@@ -28,8 +28,7 @@ import java.util.EnumSet;
 public enum PinType {
     NUM_PIN (0x1 << 0),
     UPPERCASE_CHAR_PIN  (0x1 << 1),
-    LOWERCASE_CHAR_PIN  (0x1 << 2),
-    ;
+    LOWERCASE_CHAR_PIN  (0x1 << 2);
 
     private int value;
 

@@ -23,8 +23,8 @@
 package org.iotivity.base;
 
 public enum KeySize {
-    OWNER_PSK_LENGTH_128 (128/8),
-    OWNER_PSK_LENGTH_256 (256/8),;
+    OWNER_PSK_LENGTH_128 (128 / 8),
+    OWNER_PSK_LENGTH_256 (256 / 8);
 
     private int value;
 

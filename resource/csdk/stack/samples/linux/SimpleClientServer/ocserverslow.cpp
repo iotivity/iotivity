@@ -272,6 +272,8 @@ void AlarmHandler(int sig)
 {
 #ifdef SIGALRM
     if (sig == SIGALRM)
+#else
+    OC_UNUSED(sig);
 #endif
     {
         OIC_LOG (INFO, TAG, "Server starting slow response");

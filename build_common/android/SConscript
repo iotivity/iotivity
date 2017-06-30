@@ -9,7 +9,7 @@ Import('env')
 
 help_vars = Variables()
 if not env.get('ANDROID_NDK'):
-    SConscript('../../extlibs/android/ndk/SConscript')
+    SConscript('#/extlibs/android/ndk/SConscript')
     help_vars.Add(
         PathVariable('ANDROID_NDK',
                      'Android NDK root directory',
@@ -18,7 +18,7 @@ if not env.get('ANDROID_NDK'):
                          'android-ndk-r10e')))
 
 if not env.get('ANDROID_GRADLE'):
-    SConscript('../../extlibs/android/gradle/SConscript')
+    SConscript('#/extlibs/android/gradle/SConscript')
     help_vars.Add(
         PathVariable('ANDROID_GRADLE',
                      'Android Gradle directory',
@@ -27,16 +27,16 @@ if not env.get('ANDROID_GRADLE'):
                          'gradle-2.2.1/bin/gradle')))
 
 if not env.get('ANDROID_HOME'):
-    SConscript('../../extlibs/android/sdk/SConscript')
+    SConscript('#/extlibs/android/sdk/SConscript')
 
 if env.get('ANDROID_NDK'):
     android_ndk = env.get('ANDROID_NDK')
 else:
     print '''
 *************************************** Info **********************************
-*    Android NDK path isn't set, the default will be used. You can set        *
-* environment variable ANDROID_NDK or add it in command line as:              *
-*      # scons ANDROID_NDK=<path to android NDK> ...                          *
+* Android NDK path not set, the default will be used. You can set
+* environment variable ANDROID_NDK or add it in the command line as:
+*      # scons ANDROID_NDK=<path to android NDK> ...
 *******************************************************************************
 '''
     android_ndk = os.path.join(
@@ -47,9 +47,9 @@ if env.get('ANDROID_GRADLE'):
 else:
     print '''
 *************************************** Info **********************************
-*    Android Gradle path isn't set, the default will be used. You can set     *
-* environment variable ANDROID_GRADLE or add it in command line as:           *
-*      # scons ANDROID_GRADLE=<path to android GRADLE> ...                    *
+* Android Gradle path not set, the default will be used. You can set
+* environment variable ANDROID_GRADLE or add it in the command line as:
+*      # scons ANDROID_GRADLE=<path to android GRADLE> ...
 *******************************************************************************
 '''
     android_gradle = os.path.join(
@@ -60,7 +60,7 @@ help_vars.Update(env)
 Help(help_vars.GenerateHelpText(env))
 src_dir = env.get('SRC_DIR')
 
-# Overwrite suffixes and prefixes
+# Overwrite suffixes and prefixes if host's don't agree with NDK
 if env['HOST_OS'] == 'win32':
     env['OBJSUFFIX'] = '.o'
     env['SHOBJSUFFIX'] = '.os'
@@ -95,13 +95,13 @@ if env['HOST_OS'] == 'win32':
         ndk_build_cmd += '.cmd'
 
 if not os.path.isfile(ndk_build_cmd):
-    print '''
+    msg = '''
 *************************************** Error *********************************
-*   It seems android ndk path is not set properly, please check if "%s"
-* is the root directory of android ndk.                                       *
+* It seems android ndk path is not set properly, please check if "%s"
+* is the root directory of android ndk.
 *******************************************************************************
 ''' % android_ndk
-    Exit(1)
+    Exit(msg)
 
 # ANDROID_HOME build option
 if env.get('ANDROID_HOME'):
@@ -116,19 +116,21 @@ else:
     Help(help_vars.GenerateHelpText(env))
     print '''
 *************************************** Info **********************************
-*   Environment variable ANDROID_HOME will use default value. To override     *
-* root directory of android sdk, please specify ANDROID_HOME as follows:      *
-*       scons ANDROID_HOME= <path to Android SDK>                             *
+* Environment variable ANDROID_HOME will use default value. To override
+* root directory of android sdk, please specify ANDROID_HOME as follows:
+*       scons ANDROID_HOME= <path to Android SDK>
 *******************************************************************************
 '''
 
 target_arch = env.get('TARGET_ARCH')
 
-# Android ndk early version doesn't support C++11. Detect the toolchain version
-# to make sure proper toolchain is used
-for tc_ver in ['4.7', '4.8', '4.9', '']:
+# Early Android ndk versions do not support C++11.
+# Detect the toolchain version to make sure proper toolchain is used
+for tc_ver in ['4.7', '4.8', '4.9']:
     if os.path.exists(android_ndk + '/toolchains/x86-' + tc_ver):
         break
+else:
+    tc_ver = None
 
 cmd = [ndk_build_cmd]
 cmd.append('APP_ABI=' + target_arch)
@@ -138,13 +140,13 @@ if env.get('RELEASE'):
     cmd.append('APP_OPTIM=release')
 else:
     cmd.append('APP_OPTIM=debug')
-if tc_ver != '':
+if tc_ver:
     cmd.append('NDK_TOOLCHAIN_VERSION=' + tc_ver)
 else:
     print '''
 *************************************** Warning *******************************
-*   To support C++11, the toolchain should be >= 4.7, please make sure your   *
-* android NDK is at least r8e!                                                *
+* To support C++11, the NDK toolchain must support gcc >= 4.7
+* Please make sure your  android NDK is at least r8e
 *******************************************************************************
 '''
 
@@ -153,46 +155,43 @@ cmd.append('-n')
 p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 
 for flags in p.stdout.readlines():
-    if cmp(flags[0:10], 'TC_PREFIX=') == 0:  # toolchain prefix (include path)
-        prefix = flags[10:].strip()
+    if flags.startswith('TC_PREFIX='):  # toolchain prefix (include path)
+        prefix = flags.replace('TC_PREFIX=', '').strip()
         env.Replace(CC=prefix + 'gcc')
         env.Replace(CXX=prefix + 'g++')
         env.Replace(AR=prefix + 'ar')
         env.Replace(RANLIB=prefix + 'ranlib')
 
-    elif cmp(flags[0:7], 'CFLAGS=') == 0:
-        env.AppendUnique(CFLAGS=Split(flags[7:]))
 
-    elif cmp(flags[0:9], 'CXXFLAGS=') == 0:
-        env.AppendUnique(CXXFLAGS=Split(flags[9:]))
+    elif flags.startswith('CFLAGS='):
+        env.AppendUnique(CFLAGS=Split(flags.replace('CFLAGS=', '')))
 
-    elif cmp(flags[0:8], 'CPPPATH=') == 0:
+    elif flags.startswith('CXXFLAGS='):
+        env.AppendUnique(CXXFLAGS=Split(flags.replace('CXXFLAGS=', '')))
+
+    elif flags.startswith('CPPPATH='):
         ndk_arch = 'arch-'
-        if cmp(target_arch, 'x86') == 0:
+        if target_arch in ['x86']:
             ndk_arch += 'x86'
-        elif cmp(target_arch, 'x86_64') == 0:
+        elif target_arch in ['x86_64']:
             ndk_arch += 'x86_64'
-        elif cmp(target_arch, 'armeabi') == 0:
+        elif target_arch in ['armeabi', 'armeabi-v7a', 'armeabi-v7a-hard']:
             ndk_arch += 'arm'
-        elif cmp(target_arch, 'armeabi-v7a') == 0:
-            ndk_arch += 'arm'
-        elif cmp(target_arch, 'armeabi-v7a-hard') == 0:
-            ndk_arch += 'arm'
-        elif cmp(target_arch, 'arm64-v8a') == 0:
+        elif target_arch in ['arm64-v8a']:
             ndk_arch += 'arm64'
 
-        env.AppendUnique(CPPPATH = android_ndk + '/platforms/android-21/' + ndk_arch + '/usr/include')
-        env.AppendUnique(CPPPATH = Split(flags[8:]))
+        env.AppendUnique(CPPPATH=android_ndk + '/platforms/android-21/' + ndk_arch + '/usr/include')
+        env.AppendUnique(CPPPATH=Split(flags.replace('CPPPATH=', '')))
 
-    elif cmp(flags[0:8], 'SYSROOT=') == 0:
-        sysroot = flags[8:].strip()
+    elif flags.startswith('SYSROOT='):
+        sysroot = flags.replace('SYSROOT=', '').strip()
         env.AppendUnique(LINKFLAGS=['--sysroot=' + sysroot])
 
-    elif cmp(flags[0:8], 'LDFLAGS=') == 0:
-        env.AppendUnique(LINKFLAGS=Split(flags[8:]))
+    elif flags.startswith('LDFLAGS='):
+        env.AppendUnique(LINKFLAGS=Split(flags.replace('LDFLAGS=', '')))
 
-    elif cmp(flags[0:7], 'TC_VER=') == 0:  # set gnustl library path
-        ver = flags[7:].strip()
+    elif flags.startswith('TC_VER='):  # set gnustl library path
+        ver = flags.replace('TC_VER=', '').strip()
         stl_path = android_ndk + '/sources/cxx-stl/gnu-libstdc++/' + ver + '/libs/' + target_arch
         #if target_arch in ['armeabi', 'armeabi-v7a', 'armeabi-v7a-hard']:
         #    stl_path = stl_path + '/thumb/'
@@ -200,8 +199,9 @@ for flags in p.stdout.readlines():
         env.AppendUnique(LIBPATH=[stl_path])
         env.Install(env.get('BUILD_DIR'), stl_path + '/libgnustl_shared.so')
 
-    elif cmp(flags[0:9], 'PLATFORM=') == 0:  # get target platform: android-x
-        platform_ver = flags[9 + 8:].strip()
+    elif flags.startswith('PLATFORM='):  # get target platform: android-x
+        platform_ver = flags.replace('PLATFORM=', '')
+        platform_ver = platform_ver.replace('android-', '').strip()
         if not platform_ver.isdigit():
             platform_ver = ''
 

@@ -356,6 +356,7 @@ static OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, 
                                        uint16_t port, uint16_t securePort
 #ifdef __WITH_TLS__
                                        ,uint16_t tcpPort
+                                       ,uint16_t tcpSecurePort
 #endif
                                        )
 {
@@ -372,6 +373,7 @@ static OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, 
 
 #ifdef __WITH_TLS__
     ptr->tcpPort = tcpPort;
+    ptr->tcpSecurePort = tcpSecurePort;
 #endif
 
     return OC_STACK_OK;
@@ -724,6 +726,10 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
             }
 
             uint16_t securePort = 0;
+#ifdef __WITH_TLS__
+            uint16_t tcpPort = 0;
+            uint16_t tcpSecurePort = 0;
+#endif
             OCResourcePayload* resPayload = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
 
             // Use seure port of doxm for OTM and Provision.
@@ -765,10 +771,44 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
                     }
                     eps = eps->next;
                 }
+#ifdef __WITH_TLS__
+                eps = resPayload->eps;
+                while (eps != NULL)
+                {
+                    if ((eps->family & OC_FLAG_SECURE) &&
+                        ((OC_IP_USE_V6 == clientResponse->devAddr.flags &&
+                          strchr(eps->addr, ':')) ||
+                         (OC_IP_USE_V4 == clientResponse->devAddr.flags &&
+                          strchr(eps->addr, '.'))) &&
+                        0 == strncmp(eps->tps, COAPS_TCP_PREFIX, strlen(COAPS_TCP_PREFIX)-3))
+                    {
+                            tcpSecurePort = eps->port;
+                            break;
+                    }
+                    eps = eps->next;
+                }
+                eps = resPayload->eps;
+                while (eps != NULL)
+                {
+                    if(((OC_IP_USE_V6 == clientResponse->devAddr.flags && strchr(eps->addr, ':')) ||
+                        (OC_IP_USE_V4 == clientResponse->devAddr.flags && strchr(eps->addr, '.'))) &&
+                        0 == strncmp(eps->tps, COAP_TCP_PREFIX, strlen(COAP_TCP_PREFIX)-3)
+                      )
+                    {
+                        tcpPort =  eps->port;
+                        break;
+                    }
+                    eps = eps->next;
+                }
+#endif
                 if (!securePort)
                 {
                     OIC_LOG(INFO, TAG, "Can not find secure port information.");
                     return OC_STACK_DELETE_TRANSACTION;
+                }
+                else
+                {
+                    OIC_LOG_V(INFO, TAG, "%s: secure port: %d", __func__, securePort);
                 }
             }
             else
@@ -794,7 +834,8 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
                                                          clientResponse->devAddr.port,
                                                          securePort
 #ifdef __WITH_TLS__
-                                                         ,resPayload->tcpPort
+                                                         ,tcpPort
+                                                         ,tcpSecurePort
 #endif
                                                          );
             if (OC_STACK_OK != res)

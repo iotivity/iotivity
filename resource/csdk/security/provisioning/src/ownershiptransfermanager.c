@@ -785,7 +785,7 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
 #ifdef WITH_TCP
     else if (CA_ADAPTER_TCP == endpoint.adapter)
     {
-        endpoint.port = selectedDeviceInfo->tcpPort;
+        endpoint.port = selectedDeviceInfo->tcpSecurePort;
     }
 #endif
 
@@ -1760,7 +1760,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
 #ifdef WITH_TCP
     else if (CA_ADAPTER_TCP == endpoint.adapter)
     {
-        endpoint.port = deviceInfo->tcpPort;
+        endpoint.port = deviceInfo->tcpSecurePort;
     }
 #endif
 

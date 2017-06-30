@@ -60,7 +60,7 @@ public enum ResourceProperty {
      * if discovery request contains an explicit querystring.
      * Ex: GET /oic/res?rt=oic.sec.acl
      */
-    EXPLICIT_DISCOVERABLE(1 << 5),;
+    EXPLICIT_DISCOVERABLE(1 << 5);
 
     private int value;
 

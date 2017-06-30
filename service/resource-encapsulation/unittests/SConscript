@@ -55,6 +55,7 @@ src_dir = lib_env.get('SRC_DIR')
 ######################################################################
 # Build flags
 ######################################################################
+
 rcs_test_env.AppendUnique(CPPPATH=[
     '#/extlibs/hippomocks/hippomocks',
     '../include',

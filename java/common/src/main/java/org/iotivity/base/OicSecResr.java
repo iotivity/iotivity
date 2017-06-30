@@ -25,78 +25,78 @@ package org.iotivity.base;
 import java.util.List;
 public class OicSecResr {
 
-        private String href;
-        private String rel;
-        private List<String> types;
-        private int typeLen;
-        private List<String> interfaces;
-        private int interfaceLen;
+    private String href;
+    private String rel;
+    private List<String> types;
+    private int typeLen;
+    private List<String> interfaces;
+    private int interfaceLen;
 
-        public OicSecResr(String href, String rel, List<String> types, int typeLen,
-                List<String> interfaces, int interfaceLen) {
-            super();
-            this.href = href;
-            this.rel = rel;
-            this.types = types;
-            this.typeLen = typeLen;
-            this.interfaces = interfaces;
-            this.interfaceLen = interfaceLen;
-        }
+    public OicSecResr(String href, String rel, List<String> types, int typeLen,
+            List<String> interfaces, int interfaceLen) {
+        super();
+        this.href = href;
+        this.rel = rel;
+        this.types = types;
+        this.typeLen = typeLen;
+        this.interfaces = interfaces;
+        this.interfaceLen = interfaceLen;
+    }
 
-        public String getHref() {
-            return href;
-        }
+    public String getHref() {
+        return href;
+    }
 
-        public void setHref(String href) {
-            this.href = href;
-        }
+    public void setHref(String href) {
+        this.href = href;
+    }
 
-        public String getRel() {
-            return rel;
-        }
+    public String getRel() {
+        return rel;
+    }
 
-        public void setRel(String rel) {
-            this.rel = rel;
-        }
+    public void setRel(String rel) {
+        this.rel = rel;
+    }
 
-        public List<String> getTypesList() {
-            return types;
-        }
+    public List<String> getTypesList() {
+        return types;
+    }
 
-        public void setTypes(List<String> types) {
-            this.types = types;
-        }
+    public void setTypes(List<String> types) {
+        this.types = types;
+    }
 
-        public int getTypeLen() {
-            return typeLen;
-        }
+    public int getTypeLen() {
+        return typeLen;
+    }
 
-        public void setTypeLen(int typeLen) {
-            this.typeLen = typeLen;
-        }
+    public void setTypeLen(int typeLen) {
+        this.typeLen = typeLen;
+    }
 
-        public List<String> getInterfacesList() {
-            return interfaces;
-        }
+    public List<String> getInterfacesList() {
+        return interfaces;
+    }
 
-        public String getInterfaces(int i) {
-            return this.interfaces.get(i);
-        }
+    public String getInterfaces(int i) {
+        return this.interfaces.get(i);
+    }
 
-        public String getTypes(int i) {
-            return this.types.get(i);
-        }
+    public String getTypes(int i) {
+        return this.types.get(i);
+    }
 
-        public void setInterfaces(List<String> interfaces) {
-            this.interfaces = interfaces;
-        }
+    public void setInterfaces(List<String> interfaces) {
+        this.interfaces = interfaces;
+    }
 
-        public int getInterfaceLen() {
-            return interfaceLen;
-        }
+    public int getInterfaceLen() {
+        return interfaceLen;
+    }
 
-        public void setInterfaceLen(int interfaceLen) {
-            this.interfaceLen = interfaceLen;
-        }
+    public void setInterfaceLen(int interfaceLen) {
+        this.interfaceLen = interfaceLen;
+    }
 
 }

@@ -51,7 +51,7 @@ typedef struct LIGHTRESOURCE{
     int power;
 } LightResource;
 
-static LightResource light;
+static LightResource gLight;
 
 char *gLightResourceUri= (char *)"/a/light";
 char *gRoomResourceUri= (char *)"/a/room";
@@ -468,12 +468,12 @@ void *ChangeLightRepresentation (void *param)
     while (!gQuitFlag)
     {
         sleep(10);
-        light.power += 5;
+        gLight.power += 5;
         if (gLightUnderObservation)
         {
             OIC_LOG_V(INFO, TAG,
-                " =====> Notifying stack of new power level %d\n", light.power);
-            result = OCNotifyAllObservers (light.handle, OC_NA_QOS);
+                " =====> Notifying stack of new power level %d\n", gLight.power);
+            result = OCNotifyAllObservers (gLight.handle, OC_NA_QOS);
             if (OC_STACK_NO_OBSERVERS == result)
             {
                 gLightUnderObservation = 0;
@@ -559,7 +559,7 @@ int main(int argc, char* argv[])
 
 void createResources()
 {
-    light.state = false;
+    gLight.state = false;
 
     OCResourceHandle fan;
     OCStackResult res = OCCreateResource(&fan,

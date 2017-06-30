@@ -65,7 +65,6 @@ if target_os in ['linux']:
     # Run make on gtest
     print 'Making google unit test'
     make_ran = gtest_env.Configure(gtest_dir, 'make')
-    # gtest_env.Depends(make_ran, configure_ran)
 
 elif target_os in ['darwin', 'msys_nt'] and os.path.exists(gtest_dir):
     if not os.path.exists(gtest_configured_sentinel):

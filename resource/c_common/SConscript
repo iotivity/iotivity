@@ -166,13 +166,6 @@ if target_os in ['tizen', 'linux']:
 common_env = env.Clone()
 
 ######################################################################
-# Enable treating all warnings as errors
-######################################################################
-
-if target_os in ['windows', 'msys_nt']:
-    common_env.AppendUnique(CCFLAGS=['/W4'])
-
-######################################################################
 # Add platform-specific helper library
 ######################################################################
 
@@ -226,9 +219,13 @@ common_env.AppendUnique(CPPPATH=['#resource/csdk/logger/include'])
 commonlib = common_env.StaticLibrary('c_common', common_src)
 common_env.InstallTarget(commonlib, 'c_common')
 common_env.UserInstallTargetLib(commonlib, 'c_common')
-common_env.UserInstallTargetHeader('iotivity_commontypes.h', 'c_common', 'iotivity_commontypes.h')
-common_env.UserInstallTargetHeader('iotivity_debug.h', 'c_common', 'iotivity_debug.h')
-common_env.UserInstallTargetHeader('platform_features.h', 'c_common', 'platform_features.h')
+
+common_env.UserInstallTargetHeader(
+    'iotivity_commontypes.h', 'c_common', 'iotivity_commontypes.h')
+common_env.UserInstallTargetHeader(
+    'iotivity_debug.h', 'c_common', 'iotivity_debug.h')
+common_env.UserInstallTargetHeader(
+    'platform_features.h', 'c_common', 'platform_features.h')
 
 Clean(commonlib, config_h_file_path)
 

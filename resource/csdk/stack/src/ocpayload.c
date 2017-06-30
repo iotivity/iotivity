@@ -176,7 +176,7 @@ static void OC_CALL OCCopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPaylo
             }
             break;
         case OCREP_PROP_BYTE_STRING:
-            dest->arr.ocByteStrArray = (OCByteString*)OICMalloc(dimTotal * sizeof(OCByteString));
+            dest->arr.ocByteStrArray = (OCByteString*)OICCalloc(dimTotal, sizeof(OCByteString));
             VERIFY_PARAM_NON_NULL(TAG, dest->arr.ocByteStrArray, "Failed allocating memory");
             for (size_t i = 0; i < dimTotal; ++i)
             {
@@ -1554,13 +1554,9 @@ char* OC_CALL OCCreateString(const OCStringLL* ll)
 
 bool OC_CALL OCByteStringCopy(OCByteString* dest, const OCByteString* source)
 {
-    VERIFY_PARAM_NON_NULL(TAG, source, "Bad input");
+    VERIFY_PARAM_NON_NULL(TAG, dest, "Bad dest");
+    VERIFY_PARAM_NON_NULL(TAG, source, "Bad source");
 
-    if (!dest)
-    {
-        dest = (OCByteString *)OICMalloc(sizeof(OCByteString));
-        VERIFY_PARAM_NON_NULL(TAG, dest, "Failed allocating memory");
-    }
     if (dest->bytes)
     {
         OICFree(dest->bytes);

@@ -91,10 +91,7 @@ if 'SERVER' in rd_mode:
         catest_env.PrependUnique(LIBS=['sqlite3'])
 
 if target_os not in ['msys_nt', 'windows']:
-    catest_env.AppendUnique(LIBS=['m'])
-else:
-    catest_env.AppendUnique(CCFLAGS=['/W4'])
-
+    catest_env.AppendUnique(LIBS = ['m'])
 ######################################################################
 # Source files and Targets
 ######################################################################

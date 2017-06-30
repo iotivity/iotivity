@@ -24,44 +24,44 @@ package org.iotivity.base;
 
 import java.util.List;
 public class OicSecValidity {
-        private String period;
-        private List<String> recurrences;
-        private int recurrenceLen;
+    private String period;
+    private List<String> recurrences;
+    private int recurrenceLen;
 
-        public OicSecValidity(String period, List<String> recurrences,
-                int recurrenceLen) {
-            super();
-            this.period = period;
-            this.recurrences = recurrences;
-            this.recurrenceLen = recurrenceLen;
-        }
+    public OicSecValidity(String period, List<String> recurrences,
+            int recurrenceLen) {
+        super();
+        this.period = period;
+        this.recurrences = recurrences;
+        this.recurrenceLen = recurrenceLen;
+    }
 
-        public String getPeriod() {
-            return period;
-        }
+    public String getPeriod() {
+        return period;
+    }
 
-        public void setPeriod(String period) {
-            this.period = period;
-        }
+    public void setPeriod(String period) {
+        this.period = period;
+    }
 
-        public List<String> getRecurrencesList() {
-            return recurrences;
-        }
+    public List<String> getRecurrencesList() {
+        return recurrences;
+    }
 
-        public String getRecurrences(int i) {
-            return this.recurrences.get(i);
-        }
+    public String getRecurrences(int i) {
+        return this.recurrences.get(i);
+    }
 
-        public void setRecurrences(List<String> recurrences) {
-            this.recurrences = recurrences;
-        }
+    public void setRecurrences(List<String> recurrences) {
+        this.recurrences = recurrences;
+    }
 
-        public int getRecurrenceLen() {
-            return recurrenceLen;
-        }
+    public int getRecurrenceLen() {
+        return recurrenceLen;
+    }
 
-        public void setRecurrenceLen(int recurrenceLen) {
-            this.recurrenceLen = recurrenceLen;
-        }
+    public void setRecurrenceLen(int recurrenceLen) {
+        this.recurrenceLen = recurrenceLen;
+    }
 
 }

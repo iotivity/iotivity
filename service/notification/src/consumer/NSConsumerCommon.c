@@ -901,7 +901,7 @@ void NSCopyPayloadValueArray(OCRepPayloadValue* dest, OCRepPayloadValue* source)
             }
             break;
         case OCREP_PROP_BYTE_STRING:
-            dest->arr.ocByteStrArray = (OCByteString*)OICMalloc(dimTotal * sizeof(OCByteString));
+            dest->arr.ocByteStrArray = (OCByteString*)OICCalloc(dimTotal, sizeof(OCByteString));
             NS_VERIFY_NOT_NULL_V(dest->arr.ocByteStrArray);
             for (size_t i = 0; i < dimTotal; ++i)
             {

@@ -28,8 +28,7 @@ import java.util.EnumSet;
 public enum MVJustWorksOptionMask {
     NOT_APPLICABLE (0x0),
     DISPLAY_MUTUAL_VERIF_NUM  (0x1 << 0),
-    CONFIRM_MUTUAL_VERIF_NUM  (0x1 << 1),
-    ;
+    CONFIRM_MUTUAL_VERIF_NUM  (0x1 << 1);
 
     private int value;
 

@@ -100,8 +100,10 @@ else:
 if target_os in ['linux']:
     server_builder_test_env = server_builder_env.Clone()
 
-    server_builder_test_env.AppendUnique(
-        CPPPATH=['#/extlibs/hippomocks/hippomocks', '../common/utils/include'])
+    server_builder_test_env.AppendUnique(CPPPATH=[
+        '#/extlibs/hippomocks/hippomocks',
+        '../common/utils/include'
+])
 
     if server_builder_test_env.get('SECURED') == '1':
         server_builder_test_env.AppendUnique(

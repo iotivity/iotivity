@@ -115,6 +115,7 @@ static bool stringArgumentsWithinBounds(const char** arguments, size_t count)
 static int storeResourceTypes(char **resourceTypes, size_t size, sqlite3_int64 rowid)
 {
     int res = 1;
+    sqlite3_stmt *stmt = NULL;
     if (!stringArgumentsWithinBounds(resourceTypes, size))
     {
         return res;
@@ -127,7 +128,6 @@ static int storeResourceTypes(char **resourceTypes, size_t size, sqlite3_int64 r
     int deleteRTSize = (int)sizeof(deleteRT);
     int insertRTSize = (int)sizeof(insertRT);
 
-    sqlite3_stmt *stmt = NULL;
 
     VERIFY_SQLITE(sqlite3_prepare_v2(gRDDB, deleteRT, deleteRTSize, &stmt, NULL));
     VERIFY_SQLITE(sqlite3_bind_int64(stmt, sqlite3_bind_parameter_index(stmt, "@id"), rowid));
@@ -229,6 +229,7 @@ static int storeEndpoints(OCRepPayload **eps, size_t size, sqlite3_int64 rowid)
 {
     int res;
     char *ep = NULL;
+    sqlite3_stmt *stmt = NULL;
 
     VERIFY_SQLITE(sqlite3_exec(gRDDB, "SAVEPOINT storeEndpoints", NULL, NULL, NULL));
     static const char deleteEp[] = "DELETE FROM RD_LINK_EP WHERE LINK_ID=@id";
@@ -236,7 +237,6 @@ static int storeEndpoints(OCRepPayload **eps, size_t size, sqlite3_int64 rowid)
     int deleteEpLength = (int)sizeof(deleteEp);
     int insertEpLength = (int)sizeof(insertEp);
 
-    sqlite3_stmt *stmt = NULL;
 
     VERIFY_SQLITE(sqlite3_prepare_v2(gRDDB, deleteEp, deleteEpLength, &stmt, NULL));
     VERIFY_SQLITE(sqlite3_bind_int64(stmt, sqlite3_bind_parameter_index(stmt, "@id"), rowid));
@@ -475,6 +475,7 @@ static int storeLinkPayload(OCRepPayload *rdPayload, sqlite3_int64 rowid)
 static int storeResources(OCRepPayload *payload)
 {
     char *deviceId = NULL;
+    sqlite3_stmt *stmt = NULL;
     OCRepPayloadGetPropString(payload, OC_RSRVD_DEVICE_ID, &deviceId);
     if (!stringArgumentWithinBounds(deviceId))
     {
@@ -488,7 +489,6 @@ static int storeResources(OCRepPayload *payload)
     VERIFY_SQLITE(sqlite3_exec(gRDDB, "BEGIN TRANSACTION", NULL, NULL, NULL));
 
     /* INSERT OR IGNORE then UPDATE to update or insert the row without triggering the cascading deletes */
-    sqlite3_stmt *stmt = NULL;
     static const char insertDeviceList[] = "INSERT OR IGNORE INTO RD_DEVICE_LIST (ID, di, ttl) "
         "VALUES ((SELECT ID FROM RD_DEVICE_LIST WHERE di=@deviceId), @deviceId, @ttl)";
     int insertDeviceListSize = (int)sizeof(insertDeviceList);
@@ -572,6 +572,7 @@ exit:
 static int deleteResources(const char *deviceId, const uint8_t *instanceIds, uint8_t nInstanceIds)
 {
     char *delResource = NULL;
+    sqlite3_stmt *stmt = NULL;
     if (!stringArgumentWithinBounds(deviceId))
     {
         OIC_LOG_V(ERROR, TAG, "Query longer than %d: \n%s", INT_MAX, deviceId);
@@ -581,7 +582,6 @@ static int deleteResources(const char *deviceId, const uint8_t *instanceIds, uin
     int res;
     VERIFY_SQLITE(sqlite3_exec(gRDDB, "BEGIN TRANSACTION", NULL, NULL, NULL));
 
-    sqlite3_stmt *stmt = NULL;
     if (!instanceIds || !nInstanceIds)
     {
         static const char delDevice[] = "DELETE FROM RD_DEVICE_LIST WHERE di=@deviceId";

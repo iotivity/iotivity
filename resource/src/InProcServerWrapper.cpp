@@ -451,7 +451,7 @@ namespace OC
             }
             else
             {
-                std::lock_guard<std::mutex> lock(OC::details::serverWrapperLock);
+                std::lock_guard<std::mutex> mapsLock(OC::details::serverWrapperLock);
                 OC::details::entityHandlerMap[resourceHandle] = eHandler;
                 OC::details::resourceUriMap[resourceHandle] = resourceURI;
             }
@@ -501,7 +501,7 @@ namespace OC
 
             if(result == OC_STACK_OK)
             {
-                std::lock_guard<std::mutex> lock(OC::details::serverWrapperLock);
+                std::lock_guard<std::mutex> resourceUriMapLock(OC::details::serverWrapperLock);
                 OC::details::resourceUriMap.erase(resourceHandle);
             }
             else

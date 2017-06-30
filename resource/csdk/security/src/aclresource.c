@@ -1416,6 +1416,17 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                 aclistVersion = OIC_SEC_ACL_V2;
                 aclistTagJustFound = true;
             }
+            else
+            {
+                if (NULL != versionCheck)
+                {
+                    OIC_LOG_V(DEBUG, TAG, "%s Unable to determine ACL version, could be either v1 or v2!"
+                        " Assigning 'versionCheck' to OIC_SEC_ACL_UNKNOWN and returning NULL.", __func__);
+                    *versionCheck = OIC_SEC_ACL_UNKNOWN;
+                    OICFree(acl);
+                    return NULL;
+                }
+            }
 
             CborValue aclistMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
             if (aclistTagJustFound && OIC_SEC_ACL_V1 == aclistVersion)
@@ -2684,9 +2695,9 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
         // Clients should not POST v1 ACL to OCF 1.0 Server
         OicSecAclVersion_t payloadVersionReceived = OIC_SEC_ACL_V1;
         CBORPayloadToAclVersionOpt(payload, size, &payloadVersionReceived);
-        if (OIC_SEC_ACL_V2 != payloadVersionReceived)
+        if (OIC_SEC_ACL_V1 == payloadVersionReceived)
         {
-            OIC_LOG_V(WARNING, TAG, "%s /acl Resource is v2; POST of v1 ACL not acceptable.", __func__);
+            OIC_LOG_V(WARNING, TAG, "%s /acl2 Resource Update with v1 ACL payload not acceptable.", __func__);
             ehRet = OC_EH_NOT_ACCEPTABLE;
             goto exit;
         }

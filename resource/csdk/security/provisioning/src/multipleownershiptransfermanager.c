@@ -687,7 +687,7 @@ static OCStackResult SaveSubOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
 #ifdef WITH_TCP
     else if (CA_ADAPTER_TCP == endpoint.adapter)
     {
-        endpoint.port = selectedDeviceInfo->tcpPort;
+        endpoint.port = selectedDeviceInfo->tcpSecurePort;
     }
 #endif
 

@@ -24,75 +24,75 @@ package org.iotivity.base;
 
 import java.util.List;
 public class OicSecCloudAce {
-        private String aclID;
-        private String subjectID;
-        private int stype;
-        private int permission;
-        private List<OicSecResr> resources;
-        private List<OicSecValidity> validities;
+    private String aclID;
+    private String subjectID;
+    private int stype;
+    private int permission;
+    private List<OicSecResr> resources;
+    private List<OicSecValidity> validities;
 
-        public OicSecCloudAce(String aclID, String subjectID, int stype, int permission,
-                List<OicSecResr> resources, List<OicSecValidity> validities) {
-            super();
-            this.subjectID = subjectID;
-            this.permission = permission;
-            this.resources = resources;
-            this.validities = validities;
-        }
+    public OicSecCloudAce(String aclID, String subjectID, int stype, int permission,
+            List<OicSecResr> resources, List<OicSecValidity> validities) {
+        super();
+        this.subjectID = subjectID;
+        this.permission = permission;
+        this.resources = resources;
+        this.validities = validities;
+    }
 
-        public String getAclID() {
-            return aclID;
-        }
+    public String getAclID() {
+        return aclID;
+    }
 
-        public String getSubjectID() {
-            return subjectID;
-        }
+    public String getSubjectID() {
+        return subjectID;
+    }
 
-        public void setAclID(String aclID) {
-            this.aclID = aclID;
-        }
+    public void setAclID(String aclID) {
+        this.aclID = aclID;
+    }
 
-        public void setSubjectID(String subjectID) {
-            this.subjectID = subjectID;
-        }
+    public void setSubjectID(String subjectID) {
+        this.subjectID = subjectID;
+    }
 
-        public int getStype() {
-            return stype;
-        }
+    public int getStype() {
+        return stype;
+    }
 
-        public void setStype(int stype) {
-            this.stype = stype;
-        }
+    public void setStype(int stype) {
+        this.stype = stype;
+    }
 
 
-        public int getPermission() {
-            return permission;
-        }
+    public int getPermission() {
+        return permission;
+    }
 
-        public void setPermission(int permission) {
-            this.permission = permission;
-        }
+    public void setPermission(int permission) {
+        this.permission = permission;
+    }
 
-        public List<OicSecResr> getResourcesList() {
-            return resources;
-        }
+    public List<OicSecResr> getResourcesList() {
+        return resources;
+    }
 
-        public OicSecResr[] getResources() {
-            return resources.toArray(new OicSecResr[resources.size()]);
-        }
-        public void setResources(List<OicSecResr> resources) {
-            this.resources = resources;
-        }
+    public OicSecResr[] getResources() {
+        return resources.toArray(new OicSecResr[resources.size()]);
+    }
+    public void setResources(List<OicSecResr> resources) {
+        this.resources = resources;
+    }
 
-        public List<OicSecValidity> getValiditiesList() {
-            return validities;
-        }
+    public List<OicSecValidity> getValiditiesList() {
+        return validities;
+    }
 
-        public OicSecValidity[] getValidities() {
-            return validities.toArray(new OicSecValidity[validities.size()]);
-        }
+    public OicSecValidity[] getValidities() {
+        return validities.toArray(new OicSecValidity[validities.size()]);
+    }
 
-        public void setValidities(List<OicSecValidity> validities) {
-            this.validities = validities;
-        }
+    public void setValidities(List<OicSecValidity> validities) {
+        this.validities = validities;
+    }
 }

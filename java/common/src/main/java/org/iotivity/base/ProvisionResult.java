@@ -24,18 +24,15 @@ public class ProvisionResult {
     private String mDeviceId;
     private int mResult;
 
-    public ProvisionResult(String deviceId, int result)
-    {
+    public ProvisionResult(String deviceId, int result) {
         this.mDeviceId = deviceId;
         this.mResult = result;
     }
 
-    public String getDevId()
-    {
+    public String getDevId() {
         return this.mDeviceId;
     }
-    public int getResult()
-    {
+    public int getResult() {
         return this.mResult;
     }
 }

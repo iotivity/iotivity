@@ -2747,7 +2747,7 @@ static void setDevProtocol(OCProvisionDev_t* lst)
             lst->connType |= CT_ADAPTER_TCP; //set TCP flag
             lst->endpoint.adapter = OC_ADAPTER_TCP;
             lst->endpoint.port = lst->tcpPort;
-            lst->securePort = lst->tcpPort;
+            lst->securePort = lst->tcpSecurePort;
         }
         lst = lst->next;
     }

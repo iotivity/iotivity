@@ -82,8 +82,7 @@ public enum OcConnectivityType {
     CT_SCOPE_ORG            (0x8),
 
     /** IPv6 Global scope.*/
-    CT_SCOPE_GLOBAL         (0xE),
-    ;
+    CT_SCOPE_GLOBAL         (0xE);
 
     private int value;
 

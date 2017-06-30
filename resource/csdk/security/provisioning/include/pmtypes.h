@@ -69,6 +69,7 @@ typedef struct OCProvisionDev
     uint16_t        securePort;      /**< secure port **/
 #ifdef WITH_TCP
     uint16_t        tcpPort;         /**< tcp port **/
+    uint16_t        tcpSecurePort;   /**< secure tcp port **/
 #endif
     char            secVer[OIC_SEC_MAX_VER_LEN];         /**< security version **/
     DeviceStatus    devStatus;       /**< status of device **/

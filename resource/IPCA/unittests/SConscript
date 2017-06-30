@@ -31,9 +31,6 @@ src_dir = ipcatest_env.get('SRC_DIR')
 target_os = ipcatest_env.get('TARGET_OS')
 with_cloud = ipcatest_env.get('WITH_CLOUD')
 
-if ipcatest_env['CC'] == 'cl':
-    ipcatest_env.AppendUnique(CCFLAGS=['/W4'])
-
 ######################################################################
 # Build flags
 ######################################################################

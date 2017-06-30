@@ -968,6 +968,8 @@ int InitGetRequestWithCoap(OCDiscoveryPayload* dis, bool isUdp)
 
     // server addr
     OCDevAddr dev;
+    memset(&dev, 0, sizeof(dev));
+    dev.adapter = OC_DEFAULT_ADAPTER;
 
     // find endpoint with ipv4, UDP or TCP
     OCResourcePayload* res = dis->resources;

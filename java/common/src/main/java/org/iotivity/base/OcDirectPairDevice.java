@@ -39,13 +39,11 @@ public class OcDirectPairDevice {
         this.mNativeHandle = nativeHandle;
     }
 
-    public OcDirectPairDevice(String deviceID)
-    {
+    public OcDirectPairDevice(String deviceID) {
         this.mdeviceID = deviceID;
     }
 
-    public String getDevId()
-    {
+    public String getDevId() {
         return this.mdeviceID;
     }
 
@@ -54,8 +52,7 @@ public class OcDirectPairDevice {
     public List<Integer> getPairingMethodList() {
         int [] intList = this.getPairingMethods();
         List<Integer> prmList = new ArrayList<Integer>();
-        for (int i = 0; i < intList.length; i++)
-        {
+        for (int i = 0; i < intList.length; i++) {
             prmList.add(intList[i]);
         }
         return  prmList;

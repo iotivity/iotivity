@@ -49,6 +49,7 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
+
 easysetup_test_env.AppendUnique(LIBPATH=[lib_env.get('BUILD_DIR')])
 easysetup_test_env.PrependUnique(LIBS=[
     'connectivity_abstraction',

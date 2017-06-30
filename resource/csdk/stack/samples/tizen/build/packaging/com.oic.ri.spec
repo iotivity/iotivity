@@ -88,19 +88,19 @@ scons %{JOB} --prefix=%{_prefix} \
 mkdir -p %{DEST_INC_DIR}
 mkdir -p %{DEST_LIB_DIR}/pkgconfig
 
-cp -f %{BUILD_DIR}/resource/csdk/stack/liboctbstack.so %{buildroot}/%{_libdir}
-cp -f %{BUILD_DIR}/resource/c_common/libc_common.a %{buildroot}/%{_libdir}
-cp -f %{BUILD_DIR}/resource/csdk/security/libocsrm.a %{buildroot}/%{_libdir}
-cp -f %{BUILD_DIR}/resource/csdk/connectivity/src/libconnectivity_abstraction.so %{buildroot}/%{_libdir}
-cp -f %{BUILD_DIR}/libcoap.a %{buildroot}/%{_libdir}
+install %{BUILD_DIR}/liboctbstack.so %{buildroot}/%{_libdir}
+install %{BUILD_DIR}/libc_common.a %{buildroot}/%{_libdir}
+install %{BUILD_DIR}/libocsrm.a %{buildroot}/%{_libdir}
+install %{BUILD_DIR}/libconnectivity_abstraction.so %{buildroot}/%{_libdir}
+install %{BUILD_DIR}/libcoap.a %{buildroot}/%{_libdir}
 # Renamed to avoid colision with system package
 # I suppose it was added to be used along Tizen SDK which does not ship it
 cp -av /usr/lib*/libuuid.so.1 %{buildroot}%{_libdir}/libuuid1.so ||:
 
 %if 0%{?SECURED} == 1
-	cp -f %{BUILD_DIR}/libmbedcrypto.a %{buildroot}/%{_libdir}
-	cp -f %{BUILD_DIR}/libmbedtls.a %{buildroot}/%{_libdir}
-	cp -f %{BUILD_DIR}/libmbedx509.a %{buildroot}/%{_libdir}
+cp -f %{BUILD_DIR}/libmbedcrypto.a %{buildroot}/%{_libdir}
+cp -f %{BUILD_DIR}/libmbedtls.a %{buildroot}/%{_libdir}
+cp -f %{BUILD_DIR}/libmbedx509.a %{buildroot}/%{_libdir}
 %endif
 
 cp -rf resource/csdk/stack/include/ocstack.h* %{DEST_INC_DIR}/
@@ -123,7 +123,7 @@ cp resource/c_common/iotivity_config.h %{DEST_INC_DIR}
 cp resource/c_common/*/include/*.h %{DEST_INC_DIR}
 cp resource/csdk/stack/include/payload_logging.h %{DEST_INC_DIR}
 cp extlibs/tinycbor/tinycbor/src/cbor.h %{DEST_INC_DIR}
-cp -rf com.oic.ri.pc %{DEST_LIB_DIR}/pkgconfig/
+cp -f com.oic.ri.pc %{DEST_LIB_DIR}/pkgconfig/
 
 %files
 %manifest com.oic.ri.manifest

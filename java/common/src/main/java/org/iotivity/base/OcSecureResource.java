@@ -178,15 +178,14 @@ public class OcSecureResource {
             boolean edp , ProvisionDirectPairingListener provisionDirectPairingListener)
         throws OcException {
 
-            int[] typeArray = new int[type.size()];
-            int i = 0;
-            for (OcPrmType ocPrmType:type) {
-                typeArray[i++] = ocPrmType.getValue();
-            }
-
-            this.provisionDirectPairing(pin, pdacls, typeArray, (edp?1:0),
-                    provisionDirectPairingListener);
+        int[] typeArray = new int[type.size()];
+        int i = 0;
+        for (OcPrmType ocPrmType:type) {
+            typeArray[i++] = ocPrmType.getValue();
         }
+
+        this.provisionDirectPairing(pin, pdacls, typeArray, (edp ? 1: 0), provisionDirectPairingListener);
+    }
 
     private native void provisionDirectPairing(String pin, OicSecPdAcl[] pdacls, int[] type,
             int edp , ProvisionDirectPairingListener provisionDirectPairingListener)
@@ -352,7 +351,7 @@ public class OcSecureResource {
                 int hasError);
     }
 
-	/**
+    /**
      * provisionTrustCertChainListener can be registered with ProvisionTrustCertChainListener
      * call.
      * Listener notified asynchronously.
@@ -386,7 +385,7 @@ public class OcSecureResource {
      *
      *  @return Sring List  List of device id's of linked devices.
      */
-     public native List<String> getLinkedDevices();
+    public native List<String> getLinkedDevices();
 
      /**
       * Method to get IP address of sercure discovered device.

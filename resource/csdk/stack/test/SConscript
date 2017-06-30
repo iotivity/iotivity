@@ -70,13 +70,9 @@ if 'SERVER' in rd_mode:
     elif target_os in ['msys_nt', 'windows']:
         stacktest_env.PrependUnique(LIBS=['sqlite3'])
 
-if stacktest_env.get('LOGGING'):
-    stacktest_env.AppendUnique(CPPDEFINES=['TB_LOG'])
-
-if target_os in ['msys_nt', 'windows']:
-    stacktest_env.AppendUnique(CCFLAGS=['/W4'])
-else:
+if target_os not in ['msys_nt', 'windows']:
     stacktest_env.PrependUnique(LIBS=['m'])
+
     if target_os in ['tizen', 'linux']:
         stacktest_env.ParseConfig(
             "pkg-config --cflags --libs gobject-2.0 gio-2.0 glib-2.0")
