@@ -2092,6 +2092,8 @@ bool IsValidAclAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPaylo
 {
     bool retValue = false;
     OicSecAcl_t* acl = NULL;
+    OicSecAce_t* ace = NULL;
+    OicSecAce_t* tempAce = NULL;
 
     VERIFY_NOT_NULL(TAG, uuid, ERROR);
     VERIFY_NOT_NULL(TAG, cborPayload, ERROR);
@@ -2100,8 +2102,6 @@ bool IsValidAclAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPaylo
     acl = CBORPayloadToAcl(cborPayload, size);
     VERIFY_NOT_NULL(TAG, acl, ERROR);
 
-    OicSecAce_t* ace = NULL;
-    OicSecAce_t* tempAce = NULL;
     LL_FOREACH_SAFE(acl->aces, ace, tempAce)
     {
         OicSecRsrc_t* rsrc = NULL;
