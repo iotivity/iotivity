@@ -32,30 +32,33 @@ target_os = env.get('TARGET_OS')
 target_arch = env.get('TARGET_ARCH')
 with_ra = env.get('WITH_RA')
 with_ra_ibb = env.get('WITH_RA_IBB')
-if with_ra and not with_ra_ibb :
-	# check 'raxmppl' library, if it doesn't exits, ask user to download it
-	if not os.path.exists('raxmpp'):
-		print '''
-	*********************************** Error: ***********************************************
-	* Please download ra_xmpp as following :
-	*     $ git clone https://gerrit.iotivity.org/gerrit/iotivity-xmpp extlibs/raxmpp/raxmpp
-	******************************************************************************************
-	'''
-		Exit(1)
+if with_ra and not with_ra_ibb:
+    # check 'raxmppl' library, if it doesn't exist, ask user to download it
+    if not os.path.exists('raxmpp'):
+        msg = '''
+*********************************** Error: ************************************
+* Please download ra_xmpp as following :
+*     $ git clone https://gerrit.iotivity.org/gerrit/iotivity-xmpp extlibs/raxmpp/raxmpp
+*******************************************************************************
+'''
+        Exit(msg)
 
-	print 'building with ra_xmpp'
-	if env.get('RELEASE'):
-		print src_dir
-		build_dir = os.path.join(src_dir, 'extlibs/raxmpp/raxmpp/out', target_os, target_arch, 'release/')
-	else:
-		build_dir = os.path.join(src_dir, 'extlibs/raxmpp/raxmpp/out/', target_os, target_arch, 'debug/')
-	os.chdir('raxmpp')
-	sconsflags = ' RELEASE=true' if  env['RELEASE'] else ' RELEASE=false'
-	foo=commands.getoutput('scons external' + sconsflags )
-	print foo
-	foo=commands.getoutput('scons' + sconsflags )
-	print foo
+    print 'building with ra_xmpp'
+    if env.get('RELEASE'):
+        print src_dir
+        build_dir = os.path.join(src_dir, 'extlibs/raxmpp/raxmpp/out',
+                                 target_os, target_arch, 'release/')
+    else:
+        build_dir = os.path.join(src_dir, 'extlibs/raxmpp/raxmpp/out/',
+                                 target_os, target_arch, 'debug/')
+    os.chdir('raxmpp')
+    sconsflags = ' RELEASE=true' if env['RELEASE'] else ' RELEASE=false'
+    foo = commands.getoutput('scons external' + sconsflags)
+    print foo
+    foo = commands.getoutput('scons' + sconsflags)
+    print foo
 
-	env.AppendUnique(CPPPATH = src_dir+'/extlibs/raxmpp/raxmpp/ra_xmpp/',
-				LIBPATH=build_dir,
-				RPATH = build_dir)
+    env.AppendUnique(
+        CPPPATH=src_dir + '/extlibs/raxmpp/raxmpp/ra_xmpp/',
+        LIBPATH=build_dir,
+        RPATH=build_dir)

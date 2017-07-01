@@ -40,17 +40,18 @@ with_upstream_libcoap = libcoap_env.get('WITH_UPSTREAM_LIBCOAP')
 
 # Temporary LibCoAP URL is a fork of the original.
 # Once a pull request is merged, change this back to the obgm original below.
-libcoap_repo_url    = 'https://github.com/dthaler/libcoap'
+libcoap_repo_url = 'https://github.com/dthaler/libcoap'
 #libcoap_repo_url    = 'https://github.com/obgm/libcoap'
 
 ######################################################################
 # Download libCoAP
 ######################################################################
-# Right now this script assumes the revision is a tag, and not a branch or an arbitrary
-# commit. If this changes, update the check below, or else the script will always conclude
-# the repo is not up to date because a tag with that name doesn't exist.
-libcoap_version          = 'IoTivity-1.2.1d'
-libcoap_dir              = os.path.join(src_dir, 'extlibs', 'libcoap', 'libcoap')
+# Right now this script assumes the revision is a tag, and not a branch or
+# an arbitrary commit. If this changes, update the check below, or else
+# the script will always conclude the repo is not up to date because a tag
+# with that name doesn't exist.
+libcoap_version = 'IoTivity-1.2.1d'
+libcoap_dir = os.path.join(src_dir, 'extlibs', 'libcoap', 'libcoap')
 libcoap_checkout_command = 'git clone ' + libcoap_repo_url + '.git extlibs/libcoap/libcoap -b ' + libcoap_version
 libcoap_update_command = 'git fetch --tags && git checkout -f ' + libcoap_version
 libcoap_change_dir_command = 'cd ' + libcoap_dir
@@ -58,45 +59,46 @@ libcoap_change_dir_command = 'cd ' + libcoap_dir
 if with_upstream_libcoap == '1':
     print '*** Checking for installation of libCoAP ***'
     if not os.path.exists(libcoap_dir):
-        print '''
-*********************************** Error: ****************************************
-* Please download libcoap using the following command:                            *
+        msg = '''
+*********************************** Error: ************************************
+* Please download libcoap using the following command:
 *     $ %s
-***********************************************************************************
- ''' % libcoap_checkout_command
-        Exit(1)
+*******************************************************************************
+''' % libcoap_checkout_command
+        Exit(msg)
 
     os.chdir(libcoap_dir)
-    out = subprocess.check_output('git log --format=%d -n 1', shell = True)
+    out = subprocess.check_output('git log --format=%d -n 1', shell=True)
     if libcoap_version not in out:
         print '''
-*********************************** Info: *****************************************
+******************************* Info: *****************************************
 * Your libCoAP repo is not up to date with the latest version we require (%s).
-***********************************************************************************
- ''' %(libcoap_version)
+*******************************************************************************
+''' % (libcoap_version)
         if libcoap_env.get('AUTOMATIC_UPDATE'):
             print '''
-*********************************** Info: *****************************************
+******************************* Info: *****************************************
 * Automatically updating libcoap to version %s.
-***********************************************************************************
- ''' %(libcoap_version)
-            subprocess.check_output(libcoap_update_command, shell = True)
+*******************************************************************************
+''' % (libcoap_version)
+            subprocess.check_output(libcoap_update_command, shell=True)
         else:
-            print '''
-*********************************** Info: *****************************************
+            msg = '''
+******************************* Info: *****************************************
 * Please update using the following commands:
 *   %s
 *   %s
-***********************************************************************************
- ''' %(libcoap_change_dir_command, libcoap_update_command)
-            Exit(1)
+*******************************************************************************
+''' % (libcoap_change_dir_command, libcoap_update_command)
+            Exit(msg)
 
 else:
     print '''
-*********************************** Info: *****************************************
-* Using FORKED copy of libCoap located in:                                        *
-* resource/csdk/connectivity/lib/libcoap-4.1.1                                    *
-***********************************************************************************'''
+******************************* Info: *****************************************
+* Using FORKED copy of libCoap located in:
+* resource/csdk/connectivity/lib/libcoap-4.1.1
+*******************************************************************************
+'''
 
 ######################################################################
 # Build libCoAP
@@ -104,8 +106,8 @@ else:
 # As in the source code(C) includes arduino Time library head file(C++)
 # It requires compile the .c with g++
 if target_os == 'arduino':
-    libcoap_env.Replace(CFLAGS = libcoap_env.get('CXXFLAGS'))
-    libcoap_env.PrependUnique(CPPPATH = [
+    libcoap_env.Replace(CFLAGS=libcoap_env.get('CXXFLAGS'))
+    libcoap_env.PrependUnique(CPPPATH=[
         './',
         env.get('ARDUINO_HOME') + '/',
         env.get('ARDUINO_HOME') + '/hardware/arduino/avr/cores/arduino',
@@ -115,38 +117,38 @@ if target_os == 'arduino':
         env.get('ARDUINO_HOME') + '/libraries/TimedAction',
         env.get('ARDUINO_HOME') + '/hardware/arduino/avr/libraries/SPI',
         env.get('ARDUINO_HOME') + '/libraries/Ethernet/src/utility',
-        ])
+    ])
 
 # Build flags
 if target_os not in ['arduino', 'windows', 'winrt', 'msys_nt']:
-    libcoap_env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '_DEFAULT_SOURCE'])
-    libcoap_env.AppendUnique(CFLAGS = ['-std=gnu99','-fPIC'])
+    libcoap_env.AppendUnique(CPPDEFINES=['WITH_POSIX', '_DEFAULT_SOURCE'])
+    libcoap_env.AppendUnique(CFLAGS=['-std=gnu99','-fPIC'])
 
 if target_os not in ['windows', 'winrt']:
-    libcoap_env.AppendUnique(CFLAGS = ['-Wall', '-ffunction-sections',
+    libcoap_env.AppendUnique(CFLAGS=['-Wall', '-ffunction-sections',
             '-fdata-sections', '-fno-exceptions'])
 
 if target_os == 'msys_nt':
-    libcoap_env.AppendUnique(CPPDEFINES = ['_DEFAULT_SOURCE'])
-    libcoap_env.AppendUnique(CFLAGS = ['-std=c99'])
+    libcoap_env.AppendUnique(CPPDEFINES=['_DEFAULT_SOURCE'])
+    libcoap_env.AppendUnique(CFLAGS=['-std=c99'])
 
 if target_os in ['linux', 'tizen', 'android', 'ios', 'arduino', 'windows']:
     if with_tcp == True:
-        libcoap_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
+        libcoap_env.AppendUnique(CPPDEFINES=['WITH_TCP'])
 
 if target_os in ['linux', 'tizen', 'android', 'arduino']:
-    libcoap_env.AppendUnique(LIBS = ['log'])
-    if (('BLE' in ca_transport) or ('BT' in ca_transport) or ('ALL' in ca_transport)):
-        libcoap_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
+    libcoap_env.AppendUnique(LIBS=['log'])
+    if 'BLE' in ca_transport or 'BT' in ca_transport or 'ALL' in ca_transport:
+        libcoap_env.AppendUnique(CPPDEFINES=['WITH_TCP'])
 
 if target_os == 'arduino':
-    libcoap_env.AppendUnique(CPPDEFINES = ['NDEBUG', 'WITH_ARDUINO'])
+    libcoap_env.AppendUnique(CPPDEFINES=['NDEBUG', 'WITH_ARDUINO'])
 
 if target_os in ['darwin', 'ios']:
-    libcoap_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+    libcoap_env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
 
 if env.get('LOGGING') == '1':
-    libcoap_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    libcoap_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 ######################################################################
 # Source files and Target(s)
@@ -154,26 +156,26 @@ if env.get('LOGGING') == '1':
 with_upstream_libcoap = libcoap_env.get('WITH_UPSTREAM_LIBCOAP')
 config_h_file_path = os.path.join(src_dir, 'extlibs', 'libcoap', 'libcoap', 'include', 'coap', 'coap_config.h')
 if with_upstream_libcoap == '1':
-    libcoap_env.PrependUnique(CPPPATH = ['libcoap/include/coap'])
-    libcoap_env.AppendUnique(CPPDEFINES = ['WITH_UPSTREAM_LIBCOAP'])
+    libcoap_env.PrependUnique(CPPPATH=['libcoap/include/coap'])
+    libcoap_env.AppendUnique(CPPDEFINES=['WITH_UPSTREAM_LIBCOAP'])
     libcoap_src_root = os.path.join(libcoap_dir, 'src')
 
     # We need to generate coap.h from coap.h.in
     coap_h_pc_file = os.path.join(libcoap_dir, 'include', 'coap', 'coap.h.in')
-    coap_h_output  = os.path.join(libcoap_dir, 'include', 'coap', 'coap.h')
+    coap_h_output = os.path.join(libcoap_dir, 'include', 'coap', 'coap.h')
 
     # Generate coap_config.h
     target_arch = env.get('TARGET_ARCH')
     lib_prefix = '' + str(libcoap_env.get('PREFIX'))
 
-    if (not os.path.isfile(config_h_file_path)) and (not env.GetOption('clean')):
-        conf = Configure(libcoap_env.Clone(LIBS = []))
+    if not os.path.isfile(config_h_file_path) and not env.GetOption('clean'):
+        conf = Configure(libcoap_env.Clone(LIBS=[]))
 
         config_h_header = '''
 /* ****************************************************************************
  * coap_config.h - libcoap platform-specific configuration header.
  *
- * Auto-generated code for the %s %s platform.
+ * Auto-generated code for the %s %s platform. Do not edit.
  *
  *************************************************************************** */
 
@@ -204,7 +206,7 @@ if with_upstream_libcoap == '1':
 
 #endif // _COAP_CONFIG_H_
 
-    ''' % (str(lib_prefix + 'coap'), str(lib_prefix + 'coap ' + libcoap_version))
+''' % (str(lib_prefix + 'coap'), str(lib_prefix + 'coap ' + libcoap_version))
 
         config_h_body = ''
 
@@ -239,44 +241,50 @@ if with_upstream_libcoap == '1':
 #define in_port_t uint16_t
 '''
         else:
-            cxx_headers = ['arpa/inet.h',
-                           'assert.h',
-                           'limits.h',
-                           'netinet/in.h',
-                           'stdio.h',
-                           'strings.h',
-                           'sys/select.h',
-                           'sys/socket.h',
-                           'sys/time.h',
-                           'sys/types.h',
-                           'sys/uio.h',
-                           'sys/unistd.h',
-                           'syslog.h',
-                           'time.h',
-                           'unistd.h',
-                           'winsock2.h',
-                           'ws2tcpip.h']
+            cxx_headers = [
+                'arpa/inet.h',
+                'assert.h',
+                'limits.h',
+                'netinet/in.h',
+                'stdio.h',
+                'strings.h',
+                'sys/select.h',
+                'sys/socket.h',
+                'sys/time.h',
+                'sys/types.h',
+                'sys/uio.h',
+                'sys/unistd.h',
+                'syslog.h',
+                'time.h',
+                'unistd.h',
+                'winsock2.h',
+                'ws2tcpip.h'
+            ]
 
-            cxx_functions = ['malloc',
-                             'snprintf',
-                             'strnlen',
-                             'vprintf']
+            cxx_functions = [
+                'malloc',
+                'snprintf',
+                'strnlen',
+                'vprintf'
+            ]
 
             if target_os == 'arduino':
                 # Detection of headers on the Arduino platform is currently broken.
                 cxx_headers = []
 
             def get_define_from_string(string):
-                string_converted = string.replace("/","_").replace(".","_").upper()
+                string_converted = string.replace("/", "_").replace(".", "_").upper()
                 return "HAVE_" + string_converted
 
             for header_file_name in cxx_headers:
                 if conf.CheckCXXHeader(header_file_name):
-                    config_h_body += "#define %s 1\n\n" % get_define_from_string(header_file_name)
+                    config_h_body += "#define %s 1\n\n" % get_define_from_string(
+                        header_file_name)
 
             for function_name in cxx_functions:
                 if conf.CheckFunc(function_name):
-                    config_h_body += "#define %s 1\n\n" % get_define_from_string(function_name)
+                    config_h_body += "#define %s 1\n\n" % get_define_from_string(
+                        function_name)
 
             if conf.CheckCXXHeader('windows.h'):
                 config_h_body += "#define ssize_t SSIZE_T\n\n"
@@ -284,7 +292,8 @@ if with_upstream_libcoap == '1':
 
             conf.Finish()
 
-            # Autoconf feature doesn't work with Jenkins' arduino toolchain, so hardcode it here.
+            # Autoconf feature doesn't work with Jenkins' arduino toolchain,
+            # so hardcode it here.
             if target_os == 'arduino':
                 config_h_body += "#define HAVE_ARDUINO_TIME_H\n\n"
 
@@ -296,18 +305,18 @@ if with_upstream_libcoap == '1':
         config_h_file.close()
 
     # Sanity check to ensure that the above block created the file.
-    if (not os.path.exists(config_h_file_path)) and (not env.GetOption('clean')):
-        print "Error: coap_config.h file not created!"
-        Exit(1)
+    if not os.path.exists(config_h_file_path) and not env.GetOption('clean'):
+        msg = "Error: coap_config.h file not created!"
+        Exit(msg)
 
     pc_vars = {
-        '\@LIBCOAP_PACKAGE_NAME\@'          : lib_prefix + 'coap',
-        '\@LIBCOAP_PACKAGE_STRING\@'        : lib_prefix + 'coap-' + libcoap_version,
-        '\@LIBCOAP_PACKAGE_URL\@'           : libcoap_repo_url,
-        '\@LIBCOAP_PACKAGE_BUGREPORT\@'     : libcoap_repo_url + '/issues',
-        '\@LIBCOAP_PACKAGE_VERSION\@'       : libcoap_version
-        }
-    libcoap_env.Substfile(coap_h_pc_file, SUBST_DICT = pc_vars)
+        '\@LIBCOAP_PACKAGE_NAME\@': lib_prefix + 'coap',
+        '\@LIBCOAP_PACKAGE_STRING\@': lib_prefix + 'coap-' + libcoap_version,
+        '\@LIBCOAP_PACKAGE_URL\@': libcoap_repo_url,
+        '\@LIBCOAP_PACKAGE_BUGREPORT\@': libcoap_repo_url + '/issues',
+        '\@LIBCOAP_PACKAGE_VERSION\@': libcoap_version
+    }
+    libcoap_env.Substfile(coap_h_pc_file, SUBST_DICT=pc_vars)
 
     libcoap_src = glob.glob(os.path.join(libcoap_src_root, '*.c'))
     libcoap_src.remove(os.path.join(libcoap_src_root, 'coap_io_lwip.c'))

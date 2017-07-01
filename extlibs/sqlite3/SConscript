@@ -16,7 +16,7 @@ sqlite_dir = src_dir + '/extlibs/sqlite3/'
 sqlite_build_dir = src_dir + '/extlibs/sqlite3/sqlite-amalgamation-3081101/'
 sqlite_zip_file = src_dir + '/extlibs/sqlite3/sqlite-amalgamation-3081101.zip'
 sqlite_url = 'https://www.sqlite.org/2015/sqlite-amalgamation-3081101.zip'
-sqlite_package= 'sqlite-amalgamation-3081101'
+sqlite_package = 'sqlite-amalgamation-3081101'
 sqlite_url = 'https://www.sqlite.org/2015/' + sqlite_package + '.zip'
 
 sqlite_dir = os.path.join(src_dir, 'extlibs', 'sqlite3')
@@ -46,4 +46,4 @@ if target_os in ['windows']:
     # In multi-threaded builds, SCons appears to proceed to using sqlite3.lib
     # before finishing InstallTarget(libsqlite3, 'sqlite3') here. So, use the
     # generated LIB directly, without installing it.
-    env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'extlibs/sqlite3')])
+    env.AppendUnique(LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'extlibs/sqlite3')])
