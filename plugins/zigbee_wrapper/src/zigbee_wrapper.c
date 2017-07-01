@@ -867,6 +867,7 @@ OCEntityHandlerResult processGetRequest(PIPluginBase * plugin,
 
         if (stackResult != OC_STACK_OK || !outVal)
         {
+            stackResult = OC_STACK_ERROR;
             OCRepPayloadDestroy(*payload);
             goto exit;
         }
