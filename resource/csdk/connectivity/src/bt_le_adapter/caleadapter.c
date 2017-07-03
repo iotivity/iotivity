@@ -2656,7 +2656,7 @@ static void CALESecureReceiveDataCB(const CASecureEndpoint_t *sep,
 
     OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Secure Data Receive - decrypted datalen = %d", dataLen);
 
-    if (dataLen <= 0)
+    if (dataLen == 0)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "incorrect dataLen, derecypt fail !");
         return;
