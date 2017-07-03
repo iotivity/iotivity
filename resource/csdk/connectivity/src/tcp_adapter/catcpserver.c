@@ -1474,7 +1474,6 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *removedData)
     removedData->data = NULL;
 
     OICFree(removedData);
-    removedData = NULL;
 
     OIC_LOG(DEBUG, TAG, "data is removed from session list");
     return CA_STATUS_OK;
