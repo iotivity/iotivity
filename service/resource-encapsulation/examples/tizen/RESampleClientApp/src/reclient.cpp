@@ -587,7 +587,7 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
     }
     else
     {
-        if (NULL == attributeString || 1 > len)
+        if (1 > len)
         {
             invalidFlag = 1;
             dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL attribute Value");
