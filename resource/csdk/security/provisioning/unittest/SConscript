@@ -24,12 +24,12 @@ from time import sleep
 try:
     from subprocess import Popen, call, PIPE
 except ImportError:
-    raise ImportError("can import Popen, call from subprocess, exit.")
+    raise ImportError("cannot import Popen from subprocess, exit.")
 
 try:
     from shutil import copyfile
 except ImportError:
-    raise ImportError("can import copyfile from shutil, exit.")
+    raise ImportError("cannot import copyfile from shutil, exit.")
 
 Import('test_env')
 
@@ -40,13 +40,13 @@ target_os = sptest_env.get('TARGET_OS')
 rd_mode = sptest_env.get('RD_MODE')
 out_dir = sptest_env.get('BUILD_DIR')
 
-
 unittest_dir = 'resource/csdk/security/provisioning/unittest/'
-sec_provisioning_src_dir = sptest_env.get('SRC_DIR') + '/resource/csdk/security/provisioning/sample/'
-unittest_build_dir = sptest_env.get('BUILD_DIR') + unittest_dir
+sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sample/'
+unittest_build_dir = out_dir + unittest_dir
 
 sptest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-sptest_env.AppendENVPath('PATH', [sptest_env.get('BUILD_DIR'), unittest_build_dir])
+sptest_env.AppendENVPath('PATH', [out_dir, unittest_build_dir])
+
 
 ######################################################################
 # Config files
@@ -54,13 +54,16 @@ sptest_env.AppendENVPath('PATH', [sptest_env.get('BUILD_DIR'), unittest_build_di
 cfg_client = 'oic_svr_db_client.dat'
 server_bin = 'sample_server' + sptest_env.get('PROGSUFFIX')
 unittest_bin = 'unittest' + sptest_env.get('PROGSUFFIX')
+
+
 ######################################################################
 # Functions
 ######################################################################
 def safe_remove(file_name):
     if path.isfile(file_name):
-        print 'Removing: '+ file_name
+        print 'Removing: ' + file_name
         remove(file_name)
+
 
 def clean_config():
     print 'Clean configs'
@@ -72,24 +75,30 @@ def clean_config():
     safe_remove('secureresourceprovider.dat')
     safe_remove('device_properties.dat')
 
+
 def start_srv(num):
     if not path.isfile(unittest_build_dir + server_bin):
         print "no executable file"
         return
-    cfg_srv = 'oic_svr_db_server'+num+'.dat'
+    cfg_srv = 'oic_svr_db_server' + num + '.dat'
     copyfile(sec_provisioning_src_dir + 'oic_svr_db_server_justworks.dat', cfg_srv)
     if not sptest_env.get('RELEASE'):
-        po = Popen(unittest_build_dir + server_bin + ' '+num+' ' + cfg_srv,
-            shell=True, universal_newlines=True, stdout=open('srv'+num+'.log', 'w'))
+        po = Popen(
+            unittest_build_dir + server_bin + ' ' + num + ' ' + cfg_srv,
+            shell=True,
+            universal_newlines=True,
+            stdout=open('srv' + num + '.log', 'w'))
     else:
         po = Popen([unittest_build_dir + server_bin, num, cfg_srv])
     print "start server ", num, " pid: ", po.pid
     return po
 
+
 def kill_all():
     if target_os in ['msys_nt', 'windows']:
         from signal import SIGTERM
-        for line in Popen('tasklist /FI "IMAGENAME eq '+server_bin+'" /NH', stdout=PIPE).stdout.readlines():
+        ptask = 'tasklist /FI "IMAGENAME eq ' + server_bin + '" /NH'
+        for line in Popen(ptask, stdout=PIPE).stdout.readlines():
             cmd_list = line.decode('cp866', 'ignore').split()
             if len(cmd_list):
                 if not cmd_list[1].isdigit():
@@ -111,6 +120,7 @@ def kill_all():
         except ImportError:
             print "can not process check"
 
+
 def run_test(target, source, env):
     kill_all()
     clean_config()
@@ -126,6 +136,8 @@ def run_test(target, source, env):
     po_srv2.terminate()
     clean_config()
     kill_all()
+
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -139,7 +151,7 @@ sptest_env.PrependUnique(CPPPATH=[
     '../include',
     '../../include',
     '../include/internal',
-     '../../../include',
+    '../../../include',
     '../../../ocrandom/include',
     '../../../logger/include',
     '../../../stack/include',
@@ -190,13 +202,14 @@ else:
 # Source files and Targets
 ######################################################################
 
-unittest_src = ['pmutilitytest.cpp',
-                'secureresourceprovider.cpp',
-                'provisioningdatabasemanager.cpp',
-                'ocprovisioningmanager.cpp',
-                'credentialgeneratortest.cpp',
-                'otmunittest.cpp'
-                ]
+unittest_src = [
+    'pmutilitytest.cpp',
+    'secureresourceprovider.cpp',
+    'provisioningdatabasemanager.cpp',
+    'ocprovisioningmanager.cpp',
+    'credentialgeneratortest.cpp',
+    'otmunittest.cpp',
+]
 
 tests = sptest_env.Program(unittest_bin, unittest_src)
 server = sptest_env.Program(server_bin, ['sampleserver.cpp'])
