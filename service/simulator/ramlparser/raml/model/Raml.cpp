@@ -197,7 +197,6 @@ namespace RAML
                         for ( YAML::const_iterator tt = (*iit).begin(); tt != (*iit).end(); ++tt )
                         {
                             std::string key = READ_NODE_AS_STRING(tt->first);
-                            std::pair<std::string, Schema> schema;
 
                             IncludeResolver::FileType fileType = m_includeResolver->getFileType(tt->second);
                             if ((fileType == IncludeResolver::FileType::JSON) ||

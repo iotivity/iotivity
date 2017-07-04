@@ -54,7 +54,7 @@ static jobject createObserverInfo(JNIEnv *env, const ObserverInfo &observerInfo)
 }
 
 static jobject createObserverInfoVector(JNIEnv *env,
-                                        const std::vector<ObserverInfo> observersList)
+                                        const std::vector<ObserverInfo> &observersList)
 {
     jobject vectorObject = JniVector(env).toJava();
     if (!vectorObject)
