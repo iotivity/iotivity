@@ -107,7 +107,7 @@ class ClientController
         SimulatorRemoteResourceSP selectResource()
         {
             std::lock_guard<std::recursive_mutex> lock(m_mutex);
-            if (0 == m_resList.size())
+            if (m_resList.empty())
             {
                 std::cout << "No resources!" << std::endl;
                 return nullptr;

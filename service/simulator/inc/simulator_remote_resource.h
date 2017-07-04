@@ -142,6 +142,18 @@ class SimulatorRemoteResource : private UnCopyable
         virtual void observe(ObserveType type, ObserveNotificationCallback callback) = 0;
 
         /**
+         * API to send observe request to remote resource.
+         *
+         * @param type - Observe request type.
+         * @param queryParametersMap - Query parameters.
+         * @param callback - callback for receiving notifications from remote resource
+         * asynchronously.
+         */
+        virtual void observe(ObserveType type,
+                  const std::map<std::string, std::string> &queryParams,
+                  ObserveNotificationCallback callback) = 0;
+
+        /**
          * API to send cancel observe request to remote resource.
          *
          */

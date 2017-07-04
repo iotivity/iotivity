@@ -115,7 +115,8 @@ namespace RAML
     {
         return (m_parentUri + m_relativeUri);
     }
-    void RamlResource::readResource(const std::string resourceKey, const YAML::Node &yamlNode,
+
+    void RamlResource::readResource(const std::string &resourceKey, const YAML::Node &yamlNode,
                                     const std::string &parentUri)
     {
         m_relativeUri = resourceKey;
