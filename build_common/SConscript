@@ -853,7 +853,7 @@ env.Append(BUILDERS = {'Cbor' : builder})
 
 def ScanJSON(env, directory):
     actions = []
-    if env.get('SECURED') != '1':
+    if env.GetOption('clean') or env.get('SECURED') != '1':
         return actions
     dst_dir = env.get('BUILD_DIR') + '/' + directory + '/'
     src_dir = env.get('SRC_DIR') + '/' + directory + '/'
@@ -867,7 +867,7 @@ def ScanJSON(env, directory):
             cbor_file = Flatten(cbor_file)[0].name
             src = dst_dir + cbor_file
             dst = src_dir + cbor_file
-            Copy(dst, src)
+            Command(dst, src, Copy("$TARGET", "$SOURCE"))
         actions += cbor_file
     return actions
 
