@@ -37,7 +37,7 @@
 #include "cainterface.h"
 #define TAG "OIC_RI_COLLECTION"
 
-static bool AddRTSBaslinePayload(OCRepPayload **linkArray, int size, OCRepPayload **colPayload)
+static bool AddRTSBaselinePayload(OCRepPayload **linkArray, int size, OCRepPayload **colPayload)
 {
     size_t arraySize = 0;
     for (int j = 0; j < size; j++)
@@ -134,21 +134,20 @@ static OCStackResult HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest
     uint8_t size = GetNumOfResourcesInCollection(collResource);
     OCRepPayload *colPayload = NULL;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
-    int i = 0;
-    OCStackResult ret = OC_STACK_OK;
+    OCStackResult ret = OC_STACK_ERROR;
     size_t dim[MAX_REP_ARRAY_DEPTH] = {size, 0, 0};
-    OCRepPayload **linkArr = (OCRepPayload **)OICCalloc(size, sizeof(OCRepPayload *));
-    VERIFY_PARAM_NON_NULL(TAG, linkArr, "Failed creating LinkArray");
+    OCRepPayloadValue* tempLinksPayloadValues = NULL;
 
-    for (OCChildResource *tempChildResource = collResource->rsrcChildResourcesHead;
-        tempChildResource && ret == OC_STACK_OK; tempChildResource = tempChildResource->next)
+    if (OCLinksPayloadValueCreate(((OCResource*)ehRequest->resource)->uri,
+                                 &tempLinksPayloadValues, ehRequest))
     {
-        OCResource* temp = tempChildResource->rsrcResource;
-        if (temp)
-        {
-            ret = BuildResponseRepresentation(temp, &linkArr[i++], &ehRequest->devAddr);
-        }
+        ret = OC_STACK_OK;
     }
+
+    VERIFY_PARAM_NON_NULL(TAG, tempLinksPayloadValues, "Failed creating LinksPayloadValue");
+
+    OCRepPayload **linkArr = tempLinksPayloadValues->arr.objArray;
+    VERIFY_PARAM_NON_NULL(TAG, linkArr, "Failed creating LinkArray");
 
     if (size < 1)
     {
@@ -189,7 +188,7 @@ static OCStackResult HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest
                 {
                     OCRepPayloadAddInterface(colPayload, itf->name);
                 }
-                AddRTSBaslinePayload(linkArr, i, &colPayload);
+                AddRTSBaselinePayload(linkArr, size, &colPayload);
             }
             OCRepPayloadSetPropObjectArrayAsOwner(colPayload, OC_RSRVD_LINKS, linkArr, dim);
         }
