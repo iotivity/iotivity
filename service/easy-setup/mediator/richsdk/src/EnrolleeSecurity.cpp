@@ -1076,12 +1076,10 @@ namespace OIC
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "isOwnedDeviceRegisteredInDB IN");
 
-            OCStackResult res = OC_STACK_ERROR;
-
             OCUuidList_t *uuidList = NULL;
             size_t numOfDevices = 0;
 
-            res = PDMGetOwnedDevices(&uuidList, &numOfDevices);
+            OCStackResult res = PDMGetOwnedDevices(&uuidList, &numOfDevices);
             if (OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Error while getting info from DB");
