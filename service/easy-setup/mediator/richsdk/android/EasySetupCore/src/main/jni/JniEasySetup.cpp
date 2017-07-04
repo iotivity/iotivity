@@ -76,11 +76,11 @@ Java_org_iotivity_service_easysetup_mediator_EasySetup_nativeCreateRemoteEnrolle
         JniRemoteEnrollee *jniRemoteEnrollee = new JniRemoteEnrollee(nativeRemoteEnrollee);
         ESSetHandle<JniRemoteEnrollee>(env, jRemoteEnrollee, jniRemoteEnrollee);
     }
-    catch (ESBadRequestException exception)
+    catch (ESBadRequestException &exception)
     {
         ES_LOGE("JniEasySetup::nativeCreateRemoteEnrollee Unable to create the Native EnrolleeDevice");
         //throw the exception to java layer
-        throwESException( env,  exception.what());
+        throwESException(env,  exception.what());
     }
 
     ES_LOGI("JniEasySetup::nativeCreateRemoteEnrollee exit");

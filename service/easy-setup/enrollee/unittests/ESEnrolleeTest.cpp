@@ -325,6 +325,7 @@ TEST_F(EasysetupEnrolleeTest, DevicePropertyIsWellConstructedInResponsePayload)
                 }
             }
         });
+
     ESResult ret = startEnrollee();
     ret = setDeviceProperty();
 
@@ -333,7 +334,7 @@ TEST_F(EasysetupEnrolleeTest, DevicePropertyIsWellConstructedInResponsePayload)
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(ret, ES_OK);
+    EXPECT_TRUE(isWellConstructed);
 
     ESTerminateEnrollee();
 }
@@ -356,6 +357,7 @@ TEST_F(EasysetupEnrolleeTest, ProvisioningPropertiesIsWellConstructedInResponseP
                 }
             }
         });
+
     ESResult ret = startEnrollee();
     ret = setDeviceProperty();
     ret = ESSetState(ES_STATE_CONNECTED_TO_ENROLLER);
@@ -366,7 +368,7 @@ TEST_F(EasysetupEnrolleeTest, ProvisioningPropertiesIsWellConstructedInResponseP
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(ret, ES_OK);
+    EXPECT_TRUE(isWellConstructed);
 
     ESTerminateEnrollee();
 }
@@ -448,7 +450,6 @@ TEST_F(EasysetupEnrolleeTest, GetWifiRsrcTest)
     mocks.ExpectCallFunc(onGetWifiRsrc).Do(
         [& isRepFlag](const OCRepresentation& /*rep*/)
         {
-
             isRepFlag = true;
         });
 
@@ -458,7 +459,7 @@ TEST_F(EasysetupEnrolleeTest, GetWifiRsrcTest)
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(ret, ES_OK);
+    EXPECT_TRUE(isRepFlag);
 
     ESTerminateEnrollee();
 }
@@ -478,7 +479,7 @@ TEST_F(EasysetupEnrolleeTest, GetCloudRsrcTest)
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(ret, ES_OK);
+    EXPECT_TRUE(isRepFlag);
 
     ESTerminateEnrollee();
 }
@@ -500,7 +501,7 @@ TEST_F(EasysetupEnrolleeTest, GetDevConfTest)
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(ret, ES_OK);
+    EXPECT_TRUE(isRepFlag);
 
     ESTerminateEnrollee();
 }
@@ -521,7 +522,7 @@ TEST_F(EasysetupEnrolleeTest, PutRequestTest)
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(ret, ES_OK);
+    EXPECT_TRUE(isRepFlag);
 
     ESTerminateEnrollee();
 }

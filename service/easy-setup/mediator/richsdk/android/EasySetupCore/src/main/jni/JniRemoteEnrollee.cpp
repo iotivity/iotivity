@@ -68,11 +68,11 @@ void JniRemoteEnrollee::getStatus(JNIEnv *env, jobject jListener)
     {
         m_sharedResource->getStatus(getEnrolleeStatusCallback);
     }
-    catch (ESBadRequestException exception)
+    catch (ESBadRequestException &exception)
     {
         ES_LOGE("JNI getStatus :: Exception occured");
         //throw the exception to java
-        throwESException( env,  exception.what());
+        throwESException(env, exception.what());
     }
 }
 
@@ -91,11 +91,11 @@ void JniRemoteEnrollee::getConfiguration(JNIEnv *env, jobject jListener)
     {
         m_sharedResource->getConfiguration(getConfigurationStatusCallback);
     }
-    catch (ESBadRequestException exception)
+    catch (ESBadRequestException &exception)
     {
         ES_LOGE("JNI getConfiguration :: Exception occured");
         //throw the exception to java
-        throwESException( env,  exception.what());
+        throwESException(env, exception.what());
     }
 }
 
@@ -114,11 +114,11 @@ void JniRemoteEnrollee::provisionSecurity(JNIEnv *env, jobject jListener)
     {
         m_sharedResource->provisionSecurity(secProvStatusCallback);
     }
-    catch (ESBadRequestException exception)
+    catch (ESBadRequestException &exception)
     {
         ES_LOGE("JNI provisionSecurity :: Exception occured");
         //throw the exception to java
-        throwESException( env,  exception.what());
+        throwESException(env, exception.what());
     }
 }
 
@@ -146,11 +146,11 @@ void JniRemoteEnrollee::provisionDeviceProperties(JNIEnv *env,
     {
         m_sharedResource->provisionDeviceProperties(deviceProp, devicePropProvStatusCallback);
     }
-    catch (ESBadRequestException exception)
+    catch (ESBadRequestException &exception)
     {
         ES_LOGE("JNI provisionDeviceProperties :: Exception occured");
         //throw the exception to java
-        throwESException( env,  exception.what());
+        throwESException(env, exception.what());
     }
 }
 
@@ -188,7 +188,7 @@ void JniRemoteEnrollee::provisionCloudProperties(JNIEnv *env,
     {
         m_sharedResource->provisionCloudProperties(cloudProp, cloudPropProvStatusCallback);
     }
-    catch (ESBadRequestException exception)
+    catch (ESBadRequestException &exception)
     {
         ES_LOGE("JNI startProvisioning :: Exception occured");
         //throw the exception to java
