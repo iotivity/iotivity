@@ -72,6 +72,7 @@ namespace OIC
                 const std::string DRYER = "oic.d.dryer";
                 const std::string WATER_VALVE = "oic.d.watervalve";
                 const std::string BLIND = "oic.d.blind";
+                const std::string DOOR = "oic.d.door";
             }
 
             namespace RESOURCE_TYPE
