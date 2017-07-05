@@ -37,6 +37,14 @@ namespace OIC
             public:
                 static SHBaseRemoteResource* createSHBaseRemoteResource(OCDevAddr& devAddr,
                         OCResourcePayload *resource);
+                static SHBaseRemoteResource* constructSHBaseRemoteResourceObject(
+                                                const std::string& host,
+                                                const std::string& uri,
+                                                OCConnectivityType connectivityType,
+                                                bool isObservable,
+                                                const std::list<std::string>& resourceTypes,
+                                                const std::list<std::string>& interfaces,
+                                                const std::list<std::string>& endpoints);
 
             private:
                 static SHBaseRemoteResource* makeSHBaseRemoteResource(

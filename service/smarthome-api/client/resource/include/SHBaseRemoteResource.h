@@ -22,6 +22,7 @@
 
 #include <list>
 #include <CommonApi.h>
+#include <octypes.h>
 
 /**
  * @file
@@ -162,6 +163,47 @@ namespace OIC
                  * @return true if request success.
                  */
                 bool stopObserve();
+
+                /**
+                 * API to get known resource without discovering.
+                 *
+                 * @param host a string containing a resolvable "coap(s)", "coap(s)+protocol"
+                 *        uri scheme of the server holding the resource.
+                 *        Currently this should be in the format coap(s)://address:port or
+                 *        coap(s)+protocol://address:port, though in the future, we expect this to
+                 *        change to //address:port
+                 *
+                 * @param uri the rest of the resource's URI that will permit messages to be
+                 *           properly routed.  Example: /a/light
+                 *
+                 * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+                 *                           transport method and IP address scope.
+                 *                           Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
+                 *                           if you want to use a specific Flag like IPv4,
+                 *                           you should apply OR operation for the flag in here.
+                 *                           Example: static_cast<OCConnectivityType>(CT_ADAPTER_TCP
+                 *                                                                   | OC_IP_USE_V4)
+                 *
+                 * @param isObservable a boolean containing whether the resource
+                 *                     supports observation
+                 *
+                 * @param resourceTypes a collection of resource types implemented by the resource
+                 *
+                 * @param interfaces a collection of interfaces that the
+                 *                   resource supports/implements
+                 *
+                 * @param endpoints List of endpoints information
+                 *
+                 * @resurn SHBaseRemoteResource*  Pointer to the new resource object.
+                 */
+                static SHBaseRemoteResource* constructResourceObject(
+                                                const std::string& host,
+                                                const std::string& uri,
+                                                OCConnectivityType connectivityType,
+                                                bool isObservable,
+                                                const std::list<std::string>& resourceTypes,
+                                                const std::list<std::string>& interfaces,
+                                                const std::list<std::string>& endpoints);
 
             protected:
                 SHBaseRemoteResource();

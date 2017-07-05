@@ -21,6 +21,8 @@
 #include <SHBaseRemoteResource_Impl.h>
 #include <PropertyBundle.h>
 #include <ResourceQuery.h>
+#include <CommonException.h>
+#include <SHBaseRemoteResourceBuilder.h>
 
 namespace OIC
 {
@@ -112,6 +114,39 @@ namespace OIC
             bool SHBaseRemoteResource::stopObserve()
             {
                 return m_remoteResourceImpl->stopObserve();
+            }
+
+            SHBaseRemoteResource* SHBaseRemoteResource::constructResourceObject(
+                                                const std::string& host,
+                                                const std::string& uri,
+                                                OCConnectivityType connectivityType,
+                                                bool isObservable,
+                                                const std::list<std::string>& resourceTypes,
+                                                const std::list<std::string>& interfaces,
+                                                const std::list<std::string>& endpoints)
+            {
+                if (host.empty() || uri.empty() || resourceTypes.empty() || interfaces.empty())
+                {
+                    throw CommonException("Invalid arguments");
+                    return NULL;
+                }
+
+                if (uri.length() == 1 && uri[0] == '/')
+                {
+                    throw CommonException("Invalid uri");
+                    return NULL;
+                }
+
+                if (uri[0] != '/')
+                {
+                    throw CommonException("Invalid uri");
+                    return NULL;
+                }
+
+                return SHBaseRemoteResourceBuilder::constructSHBaseRemoteResourceObject(
+                                                            host, uri, connectivityType,
+                                                            isObservable, resourceTypes,
+                                                            interfaces, endpoints);
             }
         }
     }

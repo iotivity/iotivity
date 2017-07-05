@@ -143,17 +143,23 @@ namespace OIC
                 bool setSHBaseRemoteResource_Impl(const std::string& uri,
                         const OCDevAddr& devAddr,
                         uint8_t property,
-                        std::list<std::string>& resourceTypes,
-                        std::list<std::string>& interfaces);
+                        const std::list<std::string>& resourceTypes,
+                        const std::list<std::string>& interfaces);
 
                 bool setSHBaseRemoteResource_Impl(const std::string& uri,
                         const OCDevAddr& devAddr,
                         uint8_t property,
-                        std::list<std::string>& resourceTypes,
-                        std::list<std::string>& interfaces,
-                        std::list<std::string>& endpoints);
+                        const std::list<std::string>& resourceTypes,
+                        const std::list<std::string>& interfaces,
+                        const std::list<std::string>& endpoints);
 
-                //TODO with host Setter.
+                bool setSHBaseRemoteResource_Impl(const std::string& host,
+                        OCConnectivityType connectivityType,
+                        const std::string& uri,
+                        uint8_t property,
+                        const std::list<std::string>& resourceTypes,
+                        const std::list<std::string>& interfaces,
+                        const std::list<std::string>& endpoints);
 
             private:
                 SHBaseRemoteResource_Impl();

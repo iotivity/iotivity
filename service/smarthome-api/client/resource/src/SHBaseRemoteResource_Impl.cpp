@@ -74,8 +74,8 @@ namespace OIC
             bool SHBaseRemoteResource_Impl::setSHBaseRemoteResource_Impl(const std::string& uri,
                     const OCDevAddr& devAddr,
                     uint8_t property,
-                    std::list<std::string>& resourceTypes,
-                    std::list<std::string>& interfaces)
+                    const std::list<std::string>& resourceTypes,
+                    const std::list<std::string>& interfaces)
             {
                 std::list<std::string> endpoints;
 
@@ -88,9 +88,9 @@ namespace OIC
             bool SHBaseRemoteResource_Impl::setSHBaseRemoteResource_Impl(const std::string& uri,
                     const OCDevAddr& devAddr,
                     uint8_t property,
-                    std::list<std::string>& resourceTypes,
-                    std::list<std::string>& interfaces,
-                    std::list<std::string>& endpoints)
+                    const std::list<std::string>& resourceTypes,
+                    const std::list<std::string>& interfaces,
+                    const std::list<std::string>& endpoints)
             {
                 if (uri.empty())
                 {
@@ -105,6 +105,33 @@ namespace OIC
                 m_interfaces = interfaces;
                 m_endpoints = endpoints;
 
+                return true;
+            }
+
+            bool SHBaseRemoteResource_Impl::setSHBaseRemoteResource_Impl(const std::string& host,
+                        OCConnectivityType connectivityType,
+                        const std::string& uri,
+                        uint8_t property,
+                        const std::list<std::string>& resourceTypes,
+                        const std::list<std::string>& interfaces,
+                        const std::list<std::string>& endpoints)
+            {
+                OCDevAddr devAddr;
+                if (!setSHBaseRemoteResource_Impl(uri, devAddr, property, resourceTypes,
+                                                  interfaces, endpoints))
+                {
+                    return false;
+                }
+
+                if (setHost(host).empty())
+                {
+                    return false;
+                }
+
+                m_devAddr.adapter = static_cast<OCTransportAdapter>
+                                                (connectivityType >> CT_ADAPTER_SHIFT);
+                m_devAddr.flags = static_cast<OCTransportFlags>
+                                             (connectivityType & CT_MASK_FLAGS);
                 return true;
             }
 

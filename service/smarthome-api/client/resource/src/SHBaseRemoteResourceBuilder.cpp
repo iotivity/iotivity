@@ -28,6 +28,7 @@
 #include <RemoteOperationalStateResource.h>
 #include <sstream>
 #include "logger.h"
+#include "oic_malloc.h"
 
 #define TAG "OIC_SH_CLIENT_REMOTERESOURCE_BUILDER"
 
@@ -78,13 +79,59 @@ namespace OIC
                     return NULL;
                 }
 
-                shResource->m_remoteResourceImpl->setSHBaseRemoteResource_Impl(
-                        std::string(resource->uri),
-                        currentDevAddr,
-                        resource->bitmap,
-                        resourceTypes,
-                        interfaces,
-                        epsList);
+                if (shResource->m_remoteResourceImpl->setSHBaseRemoteResource_Impl(
+                                                                        std::string(resource->uri),
+                                                                        currentDevAddr,
+                                                                        resource->bitmap,
+                                                                        resourceTypes,
+                                                                        interfaces,
+                                                                        epsList))
+                {
+                    OIC_LOG(ERROR, TAG, "setSHBaseRemoteResource_Impl Failed!");
+                    OICFree(shResource);
+                    return NULL;
+                }
+
+                return shResource;
+            }
+
+            SHBaseRemoteResource* SHBaseRemoteResourceBuilder::constructSHBaseRemoteResourceObject(
+                                                        const std::string& host,
+                                                        const std::string& uri,
+                                                        OCConnectivityType connectivityType,
+                                                        bool isObservable,
+                                                        const std::list<std::string>& resourceTypes,
+                                                        const std::list<std::string>& interfaces,
+                                                        const std::list<std::string>& endpoints)
+            {
+                OCDevAddr devAddr;
+                memset(&devAddr, 0, sizeof(OCDevAddr));
+
+                uint8_t resourceProperty = 0;
+                if (isObservable)
+                {
+                    resourceProperty |= OC_OBSERVABLE;
+                }
+
+                SHBaseRemoteResource* shResource = makeSHBaseRemoteResource(resourceTypes);
+                if (!shResource)
+                {
+                    OIC_LOG(ERROR, TAG, "makeSHBaseRemoteResource Failed!");
+                    return NULL;
+                }
+
+                if (!shResource->m_remoteResourceImpl->setSHBaseRemoteResource_Impl(host,
+                                                                                   connectivityType,
+                                                                                   uri,
+                                                                                   resourceProperty,
+                                                                                   resourceTypes,
+                                                                                   interfaces,
+                                                                                   endpoints))
+                {
+                    OIC_LOG(ERROR, TAG, "setSHBaseRemoteResource_Impl Failed!");
+                    OICFree(shResource);
+                    return NULL;
+                }
 
                 return shResource;
             }
