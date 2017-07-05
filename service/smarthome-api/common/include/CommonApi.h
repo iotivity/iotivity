@@ -70,6 +70,7 @@ namespace OIC
                 const std::string ROBOTCLEANER = "oic.d.robotcleaner";
                 const std::string SMART_LOCK = "oic.d.smartlock";
                 const std::string DRYER = "oic.d.dryer";
+                const std::string WATER_VALVE = "oic.d.watervalve";
             }
 
             namespace RESOURCE_TYPE
@@ -77,6 +78,7 @@ namespace OIC
                 const std::string BINARYSWITCH = "oic.r.switch.binary";
                 const std::string MODE = "oic.r.mode";
                 const std::string LOCK_STATUS = "oic.r.lock.status";
+                const std::string OPENLEVEL = "oic.r.openlevel";
             }
 
             namespace INTERFACE

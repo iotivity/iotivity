@@ -24,9 +24,11 @@
 #include <RemoteRobotCleanerDevice.h>
 #include <RemoteSmartLockDevice.h>
 #include <RemoteDryerDevice.h>
+#include <RemoteWaterValveDevice.h>
 #include <RemoteBinarySwitchResource.h>
 #include <RemoteModeResource.h>
 #include <RemoteLockStatusResource.h>
+#include <RemoteOpenLevelResource.h>
 #include "logger.h"
 #include <typeinfo>
 
@@ -127,6 +129,17 @@ namespace OIC
                         {
                             dryer->m_remoteBinarySwitch =
                                 dynamic_cast<RemoteBinarySwitchResource*>(resource);
+                        }
+                    }
+                    else if (device->hasDeviceType(DEVICE_TYPE::WATER_VALVE))
+                    {
+                        RemoteWaterValveDevice *waterValve =
+                            dynamic_cast<RemoteWaterValveDevice*>(device);
+
+                        if (resource->hasResourceType(RESOURCE_TYPE::OPENLEVEL))
+                        {
+                            waterValve->m_remoteOpenLevel =
+                                dynamic_cast<RemoteOpenLevelResource*>(resource);
                         }
                     }
                     //TODO any other pre-defined device will be added here.
@@ -230,6 +243,24 @@ namespace OIC
                                 break;
                             }
                         }
+                    }
+                    else if (0 == DEVICE_TYPE::WATER_VALVE.compare(deviceType))
+                    {
+                        if (!isVerified)
+                        {
+                            device = new RemoteWaterValveDevice;
+                            isVerified = true;
+                        }
+                        else
+                        {
+                            if (device)
+                            {
+                                delete device;
+                                device = new SHBaseRemoteDevice;
+                                break;
+                            }
+                        }
+
                     }
                     //TODO check pre-defined class
 

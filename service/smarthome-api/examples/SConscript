@@ -63,3 +63,5 @@ smarthome_example_env.AppendUnique(CPPPATH= [
 smarthome_example_env.Program('LightClientSample', 'LightClientSample.cpp')
 smarthome_example_env.Program('LightServerSample', 'LightServerSample.cpp')
 smarthome_example_env.Program('RobotCleanerClientSample', 'RobotCleanerClientSample.cpp')
+smarthome_example_env.Program('WaterValveClientSample', 'WaterValveClientSample.cpp')
+smarthome_example_env.Program('WaterValveServerSample', 'WaterValveServerSample.cpp')
