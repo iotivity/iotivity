@@ -88,6 +88,7 @@ namespace OIC
                 const std::string AIRPURIFIER = "oic.d.airpurifier";
                 const std::string FAN = "oic.d.fan";
                 const std::string REFRIGERATOR = "oic.d.refrigerator";
+                const std::string DISHWASHER = "oic.d.dishwasher";
             }
 
             namespace RESOURCE_TYPE
