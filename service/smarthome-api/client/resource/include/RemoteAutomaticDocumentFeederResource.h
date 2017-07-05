@@ -17,8 +17,8 @@
  * limitations under the License.
  *
  ******************************************************************/
-#ifndef SMARTHOME_API_CLIENT_REMOTEOPERATIONALSTATE_H_
-#define SMARTHOME_API_CLIENT_REMOTEOPERATIONALSTATE_H_
+#ifndef SMARTHOME_API_CLIENT_REMOTEAUTOMATICDOCUMENTFEEDER_H_
+#define SMARTHOME_API_CLIENT_REMOTEAUTOMATICDOCUMENTFEEDER_H_
 
 #include <SHBaseRemoteResource.h>
 
@@ -28,42 +28,34 @@ namespace OIC
     {
         namespace SH
         {
-            class RemoteOperationalStateResourceDelegate
+            class RemoteAutomaticDocumentFeederResourceDelegate
             {
             public:
-                virtual void onGetState(std::string machineState, std::string jobState,
-                        std::list<std::string> possibleMachineStates,
-                        std::list<std::string> possibleJobStates, std::string runningTime,
-                        std::string remainingTime, int progressPercentage, ResultCode ret) = 0;
-                virtual void onChangeMachineState(ResultCode ret) = 0;
-                virtual void onChangeJobState(ResultCode ret) = 0;
+                virtual void onGetState(std::string currentState,
+                        std::list<std::string> possibleStates, ResultCode ret) = 0;
             };
 
-            class RemoteOperationalStateResource: public SHBaseRemoteResource,
+            class RemoteAutomaticDocumentFeederResource: public SHBaseRemoteResource,
                     public SHBaseRemoteResourceDelegate
             {
-            friend class SHBaseRemoteResourceBuilder;
             public:
                 void getState();
-                void changeMachineState(std::string state);
-                void changeJobState(std::string state);
-
-                void setDelegate(RemoteOperationalStateResourceDelegate *delegate);
+                void setDelegate(RemoteAutomaticDocumentFeederResourceDelegate *delegate);
 
             public:
-                RemoteOperationalStateResource();
-                virtual ~RemoteOperationalStateResource();
+                RemoteAutomaticDocumentFeederResource();
+                virtual ~RemoteAutomaticDocumentFeederResource();
 
             private:
                 virtual void onGet(PropertyBundle bundle, ResultCode ret);
                 virtual void onSet(PropertyBundle bundle, ResultCode ret);
                 virtual void onObserve(PropertyBundle bundle, const ObserveResponse obsType,
-                    ResultCode ret);
+                        ResultCode ret);
 
             private:
-                RemoteOperationalStateResourceDelegate *m_delegate;
-                bool m_changeMachineState;
-                bool m_changeJobState;
+                RemoteAutomaticDocumentFeederResourceDelegate *m_delegate;
+                std::string m_currentState;
+                std::list<std::string> m_possibleStates;
             };
         }
     }

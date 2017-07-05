@@ -77,6 +77,7 @@ namespace OIC
                 const std::string TELEVISION = "oic.d.tv";
                 const std::string CAMERA = "oic.d.camera";
                 const std::string PRINTER = "oic.d.printer";
+                const std::string SCANNER = "oic.d.scanner";
             }
 
             namespace RESOURCE_TYPE
@@ -90,6 +91,7 @@ namespace OIC
                 const std::string MEDIA_OUTPUT = "oic.r.media.output";
                 const std::string MEDIA = "oic.r.media";
                 const std::string OPERATIONAL_STATE = "oic.r.operational.state";
+                const std::string AUTOMATICDOCUMENT_FEEDER = "oic.r.automaticdocumentfeeder";
             }
 
             namespace INTERFACE
