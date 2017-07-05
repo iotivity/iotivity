@@ -89,6 +89,7 @@ namespace OIC
                 const std::string FAN = "oic.d.fan";
                 const std::string REFRIGERATOR = "oic.d.refrigerator";
                 const std::string DISHWASHER = "oic.d.dishwasher";
+                const std::string GARAGE_DOOR = "oic.d.garagedoor";
             }
 
             namespace RESOURCE_TYPE
@@ -104,6 +105,7 @@ namespace OIC
                 const std::string OPERATIONAL_STATE = "oic.r.operational.state";
                 const std::string AUTOMATICDOCUMENT_FEEDER = "oic.r.automaticdocumentfeeder";
                 const std::string TEMPERATURE = "oic.r.temperature";
+                const std::string DOOR = "oic.r.door";
             }
 
             namespace INTERFACE
