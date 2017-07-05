@@ -32,6 +32,7 @@ mbedtls_dir = os.path.join(root_dir, 'extlibs', 'mbedtls', 'mbedtls')
 start_dir = os.getcwd()
 mbedtls_config_file = 'config-iotivity.h' if target_os != 'windows' else 'config-iotivity_windows.h'
 
+mbedtls_revision = 'mbedtls-2.4.2'
 if not os.path.exists(mbedtls_dir):
     msg = '''
 *********************************** Error: ************************************
@@ -51,7 +52,6 @@ os.chdir(mbedtls_dir)
 # with that name doesn't exist.
 # Tizen uses its own process to prepare the mbedTLS repo in gbsbuild.sh.
 # The mbedtls_revision tag here must match the one in extlibs/mbedtls/prep.sh.
-mbedtls_revision = 'mbedtls-2.4.2'
 if os.path.exists('.git/HEAD'):
     out = subprocess.check_output('git tag -l ' + mbedtls_revision, shell=True)
     if mbedtls_revision not in out:
