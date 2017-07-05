@@ -27,11 +27,13 @@
 #include <RemoteWaterValveDevice.h>
 #include <RemoteBlindDevice.h>
 #include <RemoteCameraDevice.h>
+#include <RemotePrinterDevice.h>
 #include <RemoteBinarySwitchResource.h>
 #include <RemoteModeResource.h>
 #include <RemoteLockStatusResource.h>
 #include <RemoteOpenLevelResource.h>
 #include <RemoteMediaResource.h>
+#include <RemoteOperationalStateResource.h>
 #include "logger.h"
 #include <typeinfo>
 
@@ -165,6 +167,21 @@ namespace OIC
                                 dynamic_cast<RemoteMediaResource*>(resource);
                         }
                     }
+                    else if (device->hasDeviceType(DEVICE_TYPE::PRINTER))
+                    {
+                        RemotePrinterDevice *printer = dynamic_cast<RemotePrinterDevice*>(device);
+
+                        if (resource->hasResourceType(RESOURCE_TYPE::BINARYSWITCH))
+                        {
+                            printer->m_remoteBinarySwitch =
+                                dynamic_cast<RemoteBinarySwitchResource*>(resource);
+                        }
+                        else if (resource->hasResourceType(RESOURCE_TYPE::OPERATIONAL_STATE))
+                        {
+                            printer->m_remoteOperationalState =
+                                dynamic_cast<RemoteOperationalStateResource*>(resource);
+                        }
+                    }
                     //TODO any other pre-defined device will be added here.
                 }
                 catch (const std::bad_cast& e)
@@ -283,7 +300,6 @@ namespace OIC
                                 break;
                             }
                         }
-
                     }
                     else if (0 == DEVICE_TYPE::BLIND.compare(deviceType))
                     {
@@ -301,7 +317,6 @@ namespace OIC
                                 break;
                             }
                         }
-
                     }
                     else if (0 == DEVICE_TYPE::CAMERA.compare(deviceType))
                     {
@@ -319,7 +334,23 @@ namespace OIC
                                 break;
                             }
                         }
-
+                    }
+                    else if (0 == DEVICE_TYPE::PRINTER.compare(deviceType))
+                    {
+                        if (!isVerified)
+                        {
+                            device = new RemotePrinterDevice;
+                            isVerified = true;
+                        }
+                        else
+                        {
+                            if (device)
+                            {
+                                delete device;
+                                device = new SHBaseRemoteDevice;
+                                break;
+                            }
+                        }
                     }
                     //TODO check pre-defined class
 
