@@ -85,7 +85,7 @@ else:
     #    - Disabled due to compiler incorrectly specifying JNI functions as
     #      unreferenced
     jni_env.AppendUnique(CCFLAGS=['/wd4047', '/wd4022', '/wd4505',])
-jni_env.AppendUnique(LIBPATH=[env.get('BUILD_DIR'), '#/exlibs/sqlite3'])
+jni_env.AppendUnique(LIBPATH=['#/exlibs/sqlite3'])
 jni_env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
 # make sure we link with the static oc library. This is important since Windows does not build a shared library for the oc library
 # The oc library can not be imported into the Java on all of the platfroms so must be statically linked to make Java code work on
