@@ -18,7 +18,7 @@
 
 /**
  * This file contains the declaration of classes and its members related to
- * RemoteScannerDevice.
+ * RemotePrinterMultiFunctionDevice.
  */
 
 #ifndef SMARTHOME_API_CLIENT_REMOTEPRINTERMULTIFUNCTION_H_
@@ -34,7 +34,8 @@ namespace OIC
         namespace SH
         {
             /**
-             * This class contains a set of functions to control remote scanner device.
+             * This class contains a set of functions to control
+             * remote printer multifunction device.
              */
             class RemotePrinterMultiFunctionDevice: public SHBaseRemoteDevice
             {

@@ -19,8 +19,6 @@
  ******************************************************************/
 
 /**
- * @file
- *
  * This file contains the declaration of classes and its members related to DiscoveryQuery.
  */
 
@@ -36,9 +34,7 @@ namespace OIC
         namespace SH
         {
             /**
-             * @class DiscoveryQuery
-             *
-             * @brief This class contains a set of functions for setting option for discovering
+             * This class contains a set of functions for setting option for discovering
              * remote devices.
              */
             class DiscoveryQuery

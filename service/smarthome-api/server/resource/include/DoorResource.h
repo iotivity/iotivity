@@ -17,6 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to DoorResource.
+ */
+
 #ifndef SMARTHOME_API_SERVER_DOOR_H_
 #define SMARTHOME_API_SERVER_DOOR_H_
 
@@ -38,27 +43,72 @@ namespace OIC
                 DEACTIVATE = 0, ACTIVATE
             };
 
+            /**
+             * This class contains a set of functions for callback of
+             * DoorResource class.
+             */
             class DoorResourceDelegate
             {
             public:
                 virtual ~DoorResourceDelegate() {}
 
+                /**
+                 * API to handle OpenAlarm activate request.
+                 *
+                 * @return ResultCode ::SUCCESS if success
+                 */
                 virtual ResultCode onActivateOpenAlarm() = 0;
+
+                /**
+                 * API to handle OpenAlarm deactivate request.
+                 *
+                 * @return ResultCode ::SUCCESS if success
+                 */
                 virtual ResultCode onDeactivateOpenAlarm() = 0;
             };
 
+            /**
+             * This class contains a set of functions to change the properties of Door.
+             */
             class DoorResource: public SHBaseResource, public SHBaseResourceDelegate
             {
             public:
                 DoorResource();
                 virtual ~DoorResource();
 
+                /**
+                 * API to chanage the openState.
+                 *
+                 * @return true if success
+                 */
                 bool changeOpenState(DoorState state);
+
+                /**
+                 * API to get the OpenState.
+                 *
+                 * @return current open state
+                 */
                 DoorState getOpenState();
 
+                /**
+                 * API to change the openAlarm state.
+                 *
+                 * @return true if success
+                 */
                 bool changeOpenAlarmState(OpenAlarmState state);
+
+                /**
+                 * API to get the openAlarm state.
+                 *
+                 * @return openAlarm state
+                 */
                 OpenAlarmState getOpenAlarmState();
-                
+
+                /**
+                 * API to set the delegate.
+                 *
+                 * @param[in] delegate instance of delegate
+                 */
                 void setDelegate(DoorResourceDelegate* delegate);
 
             private:

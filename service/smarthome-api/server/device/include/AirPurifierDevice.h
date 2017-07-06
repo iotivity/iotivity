@@ -19,9 +19,7 @@
  ******************************************************************/
 
 /**
- * @file
- *
- * This file contains the declaration of a class and its members related to LightDevice.
+ * This file contains the declaration of a class and its members related to AirPurifierDevice.
  */
 
 #ifndef SMARTHOME_API_SERVER_AIRPURIFIER_H_
@@ -37,11 +35,9 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class LightDevice
-            *
-            * @brief This class contains a set of functions to define device and
-            * handle client requests.
-            */
+             * This class contains a set of functions to define device and
+             * handle client requests.
+             */
             class AirPurifierDevice: public SHBaseDevice
             {
             public:
@@ -49,9 +45,6 @@ namespace OIC
                 virtual ~AirPurifierDevice();
 
             public:
-                /**
-                 * binary switch of light device
-                 */
                 BinarySwitchResource m_binarySwitch;
             };
         }

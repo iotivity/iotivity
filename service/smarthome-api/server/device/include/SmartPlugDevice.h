@@ -19,8 +19,6 @@
  ******************************************************************/
 
 /**
- * @file
- *
  * This file contains the declaration of a class and its members related to SmartPlugDevice.
  */
 
@@ -37,11 +35,9 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class SmartPlugDevice
-            *
-            * @brief This class contains a set of functions to define device and
-            * handle client requests.
-            */
+             * This class contains a set of functions to define device and
+             * handle client requests.
+             */
             class SmartPlugDevice: public SHBaseDevice
             {
             public:
@@ -49,9 +45,6 @@ namespace OIC
                 virtual ~SmartPlugDevice();
 
             public:
-                /**
-                 * binary switch of smart plug device
-                 */
                 BinarySwitchResource m_binarySwitch;
             };
         }

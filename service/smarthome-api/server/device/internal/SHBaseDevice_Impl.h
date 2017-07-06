@@ -20,13 +20,6 @@
 #ifndef SMARTHOME_API_SERVER_SHBASEDEVICE_IMPL_H_
 #define SMARTHOME_API_SERVER_SHBASEDEVICE_IMPL_H_
 
-/**
- * @file
- *
- * This file contains the declaration of a class and its members related to
- * SHBaseDevice_Impl.
- */
-
 #include <string>
 #include <list>
 
@@ -38,41 +31,17 @@ namespace OIC
         {
             class SHBaseResource;
 
-            /**
-            * @class SHBaseDevice_Impl
-            *
-            * @brief This class contains a set of base functions to control device.
-            */
             class SHBaseDevice_Impl
             {
             friend class SHBaseDevice;
+
             protected:
-                /**
-                 * API to get type of device
-                 *
-                 * @return type of device
-                 */
                 std::string getType();
 
-                /**
-                 * API to set type of device.
-                 *
-                 * @param[in] type type of device.
-                 */
                 void setType(std::string type);
 
-                /**
-                 * API to get name of device
-                 *
-                 * @return name of device
-                 */
                 std::string getName();
 
-                /**
-                 * API to set name of device.
-                 *
-                 * @param[in] name name of device.
-                 */
                 void setName(std::string name);
 
             public:

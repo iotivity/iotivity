@@ -17,6 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to OperationalStateResource.
+ */
+
 #ifndef SMARTHOME_API_SERVER_OPERATIONALSTATE_H_
 #define SMARTHOME_API_SERVER_OPERATIONALSTATE_H_
 
@@ -30,13 +35,33 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions for callback of
+             * OperationalStateResource class.
+             */
             class OperationalStateResourceDelegate
             {
             public:
+                /**
+                 * API to handle machine state change request .
+                 *
+                 * @param[in] state state to be changed
+                 * @return ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual ResultCode onChangeMachineState(std::string state) = 0;
+
+                /**
+                 * API to handle job state change request .
+                 *
+                 * @param[in] state state to be changed
+                 * @return ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual ResultCode onChangeJobState(std::string state) = 0;
             };
 
+            /**
+             * This class contains a set of functions to change the properties of OperationalState.
+             */
             class OperationalStateResource: public SHBaseResource,
                     public SHBaseResourceDelegate
             {
@@ -44,19 +69,95 @@ namespace OIC
                 OperationalStateResource();
                 virtual ~OperationalStateResource();
 
+                /**
+                 * API to get current machine state.
+                 *
+                 * @return string current machine state
+                 */
                 std::string getCurrentMachineState();
+
+                /**
+                 * API to get current job state.
+                 *
+                 * @return string current job state
+                 */
                 std::string getCurrentJobState();
+
+                /**
+                 * API to get possible machine states.
+                 *
+                 * @return list<string> possible machine states
+                 */
                 std::list< std::string > getPossibleMachineStates();
+
+                /**
+                 * API to get possible job states.
+                 *
+                 * @return list<string> possible job states
+                 */
                 std::list< std::string > getPossibleJobStates();
 
+                /**
+                 * API to add possible machine state change request .
+                 *
+                 * @param[in] state state to be added
+                 * @return true if success
+                 */
                 bool addPossibleMachineState(std::string state);
+
+                /**
+                 * API to add possible job state change request .
+                 *
+                 * @param[in] state state to be added
+                 * @return true if success
+                 */
                 bool addPossibleJobState(std::string state);
+
+                /**
+                 * API to set current machine state.
+                 *
+                 * @param[in] state current state
+                 * @return true if success
+                 */
                 bool setCurrentMachineState(std::string state);
+
+                /**
+                 * API to set current job state.
+                 *
+                 * @param[in] state current state
+                 * @return true if success
+                 */
                 bool setCurrentJobState(std::string state);
+
+                /**
+                 * API to set progress percentage.
+                 *
+                 * @param[in] percentage progress percentage
+                 * @return true if success
+                 */
                 bool setProgressPercentage(int percentage);
+
+                /**
+                 * API to set remaining time.
+                 *
+                 * @param[in] time temaining time.
+                 * @return true if success
+                 */
                 bool setRemainingTime(std::string time);
+
+                /**
+                 * API to set running time.
+                 *
+                 * @param[in] time running time
+                 * @return true if success
+                 */
                 bool setRunningTime(std::string time);
 
+                /**
+                 * API to set delegate of resource.
+                 *
+                 * @param[in] delegate delegate instance
+                 */
                 void setDelegate(OperationalStateResourceDelegate *delegate);
 
             private:

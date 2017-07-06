@@ -19,8 +19,6 @@
  ******************************************************************/
 
 /**
- * @file
- *
  * This file contains the declaration of a class and its members related to LightDevice.
  */
 
@@ -37,11 +35,8 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class LightDevice
-            *
-            * @brief This class contains a set of functions to define device and
-            * handle client requests.
-            */
+             * This class contains a set of functions to define device and handle client requests.
+             */
             class LightDevice: public SHBaseDevice
             {
             public:
@@ -49,9 +44,6 @@ namespace OIC
                 virtual ~LightDevice();
 
             public:
-                /**
-                 * binary switch of light device
-                 */
                 BinarySwitchResource m_binarySwitch;
             };
         }

@@ -17,6 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of a class and its members related to ThermostatDevice.
+ */
+
 #ifndef SMARTHOME_API_SERVER_THERMOSTAT_H_
 #define SMARTHOME_API_SERVER_THERMOSTAT_H_
 
@@ -29,6 +34,10 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions to define device and
+             * handle client requests.
+             */
             class ThermostatDevice: public SHBaseDevice
             {
             public:

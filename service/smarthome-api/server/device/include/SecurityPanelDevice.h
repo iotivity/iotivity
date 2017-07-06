@@ -17,6 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of a class and its members related to SecurityPanelDevice.
+ */
+
 #ifndef SMARTHOME_API_SERVER_SECURITYPANEL_H_
 #define SMARTHOME_API_SERVER_SECURITYPANEL_H_
 
@@ -30,11 +35,9 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class SecurityPanelDevice
-            *
-            * @brief This class contains a set of functions to define device and
-            * handle client requests.
-            */
+             * This class contains a set of functions to define device and
+             * handle client requests.
+             */
             class SecurityPanelDevice: public SHBaseDevice
             {
             public:
@@ -42,9 +45,6 @@ namespace OIC
                 virtual ~SecurityPanelDevice();
 
             public:
-                /**
-                 * Mode of security panel device
-                 */
                 ModeResource m_mode;
             };
         }

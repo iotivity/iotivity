@@ -31,21 +31,8 @@ namespace OIC
             class PropertyBundle;
             namespace Converter
             {
-                /**
-                 * API to convert Property Bundle to OCPayload.
-                 *
-                 * @param[in] bundle Property Bundle.
-                 * @return OCPayload.
-                 */
                 OCPayload* convertBundleToPayload(const PropertyBundle& bundle);
 
-                /**
-                 * API to convert OCPayload to Property Bundle.
-                 *
-                 * @param[in] payload OCPayload.
-                 * @param[out] bundle Property Bundle.
-                 * @return Returns ::SUCCESS if success
-                 */
                 bool convertPayloadToBundle(const OCPayload *payload, PropertyBundle& bundle);
             }
         }

@@ -17,6 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of a class and its members related to PrinterDevice.
+ */
+
 #ifndef SMARTHOME_API_SERVER_PRINTER_H_
 #define SMARTHOME_API_SERVER_PRINTER_H_
 
@@ -47,6 +52,10 @@ namespace OIC
                 const static std::string COMPLETED = "completed";
             }
 
+            /**
+             * This class contains a set of functions to define device and
+             * handle client requests.
+             */
             class PrinterDevice: public SHBaseDevice
             {
             public:

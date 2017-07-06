@@ -17,6 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to OpenLevelResource.
+ */
+
 #ifndef SMARTHOME_API_SERVER_OPENLEVEL_H_
 #define SMARTHOME_API_SERVER_OPENLEVEL_H_
 
@@ -29,9 +34,7 @@ namespace OIC
         namespace SH
         {
             /**
-             * @class OpenLevelResourceDelegate
-             *
-             * @brief This class contains a set of callback functions handling events and requests
+             * This class contains a set of callback functions handling events and requests
              * for OpenLevelResource class
              */
             class OpenLevelResourceDelegate
@@ -39,13 +42,16 @@ namespace OIC
             public:
                 virtual ~OpenLevelResourceDelegate() {}
 
+                /**
+                 * API to handle level change request .
+                 *
+                 * @return ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual ResultCode onChangeLevel(int level) = 0;
             };
 
             /**
-             * @class OpenLevelResource
-             *
-             * @brief This class contains a set of functions to change the properties of OpenLevel.
+             * This class contains a set of functions to change the properties of OpenLevel.
              */
             class OpenLevelResource: public SHBaseResource, public SHBaseResourceDelegate
             {

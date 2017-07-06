@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteSmartLockDevice.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTESMARTLOCK_H_
 #define SMARTHOME_API_CLIENT_REMOTESMARTLOCK_H_
 
@@ -29,6 +35,9 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions to control remote smartlock device.
+             */
             class RemoteSmartLockDevice: public SHBaseRemoteDevice
             {
             friend class SHBaseRemoteDeviceBuilder;

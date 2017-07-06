@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteRefrigeratorDevice.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTEREFRIGERATOR_H_
 #define SMARTHOME_API_CLIENT_REMOTEREFRIGERATOR_H_
 
@@ -30,10 +36,8 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class RemoteRefrigeratorDevice
-            *
-            * @brief This class contains a set of functions to control remote refrigerator device.
-            */
+             * This class contains a set of functions to control remote refrigerator device.
+             */
             class RemoteRefrigeratorDevice: public SHBaseRemoteDevice
             {
             public:

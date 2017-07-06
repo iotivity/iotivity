@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteReceiverDevice.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTERECEIVER_H_
 #define SMARTHOME_API_CLIENT_REMOTERECEIVER_H_
 
@@ -26,13 +32,6 @@
 #include <RemoteMediaSourceInputResource.h>
 #include <RemoteMediaSourceOutputResource.h>
 
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related to
- * RemoteReceiverDevice.
- */
-
 namespace OIC
 {
     namespace Service
@@ -40,37 +39,16 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class RemoteReceiverDevice
-            *
-            * @brief This class contains a set of functions to control remote receiver device.
-            */
+             * This class contains a set of functions to control remote receiver device.
+             */
             class RemoteReceiverDevice: public SHBaseRemoteDevice
             {
             public:
                 virtual ~RemoteReceiverDevice();
 
-                /**
-                 * Remote binary switch of device.
-                 * this variiable's value will be set when remote receiver device is found.
-                 */
                 RemoteBinarySwitchResource *m_remoteBinarySwitch;
-
-                /**
-                 * Remote audio resource of device.
-                 * this variiable's value will be set when remote receiver device is found.
-                 */
                 RemoteAudioResource *m_remoteAudio;
-
-                /**
-                 * Remote media source input resource of device.
-                 * this variiable's value will be set when remote receiver device is found.
-                 */
                 RemoteMediaSourceInputResource *m_remoteInputMedia;
-
-                /**
-                 * Remote media source output resource of device.
-                 * this variiable's value will be set when remote receiver device is found.
-                 */
                 RemoteMediaSourceOutputResource *m_remoteOutputMedia;
 
             protected:

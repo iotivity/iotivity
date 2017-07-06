@@ -17,6 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to ModeResource.
+ */
+
 #ifndef SMARTHOME_API_SERVER_MODE_H_
 #define SMARTHOME_API_SERVER_MODE_H_
 
@@ -28,28 +33,80 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions for callback of
+             * ModeResource class.
+             */
             class ModeResourceDelegate
             {
             public:
                 virtual ~ModeResourceDelegate() {}
 
+                /**
+                 * API to handle a mode get request .
+                 *
+                 * @return ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual ResultCode getModeCallback() = 0;
+
+                /**
+                 * API to handle a mode set request .
+                 *
+                 * @param[in] mode mode value
+                 * @return ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual ResultCode setModeCallback(std::list< std::string > mode) = 0;
             };
 
+            /**
+             * This class contains a set of functions to change the properties of Mode.
+             */
             class ModeResource: public SHBaseResource, public SHBaseResourceDelegate
             {
             public:
                 ModeResource();
                 virtual ~ModeResource();
 
+                /**
+                 * API to add supported mode.
+                 *
+                 * @param[in] supportedMode supported modes
+                 */
                 void addSupportedMode(const std::list< std::string >& supportedMode);
+
+                /**
+                 * API to remove supported mode.
+                 *
+                 * @param[in] removeMode removed mode
+                 */
                 void removeSupportedMode(const std::string& removeMode);
+
+                /**
+                 * API to get supported mode.
+                 *
+                 * @return supported modes
+                 */
                 std::list< std::string > getSupportedMode();
 
+                /**
+                 * API to set current modes.
+                 *
+                 * @param[in] currentMode currment modes
+                 */
                 void setCurrentMode(const std::list< std::string >& currentMode);
+
+                /**
+                 * API to get current modes.
+                 *
+                 * @return current modes
+                 */
                 std::list< std::string > getCurrentMode();
 
+                /**
+                 * API to set a instance of delegate class.
+                 *
+                 * @param[in] modeDelegate delegate
+                 */
                 void setModeResourceDelegate(ModeResourceDelegate *modeDelegate);
 
             private:

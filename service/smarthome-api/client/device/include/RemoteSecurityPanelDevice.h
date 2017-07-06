@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteSecurityPanelDevice.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTESECURITYPANEL_H_
 #define SMARTHOME_API_CLIENT_REMOTESECURITYPANEL_H_
 
@@ -29,15 +35,14 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions to control remote securitypanel device.
+             */
             class RemoteSecurityPanelDevice: public SHBaseRemoteDevice
             {
             public:
                 virtual ~RemoteSecurityPanelDevice();
 
-                /**
-                 * Remote mode of device.
-                 * this variiable's value will be set when remote security panel device is found.
-                 */
                 RemoteModeResource *m_remoteMode;
 
             protected:

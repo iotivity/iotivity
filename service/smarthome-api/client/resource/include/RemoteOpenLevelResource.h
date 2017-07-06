@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteOpenLevelResource.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTEOPENLEVEL_H_
 #define SMARTHOME_API_CLIENT_REMOTEOPENLEVEL_H_
 
@@ -29,11 +35,9 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class RemoteOpenLevelResourceDelegate
-            *
-            * @brief This class contains a set of functions for callback of
-            * RemoteOpenLevelResourceDelegate class.
-            */
+             * This class contains a set of functions for callback of
+             * RemoteOpenLevelResource class.
+             */
             class RemoteOpenLevelResourceDelegate
             {
             public:
@@ -68,10 +72,8 @@ namespace OIC
             };
 
             /**
-            * @class RemoteOpenLevelResource
-            *
-            * @brief This class contains a set of functions to control RemoteOpenLevelResource.
-            */
+             * This class contains a set of functions to control RemoteOpenLevelResource.
+             */
             class RemoteOpenLevelResource: public SHBaseRemoteResource,
                                            public SHBaseRemoteResourceDelegate
             {
@@ -87,6 +89,8 @@ namespace OIC
 
                 /**
                  * API to change the open level of remote device.
+                 *
+                 * @param[in] level open level
                  */
                 void changeLevel(int level);
 

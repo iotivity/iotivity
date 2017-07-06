@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * MediaSourceResource.
+ */
+
 #ifndef SMARTHOME_API_SERVER_MEDIASOURCE_H_
 #define SMARTHOME_API_SERVER_MEDIASOURCE_H_
 #include <SHBaseResource.h>
@@ -40,23 +46,70 @@ namespace OIC
                 bool status;
             } MediaSource;
 
+            /**
+             * This class contains a set of callback functions handling events and requests
+             * for MediaSourceResource class
+             */
             class MediaSourceResourceDelegate
             {
             public:
                 virtual ~MediaSourceResourceDelegate() {}
+
+                /**
+                 * API to handle a request to change media source.
+                 *
+                 * @param[in] sources list of source
+                 * @return ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual ResultCode onChangeMediaSources(std::list<MediaSource> sources) = 0;
             };
 
+            /**
+             * This class contains a set of functions to change the properties of
+             * MediaSourceResource
+             */
             class MediaSourceResource: public SHBaseResource, public SHBaseResourceDelegate
             {
             public:
                 MediaSourceResource(std::string uri);
                 virtual ~MediaSourceResource();
 
+                /**
+                 * API to get media source.
+                 *
+                 * @return :: std::list<MediaInfo>  list of medif source.
+                 */
                 std::list<MediaSource> getMediaSources() const;
+
+                /**
+                 * API to add media source.
+                 *
+                 * @param source media source that will be added
+                 * @return true if success
+                 */
                 bool addMediaSource(const MediaSource& source);
+
+                /**
+                 * API to remove media source.
+                 *
+                 * @param source media source that will be removed
+                 * @return true if success
+                 */
                 bool removeMediaSource(const MediaSource& source);
+
+                /**
+                 * API to update media source.
+                 *
+                 * @param source media source that will be update
+                 * @return true if success
+                 */
                 bool updateMediaSource(const MediaSource& source);
+
+                /**
+                 * API to set delegate.
+                 *
+                 * @param delegate instance of delegate
+                 */
                 void setDelegate(MediaSourceResourceDelegate *delegate);
 
             private:

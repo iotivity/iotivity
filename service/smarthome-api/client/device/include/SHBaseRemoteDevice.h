@@ -24,10 +24,7 @@
 #include <list>
 
 /**
- * @file
- *
- * This file contains the declaration of classes and its members related to
- * SHBaseRemoteDevice.
+ * This file contains the declaration of classes and its members related to SHBaseRemoteDevice.
  */
 
 namespace OIC
@@ -40,12 +37,12 @@ namespace OIC
             class SHBaseRemoteResource;
 
             /**
-            * @class SHBaseRemoteDevice
-            *
-            * @brief This class contains a set of functions to control remote device that is found
-            * in device discovery step. SHBaseRemoteDevice provides client-side APIs to communicate
-            * with devices with resources.
-            */
+             * This class contains a set of functions to control remote device that is found in
+             * device discovery step.
+             *
+             * SHBaseRemoteDevice provides client-side APIs to communicate with devices
+             * with resources.
+             */
             class SHBaseRemoteDevice
             {
             friend class SHBaseRemoteDeviceBuilder;

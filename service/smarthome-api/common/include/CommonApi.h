@@ -19,10 +19,9 @@
  ******************************************************************/
 
 /**
- * @file
- *
  * This file contains the declaration of reserved variables.
  */
+
 
 #ifndef SMARTHOME_API_COMMON_COMMONAPI_H_
 #define SMARTHOME_API_COMMON_COMMONAPI_H_
@@ -39,12 +38,18 @@ namespace OIC
             typedef void* RequestId;
             typedef void* SHRequestHandle;
 
+            /**
+             * Information about the reserved uri.
+             */
             namespace RESERVED_URI
             {
                 const std::string DEVICE = "/oic/d";
                 const std::string PLATFORM = "/oic/p";
             }
 
+            /**
+             * Information about the result code.
+             */
             enum ResultCode
             {
                 SUCCESS, FAIL, KEEP,
@@ -56,6 +61,9 @@ namespace OIC
                 OBSERVE_UNREGISTER_FAIL
             };
 
+            /**
+             * Information about the observe response
+             */
             enum ObserveResponse
             {
                 REGISTER,
@@ -63,6 +71,9 @@ namespace OIC
                 NOTIFY
             };
 
+            /**
+             * Information about the device type.
+             */
             namespace DEVICE_TYPE
             {
                 const std::string UNKNOWN = "oic.wk.d";
@@ -93,6 +104,9 @@ namespace OIC
                 const std::string WASHER = "oic.d.washer";
             }
 
+            /**
+             * Information about the resource type.
+             */
             namespace RESOURCE_TYPE
             {
                 const std::string BINARYSWITCH = "oic.r.switch.binary";
@@ -109,6 +123,9 @@ namespace OIC
                 const std::string DOOR = "oic.r.door";
             }
 
+            /**
+             * Information about the resource interface.
+             */
             namespace INTERFACE
             {
                 const std::string BASELINE = "oic.if.baseline";
@@ -122,6 +139,7 @@ namespace OIC
 
             /**
              * Resource Properties.
+             *
              * The value of a policy property is defined as bitmap.
              * The LSB represents OC_DISCOVERABLE and Second LSB bit represents OC_OBSERVABLE and
              * so on. Not including the policy property is equivalent to zero.

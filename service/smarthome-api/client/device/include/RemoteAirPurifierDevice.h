@@ -17,18 +17,17 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteAirPurifierDevice.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTEAIRPURIFIER_H_
 #define SMARTHOME_API_CLIENT_REMOTEAIRPURIFIER_H_
 
 #include <SHBaseRemoteDevice.h>
 #include <RemoteBinarySwitchResource.h>
-
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related to
- * RemoteLightDevice.
- */
 
 namespace OIC
 {
@@ -37,20 +36,14 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class RemoteLightDevice
-            *
-            * @brief This class contains a set of functions to control remote light device.
-            */
+             * This class contains a set of functions to control remote AirPurifier device.
+             */
             class RemoteAirPurifierDevice: public SHBaseRemoteDevice
             {
             friend class SHBaseRemoteDeviceBuilder;
             public:
                 virtual ~RemoteAirPurifierDevice();
 
-                /**
-                 * Remote binary switch of device.
-                 * this variiable's value will be set when remote light device is found.
-                 */
                 RemoteBinarySwitchResource *m_remoteBinarySwitch;
 
             protected:

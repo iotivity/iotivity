@@ -17,17 +17,16 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of a class and its members related to CameraDevice.
+ */
+
 #ifndef SMARTHOME_API_SERVER_CAMERA_H_
 #define SMARTHOME_API_SERVER_CAMERA_H_
 
 #include <SHBaseDevice.h>
 #include <MediaResource.h>
-
-/**
- * @file
- *
- * This file contains the declaration of a class and its members related to CameraDevice.
- */
 
 namespace OIC
 {
@@ -36,11 +35,9 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class CameraDevice
-            *
-            * @brief This class contains a set of functions to define device and
-            * handle client requests.
-            */
+             * This class contains a set of functions to define device and
+             * handle client requests.
+             */
             class CameraDevice: public SHBaseDevice
             {
             public:
@@ -48,9 +45,6 @@ namespace OIC
                 virtual ~CameraDevice();
 
             public:
-                /**
-                 * media resource of camera device
-                 */
                 MediaResource m_media;
             };
         }

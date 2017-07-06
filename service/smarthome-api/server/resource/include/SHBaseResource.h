@@ -17,6 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to SHBaseResource.
+ */
+
 #ifndef SMARTHOME_API_SERVER_SHBASERESOURCE_H_
 #define SMARTHOME_API_SERVER_SHBASERESOURCE_H_
 
@@ -24,12 +29,6 @@
 #include <list>
 #include <stdint.h>
 #include <CommonApi.h>
-
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related to SHBaseResource.
- */
 
 namespace OIC
 {
@@ -42,9 +41,7 @@ namespace OIC
             class ResourceQuery;
 
             /**
-             * @class
-             *
-             * @brief This class contains a set of callback functions handling events and requests
+             * This class contains a set of callback functions handling events and requests
              * for SHBaseResource class.
              */
             class SHBaseResourceDelegate

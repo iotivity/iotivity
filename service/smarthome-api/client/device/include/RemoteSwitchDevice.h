@@ -17,16 +17,17 @@
  * limitations under the License.
  *
  ******************************************************************/
-#ifndef SMARTHOME_API_CLIENT_REMOTESWITCH_H_
-#define SMARTHOME_API_CLIENT_REMOTESWITCH_H_
-
-#include <SHBaseRemoteDevice.h>
-#include <RemoteBinarySwitchResource.h>
 
 /**
  * This file contains the declaration of classes and its members related to
  * RemoteSwitchDevice.
  */
+
+#ifndef SMARTHOME_API_CLIENT_REMOTESWITCH_H_
+#define SMARTHOME_API_CLIENT_REMOTESWITCH_H_
+
+#include <SHBaseRemoteDevice.h>
+#include <RemoteBinarySwitchResource.h>
 
 namespace OIC
 {
@@ -35,17 +36,13 @@ namespace OIC
         namespace SH
         {
             /**
-            * This class contains a set of functions to control remote switch device.
-            */
+             * This class contains a set of functions to control remote switch device.
+             */
             class RemoteSwitchDevice: public SHBaseRemoteDevice
             {
             public:
                 virtual ~RemoteSwitchDevice();
 
-                /**
-                 * Remote binary switch of device.
-                 * this variiable's value will be set when remote light device is found.
-                 */
                 RemoteBinarySwitchResource *m_remoteBinarySwitch;
 
             protected:

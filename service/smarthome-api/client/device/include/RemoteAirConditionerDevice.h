@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteAirConditionerDevice.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTEAIRCONDITIONER_H_
 #define SMARTHOME_API_CLIENT_REMOTEAIRCONDITIONER_H_
 
@@ -31,6 +37,9 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions to control remote airconditioner device.
+             */
             class RemoteAirConditionerDevice: public SHBaseRemoteDevice
             {
             public:

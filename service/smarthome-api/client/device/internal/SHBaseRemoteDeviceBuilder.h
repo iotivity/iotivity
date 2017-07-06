@@ -25,12 +25,6 @@
 #include <ClientCallbackWrapper.h>
 #include "octypes.h"
 
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related to
- * SHBaseRemoteDeviceBuilder.
- */
 namespace OIC
 {
     namespace Service
@@ -39,54 +33,19 @@ namespace OIC
         {
             class SHBaseRemoteDevice;
 
-            /**
-             * @class SHBaseRemoteDeviceBuilder
-             *
-             * @brief This class contains a set of functions to make SHBaseRemoteDevice.
-             */
             class SHBaseRemoteDeviceBuilder
             {
             public:
-                /**
-                 * API to create SHBaseRemoteDevice.
-                 * SHBaseRemoteDevice and all classes that inherit it needs to be created
-                 * in ClientWrapper class logic.
-                 * Also, SHBaseRemoteDevice and all classes that inherit it has protected
-                 * constructor. To construct in this class, SHBaseRemoteDevice and all classes
-                 * that inherit it should declare this class to friend class.
-                 *
-                 * @param[in] payload  Payload from csdk.
-                 * @return SHBaseRemoteDevice*  created device pointer
-                 */
+
                 static SHBaseRemoteDevice* createSHBaseRemoteDevice(
                         OCDiscoveryPayload *payload);
 
-                /**
-                 * API to Mapping specific resource to Device member resource.
-                 *
-                 * @param[in,out] device    Device for mapping specific resource.
-                 * @param[in]     resource  Resource for classification.
-                 * @return  true if resource is mapping successfully in device.
-                 */
                 static bool mappingResource(SHBaseRemoteDevice *device,
                                             SHBaseRemoteResource *resource);
             private:
-                /**
-                 * API to convert OCStringLL to std::list.
-                 *
-                 * @param[in] ll OCStringLL to be converted.
-                 * @return std::list<std::string> converted list.
-                 */
+
                 static std::list<std::string> convertStringLLToList(OCStringLL *ll);
 
-                /**
-                 * API to make SHBaseRemoteDevice according to device type.
-                 *
-                 * @param[in] deviceResource  resource that contain device
-                 *                            information.(/oic/d)
-                 * @param[in] deviceId        device ID.
-                 * @return SHBaseRemoteDevice*  created device pointer
-                 */
                 static SHBaseRemoteDevice* makeSHBaseRemoteDevice(
                     OCResourcePayload *deviceResource, char *deviceId);
             };

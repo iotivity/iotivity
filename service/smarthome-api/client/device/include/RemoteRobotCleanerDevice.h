@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteRobotCleanerDevice.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTEROBOTCLEANER_H_
 #define SMARTHOME_API_CLIENT_REMOTEROBOTCLEANER_H_
 
@@ -30,6 +36,9 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions to control remote robotcleaner device.
+             */
             class RemoteRobotCleanerDevice: public SHBaseRemoteDevice
             {
             friend class SHBaseRemoteDeviceBuilder;

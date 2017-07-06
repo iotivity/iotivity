@@ -26,13 +26,6 @@
 #include <CommonApi.h>
 #include "octypes.h"
 
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related to
- * SHBaseRemoteResource_Impl.
- */
-
 namespace OIC
 {
     namespace Service
@@ -43,53 +36,23 @@ namespace OIC
             class ResourceQuery;
             class SHBaseRemoteResourceDelegate;
 
-            /**
-             * @class SHBaseRemoteResource_Impl
-             *
-             * @brief This class contains a set of functions to implement
-             * SHBaseRemoteResoource class.
-             */
-            class SHBaseRemoteResource_Impl
+             class SHBaseRemoteResource_Impl
             {
             friend class SHBaseRemoteResource;
             friend class SHBaseRemoteResourceBuilder;
             public:
                 ~SHBaseRemoteResource_Impl();
 
-                /**
-                 * Function to get URI of this resource.
-                 *
-                 * @return std::string  resource URI.
-                 */
                 std::string getUri() const;
 
-                /**
-                 * Function to get host address of this resource.
-                 *
-                 * @return std::string  resource host address.
-                 */
                 std::string getHost() const;
-                /**
-                 * Function to get the endpoints information of this resource.
-                 *
-                 * @return std::list<std::string> endpoints information.
-                 */
+
                 std::list<std::string> getHosts() const;
 
                 std::string setHost(const std::string &host);
 
-                /**
-                 * Function to get types of this resource.
-                 *
-                 * @return std::list<std::string> resource types.
-                 */
                 std::list<std::string> getResourceTypes() const;
 
-                /**
-                 * Function to get interfaces of this resource.
-                 *
-                 * @return std::list<std::string> resource interfaces.
-                 */
                 std::list<std::string> getInterfaces() const;
 
                 bool hasResourceType(const std::string resourceType) const;
@@ -103,40 +66,12 @@ namespace OIC
             protected:
                 void setDelegate(SHBaseRemoteResourceDelegate *delegate);
 
-                /**
-                 * Request to get the properties of a resource(server-side).
-                 * (use GET method)
-                 *
-                 * @return SHRequestHandle request handle.
-                 */
                 SHRequestHandle getPropertyBundle();
 
-                /**
-                 * Request to get the properties of a resource(server-side).
-                 * (use GET method)
-                 *
-                 * @param[in] query  ResourceQuery to specify request.
-                 * @return SHRequestHandle request handle.
-                 */
                 SHRequestHandle getPropertyBundle(const ResourceQuery &query);
 
-                /**
-                 * Request to set the properties to a resource(server-side).
-                 * (use POST method)
-                 *
-                 * @param[in] bundle Properties to set a resource.
-                 * @return SHRequestHandle request handle.
-                 */
                 SHRequestHandle setPropertyBundle(const PropertyBundle &bundle);
 
-                /**
-                 * Request to set the properties to a resource(server-side).
-                 * (use POST method)
-                 *
-                 * @param[in] bundle Properties to set a resource.
-                 * @param[in] query  ResourceQuery to specify request.
-                 * @return SHRequestHandle request handle.
-                 */
                 SHRequestHandle setPropertyBundle(const PropertyBundle &bundle,
                         const ResourceQuery &query);
 

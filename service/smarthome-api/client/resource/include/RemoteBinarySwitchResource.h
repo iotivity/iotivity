@@ -17,17 +17,16 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteBinarySwitchResource.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTEBINARYSWITCH_H_
 #define SMARTHOME_API_CLIENT_REMOTEBINARYSWITCH_H_
 
 #include <SHBaseRemoteResource.h>
-
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related to
- * RemoteBinarySwitchResource.
- */
 
 namespace OIC
 {
@@ -35,12 +34,10 @@ namespace OIC
     {
         namespace SH
         {
-           /**
-            * @class RemoteBinarySwitchResourceDelegate
-            *
-            * @brief This class contains a set of functions for callback of
-            * RemoteBinarySwitchResourceDelegate class.
-            */
+            /**
+             * This class contains a set of functions for callback of
+             * RemoteBinarySwitchResource class.
+             */
             class RemoteBinarySwitchResourceDelegate
             {
             public:
@@ -72,11 +69,9 @@ namespace OIC
                 virtual void onGetState(bool value, ResultCode ret) = 0;
             };
 
-           /**
-            * @class RemoteBinarySwitchResource
-            *
-            * @brief This class contains a set of functions to control BinarySwitch resource
-            */
+            /**
+             * This class contains a set of functions to control BinarySwitch resource.
+             */
             class RemoteBinarySwitchResource: public SHBaseRemoteResource,
                     public SHBaseRemoteResourceDelegate
             {

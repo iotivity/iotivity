@@ -24,10 +24,8 @@
 #include <RemoteBinarySwitchResource.h>
 
 /**
- * @file
- *
  * This file contains the declaration of classes and its members related to
- * RemoteLightDevice.
+ * RemoteFanDevice.
  */
 
 namespace OIC
@@ -37,20 +35,14 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class RemoteLightDevice
-            *
-            * @brief This class contains a set of functions to control remote light device.
-            */
+             * This class contains a set of functions to control remote fan device.
+             */
             class RemoteFanDevice: public SHBaseRemoteDevice
             {
             friend class SHBaseRemoteDeviceBuilder;
             public:
                 virtual ~RemoteFanDevice();
 
-                /**
-                 * Remote binary switch of device.
-                 * this variiable's value will be set when remote light device is found.
-                 */
                 RemoteBinarySwitchResource *m_remoteBinarySwitch;
 
             protected:

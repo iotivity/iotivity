@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteAutomaticDocumentFeederResource.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTEAUTOMATICDOCUMENTFEEDER_H_
 #define SMARTHOME_API_CLIENT_REMOTEAUTOMATICDOCUMENTFEEDER_H_
 
@@ -28,18 +34,42 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions for callback of
+             * RemoteAutomaticDocumentFeederResource class.
+             */
             class RemoteAutomaticDocumentFeederResourceDelegate
             {
             public:
+                /**
+                 * API to handle a response about State Get request.
+                 *
+                 * @param[in] currentState current state
+                 * @param[in] possibleStates possible state values
+                 * @param[in] ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual void onGetState(std::string currentState,
                         std::list<std::string> possibleStates, ResultCode ret) = 0;
             };
 
+            /**
+             * This class contains a set of functions to control RemoteAutomaticDocumentFeederResource.
+             */
             class RemoteAutomaticDocumentFeederResource: public SHBaseRemoteResource,
                     public SHBaseRemoteResourceDelegate
             {
             public:
+
+                /**
+                 * API to get state value
+                 */
                 void getState();
+
+                /**
+                 * API to set remote delegate.
+                 *
+                 * @param[in] delegate instance of delegate class
+                 */
                 void setDelegate(RemoteAutomaticDocumentFeederResourceDelegate *delegate);
 
             public:

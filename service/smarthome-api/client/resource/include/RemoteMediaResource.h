@@ -17,17 +17,16 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteMediaResource.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTEMEDIA_H_
 #define SMARTHOME_API_CLIENT_REMOTEMEDIA_H_
 
 #include <SHBaseRemoteResource.h>
-
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related to
- * RemoteMediaResource.
- */
 
 namespace OIC
 {
@@ -48,10 +47,8 @@ namespace OIC
             }MediaInfo;
 
             /**
-             * @class RemoteMediaResourceDelegate
-             *
-             * @brief This class contains a set of functions for callback of
-             * RemoteMediaResourceDelegate class.
+             * This class contains a set of functions for callback of
+             * RemoteMediaResource class.
              */
             class RemoteMediaResourceDelegate
             {
@@ -71,9 +68,7 @@ namespace OIC
             };
 
             /**
-             * @class RemoteMediaResource
-             *
-             * @brief This class contains a set of functions to control Media resource
+             * This class contains a set of functions to control Media
              */
             class RemoteMediaResource: public SHBaseRemoteResource,
                     public SHBaseRemoteResourceDelegate

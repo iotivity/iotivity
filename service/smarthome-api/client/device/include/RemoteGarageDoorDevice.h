@@ -18,10 +18,10 @@
  *
  ******************************************************************/
 
-/**
- * This file contains the declaration of classes and its members related to
- * RemoteDoorDevice.
- */
+ /**
+  * This file contains the declaration of classes and its members related to
+  * RemoteGarageDoorDevice.
+  */
 
 #ifndef SMARTHOME_API_CLIENT_REMOTEGARAGEDOOR_H_
 #define SMARTHOME_API_CLIENT_REMOTEGARAGEDOOR_H_
@@ -36,7 +36,7 @@ namespace OIC
         namespace SH
         {
             /**
-             * This class contains a set of functions to control remote door  device.
+             * This class contains a set of functions to control remote garage door device.
              */
             class RemoteGarageDoorDevice: public SHBaseRemoteDevice
             {

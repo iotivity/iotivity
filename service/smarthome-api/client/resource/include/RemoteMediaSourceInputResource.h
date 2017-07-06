@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteMediaSourceInputResource.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTEMEDIASOURCEINPUT_H_
 #define SMARTHOME_API_CLIENT_REMOTEMEDIASOURCEINPUT_H_
 #include <RemoteMediaSourceResource.h>
@@ -27,22 +33,55 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions for callback of
+             * RemoteMediaSourceInputResource class.
+             */
             class RemoteMediaSourceInputResourceDelegate: public RemoteMediaSourceResourceDelegate
             {
             public:
                 virtual ~RemoteMediaSourceInputResourceDelegate() {}
+
+                /**
+                 * API to handle a response about media source get request.
+                 *
+                 * @param[in] sources media sources
+                 */
                 virtual void onGetMediaSource(std::list<MediaSource> sources) = 0;
+
+                /**
+                 * API to handle a response about media source change request.
+                 *
+                 * @param[in] sources media sources
+                 */
                 virtual void onChangeMediaSource(std::list<MediaSource> sources) = 0;
             };
 
-
+            /**
+             * This class contains a set of functions to control RemoteMediaSourceInputResource.
+             */
             class RemoteMediaSourceInputResource: public RemoteMediaSourceResource
             {
             public:
                 virtual ~RemoteMediaSourceInputResource();
 
+                /**
+                 * API to get media sources.
+                 */
                 void getMediaSources();
+
+                /**
+                 * API to change media sources.
+                 *
+                 * @param[in] sources media sources
+                 */
                 void changeMediaSources(std::list<MediaSource> sources);
+
+                /**
+                 * API to set delegate of RemoteMediaSourceInputResource.
+                 *
+                 * @param[in] delegate instance of RemoteMediaSourceInputResourceDelegate
+                 */
                 void setDelegate(RemoteMediaSourceInputResourceDelegate *delegate);
 
             protected:

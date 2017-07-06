@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteDoorResource.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTEDOOR_H_
 #define SMARTHOME_API_CLIENT_REMOTEDOOR_H_
 
@@ -39,18 +45,57 @@ namespace OIC
                 DEACTIVATE = 0, ACTIVATE
             };
 
+            /**
+             * This class contains a set of functions for callback of
+             * RemoteDoorResource class.
+             */
             class RemoteDoorResourceDelegate
             {
             public:
                 virtual ~RemoteDoorResourceDelegate() {}
 
+                /**
+                 * API to handle a response about OpenState get request.
+                 *
+                 * @param[in] state open state value
+                 * @param[in] ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual void onGetOpenState(std::string state, ResultCode code) = 0;
+
+                /**
+                 * API to handle a response about OpenDuration get request.
+                 *
+                 * @param[in] duration duration value
+                 * @param[in] ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual void onGetOpenDuration(std::string duration, ResultCode code) = 0;
+
+                /**
+                 * API to handle a response about OpenAlarm get request.
+                 *
+                 * @param[in] OpenAlarmState alarm state value
+                 * @param[in] ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual void onGetOpenAlarmState(OpenAlarmState, ResultCode code) = 0;
+
+                /**
+                 * API to handle a response about OpenAlarm activate request.
+                 *
+                 * @param[in] ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual void onActivateOpenAlarm(ResultCode code) = 0;
+
+                /**
+                 * API to handle a response about OpenAlarm deactivate request.
+                 *
+                 * @param[in] ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual void onDeActivateOpenAlarm(ResultCode code) = 0;
             };
 
+            /**
+             * This class contains a set of functions to control RemoteDoorResource.
+             */
             class RemoteDoorResource: public SHBaseRemoteResource,
                     public SHBaseRemoteResourceDelegate
             {
@@ -58,11 +103,33 @@ namespace OIC
             public:
                 virtual ~RemoteDoorResource();
 
+                /**
+                 * API to get openStatue.
+                 */
                 void getOpenState();
+
+                /**
+                 * API to get openDuration.
+                 */
                 void getOpenDuration();
+
+                /**
+                 * API to get openAlarmState.
+                 */
                 void getOpenAlarmState();
+
+                /**
+                 * API to chage openAlarmState.
+                 *
+                 * @param[in] state alram state
+                 */
                 void changeOpenAlarmState(OpenAlarmState state);
 
+                /**
+                 * API to set a instance of delegate calss.
+                 *
+                 * @param[in] delegate instance of delegate
+                 */
                 void setRemoteDoorResourceDelegate(
                         RemoteDoorResourceDelegate* delegate);
 

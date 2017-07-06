@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteTemperatureResource.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTETEMPERATURE_H_
 #define SMARTHOME_API_CLIENT_REMOTETEMPERATURE_H_
 
@@ -29,29 +35,82 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions for callback of
+             * RemoteTemperatureResource class.
+             */
             class RemoteTemperatureResourceDelegate
             {
             public:
+                /**
+                 * API to handle a response about Temperature Get request.
+                 *
+                 * @param[in] temperature temperature
+                 * @param[in] unit unit of temperature
+                 * @param[in] range range values
+                 * @param[in] ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual void onGetTemperature(double temperature,
                                               std::string units,
                                               std::list<double> range,
                                               ResultCode ret) = 0;
+
+                /**
+                 * API to handle a response about Temperature Set request.
+                 *
+                 * @param[in] temperature temperature
+                 * @param[in] unit unit of temperature
+                 * @param[in] range range value
+                 * @param[in] ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual void onSetTemperature(double temperature,
                                               std::string units,
                                               std::list<double> range,
                                               ResultCode ret) = 0;
             };
 
+            /**
+             * This class contains a set of functions to control RemoteTemperatureResource.
+             */
             class RemoteTemperatureResource: public SHBaseRemoteResource,
                     public SHBaseRemoteResourceDelegate
             {
             public:
                 virtual ~RemoteTemperatureResource();
+
+                /**
+                 * API to set remote delegate.
+                 *
+                 * @param[in] delegate instance of delegate class
+                 */
                 void setRemoteTemperatureResourceDelegate(
                         RemoteTemperatureResourceDelegate *delegate);
+
+                /**
+                 * API to get temperature.
+                 */
                 void getTemperature();
+
+                /**
+                 * API to get temperature with unit.
+                 *
+                 * @param[in] unit unit of temperature
+                 */
                 void getTemperatureWithUnits(std::string units);
+
+                /**
+                 * API to set temperature.
+                 *
+                 * @param[in] temperature temperature
+                 */
                 void setTemperature(double temperature);
+
+                /**
+                 * API to set temperature with unit.
+                 *
+                 * @param[in] temperature temperature
+                 * @param[in] units unit of temperature
+                 */
                 void setTemperatureWithUnits(double temperature, std::string units);
 
             protected:

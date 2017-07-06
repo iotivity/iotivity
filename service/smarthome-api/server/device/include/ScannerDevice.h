@@ -17,6 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of a class and its members related to ScannerDevice.
+ */
+
 #ifndef SMARTHOME_API_SERVER_SCANNER_H_
 #define SMARTHOME_API_SERVER_SCANNER_H_
 
@@ -63,6 +68,10 @@ namespace OIC
                 const static std::string INPUT_TRAY_OVERLOADED = "adfInputTrayOverloaded";
             }
 
+            /**
+            * This class contains a set of functions to define device and
+            * handle client requests.
+            */
             class ScannerDevice: public SHBaseDevice
             {
             public:

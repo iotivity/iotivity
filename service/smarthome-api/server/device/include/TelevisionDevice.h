@@ -19,8 +19,6 @@
  ******************************************************************/
 
 /**
- * @file
- *
  * This file contains the declaration of a class and its members related to ReceiverDevice.
  */
 
@@ -39,11 +37,9 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class TelevisionDevice
-            *
-            * @brief This class contains a set of functions to define device and
-            * handle client requests.
-            */
+             * This class contains a set of functions to define device and
+             * handle client requests.
+             */
             class TelevisionDevice: public SHBaseDevice
             {
             public:
@@ -51,19 +47,9 @@ namespace OIC
                 virtual ~TelevisionDevice();
 
             public:
-                /**
-                 * Binary switch resource of televison device.
-                 */
+
                 BinarySwitchResource m_binarySwitch;
-
-                /**
-                 * Audio resource of televison device.
-                 */
                 AudioResource m_audio;
-
-                /**
-                 * Media source input resource of televison device.
-                 */
                 MediaSourceInputResource m_inputMedia;
             };
         }

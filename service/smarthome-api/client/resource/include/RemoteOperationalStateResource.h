@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteOperationalStateResource.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTEOPERATIONALSTATE_H_
 #define SMARTHOME_API_CLIENT_REMOTEOPERATIONALSTATE_H_
 
@@ -28,26 +34,76 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions for callback of
+             * RemoteOperationalStateResource class.
+             */
             class RemoteOperationalStateResourceDelegate
             {
             public:
+                /**
+                 * API to handle a response about State get request.
+                 *
+                 * @param[in] machineState current machine state
+                 * @param[in] jobState current job state
+                 * @param[in] possibleMachineStates possible machine states
+                 * @param[in] possibleJobStates possible job states
+                 * @param[in] runningTime running time
+                 * @param[in] remainingTime remaining time
+                 * @param[in] progressPercentage progress percentage
+                 * @param[in] ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual void onGetState(std::string machineState, std::string jobState,
                         std::list<std::string> possibleMachineStates,
                         std::list<std::string> possibleJobStates, std::string runningTime,
                         std::string remainingTime, int progressPercentage, ResultCode ret) = 0;
+
+                /**
+                 * API to handle a response about MachineState change request.
+                 *
+                 * @param[in] ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual void onChangeMachineState(ResultCode ret) = 0;
+
+                /**
+                 * API to handle a response about JobState change request.
+                 *
+                 * @param[in] ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual void onChangeJobState(ResultCode ret) = 0;
             };
 
+            /**
+             * This class contains a set of functions to control RemoteOperationalStateResource.
+             */
             class RemoteOperationalStateResource: public SHBaseRemoteResource,
                     public SHBaseRemoteResourceDelegate
             {
             friend class SHBaseRemoteResourceBuilder;
             public:
+
+                /**
+                 * API to get current state.
+                 */
                 void getState();
+
+                /**
+                 * API to change machine state.
+                 *
+                 * @param[in] state machine state
+                 */
                 void changeMachineState(std::string state);
+
+                /**
+                 * API to change job state.
+                 * @param[in] state job state
+                 */
                 void changeJobState(std::string state);
 
+                /**
+                 * API to set an instance of delegate class.
+                 * @param[in] delegate instance of delegate
+                 */
                 void setDelegate(RemoteOperationalStateResourceDelegate *delegate);
 
             public:

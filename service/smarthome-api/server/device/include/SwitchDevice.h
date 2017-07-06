@@ -35,11 +35,9 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class SwitchDevice
-            *
-            * @brief This class contains a set of functions to define device and
-            * handle client requests.
-            */
+             * This class contains a set of functions to define device and
+             * handle client requests.
+             */
             class SwitchDevice: public SHBaseDevice
             {
             public:
@@ -47,9 +45,6 @@ namespace OIC
                 virtual ~SwitchDevice();
 
             public:
-                /**
-                 * binary switch of light device
-                 */
                 BinarySwitchResource m_binarySwitch;
             };
         }

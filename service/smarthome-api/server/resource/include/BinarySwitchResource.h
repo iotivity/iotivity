@@ -23,9 +23,8 @@
 #include <SHBaseResource.h>
 
 /**
- * @file
- *
- * This file contains the declaration of classes and its members related to BinarySwitchResource.
+ * This file contains the declaration of classes and its members related to
+ * BinarySwitchResource.
  */
 
 namespace OIC
@@ -35,10 +34,8 @@ namespace OIC
         namespace SH
         {
             /**
-             * @class BinarySwitchResourceDelegate
-             *
-             * @brief This class contains a set of callback functions handling events and requests
-             * for BinarySwitchResource class
+             * This class contains a set of callback functions handling events and requests
+             * for BinarySwitchResource class.
              */
             class BinarySwitchResourceDelegate
             {
@@ -64,10 +61,7 @@ namespace OIC
             };
 
             /**
-             * @class BinarySwitchResource
-             *
-             * @brief This class contains a set of functions to change the properties of
-             * BinarySwitch
+             * This class contains a set of functions to change the properties of BinarySwitch.
              */
             class BinarySwitchResource: public SHBaseResource, public SHBaseResourceDelegate
             {

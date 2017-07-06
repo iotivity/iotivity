@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * AutomaticDocumentFeederResource.
+ */
+
 #ifndef SMARTHOME_API_SERVER_AUTOMATICDOCUMENTFEEDER_H_
 #define SMARTHOME_API_SERVER_AUTOMATICDOCUMENTFEEDER_H_
 
@@ -30,6 +36,9 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions to change the properties of AutomaticDocumentFeeder.
+             */
             class AutomaticDocumentFeederResource: public SHBaseResource,
                     public SHBaseResourceDelegate
             {
@@ -37,9 +46,32 @@ namespace OIC
                 AutomaticDocumentFeederResource();
                 virtual ~AutomaticDocumentFeederResource();
 
+                /**
+                 * API to get the current state.
+                 *
+                 * @return current state
+                 */
                 std::string getCurrentState();
+
+                /**
+                 * API to get the possible state.
+                 *
+                 * @return possible states
+                 */
                 std::list<std::string> getPossibleStates();
+
+                /**
+                 * API to add the possible state.
+                 *
+                 * @return true if success
+                 */
                 bool addPossibleState(std::string state);
+
+                /**
+                 * API to set the current state.
+                 *
+                 * @return true if success
+                 */
                 bool setCurrentState(std::string state);
 
             private:

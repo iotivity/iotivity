@@ -19,9 +19,8 @@
  ******************************************************************/
 
 /**
- * @file
- *
  * This file contains the declaration of classes and its members related to DeviceDiscovery.
+ *
  * DeviceDiscovery provides device-level discovery that devices with resources are found.
  */
 
@@ -40,16 +39,13 @@ namespace OIC
             class SHBaseRemoteDevice;
 
             /**
-             * @class DeviceDiscoveryDelegate
-             *
-             * @brief This class contains a set of functions for callback of
-             * DeviceDiscoveryDelegate class.
+             * This class contains a set of functions for callback of DeviceDiscoveryDelegate class.
              */
             class DeviceDiscoveryDelegate
             {
             public:
                 /**
-                 * API to handle the response when remote devices are found
+                 * API to handle the response when remote devices are found.
                  *
                  * @param[in] remoteDevice information of a remote device
                  */
@@ -57,9 +53,7 @@ namespace OIC
             };
 
             /**
-             * @class DeviceDiscovery
-             *
-             * @brief This class contains a set of functions for discovering remote devices
+             * This class contains a set of functions for discovering remote devices.
              */
             class DeviceDiscovery
             {

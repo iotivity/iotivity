@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * AudioResource.
+ */
+
 #ifndef SMARTHOME_API_SERVER_AUDIO_H_
 #define SMARTHOME_API_SERVER_AUDIO_H_
 #include <SHBaseResource.h>
@@ -27,6 +33,9 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions to change the properties of AudioResource.
+             */
             class AudioResourceDelegate
             {
             public:
@@ -40,10 +49,40 @@ namespace OIC
                 AudioResource();
                 virtual ~AudioResource();
 
+                /**
+                 * API to get the volume.
+                 *
+                 * @return volume
+                 */
                 int getVolume();
+
+                /**
+                 * API to set the volume.
+                 *
+                 * @param[in] volume desired volume
+                 * @return true if success
+                 */
                 bool setVolume(int volume);
+
+                /**
+                 * API to know whether mute state is on or not.
+                 *
+                 * @return true if success
+                 */
                 bool isMute();
+
+                /**
+                 * API to set the mute.
+                 *
+                 * @param[in] on disired mute state
+                 */
                 void setMute(bool on);
+
+                /**
+                 * API to set delegate function.
+                 *
+                 * @param[in] delegate instance of delegate
+                 */
                 void setDelegate(AudioResourceDelegate *delegate);
 
             private:

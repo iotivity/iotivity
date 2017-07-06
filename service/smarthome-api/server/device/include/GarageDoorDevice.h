@@ -20,7 +20,7 @@
 
 /**
  * This file contains the declaration of classes and its members related to
- * DoorDevice.
+ * GarageDoor Device.
  */
 
 #ifndef SMARTHOME_API_SERVER_GARAGEDOOR_H_
@@ -37,7 +37,7 @@ namespace OIC
         {
             /**
              * This class contains a set of functions to define device and
-            * handle client requests.
+             * handle client requests.
              */
             class GarageDoorDevice: public SHBaseDevice
             {

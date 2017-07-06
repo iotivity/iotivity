@@ -18,11 +18,6 @@
  *
  ******************************************************************/
 
-/**
- * This file contains the declaration of functions related to
- * SHPlatform_Impl
- */
-
 #ifndef SMARTHOME_API_COMMON_SHPLATFORM_IMPL_H_
 #define SMARTHOME_API_COMMON_SHPLATFORM_IMPL_H_
 
@@ -36,32 +31,13 @@ namespace OIC
 
             namespace SH_Impl
             {
-                /**
-                 * API to get configuration information.
-                 *
-                 * @return SHPlatformConfig class that application set config.
-                 */
+
                 SHPlatformConfig& getConfig();
 
-                /**
-                 * API to set configuration information using stack initialize.
-                 *
-                 * @param[in] config  configuration informations to be set.
-                 */
                 void setConfig(const SHPlatformConfig &config);
 
-                /**
-                 * API to start Base layer stack.
-                 *
-                 * @return ::true if stack initialize success.
-                 */
                 bool start();
 
-                /**
-                 * API to stop Base layer stack.
-                 *
-                 * @return ::true if stack de-initialize success.
-                 */
                 bool stop();
             }
         }

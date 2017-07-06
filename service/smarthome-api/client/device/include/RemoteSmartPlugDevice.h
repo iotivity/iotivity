@@ -17,18 +17,17 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteSmartPlugDevice.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTESMARTPLUG_H_
 #define SMARTHOME_API_CLIENT_REMOTESMARTPLUG_H_
 
 #include <SHBaseRemoteDevice.h>
 #include <RemoteBinarySwitchResource.h>
-
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related to
- * RemoteSmartPlugDevice.
- */
 
 namespace OIC
 {
@@ -37,19 +36,13 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class RemoteSmartPlugDevice
-            *
-            * @brief This class contains a set of functions to control remote smart plug device.
-            */
+             * This class contains a set of functions to control remote smart plug device.
+             */
             class RemoteSmartPlugDevice: public SHBaseRemoteDevice
             {
             public:
                 virtual ~RemoteSmartPlugDevice();
 
-                /**
-                 * Remote binary switch of device.
-                 * this variiable's value will be set when remote smart plug device is found.
-                 */
                 RemoteBinarySwitchResource *m_remoteBinarySwitch;
 
             protected:

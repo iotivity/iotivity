@@ -19,10 +19,7 @@
  ******************************************************************/
 
 /**
- * @file
- *
  * This file contains the declaration of a class and its members related to SHBaseDevice.
- * SHBaseDevice provides server-side APIs to handle requests from client.
  */
 
 #ifndef SMARTHOME_API_SERVER_SHBASEDEVICE_H_
@@ -37,11 +34,9 @@ namespace OIC
         namespace SH
         {
             class SHBaseDevice_Impl;
+
             /**
-             * @class SHBaseDevice
-             *
-             * @brief This class contains a set of functions to define device and
-             * handle client requests.
+             * This class contains a set of functions to define device and handle client requests.
              */
             class SHBaseDevice
             {

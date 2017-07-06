@@ -17,18 +17,17 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteCameraDevice.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTECAMERA_H_
 #define SMARTHOME_API_CLIENT_REMOTECAMERA_H_
 
 #include <SHBaseRemoteDevice.h>
 #include <RemoteMediaResource.h>
-
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related to
- * RemoteCameraDevice.
- */
 
 namespace OIC
 {
@@ -37,20 +36,14 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class RemoteCameraDevice
-            *
-            * @brief This class contains a set of functions to control remote camera device.
-            */
+             * This class contains a set of functions to control remote camera device.
+             */
             class RemoteCameraDevice: public SHBaseRemoteDevice
             {
             friend class SHBaseRemoteDeviceBuilder;
             public:
                 virtual ~RemoteCameraDevice();
 
-                /**
-                 * Remote media resource of device.
-                 * this variable's value will be set when remote camera device is found.
-                 */
                 RemoteMediaResource *m_remoteMedia;
 
             protected:

@@ -17,19 +17,18 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * SHBaseRemoteResource.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_SHBASEREMOTERESOURCE_H_
 #define SMARTHOME_API_CLIENT_SHBASEREMOTERESOURCE_H_
 
 #include <list>
 #include <CommonApi.h>
 #include <octypes.h>
-
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related to
- * SHBaseRemoteResource.
- */
 
 namespace OIC
 {
@@ -41,12 +40,10 @@ namespace OIC
             class PropertyBundle;
             class ResourceQuery;
 
-           /**
-            * @class SHBaseRemoteResourceDelegate
-            *
-            * @brief This class contains a set of base functions for callback of
-            * SHBaseRemoteResource class.
-            */
+            /**
+             * This class contains a set of base functions for callback of
+             * SHBaseRemoteResource class.
+             */
             class SHBaseRemoteResourceDelegate
             {
             public:
@@ -82,12 +79,11 @@ namespace OIC
                         ResultCode ret) = 0;
             };
 
-           /**
-            * @class SHBaseRemoteResource
-            *
-            * @brief This class contains a set of functions to get/set of resource(server-side)
-            * Also, some API can support to get informations about resource.
-            */
+            /**
+             * This class contains a set of functions to get/set of remote resource.
+             *
+             * Also, some API can support to get informations about resource.
+             */
             class SHBaseRemoteResource
             {
             friend class SHBaseRemoteResourceBuilder;

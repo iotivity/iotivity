@@ -19,9 +19,7 @@
  ******************************************************************/
 
 /**
- * @file
- *
- * This file contains the declaration of a class and its members related to LightDevice.
+ * This file contains the declaration of a class and its members related to FanDevice.
  */
 
 #ifndef SMARTHOME_API_SERVER_FAN_H_
@@ -37,11 +35,9 @@ namespace OIC
         namespace SH
         {
             /**
-            * @class LightDevice
-            *
-            * @brief This class contains a set of functions to define device and
-            * handle client requests.
-            */
+             * This class contains a set of functions to define device and
+             * handle client requests.
+             */
             class FanDevice: public SHBaseDevice
             {
             public:
@@ -49,9 +45,6 @@ namespace OIC
                 virtual ~FanDevice();
 
             public:
-                /**
-                 * binary switch of light device
-                 */
                 BinarySwitchResource m_binarySwitch;
             };
         }

@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteModeResource.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTEMODE_H_
 #define SMARTHOME_API_CLIENT_REMOTEMODE_H_
 
@@ -29,6 +35,10 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions for callback of
+             * RemoteModeResource class.
+             */
             class RemoteModeResourceDelegate
             {
             public:
@@ -37,12 +47,30 @@ namespace OIC
                  */
                 virtual ~RemoteModeResourceDelegate() {}
 
+                /**
+                 * API to handle a response about Mode get request.
+                 *
+                 * @param[in] supportedMode supported mode
+                 * @param[in] currentMode current mode
+                 * @param[in] ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual void onGetMode(const std::list< std::string >& supportedMode,
                         const std::list< std::string >& currentMode, ResultCode ret) = 0;
+
+                /**
+                 * API to handle a response about Mode set request.
+                 *
+                 * @param[in] supportedMode supported mode
+                 * @param[in] currentMode current mode
+                 * @param[in] ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual void onSetMode(const std::list< std::string >& supportedMode,
                         const std::list< std::string >& currentMode, ResultCode ret) = 0;
             };
 
+            /**
+             * This class contains a set of functions to control RemoteModeResource.
+             */
             class RemoteModeResource: public SHBaseRemoteResource,
                     public SHBaseRemoteResourceDelegate
             {
@@ -50,8 +78,20 @@ namespace OIC
             public:
                 virtual ~RemoteModeResource();
 
+                /**
+                 * API to set a instance of delegate class.
+                 */
                 void setRemoteModeResourceDelegate(RemoteModeResourceDelegate *delegate);
+
+                /**
+                 * API to get current mode.
+                 */
                 void getMode();
+
+                /**
+                 * API to set current mode,
+                 * @param[in] mode current modes
+                 */
                 void setMode(std::list< std::string > mode);
 
                 virtual void onGet(PropertyBundle bundle, ResultCode ret);

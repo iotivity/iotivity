@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteBlindDevice.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTEBLIND_H_
 #define SMARTHOME_API_CLIENT_REMOTEBLIND_H_
 
@@ -29,6 +35,9 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions to control remote blind device.
+             */
             class RemoteBlindDevice: public SHBaseRemoteDevice
             {
             friend class SHBaseRemoteDeviceBuilder;

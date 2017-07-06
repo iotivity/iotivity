@@ -17,6 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to LockStatusResource.
+ */
+
 #ifndef SMARTHOME_API_SERVER_LOCKSTATUS_H_
 #define SMARTHOME_API_SERVER_LOCKSTATUS_H_
 
@@ -28,23 +33,59 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions for callback of
+             * LockStatusResource class.
+             */
             class LockStatusResourceDelegate
             {
             public:
                 virtual ~LockStatusResourceDelegate() {}
 
+                /**
+                 * API to handle a lock request .
+                 *
+                 * @return ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual ResultCode onLock() = 0;
+
+                /**
+                 * API to handle a unlock request .
+                 *
+                 * @return ret ResultCode about response.(SUCCESS OR FAIL)
+                 */
                 virtual ResultCode onUnLock() = 0;
             };
 
+            /**
+             * This class contains a set of functions to change the properties of LockStatus.
+             */
             class LockStatusResource: public SHBaseResource, public SHBaseResourceDelegate
             {
             public:
                 LockStatusResource();
                 virtual ~LockStatusResource();
 
+                /**
+                 * API to get current lock state.
+                 *
+                 * @param[out] string current lock state
+                 */
                 std::string getState();
+
+                /**
+                 * API to set current lock state.
+                 *
+                 * @param[in] state current lock state
+                 * @return true if success
+                 */
                 bool setState(std::string state);
+
+                /**
+                 * API to set delegate
+                 *
+                 * @param[out] delegate instance of delegate
+                 */
                 void setDelegate(LockStatusResourceDelegate* delegate);
 
             private:

@@ -17,6 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of classes and its members related to
+ * RemoteDryerDevice.
+ */
+
 #ifndef SMARTHOME_API_CLIENT_REMOTEDRYER_H_
 #define SMARTHOME_API_CLIENT_REMOTEDRYER_H_
 
@@ -30,6 +36,9 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions to control remote dryer device.
+             */
             class RemoteDryerDevice: public SHBaseRemoteDevice
             {
             friend class SHBaseRemoteDeviceBuilder;

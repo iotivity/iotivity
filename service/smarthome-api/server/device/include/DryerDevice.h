@@ -17,6 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * This file contains the declaration of a class and its members related to DryerDevice.
+ */
+
 #ifndef SMARTHOME_API_SERVER_DRYER_H_
 #define SMARTHOME_API_SERVER_DRYER_H_
 
@@ -30,6 +35,10 @@ namespace OIC
     {
         namespace SH
         {
+            /**
+             * This class contains a set of functions to define device and
+             * handle client requests.
+             */
             class DryerDevice: public SHBaseDevice
             {
             public:
