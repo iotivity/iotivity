@@ -40,6 +40,7 @@ const char * OIC_JSON_ACES_NAME = "aces";
 const char * OIC_JSON_ACEID_NAME = "aceid";
 
 const char * OIC_RSRC_TYPE_SEC_ACL2 = "oic.r.acl2";
+const char * OIC_RSRC_TYPE_SEC_ACE2 = "oic.r.ace2";
 const char * OIC_RSRC_ACL2_URI = "/oic/sec/acl2";
 const char * OIC_JSON_ACL2_NAME = "acl2";
 
