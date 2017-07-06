@@ -144,12 +144,6 @@ if target_os in ['linux', 'tizen', 'android', 'arduino']:
 if target_os == 'arduino':
     libcoap_env.AppendUnique(CPPDEFINES=['NDEBUG', 'WITH_ARDUINO'])
 
-if target_os in ['darwin', 'ios']:
-    libcoap_env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
-
-if env.get('LOGGING') == '1':
-    libcoap_env.AppendUnique(CPPDEFINES=['TB_LOG'])
-
 ######################################################################
 # Source files and Target(s)
 ######################################################################
