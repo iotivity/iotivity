@@ -20,6 +20,7 @@
 #include <jni.h>
 #include "logger.h"
 #include <stdio.h>
+#include "caadapterutils.h"
 #include "cainterface.h"
 #include "JniCaInterface.h"
 #include "cautilinterface.h"
@@ -35,17 +36,22 @@ static JavaVM *g_jvm = NULL;
 static jclass g_jni_cls_enum = NULL;
 static jmethodID g_jni_mid_enum = NULL;
 
-JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *reserved)
+JNIEXPORT jint JNICALL
+JNI_OnLoad(JavaVM *jvm, void *reserved)
 {
-    LOGI("JNI_OnLoad");
+    OC_UNUSED(reserved);
+    LOGI("CaInterface_initialize");
     g_jvm = jvm;
     CANativeJNISetJavaVM(jvm);
 
     return JNI_VERSION_1_6;
 }
 
-void JNI_OnUnload(JavaVM *jvm, void *reserved)
+JNIEXPORT void JNICALL
+JNI_OnUnload(JavaVM *jvm, void *reserved)
 {
+    OC_UNUSED(jvm);
+    OC_UNUSED(reserved);
     return;
 }
 
@@ -61,9 +67,10 @@ Java_org_iotivity_ca_CaInterface_initialize
 }
 #else
 JNIEXPORT void JNICALL
-Java_org_iotivity_ca_CaInterface_initialize
-(JNIEnv *env, jclass clazz)
+Java_org_iotivity_ca_CaInterface_initialize(JNIEnv *env, jclass clazz)
 {
+    OC_UNUSED(env);
+    OC_UNUSED(clazz);
     LOGI("CaInterface_initialize");
 }
 #endif
@@ -244,7 +251,8 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaInterface_caManagerInitialize(JNIEnv *env, jclass clazz,
                                                      jobject listener)
 {
-    LOGI("CaManager_initialize");
+    OC_UNUSED(clazz);
+    LOGI("CaManagere_initialize");
 
     g_listenerObject = (*env)->NewGlobalRef(env, listener);
 
@@ -256,6 +264,7 @@ Java_org_iotivity_ca_CaInterface_caManagerInitialize(JNIEnv *env, jclass clazz,
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaInterface_caManagerTerminate(JNIEnv *env, jclass clazz)
 {
+    OC_UNUSED(clazz);
     LOGI("CaManager_terminate");
 
     CAUtilClientTerminate(env);
@@ -285,6 +294,7 @@ Java_org_iotivity_ca_CaInterface_caManagerSetAutoConnectionDeviceInfo(JNIEnv *en
                                                                       jclass clazz,
                                                                       jstring jaddress)
 {
+    OC_UNUSED(clazz);
     LOGI("CaManager_setAutoConnectionDeviceInfo");
     if (!jaddress)
     {
@@ -309,6 +319,7 @@ Java_org_iotivity_ca_CaInterface_caManagerUnsetAutoConnectionDeviceInfo(JNIEnv *
                                                                         jclass clazz,
                                                                         jstring jaddress)
 {
+    OC_UNUSED(clazz);
     LOGI("CaManager_unsetAutoConnectionDeviceInfo");
     if (!jaddress)
     {
@@ -445,7 +456,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_ca_CaInterface_setCipherSuiteImpl
     LOGI("setCipherSuiteImpl");
     (void)env;
     (void)clazz;
-    CAResult_t ret = CASelectCipherSuite(cipherSuite, (CATransportAdapter_t) adapter);
+    CAResult_t ret = CASelectCipherSuite((uint16_t)cipherSuite, (CATransportAdapter_t) adapter);
     if (CA_STATUS_OK != ret)
     {
         LOGE("CASelectCipherSuite has failed");

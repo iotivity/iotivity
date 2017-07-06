@@ -200,8 +200,10 @@ void throwOcException(JNIEnv* env, jobject ex)
 }
 
 // JNI OnLoad
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
+JNIEXPORT jint JNICALL
+JNI_OnLoad(JavaVM* vm, void* reserved)
 {
+    OC_UNUSED(reserved);
     LOGI("JNI_OnLoad");
     JNIEnv* env = nullptr;
     g_jvm = vm;
@@ -674,8 +676,10 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
     return JNI_CURRENT_VERSION;
 }
 
-JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
+JNIEXPORT void JNICALL
+JNI_OnUnload(JavaVM *vm, void *reserved)
 {
+    OC_UNUSED(reserved);
     LOGI("JNI_OnUnload");
     JNIEnv* env = nullptr;
 

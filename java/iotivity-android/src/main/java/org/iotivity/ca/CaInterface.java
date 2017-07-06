@@ -30,7 +30,6 @@ import org.iotivity.base.OcConnectivityType;
 
 public class CaInterface {
     static {
-        System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("ca-interface");
     }
     private static volatile boolean isConnectionManagerInitialized = false;
