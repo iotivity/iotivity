@@ -63,8 +63,7 @@ if target_os not in ['windows', 'winrt']:
     easysetup_test_env.AppendUnique(
         CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
-easysetup_test_env.AppendUnique(CXXFLAGS=['-pthread'])
-easysetup_test_env.AppendUnique(LIBS=['pthread'])
+easysetup_test_env.AddPthreadIfNeeded()
 
 easysetup_test_env.PrependUnique(CPPPATH=[
     '#/extlibs/hippomocks/hippomocks',
