@@ -50,8 +50,11 @@ using namespace std;
 
 #define RECONNECT_FILE_LENGTH 260
 
+void scanCommand(MPMPluginHandle handle);
+
 map<string, MPMPluginHandle> g_loadedPlugins;
 std::atomic_bool keepEventLoop(true);
+bool autoScanMode = false;
 bool autoAddMode = false;
 
 std::string rawUsageMessage =
@@ -63,6 +66,10 @@ Give valid inputs! This is just an example client and input is not sanitized to 
 the client minimal.
 
 -n          Start plugins in NON secure mode. Default is secure.
+
+-s          Start this client in auto scan mode.
+            This will cause the client send a SCAN message at startup to each loaded
+            plugin. If used in conjunction with '-a', then no user interaction required.
 
 -a          Start this client in auto add mode.
             This will cause the client send an ADD message with the same message as in
@@ -302,6 +309,11 @@ void loadPlugin(const std::string pluginPath)
         g_loadedPlugins[pluginPath] = pluginHandle;
         printf("%p\n", pluginHandle);
         log(pluginPath, " is loaded.\n");
+        if(autoScanMode)
+        {
+            log(pluginPath, " performing auto scan.\n");
+            scanCommand(pluginHandle);
+        }
     }
     else
     {
@@ -566,6 +578,10 @@ int main(int argc, char const *argv[])
         if (strcmp(argv[i], "-n") == 0)
         {
             setenv("NONSECURE", "true", 1);
+        }
+        else if (strcmp(argv[i], "-s") == 0)
+        {
+            autoScanMode = true;
         }
         else if (strcmp(argv[i], "-a") == 0)
         {
