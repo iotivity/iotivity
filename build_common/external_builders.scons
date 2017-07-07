@@ -2,34 +2,33 @@
 # Add external Pseudo-Builders
 #
 # Some methods are added to manage external packages:
-#    'PrepareLib': Checks the existence of an external library, if it
-# doesn't exist, calls the script user provided to download(if required)
-# and build the source code of the external library or notify user to
-# install the library.
+#   'PrepareLib': Make a library ready to use.
 #   'Download': Download package from specify URL
 #   'UnpackAll': Unpack the package
-#   'Configure': Execute specify script(configure, bootstrap etc)
+#   'Configure': Execute specify script (configure, bootstrap etc)
 #   'InstallHeadFile': Install head files
-#   'InstallLib': Install library binaries(.so, .a etc)
+#   'InstallLib': Install library binaries (.so, .a etc)
 #
 # for more on Pseudo-Builders see scons offical documentation
 # 'Pseudo-Builders: the AddMethod function'
 ##
-import os, subprocess
-import urllib2, urlparse
+import os
+import subprocess
+import urllib2
 import SCons.Errors
 
 Import('env')
+src_dir = env.get('SRC_DIR')
 
-
-# Check whether a library exists, if not, notify user to install it or try to
-# download the source code and build it
+# Prepare a library for use.
+# Check whether it exists
+#  if not try to download the source code and build it
+#  if not possible, give the user a hint about downloading
 # @param libname - the name of the library try to prepare
-# @param lib - the lib(.so, .a etc) to check (a library may include more then
-#      one lib, e.g. boost, includes boost_thread, boost_system ...
-# @param path - the directory of the library building script, if it's not set,
-#            by default, it's <src_dir>/extlibs/<libname>/
-# @param script - the building script, by default, it's 'SConscript'
+# @param lib - the lib (.so, .a etc) to check (a library may include more then
+#      one lib, e.g. boost includes boost_thread, boost_system ...)
+# @param path - path to build script for library. Default is <src_dir>/extlibs/<libname>/
+# @param script - build script for this library. Default is SConscript
 #
 def __prepare_lib(ienv, libname, lib=None, path=None, script=None):
     p_env = ienv.Clone(LIBS=[])
@@ -44,9 +43,9 @@ def __prepare_lib(ienv, libname, lib=None, path=None, script=None):
         if path:
             dir = path
         else:
-            dir = os.path.join(env.get('SRC_DIR'), 'extlibs', libname)
+            dir = os.path.join(src_dir, 'extlibs', libname)
 
-        # Execute the script to download(if required) and build source code
+        # Execute the script to download (if required) and build source code
         if script:
             st = os.path.join(dir, script)
         else:
@@ -56,16 +55,16 @@ def __prepare_lib(ienv, libname, lib=None, path=None, script=None):
             SConscript(st)
         else:
             if target_os in ['linux', 'darwin', 'tizen']:
-                print 'Don\'t find library(%s), please intall it, exit ...' % libname
+                msg = 'Library (%s) not found, please intall it, exit ...' % libname
             else:
-                print 'Library (%s) not found and cannot find the scons script (%s), exit ...' % (
+                msg = 'Library (%s) not found and cannot find the scons script (%s), exit ...' % (
                     libname, st)
-            Exit(1)
+            Exit(msg)
 
     conf.Finish()
 
 
-# Run configure command (usually it's done before build a library)
+# Run configure command (usually done before building a library)
 def __configure(env, cwd, cmd):
     print "Configuring using [%s/%s] ..." % (cwd, cmd)
     # build it now (we need the shell, because some programs need it)
@@ -98,15 +97,14 @@ def __download(ienv, target, url):
 def __install_head_file(ienv, file):
     return ienv.Install(
         os.path.join(
-            env.get('SRC_DIR'), 'dep', target_os, target_arch, 'usr',
-            'include'), file)
+            src_dir, 'dep', target_os, target_arch, 'usr', 'include'), file)
 
 
 # Install library binaries to <src_dir>/deps/<target_os>/lib/<arch>
 def __install_lib(ienv, lib):
     return ienv.Install(
         os.path.join(
-            env.get('SRC_DIR'), 'dep', target_os, target_arch, 'usr', 'lib'),
+            src_dir, 'dep', target_os, target_arch, 'usr', 'lib'),
         lib)
 
 
