@@ -89,6 +89,7 @@ SampleResource *g_acAirFlowResourceHidden;
 SampleResource *g_acTemperatureResourceHidden;
 SampleResource *g_acTimerResourceHidden;
 SampleResource *g_acSwingResourceHidden;
+SampleResource *g_acConfigurationResource;
 
 bool g_hasCallbackArrived = false;
 bool g_isObservingResource = false;
@@ -1617,6 +1618,41 @@ void createAirConDevice(bool isSecured)
         {
             cout << "Unable to create Air Conditioner Swing resource" << endl;
         }
+
+        resourceProperty = OC_ACTIVE | OC_DISCOVERABLE;
+        if (isSecured)
+        {
+            resourceProperty = resourceProperty | OC_SECURE;
+        }
+        g_acConfigurationResource = new SampleResource();
+        g_acConfigurationResource->setResourceProperties(AC_CON_URI, CON_RESOURCE_TYPE,
+        CON_RESOURCE_INTERFACE);
+
+        OCRepresentation conRep;
+        value = ENGLISH_NAME_VALUE;
+        conRep.setValue(NAME_KEY, value);
+        vector<double> location;
+        location.push_back(LATTITUDE_VALUE);
+        location.push_back(LONGITUDE_VALUE);
+        conRep.setValue(LOCATION_KEY, location);
+        value = CURRENCY_VALUE;
+        conRep.setValue(CURRENCY_KEY, value);
+
+        g_acConfigurationResource->setResourceRepresentation(conRep);
+
+        result = g_acConfigurationResource->startResource(resourceProperty);
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "Air Conditioner Configuration Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_acConfigurationResource);
+            g_isAirConDeviceCreated = true;
+        }
+        else
+        {
+            cout << "Unable to create Air Conditioner Swing resource" << endl;
+        }
+
     }
     else
     {

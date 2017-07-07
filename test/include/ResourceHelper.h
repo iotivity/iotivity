@@ -55,6 +55,7 @@ namespace PH = std::placeholders;
 #define AC_SWING_URI "/Vendor/AirConditioner/Swinger"
 #define AC_TIMER_URI_CHILD "/Vendor/AirConditioner/TimerClock/Children"
 #define AC_SWING_URI_CHILD "/Vendor/AirConditioner/Swinger/Children"
+#define AC_CON_URI "/ACConfigurationResURI"
 
 #define Device_TYPE_TV "oic.d.tv"
 #define Device_TYPE_AC "oic.d.airconditioner"
@@ -67,6 +68,7 @@ namespace PH = std::placeholders;
 #define TIMER_RESOURCE_TYPE "x.com.vendor.timer"
 #define CHILD_LOCK_RESOURCE_TYPE "x.com.vendor.child.lock"
 #define SWING_RESOURCE_TYPE "x.com.vendor.swing"
+#define CON_RESOURCE_TYPE "oic.wk.con"
 
 #define TV_Device_INTERFACE "oic.if.a"
 #define AC_Device_INTERFACE "oic.if.a"
@@ -78,6 +80,7 @@ namespace PH = std::placeholders;
 #define TIMER_RESOURCE_INTERFACE "oic.if.a oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline"
 #define CHILD_LOCK_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
 #define SWING_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
+#define CON_RESOURCE_INTERFACE "oic.if.rw oic.if.baseline"
 
 #define ACTUATOR_INTERFACE "oic.if.a"
 #define LIGHT_1_URI "/device/light-1"
@@ -120,19 +123,37 @@ const int SUCCESS_RESPONSE = 0;
 #define DEFAULT_POWER_STATE "off"
 #define DEFAULT_INTENSITY 10
 #define DEFAULT_MANUFACTURER "Vendor"
-#define DEFAULT_REGION "Dhaka, Bangladesh "
+#define DEFAULT_REGION "রাজশাহী, Bangladesh "
 #define DEFAULT_FACTORY_RESET_STATE "false"
 #define DEFAULT_REBOOT_STATE "false"
 #define DEFAULT_VERSION 1.0
 #define DEFAULT_ACCURACY 0.85
 #define DEFAULT_CRUDN_SUPPORT true
+#define LATTITUDE_VALUE 23.50
+#define LONGITUDE_VALUE 90.10
+#define LOCATION_NAME_VALUE "Guest Room "
+#define CURRENCY_VALUE "BDT"
+#define BANGLA_VALUE "bn"
+#define ENGLISH_VALUE "en"
+#define DEFAULT_LANGUAGE_VALUE "en"
+#define BANGLA_VALUE "bn"
+#define ENGLISH_VALUE "en"
+#define BANGLA_NAME_VALUE "বুদ্ধিমান এয়ার কন্ডিশনার"
+#define ENGLISH_NAME_VALUE "Smart Air Conditioner"
+#define LANGUAGE_VALUE "language"
+
 
 #define REPRESENTATION_KEY "rep"
 #define URI_KEY "href"
 #define POWER_KEY "power"
 #define INTENSITY_KEY "intensity"
 #define MANUFACTURER_KEY "manufacturer"
-#define REGION_KEY "region"
+#define REGION_KEY "r"
+#define LOCATION_KEY "loc"
+#define LOCATION_NAME_KEY "locn"
+#define CURRENCY_KEY "c"
+#define LANGUAGE_KEY "ln"
+#define DEFAULT_LANGUAGE_KEY "dl"
 #define FACTORY_RESET_KEY "value"
 #define REBOOT_KEY "rb"
 #define ACTIONSET_KEY "ActionSet"
