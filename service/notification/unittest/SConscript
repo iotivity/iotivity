@@ -80,6 +80,7 @@ notification_test_env.PrependUnique(CPPPATH=[
 if env.get('WITH_TCP') == True:
     notification_test_env.AppendUnique(CPPDEFINES=['WITH_TCP'])
 if env.get('SECURED') == '1':
+    notification_test_env.AppendUnique(CPPDEFINES=['SECURED'])
     notification_test_env.AppendUnique(
         LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
     notification_test_env.AppendUnique(
