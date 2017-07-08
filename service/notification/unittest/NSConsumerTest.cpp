@@ -35,6 +35,8 @@
 #include "NSProviderSimulator.h"
 #include "NSUnittestUtil.h"
 
+#define DEFAULT_G_TIMEOUT 1000
+
 namespace
 {
     NSProviderSimulator g_providerSimul;
@@ -43,9 +45,10 @@ namespace
     std::atomic_bool g_isStartedStack(false);
 
     /// Reasonable timeout is set to 1000 ms in unsecured mode.
-    unsigned int g_timeout = 1000;
 #ifdef SECURED
-    g_timeout = 2 * g_timeout;
+    unsigned int g_timeout = 2 * DEFAULT_G_TIMEOUT;
+#else
+    unsigned int g_timeout = DEFAULT_G_TIMEOUT;
 #endif
     std::chrono::milliseconds g_waitForResponse(g_timeout);
  

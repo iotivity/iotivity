@@ -30,14 +30,17 @@
 #include "NSUnittestUtil.h"
 #include "NSCommon.h"
 
+#define DEFAULT_G_TIMEOUT 1000
+
 namespace
 {
     std::atomic_bool g_isStartedStack(false);
 
     /// Reasonable timeout is set to 1000 ms in unsecured mode
-    unsigned int g_timeout = 1000;
 #ifdef SECURED
-    g_timeout = 2 * g_timeout;
+    unsigned int g_timeout = 2 * DEFAULT_G_TIMEOUT;
+#else
+    unsigned int g_timeout = DEFAULT_G_TIMEOUT;
 #endif
     std::chrono::milliseconds g_waitForResponse(g_timeout);
 
@@ -235,9 +238,10 @@ TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAc
 
     // maximum waiting time for subscription is 1.5 sec.
     // usually maximum time is 1 sec. (g_waitForResponse = 1 sec.)
-    unsigned int timeout = g_timeout * 1.5;
 #ifdef SECURED
-    timemout = 2 * timemout;
+    unsigned int timeout = g_timeout * 3;
+#else
+    unsigned int timeout = g_timeout * 1.5;
 #endif
     std::chrono::milliseconds waitForSubscription(timeout);
     std::unique_lock< std::mutex > lock{ responseProviderSubLock };
