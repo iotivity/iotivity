@@ -115,6 +115,10 @@ def __action( target, source, env ) :
 
     build_path = 'build' + os.sep + target_os + os.sep + target_arch
 
+    if env.get('TARGET_ARCH') in ['arm64-v8a']:
+        cmd.append('architecture=arm')
+        cmd.append('address-model=64')
+
     cmd.append('-q')
     cmd.append('target-os=linux')
     cmd.append('link=static')

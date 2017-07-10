@@ -70,6 +70,22 @@ static OicSecAcl_t *gAcl = NULL;
 static OCResourceHandle gAclHandle = NULL;
 static OCResourceHandle gAcl2Handle = NULL;
 
+/**
+ * List of known ace ids
+ */
+enum
+{
+    ACE_ID1 = 1,
+    ACE_ID2,
+    ACE_ID3,
+    ACE_ID4,
+    ACE_ID5,
+    ACE_ID_FIRST_FREE
+};
+
+//global aceid counter to assign unique ace id to new/duplicated aces
+static uint16_t ACE_ID_COUNTER = ACE_ID_FIRST_FREE;
+
 void FreeRsrc(OicSecRsrc_t *rsrc)
 {
     //Clean each member of resource
@@ -171,6 +187,8 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
     {
         newAce = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
         VERIFY_NOT_NULL(TAG, newAce, ERROR);
+
+        newAce->aceid = ACE_ID_COUNTER++;
 
         //Subject
         newAce->subjectType = ace->subjectType;
@@ -2974,7 +2992,7 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     // ACE allowing read-only access to /res, /d and /p by "ANON_CLEAR" subjects
     readOnlyAceAnon = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
     VERIFY_NOT_NULL(TAG, readOnlyAceAnon, ERROR);
-    readOnlyAceAnon->aceid = 1;
+    readOnlyAceAnon->aceid = ACE_ID1;
     readOnlyAceAnon->permission = PERMISSION_READ;
     readOnlyAceAnon->validities = NULL;
     LL_APPEND(acl->aces, readOnlyAceAnon);
@@ -3008,7 +3026,7 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     // ACE allowing read-only access to /res, /d and /p by "AUTH_CRYPT" subjects
     readOnlyAceAuth = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
     VERIFY_NOT_NULL(TAG, readOnlyAceAuth, ERROR);
-    readOnlyAceAuth->aceid = 2;
+    readOnlyAceAuth->aceid = ACE_ID2;
     readOnlyAceAuth->permission = PERMISSION_READ;
     readOnlyAceAuth->validities = NULL;
     LL_APPEND(acl->aces, readOnlyAceAuth);
@@ -3043,7 +3061,7 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     // to "ANON_CLEAR" (e.g. CoAP) subjects, for ownership transfer
     readWriteDeleteAceAnon = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
     VERIFY_NOT_NULL(TAG, readWriteDeleteAceAnon, ERROR);
-    readWriteDeleteAceAnon->aceid = 3;
+    readWriteDeleteAceAnon->aceid = ACE_ID3;
     readWriteDeleteAceAnon->permission = PERMISSION_READ | PERMISSION_WRITE | PERMISSION_DELETE;
     readWriteDeleteAceAnon->validities = NULL;
     LL_APPEND(acl->aces, readWriteDeleteAceAnon);
@@ -3064,7 +3082,7 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     // to "AUTH_CRYPT" (e.g. CoAPS) subjects, for ownership transfer
     readWriteDeleteAceAuth = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
     VERIFY_NOT_NULL(TAG, readWriteDeleteAceAuth, ERROR);
-    readWriteDeleteAceAuth->aceid = 4;
+    readWriteDeleteAceAuth->aceid = ACE_ID4;
     readWriteDeleteAceAuth->permission = PERMISSION_READ | PERMISSION_WRITE | PERMISSION_DELETE;
     readWriteDeleteAceAuth->validities = NULL;
     LL_APPEND(acl->aces, readWriteDeleteAceAuth);
@@ -3501,6 +3519,8 @@ static OicSecAce_t* GetSecDefaultACE()
     //Generate default ACE
     OicSecAce_t* newAce = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
     VERIFY_NOT_NULL(TAG, newAce, ERROR);
+
+    newAce->aceid = ACE_ID5;
 
     // Subject -- Mandatory
     newAce->subjectType = OicSecAceUuidSubject;
