@@ -115,7 +115,12 @@ def kill_all():
         try:
             from psutil import process_iter
             for proc in process_iter():
-                if proc.name() == server_bin:
+                name = None
+                if callable(getattr(proc, 'name')):
+                    name = proc.name()
+                else:
+                    name = proc.name
+                if name == server_bin:
                     proc.kill()
         except ImportError:
             print "can not process check"
