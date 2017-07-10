@@ -32,7 +32,7 @@
 class JniOcCloudProvisioning
 {
     public:
-        JniOcCloudProvisioning(std::shared_ptr<OCCloudProvisioning> cloudObject);
+        JniOcCloudProvisioning(std::shared_ptr<OC::OCCloudProvisioning> cloudObject);
         ~JniOcCloudProvisioning();
 
         static JniOcCloudProvisioning* getJniOcCloudProvisioningPtr(JNIEnv *env, jobject thiz);
@@ -61,7 +61,7 @@ class JniOcCloudProvisioning
         std::mutex resultMapLock;
         std::mutex aclresultMapLock;
         std::mutex createresultMapLock;
-        std::shared_ptr<OCCloudProvisioning>m_sharedCloudObject;
+        std::shared_ptr<OC::OCCloudProvisioning>m_sharedCloudObject;
 };
 
 

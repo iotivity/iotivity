@@ -26,6 +26,7 @@
 #include "oic_malloc.h"
 
 namespace PH = std::placeholders;
+using namespace OC;
 
 JniOcCloudProvisioning::JniOcCloudProvisioning(std::shared_ptr<OCCloudProvisioning> p)
     : m_sharedCloudObject(p)
