@@ -36,9 +36,6 @@ import java.util.List;
 public final class OcPlatform {
 
     static {
-        System.loadLibrary("oc_logger");
-        System.loadLibrary("octbstack");
-        System.loadLibrary("oc");
         System.loadLibrary("ocstack-jni");
     }
 

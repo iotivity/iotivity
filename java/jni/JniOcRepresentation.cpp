@@ -172,7 +172,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean
     }
 
     std::string str = env->GetStringUTFChars(jKey, nullptr);
-    rep->setValue(str, static_cast<bool>(jValue));
+    rep->setValue(str, (jValue != 0));
 }
 
 /*
@@ -511,7 +511,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBooleanAr
     std::vector<bool> value;
     for (jsize i = 0; i < len; ++i)
     {
-        value.push_back(static_cast<bool>(booleans[i]));
+        value.push_back((booleans[i] != 0));
     }
     env->ReleaseBooleanArrayElements(jValue, booleans, JNI_ABORT);
 
@@ -550,7 +550,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean2D
         std::vector<bool> innerVector;
         for (jsize i = 0; i < lenInner; ++i)
         {
-            innerVector.push_back(static_cast<bool>(booleans[i]));
+            innerVector.push_back((booleans[i] != 0));
         }
         env->ReleaseBooleanArrayElements(jInnerArray, booleans, JNI_ABORT);
         env->DeleteLocalRef(jInnerArray);
@@ -597,7 +597,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean3D
             std::vector<bool> innerVector;
             for (jsize i = 0; i < lenInner; ++i)
             {
-                innerVector.push_back(static_cast<bool>(booleans[i]));
+                innerVector.push_back((booleans[i] != 0));
             }
             env->ReleaseBooleanArrayElements(jInnerArray, booleans, JNI_ABORT);
             env->DeleteLocalRef(jInnerArray);

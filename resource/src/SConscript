@@ -141,7 +141,8 @@ if target_os in ['windows', 'ios']:
     # TODO: Add OC_EXPORT prefixes to enable DLL generation
     oclib = oclib_env.StaticLibrary('oc', oclib_src)
 else:
-    oclib = oclib_env.SharedLibrary('oc', oclib_src)
+    oclib = oclib_env.StaticLibrary('oc_internal', oclib_src)
+    oclib += oclib_env.SharedLibrary('oc', oclib_src)
 oclib_env.InstallTarget(oclib, 'oc')
 oclib_env.UserInstallTargetLib(oclib, 'oc')
 header_dir = os.path.join(oclib_env.get('SRC_DIR'), 'resource',

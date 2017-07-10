@@ -17,6 +17,6 @@ allprojects {
         jcenter()
     }
     dependencies {
-        compile fileTree(dir: "../../iotivity-$TARGET_OS/build/libs/", include: '*.jar')
+        compile fileTree(dir: "../../iotivity-java/build/libs/", include: '*.jar')
     }
 }

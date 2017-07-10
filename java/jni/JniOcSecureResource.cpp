@@ -156,11 +156,16 @@ OCStackResult JniOcSecureResource::doOwnershipTransfer(JNIEnv* env, jobject jLis
 
 OCStackResult JniOcSecureResource::getLinkedDevices(JNIEnv *env, UuidList_t &uuidList)
 {
+    OC_UNUSED(env);
     return m_sharedSecureResource->getLinkedDevices(uuidList);
 }
 
 OCStackResult JniOcSecureResource::removeDevice(JNIEnv* env, jint timeout, jobject jListener)
 {
+    if (timeout > USHRT_MAX)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
     JniProvisionResultListner *resultListener = AddProvisionResultListener(env, jListener);
 
     ResultCallBack resultCallback = [resultListener](PMResultList_t *result, int hasError)
@@ -168,7 +173,7 @@ OCStackResult JniOcSecureResource::removeDevice(JNIEnv* env, jint timeout, jobje
         resultListener->ProvisionResultCallback(result, hasError, ListenerFunc::REMOVEDEVICE);
     };
 
-    return m_sharedSecureResource->removeDevice((int)timeout, resultCallback);
+    return m_sharedSecureResource->removeDevice(static_cast<unsigned short>(timeout), resultCallback);
 }
 
 OCStackResult JniOcSecureResource::unlinkDevices(JNIEnv* env, jobject _device2, jobject jListener)
@@ -222,8 +227,8 @@ OCStackResult JniOcSecureResource::provisionTrustCertChain(JNIEnv* env, jint typ
         resultListener->ProvisionResultCallback(result, hasError, ListenerFunc::PROVISIONTRUSTCERTCHAIN);
     };
 
-    return m_sharedSecureResource->provisionTrustCertChain((OicSecCredType_t)type, credId,
-            resultCallback);
+    return m_sharedSecureResource->provisionTrustCertChain((OicSecCredType_t)type,
+            static_cast<uint16_t>(credId), resultCallback);
 }
 #endif
 
@@ -294,12 +299,12 @@ OCStackResult JniOcSecureResource::provisionDirectPairing(JNIEnv* env, jobjectAr
 
     pconf = new OicSecPconf_t;
     memset(pconf, 0, sizeof(OicSecPconf_t));
-    pconf->edp = edp;
+    pconf->edp = (edp != 0);
     pconf->prmLen = prms.size();
     pconf->prm = new OicSecPrm_t[pconf->prmLen];
     pconf->pddevLen = 0;
 
-    for (int i = 0 ; i < prms.size(); i++)
+    for (size_t i = 0 ; i < prms.size(); i++)
         pconf->prm[i] = (OicSecPrm_t)prms[i];
 
     memcpy(pconf->pin.val, pin.c_str(), DP_PIN_LENGTH);
@@ -440,6 +445,7 @@ OCStackResult JniOcSecureResource::changeMOTMode(JNIEnv* env, jint momType, jobj
 
 OCStackResult JniOcSecureResource::addPreconfigPIN(JNIEnv* env, std::string pin, int size)
 {
+    OC_UNUSED(env);
     OCStackResult ret;
     ret = m_sharedSecureResource->addPreconfigPIN(pin.c_str(), (size_t) size);
     return ret;
@@ -542,6 +548,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_removeDevice
 
     try
     {
+
         OCStackResult result = secureResource->removeDevice(env, timeout, jListener);
         if (OC_STACK_OK != result)
         {

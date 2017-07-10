@@ -89,7 +89,7 @@ struct JObjectConverter : boost::static_visitor < jobject >
     // Sequences:
     jobject operator()(const std::vector<int>& val) const
     {
-        size_t len = val.size();
+        jsize len = static_cast<jsize>(val.size());
         jintArray jIntArray = env->NewIntArray(len);
         if (!jIntArray)
         {
@@ -101,7 +101,7 @@ struct JObjectConverter : boost::static_visitor < jobject >
     }
     jobject operator()(const std::vector<double>& val) const
     {
-        size_t len = val.size();
+        jsize len = static_cast<jsize>(val.size());
         jdoubleArray jDoubleArray = env->NewDoubleArray(len);
         if (!jDoubleArray)
         {
@@ -113,14 +113,14 @@ struct JObjectConverter : boost::static_visitor < jobject >
     }
     jobject operator()(const std::vector<bool>& val) const
     {
-        size_t len = val.size();
+        jsize len = static_cast<jsize>(val.size());
         jbooleanArray jBooleanArray = env->NewBooleanArray(len);
         if (!jBooleanArray)
         {
             return nullptr;
         }
         jboolean* booleans = new jboolean[len];
-        for (size_t i = 0; i < len; ++i)
+        for (jsize i = 0; i < len; ++i)
         {
             booleans[i] = static_cast<jboolean>(val[i]);
         }
@@ -134,13 +134,13 @@ struct JObjectConverter : boost::static_visitor < jobject >
     }
     jobject operator()(const std::vector<std::string>& val) const
     {
-        size_t len = val.size();
+        jsize len = static_cast<jsize>(val.size());
         jobjectArray strArr = env->NewObjectArray(len, g_cls_String, nullptr);
         if (!strArr)
         {
             return nullptr;
         }
-        for (size_t i = 0; i < len; ++i)
+        for (jsize i = 0; i < len; ++i)
         {
             jstring jString = env->NewStringUTF(val[i].c_str());
             env->SetObjectArrayElement(strArr, static_cast<jsize>(i), jString);
@@ -155,12 +155,13 @@ struct JObjectConverter : boost::static_visitor < jobject >
     // OCByteString and arrays:
     jobject operator()(const OCByteString &val) const
     {
-        jbyteArray jByteArray = env->NewByteArray(val.len);
+        jsize len = static_cast<jsize>(val.len);
+        jbyteArray jByteArray = env->NewByteArray(len);
         if (!jByteArray)
         {
             return nullptr;
         }
-        env->SetByteArrayRegion(jByteArray, 0, val.len, reinterpret_cast<const jbyte *>(val.bytes));
+        env->SetByteArrayRegion(jByteArray, 0, len, reinterpret_cast<const jbyte *>(val.bytes));
         if (env->ExceptionCheck())
         {
             env->DeleteLocalRef(jByteArray);
@@ -280,7 +281,7 @@ struct JObjectConverter : boost::static_visitor < jobject >
     }
     jobject operator()(const std::vector<uint8_t>& val) const
     {
-        size_t len = val.size();
+        jsize len = static_cast<jsize>(val.size());
         jbyteArray jByteArray = env->NewByteArray(len);
         if (!jByteArray)
         {
@@ -302,7 +303,7 @@ struct JObjectConverter : boost::static_visitor < jobject >
         }
         for (jsize i = 0; i < lenOuter; ++i)
         {
-            size_t lenInner = val[i].size();
+            jsize lenInner = static_cast<jsize>(val[i].size());
             jintArray jIntArray = env->NewIntArray(lenInner);
             if (!jIntArray)
             {
@@ -383,7 +384,7 @@ struct JObjectConverter : boost::static_visitor < jobject >
 
         for (jsize i = 0; i < lenOuter; ++i)
         {
-            size_t lenInner = val[i].size();
+            jsize lenInner = static_cast<jsize>(val[i].size());
             jdoubleArray jDoubleArray = env->NewDoubleArray(lenInner);
             if (!jDoubleArray)
             {
@@ -463,14 +464,14 @@ struct JObjectConverter : boost::static_visitor < jobject >
         }
         for (jsize i = 0; i < lenOuter; ++i)
         {
-            size_t lenInner = val[i].size();
+            jsize lenInner = static_cast<jsize>(val[i].size());
             jbooleanArray jBooleanArray = env->NewBooleanArray(lenInner);
             if (!jBooleanArray)
             {
                 return nullptr;
             }
             jboolean* booleans = new jboolean[lenInner];
-            for (size_t j = 0; j < lenInner; ++j)
+            for (jsize j = 0; j < lenInner; ++j)
             {
                 booleans[j] = static_cast<jboolean>(val[i][j]);
             }
@@ -511,10 +512,10 @@ struct JObjectConverter : boost::static_visitor < jobject >
             }
             for (jsize i = 0; i < lenMiddle; ++i)
             {
-                size_t lenInner = val[k][i].size();
+                jsize lenInner = static_cast<jsize>(val[k][i].size());
                 jbooleanArray jBooleanArray = env->NewBooleanArray(lenInner);
                 jboolean* booleans = new jboolean[lenInner];
-                for (size_t j = 0; j < lenInner; ++j)
+                for (jsize j = 0; j < lenInner; ++j)
                 {
                     booleans[j] = val[k][i][j];
                 }

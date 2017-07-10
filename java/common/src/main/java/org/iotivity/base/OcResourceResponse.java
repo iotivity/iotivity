@@ -30,7 +30,6 @@ import java.util.List;
 public class OcResourceResponse {
 
     static {
-        System.loadLibrary("oc");
         System.loadLibrary("ocstack-jni");
     }
 
