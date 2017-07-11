@@ -32,6 +32,7 @@ mbedtls_dir = os.path.join(root_dir, 'extlibs', 'mbedtls', 'mbedtls')
 start_dir = os.getcwd()
 mbedtls_config_file = 'config-iotivity.h' if target_os != 'windows' else 'config-iotivity_windows.h'
 
+# The mbedtls_revision tag here must match the one in extlibs/mbedtls/prep.sh.
 mbedtls_revision = 'mbedtls-2.4.2'
 if not os.path.exists(mbedtls_dir):
     msg = '''
@@ -51,7 +52,6 @@ os.chdir(mbedtls_dir)
 # the script will always conclude the repo is not up to date because a tag
 # with that name doesn't exist.
 # Tizen uses its own process to prepare the mbedTLS repo in gbsbuild.sh.
-# The mbedtls_revision tag here must match the one in extlibs/mbedtls/prep.sh.
 if os.path.exists('.git/HEAD'):
     out = subprocess.check_output('git tag -l ' + mbedtls_revision, shell=True)
     if mbedtls_revision not in out:
@@ -92,6 +92,7 @@ if found:
 if not found:
     if os.path.exists('.git/HEAD'):
         # Apply ocf patch on git revision
+        print "Syncing/patching mbedtls external project..."
         cmd = 'git checkout -f development && git reset --hard ' + mbedtls_revision + ' && git clean -f && git apply --whitespace=fix ../ocf.patch'
         res = os.system(cmd)
     else:
@@ -114,8 +115,8 @@ mbedtls_config = os.path.join(root_dir, 'extlibs', 'mbedtls', 'mbedtls',
 try:
     copyfile(iotivity_config, mbedtls_config)
 except:
-    print 'mbedtls SConscript: cannot copy ' + iotivity_config + ' to ' + mbedtls_config
-    msg = 'error: ' + str(sys.exc_info()[0])
+    msg = 'mbedtls SConscript: cannot copy ' + iotivity_config + ' to ' + mbedtls_config
+    msg += 'error: ' + str(sys.exc_info()[0])
     Exit(msg)
 else:
     print 'Copied IoTivity version of config.h to ' + mbedtls_config

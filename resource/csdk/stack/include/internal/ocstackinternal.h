@@ -364,23 +364,6 @@ void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCR
 /* This method will retrieve the tcp port */
 OCStackResult GetTCPPortInfo(OCDevAddr *endpoint, uint16_t *port, bool secured);
 #endif
-
-/**
- * This function creates list of OCEndpointPayload structure,
- *  which matches with endpointType from list of CAEndpoint_t.
- *
- * @param[in] endpointType Bit combination of type for Endpoint.
- * @param[in] devAddr devAddr Structure pointing to the address.
- * @param[in] networkInfo array of CAEndpoint_t
- * @param[in] infoSize size of array
- * @param[in] listHead pointer to HeadNode pointer
- *
- * @return if success return pointer else NULL
- */
-OCEndpointPayload* CreateEndpointPayloadList(OCTpsSchemeFlags endpointType,
-    const OCDevAddr *devAddr, CAEndpoint_t *networkInfo,
-    size_t infoSize, OCEndpointPayload **listHead);
-
 #ifdef __cplusplus
 }
 #endif // __cplusplus
