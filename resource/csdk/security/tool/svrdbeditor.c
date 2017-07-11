@@ -73,6 +73,12 @@
 
 #define SVR_DB_PATH_LENGTH 1024
 #define PRINT_ERR(fmt,...) printf(RED_BEGIN "error: " fmt COLOR_END_NL, ##__VA_ARGS__)
+#define PRINT_WARN(fmt,...) printf(YELLOW_BEGIN "warning : " fmt COLOR_END_NL, ##__VA_ARGS__)
+#define PRINT_INFO(fmt,...) printf(YELLOW_BEGIN fmt COLOR_END_NL, ##__VA_ARGS__)
+#define PRINT_PROG(fmt,...) printf(BOLD_BEGIN fmt COLOR_END, ##__VA_ARGS__)
+#define PRINT_DATA(fmt,...) printf(CYAN_BEGIN fmt COLOR_END, ##__VA_ARGS__)
+#define PRINT_NORMAL(fmt,...) printf(fmt, ##__VA_ARGS__)
+#define PRINT_NL() printf("\n");
 
 typedef enum OperationType
 {
@@ -94,12 +100,12 @@ typedef enum SubOperationType
     BACK = 99
 } SubOperationType_t;
 
-bool gAllowedEditMenu[SVR_EDIT_IDX_SIZE] = {false/*unused*/, false, false, false, false};
-char gSvrDbPath[SVR_DB_PATH_LENGTH] = {0};
+bool g_allowedEditMenu[SVR_EDIT_IDX_SIZE] = {false/*unused*/, false, false, false, false};
+char g_svrDbPath[SVR_DB_PATH_LENGTH] = {0};
 
-OicSecDoxm_t *gDoxmResource = NULL;
-OicSecPstat_t *gPstatResource = NULL;
-OicSecAcl_t *gAclResource = NULL;
+OicSecDoxm_t *g_doxmResource = NULL;
+OicSecPstat_t *g_pstatResource = NULL;
+OicSecAcl_t *g_aclResource = NULL;
 
 
 /**
@@ -111,7 +117,7 @@ static FILE *fopen_svreditor(const char *path, const char *mode)
 {
     (void)path;  // unused |path| parameter
 
-    return fopen(gSvrDbPath, mode);
+    return fopen(g_svrDbPath, mode);
 }
 
 static void RefreshSVRInstance(bool credRefFlag, bool aclRefFlag, bool doxmRefFlag,
@@ -209,7 +215,7 @@ static int MainOperation(const char *svrpath)
         return -1;
     }
 
-    strcpy(gSvrDbPath, svrpath);
+    strcpy(g_svrDbPath, svrpath);
 
     ocResult = OCRegisterPersistentStorageHandler(&psInst);
     if (OC_STACK_OK != ocResult)
@@ -227,9 +233,9 @@ static int MainOperation(const char *svrpath)
         switch (menu)
         {
             case SVR_PRINT_ALL:
-                PrintDoxm(gDoxmResource);
-                PrintPstat(gPstatResource);
-                PrintAcl(gAclResource);
+                PrintDoxm(g_doxmResource);
+                PrintPstat(g_pstatResource);
+                PrintAcl(g_aclResource);
                 PrintCredList(GetCredList());
                 break;
             case SVR_EDIT_CRED:
@@ -237,7 +243,7 @@ static int MainOperation(const char *svrpath)
                 {
                     if (NULL == GetCredList())
                     {
-                        printf(YELLOW_BEGIN "WARNING : Credential resource is empty." COLOR_END_NL);
+                        PRINT_WARN("Credential resource is empty.");
                         PrintEditMenu("Credential Resource", false, true, false, false);
                     }
                     else
@@ -253,9 +259,9 @@ static int MainOperation(const char *svrpath)
             case SVR_EDIT_ACL:
                 do
                 {
-                    if (NULL == gAclResource)
+                    if (NULL == g_aclResource)
                     {
-                        printf(YELLOW_BEGIN "WARNING : ACL resource is empty." COLOR_END_NL);
+                        PRINT_WARN("ACL resource is empty.");
                         PrintEditMenu("ACL Resource", false, true, false, false);
                     }
                     else
@@ -270,12 +276,12 @@ static int MainOperation(const char *svrpath)
 
                 break;
             case SVR_EDIT_DOXM:
-                printf(YELLOW_BEGIN "NOT SUPPORTED YET" COLOR_END_NL);
+                PRINT_INFO("NOT SUPPORTED YET");
                 //PrintEditMenu("Doxm Resource", false, false, true);
                 //T.B.D
                 break;
             case SVR_EDIT_PSTAT:
-                printf(YELLOW_BEGIN "NOT SUPPORTED YET" COLOR_END_NL);
+                PRINT_INFO("NOT SUPPORTED YET");
                 //PrintEditMenu("Pstat Resource", false, false, true);
                 //T.B.D
                 break;
@@ -290,9 +296,9 @@ static int MainOperation(const char *svrpath)
     }
 
     DeInitCredResource();
-    DeletePstatBinData(gPstatResource);
-    DeleteDoxmBinData(gDoxmResource);
-    DeleteACLList(gAclResource);
+    DeletePstatBinData(g_pstatResource);
+    DeleteDoxmBinData(g_doxmResource);
+    DeleteACLList(g_aclResource);
     return 0;
 }
 
@@ -300,7 +306,7 @@ int main(int argc, char *argv[])
 {
     if (argc == 2)
     {
-        printf("SVR DB File Path: %s\n", argv[1]);
+        PRINT_NORMAL("SVR DB File Path: %s\n", argv[1]);
         return MainOperation(argv[1]);
     }
     else
@@ -331,7 +337,7 @@ static void RefreshSVRInstance(bool credRefFlag, bool aclRefFlag, bool doxmRefFl
         ocResult = GetSecureVirtualDatabaseFromPS(OIC_JSON_CRED_NAME, &secPayload, &payloadSize);
         if (OC_STACK_OK != ocResult)
         {
-            printf(YELLOW_BEGIN "WARNING : GetSecureVirtualDatabaseFromPS error : %d" COLOR_END_NL, ocResult);
+            PRINT_WARN("GetSecureVirtualDatabaseFromPS return %d", ocResult);
         }
         if (secPayload && 0 != payloadSize)
         {
@@ -339,7 +345,7 @@ static void RefreshSVRInstance(bool credRefFlag, bool aclRefFlag, bool doxmRefFl
             if (OC_STACK_OK != ocResult)
             {
                 OICFree(secPayload);
-                PRINT_ERR("CBORPayloadToCred error : %d", ocResult);
+                PRINT_ERR("CBORPayloadToCred : %d", ocResult);
                 return;
             }
         }
@@ -363,20 +369,20 @@ static void RefreshSVRInstance(bool credRefFlag, bool aclRefFlag, bool doxmRefFl
         ocResult = GetSecureVirtualDatabaseFromPS(OIC_JSON_ACL_NAME, &secPayload, &payloadSize);
         if (OC_STACK_OK != ocResult)
         {
-            printf(YELLOW_BEGIN "WARNING : GetSecureVirtualDatabaseFromPS error : %d" COLOR_END_NL, ocResult);
+            PRINT_WARN("GetSecureVirtualDatabaseFromPS return %d", ocResult);
         }
 
-        if (gAclResource)
+        if (g_aclResource)
         {
-            DeleteACLList(gAclResource);
-            gAclResource = NULL;
+            DeleteACLList(g_aclResource);
+            g_aclResource = NULL;
         }
 
-        gAclResource = CBORPayloadToAcl(secPayload, payloadSize);
-        if (NULL == gAclResource)
+        g_aclResource = CBORPayloadToAcl(secPayload, payloadSize);
+        if (NULL == g_aclResource)
         {
             OICFree(secPayload);
-            PRINT_ERR("CBORPayloadToAcl error : %d", ocResult);
+            PRINT_ERR("Failed CBORPayloadToAcl");
             return;
         }
 
@@ -389,20 +395,20 @@ static void RefreshSVRInstance(bool credRefFlag, bool aclRefFlag, bool doxmRefFl
         ocResult = GetSecureVirtualDatabaseFromPS(OIC_JSON_DOXM_NAME, &secPayload, &payloadSize);
         if (OC_STACK_OK != ocResult)
         {
-            printf(YELLOW_BEGIN "WARNING : GetSecureVirtualDatabaseFromPS error : %d" COLOR_END_NL, ocResult);
+            PRINT_WARN("GetSecureVirtualDatabaseFromPS error : %d", ocResult);
         }
 
-        if (gDoxmResource)
+        if (g_doxmResource)
         {
-            DeleteDoxmBinData(gDoxmResource);
-            gDoxmResource = NULL;
+            DeleteDoxmBinData(g_doxmResource);
+            g_doxmResource = NULL;
         }
 
-        ocResult = CBORPayloadToDoxm(secPayload, payloadSize, &gDoxmResource);
+        ocResult = CBORPayloadToDoxm(secPayload, payloadSize, &g_doxmResource);
         if (OC_STACK_OK != ocResult)
         {
             OICFree(secPayload);
-            PRINT_ERR("CBORPayloadToDoxm error : %d" , ocResult);
+            PRINT_ERR("CBORPayloadToDoxm : %d", ocResult);
             return;
         }
 
@@ -415,20 +421,20 @@ static void RefreshSVRInstance(bool credRefFlag, bool aclRefFlag, bool doxmRefFl
         ocResult = GetSecureVirtualDatabaseFromPS(OIC_JSON_PSTAT_NAME, &secPayload, &payloadSize);
         if (OC_STACK_OK != ocResult)
         {
-            printf(YELLOW_BEGIN "WARNING : GetSecureVirtualDatabaseFromPS error : %d" COLOR_END_NL, ocResult);
+            PRINT_WARN("GetSecureVirtualDatabaseFromPS error : %d", ocResult);
         }
 
-        if (gPstatResource)
+        if (g_pstatResource)
         {
-            DeletePstatBinData(gPstatResource);
-            gPstatResource = NULL;
+            DeletePstatBinData(g_pstatResource);
+            g_pstatResource = NULL;
         }
 
-        ocResult = CBORPayloadToPstat(secPayload, payloadSize, &gPstatResource);
+        ocResult = CBORPayloadToPstat(secPayload, payloadSize, &g_pstatResource);
         if (OC_STACK_OK != ocResult)
         {
             OICFree(secPayload);
-            PRINT_ERR("CBORPayloadToPstat error : %d" , ocResult);
+            PRINT_ERR("CBORPayloadToPstat : %d", ocResult);
             return;
         }
 
@@ -489,7 +495,7 @@ static void PrintUuid(const OicUuid_t *uuid)
     char *strUuid = NULL;
     if (OC_STACK_OK == ConvertUuidToStr(uuid, &strUuid))
     {
-        printf(CYAN_BEGIN "%s" COLOR_END_NL, strUuid);
+        PRINT_DATA("%s\n", strUuid);
         OICFree(strUuid);
     }
     else
@@ -500,66 +506,30 @@ static void PrintUuid(const OicUuid_t *uuid)
 
 static void PrintIntArray(const int *array, size_t length)
 {
-    bool colorToogle = true;
-
-    if (length == 0)
+    for (size_t i = 0; i < length; i++)
     {
-        printf("\n");
+        PRINT_DATA("%d ", array[i]);
     }
-    else
-    {
-        for (size_t i = 0; i < length; i++)
-        {
-            if (i == length - 1)
-            {
-                colorToogle ? printf(CYAN_BEGIN "%d" COLOR_END_NL, array[i]) : printf(GREEN_BEGIN "%d" COLOR_END_NL,
-                        array[i]);
-            }
-            else
-            {
-                colorToogle ? printf(CYAN_BEGIN "%d " COLOR_END, array[i]) : printf(GREEN_BEGIN "%d " COLOR_END,
-                        array[i]);
-            }
-            colorToogle = (!colorToogle);
-        }
-    }
+    PRINT_NL();
 }
 
 static void PrintStringArray(const char **array, size_t length)
 {
-    bool colorToogle = true;
-
-    if (length == 0)
+    for (size_t i = 0; i < length; i++)
     {
-        printf("\n");
+        PRINT_DATA("%s ", array[i]);
     }
-    else
-    {
-        for (size_t i = 0; i < length; i++)
-        {
-            if (i == length - 1)
-            {
-                colorToogle ? printf(CYAN_BEGIN "%s" COLOR_END_NL, array[i]) : printf(GREEN_BEGIN "%s" COLOR_END_NL,
-                        array[i]);
-            }
-            else
-            {
-                colorToogle ? printf(CYAN_BEGIN "%s " COLOR_END, array[i]) : printf(GREEN_BEGIN "%s " COLOR_END,
-                        array[i]);
-            }
-            colorToogle = (!colorToogle);
-        }
-    }
+    PRINT_NL();
 }
 
 static void PrintInt(int value)
 {
-    printf(CYAN_BEGIN "%d" COLOR_END_NL, value);
+    PRINT_DATA("%d\n", value);
 }
 
 static void PrintString(const char *text)
 {
-    printf(CYAN_BEGIN "%s" COLOR_END_NL, text);
+    PRINT_DATA("%s\n", text);
 }
 
 static void PrintBuffer(const uint8_t *buf, size_t bufLen)
@@ -570,67 +540,67 @@ static void PrintBuffer(const uint8_t *buf, size_t bufLen)
     {
         if ((i + 1) % 20 == 0 || i == bufLen - 1)
         {
-            printf(CYAN_BEGIN "%02X " COLOR_END_NL, buf[i]);
+            PRINT_DATA("%02X \n", buf[i]);
         }
         else
         {
-            printf(CYAN_BEGIN "%02X " COLOR_END, buf[i]);
+            PRINT_DATA("%02X ", buf[i]);
         }
     }
 }
 
 static void PrintDpm(const OicSecDpm_t dpm)
 {
-    printf(CYAN_BEGIN "%d (" COLOR_END, dpm);
+    PRINT_DATA("%d (", dpm);
 
     if (dpm == NORMAL)
     {
-        printf(CYAN_BEGIN " NORMAL " COLOR_END);
+        PRINT_DATA(" NORMAL ");
     }
     if (dpm & RESET)
     {
-        printf(CYAN_BEGIN " RESET " COLOR_END);
+        PRINT_DATA(" RESET ");
     }
     if (dpm & TAKE_OWNER)
     {
-        printf(CYAN_BEGIN " TAKE_OWNER " COLOR_END);
+        PRINT_DATA(" TAKE_OWNER ");
     }
     if (dpm & BOOTSTRAP_SERVICE)
     {
-        printf(CYAN_BEGIN " BOOTSTRAP_SERVICE " COLOR_END);
+        PRINT_DATA(" BOOTSTRAP_SERVICE ");
     }
     if (dpm & SECURITY_MANAGEMENT_SERVICES)
     {
-        printf(CYAN_BEGIN " SECURITY_MANAGEMENT_SERVICES " COLOR_END);
+        PRINT_DATA(" SECURITY_MANAGEMENT_SERVICES ");
     }
     if (dpm & PROVISION_CREDENTIALS)
     {
-        printf(CYAN_BEGIN " PROVISION_CREDENTIALS " COLOR_END);
+        PRINT_DATA(" PROVISION_CREDENTIALS ");
     }
     if (dpm & PROVISION_ACLS)
     {
-        printf(CYAN_BEGIN " PROVISION_ACLS " COLOR_END);
+        PRINT_DATA(" PROVISION_ACLS ");
     }
-    printf(CYAN_BEGIN ") " COLOR_END_NL);
+    PRINT_DATA(") \n");
 }
 
 static void PrintDpom(const OicSecDpom_t dpom)
 {
-    printf(CYAN_BEGIN "%d (" COLOR_END, dpom);
+    PRINT_DATA("%d (", dpom);
 
     if (dpom & MULTIPLE_SERVICE_SERVER_DRIVEN)
     {
-        printf(CYAN_BEGIN " MULTIPLE_SERVICE_SERVER_DRIVEN " COLOR_END);
+        PRINT_DATA(" MULTIPLE_SERVICE_SERVER_DRIVEN ");
     }
     if (dpom & SINGLE_SERVICE_SERVER_DRIVEN)
     {
-        printf(CYAN_BEGIN " SINGLE_SERVICE_SERVER_DRIVEN " COLOR_END);
+        PRINT_DATA(" SINGLE_SERVICE_SERVER_DRIVEN ");
     }
     if (dpom & SINGLE_SERVICE_CLIENT_DRIVEN)
     {
-        printf(CYAN_BEGIN " SINGLE_SERVICE_CLIENT_DRIVEN " COLOR_END);
+        PRINT_DATA(" SINGLE_SERVICE_CLIENT_DRIVEN ");
     }
-    printf(CYAN_BEGIN ") " COLOR_END_NL);
+    PRINT_DATA(") \n");
 }
 
 #ifdef MULTIPLE_OWNER
@@ -638,56 +608,56 @@ static void PrintMom(const OicSecMom_t *mom)
 {
     if (mom)
     {
-        printf(CYAN_BEGIN "%d (" COLOR_END, mom->mode);
+        PRINT_DATA("%d (", mom->mode);
 
         switch (mom->mode)
         {
             case OIC_MULTIPLE_OWNER_DISABLE:
-                printf(CYAN_BEGIN " OIC_MULTIPLE_OWNER_DISABLE " COLOR_END);
+                PRINT_DATA(" OIC_MULTIPLE_OWNER_DISABLE ");
                 break;
             case OIC_MULTIPLE_OWNER_ENABLE:
-                printf(CYAN_BEGIN " OIC_MULTIPLE_OWNER_ENABLE " COLOR_END);
+                PRINT_DATA(" OIC_MULTIPLE_OWNER_ENABLE ");
                 break;
             case OIC_MULTIPLE_OWNER_TIMELY_ENABLE:
-                printf(CYAN_BEGIN " OIC_MULTIPLE_OWNER_TIMELY_ENABLE " COLOR_END);
+                PRINT_DATA(" OIC_MULTIPLE_OWNER_TIMELY_ENABLE ");
                 break;
             default:
                 break;
         }
 
-        printf(CYAN_BEGIN ") " COLOR_END_NL);
+        PRINT_DATA(") \n");
     }
     else
     {
-        printf(CYAN_BEGIN "NULL" COLOR_END_NL);
+        PRINT_DATA("NULL\n");
     }
 }
 #endif
 static void PrintCredType(OicSecCredType_t credType)
 {
-    printf(CYAN_BEGIN "%d" COLOR_END, credType);
+    PRINT_DATA("%d", credType);
     switch (credType)
     {
         case NO_SECURITY_MODE:
-            printf(CYAN_BEGIN " (NO_SECURITY_MODE)" COLOR_END_NL);
+            PRINT_DATA(" (NO_SECURITY_MODE)\n");
             break;
         case SYMMETRIC_PAIR_WISE_KEY:
-            printf(CYAN_BEGIN " (SYMMETRIC_PAIR_WISE_KEY)" COLOR_END_NL);
+            PRINT_DATA(" (SYMMETRIC_PAIR_WISE_KEY)\n");
             break;
         case SYMMETRIC_GROUP_KEY:
-            printf(CYAN_BEGIN " (SYMMETRIC_GROUP_KEY)" COLOR_END_NL);
+            PRINT_DATA(" (SYMMETRIC_GROUP_KEY)\n");
             break;
         case ASYMMETRIC_KEY:
-            printf(CYAN_BEGIN " (ASYMMETRIC_KEY)" COLOR_END_NL);
+            PRINT_DATA(" (ASYMMETRIC_KEY)\n");
             break;
         case SIGNED_ASYMMETRIC_KEY:
-            printf(CYAN_BEGIN " (SIGNED_ASYMMETRIC_KEY)" COLOR_END_NL);
+            PRINT_DATA(" (SIGNED_ASYMMETRIC_KEY)\n");
             break;
         case PIN_PASSWORD:
-            printf(CYAN_BEGIN " (PIN_PASSWORD)" COLOR_END_NL);
+            PRINT_DATA(" (PIN_PASSWORD)\n");
             break;
         case ASYMMETRIC_ENCRYPTION_KEY:
-            printf(CYAN_BEGIN " (ASYMMETRIC_ENCRYPTION_KEY)" COLOR_END_NL);
+            PRINT_DATA(" (ASYMMETRIC_ENCRYPTION_KEY)\n");
             break;
         default:
             PRINT_ERR(" (Unknown Cred type)");
@@ -697,20 +667,20 @@ static void PrintCredType(OicSecCredType_t credType)
 
 static void PrintCredEncodingType(OicEncodingType_t encoding)
 {
-    printf(CYAN_BEGIN "%d" COLOR_END, encoding);
+    PRINT_DATA("%d", encoding);
     switch (encoding)
     {
         case OIC_ENCODING_RAW:
-            printf(CYAN_BEGIN " (OIC_ENCODING_RAW)" COLOR_END_NL);
+            PRINT_DATA(" (OIC_ENCODING_RAW)\n");
             break;
         case OIC_ENCODING_BASE64:
-            printf(CYAN_BEGIN " (OIC_ENCODING_BASE64)" COLOR_END_NL);
+            PRINT_DATA(" (OIC_ENCODING_BASE64)\n");
             break;
         case OIC_ENCODING_PEM:
-            printf(CYAN_BEGIN " (OIC_ENCODING_PEM)" COLOR_END_NL);
+            PRINT_DATA(" (OIC_ENCODING_PEM)\n");
             break;
         case OIC_ENCODING_DER:
-            printf(CYAN_BEGIN " (OIC_ENCODING_DER)" COLOR_END_NL);
+            PRINT_DATA(" (OIC_ENCODING_DER)\n");
             break;
         default:
             PRINT_ERR(" (Unknown Encoding type)");
@@ -722,71 +692,71 @@ static void PrintCredEncodingType(OicEncodingType_t encoding)
 static void PrintHelp()
 {
     PRINT_ERR("<This program requires one input>");
-    printf(YELLOW_BEGIN "./svrdbeditor <svr_db_file_path>" COLOR_END_NL);
+    PRINT_INFO("./svrdbeditor <svr_db_file_path>");
 }
 
 static void PrintDoxm(const OicSecDoxm_t *doxm)
 {
-    printf(YELLOW_BEGIN "\n\n********************* [%-20s] *********************" COLOR_END_NL,
-           "DOXM Resource");
+    PRINT_INFO("\n\n********************* [%-20s] *********************",
+               "DOXM Resource");
 
-    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_OWNED_NAME);
+    PRINT_PROG("%15s : ", OIC_JSON_OWNED_NAME);
     (doxm->owned ? PrintString("True (Owned)") : PrintString("False (Unowned)"));
 
-    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_OXMS_NAME);
+    PRINT_PROG("%15s : ", OIC_JSON_OXMS_NAME);
     PrintIntArray((int *)doxm->oxm, doxm->oxmLen);
 
-    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_OXM_SEL_NAME);
+    PRINT_PROG("%15s : ", OIC_JSON_OXM_SEL_NAME);
     PrintInt((int)doxm->oxmSel);
 
-    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_SUPPORTED_CRED_TYPE_NAME);
+    PRINT_PROG("%15s : ", OIC_JSON_SUPPORTED_CRED_TYPE_NAME);
     PrintInt((int)doxm->sct);
 
 #ifdef MULTIPLE_OWNER
-    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_MOM_NAME);
+    PRINT_PROG("%15s : ", OIC_JSON_MOM_NAME);
     PrintMom(doxm->mom);
 
     // TODO: Print Subowner List
 #endif //MULTIPLE_OWNER
 
-    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_DEVICE_ID_NAME);
+    PRINT_PROG("%15s : ", OIC_JSON_DEVICE_ID_NAME);
     PrintUuid(&doxm->deviceID);
 
-    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_DEVOWNERID_NAME);
+    PRINT_PROG("%15s : ", OIC_JSON_DEVOWNERID_NAME);
     PrintUuid(&doxm->owner);
 
-    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_ROWNERID_NAME);
+    PRINT_PROG("%15s : ", OIC_JSON_ROWNERID_NAME);
     PrintUuid(&doxm->rownerID);
-    printf(YELLOW_BEGIN "********************* [%-20s] *********************" COLOR_END_NL,
-           "DOXM Resource");
+    PRINT_INFO("********************* [%-20s] *********************",
+               "DOXM Resource");
 }
 
 static void PrintPstat(const OicSecPstat_t *pstat)
 {
-    printf(YELLOW_BEGIN "\n\n********************* [%-20s] *********************" COLOR_END_NL,
-           "PSTAT Resource");
-    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_ISOP_NAME);
+    PRINT_INFO("\n\n********************* [%-20s] *********************",
+               "PSTAT Resource");
+    PRINT_PROG("%15s : ", OIC_JSON_ISOP_NAME);
     (pstat->isOp ? PrintString("True") : PrintString("False"));
 
-    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_SM_NAME);
+    PRINT_PROG("%15s : ", OIC_JSON_SM_NAME);
     for (size_t i = 0; i < pstat->smLen; i++)
     {
         PrintDpom(pstat->sm[i]);
     }
 
-    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_OM_NAME);
+    PRINT_PROG("%15s : ", OIC_JSON_OM_NAME);
     PrintDpom(pstat->om);
 
-    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_CM_NAME);
+    PRINT_PROG("%15s : ", OIC_JSON_CM_NAME);
     PrintDpm(pstat->cm);
 
-    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_TM_NAME);
+    PRINT_PROG("%15s : ", OIC_JSON_TM_NAME);
     PrintDpm(pstat->tm);
 
-    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_ROWNERID_NAME);
+    PRINT_PROG("%15s : ", OIC_JSON_ROWNERID_NAME);
     PrintUuid(&pstat->rownerID);
-    printf(YELLOW_BEGIN "********************* [%-20s] *********************" COLOR_END_NL,
-           "PSTAT Resource");
+    PRINT_INFO("********************* [%-20s] *********************",
+               "PSTAT Resource");
 }
 
 static void PrintResourceList(const OicSecRsrc_t *rsrcList)
@@ -797,12 +767,12 @@ static void PrintResourceList(const OicSecRsrc_t *rsrcList)
 
     LL_FOREACH_SAFE(rsrcList, rsrc, tempRsrc)
     {
-        printf(CYAN_BEGIN "Resource #%zu:" COLOR_END_NL, rsrcCnt + 1);
-        printf(CYAN_BEGIN "%10s : %s" COLOR_END_NL, OIC_JSON_HREF_NAME, rsrc->href);
-        printf(CYAN_BEGIN "%10s : %s" COLOR_END_NL, OIC_JSON_REL_NAME, rsrc->rel);
-        printf(CYAN_BEGIN "%10s : " COLOR_END, OIC_JSON_RT_NAME);
+        PRINT_DATA("Resource #%zu:\n", rsrcCnt + 1);
+        PRINT_DATA("%10s : %s\n", OIC_JSON_HREF_NAME, rsrc->href);
+        PRINT_DATA("%10s : %s\n", OIC_JSON_REL_NAME, rsrc->rel);
+        PRINT_DATA("%10s : ", OIC_JSON_RT_NAME);
         PrintStringArray((const char **)rsrc->types, rsrc->typeLen);
-        printf(CYAN_BEGIN "%10s : " COLOR_END, OIC_JSON_IF_NAME);
+        PRINT_DATA("%10s : ", OIC_JSON_IF_NAME);
         PrintStringArray((const char **)rsrc->interfaces, rsrc->interfaceLen);
         rsrcCnt++;
     }
@@ -816,9 +786,9 @@ static void PrintValidity(const OicSecValidity_t *validities)
 
     LL_FOREACH_SAFE(validities, validity, tempValidity)
     {
-        printf(CYAN_BEGIN "Validity #%zu:" COLOR_END_NL, validityCnt + 1);
-        printf(CYAN_BEGIN "%10s : %s" COLOR_END_NL, OIC_JSON_PERIOD_NAME, validity->period);
-        printf(CYAN_BEGIN "%10s : " COLOR_END, OIC_JSON_RESOURCES_NAME);
+        PRINT_DATA("Validity #%zu:\n", validityCnt + 1);
+        PRINT_DATA("%10s : %s\n", OIC_JSON_PERIOD_NAME, validity->period);
+        PRINT_DATA("%10s : ", OIC_JSON_RESOURCES_NAME);
         PrintStringArray((const char **)validity->recurrences, validity->recurrenceLen);
         validityCnt++;
     }
@@ -826,37 +796,37 @@ static void PrintValidity(const OicSecValidity_t *validities)
 
 static void PrintPermission(uint16_t permission)
 {
-    printf(CYAN_BEGIN "%d (" COLOR_END, permission);
+    PRINT_DATA("%d (", permission);
 
     if (0 == permission)
     {
-        printf(CYAN_BEGIN " NO PERMISSION" COLOR_END);
+        PRINT_DATA(" NO PERMISSION");
     }
     else
     {
         if (permission & PERMISSION_CREATE)
         {
-            printf(CYAN_BEGIN " CREATE " COLOR_END);
+            PRINT_DATA(" CREATE ");
         }
         if (permission & PERMISSION_READ)
         {
-            printf(CYAN_BEGIN " READ " COLOR_END);
+            PRINT_DATA(" READ ");
         }
         if (permission & PERMISSION_WRITE)
         {
-            printf(CYAN_BEGIN " WRITE " COLOR_END);
+            PRINT_DATA(" WRITE ");
         }
         if (permission & PERMISSION_DELETE)
         {
-            printf(CYAN_BEGIN " DELETE " COLOR_END);
+            PRINT_DATA(" DELETE ");
         }
         if (permission & PERMISSION_NOTIFY)
         {
-            printf(CYAN_BEGIN " NOTIFY " COLOR_END);
+            PRINT_DATA(" NOTIFY ");
         }
     }
 
-    printf(CYAN_BEGIN ") " COLOR_END_NL);
+    PRINT_DATA(") \n");
 }
 
 static size_t PrintAcl(const OicSecAcl_t *acl)
@@ -868,15 +838,15 @@ static size_t PrintAcl(const OicSecAcl_t *acl)
     bool isEmptyList = true;
     size_t aceCnt = 0;
 
-    printf(YELLOW_BEGIN "\n\n********************* [%-20s] *********************" COLOR_END_NL,
-           "ACL Resource");
+    PRINT_INFO("\n\n********************* [%-20s] *********************",
+               "ACL Resource");
 
     if (acl)
     {
         LL_FOREACH_SAFE(acl->aces, ace, tempAce)
         {
-            printf(YELLOW_BEGIN "[ACE #%zu]" COLOR_END_NL, ++aceCnt);
-            printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_SUBJECTID_NAME);
+            PRINT_INFO("[ACE #%zu]", ++aceCnt);
+            PRINT_PROG("%15s : ", OIC_JSON_SUBJECTID_NAME);
             if (memcmp(&(ace->subjectuuid), &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)) == 0)
             {
                 PrintString((char *)WILDCARD_SUBJECT_ID.id);
@@ -886,7 +856,7 @@ static size_t PrintAcl(const OicSecAcl_t *acl)
                 strUuid = NULL;
                 if (OC_STACK_OK != ConvertUuidToStr(&(ace->subjectuuid), &strUuid))
                 {
-                    PRINT_ERR("ConvertUuidToStr error");
+                    PRINT_ERR("Failed ConvertUuidToStr");
                     return aceCnt;
                 }
                 PrintString(strUuid);
@@ -896,11 +866,11 @@ static size_t PrintAcl(const OicSecAcl_t *acl)
 #ifdef MULTIPLE_OWNER
             if (ace->eownerID)
             {
-                printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_EOWNERID_NAME);
+                PRINT_PROG("%15s : ", OIC_JSON_EOWNERID_NAME);
                 strUuid = NULL;
                 if (OC_STACK_OK != ConvertUuidToStr(ace->eownerID, &strUuid))
                 {
-                    PRINT_ERR("ConvertUuidToStr error");
+                    PRINT_ERR("Failed ConvertUuidToStr");
                     return aceCnt;
                 }
                 PrintString(strUuid);
@@ -909,33 +879,31 @@ static size_t PrintAcl(const OicSecAcl_t *acl)
 #endif
 
             //permission
-            printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_PERMISSION_NAME);
+            PRINT_PROG("%15s : ", OIC_JSON_PERMISSION_NAME);
             PrintPermission(ace->permission);
 
             //resource list
-            printf(BOLD_BEGIN "%15s : " COLOR_END_NL, OIC_JSON_RESOURCES_NAME);
+            PRINT_PROG("%15s : \n", OIC_JSON_RESOURCES_NAME);
             PrintResourceList(ace->resources);
 
             //Validity
             PrintValidity(ace->validities);
 
-            printf(BOLD_BEGIN "------------------------------------------------------------------"
-                   COLOR_END_NL);
+            PRINT_PROG("------------------------------------------------------------------\n");
             isEmptyList = false;
         }
 
         if (isEmptyList)
         {
-            printf(BOLD_BEGIN "ACE is empty." COLOR_END_NL);
-            printf(BOLD_BEGIN "------------------------------------------------------------------"
-                   COLOR_END_NL);
+            PRINT_PROG("ACE is empty.\n");
+            PRINT_PROG("------------------------------------------------------------------\n");
         }
 
-        printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_ROWNERID_NAME);
+        PRINT_PROG("%15s : ", OIC_JSON_ROWNERID_NAME);
         strUuid = NULL;
         if (OC_STACK_OK != ConvertUuidToStr(&(acl->rownerID), &strUuid))
         {
-            PRINT_ERR("ConvertUuidToStr error");
+            PRINT_ERR("Failed ConvertUuidToStr");
             return aceCnt;
         }
         PrintString(strUuid);
@@ -943,11 +911,11 @@ static size_t PrintAcl(const OicSecAcl_t *acl)
     }
     else
     {
-        printf(BOLD_BEGIN "ACL is empty." COLOR_END_NL);
+        PRINT_PROG("ACL is empty.\n");
     }
 
-    printf(YELLOW_BEGIN "********************* [%-20s] *********************" COLOR_END_NL,
-           "ACL Resource");
+    PRINT_INFO("********************* [%-20s] *********************",
+               "ACL Resource");
 
     return aceCnt;
 }
@@ -962,14 +930,14 @@ static void PrintCredList(const OicSecCred_t *creds)
     const OicSecCred_t *tempCred = NULL;
     bool isEmptyList = true;
     char *strUuid = NULL;
-    printf(YELLOW_BEGIN "\n\n********************* [%-20s] *********************" COLOR_END_NL,
-           "Credential Resource");
+    PRINT_INFO("\n\n********************* [%-20s] *********************",
+               "Credential Resource");
     LL_FOREACH_SAFE(creds, cred, tempCred)
     {
-        printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_CREDID_NAME);
+        PRINT_PROG("%15s : ", OIC_JSON_CREDID_NAME);
         PrintInt(cred->credId);
 
-        printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_SUBJECTID_NAME);
+        PRINT_PROG("%15s : ", OIC_JSON_SUBJECTID_NAME);
         if (memcmp(&(cred->subject), &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)) == 0)
         {
             PrintString((char *)WILDCARD_SUBJECT_ID.id);
@@ -979,7 +947,7 @@ static void PrintCredList(const OicSecCred_t *creds)
             strUuid = NULL;
             if (OC_STACK_OK != ConvertUuidToStr(&(cred->subject), &strUuid))
             {
-                PRINT_ERR("ConvertUuidToStr error");
+                PRINT_ERR("Failed ConvertUuidToStr");
                 return;
             }
             PrintString(strUuid);
@@ -989,11 +957,11 @@ static void PrintCredList(const OicSecCred_t *creds)
 #ifdef MULTIPLE_OWNER
         if (creds->eownerID)
         {
-            printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_EOWNERID_NAME);
+            PRINT_PROG("%15s : ", OIC_JSON_EOWNERID_NAME);
             strUuid = NULL;
             if (OC_STACK_OK != ConvertUuidToStr(cred->eownerID, &strUuid))
             {
-                PRINT_ERR("ConvertUuidToStr error");
+                PRINT_ERR("Failed ConvertUuidToStr");
                 return;
             }
             PrintString(strUuid);
@@ -1001,20 +969,20 @@ static void PrintCredList(const OicSecCred_t *creds)
         }
 #endif
 
-        printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_CREDTYPE_NAME);
+        PRINT_PROG("%15s : ", OIC_JSON_CREDTYPE_NAME);
         PrintCredType(cred->credType);
 
         switch (cred->credType)
         {
             case SYMMETRIC_PAIR_WISE_KEY:
             case SYMMETRIC_GROUP_KEY:
-                printf(BOLD_BEGIN "%15s : " COLOR_END_NL, OIC_JSON_PRIVATEDATA_NAME);
+                PRINT_PROG("%15s : \n", OIC_JSON_PRIVATEDATA_NAME);
                 if (cred->privateData.data)
                 {
-                    printf(CYAN_BEGIN "%s : " COLOR_END, OIC_JSON_ENCODING_NAME);
+                    PRINT_DATA("%s : ", OIC_JSON_ENCODING_NAME);
                     PrintCredEncodingType(cred->privateData.encoding);
 
-                    printf(CYAN_BEGIN "%s : " COLOR_END, OIC_JSON_DATA_NAME);
+                    PRINT_DATA("%s : ", OIC_JSON_DATA_NAME);
                     if (OIC_ENCODING_BASE64 == cred->privateData.encoding)
                     {
                         PrintString((char *)cred->privateData.data);
@@ -1026,7 +994,7 @@ static void PrintCredList(const OicSecCred_t *creds)
                 }
                 else
                 {
-                    PRINT_ERR("private data is null");
+                    PRINT_ERR("Private data is null");
                 }
                 break;
             case ASYMMETRIC_KEY:
@@ -1036,15 +1004,15 @@ static void PrintCredList(const OicSecCred_t *creds)
                 //cred usage
                 if (cred->credUsage)
                 {
-                    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_CREDUSAGE_NAME);
-                    printf(CYAN_BEGIN "%s" COLOR_END_NL, cred->credUsage);
+                    PRINT_PROG("%15s : ", OIC_JSON_CREDUSAGE_NAME);
+                    PRINT_DATA("%s\n", cred->credUsage);
                 }
 
                 //private data
                 if (cred->privateData.data)
                 {
-                    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_PRIVATEDATA_NAME);
-                    printf(YELLOW_BEGIN "will be updated to print private data" COLOR_END_NL);
+                    PRINT_PROG("%15s : ", OIC_JSON_PRIVATEDATA_NAME);
+                    PRINT_INFO("will be updated to print private data");
 
                     PrintBuffer(cred->privateData.data, cred->privateData.len);
 
@@ -1063,8 +1031,8 @@ static void PrintCredList(const OicSecCred_t *creds)
                 //public data
                 if (cred->publicData.data)
                 {
-                    printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_PUBLICDATA_NAME);
-                    printf(CYAN_BEGIN "%-17s : " COLOR_END, OIC_JSON_ENCODING_NAME);
+                    PRINT_PROG("%15s : ", OIC_JSON_PUBLICDATA_NAME);
+                    PRINT_DATA("%-17s : ", OIC_JSON_ENCODING_NAME);
                     PrintCredEncodingType(cred->publicData.encoding);
 
 
@@ -1086,28 +1054,28 @@ static void PrintCredList(const OicSecCred_t *creds)
 
                         for (i = 0, tmpCrt = &crt; NULL != tmpCrt; i++, tmpCrt = tmpCrt->next)
                         {
-                            printf(YELLOW_BEGIN "[Cert #%d]" COLOR_END_NL, (i + 1));
+                            PRINT_INFO("[Cert #%d]", (i + 1));
                             mbedtls_x509_crt_info( buf, sizeof(buf) - 1, "", tmpCrt );
-                            printf(CYAN_BEGIN "%s" COLOR_END, buf);
+                            PRINT_DATA("%s", buf);
                         }
                         mbedtls_x509_crt_free(&crt);
                     }
                     else
                     {
-                        printf(YELLOW_BEGIN "will be updated to print public data" COLOR_END_NL);
+                        PRINT_INFO("will be updated to print public data");
                     }
                 }
 
                 //optional data
                 if (cred->optionalData.data)
                 {
-                    printf(BOLD_BEGIN "%15s : " COLOR_END_NL, OIC_JSON_OPTDATA_NAME);
+                    PRINT_PROG("%15s : \n", OIC_JSON_OPTDATA_NAME);
 
                     //revocation status
-                    printf(CYAN_BEGIN "%-17s : %s" COLOR_END_NL, OIC_JSON_REVOCATION_STATUS_NAME,
-                           (cred->optionalData.revstat ? "True" : "False"));
+                    PRINT_DATA("%-17s : %s\n", OIC_JSON_REVOCATION_STATUS_NAME,
+                               (cred->optionalData.revstat ? "True" : "False"));
 
-                    printf(CYAN_BEGIN "%-17s : " COLOR_END, OIC_JSON_ENCODING_NAME);
+                    PRINT_DATA("%-17s : ", OIC_JSON_ENCODING_NAME);
                     PrintCredEncodingType(cred->optionalData.encoding);
 
                     //CA chain
@@ -1129,32 +1097,32 @@ static void PrintCredList(const OicSecCred_t *creds)
 
                         for (i = 0, tmpCa = &ca; NULL != tmpCa; i++, tmpCa = tmpCa->next)
                         {
-                            printf(YELLOW_BEGIN "[Cert #%d]" COLOR_END_NL, (i + 1));
+                            PRINT_INFO("[Cert #%d]", (i + 1));
                             mbedtls_x509_crt_info( buf, sizeof(buf) - 1, "", tmpCa );
-                            printf(CYAN_BEGIN "%s" COLOR_END, buf);
+                            PRINT_DATA("%s", buf);
                         }
                         mbedtls_x509_crt_free(&ca);
                     }
                     else
                     {
                         // TODO: T.B.D
-                        printf(YELLOW_BEGIN "will be updated to print optional data" COLOR_END_NL);
+                        PRINT_INFO("will be updated to print optional data");
                     }
                 }
                 break;
             case PIN_PASSWORD:
-                printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_PRIVATEDATA_NAME);
+                PRINT_PROG("%15s : ", OIC_JSON_PRIVATEDATA_NAME);
                 if (cred->privateData.data)
                 {
-                    printf(CYAN_BEGIN "%s : " COLOR_END, OIC_JSON_ENCODING_NAME);
+                    PRINT_DATA("%s : ", OIC_JSON_ENCODING_NAME);
                     PrintCredEncodingType(cred->privateData.encoding);
 
-                    printf(CYAN_BEGIN "%s : " COLOR_END, OIC_JSON_DATA_NAME);
-                    printf(CYAN_BEGIN "%s" COLOR_END_NL, cred->privateData.data);
+                    PRINT_DATA("%s : ", OIC_JSON_DATA_NAME);
+                    PRINT_DATA("%s\n", cred->privateData.data);
                 }
                 else
                 {
-                    PRINT_ERR("private data is null");
+                    PRINT_ERR("Private data is null");
                 }
                 break;
             case ASYMMETRIC_ENCRYPTION_KEY:
@@ -1163,18 +1131,17 @@ static void PrintCredList(const OicSecCred_t *creds)
                 PRINT_ERR(" (Unknown Cred type)");
                 break;
         }
-        printf(BOLD_BEGIN "------------------------------------------------------------------"
-               COLOR_END_NL);
+        PRINT_PROG("------------------------------------------------------------------\n");
         isEmptyList = false;
     }
 
     if (!isEmptyList)
     {
-        printf(BOLD_BEGIN "%15s : " COLOR_END, OIC_JSON_ROWNERID_NAME);
+        PRINT_PROG("%15s : ", OIC_JSON_ROWNERID_NAME);
         strUuid = NULL;
         if (OC_STACK_OK != ConvertUuidToStr(&(creds->rownerID), &strUuid))
         {
-            PRINT_ERR("ConvertUuidToStr error");
+            PRINT_ERR("Failed ConvertUuidToStr");
             return;
         }
         PrintString(strUuid);
@@ -1182,11 +1149,11 @@ static void PrintCredList(const OicSecCred_t *creds)
     }
     else
     {
-        printf(BOLD_BEGIN "Cred List is empty." COLOR_END_NL);
+        PRINT_PROG("Cred List is empty.\n");
     }
 
-    printf(YELLOW_BEGIN "********************* [%-20s] *********************" COLOR_END_NL,
-           "Credential Resource");
+    PRINT_INFO("********************* [%-20s] *********************",
+               "Credential Resource");
 
     return;
 }
@@ -1195,7 +1162,7 @@ static int InputNumber(const char *infoText)
 {
     int inputValue = 0;
 
-    printf(BOLD_BEGIN"%s"COLOR_END, infoText);
+    PRINT_PROG("%s", infoText);
     for (int ret = 0; 1 != ret; )
     {
         ret = scanf("%d", &inputValue);
@@ -1210,7 +1177,7 @@ inline static char InputChar(const char *infoText)
 {
     char inputValue = 0;
 
-    printf(BOLD_BEGIN"%s"COLOR_END, infoText);
+    PRINT_PROG("%s", infoText);
     for (int ret = 0; 1 != ret; )
     {
         ret = scanf("%c", &inputValue);
@@ -1225,7 +1192,7 @@ static char *InputString(const char *infoText)
 {
     char tmpStr[SVR_DB_PATH_LENGTH] = {0};
 
-    printf(BOLD_BEGIN"%s"COLOR_END, infoText);
+    PRINT_PROG("%s", infoText);
     for (int ret = 0; 1 != ret; )
     {
         ret = scanf("%1024s", tmpStr);
@@ -1238,70 +1205,70 @@ static char *InputString(const char *infoText)
 
 static void PrintEditMenu(const char *resourceName, bool print, bool add, bool remove, bool modify)
 {
-    printf(BOLD_BEGIN "\n\nYou can perform the " COLOR_END
-           CYAN_BEGIN "cyan color opertions " COLOR_END
-           BOLD_BEGIN "for" COLOR_END
-           YELLOW_BEGIN " %s" COLOR_END_NL, resourceName);
+    PRINT_PROG("\n\nYou can perform the "
+               CYAN_BEGIN "cyan color opertions " COLOR_END
+               BOLD_BEGIN "for" COLOR_END
+               YELLOW_BEGIN " %s" COLOR_END_NL, resourceName);
 
     for (int i = 0; i < SVR_EDIT_IDX_SIZE; i++)
     {
-        gAllowedEditMenu[i] = false;
+        g_allowedEditMenu[i] = false;
     }
 
     if (print)
     {
-        gAllowedEditMenu[SVR_PRINT] = true;
-        printf(CYAN_BEGIN "\t%2d. Print all entities" COLOR_END_NL, SVR_PRINT);
+        g_allowedEditMenu[SVR_PRINT] = true;
+        PRINT_DATA("\t%2d. Print all entities\n", SVR_PRINT);
     }
     else
     {
-        printf("\t%2d. Print all entities\n", SVR_PRINT);
+        PRINT_NORMAL("\t%2d. Print all entities\n", SVR_PRINT);
     }
 
     if (add)
     {
-        gAllowedEditMenu[SVR_ADD] = true;
-        printf(CYAN_BEGIN "\t%2d. Add entity" COLOR_END_NL, SVR_ADD);
+        g_allowedEditMenu[SVR_ADD] = true;
+        PRINT_DATA("\t%2d. Add entity\n", SVR_ADD);
     }
     else
     {
-        printf("\t%2d. Add entity\n", SVR_ADD);
+        PRINT_NORMAL("\t%2d. Add entity\n", SVR_ADD);
     }
 
 
     if (remove)
     {
-        gAllowedEditMenu[SVR_REMOVE] = true;
-        printf(CYAN_BEGIN "\t%2d. Remove entity" COLOR_END_NL, SVR_REMOVE);
+        g_allowedEditMenu[SVR_REMOVE] = true;
+        PRINT_DATA("\t%2d. Remove entity\n", SVR_REMOVE);
     }
     else
     {
-        printf("\t%2d. Remove entity\n", SVR_REMOVE);
+        PRINT_NORMAL("\t%2d. Remove entity\n", SVR_REMOVE);
     }
 
     if (modify)
     {
-        gAllowedEditMenu[SVR_MODIFY] = true;
-        printf(CYAN_BEGIN "\t%2d. Modify entity" COLOR_END_NL, SVR_MODIFY);
+        g_allowedEditMenu[SVR_MODIFY] = true;
+        PRINT_DATA("\t%2d. Modify entity\n", SVR_MODIFY);
     }
     else
     {
-        printf("\t%2d. Modify entity\n", SVR_MODIFY);
+        PRINT_NORMAL("\t%2d. Modify entity\n", SVR_MODIFY);
     }
-    printf(CYAN_BEGIN "\t%2d. Back to the main menu" COLOR_END_NL, BACK);
+    PRINT_DATA("\t%2d. Back to the main menu\n", BACK);
 }
 
 static void PrintMainMenu()
 {
-    printf(BOLD_BEGIN "\n\nYou can perform the " COLOR_END
-           CYAN_BEGIN "cyan color opertions : " COLOR_END_NL);
+    PRINT_PROG("\n\nYou can perform the "
+               CYAN_BEGIN "cyan color opertions : " COLOR_END_NL);
 
-    printf(CYAN_BEGIN "\t%2d. Print All Security Resource." COLOR_END_NL, SVR_PRINT_ALL);
-    printf(CYAN_BEGIN "\t%2d. Edit Credential Resource." COLOR_END_NL, SVR_EDIT_CRED);
-    printf(CYAN_BEGIN "\t%2d. Edit ACL Resource." COLOR_END_NL, SVR_EDIT_ACL);
-    printf(BOLD_BEGIN "\t%2d. Edit Doxm Resource. (T.B.D)" COLOR_END_NL, SVR_EDIT_DOXM);
-    printf(BOLD_BEGIN "\t%2d. Edit Pstat Resource. (T.B.D)" COLOR_END_NL, SVR_EDIT_PSTAT);
-    printf(CYAN_BEGIN "\t%2d. Exit." COLOR_END_NL, EXIT);
+    PRINT_DATA("\t%2d. Print All Security Resource.\n", SVR_PRINT_ALL);
+    PRINT_DATA("\t%2d. Edit Credential Resource.\n", SVR_EDIT_CRED);
+    PRINT_DATA("\t%2d. Edit ACL Resource.\n", SVR_EDIT_ACL);
+    PRINT_PROG("\t%2d. Edit Doxm Resource. (T.B.D)\n", SVR_EDIT_DOXM);
+    PRINT_PROG("\t%2d. Edit Pstat Resource. (T.B.D)\n", SVR_EDIT_PSTAT);
+    PRINT_DATA("\t%2d. Exit.\n", EXIT);
 }
 
 static int InputUuid(OicUuid_t *uuid)
@@ -1311,7 +1278,7 @@ static int InputUuid(OicUuid_t *uuid)
 
     if (NULL == uuid)
     {
-        PRINT_ERR("ConvertStrToUuid error : %d" , ocResult);
+        PRINT_ERR("Failed ConvertStrToUuid");
         return -1;
     }
 
@@ -1332,7 +1299,7 @@ static int InputUuid(OicUuid_t *uuid)
         ocResult = ConvertStrToUuid(strSubject, uuid);
         if (OC_STACK_OK != ocResult)
         {
-            PRINT_ERR("ConvertStrToUuid error : %d" , ocResult);
+            PRINT_ERR("Failed ConvertStrToUuid");
             return -1;
         }
     }
@@ -1355,11 +1322,11 @@ static int InputResources(OicSecRsrc_t *resources)
     resources->href = InputString("\tInput the resource URI : ");
     if (NULL == resources->href)
     {
-        PRINT_ERR("InputResources : InputString error");
+        PRINT_ERR("InputResources : Failed InputString");
         return -1;
     }
 
-    printf(BOLD_BEGIN "\tInput the number of interface for %s : " COLOR_END, resources->href);
+    PRINT_PROG("\tInput the number of interface for %s : ", resources->href);
     resources->interfaceLen = InputNumber("");
     if (0 == resources->interfaceLen || SVR_MAX_ENTITY < resources->interfaceLen)
     {
@@ -1376,17 +1343,17 @@ static int InputResources(OicSecRsrc_t *resources)
 
     for (i = 0; i < resources->interfaceLen; i++)
     {
-        printf(BOLD_BEGIN "\tInput the interface name #%zu : " COLOR_END, i + 1);
+        PRINT_PROG("\tInput the interface name #%zu : ", i + 1);
         resources->interfaces[i] = InputString("");
         if (NULL == resources->interfaces[i] )
         {
-            PRINT_ERR("InputResources : InputString error");
+            PRINT_ERR("InputResources : Failed InputString");
             return -1;
         }
     }
 
 
-    printf(BOLD_BEGIN "\tInput the number of resource type for %s : " COLOR_END, resources->href);
+    PRINT_PROG("\tInput the number of resource type for %s : ", resources->href);
     resources->typeLen = InputNumber("");
     if (0 == resources->typeLen || SVR_MAX_ENTITY < resources->typeLen)
     {
@@ -1403,11 +1370,11 @@ static int InputResources(OicSecRsrc_t *resources)
 
     for (i = 0; i < resources->typeLen; i++)
     {
-        printf(BOLD_BEGIN "\tInput the resource type name #%zu : " COLOR_END, i + 1);
+        PRINT_PROG("\tInput the resource type name #%zu : ", i + 1);
         resources->types[i] = InputString("");
         if (NULL == resources->types[i] )
         {
-            PRINT_ERR("InputResources : InputString error");
+            PRINT_ERR("InputResources : Failed InputString");
             return -1;
         }
     }
@@ -1426,7 +1393,7 @@ static uint16_t InputAccessPermission()
         char ans = 0;
         for ( ; ; )
         {
-            printf("\tEnter %s Permission (y/n): ", ACL_PEMISN[i]);
+            PRINT_NORMAL("\tEnter %s Permission (y/n): ", ACL_PEMISN[i]);
             for (int ret = 0; 1 != ret; )
             {
                 ret = scanf("%c", &ans);
@@ -1438,7 +1405,7 @@ static uint16_t InputAccessPermission()
                 ans &= ~0x20;  // for masking lower case, 'y/n'
                 break;
             }
-            printf("\tEntered Wrong Answer. Please Enter 'y/n' Again\n");
+            PRINT_NORMAL("\tEntered Wrong Answer. Please Enter 'y/n' Again\n");
         }
         if ('N' == ans)  // masked lower case, 'n'
         {
@@ -1454,18 +1421,18 @@ static int InputAceData(OicSecAce_t *ace)
     int ret = 0;
     size_t numOfRsrc = 0;
 
-    printf(BOLD_BEGIN"\n\nPlease input the each entity of new ACE."COLOR_END_NL);
+    PRINT_PROG("\n\nPlease input the each entity of new ACE.\n");
 
-    printf(BOLD_BEGIN
-           "\tInput the Subject UUID for this access (e.g. 61646D69-6E44-6576-6963-655575696430) : "COLOR_END);
+    PRINT_PROG(
+        "\tInput the Subject UUID for this access (e.g. 61646D69-6E44-6576-6963-655575696430) : ");
     ret = InputUuid(&ace->subjectuuid);
     if (0 != ret)
     {
-        PRINT_ERR("InputAceData : InputUuid error");
+        PRINT_ERR("InputAceData : Failed InputUuid");
         return ret;
     }
 
-    printf(BOLD_BEGIN "\tInput the number of resource for this access : " COLOR_END);
+    PRINT_PROG("\tInput the number of resource for this access : ");
     numOfRsrc = InputNumber("");
     if (0 == numOfRsrc || SVR_MAX_ENTITY < numOfRsrc)
     {
@@ -1475,7 +1442,7 @@ static int InputAceData(OicSecAce_t *ace)
 
     for (size_t i = 0; i < numOfRsrc; i++)
     {
-        printf(BOLD_BEGIN "Please input the resource information for resource #%zu"COLOR_END_NL, i + 1);
+        PRINT_PROG("Please input the resource information for resource #%zu\n", i + 1);
         OicSecRsrc_t *rsrc = (OicSecRsrc_t *)OICCalloc(1, sizeof(OicSecRsrc_t));
         if (NULL == rsrc)
         {
@@ -1487,12 +1454,12 @@ static int InputAceData(OicSecAce_t *ace)
         ret = InputResources(rsrc);
         if (0 != ret)
         {
-            PRINT_ERR("InputAceData : InputResources error");
+            PRINT_ERR("InputAceData : Failed InputResources");
             return ret;
         }
     }
 
-    printf(BOLD_BEGIN"\tSelect permission for this access." COLOR_END_NL);
+    PRINT_PROG("\tSelect permission for this access.\n");
     ace->permission = InputAccessPermission();
 
 #ifdef MULTIPLE_OWNER
@@ -1517,12 +1484,12 @@ static int InputCredUsage(char **credUsage)
 
     do
     {
-        printf("\n\n");
-        printf("\t1. %s\n", TRUST_CA);
-        printf("\t2. %s\n", PRIMARY_CERT);
-        printf("\t3. %s\n", MF_TRUST_CA);
-        printf("\t4. %s\n", MF_PRIMARY_CERT);
-        printf("\t5. Input manually\n");
+        PRINT_NORMAL("\n\n");
+        PRINT_NORMAL("\t1. %s\n", TRUST_CA);
+        PRINT_NORMAL("\t2. %s\n", PRIMARY_CERT);
+        PRINT_NORMAL("\t3. %s\n", MF_TRUST_CA);
+        PRINT_NORMAL("\t4. %s\n", MF_PRIMARY_CERT);
+        PRINT_NORMAL("\t5. Input manually\n");
         credUsageNum = InputNumber("\tSelect the credential usage : ");
         switch (credUsageNum)
         {
@@ -1539,7 +1506,7 @@ static int InputCredUsage(char **credUsage)
                 *credUsage = OICStrdup(MF_PRIMARY_CERT);
                 break;
             case 5:
-                printf("\tInput the credential usage : ");
+                PRINT_NORMAL("\tInput the credential usage : ");
                 for (int ret = 0; 1 != ret; )
                 {
                     ret = scanf("%128s", inputUsage);
@@ -1558,7 +1525,7 @@ static int InputCredUsage(char **credUsage)
 
     if (NULL == *credUsage)
     {
-        PRINT_ERR("OICStrdup error");
+        PRINT_ERR("Failed OICStrdup");
         return -1;
     }
 
@@ -1572,7 +1539,7 @@ static int InputCredEncodingType(const char *dataType, OicEncodingType_t *encodi
 
     if (NULL == dataType || NULL == encoding)
     {
-        PRINT_ERR("InputCredEncodingType error : invaild param");
+        PRINT_ERR("InputCredEncodingType : Invaild param");
         return -1;
     }
 
@@ -1580,11 +1547,11 @@ static int InputCredEncodingType(const char *dataType, OicEncodingType_t *encodi
 
     do
     {
-        printf("\n\n");
-        printf("\t%d. %s\n", OIC_ENCODING_RAW, "OIC_ENCODING_RAW");
-        printf("\t%d. %s\n", OIC_ENCODING_BASE64, "OIC_ENCODING_BASE64");
-        printf("\t%d. %s\n", OIC_ENCODING_PEM, "OIC_ENCODING_PEM");
-        printf("\t%d. %s\n", OIC_ENCODING_DER, "OIC_ENCODING_DER");
+        PRINT_NORMAL("\n\n");
+        PRINT_NORMAL("\t%d. %s\n", OIC_ENCODING_RAW, "OIC_ENCODING_RAW");
+        PRINT_NORMAL("\t%d. %s\n", OIC_ENCODING_BASE64, "OIC_ENCODING_BASE64");
+        PRINT_NORMAL("\t%d. %s\n", OIC_ENCODING_PEM, "OIC_ENCODING_PEM");
+        PRINT_NORMAL("\t%d. %s\n", OIC_ENCODING_DER, "OIC_ENCODING_DER");
         credEncType = InputNumber(infoText);
         switch ( (OicEncodingType_t)credEncType )
         {
@@ -1618,11 +1585,11 @@ static int ReadDataFromFile(const char *infoTxt, uint8_t **buffer, size_t *buffe
 
     if (NULL == buffer || NULL != *buffer || NULL == bufferSize)
     {
-        PRINT_ERR("ReadDataFromFile error : invaild param");
+        PRINT_ERR("ReadDataFromFile : Invaild param");
         return -1;
     }
 
-    printf("%s", infoTxt);
+    PRINT_NORMAL("%s", infoTxt);
     for (int ret = 0; 1 != ret; )
     {
         ret = scanf("%512s", filePath);
@@ -1704,14 +1671,14 @@ static int InputCredentialData(OicSecCred_t *cred)
     size_t publicKeySize = 0;
 
 
-    printf(BOLD_BEGIN"\n\nPlease input the each entity of new credential."COLOR_END_NL);
+    PRINT_PROG("\n\nPlease input the each entity of new credential.\n");
 
-    printf("\t%3d. Symmetric pair wise key\n", SYMMETRIC_PAIR_WISE_KEY);
-    printf("\t%3d. Symmetric group key\n", SYMMETRIC_GROUP_KEY);
-    printf("\t%3d. Asymmetric key\n", ASYMMETRIC_KEY);
-    printf("\t%3d. Signed asymmetric key\n", SIGNED_ASYMMETRIC_KEY);
-    printf("\t%3d. PIN/Password\n", PIN_PASSWORD);
-    printf("\t%3d. Asymmetric encryption key\n", ASYMMETRIC_ENCRYPTION_KEY);
+    PRINT_NORMAL("\t%3d. Symmetric pair wise key\n", SYMMETRIC_PAIR_WISE_KEY);
+    PRINT_NORMAL("\t%3d. Symmetric group key\n", SYMMETRIC_GROUP_KEY);
+    PRINT_NORMAL("\t%3d. Asymmetric key\n", ASYMMETRIC_KEY);
+    PRINT_NORMAL("\t%3d. Signed asymmetric key\n", SIGNED_ASYMMETRIC_KEY);
+    PRINT_NORMAL("\t%3d. PIN/Password\n", PIN_PASSWORD);
+    PRINT_NORMAL("\t%3d. Asymmetric encryption key\n", ASYMMETRIC_ENCRYPTION_KEY);
     cred->credType = (OicSecCredType_t)InputNumber("\tSelect the credential type : ");
     if (SYMMETRIC_PAIR_WISE_KEY != cred->credType &&
         SYMMETRIC_GROUP_KEY != cred->credType &&
@@ -1727,11 +1694,11 @@ static int InputCredentialData(OicSecCred_t *cred)
     switch (cred->credType)
     {
         case SYMMETRIC_PAIR_WISE_KEY:
-            printf(YELLOW_BEGIN "Unsupported yet." COLOR_END_NL);
+            PRINT_INFO("Unsupported yet.");
             goto error;
             // TODO: T.B.D
             /*
-            printf(BOLD_BEGIN "\tSubject UUID (e.g. 61646D69-6E44-6576-6963-655575696430) : " COLOR_END);
+            PRINT_PROG("\tSubject UUID (e.g. 61646D69-6E44-6576-6963-655575696430) : ");
             if (0 != InputUuid(&cred->subject))
             {
                 PRINT_ERR("InputUuid error");
@@ -1741,19 +1708,19 @@ static int InputCredentialData(OicSecCred_t *cred)
             break;
         case SYMMETRIC_GROUP_KEY:
             // TODO: T.B.D
-            printf(YELLOW_BEGIN "Unsupported yet." COLOR_END_NL);
+            PRINT_INFO("Unsupported yet.");
             goto error;
             break;
         case ASYMMETRIC_KEY:
             // TODO: T.B.D
-            printf(YELLOW_BEGIN "Unsupported yet." COLOR_END_NL);
+            PRINT_INFO("Unsupported yet.");
             goto error;
             break;
         case SIGNED_ASYMMETRIC_KEY:
             //Credential usage
             if ( 0 != InputCredUsage(&cred->credUsage))
             {
-                PRINT_ERR("InputCredUsage error");
+                PRINT_ERR("Failed InputCredUsage");
                 goto error;
             }
 
@@ -1762,19 +1729,19 @@ static int InputCredentialData(OicSecCred_t *cred)
                  strcmp(cred->credUsage, MF_TRUST_CA) == 0)
             {
                 //Subject
-                memcpy(cred->subject.id, gDoxmResource->deviceID.id, sizeof(gDoxmResource->deviceID.id));
+                memcpy(cred->subject.id, g_doxmResource->deviceID.id, sizeof(g_doxmResource->deviceID.id));
 
                 //encoding type
                 if ( 0 != InputCredEncodingType("certificate chain", &cred->optionalData.encoding))
                 {
-                    PRINT_ERR("InputCredEncodingType error");
+                    PRINT_ERR("Failed InputCredEncodingType");
                     goto error;
                 }
 
                 //Read chain data from file (readed data will be saved to optional data)
                 if (0 != ReadDataFromFile("\tInput the certificate chain path : ", &certChain, &certChainSize))
                 {
-                    PRINT_ERR("ReadDataFromFile error");
+                    PRINT_ERR("Failed ReadDataFromFile");
                     goto error;
                 }
 
@@ -1805,13 +1772,13 @@ static int InputCredentialData(OicSecCred_t *cred)
             else if ( strcmp(cred->credUsage, PRIMARY_CERT) == 0 ||
                       strcmp(cred->credUsage, MF_PRIMARY_CERT) == 0)
             {
-                memcpy(cred->subject.id, gDoxmResource->deviceID.id, sizeof(gDoxmResource->deviceID.id));
+                memcpy(cred->subject.id, g_doxmResource->deviceID.id, sizeof(g_doxmResource->deviceID.id));
 
                 //private key
                 //encoding type
                 if ( 0 != InputCredEncodingType(YELLOW_BEGIN"Private key"COLOR_END, &cred->privateData.encoding))
                 {
-                    PRINT_ERR("InputCredEncodingType error");
+                    PRINT_ERR("Failed InputCredEncodingType");
                     goto error;
                 }
 
@@ -1824,7 +1791,7 @@ static int InputCredentialData(OicSecCred_t *cred)
                 //Read private key data from file
                 if (0 != ReadDataFromFile("\tInput the private key's path : ", &privateKey, &privateKeySize))
                 {
-                    PRINT_ERR("ReadDataFromFile error");
+                    PRINT_ERR("Failed ReadDataFromFile");
                     goto error;
                 }
 
@@ -1842,7 +1809,7 @@ static int InputCredentialData(OicSecCred_t *cred)
                 //encoding type
                 if ( 0 != InputCredEncodingType(YELLOW_BEGIN"Certificate"COLOR_END, &cred->publicData.encoding))
                 {
-                    PRINT_ERR("InputCredEncodingType error");
+                    PRINT_ERR("Failed InputCredEncodingType");
                     goto error;
                 }
 
@@ -1856,7 +1823,7 @@ static int InputCredentialData(OicSecCred_t *cred)
                 //Read certificate data from file
                 if (0 != ReadDataFromFile("\tInput the certificate's path : ", &publicKey, &publicKeySize))
                 {
-                    PRINT_ERR("ReadDataFromFile error");
+                    PRINT_ERR("Failed ReadDataFromFile");
                     goto error;
                 }
 
@@ -1893,14 +1860,14 @@ static int InputCredentialData(OicSecCred_t *cred)
             {
                 char pinPass[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
 
-                printf("\tSubject UUID (e.g. 61646D69-6E44-6576-6963-655575696430) : ");
+                PRINT_NORMAL("\tSubject UUID (e.g. 61646D69-6E44-6576-6963-655575696430) : ");
                 if (0 != InputUuid(&cred->subject))
                 {
-                    PRINT_ERR("InputUuid error");
+                    PRINT_ERR("Failed InputUuid");
                     goto error;
                 }
 
-                printf("\tInput the PIN or Password : ");
+                PRINT_NORMAL("\tInput the PIN or Password : ");
                 for (int ret = 0; 1 != ret; )
                 {
                     ret = scanf("%32s", pinPass);
@@ -1910,7 +1877,7 @@ static int InputCredentialData(OicSecCred_t *cred)
                 cred->privateData.data = (uint8_t *)OICStrdup(pinPass);
                 if (NULL == cred->privateData.data)
                 {
-                    PRINT_ERR("OICStrdup error");
+                    PRINT_ERR("Failed OICStrdup");
                     goto error;
                 }
                 cred->privateData.len = strlen((char *)cred->privateData.data);
@@ -1919,7 +1886,7 @@ static int InputCredentialData(OicSecCred_t *cred)
             }
         case ASYMMETRIC_ENCRYPTION_KEY:
             // TODO: T.B.D
-            printf(YELLOW_BEGIN "Unsupported yet." COLOR_END_NL);
+            PRINT_INFO("Unsupported yet.");
             goto error;
             break;
         default:
@@ -1978,7 +1945,7 @@ static int ParseCertChain(mbedtls_x509_crt *crt, unsigned char *buf, size_t bufL
             ret = mbedtls_asn1_get_len(&tmp, buf + bufLen, &len);
             if (0 != ret)
             {
-                PRINT_ERR("mbedtls_asn1_get_len error : %d" , ret);
+                PRINT_ERR("mbedtls_asn1_get_len failed: 0x%04x", ret);
                 return -1;
             }
 
@@ -1991,7 +1958,7 @@ static int ParseCertChain(mbedtls_x509_crt *crt, unsigned char *buf, size_t bufL
                 }
                 else
                 {
-                    PRINT_ERR("mbedtls_x509_crt_parse_der error : 0x%04x" , ret);
+                    PRINT_ERR("mbedtls_x509_crt_parse_der failed: 0x%04x", ret);
                 }
             }
             pos += len + 4;
@@ -2019,7 +1986,7 @@ static int ParseCertChain(mbedtls_x509_crt *crt, unsigned char *buf, size_t bufL
                 }
                 else
                 {
-                    PRINT_ERR("mbedtls_x509_crt_parse returned : 0x%04x" , ret);
+                    PRINT_ERR("mbedtls_x509_crt_parse failed: 0x%04x", ret);
                 }
                 buf[pos + len] = con;
             }
@@ -2040,7 +2007,7 @@ static int ParseCertChain(mbedtls_x509_crt *crt, unsigned char *buf, size_t bufL
                 }
                 else
                 {
-                    PRINT_ERR("mbedtls_x509_crt_parse error : 0x%04x" , ret);
+                    PRINT_ERR("mbedtls_x509_crt_parse failed: 0x%04x", ret);
                 }
                 OICFree(lastCert);
             }
@@ -2104,7 +2071,7 @@ static void ParseDerCaCert(ByteArray_t *crt, const char *usage, uint16_t credId)
     }
     if (0 == crt->len)
     {
-        printf(YELLOW_BEGIN "ParseDerCaCert : %s not found" COLOR_END_NL, usage);
+        PRINT_INFO("ParseDerCaCert : %s not found", usage);
     }
     return;
 }
@@ -2181,7 +2148,7 @@ static void HandleCredOperation(SubOperationType_t cmd)
         PRINT_ERR("Invalid menu for credential");
         return;
     }
-    if (gAllowedEditMenu[cmd])
+    if (g_allowedEditMenu[cmd])
     {
         switch (cmd)
         {
@@ -2227,11 +2194,11 @@ static void HandleCredOperation(SubOperationType_t cmd)
 
                 break;
             case SVR_MODIFY:
-                printf(YELLOW_BEGIN "Unsupported yet." COLOR_END_NL);
+                PRINT_INFO("Unsupported yet.");
                 // TODO: T.B.D
                 break;
             case BACK:
-                printf(YELLOW_BEGIN "Back to the previous menu." COLOR_END_NL);
+                PRINT_INFO("Back to the previous menu.");
                 break;
             default:
                 PRINT_ERR("Invalid menu for credential");
@@ -2256,13 +2223,13 @@ static void HandleAclOperation(const SubOperationType_t cmd)
         PRINT_ERR("Invalid menu for ACL");
         return;
     }
-    if (gAllowedEditMenu[cmd])
+    if (g_allowedEditMenu[cmd])
     {
         switch (cmd)
         {
             case SVR_PRINT:
                 {
-                    PrintAcl(gAclResource);
+                    PrintAcl(g_aclResource);
                     break;
                 }
             case SVR_ADD:
@@ -2283,19 +2250,19 @@ static void HandleAclOperation(const SubOperationType_t cmd)
                     }
 
                     //Add ACE
-                    LL_APPEND(gAclResource->aces, ace);
+                    LL_APPEND(g_aclResource->aces, ace);
 
-                    aclResult = AclToCBORPayload(gAclResource, OIC_SEC_ACL_V2, &aclPayload, &aclPayloadSize);
+                    aclResult = AclToCBORPayload(g_aclResource, OIC_SEC_ACL_V2, &aclPayload, &aclPayloadSize);
                     if (OC_STACK_OK != aclResult)
                     {
-                        PRINT_ERR("AclToCBORPayload error : %d " , aclResult);
+                        PRINT_ERR("AclToCBORPayload : %d" , aclResult);
                         return;
                     }
 
                     aclResult = UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, aclPayload, aclPayloadSize);
                     if (OC_STACK_OK != aclResult)
                     {
-                        PRINT_ERR("UpdateSecureResourceInPS error : %d " , aclResult);
+                        PRINT_ERR("UpdateSecureResourceInPS : %d" , aclResult);
                         return;
                     }
 
@@ -2307,7 +2274,7 @@ static void HandleAclOperation(const SubOperationType_t cmd)
                     OicSecAce_t *tempAce = NULL;
                     uint16_t curIdx = 0;
 
-                    size_t numOfAce = PrintAcl(gAclResource);
+                    size_t numOfAce = PrintAcl(g_aclResource);
                     aclIdx = (uint16_t)InputNumber("\tPlease input the number of ACE : ");
 
                     if (0 == aclIdx || aclIdx > numOfAce)
@@ -2317,27 +2284,27 @@ static void HandleAclOperation(const SubOperationType_t cmd)
                     }
 
                     //Revmoe the ACE
-                    LL_FOREACH_SAFE(gAclResource->aces, ace, tempAce)
+                    LL_FOREACH_SAFE(g_aclResource->aces, ace, tempAce)
                     {
                         if (ace)
                         {
                             //If found target ACE, delete it.
                             if (aclIdx == ++curIdx)
                             {
-                                LL_DELETE(gAclResource->aces, ace);
+                                LL_DELETE(g_aclResource->aces, ace);
                                 FreeACE(ace);
 
-                                aclResult = AclToCBORPayload(gAclResource, OIC_SEC_ACL_V2, &aclPayload, &aclPayloadSize);
+                                aclResult = AclToCBORPayload(g_aclResource, OIC_SEC_ACL_V2, &aclPayload, &aclPayloadSize);
                                 if (OC_STACK_OK != aclResult)
                                 {
-                                    PRINT_ERR("AclToCBORPayload error : %d " , aclResult);
+                                    PRINT_ERR("AclToCBORPayload : %d" , aclResult);
                                     return;
                                 }
 
                                 aclResult = UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, aclPayload, aclPayloadSize);
                                 if (OC_STACK_OK != aclResult)
                                 {
-                                    PRINT_ERR("UpdateSecureResourceInPS error : %d " , aclResult);
+                                    PRINT_ERR("UpdateSecureResourceInPS : %d", aclResult);
                                     return;
                                 }
                             }
@@ -2346,11 +2313,11 @@ static void HandleAclOperation(const SubOperationType_t cmd)
                     break;
                 }
             case SVR_MODIFY:
-                printf(YELLOW_BEGIN "Not supported yet." COLOR_END_NL);
+                PRINT_INFO("Not supported yet.");
                 // TODO: T.B.D
                 break;
             case BACK:
-                printf(YELLOW_BEGIN "Back to the previous menu." COLOR_END_NL);
+                PRINT_INFO("Back to the previous menu.");
                 break;
             default:
                 PRINT_ERR("Invalid menu for ACL");
