@@ -229,7 +229,10 @@ static GetSvrRownerId_t GetSvrRownerId[OIC_SEC_SVR_TYPE_COUNT + 1] = {
     GetPconfRownerId,
     GetPstatRownerId,
     NULL,               // sacl is not implemented yet.
-    NULL                // svc has been removed from the OCF 1.0 Security spec.
+    NULL,               // svc has been removed from the OCF 1.0 Security spec.
+    NULL,               // csr
+    GetAclRownerId,     // acl2
+    NULL                // roles
 };
 
 /**
