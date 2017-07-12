@@ -220,18 +220,13 @@ env.AppendUnique(LIBPATH=[dep_lib_dir])
 ######################################################################
 if env.get('RELEASE'):
     env.AppendUnique(CCFLAGS=['-Os'])
-    env.AppendUnique(CPPDEFINES=['NDEBUG'])
     env.AppendUnique(LINKFLAGS=['-s'])
 else:
     env.AppendUnique(CCFLAGS=['-g'])
 
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES=['TB_LOG'])
-
 env.AppendUnique(CPPDEFINES=['WITH_POSIX', '__ANDROID__'])
 env.AppendUnique(CCFLAGS=['-Wall', '-Wextra', '-fPIC'])
 
-env.AppendUnique(LIBPATH=[env.get('BUILD_DIR')])
 env.AppendUnique(LIBPATH=[src_dir + '/resource/csdk/connectivity/lib/android'])
 env.AppendUnique(LIBS=['log', 'coap'])
 
