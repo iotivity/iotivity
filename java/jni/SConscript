@@ -95,15 +95,18 @@ jni_env.PrependUnique(LIBS=[
     'oc_logger_internal',
     'coap',
     'octbstack_internal',
-    'connectivity_abstraction_internal',
     'ocsrm',
     'routingmanager'
 ])
 
 if target_os not in ['windows', 'winrt']:
-    jni_env.PrependUnique(LIBS=['oc_internal'])
+    jni_env.PrependUnique(LIBS=[
+        jni_env['LIBPREFIX'] + 'connectivity_abstraction' + jni_env['LIBSUFFIX'],
+        'oc_internal'
+    ])
 else:
     jni_env.PrependUnique(LIBS=[
+        'connectivity_abstraction_internal',
         'oc',
         'mbedcrypto',
         'resource_directory_internal',
