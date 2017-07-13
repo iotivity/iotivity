@@ -412,7 +412,7 @@ static bool EnterRESET()
     // Unset pstat.tm and set TAKE_OWNER
     // Set pstat.dos.s to RESET
     VERIFY_SUCCESS(TAG,
-        EnterStateGeneric(false, true, false, false, false, DOS_RESET),
+        EnterStateGeneric(false, true, false, false, true, DOS_RESET),
         ERROR);
 
 exit:
@@ -428,10 +428,12 @@ static bool EnterSRESET()
     bool ret = false;
 
     // Set pstat.isop = FALSE
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatIsop(false), ERROR);
-
-    // Set pstat.dos to SRESET
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatDosS(DOS_SRESET), ERROR);
+    // Set pstat.cm RESET and unset TAKE_OWNER
+    // Unset pstat.tm and unset TAKE_OWNER
+    // Set pstat.dos.s to RESET
+    VERIFY_SUCCESS(TAG,
+        EnterStateGeneric(false, true, false, false, false, DOS_SRESET),
+        ERROR);
 
     ret = true;
 
