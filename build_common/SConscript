@@ -852,24 +852,25 @@ env.Append(BUILDERS = {'Cbor' : builder})
 
 
 def ScanJSON(env, directory):
-    actions = []
+    targets = []
     if env.GetOption('clean') or env.get('SECURED') != '1':
-        return actions
+        return targets
     dst_dir = env.get('BUILD_DIR') + '/' + directory + '/'
     src_dir = env.get('SRC_DIR') + '/' + directory + '/'
     for json_file in Glob('*.json'):
-        actions += env.Install(dst_dir, str(json_file))
+        targets += env.Install(dst_dir, str(json_file))
         if env.get('CROSS_COMPILE') != None:
             cbor_file = src_dir + re.sub('\.json$', '.dat', str(json_file))
-            Install(dst_dir, cbor_file)
+            targets += Install(dst_dir, cbor_file)
         else:
             cbor_file = env.Cbor(json_file)
+            targets.append(cbor_file)
             cbor_file = Flatten(cbor_file)[0].name
             src = dst_dir + cbor_file
             dst = src_dir + cbor_file
             Command(dst, src, Copy("$TARGET", "$SOURCE"))
-        actions += cbor_file
-    return actions
+
+    return targets
 
 AddMethod(env, ScanJSON)
 
