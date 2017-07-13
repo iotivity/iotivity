@@ -25,12 +25,12 @@
 using namespace OC::OCPlatform;
 
 JniOcPresenceHandle::JniOcPresenceHandle(JniOnPresenceListener* jniListener, OCPresenceHandle presenceHandle)
-    : m_jniListener(jniListener), m_presenceHandle(presenceHandle), m_jniObserveListener(nullptr)
+    : m_jniListener(jniListener), m_jniObserveListener(nullptr), m_presenceHandle(presenceHandle)
 {
 }
 
 JniOcPresenceHandle::JniOcPresenceHandle(JniOnObserveListener* jniListener, OCPresenceHandle presenceHandle)
-    : m_jniObserveListener(jniListener), m_presenceHandle(presenceHandle), m_jniListener(nullptr)
+    : m_jniListener(nullptr), m_jniObserveListener(jniListener), m_presenceHandle(presenceHandle)
 {
 }
 

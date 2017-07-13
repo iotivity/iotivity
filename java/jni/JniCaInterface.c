@@ -99,7 +99,7 @@ void CAManagerConnectionStateChangedCB(const CAEndpoint_t *info,
     if (JNI_OK != res)
     {
         LOGI("AttachCurrentThread will be called for JNIEnv pointer");
-        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, (void**) &env, NULL);
 
         if (JNI_OK != res)
         {
@@ -168,7 +168,7 @@ void CAManagerAdapterStateChangedCB(CATransportAdapter_t adapter, bool enabled)
     if (JNI_OK != res)
     {
         LOGI("AttachCurrentThread will be called for JNIEnv pointer");
-        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, (void**) &env, NULL);
 
         if (JNI_OK != res)
         {
@@ -446,7 +446,7 @@ Java_org_iotivity_ca_CaInterface_setBTConfigureImpl(JNIEnv *env, jclass clazz, j
     LOGI("setConfigureImpl");
     (void)env;
     (void)clazz;
-    CAUtilConfig_t configs = {(CATransportBTFlags_t)flag};
+    CAUtilConfig_t configs = {(CATransportBTFlags_t)flag, CA_USER_PREF_CLOUD};
     CAUtilSetBTConfigure(configs);
 }
 

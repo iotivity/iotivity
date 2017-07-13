@@ -108,7 +108,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_ownershipTransferCB
 
     try
     {
-        OTMCallbackData_t CBData = {0};
         if (OIC_JUST_WORKS == (OicSecOxm_t)OxmType)
         {
             /*NO callback required for JUST_WORKS*/
