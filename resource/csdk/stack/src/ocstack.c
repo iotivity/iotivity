@@ -644,21 +644,24 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
     {
         for (uint8_t i = 0; i < requestInfo->info.numOptions; i++)
         {
-            if (COAP_OPTION_ACCEPT_VERSION == requestInfo->info.options[i].optionID)
+            if (COAP_OPTION_ACCEPT_VERSION == requestInfo->info.options[i].optionID
+                    && sizeof(uint16_t) == requestInfo->info.options[i].optionLength)
             {
-                acceptVersion = *(uint16_t*) requestInfo->info.options[i].optionData;
+                acceptVersion = (requestInfo->info.options[i].optionData[1] << 8)
+                        + requestInfo->info.options[i].optionData[0];
             }
             else if (COAP_OPTION_ACCEPT == requestInfo->info.options[i].optionID)
             {
-                if (1 == requestInfo->info.options[i].optionLength)
+                if (sizeof(uint8_t) == requestInfo->info.options[i].optionLength)
                 {
                     acceptFormat = CAConvertFormat(
                             *(uint8_t*) requestInfo->info.options[i].optionData);
                 }
-                else if (2 == requestInfo->info.options[i].optionLength)
+                else if (sizeof(uint16_t) == requestInfo->info.options[i].optionLength)
                 {
                     acceptFormat = CAConvertFormat(
-                            *(uint16_t*) requestInfo->info.options[i].optionData);
+                            (requestInfo->info.options[i].optionData[1] << 8)
+                                    + requestInfo->info.options[i].optionData[0]);
                 }
                 else
                 {
@@ -3416,21 +3419,23 @@ OCStackResult OC_CALL OCDoRequest(OCDoHandle *handle,
         {
             for (uint8_t i = 0; i < numOptions; i++)
             {
-                if (COAP_OPTION_ACCEPT_VERSION == options[i].optionID)
+                if (COAP_OPTION_ACCEPT_VERSION == options[i].optionID
+                        && sizeof(uint16_t) == options[i].optionLength)
                 {
-                    acceptVersion = *(uint16_t*) options[i].optionData;
+                    acceptVersion = (options[i].optionData[1] << 8) + options[i].optionData[0];
                     IsAcceptVersionSet = true;
                 }
                 else if (COAP_OPTION_ACCEPT == options[i].optionID)
                 {
-                    if (1 == options[i].optionLength)
+                    if (sizeof(uint8_t) == options[i].optionLength)
                     {
                         acceptFormat = CAConvertFormat(*(uint8_t*)options[i].optionData);
                         IsAcceptFormatSet = true;
                     }
-                    else if (2 == options[i].optionLength)
+                    else if (sizeof(uint16_t) == options[i].optionLength)
                     {
-                        acceptFormat = CAConvertFormat(*(uint16_t*)options[i].optionData);
+                        acceptFormat = CAConvertFormat(
+                                (options[i].optionData[1] << 8) + options[i].optionData[0]);
                         IsAcceptFormatSet = true;
                     }
                     else
@@ -3503,19 +3508,21 @@ OCStackResult OC_CALL OCDoRequest(OCDoHandle *handle,
         {
             for (uint8_t i = 0; i < numOptions; i++)
             {
-                if (COAP_OPTION_CONTENT_VERSION == options[i].optionID)
+                if (COAP_OPTION_CONTENT_VERSION == options[i].optionID
+                        && sizeof(uint16_t) == options[i].optionLength)
                 {
-                    payloadVersion = *(uint16_t*) options[i].optionData;
+                    payloadVersion = (options[i].optionData[1] << 8) + options[i].optionData[0];
                 }
                 else if (COAP_OPTION_CONTENT_FORMAT == options[i].optionID)
                 {
-                    if (1 == options[i].optionLength)
+                    if (sizeof(uint8_t) == options[i].optionLength)
                     {
                         payloadFormat = CAConvertFormat(*(uint8_t*) options[i].optionData);
                     }
-                    else if (2 == options[i].optionLength)
+                    else if (sizeof(uint16_t) == options[i].optionLength)
                     {
-                        payloadFormat = CAConvertFormat(*(uint16_t*) options[i].optionData);
+                        payloadFormat = CAConvertFormat(
+                                (options[i].optionData[1] << 8) + options[i].optionData[0]);
                     }
                     else
                     {
