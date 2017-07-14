@@ -45,7 +45,6 @@ if target_os in ['linux']:
     if not env.get('RELEASE'):
         proxy_sample_app_env.PrependUnique(LIBS=['gcov'])
 
-proxy_sample_app_env.AppendUnique(LIBPATH=[env.get('BUILD_DIR')])
 proxy_sample_app_env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
 proxy_sample_app_env.PrependUnique(LIBS=[
     'coap_http_proxy',
