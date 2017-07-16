@@ -30,54 +30,55 @@ target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 zw_path = os.path.join(src_dir, 'plugins')
 
-print"Reading Zigbee Wrapper (ZW) script"
+print "Reading Zigbee Wrapper (ZW) script"
 
 ######################################################################
 # Build flags
 ######################################################################
 
-env.PrependUnique(CPPPATH = [ os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
-                              os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
-                              os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
-                              os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
-                              os.path.join(src_dir, 'resource', 'csdk', 'include'),
-                              os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
-                              ])
-env.AppendUnique(CPPPATH = [ os.path.join(zw_path, 'include'),
-                             os.path.join(zw_path, 'include', 'internal'),
-                             os.path.join(zw_path, 'zigbee_wrapper', 'include')
-                             ])
+env.PrependUnique(CPPPATH=[
+    os.path.join(src_dir, 'resource'),
+    os.path.join(src_dir, 'resource', 'c_common'),
+    os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
+    os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
+    os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
+    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
+    os.path.join(src_dir, 'resource', 'csdk', 'include'),
+    os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
+])
+env.AppendUnique(CPPPATH=[
+    os.path.join(zw_path, 'include'),
+    os.path.join(zw_path, 'include', 'internal'),
+    os.path.join(zw_path, 'zigbee_wrapper', 'include')
+])
 
 if target_os not in ['arduino', 'windows']:
-	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
+    env.AppendUnique(CPPDEFINES=['WITH_POSIX'])
 
-if target_os in ['darwin','ios']:
-	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+if target_os in ['darwin', 'ios']:
+    env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
 
-env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
-env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
+env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
 
-env.PrependUnique(LIBS = ['telegesis_wrapper'])
-
-if env.get('LOGGING'):
-	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+env.PrependUnique(LIBS=['telegesis_wrapper'])
 
 #####################################################################
 # Source files and Target(s)
 ######################################################################
 
 zw_src = [
-         os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'src', 'oic_malloc.c'),
-         os.path.join(src_dir, 'resource', 'csdk', 'logger', 'src', 'logger.c'),
-	     'zigbee_wrapper.c',
-         ]
+    os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'src',
+                 'oic_malloc.c'),
+    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'src', 'logger.c'),
+    'zigbee_wrapper.c',
+]
 
-env.AppendUnique(ZW_SRC = zw_src)
+env.AppendUnique(ZW_SRC=zw_src)
 
 if target_os in ['android', 'tizen']:
-	calib = env.SharedLibrary('zigbee_wrapper', env.get('ZW_SRC'))
+    calib = env.SharedLibrary('zigbee_wrapper', env.get('ZW_SRC'))
 else:
-	calib = env.StaticLibrary('zigbee_wrapper', env.get('ZW_SRC'))
+    calib = env.StaticLibrary('zigbee_wrapper', env.get('ZW_SRC'))
 env.InstallTarget(calib, 'libzigbee_wrapper')
 env.UserInstallTargetLib(calib, 'libzigbee_wrapper')
