@@ -5026,7 +5026,7 @@ OCStackResult OC_CALL OCDoResponse(OCEntityHandlerResponse *ehResponse)
 
     // Normal response
     // Get pointer to request info
-    serverRequest = GetServerRequestUsingHandle((OCServerRequest *)ehResponse->requestHandle);
+    serverRequest = (OCServerRequest *)ehResponse->requestHandle;
     if(serverRequest)
     {
         // response handler in ocserverrequest.c. Usually HandleSingleResponse.

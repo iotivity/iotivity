@@ -1427,7 +1427,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                             OicUuid_t deviceID = {.id = {0}};
 
                             //Generate mutualVerifNum
-                            OCServerRequest * request = GetServerRequestUsingHandle(ehRequest->requestHandle);
+                            OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
 
                             char label[LABEL_LEN] = {0};
                             snprintf(label, LABEL_LEN, "%s%s", MUTUAL_VERIF_NUM, OXM_MV_JUST_WORKS);

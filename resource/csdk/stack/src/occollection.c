@@ -291,7 +291,7 @@ OCStackResult DefaultCollectionEntityHandler(OCEntityHandlerFlag flag, OCEntityH
     }
     else if (0 == strcmp(ifQueryParam, OC_RSRVD_INTERFACE_BATCH))
     {
-        OCServerRequest *request = GetServerRequestUsingHandle((OCServerRequest *)ehRequest->requestHandle);
+        OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
         if (request)
         {
             request->numResponses = GetNumOfResourcesInCollection((OCResource *)ehRequest->resource);
