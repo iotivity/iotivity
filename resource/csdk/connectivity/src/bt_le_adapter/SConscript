@@ -1,5 +1,5 @@
 ################################
-#       Build BLE adapter
+# Build BLE adapter
 ################################
 import os
 
