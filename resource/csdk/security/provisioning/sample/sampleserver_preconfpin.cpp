@@ -49,6 +49,7 @@
 #define TAG "SAMPLE_PRECONF_PIN"
 
 int gQuitFlag = 0;
+const char * specVersion = "ocf.1.1.0";
 
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE{
@@ -432,6 +433,7 @@ int main()
         OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
+    OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, (void*) specVersion);
 
     /*
      * Declare and create the example resource: LED

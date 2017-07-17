@@ -401,7 +401,7 @@ static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx);
  * @param[in]  otmCtx  Context value of ownership transfer.
  * @return  OC_STACK_OK on success
  */
-static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx);
+static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx, OicSecAclVersion_t aclVer);
 
 /**
  * Function to send ownerShip info.
@@ -1230,7 +1230,7 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
 #ifdef __WITH_TLS__
             otmCtx->selectedDeviceInfo->connType |= CT_FLAG_SECURE;
 #endif
-            res = PostOwnerAcl(otmCtx);
+            res = PostOwnerAcl(otmCtx, GET_ACL_VER(otmCtx->selectedDeviceInfo->specVer));
             if(OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "Failed to update owner ACL to new device");
@@ -1290,31 +1290,6 @@ static OCStackApplicationResult OwnerAclHandler(void *ctx, OCDoHandle UNUSED,
             }
         }
     }
-    else if((OC_STACK_UNAUTHORIZED_REQ == res) &&
-            (NULL != selectedDeviceInfo) &&
-            !selectedDeviceInfo->ownerAclUnauthorizedRequest)
-    {
-        OIC_LOG_V(WARNING, TAG, "%s: UNAUTHORIZED_REQ. Assuming server is based on OIC 1.1",
-            __func__);
-        selectedDeviceInfo->ownerAclUnauthorizedRequest = true;
-
-        //Close the temporal secure session and re-connect using the owner credential
-        if(!CloseSslConnection(selectedDeviceInfo))
-        {
-            //Cannot make progress reliably, so return the error code from the previous request.
-            SetResult(otmCtx, OC_STACK_UNAUTHORIZED_REQ);
-        }
-        else
-        {
-            res = PostOwnerAcl(otmCtx);
-            if(OC_STACK_OK != res)
-            {
-                OIC_LOG_V(ERROR, TAG, "%s: Failed to update owner ACL to new device, res = %d",
-                    __func__, res);
-                SetResult(otmCtx, res);
-            }
-        }
-    }
     else
     {
         OIC_LOG_V(ERROR, TAG, "OwnerAclHandler : Unexpected result %d", res);
@@ -1326,7 +1301,6 @@ static OCStackApplicationResult OwnerAclHandler(void *ctx, OCDoHandle UNUSED,
 exit:
     return  OC_STACK_DELETE_TRANSACTION;
 }
-
 
 /**
  * Response handler for update owner information request.
@@ -1731,9 +1705,10 @@ error:
  * Function to update the owner ACL to new device.
  *
  * @param[in]  otmCtx  Context value of ownership transfer.
+ * @param[in]  aclVer  ACL version.
  * @return  OC_STACK_OK on success
  */
-static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
+static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx, OicSecAclVersion_t aclVer)
 {
     OCStackResult res = OC_STACK_ERROR;
 
@@ -1744,7 +1719,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
         OIC_LOG(ERROR, TAG, "Invalid parameters");
         return OC_STACK_INVALID_PARAM;
     }
-
+    const char * aclUri = (OIC_SEC_ACL_V2 == aclVer ? OIC_RSRC_ACL2_URI : OIC_RSRC_ACL_URI);
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     OicSecAcl_t* ownerAcl = NULL;
@@ -1773,7 +1748,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr, deviceInfo->securePort,
                         deviceInfo->connType,
-                        query, sizeof(query), OIC_RSRC_ACL2_URI))
+                        query, sizeof(query), aclUri))
     {
         OIC_LOG(ERROR, TAG, "Failed to generate query");
         return OC_STACK_ERROR;
@@ -1805,8 +1780,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
         goto error;
     }
 
-    // TODO IOT-2052 change to V2
-    res = AclToCBORPayload(ownerAcl, OIC_SEC_ACL_V2, &secPayload->securityData, &secPayload->payloadSize);
+    res = AclToCBORPayload(ownerAcl, aclVer, &secPayload->securityData, &secPayload->payloadSize);
     if (OC_STACK_OK != res)
     {
         OICFree(secPayload);
@@ -1820,7 +1794,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
 
     //Send owner ACL to new device : POST /oic/sec/cred [ owner credential ]
     OCCallbackData cbData;
-    cbData.cb = &OwnerAclHandler;
+    cbData.cb = OwnerAclHandler;
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query,

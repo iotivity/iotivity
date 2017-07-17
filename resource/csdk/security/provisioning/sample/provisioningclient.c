@@ -2526,6 +2526,7 @@ static int printDevList(const OCProvisionDev_t* dev_lst)
     {
         printf("     [%d] ", ++lst_cnt);
         printUuid((const OicUuid_t*) &lst->doxm->deviceID);
+        printf("    %s", lst->specVer);
         printf("\n");
         lst = lst->next;
     }

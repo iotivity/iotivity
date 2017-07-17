@@ -41,7 +41,6 @@
 #include "srmresourcestrings.h" //@note: SRM's internal header
 #include "doxmresource.h"       //@note: SRM's internal header
 #include "pstatresource.h"      //@note: SRM's internal header
-#include "verresource.h"      //@note: SRM's internal header
 
 #include "pmtypes.h"
 #include "pmutility.h"
@@ -87,7 +86,7 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
  * Since security version discovery does not used anymore, disable security version discovery.
  * Need to discussion to removing all version discovery related codes.
  */
-#if 0
+
 /*
  * Function to discover security version information through unicast
  *
@@ -96,9 +95,9 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
  *
  * @return OC_STACK_OK on success otherwise error.
  */
-static OCStackResult SecurityVersionDiscovery(DiscoveryInfo* discoveryInfo,
+static OCStackResult SpecVersionDiscovery(DiscoveryInfo* discoveryInfo,
                                               const OCClientResponse *clientResponse);
-
+#if 0
 /**
  * Callback handler for getting secure port information using /oic/res discovery.
  *
@@ -304,7 +303,7 @@ OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, OCDevAddr* endpoint,
         ptr->next = NULL;
         ptr->connType = connType;
         ptr->devStatus = DEV_STATUS_ON; //AddDevice is called when discovery(=alive)
-        OICStrcpy(ptr->secVer, OIC_SEC_MAX_VER_LEN, DEFAULT_SEC_VERSION); // version initialization
+        OICStrcpy(ptr->specVer, SPEC_MAX_VER_LEN, DEFAULT_SPEC_VERSION); // version initialization
         ptr->handle = NULL;
 
         LL_PREPEND(*ppDevicesList, ptr);
@@ -385,14 +384,14 @@ static OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, 
  * @param[in] pList         List of OCProvisionDev_t.
  * @param[in] addr          address of target device.
  * @param[in] port          port of remote server.
- * @param[in] secVer    security version information.
+ * @param[in] specVer    security version information.
  *
  * @return OC_STACK_OK for success and errorcode otherwise.
  */
-OCStackResult UpdateSecVersionOfDevice(OCProvisionDev_t **ppDevicesList, const char *addr,
-                                       uint16_t port, const char* secVer)
+static OCStackResult UpdateSpecVersionOfDevice(OCProvisionDev_t **ppDevicesList, const char *addr,
+                                       uint16_t port, const char* specVer)
 {
-    if (NULL == secVer)
+    if (NULL == specVer)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -405,7 +404,7 @@ OCStackResult UpdateSecVersionOfDevice(OCProvisionDev_t **ppDevicesList, const c
         return OC_STACK_ERROR;
     }
 
-    OICStrcpy(ptr->secVer, OIC_SEC_MAX_VER_LEN, secVer);
+    OICStrcpy(ptr->specVer, SPEC_MAX_VER_LEN, specVer);
 
     return OC_STACK_OK;
 }
@@ -463,13 +462,13 @@ OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src)
         VERIFY_NOT_NULL(TAG, newDev->doxm, ERROR);
     }
 
-    if (0 == strlen(src->secVer))
+    if (0 == strlen(src->specVer))
     {
-        OICStrcpy(newDev->secVer, OIC_SEC_MAX_VER_LEN, DEFAULT_SEC_VERSION);
+        OICStrcpy(newDev->specVer, SPEC_MAX_VER_LEN, DEFAULT_SPEC_VERSION);
     }
     else
     {
-        OICStrcpy(newDev->secVer, OIC_SEC_MAX_VER_LEN, src->secVer);
+        OICStrcpy(newDev->specVer, SPEC_MAX_VER_LEN, src->specVer);
     }
 
     newDev->securePort = src->securePort;
@@ -627,8 +626,7 @@ bool OC_CALL PMGenerateQuery(bool isSecure,
  * Since security version discovery does not used anymore, disable security version discovery.
  * Need to discussion to removing all version discovery related codes.
  */
-#if 0
-static OCStackApplicationResult SecurityVersionDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
+static OCStackApplicationResult SpecVersionDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)
 {
     if (ctx == NULL)
@@ -651,45 +649,42 @@ static OCStackApplicationResult SecurityVersionDiscoveryHandler(void *ctx, OCDoH
         }
         else
         {
-            if (PAYLOAD_TYPE_SECURITY != clientResponse->payload->type)
+            if (PAYLOAD_TYPE_REPRESENTATION != clientResponse->payload->type)
             {
                 OIC_LOG(INFO, TAG, "Unknown payload type");
                 return OC_STACK_KEEP_TRANSACTION;
             }
+            OCRepPayloadValue* val = ((OCRepPayload*) clientResponse->payload)->values;
 
-            OicSecVer_t *ptrVer = NULL;
-            uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
-            size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
-
-            OCStackResult res = CBORPayloadToVer(payload, size, &ptrVer);
-            if ((NULL == ptrVer) && (OC_STACK_OK != res))
+            char specVer[SPEC_MAX_VER_LEN + 1] = {0};
+            OICStrcpy(specVer, SPEC_MAX_VER_LEN, DEFAULT_SPEC_VERSION);
+            while (val)
             {
-                OIC_LOG(INFO, TAG, "Ignoring malformed CBOR");
+                if (val->type == OCREP_PROP_STRING)
+                {
+                    OIC_LOG_V(DEBUG, TAG, "\t\t%s:%s", val->name, val->str);
+                    if (0 == strcmp(val->name, OC_RSRVD_SPEC_VERSION))
+                    {
+                        OICStrcpy(specVer, SPEC_MAX_VER_LEN, val->str);
+                        break;
+                    }
+                }
+                val = val -> next;
+            }
+            //If this is owend device discovery we have to filter out the responses.
+            DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
+            OCStackResult res = UpdateSpecVersionOfDevice(pDInfo->ppDevicesList, clientResponse->devAddr.addr,
+                                                     clientResponse->devAddr.port, specVer);
+            if (OC_STACK_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "Error while getting security version.");
                 return OC_STACK_KEEP_TRANSACTION;
             }
-            else
-            {
-                OIC_LOG(DEBUG, TAG, "Successfully converted ver cbor to bin.");
 
-                //If this is owend device discovery we have to filter out the responses.
-                DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
-                res = UpdateSecVersionOfDevice(pDInfo->ppDevicesList, clientResponse->devAddr.addr,
-                                                         clientResponse->devAddr.port, ptrVer->secv);
-                if (OC_STACK_OK != res)
-                {
-                    OIC_LOG(ERROR, TAG, "Error while getting security version.");
-                    DeleteVerBinData(ptrVer);
-                    return OC_STACK_KEEP_TRANSACTION;
-                }
-
-                OIC_LOG(INFO, TAG, "= Discovered security version =");
-                OIC_LOG_V(DEBUG, TAG, "IP %s", clientResponse->devAddr.addr);
-                OIC_LOG_V(DEBUG, TAG, "PORT %d", clientResponse->devAddr.port);
-                OIC_LOG_V(DEBUG, TAG, "VERSION %s", ptrVer->secv);
-
-                OIC_LOG(INFO, TAG, "Exiting SecVersionDiscoveryHandler.");
-                DeleteVerBinData(ptrVer);
-            }
+            OIC_LOG(INFO, TAG, "= Discovered security version =");
+            OIC_LOG_V(DEBUG, TAG, "IP %s", clientResponse->devAddr.addr);
+            OIC_LOG_V(DEBUG, TAG, "PORT %d", clientResponse->devAddr.port);
+            OIC_LOG_V(DEBUG, TAG, "VERSION %s", specVer);
         }
     }
     else
@@ -700,7 +695,6 @@ static OCStackApplicationResult SecurityVersionDiscoveryHandler(void *ctx, OCDoH
 
     return  OC_STACK_DELETE_TRANSACTION;
 }
-#endif
 
 static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                  OCClientResponse *clientResponse)
@@ -856,18 +850,13 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
                 pDInfo->isFound = true;
             }
 
-/*
- * Since security version discovery does not used anymore, disable security version discovery.
- * Need to discussion to removing all version discovery related codes.
- */
-#if 0
-            res = SecurityVersionDiscovery(pDInfo, clientResponse);
+            res = SpecVersionDiscovery(pDInfo, clientResponse);
             if(OC_STACK_OK != res)
             {
-                OIC_LOG(ERROR, TAG, "Failed to SecurityVersionDiscovery");
+                OIC_LOG(ERROR, TAG, "Failed to SpecVersionDiscovery");
                 return OC_STACK_DELETE_TRANSACTION;
             }
-#endif
+
             OIC_LOG(INFO, TAG, "Exiting SecurePortDiscoveryHandler.");
         }
 
@@ -1731,15 +1720,11 @@ static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,
     return ret;
 }
 
-/*
- * Since security version discovery does not used anymore, disable security version discovery.
- * Need to discussion to removing all version discovery related codes.
- */
-#if 0
-static OCStackResult SecurityVersionDiscovery(DiscoveryInfo* discoveryInfo,
+
+static OCStackResult SpecVersionDiscovery(DiscoveryInfo* discoveryInfo,
                                               const OCClientResponse *clientResponse)
 {
-    OIC_LOG(DEBUG, TAG, "IN SecurityVersionDiscovery");
+    OIC_LOG(DEBUG, TAG, "IN SpecVersionDiscovery");
 
     if(NULL == discoveryInfo || NULL == clientResponse)
     {
@@ -1751,15 +1736,15 @@ static OCStackResult SecurityVersionDiscovery(DiscoveryInfo* discoveryInfo,
     if(!PMGenerateQuery(false,
                         clientResponse->devAddr.addr, clientResponse->devAddr.port,
                         clientResponse->connType,
-                        query, sizeof(query), OIC_RSRC_VER_URI))
+                        query, sizeof(query), OC_RSRVD_DEVICE_URI))
     {
-        OIC_LOG(ERROR, TAG, "SecurityVersionDiscovery : Failed to generate query");
+        OIC_LOG(ERROR, TAG, "SpecVersionDiscovery : Failed to generate query");
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
     OCCallbackData cbData;
-    cbData.cb = &SecurityVersionDiscoveryHandler;
+    cbData.cb = &SpecVersionDiscoveryHandler;
     cbData.context = (void*)discoveryInfo;
     cbData.cd = NULL;
     OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
@@ -1774,11 +1759,10 @@ static OCStackResult SecurityVersionDiscovery(DiscoveryInfo* discoveryInfo,
         OIC_LOG_V(INFO, TAG, "OCDoResource with [%s] Success", query);
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT SecurityVersionDiscovery");
+    OIC_LOG(DEBUG, TAG, "OUT SpecVersionDiscovery");
 
     return ret;
 }
-#endif
 
 /**
  * Function to print OCProvisionDev_t for debug purpose.
