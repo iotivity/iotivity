@@ -147,7 +147,7 @@ help_vars.AddVariables(
                  allowed_values=os_arch_map[target_os]),
     EnumVariable('MULTIPLE_OWNER',
                  'Enable multiple owner',
-                 default='1',
+                 default='0',
                  allowed_values=('0', '1')),
     EnumVariable('EXC_PROV_SUPPORT',
                  'Except OCPMAPI library(libocpmapi.so)',
