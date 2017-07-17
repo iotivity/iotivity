@@ -543,6 +543,11 @@ namespace OIC
             return m_types;
         }
 
+        OCResourceHandle RCSResourceObject::getResourceHandle() const
+        {
+            return m_resourceHandle;
+        }
+
         RCSRepresentation RCSResourceObject::getRepresentation(const RCSRequest& request) const
         {
             if (request.getOCRequest()->getRequestType() == "GET")
