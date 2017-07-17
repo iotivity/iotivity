@@ -558,6 +558,11 @@ namespace OIC
              */
             std::vector< std::string > getTypes() const;
 
+            /**
+             * Returns the resource handle of the resource.
+             */
+             OCResourceHandle getResourceHandle() const;
+
         private:
             RCSResourceObject(const std::string&, uint8_t, RCSResourceAttributes&&);
 
