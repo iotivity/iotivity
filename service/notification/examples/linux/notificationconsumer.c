@@ -193,7 +193,7 @@ int main(void)
 
         printf("Input: ");
 
-        if(scanf("%d", &num) == EOF)
+        if(scanf("%2d", &num) == EOF)
         {
             printf("Fail to input num\n");
         }

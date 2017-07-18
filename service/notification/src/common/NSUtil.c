@@ -205,7 +205,6 @@ NSResult NSFreeConsumer(NSConsumer * obj)
     (obj->consumerId)[0] = '\0';
 
     OICFree(obj);
-    obj = NULL;
 
     return NS_OK;
 }
@@ -490,7 +489,7 @@ OCDevAddr * NSChangeAddress(const char * inputaddress)
     {
         address = schema + 2;
     }
-    size_t prefixLen = schema - inputaddress;
+    int prefixLen = schema - inputaddress;
     if (prefixLen <= 0)
     {
         NS_LOG(ERROR, "Invalid Input address.");
