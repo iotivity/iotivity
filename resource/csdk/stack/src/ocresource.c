@@ -226,7 +226,7 @@ OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char 
         {
             *filterOne = value;     // if
         }
-        else if (strncasecmp(key, OC_RSRVD_RESOURCE_TYPE, sizeof(OC_RSRVD_INTERFACE) - 1) == 0)
+        else if (strncasecmp(key, OC_RSRVD_RESOURCE_TYPE, sizeof(OC_RSRVD_RESOURCE_TYPE) - 1) == 0)
         {
             *filterTwo = value;     // rt
         }
