@@ -736,6 +736,22 @@ const char *OC_CALL OCRDDatabaseGetStorageFilename();
 OCStackResult OC_CALL OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType,
                                                  const char *resourceType,
                                                  OCDiscoveryPayload **discPayload);
+
+/**
+* Search the RD database for queries.
+*
+* @param interfaceType is the interface type that is queried.
+* @param resourceType is the resource type that is queried.
+* @param endpoint is the requesting endpoint to filter created eps value against.
+* @param discPayload NULL if no resource found or else OCDiscoveryPayload with the details
+* about the resources.
+*
+* @return ::OC_STACK_OK in case of success or else other value.
+*/
+OCStackResult OC_CALL OCRDDatabaseDiscoveryPayloadCreateWithEp(const char *interfaceType,
+                                                 const char *resourceType,
+                                                 OCDevAddr *endpoint,
+                                                 OCDiscoveryPayload **discPayload);
 #endif // RD_SERVER
 #endif // RD_CLIENT || RD_SERVER
 

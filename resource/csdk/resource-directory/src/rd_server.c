@@ -25,10 +25,20 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
+#ifdef HAVE_IN6ADDR_H
+#include <in6addr.h>
+#endif
 #include "payload_logging.h"
 #include "ocpayload.h"
 #include "octypes.h"
 #include "oic_string.h"
+#include "cainterface.h"
 
 #define TAG PCF("OIC_RD_SERVER")
 
@@ -93,6 +103,54 @@ static OCEntityHandlerResult handleGetRequest(const OCEntityHandlerRequest *ehRe
     return ehResult;
 }
 
+static bool isRequestFromThisHost(const OCEntityHandlerRequest *ehRequest)
+{
+    /* ehRequest->devAddr.addr includes zone ID which inet_pton doesn't like */
+    struct in6_addr addr6;
+    if (ehRequest->devAddr.flags & OC_IP_USE_V6)
+    {
+        char addr[MAX_ADDR_STR_SIZE];
+        const char *src = ehRequest->devAddr.addr;
+        char *dst = addr;
+        while (*src && *src != '%')
+        {
+            *dst++ = *src++;
+        }
+        *dst = '\0';
+        inet_pton(AF_INET6, addr, &addr6);
+    }
+
+    bool fromThisHost = false;
+    CAEndpoint_t *caEps = NULL;
+    size_t nCaEps = 0;
+    if (CA_STATUS_OK == CAGetNetworkInformation(&caEps, &nCaEps))
+    {
+        for (size_t i = 0; i < nCaEps; ++i)
+        {
+            if (caEps[i].flags & ehRequest->devAddr.flags & OC_IP_USE_V6)
+            {
+                struct in6_addr ca6;
+                if ((1 == inet_pton(AF_INET6, caEps[i].addr, &ca6)) &&
+                        !memcmp(&ca6, &addr6, sizeof(struct in6_addr)))
+                {
+                    fromThisHost = true;
+                    break;
+                }
+            }
+            else if (!strcmp(caEps[i].addr, ehRequest->devAddr.addr))
+            {
+                fromThisHost = true;
+                break;
+            }
+        }
+        if (caEps)
+        {
+            OICFree(caEps);
+        }
+    }
+    return fromThisHost;
+}
+
 /**
  * This internal method handles RD publish request.
  * Responds with the RD success message.
@@ -116,7 +174,16 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
         OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) payload);
         if (OC_STACK_OK == OCRDDatabaseInit())
         {
-            if (OC_STACK_OK == OCRDDatabaseStoreResources(payload))
+            OCStackResult result;
+            if (isRequestFromThisHost(ehRequest))
+            {
+                result = OCRDDatabaseStoreResourcesFromThisHost(payload);
+            }
+            else
+            {
+                result = OCRDDatabaseStoreResources(payload);
+            }
+            if (OC_STACK_OK == result)
             {
                 OIC_LOG_V(DEBUG, TAG, "Stored resources.");
                 resPayload = payload;

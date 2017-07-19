@@ -1194,7 +1194,7 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
                 char *proto = NULL;
 
                 // consider IP or TCP adapter for payload that is visible to the client
-                if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter) && 
+                if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter) &&
                     (info->ifindex == devAddr->ifindex))
                 {
                     OCTpsSchemeFlags matchedTps = OC_NO_TPS;
@@ -1651,13 +1651,15 @@ static OCStackResult EHRequest(OCEntityHandlerRequest *ehRequest, OCPayloadType 
  * In case if RD server is not started, it returns ::OC_STACK_NO_RESOURCE.
  */
 static OCStackResult findResourcesAtRD(const char *interfaceQuery,
-                                       const char *resourceTypeQuery, OCDiscoveryPayload **discPayload)
+                                       const char *resourceTypeQuery,
+                                       OCDevAddr *endpoint,
+                                       OCDiscoveryPayload **discPayload)
 {
     OCStackResult result = OC_STACK_NO_RESOURCE;
     if (OCGetResourceHandleAtUri(OC_RSRVD_RD_URI) != NULL)
     {
-        result = OCRDDatabaseDiscoveryPayloadCreate(interfaceQuery, resourceTypeQuery,
-            (*discPayload) ? &(*discPayload)->next : discPayload);
+        result = OCRDDatabaseDiscoveryPayloadCreateWithEp(interfaceQuery, resourceTypeQuery,
+                endpoint, (*discPayload) ? &(*discPayload)->next : discPayload);
     }
     if ((*discPayload) && (*discPayload)->resources)
     {
@@ -1886,7 +1888,8 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             OICFree(networkInfo);
         }
 #ifdef RD_SERVER
-        discoveryResult = findResourcesAtRD(interfaceQuery, resourceTypeQuery, (OCDiscoveryPayload **)&payload);
+        discoveryResult = findResourcesAtRD(interfaceQuery, resourceTypeQuery, &request->devAddr,
+                (OCDiscoveryPayload **)&payload);
 #endif
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
@@ -2577,7 +2580,7 @@ static OCStackResult IsDatabaseUpdateNeeded(const char *attribute, const void *v
         }
         else
         {
-            OIC_LOG_V(ERROR, TAG, 
+            OIC_LOG_V(ERROR, TAG,
                 "Call to OCGetPropertyValue for the current PIID failed with error: %d", result);
         }
     }
@@ -2597,7 +2600,7 @@ OCStackResult OC_CALL OCSetAttribute(OCResource *resource, const char *attribute
     // write.
     if (OC_STACK_OK != IsDatabaseUpdateNeeded(attribute, value, &updateDatabase))
     {
-        OIC_LOG_V(WARNING, TAG, 
+        OIC_LOG_V(WARNING, TAG,
             "Could not determine if a database update was needed for %s. Proceeding without updating the database.",
             attribute);
         updateDatabase = false;

@@ -44,6 +44,16 @@ OCStackResult OC_CALL OCRDDatabaseInit();
 OCStackResult OC_CALL OCRDDatabaseStoreResources(const OCRepPayload *payload);
 
 /**
+ * Stores in database the published resource and marks them as originating at this host so that the
+ * eps can be filtered.
+ *
+ * @param payload is the the published resource payload.
+ *
+ * @return ::OC_STACK_OK in case of success or else other value.
+ */
+OCStackResult OC_CALL OCRDDatabaseStoreResourcesFromThisHost(const OCRepPayload *payload);
+
+/**
  * Delete the RD resources
  *
  * @param deviceId of the device containing the resource(s) to be deleted.
