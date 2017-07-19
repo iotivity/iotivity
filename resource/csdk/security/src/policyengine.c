@@ -25,7 +25,6 @@
 #include "ocrandom.h"
 #include "policyengine.h"
 #include "resourcemanager.h"
-#include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "logger.h"
 #include "aclresource.h"

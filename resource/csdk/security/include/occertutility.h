@@ -23,7 +23,7 @@
 #ifndef OCCERTUTILITY_H_
 #define OCCERTUTILITY_H_
 
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -42,7 +42,7 @@
 
 #include "cacommon.h"
 #include "cainterface.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C" {

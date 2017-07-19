@@ -24,7 +24,7 @@
 #include "ocstack.h"
 #include "ocpayload.h"
 //#include "psinterface.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "doxmresource.h"
 #include "oic_malloc.h"
 #include "oic_string.h"

@@ -28,7 +28,7 @@
 #include "OCApi.h"
 #include "OCPlatform_impl.h"
 #include "oxmverifycommon.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 namespace OC
 {

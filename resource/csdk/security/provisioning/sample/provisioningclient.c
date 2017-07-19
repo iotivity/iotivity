@@ -33,7 +33,6 @@
 #include "ocprovisioningmanager.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
-#include "securevirtualresourcetypes.h"
 #include "srmutility.h"
 #include "pmtypes.h"
 #include "oxmverifycommon.h"

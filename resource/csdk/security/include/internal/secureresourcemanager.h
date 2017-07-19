@@ -21,7 +21,7 @@
 #ifndef SECURITYRESOURCEMANAGER_H_
 #define SECURITYRESOURCEMANAGER_H_
 
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "cainterface.h"
 
 #ifdef __cplusplus

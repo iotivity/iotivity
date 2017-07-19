@@ -22,7 +22,7 @@
 #define OC_PROVISIONING_TYPES_H
 
 #include <stdbool.h>
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C" {

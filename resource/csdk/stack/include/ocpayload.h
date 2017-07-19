@@ -34,7 +34,7 @@
 #include "platform_features.h"
 
 #if defined(__WITH_TLS__) || defined(__WITH_DTLS__)
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #endif
 
 #ifdef __cplusplus

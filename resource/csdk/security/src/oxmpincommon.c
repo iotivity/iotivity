@@ -29,7 +29,6 @@
 #include "pinoxmcommon.h"
 #include "pbkdf2.h"
 #include "base64.h"
-#include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
 #include "credresource.h"

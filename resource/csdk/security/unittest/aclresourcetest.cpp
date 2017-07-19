@@ -28,7 +28,6 @@
 #include "oic_string.h"
 #include "cainterface.h"
 #include "secureresourcemanager.h"
-#include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "aclresource.h"
 #include "pstatresource.h"

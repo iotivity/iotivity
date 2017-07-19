@@ -20,7 +20,6 @@
 
 #include <string.h>
 #include "resourcemanager.h"
-#include "securevirtualresourcetypes.h"
 #include "aclresource.h"
 #include "pstatresource.h"
 #include "doxmresource.h"

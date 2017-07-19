@@ -37,7 +37,6 @@
 #include "utlist.h"
 #include "ocpayload.h"
 
-#include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h" //@note: SRM's internal header
 #include "doxmresource.h"       //@note: SRM's internal header
 #include "pstatresource.h"      //@note: SRM's internal header

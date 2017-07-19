@@ -25,7 +25,6 @@
 #include "oic_string.h"
 #include "resourcemanager.h"
 #include "credresource.h"
-#include "securevirtualresourcetypes.h"
 #include "srmtestcommon.h"
 #include "srmutility.h"
 #include "psinterface.h"

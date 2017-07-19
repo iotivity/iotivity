@@ -58,7 +58,6 @@
 #include "aclresource.h"
 #include "ownershiptransfermanager.h"
 #include "secureresourceprovider.h"
-#include "securevirtualresourcetypes.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "oxmmanufacturercert.h"

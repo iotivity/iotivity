@@ -22,7 +22,7 @@
 #define CRL_LOGGING_H_
 
 #include "logger.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C"

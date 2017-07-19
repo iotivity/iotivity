@@ -103,9 +103,9 @@ cp -f %{BUILD_DIR}/libmbedtls.a %{buildroot}/%{_libdir}
 cp -f %{BUILD_DIR}/libmbedx509.a %{buildroot}/%{_libdir}
 %endif
 
+install -d  %{DEST_INC_DIR}/experimental
 cp -rf resource/csdk/stack/include/ocstack.h* %{DEST_INC_DIR}/
-cp -rf resource/csdk/security/include/securevirtualresourcetypes.h* %{DEST_INC_DIR}/
-cp -rf resource/c_common/byte_array.h* %{DEST_INC_DIR}/
+cp resource/csdk/security/include/experimental/*.h* %{DEST_INC_DIR}/experimental/
 cp -rf resource/csdk/stack/include/ocstackconfig.h* %{DEST_INC_DIR}/
 cp -rf resource/csdk/include/octypes.h* %{DEST_INC_DIR}/
 cp -rf resource/csdk/logger/include/logger.h* %{DEST_INC_DIR}/
@@ -121,6 +121,7 @@ cp resource/csdk/stack/include/ocpayload.h %{DEST_INC_DIR}
 cp resource/c_common/platform_features.h %{DEST_INC_DIR}
 cp resource/c_common/iotivity_config.h %{DEST_INC_DIR}
 cp resource/c_common/*/include/*.h %{DEST_INC_DIR}
+cp resource/c_common/experimental/*.h* %{DEST_INC_DIR}/experimental/
 cp resource/csdk/stack/include/payload_logging.h %{DEST_INC_DIR}
 cp extlibs/tinycbor/tinycbor/src/cbor.h %{DEST_INC_DIR}
 cp -f com.oic.ri.pc %{DEST_LIB_DIR}/pkgconfig/
