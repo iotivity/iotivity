@@ -101,6 +101,7 @@ src_files = [
 src_files = [os.path.join(this_src_dir, src_file) for src_file in src_files]
 
 glue_files = []
+updated_files = []
 
 for file, prefix in dbus_introspection_xml.items():
     source_xml = file + '.xml'
@@ -128,13 +129,39 @@ for file, prefix in dbus_introspection_xml.items():
         '&& cd -' % (this_build_dir, glue, prefix, glue_header_gen,
                      glue_header_copy))
 
+    # install the header files in the updated folder.
+    updated_files.append(connectivity_env.Install(this_build_dir + '/updated/', glue_header_gen))
     connectivity_env.Clean(gen, glue_header_copy)
 
     # Force a dependency on copied glue header to make sure it exists
     # before compilation of the non-generated source files begins.
+    Depends(updated_files, gen)
     Depends(src_files, gen)
 
-src_files += glue_files
+# open the input file and add pragmas to ignore the unused-parameter
+# warning around the entier file.
+# Since the input file and output file both end in the same subfix the
+# source and target must differ in name or path.
+def add_pragma_function(target, source, env):
+    for n in source:
+        with open(n.get_abspath(), 'r') as f:
+            with open(target[0].get_abspath(), 'w') as out_f:
+                out_f.write('#pragma GCC diagnostic push\n')
+                out_f.write('#pragma GCC diagnostic ignored "-Wunused-parameter"\n')
+                out_f.write(f.read())
+                out_f.write('#pragma GCC diagnostic pop\n')
+    return None
+
+bldr = Builder(action=add_pragma_function, suffix = '.c', src_suffix = '.c')
+env_foo = Environment( BUILDERS={'AddPragma': bldr}, tools = ['default', 'textfile'] )
+
+# Add the pragmas to the generated files place them in the updated directory. Add those files to the list of source files.
+# The generated files produce many unused-parameter warnings.  This is to prevent those warnings when the generated files
+# are included in the rest of the project.
+for glue_file in glue_files:
+    src_files += env_foo.AddPragma(target=this_build_dir + '/updated/' + os.path.basename(glue_file), source=glue_file)
+
+Depends(src_files, updated_files)
 
 connectivity_env.AppendUnique(CA_SRC=src_files)
 
