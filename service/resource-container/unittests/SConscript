@@ -107,6 +107,7 @@ if int(containerJavaSupport):
 
 if target_os not in ['windows']:
     container_gtest_env.AppendUnique(LIBS=['dl'])
+if 'g++' in container_gtest_env.get('CXX'):
     container_gtest_env.AppendUnique(CCFLAGS=['-Wnoexcept'])
 
 container_gtest_env.PrependUnique(LIBS=[
