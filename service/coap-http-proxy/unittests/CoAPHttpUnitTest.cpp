@@ -274,8 +274,9 @@ TEST_F(CoApHttpTest, CHPGetHttpMethod)
 
 TEST_F(CoApHttpTest, CHPGetHttpOption)
 {
-    OCHeaderOption ocOp = {OC_COAP_ID, COAP_OPTION_ACCEPT, strlen(CBOR_CONTENT_TYPE) + 1,
-                            (uint8_t *)CBOR_CONTENT_TYPE};
+    OCHeaderOption ocOp = {OC_COAP_ID, COAP_OPTION_ACCEPT,
+                           static_cast<uint16_t>(strlen(CBOR_CONTENT_TYPE) + 1),
+                           (uint8_t *)CBOR_CONTENT_TYPE};
 
     HttpHeaderOption_t *httpOp;
     EXPECT_NE(OC_STACK_OK, (CHPGetHttpOption(NULL, NULL)));
