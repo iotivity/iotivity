@@ -217,7 +217,6 @@ static CAPayloadFormat_t OCToCAPayloadFormat (OCPayloadFormat ocFormat)
         return CA_FORMAT_UNSUPPORTED;
     }
 }
-
 static CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMethod method)
 {
     CAResponseResult_t caResult = CA_BAD_REQ;
@@ -494,6 +493,15 @@ OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerR
     return OC_STACK_INVALID_PARAM;
 }
 
+
+/**
+ * Handler function for sending a response from a single resource
+ *
+ * @param ehResponse - pointer to the response from the resource
+ *
+ * @return
+ *     OCStackResult
+ */
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;
