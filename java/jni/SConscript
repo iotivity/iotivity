@@ -67,7 +67,9 @@ jni_env.AppendUnique(CPPPATH=[
 target_os = env.get('TARGET_OS')
 if target_os not in ['windows', 'winrt']:
     jni_env.AppendUnique(CCFLAGS=[
-        '-Wno-error', '-Wno-comment', '-Wno-unused-function',
+        '-Werror',
+        '-Wno-comment',
+        '-Wno-unused-function',
         '-Wno-unused-parameter'
     ])
     jni_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-pthread'])
