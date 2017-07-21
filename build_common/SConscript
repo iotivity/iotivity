@@ -479,7 +479,7 @@ def __installbin(ienv, targets, name):
 def __installheader(ienv, targets, dir, name):
     user_prefix = env.get('PREFIX')
     if user_prefix:
-        i_n = ienv.Install(user_prefix + '/include/' + dir, targets)
+        i_n = ienv.Install(user_prefix + '/include/iotivity/' + dir, targets)
     else:
         i_n = ienv.Install(
             os.path.join(env.get('BUILD_DIR'), 'include', dir), targets)

@@ -264,13 +264,6 @@ cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/service/coap-http-proxy/samples
 mkdir -p %{ex_install_dir}/provisioning
 mkdir -p %{ex_install_dir}/provision-sample
 
-
-cp ./resource/csdk/security/include/*.h %{buildroot}%{_includedir}
-cp ./resource/csdk/security/include/*/*.h %{buildroot}%{_includedir}
-cp ./resource/csdk/connectivity/api/*.h %{buildroot}%{_includedir}/
-cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
-cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
-cp ./resource/csdk/security/provisioning/include/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{buildroot}%{_libdir}/oic_svr_db_server.dat
 cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_justworks %{ex_install_dir}/provision-sample/
 cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{ex_install_dir}/provision-sample/
@@ -281,22 +274,13 @@ cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/oic_svr_db_cl
 
 %endif
 
-cp resource/c_common/*.h %{buildroot}%{_includedir}
-cp resource/csdk/include/*.h %{buildroot}%{_includedir}
-cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
-install -d %{buildroot}%{_includedir}/experimental/
-cp resource/csdk/logger/include/experimental/*.h %{buildroot}%{_includedir}/experimental/
-
 find "%{buildroot}" -type f -perm /u+x -exec chrpath -d "{}" \;
 find "%{buildroot}" -type f -iname "lib*.so" -exec chrpath -d "{}" \;
 
-find "%{buildroot}" -type f -perm /u+x -exec chrpath -d "{}" \;
-find "%{buildroot}" -type f -iname "lib*.so" -exec chrpath -d "{}" \;
-
-install -d %{buildroot}%{_includedir}/iotivity
-ln -fs ../resource %{buildroot}%{_includedir}/iotivity/
-ln -fs ../service %{buildroot}%{_includedir}/iotivity/
-ln -fs ../c_common %{buildroot}%{_includedir}/iotivity/
+# Support legacy path (transitional, use pkg-config)
+ln -fs iotivity/resource %{buildroot}%{_includedir}/
+ln -fs iotivity/service %{buildroot}%{_includedir}/
+ln -fs iotivity/c_common %{buildroot}%{_includedir}/
 
 rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 
