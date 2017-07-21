@@ -48,8 +48,6 @@ mpmclient_env.AppendUnique(LIBS=['pthread'])
 mpmclient_env.AppendUnique(LIBS=[
     'm', 'octbstack', 'ocsrm', 'mpmcommon', 'connectivity_abstraction', 'coap', 'curl'
 ])
-mpmclient_env.AppendUnique(
-    RPATH=[os.path.join(env.get('BUILD_DIR'), 'bridging', 'plugins')])
 
 if target_os in ['linux', 'tizen', 'yocto']:
     mpmclient_env.AppendUnique(LIBS = ['rt'])

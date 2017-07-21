@@ -72,8 +72,6 @@ if 'g++' in nest_env.get('CXX'):
     nest_env.AppendUnique(
         CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
-nest_env.AppendUnique(RPATH=[nest_env.get('BUILD_DIR')])
-
 if nest_env.get('LOGGING'):
     nest_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 

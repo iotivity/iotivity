@@ -65,8 +65,6 @@ if 'g++' in lifx_env.get('CXX'):
     lifx_env.AppendUnique(
         CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
-lifx_env.AppendUnique(RPATH=[lifx_env.get('BUILD_DIR')])
-
 lifx_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
 lifx_env.AppendUnique(LINKFLAGS=['-Wl,--allow-shlib-undefined'])
 lifx_env.AppendUnique(LINKFLAGS=[

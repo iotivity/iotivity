@@ -57,7 +57,6 @@ if target_os not in ['arduino', 'windows']:
     mpmcommon_env.AppendUnique(
         CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror', '-fpic'])
 
-mpmcommon_env.AppendUnique(RPATH=[mpmcommon_env.get('BUILD_DIR')])
 mpmcommon_env['LINKFLAGS'] = maskFlags(mpmcommon_env['LINKFLAGS'])
 
 mpmcommon_env.PrependUnique(LIBS=[

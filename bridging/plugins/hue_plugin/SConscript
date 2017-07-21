@@ -69,7 +69,6 @@ if target_os in ['darwin', 'ios']:
     hue_env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
 
 hue_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
-hue_env.AppendUnique(RPATH=[hue_env.get('BUILD_DIR')])
 
 if hue_env.get('LOGGING'):
     hue_env.AppendUnique(CPPDEFINES=['TB_LOG'])

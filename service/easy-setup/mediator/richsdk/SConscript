@@ -80,7 +80,6 @@ if target_os in ['android']:
             env.get('SRC_DIR') +
             '/java/iotivity-android/build/native-libs/armeabi'
         ])
-    easy_setup_env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
     easy_setup_env.AppendUnique(CXXFLAGS=['-frtti', '-fexceptions'])
     easy_setup_env.PrependUnique(LIBS=[
         'oc',
@@ -95,7 +94,6 @@ if target_os in ['android']:
         easy_setup_env.AppendUnique(LIBS=['log'])
 
 if target_os in ['linux', 'tizen']:
-    easy_setup_env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
     easy_setup_env.AppendUnique(CXXFLAGS=['-pthread'])
     easy_setup_env.PrependUnique(LIBS=[
         'oc',

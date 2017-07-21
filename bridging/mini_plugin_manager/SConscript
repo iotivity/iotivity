@@ -48,7 +48,6 @@ manager_env.PrependUnique(CPPPATH=[
 if target_os not in ['arduino', 'windows']:
         manager_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
-manager_env.AppendUnique(RPATH=[manager_env.get('BUILD_DIR')])
 manager_env.PrependUnique(LIBS=['mpmcommon'])
 
 #####################################################################

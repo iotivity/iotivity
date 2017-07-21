@@ -76,7 +76,6 @@ if not env.get('RELEASE'):
 if target_os in ['linux']:
     enrollee_env.AddPthreadIfNeeded()
     enrollee_env.AppendUnique(LIBS=['dl'])
-    enrollee_env.AppendUnique(RPATH=[enrollee_env.get('BUILD_DIR')])
     enrollee_env.PrependUnique(LIBS=[
         'oc',
         'octbstack',
@@ -91,7 +90,6 @@ if target_os in ['linux']:
 # Tizen Enrollee
 ######################################################################
 if target_os == 'tizen':
-    enrollee_env.AppendUnique(RPATH=[enrollee_env.get('BUILD_DIR')])
     enrollee_env.AppendUnique(CXXFLAGS=['-pthread'])
     enrollee_env.PrependUnique(LIBS=[
         'oc',
@@ -105,7 +103,6 @@ if target_os == 'tizen':
 # Arduino Enrollee
 ######################################################################
 if target_os == 'arduino':
-    enrollee_env.AppendUnique(RPATH=[enrollee_env.get('BUILD_DIR')])
     enrollee_env.PrependUnique(LIBS=[
         'oc',
         'octbstack',

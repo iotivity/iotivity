@@ -40,7 +40,6 @@ samples_env.PrependUnique(CPPPATH=[
 
 samples_env.AppendUnique(
     CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
-samples_env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
 
 if target_os in ['darwin', 'ios']:
     samples_env.PrependUnique(
