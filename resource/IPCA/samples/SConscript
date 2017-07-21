@@ -28,3 +28,5 @@ Import('ipca_env')
 SConscript('ipcaapp/SConscript', 'ipca_env')
 SConscript('ElevatorServer/SConscript', 'ipca_env')
 SConscript('ElevatorClient/SConscript', 'ipca_env')
+if ipca_env.get('UWP_APP') == '1':
+    SConscript('ElevatorClientUWP/SConscript', 'ipca_env')
