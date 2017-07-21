@@ -70,7 +70,6 @@ if target_os not in ['windows', 'winrt']:
         '-Werror',
         '-Wno-comment',
         '-Wno-unused-function',
-        '-Wno-unused-parameter'
     ])
     jni_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-pthread'])
     # Note: 'pthread' is in libc for android. On other platform, if use
