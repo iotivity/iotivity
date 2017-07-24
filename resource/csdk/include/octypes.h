@@ -538,13 +538,13 @@ extern "C" {
 
 #define OC_RSRVD_LAST_UPDATE              "lu"
 
-#define OC_RSRVD_THIS_UPDATE              "tu"
+#define OC_RSRVD_THIS_UPDATE              "thisupdate"
 
 #define OC_RSRVD_NEXT_UPDATE              "nu"
 
 #define OC_RSRVD_SERIAL_NUMBERS           "rcsn"
 
-#define OC_RSRVD_CRL                      "crl"
+#define OC_RSRVD_CRL                      "crldata"
 
 #define OC_RSRVD_CRL_ID                   "crlid"
 
