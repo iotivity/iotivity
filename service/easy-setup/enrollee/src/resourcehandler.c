@@ -998,7 +998,7 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
             (ehRequest->query && !strcmp(ehRequest->query, "")) ||
             (ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT)))
         {
-            OIC_LOG(DEBUG, ES_RH_TAG, "constructResponse EasySetup res");
+            OIC_LOG(DEBUG, ES_RH_TAG, "constructResponse EasySetup res (Default interface)");
             OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_EASYSETUP);
             OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
             OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_LL);
@@ -1023,13 +1023,19 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
                 {
                     connectRequest[i] = g_ESEasySetupResource.connectRequest[i];
                 }
-                OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_CONNECT, (int64_t *)connectRequest, dimensions);
+
+                bool b = OCRepPayloadSetIntArrayAsOwner(payload, OC_RSRVD_ES_CONNECT, (int64_t *)connectRequest, dimensions);
+                if (!b)
+                {
+                    OIC_LOG(ERROR, ES_RH_TAG, "Failed to set array value for Connect property");
+                    OICFree(connectRequest);
+                }
             }
             else
             {
                 OIC_LOG(DEBUG, ES_RH_TAG, "g_ESEasySetupResource.numRequest is 0");
                 size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
-                OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_CONNECT, NULL, dimensions);
+                OCRepPayloadSetIntArrayAsOwner(payload, OC_RSRVD_ES_CONNECT, NULL, dimensions);
             }
 
             if (gWriteUserdataCb)
@@ -1047,7 +1053,7 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
         ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
 
     {
-        OIC_LOG(DEBUG, ES_RH_TAG, "constructResponse EasySetup res");
+        OIC_LOG(DEBUG, ES_RH_TAG, "constructResponse EasySetup res (Batch Interface)");
         OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_EASYSETUP);
 
         OCRepPayload* repPayload = NULL;
@@ -1102,13 +1108,19 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
             {
                 connectRequest[i] = g_ESEasySetupResource.connectRequest[i];
             }
-            OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_CONNECT, (int64_t *)connectRequest, dimensions);
+
+            bool b = OCRepPayloadSetIntArrayAsOwner(repPayload, OC_RSRVD_ES_CONNECT, (int64_t *)connectRequest, dimensions);
+            if (!b)
+            {
+                OIC_LOG(ERROR, ES_RH_TAG, "Failed to set array value for Connect property");
+                OICFree(connectRequest);
+            }
         }
         else
         {
             OIC_LOG(DEBUG, ES_RH_TAG, "g_ESEasySetupResource.numRequest is 0");
             size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
-            OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_CONNECT, NULL, dimensions);
+            OCRepPayloadSetIntArrayAsOwner(repPayload, OC_RSRVD_ES_CONNECT, NULL, dimensions);
         }
 
         if (gWriteUserdataCb)
