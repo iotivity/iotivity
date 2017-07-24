@@ -26,7 +26,7 @@
 #endif
 #include <string>
 #include <fstream>
-#ifdef _GNUC_
+#ifdef __GNUC__
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 #endif
