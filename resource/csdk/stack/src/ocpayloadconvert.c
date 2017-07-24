@@ -771,8 +771,8 @@ static int64_t OCConvertArrayItem(CborEncoder *array, const OCRepPayloadValueArr
             }
             break;
         case OCREP_PROP_BYTE_STRING:
-            err |= (!valArray->ocByteStrArray[index].len) ? cbor_encode_null(array) : cbor_encode_byte_string(array,
-                valArray->ocByteStrArray[index].bytes, valArray->ocByteStrArray[index].len);
+            err |= cbor_encode_byte_string(array, valArray->ocByteStrArray[index].bytes,
+                    valArray->ocByteStrArray[index].len);
             break;
         case OCREP_PROP_OBJECT:
             if (valArray->objArray != 0)

@@ -790,7 +790,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
 
             bool includeAuthority = (0 != memcmp(&cred->roleId.authority, &EMPTY_ROLE.authority, sizeof(EMPTY_ROLE.authority)));
 
-            cborEncoderResult = cbor_encoder_create_map(&credMap, &roleIdMap, ROLEID_MAP_SIZE + includeAuthority ? 1 : 0);
+            cborEncoderResult = cbor_encoder_create_map(&credMap, &roleIdMap, ROLEID_MAP_SIZE + (includeAuthority ? 1 : 0));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding role ID map");
 
             cborEncoderResult = cbor_encode_text_string(&roleIdMap, OIC_JSON_ROLE_NAME, strlen(OIC_JSON_ROLE_NAME));

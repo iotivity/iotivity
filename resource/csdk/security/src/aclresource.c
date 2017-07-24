@@ -617,7 +617,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl,
 
             bool includeAuthority = (0 != memcmp(&ace->subjectRole.authority, &EMPTY_ROLE.authority, sizeof(EMPTY_ROLE.authority)));
 
-            cborEncoderResult = cbor_encoder_create_map(&oicSecAclMap, &roleMap, ACE_ROLE_MAP_SIZE + includeAuthority?1:0);
+            cborEncoderResult = cbor_encoder_create_map(&oicSecAclMap, &roleMap, ACE_ROLE_MAP_SIZE + (includeAuthority ? 1 : 0));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed creating role map");
             OIC_LOG_V(DEBUG, TAG, "%s created v2 role map.", __func__);
 
@@ -737,7 +737,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl,
                     rsrcMapSize++;
                 }
 
-                OIC_LOG_V(DEBUG, TAG, "%s resource map size = "PRIuPTR, __func__, rsrcMapSize);
+                OIC_LOG_V(DEBUG, TAG, "%s resource map size = %"PRIuPTR, __func__, rsrcMapSize);
 
                 cborEncoderResult = cbor_encoder_create_map(&resources, &rMap, rsrcMapSize);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Resource Map.");
@@ -1722,22 +1722,22 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                                                 }
                                             }
 
-                                            // If roletype, make sure at least the id is present.
-                                            if(OicSecAceRoleSubject == ace->subjectType)
-                                            {
-                                                if ('\0' == ace->subjectRole.id[0])
-                                                {
-                                                    cborFindResult = CborUnknownError;
-                                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "ID for role was not present in role map");
-                                                }
-                                            }
-
                                             // advance to next elt in subject map
                                             if (cbor_value_is_valid(&subjectMap))
                                             {
                                                 cborFindResult = cbor_value_advance(&subjectMap);
                                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed advancing subject map");
                                                 OIC_LOG_V(DEBUG, TAG, "%s advanced ace2 subject map.", __func__);
+                                            }
+                                        }
+
+                                        // If roletype, make sure at least the id is present.
+                                        if (OicSecAceRoleSubject == ace->subjectType)
+                                        {
+                                            if ('\0' == ace->subjectRole.id[0])
+                                            {
+                                                cborFindResult = CborUnknownError;
+                                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "ID for role was not present in role map");
                                             }
                                         }
                                     }
