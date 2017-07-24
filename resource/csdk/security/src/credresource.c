@@ -87,6 +87,7 @@ static const uint16_t CBOR_SIZE = 2048;
 
 /** CRED size - Number of mandatory items. */
 static const uint8_t CRED_ROOT_MAP_SIZE = 4;
+static const uint8_t CRED_EMPTY_ROOT_MAP_SIZE = 2;
 static const uint8_t CRED_MAP_SIZE = 3;
 static const uint8_t ROLEID_MAP_SIZE = 1;
 
@@ -667,7 +668,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
                                 size_t *cborSize, int secureFlag)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s:", __func__);
-    if (NULL == credS || NULL == cborPayload || NULL != *cborPayload || NULL == cborSize)
+    if (NULL == cborPayload || NULL != *cborPayload || NULL == cborSize)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -695,8 +696,10 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
 
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
+    size_t credRootMapSize = (NULL == cred)? CRED_EMPTY_ROOT_MAP_SIZE : CRED_ROOT_MAP_SIZE;
+
     // Create CRED Root Map (creds, rownerid)
-    cborEncoderResult = cbor_encoder_create_map(&encoder, &credRootMap, CRED_ROOT_MAP_SIZE);
+    cborEncoderResult = cbor_encoder_create_map(&encoder, &credRootMap, credRootMapSize);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Root Map");
 
     // creds
@@ -896,45 +899,49 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_ROWNERID_NAME,
             strlen(OIC_JSON_ROWNERID_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding rownerid Name.");
-        ret = ConvertUuidToStr(&cred->rownerID, &rowner);
+        OicUuid_t emptyUuid = { .id = { 0 } };
+        const OicUuid_t* rownerID = (NULL == cred)? &emptyUuid : &cred->rownerID;
+        ret = ConvertUuidToStr(rownerID, &rowner);
         VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
         cborEncoderResult = cbor_encode_text_string(&credRootMap, rowner, strlen(rowner));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding rownerid Value.");
         OICFree(rowner);
     }
 
-    //RT -- Mandatory
-    CborEncoder rtArray;
-    cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_RT_NAME,
-            strlen(OIC_JSON_RT_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
-    cborEncoderResult = cbor_encoder_create_array(&credRootMap, &rtArray, 1);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Value.");
-    for (size_t i = 0; i < 1; i++)
+    if (cred != NULL)
     {
-        cborEncoderResult = cbor_encode_text_string(&rtArray, OIC_RSRC_TYPE_SEC_CRED,
-                strlen(OIC_RSRC_TYPE_SEC_CRED));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding RT Value.");
-    }
-    cborEncoderResult = cbor_encoder_close_container(&credRootMap, &rtArray);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RT.");
+        //RT -- Mandatory
+        CborEncoder rtArray;
+        cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_RT_NAME,
+                strlen(OIC_JSON_RT_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
+        cborEncoderResult = cbor_encoder_create_array(&credRootMap, &rtArray, 1);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Value.");
+        for (size_t i = 0; i < 1; i++)
+        {
+            cborEncoderResult = cbor_encode_text_string(&rtArray, OIC_RSRC_TYPE_SEC_CRED,
+                    strlen(OIC_RSRC_TYPE_SEC_CRED));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding RT Value.");
+        }
+        cborEncoderResult = cbor_encoder_close_container(&credRootMap, &rtArray);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RT.");
 
-    //IF-- Mandatory
-    CborEncoder ifArray;
-    cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_IF_NAME,
-             strlen(OIC_JSON_IF_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
-    cborEncoderResult = cbor_encoder_create_array(&credRootMap, &ifArray, 1);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
-    for (size_t i = 0; i < 1; i++)
-    {
-        cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
-                strlen(OC_RSRVD_INTERFACE_DEFAULT));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding IF Value.");
+        //IF-- Mandatory
+        CborEncoder ifArray;
+        cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_IF_NAME,
+                 strlen(OIC_JSON_IF_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+        cborEncoderResult = cbor_encoder_create_array(&credRootMap, &ifArray, 1);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
+        for (size_t i = 0; i < 1; i++)
+        {
+            cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
+                    strlen(OC_RSRVD_INTERFACE_DEFAULT));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding IF Value.");
+        }
+        cborEncoderResult = cbor_encoder_close_container(&credRootMap, &ifArray);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing IF.");
     }
-    cborEncoderResult = cbor_encoder_close_container(&credRootMap, &ifArray);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing IF.");
-
 
     // Close CRED Root Map
     cborEncoderResult = cbor_encoder_close_container(&encoder, &credRootMap);
@@ -1771,92 +1778,80 @@ static bool IsNewPreconfigPinCredential(OicSecCred_t * oldCred, OicSecCred_t * n
 
 OCStackResult AddCredential(OicSecCred_t * newCred)
 {
-    OCStackResult ret = OC_STACK_ERROR;
-    OicSecCred_t * temp = NULL;
-    bool validFlag = true;
-    OicUuid_t emptyOwner = { .id = {0} };
+    OCStackResult result = OC_STACK_ERROR;
+
+    OicSecCred_t* cred = NULL;
+    OicSecCred_t* tempCred = NULL;
+
+    bool found = false;
+
+    //leave IOT-1936 fix for preconfig pin
 #if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
-    uint16_t staleCredId = 0;
+    LL_FOREACH_SAFE(gCred, cred, tempCred)
+    {
+        if (IsNewPreconfigPinCredential(cred, newCred))
+        {
+            //devices can only have one Preconfigured Pin credential at any given time. Check
+            //if the new credential is an update to an existing Preconfigured Pin credential
+            //if so, just update existing one.
+
+            //save old credid so act like an update
+            newCred->credId = cred->credId;
+
+            LL_DELETE(gCred, cred);
+            LL_PREPEND(gCred, newCred);
+
+            FreeCred(cred);
+            found = true;
+            break;
+        }
+    }
 #endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER
 
-    OIC_LOG(DEBUG, TAG, "IN AddCredential");
-
-    VERIFY_SUCCESS(TAG, NULL != newCred, ERROR);
-
-    // Assigning credId to the newCred
-    newCred->credId = GetCredId();
-    VERIFY_SUCCESS(TAG, true == IsValidCredential(newCred), ERROR);
-
-    // The newCred is not valid if it is empty
-    if (memcmp(&(newCred->subject), &emptyOwner, sizeof(OicUuid_t)) == 0)
+    if (found)
     {
-        validFlag = false;
+        goto saveToDB;
+    }
+
+    if (newCred->credId != 0)
+    {
+        //check if cred with such cred id exists
+        LL_FOREACH_SAFE(gCred, cred, tempCred)
+        {
+            if (cred->credId == newCred->credId)
+            {
+                //remove old cred with same cred id
+                LL_DELETE(gCred, cred);
+                FreeCred(cred);
+                break;
+            }
+        }
     }
     else
     {
-        LL_FOREACH(gCred, temp)
+        newCred->credId = GetCredId();
+    }
+
+    OIC_LOG(DEBUG, TAG, "Adding New Cred");
+    LL_PREPEND(gCred, newCred);
+
+    if (gCred != NULL)
+    {
+        OicUuid_t emptyOwner = { .id = {0} };
+        if (memcmp(&(newCred->rownerID), &emptyOwner, sizeof(OicUuid_t)) != 0)
         {
-            CredCompareResult_t cmpRes = CompareCredential(temp, newCred);
-            if(CRED_CMP_EQUAL == cmpRes)
-            {
-                OIC_LOG_V(WARNING, TAG, "Detected same credential ID(%d)" \
-                          "new credential's ID will be replaced.", temp->credId);
-                newCred->credId = temp->credId;
-                ret = OC_STACK_OK;
-                validFlag = false;
-                break;
-            }
-
-            if (CRED_CMP_ERROR == cmpRes)
-            {
-                OIC_LOG_V(WARNING, TAG, "Credential skipped : %d", cmpRes);
-                ret = OC_STACK_ERROR;
-                validFlag = false;
-                break;
-            }
-
-#if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
-            // Devices can only have one Preconfigured Pin credential at any given time. Check
-            // to see if the new credential is an update to an existing Preconfigured Pin
-            // credential so that we can remove it later.
-            if (IsNewPreconfigPinCredential(temp, newCred))
-            {
-                staleCredId = temp->credId;
-            }
-#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER
+            memcpy(&(gCred->rownerID), &(newCred->rownerID), sizeof(OicUuid_t));
         }
     }
 
-    // Append the new Cred to existing list if new Cred is valid
-    if (validFlag)
-    {
-#if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
-        // Remove the existing Preconfigured Pin credential if it exists
-        if (0 != staleCredId)
-        {
-            ret = RemoveCredentialByCredId(staleCredId);
-            if (OC_STACK_RESOURCE_DELETED == ret)
-            {
-                // Use the old Preconfigured Pin cred id so that this acts as an update
-                newCred->credId = staleCredId;
-            }
-        }
-#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER
+saveToDB:
 
-        LL_APPEND(gCred, newCred);
-    }
-    if (memcmp(&(newCred->rownerID), &emptyOwner, sizeof(OicUuid_t)) != 0)
-    {
-        memcpy(&(gCred->rownerID), &(newCred->rownerID), sizeof(OicUuid_t));
-    }
     if (UpdatePersistentStorage(gCred))
     {
-        ret = OC_STACK_OK;
+        result = OC_STACK_OK;
     }
 
-exit:
-    OIC_LOG(DEBUG, TAG, "OUT AddCredential");
-    return ret;
+    return result;
 }
 
 OCStackResult RemoveCredential(const OicUuid_t *subject)
@@ -2468,14 +2463,17 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
                 if(memcmp(cred->rownerID.id, emptyUuid.id, sizeof(emptyUuid.id)) != 0)
                 {
                     OIC_LOG(INFO, TAG, "CRED's rowner will be updated.");
-                    memcpy(gCred->rownerID.id, cred->rownerID.id, sizeof(cred->rownerID.id));
-                    if (UpdatePersistentStorage(gCred))
+                    if (gCred != NULL)
                     {
-                        ret = OC_EH_CHANGED;
-                    }
-                    else
-                    {
-                        ret = OC_EH_ERROR;
+                        memcpy(gCred->rownerID.id, cred->rownerID.id, sizeof(cred->rownerID.id));
+                        if (UpdatePersistentStorage(gCred))
+                        {
+                            ret = OC_EH_CHANGED;
+                        }
+                        else
+                        {
+                            ret = OC_EH_ERROR;
+                        }
                     }
                 }
                 else
@@ -2551,7 +2549,6 @@ static OCEntityHandlerResult HandleGetRequest (const OCEntityHandlerRequest * eh
 
     // A device should always have a default cred. Therefore, payload should never be NULL.
     OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
-
 
     //Send payload to request originator
     ehRet = ((SendSRMResponse(ehRequest, ehRet, payload, size)) == OC_STACK_OK) ?
