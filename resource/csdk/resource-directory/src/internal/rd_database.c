@@ -569,7 +569,7 @@ exit:
     return res;
 }
 
-static int deleteResources(const char *deviceId, const uint8_t *instanceIds, uint8_t nInstanceIds)
+static int deleteResources(const char *deviceId, const int64_t *instanceIds, uint16_t nInstanceIds)
 {
     char *delResource = NULL;
     sqlite3_stmt *stmt = NULL;
@@ -726,8 +726,8 @@ exit:
     return (SQLITE_OK == res) ? OC_STACK_OK : OC_STACK_ERROR;
 }
 
-OCStackResult OC_CALL OCRDDatabaseDeleteResources(const char *deviceId, const uint8_t *instanceIds,
-        uint8_t nInstanceIds)
+OCStackResult OC_CALL OCRDDatabaseDeleteResources(const char *deviceId, const int64_t *instanceIds,
+        uint16_t nInstanceIds)
 {
     CHECK_DATABASE_INIT;
     int res;
