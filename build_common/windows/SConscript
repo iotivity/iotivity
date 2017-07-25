@@ -6,6 +6,9 @@ import os
 import winreg
 import platform
 
+src_dir = env.get('SRC_DIR')
+build_dir = env.get('BUILD_DIR')
+
 def OpenRegKey(env, key, sub_key, reg_view_64bit=False):
     # Default access
     reg_access_mask = winreg.KEY_READ
@@ -104,7 +107,12 @@ help_vars = Variables()
 if env.get('BUILD_JAVA') == True:
     if not env.get('ANDROID_GRADLE'):
         SConscript('../../extlibs/android/gradle/SConscript')
-        help_vars.Add(PathVariable('ANDROID_GRADLE', 'Android Gradle directory', os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'gradle', 'gradle-2.2.1/bin/gradle')))
+        help_vars.Add(
+            PathVariable('ANDROID_GRADLE',
+                         'Android Gradle directory',
+                         default=os.path.join(
+                             src_dir, 'extlibs', 'android',
+                             'gradle', 'gradle-2.2.1/bin/gradle')))
 
     if env.get('ANDROID_GRADLE'):
         android_gradle = env.get('ANDROID_GRADLE')
@@ -112,12 +120,13 @@ if env.get('BUILD_JAVA') == True:
         print(
 '''
 *************************************** Info **********************************
-*    Android Gradle path isn't set, the default will be used. You can set     *
-* environment variable ANDROID_GRADLE or add it in command line as:           *
-*      # scons ANDROID_GRADLE=<path to android GRADLE> ...                    *
+* Android Gradle path is not set, the default will be used. You can set
+* environment variable ANDROID_GRADLE or add it on the command line as:
+*      # scons ANDROID_GRADLE=<path to android GRADLE> ...
 *******************************************************************************
 ''')
-        android_gradle = os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'gradle', 'gradle-2.2.1', 'bin', 'gradle')
+        android_gradle = os.path.join(
+            src_dir, 'extlibs', 'android', 'gradle', 'gradle-2.2.1', 'bin', 'gradle')
 
 help_vars.Update(env)
 Help(help_vars.GenerateHelpText(env))
@@ -142,11 +151,12 @@ if env.get('UWP_APP') == '1':
 if env['CC'] == 'cl':
     if env.get('UWP_APP') == '1':
         # Currently only supports VS2015 (14.0)
+        # TODO add VS2017 (15.0)
         supported_uwp_msvc_versions = ['14.0']
         # If MSVC_VERSION is not supported for UWP, exit on error
         if env.get('MSVC_VERSION') not in supported_uwp_msvc_versions:
-            print '\nError: Trying to Build UWP binaries with unsupported Visual Studio version\n'
-            Exit(1)
+            msg = '\nError: Trying to Build UWP binaries with unsupported Visual Studio version\n'
+            Exit(msg)
 
     #  - warning C4133: incompatible type conversion
     env.AppendUnique(CCFLAGS=['/we4133'])
@@ -195,11 +205,13 @@ if env['CC'] == 'cl':
     # InstallTarget() for this static LIB, but didn't finish yet. That behavior results
     # in linker errors. Work around this issue by linking with the source of InstallTarget(),
     # rather than the target.
-    env.PrependUnique(LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'resource', 'src')])
-    env.PrependUnique(LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'resource', 'c_common', 'windows')])
-    env.PrependUnique(LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'resource', 'oc_logger')])
-    env.PrependUnique(LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk', 'resource-directory')])
-    env.PrependUnique(LIBPATH=['#extlibs/mbedtls'])
+    env.PrependUnique(LIBPATH=[
+        os.path.join(build_dir, 'resource', 'src'),
+        os.path.join(build_dir, 'resource', 'c_common', 'windows'),
+        os.path.join(build_dir, 'resource', 'oc_logger'),
+        os.path.join(build_dir, 'resource', 'csdk', 'resource-directory'),
+        '#extlibs/mbedtls',
+    ])
 
     env['PDB'] = '${TARGET.base}.pdb'
     env.Append(LINKFLAGS=['/PDB:${TARGET.base}.pdb'])
@@ -231,5 +243,5 @@ if env['CC'] == 'cl':
         env.AppendUnique(LIBS=['WindowsApp', 'bcrypt', 'ws2_32', 'iphlpapi', 'crypt32'])
 
 elif env['CC'] == 'gcc':
-    print "\nError: gcc not supported on Windows.  Use Visual Studio!\n"
-    Exit(1)
+    msg = "\nError: gcc not supported on Windows.  Use Visual Studio!\n"
+    Exit(msg)

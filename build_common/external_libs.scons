@@ -16,6 +16,8 @@ Import('env')
 target_os = env.get('TARGET_OS')
 target_arch = env.get('TARGET_ARCH')
 rd_mode = env.get('RD_MODE')
+src_dir = env.get('SRC_DIR')
+java_home = env.get('JAVA_HOME')
 
 # for android, doesn't distinguish 'armeabi-v7a-hard' and 'armeabi-v7a' library
 if target_os == 'android':
@@ -27,18 +29,18 @@ if target_os == 'darwin':
     env.AppendUnique(CPPPATH = ['/usr/local/include'])
     env.AppendUnique(LIBPATH = ['/usr/local/lib'])
 
-if env.get('BUILD_JAVA') == True and target_os != 'android':
-    if env.get('JAVA_HOME') != None:
+if env.get('BUILD_JAVA') is True and target_os != 'android':
+    if java_home is not None:
         env.AppendUnique(CPPDEFINES=['__JAVA__'])
         if target_os in ['windows', 'winrt']:
             env.AppendUnique(CPPPATH=[
-            env.get('JAVA_HOME') + '/include',
-            env.get('JAVA_HOME') + '/include/win32'
+            java_home + '/include',
+            java_home + '/include/win32'
             ])
         else:
             env.AppendUnique(CPPPATH=[
-            env.get('JAVA_HOME') + '/include',
-            env.get('JAVA_HOME') + '/include/' + target_os
+            java_home + '/include',
+            java_home + '/include/' + target_os
         ])
     else:
         msg = "Error: BUILD_JAVA requires JAVA_HOME to be set for target '%s'" % target_os
@@ -47,8 +49,8 @@ if env.get('BUILD_JAVA') == True and target_os != 'android':
 # External library include files are in <src_dir>/deps/<target_os>/include
 # the library binaries are in <src_dir>/deps/<target_os>/lib/<arch>
 if target_os not in ['windows']:
-    env.AppendUnique(CPPPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'include')])
-    env.AppendUnique(LIBPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'lib', target_arch)])
+    env.AppendUnique(CPPPATH = [os.path.join(src_dir, 'deps', target_os, 'include')])
+    env.AppendUnique(LIBPATH = [os.path.join(src_dir, 'deps', target_os, 'lib', target_arch)])
 
 # tinycbor build/fetch
 SConscript('#extlibs/tinycbor/SConscript')
