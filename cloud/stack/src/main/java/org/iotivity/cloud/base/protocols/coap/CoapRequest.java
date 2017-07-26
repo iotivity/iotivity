@@ -25,9 +25,11 @@ import org.iotivity.cloud.base.exception.ServerException.MethodNotAllowedExcepti
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.protocols.enums.SignalingMethod;
+import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 
 public class CoapRequest extends CoapMessage {
     private RequestMethod mRequestMethod;
+    private ContentFormat mOrigAcceptType;
 
     public CoapRequest(RequestMethod requestMethod) {
         mRequestMethod = requestMethod;
@@ -87,5 +89,17 @@ public class CoapRequest extends CoapMessage {
     @Override
     public SignalingMethod getSignalingMethod() {
         return null;
+    }
+
+    // [wordaround] Device stack can not handle JSON accept type
+    // These APIs are for manipulating accept type to CBOR and
+    // storing the actual acccept type so that response payload can
+    // be converted to JSON back before sending it over to client.
+    public ContentFormat getOrigAcceptType() {
+        return mOrigAcceptType;
+    }
+
+    public void setOrigAcceptType(ContentFormat type) {
+        mOrigAcceptType = type;
     }
 }

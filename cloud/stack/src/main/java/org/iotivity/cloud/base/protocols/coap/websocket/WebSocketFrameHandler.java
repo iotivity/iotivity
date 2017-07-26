@@ -93,6 +93,12 @@ public class WebSocketFrameHandler extends ChannelDuplexHandler {
                         coapMessage.setContentFormat(
                                 ContentFormat.APPLICATION_CBOR);
                     }
+
+                    // Add default accept format JSON if it is not specified
+                    if (coapMessage.getAcceptType() == ContentFormat.NO_CONTENT) {
+                        coapMessage.setAcceptType(ContentFormat.APPLICATION_JSON);
+                    }
+
                     ctx.fireChannelRead(coapMessage);
                 }
             }
@@ -130,14 +136,6 @@ public class WebSocketFrameHandler extends ChannelDuplexHandler {
         if (msg instanceof CoapMessage) {
 
             CoapMessage coapMessage = (CoapMessage) msg;
-
-            // covert content format to json.
-            if (coapMessage.getPayloadSize() != 0) {
-                byte[] payload = coapMessage.getPayload();
-                coapMessage.setPayload(convertCborToJson(payload));
-                coapMessage.setContentFormat(ContentFormat.APPLICATION_JSON);
-            }
-
             ByteBuf encodedBytes = Unpooled.buffer();
             new CoapEncoder().encode((CoapMessage) msg, encodedBytes, true);
             WebSocketFrame frame = new BinaryWebSocketFrame(encodedBytes);

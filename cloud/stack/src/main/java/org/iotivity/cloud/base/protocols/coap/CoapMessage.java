@@ -459,6 +459,65 @@ public abstract class CoapMessage extends Message {
         }
     }
 
+    public ContentFormat getAcceptType() {
+        if (accept == null) {
+            return ContentFormat.NO_CONTENT;
+        }
+
+        int acceptType = Bytes.bytesToInt(accept);
+
+        switch (acceptType) {
+            case 40:
+                return ContentFormat.APPLICATION_LINK_FORMAT;
+
+            case 41:
+                return ContentFormat.APPLICATION_XML;
+
+            case 42:
+                return ContentFormat.APPLICATION_OCTET_STREAM;
+
+            case 47:
+                return ContentFormat.APPLICATION_EXI;
+
+            case 50:
+                return ContentFormat.APPLICATION_JSON;
+
+            case 60:
+            case 10000:
+                return ContentFormat.APPLICATION_CBOR;
+        }
+
+        return ContentFormat.NO_CONTENT;
+    }
+
+    public void setAcceptType(ContentFormat format) {
+        byte value = 0;
+        switch (format) {
+            case NO_CONTENT:
+                break;
+            case APPLICATION_LINK_FORMAT:
+                value = 40;
+                break;
+            case APPLICATION_XML:
+                value = 41;
+                break;
+            case APPLICATION_OCTET_STREAM:
+                value = 42;
+                break;
+            case APPLICATION_EXI:
+                value = 47;
+                break;
+            case APPLICATION_JSON:
+                value = 50;
+                break;
+            case APPLICATION_CBOR:
+                value = 60;
+                break;
+        }
+
+        accept = new byte[] { value };
+    }
+
     public int getAcceptVersionValue() {
         if (accept_version == null) {
             return 0;

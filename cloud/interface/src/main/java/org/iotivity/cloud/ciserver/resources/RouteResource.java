@@ -45,6 +45,8 @@ import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapDevicePool;
 import org.iotivity.cloud.util.Cbor;
+import org.iotivity.cloud.util.JSONUtil;
+import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 
 /**
  *
@@ -119,6 +121,23 @@ public class RouteResource extends Resource {
                 null);
     }
 
+    private IResponse convertPayloadToJson(IResponse response) {
+
+        if (response.getPayload() != null &&
+            response.getContentFormat() != ContentFormat.APPLICATION_JSON) {
+            byte[] payload = response.getPayload();
+            Cbor<Object> cbor = new Cbor<>();
+            Object parsedData = cbor.parsePayloadFromCbor(payload, Object.class);
+            JSONUtil<String> json = new JSONUtil<>();
+            byte[] jsonPayload = json.writeJSON(parsedData).getBytes();
+
+            return MessageBuilder.modifyResponse(null, ContentFormat.APPLICATION_JSON,
+                    jsonPayload);
+        }
+
+        return response;
+    }
+
     private String getDeviceId(IRequest request) {
         List<String> uriPathSegment = request.getUriPathSegments();
         if (uriPathSegment == null)
@@ -172,24 +191,44 @@ public class RouteResource extends Resource {
                 }
                 convertHref(linkPayload);
             }
-            mSrcDevice.sendResponse(MessageBuilder.modifyResponse(
+
+            // Convert payload to JSON based on accept format
+            // [Assumption] Default payload format is CBOR only
+            CoapRequest coapRequest = (CoapRequest) mRequest;
+            if (coapRequest.getOrigAcceptType() == ContentFormat.APPLICATION_JSON) {
+                response = convertPayloadToJson(response);
+                mSrcDevice.sendResponse(convertReponseUri(response, mTargetDI));
+            }
+            else {
+                mSrcDevice.sendResponse(MessageBuilder.modifyResponse(
                     convertReponseUri(response, mTargetDI),
                     ContentFormat.APPLICATION_CBOR, linkPayload != null
                             ? mCbor.encodingPayloadToCbor(linkPayload) : null));
+            }
         }
     }
 
     class DefaultResponseHandler implements IResponseEventHandler {
         private String mTargetDI  = null;
         private Device mSrcDevice = null;
+        private IRequest mRequest = null;
 
-        public DefaultResponseHandler(String targetDI, Device srcDevice) {
+        public DefaultResponseHandler(String targetDI, Device srcDevice,
+               IRequest request) {
             mTargetDI = targetDI;
             mSrcDevice = srcDevice;
+            mRequest = request;
         }
 
         @Override
         public void onResponseReceived(IResponse response) {
+
+            // Convert payload to JSON based on accept format
+            // [Assumption] Default payload format is CBOR only
+            CoapRequest coapRequest = (CoapRequest) mRequest;
+            if (coapRequest.getOrigAcceptType() == ContentFormat.APPLICATION_JSON) {
+                response = convertPayloadToJson(response);
+            }
 
             mSrcDevice.sendResponse(convertReponseUri(response, mTargetDI));
         }
@@ -243,8 +282,17 @@ public class RouteResource extends Resource {
                     break;
                 }
 
+                /* [wordaround] Convert accept type JSON to CBOR as
+                   iotivity device stack does not accept JSON type*/
+                CoapRequest coapRequest = (CoapRequest) request;
+                coapRequest.setOrigAcceptType(coapRequest.getAcceptType());
+                if (coapRequest.getAcceptType() == ContentFormat.APPLICATION_JSON) {
+                    coapRequest.setAcceptType(ContentFormat.APPLICATION_CBOR);
+                    coapRequest.setOrigAcceptType(ContentFormat.APPLICATION_JSON);
+                }
+
                 IResponseEventHandler responseHandler = new DefaultResponseHandler(
-                        getDeviceId(request), srcDevice);
+                        getDeviceId(request), srcDevice, coapRequest);
                 if (request.getUriQuery() != null && request.getUriQuery()
                         .contains(Constants.LINK_INTERFACE)) {
                     responseHandler = new LinkInterfaceHandler(
