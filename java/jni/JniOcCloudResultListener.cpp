@@ -50,6 +50,7 @@ JniOcCloudResultListener::~JniOcCloudResultListener()
 void JniOcCloudResultListener::CloudResultListenerCB(int result, void *data,
       ListenerFunc func)
 {
+    OC_UNUSED(data);
     jint ret = JNI_ERR;
     JNIEnv *env = GetJNIEnv(ret);
     if (nullptr == env)
