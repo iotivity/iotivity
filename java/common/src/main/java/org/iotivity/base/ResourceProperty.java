@@ -60,7 +60,11 @@ public enum ResourceProperty {
      * if discovery request contains an explicit querystring.
      * Ex: GET /oic/res?rt=oic.sec.acl
      */
-    EXPLICIT_DISCOVERABLE(1 << 5);
+    EXPLICIT_DISCOVERABLE(1 << 5),
+    /**
+     * When this bit is set, the resource supports access via non-secure endpoints.
+     */
+    NONSECURE(1 << 6);
 
     private int value;
 
