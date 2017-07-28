@@ -32,7 +32,7 @@ import os
 env_linux['CC'] = 'g++'
 
 iotivity_root = env_linux.get('IOTIVITY_ROOT')
-iotivity_lib_path = [env_linux.get('IOTIVITY_LIB_PATH'), '/usr/local/lib']
+iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
 iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
 variant_dir = env_linux.get('VARIANT_DIR')
 install_dir = env_linux.get('INSTALL_DIR')
@@ -130,10 +130,12 @@ common_defines = Split('LINUX __LINUX__ WITH_TCP IP_ADAPTER NO_EDR_ADAPTER LE_AD
 
 common_flags = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissive -fno-stack-protector ')
 
-csdk_shared_libs = Split('connectivity_abstraction octbstack coap boost_system boost_filesystem boost_thread dl expat resource_directory oc oc_logger oc_logger_core pthread glib-2.0 uuid gcov')
+csdk_shared_libs = Split('common_util connectivity_abstraction octbstack coap boost_system boost_filesystem boost_thread dl expat resource_directory oc oc_logger oc_logger_core pthread glib-2.0 uuid gcov')
 
 testapp_shared_libs = csdk_shared_libs
 cpp_shared_libs = csdk_shared_libs
+
+common_lib_paths = [iotivity_lib_path, '/usr/local/lib', '.' ]
 
 provier_shared_libs = Split('notification_provider pthread')
 consumer_shared_libs = Split('notification_consumer pthread')
@@ -149,9 +151,9 @@ ns_csdk_consumer_simulator_bin = 'ns_consumer_csdk_simulator'
 
 if 'tc' in test:
 
-    tc_lib_paths = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux']
-    csdk_libs = csdk_shared_libs + ['gtest', 'common_util', 'tc_util', 'dl']
-    cpp_libs = cpp_shared_libs + ['gtest', 'common_util', 'tc_util', 'dl']
+    tc_lib_paths = common_lib_paths + [iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux']
+    csdk_libs = ['gtest', 'common_util', 'tc_util', 'dl'] + csdk_shared_libs
+    cpp_libs = ['gtest', 'common_util', 'tc_util', 'dl'] + cpp_shared_libs
 
     if 'csdk' in sdk:
         csdk_util = env_linux.StaticLibrary('csdk_util',
@@ -189,7 +191,7 @@ if 'tc' in test:
                             target = ns_csdk_provider_simulator_bin, 
                             CPPPATH = iotivity_include_paths + csdk_simulator_include_paths, 
                             LIBS = testapp_shared_libs + provier_shared_libs, 
-                            LIBPATH = iotivity_lib_path, 
+                            LIBPATH = common_lib_paths, 
                             RPATH = iotivity_lib_path, 
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
@@ -200,7 +202,7 @@ if 'tc' in test:
                             target = ns_csdk_consumer_simulator_bin, 
                             CPPPATH = iotivity_include_paths + csdk_simulator_include_paths,
                             LIBS = testapp_shared_libs + consumer_shared_libs, 
-                            LIBPATH = iotivity_lib_path,
+                            LIBPATH = common_lib_paths,
                             RPATH = iotivity_lib_path,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
@@ -241,7 +243,7 @@ if 'tc' in test:
                             source = cpp_stc_src,
                             target = 'iotivity_ns_cpp_scenario_test',
                             CPPPATH = iotivity_include_paths + cpp_include_paths,
-                            LIBS = cpp_util + cpp_libs + ns_cpp_shared_libs ,
+                            LIBS = cpp_util + cpp_libs + ns_cpp_shared_libs + ['gtest', 'pthread'],
                             LIBPATH =  tc_lib_paths,
                             RPATH = iotivity_lib_path,
                             CPPFLAGS = common_flags + common_linux_cppflags,
@@ -253,7 +255,7 @@ if 'tc' in test:
                             target = ns_cpp_provider_simulator_bin,
                             CPPPATH = iotivity_include_paths + cpp_simulator_include_paths,
                             LIBS = testapp_shared_libs + ns_cpp_shared_libs,
-                            LIBPATH = iotivity_lib_path,
+                            LIBPATH = common_lib_paths,
                             RPATH = iotivity_lib_path,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
@@ -264,7 +266,7 @@ if 'tc' in test:
                             target = ns_cpp_consumer_simulator_bin,
                             CPPPATH = iotivity_include_paths + cpp_simulator_include_paths,
                             LIBS = testapp_shared_libs + ns_cpp_shared_libs,
-                            LIBPATH = iotivity_lib_path,
+                            LIBPATH = common_lib_paths,
                             RPATH = iotivity_lib_path,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
@@ -278,7 +280,7 @@ if 'tc' in test or 'app' in test:
                             target = 'iotivity_ns_csdk_provider_app',
                             CPPPATH = iotivity_include_paths + csdk_testapp_include_paths,
                             LIBS = testapp_shared_libs + provier_shared_libs,
-                            LIBPATH = iotivity_lib_path,
+                            LIBPATH = common_lib_paths,
                             RPATH = iotivity_lib_path,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
@@ -289,7 +291,7 @@ if 'tc' in test or 'app' in test:
                             target = 'iotivity_ns_csdk_consumer_app',
                             CPPPATH = iotivity_include_paths + csdk_testapp_include_paths,
                             LIBS = testapp_shared_libs + consumer_shared_libs,
-                            LIBPATH = iotivity_lib_path,
+                            LIBPATH = common_lib_paths,
                             RPATH = iotivity_lib_path,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
@@ -299,8 +301,9 @@ if 'tc' in test or 'app' in test:
                             source = test_src_root + '/iBtestapp/modules/ns/c_cpp/cpp/src/NSProviderCppApp.cpp',
                             target = 'iotivity_ns_cpp_provider_app',
                             CPPPATH = iotivity_include_paths + cpp_testapp_include_paths,
+                            #LIBS = testapp_shared_libs + ns_cpp_shared_libs,
                             LIBS = testapp_shared_libs + ['notification_provider_wrapper'],
-                            LIBPATH = iotivity_lib_path,
+                            LIBPATH = common_lib_paths,
                             RPATH = iotivity_lib_path,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
@@ -310,8 +313,9 @@ if 'tc' in test or 'app' in test:
                             source = test_src_root + '/iBtestapp/modules/ns/c_cpp/cpp/src/NSConsumerCppApp.cpp',
                             target = 'iotivity_ns_cpp_consumer_app',
                             CPPPATH = iotivity_include_paths + cpp_testapp_include_paths,
+                            #LIBS = testapp_shared_libs + ns_cpp_shared_libs,
                             LIBS = testapp_shared_libs + ['notification_consumer_wrapper'],
-                            LIBPATH = iotivity_lib_path,
+                            LIBPATH = common_lib_paths,
                             RPATH = iotivity_lib_path,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
