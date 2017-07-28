@@ -253,7 +253,7 @@ if 'SERVER' in rd_mode:
     if target_os not in ['linux', 'tizen', 'windows']:
         liboctbstack_src.append('#extlibs/sqlite3/sqlite3.c')
 
-if ((target_os in ['windows']) and (liboctbstack_env.get('UWP_APP') == '1')):
+if ((target_os in ['windows']) and (liboctbstack_env.get('MSVC_UWP_APP') == '1')):
     liboctbstack_src.append(OCTBSTACK_SRC + 'ocsqlite3helper.c')
 
 internal_liboctbstack = liboctbstack_env.StaticLibrary(

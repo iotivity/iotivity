@@ -261,7 +261,7 @@ if target_os == 'windows':
                      allowed_values=('12.0', '14.0')))
                      #TODO allowed_values=('12.0', '14.0', '15.0')))
     help_vars.Add(
-        EnumVariable('UWP_APP',
+        EnumVariable('MSVC_UWP_APP',
                      'Build a Universal Windows Platform (UWP) Application',
                      default='0',
                      allowed_values=('0', '1')))
@@ -429,7 +429,7 @@ def __set_dir(env, dir):
     build_dir = dir + '/out/' + target_os + '/'
 
     if target_os == 'windows':
-        if env.get('UWP_APP') == '1':
+        if env.get('MSVC_UWP_APP') == '1':
             build_dir = build_dir + 'uwp/'
         else:
             build_dir = build_dir + 'win32/'

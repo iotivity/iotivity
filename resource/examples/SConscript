@@ -130,7 +130,7 @@ if target_os in ['msys_nt', 'windows']:
     examples += [winUIClient]
     # mediaserver uses GetVersionEx which is a windows native/desktop only API.
     # Only build for Native/Win32
-    if env.get('UWP_APP') != '1':
+    if env.get('MSVC_UWP_APP') != '1':
         mediaserver = examples_env.Program('mediaserver', 'mediaserver.cpp')
         examples += [mediaserver]
 
