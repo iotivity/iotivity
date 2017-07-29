@@ -366,16 +366,16 @@ ByteArray_t PMCsdkCertHelper::getTrustCertChainArray()
         {
             trustCertChainArray.data = (uint8_t *) malloc(fsize);
             trustCertChainArray.len = fsize;
-            if (NULL == trustCertChainArray.data)
+            if (NULL != trustCertChainArray.data)
             {
-                cout << "Failed to allocate memory" << endl;
+                rewind(fp);
+                fsize = fread(trustCertChainArray.data, 1, fsize, fp);
+                OC_UNUSED(fsize);
                 fclose(fp);
+                return trustCertChainArray;
             }
-            rewind(fp);
-            if (fsize != fread(trustCertChainArray.data, 1, fsize, fp))
-            {
-                cout << "Certiface not read completely" << endl;
-            }
+
+            cout << "Failed to allocate memory" << endl;
             fclose(fp);
         }
     }

@@ -53,7 +53,11 @@ class PMCppTest_stc: public ::testing::Test
             callbackHandle = nullptr;
             displayPinCallbackHandle = nullptr;
 
-            m_PMCppHelper.provisionInit();
+            if (!m_PMCppHelper.provisionInit())
+            {
+                SET_FAILURE(m_PMCppHelper.getFailureMessage());
+                return;
+            }
         }
 
         virtual void TearDown()

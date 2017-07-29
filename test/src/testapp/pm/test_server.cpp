@@ -432,23 +432,8 @@ OCStackResult confirmNumCB(void * ctx)
 {
     IOTIVITYTEST_LOG(DEBUG, "[Test Server] confirmNumCB IN");
 
-    for (;;)
-    {
-        int confirm;
-
-        confirm = 1;
-
-        if (1 == confirm)
-        {
-            break;
-        }
-        else if (0 == confirm)
-        {
-            return OC_STACK_ERROR;
-        }
-
-        IOTIVITYTEST_LOG(ERROR, "[Test Server] Entered Wrong Number. Please Enter Again");
-    }
+        int confirm = 1;
+        OC_UNUSED(confirm);
 
     IOTIVITYTEST_LOG(DEBUG, "[Test Server] confirmNumCB OUT");
     return OC_STACK_OK;
@@ -470,7 +455,7 @@ int main(int argc, char **argv)
 {
     struct timespec timeout;
 
-    strcpy(fileName, argv[1]);
+    strncpy(fileName, argv[1], strlen(argv[1]));
 
     if(!strcmp(argv[2], "4"))
     {

@@ -81,11 +81,12 @@ void PMCppHelper::OnInputPinCB(OicUuid_t deviceId, char *pinBuf, size_t bufSize)
     fp = fopen(RANDOM_PIN_TEXT_FILE, "r");
     char *str;
     str = fgets(buff, PIN_MAX_SIZE, (FILE *) fp);
+    OC_UNUSED(str);
     fclose(fp);
 
     IOTIVITYTEST_LOG(DEBUG, "[PIN CODE] %s\n", buff);
 
-    strcpy(pinBuf, (const char *) buff);
+    strncpy(pinBuf, (const char *) buff, bufSize);
 
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] OnInputPinCB Out");
 }
@@ -116,11 +117,12 @@ void PMCppHelper::inputPinCB(char *pin, size_t len)
     fp = fopen(RANDOM_PIN_TEXT_FILE, "r");
     char *str;
     str = fgets(buff, PIN_MAX_SIZE, (FILE *) fp);
+    OC_UNUSED(str);
     fclose(fp);
 
     IOTIVITYTEST_LOG(DEBUG, "[PIN CODE] %s\n", buff);
 
-    strcpy(pin, (const char *) buff);
+    strncpy(pin, (const char *) buff, len);
 
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] inputPinCB Out");
 }
@@ -148,16 +150,7 @@ OCStackResult PMCppHelper::confirmMutualVerifNumCB(void)
         int userConfirm;
         CommonUtil::waitInSecond(DELAY_SHORT);
         userConfirm = 1;
-
-        if (1 == userConfirm)
-        {
-            break;
-        }
-        else if (0 == userConfirm)
-        {
-            return OC_STACK_USER_DENIED_REQ;
-        }
-        printf("   Entered Wrong Number. Please Enter Again\n");
+        OC_UNUSED(userConfirm);
     }
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] confirmMutualVerifNumCB OUT");
     return OC_STACK_OK;
@@ -175,11 +168,11 @@ void PMCppHelper::createAcl(OicSecAcl_t *acl, const int dev_num, int nPermission
 
     if (dev_num == 1)
     {
-        memcpy(&ace->subjectuuid, DEFAULT_SUBJECT_UUID, UUID_LENGTH);
+        memcpy(&ace->subjectuuid, DEFAULT_SUBJECT_UUID, strlen(DEFAULT_SUBJECT_UUID));
     }
     else
     {
-        memcpy(&ace->subjectuuid, DEFAULT_SUBJECT_UUID, UUID_LENGTH);
+        memcpy(&ace->subjectuuid, DEFAULT_SUBJECT_UUID, strlen(DEFAULT_SUBJECT_UUID));
     }
 
     num = 1;

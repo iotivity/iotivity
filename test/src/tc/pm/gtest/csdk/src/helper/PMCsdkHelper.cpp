@@ -215,18 +215,21 @@ static void inputPinCB(char *pin, size_t len)
     if (NULL == fp)
     {
         IOTIVITYTEST_LOG(ERROR, "[PMHelper] ERROR Opening File");
+        return;
     }
 
     if (NULL == fgets(buff, PIN_MAX_SIZE, (FILE *) fp))
     {
         IOTIVITYTEST_LOG(ERROR, "[PMHelper] Unable to Get input from File");
+        fclose(fp);
+        return;
     }
 
     fclose(fp);
 
     IOTIVITYTEST_LOG(DEBUG, "[PIN CODE] %s\n\n", buff);
 
-    strcpy(pin, (const char *) buff);
+    strncpy(pin, (const char *) buff, len);
 
     __FUNC_OUT__
 }
@@ -1192,13 +1195,16 @@ ByteArray_t PMCsdkHelper::getTrustCertChainArray()
         {
             trustCertChainArray.data = (uint8_t *) OICCalloc(1, fsize + 1);
             trustCertChainArray.len = fsize + 1;
-            if (NULL == trustCertChainArray.data)
+            if (NULL != trustCertChainArray.data)
             {
-                IOTIVITYTEST_LOG(ERROR, "OICCalloc");
+                rewind(fp);
+                fsize = fread(trustCertChainArray.data, 1, fsize, fp);
+                OC_UNUSED(fsize);
                 fclose(fp);
+                return trustCertChainArray;
             }
-            rewind(fp);
-            fsize = fread(trustCertChainArray.data, 1, fsize, fp);
+
+            IOTIVITYTEST_LOG(ERROR, "OICCalloc");
             fclose(fp);
         }
     }
@@ -1254,13 +1260,13 @@ OicSecAcl_t *createAcl(const int dev_num, int permission, OCProvisionDev_t **m_o
 
     PMCsdkUtilityHelper::printDevList(dev);
 
-    memcpy(&ace->subjectuuid, &dev->doxm->deviceID, UUID_LENGTH);
-
     if (!dev || !dev->doxm)
     {
         IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAcl: device instance empty");
         return NULL;
     }
+
+    memcpy(&ace->subjectuuid, &dev->doxm->deviceID, UUID_LENGTH);
 
     num = 1;
     for (int i = 0; num > i; ++i)
