@@ -99,6 +99,10 @@ platform
 iotivity.pc
 tmp/
 
+# Ignore GCov generated files
+*.gcda
+*.gcno
+
 # Ignore downloaded dependencies
 extlibs/libcoap/libcoap
 extlibs/gtest/gtest-*
