@@ -71,7 +71,7 @@ OCGetSupportedEndpointTpsFlags
 OCInit
 OCInit1
 OCInit2
-OCLinksPayloadValueCreate
+OCLinksPayloadArrayCreate
 OCNotifyAllObservers
 OCNotifyListOfObservers
 OCPayloadDestroy
