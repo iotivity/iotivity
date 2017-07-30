@@ -89,6 +89,10 @@ platform
 iotivity.pc
 tmp/
 
+# Ignore GCov generated files
+*.gcda
+*.gcno
+
 # Ignore downloaded dependencies
 *.tgz
 *.zip
