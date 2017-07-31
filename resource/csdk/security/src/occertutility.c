@@ -350,7 +350,9 @@ static OCStackResult GenerateCertificate(
             s_ekuRole, sizeof(s_ekuRole));
         VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
         ret = snprintf(buf, sizeof(buf), "CN=%s%s%s", role, (NULL != authority) ? ",OU=" : "", (NULL != authority) ? authority : "");
-        VERIFY_SUCCESS(TAG, ret < sizeof(buf), ERROR);
+        // To prevent sign-compare warning sizeof(buf) is cast to int. This is safe because the max size of buf fits into int.
+        // Note ret value from snprintf may be negative if there was an error so it should not be cast to size_t.
+        VERIFY_SUCCESS(TAG, ret < (int)sizeof(buf), ERROR);
         names.next = NULL;
         names.general_name.name_type = MBEDTLS_X509_GENERALNAME_DIRECTORYNAME;
         ret = mbedtls_x509_string_to_names(&names.general_name.directory_name, buf);
