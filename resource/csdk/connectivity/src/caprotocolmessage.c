@@ -1068,7 +1068,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
         outInfo->payloadSize = dataSize;
     }
 
-    if (optionResult[0] != '\0' && optionLength >= 0)
+    if (optionResult[0] != '\0')
     {
         optionResult[optionLength] = '\0';
         OIC_LOG_V(DEBUG, TAG, "URL length:%" PRIuPTR, strlen(optionResult));
