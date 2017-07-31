@@ -64,7 +64,7 @@ void handler(int sig)
 
 char* exe = 0;
 
-int initialiseExecutableName()
+void initialiseExecutableName()
 {
     char link[1024];
     exe = new char[1024];

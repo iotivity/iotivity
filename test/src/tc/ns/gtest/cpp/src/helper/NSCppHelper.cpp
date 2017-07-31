@@ -387,6 +387,7 @@ shared_ptr< OIC::Service::NSConsumer > NSCppHelper::getLocalConsumer(bool subCon
 
 bool NSCppHelper::sendNotification()
 {
+    OIC::Service::NSMediaContents* mediaContents=NULL;
     if (m_pProviderService == nullptr || !s_consumer)
     {
         IOTIVITYTEST_LOG(ERROR, "ProviderService or Consumer is null");
@@ -415,7 +416,7 @@ bool NSCppHelper::sendNotification()
         msg.setSourceName(SOURCE_NAME);
         msg.setTopic(TEST_TOPIC_1);
 
-        OIC::Service::NSMediaContents* mediaContents = new OIC::Service::NSMediaContents(
+        mediaContents = new OIC::Service::NSMediaContents(
                 ICONIMAGE_TO_SET);
 
         msg.setMediaContents(mediaContents);
@@ -443,7 +444,11 @@ bool NSCppHelper::sendNotification()
     }
 
     IOTIVITYTEST_LOG(INFO, "Notification Sent");
-
+    if(mediaContents!=NULL)
+    {
+        delete mediaContents;
+        mediaContents=NULL;
+    }
     return true;
 }
 

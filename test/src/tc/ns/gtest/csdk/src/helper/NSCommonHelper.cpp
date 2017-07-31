@@ -31,11 +31,13 @@ const char * CONSUMER_FIFO = "/tmp/consumerFifo";
 
 int g_FileRead, g_FileWrite;
 
-NSCommonHelper::NSCommonHelper() {
+NSCommonHelper::NSCommonHelper()
+{
     m_isProvider = false;
 }
 
-NSCommonHelper::~NSCommonHelper() {
+NSCommonHelper::~NSCommonHelper()
+{
 }
 
 NSCommonHelper* NSCommonHelper::getInstance(void)
@@ -52,21 +54,41 @@ NSCommonHelper* NSCommonHelper::getInstance(void)
     return s_NSCommonHelperInstance;
 }
 
-void NSCommonHelper::initPipe(bool isProvider) {
+void NSCommonHelper::initPipe(bool isProvider)
+{
     m_isProvider = isProvider;
 
-    mkfifo(FIFO_INPUT_FILE, 0666);
+    if( mkfifo( FIFO_INPUT_FILE, 0666) == -1)
+    {
+        cout << "mkfifo Error: " << endl;
+    }
 
-    if (isProvider) {
+    if (isProvider)
+    {
         g_FileRead = open(PROVIDER_FIFO, O_RDONLY);
-    } else {
+        if ( g_FileRead == -1)
+        {
+            cout << "provider Read File open Error: " << endl;
+        }
+    }
+    else
+    {
         g_FileRead = open(CONSUMER_FIFO, O_RDONLY);
+        if( g_FileRead == -1)
+        {
+            cout << "consumer Read File open Error: " << endl;
+        }
     }
 
     g_FileWrite = open(FIFO_INPUT_FILE, O_WRONLY);
+    if( g_FileWrite == -1)
+    {
+        cout << "consumer write File open Error: " << endl;
+    }
 }
 
-void NSCommonHelper::closePipe() {
+void NSCommonHelper::closePipe()
+{
     close(g_FileRead);
     close(g_FileWrite);
 
@@ -74,17 +96,32 @@ void NSCommonHelper::closePipe() {
 
 }
 
-void NSCommonHelper::loggerReader() {
+void NSCommonHelper::loggerReader()
+{
     char inputBuf[MAX_BUF];
+    int maxRetry = 0;
 
-    while(true)
+    while (true)
     {
+        memset( inputBuf, '\0', MAX_BUF);
         ssize_t rd = read(g_FileRead, inputBuf, MAX_BUF);
+        if (rd == -1)
+        {
+            cout << "Error in reading file" << endl;
+            maxRetry++;
+            if ( maxRetry == 10)
+            {
+                break;
+            }
+            continue;
+        }
 
         cout << "********** Log: " << inputBuf << endl;
 
         if (rd == 0)
+        {
             break;
+        }
 
         if (rd != -1)
         {
@@ -94,10 +131,12 @@ void NSCommonHelper::loggerReader() {
     }
 }
 
-void NSCommonHelper::inputMenu(const char input[]) {
+void NSCommonHelper::inputMenu(const char input[])
+{
     char in[2];
 
-    for (int i=0; i<2; i++) {
+    for (int i=0; i<2; i++)
+    {
         in[i] = input[i];
     }
 
@@ -108,6 +147,7 @@ void NSCommonHelper::inputMenu(const char input[]) {
     loggerReader();
 }
 
-string NSCommonHelper::getAppLog() {
+string NSCommonHelper::getAppLog()
+{
     return log;
 }

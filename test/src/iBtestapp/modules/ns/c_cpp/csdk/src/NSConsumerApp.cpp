@@ -359,7 +359,7 @@ void showMainMenu()
 // This function is for taking input from console and processing input as necessary
 int userInputProcessing(int max, int min)
 {
-    int input;
+    int input=0;
 
     if (g_IsTCRunning)
     {
@@ -409,21 +409,27 @@ void enableSecure()
     OCRegisterPersistentStorageHandler(&ps);
 }
 
-void enablePipe()
+int enablePipe()
 {
     cout << "Running from TC......." << endl;
     g_IsTCRunning = true;
 
     sleep(2);
-    mkfifo(FIFO_WRITE_FILE, 0666);
+    if(mkfifo(FIFO_WRITE_FILE, 0666)==-1)
+        return -1;
 
     cout << "Opening Writer...." << endl;
     g_WriteFile = open(FIFO_WRITE_FILE, O_WRONLY);
+    if(g_WriteFile==-1)
+        return -1;
     cout << "Writer Opened...." << endl;
 
     cout << "Reading..." << endl;
     g_ReadFile = open(FIFO_READ_FILE, O_RDONLY);
+    if(g_ReadFile==-1)
+        return -1;
     cout << "Read Opened" << endl;
+    return 0;
 }
 
 void closePipe()
@@ -465,7 +471,10 @@ int main(int argc, char **argv)
 
     if (menu == 1)
     {
-        enablePipe();
+        if(enablePipe()==-1)
+        {
+            cout << "Can't enable pipe..." << endl;
+        }
     }
 
     if (secured == 1)
@@ -496,6 +505,10 @@ int main(int argc, char **argv)
 
             menuSelection(
                     ConsumerAppMenu(userInputProcessing(CONSUMER_UPDATE_TOPICS, CONSUMER_EXIT)));
+        }
+        catch (const std::runtime_error &e)
+        {
+            cout << "[ERROR] " << e.what() << endl;
         }
         catch (const exception &e)
         {
