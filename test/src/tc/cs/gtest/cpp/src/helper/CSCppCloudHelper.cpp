@@ -330,7 +330,10 @@ ByteArray CSCppCloudHelper::getTrustCertChainArray()
             }
             rewind(fp);
             fsize = fread(trustCertChainArray.data, 1, fsize, fp);
-            OC_UNUSED(fsize);
+            if(fsize > 0)
+            {
+                OC_UNUSED(fsize);
+            }     
             fclose(fp);
         }
     }

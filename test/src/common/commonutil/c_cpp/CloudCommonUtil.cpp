@@ -86,7 +86,8 @@ std::string CloudCommonUtil::readfile(std::string filename)
 {
     __FUNC_IN__
     FILE *fp;
-    char buff[100];
+    char buff[100] =
+    { 0, };
 
     fp = fopen(filename.c_str(), "r");
 
@@ -99,6 +100,7 @@ std::string CloudCommonUtil::readfile(std::string filename)
     if (NULL == fgets(buff, 100, (FILE*) fp))
     {
         IOTIVITYTEST_LOG(ERROR, "[CSC Helper] Unable to Get input from File: %s", filename.c_str());
+        fclose(fp);
         return NULL;
     }
 
@@ -110,11 +112,17 @@ std::string CloudCommonUtil::readfile(std::string filename)
     return std::string(buff);
 }
 
-
 void CloudCommonUtil::create_file(string filename, string data)
 {
     FILE *fp;
     fp = fopen(filename.c_str(), "w+");
+
+    if (!fp)
+    {
+        IOTIVITYTEST_LOG(ERROR, "[CSC Helper] Unable to Open File");
+        return;
+    }
+
     fprintf(fp, "%s", data.c_str());
     fclose(fp);
 }
@@ -237,7 +245,7 @@ char* CloudCommonUtil::getgithubcode(const char *gitlogin, const char *gitpasswo
     if (curl)
     {
         //Get Github login page
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
         curl_easy_setopt(curl, CURLOPT_URL, INIT_GET_LOGIN_URL);
         curl_easy_setopt(curl, CURLOPT_COOKIEFILE, ""); /* start cookie engine */
         curl_easy_setopt(curl, CURLOPT_AUTOREFERER, 1L);
@@ -260,8 +268,8 @@ char* CloudCommonUtil::getgithubcode(const char *gitlogin, const char *gitpasswo
         auth_text = get_authenticity_token(str.ptr);
         auth_url_text = curl_easy_escape(curl, auth_text, strlen(auth_text));
 
-        snprintf(demoPost, 1000, "%s%s%s%s%s%s%s", PAR_POST_VAL, AUTHENTICITY_TOKEN,
-                auth_url_text, "&login=", gitlogin, "&password=", gitpassword);
+        snprintf(demoPost, 1000, "%s%s%s%s%s%s%s", PAR_POST_VAL, AUTHENTICITY_TOKEN, auth_url_text,
+                "&login=", gitlogin, "&password=", gitpassword);
 
         free(str.ptr);
 
@@ -323,8 +331,6 @@ char* CloudCommonUtil::getgithubcode(const char *gitlogin, const char *gitpasswo
 
         code_text = get_auth_token_code(str.ptr, code);
 
-
-
         curl_easy_cleanup(curl);
     }
     curl_global_cleanup();
@@ -339,9 +345,9 @@ char* CloudCommonUtil::getgithubcode(const char *gitlogin, const char *gitpasswo
 char* CloudCommonUtil::getGitLoginAuthCodeMain()
 {
     __FUNC_IN__
-    char *code = new char[30];
-    string github_user_id =g_configPropFile.getProperties(GITHUB_USER_KEY);
-    string github_password =g_configPropFile.getProperties(GITHUB_PASSWORD_KEY);
+    char *code = (char*) calloc(30, sizeof(char));
+    string github_user_id = g_configPropFile.getProperties(GITHUB_USER_KEY);
+    string github_password = g_configPropFile.getProperties(GITHUB_PASSWORD_KEY);
     code = getgithubcode(github_user_id.c_str(), github_password.c_str(), code);
     IOTIVITYTEST_LOG(INFO, "Auth Code: %s", code);
     __FUNC_OUT__
@@ -421,6 +427,7 @@ bool CloudCommonUtil::signUp(OCAccountManager::Ptr accountMgr)
         if (CALLBACK_INVOKED != waitCallbackRet())
         {
             IOTIVITYTEST_LOG(ERROR, "[Cloud Common] Callback Not Invoked");
+            free(g_chAuthCode);
             return false;
         }
     }
@@ -436,8 +443,8 @@ bool CloudCommonUtil::signUp(OCAccountManager::Ptr accountMgr, std::string authC
 {
     __FUNC_IN__
 
-    OCStackResult result = accountMgr->signUp(CloudCommonUtil::g_authprovider,
-            authCode.c_str(), handleLoginoutCB);
+    OCStackResult result = accountMgr->signUp(CloudCommonUtil::g_authprovider, authCode.c_str(),
+            handleLoginoutCB);
 
     IOTIVITYTEST_LOG(INFO, "[Cloud Common] signUp returns %s",
             CommonUtil::getOCStackResult(result));
@@ -530,3 +537,4 @@ bool CloudCommonUtil::signOut(OCAccountManager::Ptr accountMgr)
     __FUNC_OUT__
     return true;
 }
+

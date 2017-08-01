@@ -190,7 +190,6 @@ bool ResourceHelper::containsResource(vector< shared_ptr< OCResource > > resourc
 void ResourceHelper::printRepresentation(OCRepresentation rep)
 {
     string uri = rep.getUri();
-    
     if (uri.compare("") == 0)
     {
         cout << "The representation has no uri." << endl;

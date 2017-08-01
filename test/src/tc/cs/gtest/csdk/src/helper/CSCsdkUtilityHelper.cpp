@@ -98,8 +98,8 @@ cloudAce_t* CSCsdkUtilityHelper::createCloudAces()
                 static char* resTypeArray[2] =
                 { "core.test.light", "core.test.bulb" };
 
-                stringArray_t *rt = (stringArray_t*) OICCalloc(1,
-                        sizeof(stringArray_t*));
+                stringArray_t *rt = (stringArray_t*) OICCalloc(resourceNumber,
+                        sizeof(stringArray_t));
                 rt->array = resTypeArray;
                 rt->length = resourceNumber;
 
@@ -107,8 +107,8 @@ cloudAce_t* CSCsdkUtilityHelper::createCloudAces()
                 static char* interfaceArray[2] =
                 { "oic.if.baseline", "oic.if.a" };
 
-                stringArray_t *_if = (stringArray_t*) OICCalloc(1,
-                        sizeof(stringArray_t*));
+                stringArray_t *_if = (stringArray_t*) OICCalloc(interfaceNumber,
+                        sizeof(stringArray_t));
                 _if->array = interfaceArray;
                 _if->length = interfaceNumber;
 
