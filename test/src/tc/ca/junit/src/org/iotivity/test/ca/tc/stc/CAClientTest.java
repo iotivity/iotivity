@@ -85,7 +85,7 @@ public class CAClientTest extends AndroidTestCase {
      */
 
     public void testLeSelectNetworkForIncomingMessages_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -156,7 +156,7 @@ public class CAClientTest extends AndroidTestCase {
      * @expected The received amount should be zero in client side
      */
     public void testLeSelectUnAvailableNetworkForIncomingMessages_N() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -236,7 +236,7 @@ public class CAClientTest extends AndroidTestCase {
      *           sent messages
      */
     public void testLeSelectNetworkForOutgoingMessages_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -308,7 +308,7 @@ public class CAClientTest extends AndroidTestCase {
      *           each time in client side
      */
     public void testLeSelectNetworkSequentiallyForIncomingMessages_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -400,7 +400,7 @@ public class CAClientTest extends AndroidTestCase {
      *           each time in client side
      */
     public void testLeSelectNetworkMultipleTimesForIncomingMessages_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -481,17 +481,17 @@ public class CAClientTest extends AndroidTestCase {
      *           sent messages and received header options should be same NULL
      */
     public void testLeSendRequest_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
         }
 
-
-        CAJni.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD,
-                MESSAGE_UNICAST);
-
         for (int i = 0; i < TRY_COUNT; i++) {
+
+            CAJni.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD,
+                    MESSAGE_UNICAST);
+
             CAJni
                     .setContext(getContext(), MainActivity.getActivity());
 
@@ -558,7 +558,7 @@ public class CAClientTest extends AndroidTestCase {
      *           sent messages and received header options should be same NULL
      */
     public void testLeSendRequestWithoutHeaderOption_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -630,7 +630,7 @@ public class CAClientTest extends AndroidTestCase {
      *           header option
      */
     public void testLeSendRequestWithHeaderOption_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -702,7 +702,7 @@ public class CAClientTest extends AndroidTestCase {
      *           header options
      */
     public void testLeSendRequestWithHeaderOptions_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -775,7 +775,7 @@ public class CAClientTest extends AndroidTestCase {
      *           sent messages
      */
     public void testLeSendRequestWithEmptyPayload_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -847,7 +847,7 @@ public class CAClientTest extends AndroidTestCase {
      *           sent messages
      */
     public void testLeSendRequestWithNullPayload_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -918,7 +918,7 @@ public class CAClientTest extends AndroidTestCase {
      * @expected The request message should be acknowledged
      */
     public void testLeSendRequestWithMessageTypeConfirm_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -988,7 +988,7 @@ public class CAClientTest extends AndroidTestCase {
      * @expected The received amount should be zero
      */
     public void testLeSendRequestWithWrongEndpoint_N() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -1059,7 +1059,7 @@ public class CAClientTest extends AndroidTestCase {
      * @expected The request message should be acknowledged
      */
     public void testLeSendRequestWithInvalidMethod_N() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -1131,12 +1131,11 @@ public class CAClientTest extends AndroidTestCase {
      *           sent messages
      */
     public void testLeSendGetRequest_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
         }
-
 
         CAJni.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD,
                 MESSAGE_UNICAST);
@@ -1203,7 +1202,7 @@ public class CAClientTest extends AndroidTestCase {
      *           sent messages
      */
     public void testLeSendPutRequest_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -1275,7 +1274,7 @@ public class CAClientTest extends AndroidTestCase {
      *           sent messages
      */
     public void testLeSendPostRequest_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -1347,7 +1346,7 @@ public class CAClientTest extends AndroidTestCase {
      *           sent messages
      */
     public void testLeSendDeleteRequest_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -1415,7 +1414,7 @@ public class CAClientTest extends AndroidTestCase {
      * @expected No response messages should be received
      */
     public void testLeReceiveWithNullResponseHandler_N() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -1484,23 +1483,17 @@ public class CAClientTest extends AndroidTestCase {
      * @expected No response messages should be received
      */
     public void testLeReceiveResponseWithoutCallingCARegisterHandler_N() {
-        
-        if (!CAJni.establishConnectionWithServer()) {
-            fail();
-            return;
-        }
 
-
-        CAJni.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD,
-                MESSAGE_UNICAST);
+        CAJni.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD,
+                MESSAGE_MULTICAST);
 
         if (!CAJni.initNetwork()) {
             fail();
             return;
         }
 
-        if (!CAJni.sendConfigurationRequest(SEND_MESSAGE,
-                MESSAGE_RESPONSE, CA_PUT)) {
+        if (!CAJni.sendRequestToAll(URI_TYPE_NORMAL,
+                PAYLOAD_TYPE_NORMAL, CA_MSG_NONCONFIRM, CA_GET, HEADER_NONE)) {
             fail();
             CAJni.terminate();
             return;
@@ -1556,7 +1549,7 @@ public class CAClientTest extends AndroidTestCase {
      *           messages and first handler will receive no response message
      */
     public void testLeReceiveWithSecondResponseHandler_P() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;
@@ -1635,7 +1628,7 @@ public class CAClientTest extends AndroidTestCase {
      * @expected No response messages should be received
      */
     public void testLeReceiveAfterRegisteringWithValidFollowedByNullResponseHandler_N() {
-        
+
         if (!CAJni.establishConnectionWithServer()) {
             fail();
             return;

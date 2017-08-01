@@ -333,7 +333,6 @@ TEST_F(CANetworkTest_btc, CASelectNetwork_P)
 #endif
 
 /**
- * @GRL
  * @since 2017-06-22
  * @see CAResult_t CAInitialize()
  * @see void CATerminate()
@@ -367,8 +366,8 @@ TEST_F(CANetworkTest_btc, CAGetSelectedNetwork_P)
     CATerminate();
 }
 #endif
+
 /**
- * @GRL
  * @since 2017-06-22
  * @objective Test 'CAGetSelectedNetwork_' should match with selectnetwork
  * @target CAResult_t CAGetSelectedNetwork()

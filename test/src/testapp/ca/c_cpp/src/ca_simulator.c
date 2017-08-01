@@ -119,10 +119,8 @@ void output(const char *format, ...)
 }
 
 #ifdef ARDUINO
-char* getData()
+char* getData(char readInput[])
 {
-    char readInput[MAX_BUF_LEN+1];
-
     while (!Serial.available())
     {
 
@@ -362,7 +360,7 @@ int selectNetwork(int argc, char *argv[])
         output("TCP    : 4\n");
         output("Select : ");
 
-        scanf("%d", &number);
+        scanf("%1d", &number);
     }
     else
     {
@@ -401,11 +399,11 @@ int selectNetwork(int argc, char *argv[])
             if (argc < 3)
             {
                 output("Enter Filter Address: ");
-                scanf("%s", g_address);
+                scanf("%15s", g_address);
             }
             else
             {
-                strcpy(g_address, argv[2]);
+                strncpy(g_address, argv[2], 15);
             }
 
             if (strchr(g_address, '.'))
@@ -413,11 +411,11 @@ int selectNetwork(int argc, char *argv[])
                 if (argc < 4)
                 {
                     output("Enter Filter Command: ");
-                    scanf("%s", g_filterCommand);
+                    scanf("%2s", g_filterCommand);
                 }
                 else
                 {
-                    strcpy(g_filterCommand, argv[3]);
+                    strncpy(g_filterCommand, argv[3], 2);
                 }
             }
 #endif
@@ -1042,7 +1040,8 @@ void loop()
 
     if (Serial.available() > 0)
     {
-        char* buffer = getData();
+        char readInput[MAX_BUF_LEN+1];
+        char* buffer = getData(readInput);
         switch (toupper(buffer[0]))
         {
             case 'P':

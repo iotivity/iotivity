@@ -50,6 +50,10 @@ CAHelper::CAHelper()
 
     waitTimes[REC_NOR] = WAIT_SIM_DIRECT;
     waitTimes[REC_ACK] = WAIT_SIM_CALLBACK;
+    m_clientReceivedCount = 0;
+    m_clientAckCount = 0;
+    m_clientPreConditionPass = false;
+    m_multicastRequest = true;
 
     IOTIVITYTEST_LOG(DEBUG, "[CAHelper] OUT");
 }
@@ -931,7 +935,18 @@ bool CAHelper::CheckRemoteEndpointAttributes(const CAEndpoint_t* endpoint, char*
             return false;
         }
 
-        IOTIVITYTEST_LOG(DEBUG, "uri: %s", resourceUri);
+        char *ptr = resourceUri;
+        ptr++;
+
+        if (!strcmp(ptr, SIM_REQ_ACK) || !strcmp(ptr, SIM_REQ_CONFIG) || !strcmp(ptr, SIM_RES_ACK))
+        {
+            IOTIVITYTEST_LOG(DEBUG, "Resource URI: %s", resourceUri);
+        }
+        else
+        {
+            IOTIVITYTEST_LOG(DEBUG, "Ignore Unknown Resource URI: %s", resourceUri);
+            return false;
+        }
     }
     else if (s_tcInfo.messageType == CA_MSG_CONFIRM)
     {
@@ -1148,7 +1163,7 @@ bool CAHelper::sendConfigurationRequest(SimulatorTask taskType, MessageCommandTy
     }
 
 #if defined(__LINUX__) || defined(__ANDROID_NATIVE__)
-    char buffer[4];
+    char buffer[2048];
     sprintf(buffer, "%04d", totalMessage);
     payload += buffer;
 
@@ -1165,7 +1180,7 @@ bool CAHelper::sendConfigurationRequest(SimulatorTask taskType, MessageCommandTy
 #endif
 
 #ifdef __TIZEN__
-    char *buffer = malloc(sizeof(char)*4);
+    char *buffer = malloc(sizeof(char)*2048);
     sprintf(buffer, "%04d", totalMessage);
     payload.append(buffer);
 

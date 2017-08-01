@@ -521,7 +521,7 @@ public class CANetworkTest extends AndroidTestCase {
             return;
         }
 
-        if (!CAJni.getNetworkInfomation(NETWORKINFO_ENDPOINT_VALID, 
+        if (!CAJni.getNetworkInfomation(NETWORKINFO_ENDPOINT_VALID,
             NETWORKINFO_SIZE_VALID, CA_STATUS_OK)) {
             fail();
         }
@@ -549,7 +549,7 @@ public class CANetworkTest extends AndroidTestCase {
             return;
         }
 
-        if (!CAJni.getNetworkInfomation(NETWORKINFO_ENDPOINT_NULL, 
+        if (!CAJni.getNetworkInfomation(NETWORKINFO_ENDPOINT_NULL,
                 NETWORKINFO_SIZE_NULL, CA_STATUS_INVALID_PARAM)) {
             fail();
         }

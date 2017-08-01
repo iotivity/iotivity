@@ -84,7 +84,7 @@ static const int BLOCKWISE_PACKET_SIZE = 1500;
 #define CASENDREPONSE 0
 
 const int TOTAL_MESSAGE = 1;
-const int MAX_ATTEMPT = 10;
+const int MAX_ATTEMPT = 25;
 const int MAX_INTERVAL = 0;
 const int TRY_COUNT = 3;
 const int NETWORK_OUT_OF_BOUNDARY_VALUE = 0;

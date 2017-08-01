@@ -997,12 +997,10 @@ bool checkMessageReceiveCount(int total)
 
     int i;
     int j;
-    bool flag;
 
     for(i = 0; i < MAX_ATTEMPT; i++)
     {
         sleep(1);
-        flag = true;
 
         if (CA_STATUS_OK != CAHandleRequestResponse())
         {
@@ -1010,19 +1008,37 @@ bool checkMessageReceiveCount(int total)
             return false;
         }
 
-        for (j = 0; i < m_remoteAddressCount; j++)
+        for (j = 0; j < m_remoteAddressCount; j++)
         {
-            if(m_receiveCount[j] != total)
+            if(total > 0 && m_receiveCount[j] == total)
             {
-                flag = false;
-                break;
+                return true;
             }
         }
-    }    
+    }
+
+    for (j = 0; j < m_remoteAddressCount; j++)
+    {
+        if(m_receiveCount[j] != total)
+        {
+            return false;
+        }
+    }
+
+    char buffer[100];
+
+    sprintf(buffer, "m_remoteAddressCount: %d", m_remoteAddressCount);
+    LOGI(buffer);
+
+    for (j = 0; j < m_remoteAddressCount; j++)
+    {
+        sprintf(buffer, "m_receiveCount: %d", m_receiveCount[j]);
+        LOGI(buffer);
+    }
 
     LOGI("[checkMessageReceiveCount] OUT");
 
-    return flag;
+    return true;
 }
 
 #ifdef __WITH_DTLS__
@@ -2024,6 +2040,11 @@ Java_org_iotivity_CAJni_establishConnectionWithServer(JNIEnv *env, jclass cls)
     {
         LOGE("checkMessageReceiveCount Failed");
         return false;
+    }
+
+    for(i = 0; i < m_remoteAddressCount; i++)
+    {
+        m_receiveCount[i] = 0;
     }
 
     isAddressAlreadyKnown = 1;
