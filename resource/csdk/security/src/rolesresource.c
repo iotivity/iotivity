@@ -925,7 +925,7 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
         if (strncasecmp((const char *)parseIter.attrPos, OIC_JSON_CREDID_NAME,
             parseIter.attrLen) == 0)
         {
-            int ret = sscanf((const char *)parseIter.valPos, "%lu", &credId);
+            int ret = sscanf((const char *)parseIter.valPos, "%u", &credId);
             if (1 > ret)
             {
                 OIC_LOG_V(ERROR, TAG, "credId was not valid: %s", parseIter.valPos);
