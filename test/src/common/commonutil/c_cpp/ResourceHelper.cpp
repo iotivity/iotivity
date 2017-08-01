@@ -190,6 +190,7 @@ bool ResourceHelper::containsResource(vector< shared_ptr< OCResource > > resourc
 void ResourceHelper::printRepresentation(OCRepresentation rep)
 {
     string uri = rep.getUri();
+    
     if (uri.compare("") == 0)
     {
         cout << "The representation has no uri." << endl;
@@ -210,7 +211,10 @@ void ResourceHelper::printRepresentation(OCRepresentation rep)
                 << endl;
     }
 
-    printPayload(rep.getPayload(), rep);
+    if(rep.getPayload())
+    {
+        printPayload(rep.getPayload(), rep);
+    }
 }
 
 void ResourceHelper::printPayload(OCRepPayload* incomingPayload, OCRepresentation rep, int level)
@@ -271,7 +275,7 @@ void ResourceHelper::printPayload(OCRepPayload* incomingPayload, OCRepresentatio
             {
 #ifdef __LINUX__
                 value = to_string(repValue->i);
-#endif        
+#endif
 
 #if defined(__ANDROID__) || defined(__TIZEN__)
                 std::stringstream strstream;
@@ -360,13 +364,13 @@ bool ResourceHelper::containsElement(vector< string > list, string target)
     return isFound;
 }
 
-string ResourceHelper::getOnlyTCPHost(vector<string> allHosts)
+string ResourceHelper::getOnlyTCPHost(vector< string > allHosts)
 {
     string tcpHost = "";
     for (string host : allHosts)
     {
         cout << "Found a host: " << host << endl;
-        if(host.find("tcp") != string::npos)
+        if (host.find("tcp") != string::npos)
         {
             tcpHost = host;
             break;
@@ -375,3 +379,4 @@ string ResourceHelper::getOnlyTCPHost(vector<string> allHosts)
 
     return tcpHost;
 }
+

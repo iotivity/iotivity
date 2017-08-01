@@ -268,7 +268,7 @@ OCStackResult ResourceServer::stopResource(void)
     //stop presence
     if (m_isRegisteredForPresence)
     {
-        result = OCPlatform::stopPresence();
+        OC_UNUSED(OCPlatform::stopPresence());
     }
 
     //stop server

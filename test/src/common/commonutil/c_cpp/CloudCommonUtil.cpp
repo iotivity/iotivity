@@ -82,7 +82,6 @@ OCDevAddr CloudCommonUtil::getDefaultEndPoint()
     return endPoint;
 }
 
-
 std::string CloudCommonUtil::readfile(std::string filename)
 {
     __FUNC_IN__
@@ -94,11 +93,13 @@ std::string CloudCommonUtil::readfile(std::string filename)
     if (NULL == fp)
     {
         IOTIVITYTEST_LOG(ERROR, "[CSC Helper] ERROR Opening File : %s", filename.c_str());
+        return NULL;
     }
 
     if (NULL == fgets(buff, 100, (FILE*) fp))
     {
         IOTIVITYTEST_LOG(ERROR, "[CSC Helper] Unable to Get input from File: %s", filename.c_str());
+        return NULL;
     }
 
     fclose(fp);
@@ -108,6 +109,7 @@ std::string CloudCommonUtil::readfile(std::string filename)
     __FUNC_OUT__
     return std::string(buff);
 }
+
 
 void CloudCommonUtil::create_file(string filename, string data)
 {
@@ -258,8 +260,8 @@ char* CloudCommonUtil::getgithubcode(const char *gitlogin, const char *gitpasswo
         auth_text = get_authenticity_token(str.ptr);
         auth_url_text = curl_easy_escape(curl, auth_text, strlen(auth_text));
 
-        sprintf(demoPost, "%s%s%s%s%s%s%s", PAR_POST_VAL, AUTHENTICITY_TOKEN, auth_url_text,
-                "&login=", gitlogin, "&password=", gitpassword);
+        snprintf(demoPost, 1000, "%s%s%s%s%s%s%s", PAR_POST_VAL, AUTHENTICITY_TOKEN,
+                auth_url_text, "&login=", gitlogin, "&password=", gitpassword);
 
         free(str.ptr);
 
@@ -410,6 +412,7 @@ bool CloudCommonUtil::signUp(OCAccountManager::Ptr accountMgr)
     {
         IOTIVITYTEST_LOG(ERROR, "[Cloud Common] signUp returns %s",
                 CommonUtil::getOCStackResult(result));
+        free(g_chAuthCode);
         return false;
     }
 

@@ -110,13 +110,15 @@ static bool readFile(const char *name, OCByteString *out)
     if (length < 0)
     {
         OIC_LOG(ERROR, TAG, "Failed to ftell");
-        // goto exit;
+        fclose(file);
+        return result;
     }
 
     if (fseek(file, 0, SEEK_SET))
     {
         OIC_LOG(ERROR, TAG, "Failed to SEEK_SET");
-        //goto exit;
+        fclose(file);
+        return result;
     }
 
     //Allocate memory
@@ -124,7 +126,8 @@ static bool readFile(const char *name, OCByteString *out)
     if (!buffer)
     {
         OIC_LOG(ERROR, TAG, "Failed to allocate buffer");
-        //goto exit;
+        fclose(file);
+        return result;
     }
 
     //Read file contents into buffer
@@ -133,7 +136,9 @@ static bool readFile(const char *name, OCByteString *out)
     if (realCount != count)
     {
         OIC_LOG_V(ERROR, TAG, "Read %d bytes %" PRIuPTR " times instead of %" PRIuPTR, length, realCount, count);
-        //goto exit;
+        free(buffer);
+        fclose(file);
+        return false;
     }
 
     out->bytes = buffer;
@@ -281,7 +286,7 @@ void initServer()
 
     accountMgr = OCPlatform::constructAccountManagerObject(g_hostAddress, CT_ADAPTER_TCP);
     __FUNC_OUT__
-    return true;
+    return;
 }
 
 static void handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep, const int ecode)
@@ -399,34 +404,46 @@ int main()
     IOTIVITYTEST_LOG(INFO, "TLS MODE : Off");
 #endif
 
-    g_hostAddress = CloudCommonUtil::getDefaultHostAddess();
-
-    initServer();
-#ifdef __SECURED__
-    g_endPoint = CloudCommonUtil::getDefaultEndPoint();
-#ifdef __TLS_ON__
-    enableTlsMode();
-#endif
-#endif
-
-    isInitialized = CloudCommonUtil::signUp(accountMgr);
-
-    if (isInitialized)
+    try
     {
+        g_hostAddress = CloudCommonUtil::getDefaultHostAddess();
 
-        isInitialized = CloudCommonUtil::signIn(accountMgr);
-
+        initServer();
 #ifdef __SECURED__
+        g_endPoint = CloudCommonUtil::getDefaultEndPoint();
+#ifdef __TLS_ON__
+        enableTlsMode();
+#endif
+#endif
+
+        isInitialized = CloudCommonUtil::signUp(accountMgr);
+
         if (isInitialized)
         {
-            createAcl();
-            getAclId();
-            CloudCommonUtil::signOut(accountMgr);
-        }
+
+            isInitialized = CloudCommonUtil::signIn(accountMgr);
+
+#ifdef __SECURED__
+            if (isInitialized)
+            {
+                createAcl();
+                getAclId();
+                CloudCommonUtil::signOut(accountMgr);
+            }
 #endif
+        }
+
+    }
+    catch (const std::logic_error& e)
+    {
+        isInitialized = false;
+    }
+    catch (const std::out_of_range& e)
+    {
+        isInitialized = false;
     }
 
     IOTIVITYTEST_LOG(INFO, "Cloud Initialization %s", isInitialized ? "Successful" : "Failed");
-
     return 0;
 }
+

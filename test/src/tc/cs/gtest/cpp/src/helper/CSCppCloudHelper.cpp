@@ -28,7 +28,8 @@ std::string CSCppCloudHelper::s_accesstoken = "";
 std::string CSCppCloudHelper::s_refreshToken = "";
 std::string CSCppCloudHelper::s_groupID = "";
 std::string CSCppCloudHelper::s_aclId = "";
-OCPersistentStorage CSCppCloudHelper::s_pst = {0, 0, 0, 0, 0};
+OCPersistentStorage CSCppCloudHelper::s_pst =
+{   0, 0, 0, 0, 0};
 
 int CSCppCloudHelper::waitCallbackRet()
 {
@@ -325,9 +326,11 @@ ByteArray CSCppCloudHelper::getTrustCertChainArray()
             {
                 IOTIVITYTEST_LOG(ERROR, "OICCalloc");
                 fclose(fp);
+                return trustCertChainArray;
             }
             rewind(fp);
             fsize = fread(trustCertChainArray.data, 1, fsize, fp);
+            OC_UNUSED(fsize);
             fclose(fp);
         }
     }
@@ -574,3 +577,4 @@ std::string CSCppCloudHelper::getFailureMessage()
 }
 
 #endif /*__CLOUD__*/
+
