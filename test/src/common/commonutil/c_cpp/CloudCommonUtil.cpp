@@ -432,6 +432,7 @@ bool CloudCommonUtil::signUp(OCAccountManager::Ptr accountMgr)
         }
     }
     g_cloudPropFile.save();
+    free(g_chAuthCode);
     __FUNC_OUT__
     return true;
 }

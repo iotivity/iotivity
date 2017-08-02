@@ -285,6 +285,7 @@ std::string CSCsdkUtilityHelper::readfile(std::string filename)
     if (NULL == fgets(buff, 100, (FILE*) fp))
     {
         IOTIVITYTEST_LOG(ERROR, "[CSC Helper] Unable to Get input from File: %s", filename.c_str());
+        fclose(fp);
         return NULL;
     }
 

@@ -125,7 +125,7 @@ static FILE* g_logfile_out = NULL;
                 if(INIT_LEVEL+level==INFO) { \
                     buffer[0] = 0; \
                 } else { \
-                    sprintf(buffer,"%s[%s][%s][%s:%d]%s: ", start_color[INIT_LEVEL+level], GetTimeStampString(), LEVEL[INIT_LEVEL+level], __FILE__,__LINE__, end_color); \
+                    snprintf(buffer, MAX_LOG_BUFFER_SIZE, "%s[%s][%s][%s:%d]%s: ", start_color[INIT_LEVEL+level], GetTimeStampString(), LEVEL[INIT_LEVEL+level], __FILE__,__LINE__, end_color); \
                 } \
                 vPrintf(buffer,format,##__VA_ARGS__); \
             }} \
