@@ -32,7 +32,7 @@
 #define TAG "ENROLLEE_SAMPLE"
 
 void *listeningFunc(void *);
-pthread_t thread_handle = NULL;
+pthread_t thread_handle;
 
 /**
  * Secure Virtual Resource database for Iotivity Server
