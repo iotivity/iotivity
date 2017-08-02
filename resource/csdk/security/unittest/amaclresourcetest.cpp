@@ -27,7 +27,6 @@
 #include "payload_logging.h"
 #include "psinterface.h"
 #include "secureresourcemanager.h"
-#include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "srmutility.h"
 #include "amaclresource.h"

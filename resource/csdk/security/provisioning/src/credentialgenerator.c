@@ -28,7 +28,6 @@
 #include "ocrandom.h"
 #include "srmutility.h"
 #include "stdbool.h"
-#include "securevirtualresourcetypes.h"
 
 #define TAG "OIC_SRPAPI_CG"
 

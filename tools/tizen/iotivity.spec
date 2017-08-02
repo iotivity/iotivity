@@ -265,6 +265,7 @@ mkdir -p %{ex_install_dir}/provision-sample
 
 
 cp ./resource/csdk/security/include/*.h %{buildroot}%{_includedir}
+cp ./resource/csdk/security/include/*/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/connectivity/api/*.h %{buildroot}%{_includedir}/
 cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}

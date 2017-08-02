@@ -25,7 +25,7 @@
 #include "pmtypes.h"
 #include "ownershiptransfermanager.h"
 #ifdef MULTIPLE_OWNER
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #endif //MULTIPLE_OWNER
 
 #ifdef __cplusplus

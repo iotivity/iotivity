@@ -28,7 +28,6 @@
 #include "srmutility.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
-#include "securevirtualresourcetypes.h"
 #include "secureresourcemanager.h"
 #include "srmresourcestrings.h"
 #include "ocresourcehandler.h"

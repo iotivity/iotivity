@@ -29,7 +29,6 @@
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "oxmmanufacturercert.h"
-#include "securevirtualresourcetypes.h"
 #include "provisioningdatabasemanager.h"
 #ifdef MULTIPLE_OWNER
 #include "multipleownershiptransfermanager.h"

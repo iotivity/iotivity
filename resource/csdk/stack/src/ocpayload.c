@@ -1039,20 +1039,13 @@ bool OC_CALL OCRepPayloadSetIntArray(OCRepPayload* payload, const char* name,
         const int64_t* array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
 {
     size_t dimTotal = calcDimTotal(dimensions);
-    if (dimTotal == 0)
-    {
-        return false;
-    }
 
     int64_t* newArray = (int64_t*)OICMalloc(dimTotal * sizeof(int64_t));
 
-    if (!newArray)
+    if (newArray && array)
     {
-        return false;
+        memcpy(newArray, array, dimTotal * sizeof(int64_t));
     }
-
-    memcpy(newArray, array, dimTotal * sizeof(int64_t));
-
 
     bool b = OCRepPayloadSetIntArrayAsOwner(payload, name, newArray, dimensions);
     if (!b)

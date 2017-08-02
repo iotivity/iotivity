@@ -51,7 +51,7 @@
 #include <stdint.h> // for uint8_t typedef
 #include <stdbool.h>
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-#include "byte_array.h"
+#include "experimental/byte_array.h"
 #endif /* __WITH_DTLS__  or __WITH_TLS__*/
 
 #ifdef __cplusplus

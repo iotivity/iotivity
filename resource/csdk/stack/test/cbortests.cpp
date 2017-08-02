@@ -401,3 +401,35 @@ TEST(CborHeterogeneousArrayTest, ConvertParseTest)
     OICFree(payload_cbor);
     OCPayloadDestroy(payload_out);
 }
+
+TEST(CborEmptyArrayTest, EmptyArrayArraySetGetTest)
+{
+    OCRepPayload* payload_in = OCRepPayloadCreate();
+    ASSERT_TRUE(payload_in != NULL);
+
+    OCRepPayloadSetUri(payload_in, "/a/quake_sensor");
+    OCRepPayloadSetPropInt(payload_in, "scale", 4);
+
+    size_t dimensions_in[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
+
+    EXPECT_EQ(true, OCRepPayloadSetIntArray(payload_in, "quakedata",
+                NULL, dimensions_in));
+
+    int64_t* quakedata_out = NULL;
+    size_t dimensions_out[MAX_REP_ARRAY_DEPTH] = {0};
+
+    ///TODO: Change Assert to true after fixing OCRepPayloadGetIntArray behaviour
+    ASSERT_EQ(false, OCRepPayloadGetIntArray(payload_in, "quakedata",
+                &quakedata_out, dimensions_out));
+
+    ASSERT_TRUE(quakedata_out == NULL);
+
+    for(size_t i = 0; i < MAX_REP_ARRAY_DEPTH; i++)
+    {
+        EXPECT_EQ(0, dimensions_out[i]);
+    }
+
+    // Cleanup
+    OCRepPayloadDestroy(payload_in);
+}
+

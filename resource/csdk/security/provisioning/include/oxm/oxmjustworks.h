@@ -22,7 +22,7 @@
 #define OXM_JUST_WORKS_H_
 
 #include "ocstack.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "ownershiptransfermanager.h"
 
 #ifdef __cplusplus

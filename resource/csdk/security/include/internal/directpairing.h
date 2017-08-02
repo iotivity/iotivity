@@ -24,7 +24,7 @@
 #include <stdbool.h>
 #include "ocstack.h"
 #include "pmtypes.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C"

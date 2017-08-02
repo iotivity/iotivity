@@ -45,7 +45,6 @@
 #include "dpairingresource.h"
 #include "psinterface.h"
 #include "srmresourcestrings.h"
-#include "securevirtualresourcetypes.h"
 #include "credresource.h"
 #include "srmutility.h"
 #include "pinoxmcommon.h"

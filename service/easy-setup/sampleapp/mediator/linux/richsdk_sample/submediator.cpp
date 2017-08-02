@@ -24,7 +24,7 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "OCProvisioningManager.hpp"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #include "EasySetup.hpp"
 #include "ESRichCommon.h"

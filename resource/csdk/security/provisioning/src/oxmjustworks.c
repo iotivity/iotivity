@@ -20,7 +20,7 @@
 
 #include <memory.h>
 #include "ocstack.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "doxmresource.h"
 #include "cacommon.h"
 #include "cainterface.h"

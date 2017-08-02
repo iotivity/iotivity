@@ -29,7 +29,7 @@
 
 
 #include "cacommon.h"
-#include "byte_array.h"
+#include "experimental/byte_array.h"
 
 #ifdef __cplusplus
 extern "C"

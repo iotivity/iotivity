@@ -43,7 +43,6 @@
 #include "credresource.h"
 #include "aclresource.h"
 #include "ownershiptransfermanager.h"
-#include "securevirtualresourcetypes.h"
 #include "oxmjustworks.h"
 #include "pmtypes.h"
 #include "pmutility.h"

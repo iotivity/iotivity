@@ -22,7 +22,6 @@
 #include "ocstack.h"
 #include "cainterface.h"
 #include "srmresourcestrings.h"
-#include "securevirtualresourcetypes.h"
 
 using namespace std;
 

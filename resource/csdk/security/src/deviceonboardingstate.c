@@ -22,7 +22,6 @@
 #include "srmutility.h"
 #include "octypes.h"
 #include "logger.h"
-#include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "aclresource.h"
 #include "amaclresource.h"

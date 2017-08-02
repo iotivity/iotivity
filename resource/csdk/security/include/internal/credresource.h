@@ -22,7 +22,7 @@
 #define IOTVT_SRM_CREDR_H
 
 #include "cainterface.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "octypes.h"
 #include "rolesresource.h"
 #include <cbor.h>
