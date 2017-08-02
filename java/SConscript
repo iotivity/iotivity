@@ -1,5 +1,28 @@
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Copyright 2017 Intel Corporation All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+import SCons
 import os
 import platform
+import subprocess
+from distutils.version import StrictVersion
 Import('env')
 
 PROJECT_VERSION = env.get('PROJECT_VERSION')
@@ -57,7 +80,7 @@ else:
     if 'NFC' in TARGET_TRANSPORT:
         TRANSPORT_NFC = 1
 
-if target_os == "android":
+if target_os in ['android']:
     android_home = env.get('ANDROID_HOME')
     os.environ['ANDROID_HOME'] = env.get('ANDROID_HOME')
     os.environ['ANDROID_NDK_HOME'] = env.get('ANDROID_NDK')
@@ -95,12 +118,87 @@ if target_os == "android":
 
 def ensure_libs(target, source, env):
     if platform.system() == 'Windows':
-        return target, [source, env.get('BUILD_DIR') + 'ca-interface.dll', 
+        return target, [source, env.get('BUILD_DIR') + 'ca-interface.dll',
                                 env.get('BUILD_DIR') + 'ocstack-jni.dll']
     else:
         return target, [source, env.get('BUILD_DIR') + 'libca-interface.so',
                                 env.get('BUILD_DIR') + 'libocstack-jni.so']
 
+def find_scons_java_version(env):
+    '''
+    Attempt to find the version of the javac tool that will be used to build
+    the java code.
+    This will return a string that SHOULD be placed into SCons' JAVAVERSION
+    environment variable.
+    If a version can not be determined return None
+    '''
+    possible_versions = ['1.8', '1.7', '1.6', '1.5']
+    # This command is used to get the java version used.
+    # Then walk through the output line by line to see if it has one of the
+    # expected java version. Note older versions of SCons do not support newer
+    # versions of Java. Since the way java code is compiled by SCons has not
+    # changed significantly since Java 1.6 we just tell SCons to use the
+    # maximum version of Java that was supported for by SCons for a given
+    # release
+    # SCons 2.1.0 Java 1.6 support (older versions of SCons were not investigated)
+    # SCons 2.3.0 Java 1.7 support added
+    # SCons 2.3.3 Java 1.8 support added
+    # Support for Java 1.9 not yet added. At this time JDK1.9 has not be released
+    # Until support for Java 1.9 is officially added to SCons this script will
+    # use the the 1.8 for the JAVAVERSION.
+    javac_cmd = os.path.join(env['JAVA_HOME'], 'bin', 'javac')
+    java_ver = subprocess.check_output([javac_cmd, '-version'], stderr=subprocess.STDOUT)
+    print('Trying to discover the version of Java used for compilation')
+    scons_version =  SCons.__version__
+    if StrictVersion(scons_version) < StrictVersion('2.1.0'):
+        print('\t***** Version of SCons older than 2.0.0 detected.                     *****')
+        print('\t***** Java build will likely fail or have errors in the build output. *****')
+        print('\t***** Recommend updating to the latest version of SCons               *****')
+        return None
+    for line in java_ver.split('\n'):
+        # handle building with versions of Java not supported by SCons
+        if ' 1.9' in line:
+            print('\tJava version 1.9 found.')
+            if StrictVersion(scons_version) <= StrictVersion('2.2.0'):
+                print('\tJava 1.9 not supported in SCons ' + scons_version + ', max supported Java 1.6.')
+                print('\tSetting JAVAVERSION to 1.6')
+                return '1.6'
+            if StrictVersion(scons_version) <= StrictVersion('2.3.2'):
+                print('\tJava 1.9 not supported in SCons ' + scons_version + ', max supported Java 1.7.')
+                print('\tSetting JAVAVERSION to 1.7')
+                return '1.7'
+            if StrictVersion(scons_version) > StrictVersion('2.5.1'):
+                # only printing this if Java 1.9 is found. Newer versions of
+                # scons should be able to handle older versions of Java
+                print('\t***** Unrecognized version of SCons found in java version Check. Build script may need to be updated *****')
+                # drop through to the next if statement.
+            if StrictVersion(scons_version) > StrictVersion('2.3.2'):
+                print('\tJava 1.9 not supported in SCons ' + scons_version + ', max supported Java 1.8.')
+                print('\tSetting JAVAVERSION to 1.8')
+                return '1.8'
+        if ' 1.8' in line:
+            print('\tJava version 1.8 found.')
+            if StrictVersion(scons_version) <= StrictVersion('2.2.0'):
+                print('\tJava 1.8 not supported in SCons ' + scons_version + ', max supported Java 1.6.')
+                print('\tSetting JAVAVERSION to 1.6')
+                return '1.6'
+            if StrictVersion(scons_version) <= StrictVersion('2.3.2'):
+                print('\tJava 1.8 not supported in SCons ' + scons_version + ', max supported Java 1.7.')
+                print('\tSetting JAVAVERSION to 1.7')
+                return '1.7'
+        if ' 1.7' in line:
+            print('\tJava version 1.7 found.')
+            if StrictVersion(scons_version) <= StrictVersion('2.2.0'):
+                print('\tJava 1.7 not supported in SCons ' + scons_version + ', max supported Java 1.6.')
+                print('\tSetting JAVAVERSION to 1.6')
+                return '1.6'
+        # handle versions supported by SCons
+        for v in possible_versions:
+            if (' ' + v) in line:
+                print('\tSetting JAVAVERSION to ' + v)
+                return v
+    print('\tJava version NOT found!')
+    return None
 
 jniOut = SConscript('jni/SConscript')
 
@@ -108,44 +206,71 @@ target_variant = "java"
 if target_os == 'android':
     target_variant = "android"
 
-jdk_env = Environment(ENV=os.environ)
-jdk_env['BUILDERS']['Gradle'] = Builder(
-    action=env.get('ANDROID_GRADLE') + ' build -b ' + env.get('SRC_DIR') +
-    '/java/iotivity-%s/build.gradle -PPROJECT_VERSION=%s -PWITH_TRANSPORT_EDR=%s -PWITH_TRANSPORT_BLE=%s -PWITH_TRANSPORT_NFC=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s -PMULTIPLE_OWNER=%s -PBUILD_DIR=%s --stacktrace'
-    % (target_variant, PROJECT_VERSION, TRANSPORT_EDR, TRANSPORT_BLE, TRANSPORT_NFC,
-       TARGET_ARCH, RELEASE, SECURED, SECURED, CLOUD, RD_MODE, MQ_PUB, MQ_SUB,
-       MQ_BROKER, TCP, ANDROID_MULTIPLE_OWNER, env.get('BUILD_DIR')),
-    emitter=ensure_libs)
-jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
-cmdBuildApi = jdk_env.Gradle(
-    target="base/objs",
-    source="common/src/main/java/org/iotivity/base/OcResource.java")
+jdk_env = None
+if target_os in ['android']:
+    # IOT-2559 Why does Gradle build require importing the os.environ
+    jdk_env = Environment(ENV=os.environ)
+else:
+    jdk_env = env.Clone()
 
-jdk_env['BUILDERS']['Gradle'] = Builder(
-    action=env.get('ANDROID_GRADLE') + ' build -b ' +
-    'java/examples-%s/build.gradle -PPROJECT_VERSION=%s -DWITH_TRANSPORT_EDR=%s -DWITH_TRANSPORT_BLE=%s -DWITH_TRANSPORT_NFC=%s -PTARGET_OS=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s -PMULTIPLE_OWNER=%s -PBUILD_DIR=%s --stacktrace'
-    % (target_variant, PROJECT_VERSION, TRANSPORT_EDR, TRANSPORT_BLE,
-       TRANSPORT_NFC, target_os, TARGET_ARCH, RELEASE, SECURED, SECURED, CLOUD,
-       RD_MODE, MQ_PUB, MQ_SUB, MQ_BROKER, TCP, ANDROID_MULTIPLE_OWNER,
-       env.get('BUILD_DIR')))
-#cmdBuildExamples=jdk_env.Gradle(target="../examples-%s/devicediscoveryclient/apk" % (target_variant, ), source="examples-%s/devicediscoveryclient/src/main/java/org/iotivity/base/examples/DeviceDiscoveryClient.java" % (target_variant, ))
-cmdBuildExamples = jdk_env.Gradle(
-    target="examples-%s/simpleclient/jar" % (target_variant, ),
-    source=
-    "examples-%s/simpleclient/src/main/java/org/iotivity/base/examples/SimpleClient.java"
-    % (target_variant, ))
 
-if target_os != 'android':
-    exampleAclFiles = jdk_env.Install(
-        '#java/examples-java/simpleserver/build/libs/',
-        'examples-java/simpleserver/src/main/assets/oic_svr_db_server.dat')
-    exampleAclFiles += jdk_env.Install(
-        '#java/examples-java/simpleclientserver/build/libs/',
-        'examples-java/simpleserver/src/main/assets/oic_svr_db_server.dat')
-    Depends(exampleAclFiles, cmdBuildExamples)
+cmdBuildApi = []
+cmdBuildExamples = []
+if target_os in ['android']:
+    jdk_env['BUILDERS']['Gradle'] = Builder(
+        action=env.get('ANDROID_GRADLE') + ' build -b ' + env.get('SRC_DIR') +
+        '/java/iotivity-%s/build.gradle -PPROJECT_VERSION=%s -PWITH_TRANSPORT_EDR=%s -PWITH_TRANSPORT_BLE=%s -PWITH_TRANSPORT_NFC=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s -PMULTIPLE_OWNER=%s -PBUILD_DIR=%s --stacktrace'
+        % (target_variant, PROJECT_VERSION, TRANSPORT_EDR, TRANSPORT_BLE, TRANSPORT_NFC,
+           TARGET_ARCH, RELEASE, SECURED, SECURED, CLOUD, RD_MODE, MQ_PUB, MQ_SUB,
+           MQ_BROKER, TCP, ANDROID_MULTIPLE_OWNER, env.get('BUILD_DIR')),
+        emitter=ensure_libs)
+    jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
 
-Depends(cmdBuildExamples, cmdBuildApi)
-Depends(cmdBuildExamples, jniOut)
+    cmdBuildApi = jdk_env.Gradle(
+        target="base/objs",
+        source="common/src/main/java/org/iotivity/base/OcResource.java")
+
+    jdk_env.NoClean(cmdBuildApi)
+    jdk_env['BUILDERS']['Gradle'] = Builder(
+        action=env.get('ANDROID_GRADLE') + ' build -b ' +
+        'java/examples-%s/build.gradle -PPROJECT_VERSION=%s -DWITH_TRANSPORT_EDR=%s -DWITH_TRANSPORT_BLE=%s -DWITH_TRANSPORT_NFC=%s -PTARGET_OS=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s -PMULTIPLE_OWNER=%s -PBUILD_DIR=%s --stacktrace'
+        % (target_variant, PROJECT_VERSION, TRANSPORT_EDR, TRANSPORT_BLE,
+           TRANSPORT_NFC, target_os, TARGET_ARCH, RELEASE, SECURED, SECURED, CLOUD,
+           RD_MODE, MQ_PUB, MQ_SUB, MQ_BROKER, TCP, ANDROID_MULTIPLE_OWNER,
+           env.get('BUILD_DIR')))
+    #cmdBuildExamples=jdk_env.Gradle(target="../examples-%s/devicediscoveryclient/apk" % (target_variant, ), source="examples-%s/devicediscoveryclient/src/main/java/org/iotivity/base/examples/DeviceDiscoveryClient.java" % (target_variant, ))
+    cmdBuildExamples = jdk_env.Gradle(
+        target="examples-%s/simpleclient/jar" % (target_variant, ),
+        source=
+        "examples-%s/simpleclient/src/main/java/org/iotivity/base/examples/SimpleClient.java"
+        % (target_variant, ))
+    jdk_env.NoClean(cmdBuildExamples)
+
+    if target_os != 'android':
+        exampleAclFiles = jdk_env.Install(
+            '.',
+            'examples-java/simpleserver/src/main/assets/oic_svr_db_server.dat')
+        exampleAclFiles += jdk_env.Install(
+            '.',
+            'examples-java/simpleserver/src/main/assets/oic_svr_db_server.dat')
+        Depends(exampleAclFiles, cmdBuildExamples)
+
+    Depends(cmdBuildExamples, cmdBuildApi)
+    Depends(cmdBuildExamples, jniOut)
+else:
+    # Build iotivity.jar
+    # TODO At this time we expect this build flag is required for i18n support
+    # need to do additional testing to verify this assumption.
+    jdk_env.Append(JAVACFLAGS=['-encoding', 'UTF-8'])
+    java_v =  find_scons_java_version(jdk_env)
+    if java_v != None:
+        jdk_env.Append(JAVAVERSION=java_v)
+    jdk_env.Append(JAVASOURCEPATH=['java/iotivity-java/src/main/java', 'java/common/src/main/java'])
+    java_class_out = jdk_env.Java(target='classes', source=['iotivity-java/src/main/java', 'common/src/main/java'])
+    cmdBuildApi = jdk_env.Jar(target='iotivity.jar', source=java_class_out)
+
+    # Build examples
+    jdk_env.SConscript('examples-java/SConscript', exports='jdk_env')
 
 if target_os == 'android':
     jdk_env.Clean(cmdBuildExamples, '#/java/iotivity-android/build/')
@@ -186,12 +311,5 @@ if target_os == 'android':
                   '#/java/examples-android/simpleclientserver/build/')
     jdk_env.Clean(cmdBuildExamples,
                   '#/java/examples-android/simpleserver/build/')
-else:
-    jdk_env.Clean(cmdBuildExamples, '#/java/iotivity-linux/build/')
-    jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/build/')
-    jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/simpleclient/build/')
-    jdk_env.Clean(cmdBuildExamples,
-                  '#/java/examples-java/simpleclientserver/build/')
-    jdk_env.Clean(cmdBuildExamples, '#/java/examples-java/simpleserver/build/')
 
 env.AppendUnique(baseAAR=cmdBuildApi)

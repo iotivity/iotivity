@@ -34,14 +34,15 @@ if env.get('BUILD_JAVA') is True and target_os != 'android':
         env.AppendUnique(CPPDEFINES=['__JAVA__'])
         if target_os in ['windows', 'winrt']:
             env.AppendUnique(CPPPATH=[
-            java_home + '/include',
-            java_home + '/include/win32'
+                java_home + '/include',
+                java_home + '/include/win32'
             ])
+            env.AppendENVPath('PATH', java_home + '/bin')
         else:
             env.AppendUnique(CPPPATH=[
-            java_home + '/include',
-            java_home + '/include/' + target_os
-        ])
+                java_home + '/include',
+                java_home + '/include/' + target_os
+            ])
     else:
         msg = "Error: BUILD_JAVA requires JAVA_HOME to be set for target '%s'" % target_os
         Exit(msg)
