@@ -2675,19 +2675,20 @@ static FILE* fopen_prvnMng(const char* path, const char* mode)
 
 static int waitCallbackRet(void)
 {
-    for(int i=0; !g_doneCB && CALLBACK_TIMEOUT>i; ++i)
+    for (int i = 0; !g_doneCB && (CALLBACK_TIMEOUT > i); ++i)
     {
-        sleep(1);
-        if(OC_STACK_OK != OCProcess())
+        if (OC_STACK_OK != OCProcess())
         {
             OIC_LOG(ERROR, TAG, "OCStack process error");
             return -1;
         }
+        sleep(1);
     }
 
-    if(!g_doneCB)
+    if (!g_doneCB)
     {
         OCPDMCleanupForTimeout();
+        return -1;
     }
 
     return 0;
