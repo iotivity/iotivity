@@ -323,7 +323,18 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
             {
                 OIC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
                         ((OCHeaderOption)rcvdOptions[i]).optionID );
-
+               if (COAP_OPTION_CONTENT_VERSION == ((OCHeaderOption)rcvdOptions[i]).optionID)
+               {
+                    uint16_t versionValue = rcvdOptions[i].optionData[0] * 256
+                            + rcvdOptions[i].optionData[1];
+                    OIC_LOG_V(INFO, TAG, "Received version value of %u", versionValue);
+               }
+               if (COAP_OPTION_CONTENT_FORMAT == ((OCHeaderOption)rcvdOptions[i]).optionID)
+               {
+                    uint16_t formatValue = rcvdOptions[i].optionData[0] * 256
+                            + rcvdOptions[i].optionData[1];
+                   OIC_LOG_V(INFO, TAG, "Received format value of %u", formatValue);
+               }
                 OIC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
                     MAX_HEADER_OPTION_DATA_LENGTH);
             }

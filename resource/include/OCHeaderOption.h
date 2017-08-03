@@ -52,6 +52,7 @@ namespace OC
         const uint16_t LOCATION_PATH_OPTION_ID = 8;
         const uint16_t LOCATION_QUERY_OPTION_ID = 20;
         const uint16_t ACCEPT_OPTION_ID = 17;
+        const uint16_t CONTENT_TYPE_OPTION_ID = 12;
 
         class OCHeaderOption
         {
@@ -72,7 +73,8 @@ namespace OC
                         && optionID != IF_NONE_MATCH_OPTION_ID
                         && optionID != LOCATION_PATH_OPTION_ID
                         && optionID != LOCATION_QUERY_OPTION_ID
-                        && optionID != ACCEPT_OPTION_ID)
+                        && optionID != ACCEPT_OPTION_ID
+                        && optionID != CONTENT_TYPE_OPTION_ID)
                 {
                     throw OCException(OC::Exception::OPTION_ID_RANGE_INVALID);
                 }
