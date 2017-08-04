@@ -316,7 +316,7 @@ TEST(CredResourceTest, GenerateCredentialValidInput)
     OICStrcpy((char *)subject.id, sizeof(subject.id), "subject11");
 
     uint8_t privateKey[] = "My private Key11";
-    OicSecKey_t key = {privateKey, sizeof(privateKey)};
+    OicSecKey_t key = {privateKey, sizeof(privateKey), OIC_ENCODING_UNKNOW};
 
     OicSecCred_t * cred  = NULL;
     cred = GenerateCredential(&subject, SYMMETRIC_PAIR_WISE_KEY, NULL,
