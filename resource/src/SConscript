@@ -41,13 +41,10 @@ with_mq = oclib_env.get('WITH_MQ')
 ######################################################################
 with_upstream_libcoap = oclib_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
-    oclib_env.AppendUnique(CPPPATH=[
-        '#extlibs/libcoap/libcoap/include'
-    ])
+    oclib_env.AppendUnique(CPPPATH=['#extlibs/libcoap/libcoap/include'])
 else:
-    oclib_env.AppendUnique(CPPPATH=[
-        '../csdk/connectivity/lib/libcoap-4.1.1/include'
-    ])
+    oclib_env.AppendUnique(
+        CPPPATH=['../csdk/connectivity/lib/libcoap-4.1.1/include'])
 
 oclib_env.AppendUnique(CPPPATH=[
     '../include/',

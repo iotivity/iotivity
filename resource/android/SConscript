@@ -13,7 +13,7 @@ compatibilitylib_env.AppendUnique(CPPPATH=[
 
 target_os = env.get('TARGET_OS')
 
-if target_os == 'android':
+if target_os in ['android']:
     compatibilitylib_env.AppendUnique(CXXFLAGS=['-frtti', '-fexceptions'])
     compatibilitylib_env.AppendUnique(LIBS=['gnustl_shared'])
 
@@ -22,7 +22,7 @@ if target_os == 'android':
 ######################################################################
 compatibilitylib_src = ['OCAndroid.cpp']
 
-if target_os == 'android':
+if target_os in ['android']:
     static_compatibilitylib = compatibilitylib_env.StaticLibrary(
         'compatibility', compatibilitylib_src)
     compatibilitylib_env.InstallTarget(

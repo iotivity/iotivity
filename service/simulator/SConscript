@@ -60,13 +60,13 @@ simulator_env.AppendUnique(CPPPATH=[
 try:
     os.environ['JAVA_HOME']
 except KeyError:
-    print '''
+    msg = '''
 *************************************** Error *********************************
 * JAVA_HOME environment variable not set                                      
 * Simulator has dependency on java, Please set environment variable JAVA_HOME
 *******************************************************************************
-	'''
-    sys.exit(1)
+'''
+    Exit(msg)
 
 java_headers = [os.path.join(os.environ['JAVA_HOME'], 'include')]
 java_headers.append(os.path.join(java_headers[0], 'win32'))

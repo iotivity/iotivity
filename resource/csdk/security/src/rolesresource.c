@@ -115,8 +115,8 @@ static OCStackResult GetPeerPublicKeyFromEndpoint(const CAEndpoint_t *endpoint,
 
     if ((NULL == sep.publicKey) || (0 == sep.publicKeyLength))
     {
-        OIC_LOG_V(ERROR, TAG, "%s: Peer did not have a public key", __func__);
-        return OC_STACK_INVALID_PARAM;
+        OIC_LOG_V(WARNING, TAG, "%s: Peer did not have a public key", __func__);
+        return OC_STACK_NO_RESOURCE;
     }
 
     *publicKey = OICCalloc(1, sep.publicKeyLength);
@@ -433,7 +433,6 @@ OCStackResult RolesToCBORPayload(const RoleCertChain_t *roles, uint8_t **cborPay
     size_t roleCount = 0;
     const RoleCertChain_t *currChain = NULL;
 
-    VERIFY_NOT_NULL_RETURN(TAG, roles, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cborPayload, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cborSize, ERROR, OC_STACK_INVALID_PARAM);
 
@@ -458,6 +457,7 @@ OCStackResult RolesToCBORPayload(const RoleCertChain_t *roles, uint8_t **cborPay
     cborEncoderResult = cbor_encode_text_string(&rolesRootMap, OIC_JSON_ROLES_NAME, strlen(OIC_JSON_ROLES_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding roles name tag");
 
+    // If roles is NULL, the "roles" array will be empty
     for (currChain = roles; NULL != currChain; currChain = currChain->next)
     {
         roleCount++;
@@ -789,30 +789,28 @@ static OCEntityHandlerResult HandleGetRequest(OCEntityHandlerRequest *ehRequest)
     size_t publicKeyLength = 0;
 
     res = GetPeerPublicKey(&ehRequest->devAddr, &publicKey, &publicKeyLength);
-    if (OC_STACK_OK != res)
+    // OC_STACK_NO_RESOURCE means that the Peer doesn't have a Public Key.
+    if ((OC_STACK_OK != res) && (OC_STACK_NO_RESOURCE != res))
     {
         OIC_LOG_V(ERROR, TAG, "Could not get remote peer's public key: %d", res);
         ehRet = OC_EH_ERROR;
         goto exit;
     }
 
-    for (const RolesEntry_t *entry = gRoles; NULL != entry; entry = entry->next)
+    if (NULL != publicKey)
     {
-        if ((entry->publicKeyLength == publicKeyLength) &&
-            (0 == memcmp(entry->publicKey, publicKey, publicKeyLength)))
+        for (const RolesEntry_t *entry = gRoles; NULL != entry; entry = entry->next)
         {
-            roles = entry->chains;
-            break;
+            if ((entry->publicKeyLength == publicKeyLength) &&
+                (0 == memcmp(entry->publicKey, publicKey, publicKeyLength)))
+            {
+                roles = entry->chains;
+                break;
+            }
         }
     }
 
-    if (NULL == roles)
-    {
-        OIC_LOG(ERROR, TAG, "Could not find a roles list for this peer");
-        ehRet = OC_EH_ERROR;
-        goto exit;
-    }
-
+    // If roles is NULL, we will return success with an empty "roles" array
     res = RolesToCBORPayload(roles, &payload, &size);
     ehRet = (OC_STACK_OK == res) ? OC_EH_OK : OC_EH_ERROR;
 

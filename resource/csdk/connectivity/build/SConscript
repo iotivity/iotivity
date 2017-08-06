@@ -36,8 +36,8 @@ os_arch_map = {
 host = platform.system().lower()
 
 if host not in host_target_map:
-    print "\nError: Current system (%s) isn't supported\n" % host
-    Exit(1)
+    msg = "\nError: Current system (%s) isn't supported\n" % host
+    Exit(msg)
 
 ######################################################################
 # Get build options (the optins from command line)
@@ -45,9 +45,9 @@ if host not in host_target_map:
 target_os = ARGUMENTS.get('TARGET_OS', host).lower()  # target os
 
 if target_os not in host_target_map[host]:
-    print "\nError: Unknown target os: %s (Allow values: %s)\n" % (
+    msg = "\nError: Unknown target os: %s (Allow values: %s)\n" % (
         target_os, host_target_map[host])
-    Exit(1)
+    Exit(msg)
 
 default_arch = platform.machine()
 
@@ -67,54 +67,54 @@ help_vars = Variables()
 help_vars.Add(
     BoolVariable('RELEASE',
                  'Build for release?',
-                 True))  # set to 'no', 'false' or 0 for debug
+                 default=True))  # set to 'no', 'false' or 0 for debug
 help_vars.Add(
     BoolVariable('LOGGING',
                  'Enable stack logging',
-                 False))
+                 default=False))
 help_vars.Add(
     EnumVariable('TARGET_OS',
                  'Target platform',
-                 host,
+                 default=host,
                  allowed_values=host_target_map[host]))
 help_vars.Add(
     ListVariable('TARGET_TRANSPORT',
                  'Target transport',
-                 'ALL',
-                 ['ALL', 'BT', 'BLE', 'IP']))
+                 default='ALL',
+                 names=['ALL', 'BT', 'BLE', 'IP']))
 help_vars.Add(
     EnumVariable('TARGET_ARCH',
                  'Target architecture',
-                 default_arch,
+                 default=default_arch,
                  allowed_values=os_arch_map[target_os]))
 help_vars.Add(
     EnumVariable('SECURED',
                  'Build with DTLS',
-                 '1',
+                 default='1',
                  allowed_values=('0', '1')))
 help_vars.Add(
     BoolVariable('UPLOAD',
                  'Upload binary ? (For Arduino)',
-                 require_upload))
+                 default=require_upload))
 help_vars.Add(
     EnumVariable('ROUTING',
                  'Enable routing',
-                 'EP',
+                 default='EP',
                  allowed_values=('GW', 'EP')))
 help_vars.Add(
     EnumVariable('BUILD_SAMPLE',
                  'Build with sample',
-                 'ON',
+                 default='ON',
                  allowed_values=('ON', 'OFF')))
 help_vars.Add(
     BoolVariable('WITH_TCP',
                  'Enable TCP',
-                 False))
+                 default=False))
 help_vars.Add(
     ListVariable('WITH_MQ',
                  'Build with MQ publisher/subscriber/broker',
-                 'OFF',
-                 ['OFF', 'SUB', 'PUB', 'BROKER']))
+                 default='OFF',
+                 names=['OFF', 'SUB', 'PUB', 'BROKER']))
 
 help_vars.AddVariables(
     ('DEVICE_NAME',
@@ -141,12 +141,11 @@ if target_os in targets_support_cc:
     # Set cross compile toolchain
     help_vars.Add('TC_PREFIX',
                   "Toolchain prefix (Generally only required for cross-compiling)",
-                  os.environ.get('TC_PREFIX'))
+                  default=os.environ.get('TC_PREFIX'))
     help_vars.Add(
-        PathVariable(
-            'TC_PATH',
-            'Toolchain path (Generally only required for cross-compiling)',
-            os.environ.get('TC_PATH')))
+        PathVariable('TC_PATH',
+                     'Toolchain path (Generally only required for cross-compiling)',
+                     default=os.environ.get('TC_PATH')))
 
 if target_os in [
         'android', 'arduino'
@@ -208,13 +207,13 @@ env.SConscriptChdir(1)
 
 def __set_dir(env, dir):
     if not os.path.exists(dir + '/SConstruct'):
-        print '''
+        msg = '''
 *************************************** Error *********************************
 * The directory(%s) seems isn't a source code directory, no SConstruct file is
 * found. *
 *******************************************************************************
 ''' % dir
-        Exit(1)
+        Exit(msg)
 
     if env.get('RELEASE'):
         build_dir = os.path.join(
@@ -301,7 +300,7 @@ if target_os == "yocto":
     try:
         CC = os.environ['CC']
         target_prefix = CC.split()[0]
-        target_prefix = target_prefix[:len(target_prefix) - 3]
+        target_prefix = target_prefix[:-3]
         tools = {
             "CC": target_prefix + "gcc",
             "CXX": target_prefix + "g++",
@@ -324,10 +323,10 @@ if target_os == "yocto":
                     if os.path.isfile(os.path.join(path, tools[tool])):
                         env[tool] = os.path.join(path, os.environ[tool])
                         break
-        env['CROSS_COMPILE'] = target_prefix[:len(target_prefix) - 1]
+        env['CROSS_COMPILE'] = target_prefix[:-1]
     except:
-        print "ERROR in Yocto cross-toolchain environment"
-        Exit(1)
+        msg = "ERROR in Yocto cross-toolchain environment"
+        Exit(msg)
     '''
     Now reset TARGET_OS to linux so that all linux specific build configurations
     hereupon apply for the entirety of the build process.
