@@ -76,7 +76,7 @@ static RolesEntry_t         *gRoles             = NULL;
 static SymmetricRoleEntry_t *gSymmetricRoles    = NULL;
 static uint32_t             gIdCounter          = 1;
 
-/** 
+/**
  * Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching max cbor size.
  */
@@ -323,7 +323,7 @@ exit:
 static bool RoleCertChainContains(RoleCertChain_t *chain, const RoleCertChain_t* roleCert)
 {
     RoleCertChain_t *temp = NULL;
-    
+
     LL_FOREACH(chain, temp)
     {
         if (IsSameSecKey(&temp->certificate, &roleCert->certificate) &&
@@ -709,7 +709,7 @@ OCStackResult CBORPayloadToRoles(const uint8_t *cborPayload, size_t size, RoleCe
                                 /* Only SIGNED_ASYMMETRIC_KEY is supported. */
                                 if (SIGNED_ASYMMETRIC_KEY != (OicSecCredType_t)credType)
                                 {
-                                    OIC_LOG_V(ERROR, TAG, "Unsupported role credential type: %llu", credType);
+                                    OIC_LOG_V(ERROR, TAG, "Unsupported role credential type: %lu", credType);
                                     goto exit;
                                 }
                             }
@@ -1151,7 +1151,7 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
         SymmetricRoleEntry_t *curr = NULL;
         LL_FOREACH(gSymmetricRoles, curr)
         {
-            if ((UUID_LENGTH == sep.identity.id_length) && 
+            if ((UUID_LENGTH == sep.identity.id_length) &&
                 (0 == memcmp(curr->subject.id, sep.identity.id, sizeof(curr->subject.id))))
             {
                 *roles = (OicSecRole_t *)OICCalloc(1, sizeof(OicSecRole_t));

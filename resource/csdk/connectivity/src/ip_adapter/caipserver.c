@@ -62,6 +62,7 @@
 #endif
 
 #include <coap/pdu.h>
+#include <inttypes.h>
 #include "caipinterface.h"
 #include "caipnwmonitor.h"
 #include "caadapterutils.h"
@@ -1180,7 +1181,7 @@ CAResult_t CAIPStartListenServer()
     }
 
     size_t len = u_arraylist_length(iflist);
-    OIC_LOG_V(DEBUG, TAG, "IP network interfaces found: %d", len);
+    OIC_LOG_V(DEBUG, TAG, "IP network interfaces found: %" PRIuPTR, len);
 
     for (size_t i = 0; i < len; i++)
     {
@@ -1225,7 +1226,7 @@ CAResult_t CAIPStopListenServer()
     }
 
     size_t len = u_arraylist_length(iflist);
-    OIC_LOG_V(DEBUG, TAG, "IP network interfaces found: %d", len);
+    OIC_LOG_V(DEBUG, TAG, "IP network interfaces found: %" PRIuPTR, len);
 
     for (size_t i = 0; i < len; i++)
     {

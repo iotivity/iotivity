@@ -149,7 +149,7 @@ static OCStackResult WriteBufferToFile(const char *fileName, uint8_t *buffer, si
         }
         else
         {
-            OIC_LOG_V(ERROR, TAG, "Failed writing %" PRIuPTR " bytes - Error: %" PRIi64,
+            OIC_LOG_V(ERROR, TAG, "Failed writing %" PRIuPTR " bytes - Error: %d",
                       size, ferror(fp));
         }
         if (0 != fclose(fp))
