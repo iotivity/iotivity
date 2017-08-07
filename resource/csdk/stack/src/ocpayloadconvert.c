@@ -274,20 +274,6 @@ static int64_t OCConvertResourcePayloadCbor(CborEncoder *linkArray, OCResourcePa
         err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
                                   uri);
     }
-    else if (!strstr(resource->uri, OC_ENDPOINT_TPS_TOKEN) &&
-             resource->rel && !strcmp(resource->rel, "self") &&
-             resource->anchor)
-    {
-        char uri[MAX_URI_LENGTH];
-        int snRet = snprintf(uri, MAX_URI_LENGTH, "%s%s", resource->anchor, resource->uri);
-        if(0 > snRet || snRet >= MAX_URI_LENGTH)
-        {
-            VERIFY_CBOR_SUCCESS(TAG, CborErrorInternalError, "Error (snprintf)");
-        }
-
-        err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
-                                  uri);
-    }
     else
     {
         err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
@@ -580,24 +566,8 @@ static int64_t OCConvertDiscoveryPayloadVndOcfCbor(OCDiscoveryPayload *payload,
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating discovery map");
 
             // Uri
-            if (!strstr(resource->uri, OC_ENDPOINT_TPS_TOKEN) &&
-                resource->rel && !strcmp(resource->rel, "self"))
-            {
-                char uri[MAX_URI_LENGTH];
-                int snRet = snprintf(uri, MAX_URI_LENGTH, "ocf://%s%s", payload->sid, resource->uri);
-                if(0 > snRet || snRet >= MAX_URI_LENGTH)
-                {
-                    VERIFY_CBOR_SUCCESS(TAG, CborErrorInternalError, "Error (snprintf)");
-                }
-
-                err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
-                                          uri);
-            }
-            else
-            {
-                err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
-                                          resource->uri);
-            }
+            err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
+                                      resource->uri);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding uri to links map");
 
             // Rel - Not a mandatory field
