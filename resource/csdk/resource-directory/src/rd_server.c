@@ -79,7 +79,6 @@ static OCEntityHandlerResult handleGetRequest(const OCEntityHandlerRequest *ehRe
     OCRepPayloadSetPropInt(rdPayload, OC_RSRVD_RD_DISCOVERY_SEL, OC_RD_DISC_SEL);
 
     OCRepPayloadAddResourceType(rdPayload, OC_RSRVD_RESOURCE_TYPE_RD);
-    OCRepPayloadAddResourceType(rdPayload, OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
 
     OCRepPayloadAddInterface(rdPayload, OC_RSRVD_INTERFACE_DEFAULT);
 
@@ -326,16 +325,6 @@ OCStackResult OC_CALL OCRDStart()
     {
         OIC_LOG(ERROR, TAG, "Failed creating Resource Directory resource.");
         return result;
-    }
-    result = OCBindResourceTypeToResource(rdHandle,
-                    OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
-    if (OC_STACK_OK == result)
-    {
-        OIC_LOG(DEBUG, TAG, "Resource Directory resource Publish created.");
-    }
-    else
-    {
-        OIC_LOG(ERROR, TAG, "Failed creating Resource Directory Publish resource.");
     }
 
     return result;
