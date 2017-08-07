@@ -716,7 +716,7 @@ OCStackResult CBORPayloadToRoles(const uint8_t *cborPayload, size_t size, RoleCe
                                 /* Only SIGNED_ASYMMETRIC_KEY is supported. */
                                 if (SIGNED_ASYMMETRIC_KEY != (OicSecCredType_t)credType)
                                 {
-                                    OIC_LOG_V(ERROR, TAG, "Unsupported role credential type: %llu", credType);
+                                    OIC_LOG_V(ERROR, TAG, "Unsupported role credential type: %lu", credType);
                                     goto exit;
                                 }
                             }

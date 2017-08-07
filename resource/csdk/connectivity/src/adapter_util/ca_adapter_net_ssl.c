@@ -28,6 +28,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <inttypes.h>
 #include "ca_adapter_net_ssl.h"
 #include "cacommon.h"
 #include "caipinterface.h"
@@ -588,7 +589,7 @@ static int SendCallBack(void * tep, const unsigned char * data, size_t dataLen)
         else if ((size_t)sentLen != dataLen)
         {
             OIC_LOG_V(DEBUG, NET_SSL_TAG,
-                      "Packet was partially sent - sent/total/remained bytes : %d/%" PRIuPTR "/%" PRIuPTR,
+                      "Packet was partially sent - sent/total/remained bytes : %" PRIdPTR "/%" PRIuPTR "/%" PRIuPTR,
                       sentLen, dataLen, (dataLen - sentLen));
         }
     }
