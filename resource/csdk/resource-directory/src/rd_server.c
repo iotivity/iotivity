@@ -316,7 +316,7 @@ OCStackResult OC_CALL OCRDStart()
                                 OC_RSRVD_RD_URI,
                                 rdEntityHandler,
                                 NULL,
-                                (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE));
+                                (OC_ACTIVE | OC_DISCOVERABLE));
 
     if (OC_STACK_OK == result)
     {
