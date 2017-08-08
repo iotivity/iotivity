@@ -92,7 +92,7 @@ static bool copyByteArray(const uint8_t *in, size_t in_len, uint8_t **out, size_
 
 static bool copyCrl(const OicSecCrl_t *in, OicSecCrl_t *out)
 {
-    bool result = false;
+    bool result = true;
 
     if (!in || !out)
     {
@@ -102,20 +102,19 @@ static bool copyCrl(const OicSecCrl_t *in, OicSecCrl_t *out)
 
     out->CrlId = in->CrlId;
 
-    result = copyByteArray(in->ThisUpdate.data, in->ThisUpdate.len, &out->ThisUpdate.data, &out->ThisUpdate.len);
-    if (!result)
+    if (NULL != in->ThisUpdate.data)
     {
-        OIC_LOG(ERROR, TAG, "Can't allocate memory for ThisUpdate");
-        return false;
+        result = copyByteArray(in->ThisUpdate.data, in->ThisUpdate.len, &out->ThisUpdate.data, &out->ThisUpdate.len);
+        VERIFY_SUCCESS(TAG, result, ERROR);
     }
 
-    result = copyByteArray(in->CrlData.data, in->CrlData.len, &out->CrlData.data, &out->CrlData.len);
-    if (!result)
+    if (NULL != in->CrlData.data)
     {
-        OIC_LOG(ERROR, TAG, "Can't allocate memory for CrlData");
-        return false;
+        result = copyByteArray(in->CrlData.data, in->CrlData.len, &out->CrlData.data, &out->CrlData.len);
+        VERIFY_SUCCESS(TAG, result, ERROR);
     }
 
+exit:
     return result;
 }
 
@@ -150,7 +149,7 @@ exit:
     return result;
 }
 
-static CborError getPubDataType(CborValue *in, const char *name, OicSecKey_t *value)
+static CborError getCrlData(CborValue *in, const char *name, OicSecKey_t *value)
 {
     if (!in || !name || !value)
     {
@@ -159,65 +158,32 @@ static CborError getPubDataType(CborValue *in, const char *name, OicSecKey_t *va
     }
 
     CborError result = CborNoError;
-    char *encoding = NULL;
-
     CborValue crlNode = { .parser = NULL };
+    char *decodeBuffer = NULL;
+    size_t decodeBufferSize;
+
     result = cbor_value_map_find_value(in, name, &crlNode);
-    if (CborNoError == result && cbor_value_is_map(&crlNode))
+    if (CborNoError == result && cbor_value_is_text_string(&crlNode))
     {
-        CborValue crlMap = { .parser = NULL };
-        result = cbor_value_enter_container(&crlNode, &crlMap);
+        result = cbor_value_dup_text_string(&crlNode,
+                (char **)&decodeBuffer, &decodeBufferSize, NULL);
+        VERIFY_CBOR_SUCCESS(TAG, result, "Failed Advancing Byte Array.");
 
-        while(cbor_value_is_valid(&crlMap) && cbor_value_is_text_string(&crlMap))
+        value->len = B64DECODE_OUT_SAFESIZE(decodeBufferSize + 1);
+        value->data = OICCalloc(1, value->len);
+        VERIFY_NOT_NULL(TAG, value->data, ERROR);
+
+        B64Result b64result = b64Decode(decodeBuffer, decodeBufferSize, value->data, value->len, &value->len);
+        if (B64_OK != b64result)
         {
-            char *property = NULL;
-            size_t length = 0;
-            result = cbor_value_dup_text_string(&crlMap, &property, &length, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, result, "Failed Get first crl ojbject tag.");
-            result = cbor_value_advance(&crlMap);
-            VERIFY_CBOR_SUCCESS(TAG, result, "Failed to advance crlMap");
-
-            if (0 == strcmp(OIC_JSON_DATA_NAME, property))
-            {
-                if (cbor_value_is_byte_string(&crlMap))
-                {
-                    result = cbor_value_dup_byte_string(&crlMap, &value->data, &value->len, NULL);
-                }
-                else if(cbor_value_is_text_string(&crlMap))
-                {
-                    char *buffer = NULL;
-                    result = cbor_value_dup_text_string(&crlMap, &buffer, &value->len, NULL);
-                    value->data = (uint8_t *)buffer;
-                }
-                else
-                {
-                    result = CborErrorUnknownType;
-                    OIC_LOG(ERROR, TAG, "Unknown type for crl->data.");
-                }
-                VERIFY_CBOR_SUCCESS(TAG, result, "Failed to read crl->data");
-            }
-            else if (0 == strcmp(OIC_JSON_ENCODING_NAME, property))
-            {
-                size_t encoding_len = 0;
-                result = cbor_value_dup_text_string(&crlMap, &encoding, &encoding_len, NULL);
-                VERIFY_CBOR_SUCCESS(TAG, result, "Failed to read crl->encdoing");
-            }
-            OICFree(property);
+            OIC_LOG_V(ERROR, TAG, "CRL b64Decode error");
+            result = CborErrorInternalError;
         }
-    }
-    VERIFY_CBOR_SUCCESS(TAG, result, "Failed to find root node");
 
-    if (encoding)
-    {
-        OicEncodingType_t type = OIC_ENCODING_UNKNOW;
-        if (0 == strcmp(encoding, OIC_SEC_ENCODING_BASE64)) type = OIC_ENCODING_BASE64;
-        else if (0 == strcmp(encoding, OIC_SEC_ENCODING_DER)) type = OIC_ENCODING_DER;
-        else if (0 == strcmp(encoding, OIC_SEC_ENCODING_PEM)) type = OIC_ENCODING_PEM;
-        else if (0 == strcmp(encoding, OIC_SEC_ENCODING_RAW)) type = OIC_ENCODING_RAW;
-
-        value->encoding = type;
     }
+
 exit:
+    OICFree(decodeBuffer);
     return result;
 }
 
@@ -367,7 +333,7 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Byte Array.");
     }
 
-    cborFindResult = getPubDataType(&crlCbor, OC_RSRVD_CRL, &crl->CrlData);
+    cborFindResult = getCrlData(&crlCbor, OC_RSRVD_CRL, &crl->CrlData);
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to read CRL.");
 
     OIC_LOG_CRL(INFO, crl);
@@ -421,7 +387,23 @@ OCStackResult UpdateCRLResource(OicSecCrl_t *crl)
     uint8_t *payload = NULL;
     size_t size = 0;
 
-    crl->CrlId = crlid++;
+    if ( NULL == gCrl && OC_STACK_OK != InitCRLResource() )
+    {
+        OIC_LOG(ERROR, TAG, "Can't init global crl");
+        return OC_STACK_ERROR;
+    }
+
+    if ( 0 == crl->CrlId)
+    {
+        crl->CrlId = ++crlid;
+    }
+    else
+    {
+        if (crl->CrlId > crlid)
+        {
+            crlid = crl->CrlId;
+        }
+    }
 
     if (!copyCrl(crl, gCrl))
     {
@@ -432,7 +414,7 @@ OCStackResult UpdateCRLResource(OicSecCrl_t *crl)
     char currentTime[32] = {0};
     getCurrentUTCTime(currentTime, sizeof(currentTime));
 
-    OCStackResult res = CrlToCBORPayload((const OicSecCrl_t *) crl, &payload, &size, currentTime);
+    OCStackResult res = CrlToCBORPayload((const OicSecCrl_t *) gCrl, &payload, &size, currentTime);
     if (OC_STACK_OK != res)
     {
         return res;
@@ -443,21 +425,21 @@ OCStackResult UpdateCRLResource(OicSecCrl_t *crl)
 
 static OCEntityHandlerResult HandleCRLGetRequest(const OCEntityHandlerRequest *ehRequest)
 {
-    OCEntityHandlerResult ehRet = OC_EH_ERROR;
-    OicSecCrl_t *crl = NULL;
+    OCEntityHandlerResult ehRet = OC_EH_OK;
     uint8_t* payload = NULL;
     size_t size = 0;
 
-    crl = GetCRLResource();
-    VERIFY_NOT_NULL(TAG, crl, ERROR);
-
-    if (OC_STACK_OK == CrlToCBORPayload(crl, &payload, &size, NULL))
+    if ( NULL == gCrl && OC_STACK_OK != InitCRLResource() )
     {
-        OIC_LOG(DEBUG, TAG, " HandleCRLGetRequest success ");
-        ehRet = OC_EH_OK;
+        ehRet = OC_EH_ERROR;
     }
 
-exit:
+    if (OC_EH_OK == ehRet && OC_STACK_OK != CrlToCBORPayload(gCrl, &payload, &size, NULL))
+    {
+        OIC_LOG(ERROR, TAG, " HandleCRLGetRequest error");
+        ehRet = OC_EH_ERROR;
+    }
+
     ehRet = (payload ? OC_EH_OK : OC_EH_ERROR);
     OIC_LOG(DEBUG, TAG, "CRL payload with GET response");
     OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
@@ -481,6 +463,7 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
     OicSecCrl_t *crl = NULL;
     uint8_t *payload = ((OCSecurityPayload *)ehRequest->payload)->securityData;
     size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
+    bool create = (NULL == gCrl);
 
     if (payload)
     {
@@ -490,7 +473,7 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
 
         if (OC_STACK_OK == UpdateCRLResource(crl))
         {
-            ehRet = OC_EH_RESOURCE_CREATED;
+            ehRet = create ? OC_EH_RESOURCE_CREATED : OC_EH_CHANGED;
         }
 
         DeleteCrl(crl);
