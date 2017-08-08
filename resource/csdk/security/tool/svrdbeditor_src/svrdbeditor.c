@@ -46,10 +46,10 @@ typedef enum OperationType
 } OperationType_t;
 
 static int MainOperation(const char *svrpath);
-static void PrintMainMenu();
+static void PrintMainMenu(void);
 static void PrintEditMenu(const char *resourceName, bool print, bool add, bool remove,
                           bool modify);
-static void PrintHelp();
+static void PrintHelp(void);
 static FILE *SVRDBFopen(const char *path, const char *mode);
 
 int main(int argc, char *argv[])
@@ -182,9 +182,31 @@ static int MainOperation(const char *svrpath)
                 //T.B.D
                 break;
             case SVR_EDIT_PSTAT:
-                PRINT_INFO("NOT SUPPORTED YET");
-                //PrintEditMenu("Pstat Resource", false, false, true);
-                //T.B.D
+                for (;;)
+                {
+                    PrintEditMenu("Pstat Resource", true, true, true, true);
+                    editMenu = (SubOperationType_t)InputNumber("Select the menu : ");
+                    if (0 < editMenu && editMenu < SVR_EDIT_IDX_SIZE)
+                    {
+                        if (!g_allowedEditMenu[editMenu])
+                        {
+                            PRINT_ERR("Disabled menu");
+                            continue;
+                        }
+                    }
+                    else if (BACK == editMenu)
+                    {
+                        PRINT_INFO("Back to the previous menu.");
+                        break;
+                    }
+                    else
+                    {
+                        PRINT_ERR("Invalid menu");
+                        continue;
+                    }
+                    HandlePstatOperation(editMenu);
+                    RefreshPstat();
+                }
                 break;
             case EXIT:
                 run = false;
@@ -209,12 +231,11 @@ static FILE *SVRDBFopen(const char *path, const char *mode)
     return fopen(g_svrDbPath, mode);
 }
 
-static void PrintHelp()
+static void PrintHelp(void)
 {
     PRINT_ERR("<This program requires one input>");
     PRINT_INFO("./svrdbeditor <svr_db_file_path>");
 }
-
 
 static void PrintEditMenu(const char *resourceName, bool print, bool add, bool remove,
                           bool modify)
@@ -228,7 +249,6 @@ static void PrintEditMenu(const char *resourceName, bool print, bool add, bool r
     {
         g_allowedEditMenu[i] = false;
     }
-
     if (print)
     {
         g_allowedEditMenu[SVR_PRINT] = true;
@@ -248,8 +268,6 @@ static void PrintEditMenu(const char *resourceName, bool print, bool add, bool r
     {
         PRINT_NORMAL("\t%2d. Add entity\n", SVR_ADD);
     }
-
-
     if (remove)
     {
         g_allowedEditMenu[SVR_REMOVE] = true;
@@ -272,7 +290,7 @@ static void PrintEditMenu(const char *resourceName, bool print, bool add, bool r
     PRINT_DATA("\t%2d. Back to the main menu\n", BACK);
 }
 
-static void PrintMainMenu()
+static void PrintMainMenu(void)
 {
     PRINT_PROG("\n\nYou can perform the "
                CYAN_BEGIN "cyan color opertions : " COLOR_END_NL);
@@ -281,6 +299,6 @@ static void PrintMainMenu()
     PRINT_DATA("\t%2d. Edit Credential Resource.\n", SVR_EDIT_CRED);
     PRINT_DATA("\t%2d. Edit ACL Resource.\n", SVR_EDIT_ACL);
     PRINT_PROG("\t%2d. Edit Doxm Resource. (T.B.D)\n", SVR_EDIT_DOXM);
-    PRINT_PROG("\t%2d. Edit Pstat Resource. (T.B.D)\n", SVR_EDIT_PSTAT);
+    PRINT_DATA("\t%2d. Edit Pstat Resource.\n", SVR_EDIT_PSTAT);
     PRINT_DATA("\t%2d. Exit.\n", EXIT);
 }

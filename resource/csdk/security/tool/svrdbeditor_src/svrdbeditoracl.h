@@ -23,9 +23,9 @@
 
 #include "svrdbeditorcommon.h"
 
-void DeInitACL();
-void RefreshACL();
-size_t PrintAcl();
+void DeInitACL(void);
+void RefreshACL(void);
+size_t PrintAcl(void);
 void HandleAclOperation(const SubOperationType_t cmd);
 
 #endif /* SVRDBEDITOR_ACL_H_ */

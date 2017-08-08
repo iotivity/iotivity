@@ -23,9 +23,9 @@
 
 #include "svrdbeditorcommon.h"
 
-void DeInitPstat();
-void RefreshPstat();
-void PrintPstat();
+void DeInitPstat(void);
+void RefreshPstat(void);
+void PrintPstat(void);
 void HandlePstatOperation(const SubOperationType_t cmd);
 
 #endif /* SVRDBEDITOR_PSTAT_H_ */

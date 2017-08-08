@@ -23,7 +23,6 @@
 #include "utlist.h"
 #include "octypes.h"
 #include "oic_malloc.h"
-#include "logger.h"
 
 #include "psinterface.h"
 
@@ -52,22 +51,7 @@ typedef enum AceModifyType
     ACE_EDIT_PERMISSION = 5
 } AceModifyType_t;
 
-
-static void UpdateACL();
-static void FreeACE(OicSecAce_t *ace);
-static size_t PrintResourceList(const OicSecRsrc_t *rsrcList);
-static void PrintValidity(const OicSecValidity_t *validities);
-static void PrintPermission(uint16_t permission);
-static void PrintAceid(uint16_t aceid);
-static int PrintAce(const OicSecAce_t *ace);
-static int InputSubjectType(OicSecAce_t *ace);
-static int InputResources(OicSecRsrc_t *resources);
-static uint16_t InputAccessPermission();
-static uint16_t generateAceid();
-static int ModifyAce(OicSecAce_t *ace);
-static int ModifyAcl();
-
-void DeInitACL()
+void DeInitACL(void)
 {
     if (g_acl)
     {
@@ -76,7 +60,7 @@ void DeInitACL()
     }
 }
 
-void RefreshACL()
+void RefreshACL(void)
 {
     OicSecAcl_t *tmpACL = NULL;
     uint8_t *secPayload = NULL;
@@ -105,7 +89,7 @@ void RefreshACL()
     g_acl = tmpACL;
 }
 
-static void UpdateACL()
+static void UpdateACL(void)
 {
     OCStackResult aclResult = OC_STACK_ERROR;
     uint8_t *aclPayload = NULL;
@@ -117,7 +101,6 @@ static void UpdateACL()
         PRINT_ERR("AclToCBORPayload error : %d" , aclResult);
         return;
     }
-
     aclResult = UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, aclPayload, aclPayloadSize);
     if (OC_STACK_OK != aclResult)
     {
@@ -226,6 +209,27 @@ static void PrintAceid(uint16_t aceid)
     PRINT_DATA("%d\n", aceid);
 }
 
+static size_t PrintResourceList(const OicSecRsrc_t *rsrcList)
+{
+    const OicSecRsrc_t *rsrc = NULL;
+    const OicSecRsrc_t *tempRsrc = NULL;
+    size_t rsrcCnt = 0;
+
+    LL_FOREACH_SAFE(rsrcList, rsrc, tempRsrc)
+    {
+        PRINT_DATA("Resource #%zu:\n", rsrcCnt + 1);
+        PRINT_DATA("%10s : %s\n", OIC_JSON_HREF_NAME, rsrc->href);
+        PRINT_DATA("%10s : %s\n", OIC_JSON_REL_NAME, rsrc->rel);
+        PRINT_DATA("%10s : ", OIC_JSON_RT_NAME);
+        PrintStringArray((const char **)rsrc->types, rsrc->typeLen);
+        PRINT_DATA("%10s : ", OIC_JSON_IF_NAME);
+        PrintStringArray((const char **)rsrc->interfaces, rsrc->interfaceLen);
+        rsrcCnt++;
+    }
+    return rsrcCnt;
+}
+
+
 static int PrintAce(const OicSecAce_t *ace)
 {
     //aceid
@@ -286,7 +290,7 @@ static int PrintAce(const OicSecAce_t *ace)
     return 0;
 }
 
-size_t PrintAcl()
+size_t PrintAcl(void)
 {
     OicSecAce_t *ace = NULL;
     OicSecAce_t *tempAce = NULL;
@@ -524,7 +528,7 @@ static int InputResources(OicSecRsrc_t *resources)
     return 0;
 }
 
-static uint16_t InputAccessPermission()
+static uint16_t InputAccessPermission(void)
 {
     uint16_t pmsn = PERMISSION_FULL_CONTROL;  // default full permission
     uint16_t pmsn_msk = PERMISSION_CREATE;  // default permission mask
@@ -747,7 +751,7 @@ static int ModifyAce(OicSecAce_t *ace)
     return ret;
 }
 
-static int ModifyAcl()
+static int ModifyAcl(void)
 {
     int ret = 0;
     int modifyMenu = 0;
@@ -764,7 +768,7 @@ static int ModifyAcl()
     switch (modifyMenu)
     {
         case ACL_MODIFY_ACE:
-            numOfAce = PrintAcl(g_acl);
+            numOfAce = PrintAcl();
             if (0 == numOfAce)
             {
                 PRINT_ERR("empty ace");
@@ -815,26 +819,6 @@ static int ModifyAcl()
     return ret;
 }
 
-static size_t PrintResourceList(const OicSecRsrc_t *rsrcList)
-{
-    const OicSecRsrc_t *rsrc = NULL;
-    const OicSecRsrc_t *tempRsrc = NULL;
-    size_t rsrcCnt = 0;
-
-    LL_FOREACH_SAFE(rsrcList, rsrc, tempRsrc)
-    {
-        PRINT_DATA("Resource #%zu:\n", rsrcCnt + 1);
-        PRINT_DATA("%10s : %s\n", OIC_JSON_HREF_NAME, rsrc->href);
-        PRINT_DATA("%10s : %s\n", OIC_JSON_REL_NAME, rsrc->rel);
-        PRINT_DATA("%10s : ", OIC_JSON_RT_NAME);
-        PrintStringArray((const char **)rsrc->types, rsrc->typeLen);
-        PRINT_DATA("%10s : ", OIC_JSON_IF_NAME);
-        PrintStringArray((const char **)rsrc->interfaces, rsrc->interfaceLen);
-        rsrcCnt++;
-    }
-    return rsrcCnt;
-}
-
 void HandleAclOperation(const SubOperationType_t cmd)
 {
     size_t aclIdx = 0;
@@ -856,7 +840,7 @@ void HandleAclOperation(const SubOperationType_t cmd)
     switch (cmd)
     {
         case SVR_PRINT:
-            PrintAcl(g_acl);
+            PrintAcl();
             break;
         case SVR_ADD:
             {
@@ -896,7 +880,7 @@ void HandleAclOperation(const SubOperationType_t cmd)
                 size_t curIdx = 0;
                 size_t numOfAce = 0;
 
-                numOfAce = PrintAcl(g_acl);
+                numOfAce = PrintAcl();
                 if (0 == numOfAce)
                 {
                     PRINT_ERR("empty ace");
