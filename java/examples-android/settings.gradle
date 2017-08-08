@@ -1,7 +1,7 @@
 include ':simpleserver', ':simpleclient', ':fridgeserver', ':fridgeclient', ':guiclient', ':presenceserver', ':presenceclient', ':devicediscoveryclient', ':devicediscoveryserver', ':groupclient', ':groupserver', ':fridgegroupclient', ':fridgegroupserver'
 SECURED=System.getProperty('SECURE')
 if(SECURED== "1"){
-        include ':provisioningclient', ':DirectPairing'
+        include ':provisioningclient'
 }
 if(SECURED== "1" && WITH_TCP== "1" && WITH_CLOUD== "1"){
         include ':cloudprovisioningclient'

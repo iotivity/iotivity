@@ -282,8 +282,6 @@ if target_os == 'android':
     jdk_env.Clean(cmdBuildExamples,
                   '#/java/examples-android/devicediscoveryserver/build/')
     jdk_env.Clean(cmdBuildExamples,
-                  '#/java/examples-android/DirectPairing/build/')
-    jdk_env.Clean(cmdBuildExamples,
                   '#/java/examples-android/fridgeclient/build/')
     jdk_env.Clean(cmdBuildExamples,
                   '#/java/examples-android/fridgegroupclient/build/')
