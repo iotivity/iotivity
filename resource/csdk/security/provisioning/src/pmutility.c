@@ -423,8 +423,11 @@ void PMDeleteDeviceList(OCProvisionDev_t *pDevicesList)
             LL_DELETE(pDevicesList, del);
 
             DeleteDoxmBinData(del->doxm);
+            del->doxm = NULL;
             DeletePstatBinData(del->pstat);
+            del->pstat = NULL;
             OICFree(del);
+            del = NULL;
         }
     }
 }
