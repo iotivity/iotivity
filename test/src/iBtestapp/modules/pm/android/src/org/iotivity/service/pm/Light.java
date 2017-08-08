@@ -160,7 +160,6 @@ public class Light implements OcPlatform.EntityHandler {
             }).start();
             ehResult = EntityHandlerResult.SLOW;
         } else { // normal response case.
-            response.setErrorCode(SUCCESS);
             response.setResponseResult(EntityHandlerResult.OK);
             response.setResourceRepresentation(getOcRepresentation());
             ehResult = sendResponse(response);
@@ -176,7 +175,6 @@ public class Light implements OcPlatform.EntityHandler {
         setOcRepresentation(request.getResourceRepresentation());
         response.setResourceRepresentation(getOcRepresentation());
         response.setResponseResult(EntityHandlerResult.OK);
-        response.setErrorCode(SUCCESS);
         return sendResponse(response);
     }
 
@@ -198,7 +196,6 @@ public class Light implements OcPlatform.EntityHandler {
             Log.e(TAG, e.toString());
         }
         response.setResourceRepresentation(rep_post);
-        response.setErrorCode(SUCCESS);
         response.setNewResourceUri(newUri);
         response.setResponseResult(EntityHandlerResult.RESOURCE_CREATED);
         return sendResponse(response);
@@ -225,7 +222,6 @@ public class Light implements OcPlatform.EntityHandler {
         response.setErrorCode(SUCCESS);
         response.setResponseResult(EntityHandlerResult.OK);
         response.setResourceRepresentation(getOcRepresentation());
-        sendResponse(response);
     }
 
     private List<Byte> mObservationIds; // IDs of observes
@@ -267,7 +263,6 @@ public class Light implements OcPlatform.EntityHandler {
             try {
                 if (mIsListOfObservers) {
                     OcResourceResponse response = new OcResourceResponse();
-                    response.setErrorCode(SUCCESS);
                     response.setResourceRepresentation(getOcRepresentation());
                     OcPlatform.notifyListOfObservers(mResourceHandle, mObservationIds,
                             response);
