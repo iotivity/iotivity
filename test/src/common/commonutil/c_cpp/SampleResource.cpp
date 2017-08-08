@@ -114,7 +114,7 @@ void SampleResource::handleObserveRequest(QueryParamsMap &queryParamsMap,
     }
     else if (ObserveAction::ObserveUnregister == observationInfo.action)
     {
-        if (m_listOfObservers.size() > 0)
+        if (m_listOfObservers.size() > 0 && (find(m_listOfObservers.begin(), m_listOfObservers.end(), observationInfo.obsId) != m_listOfObservers.end()) )
         {
             cout << "Removing observer from observer list" << endl;
             cout << "Observe Info: address: " << observationInfo.address << " , id: " << (int) observationInfo.obsId << endl;
@@ -126,7 +126,7 @@ void SampleResource::handleObserveRequest(QueryParamsMap &queryParamsMap,
         else
         {
             response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
-            cerr << "No observer found!! Unable cancel observe!!" << endl;
+            cerr << "No such observer found!! Unable cancel observe!!" << endl;
         }
 
         result = OCPlatform::sendResponse(response);
@@ -731,6 +731,11 @@ bool SampleResource::updateRepresentation(string key, OCRepresentation incomingR
     string configurationKey = key;
     AttributeValue configurationValue;
     rep.setValue(configurationKey, incomingValue);
+    if (key.compare(NAME_KEY) == 0)
+    {
+        string newDeviceName = incomingRep.getValueToString(key);
+        setDeviceInfo(newDeviceName);
+    }
     if (rep.getAttributeValue(configurationKey, configurationValue))
     {
         response->setResourceRepresentation(rep, DEFAULT_INTERFACE);

@@ -41,7 +41,9 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstdio>
-
+#include <array>
+#include <string>
+#include <stdexcept>
 
 #include "OCPlatform.h"
 
@@ -69,16 +71,23 @@ namespace PH = std::placeholders;
 #define AC_SWING_URI "/Vendor/AirConditioner/Swinger"
 #define AC_TIMER_URI_CHILD "/Vendor/AirConditioner/TimerClock/Children"
 #define AC_SWING_URI_CHILD "/Vendor/AirConditioner/Swinger/Children"
-#define AC_CON_URI "/ACConfigurationResURI"
+#define AC_CON_URI "/ConfigurationResURI"
+
+#define EXTRA_COLLECTION_URI "/bridge/root"
+#define EXTRA_LIGHT_URI "/bridge/light"
+#define EXTRA_SWITCH_URI "/bridge/binary-switch"
+#define EXTRA_BRIGHTNESS_URI "/bridge/light-brightness"
 
 #define Device_TYPE_TV "oic.d.tv"
+#define Device_TYPE_LIGHT "oic.d.light"
 #define Device_TYPE_AC "oic.d.airconditioner"
-#define Device_TYPE_VENDOR "x.com.vendor.device.partial"
+#define Device_TYPE_VENDOR "x.com.vendor.device.eco.power"
 #define SWITCH_RESOURCE_TYPE "oic.r.switch.binary"
 #define AUDIO_RESOURCE_TYPE "oic.r.audio"
 #define MEDIA_SOURCE_LIST_RESOURCE_TYPE "oic.r.mediasourcelist"
 #define TEMPERATURE_RESOURCE_TYPE "oic.r.temperature"
 #define AIR_FLOW_RESOURCE_TYPE "oic.r.airflow"
+#define BRIGHTNESS_RESOURCE_TYPE "oic.r.light.brightness"
 #define TIMER_RESOURCE_TYPE "x.com.vendor.timer"
 #define CHILD_LOCK_RESOURCE_TYPE "x.com.vendor.child.lock"
 #define SWING_RESOURCE_TYPE "x.com.vendor.swing"
@@ -91,12 +100,15 @@ namespace PH = std::placeholders;
 #define MEDIA_SOURCE_LIST_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
 #define TEMPERATURE_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
 #define AIR_FLOW_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
+#define BRIGHTNESS_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
+#define LIGHT_DEVICE_INTERFACE "oic.if.r oic.if.baseline"
 #define TIMER_RESOURCE_INTERFACE "oic.if.a oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline"
 #define CHILD_LOCK_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
 #define SWING_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
 #define CON_RESOURCE_INTERFACE "oic.if.rw oic.if.baseline"
 
 #define ACTUATOR_INTERFACE "oic.if.a"
+#define READ_ONLY_INTERFACE "oic.if.r"
 #define LIGHT_1_URI "/device/light-1"
 #define LIGHT_2_URI "/device/light-2"
 #define LIGHT_3_URI "/device/light-3"
@@ -110,15 +122,13 @@ namespace PH = std::placeholders;
 #define FAN_INVISIBLE_URI "/device/fan-invisible"
 #define RESOURCE_TYPE_LIGHT "core.light core.brightlight"
 #define RESOURCE_TYPE_FAN "core.fan core.table-fan"
-#define GROUP_TYPE_ROOM "oic.wk.col"
+#define GROUP_TYPE_DEFAULT "oic.wk.col"
 #define GROUP_TYPE_AIRCON "x.com.vendor.aircon.collection.extra"
 #define GROUP_TYPE_AIRCON_VENDOR "x.com.vendor.aircon.collection"
 #ifdef GROUP_NAME
 #undef GROUP_NAME
-#define GROUP_NAME "AirCon Collection"
-#else
-#define GROUP_NAME "AirCon Collection"
 #endif
+#define GROUP_NAME "AirCon Collection"
 #define RESOURCE_TYPE_ROOM "core.room"
 #define SERVER_IP_V4 "0.0.0.0"
 #define SERVER_IP_V6 ":::::"
@@ -148,6 +158,7 @@ const int SUCCESS_RESPONSE = 0;
 #define DEFAULT_VERSION 1.0
 #define DEFAULT_ACCURACY 0.85
 #define DEFAULT_CRUDN_SUPPORT true
+#define DEFAULT_BRIGHTNESS_VALUE 10
 #define LATTITUDE_VALUE 23.50
 #define LONGITUDE_VALUE 90.10
 #define LOCATION_NAME_VALUE "Guest Room "
@@ -158,7 +169,7 @@ const int SUCCESS_RESPONSE = 0;
 #define BANGLA_VALUE "bn"
 #define ENGLISH_VALUE "en"
 #define BANGLA_NAME_VALUE "বুদ্ধিমান এয়ার কন্ডিশনার"
-#define ENGLISH_NAME_VALUE "Smart Air Conditioner"
+#define ENGLISH_NAME_VALUE "Vendor Smart Home AirCon Device"
 #define LANGUAGE_VALUE "language"
 
 
@@ -191,6 +202,7 @@ const int SUCCESS_RESPONSE = 0;
 #define SPEED_KEY "speed"
 #define DIRECTION_KEY "direction"
 #define ON_OFF_KEY "value"
+#define BRIGHTNESS_KEY "brightness"
 #define BITMASK_KEY "bm"
 #define PORT_KEY "port"
 #define POLICY_KEY "p"
@@ -203,6 +215,12 @@ const int SUCCESS_RESPONSE = 0;
 #define EP_KEY "ep"
 #define EP_DEFAULT_VALUE "coaps://"
 #define PRI_KEY "pri"
+#define PLATFORM_ID_KEY "pi"
+#define PIID_KEY "piid"
+#define DMV_KEY "dmv"
+#define ICV_KEY "icv"
+#define MANUFACTURER_NAME_KEY "dmn"
+
 #define PRI_DEFAULT_VALUE 1
 #define SWING_STATE_KEY "x.com.vendor.swing.on"
 #define SWING_STATE_VALUE false
@@ -351,6 +369,7 @@ public:
 
     string getOnlyTCPHost(vector<string> allHosts);
 
+    string executeCommand(string cmd);
 };
 
 #endif // __RESOURCE_HELPER_H__

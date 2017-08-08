@@ -38,6 +38,7 @@ variant_dir = env_linux.get('VARIANT_DIR')
 install_dir = env_linux.get('INSTALL_DIR')
 test_src_root = iotivity_test_root + '/' + variant_dir
 secured = env_linux.get('SECURED')
+WITH_RD = env_linux.get('WITH_RD')
 common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
 
 install_targets = []
@@ -49,6 +50,10 @@ if secured == '1':
     cppflags.append('-D__SECURED__')
     cppflags.append('-D__WITH_DTLS__')
 
+if WITH_RD == True:
+    print('Building with RD')
+    cppflags.append('-DRD_SERVER')
+
 include_paths = [
     iotivity_test_root + '/include',
     iotivity_root + '/resource/include',
@@ -59,8 +64,11 @@ include_paths = [
     iotivity_root + '/resource/csdk/ocsocket/include',
     iotivity_root + '/resource/csdk/ocrandom/include',
     iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/resource-directory/include',
     iotivity_root + '/resource/c_common/',
     iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/service/easy-setup/inc',
+    iotivity_root + '/service/easy-setup/enrollee/inc',
     iotivity_root + '/extlibs/cereal/include/',
     iotivity_root + '/extlibs/timer/',
     iotivity_root + '/extlibs/tinycbor/tinycbor/src/',
@@ -69,10 +77,14 @@ include_paths = [
 ]
 
 libs = Split('libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap pthread libglib-2.0 gcov')
+enrolee_libs =  [ 'ESEnrolleeSDK' ]
+rd_libs = [ 'resource_directory' ]
+libs = libs + enrolee_libs + rd_libs
 
 src = [
     test_src_root + '/common/commonutil/c_cpp/ResourceServer.cpp',
     test_src_root + '/common/commonutil/c_cpp/SampleResource.cpp',
+    test_src_root + '/common/commonutil/c_cpp/SampleCollection.cpp',
     test_src_root + '/common/commonutil/c_cpp/ResourceHelper.cpp',
     test_src_root + '/testapp/IUTSimulatorApp/c_cpp/IUTSimulator.cpp',
 ]

@@ -245,8 +245,6 @@ OCStackResult ResourceServer::startResource(uint8_t resourceProperty)
             OCPlatform::startPresence(presenceInterval);
         }
 
-        m_representation.setUri(m_resourceURI);
-
     }
 
     return result;
@@ -332,12 +330,16 @@ void ResourceServer::setAsNormalResource()
     m_isSlowResource = false;
 }
 
-OCStackResult ResourceServer::setDeviceInfo(string deviceName, string deviceType)
+OCStackResult ResourceServer::setDeviceInfo(string deviceName, vector<string> deviceTypes)
 {
     p_resourceHelper->duplicateString(&s_deviceInfo.deviceName, deviceName);
-    if (deviceType.compare("") != 0)
+    if (deviceTypes.size() > 0)
     {
-        OCResourcePayloadAddStringLL(&s_deviceInfo.types, deviceType.c_str());
+        for (string deviceType : deviceTypes)
+        {
+            OCResourcePayloadAddStringLL(&s_deviceInfo.types, deviceType.c_str());
+        }
+
         p_resourceHelper->duplicateString(&s_deviceInfo.specVersion, CORE_SPEC_VERSION);
         OCResourcePayloadAddStringLL(&s_deviceInfo.dataModelVersions, RESOURCE_TYPE_SPEC_VERSION);
         if ((deviceName.find("Client") == string::npos)
@@ -464,3 +466,14 @@ bool ResourceServer::isSecuredResource(void)
 {
     return m_resourceProperty & OC_SECURE;
 }
+
+void ResourceServer::addResourceType(string resourceType)
+{
+    OCPlatform::bindTypeToResource(getResourceHandle(), resourceType);
+}
+
+void ResourceServer::addResourceInterface(string resourceInterface)
+{
+    OCPlatform::bindInterfaceToResource(getResourceHandle(), resourceInterface);
+}
+

@@ -130,6 +130,7 @@ help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_va
 help_vars.Add(EnumVariable('PREVENT', 'Build with sample', 'OFF', allowed_values=('ON', 'OFF')))
 help_vars.Add(BoolVariable('SRC_BUILD', 'Enable Dev Source Building?', False))
 help_vars.Add(BoolVariable('SRC_UPDATE', 'Enable Dev Source Updating?', False))
+help_vars.Add(BoolVariable('WITH_RD', 'Build with RD Server', False))
 
 targets_support_cc = ['linux', 'arduino', 'tizen', 'android']
 

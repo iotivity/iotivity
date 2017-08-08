@@ -18,31 +18,39 @@
  *
  ******************************************************************/
 
-#ifndef COMMON_TESTCASE_SAMPLERESOURCE_H_
-#define COMMON_TESTCASE_SAMPLERESOURCE_H_
+#ifndef COMMON_TESTCASE_SAMPLECOLLECTION_H_
+#define COMMON_TESTCASE_SAMPLECOLLECTION_H_
+
+#include "cautilinterface.h"
+#include "cacommon.h"
 
 #include "ResourceHelper.h"
 #include "ResourceServer.h"
+#include "SampleResource.h"
 
 using namespace std;
 namespace PH = std::placeholders;
 
-class SampleResource: public ResourceServer
+class SampleCollection: public ResourceServer
 {
 private:
-    int m_recursiveDelay;
-    int m_scheduledDelay;
     bool m_isCancelCalled;
     bool m_isObserveRegistered;
+    bool m_isSecured;
+
+    string m_di;
+    OCConnectivityType m_ipVer;
+    string m_collectionName;
+
     ObservationIds m_listOfObservers;
     shared_ptr< OCResourceResponse > m_pResponse;
-    vector< string > m_resourceList;
+    vector< SampleResource* > m_childResourceList;
     map< string, string > m_accessmodifier;
 
 public:
-    SampleResource(void);
+    SampleCollection(void);
 
-    ~SampleResource(void);
+    ~SampleCollection(void);
 
     void setAsReadOnly(string key);
 
@@ -76,25 +84,29 @@ public:
 
     virtual OCRepresentation getResourceRepresentation(OCRepresentation &resourceRep);
 
-    OCStackResult addArrayAttribute(string key, OCRepresentation arrayRep);
-
     void notifyObservers(void *param);
     bool updateRepresentation(string key, OCRepresentation incomingRep);
 
-private:
-    void handleRecursiveActionSet();
+    void setDI(string di);
+    void setName(string name);
+    void setIPVer(OCConnectivityType ipVer);
+    void setSecured(bool isSecured);
 
-    void handleScheduledActionSet();
+    void addChild(SampleResource* childResource);
+
+
+private:
+
+    void addIntoLinksArray(vector< OCRepresentation >& childrenList, SampleResource* resource);
+
+    OCStackResult addArrayAttribute(string, OCRepresentation);
 
     bool updateRepresentation(string key, OCRepresentation incomingRep,
             shared_ptr< OCResourceResponse > response);
 
-    void createResource(string initialUri, OCRepresentation incomingRepresentation,
-            shared_ptr< OCResourceResponse > response);
+    vector<SampleResource*> getChildResourcesFromType(string resourceType);
+    vector<SampleResource*> getChildResourcesFromRepKey(string key);
 
-    void supportCreateAndOthersForPUT(QueryParamsMap &queryParamsMap,
-            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
-            std::shared_ptr< OCResourceResponse > response);
 };
 
-#endif /* COMMON_TESTCASE_SAMPLERESOURCE_H_ */
+#endif /* COMMON_TESTCASE_SampleCollection_H_ */

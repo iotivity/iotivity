@@ -373,3 +373,15 @@ string ResourceHelper::getOnlyTCPHost(vector< string > allHosts)
     return tcpHost;
 }
 
+string ResourceHelper::executeCommand(string cmd) {
+    array<char, 128> buffer;
+    string result;
+    shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
+    if (!pipe) throw std::runtime_error("popen() failed!");
+    while (!feof(pipe.get())) {
+        if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
+            result += buffer.data();
+    }
+    return result;
+}
+
