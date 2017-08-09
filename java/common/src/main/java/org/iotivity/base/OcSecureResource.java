@@ -384,8 +384,10 @@ public class OcSecureResource {
     /** Method to get List of device ID of devices linked with invoking device.
      *
      *  @return Sring List  List of device id's of linked devices.
+     *  @throws OcException Failed to get linked devices.
+     *                      Use OcException.GetErrorCode() for more details.
      */
-    public native List<String> getLinkedDevices();
+    public native List<String> getLinkedDevices() throws OcException;
 
      /**
       * Method to get IP address of sercure discovered device.
