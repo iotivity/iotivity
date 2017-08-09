@@ -36,7 +36,9 @@
 #include "OCHeaderOption.h"
 #include <OCException.h>
 #include "StringConstants.h"
+#if ! defined(_MSC_VER)
 #include "oc_logger.hpp"
+#endif
 
 #include <OCRepresentation.h>
 
