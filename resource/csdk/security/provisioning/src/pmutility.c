@@ -848,12 +848,14 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
             {
                 pDInfo->isFound = true;
             }
-
-            res = SpecVersionDiscovery(pDInfo, clientResponse);
-            if(OC_STACK_OK != res)
+            else
             {
-                OIC_LOG(ERROR, TAG, "Failed to SpecVersionDiscovery");
-                return OC_STACK_DELETE_TRANSACTION;
+                res = SpecVersionDiscovery(pDInfo, clientResponse);
+                if(OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to SpecVersionDiscovery");
+                    return OC_STACK_DELETE_TRANSACTION;
+                }
             }
 
             OIC_LOG(INFO, TAG, "Exiting SecurePortDiscoveryHandler.");
