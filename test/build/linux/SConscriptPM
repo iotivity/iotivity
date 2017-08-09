@@ -46,6 +46,7 @@ iotivity_include_paths = [
     iotivity_root + '/resource/csdk',
     iotivity_root + '/resource/csdk/include',
     iotivity_root + '/resource/csdk/security/include',
+    iotivity_root + '/resource/csdk/security/include/experimental',
     iotivity_root + '/resource/csdk/security/include/internal',
     iotivity_root + '/resource/csdk/security/provisioning/include',
     iotivity_root + '/resource/csdk/security/provisioning/include/internal',
