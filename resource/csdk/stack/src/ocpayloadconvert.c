@@ -931,6 +931,29 @@ static int64_t OCConvertSingleRepPayloadValue(CborEncoder *parent, const OCRepPa
 static int64_t OCConvertSingleRepPayload(CborEncoder *repMap, const OCRepPayload *payload)
 {
     int64_t err = CborNoError;
+    VERIFY_PARAM_NON_NULL(TAG, payload, "Input param, payload is NULL");
+    VERIFY_PARAM_NON_NULL(TAG, repMap, "Input param, repMap is NULL");
+
+    if (payload->uri && strlen(payload->uri) > 0)
+    {
+        OIC_LOG(INFO, TAG, "Payload has uri");
+        err |= cbor_encode_text_string(repMap, OC_RSRVD_HREF, strlen(OC_RSRVD_HREF));
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep href tag");
+        err |= cbor_encode_text_string(repMap, payload->uri, strlen(payload->uri));
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep href value");
+    }
+    if (payload->types)
+    {
+        OIC_LOG(INFO, TAG, "Payload has types");
+        err |= OCStringLLJoin(repMap, OC_RSRVD_RESOURCE_TYPE, payload->types);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding resource type.");
+    }
+    if (payload->interfaces)
+    {
+        OIC_LOG(INFO, TAG, "Payload has interfaces");
+        err |= OCStringLLJoin(repMap, OC_RSRVD_INTERFACE, payload->interfaces);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding platform interface type.");
+    }
     OCRepPayloadValue *value = payload->values;
     while (value)
     {
@@ -971,28 +994,6 @@ static int64_t OCConvertRepPayload(OCRepPayload *payload, uint8_t *outPayload, s
         err |= cbor_encoder_create_map(((arrayCount == 1)? &encoder: &rootArray),
                                             &rootMap, CborIndefiniteLength);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating root map");
-
-        // Only in case of collection href is included.
-        if (arrayCount > 1 && payload->uri && strlen(payload->uri) > 0)
-        {
-            OIC_LOG(INFO, TAG, "Payload has uri");
-            err |= cbor_encode_text_string(&rootMap, OC_RSRVD_HREF, strlen(OC_RSRVD_HREF));
-            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep href tag");
-            err |= cbor_encode_text_string(&rootMap, payload->uri, strlen(payload->uri));
-            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep href value");
-        }
-        if (payload->types)
-        {
-            OIC_LOG(INFO, TAG, "Payload has types");
-            err |= OCStringLLJoin(&rootMap, OC_RSRVD_RESOURCE_TYPE, payload->types);
-            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding resource type.");
-        }
-        if (payload->interfaces)
-        {
-            OIC_LOG(INFO, TAG, "Payload has interfaces");
-            err |= OCStringLLJoin(&rootMap, OC_RSRVD_INTERFACE, payload->interfaces);
-            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding platform interface type.");
-        }
 
         err |= OCConvertSingleRepPayload(&rootMap, payload);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting rep payload");
