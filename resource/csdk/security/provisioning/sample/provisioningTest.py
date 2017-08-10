@@ -50,8 +50,8 @@ usage = '''
    - script assumes it's being run from the root of iotivity, e.g.:
          t:\\iotivity\\resource\\csdk\\security\\provisioning\\sample\\provisioningTest.py
    - I have added
-        t:\\iotivity\\out\\windows\\amd64\\debug\\resource\\csdk
-        t:\\iotivity\\out\\windows\\amd64\\debug
+        t:\\iotivity\\out\\windows\\win32\\amd64\\debug\\resource\\csdk
+        t:\\iotivity\\out\\windows\\win32\\amd64\\debug
      to my PATH
    - The discovery timeout in autoprovisioning client may be a bit agressive, 3 seconds
 '''
@@ -70,16 +70,16 @@ args = parser.parse_args()
 iotivity_base_path = os.getcwd()
 os_name = platform.system()
 if os_name == 'Windows':
-    os_name = 'windows'
+    os_directory = 'windows\win32'
 elif os_name == 'Linux':
-    os_name = 'linux'
+    os_directory = 'linux'
 
-exe_path = os.path.join(iotivity_base_path, 'out', os_name, args.arch, args.build, 'resource', 'csdk', 'security', 'provisioning', 'sample')
+exe_path = os.path.join(iotivity_base_path, 'out', os_directory, args.arch, args.build, 'resource', 'csdk', 'security', 'provisioning', 'sample')
 
 # Set PATH so octbstack.dll is found
 cwd = os.getcwd()
 sys.path.append(os.path.join(cwd, exe_path))
-sys.path.append(os.path.join(cwd, 'out', os_name, args.arch, args.build))
+sys.path.append(os.path.join(cwd, 'out', os_directory, args.arch, args.build))
 
 # Work in the output dir with the test binaries
 os.chdir(exe_path)
