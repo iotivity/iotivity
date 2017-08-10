@@ -88,6 +88,7 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?WITH_TCP: %define WITH_TCP 0}
 %{!?MULTIPLE_OWNER: %define MULTIPLE_OWNER 0}
 %{!?OIC_SUPPORT_TIZEN_TRACE: %define OIC_SUPPORT_TIZEN_TRACE False}
+%define BUILD_DIR out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/
 
 BuildRequires:  chrpath
 BuildRequires:  expat-devel
@@ -232,45 +233,46 @@ scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
     OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
     #eol
 
-mkdir -p %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/examples/OICMiddle/OICMiddle %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/devicediscoveryclient %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/devicediscoveryserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/fridgeclient %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/fridgeserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/garageclient %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/garageserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/groupclient %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/groupserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/lightserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/presenceclient %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/presenceserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/roomclient %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/roomserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleclient %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleclientHQ %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleclientserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleserverHQ %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/threadingsample %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/lib*.a %{buildroot}%{_libdir}
+cd %{BUILD_DIR}
+install -d %{ex_install_dir}
+install examples/OICMiddle/OICMiddle %{ex_install_dir}
+install resource/examples/devicediscoveryclient %{ex_install_dir}
+install resource/examples/devicediscoveryserver %{ex_install_dir}
+install resource/examples/fridgeclient %{ex_install_dir}
+install resource/examples/fridgeserver %{ex_install_dir}
+install resource/examples/garageclient %{ex_install_dir}
+install resource/examples/garageserver %{ex_install_dir}
+install resource/examples/groupclient %{ex_install_dir}
+install resource/examples/groupserver %{ex_install_dir}
+install resource/examples/lightserver %{ex_install_dir}
+install resource/examples/presenceclient %{ex_install_dir}
+install resource/examples/presenceserver %{ex_install_dir}
+install resource/examples/roomclient %{ex_install_dir}
+install resource/examples/roomserver %{ex_install_dir}
+install resource/examples/simpleclient %{ex_install_dir}
+install resource/examples/simpleclientHQ %{ex_install_dir}
+install resource/examples/simpleclientserver %{ex_install_dir}
+install resource/examples/simpleserver %{ex_install_dir}
+install resource/examples/simpleserverHQ %{ex_install_dir}
+install resource/examples/threadingsample %{ex_install_dir}
+install lib*.a %{buildroot}%{_libdir}
 
 %if 0%{?WITH_PROXY} == 1
-mkdir -p %{ex_install_dir}/proxy-sample
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/service/coap-http-proxy/samples/proxy_main %{ex_install_dir}/proxy-sample/
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/service/coap-http-proxy/samples/proxy_client %{ex_install_dir}/proxy-sample/
+install -d %{ex_install_dir}/proxy-sample
+install service/coap-http-proxy/samples/proxy_main %{ex_install_dir}/proxy-sample/
+install service/coap-http-proxy/samples/proxy_client %{ex_install_dir}/proxy-sample/
 %endif
 %if 0%{?SECURED} == 1
-mkdir -p %{ex_install_dir}/provisioning
-mkdir -p %{ex_install_dir}/provision-sample
+install -d %{ex_install_dir}/provisioning
+install -d %{ex_install_dir}/provision-sample
 
-cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{buildroot}%{_libdir}/oic_svr_db_server.dat
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_justworks %{ex_install_dir}/provision-sample/
-cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{ex_install_dir}/provision-sample/
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_randompin %{ex_install_dir}/provision-sample/
-cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat %{ex_install_dir}/provision-sample/
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/oic_svr_db_server.dat %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/oic_svr_db_client.dat %{ex_install_dir}
+install resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{buildroot}%{_libdir}/oic_svr_db_server.dat
+install resource/csdk/security/provisioning/sample/sampleserver_justworks %{ex_install_dir}/provision-sample/
+install resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{ex_install_dir}/provision-sample/
+install resource/csdk/security/provisioning/sample/sampleserver_randompin %{ex_install_dir}/provision-sample/
+install resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat %{ex_install_dir}/provision-sample/
+install resource/examples/oic_svr_db_server.dat %{ex_install_dir}
+install resource/examples/oic_svr_db_client.dat %{ex_install_dir}
 
 %endif
 
