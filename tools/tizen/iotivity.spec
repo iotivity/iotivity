@@ -89,6 +89,7 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?MULTIPLE_OWNER: %define MULTIPLE_OWNER 0}
 %{!?OIC_SUPPORT_TIZEN_TRACE: %define OIC_SUPPORT_TIZEN_TRACE False}
 
+BuildRequires:  chrpath
 BuildRequires:  expat-devel
 BuildRequires:  python, libcurl-devel
 BuildRequires:  scons
@@ -284,6 +285,9 @@ cp resource/c_common/*.h %{buildroot}%{_includedir}
 cp resource/csdk/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
+
+find "%{buildroot}" -type f -perm /u+x -exec chrpath -d "{}" \;
+find "%{buildroot}" -type f -iname "lib*.so" -exec chrpath -d "{}" \;
 
 install -d %{buildroot}%{_includedir}/iotivity
 ln -fs ../resource %{buildroot}%{_includedir}/iotivity/
