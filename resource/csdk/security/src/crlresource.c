@@ -561,7 +561,6 @@ static OCStackResult CreateCRLResource()
                                          OIC_RSRC_CRL_URI,
                                          CRLEntityHandler,
                                          NULL,
-                                         OC_OBSERVABLE |
                                          OC_SECURE |
                                          OC_DISCOVERABLE);
 
