@@ -1678,8 +1678,7 @@ TEST_F(PMCppOtmTest_btc, SetDisplayPinCB_SRC_P)
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
-
-    if(!m_PMCppHelper.setDisplayPinCB(PMCppHelper::inputPinCB, OC_STACK_OK))
+    if (!m_PMCppHelper.setDisplayPinCB((GeneratePinCallback)PMCppHelper::inputPinCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1738,8 +1737,7 @@ TEST_F(PMCppOtmTest_btc, unsetDisplayPinCB_SRC_P)
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
-
-    if(!m_PMCppHelper.setDisplayPinCB(PMCppHelper::inputPinCB, OC_STACK_OK))
+    if (!m_PMCppHelper.setDisplayPinCB((GeneratePinCallback)PMCppHelper::inputPinCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1775,7 +1773,7 @@ TEST_F(PMCppOtmTest_btc, setInputPinCallback_SRC_P)
         return;
     }
 
-    if(!m_PMCppHelper.setInputPinCallback(PMCppHelper::inputPinCB, OC_STACK_OK))
+    if (!m_PMCppHelper.setInputPinCallback((InputPinCallback)PMCppHelper::inputPinCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1837,7 +1835,7 @@ TEST_F(PMCppOtmTest_btc, unsetInputPinCallback_SRC_P)
         return;
     }
 
-    if(!m_PMCppHelper.setInputPinCallback(PMCppHelper::inputPinCB, OC_STACK_OK))
+    if (!m_PMCppHelper.setInputPinCallback((InputPinCallback)PMCppHelper::inputPinCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;

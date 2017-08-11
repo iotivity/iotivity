@@ -324,7 +324,7 @@ bool PMCsdkHelper::initProvisionClient(int clientOTMType, char* chDBPath)
             return false;
         }
 
-        SetInputPinCB(inputPinCB);
+        SetInputPinCB((InputPinCallback)inputPinCB);
     }
 
     if (!setOxmAllowStatus(OIC_JUST_WORKS, true, OC_STACK_OK))
@@ -339,8 +339,8 @@ bool PMCsdkHelper::initProvisionClient(int clientOTMType, char* chDBPath)
         return false;
     }
 
-    SetDisplayNumCB(NULL, displayMutualVerifNumCB);
-    SetUserConfirmCB(NULL, confirmMutualVerifNumCB);
+    SetDisplayNumCB(NULL, (DisplayNumCallback)displayMutualVerifNumCB);
+    SetUserConfirmCB(NULL, (UserConfirmCallback)confirmMutualVerifNumCB);
 
     __FUNC_OUT__
     return true;

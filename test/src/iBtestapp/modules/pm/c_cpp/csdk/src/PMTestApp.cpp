@@ -21,7 +21,6 @@
 
 #include "../include/PMCsdkAppHelper.h"
 #include "../include/PMCsdkAppMotHelper.h"
-
 static int g_userInput = 0;
 OCProvisionDev_t *g_OwnList, *g_unownList;
 OicSecAcl_t *g_Acl, *g_Acl1, *g_Acl2;
@@ -77,9 +76,9 @@ PROVISION_MOT_CREDENTIAL,
 
 void clearScreen()
 {
-const char* CLEAR_SCREE_ANSI = "\e[1;1H\e[2J";
-ssize_t bytes = write(STDOUT_FILENO, CLEAR_SCREE_ANSI, 12);
-OC_UNUSED(bytes);
+    const char* CLEAR_SCREE_ANSI = "\e[1;1H\e[2J";
+    ssize_t bytes = write(STDOUT_FILENO, CLEAR_SCREE_ANSI, 12);
+    OC_UNUSED(bytes);
 }
 
 static void printMenu(void)

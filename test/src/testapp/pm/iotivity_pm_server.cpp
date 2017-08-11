@@ -403,8 +403,8 @@ int main(int argc, char **argv)
 
     if (!strcmp(argv[2], "4"))
     {
-        SetDisplayNumCB(NULL, displayNumCB);
-        SetUserConfirmCB(NULL, confirmNumCB);
+        SetDisplayNumCB(NULL, (DisplayNumCallback)displayNumCB);
+        SetUserConfirmCB(NULL, (UserConfirmCallback)confirmNumCB);
         SetVerifyOption((VerifyOptionBitmask_t) (DISPLAY_NUM | USER_CONFIRM));
     }
 
@@ -443,7 +443,7 @@ int main(int argc, char **argv)
 
     if (!strcmp(argv[2], "2"))
     {
-        SetGeneratePinCB(&GeneratePinCB);
+        SetGeneratePinCB((GeneratePinCallback)&GeneratePinCB);
 
         if (OC_STACK_OK != SetRandomPinPolicy(OXM_RANDOM_PIN_DEFAULT_SIZE, LOWERCASE_CHAR_PIN))
         {

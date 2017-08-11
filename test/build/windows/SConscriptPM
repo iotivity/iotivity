@@ -77,6 +77,7 @@ iotivity_include_paths = [
     iotivity_root + '/resource/csdk',
     iotivity_root + '/resource/csdk/include',
     iotivity_root + '/resource/csdk/security/include',
+    iotivity_root + '/resource/csdk/security/include/experimental',
     iotivity_root + '/resource/csdk/security/include/internal',
     iotivity_root + '/resource/csdk/security/provisioning/include',
     iotivity_root + '/resource/csdk/security/provisioning/include/internal',
@@ -109,7 +110,7 @@ iotivity_include_paths = [
 cert_include_paths = [
     iotivity_root + '/resource/csdk/security/provisioning/ck_manager/include',
     iotivity_root + '/resource/csdk/security/include/internal',
-	iotivity_root + '/resource/csdk/security/include',
+    iotivity_root + '/resource/csdk/security/include',
     iotivity_root + '/resource/csdk/connectivity/inc/pkix',
     iotivity_root + '/extlibs/asn1cert',
     iotivity_root + '/extlibs/tinydtls/ecc',
@@ -120,21 +121,19 @@ cert_include_paths = [
 csdk_tc_include_paths = [
     iotivity_test_root + '/include',
     test_src_root + '/tc/pm/gtest/csdk/include',
-    iotivity_test_root + '/extlibs/gtest-1.7.0/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
 ]
 
 cpp_tc_include_paths = [
     iotivity_test_root + '/include',
     test_src_root + '/tc/pm/gtest/cpp/include',
-    iotivity_test_root + '/extlibs/gtest-1.7.0/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
 ]
 
-main_src = [
+tc_util = [
     iotivity_test_root + '/src/common/commonutil/c_cpp/trace.c',
     iotivity_test_root + '/src/common/testcase/gtest/IotivitySECTestMain.cpp',
-    iotivity_test_root + '/src/common/commonutil/c_cpp/CommonTestUtil.cpp',
-    iotivity_test_root + '/include',
-    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+    iotivity_test_root + '/src/common/commonutil/c_cpp/CommonTestUtil.cpp'
 ]
 
 csdk_testapp_include_paths = [test_src_root + '/iBtestapp/modules/pm/c_cpp/csdk/include']
@@ -150,6 +149,7 @@ lib_paths = [
     iotivity_lib_path + '/resource/c_common/',
     iotivity_lib_path + '/resource/csdk/routing/',
     iotivity_test_root + '/extlibs/gtest-1.7.0/bin/windows/',
+    iotivity_root + '/extlibs/sqlite3/',
     iotivity_root + '/extlibs/mbedtls/'
 ]
 
@@ -193,7 +193,7 @@ cppflags = Split('-D__WINDOWS__ -D_WIN -DHAVE_STRUCT_TIMESPEC -D_MSC_VER=1900 -D
 
 csdk_lib_list = Split('bcrypt Ws2_32 advapi32 iphlpapi crypt32 boost_system boost_filesystem boost_thread octbstack_internal connectivity_abstraction_internal c_common coap oc oc_logger_internal ocsrm logger octbstack ocpmapi_internal ocprovision octbstack resource_directory mbedtls mbedx509 mbedcrypto common_util routingmanager ipca win_helper')
 
-cpp_lib_list = Split('bcrypt Ws2_32 advapi32 iphlpapi crypt32 boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction_internal oc oc_logger octbstack ocprovision ocsrm octbstack mbedtls mbedcrypto mbedx509 routingmanager resource_directory sqlite3 common_util win_helper')
+cpp_lib_list = Split('bcrypt Ws2_32 advapi32 iphlpapi crypt32 boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction_internal oc oc_logger_internal ocsrm octbstack ocprovision ocsrm octbstack mbedtls mbedcrypto mbedx509 routingmanager resource_directory sqlite3 common_util win_helper')
 
 cppdefines = ['-DWITH_CLOUD', '-DRD_CLIENT', '-DWITH_CLOUD', '-DNDEBUG', '-DTCP_ADAPTER', '-DIP_ADAPTER', '-DNO_EDR_ADAPTER', '-DLE_ADAPTER', '-DMQ_SUBSCRIBER', '-DWITH_MQ', '-DMQ_PUBLISHER', '-DSHA2_USE_INTTYPES_H', '-D__WITH_DTLS__', '-D__WITH_TLS__', '-D_ENABLE_MULTIPLE_OWNER_', '-DROUTING_EP', '-DWITH_BWT', '-DCA_DBUS_GATT_SERVICE_NAME', '-DGLIB_VERSION_MIN_REQUIRED', '-DGLIB_VERSION_2_32', '-DWITH_TCP'] 
 
@@ -208,7 +208,7 @@ cppflags.append('-DMULTIPLE_OWNER')
 if 'tc' in test:
 
     if 'csdk' in sdk:
-        csdk_tc = env_windows.Program(source = csdk_tc_src + main_src,
+        csdk_tc = env_windows.Program(source = csdk_tc_src + tc_util,
                             target = 'iotivity_pm_csdk_test',
                             CPPPATH = iotivity_include_paths + cert_include_paths + csdk_tc_include_paths + iotivity_common_includes_paths + iotivity_test_include_paths,
                             LIBS = csdk_lib_list + ['gtest'],
@@ -218,9 +218,9 @@ if 'tc' in test:
         install_targets += csdk_tc
 
     if 'cpp' in sdk:
-        cpp_tc = env_windows.Program(source = cpp_tc_src + main_src, 
+        cpp_tc = env_windows.Program(source = cpp_tc_src + tc_util, 
                             target = 'iotivity_pm_cpp_test', 
-                            CPPPATH = iotivity_include_paths + cert_include_paths + csdk_tc_include_paths + iotivity_common_includes_paths + iotivity_test_include_paths,
+                            CPPPATH = iotivity_include_paths + cert_include_paths + cpp_tc_include_paths + iotivity_common_includes_paths + iotivity_test_include_paths,
                             LIBS = csdk_lib_list + ['gtest'],
                             LIBPATH = lib_paths + ['.'],
                             RPATH = iotivity_lib_path,
@@ -248,19 +248,17 @@ if 'app' in test:
                     LIBS = csdk_lib_list + ['gtest'],
                     LIBPATH = lib_paths + ['.'],
                     RPATH = iotivity_lib_path,
-                    CPPFLAGS = cppflags + common_windows_cppflags,
-                    CXXFLAGS = cxxflags)
+                    CPPFLAGS = cppflags + common_windows_cppflags)
         install_targets += pm_test_app
 
     if 'cpp' in sdk:
         pm_test_app = env_windows.Program(source = cpp_testapp_src,
                     target = 'iotivity_pm_cpp_app',
-                    CPPPATH = iotivity_include_paths + cert_include_paths + csdk_tc_include_paths + cpp_testapp_include_paths,
+                    CPPPATH = iotivity_include_paths + cert_include_paths + cpp_tc_include_paths + cpp_testapp_include_paths,
                     LIBS = csdk_lib_list + ['gtest'],
                     LIBPATH = lib_paths + ['.'],
                     RPATH = iotivity_lib_path,
-                    CPPFLAGS = cppflags + common_windows_cppflags,
-                    CXXFLAGS = cxxflags)
+                    CPPFLAGS = cppflags + common_windows_cppflags)
         install_targets += pm_test_app
 
 

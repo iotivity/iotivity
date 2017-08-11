@@ -531,8 +531,8 @@ int startServer(int serverType)
             CommonUtil::waitInSecond(DELAY_LONG);
 
             // Set callbacks for verification
-            SetDisplayNumCB(NULL, displayNumCB);
-            SetUserConfirmCB(NULL, confirmNumCB);
+            SetDisplayNumCB(NULL, (DisplayNumCallback)displayNumCB);
+            SetUserConfirmCB(NULL, (UserConfirmCallback)confirmNumCB);
 
             // Set Verification Option for ownership transfer
             // Currently, BOTH display AND confirm
@@ -555,7 +555,7 @@ int startServer(int serverType)
 
     if (gCurrentIndex == 3)
     {
-        SetGeneratePinCB(&GeneratePinCB);
+        SetGeneratePinCB((GeneratePinCallback)&GeneratePinCB);
     }
 
     /*

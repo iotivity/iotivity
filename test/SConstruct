@@ -94,11 +94,11 @@ def build_tizen():
     SConscript('build/tizen/SConscript', exports = 'env_tizen')
 
 def build_windows():
-    build_dir = 'bin/windows/'
+    variant_dir = 'bin/windows/'
     install_dir = 'bin/windows/'
-    env_windows.Append(VARIANT_DIR = build_dir)
+    env_windows.Append(VARIANT_DIR = variant_dir)
     env_windows.Append(INSTALL_DIR = install_dir)
-    env_windows.VariantDir(build_dir, 'src', duplicate=0)
+    env_windows.VariantDir(variant_dir, 'src', duplicate=0)
     SConscript('build/windows/SConscript', exports = 'env_windows')
 
 

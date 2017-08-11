@@ -23,11 +23,15 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <string>
 #include <map>
 #include <cstdlib>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <mutex>
 #include <condition_variable>
 

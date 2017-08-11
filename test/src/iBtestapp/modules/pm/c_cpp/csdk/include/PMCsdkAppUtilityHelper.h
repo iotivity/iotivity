@@ -27,8 +27,12 @@
 #include <string.h>
 #include <string>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <iostream>
 #include <sstream>
 

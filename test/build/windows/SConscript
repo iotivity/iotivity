@@ -25,14 +25,11 @@ print '\n---------------Started Building Test for Windows---------------\n'
 Import('env_windows')
 import os
 
-variant_dir = env_windows.get('VARIANT_DIR')
-ENV_HOME = '../../..'
-PROJECT_HOME = '../../'
-ORG_SRC = '../../../'
-ORG_SRC_HOME = ENV_HOME + ORG_SRC
-
 iotivity_root = env_windows.get('IOTIVITY_ROOT')
 iotivity_test_root = env_windows.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_windows.get('VARIANT_DIR')
+install_dir = env_windows.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
 target_arch = env_windows.get('TARGET_ARCH')
 release_dir = env_windows.get('RELEASE_DIR')
 test = env_windows.get('TEST')
@@ -46,10 +43,7 @@ print 'RELEASE DIR: ' + release_dir
 print 'MODULE: ' + str(module)
 print 'TEST: ' + str(test)
 
-env_windows.Append(IOTIVITY_LIB_PATH = iotivity_root + '/out/windows/' + target_arch + '/' + release_dir)
-
-env_windows['ORG_SRC'] = iotivity_root
-env_windows['ORG_SRC_HOME'] = iotivity_root
+env_windows.Append(IOTIVITY_LIB_PATH = iotivity_root + '/out/windows/win32/' + target_arch + '/' + release_dir)
 
 create_target_dir = env_windows.Command('target.out', [], Mkdir(variant_dir))
 pre_job = [create_target_dir]
@@ -68,12 +62,12 @@ iotivity_common_includes_paths = [
     iotivity_root + '/resource/include',
     iotivity_root + '/resource/csdk/include',
     iotivity_root + '/resource/csdk/resource-directory/include',
-    iotivity_root + '/extlibs/gtest/googletest-release-1.7.0/include'
 ]
 
 iotivity_test_include_paths = [ iotivity_test_root + '/include' ]
+extlibs_include_paths = [ iotivity_test_root + '/extlibs/gtest-1.7.0/include' ]
 
-common_windows_cppflags = ['-DWINDOWS', '-D__WINDOWS__']
+common_windows_cppflags = []
 
 cppflags = Split('')
 
@@ -86,51 +80,49 @@ if env_windows.get('COVERAGE'):
 env_windows.Append(COMMON_WINDOWS_CPPFLAGS = common_windows_cppflags)
 env_windows.AppendUnique(LIBS = ['bcrypt', 'Ws2_32', 'advapi32', 'iphlpapi', 'crypt32', 'kernel32'])
 
-common_util = env_windows.StaticLibrary('common_util',
-                    source = [iotivity_test_root + '/src/common/commonutil/c_cpp/CommonUtil.cpp',
-                    iotivity_test_root + '/src/common/commonutil/c_cpp/Configuration.cpp'
+install_targets += env_windows.StaticLibrary('common_util',
+                        source = [test_src_root + '/common/commonutil/c_cpp/CommonUtil.cpp',
+                        test_src_root + '/common/commonutil/c_cpp/Configuration.cpp'
                     ],
-                    CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths,
+                    CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
                     CPPFLAGS = cppflags + common_windows_cppflags)
 
 if 'tc' in test:
     tc_util = env_windows.StaticLibrary('tc_util',
-                source = [
-                            iotivity_test_root + '/src/common/commonutil/c_cpp/trace.c',
-                            iotivity_test_root + '/src/common/testcase/gtest/IotivitySECTestMain.cpp',
-                            iotivity_test_root + '/src/common/commonutil/c_cpp/CommonTestUtil.cpp',
+               source = [
+                            test_src_root + '/common/commonutil/c_cpp/trace.c',
+                            test_src_root + '/common/testcase/gtest/IotivitySECTestMain.cpp',
+                            test_src_root + '/common/commonutil/c_cpp/CommonTestUtil.cpp',
                         ],
-                CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths,
+                CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
                 CPPFLAGS = cppflags + common_windows_cppflags)
 
     if 'ic' in module or 'cs' in module:
         if tls_mode == 1:
-               cppflags.append(['-D__TLS_ON__'])
+            cppflags.append(['-D__TLS_ON__'])
         cloud_util = env_windows.StaticLibrary('cloud_util',
-                        source = [iotivity_test_root + '/src/common/commonutil/c_cpp/CloudCommonUtil.cpp'],
-                        CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths,
+                        source = [test_src_root + '/src/common/commonutil/c_cpp/CloudCommonUtil.cpp'],
+                        CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
                         LIBS = ['curl', 'common_util'],
                         CPPFLAGS = cppflags + common_windows_cppflags)
+
+if 'pm' in module:
+    SConscript('SConscriptSK', exports = 'env_windows')
 
 for temp in all_modules:
     if temp in module:
         SConscript('SConscript' + temp.upper(), exports = 'env_windows')
 
-install = env_windows.Install(iotivity_test_root + '/' + variant_dir, install_targets)
-
-delete_bin = []
-i = 0
-for delete_target in install_targets:
-    delete_bin += '0'
-    delete_bin[i] = Command(str(i), [], Delete(delete_target))
-    i = i + 1
-
-default_targets += install_targets + install + common_util
-
-if 'all' in test or 'tc' in test:
-    default_targets += tc_util
+if 'tc' in test:
+    install_targets += tc_util
 
     if 'ic' in module or 'cs' in module:
-        default_targets += cloud_util
+        install_targets += cloud_util
+
+install_bin = env_windows.Install(iotivity_test_root + '/' + install_dir, install_targets)
+
+delete_bin = []
+
+default_targets = install_bin + delete_bin
 
 env_windows.Default(default_targets)

@@ -303,10 +303,10 @@ bool initProvisionClient()
         IOTIVITYTEST_LOG(ERROR, "OCSetOwnerTransferCallbackData error: OIC_RANDOM_DEVICE_PIN");
         return false;
     }
-    SetInputPinCB(inputPinCB);
+    SetInputPinCB((InputPinCallback)inputPinCB);
     // set callbacks for verification options
-    SetDisplayNumCB(NULL, displayMutualVerifNumCB);
-    SetUserConfirmCB(NULL, confirmMutualVerifNumCB);
+    SetDisplayNumCB(NULL, (DisplayNumCallback)displayMutualVerifNumCB);
+    SetUserConfirmCB(NULL, (UserConfirmCallback)confirmMutualVerifNumCB);
 
     //SetPreconfigPin(MOT_DEFAULT_PRE_CONFIG_PIN, 8);
 

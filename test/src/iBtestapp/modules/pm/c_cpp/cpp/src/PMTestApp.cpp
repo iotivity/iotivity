@@ -69,8 +69,9 @@ PUT_LED_RESOURCE,
 
 void clearScreen()
 {
-const char* CLEAR_SCREE_ANSI = "\e[1;1H\e[2J";
-write(STDOUT_FILENO, CLEAR_SCREE_ANSI, 12);
+    const char* CLEAR_SCREE_ANSI = "\e[1;1H\e[2J";
+    ssize_t bytes = write(STDOUT_FILENO, CLEAR_SCREE_ANSI, 12);
+    OC_UNUSED(bytes);
 }
 
 static void printMenu(void)

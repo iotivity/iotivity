@@ -415,7 +415,7 @@ bool getLedResources(OCProvisionDev_t *selDev,OCStackResult expectedResult)
 	IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getLedResource IN");
 	char query[256] = {0};
 	OCCallbackData cbData;
-	cbData.cb = &LedCB;
+	cbData.cb = *reinterpret_cast<OCClientResponseHandler>(&LedCB);
 	cbData.context = NULL;
 	cbData.cd = NULL;
 
@@ -453,7 +453,7 @@ bool putLedResources(OCProvisionDev_t *selDev,OCStackResult expectedResult)
 	IOTIVITYTEST_LOG(DEBUG, "[PMHelper] putLedResources IN");
 	char query[256] = {0};
 	OCCallbackData cbData;
-	cbData.cb = &LedCB;
+	cbData.cb = *reinterpret_cast<OCClientResponseHandler>(&LedCB);
 	cbData.context = NULL;
 	cbData.cd = NULL;
 
