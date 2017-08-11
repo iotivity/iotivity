@@ -374,6 +374,12 @@ OCStackResult OC_CALL OCProvisionACL(void* ctx, const OCProvisionDev_t *selected
                 aclVersion = OIC_SEC_ACL_V2;
                 break;
             }
+            OicSecRsrc_t* rsrc = NULL;
+            LL_FOREACH(ace->resources, rsrc)
+            {
+                if(0 >= rsrc->interfaceLen)
+                    return OC_STACK_INVALID_PARAM;
+            }
         }
     }
 
