@@ -1,24 +1,23 @@
 #######################################################
 # Build BT EDR adapter
 #######################################################
-
-Import('connectivity_env')
 import os
 
-print("Reading BT EDR adapter script")
+Import('connectivity_env')
 
 target_os = connectivity_env.get('TARGET_OS')
-src_dir = os.path.abspath(os.curdir)
 
-# Source files to build common for all platforms
-if target_os != 'arduino':
-    connectivity_env.AppendUnique(
-        CA_SRC=[os.path.join(src_dir, 'caedradapter.c')])
+# Target-specific sources
+if target_os not in ['arduino']:
+    connectivity_env.AppendUnique(CA_SRC=File('caedradapter.c'))
 
 # Check for the existence of the platform-specific SConscript file
-# relative to the top-level source directory, not the build (variant)
-# directory, before calling that SConscript file to prevent a missing
-# file warning for platforms that don't provide one.
-target_sconscript = target_os + '/SConscript'
-if os.path.exists(target_sconscript):
+# before calling it - some target platforms do not provide one.
+# The check has to happen in the source tree because os.path.*
+# methods cannot know about SCons's rewriting rules, but the actual
+# call to the script should happen normally or the targets will
+# not be adjusted properly - scons keeps track of the directory
+# an sconscript is invoked in and actions are relative to that path.
+target_sconscript = File(target_os + '/SConscript')
+if os.path.exists(target_sconscript.srcnode().abspath):
     SConscript(target_sconscript, exports='connectivity_env')

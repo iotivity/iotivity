@@ -5,20 +5,18 @@ import os
 
 Import('connectivity_env')
 
-src_dir = os.path.abspath(os.curdir)
-
-connectivity_env.PrependUnique(CPPPATH=[src_dir])
+connectivity_env.PrependUnique(CPPPATH=Dir('.'))
 
 connectivity_env.ParseConfig(
     "pkg-config --cflags --libs capi-network-bluetooth")
 
 src_files = [
-    os.path.join(src_dir, 'caedrclient.c'),
-    os.path.join(src_dir, 'caedrdevicelist.c'),
-    os.path.join(src_dir, 'caedrendpoint.c'),
-    os.path.join(src_dir, 'caedrnwmonitor.c'),
-    os.path.join(src_dir, 'caedrserver.c'),
-    os.path.join(src_dir, 'caedrutils.c')
+    File('caedrclient.c'),
+    File('caedrdevicelist.c'),
+    File('caedrendpoint.c'),
+    File('caedrnwmonitor.c'),
+    File('caedrserver.c'),
+    File('caedrutils.c')
 ]
 
 connectivity_env.AppendUnique(CA_SRC=src_files)

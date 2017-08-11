@@ -5,15 +5,13 @@ import os
 
 Import('connectivity_env')
 
-src_dir = os.path.abspath(os.curdir)
-
-connectivity_env.PrependUnique(CPPPATH=[src_dir])
+connectivity_env.PrependUnique(CPPPATH=Dir('.'))
 
 src_files = None
 if connectivity_env.get('SHIELD') == 'ETH':
     src_files = [
-        os.path.join(src_dir, 'catcpserver_eth.cpp'),
-        os.path.join(src_dir, 'catcpadapterutils_eth.cpp')
+        File('catcpserver_eth.cpp'),
+        File('catcpadapterutils_eth.cpp')
     ]
 else:
     msg = "\nError: TCP is not supported for WIFI shield"

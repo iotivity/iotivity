@@ -5,6 +5,4 @@ import os
 
 Import('connectivity_env')
 
-src_dir = os.path.abspath(os.curdir)
-
-connectivity_env.AppendUnique(CA_SRC=[os.path.join(src_dir, 'canfcserver.c')])
+connectivity_env.AppendUnique(CA_SRC=[File('canfcserver.c')])

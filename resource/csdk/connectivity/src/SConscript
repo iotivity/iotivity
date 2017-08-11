@@ -12,15 +12,13 @@ multiple_owner = connectivity_env.get('MULTIPLE_OWNER')
 with_ra = connectivity_env.get('WITH_RA')
 with_ra_ibb = connectivity_env.get('WITH_RA_IBB')
 with_tcp = connectivity_env.get('WITH_TCP')
-src_dir = connectivity_env.get('SRC_DIR')
 root_dir = os.pardir
-ca_path = os.curdir
+
+print "Reading ca script; transports requested: %s" % ca_transport
 
 #####################################################################
 # Source files and Target(s)
 ######################################################################
-
-print("Reading ca script %s" % ca_transport)
 
 connectivity_env.PrependUnique(CPPPATH=[os.path.join(root_dir, 'api')])
 
@@ -35,7 +33,7 @@ else:
 
 connectivity_env.AppendUnique(CPPPATH=[
     os.path.join(root_dir, 'inc'),
-    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
+    '#/resource/csdk/logger/include',
     os.path.join(root_dir, 'common', 'inc'),
     os.path.join(root_dir, 'util', 'inc'),
 ])
@@ -43,22 +41,18 @@ connectivity_env.AppendUnique(CPPPATH=[
 if ca_os not in ['darwin', 'ios', 'windows']:
     connectivity_env.AppendUnique(LINKFLAGS=['-Wl,--no-undefined'])
 
-# Getting common source files
+# Pick up source files from ../common
 connectivity_env.SConscript(root_dir + '/common/SConscript',
                             exports='connectivity_env')
 
-# Getting util source files
+# Pick up source files from ../util
 connectivity_env.SConscript(root_dir + '/util/SConscript',
                             exports='connectivity_env')
 
-build_dir = connectivity_env.get('BUILD_DIR')
-
-connectivity_env.AppendUnique(
-    CA_SRC=[os.path.join(ca_path, 'adapter_util/caadapterutils.c')])
+src_files = [File('adapter_util/caadapterutils.c'),]
 
 if (('BLE' in ca_transport) or ('ALL' in ca_transport)):
-    connectivity_env.AppendUnique(
-        CA_SRC=[os.path.join(ca_path, 'adapter_util/cafragmentation.c')])
+    src_files.append(File('adapter_util/cafragmentation.c'))
 
 # Build mbedtls as ocstack uses hash functions from mbedcrypto.lib.
 tls_path = 'extlibs/mbedtls'
@@ -78,31 +72,26 @@ if connectivity_env.get('SECURED') == '1':
     connectivity_env.AppendUnique(
         CPPPATH=['#/resource/c_common/octimer/include'])
     connectivity_env.AppendUnique(
-        CPPPATH=[src_dir + '/resource/csdk/security/include'])
+        CPPPATH=['#/resource/csdk/security/include'])
     connectivity_env.AppendUnique(
         CPPPATH=[os.path.join(root_dir, 'external/inc')])
-    if ca_os != 'tizen' or os.path.exists(root_dir + '/' + tls_path) == False:
-        connectivity_env.AppendUnique(CA_SRC=[
-            os.path.join(ca_path, 'adapter_util/ca_adapter_net_ssl.c')
-        ])
-
-ca_common_src = None
+    if ca_os != 'tizen' or not os.path.exists(root_dir + '/' + tls_path):
+        src_files.append(File('adapter_util/ca_adapter_net_ssl.c'))
 
 if with_ra_ibb:
     connectivity_env.SConscript('#/extlibs/wksxmppxep/SConscript')
 
 if ca_os == 'arduino':
-    print("setting WITH_ARDUINO")
-    ca_common_src = [
+    src_files.extend([File(src) for src in (
         'caconnectivitymanager.c',
         'cainterfacecontroller.c',
         'camessagehandler.c',
         'canetworkconfigurator.c',
         'caprotocolmessage.c',
         'caretransmission.c',
-    ]
+    )])
 else:
-    ca_common_src = [
+    src_files.extend([File(src) for src in (
         'caconnectivitymanager.c',
         'cainterfacecontroller.c',
         'camessagehandler.c',
@@ -110,14 +99,11 @@ else:
         'caprotocolmessage.c',
         'caqueueingthread.c',
         'caretransmission.c',
-    ]
+    )])
     if (('IP' in ca_transport) or ('ALL' in ca_transport)):
-        connectivity_env.AppendUnique(
-            CA_SRC=[os.path.join(ca_path, 'cablockwisetransfer.c')])
+        src_files.append(File('cablockwisetransfer.c'))
 
-ca_common_src = [os.path.join(ca_path, d) for d in ca_common_src]
-
-connectivity_env.AppendUnique(CA_SRC=ca_common_src)
+connectivity_env.AppendUnique(CA_SRC=src_files)
 
 transports = set()
 if 'ALL' in ca_transport:

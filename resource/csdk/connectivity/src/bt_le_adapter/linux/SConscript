@@ -22,6 +22,8 @@ Import('connectivity_env')
 
 import os.path
 
+connectivity_env.PrependUnique(CPPPATH=[Dir('.')])
+
 # Top-level build (variant) directory.
 root_build_dir = connectivity_env['BUILD_DIR']
 
@@ -85,7 +87,7 @@ dbus_introspection_xml = {
 
 # The source files to be compiled as part of the connectivity
 # abstraction library.
-src_files = [
+src_files = [File(src) for src in (
     'characteristic.c',
     'descriptor.c',
     'service.c',
@@ -97,8 +99,7 @@ src_files = [
     'server.c',
     'recv.c',
     'caleinterface.c'
-]
-src_files = [os.path.join(this_src_dir, src_file) for src_file in src_files]
+)]
 
 glue_files = []
 updated_files = []
@@ -152,8 +153,8 @@ def add_pragma_function(target, source, env):
                 out_f.write('#pragma GCC diagnostic pop\n')
     return None
 
-bldr = Builder(action=add_pragma_function, suffix = '.c', src_suffix = '.c')
-env_foo = Environment( BUILDERS={'AddPragma': bldr}, tools = ['default', 'textfile'] )
+bldr = Builder(action=add_pragma_function, suffix='.c', src_suffix='.c')
+env_foo = Environment(BUILDERS={'AddPragma': bldr}, tools=['default', 'textfile'])
 
 # Add the pragmas to the generated files place them in the updated directory. Add those files to the list of source files.
 # The generated files produce many unused-parameter warnings.  This is to prevent those warnings when the generated files
