@@ -19,6 +19,11 @@ if env.get('RELEASE'):
 else:
     env.AppendUnique(CCFLAGS=['-g'])
 
+# Test Coverage Flags and Library (if RELEASE=0)
+if not env.get('RELEASE'):
+    env.AppendUnique(LIBS=['gcov'])
+    env.AppendUnique(CCFLAGS=['--coverage', '-fPIC', '-O0'])
+
 env.AppendUnique(CPPDEFINES=['WITH_POSIX', '__linux__'])
 env.AppendUnique(CFLAGS=['-std=gnu99'])
 env.AppendUnique(CCFLAGS=['-Wall', '-Wextra', '-fPIC'])

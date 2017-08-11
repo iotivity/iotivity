@@ -46,8 +46,11 @@ if target_os in ['linux']:
 * installed!                                                                  *
 *******************************************************************************
 ''' % target_arch
-
-        conf = Configure(lib_env.Clone(LIBS=[]))
+        #Test Coverage Flags and Library (if RELEASE=0)
+        if not env.get('RELEASE'):
+            conf = Configure(lib_env.Clone(LIBS=['gcov']))
+        else:
+            conf = Configure(lib_env.Clone(LIBS=[]))
 
         if target_os not in ['tizen']:
             if not conf.CheckLib('boost_thread', language='C++'):
