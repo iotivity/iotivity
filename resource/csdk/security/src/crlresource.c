@@ -49,7 +49,7 @@
 #define CRL_DEFAULT_THIS_UPDATE     "150101000000Z"
 #define CRL_DEFAULT_LAST_UPDATE     "20150701000000"
 #define CRL_DEFAULT_CRL_DATA        "-"
-#define CRL_MAP_SIZE                (3)
+#define CRL_MAP_SIZE                (5)
 
 static OCResourceHandle     gCrlHandle  = NULL;
 static OicSecCrl_t         *gCrl        = NULL;
@@ -255,6 +255,32 @@ OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add last Update value");
     }
 
+    //RT -- Mandatory
+    CborEncoder rtArray;
+    cborEncoderResult = cbor_encode_text_string(&crlMap, OIC_JSON_RT_NAME,
+            strlen(OIC_JSON_RT_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
+    cborEncoderResult = cbor_encoder_create_array(&crlMap, &rtArray, 1);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Value.");
+    cborEncoderResult = cbor_encode_text_string(&rtArray, OIC_RSRC_TYPE_SEC_CRL,
+            strlen(OIC_RSRC_TYPE_SEC_CRL));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding RT Value.");
+    cborEncoderResult = cbor_encoder_close_container(&crlMap, &rtArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RT.");
+
+    //IF-- Mandatory
+    CborEncoder ifArray;
+    cborEncoderResult = cbor_encode_text_string(&crlMap, OIC_JSON_IF_NAME,
+       strlen(OIC_JSON_IF_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+    cborEncoderResult = cbor_encoder_create_array(&crlMap, &ifArray, 1);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
+    cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
+            strlen(OC_RSRVD_INTERFACE_DEFAULT));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding IF Value.");
+    cborEncoderResult = cbor_encoder_close_container(&crlMap, &ifArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing IF.");
+
     cborEncoderResult = cbor_encoder_close_container(&encoder, &crlMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add close Crl map");
 
@@ -387,9 +413,9 @@ OCStackResult UpdateCRLResource(OicSecCrl_t *crl)
     uint8_t *payload = NULL;
     size_t size = 0;
 
-    if ( NULL == gCrl && OC_STACK_OK != InitCRLResource() )
+    if ( NULL == gCrl )
     {
-        OIC_LOG(ERROR, TAG, "Can't init global crl");
+        OIC_LOG(ERROR, TAG, "Crl resourse isn't initialized");
         return OC_STACK_ERROR;
     }
 
@@ -423,14 +449,52 @@ OCStackResult UpdateCRLResource(OicSecCrl_t *crl)
     return UpdateSecureResourceInPS(OIC_CBOR_CRL_NAME, payload, size);
 }
 
+static bool ValidateQuery(const char * query)
+{
+    OIC_LOG (DEBUG, TAG, "In ValidateQuery");
+
+    bool bInterfaceQry = false;      // does querystring contains 'if' query ?
+    bool bInterfaceMatch = false;    // does 'if' query matches with oic.if.baseline ?
+
+    OicParseQueryIter_t parseIter = {.attrPos = NULL};
+
+    ParseQueryIterInit((unsigned char*)query, &parseIter);
+
+    while (GetNextQuery(&parseIter))
+    {
+        if (strncasecmp((char *)parseIter.attrPos, OC_RSRVD_INTERFACE, parseIter.attrLen) == 0)
+        {
+            bInterfaceQry = true;
+            if ((strncasecmp((char *)parseIter.valPos, OC_RSRVD_INTERFACE_DEFAULT, parseIter.valLen) == 0))
+            {
+                bInterfaceMatch = true;
+            }
+            return (bInterfaceQry ? bInterfaceMatch: false);
+        }
+    }
+
+    return false;
+}
+
 static OCEntityHandlerResult HandleCRLGetRequest(const OCEntityHandlerRequest *ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_OK;
     uint8_t* payload = NULL;
     size_t size = 0;
 
-    if ( NULL == gCrl && OC_STACK_OK != InitCRLResource() )
+    if (ehRequest->query)
     {
+        OIC_LOG_V(DEBUG,TAG,"query:%s",ehRequest->query);
+        OIC_LOG(DEBUG, TAG, "HandleCRLGetRequest processing query");
+        if (!ValidateQuery(ehRequest->query))
+        {
+            ehRet = OC_EH_ERROR;
+        }
+    }
+
+    if ( NULL == gCrl )
+    {
+        OIC_LOG(ERROR, TAG, "Crl resourse isn't initialized");
         ehRet = OC_EH_ERROR;
     }
 
