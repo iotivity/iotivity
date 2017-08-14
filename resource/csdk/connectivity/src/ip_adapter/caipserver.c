@@ -156,6 +156,18 @@ static void CAEventReturned(CASocketFd_t socket);
 
 static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags);
 
+static void CACloseFDs()
+{
+#if !defined(WSA_WAIT_EVENT_0)
+    if (caglobals.ip.shutdownFds[0] != -1)
+    {
+        close(caglobals.ip.shutdownFds[0]);
+        caglobals.ip.shutdownFds[0] = -1;
+    }
+#endif
+    CADeInitializeIPGlobals();
+}
+
 static void CAReceiveHandler(void *data)
 {
     (void)data;
@@ -164,6 +176,7 @@ static void CAReceiveHandler(void *data)
     {
         CAFindReadyMessage();
     }
+    CACloseFDs();
 }
 
 #define CLOSE_SOCKET(TYPE) \
@@ -1010,13 +1023,13 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
 
 void CAIPStopServer()
 {
-    caglobals.ip.started = false;
     caglobals.ip.terminate = true;
 
 #if !defined(WSA_WAIT_EVENT_0)
     if (caglobals.ip.shutdownFds[1] != -1)
     {
         close(caglobals.ip.shutdownFds[1]);
+        caglobals.ip.shutdownFds[1] = -1;
         // receive thread will stop immediately
     }
     else
@@ -1030,6 +1043,12 @@ void CAIPStopServer()
         OIC_LOG_V(DEBUG, TAG, "set shutdown event failed: %d", WSAGetLastError());
     }
 #endif
+
+    if (!caglobals.ip.started)
+    { // Close fd's since receive handler was not started
+        CACloseFDs();
+    }
+    caglobals.ip.started = false;
 }
 
 void CAWakeUpForChange()
