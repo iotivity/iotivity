@@ -984,11 +984,11 @@ namespace OIC
                 {
                     return WIFI_11N;
                 }
-                else if(0 == wifiMode.compare("AC"))
+                else /* if(0 == wifiMode.compare("AC")) */
                 {
                     return WIFI_11AC;
                 }
-                return WiFi_EOF;
+                //return WiFi_EOF;
             }
 
             WIFI_FREQ getWiFiFreqAsEnum(std::vector<std::string> wifiFreqList) const

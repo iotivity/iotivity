@@ -158,9 +158,14 @@ public:
 
     ESResult setDeviceProperty()
     {
-        ESDeviceProperty deviceProperty = {
-            {{WIFI_11G, WiFi_EOF}, WIFI_5G}, {"Test Device"}
-        };
+        ESDeviceProperty deviceProperty =
+            {
+                {
+                    { WIFI_11G, WIFI_11N, WIFI_11AC }, 3,
+                    { WIFI_24G, WIFI_5G }, 2
+                },
+                { "Test Device"}
+            };
 
         return ESSetDeviceProperty(&deviceProperty);
     }
@@ -317,7 +322,7 @@ TEST_F(EasysetupEnrolleeTest, DevicePropertyIsWellConstructedInResponsePayload)
             if(status->getESResult() == ES_OK)
             {
                 EnrolleeConf conf = status->getEnrolleeConf();
-                if(conf.getWiFiModes().at(0) == WIFI_11G &&
+                if(conf.getWiFiModes().size() > 0 && conf.getWiFiModes().at(0) == WIFI_11G &&
                     conf.getWiFiFreq() == WIFI_5G &&
                     !strcmp(conf.getDeviceName().c_str(), "Test Device"))
                 {

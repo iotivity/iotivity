@@ -82,8 +82,10 @@ typedef struct
      */
     struct
     {
-        WIFI_MODE mode[NUM_WIFIMODE];
-        WIFI_FREQ freq;
+        WIFI_MODE supportedMode[NUM_WIFIMODE];
+        uint8_t numSupportedMode;
+        WIFI_FREQ supportedFreq[NUM_WIFIFREQ];
+        uint8_t numSupportedFreq;
     } WiFi;
 
     /**

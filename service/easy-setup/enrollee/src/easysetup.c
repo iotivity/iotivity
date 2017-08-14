@@ -42,7 +42,6 @@
 static bool gIsSecured = false;
 
 static ESProvisioningCallbacks gESProvisioningCb;
-static ESDeviceProperty gESDeviceProperty;
 
 void ESConnectRequestCallback(ESResult esResult, ESConnectRequest *eventData)
 {
@@ -207,19 +206,6 @@ ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty)
         OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESSetDeviceProperty Error");
         return ES_ERROR;
     }
-
-    int modeIdx = 0;
-    while((deviceProperty->WiFi).mode[modeIdx] != WiFi_EOF)
-    {
-        (gESDeviceProperty.WiFi).mode[modeIdx] = (deviceProperty->WiFi).mode[modeIdx];
-        OIC_LOG_V(INFO_PRIVATE, ES_ENROLLEE_TAG, "WiFi Mode : %d", (gESDeviceProperty.WiFi).mode[modeIdx]);
-        modeIdx ++;
-    }
-    (gESDeviceProperty.WiFi).freq = (deviceProperty->WiFi).freq;
-    OIC_LOG_V(INFO_PRIVATE, ES_ENROLLEE_TAG, "WiFi Freq : %d", (gESDeviceProperty.WiFi).freq);
-
-    OICStrcpy((gESDeviceProperty.DevConf).deviceName, OIC_STRING_MAX_VALUE, (deviceProperty->DevConf).deviceName);
-    OIC_LOG_V(INFO_PRIVATE, ES_ENROLLEE_TAG, "Device Name : %s", (gESDeviceProperty.DevConf).deviceName);
 
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetDeviceProperty OUT");
     return ES_OK;

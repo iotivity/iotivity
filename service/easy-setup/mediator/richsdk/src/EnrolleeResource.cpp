@@ -206,7 +206,7 @@ namespace OIC
             HeaderOptions headerOptions = m_ocResource->getServerHeaderOptions();
             if (headerOptions.size() == 0)
             {
-                OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "No header option exists");
+                OIC_LOG (ERROR, ES_REMOTE_ENROLLEE_RES_TAG, "No header option exists");
             }
             else
             {
@@ -217,8 +217,12 @@ namespace OIC
                         size_t dataLength = it->getOptionData().length();
                         if (dataLength == 0)
                         {
-                            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "GetOCFServerVersion: version not found!");
-                            return 0;
+                            OIC_LOG (ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
+                                "GetOCFServerVersion: version value not found!");
+
+                            // Content Format Version Header Option ID exist but not value.
+                            // As OIC server don't use this header option ID, assuming as OCF Server.
+                            return 1;
                         }
 
                         int version = (it->getOptionData().c_str()[0]) * 256;

@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "resourcehandler.h"
+#include "internal/es_util.h"
 
 #include "ocpayload.h"
 #include "oic_string.h"
@@ -221,7 +222,9 @@ OCStackResult initWiFiConfResource(bool isSecured)
 {
     OCStackResult res = OC_STACK_ERROR;
 
-    g_ESWiFiConfResource.supportedFreq = WIFI_BOTH;
+    g_ESWiFiConfResource.supportedFreq[0] = WIFI_24G;
+    g_ESWiFiConfResource.supportedFreq[1] = WIFI_5G;
+    g_ESWiFiConfResource.numSupportedFreq=2;
     g_ESWiFiConfResource.supportedMode[0] = WIFI_11A;
     g_ESWiFiConfResource.supportedMode[1] = WIFI_11B;
     g_ESWiFiConfResource.supportedMode[2] = WIFI_11G;
@@ -398,12 +401,12 @@ void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* in
 
 void updateWiFiConfResource(OCRepPayload* input)
 {
-    ESWiFiConfData* wiFiData = (ESWiFiConfData*)OICMalloc(sizeof(ESWiFiConfData));
+    ESWiFiConfData* wiFiData = (ESWiFiConfData*) OICMalloc(sizeof(ESWiFiConfData));
 
     if (wiFiData == NULL)
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "OICMalloc is failed");
-        return ;
+        return;
     }
 
     memset(wiFiData->ssid, 0, OIC_STRING_MAX_VALUE);
@@ -417,7 +420,8 @@ void updateWiFiConfResource(OCRepPayload* input)
     {
         OICStrcpy(g_ESWiFiConfResource.ssid, sizeof(g_ESWiFiConfResource.ssid), ssid);
         OICStrcpy(wiFiData->ssid, sizeof(wiFiData->ssid), ssid);
-        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESWiFiConfResource.ssid : %s", g_ESWiFiConfResource.ssid);
+        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESWiFiConfResource.ssid : %s",
+                g_ESWiFiConfResource.ssid);
     }
 
     char* cred = NULL;
@@ -425,23 +429,38 @@ void updateWiFiConfResource(OCRepPayload* input)
     {
         OICStrcpy(g_ESWiFiConfResource.cred, sizeof(g_ESWiFiConfResource.cred), cred);
         OICStrcpy(wiFiData->pwd, sizeof(wiFiData->pwd), cred);
-        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESWiFiConfResource.cred %s", g_ESWiFiConfResource.cred);
+        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESWiFiConfResource.cred %s",
+                g_ESWiFiConfResource.cred);
     }
 
-    int64_t authType = -1;
-    if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_AUTHTYPE, &authType))
+    bool validAuthType = false;
+    char *authType = NULL;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHTYPE, &authType))
     {
-        g_ESWiFiConfResource.authType = authType;
-        wiFiData->authtype = g_ESWiFiConfResource.authType;
-        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESWiFiConfResource.authType %u", g_ESWiFiConfResource.authType);
+        WIFI_AUTHTYPE tmp;
+        validAuthType = WiFiAuthTypeStringToEnum(authType, &tmp);
+        if (validAuthType == true)
+        {
+            g_ESWiFiConfResource.authType = tmp;
+            wiFiData->authtype = g_ESWiFiConfResource.authType;
+            OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESWiFiConfResource.authType %u",
+                    g_ESWiFiConfResource.authType);
+        }
     }
 
-    int64_t encType = -1;
-    if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_ENCTYPE, &encType))
+    bool validEncType = false;
+    char *encType = NULL;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_ENCTYPE, &encType))
     {
-        g_ESWiFiConfResource.encType = encType;
-        wiFiData->enctype = g_ESWiFiConfResource.encType;
-        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESWiFiConfResource.encType %u", g_ESWiFiConfResource.encType);
+        WIFI_ENCTYPE tmp;
+        validEncType = WiFiEncTypeStringToEnum(encType, &tmp);
+        if (validEncType == true)
+        {
+            g_ESWiFiConfResource.encType = tmp;
+            wiFiData->enctype = g_ESWiFiConfResource.encType;
+            OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESWiFiConfResource.encType %u",
+                    g_ESWiFiConfResource.encType);
+        }
     }
 
     if (gReadUserdataCb)
@@ -449,7 +468,7 @@ void updateWiFiConfResource(OCRepPayload* input)
         gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_WIFICONF, &wiFiData->userdata);
     }
 
-    if (ssid || cred || authType!= -1 || encType != -1)
+    if (ssid || cred || validAuthType || validEncType)
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "Send WiFiConfRsrc Callback To ES");
 
@@ -469,6 +488,10 @@ void updateWiFiConfResource(OCRepPayload* input)
         OIC_LOG(DEBUG, ES_RH_TAG, "Enrollee doesn't have any observer.");
     }
 
+    OICFree(encType);
+    OICFree(authType);
+    OICFree(cred);
+    OICFree(ssid);
     OICFree(wiFiData);
 }
 
@@ -662,32 +685,33 @@ OCRepPayload* constructResponseOfWiFiConf(char *interface)
         OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_WIFICONF);
     }
 
-    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {g_ESWiFiConfResource.numMode, 0, 0};
-    int64_t *modes_64 = (int64_t *)OICMalloc(g_ESWiFiConfResource.numMode * sizeof(int64_t));
-    if (!modes_64)
-    {
-        OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
-        return NULL;
-    }
-
-    for (int i = 0 ; i < g_ESWiFiConfResource.numMode ; ++i)
-    {
-        modes_64[i] = g_ESWiFiConfResource.supportedMode[i];
-    }
-
     // Do not add Read Only Properties when using OC_RSRVD_INTERFACE_READ_WRITE
     if (strcmp(interface, OC_RSRVD_INTERFACE_READ_WRITE) != 0)
     {
-        OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIMODE, (int64_t *) modes_64,
-                dimensions);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_SUPPORTEDWIFIFREQ,
-                g_ESWiFiConfResource.supportedFreq);
+        size_t dimensionsModes[MAX_REP_ARRAY_DEPTH] = { g_ESWiFiConfResource.numMode, 0, 0 };
+        const char *modes[NUM_WIFIMODE] = { 0, };
+        for (int i = 0; i < g_ESWiFiConfResource.numMode; ++i)
+        {
+            modes[i] = WiFiModeEnumToString(g_ESWiFiConfResource.supportedMode[i]);
+        }
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIMODE, &modes[0],
+                dimensionsModes);
+
+        size_t dimensionsFreq[MAX_REP_ARRAY_DEPTH] = { g_ESWiFiConfResource.numSupportedFreq, 0, 0 };
+        const char *freq[NUM_WIFIFREQ] = { 0, };
+        for (int i = 0; i < g_ESWiFiConfResource.numSupportedFreq; ++i)
+        {
+            freq[i] = WiFiFreqEnumToString(g_ESWiFiConfResource.supportedFreq[i]);
+        }
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIFREQ, freq, dimensionsFreq);
     }
 
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_SSID, g_ESWiFiConfResource.ssid);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CRED, g_ESWiFiConfResource.cred);
-    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_AUTHTYPE, (int) g_ESWiFiConfResource.authType);
-    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ENCTYPE, (int) g_ESWiFiConfResource.encType);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHTYPE,
+            WiFiAuthTypeEnumToString(g_ESWiFiConfResource.authType));
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_ENCTYPE,
+            WiFiEncTypeEnumToString(g_ESWiFiConfResource.encType));
 
     if (gWriteUserdataCb)
     {
@@ -1642,17 +1666,26 @@ OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty)
 {
     OIC_LOG(DEBUG, ES_RH_TAG, "SetDeviceProperty IN");
 
-    g_ESWiFiConfResource.supportedFreq = (deviceProperty->WiFi).freq;
-    OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "WiFi Freq : %d", g_ESWiFiConfResource.supportedFreq);
-
-    int modeIdx = 0;
-    while ((deviceProperty->WiFi).mode[modeIdx] != WiFi_EOF)
+    if (deviceProperty->WiFi.numSupportedMode > NUM_WIFIMODE
+            || deviceProperty->WiFi.numSupportedFreq > NUM_WIFIFREQ)
     {
-        g_ESWiFiConfResource.supportedMode[modeIdx] = (deviceProperty->WiFi).mode[modeIdx];
-        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "WiFi Mode : %d", g_ESWiFiConfResource.supportedMode[modeIdx]);
-        modeIdx ++;
+        OIC_LOG(ERROR, ES_RH_TAG, "SetDeviceProperty: Invalid Input Param");
+        return OC_STACK_INVALID_PARAM;
     }
-    g_ESWiFiConfResource.numMode = modeIdx;
+
+    g_ESWiFiConfResource.numSupportedFreq = deviceProperty->WiFi.numSupportedFreq;
+    for (uint8_t i = 0; i < g_ESWiFiConfResource.numSupportedFreq; ++i)
+    {
+        g_ESWiFiConfResource.supportedFreq[i] = (deviceProperty->WiFi).supportedFreq[i];
+        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "WiFi Freq : %d", g_ESWiFiConfResource.supportedFreq[i]);
+    }
+
+    g_ESWiFiConfResource.numMode = deviceProperty->WiFi.numSupportedMode;
+    for (uint8_t i = 0; i < g_ESWiFiConfResource.numMode; ++i)
+    {
+        g_ESWiFiConfResource.supportedMode[i] = (deviceProperty->WiFi).supportedMode[i];
+        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "WiFi Mode : %d", g_ESWiFiConfResource.supportedMode[i]);
+    }
 
     OICStrcpy(g_ESDevConfResource.devName, OIC_STRING_MAX_VALUE, (deviceProperty->DevConf).deviceName);
     OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "Device Name : %s", g_ESDevConfResource.devName);

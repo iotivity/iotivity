@@ -200,9 +200,14 @@ void SetDeviceInfo()
 {
     printf("SetDeviceInfo IN\n");
 
-    ESDeviceProperty deviceProperty = {
-        {{WIFI_11G, WIFI_11N, WIFI_11AC, WiFi_EOF}, WIFI_5G}, {"Test Device"}
-    };
+    ESDeviceProperty deviceProperty =
+        {
+            {
+                { WIFI_11G, WIFI_11N, WIFI_11AC }, 3,
+                { WIFI_24G, WIFI_5G }, 2
+            },
+            { "Test Device"}
+        };
 
     // Set user properties if needed
     char userValue_str[] = "user_str";
