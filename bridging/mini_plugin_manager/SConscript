@@ -21,13 +21,9 @@
 # Mini Plugin Manager build script
 ##
 
-import os.path
-
 Import('env')
 
 target_os = env.get('TARGET_OS')
-src_dir = env.get('SRC_DIR')
-bridging_path = os.path.join(src_dir, 'bridging')
 
 manager_env = env.Clone()
 
@@ -37,16 +33,17 @@ print "Reading MPM script"
 # Build flags
 ######################################################################
 manager_env.PrependUnique(CPPPATH=[
-                            os.path.join(src_dir, 'resource', 'c_common'),
-                            os.path.join(src_dir, 'resource', 'c_common', 'ocrandom', 'include'),
-                            os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
-                            os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
-                            os.path.join(src_dir, 'extlibs', 'rapidjson', 'include', 'rapidjson'),
-                            os.path.join(bridging_path, 'include')
+    '#/resource/include',
+    '#/bridging/include',
+    '#/resource/c_common',
+    '#/resource/c_common/ocrandom/include',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/extlibs/rapidjson/include/rapidjson',
 ])
 
 if target_os not in ['arduino', 'windows']:
-        manager_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
+    manager_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
 manager_env.AppendUnique(RPATH=[manager_env.get('BUILD_DIR')])
 manager_env.PrependUnique(LIBS=['mpmcommon'])
@@ -54,19 +51,12 @@ manager_env.PrependUnique(LIBS=['mpmcommon'])
 #####################################################################
 # Source files and Target(s)
 ######################################################################
-minipluginmanager_src = [
-    os.path.join(bridging_path, 'mini_plugin_manager',
-                 'miniPluginManager.cpp'),
-]
-
-manager_env.AppendUnique(MINIPLUGINMANAGER_SRC=minipluginmanager_src)
+minipluginmanager_src = ['miniPluginManager.cpp']
 
 if target_os in ['android', 'tizen']:
-        mpmlib = manager_env.SharedLibrary('minipluginmanager',
-                                           manager_env.get('MINIPLUGINMANAGER_SRC'))
+    mpmlib = manager_env.SharedLibrary('minipluginmanager', minipluginmanager_src)
 else:
-        mpmlib = manager_env.StaticLibrary('minipluginmanager',
-                                           manager_env.get('MINIPLUGINMANAGER_SRC'))
+    mpmlib = manager_env.StaticLibrary('minipluginmanager', minipluginmanager_src)
 manager_env.InstallTarget(mpmlib, 'minipluginmanager')
 manager_env.UserInstallTargetLib(mpmlib, 'minipluginmanager')
 
