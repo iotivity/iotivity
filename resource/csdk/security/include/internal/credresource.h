@@ -265,6 +265,12 @@ CborError DeserializeEncodingFromCbor(CborValue *rootMap, OicSecKey_t *value);
 CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value);
 bool IsSameSecOpt(const OicSecOpt_t* sk1, const OicSecOpt_t* sk2);
 bool IsSameSecKey(const OicSecKey_t* sk1, const OicSecKey_t* sk2);
+/**
+ * Delete OicSecCred_t
+ *
+ * @param[in] cred the pointer to credential usage.
+ */
+void FreeCred(OicSecCred_t *cred);
 
 #ifdef __cplusplus
 }

@@ -348,6 +348,18 @@ OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
  */
 OCStackResult SRPReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
                                      size_t *chainSize);
+/**
+ * Function for certificate provisioning.
+ * @param[in] ctx Application context to be returned in result callback.
+ * @param[in] pDev Selected target device.
+ * @param[in] pemCert the certificate in PEM.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request receives a response from resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPProvisionCertificate(void *ctx, const OCProvisionDev_t *pDev,
+        const char* pemCert, OCProvisionResultCB resultCallback);
+
 #ifdef __cplusplus
 }
 #endif

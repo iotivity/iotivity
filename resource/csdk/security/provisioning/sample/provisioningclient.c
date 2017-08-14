@@ -1085,20 +1085,27 @@ static int provisionCert(void)
 
     // select device for provisioning certificate
     int dev_num = 0;
-    for (; ; )
+    if (g_own_cnt == 1)
     {
-        printf("   > Enter Device Number, for certificate provisioning: ");
-        for (int ret = 0; 1 != ret; )
+        dev_num = 1;
+    }
+    else
+    {
+        for (; ; )
         {
-            ret = scanf("%d", &dev_num);
-            for (; 0x20 <= getchar(); );  // for removing overflow garbages
+            printf("   > Enter Device Number, for certificate provisioning: ");
+            for (int ret = 0; 1 != ret; )
+            {
+                ret = scanf("%d", &dev_num);
+                for (; 0x20 <= getchar(); );  // for removing overflow garbages
                                           // '0x20<=code' is character region
+            }
+            if (0<dev_num && g_own_cnt >= dev_num)
+            {
+                break;
+            }
+            printf("     Entered Wrong Number. Please Enter Again\n");
         }
-        if (0<dev_num && g_own_cnt >= dev_num)
-        {
-            break;
-        }
-        printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
     OCProvisionDev_t* targetDevice = getDevInst((const OCProvisionDev_t*)g_own_list, dev_num);

@@ -277,7 +277,7 @@ exit:
 /**
  * This function frees OicSecCred_t object's fields and object itself.
  */
-static void FreeCred(OicSecCred_t *cred)
+void FreeCred(OicSecCred_t *cred)
 {
     if(NULL == cred)
     {
@@ -310,6 +310,8 @@ static void FreeCred(OicSecCred_t *cred)
     //Clean eowner
     OICFree(cred->eownerID);
 #endif
+
+    cred->next = NULL;
 
     //Clean Cred node itself
     OICFree(cred);
@@ -1338,6 +1340,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
 
     OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(*cred));
     VERIFY_NOT_NULL(TAG, cred, ERROR);
+    cred->next = NULL;
 
     //CredId is assigned before appending new cred to the existing
     //credential list and updating svr database in AddCredential().
