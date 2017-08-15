@@ -97,7 +97,7 @@
     "doxm": {
         "oxms": [0],
         "oxmsel": 0,
-        "sct": 1,
+        "sct": 9,
         "owned": false,
         "deviceuuid": "756E6B6E-6F77-6564-4465-766963654964",
         "devowneruuid": "",
