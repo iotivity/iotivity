@@ -820,10 +820,11 @@ OCEntityHandlerResult processGetRequest(PIPluginBase * plugin,
     uint32_t attributeListIndex = 0;
     OCStackResult stackResult = OC_STACK_OK;
     PIResource_Zigbee * piResource = NULL;
+    PIResourceBase * piResourceBase = &piResource->header;
 
     AttributeList attributeList = { 0, (CIECommandMask) 0,
         .list[0] = { NULL, NULL, OIC_ATTR_NULL, ZB_NULL, { .i = 0 } } };
-    stackResult = GetResourceFromHandle(plugin, (PIResource**) (&piResource),
+    stackResult = GetResourceFromHandle(plugin, &piResourceBase,
                         ehRequest->resource);
     if (stackResult != OC_STACK_OK)
     {
@@ -1000,6 +1001,7 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
     }
     OCStackResult stackResult = OC_STACK_OK;
     PIResource_Zigbee *piResource = NULL;
+    PIResourceBase * piResourceBase = &piResource->header;
     AttributeList attributeList = {
         0,
         (CIECommandMask) 0,
@@ -1007,7 +1009,7 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
     };
 
     stackResult = GetResourceFromHandle(plugin,
-                                        ((PIResource **) (&piResource)),
+                                        &piResourceBase,
                                         ehRequest->resource);
     if (stackResult != OC_STACK_OK)
     {
