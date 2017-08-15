@@ -23,20 +23,15 @@
 ##
 
 from tools.scons.RunTest import run_test
-
 Import('env')
-
-if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS=['-Os'])
-    env.AppendUnique(CPPDEFINES=['NDEBUG'])
-else:
-    env.AppendUnique(CCFLAGS=['-g'])
-
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
+
+if lib_env.get('RELEASE'):
+    lib_env.AppendUnique(CCFLAGS = ['-Os'])
+else:
+    lib_env.AppendUnique(CCFLAGS = ['-g'])
 
 ######################################################################
 #unit test setting
@@ -49,8 +44,6 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-
-notification_wrapper_test_env.AppendUnique(LIBPATH=[lib_env.get('BUILD_DIR')])
 notification_wrapper_test_env.AppendUnique(LIBS=[
     'connectivity_abstraction',
     'oc',
@@ -58,7 +51,6 @@ notification_wrapper_test_env.AppendUnique(LIBS=[
     'oc_logger',
     'coap',
     'resource_directory',
-
 ])
 
 if env.get('WITH_TCP') == True:
@@ -73,17 +65,17 @@ if target_os not in ['windows', 'winrt']:
 
 notification_wrapper_test_env.AppendUnique(LINKFLAGS=['-Wl,--no-as-needed'])
 
-notification_wrapper_test_env.AppendUnique(CXXFLAGS=['-pthread'])
-notification_wrapper_test_env.AppendUnique(LIBS=['pthread'])
+notification_wrapper_test_env.AddPthreadIfNeeded()
 
 notification_wrapper_test_env.PrependUnique(CPPPATH=[
     '#/extlibs/hippomocks/hippomocks',
-    '../provider/inc',
-    '../consumer/inc',
-    '../common',
-    '../../include',
-    '../../src/provider',
-    '../../src/consumer',
+    '#/service/notification/cpp-wrapper/provider/inc',
+    '#/service/notification/cpp-wrapper/consumer/inc',
+    '#/service/notification/cpp-wrapper/common',
+    '#/service/notification/include',
+    '#/service/notification/src/provider',
+    '#/service/notification/src/consumer',
+    '#/resource/c_common',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
     '#/resource/include',
@@ -108,7 +100,7 @@ notification_consumer_wrapper_test = notification_consumer_wrapper_test_env.Prog
     'notification_consumer_wrapper_test',
     notification_consumer_wrapper_test_src)
 Alias("notification_consumer_wrapper_test", notification_consumer_wrapper_test)
-env.AppendTarget('notification_consumer_wrapper_test')
+notification_consumer_wrapper_test_env.AppendTarget('notification_consumer_wrapper_test')
 
 notification_consumer_wrapper_test_src = env.Glob(
     './NSConsumerServiceTest.cpp')
@@ -117,7 +109,7 @@ notification_consumer_wrapper_internaltest = notification_consumer_wrapper_test_
     notification_consumer_wrapper_test_src)
 Alias("notification_consumer_wrapper_internaltest",
       notification_consumer_wrapper_internaltest)
-env.AppendTarget('notification_consumer_wrapper_test')
+notification_consumer_wrapper_test_env.AppendTarget('notification_consumer_wrapper_test')
 
 notification_provider_wrapper_test_src = env.Glob(
     './NSProviderServiceTest2.cpp')
@@ -125,7 +117,7 @@ notification_provider_wrapper_test = notification_provider_wrapper_test_env.Prog
     'notification_provider_wrapper_test',
     notification_provider_wrapper_test_src)
 Alias("notification_provider_wrapper_test", notification_provider_wrapper_test)
-env.AppendTarget('notification_provider_wrapper_test')
+notification_provider_wrapper_test_env.AppendTarget('notification_provider_wrapper_test')
 
 notification_provider_wrapper_test_src = env.Glob(
     './NSProviderServiceTest.cpp')
@@ -134,7 +126,7 @@ notification_provider_wrapper_internaltest = notification_provider_wrapper_test_
     notification_provider_wrapper_test_src)
 Alias("notification_provider_wrapper_internaltest",
       notification_provider_wrapper_internaltest)
-env.AppendTarget('notification_provider_wrapper_test')
+notification_provider_wrapper_test_env.AppendTarget('notification_provider_wrapper_test')
 
 # TODO: Fix this test for more configs and remove this commented line
 if env.get('TEST') == '1':
