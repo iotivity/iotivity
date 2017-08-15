@@ -44,6 +44,9 @@ stacktest_env.PrependUnique(CPPPATH=[
     '../../connectivity/inc/pkix',
     '../../connectivity/external/inc',
     '../../../oc_logger/include',
+    '#resource/csdk/connectivity/inc',
+    '#resource/csdk/connectivity/lib/libcoap-4.1.1/include',
+    '#resource/csdk/connectivity/common/inc',
 ])
 
 stacktest_env.PrependUnique(LIBS=[
