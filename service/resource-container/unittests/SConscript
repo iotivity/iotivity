@@ -49,16 +49,12 @@ lib_env.AddMethod(filtered_glob, "FilteredGlob")
 
 if lib_env.get('RELEASE'):
     lib_env.AppendUnique(CCFLAGS=['-Os'])
-    lib_env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
     lib_env.AppendUnique(CCFLAGS=['-g'])
 
-if lib_env.get('LOGGING'):
-    lib_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 # Add third party libraries
 SConscript(src_dir + '/service/third_party_libs.scons', 'lib_env')
-
 container_gtest_env = lib_env.Clone()
 
 if int(containerJavaSupport):
@@ -86,15 +82,18 @@ if int(containerJavaSupport):
 ######################################################################
 container_gtest_env.AppendUnique(CPPPATH=[
     '#/extlibs',
-    '../include',
-    '../../resource-encapsulation/include',
-    '../../resource-encapsulation/src/common/utils/include',
-    '../bundle-api/include',
-    '../src',
+    '#/service/resource-container/include',
+    '#/service/resource-encapsulation/include',
+    '#/service/resource-encapsulation/src/common/utils/include',
+    '#/service/resource-container/bundle-api/include',
+    '#/service/resource-container/src',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/include',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
-    '#/resource/oc_logger/include'
+    '#/resource/oc_logger/include',
 ])
 
 if int(containerJavaSupport):
