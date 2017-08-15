@@ -95,10 +95,10 @@ OCEntityHandlerResult PluginInterfaceEntityHandler(OCEntityHandlerFlag flag,
     else
     {
         OIC_LOG_V(ERROR, TAG, "Error handling request %u", ehResult);
-        PIResource * piResource = NULL;
-        result = GetResourceFromHandle(plugin, &piResource, response->resourceHandle);
-        OIC_LOG_V(ERROR, TAG, "Deleting resource \"%s\" because of failed request.", piResource->uri);
-        result = DeleteResource(plugin, piResource);
+        PIResourceBase * piResourceBase = NULL;
+        result = GetResourceFromHandle(plugin, &piResourceBase, response->resourceHandle);
+        OIC_LOG_V(ERROR, TAG, "Deleting resource \"%s\" because of failed request.", piResourceBase->piResource.uri);
+        result = DeleteResource(plugin, piResourceBase);
         if(result != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, TAG, "Failed to delete resource after failed request.");

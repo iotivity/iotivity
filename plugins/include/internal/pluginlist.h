@@ -39,11 +39,11 @@ OCStackResult DeletePlugin(PIPluginBase * plugin);
 
 OCStackResult DeletePluginList();
 
-OCStackResult GetResourceFromHandle(PIPluginBase * plugin, PIResource ** piResource,
+OCStackResult GetResourceFromHandle(PIPluginBase * plugin, PIResourceBase ** piResourceBase,
                                     OCResourceHandle * resourceHandle);
 
 OCStackResult GetResourceFromZigBeeNodeId(PIPluginBase * plugin,
-                                          PIResource_Zigbee ** piResource,
+                                          PIResource_Zigbee ** piResourceBase,
                                           const char * nodeId,
                                           const char * endpointId,
                                           const char * clusterId);

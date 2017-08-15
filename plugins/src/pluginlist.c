@@ -82,10 +82,10 @@ OCStackResult DeletePluginList()
     return result;
 }
 
-OCStackResult GetResourceFromHandle(PIPluginBase * plugin, PIResource ** piResource,
+OCStackResult GetResourceFromHandle(PIPluginBase * plugin, PIResourceBase **piResourceBase,
                                     OCResourceHandle * resourceHandle)
 {
-    if (!plugin || !resourceHandle || !piResource)
+    if (!plugin || !resourceHandle || !piResourceBase)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -95,7 +95,7 @@ OCStackResult GetResourceFromHandle(PIPluginBase * plugin, PIResource ** piResou
     {
         if (out->piResource.resourceHandle == resourceHandle)
         {
-            *piResource = (PIResource *) out;
+            *piResourceBase = out;
             return OC_STACK_OK;
         }
     }
