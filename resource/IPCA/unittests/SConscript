@@ -32,30 +32,37 @@ target_os = ipcatest_env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-ipcatest_env.AppendUnique(CPPPATH = [
-        '#/resource/include',
-        '#/resource/oc_logger/include',
-        '#/resource/csdk/include',
-        '#/resource/csdk/stack/include',
-        '#/resource/csdk/security/include',
-        '#/resource/csdk/security/provisioning/include',
-        '#/resource/csdk/security/provisioning/include/internal',
-        '#/resource/csdk/stack/include/internal',
-        '#/resource/csdk/connectivity/api',
-        '#/resource/csdk/connectivity/external/inc',
-        '#/resource/csdk/ocsocket/include',
-        '#/resource/csdk/logger/include',
-        '#/resource/c_common/ocrandom/include',
-        '#/extlibs/boost/boost',
-        '#/extlibs/libcoap/libcoap/include',
-        '../inc',
-        '../src/inc'
-        ])
+ipcatest_env.AppendUnique(CPPPATH=[
+    '#/resource/include',
+    '#/resource/oc_logger/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/csdk/security/include',
+    '#/resource/csdk/security/provisioning/include',
+    '#/resource/csdk/security/provisioning/include/internal',
+    '#/resource/csdk/stack/include/internal',
+    '#/resource/csdk/connectivity/api',
+    '#/resource/csdk/connectivity/external/inc',
+    '#/resource/csdk/ocsocket/include',
+    '#/resource/csdk/logger/include',
+    '#/resource/c_common',
+    '#/resource/c_common/ocrandom/include',
+    '#/resource/c_common/octhread/include',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/c_common/oic_time/include',
+    '#/extlibs/boost/boost',
+    '#/extlibs/libcoap/libcoap/include',
+    '../inc',
+    '../src/inc',
+])
 
-ipcatest_env.PrependUnique(LIBS = [
+ipcatest_env.PrependUnique(LIBS=[
         'oc_logger_internal',
         'octbstack',
-        'ipca_static'
+        'ipca_static',
+        'logger',
+        'c_common',
         ])
 
 if use_iotivity == 1:
@@ -75,6 +82,7 @@ if use_iotivity == 1:
 
 if target_os in ['msys_nt', 'windows']:
     ipcatest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
+    ipcatest_env.AppendUnique(LIBS=['win_helper'])
 
 ######################################################################
 # Source files and Targets
