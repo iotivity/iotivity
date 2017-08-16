@@ -86,7 +86,7 @@ static OicSecDoxm_t gDefaultDoxm =
     &gDoxmDefaultOxm,       /* uint16_t *oxm */
     1,                      /* size_t oxmLen */
     OIC_RANDOM_DEVICE_PIN,  /* uint16_t oxmSel */
-    SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
+    SYMMETRIC_PAIR_WISE_KEY | SIGNED_ASYMMETRIC_KEY, /* OicSecCredType_t sct */
     false,                  /* bool owned */
     {.id = {0}},            /* OicUuid_t deviceID */
     false,                  /* bool dpc */

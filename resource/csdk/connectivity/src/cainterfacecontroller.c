@@ -409,7 +409,8 @@ CAResult_t CAInitializeAdapters(ca_thread_pool_t handle, CATransportAdapter_t tr
 
     // Initialize adapters and register callback.
 #ifdef IP_ADAPTER
-    if ((transportType & CA_ADAPTER_IP) || (CA_DEFAULT_ADAPTER == transportType))
+    if ((transportType & CA_ADAPTER_IP) || (CA_DEFAULT_ADAPTER == transportType)
+        || (transportType == CA_ALL_ADAPTERS))
     {
         CAInitializeIP(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
                        CAAdapterErrorHandleCallback, handle);

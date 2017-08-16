@@ -204,7 +204,7 @@ if with_upstream_libcoap == '1':
 
         config_h_body = ''
 
-        if ((target_os == 'windows') and (libcoap_env.get('UWP_APP') == '1')):
+        if ((target_os == 'windows') and (libcoap_env.get('MSVC_UWP_APP') == '1')):
             # Workaround for libcoap config [Investigation in IOT-2234]:
             # libcoap builds its config file by trying to create a small program to see if an API is
             # available. However, when building with store libraries on windows, it doesn't seem
