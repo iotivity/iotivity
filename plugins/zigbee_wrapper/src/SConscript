@@ -27,29 +27,24 @@ import os.path
 Import('env')
 
 target_os = env.get('TARGET_OS')
-src_dir = env.get('SRC_DIR')
-zw_path = os.path.join(src_dir, 'plugins')
-
-print("Reading Zigbee Wrapper (ZW) script")
 
 ######################################################################
 # Build flags
 ######################################################################
 
 env.PrependUnique(CPPPATH=[
-    os.path.join(src_dir, 'resource'),
-    os.path.join(src_dir, 'resource', 'c_common'),
-    os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
-    os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
-    os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/oc_logger/include',
+    '#/resource/csdk/logger/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
 ])
 env.AppendUnique(CPPPATH=[
-    os.path.join(zw_path, 'include'),
-    os.path.join(zw_path, 'include', 'internal'),
-    os.path.join(zw_path, 'zigbee_wrapper', 'include')
+    '#/plugins/include',
+    '#/plugins/include/internal',
+    '#/plugins/zigbee_wrapper/include'
 ])
 
 if target_os not in ['arduino', 'windows']:
@@ -66,17 +61,12 @@ env.PrependUnique(LIBS=['telegesis_wrapper'])
 ######################################################################
 
 zw_src = [
-    os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'src',
-                 'oic_malloc.c'),
-    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'src', 'logger.c'),
     'zigbee_wrapper.c',
 ]
 
-env.AppendUnique(ZW_SRC=zw_src)
-
 if target_os in ['android', 'tizen']:
-    calib = env.SharedLibrary('zigbee_wrapper', env.get('ZW_SRC'))
+    calib = env.SharedLibrary('zigbee_wrapper', zw_src)
 else:
-    calib = env.StaticLibrary('zigbee_wrapper', env.get('ZW_SRC'))
+    calib = env.StaticLibrary('zigbee_wrapper', zw_src)
 env.InstallTarget(calib, 'libzigbee_wrapper')
 env.UserInstallTargetLib(calib, 'libzigbee_wrapper')

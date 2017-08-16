@@ -26,10 +26,6 @@ import os.path
 Import('env')
 
 target_os = env.get('TARGET_OS')
-src_dir = env.get('SRC_DIR')
-pi_path = os.path.join(src_dir, 'plugins')
-
-print("Reading PI script")
 
 ######################################################################
 # Build flags
@@ -38,26 +34,23 @@ with_unforked_libcoap = env.get('WITH_UNFORKED_LIBCOAP')
 if with_unforked_libcoap == '1':
     env.PrependUnique(CPPPATH=['#extlibs/libcoap/libcoap/include'])
 else:
-    env.PrependUnique(CPPPATH=[
-        os.path.join(src_dir, 'resource', 'csdk', 'connectivity', 'lib',
-                     'libcoap-4.1.1', 'include')
-    ])
+    env.PrependUnique(CPPPATH=['#/resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
 
 env.PrependUnique(CPPPATH=[
-    os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
-    os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
-    os.path.join(src_dir, 'resource', 'c_common', 'oic_time', 'include'),
-    os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'security', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'include')
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/c_common/oic_time/include',
+    '#/resource/oc_logger/include',
+    '#/resource/csdk/logger/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/csdk/security/include',
+    '#/resource/csdk/include'
 ])
 env.AppendUnique(CPPPATH=[
-    os.path.join(pi_path, 'include'),
-    os.path.join(pi_path, 'include', 'internal'),
-    os.path.join(pi_path, 'zigbee_wrapper', 'include'),
-    os.path.join(pi_path, 'include', 'internal')
+    '#/plugins/include',
+    '#/plugins/include/internal',
+    '#/plugins/zigbee_wrapper/include',
+    '#/plugins/include/internal'
 ])
 
 if target_os not in ['arduino', 'windows']:
@@ -74,16 +67,13 @@ env.PrependUnique(LIBS=['zigbee_wrapper'])
 # Source files and Target(s)
 ######################################################################
 pi_src = [
-    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'src', 'logger.c'),
     'pluginlist.c',
     'plugininterface.c',
 ]
 
-env.AppendUnique(PI_SRC=pi_src)
-
 if target_os in ['android', 'tizen']:
-    calib = env.SharedLibrary('plugin_interface', env.get('PI_SRC'))
+    calib = env.SharedLibrary('plugin_interface', pi_src)
 else:
-    calib = env.StaticLibrary('plugin_interface', env.get('PI_SRC'))
+    calib = env.StaticLibrary('plugin_interface', pi_src)
 env.InstallTarget(calib, 'plugin_interface')
 env.UserInstallTargetLib(calib, 'plugin_interface')
