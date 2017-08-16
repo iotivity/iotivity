@@ -473,7 +473,7 @@ static bool ValidateQuery(const char * query)
         }
     }
 
-    return false;
+    return true;
 }
 
 static OCEntityHandlerResult HandleCRLGetRequest(const OCEntityHandlerRequest *ehRequest)
