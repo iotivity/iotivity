@@ -3711,11 +3711,25 @@ void GetDerKey(ByteArray_t * key, const char * usage)
                 /* Convert PEM to DER */
                 const char* pemHeader = "-----BEGIN EC PRIVATE KEY-----"; /* no newlines allowed here */
                 const char* pemFooter = "-----END EC PRIVATE KEY-----";
+                uint8_t *data = temp->privateData.data;
+                size_t length = temp->privateData.len;
+                bool freeData = false;
 
-                if (temp->privateData.data[temp->privateData.len - 1] != 0)
+                if (data[length - 1] != 0)
                 {
-                    OIC_LOG(ERROR, TAG, "Bad PEM private key data (not null terminated)");
-                    return;
+                    /* Add a null terminator, because mbedtls_pem_read_buffer requires it */
+                    OIC_LOG_V(DEBUG, TAG, "%s: adding null terminator to privateData", __func__);
+
+                    data = OICMalloc(length + 1);
+                    if (NULL == data)
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                        return;
+                    }
+
+                    memcpy(data, temp->privateData.data, length);
+                    data[length] = 0;
+                    freeData = true;
                 }
 
                 mbedtls_pem_context ctx;
@@ -3723,7 +3737,13 @@ void GetDerKey(ByteArray_t * key, const char * usage)
                 size_t usedLen;
 
                 mbedtls_pem_init(&ctx);
-                ret = mbedtls_pem_read_buffer(&ctx, pemHeader, pemFooter, (const uint8_t*)temp->privateData.data, NULL, 0, &usedLen);
+                ret = mbedtls_pem_read_buffer(&ctx, pemHeader, pemFooter, data, NULL, 0, &usedLen);
+
+                if (freeData)
+                {
+                    OICFree(data);
+                }
+
                 if (ret != 0)
                 {
                     OIC_LOG_V(ERROR, TAG, "%s: failed reading PEM key", __func__);
