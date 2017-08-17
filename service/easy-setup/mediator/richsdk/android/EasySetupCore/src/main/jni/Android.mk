@@ -48,6 +48,7 @@ LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libocstack-jni.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
+OIC_OUT_PATH := ../../../../../../../../out/android/$(TARGET_ARCH_ABI)/$(APP_OPTIM)
 
 LOCAL_MODULE    := easysetup-jni
 
@@ -73,6 +74,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) \
 					$(LOCAL_PATH)/../../../../../../../../../resource/c_common/oic_string/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/c_common \
+					$(OIC_OUT_PATH)/resource/c_common \
 					$(LOCAL_PATH)/../../../../../../../../../resource/oc_logger/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/c_common/oic_malloc/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/connectivity/api \
