@@ -3367,9 +3367,9 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
             (0 == strcmp(temp->credUsage, usage)) && (false == temp->optionalData.revstat))
         {
 
-            if ((OIC_ENCODING_BASE64 != temp->optionalData.encoding) &&
-                (OIC_ENCODING_PEM != temp->optionalData.encoding) &&
-                (OIC_ENCODING_DER != temp->optionalData.encoding))
+            if ((OIC_ENCODING_BASE64 != temp->publicData.encoding) &&
+                (OIC_ENCODING_PEM != temp->publicData.encoding) &&
+                (OIC_ENCODING_DER != temp->publicData.encoding))
             {
                 OIC_LOG_V(WARNING, TAG, "%s: Unknown encoding type", __func__);
                 continue;
@@ -3377,12 +3377,12 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
 
             if (OIC_ENCODING_DER == desiredEncoding)
             {
-                if ((OIC_ENCODING_BASE64 == temp->optionalData.encoding) ||
-                    (OIC_ENCODING_PEM == temp->optionalData.encoding))
+                if ((OIC_ENCODING_BASE64 == temp->publicData.encoding) ||
+                    (OIC_ENCODING_PEM == temp->publicData.encoding))
                 {
                     uint8_t* buf = NULL;
                     size_t outSize = 0;
-                    int ret = ConvertPemCertToDer((const char*)temp->optionalData.data, temp->optionalData.len, &buf, &outSize);
+                    int ret = ConvertPemCertToDer((const char*)temp->publicData.data, temp->publicData.len, &buf, &outSize);
                     if (0 > ret)
                     {
                         OIC_LOG(ERROR, TAG, "Could not convert PEM cert to DER");
@@ -3405,15 +3405,15 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
                 else
                 {
                     uint8_t *savePtr = crt->data;
-                    crt->data = OICRealloc(crt->data, crt->len + temp->optionalData.len);
+                    crt->data = OICRealloc(crt->data, crt->len + temp->publicData.len);
                     if (NULL == crt->data)
                     {
                         OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
                         OICFree(savePtr);
                         return OC_STACK_NO_MEMORY;
                     }
-                    memcpy(crt->data + crt->len, temp->optionalData.data, temp->optionalData.len);
-                    crt->len += temp->optionalData.len;
+                    memcpy(crt->data + crt->len, temp->publicData.data, temp->publicData.len);
+                    crt->len += temp->publicData.len;
                 }
                 OIC_LOG_V(DEBUG, TAG, "%s found", usage);
             }
@@ -3422,15 +3422,15 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
                 /* PEM/Base64 */
                 uint8_t *pem = NULL;
                 size_t pemLen = 0;
-                if ((OIC_ENCODING_BASE64 == temp->optionalData.encoding) ||
-                    (OIC_ENCODING_PEM == temp->optionalData.encoding))
+                if ((OIC_ENCODING_BASE64 == temp->publicData.encoding) ||
+                    (OIC_ENCODING_PEM == temp->publicData.encoding))
                 {
-                    pem = temp->optionalData.data;
-                    pemLen = temp->optionalData.len;
+                    pem = temp->publicData.data;
+                    pemLen = temp->publicData.len;
                 }
                 else
                 {
-                    int ret = ConvertDerCertToPem(temp->optionalData.data, temp->optionalData.len, &pem);
+                    int ret = ConvertDerCertToPem(temp->publicData.data, temp->publicData.len, &pem);
                     if (0 > ret)
                     {
                         OIC_LOG_V(ERROR, TAG, "Failed converting DER cert to PEM: %d", ret);
