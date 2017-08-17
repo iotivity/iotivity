@@ -118,6 +118,7 @@ extlibs/sqlite3/sqlite3*
 extlibs/tinycbor/tinycbor
 extlibs/tinydtls/dtls-client
 extlibs/tinydtls/dtls-server
+extlibs/wksxmppxep/*/
 extlibs/yaml/yaml
 
 # Ignore editor (e.g. Emacs) backup and autosave files
