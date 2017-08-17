@@ -3457,6 +3457,29 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
         OIC_LOG_V(WARNING, TAG, "%s not found", usage);
         return OC_STACK_NO_RESOURCE;
     }
+
+    if (OIC_ENCODING_PEM == desiredEncoding)
+    {
+        /* mbedtls_x509_crt_parse requires a null terminator to determine that the format is PEM */
+        size_t crtLength = crt->len;
+        bool addNull = (crt->data[crtLength - 1] != 0);
+
+        if (addNull)
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: adding null terminator at the end of the cert", __func__);
+            uint8_t *oldData = crt->data;
+            crt->data = OICRealloc(crt->data, crtLength + 1);
+            if (NULL == crt->data)
+            {
+                OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
+                OICFree(oldData);
+                return OC_STACK_NO_MEMORY;
+            }
+            crt->data[crtLength] = 0;
+            crt->len = crtLength + 1;
+        }
+    }
+
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return OC_STACK_OK;
 }
