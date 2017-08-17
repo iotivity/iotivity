@@ -183,11 +183,11 @@ extern "C" {
 /** To represent interface.*/
 #define OC_RSRVD_INTERFACE              "if"
 
-/** To indicate how long RD should publish this item.*/
-#define OC_RSRVD_DEVICE_TTL             "lt"
-
 /** To represent time to live.*/
 #define OC_RSRVD_TTL                    "ttl"
+
+/** To indicate how long RD should publish this item.*/
+#define OC_RSRVD_DEVICE_TTL             OC_RSRVD_TTL
 
 /** To represent non*/
 #define OC_RSRVD_NONCE                  "non"

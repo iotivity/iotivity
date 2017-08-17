@@ -376,8 +376,7 @@ OCStackResult OC_CALL OCRDPublishWithDeviceId(OCDoHandle *handle, const char *ho
     }
 
     char targetUri[MAX_URI_LENGTH] = { 0 };
-    snprintf(targetUri, MAX_URI_LENGTH, "%s%s?rt=%s", host,
-             OC_RSRVD_RD_URI, OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
+    snprintf(targetUri, MAX_URI_LENGTH, "%s%s", host, OC_RSRVD_RD_URI);
     OIC_LOG_V(DEBUG, TAG, "Target URI: %s", targetUri);
 
     OCRepPayload *rdPayload = RDPublishPayloadCreate(id, pubResHandle, nPubResHandles);

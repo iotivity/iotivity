@@ -238,7 +238,6 @@ static int storeEndpoints(OCRepPayload **eps, size_t size, sqlite3_int64 rowid)
     int deleteEpLength = (int)sizeof(deleteEp);
     int insertEpLength = (int)sizeof(insertEp);
 
-
     VERIFY_SQLITE(sqlite3_prepare_v2(gRDDB, deleteEp, deleteEpLength, &stmt, NULL));
     VERIFY_SQLITE(sqlite3_bind_int64(stmt, sqlite3_bind_parameter_index(stmt, "@id"), rowid));
     res = sqlite3_step(stmt);
@@ -261,11 +260,9 @@ static int storeEndpoints(OCRepPayload **eps, size_t size, sqlite3_int64 rowid)
             VERIFY_SQLITE(sqlite3_bind_text(stmt, sqlite3_bind_parameter_index(stmt, "@ep"),
                             ep, (int)strlen(ep), SQLITE_STATIC));
         }
-        sqlite3_int64 pri;
-        if (OCRepPayloadGetPropInt(eps[i], OC_RSRVD_PRIORITY, (int64_t *) &pri))
-        {
-            VERIFY_SQLITE(sqlite3_bind_int64(stmt, sqlite3_bind_parameter_index(stmt, "@pri"), pri));
-        }
+        sqlite3_int64 pri = 1;
+        OCRepPayloadGetPropInt(eps[i], OC_RSRVD_PRIORITY, (int64_t *) &pri);
+        VERIFY_SQLITE(sqlite3_bind_int64(stmt, sqlite3_bind_parameter_index(stmt, "@pri"), pri));
         VERIFY_SQLITE(sqlite3_bind_int64(stmt, sqlite3_bind_parameter_index(stmt, "@id"), rowid));
         res = sqlite3_step(stmt);
         if (SQLITE_DONE != res)
