@@ -90,6 +90,7 @@ iotivity.pc
 tmp/
 *.tmp
 *.tmp.*
+/*.dat
 
 # Ignore GCov generated files
 *.gcda
