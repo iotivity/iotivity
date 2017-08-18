@@ -123,4 +123,6 @@ if srmtest_env.get('TEST') == '1':
             os.makedirs(result_dir)
         srmtest_env.AppendENVPath('GTEST_OUTPUT', ['xml:' + result_dir])
         srmtest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-        run_test(srmtest_env, 'ut', 'resource/csdk/security/unittest/unittest')
+        run_test(srmtest_env,
+                 'resource_csdk_security_unittest.memcheck',
+                 'resource/csdk/security/unittest/unittest')
