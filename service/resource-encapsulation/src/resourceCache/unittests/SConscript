@@ -93,6 +93,6 @@ if cache_test_env.get('TEST') == '1':
     if target_os in ['linux']:
         run_test(
             cache_test_env,
-            'service_resource-encapsulation_src_resourceCache_unittests_cache_test.memtest',
+            'service_resource-encapsulation_src_resourceCache_unittests_cache_test.memcheck',
             'service/resource-encapsulation/src/resourceCache/unittests/cache_test',
             cache_test)
