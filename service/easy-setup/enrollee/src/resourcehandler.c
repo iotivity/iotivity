@@ -706,6 +706,26 @@ OCRepPayload* constructResponseOfWiFiConf(char *interface)
         OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIFREQ, freq, dimensionsFreq);
     }
 
+    size_t dimensionsAuthType[MAX_REP_ARRAY_DEPTH] = { g_ESWiFiConfResource.numSupportedAuthType, 0,
+            0 };
+    const char *authType[NUM_WIFIAUTHTYPE] = { 0, };
+    for (int i = 0; i < g_ESWiFiConfResource.numSupportedAuthType; ++i)
+    {
+        authType[i] = WiFiAuthTypeEnumToString(g_ESWiFiConfResource.supportedAuthType[i]);
+    }
+    OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIAUTHTYPE, authType,
+            dimensionsAuthType);
+
+    size_t dimensionsEncType[MAX_REP_ARRAY_DEPTH] =
+            { g_ESWiFiConfResource.numSupportedEncType, 0, 0 };
+    const char *encType[NUM_WIFIENCTYPE] = { 0, };
+    for (int i = 0; i < g_ESWiFiConfResource.numSupportedEncType; ++i)
+    {
+        encType[i] = WiFiEncTypeEnumToString(g_ESWiFiConfResource.supportedEncType[i]);
+    }
+    OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIENCTYPE, encType,
+            dimensionsEncType);
+
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_SSID, g_ESWiFiConfResource.ssid);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CRED, g_ESWiFiConfResource.cred);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHTYPE,
@@ -1667,7 +1687,9 @@ OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty)
     OIC_LOG(DEBUG, ES_RH_TAG, "SetDeviceProperty IN");
 
     if (deviceProperty->WiFi.numSupportedMode > NUM_WIFIMODE
-            || deviceProperty->WiFi.numSupportedFreq > NUM_WIFIFREQ)
+            || deviceProperty->WiFi.numSupportedFreq > NUM_WIFIFREQ
+            || deviceProperty->WiFi.numSupportedAuthType > NUM_WIFIAUTHTYPE
+            || deviceProperty->WiFi.numSupportedEncType > NUM_WIFIENCTYPE)
     {
         OIC_LOG(ERROR, ES_RH_TAG, "SetDeviceProperty: Invalid Input Param");
         return OC_STACK_INVALID_PARAM;
@@ -1687,7 +1709,24 @@ OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty)
         OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "WiFi Mode : %d", g_ESWiFiConfResource.supportedMode[i]);
     }
 
-    OICStrcpy(g_ESDevConfResource.devName, OIC_STRING_MAX_VALUE, (deviceProperty->DevConf).deviceName);
+    g_ESWiFiConfResource.numSupportedAuthType = deviceProperty->WiFi.numSupportedAuthType;
+    for (uint8_t i = 0; i < g_ESWiFiConfResource.numSupportedAuthType; ++i)
+    {
+        g_ESWiFiConfResource.supportedAuthType[i] = (deviceProperty->WiFi).supportedAuthType[i];
+        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "WiFi Auth Type : %d",
+                g_ESWiFiConfResource.supportedAuthType[i]);
+    }
+
+    g_ESWiFiConfResource.numSupportedEncType = deviceProperty->WiFi.numSupportedEncType;
+    for (uint8_t i = 0; i < g_ESWiFiConfResource.numSupportedEncType; ++i)
+    {
+        g_ESWiFiConfResource.supportedEncType[i] = (deviceProperty->WiFi).supportedEncType[i];
+        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "WiFi Enc Type : %d",
+                g_ESWiFiConfResource.supportedAuthType[i]);
+    }
+
+    OICStrcpy(g_ESDevConfResource.devName, OIC_STRING_MAX_VALUE,
+            (deviceProperty->DevConf).deviceName);
     OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "Device Name : %s", g_ESDevConfResource.devName);
 
     if (OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESWiFiConfResource.handle, OC_HIGH_QOS))

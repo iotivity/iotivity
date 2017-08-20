@@ -59,6 +59,10 @@ typedef struct
     uint8_t numMode;        // the number of device's supported Wi-Fi modes
     WIFI_FREQ supportedFreq[NUM_WIFIFREQ];
     uint8_t numSupportedFreq;        // the number of device's supported Wi-Fi frequency bands
+    WIFI_AUTHTYPE supportedAuthType[NUM_WIFIAUTHTYPE];
+    uint8_t numSupportedAuthType;
+    WIFI_ENCTYPE supportedEncType[NUM_WIFIENCTYPE];
+    uint8_t numSupportedEncType;
     char ssid[OIC_STRING_MAX_VALUE]; // SSID
     char cred[OIC_STRING_MAX_VALUE]; // credential information.
     WIFI_AUTHTYPE authType;

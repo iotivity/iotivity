@@ -40,6 +40,8 @@ extern "C"
 #define NUM_WIFIMODE                10
 #define NUM_WIFIFREQ                5
 #define NUM_CONNECT_TYPE            3
+#define NUM_WIFIAUTHTYPE            4
+#define NUM_WIFIENCTYPE             6
 
 /**
  * Attributes used to form a proper easysetup conforming JSON message.
