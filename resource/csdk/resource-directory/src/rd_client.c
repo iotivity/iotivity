@@ -265,7 +265,6 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
             }
             OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP, p);
             OCRepPayloadSetPropObjectAsOwner(links[j], OC_RSRVD_POLICY, policy);
-
             CAResult_t caResult = CAGetNetworkInformation(&caEps, &nCaEps);
             if (CA_STATUS_FAILED == caResult)
             {
@@ -307,6 +306,7 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
                 dim[0] = k;
                 OCRepPayloadSetPropObjectArrayAsOwner(links[j], OC_RSRVD_ENDPOINTS, eps, dim);
             }
+            OICFreeAndSetToNull((void*) &caEps);
         }
     }
 
@@ -314,7 +314,7 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
     result = OC_STACK_OK;
 
 exit:
-    OICFree(caEps);
+    OICFreeAndSetToNull((void*) &caEps);
     if (OC_STACK_OK != result)
     {
         OCRepPayloadDestroy(rdPayload);
