@@ -106,7 +106,11 @@ static const uint8_t gDoxmPropertyAccessModes[DOXM_PROPERTY_COUNT][DOS_STATE_COU
 { // RESET RFOTM  RFPRO   RFNOP   SRESET
     { R,    R,      R,      R,      R   }, // .oxmtype TODO [IOT-2105]
     { R,    R,      R,      R,      R   }, // .oxms
+#ifdef MULTIPLE_OWNER
+    { R,    RW,     RW,     R,      R   }, // .oxmsel
+#else
     { R,    RW,     R,      R,      R   }, // .oxmsel
+#endif // MULTIPLE_OWNER
     { R,    R,      R,      R,      R   }, // .sct
     { R,    RW,     R,      R,      R   }, // .owned
 #ifdef MULTIPLE_OWNER

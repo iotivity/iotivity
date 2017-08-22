@@ -1294,6 +1294,7 @@ OCStackResult PMSingleDeviceDiscoveryInUnicast(unsigned short waittime, const Oi
 #ifdef MULTIPLE_OWNER
 
 static const unsigned int IOTIVITY_USECS_PER_MSEC = 1000;
+extern int MOTIsSupportedOnboardingType(OicSecDoxm_t *ptrDoxm);
 
 static OCStackApplicationResult MOTDeviceDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)

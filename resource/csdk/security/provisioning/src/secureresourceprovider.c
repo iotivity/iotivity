@@ -61,24 +61,6 @@
 
 trustCertChainContext_t g_trustCertChainNotifier;
 
-// Enum type index for data types.
-typedef enum
-{
-    CHAIN_TYPE = 0,                       /**< Certificate trust chain.**/
-    ACL_TYPE,                             /**< Access control list.**/
-    PSK_TYPE,                             /**< Pre-Shared Key.**/
-    CERT_TYPE                             /**< X.509 certificate.**/
-} DataType_t;
-
-/**
- * Structure to carry general data to callback.
- */
-typedef struct Data
-{
-    void *ctx;                                   /**< Pointer to user context.**/
-    DataType_t type;                             /**< Data type of the context.**/
-} Data_t;
-
 /**
  * Structure to carry credential data to callback.
  */
@@ -224,8 +206,6 @@ static OCStackResult provisionCredentials(OicSecCred_t *cred,
         OCClientResponseHandler responseHandler);
 static OCStackApplicationResult  ProvisionPskCB(void *ctx, OCDoHandle UNUSED,
         OCClientResponse *clientResponse);
-static OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t dos,
-                            OCClientResponseHandler resultCallback);
 
 typedef enum {
     DEVICE_1_FINISHED,
@@ -238,7 +218,7 @@ typedef enum {
  *
  * @param[in] data    Pointer to block of memory previously allocated for Data_t.
  */
-static void FreeData(Data_t *data)
+void FreeData(Data_t *data)
 {
     if(NULL == data)
     {
@@ -276,14 +256,20 @@ static void FreeData(Data_t *data)
             }
         case CERT_TYPE:
             {
-                CertData_t *certData = (CertData_t *)data->ctx;
+                CertData_t *certData = (CertData_t *) data->ctx;
                 if (NULL != certData->resArr)
                 {
                      OICFreeAndSetToNull((void**)&certData->resArr);
                 }
                 FreeCred(certData->credInfo);
-
                 OICFreeAndSetToNull((void**)&certData);
+                break;
+            }
+        case MOT_TYPE:
+            {
+                OTMContext_t *motData = (OTMContext_t *) data->ctx;
+                OICFree(motData->ctxResultArray);
+                OICFree(motData);
                 break;
             }
         default:
@@ -820,10 +806,7 @@ static OCStackApplicationResult SetReadyForNormalOperationCB(void *ctx, OCDoHand
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-/**
- * Updates pstat resource of server.
- */
-static OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t dos,
+OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t dos,
                             OCClientResponseHandler resultCallback)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
@@ -833,7 +816,6 @@ static OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t do
         OIC_LOG_V(ERROR, TAG, "OUT %s", __func__);
         return OC_STACK_INVALID_PARAM;
     }
-
 
     const OCProvisionDev_t *pTargetDev = NULL;
 
@@ -858,6 +840,11 @@ static OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t do
         case CERT_TYPE:
         {
             pTargetDev = ((CertData_t *)data->ctx)->targetDev;
+            break;
+        }
+        case MOT_TYPE:
+        {
+            pTargetDev = ((OTMContext_t *)data->ctx)->selectedDeviceInfo;
             break;
         }
         default:
