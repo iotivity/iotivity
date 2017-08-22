@@ -100,4 +100,3 @@ else:
 ######################################################################
 if target_os in ['linux']:
     SConscript('primitiveResource/unittests/SConscript')
-

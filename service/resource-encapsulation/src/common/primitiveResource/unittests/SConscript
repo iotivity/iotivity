@@ -47,6 +47,7 @@ rcs_common_test_env.PrependUnique(LIBS = [
 rcs_common_test_src = [
     rcs_common_test_env.Glob('*.cpp'),
     '../../expiryTimer/unittests/ExpiryTimerTest.cpp',
+    '../../utils/include/UnitTestHelperWithFakeOCPlatform.cpp'
 ]
 
 rcs_common_test = rcs_common_test_env.Program('rcs_common_test', rcs_common_test_src)
@@ -54,10 +55,9 @@ Alias("rcs_common_test", rcs_common_test)
 rcs_common_test_env.AppendTarget('rcs_common_test')
 
 if rcs_common_test_env.get('TEST') == '1':
-    rcs_common_test_env.AppendUnique(CPPDEFINES = ['HIPPOMOCKS_ISSUE'])
+    rcs_common_test_env.AppendUnique(CPPDEFINES=['HIPPOMOCKS_ISSUE'])
     from tools.scons.RunTest import run_test
     run_test(rcs_common_test_env,
-#            'service_resource-encapsulation_src_common_primitiveResource_unittests_rcs_common_test.memcheck',
-             '',  # TODO: fix leaks
+             'service_resource-encapsulation_src_common_primitiveResource_unittests_rcs_common_test.memcheck',
              'service/resource-encapsulation/src/common/primitiveResource/unittests/rcs_common_test',
              rcs_common_test)

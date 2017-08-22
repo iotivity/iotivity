@@ -99,6 +99,7 @@ else:
 ######################################################################
 if target_os in ['linux']:
     server_builder_test_env = server_builder_env.Clone()
+
     server_builder_test_env.AppendUnique(CPPPATH=[
         '#/extlibs/hippomocks/hippomocks',
         '../common/utils/include'
@@ -116,8 +117,12 @@ if target_os in ['linux']:
         'coap',
     ])
 
+    unitTestHelperWithFakeOCPlatform_obj = server_builder_test_env.SharedObject(
+        server_builder_test_env.Glob(
+            '../common/utils/include/UnitTestHelperWithFakeOCPlatform.cpp'))
     server_builder_test_src = [
         server_builder_test_env.Glob('unittests/*.cpp'),
+        unitTestHelperWithFakeOCPlatform_obj
     ]
 
     server_builder_test = server_builder_test_env.Program(
@@ -126,10 +131,11 @@ if target_os in ['linux']:
     server_builder_test_env.AppendTarget('rcs_server_test')
 
     if server_builder_test_env.get('TEST') == '1':
+        server_builder_test_env.AppendUnique(CPPDEFINES=['HIPPOMOCKS_ISSUE'])
+        # this import needs to remain here so it is protected by target check
         from tools.scons.RunTest import run_test
         run_test(
             server_builder_test_env,
-#           'service_resource-encapsulation_src_serverBuilder_rcs_server_test.memcheck',
-            '', # TODO: fix this test on linux and remove commented lines
+            'service_resource-encapsulation_src_serverBuilder_rcs_server_test.memcheck',
             'service/resource-encapsulation/src/serverBuilder/rcs_server_test',
             server_builder_test)

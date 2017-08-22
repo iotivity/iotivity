@@ -18,21 +18,20 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "UnitTestHelper.h"
+#include "UnitTestHelperWithFakeOCPlatform.h"
 
 #include "RCSResourceObject.h"
 #include "RCSRequest.h"
 #include "RCSSeparateResponse.h"
 #include "InterfaceHandler.h"
 #include "ResourceAttributesConverter.h"
-
-#include "OCPlatform.h"
+#include "ocpayload.h"
 
 using namespace std;
 using namespace std::placeholders;
 
-using namespace OIC::Service;
 using namespace OC;
+using namespace OIC::Service;
 
 typedef OCStackResult (*registerResource)(OCResourceHandle&, string&, const string&, const string&,
                            EntityHandler, uint8_t );
@@ -45,26 +44,42 @@ constexpr char KEY[]{ "key" };
 constexpr char CUSTOM_INTERFACE[]{ "oic.if.custom" };
 constexpr int VALUE{ 100 };
 
+MockRepository mocks;
+FakeOCPlatform * mockFakePlatform;
+
 TEST(ResourceObjectBuilderCreateTest, ThrowIfUriIsInvalid)
 {
+    mockFakePlatform =
+            mocks.Mock< FakeOCPlatform >();
+
+    mocks.OnCall(
+            mockFakePlatform, FakeOCPlatform::registerResource)
+                    .Return(OC_STACK_ERROR);
     ASSERT_THROW(RCSResourceObject::Builder("", "", "").build(), RCSPlatformException);
+
+    mocks.reset();
 }
 
-class ResourceObjectBuilderTest: public TestWithMock
+class ResourceObjectBuilderTest: public TestWithExternMock
 {
 protected:
+    virtual ~ResourceObjectBuilderTest()
+    noexcept(noexcept(std::declval<Test>().~Test())) {}
+
     void SetUp()
     {
-        TestWithMock::SetUp();
+        TestWithExternMock::SetUp();
 
-        mocks.OnCallFuncOverload(static_cast< registerResource >(OCPlatform::registerResource))
-                .Return(OC_STACK_OK);
+        mocks.OnCall(
+                mockFakePlatform, FakeOCPlatform::registerResource)
+                        .Return(OC_STACK_OK);
     }
 };
 
 TEST_F(ResourceObjectBuilderTest, RegisterResourceWhenCallCreate)
 {
-    mocks.ExpectCallFuncOverload(static_cast< registerResource >(OCPlatform::registerResource))
+    mocks.ExpectCall(
+            mockFakePlatform, FakeOCPlatform::registerResource)
             .Return(OC_STACK_OK);
 
     RCSResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").build();
@@ -94,7 +109,8 @@ TEST_F(ResourceObjectBuilderTest, ResourceServerHasAttrsSetByBuilder)
 TEST_F(ResourceObjectBuilderTest, TypesAddedInBuilderWillBeBound)
 {
     int count = 0;
-    mocks.OnCallFunc(OCPlatform::bindTypeToResource).Do(
+    mocks.OnCall(
+            mockFakePlatform, FakeOCPlatform::bindTypeToResource).Do(
             [&count](const OCResourceHandle&, const std::string&)
             {
                 ++count;
@@ -111,7 +127,8 @@ TEST_F(ResourceObjectBuilderTest, TypesAddedInBuilderWillBeBound)
 TEST_F(ResourceObjectBuilderTest, InterfaceAddedInBuilderWillBeBound)
 {
     int count = 0;
-    mocks.OnCallFunc(OCPlatform::bindInterfaceToResource).Do(
+    mocks.OnCall(
+            mockFakePlatform, FakeOCPlatform::bindInterfaceToResource).Do(
             [&count](const OCResourceHandle&, const std::string&)
             {
                 ++count;
@@ -125,15 +142,18 @@ TEST_F(ResourceObjectBuilderTest, InterfaceAddedInBuilderWillBeBound)
     EXPECT_EQ(2, count);
 }
 
-class ResourceObjectTest: public TestWithMock
+class ResourceObjectTest: public TestWithExternMock
 {
 public:
     RCSResourceObject::Ptr server;
 
 protected:
+    virtual ~ResourceObjectTest()
+    noexcept(noexcept(std::declval<Test>().~Test())) {}
+
     void SetUp()
     {
-        TestWithMock::SetUp();
+        TestWithExternMock::SetUp();
 
         initMocks();
 
@@ -144,10 +164,13 @@ protected:
 
     virtual void initMocks()
     {
-        mocks.OnCallFuncOverload(static_cast< registerResource >(OCPlatform::registerResource)).
-                Return(OC_STACK_OK);
+        mocks.OnCall(
+                mockFakePlatform, FakeOCPlatform::registerResource)
+                        .Return(OC_STACK_OK);
 
-        mocks.OnCallFunc(OCPlatform::unregisterResource).Return(OC_STACK_OK);
+        mocks.OnCall(
+                mockFakePlatform, FakeOCPlatform::unregisterResource)
+                        .Return(OC_STACK_OK);
     }
 
     virtual void initResourceObject() {
@@ -212,10 +235,11 @@ TEST_F(ResourceObjectTest, ThrowIfResourceToBindIsInvalid)
 
 TEST_F(ResourceObjectTest, ThrowIfBindResourceFailed)
 {
-    mocks.OnCallFunc(OCBindResource).Return(OC_STACK_ERROR);
+    mocks.OnCall(mockFakePlatform, FakeOCPlatform::bindResource)
+            .Return(OC_STACK_ERROR);
 
-    ASSERT_THROW(server->bindResource(
-            RCSResourceObject::Builder("a/temp", RESOURCE_TYPE, "").build()), RCSPlatformException);
+    ASSERT_THROW(server->bindResource(RCSResourceObject::Builder(
+            "a/temp", RESOURCE_TYPE, "").build()), RCSPlatformException);
 }
 
 TEST_F(ResourceObjectTest, ThrowIfResourceToUnbindIsInvalid)
@@ -225,7 +249,9 @@ TEST_F(ResourceObjectTest, ThrowIfResourceToUnbindIsInvalid)
 
 TEST_F(ResourceObjectTest, BoundResourceCanBeRetrieved)
 {
-    mocks.OnCallFunc(OCBindResource).Return(OC_STACK_OK);
+//    OCBindResource();
+    mocks.OnCall(mockFakePlatform, FakeOCPlatform::bindResource)
+            .Return(OC_STACK_OK);
 
     auto boundResource = RCSResourceObject::Builder("a/temp", RESOURCE_TYPE, "").build();
     server->bindResource(boundResource);
@@ -239,8 +265,17 @@ class AutoNotifyTest: public ResourceObjectTest
 protected:
     void initMocks()
     {
-        mocks.OnCallFuncOverload(static_cast< NotifyAllObservers >(
-                OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+        mocks.OnCall(
+                        mockFakePlatform, FakeOCPlatform::registerResource)
+                                .Return(OC_STACK_OK);
+
+        mocks.OnCall(
+                mockFakePlatform, FakeOCPlatform::unregisterResource)
+                        .Return(OC_STACK_OK);
+
+        mocks.OnCall(
+                mockFakePlatform, FakeOCPlatform::notifyAllObservers)
+                        .Return(OC_STACK_OK);
     }
 
     virtual void initResourceObject() {
@@ -265,8 +300,8 @@ TEST_F(AutoNotifyTest, WithUpdatedPolicy_NeverBeNotifiedIfAttributeIsNotChanged)
     server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
     server->setAttribute(KEY, VALUE);
 
-    mocks.NeverCallFuncOverload(static_cast< NotifyAllObservers >(
-            OC::OCPlatform::notifyAllObservers));
+    mocks.NeverCall(
+            mockFakePlatform, FakeOCPlatform::notifyAllObservers);
 
     server->setAttribute(KEY, VALUE);
 }
@@ -276,8 +311,9 @@ TEST_F(AutoNotifyTest, WithUpdatedPolicy_WillBeNotifiedIfAttributeIsChanged)
     server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
     server->setAttribute(KEY, VALUE);
 
-    mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
-            OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+    mocks.ExpectCall(
+            mockFakePlatform, FakeOCPlatform::notifyAllObservers)
+                    .Return(OC_STACK_OK);
 
     server->setAttribute(KEY, VALUE + 1);
 }
@@ -287,8 +323,9 @@ TEST_F(AutoNotifyTest, WithUpdatedPolicy_WillBeNotifiedIfValueIsAdded)
     constexpr char newKey[]{ "newKey" };
     server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
 
-    mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
-            OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+    mocks.ExpectCall(
+            mockFakePlatform, FakeOCPlatform::notifyAllObservers)
+                    .Return(OC_STACK_OK);
 
     server->setAttribute(newKey, VALUE);
 }
@@ -297,8 +334,8 @@ TEST_F(AutoNotifyTest, WithNeverPolicy_NeverBeNotifiedEvenIfAttributeIsChanged)
 {
     server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::NEVER);
 
-    mocks.NeverCallFuncOverload(static_cast< NotifyAllObservers >(
-            OC::OCPlatform::notifyAllObservers));
+    mocks.NeverCall(
+            mockFakePlatform, FakeOCPlatform::notifyAllObservers);
 
     RCSResourceObject::LockGuard lock{ server };
     server->setAttribute(KEY, VALUE);
@@ -309,8 +346,9 @@ TEST_F(AutoNotifyTest, WithUpdatePolicy_WillBeNotifiedIfAttributeIsDeleted)
     server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
     server->setAttribute(KEY, VALUE);
 
-    mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
-            OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+    mocks.ExpectCall(
+            mockFakePlatform, FakeOCPlatform::notifyAllObservers)
+                    .Return(OC_STACK_OK);
 
     server->removeAttribute(KEY);
 }
@@ -323,8 +361,9 @@ TEST_F(AutoNotifyWithGuardTest, GuardFollowsServerPolicyByDefault)
 {
     server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
 
-    mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
-            OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+    mocks.ExpectCall(
+            mockFakePlatform, FakeOCPlatform::notifyAllObservers)
+                    .Return(OC_STACK_OK);
 
     RCSResourceObject::LockGuard guard{ server };
     server->setAttribute(KEY, VALUE);
@@ -334,8 +373,8 @@ TEST_F(AutoNotifyWithGuardTest, GuardCanOverridePolicy)
 {
     server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::ALWAYS);
 
-    mocks.NeverCallFuncOverload(static_cast< NotifyAllObservers >(
-            OC::OCPlatform::notifyAllObservers));
+    mocks.NeverCall(
+            mockFakePlatform, FakeOCPlatform::notifyAllObservers);
 
     RCSResourceObject::LockGuard guard{ server, RCSResourceObject::AutoNotifyPolicy::NEVER };
     server->getAttributes()[KEY] = VALUE;
@@ -345,16 +384,18 @@ TEST_F(AutoNotifyWithGuardTest, GuardInvokesNotifyWhenDestroyed)
 {
     server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::NEVER);
 
-    mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
-            OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+    mocks.ExpectCall(
+            mockFakePlatform, FakeOCPlatform::notifyAllObservers)
+                    .Return(OC_STACK_OK);
 
     {
         RCSResourceObject::LockGuard guard{ server, RCSResourceObject::AutoNotifyPolicy::ALWAYS };
         server->setAttribute(KEY, VALUE);
     }
 
-    mocks.NeverCallFuncOverload(static_cast< NotifyAllObservers >(
-               OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+    mocks.NeverCall(
+            mockFakePlatform, FakeOCPlatform::notifyAllObservers)
+                    .Return(OC_STACK_OK);
 
     server->setAttribute(KEY, VALUE);
 }
@@ -374,6 +415,7 @@ public:
         auto request = make_shared<OCResourceRequest>();
 
         OCEntityHandlerRequest ocEntityHandlerRequest;
+
         memset(&ocEntityHandlerRequest, 0, sizeof(OCEntityHandlerRequest));
         OC::MessageContainer mc;
 
@@ -383,14 +425,21 @@ public:
         ocEntityHandlerRequest.resource = fakeResourceHandle;
         ocEntityHandlerRequest.method = method;
         ocEntityHandlerRequest.payload = reinterpret_cast<OCPayload*>(mc.getPayload());
+        ocEntityHandlerRequest.query = NULL;
 
         if(!interface.empty())
         {
             const string query = string("if=" + interface);
-            ocEntityHandlerRequest.query = strdup(query.c_str());
+            auto cQuery = new char [query.size()+1];
+            std::strcpy(cQuery, query.c_str());
+            ocEntityHandlerRequest.query = const_cast<char *> (cQuery);
         }
 
         formResourceRequest(OC_REQUEST_FLAG, &ocEntityHandlerRequest, request);
+
+        OCRepPayloadDestroy((OCRepPayload *)ocEntityHandlerRequest.payload);
+
+        delete[] ocEntityHandlerRequest.query;
 
         return request;
     }
@@ -405,11 +454,13 @@ protected:
 
     void initMocks()
     {
-        mocks.OnCallFuncOverload(
-            static_cast<registerResource>(OCPlatform::registerResource)).Do(
+        mocks.OnCall(
+                mockFakePlatform, FakeOCPlatform::registerResource).Do(
                     bind(&ResourceObjectHandlingRequestTest::registerResourceFake,
                             this, _1, _2, _3, _4, _5, _6));
-        mocks.OnCallFunc(OCPlatform::unregisterResource).Return(OC_STACK_OK);
+        mocks.OnCall(
+                mockFakePlatform, FakeOCPlatform::unregisterResource)
+                        .Return(OC_STACK_OK);
     }
 };
 
@@ -420,21 +471,23 @@ const OCResourceHandle  ResourceObjectHandlingRequestTest::fakeResourceHandle =
 
 TEST_F(ResourceObjectHandlingRequestTest, CallSendResponseWhenReceiveRequest)
 {
-    mocks.ExpectCallFunc(OCPlatform::sendResponse).Return(OC_STACK_OK);
+    mocks.ExpectCall(
+            mockFakePlatform, FakeOCPlatform::sendResponse).Return(OC_STACK_OK);
 
     ASSERT_EQ(OC_EH_OK, handler(createRequest()));
 }
 
 TEST_F(ResourceObjectHandlingRequestTest, ReturnErrorCodeWhenSendResponseFailed)
 {
-    mocks.ExpectCallFunc(OCPlatform::sendResponse).Return(OC_STACK_ERROR);
+    mocks.ExpectCall(
+            mockFakePlatform, FakeOCPlatform::sendResponse).Return(OC_STACK_ERROR);
 
     ASSERT_EQ(OC_EH_ERROR, handler(createRequest()));
 }
 
 TEST_F(ResourceObjectHandlingRequestTest, SendResponseWithSameHandlesPassedByRequest)
 {
-    mocks.ExpectCallFunc(OCPlatform::sendResponse).Match(
+    mocks.ExpectCall(mockFakePlatform, FakeOCPlatform::sendResponse).Match(
             [](const shared_ptr<OCResourceResponse> response)
             {
                 return response->getRequestHandle() == fakeRequestHandle &&
@@ -469,7 +522,7 @@ TEST_F(ResourceObjectHandlingRequestTest, SetMethodOfSeparateResponseInvokesSend
     );
     handler(createRequest(OC_REST_GET));
 
-    mocks.ExpectCallFunc(OCPlatform::sendResponse).Return(OC_STACK_OK);
+    mocks.ExpectCall(mockFakePlatform, FakeOCPlatform::sendResponse).Return(OC_STACK_OK);
 
     RCSSeparateResponse(aRequest).set();
 }
@@ -540,7 +593,7 @@ protected:
 
     void SetUp()
     {
-        TestWithMock::SetUp();
+        TestWithExternMock::SetUp();
 
         initMocks();
     }
@@ -549,7 +602,9 @@ protected:
     {
         ResourceObjectHandlingRequestTest::initMocks();
 
-        mocks.OnCallFunc(OCPlatform::bindInterfaceToResource).Return(OC_STACK_OK);
+        mocks.OnCall(
+                mockFakePlatform, FakeOCPlatform::bindInterfaceToResource)
+                        .Return(OC_STACK_OK);
     }
 };
 
@@ -559,7 +614,8 @@ TEST_F(ResourceObjectInterfaceHandlerTest, GetResponseForBaselineContainsAllProp
 
     OCRepresentation ocRep;
 
-    mocks.ExpectCallFunc(OCPlatform::sendResponse).Match(
+    mocks.ExpectCall(
+            mockFakePlatform, FakeOCPlatform::sendResponse).Match(
             [=](const shared_ptr<OCResourceResponse> response)
             {
                 RCSResourceObject::LockGuard guard{ server };
@@ -567,7 +623,6 @@ TEST_F(ResourceObjectInterfaceHandlerTest, GetResponseForBaselineContainsAllProp
                 return checkResponse(response->getResourceRepresentation(),
                         server->getAttributes(), server->getInterfaces(), server->getTypes(),
                         server->getUri());
-
             }
     ).Return(OC_STACK_OK);
 
@@ -581,7 +636,8 @@ TEST_F(ResourceObjectInterfaceHandlerTest, SetResponseForActuatorContainsOnlyReq
     OCRepresentation ocRep;
     ocRep[KEY] = VALUE;
 
-    mocks.ExpectCallFunc(OCPlatform::sendResponse).Match(
+    mocks.ExpectCall(
+            mockFakePlatform, FakeOCPlatform::sendResponse).Match(
             [&ocRep](const shared_ptr<OCResourceResponse> response)
             {
                 return checkResponse(response->getResourceRepresentation(),
@@ -599,7 +655,8 @@ TEST_F(ResourceObjectInterfaceHandlerTest, SetResponseForBaselineContainsApplied
     OCRepresentation ocRep;
     ocRep["NEWKEY"] = std::string("NEWVALUE");
 
-    mocks.ExpectCallFunc(OCPlatform::sendResponse).Match(
+    mocks.ExpectCall(
+            mockFakePlatform, FakeOCPlatform::sendResponse).Match(
             [=](const shared_ptr<OCResourceResponse> response)
             {
                 RCSResourceObject::LockGuard guard{ server };
@@ -621,7 +678,8 @@ TEST_F(ResourceObjectInterfaceHandlerTest, GetResponseForCustomEqualsResponseFor
     OCRepresentation repArray[2];
     int cnt = 0;
 
-    mocks.OnCallFunc(OCPlatform::sendResponse).Do(
+    mocks.OnCall(
+            mockFakePlatform, FakeOCPlatform::sendResponse).Do(
             [&repArray, &cnt](const shared_ptr<OCResourceResponse> response)
             {
                 repArray[cnt++] = response->getResourceRepresentation();
@@ -660,8 +718,6 @@ TEST_F(ResourceObjectInterfaceHandlerTest, SettingDefaultInterfaceEqualsGetDefau
     EXPECT_EQ(BASELINE_INTERFACE, server->getDefaultInterface());
 }
 
-
-
 class SetRequestHandlerPolicyTest: public ResourceObjectHandlingRequestTest
 {
 public:
@@ -678,7 +734,9 @@ public:
     void initMocks()
     {
         ResourceObjectHandlingRequestTest::initMocks();
-        mocks.OnCallFunc(OCPlatform::sendResponse).Return(OC_STACK_OK);
+        mocks.OnCall(
+                mockFakePlatform, FakeOCPlatform::sendResponse)
+                        .Return(OC_STACK_OK);
     }
 };
 
@@ -716,8 +774,6 @@ TEST_F(SetRequestHandlerPolicyTest, WithAcceptancePolicy_AcceptedEvenIfKeyIsNew)
     ASSERT_TRUE(server->getAttributes().contains(KEY));
 }
 
-
-
 class ResourceObjectSynchronizationTest: public ResourceObjectHandlingRequestTest
 {
 public:
@@ -752,14 +808,24 @@ TEST_F(ResourceObjectSynchronizationTest, MultipleAccessToServerResource)
 
     server->setAttribute(KEY, 0);
 
-    for (int i = 20; i >= 0; --i) {
+    for (int i = 20; i >= 0; --i)
+    {
+#ifdef HIPPOMOCKS_ISSUE
+        int count = 50 + i * 1;
+#else
         int count = 5000 + i * 100;
+#endif
         threads.push_back(thread { withLock, server, count });
         expected += count;
     }
 
-    for (int i = 20; i >= 0; --i) {
+    for (int i = 20; i >= 0; --i)
+    {
+#ifdef HIPPOMOCKS_ISSUE
+        int count = 50 + i * 1;
+#else
         int count = 5000 + i * 100;
+#endif
         threads.push_back(thread { withSetter, server, count });
         expected +=count;
     }
@@ -777,18 +843,29 @@ TEST_F(ResourceObjectSynchronizationTest, MultipleAccessToServerResourceWithRequ
     int expected { 0 };
     vector<thread> threads;
 
-    mocks.OnCallFunc(OCPlatform::sendResponse).Return(OC_STACK_OK);
+    mocks.OnCall(mockFakePlatform, FakeOCPlatform::sendResponse)
+            .Return(OC_STACK_OK);
 
     server->setAttribute(KEY, 0);
 
-    for (int i = 20; i >= 0; --i) {
+    for (int i = 20; i >= 0; --i)
+    {
+#ifdef HIPPOMOCKS_ISSUE
+        int count = 50 + i * 1;
+#else
         int count = 5000 + i * 100;
+#endif
         threads.push_back(thread{ withLock, server, count });
         expected += count;
     }
 
-    for (int i = 20; i >= 0; --i) {
+    for (int i = 20; i >= 0; --i)
+    {
+#ifdef HIPPOMOCKS_ISSUE
+        int count = 50 + i * 1;
+#else
         int count = 5000 + i * 100;
+#endif
         threads.push_back(thread{ withSetter, server, count });
         expected +=count;
     }
@@ -796,7 +873,11 @@ TEST_F(ResourceObjectSynchronizationTest, MultipleAccessToServerResourceWithRequ
     threads.push_back(thread{
         [this]()
         {
+#ifdef HIPPOMOCKS_ISSUE
+            for (int i=0; i<100; ++i)
+#else
             for (int i=0; i<10000; ++i)
+#endif
             {
                 if (i % 5 == 0) handler(createRequest(OC_REST_OBSERVE));
                 handler(createRequest((i & 1) ? OC_REST_GET : OC_REST_POST));
@@ -811,8 +892,6 @@ TEST_F(ResourceObjectSynchronizationTest, MultipleAccessToServerResourceWithRequ
 
     ASSERT_EQ(expected, server->getAttribute<int>(KEY));
 }
-
-
 
 class AttributeUpdatedListenerTest: public ResourceObjectHandlingRequestTest
 {
@@ -831,7 +910,9 @@ protected:
     void SetUp()
     {
         ResourceObjectHandlingRequestTest::SetUp();
-        mocks.OnCallFunc(OCPlatform::sendResponse).Return(OC_STACK_OK);
+        mocks.OnCall(
+                mockFakePlatform, FakeOCPlatform::sendResponse)
+                        .Return(OC_STACK_OK);
 
         server->setAttribute(KEY, 0);
     }
@@ -845,7 +926,6 @@ public:
 
     virtual ~AttributeUpdatedListener() {}
 };
-
 
 TEST_F(AttributeUpdatedListenerTest, RemoveListenerReturnsFalseIfListenerIsNotAdded)
 {

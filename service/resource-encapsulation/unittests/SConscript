@@ -94,13 +94,13 @@ rcs_client_test = rcs_test_env.Program('rcs_client_test', rcs_test_src)
 Alias("rcs_client_test", rcs_client_test)
 rcs_test_env.AppendTarget('rcs_client_test')
 
-# TODO: fix this test on linux and remove commented lines
+
 if rcs_test_env.get('TEST') == '1':
     if target_os in ['linux']:
+        rcs_test_env.AppendUnique(CPPDEFINES=['HIPPOMOCKS_ISSUE'])
         run_test(
             rcs_test_env,
-#           'service_resource-encapsulation_unittests_rcs_client_test.memcheck',
-            '',
+            'service_resource-encapsulation_unittests_rcs_client_test.memcheck',
             'service/resource-encapsulation/unittests/rcs_client_test')
 else:
     rcs_test_env.AppendUnique(CPPDEFINES=['LOCAL_RUNNING'])
