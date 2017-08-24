@@ -132,15 +132,6 @@ void DeleteACLList(OicSecAcl_t* acl);
 void FreeRsrc(OicSecRsrc_t *rsrc);
 
 /**
- * Internal function to duplicate the ACE instance.
- *
- * @param ace instance of @ref OicSecAce_t structure to be duplicated.
- * @return reference to @ref OicSecAce_t if ACE was successfully duplicated.
- */
-OicSecAce_t* DuplicateACE(const OicSecAce_t* ace);
-
-
-/**
  * This function check the duplication with pre-installed ACL and installs only new ACEs.
  *
  * @param acl  acl to install.

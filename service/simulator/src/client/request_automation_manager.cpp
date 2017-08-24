@@ -24,7 +24,7 @@
 #include "post_request_generator.h"
 #include "request_model.h"
 #include "simulator_exceptions.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "AUTO_REQ_GEN_MNGR"
 

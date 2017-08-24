@@ -236,21 +236,21 @@ help_vars = Variables()
 help_vars.Add(
     PathVariable('ARDUINO_HOME',
                  'ARDUINO root directory',
-                 os.environ.get('ARDUINO_HOME')))
+                 default=os.environ.get('ARDUINO_HOME')))
 help_vars.Update(env)
 Help(help_vars.GenerateHelpText(env))
 
 target_arch = env.get('TARGET_ARCH')
 arduino_home = env.get('ARDUINO_HOME')
 if not arduino_home:
-    print '''
+    msg = '''
 ************************************* Error ***********************************
-*   Arduino root directory isn't set, you can set enviornment variable        *
-* ARDUINO_HOME or add it in command line as:                                  *
-*      # scons ARDUINO_HOME=<path to arduino root directory> ...              *
+* Arduino root directory is not set, you can set enviornment variable
+* ARDUINO_HOME or add it in command line as:
+*      # scons ARDUINO_HOME=<path to arduino root directory> ...
 *******************************************************************************
 '''
-    Exit(1)
+    Exit(msg)
 
 # Overwrite suffixes and prefixes
 if env['HOST_OS'] == 'win32':
@@ -282,13 +282,13 @@ if os.path.exists(arduino_home + '/lib/version.txt'):
     vf = open(arduino_home + '/lib/version.txt', 'r')
     version = vf.readline().replace('.', '')
 else:
-    print '''
+    msg = '''
 ************************************* Error ***********************************
-* Can't find version file (lib/version.txt), please check if (%s)
-* is arduino root directory.                                                  *
+* Cannot find version file (lib/version.txt), please check if (%s)
+* is the arduino root directory.
 *******************************************************************************
 ''' % arduino_home
-    Exit(1)
+    Exit(msg)
 
 if version[0:2] == '10':
     is_1_0_x = True
@@ -301,13 +301,13 @@ if version[0:2] == '10':
     env.Replace(LINK='avr-gcc')
     env.Replace(RANLIB='avr-ranlib')
     if target_arch != 'avr':
-        print '''
+        msg = '''
 ************************************* Error ***********************************
-* Arduino 1.0.x IDE only support 'avr', to support other arch at least 1.5.x  *
+* Arduino 1.0.x IDE only support 'avr', to support other arch at least 1.5.x
 * is required.
 *******************************************************************************
 '''
-        Exit(1)
+        Exit(msg)
 else:
     is_1_0_x = False
     if target_arch == 'avr':
@@ -333,7 +333,7 @@ help_vars = Variables()
 help_vars.Add(
     EnumVariable('BOARD',
                  'arduino board',
-                 boards[0],
+                 default=boards[0],
                  allowed_values=boards))
 help_vars.Update(env)
 Help(help_vars.GenerateHelpText(env))
@@ -346,7 +346,7 @@ if len(cpus) > 0:
     help_vars.Add(
         EnumVariable('CPU',
                      'arduino board cpu',
-                     cpus[0],
+                     default=cpus[0],
                      allowed_values=cpus))
     help_vars.Update(env)
     Help(help_vars.GenerateHelpText(env))

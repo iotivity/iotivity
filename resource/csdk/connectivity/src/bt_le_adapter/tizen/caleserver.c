@@ -168,7 +168,7 @@ void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddr
     }
 }
 
-void CALEServerNotificationSentCB(int result, char *remote_address, bt_gatt_server_h server,
+void CALEServerNotificationSentCB(int result, const char *remote_address, bt_gatt_server_h server,
                                   bt_gatt_h characteristic, bool completed, void *user_data)
 {
     OIC_LOG_V(DEBUG, TAG, "Notification to the device[%s] result[%d]", remote_address, result);
@@ -642,8 +642,9 @@ CAResult_t CAAddNewLEServiceInGattServer(const char *serviceUUID)
     return CA_STATUS_OK;
 }
 
-void CALEGattRemoteCharacteristicWriteCb(char *remoteAddress, bt_gatt_server_h server,
-                                         bt_gatt_h charPath, int offset, char *charValue,
+void CALEGattRemoteCharacteristicWriteCb(const char *remoteAddress, int request_id,
+                                         bt_gatt_server_h server, bt_gatt_h charPath,
+                                         bool response_needed, int offset, const char *charValue,
                                          int charValueLen, void *userData)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -681,6 +682,16 @@ void CALEGattRemoteCharacteristicWriteCb(char *remoteAddress, bt_gatt_server_h s
                                     &sentLength);
     oc_mutex_unlock(g_leReqRespCbMutex);
     OICFree(data);
+
+    OIC_LOG_V(INFO, TAG, "response needed flag: %d", response_needed);
+    if (response_needed)
+    {
+        OIC_LOG(INFO, TAG, "send response to remote client");
+        bt_gatt_server_send_response(request_id,
+                                     BT_GATT_REQUEST_TYPE_WRITE, offset,
+                                     BT_ERROR_NONE, NULL, 0);
+    }
+
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
@@ -700,12 +711,20 @@ CAResult_t CARegisterLEServicewithGattServer(const bt_gatt_h svcPath)
         return CA_STATUS_FAILED;
     }
 
-    ret = bt_gatt_server_set_value_changed_cb(g_gattWriteCharPath,
-                                              CALEGattRemoteCharacteristicWriteCb, NULL);
+    ret = bt_gatt_server_start();
+    if (0 != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "bt_gatt_server_start failed with ret[%s]",
+                  CALEGetErrorMsg(ret));
+        return CA_STATUS_FAILED;
+    }
+
+    ret = bt_gatt_server_set_write_value_requested_cb(g_gattWriteCharPath,
+                                                      CALEGattRemoteCharacteristicWriteCb, NULL);
 
     if (0 != ret)
     {
-        OIC_LOG_V(ERROR, TAG, "bt_gatt_server_set_value_changed_cb failed with ret[%s]",
+        OIC_LOG_V(ERROR, TAG, "bt_gatt_server_set_write_value_requested_cb failed with ret[%s]",
                   CALEGetErrorMsg(ret));
         return CA_STATUS_FAILED;
     }
@@ -748,11 +767,13 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const bt_gatt_h svcPath, const ch
 
     if (read)
     {
-        ret = bt_gatt_server_set_notification_state_change_cb(charPath, CALENotificationCb, NULL);
+        ret = bt_gatt_server_set_characteristic_notification_state_change_cb(charPath,
+                                                                             CALENotificationCb,
+                                                                             NULL);
         if (0 != ret)
         {
             OIC_LOG_V(ERROR, TAG,
-                      "bt_gatt_server_set_notification_state_change_cb  failed with ret[%s]",
+                      "bt_gatt_server_set_characteristic_notification_state_change_cb  failed with ret[%s]",
                       CALEGetErrorMsg(ret));
             return CA_STATUS_FAILED;
         }
@@ -837,12 +858,13 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char *address, const uint8_
         return CA_STATUS_FAILED;
     }
 
-    ret = bt_gatt_server_notify(g_gattReadCharPath, false, CALEServerNotificationSentCB,
-                                NULL);
+    ret = bt_gatt_server_notify_characteristic_changed_value(g_gattReadCharPath,
+                                                             CALEServerNotificationSentCB,
+                                                             address, NULL);
     if (0 != ret)
     {
         OIC_LOG_V(ERROR, TAG,
-                  "bt_gatt_server_notify failed with return [%s]", CALEGetErrorMsg(ret));
+                  "bt_gatt_server_notify_characteristic_changed_value failed with return [%s]", CALEGetErrorMsg(ret));
         oc_mutex_unlock(g_leCharacteristicMutex);
         return CA_STATUS_FAILED;
     }
@@ -876,12 +898,13 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const uint8_t *charValue, uin
         return CA_STATUS_FAILED;
     }
 
-    ret = bt_gatt_server_notify(g_gattReadCharPath, false, CALEServerNotificationSentCB,
-                                NULL);
+    ret = bt_gatt_server_notify_characteristic_changed_value(g_gattReadCharPath,
+                                                             CALEServerNotificationSentCB,
+                                                             NULL, NULL);
     if (0 != ret)
     {
         OIC_LOG_V(ERROR, TAG,
-                  "bt_gatt_server_notify failed with return[%s]", CALEGetErrorMsg(ret));
+                  "bt_gatt_server_notify_characteristic_changed_value failed with return[%s]", CALEGetErrorMsg(ret));
         oc_mutex_unlock(g_leCharacteristicMutex);
         return CA_STATUS_FAILED;
     }
@@ -908,27 +931,17 @@ void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback)
     g_serverErrorCallback = callback;
 }
 
-bool CALEServerIsConnected(const char* address)
+void CASetLEConnectionStateChangedCallback(CALEConnectionStateChangedCallback connStateCb)
 {
-    //@Todo
-    return true;
+    // TODO: Will be updated when tizen LE connection manager is updated
 }
 
-uint16_t CALEServerGetMtuSize(const char* address)
+void CAStartServerLEAdvertising()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-    VERIFY_NON_NULL_RET(address, TAG, "address is null", CA_DEFAULT_BLE_MTU_SIZE);
-
-    unsigned int mtu = CA_DEFAULT_BLE_MTU_SIZE + CA_BLE_MTU_HEADER_SIZE;
-    int ret = bt_device_get_att_mtu(address, &mtu);
-    if (0 != ret)
-    {
-        OIC_LOG_V(ERROR, TAG,
-                  "bt_device_get_att_mtu failed with return [%s]", CALEGetErrorMsg(ret));
-        return CA_DEFAULT_BLE_MTU_SIZE;
-    }
-    OIC_LOG_V(INFO, TAG, "mtu size(including header) from bt_device_get_att_mtu is %d", mtu);
-    OIC_LOG(DEBUG, TAG, "OUT");
-    return mtu - CA_BLE_MTU_HEADER_SIZE;
+    // TODO: Will be updated when tizen LE connection manager is updated
 }
 
+void CAStopServerLEAdvertising()
+{
+    // TODO: Will be updated when tizen LE connection manager is updated
+}

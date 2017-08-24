@@ -23,7 +23,7 @@
 #include "simulator_exceptions.h"
 #include "simulator_utils.h"
 #include "simulator_logger.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "SIMULATOR_REMOTE_RESOURCE"
 
@@ -116,6 +116,14 @@ bool SimulatorRemoteResourceImpl::isObservable() const
 void SimulatorRemoteResourceImpl::observe(ObserveType type,
         ObserveNotificationCallback callback)
 {
+    std::map<std::string, std::string> queryParams;
+    return observe(type, queryParams, callback);
+}
+
+void SimulatorRemoteResourceImpl::observe(ObserveType type,
+        const std::map<std::string, std::string> &queryParams,
+        ObserveNotificationCallback callback)
+{
     VALIDATE_CALLBACK(callback)
 
     std::lock_guard<std::mutex> lock(m_observeLock);
@@ -145,7 +153,7 @@ void SimulatorRemoteResourceImpl::observe(ObserveType type,
 
     try
     {
-        OCStackResult ocResult = m_ocResource->observe(observeType, OC::QueryParamsMap(), observeCallback);
+        OCStackResult ocResult = m_ocResource->observe(observeType, queryParams, observeCallback);
         if (OC_STACK_OK != ocResult)
             throw SimulatorException(static_cast<SimulatorResult>(ocResult), OC::OCException::reason(ocResult));
 

@@ -33,7 +33,7 @@ if env.get('OIC_SUPPORT_TIZEN_TRACE') == 'True':
     env.AppendUnique(CPPDEFINES=['OIC_SUPPORT_TIZEN_TRACE'])
 if 'ALL' in transport:
     env.AppendUnique(CPPDEFINES=[
-	'WIFI_ADAPTER', 'NO_ETHERNET_ADAPTER', 'EDR_ADAPTER', 'LE_ADAPTER'
+        'WIFI_ADAPTER', 'NO_ETHERNET_ADAPTER', 'EDR_ADAPTER', 'LE_ADAPTER'
     ])
     print "CA Transport is ALL"
 else:

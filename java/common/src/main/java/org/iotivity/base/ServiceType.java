@@ -24,7 +24,7 @@ package org.iotivity.base;
 
 public enum ServiceType {
     IN_PROC(0),
-    OUT_OF_PROC(1),;
+    OUT_OF_PROC(1);
 
     private int value;
 

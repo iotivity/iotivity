@@ -49,6 +49,8 @@ class SimulatorRemoteResourceImpl : public SimulatorRemoteResource
         bool isObservable() const;
 
         void observe(ObserveType type, ObserveNotificationCallback callback);
+        void observe(ObserveType type, const std::map<std::string, std::string> &queryParams,
+                     ObserveNotificationCallback callback);
         void cancelObserve();
 
         void get(const GetResponseCallback &callback);

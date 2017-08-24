@@ -34,7 +34,7 @@
 #include "oic_malloc.h"
 #include "ocpayloadcbor.h"
 #include "ocstackinternal.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "platform_features.h"
 #include "ocendpoint.h"
 

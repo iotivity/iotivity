@@ -89,7 +89,7 @@ void *updateGroupLog(void *data)
 
 nestedAtrribute createNestedAttribute(int fanSpeed, int airSpeed)
 {
-    nestedAtrribute *acServer = new nestedAtrribute();
+    nestedAtrribute acServer;
 
     model["model"] = "SamsungAC";
 
@@ -129,19 +129,13 @@ nestedAtrribute createNestedAttribute(int fanSpeed, int airSpeed)
     light.push_back(red);
     light.push_back(green);
 
-    if (nullptr == acServer)
-    {
-        dlog_print(DLOG_ERROR, LOG_TAG, "#### NULL nestedAtrribute");
-        return *acServer;
-    }
+    acServer.push_back(generalInfo);
+    acServer.push_back(fan);
+    acServer.push_back(tempSensor);
+    acServer.push_back(efficiency);
+    acServer.push_back(light);
 
-    acServer->push_back(generalInfo);
-    acServer->push_back(fan);
-    acServer->push_back(tempSensor);
-    acServer->push_back(efficiency);
-    acServer->push_back(light);
-
-    return *acServer;
+    return acServer;
 }
 
 static void onDestroy()

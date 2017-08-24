@@ -18,6 +18,7 @@ IOTIVITY_BASE="${PWD}"
 IOTIVITY_TARGET_OS="linux"
 IOTIVITY_TARGET_ARCH="x86"
 USE_TIMESTAMP="yes"
+UNITTEST_XML_REPORT="yes"
 
 usage() {
     echo "Usage: tools/generate_report.sh <options>"
@@ -28,11 +29,12 @@ usage() {
     echo "      --format=[html|gcov|xml] (default: html)        :  Report Format."
     echo "      --module=[CA|ES|RE|SM|NS|CHP|ALL] (default: CA) :  Module for which report needs to be generated."
     echo "      --timestamp=[yes|no] (default: yes)             :  Remove Time Stamp from the report output. If directory exits, overwrites the report to the same directory"
+    echo "      --ut_report=[yes|no] (default: yes)             :  The unit test report will be generated in xml format (as gtest only supports xml)."
     echo "      --target_arch=[x86|x86_64] (default: x86)       :  Choose Target Architecture for running test executables."
     echo "Example:"
     echo "  $ cd path/to/iotivity "
     echo "  $ scons TARGET_TRANSPORT=IP LOGGING=0 RELEASE=0 SECURED=0 WITH_TCP=0 TARGET_ARCH=x86 WITH_PROXY=1 TEST=0 "
-    echo "  $ tools/generate_report.sh --format=html --module=ALL --timestamp=yes "
+    echo "  $ tools/generate_report.sh --format=html --module=ALL --timestamp=yes --ut_report=yes"
 }
 
 clean_iotivity() {
@@ -118,6 +120,19 @@ process_cmd_args() {
                 exit 1
                 ;;
 
+            --ut_report=*)
+                UNITTEST_XML_REPORT="${1#*=}";
+                if [ "yes" != ${UNITTEST_XML_REPORT} -a "no" != ${UNITTEST_XML_REPORT} ]; then
+                    usage; exit 1;
+                fi
+                shift 1
+                ;;
+            --ut_report)
+                echo "$1 requires an argument [yes|no]" >&2;
+                usage;
+                exit 1
+                ;;
+
             --target_arch=*)
                 IOTIVITY_TARGET_ARCH="${1#*=}";
                 if [ "x86" != ${IOTIVITY_TARGET_ARCH} -a "x86_64" != ${IOTIVITY_TARGET_ARCH} ]; then
@@ -163,16 +178,41 @@ generate_report_CA()
     test_report_dir="TestReport/${report_format}/${report_dir}"
     test_report_file="${test_report_dir}/${report_file}"
 
-    if [ -d "${test_report_dir}" ]; then
-        rm -rf "${test_report_dir}"
-    fi
+    rm -rf "${test_report_dir}"
     mkdir -p "${test_report_dir}"
 
     LD_LIBRARY_PATH="${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/resource/csdk/connectivity/test/catests"
+
+    #Setting Proper Location for UnitTest XML report generation
+    unittest_report_dir="UnitTestReport/${report_dir}"
+    if [ "yes" = ${UNITTEST_XML_REPORT} ]; then
+        rm -rf "${unittest_report_dir}"
+        mkdir -p "${unittest_report_dir}"
+        UNITTEST_XML_REPORT_FLAG_PREFIX="--gtest_output=xml:${unittest_report_dir}"
+    fi
+
+    tests_list=(
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/resource/csdk/connectivity/test/catests"
+               );
+
+    for exe in ${tests_list[@]}; do
+        filename=$(basename -- "${exe}")
+        if [ -n "${UNITTEST_XML_REPORT_FLAG_PREFIX}" ]; then
+            UNITTEST_XML_REPORT_FLAG="${UNITTEST_XML_REPORT_FLAG_PREFIX}/${filename}.xml"
+        fi
+        eval "${exe} ${UNITTEST_XML_REPORT_FLAG}"
+    done
+
+    unset tests_list
+
     sleep 1
 
     echo -e "Generating ${GREEN}${module_name}${NO_COLOUR} Reports"
+
+    # Printing Unit Test Report Location
+    if [  "yes" = ${UNITTEST_XML_REPORT} ]; then
+        echo -e "${GREEN}${module_name}${NO_COLOUR} UnitTest Report Location: ${BLUE}${unittest_report_dir}${NO_COLOUR}"
+    fi
 
     gcovr -r . \
         -e ".sconf_temp*" \
@@ -254,7 +294,7 @@ generate_report_CA()
         ${report_flags} -o ${test_report_file}
 
     if [  $? -eq 0 ]; then
-        echo -e "${GREEN}${module_name}${NO_COLOUR} Report Location: ${BLUE}${test_report_file}${NO_COLOUR}"
+        echo -e "${GREEN}${module_name}${NO_COLOUR} Coverage Report Location: ${BLUE}${test_report_file}${NO_COLOUR}"
         echo -e "${GREEN}${module_name}${NO_COLOUR} Report Generated ${GREEN}Successfully!${NO_COLOUR}"
     else
         echo -e "${RED}${module_name}${NO_COLOUR} Report Generation ${RED}Failed!${NO_COLOUR}"
@@ -274,17 +314,42 @@ generate_report_ES()
     test_report_dir="TestReport/${report_format}/${report_dir}"
     test_report_file="${test_report_dir}/${report_file}"
 
-    if [ -d "${test_report_dir}" ]; then
-        rm -rf "${test_report_dir}"
-    fi
+    rm -rf "${test_report_dir}"
     mkdir -p "${test_report_dir}"
 
     LD_LIBRARY_PATH="${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/easy-setup/enrollee/unittests/easysetup_enrollee_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/easy-setup/mediator/richsdk/unittests/easysetup_mediator_test"
+
+    #Setting Proper Location for UnitTest XML report generation
+    unittest_report_dir="UnitTestReport/${report_dir}"
+    if [ "yes" = ${UNITTEST_XML_REPORT} ]; then
+        rm -rf "${unittest_report_dir}"
+        mkdir -p "${unittest_report_dir}"
+        UNITTEST_XML_REPORT_FLAG_PREFIX="--gtest_output=xml:${unittest_report_dir}"
+    fi
+
+    tests_list=(
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/easy-setup/enrollee/unittests/easysetup_enrollee_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/easy-setup/mediator/richsdk/unittests/easysetup_mediator_test"
+               );
+
+    for exe in ${tests_list[@]}; do
+        filename=$(basename -- "${exe}")
+        if [ -n "${UNITTEST_XML_REPORT_FLAG_PREFIX}" ]; then
+            UNITTEST_XML_REPORT_FLAG="${UNITTEST_XML_REPORT_FLAG_PREFIX}/${filename}.xml"
+        fi
+        eval "${exe} ${UNITTEST_XML_REPORT_FLAG}"
+    done
+
+    unset tests_list
+
     sleep 1
 
     echo -e "Generating ${GREEN}${module_name}${NO_COLOUR} Reports"
+
+    # Printing Unit Test Report Location
+    if [  "yes" = ${UNITTEST_XML_REPORT} ]; then
+        echo -e "${GREEN}${module_name}${NO_COLOUR} UnitTest Report Location: ${BLUE}${unittest_report_dir}${NO_COLOUR}"
+    fi
 
     gcovr -r . \
         -e ".sconf_temp*" \
@@ -366,7 +431,7 @@ generate_report_ES()
         ${report_flags} -o ${test_report_file}
 
     if [  $? -eq 0 ]; then
-        echo -e "${GREEN}${module_name}${NO_COLOUR} Report Location: ${BLUE}${test_report_file}${NO_COLOUR}"
+        echo -e "${GREEN}${module_name}${NO_COLOUR} Coverage Report Location: ${BLUE}${test_report_file}${NO_COLOUR}"
         echo -e "${GREEN}${module_name}${NO_COLOUR} Report Generated ${GREEN}Successfully!${NO_COLOUR}"
     else
         echo -e "${RED}${module_name}${NO_COLOUR} Report Generation ${RED}Failed!${NO_COLOUR}"
@@ -385,21 +450,45 @@ generate_report_RE()
     test_report_dir="TestReport/${report_format}/${report_dir}"
     test_report_file="${test_report_dir}/${report_file}"
 
-    if [ -d "${test_report_dir}" ]; then
-        rm -rf "${test_report_dir}"
-    fi
+    rm -rf "${test_report_dir}"
     mkdir -p "${test_report_dir}"
 
     LD_LIBRARY_PATH="${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/src/serverBuilder/rcs_server_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/unittests/rcs_client_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/src/common/rcs_common_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/src/resourceCache/unittests/cache_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/src/resourceBroker/unittest/broker_test"
+
+    #Setting Proper Location for UnitTest XML report generation
+    unittest_report_dir="UnitTestReport/${report_dir}"
+    if [ "yes" = ${UNITTEST_XML_REPORT} ]; then
+        rm -rf "${unittest_report_dir}"
+        mkdir -p "${unittest_report_dir}"
+        UNITTEST_XML_REPORT_FLAG_PREFIX="--gtest_output=xml:${unittest_report_dir}"
+    fi
+
+    tests_list=(
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/src/serverBuilder/rcs_server_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/unittests/rcs_client_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/src/common/primitiveResource/unittests/rcs_common_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/src/resourceCache/unittests/cache_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/resource-encapsulation/src/resourceBroker/unittest/broker_test"
+               );
+
+    for exe in ${tests_list[@]}; do
+        filename=$(basename -- "${exe}")
+        if [ -n "${UNITTEST_XML_REPORT_FLAG_PREFIX}" ]; then
+            UNITTEST_XML_REPORT_FLAG="${UNITTEST_XML_REPORT_FLAG_PREFIX}/${filename}.xml"
+        fi
+        eval "${exe} ${UNITTEST_XML_REPORT_FLAG}"
+    done
+
+    unset tests_list
 
     sleep 1
 
     echo -e "Generating ${GREEN}${module_name}${NO_COLOUR} Reports"
+
+    # Printing Unit Test Report Location
+    if [  "yes" = ${UNITTEST_XML_REPORT} ]; then
+        echo -e "${GREEN}${module_name}${NO_COLOUR} UnitTest Report Location: ${BLUE}${unittest_report_dir}${NO_COLOUR}"
+    fi
 
     gcovr -r . \
         -e ".sconf_temp*" \
@@ -481,7 +570,7 @@ generate_report_RE()
         ${report_flags} -o ${test_report_file}
 
     if [  $? -eq 0 ]; then
-        echo -e "${GREEN}${module_name}${NO_COLOUR} Report Location: ${BLUE}${test_report_file}${NO_COLOUR}"
+        echo -e "${GREEN}${module_name}${NO_COLOUR} Coverage Report Location: ${BLUE}${test_report_file}${NO_COLOUR}"
         echo -e "${GREEN}${module_name}${NO_COLOUR} Report Generated ${GREEN}Successfully!${NO_COLOUR}"
     else
         echo -e "${RED}${module_name}${NO_COLOUR} Report Generation ${RED}Failed!${NO_COLOUR}"
@@ -500,24 +589,48 @@ generate_report_SM()
     test_report_dir="TestReport/${report_format}/${report_dir}"
     test_report_file="${test_report_dir}/${report_file}"
 
-    if [ -d "${test_report_dir}" ]; then
-        rm -rf "${test_report_dir}"
-    fi
+    rm -rf "${test_report_dir}"
     mkdir -p "${test_report_dir}"
 
     LD_LIBRARY_PATH="${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/remote_scene_action_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/remote_scene_col_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/remote_scene_list_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/remote_scene_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/scene_action_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/scene_collection_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/scene_list_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/scene_test"
+
+    #Setting Proper Location for UnitTest XML report generation
+    unittest_report_dir="UnitTestReport/${report_dir}"
+    if [ "yes" = ${UNITTEST_XML_REPORT} ]; then
+        rm -rf "${unittest_report_dir}"
+        mkdir -p "${unittest_report_dir}"
+        UNITTEST_XML_REPORT_FLAG_PREFIX="--gtest_output=xml:${unittest_report_dir}"
+    fi
+
+    tests_list=(
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/remote_scene_action_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/remote_scene_col_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/remote_scene_list_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/remote_scene_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/scene_action_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/scene_collection_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/scene_list_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/scene-manager/unittests/scene_test"
+               );
+
+    for exe in ${tests_list[@]}; do
+        filename=$(basename -- "${exe}")
+        if [ -n "${UNITTEST_XML_REPORT_FLAG_PREFIX}" ]; then
+            UNITTEST_XML_REPORT_FLAG="${UNITTEST_XML_REPORT_FLAG_PREFIX}/${filename}.xml"
+        fi
+        eval "${exe} ${UNITTEST_XML_REPORT_FLAG}"
+    done
+
+    unset tests_list
 
     sleep 1
 
     echo -e "Generating ${GREEN}${module_name}${NO_COLOUR} Reports"
+
+    # Printing Unit Test Report Location
+    if [  "yes" = ${UNITTEST_XML_REPORT} ]; then
+        echo -e "${GREEN}${module_name}${NO_COLOUR} UnitTest Report Location: ${BLUE}${unittest_report_dir}${NO_COLOUR}"
+    fi
 
     gcovr -r . \
         -e ".sconf_temp*" \
@@ -599,7 +712,7 @@ generate_report_SM()
         ${report_flags} -o ${test_report_file}
 
     if [  $? -eq 0 ]; then
-        echo -e "${GREEN}${module_name}${NO_COLOUR} Report Location: ${BLUE}${test_report_file}${NO_COLOUR}"
+        echo -e "${GREEN}${module_name}${NO_COLOUR} Coverage Report Location: ${BLUE}${test_report_file}${NO_COLOUR}"
         echo -e "${GREEN}${module_name}${NO_COLOUR} Report Generated ${GREEN}Successfully!${NO_COLOUR}"
     else
         echo -e "${RED}${module_name}${NO_COLOUR} Report Generation ${RED}Failed!${NO_COLOUR}"
@@ -618,20 +731,44 @@ generate_report_NS()
     test_report_dir="TestReport/${report_format}/${report_dir}"
     test_report_file="${test_report_dir}/${report_file}"
 
-    if [ -d "${test_report_dir}" ]; then
-        rm -rf "${test_report_dir}"
-    fi
+    rm -rf "${test_report_dir}"
     mkdir -p "${test_report_dir}"
 
     LD_LIBRARY_PATH="${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/notification/unittest/notification_consumer_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/notification/unittest/notification_provider_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/notification/cpp-wrapper/unittest/notification_consumer_wrapper_test"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/notification/cpp-wrapper/unittest/notification_provider_wrapper_test"
+
+    #Setting Proper Location for UnitTest XML report generation
+    unittest_report_dir="UnitTestReport/${report_dir}"
+    if [ "yes" = ${UNITTEST_XML_REPORT} ]; then
+        rm -rf "${unittest_report_dir}"
+        mkdir -p "${unittest_report_dir}"
+        UNITTEST_XML_REPORT_FLAG_PREFIX="--gtest_output=xml:${unittest_report_dir}"
+    fi
+
+    tests_list=(
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/notification/unittest/notification_consumer_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/notification/unittest/notification_provider_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/notification/cpp-wrapper/unittest/notification_consumer_wrapper_test"
+                "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/notification/cpp-wrapper/unittest/notification_provider_wrapper_test"
+               );
+
+    for exe in ${tests_list[@]}; do
+        filename=$(basename -- "${exe}")
+        if [ -n "${UNITTEST_XML_REPORT_FLAG_PREFIX}" ]; then
+            UNITTEST_XML_REPORT_FLAG="${UNITTEST_XML_REPORT_FLAG_PREFIX}/${filename}.xml"
+        fi
+        eval "${exe} ${UNITTEST_XML_REPORT_FLAG}"
+    done
+
+    unset tests_list
 
     sleep 1
 
     echo -e "Generating ${GREEN}${module_name}${NO_COLOUR} Reports"
+
+    # Printing Unit Test Report Location
+    if [  "yes" = ${UNITTEST_XML_REPORT} ]; then
+        echo -e "${GREEN}${module_name}${NO_COLOUR} UnitTest Report Location: ${BLUE}${unittest_report_dir}${NO_COLOUR}"
+    fi
 
     gcovr -r . \
         -e ".sconf_temp*" \
@@ -715,7 +852,7 @@ generate_report_NS()
         ${report_flags} -o ${test_report_file}
 
     if [  $? -eq 0 ]; then
-        echo -e "${GREEN}${module_name}${NO_COLOUR} Report Location: ${BLUE}${test_report_file}${NO_COLOUR}"
+        echo -e "${GREEN}${module_name}${NO_COLOUR} Coverage Report Location: ${BLUE}${test_report_file}${NO_COLOUR}"
         echo -e "${GREEN}${module_name}${NO_COLOUR} Report Generated ${GREEN}Successfully!${NO_COLOUR}"
     else
         echo -e "${RED}${module_name}${NO_COLOUR} Report Generation ${RED}Failed!${NO_COLOUR}"
@@ -735,17 +872,41 @@ generate_report_CHP()
     test_report_dir="TestReport/${report_format}/${report_dir}"
     test_report_file="${test_report_dir}/${report_file}"
 
-    if [ -d "${test_report_dir}" ]; then
-        rm -rf "${test_report_dir}"
-    fi
+    rm -rf "${test_report_dir}"
     mkdir -p "${test_report_dir}"
 
     LD_LIBRARY_PATH="${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug"
-    "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/coap-http-proxy/unittests/CoAP_unit_test"
+
+    #Setting Proper Location for UnitTest XML report generation
+    unittest_report_dir="UnitTestReport/${report_dir}"
+    if [ "yes" = ${UNITTEST_XML_REPORT} ]; then
+        rm -rf "${unittest_report_dir}"
+        mkdir -p "${unittest_report_dir}"
+        UNITTEST_XML_REPORT_FLAG_PREFIX="--gtest_output=xml:${unittest_report_dir}"
+    fi
+
+    tests_list=(
+               "${IOTIVITY_BASE}/out/${IOTIVITY_TARGET_OS}/${IOTIVITY_TARGET_ARCH}/debug/service/coap-http-proxy/unittests/CoAP_unit_test"
+               );
+
+    for exe in ${tests_list[@]}; do
+        filename=$(basename -- "${exe}")
+        if [ -n "${UNITTEST_XML_REPORT_FLAG_PREFIX}" ]; then
+            UNITTEST_XML_REPORT_FLAG="${UNITTEST_XML_REPORT_FLAG_PREFIX}/${filename}.xml"
+        fi
+        eval "${exe} ${UNITTEST_XML_REPORT_FLAG}"
+    done
+
+    unset tests_list
 
     sleep 1
 
     echo -e "Generating ${GREEN}${module_name}${NO_COLOUR} Reports"
+
+    # Printing Unit Test Report Location
+    if [  "yes" = ${UNITTEST_XML_REPORT} ]; then
+        echo -e "${GREEN}${module_name}${NO_COLOUR} UnitTest Report Location: ${BLUE}${unittest_report_dir}${NO_COLOUR}"
+    fi
 
     gcovr -r . \
         -e ".sconf_temp*" \
@@ -827,7 +988,7 @@ generate_report_CHP()
         ${report_flags} -o ${test_report_file}
 
     if [  $? -eq 0 ]; then
-        echo -e "${GREEN}${module_name}${NO_COLOUR} Report Location: ${BLUE}${test_report_file}${NO_COLOUR}"
+        echo -e "${GREEN}${module_name}${NO_COLOUR} Coverage Report Location: ${BLUE}${test_report_file}${NO_COLOUR}"
         echo -e "${GREEN}${module_name}${NO_COLOUR} Report Generated ${GREEN}Successfully!${NO_COLOUR}"
     else
         echo -e "${RED}${module_name}${NO_COLOUR} Report Generation ${RED}Failed!${NO_COLOUR}"

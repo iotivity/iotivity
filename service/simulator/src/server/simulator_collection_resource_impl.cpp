@@ -22,7 +22,7 @@
 #include "simulator_utils.h"
 #include "oc_interface_details.h"
 #include "simulator_logger.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "SIMULATOR_COLLECTION_RESOURCE"
 

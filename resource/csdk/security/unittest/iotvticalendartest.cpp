@@ -21,7 +21,7 @@
 
 #include <gtest/gtest.h>
 #include "iotvticalendar.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG  "CALENDAR-UT"
 

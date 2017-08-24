@@ -19,7 +19,7 @@
  ******************************************************************/
 
 #include "request_model.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 RequestModel::RequestModel(const std::string &type)
     : m_type(type) {}

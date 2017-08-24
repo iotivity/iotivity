@@ -32,11 +32,11 @@
 #include "ocserverrequest.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "ocpayload.h"
 #include "utlist.h"
 #include "acl_logging.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "srmresourcestrings.h"
 #include "aclresource.h"
 #include "doxmresource.h"
@@ -47,6 +47,7 @@
 #include "ocpayloadcbor.h"
 #include "secureresourcemanager.h"
 #include "deviceonboardingstate.h"
+#include "octhread.h"
 
 #include "security_internals.h"
 
@@ -69,6 +70,32 @@ static const uint16_t CBOR_SIZE = 2048*8;
 static OicSecAcl_t *gAcl = NULL;
 static OCResourceHandle gAclHandle = NULL;
 static OCResourceHandle gAcl2Handle = NULL;
+
+/**
+ * List of known ace ids
+ */
+enum
+{
+    ACE_ID1 = 1,
+    ACE_ID2,
+    ACE_ID3,
+    ACE_ID4,
+    ACE_ID5,
+    ACE_ID_FIRST_FREE
+};
+
+//global aceid counter to assign unique ace id to new/duplicated aces
+static uint16_t gAceFreeId = ACE_ID_FIRST_FREE;
+
+static oc_mutex g_AceIdCounterMutex = NULL;
+
+typedef struct AceIdList AceIdList_t;
+
+struct AceIdList
+{
+    uint16_t aceid;
+    AceIdList_t *next;
+};
 
 void FreeRsrc(OicSecRsrc_t *rsrc)
 {
@@ -163,7 +190,22 @@ void DeleteACLList(OicSecAcl_t* acl)
     }
 }
 
-OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
+static void DeleteAceIdList(AceIdList_t** list)
+{
+    if (list)
+    {
+        AceIdList_t *head = *list;
+
+        while (head)
+        {
+            AceIdList_t *tmp = head->next;
+            OICFree(head);
+            head = tmp;
+        }
+    }
+}
+
+static OicSecAce_t* DuplicateACE(const OicSecAce_t* ace, bool createNewAceID)
 {
     OicSecAce_t* newAce = NULL;
 
@@ -171,6 +213,17 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
     {
         newAce = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
         VERIFY_NOT_NULL(TAG, newAce, ERROR);
+
+        if (createNewAceID)
+        {
+            oc_mutex_lock(g_AceIdCounterMutex);
+            newAce->aceid = gAceFreeId++;
+            oc_mutex_unlock(g_AceIdCounterMutex);
+        }
+        else
+        {
+            newAce->aceid = ace->aceid;
+        }
 
         //Subject
         newAce->subjectType = ace->subjectType;
@@ -564,7 +617,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl,
 
             bool includeAuthority = (0 != memcmp(&ace->subjectRole.authority, &EMPTY_ROLE.authority, sizeof(EMPTY_ROLE.authority)));
 
-            cborEncoderResult = cbor_encoder_create_map(&oicSecAclMap, &roleMap, ACE_ROLE_MAP_SIZE + includeAuthority?1:0);
+            cborEncoderResult = cbor_encoder_create_map(&oicSecAclMap, &roleMap, ACE_ROLE_MAP_SIZE + (includeAuthority ? 1 : 0));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed creating role map");
             OIC_LOG_V(DEBUG, TAG, "%s created v2 role map.", __func__);
 
@@ -684,7 +737,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl,
                     rsrcMapSize++;
                 }
 
-                OIC_LOG_V(DEBUG, TAG, "%s resource map size = "PRIuPTR, __func__, rsrcMapSize);
+                OIC_LOG_V(DEBUG, TAG, "%s resource map size = %"PRIuPTR, __func__, rsrcMapSize);
 
                 cborEncoderResult = cbor_encoder_create_map(&resources, &rMap, rsrcMapSize);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Resource Map.");
@@ -1416,6 +1469,17 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                 aclistVersion = OIC_SEC_ACL_V2;
                 aclistTagJustFound = true;
             }
+            else
+            {
+                if (NULL != versionCheck)
+                {
+                    OIC_LOG_V(DEBUG, TAG, "%s Unable to determine ACL version, could be either v1 or v2!"
+                        " Assigning 'versionCheck' to OIC_SEC_ACL_UNKNOWN and returning NULL.", __func__);
+                    *versionCheck = OIC_SEC_ACL_UNKNOWN;
+                    OICFree(acl);
+                    return NULL;
+                }
+            }
 
             CborValue aclistMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
             if (aclistTagJustFound && OIC_SEC_ACL_V1 == aclistVersion)
@@ -1658,22 +1722,22 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                                                 }
                                             }
 
-                                            // If roletype, make sure at least the id is present.
-                                            if(OicSecAceRoleSubject == ace->subjectType)
-                                            {
-                                                if ('\0' == ace->subjectRole.id[0])
-                                                {
-                                                    cborFindResult = CborUnknownError;
-                                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "ID for role was not present in role map");
-                                                }
-                                            }
-
                                             // advance to next elt in subject map
                                             if (cbor_value_is_valid(&subjectMap))
                                             {
                                                 cborFindResult = cbor_value_advance(&subjectMap);
                                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed advancing subject map");
                                                 OIC_LOG_V(DEBUG, TAG, "%s advanced ace2 subject map.", __func__);
+                                            }
+                                        }
+
+                                        // If roletype, make sure at least the id is present.
+                                        if (OicSecAceRoleSubject == ace->subjectType)
+                                        {
+                                            if ('\0' == ace->subjectRole.id[0])
+                                            {
+                                                cborFindResult = CborUnknownError;
+                                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "ID for role was not present in role map");
                                             }
                                         }
                                     }
@@ -2028,6 +2092,8 @@ bool IsValidAclAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPaylo
 {
     bool retValue = false;
     OicSecAcl_t* acl = NULL;
+    OicSecAce_t* ace = NULL;
+    OicSecAce_t* tempAce = NULL;
 
     VERIFY_NOT_NULL(TAG, uuid, ERROR);
     VERIFY_NOT_NULL(TAG, cborPayload, ERROR);
@@ -2036,8 +2102,6 @@ bool IsValidAclAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPaylo
     acl = CBORPayloadToAcl(cborPayload, size);
     VERIFY_NOT_NULL(TAG, acl, ERROR);
 
-    OicSecAce_t* ace = NULL;
-    OicSecAce_t* tempAce = NULL;
     LL_FOREACH_SAFE(acl->aces, ace, tempAce)
     {
         OicSecRsrc_t* rsrc = NULL;
@@ -2164,6 +2228,61 @@ OCStackResult RemoveACE(const OicUuid_t *subject, const char *resource)
 }
 
 /**
+ * This method removes ACEs corresponding to given list of aceid's from the ACL
+ * excluding delete 'oic.r.ace2' resource
+ *
+ * @param aceid's of the ACEs
+ *
+ * @return
+ *     ::OC_STACK_RESOURCE_DELETED on success
+ *     ::OC_STACK_NO_RESOURCE on failure to find the appropriate ACE
+ *     ::OC_STACK_INVALID_PARAM on invalid parameter
+ */
+static OCStackResult RemoveAceByAceIds(AceIdList_t *aceIdList)
+{
+    OIC_LOG(DEBUG, TAG, "IN RemoveAceByAceId");
+
+    VERIFY_NOT_NULL_RETURN(TAG, gAcl, ERROR, OC_STACK_INVALID_PARAM);
+
+    OicSecAce_t *ace = NULL;
+    OicSecAce_t *tempAce = NULL;
+    AceIdList_t *aceIdElem = NULL;
+    bool deleteFlag = false;
+    OCStackResult ret = OC_STACK_NO_RESOURCE;
+
+    LL_FOREACH(aceIdList, aceIdElem)
+    {
+        LL_FOREACH_SAFE(gAcl->aces, ace, tempAce)
+        {
+            if (ace->aceid == aceIdElem->aceid)
+            {
+                LL_DELETE(gAcl->aces, ace);
+                FreeACE(ace);
+
+                deleteFlag = true;
+                break; //only one ace with aceid should exist in ACL
+            }
+        }
+    }
+
+    if (deleteFlag)
+    {
+        uint8_t *payload = NULL;
+        size_t size = 0;
+        if (OC_STACK_OK == AclToCBORPayload(gAcl, OIC_SEC_ACL_V2, &payload, &size))
+        {
+            if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, payload, size))
+            {
+                ret = OC_STACK_RESOURCE_DELETED;
+            }
+            OICFree(payload);
+        }
+    }
+
+    return ret;
+}
+
+/**
  * This method parses the query string received for REST requests and
  * retrieves the 'subject' field.
  *
@@ -2199,6 +2318,67 @@ static bool GetSubjectFromQueryString(const char *query, OicUuid_t *subject)
 
 exit:
     return false;
+}
+
+/**
+ * This method parses the query string received for REST requests and
+ * retrieves the 'aceid' field.
+ *
+ * @param query querystring passed in REST request
+ * @param subject ace id parsed from query string
+ *
+ * @return true if query parsed successfully and found 'aceid', else false.
+ */
+static bool GetAceIdsFromQueryString(const char *query, AceIdList_t **aceid)
+{
+    bool found = false;
+    OicParseQueryIter_t parseIter = { .attrPos = NULL };
+
+    ParseQueryIterInit((unsigned char *) query, &parseIter);
+
+    while (GetNextQuery (&parseIter))
+    {
+        if (strncasecmp((char *) parseIter.attrPos, OIC_JSON_ACEID_NAME, parseIter.attrLen) == 0)
+        {
+            VERIFY_SUCCESS(TAG, 0 != parseIter.valLen, ERROR);
+
+            //parse aceid array value in format "1,2,3"
+            unsigned char *str = parseIter.valPos;
+
+            //remember last symbol (may be '\0' or '&')
+            unsigned char tmp = str[parseIter.valLen];
+            //set last symbol to '\0' to use strtok_r
+            str[parseIter.valLen] = '\0';
+
+            char *saveptr = NULL;
+
+            for (; ; str = NULL)
+            {
+                char *token = strtok_r((char *)str, ",", &saveptr);
+                if (NULL == token)
+                {
+                    break;
+                }
+
+                AceIdList_t *newAceIdElem = (AceIdList_t *) OICCalloc(1, sizeof(AceIdList_t));
+                if (NULL == newAceIdElem)
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to allocate AceIdList_t element");
+                    break;
+                }
+                newAceIdElem->aceid = (uint16_t)atoi(token);
+
+                LL_PREPEND(*aceid, newAceIdElem);
+                found = true;
+            }
+
+            //restore last symbol
+            parseIter.valPos[parseIter.valLen] = tmp;
+        }
+    }
+
+exit:
+    return found;
 }
 
 /**
@@ -2471,12 +2651,14 @@ static bool IsSameACE(OicSecAce_t* ace1, OicSecAce_t* ace2)
 
 /**
  * Internal function to remove all ACL data on ACL resource and persistent storage
+ * except removing ace's with given resource
  *
+ * @param resource ace's with given resource given shouldn't be deleted
  * @retval
  *     OC_STACK_RESOURCE_DELETED  - no errors
  *     Otherwise                  - error
  */
-static OCStackResult RemoveAllAce(void)
+static OCStackResult RemoveAllAce(const char *resource)
 {
     OCStackResult ret = OC_STACK_ERROR;
     uint8_t* aclBackup = NULL;
@@ -2495,8 +2677,26 @@ static OCStackResult RemoveAllAce(void)
         // Remove all ACE from ACL
         LL_FOREACH_SAFE(gAcl->aces, aceItem, tempAce)
         {
-            LL_DELETE(gAcl->aces, aceItem);
-            FreeACE(aceItem);
+            bool removeFlag = true;
+
+            if (resource != NULL)
+            {
+                OicSecRsrc_t* rsrc = NULL;
+                LL_FOREACH(aceItem->resources, rsrc)
+                {
+                    if (rsrc->href != NULL && 0 == strcmp(rsrc->href, resource))
+                    {
+                        removeFlag = false;
+                        break;
+                    }
+                }
+            }
+
+            if (removeFlag)
+            {
+                LL_DELETE(gAcl->aces, aceItem);
+                FreeACE(aceItem);
+            }
         }
 
         //Generate empty ACL payload
@@ -2684,9 +2884,9 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
         // Clients should not POST v1 ACL to OCF 1.0 Server
         OicSecAclVersion_t payloadVersionReceived = OIC_SEC_ACL_V1;
         CBORPayloadToAclVersionOpt(payload, size, &payloadVersionReceived);
-        if (OIC_SEC_ACL_V2 != payloadVersionReceived)
+        if (OIC_SEC_ACL_V1 == payloadVersionReceived)
         {
-            OIC_LOG_V(WARNING, TAG, "%s /acl Resource is v2; POST of v1 ACL not acceptable.", __func__);
+            OIC_LOG_V(WARNING, TAG, "%s /acl2 Resource Update with v1 ACL payload not acceptable.", __func__);
             ehRet = OC_EH_NOT_ACCEPTABLE;
             goto exit;
         }
@@ -2717,7 +2917,7 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
                 {
                     OIC_LOG(DEBUG, TAG, "NEW ACE detected:");
 
-                    OicSecAce_t* insertAce = DuplicateACE(newAce);
+                    OicSecAce_t* insertAce = DuplicateACE(newAce, false);
                     if(insertAce)
                     {
                         OIC_LOG(DEBUG, TAG, "Prepending new ACE:");
@@ -2776,17 +2976,159 @@ exit:
     return ehRet;
 }
 
+static OCEntityHandlerResult HandleACL2PostRequest(const OCEntityHandlerRequest *ehRequest)
+{
+    OIC_LOG(INFO, TAG, "HandleACLPostRequest processing the request");
+    OCEntityHandlerResult ehRet = OC_EH_INTERNAL_SERVER_ERROR;
+
+    // Convert CBOR into ACL data and update to SVR buffers. This will also validate the ACL data received.
+    uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;
+    size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
+
+    OicSecDostype_t dos;
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
+    ehRet = OC_EH_OK;
+
+    if ((DOS_RESET == dos.state) ||
+        (DOS_RFNOP == dos.state))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s /acl resource is read-only in RESET and RFNOP.", __func__);
+        ehRet = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
+    }
+    else
+    {
+        ehRet = OC_EH_OK;
+    }
+
+    ehRet = OC_EH_OK;
+
+    if (payload)
+    {
+        // Clients should not POST v1 ACL to OCF 1.0 Server
+        OicSecAclVersion_t payloadVersionReceived = OIC_SEC_ACL_V1;
+        CBORPayloadToAclVersionOpt(payload, size, &payloadVersionReceived);
+        if (OIC_SEC_ACL_V1 == payloadVersionReceived)
+        {
+            OIC_LOG_V(WARNING, TAG, "%s /acl2 Resource Update with v1 ACL payload not acceptable.", __func__);
+            ehRet = OC_EH_NOT_ACCEPTABLE;
+            goto exit;
+        }
+        OicSecAcl_t *newAcl = NULL;
+        OIC_LOG(DEBUG, TAG, "ACL payload from POST request << ");
+        OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
+
+        newAcl = CBORPayloadToAcl(payload, size);
+        if (NULL != newAcl && NULL != gAcl)
+        {
+            OicSecAce_t* newAce = NULL;
+            OicSecAce_t* tempAce1 = NULL;
+            OicSecAce_t* tempAce2 = NULL;
+
+            LL_FOREACH_SAFE(newAcl->aces, newAce, tempAce1)
+            {
+                bool useNewAceId = true;
+
+                if (newAce->aceid != 0)
+                {
+                    useNewAceId = false;
+                    //check if ace with such ace id exists
+                    OicSecAce_t* existAce = NULL;
+                    LL_FOREACH_SAFE(gAcl->aces, existAce, tempAce2)
+                    {
+                        if (newAce->aceid == existAce->aceid)
+                        {
+                            OIC_LOG(DEBUG, TAG, "Remove old ACE");
+
+                            //remove old ace with the same aceid
+                            LL_DELETE(gAcl->aces, existAce);
+                            FreeACE(existAce);
+                            break;
+                        }
+                    }
+                }
+
+                OIC_LOG(DEBUG, TAG, "Adding NEW ACE");
+
+                //clone and add new ace
+                OicSecAce_t* insertAce = DuplicateACE(newAce, useNewAceId);
+                if (insertAce)
+                {
+                    OIC_LOG(DEBUG, TAG, "Prepending new ACE:");
+                    OIC_LOG_ACE(DEBUG, insertAce);
+                    LL_PREPEND(gAcl->aces, insertAce);
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to duplicate ACE.");
+                    ehRet = OC_EH_ERROR;
+                }
+            }
+            memcpy(&(gAcl->rownerID), &(newAcl->rownerID), sizeof(OicUuid_t));
+
+            DeleteACLList(newAcl);
+
+            if(OC_EH_OK == ehRet)
+            {
+                size_t cborSize = 0;
+                uint8_t *cborPayload = NULL;
+
+                if (OC_STACK_OK == AclToCBORPayload(gAcl, OIC_SEC_ACL_V2, &cborPayload, &cborSize))
+                {
+                    if (UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, cborPayload, cborSize) == OC_STACK_OK)
+                    {
+                        ehRet = OC_EH_CHANGED;
+                    }
+                    OICFree(cborPayload);
+                }
+
+                if(OC_EH_CHANGED != ehRet)
+                {
+                    ehRet = OC_EH_ERROR;
+                }
+            }
+        }
+        else
+        {
+            OIC_LOG_V(WARNING, TAG, "%s: %s", __func__, (NULL == newAcl) ? "no new ACL" : "gAcl is NULL");
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "ACL post request with no payload.");
+        ehRet = OC_EH_ERROR;
+    }
+
+exit:
+
+    //Send response to request originator
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
+
+    OIC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__, ehRet);
+    return ehRet;
+}
+
 static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest *ehRequest)
 {
     OIC_LOG(DEBUG, TAG, "Processing ACLDeleteRequest");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicUuid_t subject = { .id= { 0 } };
+    AceIdList_t *aceIdList = NULL;
     char resource[MAX_URI_LENGTH] = { 0 };
 
     VERIFY_NOT_NULL(TAG, ehRequest->query, ERROR);
 
+    if (GetAceIdsFromQueryString(ehRequest->query, &aceIdList))
+    {
+        if (OC_STACK_RESOURCE_DELETED == RemoveAceByAceIds(aceIdList))
+        {
+            ehRet = OC_EH_RESOURCE_DELETED;
+        }
+        DeleteAceIdList(&aceIdList);
+    }
     // If 'Subject' field exist, processing a querystring in REST request.
-    if(GetSubjectFromQueryString(ehRequest->query, &subject))
+    else if (GetSubjectFromQueryString(ehRequest->query, &subject))
     {
         GetResourceFromQueryString(ehRequest->query, resource, sizeof(resource));
 
@@ -2800,7 +3142,7 @@ static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest
     {
         OIC_LOG(WARNING, TAG, "Can not find the 'subject' in querystring, All ACL list will be removed.");
 
-        if(OC_STACK_RESOURCE_DELETED == RemoveAllAce())
+        if (OC_STACK_RESOURCE_DELETED == RemoveAllAce(OIC_RSRC_TYPE_SEC_ACE2))
         {
             ehRet = OC_EH_RESOURCE_DELETED;
         }
@@ -2876,7 +3218,7 @@ OCEntityHandlerResult ACL2EntityHandler(OCEntityHandlerFlag flag, OCEntityHandle
                 break;
 
             case OC_REST_POST:
-                ehRet = HandleACLPostRequest(ehRequest);
+                ehRet = HandleACL2PostRequest(ehRequest);
                 break;
 
             case OC_REST_DELETE:
@@ -2963,7 +3305,7 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     // ACE allowing read-only access to /res, /d and /p by "ANON_CLEAR" subjects
     readOnlyAceAnon = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
     VERIFY_NOT_NULL(TAG, readOnlyAceAnon, ERROR);
-    readOnlyAceAnon->aceid = 1;
+    readOnlyAceAnon->aceid = ACE_ID1;
     readOnlyAceAnon->permission = PERMISSION_READ;
     readOnlyAceAnon->validities = NULL;
     LL_APPEND(acl->aces, readOnlyAceAnon);
@@ -2997,7 +3339,7 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     // ACE allowing read-only access to /res, /d and /p by "AUTH_CRYPT" subjects
     readOnlyAceAuth = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
     VERIFY_NOT_NULL(TAG, readOnlyAceAuth, ERROR);
-    readOnlyAceAuth->aceid = 2;
+    readOnlyAceAuth->aceid = ACE_ID2;
     readOnlyAceAuth->permission = PERMISSION_READ;
     readOnlyAceAuth->validities = NULL;
     LL_APPEND(acl->aces, readOnlyAceAuth);
@@ -3032,7 +3374,7 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     // to "ANON_CLEAR" (e.g. CoAP) subjects, for ownership transfer
     readWriteDeleteAceAnon = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
     VERIFY_NOT_NULL(TAG, readWriteDeleteAceAnon, ERROR);
-    readWriteDeleteAceAnon->aceid = 3;
+    readWriteDeleteAceAnon->aceid = ACE_ID3;
     readWriteDeleteAceAnon->permission = PERMISSION_READ | PERMISSION_WRITE | PERMISSION_DELETE;
     readWriteDeleteAceAnon->validities = NULL;
     LL_APPEND(acl->aces, readWriteDeleteAceAnon);
@@ -3053,7 +3395,7 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     // to "AUTH_CRYPT" (e.g. CoAPS) subjects, for ownership transfer
     readWriteDeleteAceAuth = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
     VERIFY_NOT_NULL(TAG, readWriteDeleteAceAuth, ERROR);
-    readWriteDeleteAceAuth->aceid = 4;
+    readWriteDeleteAceAuth->aceid = ACE_ID4;
     readWriteDeleteAceAuth->permission = PERMISSION_READ | PERMISSION_WRITE | PERMISSION_DELETE;
     readWriteDeleteAceAuth->validities = NULL;
     LL_APPEND(acl->aces, readWriteDeleteAceAuth);
@@ -3106,6 +3448,11 @@ exit:
 OCStackResult InitACLResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
+
+    if (NULL == g_AceIdCounterMutex)
+    {
+        g_AceIdCounterMutex = oc_mutex_new();
+    }
 
     uint8_t *data = NULL;
     size_t size = 0;
@@ -3160,6 +3507,10 @@ OCStackResult DeInitACLResource()
         DeleteACLList(gAcl);
         gAcl = NULL;
     }
+
+    oc_mutex_free(g_AceIdCounterMutex);
+    g_AceIdCounterMutex = NULL;
+
     return (OC_STACK_OK != ret) ? ret : ret2;
 }
 
@@ -3416,7 +3767,7 @@ OCStackResult InstallACL(const OicSecAcl_t* acl)
             // Append new ACE to existing ACL
             OIC_LOG(DEBUG, TAG, "NEW ACE detected.");
 
-            OicSecAce_t* insertAce = DuplicateACE(newAce);
+            OicSecAce_t* insertAce = DuplicateACE(newAce, false);
             if(insertAce)
             {
                 OIC_LOG(DEBUG, TAG, "Prepending new ACE:");
@@ -3490,6 +3841,8 @@ static OicSecAce_t* GetSecDefaultACE()
     //Generate default ACE
     OicSecAce_t* newAce = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
     VERIFY_NOT_NULL(TAG, newAce, ERROR);
+
+    newAce->aceid = ACE_ID5;
 
     // Subject -- Mandatory
     newAce->subjectType = OicSecAceUuidSubject;

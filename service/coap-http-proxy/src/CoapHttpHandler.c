@@ -22,9 +22,10 @@
 #include "platform_features.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include <coap/pdu.h>
 #include "ocpayload.h"
+#include "internal/ocpayloadcbor.h"
 #include "uarraylist.h"
 #include "CoapHttpParser.h"
 #include "CoapHttpMap.h"
@@ -321,7 +322,7 @@ void CHPHandleHttpResponse(const HttpResponse_t *httpResponse, void *context)
         {
             case OC_FORMAT_CBOR:
                 OIC_LOG(DEBUG, TAG, "Payload format is CBOR");
-                result = OCParsePayload(&response.payload, PAYLOAD_TYPE_REPRESENTATION,
+                result = OCParsePayload(&response.payload, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                                         httpResponse->payload, httpResponse->payloadLength);
                 if (result != OC_STACK_OK)
                 {

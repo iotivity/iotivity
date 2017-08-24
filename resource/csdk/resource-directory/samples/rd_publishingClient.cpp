@@ -26,7 +26,7 @@
 #include "oic_string.h"
 
 #include "rd_client.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 
 #define TAG ("RD_PublishClient")
 #define DEFAULT_CONTEXT_VALUE 0x99

@@ -39,9 +39,7 @@ public enum CredType {
 
     PIN_PASSWORD                    (1 << 4),
 
-    ASYMMETRIC_ENCRYPTION_KEY       (1 << 5),
-
-    ;
+    ASYMMETRIC_ENCRYPTION_KEY       (1 << 5);
     private int value;
 
     private CredType(int value) {

@@ -25,12 +25,8 @@ Import('env')
 import os
 local_env = env.Clone()
 
-if local_env.get('LOGGING'):
-    local_env.AppendUnique(CPPDEFINES=['-DTB_LOG'])
-
 if env.get('RELEASE'):
     local_env.AppendUnique(CCFLAGS=['-Os'])
-    local_env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
     local_env.AppendUnique(CCFLAGS=['-g'])
 

@@ -43,7 +43,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "octhread.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "OIC_CA_BWT"
 
@@ -2809,7 +2809,6 @@ void CADestroyBlockID(CABlockDataID_t *blockID)
     VERIFY_NON_NULL_VOID(blockID, TAG, "blockID");
     OICFree(blockID->id);
     OICFree(blockID);
-    blockID = NULL;
 }
 
 bool CABlockidMatches(const CABlockData_t *currData, const CABlockDataID_t *blockID)

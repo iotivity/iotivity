@@ -37,10 +37,10 @@
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "utlist.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "cainterface.h"
 #include "directpairing.h"
 #include "srmresourcestrings.h" //@note: SRM's internal header

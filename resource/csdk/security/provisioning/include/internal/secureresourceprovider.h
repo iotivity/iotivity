@@ -22,7 +22,7 @@
 #define SRP_SECURERESOURCEPROVIDER_H
 
 #include "ocstack.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "pmtypes.h"
 #include "octypes.h"
 

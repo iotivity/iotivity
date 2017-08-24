@@ -43,11 +43,12 @@
 #endif //ERROR
 #endif //HAVE_WINDOWS_H
 #include "platform_features.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "SAMPLE_RANDOMPIN"
 
 int gQuitFlag = 0;
+const char * specVersion = "ocf.1.1.0";
 
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE{
@@ -512,6 +513,7 @@ int main()
         OIC_LOG(ERROR, TAG, "Failed to setting PIN policy");
         return 0;
     }
+    OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, (void*) specVersion);
 
     /*
      * Declare and create the example resource: LED

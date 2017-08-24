@@ -20,14 +20,13 @@
 #ifdef __WITH_DTLS__
 
 #include <gtest/gtest.h>
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocpayload.h"
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "resourcemanager.h"
 #include "crlresource.h"
-#include "securevirtualresourcetypes.h"
 #include "srmtestcommon.h"
 #include "srmutility.h"
 #include "psinterface.h"

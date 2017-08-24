@@ -21,7 +21,7 @@
 #define OC_CLOUD_PROVISIONING_H
 
 #include "octypes.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -28,7 +28,7 @@
 #include "oic_string.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 #include "routingutility.h"
@@ -67,7 +67,7 @@ static int RBResponseTokenCmp(OCServerResponse *target, OCServerResponse *treeNo
 //-------------------------------------------------------------------------------------------------
 RB_HEAD(ServerRequestTree, OCServerRequest) g_serverRequestTree =
                                                             RB_INITIALIZER(&g_serverRequestTree);
-RB_GENERATE(ServerRequestTree, OCServerRequest, entry, RBRequestTokenCmp)
+RBL_GENERATE(ServerRequestTree, OCServerRequest, entry, RBRequestTokenCmp)
 
 RB_HEAD(ServerResponseTree, OCServerResponse) g_serverResponseTree =
                                                             RB_INITIALIZER(&g_serverResponseTree);
@@ -76,21 +76,6 @@ RB_GENERATE(ServerResponseTree, OCServerResponse, entry, RBResponseTokenCmp)
 //-------------------------------------------------------------------------------------------------
 // Local functions
 //-------------------------------------------------------------------------------------------------
-/**
- * Delete a server request from the server request list
- *
- * @param[in] serverRequest     server request to delete
- */
-static void DeleteServerRequestInternal (OCServerRequest * serverRequest)
-{
-    assert(serverRequest);
-
-    RB_REMOVE(ServerRequestTree, &g_serverRequestTree, serverRequest);
-    OICFree(serverRequest->requestToken);
-    OICFree(serverRequest);
-    serverRequest = NULL;
-    OIC_LOG(INFO, TAG, "Server Request Removed");
-}
 
 /**
  * Add a server response to the server response list
@@ -217,7 +202,6 @@ static CAPayloadFormat_t OCToCAPayloadFormat (OCPayloadFormat ocFormat)
         return CA_FORMAT_UNSUPPORTED;
     }
 }
-
 static CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMethod method)
 {
     CAResponseResult_t caResult = CA_BAD_REQ;
@@ -379,7 +363,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request,
 
     *request = serverRequest;
 
-    RB_INSERT(ServerRequestTree, &g_serverRequestTree, serverRequest);
+    RBL_INSERT(ServerRequestTree, &g_serverRequestTree, serverRequest);
     OIC_LOG(INFO, TAG, "Server Request Added");
     return OC_STACK_OK;
 
@@ -420,28 +404,15 @@ OCServerRequest * GetServerRequestUsingToken (const CAToken_t token, uint8_t tok
     return out;
 }
 
-OCServerRequest * GetServerRequestUsingHandle (const OCServerRequest * handle)
-{
-    if (!handle)
-    {
-        OIC_LOG(ERROR, TAG, "Invalid Parameter handle");
-        return NULL;
-    }
-
-    return GetServerRequestUsingToken(handle->requestToken, handle->tokenLength);
-}
-
 void DeleteServerRequest(OCServerRequest * serverRequest)
 {
     if (serverRequest)
     {
-        OCServerRequest* out = NULL;
-        out = RB_FIND(ServerRequestTree, &g_serverRequestTree, serverRequest);
-
-        if (out)
-        {
-            DeleteServerRequestInternal(out);
-        }
+        RBL_REMOVE(ServerRequestTree, &g_serverRequestTree, serverRequest);
+        OICFree(serverRequest->requestToken);
+        OICFree(serverRequest);
+        serverRequest = NULL;
+        OIC_LOG(INFO, TAG, "Server Request Removed");
     }
 }
 
@@ -494,6 +465,15 @@ OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerR
     return OC_STACK_INVALID_PARAM;
 }
 
+
+/**
+ * Handler function for sending a response from a single resource
+ *
+ * @param ehResponse - pointer to the response from the resource
+ *
+ * @return
+ *     OCStackResult
+ */
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;
@@ -773,8 +753,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
 
     OIC_LOG(INFO, TAG, "Inside HandleAggregateResponse");
 
-    OCServerRequest *serverRequest = GetServerRequestUsingHandle((OCServerRequest *)
-                                                                 ehResponse->requestHandle);
+    OCServerRequest *serverRequest = (OCServerRequest *)ehResponse->requestHandle;
     OCServerResponse *serverResponse = GetServerResponseUsingHandle((OCServerRequest *)
                                                                     ehResponse->requestHandle);
 

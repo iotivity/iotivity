@@ -31,7 +31,7 @@
 
 #include "caqueueingthread.h"
 #include "oic_malloc.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG PCF("OIC_CA_QING")
 

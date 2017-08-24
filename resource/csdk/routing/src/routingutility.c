@@ -23,7 +23,7 @@
 #include "routingutility.h"
 #include "routingmanager.h"
 #include "oic_malloc.h"
-#include "include/logger.h"
+#include "experimental/logger.h"
 
 /**
  * Logging tag for module name.
@@ -294,7 +294,7 @@ void RMGetRouteOptionIndex(const CAHeaderOption_t *options, uint8_t numOptions, 
         return;
     }
 
-    for (uint32_t i = 0; i < numOptions; i++)
+    for (uint8_t i = 0; i < numOptions; i++)
     {
         OIC_LOG_V(DEBUG, TAG, "Request- optionID: %u", options[i].optionID);
         if (RM_OPTION_MESSAGE_SWITCHING == options[i].optionID)
@@ -318,7 +318,7 @@ OCStackResult RMCreateRouteOption(const RMRouteOption_t *optValue, CAHeaderOptio
 
     OIC_LOG_V(DEBUG, RM_TAG, "createoption dlen %u slen [%u]", dLen, sLen);
 
-    unsigned int totalLength = 0;
+    uint16_t totalLength = 0;
     uint8_t *tempData = NULL;
 
     if (0 == dLen && 0 == sLen)

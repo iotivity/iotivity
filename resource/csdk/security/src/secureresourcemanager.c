@@ -20,7 +20,7 @@
 
 #include <string.h>
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "cainterface.h"
 #include "resourcemanager.h"
 #include "credresource.h"
@@ -28,11 +28,10 @@
 #include "srmutility.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
-#include "securevirtualresourcetypes.h"
 #include "secureresourcemanager.h"
 #include "srmresourcestrings.h"
 #include "ocresourcehandler.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 
 #if defined( __WITH_TLS__) || defined(__WITH_DTLS__)
 #include "pkix_interface.h"
@@ -139,6 +138,16 @@ void SRMGenerateResponse(SRMRequestContext_t *context)
 // Set the value of context->resourceUri, based on the context->requestInfo.
 static void SetResourceUriAndType(SRMRequestContext_t *context)
 {
+    if (NULL == context || NULL == context->requestInfo ||
+        NULL == context->requestInfo->info.resourceUri)
+    {
+        OIC_LOG_V(INFO, TAG, "%s : %s is NULL", __func__,
+            (NULL == context) ? "context" :
+            (NULL == context->requestInfo) ? "context->requestInfo" :
+            "context->requestInfo->info.resourceUri");
+        return;
+    }
+
     char *uri = strstr(context->requestInfo->info.resourceUri, "?");
     size_t position = 0;
 

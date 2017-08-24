@@ -131,7 +131,7 @@ std::string getRequestString(const std::map<std::string, std::string> &queryPara
                              const OC::OCRepresentation &rep)
 {
     std::ostringstream requestString;
-    if (queryParams.size() > 0)
+    if (!queryParams.empty())
     {
         requestString << "qp: ";
         for (auto &qp : queryParams)
@@ -146,7 +146,7 @@ std::string getRequestString(const std::map<std::string, std::string> &queryPara
 std::string getRequestString(const std::map<std::string, std::string> &queryParams)
 {
     std::ostringstream requestString;
-    if (queryParams.size() > 0)
+    if (!queryParams.empty())
     {
         requestString << "qp: ";
         for (auto &qp : queryParams)

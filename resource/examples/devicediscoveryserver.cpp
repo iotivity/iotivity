@@ -34,17 +34,17 @@
 using namespace OC;
 
 // Set of strings for each of platform Info fields
-std::string  platformID = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
-std::string  manufacturerName = "myName";
-std::string  manufacturerLink = "https://www.example.com";
-std::string  modelNumber = "myModelNumber";
-std::string  dateOfManufacture = "2016-01-15";
-std::string  platformVersion = "platformVersion";
-std::string  operatingSystemVersion = "myOS";
-std::string  hardwareVersion = "myHardwareVersion";
-std::string  firmwareVersion = "1.0";
-std::string  supportLink = "https://www.examplesupport.com";
-std::string  systemTime = "2016-01-15T11.01";
+std::string gPlatformID = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+std::string gManufacturerName = "myName";
+std::string gManufacturerLink = "https://www.example.com";
+std::string gModelNumber = "myModelNumber";
+std::string gDateOfManufacture = "2016-01-15";
+std::string gPlatformVersion = "platformVersion";
+std::string gOperatingSystemVersion = "myOS";
+std::string gHardwareVersion = "myHardwareVersion";
+std::string gFirmwareVersion = "1.0";
+std::string gSupportLink = "https://www.examplesupport.com";
+std::string gSystemTime = "2016-01-15T11.01";
 
 // Set of strings for each of device info fields
 std::string  deviceName = "Bill's Battlestar";
@@ -164,9 +164,9 @@ int main()
 
     std::cout<<"Starting server & setting platform info\n";
 
-    OCStackResult result = SetPlatformInfo(platformID, manufacturerName, manufacturerLink,
-            modelNumber, dateOfManufacture, platformVersion,  operatingSystemVersion,
-            hardwareVersion, firmwareVersion,  supportLink, systemTime);
+    OCStackResult result = SetPlatformInfo(gPlatformID, gManufacturerName, gManufacturerLink,
+            gModelNumber, gDateOfManufacture, gPlatformVersion,  gOperatingSystemVersion,
+            gHardwareVersion, gFirmwareVersion,  gSupportLink, gSystemTime);
 
     result = OCPlatform::registerPlatformInfo(platformInfo);
 
@@ -186,14 +186,9 @@ int main()
 
     DeletePlatformInfo();
 
-    // A condition variable will free the mutex it is given, then do a non-
-    // intensive block until 'notify' is called on it.  In this case, since we
-    // don't ever call cv.notify, this should be a non-processor intensive version
-    // of while(true);
-    std::mutex blocker;
-    std::condition_variable cv;
-    std::unique_lock<std::mutex> lock(blocker);
-    cv.wait(lock, []{return false;});
+    std::cout << "Waiting. Press \"Enter\" to quit." << std::endl;
+    // Ignoring all input except for EOL.
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     // Perform platform clean up.
     OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);

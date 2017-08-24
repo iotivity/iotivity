@@ -31,7 +31,7 @@
 #endif
 
 #include "iotivity_config.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -54,7 +54,7 @@
 #include <windows.h>
 #endif
 
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <assert.h>

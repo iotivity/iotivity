@@ -30,7 +30,7 @@
 #include "ocstack.h"
 #include "ocpayload.h"
 #include "ocendpoint.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "cainterface.h"
 
 #define TAG "OIC_RD_CLIENT"
@@ -90,8 +90,8 @@ OCStackApplicationResult RDPublishCallback(void *ctx,
                 OIC_LOG(ERROR, TAG, "Missing 'href' in publish response");
                 goto next;
             }
-            OCResourceHandle handle = OCGetResourceHandleAtUri(uri);
-            if (handle == NULL)
+            OCResourceHandle resourceHandle = OCGetResourceHandleAtUri(uri);
+            if (resourceHandle == NULL)
             {
                 OIC_LOG_V(ERROR, TAG, "No resource exists with uri: %s", uri);
                 goto next;
@@ -102,7 +102,7 @@ OCStackApplicationResult RDPublishCallback(void *ctx,
                 OIC_LOG(ERROR, TAG, "Missing 'ins' in publish response");
                 goto next;
             }
-            OCBindResourceInsToResource(handle, ins);
+            OCBindResourceInsToResource(resourceHandle, ins);
         next:
             OICFree(uri);
         }
@@ -212,29 +212,30 @@ static OCRepPayload *RDPublishPayloadCreate(const unsigned char *id,
                 OCRepPayloadSetPropString(links[j], OC_RSRVD_HREF, uri);
             }
 
-            uint8_t n;
-            if (OC_STACK_OK == OCGetNumberOfResourceTypes(handle, &n))
+            uint8_t resourceTypesNumber;
+            if (OC_STACK_OK == OCGetNumberOfResourceTypes(handle, &resourceTypesNumber))
             {
-                dim[0] = n;
-                char **rts = (char **)OICCalloc(n, sizeof(char *));
-                for (uint8_t i = 0; i < n; i++)
+                dim[0] = resourceTypesNumber;
+                char **resourceTypesNames = (char **)OICCalloc(resourceTypesNumber, sizeof(char *));
+                for (uint8_t i = 0; i < resourceTypesNumber; i++)
                 {
-                    rts[i] = OICStrdup(OCGetResourceTypeName(handle, i));
-                    OIC_LOG_V(DEBUG, TAG, "value: %s", rts[i]);
+                    resourceTypesNames[i] = OICStrdup(OCGetResourceTypeName(handle, i));
+                    OIC_LOG_V(DEBUG, TAG, "value: %s", resourceTypesNames[i]);
                 }
-                OCRepPayloadSetStringArrayAsOwner(links[j], OC_RSRVD_RESOURCE_TYPE, rts, dim);
+                OCRepPayloadSetStringArrayAsOwner(links[j], OC_RSRVD_RESOURCE_TYPE, resourceTypesNames, dim);
             }
 
-            if (OC_STACK_OK == OCGetNumberOfResourceInterfaces(handle, &n))
+            uint8_t resourceInterfacesNumber;
+            if (OC_STACK_OK == OCGetNumberOfResourceInterfaces(handle, &resourceInterfacesNumber))
             {
-                dim[0] = n;
-                char **ifs = (char **)OICCalloc(n, sizeof(char *));
-                for (uint8_t i = 0; i < n; i++)
+                dim[0] = resourceInterfacesNumber;
+                char **interfacesNames = (char **)OICCalloc(resourceInterfacesNumber, sizeof(char *));
+                for (uint8_t i = 0; i < resourceInterfacesNumber; i++)
                 {
-                    ifs[i] = OICStrdup(OCGetResourceInterfaceName(handle, i));
-                    OIC_LOG_V(DEBUG, TAG, "value: %s", ifs[i]);
+                    interfacesNames[i] = OICStrdup(OCGetResourceInterfaceName(handle, i));
+                    OIC_LOG_V(DEBUG, TAG, "value: %s", interfacesNames[i]);
                 }
-                OCRepPayloadSetStringArrayAsOwner(links[j], OC_RSRVD_INTERFACE, ifs, dim);
+                OCRepPayloadSetStringArrayAsOwner(links[j], OC_RSRVD_INTERFACE, interfacesNames, dim);
             }
 
             // rel is always the default ("hosts")
@@ -448,9 +449,9 @@ OCStackResult OC_CALL OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *hos
     char queryParam[MAX_URI_LENGTH] = { 0 };
     for (uint8_t j = 0; j < nHandles; j++)
     {
-        OCResource *handle = (OCResource *) resourceHandles[j];
+        OCResource *resourceHandle = (OCResource *) resourceHandles[j];
         int64_t ins = 0;
-        if (OC_STACK_OK == OCGetResourceIns(handle, &ins))
+        if (OC_STACK_OK == OCGetResourceIns(resourceHandle, &ins))
         {
             int lenBufferRequired = snprintf((queryParam + queryLength),
                     (MAX_URI_LENGTH - queryLength), "&ins=%" PRId64, ins);

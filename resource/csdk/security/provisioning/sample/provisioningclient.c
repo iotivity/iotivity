@@ -25,15 +25,14 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "utlist.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocprovisioningmanager.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
-#include "securevirtualresourcetypes.h"
 #include "srmutility.h"
 #include "pmtypes.h"
 #include "oxmverifycommon.h"
@@ -2526,6 +2525,7 @@ static int printDevList(const OCProvisionDev_t* dev_lst)
     {
         printf("     [%d] ", ++lst_cnt);
         printUuid((const OicUuid_t*) &lst->doxm->deviceID);
+        printf("    %s", lst->specVer);
         printf("\n");
         lst = lst->next;
     }
@@ -2675,19 +2675,20 @@ static FILE* fopen_prvnMng(const char* path, const char* mode)
 
 static int waitCallbackRet(void)
 {
-    for(int i=0; !g_doneCB && CALLBACK_TIMEOUT>i; ++i)
+    for (int i = 0; !g_doneCB && (CALLBACK_TIMEOUT > i); ++i)
     {
-        sleep(1);
-        if(OC_STACK_OK != OCProcess())
+        if (OC_STACK_OK != OCProcess())
         {
             OIC_LOG(ERROR, TAG, "OCStack process error");
             return -1;
         }
+        sleep(1);
     }
 
-    if(!g_doneCB)
+    if (!g_doneCB)
     {
         OCPDMCleanupForTimeout();
+        return -1;
     }
 
     return 0;
@@ -2747,7 +2748,7 @@ static void setDevProtocol(OCProvisionDev_t* lst)
             lst->connType |= CT_ADAPTER_TCP; //set TCP flag
             lst->endpoint.adapter = OC_ADAPTER_TCP;
             lst->endpoint.port = lst->tcpPort;
-            lst->securePort = lst->tcpPort;
+            lst->securePort = lst->tcpSecurePort;
         }
         lst = lst->next;
     }

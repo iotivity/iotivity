@@ -38,10 +38,10 @@
 #endif
 
 #include "caprotocolmessage.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "cacommonutil.h"
 #include "cablockwisetransfer.h"
 
@@ -746,6 +746,7 @@ CAResult_t CAGetOptionCount(coap_opt_iterator_t opt_iter, uint8_t *optionCount)
 CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                             uint32_t *outCode, CAInfo_t *outInfo)
 {
+    OIC_LOG(INFO, TAG, "IN - CAGetInfoFromPDU");
     VERIFY_NON_NULL(pdu, TAG, "pdu");
     VERIFY_NON_NULL(endpoint, TAG, "endpoint");
     VERIFY_NON_NULL(outCode, TAG, "outCode");
@@ -816,7 +817,12 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     }
 
     coap_opt_t *option = NULL;
-    char optionResult[CA_MAX_URI_LENGTH] = {0};
+    char *optionResult = (char *)OICCalloc(1, CA_MAX_URI_LENGTH * sizeof(char));
+    if (NULL == optionResult)
+    {
+        goto exit;
+    }
+
     uint32_t idx = 0;
     uint32_t optionLength = 0;
     bool isfirstsetflag = false;
@@ -825,10 +831,15 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
 
     while ((option = coap_option_next(&opt_iter)))
     {
-        char buf[COAP_MAX_PDU_SIZE] = {0};
+        char *buf = (char *)OICCalloc(1, COAP_MAX_PDU_SIZE * sizeof(char));
+        if (NULL == buf)
+        {
+            goto exit;
+        }
+
         uint32_t bufLength =
             CAGetOptionData(opt_iter.type, (uint8_t *)(COAP_OPT_VALUE(option)),
-                    COAP_OPT_LENGTH(option), (uint8_t *)buf, sizeof(buf));
+                    COAP_OPT_LENGTH(option), (uint8_t *)buf, COAP_MAX_PDU_SIZE);
         if (bufLength)
         {
             OIC_LOG_V(DEBUG, TAG, "COAP URI element : %s", buf);
@@ -840,13 +851,14 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                     optionResult[optionLength] = '/';
                     optionLength++;
                     // Make sure there is enough room in the optionResult buffer
-                    if ((optionLength + bufLength) < sizeof(optionResult))
+                    if ((optionLength + bufLength) < CA_MAX_URI_LENGTH)
                     {
                         memcpy(&optionResult[optionLength], buf, bufLength);
                         optionLength += bufLength;
                     }
                     else
                     {
+                        OICFree(buf);
                         goto exit;
                     }
                 }
@@ -855,13 +867,14 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                     if (COAP_OPTION_URI_PATH == opt_iter.type)
                     {
                         // Make sure there is enough room in the optionResult buffer
-                        if (optionLength < sizeof(optionResult))
+                        if (optionLength < CA_MAX_URI_LENGTH)
                         {
                             optionResult[optionLength] = '/';
                             optionLength++;
                         }
                         else
                         {
+                            OICFree(buf);
                             goto exit;
                         }
                     }
@@ -870,7 +883,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                         if (false == isQueryBeingProcessed)
                         {
                             // Make sure there is enough room in the optionResult buffer
-                            if (optionLength < sizeof(optionResult))
+                            if (optionLength < CA_MAX_URI_LENGTH)
                             {
                                 optionResult[optionLength] = '?';
                                 optionLength++;
@@ -878,31 +891,34 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                             }
                             else
                             {
+                                OICFree(buf);
                                 goto exit;
                             }
                         }
                         else
                         {
                             // Make sure there is enough room in the optionResult buffer
-                            if (optionLength < sizeof(optionResult))
+                            if (optionLength < CA_MAX_URI_LENGTH)
                             {
                                 optionResult[optionLength] = ';';
                                 optionLength++;
                             }
                             else
                             {
+                                OICFree(buf);
                                 goto exit;
                             }
                         }
                     }
                     // Make sure there is enough room in the optionResult buffer
-                    if ((optionLength + bufLength) < sizeof(optionResult))
+                    if ((optionLength + bufLength) < CA_MAX_URI_LENGTH)
                     {
                         memcpy(&optionResult[optionLength], buf, bufLength);
                         optionLength += bufLength;
                     }
                     else
                     {
+                        OICFree(buf);
                         goto exit;
                     }
                 }
@@ -1008,7 +1024,8 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 }
             }
         }
-    }
+        OICFree(buf);
+    } // while
 
     unsigned char* token = NULL;
     unsigned int token_length = 0;
@@ -1023,6 +1040,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
         {
             OIC_LOG(ERROR, TAG, "Out of memory");
             OICFree(outInfo->options);
+            OICFree(optionResult);
             return CA_MEMORY_ALLOC_FAILED;
         }
         memcpy(outInfo->token, token, token_length);
@@ -1043,6 +1061,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             OIC_LOG(ERROR, TAG, "Out of memory");
             OICFree(outInfo->options);
             OICFree(outInfo->token);
+            OICFree(optionResult);
             return CA_MEMORY_ALLOC_FAILED;
         }
         memcpy(outInfo->payload, pdu->data, dataSize);
@@ -1051,6 +1070,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
 
     if (optionResult[0] != '\0')
     {
+        optionResult[optionLength] = '\0';
         OIC_LOG_V(DEBUG, TAG, "URL length:%" PRIuPTR, strlen(optionResult));
         outInfo->resourceUri = OICStrdup(optionResult);
         if (!outInfo->resourceUri)
@@ -1058,6 +1078,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             OIC_LOG(ERROR, TAG, "Out of memory");
             OICFree(outInfo->options);
             OICFree(outInfo->token);
+            OICFree(optionResult);
             return CA_MEMORY_ALLOC_FAILED;
         }
     }
@@ -1074,14 +1095,18 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             OIC_LOG(ERROR, TAG, "Out of memory");
             OICFree(outInfo->options);
             OICFree(outInfo->token);
+            OICFree(optionResult);
             return CA_MEMORY_ALLOC_FAILED;
         }
     }
+    OICFree(optionResult);
+    OIC_LOG(INFO, TAG, "OUT - CAGetInfoFromPDU");
     return CA_STATUS_OK;
 
 exit:
     OIC_LOG(ERROR, TAG, "buffer too small");
     OICFree(outInfo->options);
+    OICFree(optionResult);
     return CA_STATUS_FAILED;
 }
 

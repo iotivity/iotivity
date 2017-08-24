@@ -63,21 +63,11 @@ lyric_env.AppendUnique(CPPPATH=[
     os.path.join(bridging_path, 'plugins', 'lyric_plugin', 'honeywell_objects')
 ])
 
-if target_os not in ['arduino', 'windows']:
-    lyric_env.AppendUnique(CPPDEFINES=['WITH_POSIX'])
-
-if target_os in ['darwin', 'ios']:
-    lyric_env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
-
 if 'g++' in lyric_env.get('CXX'):
     lyric_env.AppendUnique(
         CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
 lyric_env.AppendUnique(RPATH=[lyric_env.get('BUILD_DIR')])
-lyric_env.AppendUnique(LIBPATH=[lyric_env.get('BUILD_DIR')])
-
-if lyric_env.get('LOGGING'):
-    lyric_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 lyric_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
 lyric_env.AppendUnique(LINKFLAGS=['-Wl,--allow-shlib-undefined'])

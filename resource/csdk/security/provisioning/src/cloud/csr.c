@@ -20,7 +20,7 @@
 #include "iotivity_config.h"
 #include "utils.h"
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include <stddef.h>
 #include <string.h>
 #include "oic_malloc.h"
@@ -28,7 +28,7 @@
 #include "cacommonutil.h"
 
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "doxmresource.h"
 #include "pmutility.h"
 #include "secureresourceprovider.h"
@@ -397,7 +397,7 @@ OCStackResult OCCloudCertificateIssueRequest(void* ctx,
 
     OIC_LOG_V(DEBUG, TAG, "Certificate Request subject: %s", subject);
 
-    OCByteString request;
+    OCByteString request = { 0 };
     if (0 != GenerateCSR(subject, &request))
     {
         OIC_LOG(ERROR, TAG, "Cann't get the sertificate request");

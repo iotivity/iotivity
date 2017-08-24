@@ -26,7 +26,7 @@
 
 #include "NSProviderInterface.h"
 #include "NSCommon.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "octypes.h"
 #include "pthread.h"
 #include "oic_string.h"
@@ -207,7 +207,7 @@ int main()
 
         printf("input : ");
 
-        if(scanf("%d", &num) > 0)
+        if(scanf("%2d", &num) > 0)
         {
             if(scanf("%c", &dummy) > 0)
             {

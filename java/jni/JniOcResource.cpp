@@ -1,23 +1,23 @@
 /*
-* //******************************************************************
-* //
-* // Copyright 2015 Intel Corporation.
-* //
-* //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-* //
-* // Licensed under the Apache License, Version 2.0 (the "License");
-* // you may not use this file except in compliance with the License.
-* // You may obtain a copy of the License at
-* //
-* //      http://www.apache.org/licenses/LICENSE-2.0
-* //
-* // Unless required by applicable law or agreed to in writing, software
-* // distributed under the License is distributed on an "AS IS" BASIS,
-* // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* // See the License for the specific language governing permissions and
-* // limitations under the License.
-* //
-* //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+* ******************************************************************
+*
+*  Copyright 2015 Intel Corporation.
+*
+* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
 
 #include "JniOcResource.h"
@@ -1781,7 +1781,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_discoveryMQTopicsImpl
 (JNIEnv *env, jobject thiz, jobject jQueryParamsMap, jobject jListener, jint jQoS)
 {
     LOGD("OcResource_discoveryMQTopicsImpl");
-
 #ifdef WITH_MQ
     if (!jQueryParamsMap)
     {
@@ -1823,6 +1822,11 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_discoveryMQTopicsImpl
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
+    OC_UNUSED(env);
+    OC_UNUSED(thiz);
+    OC_UNUSED(jQueryParamsMap);
+    OC_UNUSED(jListener);
+    OC_UNUSED(jQoS);
     ThrowOcException(JNI_NO_SUPPORT, "not support");
 #endif
 }
@@ -1838,7 +1842,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_createMQTopicImpl
  jobject jQueryParamsMap, jobject jListener, jint jQoS)
 {
     LOGD("OcResource_createMQTopicImpl");
-
 #ifdef WITH_MQ
     if (!jQueryParamsMap)
     {
@@ -1901,6 +1904,13 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_createMQTopicImpl
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
+    OC_UNUSED(env);
+    OC_UNUSED(thiz);
+    OC_UNUSED(jRepresentation);
+    OC_UNUSED(jUri);
+    OC_UNUSED(jQueryParamsMap);
+    OC_UNUSED(jListener);
+    OC_UNUSED(jQoS);
     ThrowOcException(JNI_NO_SUPPORT, "not support");
 #endif
 }
@@ -1953,6 +1963,11 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_subscribeMQTopicImpl
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
+    OC_UNUSED(env);
+    OC_UNUSED(thiz);
+    OC_UNUSED(jQueryParamsMap);
+    OC_UNUSED(jListener);
+    OC_UNUSED(jQoS);
     ThrowOcException(JNI_NO_SUPPORT, "not support");
 #endif
 }
@@ -1988,6 +2003,9 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_unsubscribeMQTopicImpl
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
+    OC_UNUSED(env);
+    OC_UNUSED(thiz);
+    OC_UNUSED(jQoS);
     ThrowOcException(JNI_NO_SUPPORT, "not support");
 #endif
 }
@@ -2000,6 +2018,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_unsubscribeMQTopicImpl
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_requestMQPublishImpl
 (JNIEnv *env, jobject thiz, jobject jQueryParamsMap, jobject jListener, jint jQoS)
 {
+    OC_UNUSED(thiz);
     LOGD("OcResource_requestMQPublishImpl");
 #ifdef MQ_SUBSCRIBER
     if (!jQueryParamsMap)
@@ -2041,6 +2060,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_requestMQPublishImpl
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
+    OC_UNUSED(env);
+    OC_UNUSED(jQueryParamsMap);
+    OC_UNUSED(jListener);
+    OC_UNUSED(jQoS);
     ThrowOcException(JNI_NO_SUPPORT, "not support");
 #endif
 }
@@ -2055,6 +2078,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_publishMQTopicImpl
 (JNIEnv *env, jobject thiz, jobject jRepresentation, jobject jQueryParamsMap,
  jobject jListener, jint jQoS)
 {
+    OC_UNUSED(thiz);
     LOGD("OcResource_publishMQTopicImpl");
 #ifdef MQ_PUBLISHER
     if (!jRepresentation)
@@ -2111,6 +2135,11 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_publishMQTopicImpl
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
+    OC_UNUSED(env);
+    OC_UNUSED(jRepresentation);
+    OC_UNUSED(jQueryParamsMap);
+    OC_UNUSED(jListener);
+    OC_UNUSED(jQoS);
     ThrowOcException(JNI_NO_SUPPORT, "not support");
 #endif
 }

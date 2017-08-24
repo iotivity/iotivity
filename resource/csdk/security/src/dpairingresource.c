@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "base64.h"
@@ -40,7 +40,7 @@
 #include "ocserverrequest.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "ocstackinternal.h"
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 #include <mbedtls/ssl_ciphersuites.h>

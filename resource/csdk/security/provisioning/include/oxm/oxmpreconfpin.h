@@ -22,7 +22,7 @@
 #define OXM_PRECONF_PIN_H_
 
 #include "ocstack.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "ownershiptransfermanager.h"
 #include "pmtypes.h"
 #include "pinoxmcommon.h"

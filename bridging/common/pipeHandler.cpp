@@ -34,7 +34,7 @@
 #endif
 #include "platform_features.h"
 #include "oic_malloc.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "PIPE_HANDLER"
 

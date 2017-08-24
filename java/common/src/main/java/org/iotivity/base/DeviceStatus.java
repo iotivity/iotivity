@@ -39,16 +39,13 @@ public enum DeviceStatus {
 
     public static DeviceStatus convertDeviceStatus(int value) {
 
-        if (1 == value)
-        {
+        if (1 == value) {
             return DeviceStatus.ON;
         }
-        else if (2 == value)
-        {
+        else if (2 == value) {
             return DeviceStatus.OFF;
         }
-        else
-        {
+        else {
             return DeviceStatus.INVALID;
         }
     }

@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -37,7 +38,7 @@
 #include "octhread.h"
 #include "uarraylist.h"
 #include "caremotehandler.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #ifdef __WITH_TLS__
 #include "ca_adapter_net_ssl.h"
@@ -211,7 +212,7 @@ void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
         }
         else
         {
-            OIC_LOG_V(DEBUG, TAG, "%u bytes required for complete CoAP",
+            OIC_LOG_V(DEBUG, TAG, "%" PRIuPTR " bytes required for complete CoAP",
                                 svritem->totalLen - svritem->len);
         }
     }
@@ -228,14 +229,9 @@ static ssize_t CATCPPacketSendCB(CAEndpoint_t *endpoint, const void *data, size_
     OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", endpoint->addr, endpoint->port);
     OIC_LOG_BUFFER(DEBUG, TAG, data, dataLength);
 
-    ssize_t ret = 0;
-#ifndef SINGLE_THREAD
-    ret = CAQueueTCPData(false, endpoint, data, dataLength, true);
-#else
-    ret = (int32_t)CATCPSendData(endpoint, data, dataLength);
-#endif
+    ssize_t ret = CATCPSendData(endpoint, data, dataLength);
 
-    OIC_LOG_V(DEBUG, TAG, "Out %s : %d bytes sent", __func__, ret);
+    OIC_LOG_V(DEBUG, TAG, "Out %s : %" PRIdPTR " bytes sent", __func__, ret);
     return ret;
 }
 #endif

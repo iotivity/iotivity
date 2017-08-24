@@ -19,7 +19,7 @@
  * *****************************************************************/
 
 #include "ocstack.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "srmutility.h"
 #include "base64.h"
 #include "OCProvisioningManager.hpp"
@@ -1395,12 +1395,12 @@ namespace OC
     OCStackResult OCSecureResource::getLinkedDevices(UuidList_t &uuidList)
     {
         OCStackResult result;
-        size_t numOfDevices = -1;
         auto devUuid = devPtr->doxm->deviceID;
         auto cLock = m_csdkLock.lock();
 
         if (cLock)
         {
+            size_t numOfDevices;
             std::lock_guard<std::recursive_mutex> lock(*cLock);
 
             OCUuidList_t* linkedDevs = nullptr, *tmp = nullptr;

@@ -22,7 +22,7 @@
 #define _OXM_MANUFACTURER_CERTIFICATE_H_
 
 #include "ocstack.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "ownershiptransfermanager.h"
 #include "pmtypes.h"
 

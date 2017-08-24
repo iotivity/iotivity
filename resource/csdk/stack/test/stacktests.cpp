@@ -24,7 +24,7 @@ extern "C"
     #include "ocpayload.h"
     #include "ocstack.h"
     #include "ocstackinternal.h"
-    #include "logger.h"
+    #include "experimental/logger.h"
     #include "oic_malloc.h"
     #include "oic_string.h"
     #include "oic_time.h"
@@ -2435,6 +2435,45 @@ TEST(StackPayload, CloneByteString)
     OICFree(cloneByteString.bytes);
 
     OCRepPayloadDestroy(clone);
+}
+
+TEST(StackPayload, EmptyByteString)
+{
+    OCByteString value = { NULL, 0 };
+
+    OCByteString dest = { NULL, 0 };
+    EXPECT_TRUE(OCByteStringCopy(&dest, &value));
+    EXPECT_EQ(0, memcmp(&dest, &value, sizeof(OCByteString)));
+
+    OCRepPayload *payload = OCRepPayloadCreate();
+    ASSERT_TRUE(payload != NULL);
+
+    EXPECT_TRUE(OCRepPayloadSetPropByteString(payload, "value", value));
+    EXPECT_TRUE(OCRepPayloadGetPropByteString(payload, "value", &dest));
+    EXPECT_EQ(0, memcmp(&dest, &value, sizeof(OCByteString)));
+
+    OCByteString array[] = {
+        { NULL, 0 },
+        { NULL, 0 }
+    };
+    size_t dim[MAX_REP_ARRAY_DEPTH] = { 2, 0, 0 };
+    EXPECT_TRUE(OCRepPayloadSetByteStringArray(payload, "array", array, dim));
+    OCByteString *destArray = NULL;
+    size_t destDim[MAX_REP_ARRAY_DEPTH] = { 0 };
+    EXPECT_TRUE(OCRepPayloadGetByteStringArray(payload, "array", &destArray, destDim));
+    EXPECT_EQ(0, memcmp(destDim, dim, sizeof(destDim)));
+    size_t dimTotal = calcDimTotal(dim);
+    for (size_t i = 0; i < dimTotal; ++i)
+    {
+        EXPECT_EQ(0, memcmp(&destArray[i], &array[i], sizeof(OCByteString)));
+    }
+
+    for(size_t i = 0; i < dimTotal; i++)
+    {
+        OICFree(destArray[i].bytes);
+    }
+    OICFree(destArray);
+    OCRepPayloadDestroy(payload);
 }
 
 TEST(StackUri, Rfc6874_Noop_1)

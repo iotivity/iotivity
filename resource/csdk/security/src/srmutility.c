@@ -22,10 +22,10 @@
 
 #include "srmutility.h"
 #include "srmresourcestrings.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "base64.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "doxmresource.h"
 
 #define TAG  "OIC_SRM_UTILITY"
@@ -114,26 +114,16 @@ OCStackResult ConvertUuidToStr(const OicUuid_t* uuid, char** strUuid)
         return OC_STACK_INVALID_PARAM;
     }
 
-    size_t uuidIdx = 0;
-    size_t urnIdx = 0;
     const size_t urnBufSize = (UUID_LENGTH * 2) + 4 + 1;
     char* convertedUrn = (char*)OICCalloc(urnBufSize, sizeof(char));
     VERIFY_NOT_NULL(TAG, convertedUrn, ERROR);
-
-    for(uuidIdx=0, urnIdx=0;  uuidIdx < UUID_LENGTH && urnIdx < urnBufSize; uuidIdx++, urnIdx+=2)
+    if(OCConvertUuidToString(uuid->id,convertedUrn))
     {
-        // canonical format for UUID has '8-4-4-4-12'
-        if(uuidIdx==4 || uuidIdx==6 || uuidIdx==8 || uuidIdx==10)
-        {
-            snprintf(convertedUrn + urnIdx, 2, "%c", '-');
-            urnIdx++;
-        }
-        snprintf(convertedUrn + urnIdx, 3, "%02x", (uint8_t)(uuid->id[uuidIdx]));
+        *strUuid = convertedUrn;
+        return OC_STACK_OK;
     }
-    convertedUrn[urnBufSize - 1] = '\0';
 
-    *strUuid = convertedUrn;
-    return OC_STACK_OK;
+    return OC_STACK_INVALID_PARAM;
 
 exit:
     return OC_STACK_NO_MEMORY;

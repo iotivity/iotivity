@@ -37,6 +37,12 @@ if target_os == 'android':
             os.path.join(src_dir, 'btpairing', 'android', 'cabtpairing.c')
         ])
 
+if target_os == 'tizen':
+    if (('BLE' in ca_transport) or ('ALL' in ca_transport)):
+        bt_le_manager_src_dir = os.path.join(camanager_src_dir, 'bt_le_manager', 'tizen')
+        connectivity_env.AppendUnique(CA_SRC = [
+           os.path.join(bt_le_manager_src_dir, 'caleconnectionmanager.c')])
+
 if with_cloud and with_tcp:
     connectivity_env.AppendUnique(CA_SRC=[
         os.path.join(camanager_src_dir, 'caconnectionmanager.c'),

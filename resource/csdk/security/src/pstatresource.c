@@ -22,12 +22,13 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "resourcemanager.h"
 #include "pstatresource.h"
 #include "doxmresource.h"
@@ -208,7 +209,7 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
             pstatMapSize++;
         }
     }
-    OIC_LOG_V(INFO, TAG, "%s: creating pstat CBOR payload with %d Properties.",
+    OIC_LOG_V(INFO, TAG, "%s: creating pstat CBOR payload with %" PRIuPTR " Properties.",
         __func__, pstatMapSize - PSTAT_EMPTY_MAP_SIZE);
 
     // Top Level Pstat Map
@@ -1276,4 +1277,3 @@ exit:
     OICFree(cborPayload);
     return ret;
 }
-

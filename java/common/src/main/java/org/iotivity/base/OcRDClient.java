@@ -27,8 +27,7 @@ import java.util.List;
 public final class OcRDClient {
     private static QualityOfService sPlatformQualityOfService = QualityOfService.NA;
 
-    private OcRDClient()
-    {
+    private OcRDClient() {
     }
     /**
      * API to publish resource to remote resource-directory.
@@ -241,7 +240,7 @@ public final class OcRDClient {
      * @param host                        Host Address of a service to publish resource.
      * @param connectivityTypeSet         Set of types of connectivity. Example: IP
      * @param ocResourceHandleList        reference to list of resource handles to be published.
-     * @param onDeleteResourceListener   	Handles events, success states and failure states.
+     * @param onDeleteResourceListener    Handles events, success states and failure states.
      * @throws OcException if failure
      */
     public static void deleteResourceFromRD(

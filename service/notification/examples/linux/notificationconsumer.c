@@ -148,7 +148,7 @@ void input(char * buffer)
 int main(void)
 {
     bool isExit = false;
-    pthread_t OCThread = NULL;
+    pthread_t OCThread;
 
     printf("start Iotivity\n");
 
@@ -193,7 +193,7 @@ int main(void)
 
         printf("Input: ");
 
-        if(scanf("%d", &num) == EOF)
+        if(scanf("%2d", &num) == EOF)
         {
             printf("Fail to input num\n");
         }

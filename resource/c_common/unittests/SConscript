@@ -31,10 +31,13 @@ target_os = common_test_env.get('TARGET_OS')
 if target_os in ['windows', 'msys_nt']:
     common_test_env.AppendUnique(CCFLAGS=['/W4'])
 
-SConscript('../oic_string/test/SConscript', exports = { 'test_env' : common_test_env})
-SConscript('../oic_malloc/test/SConscript', exports = { 'test_env' : common_test_env})
-SConscript('../oic_time/test/SConscript', exports = { 'test_env' : common_test_env})
-SConscript('../ocrandom/test/SConscript', exports = { 'test_env' : common_test_env})
-SConscript('../ocevent/test/SConscript', exports = { 'test_env' : common_test_env})
+SConscript(exports={'test_env': common_test_env},
+           dirs=[
+               '../oic_string/test',
+               '../oic_malloc/test',
+               '../oic_time/test',
+               '../ocrandom/test',
+               '../ocevent/test',
+           ])
 if target_os == 'windows':
-    SConscript('../windows/test/SConscript', exports = { 'test_env' : common_test_env})
+    SConscript('../windows/test/SConscript', exports={'test_env': common_test_env})

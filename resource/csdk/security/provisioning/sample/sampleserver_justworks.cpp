@@ -43,11 +43,12 @@
 #endif //ERROR
 #endif //HAVE_WINDOWS_H
 #include "platform_features.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 
 #define TAG "SAMPLE_JUSTWORKS"
 
+const char * specVersion = "ocf.1.1.0";
 int gQuitFlag = 0;
 
 /* Structure to represent a LED resource */
@@ -432,6 +433,7 @@ int main()
         OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
+    OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, (void*) specVersion);
 
     /*
      * Declare and create the example resource: LED

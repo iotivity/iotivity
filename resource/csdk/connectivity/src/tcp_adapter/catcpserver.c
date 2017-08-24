@@ -66,6 +66,7 @@
 
 #include <coap/pdu.h>
 #include <coap/utlist.h>
+#include <inttypes.h>
 
 #ifdef __WITH_TLS__
 #include "ca_adapter_net_ssl.h"
@@ -172,7 +173,7 @@ static CAResult_t CATCPCreateMutex()
 {
     if (!g_mutexObjectList)
     {
-        g_mutexObjectList = oc_mutex_new();
+        g_mutexObjectList =  oc_mutex_new_recursive();
         if (!g_mutexObjectList)
         {
             OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -647,7 +648,7 @@ CAResult_t CAConstructCoAP(CATCPSessionInfo_t *svritem, unsigned char **data,
 
     unsigned char *inBuffer = *data;
     size_t inLen = *dataLength;
-    OIC_LOG_V(DEBUG, TAG, "before-datalength : %u", *dataLength);
+    OIC_LOG_V(DEBUG, TAG, "before-datalength : %" PRIuPTR, *dataLength);
 
     if (NULL == svritem->data && inLen > 0)
     {
@@ -737,7 +738,7 @@ CAResult_t CAConstructCoAP(CATCPSessionInfo_t *svritem, unsigned char **data,
     *data = inBuffer;
     *dataLength = inLen;
 
-    OIC_LOG_V(DEBUG, TAG, "after-datalength : %u", *dataLength);
+    OIC_LOG_V(DEBUG, TAG, "after-datalength : %" PRIuPTR, *dataLength);
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return CA_STATUS_OK;
 }
@@ -766,10 +767,10 @@ static CAResult_t CAReceiveMessage(CATCPSessionInfo_t *svritem)
             //[3][4] bytes in tls header are tls payload length
             tlsLength = TLS_HEADER_SIZE +
                             (size_t)((svritem->tlsdata[3] << 8) | svritem->tlsdata[4]);
-            OIC_LOG_V(DEBUG, TAG, "total tls length = %u", tlsLength);
+            OIC_LOG_V(DEBUG, TAG, "total tls length = %" PRIuPTR, tlsLength);
             if (tlsLength > sizeof(svritem->tlsdata))
             {
-                OIC_LOG_V(ERROR, TAG, "total tls length is too big (buffer size : %u)",
+                OIC_LOG_V(ERROR, TAG, "total tls length is too big (buffer size : %" PRIuPTR ")",
                                     sizeof(svritem->tlsdata));
                 if (CA_STATUS_OK != CAcloseSslConnection(&svritem->sep.endpoint))
                 {
@@ -795,7 +796,7 @@ static CAResult_t CAReceiveMessage(CATCPSessionInfo_t *svritem)
         else
         {
             svritem->tlsLen += len;
-            OIC_LOG_V(DEBUG, TAG, "nb_read : %u bytes , recv() : %d bytes, svritem->tlsLen : %u bytes",
+            OIC_LOG_V(DEBUG, TAG, "nb_read : %" PRIuPTR " bytes , recv() : %d bytes, svritem->tlsLen : %" PRIuPTR " bytes",
                                 nbRead, len, svritem->tlsLen);
             if (tlsLength > 0 && tlsLength == svritem->tlsLen)
             {
@@ -1160,7 +1161,7 @@ void CATCPStopServer()
     if (caglobals.tcp.started)
     {
         // Ask the receive thread to shut down.
-        OC_STATIC_ASSERT((WSA_INVALID_EVENT == ((WSAEVENT)NULL)), 
+        OC_STATIC_ASSERT((WSA_INVALID_EVENT == ((WSAEVENT)NULL)),
             "The assert() below relies on the default value of "
             "caglobals.tcp.updateEvent being WSA_INVALID_EVENT");
         assert(caglobals.tcp.updateEvent != WSA_INVALID_EVENT);
@@ -1489,7 +1490,6 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *removedData)
     removedData->data = NULL;
 
     OICFree(removedData);
-    removedData = NULL;
 
     OIC_LOG(DEBUG, TAG, "data is removed from session list");
     return CA_STATUS_OK;

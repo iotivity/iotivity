@@ -20,7 +20,7 @@
 
 #include "ResourceCacheManager.h"
 #include "RCSException.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 
 namespace OIC
 {
@@ -75,7 +75,7 @@ namespace OIC
 
             if (cm == CACHE_METHOD::OBSERVE_ONLY)
             {
-                if (func == NULL || func == nullptr)
+                if (func == nullptr)
                 {
                     throw RCSInvalidParameterException {"[requestResourceCache] CacheCB is invaild"};
                 }
@@ -97,7 +97,7 @@ namespace OIC
 
             if (rf != REPORT_FREQUENCY::NONE)
             {
-                if (func == NULL || func == nullptr)
+                if (func == nullptr)
                 {
                     throw RCSInvalidParameterException {"[requestResourceCache] CacheCB is invaild"};
                 }

@@ -84,7 +84,7 @@
 #endif //ERROR
 #endif //HAVE_WINDOWS_H
 #include "platform_features.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 
 #define SEED "PREDICTED_SEED"
@@ -3024,7 +3024,7 @@ TEST(TLSAdapter, Test_ParseChain)
     size_t ret = ParseChain(&crt, certChain, certChainLen, &errNum);
     mbedtls_x509_crt_free(&crt);
 
-    EXPECT_EQ(7, ret);
+    EXPECT_EQ(7u, ret);
     EXPECT_EQ(0, errNum);
 }
 

@@ -31,6 +31,7 @@
 
 #include "ocstackconfig.h"
 #include "occlientcb.h"
+#include "ocobserve.h"
 
 /** Macro Definitions for observers */
 
@@ -227,6 +228,8 @@ typedef struct OCResource {
      * place holder for the note above.*/
     /* method_t methods; */
 
+    /** Observer(s); linked list.*/
+    ResourceObserver *observersHead;
 
     /** Sequence number for observable resources. Per the CoAP standard it is a 24 bit value.*/
     uint32_t sequenceNum;
@@ -249,6 +252,34 @@ typedef struct OCResource {
     OCTpsSchemeFlags endpointType;
 } OCResource;
 
+/**
+ * Checks if an observation Id already exists among the resources.
+ *
+ * @param[in]  observationId        Observation Id to check.
+ *
+ * @return true if it exists, false if not.
+ */
+bool IsObservationIdExisting(const OCObservationId observationId);
 
+/**
+ * Search the list of resource for an observer that has the specified token.
+ *
+ * @param[out] outResource          Resource pointer that the observer belong to.
+ * @param[out] outObserver          Observer pointer that is associated with the token.
+ * @param[in]  token                Token to search for.
+ * @param[in]  tokenLength          Length of token.
+ *
+ * @return true if the resource and the observer are found, false if not.
+ */
+bool GetObserverFromResourceList(OCResource **outResource, ResourceObserver **outObserver,
+                                 const CAToken_t token, uint8_t tokenLength);
+
+/**
+ * Give a stack feedback so that entityHandler gets called with an observe de-register option
+ * and it will delete all observers associated with the specified device's address.
+ *
+ * @param[in]  devAddr              Device's address.
+ */
+void GiveStackFeedBackObserverNotInterested(const OCDevAddr *devAddr);
 
 #endif /* OCRESOURCE_H_ */

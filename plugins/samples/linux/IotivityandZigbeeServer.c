@@ -21,7 +21,7 @@
 #include "IotivityandZigbeeServer.h"
 #include <signal.h>
 #include <ocstack.h>
-#include <logger.h>
+#include "experimental/logger.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
 
@@ -69,7 +69,7 @@ int main()
     }
 
     // PIStartPlugin
-    PIPlugin* plugin = NULL;
+    PIPluginPtr plugin = NULL;
     OIC_LOG(INFO, TAG, "IoTivity Initialized properly, Starting Zigbee Plugin...");
     result = PIStartPlugin(defaultComPort, PLUGIN_ZIGBEE, &plugin);
     if (result != OC_STACK_OK)

@@ -24,7 +24,7 @@ package org.iotivity.base;
 
 public enum ObserveAction {
     REGISTER(0),
-    UNREGISTER(1),;
+    UNREGISTER(1);
 
     private int value;
 

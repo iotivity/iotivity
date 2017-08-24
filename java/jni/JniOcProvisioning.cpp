@@ -1,23 +1,23 @@
 /*
-* //******************************************************************
-* //
-* // Copyright 2015 Samsung Electronics All Rights Reserved.
-* //
-* //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-* //
-* // Licensed under the Apache License, Version 2.0 (the "License");
-* // you may not use this file except in compliance with the License.
-* // You may obtain a copy of the License at
-* //
-* //      http://www.apache.org/licenses/LICENSE-2.0
-* //
-* // Unless required by applicable law or agreed to in writing, software
-* // distributed under the License is distributed on an "AS IS" BASIS,
-* // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* // See the License for the specific language governing permissions and
-* // limitations under the License.
-* //
-* //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+* ******************************************************************
+*
+*  Copyright 2015 Samsung Electronics All Rights Reserved.
+*
+* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
 
 #include "JniOcProvisioning.h"
@@ -28,6 +28,7 @@
 #include "oxmverifycommon.h"
 #include "JniDisplayVerifyNumListener.h"
 #include "JniConfirmNumListener.h"
+#include <climits>
 
 using namespace OC;
 namespace PH = std::placeholders;
@@ -37,7 +38,7 @@ static JniDisplayPinListener *jniDisplayPinListener = nullptr;
 static JniDisplayVerifyNumListener *jniDisplayMutualVerifyNumListener = nullptr;
 static JniConfirmNumListener *jniConfirmMutualVerifyNumListener = nullptr;
 
-void Callback(char *buf, size_t size)
+void JNICALL Callback(char *buf, size_t size)
 {
     if (jniPinListener)
     {
@@ -49,7 +50,7 @@ void Callback(char *buf, size_t size)
     }
 }
 
-void displayPinCB(char *pinBuf, size_t pinSize)
+void JNICALL displayPinCB(char *pinBuf, size_t pinSize)
 {
     if (jniDisplayPinListener)
     {
@@ -101,12 +102,12 @@ OCStackResult confirmMutualVerifNumCB()
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_ownershipTransferCBdata
   (JNIEnv *env, jobject thiz, jint OxmType, jobject jListener)
 {
+    OC_UNUSED(thiz);
     LOGD("OcProvisioning_ownershipTransferCBdata");
     OCStackResult result = OC_STACK_ERROR;
 
     try
     {
-        OTMCallbackData_t CBData = {0};
         if (OIC_JUST_WORKS == (OicSecOxm_t)OxmType)
         {
             /*NO callback required for JUST_WORKS*/
@@ -147,6 +148,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_ownershipTransferCB
 JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverUnownedDevices1
   (JNIEnv *env, jclass clazz, jint timeout)
 {
+    OC_UNUSED(clazz);
     LOGI("OcProvisioning_discoverUnownedDevices");
     DeviceList_t list;
 
@@ -181,8 +183,9 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverUno
  * Signature: (Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_provisionInit
-  (JNIEnv *env, jclass calzz, jstring jdbPath)
+  (JNIEnv *env, jclass clazz, jstring jdbPath)
 {
+    OC_UNUSED(clazz);
     LOGI("OcProvisioning_provisionInit");
     char *dbpath;
 
@@ -220,6 +223,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_provisionInit
 JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverOwnedDevices1
   (JNIEnv *env, jclass clazz , jint timeout)
 {
+    OC_UNUSED(clazz);
     LOGI("OcProvisioning_discoverOwnedDevices");
     DeviceList_t list;
 
@@ -255,6 +259,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverOwn
 JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_getDeviceStatusList1
   (JNIEnv *env, jclass clazz, jint timeout)
 {
+    OC_UNUSED(clazz);
     LOGI("OcProvisioning_getDeviceStatusList");
     DeviceList_t  ownedDevList, unownedDevList;
 
@@ -291,6 +296,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_getDeviceSt
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayNumListener
   (JNIEnv *env, jclass clazz, jobject jListener)
 {
+    OC_UNUSED(clazz);
     LOGI("OcProvisioning_setDisplayNumListener");
 
     if (!jListener)
@@ -326,6 +332,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayNumListen
 JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_unsetDisplayNumListener
   (JNIEnv * env, jclass clazz)
 {
+    OC_UNUSED(clazz);
     LOGI("OcProvisioning_unsetDisplayNumListener");
 
     OCStackResult result = OCSecure::deregisterDisplayNumCallback();
@@ -346,6 +353,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_unsetDisplayNumList
 JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setPinType0
   (JNIEnv *env, jclass thiz, jint pinSize, jint pinType)
 {
+    OC_UNUSED(thiz);
     LOGI("OcProvisioning_setPinType0");
 
     OCStackResult result = OC_STACK_ERROR;
@@ -373,6 +381,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setPinType0
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setConfirmNumListener
   (JNIEnv *env, jclass clazz, jobject jListener)
 {
+    OC_UNUSED(clazz);
     LOGI("OcProvisioning_setConfirmNumListener");
 
     if (!jListener)
@@ -408,6 +417,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setConfirmNumListen
 JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_unsetConfirmNumListener
   (JNIEnv *env, jclass clazz)
 {
+    OC_UNUSED(clazz);
     LOGI("OcProvisioning_unsetConfirmNumListener");
 
     OCStackResult result = OCSecure::deregisterUserConfirmCallback();
@@ -427,6 +437,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_unsetConfirmNumList
 JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setMVJustWorksOptions0
   (JNIEnv *env, jclass clazz, jint options)
 {
+    OC_UNUSED(clazz);
     LOGI("OcProvisioning_setMVJustWorksOptions0");
 
     OCStackResult result = OCSecure::setVerifyOptionMask((VerifyOptionBitmask_t)options);
@@ -448,7 +459,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setMVJustWorksOptio
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListener
   (JNIEnv *env, jclass thiz, jobject jListener)
 {
-
+    OC_UNUSED(thiz);
     LOGI("OcProvisioning_setDisplayPinListener");
 
     if (!jListener)
@@ -483,6 +494,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
 JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOTEnabledDevices1
   (JNIEnv *env, jclass thiz, jint timeout)
 {
+    OC_UNUSED(thiz);
     LOGI("OcProvisioning_discoverMOTEnabledDevices1");
 #if defined(MULTIPLE_OWNER)
     DeviceList_t list;
@@ -512,6 +524,8 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOT
         return nullptr;
     }
 #else
+    OC_UNUSED(env);
+    OC_UNUSED(timeout);
     ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
     return nullptr;
 #endif
@@ -525,6 +539,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOT
 JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOTEnabledOwnedDevices1
   (JNIEnv *env, jclass thiz, jint timeout)
 {
+    OC_UNUSED(thiz);
     LOGI("OcProvisioning_discoverMOTEnabledOwnedDevices1");
 #if defined(MULTIPLE_OWNER)
     DeviceList_t list;
@@ -554,6 +569,8 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOT
         return nullptr;
     }
 #else
+    OC_UNUSED(env);
+    OC_UNUSED(timeout);
     ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
     return nullptr;
 #endif
@@ -567,11 +584,14 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOT
     JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_saveTrustCertChain1
 (JNIEnv *env, jobject thiz, jbyteArray trustCertChain, jint encodingType)
 {
+    OC_UNUSED(thiz);
     LOGD("OcProvisioning_saveTrustCertChain1");
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     jbyte* trustCertChainBytes = env->GetByteArrayElements(trustCertChain, 0);
+    // TODO figure out why trustCertChainBytes is created an not used.
+    OC_UNUSED(trustCertChainBytes);
     jsize arrayLength = env->GetArrayLength(trustCertChain);
-    uint16_t credId = -1;
+    uint16_t credId = USHRT_MAX;
     unsigned char* trustedCertChar = new unsigned char[arrayLength];
     try
     {
@@ -591,6 +611,9 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOT
     }
     return (jint)credId;
 #else
+    OC_UNUSED(env);
+    OC_UNUSED(trustCertChain);
+    OC_UNUSED(encodingType);
     ThrowOcException(OC_STACK_INVALID_PARAM, "WITH_TLS not enabled");
     return -1;
 #endif // __WITH_DTLS__ || __WITH_TLS__
@@ -604,6 +627,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverMOT
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_saveACL
   (JNIEnv *env , jclass thiz, jobject jacl)
 {
+    OC_UNUSED(thiz);
     LOGD("OcProvisioning_saveACL");
 
     if (!jacl)
@@ -649,7 +673,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_saveACL
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_doSelfOwnershiptransfer
   (JNIEnv *env, jclass thiz)
 {
-
+    OC_UNUSED(thiz);
     LOGD("OcProvisioning_doSelfOwnershiptransfer");
     try
     {
@@ -675,6 +699,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_doSelfOwnershiptran
     JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setDeviceIdSeed1
 (JNIEnv *env, jobject thiz, jbyteArray seed)
 {
+    OC_UNUSED(thiz);
     LOGD("OcProvisioning_setDeviceIdSeed1");
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     jbyte* byteSeed = env->GetByteArrayElements(seed, 0);
@@ -696,6 +721,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_doSelfOwnershiptran
     }
     return 0;
 #else
+    OC_UNUSED(env);
+    OC_UNUSED(seed);
     ThrowOcException(OC_STACK_INVALID_PARAM, "WITH_TLS not enabled");
     return -1;
 #endif // __WITH_DTLS__ || __WITH_TLS__

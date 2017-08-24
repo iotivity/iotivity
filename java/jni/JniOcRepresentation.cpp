@@ -1,23 +1,23 @@
 /*
-* //******************************************************************
-* //
-* // Copyright 2015 Intel Corporation.
-* //
-* //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-* //
-* // Licensed under the Apache License, Version 2.0 (the "License");
-* // you may not use this file except in compliance with the License.
-* // You may obtain a copy of the License at
-* //
-* //      http://www.apache.org/licenses/LICENSE-2.0
-* //
-* // Unless required by applicable law or agreed to in writing, software
-* // distributed under the License is distributed on an "AS IS" BASIS,
-* // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* // See the License for the specific language governing permissions and
-* // limitations under the License.
-* //
-* //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+* ******************************************************************
+*
+*  Copyright 2015 Intel Corporation.
+*
+* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
 
 #include <map>
@@ -172,7 +172,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean
     }
 
     std::string str = env->GetStringUTFChars(jKey, nullptr);
-    rep->setValue(str, static_cast<bool>(jValue));
+    rep->setValue(str, (jValue != 0));
 }
 
 /*
@@ -511,7 +511,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBooleanAr
     std::vector<bool> value;
     for (jsize i = 0; i < len; ++i)
     {
-        value.push_back(static_cast<bool>(booleans[i]));
+        value.push_back((booleans[i] != 0));
     }
     env->ReleaseBooleanArrayElements(jValue, booleans, JNI_ABORT);
 
@@ -550,7 +550,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean2D
         std::vector<bool> innerVector;
         for (jsize i = 0; i < lenInner; ++i)
         {
-            innerVector.push_back(static_cast<bool>(booleans[i]));
+            innerVector.push_back((booleans[i] != 0));
         }
         env->ReleaseBooleanArrayElements(jInnerArray, booleans, JNI_ABORT);
         env->DeleteLocalRef(jInnerArray);
@@ -597,7 +597,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean3D
             std::vector<bool> innerVector;
             for (jsize i = 0; i < lenInner; ++i)
             {
-                innerVector.push_back(static_cast<bool>(booleans[i]));
+                innerVector.push_back((booleans[i] != 0));
             }
             env->ReleaseBooleanArrayElements(jInnerArray, booleans, JNI_ABORT);
             env->DeleteLocalRef(jInnerArray);

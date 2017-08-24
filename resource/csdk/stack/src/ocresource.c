@@ -37,20 +37,22 @@
 #include <strings.h>
 #endif
 
+#include <coap/coap.h>
+
 #include "ocresource.h"
 #include "ocresourcehandler.h"
 #include "ocobserve.h"
 #include "occollection.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocpayload.h"
 #include "secureresourcemanager.h"
 #include "cacommon.h"
 #include "cainterface.h"
 #include "oickeepalive.h"
 #include "platform_features.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "ocendpoint.h"
 #include "ocstackinternal.h"
 #include "oickeepalive.h"
@@ -224,7 +226,7 @@ OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char 
         {
             *filterOne = value;     // if
         }
-        else if (strncasecmp(key, OC_RSRVD_RESOURCE_TYPE, sizeof(OC_RSRVD_INTERFACE) - 1) == 0)
+        else if (strncasecmp(key, OC_RSRVD_RESOURCE_TYPE, sizeof(OC_RSRVD_RESOURCE_TYPE) - 1) == 0)
         {
             *filterTwo = value;     // rt
         }
@@ -1780,7 +1782,8 @@ static OCStackResult HandleVirtualObserveRequest(OCServerRequest *request)
     if (request->observationOption == OC_OBSERVE_REGISTER)
     {
         OIC_LOG(INFO, TAG, "Observation registration requested");
-        ResourceObserver *obs = GetObserverUsingToken (request->requestToken,
+        ResourceObserver *obs = GetObserverUsingToken (resourcePtr,
+                                                       request->requestToken,
                                                        request->tokenLength);
         if (obs)
         {
@@ -1822,7 +1825,8 @@ static OCStackResult HandleVirtualObserveRequest(OCServerRequest *request)
     else if (request->observationOption == OC_OBSERVE_DEREGISTER)
     {
         OIC_LOG(INFO, TAG, "Deregistering observation requested");
-        result = DeleteObserverUsingToken (request->requestToken, request->tokenLength);
+        result = DeleteObserverUsingToken (resourcePtr,
+                                           request->requestToken, request->tokenLength);
         if (result == OC_STACK_OK)
         {
             OIC_LOG(INFO, TAG, "Removed observer successfully");
@@ -2173,8 +2177,8 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
     {
         OIC_LOG(INFO, TAG, "Observation registration requested");
 
-        ResourceObserver *obs = GetObserverUsingToken (request->requestToken,
-                                    request->tokenLength);
+        ResourceObserver *obs = GetObserverUsingToken(resource,
+                                                      request->requestToken, request->tokenLength);
 
         if (obs)
         {
@@ -2228,7 +2232,8 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
     {
         OIC_LOG(INFO, TAG, "Deregistering observation requested");
 
-        resObs = GetObserverUsingToken (request->requestToken, request->tokenLength);
+        resObs = GetObserverUsingToken (resource,
+                                        request->requestToken, request->tokenLength);
 
         if (NULL == resObs)
         {
@@ -2240,7 +2245,8 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
         ehRequest.obsInfo.obsId = resObs->observeId;
         ehFlag = (OCEntityHandlerFlag)(ehFlag | OC_OBSERVE_FLAG);
 
-        result = DeleteObserverUsingToken (request->requestToken, request->tokenLength);
+        result = DeleteObserverUsingToken (resource,
+                                           request->requestToken, request->tokenLength);
 
         if(result == OC_STACK_OK)
         {
@@ -2733,3 +2739,67 @@ OCStackResult OC_CALL OCSetPropertyValue(OCPayloadType type, const char *prop, c
 
     return res;
 }
+
+bool IsObservationIdExisting(const OCObservationId observationId)
+{
+    OCResource *resource = NULL;
+    LL_FOREACH(headResource, resource)
+    {
+        if (NULL != GetObserverUsingId(resource, observationId))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GetObserverFromResourceList(OCResource **outResource, ResourceObserver **outObserver,
+                                 const CAToken_t token, uint8_t tokenLength)
+{
+    OCResource *resPtr = NULL;
+    ResourceObserver* obsPtr = NULL;
+    LL_FOREACH(headResource, resPtr)
+    {
+        obsPtr = GetObserverUsingToken(resPtr, token, tokenLength);
+        if (obsPtr)
+        {
+            *outResource = resPtr;
+            *outObserver = obsPtr;
+            return true;
+        }
+    }
+
+    *outResource = NULL;
+    *outObserver = NULL;
+    return false;
+}
+
+void GiveStackFeedBackObserverNotInterested(const OCDevAddr *devAddr)
+{
+    if (!devAddr)
+    {
+        return;
+    }
+
+    OIC_LOG_V(INFO, TAG, "Observer(%s:%u) is not interested anymore", devAddr->addr,
+              devAddr->port);
+
+    OCResource *resource = NULL;
+    ResourceObserver *observer = NULL;
+    ResourceObserver *tmp = NULL;
+
+    LL_FOREACH(headResource, resource)
+    {
+        LL_FOREACH_SAFE(resource->observersHead, observer, tmp)
+        {
+            if ((strcmp(observer->devAddr.addr, devAddr->addr) == 0)
+                    && observer->devAddr.port == devAddr->port)
+            {
+                OCStackFeedBack(observer->token, observer->tokenLength,
+                                OC_OBSERVER_NOT_INTERESTED);
+            }
+        }
+    }
+}
+
+

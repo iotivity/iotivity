@@ -50,10 +50,10 @@
 #include "ocresourcehandler.h"
 #include "occlientcb.h"
 #include "ocobserve.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "trace.h"
 #include "ocserverrequest.h"
 #include "secureresourcemanager.h"
@@ -644,21 +644,24 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
     {
         for (uint8_t i = 0; i < requestInfo->info.numOptions; i++)
         {
-            if (COAP_OPTION_ACCEPT_VERSION == requestInfo->info.options[i].optionID)
+            if (COAP_OPTION_ACCEPT_VERSION == requestInfo->info.options[i].optionID
+                    && sizeof(uint16_t) == requestInfo->info.options[i].optionLength)
             {
-                acceptVersion = *(uint16_t*) requestInfo->info.options[i].optionData;
+                acceptVersion = (requestInfo->info.options[i].optionData[1] << 8)
+                        + requestInfo->info.options[i].optionData[0];
             }
             else if (COAP_OPTION_ACCEPT == requestInfo->info.options[i].optionID)
             {
-                if (1 == requestInfo->info.options[i].optionLength)
+                if (sizeof(uint8_t) == requestInfo->info.options[i].optionLength)
                 {
                     acceptFormat = CAConvertFormat(
                             *(uint8_t*) requestInfo->info.options[i].optionData);
                 }
-                else if (2 == requestInfo->info.options[i].optionLength)
+                else if (sizeof(uint16_t) == requestInfo->info.options[i].optionLength)
                 {
                     acceptFormat = CAConvertFormat(
-                            *(uint16_t*) requestInfo->info.options[i].optionData);
+                            (requestInfo->info.options[i].optionData[1] << 8)
+                                    + requestInfo->info.options[i].optionData[0]);
                 }
                 else
                 {
@@ -698,15 +701,57 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
 OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t status)
 {
     OCStackResult result = OC_STACK_ERROR;
-    ResourceObserver * observer = NULL;
     OCEntityHandlerRequest ehRequest = {0};
+    OCResource *resource = NULL;
+    ResourceObserver *observer = NULL;
+
+    if (false == GetObserverFromResourceList(&resource, &observer, token, tokenLength))
+    {
+        OIC_LOG(DEBUG, TAG, "Observer is not found.");
+        return OC_STACK_OBSERVER_NOT_FOUND;
+    }
+    assert(resource);
+    assert(observer);
 
     switch(status)
     {
     case OC_OBSERVER_NOT_INTERESTED:
         OIC_LOG(DEBUG, TAG, "observer not interested in our notifications");
-        observer = GetObserverUsingToken(token, tokenLength);
-        if (observer)
+        result = FormOCEntityHandlerRequest(&ehRequest,
+                                            (OCRequestHandle)NULL,
+                                            OC_REST_NOMETHOD,
+                                            &observer->devAddr,
+                                            (OCResourceHandle)NULL,
+                                            NULL,
+                                            PAYLOAD_TYPE_REPRESENTATION, OC_FORMAT_CBOR,
+                                            NULL, 0, 0, NULL,
+                                            OC_OBSERVE_DEREGISTER,
+                                            observer->observeId,
+                                            0);
+        if (result != OC_STACK_OK)
+        {
+            return result;
+        }
+
+        if (resource->entityHandler)
+        {
+            resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest,
+                                    resource->entityHandlerCallbackParam);
+        }
+
+        DeleteObserverUsingToken(resource, token, tokenLength);
+        break;
+
+    case OC_OBSERVER_STILL_INTERESTED:
+        OIC_LOG(DEBUG, TAG, "observer still interested, reset the failedCount");
+        observer->forceHighQos = 0;
+        observer->failedCommCount = 0;
+        result = OC_STACK_OK;
+        break;
+
+    case OC_OBSERVER_FAILED_COMM:
+        OIC_LOG(DEBUG, TAG, "observer is unreachable");
+        if (MAX_OBSERVER_FAILED_COMM <= observer->failedCommCount)
         {
             result = FormOCEntityHandlerRequest(&ehRequest,
                                                 (OCRequestHandle)NULL,
@@ -721,98 +766,32 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                 0);
             if (result != OC_STACK_OK)
             {
-                return result;
+                return OC_STACK_ERROR;
             }
 
-            if (observer->resource && observer->resource->entityHandler)
+            if (resource->entityHandler)
             {
-                observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest,
-                                                  observer->resource->entityHandlerCallbackParam);
+                resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest,
+                                        resource->entityHandlerCallbackParam);
             }
-        }
 
-        result = DeleteObserverUsingToken(token, tokenLength);
-        if (result == OC_STACK_OK)
-        {
-            OIC_LOG(DEBUG, TAG, "Removed observer successfully");
+            DeleteObserverUsingToken(resource, token, tokenLength);
         }
         else
         {
-            result = OC_STACK_OK;
-            OIC_LOG(DEBUG, TAG, "Observer Removal failed");
+            observer->failedCommCount++;
+            observer->forceHighQos = 1;
+            OIC_LOG_V(DEBUG, TAG, "Failure counter for this observer is %d",
+                      observer->failedCommCount);
+            result = OC_STACK_CONTINUE;
         }
         break;
 
-    case OC_OBSERVER_STILL_INTERESTED:
-        OIC_LOG(DEBUG, TAG, "observer still interested, reset the failedCount");
-        observer = GetObserverUsingToken(token, tokenLength);
-        if (observer)
-        {
-            observer->forceHighQos = 0;
-            observer->failedCommCount = 0;
-            result = OC_STACK_OK;
-        }
-        else
-        {
-            result = OC_STACK_OBSERVER_NOT_FOUND;
-        }
-        break;
-
-    case OC_OBSERVER_FAILED_COMM:
-        OIC_LOG(DEBUG, TAG, "observer is unreachable");
-        observer = GetObserverUsingToken (token, tokenLength);
-        if (observer)
-        {
-            if (observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
-            {
-                result = FormOCEntityHandlerRequest(&ehRequest,
-                                                    (OCRequestHandle)NULL,
-                                                    OC_REST_NOMETHOD,
-                                                    &observer->devAddr,
-                                                    (OCResourceHandle)NULL,
-                                                    NULL,
-                                                    PAYLOAD_TYPE_REPRESENTATION, OC_FORMAT_CBOR,
-                                                    NULL, 0, 0, NULL,
-                                                    OC_OBSERVE_DEREGISTER,
-                                                    observer->observeId,
-                                                    0);
-                if (result != OC_STACK_OK)
-                {
-                    return OC_STACK_ERROR;
-                }
-
-                if (observer->resource && observer->resource->entityHandler)
-                {
-                    observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest,
-                                        observer->resource->entityHandlerCallbackParam);
-                }
-
-                result = DeleteObserverUsingToken(token, tokenLength);
-                if (result == OC_STACK_OK)
-                {
-                    OIC_LOG(DEBUG, TAG, "Removed observer successfully");
-                }
-                else
-                {
-                    result = OC_STACK_OK;
-                    OIC_LOG(DEBUG, TAG, "Observer Removal failed");
-                }
-            }
-            else
-            {
-                observer->failedCommCount++;
-                observer->forceHighQos = 1;
-                OIC_LOG_V(DEBUG, TAG, "Failed count for this observer is %d",
-                          observer->failedCommCount);
-                result = OC_STACK_CONTINUE;
-            }
-        }
-        break;
     default:
         OIC_LOG(ERROR, TAG, "Unknown status");
         result = OC_STACK_ERROR;
         break;
-        }
+    }
     return result;
 }
 
@@ -1511,10 +1490,6 @@ void OC_CALL OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo
 
     ClientCB *cbNode = GetClientCBUsingToken(responseInfo->info.token,
                                              responseInfo->info.tokenLength);
-
-    ResourceObserver * observer = GetObserverUsingToken (responseInfo->info.token,
-            responseInfo->info.tokenLength);
-
     if(cbNode)
     {
         OIC_LOG(INFO, TAG, "There is a cbNode associated with the response token");
@@ -2005,7 +1980,11 @@ void OC_CALL OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo
         return;
     }
 
-    if(observer)
+    OCResource *resource = NULL;
+    ResourceObserver *observer = NULL;
+    if (true == GetObserverFromResourceList(&resource, &observer,
+                                            responseInfo->info.token,
+                                            responseInfo->info.tokenLength))
     {
         OIC_LOG(INFO, TAG, "There is an observer associated with the response token");
         if(responseInfo->result == CA_EMPTY)
@@ -2152,9 +2131,10 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
         OICFree(response);
     }
 
-    ResourceObserver *observer = GetObserverUsingToken(errorInfo->info.token,
-                                                       errorInfo->info.tokenLength);
-    if (observer)
+    OCResource *resource = NULL;
+    ResourceObserver *observer = NULL;
+    if (true == GetObserverFromResourceList(&resource, &observer,
+                                            errorInfo->info.token, errorInfo->info.tokenLength))
     {
         OIC_LOG(INFO, TAG, "Receiving communication error for an observer");
         OCStackResult result = CAResultToOCResult(errorInfo->result);
@@ -2915,8 +2895,6 @@ OCStackResult OCDeInitializeInternal()
     }
 
     TerminateScheduleResourceList();
-    // Remove all observers
-    DeleteObserverList();
     // Free memory dynamically allocated for resources
     deleteAllResources();
     // Remove all the client callbacks
@@ -3441,21 +3419,23 @@ OCStackResult OC_CALL OCDoRequest(OCDoHandle *handle,
         {
             for (uint8_t i = 0; i < numOptions; i++)
             {
-                if (COAP_OPTION_ACCEPT_VERSION == options[i].optionID)
+                if (COAP_OPTION_ACCEPT_VERSION == options[i].optionID
+                        && sizeof(uint16_t) == options[i].optionLength)
                 {
-                    acceptVersion = *(uint16_t*) options[i].optionData;
+                    acceptVersion = (options[i].optionData[1] << 8) + options[i].optionData[0];
                     IsAcceptVersionSet = true;
                 }
                 else if (COAP_OPTION_ACCEPT == options[i].optionID)
                 {
-                    if (1 == options[i].optionLength)
+                    if (sizeof(uint8_t) == options[i].optionLength)
                     {
                         acceptFormat = CAConvertFormat(*(uint8_t*)options[i].optionData);
                         IsAcceptFormatSet = true;
                     }
-                    else if (2 == options[i].optionLength)
+                    else if (sizeof(uint16_t) == options[i].optionLength)
                     {
-                        acceptFormat = CAConvertFormat(*(uint16_t*)options[i].optionData);
+                        acceptFormat = CAConvertFormat(
+                                (options[i].optionData[1] << 8) + options[i].optionData[0]);
                         IsAcceptFormatSet = true;
                     }
                     else
@@ -3528,19 +3508,21 @@ OCStackResult OC_CALL OCDoRequest(OCDoHandle *handle,
         {
             for (uint8_t i = 0; i < numOptions; i++)
             {
-                if (COAP_OPTION_CONTENT_VERSION == options[i].optionID)
+                if (COAP_OPTION_CONTENT_VERSION == options[i].optionID
+                        && sizeof(uint16_t) == options[i].optionLength)
                 {
-                    payloadVersion = *(uint16_t*) options[i].optionData;
+                    payloadVersion = (options[i].optionData[1] << 8) + options[i].optionData[0];
                 }
                 else if (COAP_OPTION_CONTENT_FORMAT == options[i].optionID)
                 {
-                    if (1 == options[i].optionLength)
+                    if (sizeof(uint8_t) == options[i].optionLength)
                     {
                         payloadFormat = CAConvertFormat(*(uint8_t*) options[i].optionData);
                     }
-                    else if (2 == options[i].optionLength)
+                    else if (sizeof(uint16_t) == options[i].optionLength)
                     {
-                        payloadFormat = CAConvertFormat(*(uint16_t*) options[i].optionData);
+                        payloadFormat = CAConvertFormat(
+                                (options[i].optionData[1] << 8) + options[i].optionData[0]);
                     }
                     else
                     {
@@ -3632,11 +3614,15 @@ OCStackResult OC_CALL OCDoRequest(OCDoHandle *handle,
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     /* Check whether we should assert role certificates before making this request. */
-    if ((endpoint.flags & CA_SECURE) && (isProxyRequest ||
-        ((strcmp(requestInfo.info.resourceUri, OIC_RSRC_ROLES_URI) != 0) &&
-        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_DOXM_URI) != 0)) &&
-        ((CT_ADAPTER_TCP == connectivityType) &&
-                strcmp(requestInfo.info.resourceUri, OC_RSRVD_KEEPALIVE_URI) != 0)))
+    bool isEndpointSecure = ((endpoint.flags & CA_SECURE) != 0);
+    bool requestContainsRolesUri = (strcmp(requestInfo.info.resourceUri, OIC_RSRC_ROLES_URI) == 0);
+    bool requestContainsDoxmResource = (strcmp(requestInfo.info.resourceUri, OIC_RSRC_DOXM_URI) == 0);
+    bool isTcpConnectivityType = (CT_ADAPTER_TCP == connectivityType);
+    bool requestContainsKeepaliveUri = (strcmp(requestInfo.info.resourceUri, OC_RSRVD_KEEPALIVE_URI) == 0);
+
+    if (isEndpointSecure && (isProxyRequest ||
+        (!requestContainsRolesUri && !requestContainsDoxmResource &&
+         isTcpConnectivityType && !requestContainsKeepaliveUri)))
     {
         CASecureEndpoint_t sep;
         CAResult_t caRes = CAGetSecureEndpointData(&endpoint, &sep);
@@ -4252,6 +4238,9 @@ OCStackResult OC_CALL OCCreateResourceWithEp(OCResourceHandle *handle,
 
     // Initialize a pointer indicating child resources in case of collection
     pointer->rsrcChildResourcesHead = NULL;
+
+    // Initialize a pointer indicating observers to this resource
+    pointer->observersHead = NULL;
 
     *handle = pointer;
     result = OC_STACK_OK;
@@ -5041,7 +5030,7 @@ OCStackResult OC_CALL OCDoResponse(OCEntityHandlerResponse *ehResponse)
 
     // Normal response
     // Get pointer to request info
-    serverRequest = GetServerRequestUsingHandle((OCServerRequest *)ehResponse->requestHandle);
+    serverRequest = (OCServerRequest *)ehResponse->requestHandle;
     if(serverRequest)
     {
         // response handler in ocserverrequest.c. Usually HandleSingleResponse.
@@ -5445,6 +5434,8 @@ void deleteResourceElements(OCResource *resource)
     {
         OCDeleteResourceAttributes(resource->rsrcAttributes);
     }
+
+    DeleteObserverList(resource);
 }
 
 void deleteResourceType(OCResourceType *resourceType)
@@ -6236,7 +6227,7 @@ void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isCon
         CopyEndpointToDevAddr(info, &devAddr);
 
         // remove observer list with remote device address.
-        DeleteObserverUsingDevAddr(&devAddr);
+        GiveStackFeedBackObserverNotInterested(&devAddr);
     }
 }
 

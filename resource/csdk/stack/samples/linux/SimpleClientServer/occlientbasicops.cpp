@@ -34,10 +34,10 @@
 #include <getopt.h>
 
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "occlientbasicops.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "common.h"
@@ -301,20 +301,20 @@ int InitPostRequest(OCQualityOfService qos)
     query << resource->uri;
     OIC_LOG_V(INFO, TAG,"Executing InitPostRequest, Query: %s", query.str().c_str());
 
-    // First POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST, &resource->endpoint,
+    // First PUT operation (to create an LED instance)
+    result = InvokeOCDoResource(query, OC_REST_PUT, &resource->endpoint,
             ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
-            postReqCB, NULL, 0);
+            putReqCB, NULL, 0);
     if (OC_STACK_OK != result)
     {
         // Error can happen if for example, network connectivity is down
         OIC_LOG(ERROR, TAG, "First POST call did not succeed");
     }
 
-    // Second POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST, &resource->endpoint,
+    // Second PUT operation (to create an LED instance)
+    result = InvokeOCDoResource(query, OC_REST_PUT, &resource->endpoint,
             ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
-            postReqCB, NULL, 0);
+            putReqCB, NULL, 0);
     if (OC_STACK_OK != result)
     {
         OIC_LOG(ERROR, TAG, "Second POST call did not succeed");

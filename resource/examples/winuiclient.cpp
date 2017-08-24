@@ -23,7 +23,7 @@
 #include <functional>
 
 extern int g_CurSliderVal;
-extern HWND hwndVolumeSlider, hwndVolumeExpectedLabel;
+extern HWND g_hwndVolumeSlider, g_hwndVolumeExpectedLabel;
 using namespace WinUIClient;
 void LabelPrintf (HWND hwndEdit, TCHAR * szFormat, ...);
 
@@ -211,8 +211,8 @@ void WinUIClientApp::onGet(const HeaderOptions& /*headerOptions*/, const OCRepre
             std::cout << "\tname: " << mymedia.m_name << std::endl;
 
             g_CurSliderVal = mymedia.m_volume;
-            SendMessage(hwndVolumeSlider, TBM_SETPOS, TRUE, g_CurSliderVal);
-            LabelPrintf(hwndVolumeExpectedLabel,"Volume: %i", g_CurSliderVal);
+            SendMessage(g_hwndVolumeSlider, TBM_SETPOS, TRUE, g_CurSliderVal);
+            LabelPrintf(g_hwndVolumeExpectedLabel,"Volume: %i", g_CurSliderVal);
 
         }
         else
@@ -392,8 +392,8 @@ void WinUIClientApp::onObserve(const HeaderOptions /*headerOptions*/, const OCRe
             std::cout << "\tname: " << mymedia.m_name << std::endl;
 
             g_CurSliderVal = mymedia.m_volume;
-            SendMessage(hwndVolumeSlider, TBM_SETPOS, TRUE, g_CurSliderVal);
-            LabelPrintf(hwndVolumeExpectedLabel,"Volume: %i", g_CurSliderVal);
+            SendMessage(g_hwndVolumeSlider, TBM_SETPOS, TRUE, g_CurSliderVal);
+            LabelPrintf(g_hwndVolumeExpectedLabel,"Volume: %i", g_CurSliderVal);
         }
         else
         {
@@ -430,7 +430,7 @@ void WinUIClientApp::BeginObserving()
 void WinUIClientApp::CancelObserving()
 {
     std::cout<<"Cancelling Observe..."<<std::endl;
-    OCStackResult result = curResource->cancelObserve();
+    curResource->cancelObserve();
 }
 
 std::shared_ptr<OCResource> WinUIClientApp::GetResource()

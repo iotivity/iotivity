@@ -39,3 +39,7 @@ else:
 
 loggerlib = local_env.StaticLibrary('logger', logger_src)
 local_env.InstallTarget(loggerlib, 'logger')
+local_env.UserInstallTargetHeader('include/experimental/logger_types.h', 
+                                  'c_common/experimental', 'logger_types.h')
+local_env.UserInstallTargetHeader('include/experimental/logger.h',
+                                  'c_common/experimental', 'logger.h')

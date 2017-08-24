@@ -25,7 +25,7 @@ extern "C"
     #include "ocstack.h"
     #include "ocpayload.h"
     #include "ocpayloadcbor.h"
-    #include "logger.h"
+    #include "experimental/logger.h"
     #include "oic_malloc.h"
 }
 
@@ -175,8 +175,7 @@ TEST_F(CborByteStringTest, ByteStringArraySetGetTest )
     OICFree(quakedata_out);
 }
 
-
-TEST_F(CborByteStringTest, ByteStringArrayConvertParseTest )
+TEST_F(CborByteStringTest, ByteStringArrayConvertParseTest)
 {
     OCRepPayloadSetUri(payload_in, "/a/quake_sensor");
     OCRepPayloadSetPropInt(payload_in, "scale", 4);
@@ -230,6 +229,98 @@ TEST_F(CborByteStringTest, ByteStringArrayConvertParseTest )
         OICFree(quakedata_out[i].bytes);
     }
     OICFree(quakedata_out);
+
+    OCPayloadDestroy((OCPayload*)payload_out);
+}
+
+TEST_F(CborByteStringTest, EmptyByteStringConvertParseTest)
+{
+    OCByteString bytestring_in = {NULL, 0};
+
+    // Set ByteString in Payload
+    EXPECT_EQ(true, OCRepPayloadSetPropByteString(payload_in, "bytestring", bytestring_in));
+
+    // Convert OCPayload to CBOR
+    uint8_t *payload_cbor = NULL;
+    size_t payload_cbor_size = 0;
+    EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*) payload_in, OC_FORMAT_CBOR,
+            &payload_cbor, &payload_cbor_size));
+
+#ifdef CBOR_BIN_STRING_DEBUG
+    FILE *fp = fopen("emptybinstring.cbor", "wb+");
+    if (fp)
+    {
+        fwrite(payload_cbor, 1, payload_cbor_size, fp);
+        fclose(fp);
+    }
+#endif //CBOR_BIN_STRING_DEBUG
+
+    // Parse CBOR back to OCPayload
+    OCPayload* payload_out = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCParsePayload(&payload_out, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
+                 payload_cbor, payload_cbor_size));
+
+    OCByteString bytestring_out = {NULL, 0};
+    ASSERT_EQ(true, OCRepPayloadGetPropByteString((OCRepPayload*)payload_out, "bytestring", &bytestring_out));
+
+    // Compare input and output data
+    ASSERT_EQ((uint8_t*)NULL, bytestring_out.bytes);
+    EXPECT_EQ(bytestring_in.len, bytestring_out.len);
+
+    // Cleanup
+    OICFree(payload_cbor);
+    OICFree(bytestring_out.bytes);
+    OCPayloadDestroy((OCPayload*)payload_out);
+}
+
+TEST_F(CborByteStringTest, EmptyByteStringArrayConvertParseTest)
+{
+    size_t dimensions_in[MAX_REP_ARRAY_DEPTH] = { 3, 0, 0};
+
+    OCByteString bytestring_in[3] = {{NULL, 0},
+                                    {NULL, 0},
+                                    {NULL, 0}};
+
+    EXPECT_EQ(true, OCRepPayloadSetByteStringArray(payload_in, "bytestring",
+                bytestring_in, dimensions_in));
+
+    // Convert OCPayload to CBOR
+    uint8_t *payload_cbor = NULL;
+    size_t payload_cbor_size = 0;
+    EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*) payload_in, OC_FORMAT_CBOR,
+            &payload_cbor, &payload_cbor_size));
+#ifdef CBOR_BIN_STRING_DEBUG
+    FILE *fp = fopen("emptybinstringarr.cbor", "wb+");
+    if (fp)
+    {
+        fwrite(payload_cbor, 1, payload_cbor_size, fp);
+        fclose(fp);
+    }
+#endif //CBOR_BIN_STRING_DEBUG
+
+    // Parse CBOR back to OCPayload
+    OCPayload* payload_out = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCParsePayload(&payload_out, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
+                payload_cbor, payload_cbor_size));
+
+    OCByteString* bytestring_out = NULL;
+    size_t dimensions_out[MAX_REP_ARRAY_DEPTH] = {0};
+    ASSERT_EQ(true, OCRepPayloadGetByteStringArray((OCRepPayload*)payload_out, "bytestring",
+                &bytestring_out, dimensions_out));
+
+    for(size_t i = 0; i < dimensions_in[0]; i++)
+    {
+        EXPECT_EQ(bytestring_in[i].len, bytestring_out[i].len);
+        EXPECT_EQ(0, memcmp(bytestring_in[i].bytes, bytestring_out[i].bytes, bytestring_in[i].len));
+    }
+
+    // Cleanup
+    OICFree(payload_cbor);
+    for(size_t i = 0; i < dimensions_out[0]; i++)
+    {
+        OICFree(bytestring_out[i].bytes);
+    }
+    OICFree(bytestring_out);
 
     OCPayloadDestroy((OCPayload*)payload_out);
 }
@@ -310,3 +401,35 @@ TEST(CborHeterogeneousArrayTest, ConvertParseTest)
     OICFree(payload_cbor);
     OCPayloadDestroy(payload_out);
 }
+
+TEST(CborEmptyArrayTest, EmptyArrayArraySetGetTest)
+{
+    OCRepPayload* payload_in = OCRepPayloadCreate();
+    ASSERT_TRUE(payload_in != NULL);
+
+    OCRepPayloadSetUri(payload_in, "/a/quake_sensor");
+    OCRepPayloadSetPropInt(payload_in, "scale", 4);
+
+    size_t dimensions_in[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
+
+    EXPECT_EQ(true, OCRepPayloadSetIntArray(payload_in, "quakedata",
+                NULL, dimensions_in));
+
+    int64_t* quakedata_out = NULL;
+    size_t dimensions_out[MAX_REP_ARRAY_DEPTH] = {0};
+
+    ///TODO: Change Assert to true after fixing OCRepPayloadGetIntArray behaviour
+    ASSERT_EQ(false, OCRepPayloadGetIntArray(payload_in, "quakedata",
+                &quakedata_out, dimensions_out));
+
+    ASSERT_TRUE(quakedata_out == NULL);
+
+    for(size_t i = 0; i < MAX_REP_ARRAY_DEPTH; i++)
+    {
+        EXPECT_EQ(0u, dimensions_out[i]);
+    }
+
+    // Cleanup
+    OCRepPayloadDestroy(payload_in);
+}
+

@@ -5,10 +5,11 @@
 ##
 import os
 import platform
+import re
 
 project_version = '1.3.0'
 
-# Map of host os and allowed target os (host: allowed target os)
+# Map of build host to possible target os
 host_target_map = {
     'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
     'windows': ['windows', 'android', 'arduino'],
@@ -16,7 +17,7 @@ host_target_map = {
     'msys_nt': ['msys_nt'],
 }
 
-# Map of os and allowed archs (os: allowed archs)
+# Map of target os to possible target architecture
 os_arch_map = {
     'linux': [
         'x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64', 'mips',
@@ -38,26 +39,28 @@ os_arch_map = {
     ],
 }
 
+# Fetch host from Python platform information and smash case
 host = platform.system().lower()
 
-# the host string contains internal version of Windows: 6.3, 6.4, 10.0
-# which are externally known as 8.0, 8.1, and 10 respectively.
-# Canonicalize the msys_nt-XX.X system name by stripping version off.
+# In case of msys_nt, the host string contains an internal Windows version
+# which is not interesting for lookups in the maps.
+# Canonicalize the msys_nt-XX.X system name to msys-nt
 if 'msys_nt' in host:
     host = 'msys_nt'
 
 if host not in host_target_map:
-    print "\nError: building on '%s' is not currently supported.\n" % host
-    Exit(1)
+    msg = "\nError: building on host os '%s' is not currently supported.\n" % host
+    Exit(msg)
 
 ######################################################################
-# Get build options (the optins from command line)
+# Get build options from command line
 ######################################################################
-target_os = ARGUMENTS.get('TARGET_OS', host).lower()  # target os
+target_os = ARGUMENTS.get('TARGET_OS', host).lower()
 
 if target_os not in host_target_map[host]:
-    print "\nError: Unsupported target os: %s (available: %s)\n" % (target_os, host_target_map[host])
-    Exit(1)
+    msg = "\nError: host '%s' cannot currently build target '%s'" % (host, target_os)
+    msg += "\n\tchoices: %s\n" % host_target_map[host]
+    Exit(msg)
 
 if target_os == 'android':
     default_arch = 'x86'
@@ -85,205 +88,184 @@ else:
             'y', 'yes', 'true', 't', '1', 'on', 'all', True
     ]:
         release_mode = True
-    logging_default = (release_mode == False)
+    logging_default = (release_mode is False)
 
 # targets that do not support the DTLS build (SECURED=1 build option)
 targets_without_dtls_support = ['arduino']
 if ARGUMENTS.get('SECURED') == '1' and target_os in targets_without_dtls_support:
-    print "\nError: DTLS not supported on target %s, MUST build with SECURED=0\n" % (target_os)
-    Exit(1)
+    msg = "\nError: DTLS not supported on target '%s', MUST build with SECURED=0\n" % (target_os)
+    Exit(msg)
 
-######################################################################
-# Common build options (release, target os, target arch)
-######################################################################
+# targets that do not support multiple values for TARGET_TRANSPORT
 targets_disallow_multitransport = ['arduino']
 
+# generate a list of unique targets: convert to set() for uniqueness,
+# then convert back to a list
+targetlist = list(set(x for l in host_target_map.values() for x in l))
+
+######################################################################
+# Common build options
+######################################################################
+
 help_vars = Variables()
-
-help_vars.Add('PROJECT_VERSION',
-              'The version of IoTivity',
-              project_version)
-
-help_vars.Add(
+help_vars.AddVariables(
+    ('PROJECT_VERSION',
+                 'The version of IoTivity',
+                 project_version),
     BoolVariable('VERBOSE',
                  'Show compilation',
-                 False))
-help_vars.Add(
+                 default=False),
     BoolVariable('RELEASE',
                  'Build for release?',
-                 True))  # set to 'no', 'false' or 0 for debug
-help_vars.Add(
+                 default=True),
     EnumVariable('TARGET_OS',
                  'Target platform',
-                 host,
-                 allowed_values=host_target_map[host]))
-
-help_vars.Add(
+                 default=host,
+                 allowed_values=targetlist),
     BoolVariable('WITH_RA',
                  'Build with Remote Access module',
-                 False))
-help_vars.Add(
+                 default=False),
     BoolVariable('WITH_TCP',
                  'Build with TCP adapter',
-                 False))
-help_vars.Add(
+                 default=False),
     BoolVariable('WITH_PROXY',
                  'Build with CoAP-HTTP Proxy',
-                 False))
-help_vars.Add(
+                 default=True),
     ListVariable('WITH_MQ',
                  'Build with MQ publisher/broker',
-                 'OFF',
-                 ['OFF', 'SUB', 'PUB', 'BROKER']))
-help_vars.Add(
+                 default='OFF',
+                 names=('OFF', 'SUB', 'PUB', 'BROKER')),
     BoolVariable('WITH_CLOUD',
                  'Build including AccountManager class and Cloud Client sample',
-                 False))
-help_vars.Add(
+                 default=False),
     ListVariable('RD_MODE',
                  'Resource Directory build mode',
-                 'CLIENT',
-                 ['CLIENT', 'SERVER']))
-help_vars.Add(
+                 default='CLIENT',
+                 names=('CLIENT', 'SERVER')),
     BoolVariable('SIMULATOR',
                  'Build with simulator module',
-                 False))
-help_vars.Add(
+                 default=False),
     BoolVariable('WITH_RA_IBB',
                  'Build with Remote Access module(workssys)',
-                 False))
+                 default=False),
+    EnumVariable('TARGET_ARCH',
+                 'Target architecture',
+                 default=default_arch,
+                 allowed_values=os_arch_map[target_os]),
+    EnumVariable('MULTIPLE_OWNER',
+                 'Enable multiple owner',
+                 default='1',
+                 allowed_values=('0', '1')),
+    EnumVariable('EXC_PROV_SUPPORT',
+                 'Except OCPMAPI library(libocpmapi.so)',
+                 default='0',
+                 allowed_values=('0', '1')),
+    EnumVariable('TEST',
+                 'Run unit tests',
+                 default='0',
+                 allowed_values=('0', '1')),
+    BoolVariable('LOGGING',
+                 'Enable stack logging',
+                 default=logging_default),
+    EnumVariable('LOG_LEVEL',
+                 'Enable stack logging level',
+                 default='DEBUG',
+                 allowed_values=('DEBUG', 'INFO', 'ERROR', 'WARNING', 'FATAL')),
+    BoolVariable('UPLOAD',
+                 'Upload binary? (For Arduino)',
+                 default=require_upload),
+    EnumVariable('ROUTING',
+                 'Enable routing',
+                 default='EP',
+                 allowed_values=('GW', 'EP')),
+    EnumVariable('BUILD_SAMPLE',
+                 'Build with sample',
+                 default='ON',
+                 allowed_values=('ON', 'OFF')),
+    ('DEVICE_NAME',
+                 'Network display name for device (For Arduino)',
+                 device_name),
+    PathVariable('ANDROID_NDK',
+                 'Android NDK path',
+                 default=None,
+                 validator=PathVariable.PathAccept),
+    PathVariable('ANDROID_HOME',
+                 'Android SDK path',
+                 default=None,
+                 validator=PathVariable.PathAccept),
+    PathVariable('ANDROID_GRADLE',
+                 'Gradle executable location',
+                 default=None,
+                 validator=PathVariable.PathIsFile),
+    EnumVariable('WITH_UPSTREAM_LIBCOAP',
+                 'Use latest stable version of LibCoAP downloaded from github',
+                 default=default_with_upstream_libcoap,
+                 allowed_values=('0', '1')),
+    BoolVariable('WITH_ENV',
+                 'Use compiler options from environment',
+                 default=False),
+    BoolVariable('AUTOMATIC_UPDATE',
+                 'Makes libcoap update automatically to the required versions if needed.',
+                 default=False),
+    BoolVariable('BUILD_JAVA',
+                 'Build Java bindings',
+                 default=False),
+    PathVariable('JAVA_HOME',
+                 'JDK directory',
+                 default=os.environ.get('JAVA_HOME'),
+                 validator=PathVariable.PathAccept),
+    EnumVariable('OIC_SUPPORT_TIZEN_TRACE',
+                 'Tizen Trace(T-trace) api availability',
+                 default='False',
+                 allowed_values=('True', 'False')),
+)
 
+######################################################################
+# Platform (build target) specific options
+######################################################################
 if target_os in targets_disallow_multitransport:
     help_vars.Add(
-        ListVariable('TARGET_TRANSPORT',
+        EnumVariable('TARGET_TRANSPORT',
                      'Target transport',
-                     'IP',
-                     ['BT', 'BLE', 'IP', 'NFC']))
+                     default='IP',
+                     allowed_values=('BT', 'BLE', 'IP', 'NFC')))
 else:
     help_vars.Add(
         ListVariable('TARGET_TRANSPORT',
                      'Target transport',
-                     'ALL',
-                     ['ALL', 'BT', 'BLE', 'IP', 'NFC']))
-
-help_vars.Add(
-    EnumVariable('TARGET_ARCH',
-                 'Target architecture',
-                 default_arch,
-                 allowed_values=os_arch_map[target_os]))
+                     default='ALL',
+                     names=('ALL', 'BT', 'BLE', 'IP', 'NFC')))
 
 if target_os in targets_without_dtls_support:
     help_vars.Add(
         EnumVariable('SECURED',
                      'Build with DTLS',
-                     '0',
-                     allowed_values=('0', '1')))
+                     default='0',
+                     allowed_values=('0',)))
 else:
     help_vars.Add(
         EnumVariable('SECURED',
                      'Build with DTLS',
-                     '1',
+                     default='1',
                      allowed_values=('0', '1')))
-help_vars.Add(
-    EnumVariable('MULTIPLE_OWNER',
-                 'Enable multiple owner',
-                 '1',
-                 allowed_values=('0', '1')))
-help_vars.Add(
-    EnumVariable('EXC_PROV_SUPPORT',
-                 'Except OCPMAPI library(libocpmapi.so)',
-                 '0',
-                 allowed_values=('0', '1')))
-help_vars.Add(
-    EnumVariable('TEST',
-                 'Run unit tests',
-                 '0',
-                 allowed_values=('0', '1')))
-help_vars.Add(
-    BoolVariable('LOGGING',
-                 'Enable stack logging',
-                 logging_default))
-help_vars.Add(
-    EnumVariable('LOG_LEVEL',
-                 'Enable stack logging level',
-                 'DEBUG',
-                 allowed_values=('DEBUG', 'INFO', 'ERROR', 'WARNING', 'FATAL')))
-help_vars.Add(
-    BoolVariable('UPLOAD',
-                 'Upload binary ? (For Arduino)',
-                 require_upload))
-help_vars.Add(
-    EnumVariable('ROUTING',
-                 'Enable routing',
-                 'EP',
-                 allowed_values=('GW', 'EP')))
-help_vars.Add(
-    EnumVariable('BUILD_SAMPLE',
-                 'Build with sample',
-                 'ON',
-                 allowed_values=('ON', 'OFF')))
-help_vars.AddVariables(('DEVICE_NAME',
-                        'Network display name for device (For Arduino)',
-                        device_name,
-                        None,
-                        None), )
-help_vars.Add(
-    PathVariable('ANDROID_NDK',
-                 'Android NDK path',
-                 None,
-                 PathVariable.PathAccept))
-help_vars.Add(
-    PathVariable('ANDROID_HOME',
-                 'Android SDK path',
-                 None,
-                 PathVariable.PathAccept))
-help_vars.Add(
-    PathVariable('ANDROID_GRADLE',
-                 'Gradle binary file',
-                 None,
-                 PathVariable.PathIsFile))
-help_vars.Add(
-    EnumVariable('WITH_UPSTREAM_LIBCOAP',
-                 'Use latest stable version of LibCoAP downloaded from github',
-                 default_with_upstream_libcoap,
-                 allowed_values=('0', '1')))
-help_vars.Add(
-    BoolVariable('WITH_ENV',
-                 'Use compiler options from environment',
-                 False))
-help_vars.Add(
-    BoolVariable('AUTOMATIC_UPDATE',
-                 'Makes libcoap update automatically to the required versions if needed.',
-                 False))
 
 if target_os == 'windows':
-    # For VS2013, MSVC_VERSION is '12.0'. For VS2015, MSVC_VERSION is '14.0'.
-    # Default value is None, meaning that SCons has to choose automatically a VS version.
+    # Builds differ based on Visual Studio version
+    #   For VS2013, MSVC_VERSION is '12.0'.
+    #   For VS2015, MSVC_VERSION is '14.0'.
+    #   For VS2017, MSVC_VERSION is '15.0'.
+    # Default value is None, which means SCons will pick
     help_vars.Add(
         EnumVariable('MSVC_VERSION',
                      'MSVC compiler version - Windows',
-                     None,
+                     default=None,
                      allowed_values=('12.0', '14.0')))
-    help_vars.Add(EnumVariable(
-                     'UWP_APP',
-                     'Build for a Universal Windows Platform (UWP) Application',
-                     '0',
+                     #TODO allowed_values=('12.0', '14.0', '15.0')))
+    help_vars.Add(
+        EnumVariable('UWP_APP',
+                     'Build a Universal Windows Platform (UWP) Application',
+                     default='0',
                      allowed_values=('0', '1')))
-
-help_vars.Add(
-    BoolVariable('BUILD_JAVA',
-                 'Build Java bindings',
-                 False))
-help_vars.Add(
-    PathVariable('JAVA_HOME',
-                 'JDK directory',
-                 os.environ.get('JAVA_HOME'),
-                 PathVariable.PathAccept))
-help_vars.Add(
-    EnumVariable('OIC_SUPPORT_TIZEN_TRACE',
-                 'Tizen Trace(T-trace) api availability',
-                 'False',
-                 allowed_values=('True', 'False')))
 
 AddOption(
     '--prefix',
@@ -295,21 +277,24 @@ AddOption(
     help='installation prefix')
 
 ######################################################################
-# Platform(build target) specific options: SDK/NDK & toolchain
+# Platform (build target) specific options: SDK/NDK & toolchain
 ######################################################################
 targets_support_cc = ['linux', 'arduino', 'tizen']
 
 if target_os in targets_support_cc:
     # Set cross compile toolchain
     help_vars.Add('TC_PREFIX',
-                  "Toolchain prefix (Generally only be required for cross-compiling)",
-                  os.environ.get('TC_PREFIX'))
+                  "Toolchain prefix (Generally only required for cross-compiling)",
+                  default=None)
     help_vars.Add(
         PathVariable('TC_PATH',
-                     'Toolchain path (Generally only be required for cross-compiling)',
-                     os.environ.get('TC_PATH')))
+                     'Toolchain path (Generally only required for cross-compiling)',
+                     default=None,
+                     validator=PathVariable.PathAccept))
 
+######################################################################
 # this is where the setup of the construction envionment begins
+######################################################################
 if target_os in ['android', 'arduino']:
     # Android/Arduino always uses GNU compiler regardless of the host
     env = Environment(
@@ -352,7 +337,7 @@ if env.get('WITH_ENV'):
         print "using LDFLAGS/LINKFLAGS from environment: %s" % env['LINKFLAGS']
 
 # set quieter build messages unless verbose mode was requested
-if env.get('VERBOSE') == False:
+if not env.get('VERBOSE'):
     env['CCCOMSTR'] = "Compiling $TARGET"
     env['SHCCCOMSTR'] = "Compiling $TARGET"
     env['CXXCOMSTR'] = "Compiling $TARGET"
@@ -395,7 +380,7 @@ if target_os in ['yocto']:
 else:
     env['CONFIG_ENVIRONMENT_IMPORT'] = False
 
-if env['CONFIG_ENVIRONMENT_IMPORT'] == True:
+if env['CONFIG_ENVIRONMENT_IMPORT']:
     print "warning: importing some environment variables for OS: %s" % target_os
     for ev in [
         'PATH',
@@ -403,10 +388,15 @@ if env['CONFIG_ENVIRONMENT_IMPORT'] == True:
         'PKG_CONFIG_PATH',
         'PKG_CONFIG_SYSROOT_DIR'
     ]:
-        if os.environ.get(ev) != None:
+        if os.environ.get(ev) is not None:
             env['ENV'][ev] = os.environ.get(ev)
     if os.environ['LDFLAGS'] != None:
         env.AppendUnique(LINKFLAGS=Split(os.environ['LDFLAGS']))
+
+if target_os in ['windows']:
+    # UnpackAll.py needs access to system PATH components that SCons
+    # does not include by default - e.g., the path to 7z.exe.
+    env.AppendUnique(PATH=os.environ['PATH'])
 
 # Ensure scons is able to change its working directory
 env.SConscriptChdir(1)
@@ -429,13 +419,13 @@ def __set_dir(env, dir):
     #   env.get('BUILD_DIR')
     #
     if not os.path.exists(dir + '/SConstruct'):
-        print '''
+        msg = '''
 *************************************** Error *********************************
 * The directory (%s) seems not to be a buildable directory,
 * no SConstruct file found.
 *******************************************************************************
 ''' % dir
-        Exit(1)
+        Exit(msg)
 
     build_dir = dir + '/out/' + target_os + '/'
 
@@ -553,6 +543,7 @@ env.AddMethod(__installpcfile, 'UserInstallTargetPCFile')
 env.SetDir(env.GetLaunchDir())
 env['ROOT_DIR'] = env.GetLaunchDir() + '/..'
 
+# make 'env' available to all other build scripts to Import()
 Export('env')
 
 ####################################################################i#
@@ -623,6 +614,7 @@ if (target_os in ['darwin', 'ios']):
     env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
 
 if (env.get('SECURED') == '1'):
+    env.AppendUnique(CPPDEFINES=['SECURED'])
     env.AppendUnique(CPPDEFINES=['__WITH_DTLS__'])
 
 if ((env.get('SECURED') == '1') and with_tcp):
@@ -671,8 +663,8 @@ if 'ALL' in target_transport:
 else:
     if ('BT' in target_transport):
         if (target_os == 'linux'):
-            print "CA Transport BT is not supported "
-            Exit(1)
+            msg = "CA Transport BT is not supported "
+            Exit(msg)
         else:
             env.AppendUnique(CPPDEFINES=['EDR_ADAPTER'])
     else:
@@ -694,8 +686,8 @@ else:
         ]):
             env.AppendUnique(CPPDEFINES=['TCP_ADAPTER', 'WITH_TCP'])
         else:
-            print "CA Transport TCP is not supported "
-            Exit(1)
+            msg = "CA Transport TCP is not supported "
+            Exit(msg)
     else:
         env.AppendUnique(CPPDEFINES=['NO_TCP_ADAPTER'])
 
@@ -703,8 +695,8 @@ else:
         if (target_os == 'android'):
             env.AppendUnique(CPPDEFINES=['NFC_ADAPTER'])
         else:
-            print "CA Transport NFC is not supported "
-            Exit(1)
+            msg = "CA Transport NFC is not supported "
+            Exit(msg)
     else:
         env.AppendUnique(CPPDEFINES=['NO_NFC_ADAPTER'])
 
@@ -734,22 +726,24 @@ if 'SERVER' in rd_mode:
 if with_ra_ibb:
     env.AppendUnique(CPPDEFINES=['RA_ADAPTER_IBB'])
 
-env.SConscript('external_builders.scons')
+if env.get('RELEASE'):
+    env.AppendUnique(CPPDEFINES=['NDEBUG'])
 
+env.SConscript('external_builders.scons')
 ######################################################################
 # Link scons to Yocto cross-toolchain ONLY when target_os is yocto
 ######################################################################
 if target_os == "yocto":
     '''
-    This code injects Yocto cross-compilation tools+flags into scons'
-    build environment in order to invoke the relevant tools while
+    This code injects Yocto cross-compilation tools+flags into the scons
+    construction environment in order to invoke the relevant tools while
     performing a build.
     '''
     import os.path
     try:
         CC = os.environ['CC']
         target_prefix = CC.split()[0]
-        target_prefix = target_prefix[:len(target_prefix) - 3]
+        target_prefix = target_prefix[:-3]
         tools = {
             "CC": target_prefix + "gcc",
             "CXX": target_prefix + "g++",
@@ -772,10 +766,10 @@ if target_os == "yocto":
                     if os.path.isfile(os.path.join(path, tools[tool])):
                         env[tool] = os.path.join(path, os.environ[tool])
                         break
-        env['CROSS_COMPILE'] = target_prefix[:len(target_prefix) - 1]
+        env['CROSS_COMPILE'] = target_prefix[:-1]
     except:
-        print "ERROR in Yocto cross-toolchain environment"
-        Exit(1)
+        msg = "ERROR in Yocto cross-toolchain environment"
+        Exit(msg)
     '''
     Now reset TARGET_OS to linux so that all linux specific build configurations
     hereupon apply for the entirety of the build process.
@@ -789,13 +783,10 @@ if target_os == "yocto":
     '''
     Additional flags to pass to the Yocto toolchain.
     '''
-    if env.get('RELEASE'):
-        env.AppendUnique(CPPDEFINES=['NDEBUG'])
     env.AppendUnique(CPPDEFINES=['__linux__', '_GNU_SOURCE'])
     env.AppendUnique(CFLAGS=['-std=gnu99'])
     env.AppendUnique(CCFLAGS=['-Wall', '-Wextra', '-fPIC'])
     env.AppendUnique(LIBS=['dl', 'pthread', 'uuid'])
-    Export('env')
 else:
     '''
     If target_os is not Yocto, continue with the regular build process
@@ -832,11 +823,11 @@ env = conf.Finish()
 ######################################################################
 # Generate Cbor from json files
 ######################################################################
-json2cbor = env.get('BUILD_DIR') + 'resource/csdk/security/tool/json2cbor'
+json2cbor = env.get('BUILD_DIR') + 'resource/csdk/security/tool/json2cbor' + env.get('PROGSUFFIX')
 
 def generate_actions(source, target, env, for_signature):
-    Depends(target, "json2cbor")
-    return " %s %s %s" % (str(json2cbor), source[0], target[0])
+    Depends(target, json2cbor)
+    return " %s %s %s" % (json2cbor, source[0], target[0])
 
 builder = Builder(generator = generate_actions,
                   suffix = '.dat',
@@ -844,10 +835,31 @@ builder = Builder(generator = generate_actions,
 
 env.Append(BUILDERS = {'Cbor' : builder})
 
+
+def ScanJSON(env, directory):
+    targets = []
+    if env.GetOption('clean') or env.get('SECURED') != '1':
+        return targets
+    dst_dir = env.get('BUILD_DIR') + '/' + directory + '/'
+    src_dir = env.get('SRC_DIR') + '/' + directory + '/'
+    for json_file in Glob('*.json'):
+        targets += env.Install(dst_dir, str(json_file))
+        if env.get('CROSS_COMPILE') != None:
+            cbor_file = src_dir + re.sub('\.json$', '.dat', str(json_file))
+            targets += Install(dst_dir, cbor_file)
+        else:
+            cbor_file = env.Cbor(json_file)
+            targets.append(cbor_file)
+            cbor_file = Flatten(cbor_file)[0].name
+            src = dst_dir + cbor_file
+            dst = src_dir + cbor_file
+            Command(dst, src, Copy("$TARGET", "$SOURCE"))
+
+    return targets
+
+AddMethod(env, ScanJSON)
+
 ######################################################################
-# must call external_builders.scons second time to properly setup
-# UnpackAll builder this is due to the system path not being pulled
-# in for windows till after the windows target has run.
-env.SConscript('external_builders.scons')
 env.SConscript('external_libs.scons')
+
 Return('env')

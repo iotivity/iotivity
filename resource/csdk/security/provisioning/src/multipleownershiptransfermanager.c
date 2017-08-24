@@ -31,7 +31,7 @@
 #include <string.h>
 
 #include "utlist.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "cacommon.h"
@@ -43,7 +43,6 @@
 #include "credresource.h"
 #include "aclresource.h"
 #include "ownershiptransfermanager.h"
-#include "securevirtualresourcetypes.h"
 #include "oxmjustworks.h"
 #include "pmtypes.h"
 #include "pmutility.h"
@@ -52,14 +51,14 @@
 #include "provisioningdatabasemanager.h"
 #include "oxmrandompin.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "oxmjustworks.h"
 #include "oxmpreconfpin.h"
 #include "oxmrandompin.h"
 #include "otmcontextlist.h"
 #include "ocstackinternal.h"
 #include "mbedtls/ssl_ciphersuites.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 
 #define TAG "OIC_MULTIPLE_OTM"
 
@@ -506,8 +505,6 @@ exit:
 static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
                                                     OCProvisionDev_t* selectedDevice);
 
-static OTMContext_t* g_MotCtx = NULL;
-
 static bool IsComplete(OTMContext_t* otmCtx)
 {
     for(size_t i = 0; i < otmCtx->ctxResultArraySize; i++)
@@ -687,7 +684,7 @@ static OCStackResult SaveSubOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
 #ifdef WITH_TCP
     else if (CA_ADAPTER_TCP == endpoint.adapter)
     {
-        endpoint.port = selectedDeviceInfo->tcpPort;
+        endpoint.port = selectedDeviceInfo->tcpSecurePort;
     }
 #endif
 

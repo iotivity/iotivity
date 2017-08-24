@@ -25,7 +25,7 @@
 #include "ocstack.h"
 #include "octypes.h"
 #include "ocpayload.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include <string>
 
 #define LOG "IOTIVITY_WORK_ITEM"

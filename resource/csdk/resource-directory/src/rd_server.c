@@ -25,7 +25,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "ocpayload.h"
 #include "octypes.h"
 #include "oic_string.h"
@@ -266,8 +266,10 @@ exit:
  * will handle REST request (GET/PUT/POST/DEL) for them.
  */
 static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *ehRequest, OC_ANNOTATE_UNUSED void *callbackParameter)
+        OCEntityHandlerRequest *ehRequest, void *callbackParameter)
 {
+    OC_UNUSED(callbackParameter);
+
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     if (!ehRequest)

@@ -27,7 +27,7 @@
 
 #include "ocprovisioningmanager.h"
 #include "secureresourceprovider.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "aclresource.h"
@@ -820,6 +820,13 @@ static OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t do
             OIC_LOG_V(ERROR, TAG, "Unknown type: %d", data->type);
             return OC_STACK_INVALID_PARAM;
         }
+    }
+    // Skip posting new DOS state in case of OIC server
+    if (IS_OIC(pTargetDev->specVer))
+    {
+        OCClientResponse clientResponse = {.result = OC_STACK_RESOURCE_CHANGED};
+        resultCallback((void*) data, NULL, &clientResponse);
+        return OC_STACK_OK;
     }
 
     OCStackResult res = OC_STACK_ERROR;

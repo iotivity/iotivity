@@ -28,7 +28,7 @@
 #include "caadapterutils.h"
 #include "caleutils.h"
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "cathreadpool.h" /* for thread pool */

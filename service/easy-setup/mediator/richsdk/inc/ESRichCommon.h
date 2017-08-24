@@ -32,9 +32,9 @@
 #include "ocstack.h"
 #include "octypes.h"
 #ifdef __WITH_DTLS__
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "OCProvisioningManager.hpp"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #endif
 
 #include "escommon.h"

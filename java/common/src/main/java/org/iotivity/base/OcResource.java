@@ -565,8 +565,8 @@ public class OcResource {
      * @return New host Address.
      *         Not observable.
      */
-     public native String setHost(String host);
-     
+    public native String setHost(String host);
+
     /**
      * Method to get the list of resource types
      *

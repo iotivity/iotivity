@@ -183,7 +183,7 @@ def __build_core(env):
     env.AppendUnique(LIBS=[File(s_core[0])])
 
     # To avoid compiler issue. Otherewise there may be warnings:
-    # 	undefined reference to '_exit' '_close', '_getpid' ...
+    # undefined reference to '_exit' '_close', '_getpid' ...
     # Above functions are used in libc.a and implemented in syscalls_sam3.c
     if env.get('TARGET_ARCH') == 'arm':
         for obj in core_obj:
@@ -283,7 +283,6 @@ elif platform.system().lower() == 'darwin':
 # Debug/release relative flags
 if env.get('RELEASE'):
     env.AppendUnique(CCFLAGS=['-Os'])
-    env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
     env.AppendUnique(CCFLAGS=['-g'])
 

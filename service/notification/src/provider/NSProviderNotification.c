@@ -90,7 +90,7 @@ OCStackResult NSProviderPublishTopic(OCRepPayload * payload, OCClientResponseHan
 
     NSMQServerInfo * serverInfo = NSGetMQServerInfo();
 
-    if (!serverInfo)
+    if (serverInfo)
     {
         NS_LOG(DEBUG, "serverInfo is not NULL");
         NS_LOG_V(DEBUG, "serverInfo->serverUri = %s", serverInfo->serverUri);

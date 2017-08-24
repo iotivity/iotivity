@@ -37,10 +37,10 @@
 #include <sstream>
 #include <getopt.h>
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "occlientbasicops.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "oic_string.h"
 #include "common.h"
 
@@ -244,20 +244,20 @@ int InitPostRequest(OCDevAddr *endpoint, OCQualityOfService qos)
     std::ostringstream query;
     query << coapServerResource;
 
-    // First POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST, endpoint,
+    // First PUT operation (to create an LED instance)
+    result = InvokeOCDoResource(query, OC_REST_PUT, endpoint,
                                 ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS),
-                                postReqCB, NULL, 0);
+                                putReqCB, NULL, 0);
     if (OC_STACK_OK != result)
     {
         // Error can happen if for example, network connectivity is down
         OIC_LOG(INFO, TAG, "First POST call did not succeed");
     }
 
-    // Second POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST, endpoint,
+    // Second PUT operation (to create an LED instance)
+    result = InvokeOCDoResource(query, OC_REST_PUT, endpoint,
                                 ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS),
-                                postReqCB, NULL, 0);
+                                putReqCB, NULL, 0);
     if (OC_STACK_OK != result)
     {
         OIC_LOG(INFO, TAG, "Second POST call did not succeed");

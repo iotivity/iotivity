@@ -18,9 +18,18 @@
 #
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-import os
-import os.path
-from tools.scons.RunTest import run_test
+from os import kill, path, remove
+from time import sleep
+
+try:
+    from subprocess import Popen, call, PIPE
+except ImportError:
+    raise ImportError("cannot import Popen from subprocess, exit.")
+
+try:
+    from shutil import copyfile
+except ImportError:
+    raise ImportError("cannot import copyfile from shutil, exit.")
 
 Import('test_env')
 
@@ -29,6 +38,110 @@ sptest_env = test_env.Clone()
 src_dir = sptest_env.get('SRC_DIR')
 target_os = sptest_env.get('TARGET_OS')
 rd_mode = sptest_env.get('RD_MODE')
+out_dir = sptest_env.get('BUILD_DIR')
+
+unittest_dir = 'resource/csdk/security/provisioning/unittest/'
+sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sample/'
+unittest_build_dir = out_dir + unittest_dir
+
+sptest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
+sptest_env.AppendENVPath('PATH', [out_dir, unittest_build_dir])
+
+
+######################################################################
+# Config files
+######################################################################
+cfg_client = 'oic_svr_db_client.dat'
+server_bin = 'sample_server' + sptest_env.get('PROGSUFFIX')
+unittest_bin = 'unittest' + sptest_env.get('PROGSUFFIX')
+
+
+######################################################################
+# Functions
+######################################################################
+def safe_remove(file_name):
+    if path.isfile(file_name):
+        print 'Removing: ' + file_name
+        remove(file_name)
+
+
+def clean_config():
+    print 'Clean configs'
+    safe_remove('oic_svr_db_server1.dat')
+    safe_remove('oic_svr_db_server2.dat')
+    safe_remove(cfg_client)
+    safe_remove('test.db')
+    safe_remove('PDM.db')
+    safe_remove('secureresourceprovider.dat')
+    safe_remove('device_properties.dat')
+
+
+def start_srv(num):
+    if not path.isfile(unittest_build_dir + server_bin):
+        print "no executable file"
+        return
+    cfg_srv = 'oic_svr_db_server' + num + '.dat'
+    copyfile(sec_provisioning_src_dir + 'oic_svr_db_server_justworks.dat', cfg_srv)
+    if not sptest_env.get('RELEASE'):
+        po = Popen(
+            unittest_build_dir + server_bin + ' ' + num + ' ' + cfg_srv,
+            shell=True,
+            universal_newlines=True,
+            stdout=open('srv' + num + '.log', 'w'))
+    else:
+        po = Popen([unittest_build_dir + server_bin, num, cfg_srv])
+    print "start server ", num, " pid: ", po.pid
+    return po
+
+
+def kill_all():
+    if target_os in ['msys_nt', 'windows']:
+        from signal import SIGTERM
+        ptask = 'tasklist /FI "IMAGENAME eq ' + server_bin + '" /NH'
+        for line in Popen(ptask, stdout=PIPE).stdout.readlines():
+            cmd_list = line.decode('cp866', 'ignore').split()
+            if len(cmd_list):
+                if not cmd_list[1].isdigit():
+                    continue
+                try:
+                    pid = int(cmd_list[1])
+                    print "killing: ", pid
+                    kill(pid, SIGTERM)
+                except Exception as ex:
+                    print line
+                    print "Cannot kill: ", cmd_list[1]
+                    print "exception: " + ex.message
+    else:
+        try:
+            from psutil import process_iter
+            for proc in process_iter():
+                name = None
+                if callable(getattr(proc, 'name')):
+                    name = proc.name()
+                else:
+                    name = proc.name
+                if name == server_bin:
+                    proc.kill()
+        except ImportError:
+            print "can not process check"
+
+
+def run_test(target, source, env):
+    kill_all()
+    clean_config()
+    copyfile(sec_provisioning_src_dir + 'oic_svr_db_client.dat', cfg_client)
+    po_srv1 = start_srv(str(1))
+    po_srv2 = start_srv(str(2))
+    print "Waiting for servers start"
+    sleep(3)
+    call([unittest_build_dir + unittest_bin])
+    print "Servers are stopping"
+    sleep(3)
+    po_srv1.terminate()
+    po_srv2.terminate()
+    clean_config()
+    kill_all()
+
 
 ######################################################################
 # Build flags
@@ -42,7 +155,8 @@ else:
 sptest_env.PrependUnique(CPPPATH=[
     '../include',
     '../../include',
-    '../include/internal', '../../../include',
+    '../include/internal',
+    '../../../include',
     '../../../ocrandom/include',
     '../../../logger/include',
     '../../../stack/include',
@@ -92,37 +206,22 @@ else:
 ######################################################################
 # Source files and Targets
 ######################################################################
+
 unittest_src = [
     'pmutilitytest.cpp',
     'secureresourceprovider.cpp',
     'provisioningdatabasemanager.cpp',
     'ocprovisioningmanager.cpp',
     'credentialgeneratortest.cpp',
+    'otmunittest.cpp',
 ]
 
-if target_os not in ['windows']:
-    unittest_src += ['otmunittest.cpp']
+tests = sptest_env.Program(unittest_bin, unittest_src)
+server = sptest_env.Program(server_bin, ['sampleserver.cpp'])
 
-unittest = sptest_env.Program('unittest', unittest_src)
+Alias('build', [tests, server])
 
-if target_os not in ['windows']:
-    sample_server1 = sptest_env.Program('sample_server1', ['sampleserver1.cpp'])
-    sample_server2 = sptest_env.Program('sample_server2', ['sampleserver2.cpp'])
-    Alias("test", [sample_server1, sample_server2])
-
-Alias("test", [unittest])
-
-sptest_env.AppendTarget('test')
-# TODO: fix test for all supported configurations
-if sptest_env.get('TEST') == '1' and sptest_env.get('SECURED') != '1':
+if sptest_env.get('TEST') == '1':
     if target_os in ['linux', 'windows']:
-        out_dir = sptest_env.get('BUILD_DIR')
-        result_dir = os.path.join(sptest_env.get('BUILD_DIR'), 'test_out') + os.sep
-        if not os.path.isdir(result_dir):
-            os.makedirs(result_dir)
-        sptest_env.AppendENVPath('GTEST_OUTPUT', ['xml:' + result_dir])
-        sptest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-        sptest_env.AppendENVPath('PATH', sptest_env.get('BUILD_DIR'))
-        run_test(sptest_env,
-                 'resource_csdk_security_provisioning_unittest.memcheck',
-                 'resource/csdk/security/provisioning/unittest/unittest')
+        print "Start tests"
+        sptest_env.Command('start', [server_bin, unittest_bin], Action(run_test))

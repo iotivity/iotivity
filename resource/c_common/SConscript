@@ -18,7 +18,6 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
 Import('env')
 import os
 import datetime
@@ -30,13 +29,14 @@ src_dir = env.get('SRC_DIR')
 ######################################################################
 # Generate iotivity_config.h using presence of headers
 ######################################################################
-config_h_file_path = os.path.join(src_dir, 'resource', 'c_common', 'iotivity_config.h')
+config_h_file_path = os.path.join(src_dir, 'resource', 'c_common',
+                                  'iotivity_config.h')
 
 if (os.path.exists(config_h_file_path)) and (env.GetOption('clean')):
     os.remove(config_h_file_path)
 
 if (not os.path.isfile(config_h_file_path)) and (not env.GetOption('clean')):
-    conf = Configure(env.Clone(LIBS = []))
+    conf = Configure(env.Clone(LIBS=[]))
 
     config_h_header = '''
 /* ****************************************************************************
@@ -61,35 +61,37 @@ if (not os.path.isfile(config_h_file_path)) and (not env.GetOption('clean')):
 
 '''
 
-    cxx_headers = ['arpa/inet.h',
-                   'fcntl.h',
-                   'grp.h',
-                   'in6addr.h',
-                   'linux/limits.h',
-                   'memory.h',
-                   'net/if.h',
-                   'netdb.h',
-                   'netinet/in.h',
-                   'pthread.h',
-                   'pwd.h',
-                   'stdlib.h',
-                   'string.h',
-                   'strings.h',
-                   'sys/ioctl.h',
-                   'sys/poll.h',
-                   'sys/select.h',
-                   'sys/socket.h',
-                   'sys/stat.h',
-                   'sys/time.h',
-                   'sys/types.h',
-                   'sys/unistd.h',
-                   'syslog.h',
-                   'time.h',
-                   'unistd.h',
-                   'uuid/uuid.h',
-                   'windows.h',
-                   'winsock2.h',
-                   'ws2tcpip.h']
+    cxx_headers = [
+        'arpa/inet.h',
+        'fcntl.h',
+        'grp.h',
+        'in6addr.h',
+        'linux/limits.h',
+        'memory.h',
+        'net/if.h',
+        'netdb.h',
+        'netinet/in.h',
+        'pthread.h',
+        'pwd.h',
+        'stdlib.h',
+        'string.h',
+        'strings.h',
+        'sys/ioctl.h',
+        'sys/poll.h',
+        'sys/select.h',
+        'sys/socket.h',
+        'sys/stat.h',
+        'sys/time.h',
+        'sys/types.h',
+        'sys/unistd.h',
+        'syslog.h',
+        'time.h',
+        'unistd.h',
+        'uuid/uuid.h',
+        'windows.h',
+        'winsock2.h',
+        'ws2tcpip.h'
+    ]
 
     cxx_functions = ['strptime']
 
@@ -102,16 +104,18 @@ if (not os.path.isfile(config_h_file_path)) and (not env.GetOption('clean')):
         cxx_headers.remove('pthread.h')
 
     def get_define_from_string(header_file):
-        header_file_converted = header_file.replace("/","_").replace(".","_").upper()
+        header_file_converted = header_file.replace("/", "_").replace(".", "_").upper()
         return "HAVE_" + header_file_converted
 
     for header_file_name in cxx_headers:
         if conf.CheckCXXHeader(header_file_name):
-            config_h_body += "#define %s 1\n\n" % get_define_from_string(header_file_name)
+            config_h_body += "#define %s 1\n\n" % get_define_from_string(
+                header_file_name)
 
     for function_name in cxx_functions:
         if conf.CheckFunc(function_name):
-            config_h_body += "#define %s 1\n\n" % get_define_from_string(function_name)
+            config_h_body += "#define %s 1\n\n" % get_define_from_string(
+                function_name)
     conf.Finish()
 
     # Autoconf feature doesn't work with Jenkins' arduino toolchain, so hardcode it here.
@@ -131,14 +135,15 @@ if (not os.path.exists(config_h_file_path)) and (not env.GetOption('clean')):
     Exit(1)
 
 # iotivity_config.h should be copied to the build dir
-env.UserInstallTargetHeader(config_h_file_path, 'c_common', 'iotivity_config.h')
+env.UserInstallTargetHeader(
+    config_h_file_path, 'c_common', 'iotivity_config.h')
 
 # Use the generated file internally
-env.AppendUnique(CPPPATH = [os.path.join(src_dir, 'resource', 'c_common')])
+env.AppendUnique(CPPPATH=[os.path.join(src_dir, 'resource', 'c_common')])
 
 ######################################################################
 
-env.AppendUnique(CPPPATH = [
+env.AppendUnique(CPPPATH=[
     os.path.join(Dir('.').abspath, 'oic_malloc', 'include'),
     os.path.join(Dir('.').abspath, 'oic_string', 'include'),
     os.path.join(Dir('.').abspath, 'oic_time', 'include'),
@@ -148,23 +153,17 @@ env.AppendUnique(CPPPATH = [
     os.path.join(Dir('.').abspath, 'ocevent', 'include'),
     os.path.join(Dir('.').abspath, 'oic_platform', 'include'),
     os.path.join(Dir('.').abspath, 'octimer', 'include'),
-   '#/extlibs/mbedtls/mbedtls/include'
+    '#/extlibs/mbedtls/mbedtls/include'
 ])
 
 if target_os not in ['tizen']:
-    env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'c_common')])
+    env.AppendUnique(
+        LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'resource', 'c_common')])
 
 if target_os in ['tizen', 'linux']:
     env.ParseConfig("pkg-config --cflags --libs uuid")
 
 common_env = env.Clone()
-
-######################################################################
-# Enable treating all warnings as errors
-######################################################################
-
-if target_os in ['windows', 'msys_nt']:
-    common_env.AppendUnique(CCFLAGS=['/W4'])
 
 ######################################################################
 # Add platform-specific helper library
@@ -186,7 +185,7 @@ common_src = [
 
 if env['POSIX_SUPPORTED']:
     common_src.append('octhread/src/posix/octhread.c')
-elif target_os  in ['windows']:
+elif target_os in ['windows']:
     common_src.append('octhread/src/windows/octhread.c')
 else:
     common_src.append('octhread/src/noop/octhread.c')
@@ -208,23 +207,33 @@ else:
 # C++ Arduino's <Timer.h> is included so use C++ compiler/flags
 if target_os in ['arduino']:
     octimer_env = common_env.Clone()
-    octimer_env.Replace(CC = env.get('CXX'))
-    octimer_env.Replace(CFLAGS = env.get('CXXFLAGS'))
+    octimer_env.Replace(CC=env.get('CXX'))
+    octimer_env.Replace(CFLAGS=env.get('CXXFLAGS'))
     octimer = octimer_env.Object('octimer/src/octimer.c')
     common_src.append(octimer)
 else:
     common_src.append('octimer/src/octimer.c')
 
-common_env.AppendUnique(LIBS = ['logger'])
-common_env.AppendUnique(CPPPATH = ['#resource/csdk/logger/include'])
+common_env.AppendUnique(LIBS=['logger'])
+common_env.AppendUnique(CPPPATH=['#resource/csdk/logger/include'])
 commonlib = common_env.StaticLibrary('c_common', common_src)
 common_env.InstallTarget(commonlib, 'c_common')
 common_env.UserInstallTargetLib(commonlib, 'c_common')
-common_env.UserInstallTargetHeader('iotivity_commontypes.h', 'c_common', 'iotivity_commontypes.h')
-common_env.UserInstallTargetHeader('iotivity_debug.h', 'c_common', 'iotivity_debug.h')
-common_env.UserInstallTargetHeader('platform_features.h', 'c_common', 'platform_features.h')
+
+common_env.UserInstallTargetHeader(
+    'iotivity_commontypes.h', 'c_common', 'iotivity_commontypes.h')
+common_env.UserInstallTargetHeader(
+    'iotivity_debug.h', 'c_common', 'iotivity_debug.h')
+common_env.UserInstallTargetHeader(
+    'ocrandom/include/experimental/ocrandom.h', 
+    'c_common/experimental', 'ocrandom.h')
+common_env.UserInstallTargetHeader(
+    'platform_features.h', 'c_common', 'platform_features.h')
+common_env.UserInstallTargetHeader(
+    'experimental/byte_array.h', 'c_common/experimental', 'byte_array.h')
+
 
 Clean(commonlib, config_h_file_path)
 
 # c_common calls into logger.
-env.PrependUnique(LIBS = ['c_common', 'logger'])
+env.PrependUnique(LIBS=['c_common', 'logger'])

@@ -24,7 +24,7 @@
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 
 #include "cainterface.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "octypes.h"
 
 #ifdef __cplusplus

@@ -23,17 +23,25 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <signal.h>
-#include <pthread.h>
+#include <time.h>
+
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocpayload.h"
 #include "oic_string.h"
+#include "srmutility.h"
+#include "doxmresource.h"
+#include "experimental/ocrandom.h"
 
-#define TAG "UNITTEST_SERVER_1"
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#define TAG "JW_UNITTEST"
 
 int gQuitFlag = 0;
+int gNum = 0;
 
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE{
@@ -54,9 +62,7 @@ char *gResourceUri= (char *)"/a/led";
 //Secure Virtual Resource database for Iotivity Server
 //It contains Server's Identity and the PSK credentials
 //of other devices which the server trusts
-static char CRED_FILE[] = "oic_svr_db_server1.dat";
-
-static char SVR_DB_FILE_NAME[] = "oic_svr_db_server_justworks.dat";
+static char *gConfigFile;
 
 /* Function that creates a new LED resource by calling the
  * OCCreateResource() method.
@@ -135,7 +141,7 @@ OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
     OCRepPayload* payload = OCRepPayloadCreate();
     if(!payload)
     {
-        OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
+        OIC_LOG(FATAL, TAG, "Failed to allocate Payload");
         return NULL;
     }
 
@@ -151,7 +157,7 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
 {
     if(ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        OIC_LOG(ERROR, TAG, "Incoming payload not a representation");
+        OIC_LOG(FATAL, TAG, "Incoming payload not a representation");
         return NULL;
     }
 
@@ -176,7 +182,7 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
         int64_t pow;
         if(OCRepPayloadGetPropInt(input, "power", &pow))
         {
-            currLEDResource->power =pow;
+            currLEDResource->power = (int)pow;
         }
 
         bool state;
@@ -252,7 +258,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
         {
             // Create new LED instance
             char newLedUri[15] = "/a/led/";
-            int newLedUriLength = strlen(newLedUri);
+            size_t newLedUriLength = strlen(newLedUri);
             snprintf (newLedUri + newLedUriLength, sizeof(newLedUri)-newLedUriLength, "%d", gCurrLedInstance);
 
             respPLPost_led = OCRepPayloadCreate();
@@ -322,7 +328,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     // Validate pointer
     if (!entityHandlerRequest)
     {
-        OIC_LOG (ERROR, TAG, "Invalid request pointer");
+        OIC_LOG (FATAL, TAG, "Invalid request pointer");
         return OC_EH_ERROR;
     }
 
@@ -371,7 +377,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                 // Send the response
                 if (OCDoResponse(&response) != OC_STACK_OK)
                 {
-                    OIC_LOG(ERROR, TAG, "Error sending response");
+                    OIC_LOG(FATAL, TAG, "Error sending response");
                     ehResult = OC_EH_ERROR;
                 }
             }
@@ -382,148 +388,38 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     return ehResult;
 }
 
-/* SIGINT handler: set gQuitFlag to 1 for graceful termination */
+/*signal handler: set gQuitFlag to 1 for graceful termination */
 void handleSigInt(int signum)
 {
-    if (signum == SIGINT)
+    if (signum == SIGTERM)
     {
         gQuitFlag = 1;
     }
 }
 
-static void GetCurrentWorkingDirectory(char* buf, size_t bufsize)
-{
-    char cwd[1024] = {0};
-    const char* unittest_path = "resource/csdk/security/provisioning/unittest";
-    if(getcwd(cwd, sizeof(cwd)) != NULL)
-    {
-        if(strstr(cwd, unittest_path) == NULL)
-        {
-#if defined __linux__
-#if __x86_64__
-        snprintf(buf, bufsize, "%s/out/linux/x86_64/release/%s/", cwd, unittest_path);
-        snprintf(buf, bufsize, "%s/out/linux/x86_64/release/%s/", cwd, unittest_path);
-#else
-        snprintf(buf, bufsize, "%s/out/linux/x86/release/%s/", cwd, unittest_path);
-        snprintf(buf, bufsize, "%s/out/linux/x86/release/%s/", cwd, unittest_path);
-#endif //__x86_64__
-#endif //defined __linux__
-        }
-        else
-        {
-            snprintf(buf, bufsize, "%s/", cwd);
-        }
-    }
-}
-
 FILE* server_fopen(const char *path, const char *mode)
 {
-    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
-    {
-        char cwd[1024] = { 0 };
-        char cred_path[1024] = { 0 };
-        GetCurrentWorkingDirectory(cwd, sizeof(cwd));
-        snprintf(cred_path, sizeof(cred_path), "%s%s", cwd, CRED_FILE);
-        return fopen(cred_path, mode);
-    }
-    else
-    {
-        return fopen(path, mode);
-    }
+  if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+  {
+    return fopen(gConfigFile, mode);
+  }
+  OIC_LOG_V(DEBUG, TAG, "use db: %s", path);
+  return fopen(path, mode);
 }
 
-/**
- * Generate default SVR DB path
- *
- * Exclude "out/<OS>/<platform>/<release>/" from current working directory path
- * Replace "unittest" by "sample" at the end of current working directory path
- * Add proper db file name to the end of path
- *
- * @param[in]  cwd  - current working directory
- * @param[out] path - generated default database path
- * @param[in] path_len - allocated length for variable path
- * @return OC_STACK_OK for success.
- */
-static OCStackResult GenerateDefaultDbPath(const char *cwd, char *path, size_t path_len)
-{
-    const char FOLDER_OUT[]      = "out";
-    const char FOLDER_UNITTEST[] = "unittest";
-    const char FOLDER_SAMPLE[]   = "sample";
-
-#ifdef _WIN32
-    const char slash = '\\';
-#else
-    const char slash = '/';
-#endif
-
-    const char slash_str[2] = {slash, 0};
-
-    path[0] = 0;
-
-    char out[5] = {0};
-    snprintf(out, sizeof(out), "%c%s%c", slash, FOLDER_OUT, slash);
-
-    char *start = strstr((char*)cwd, out);
-    if (NULL == start)
-    {
-        OIC_LOG_V(ERROR, TAG, "Can't find %s folder while parsing current working directory\n", FOLDER_OUT);
-        return OC_STACK_ERROR;
-    }
-    start++; //Go to next symbol after slash
-
-    char *end = start;
-    for (int i = 0; i < 4; i++)
-    {
-        end = strchr(end, slash);
-        if (NULL == end)
-        {
-            OIC_LOG_V(ERROR, TAG, "Can't find slash number %d while parsing current working directory\n", i);
-            return OC_STACK_ERROR;
-        }
-        end++; //Go to next symbol after slash
-    }
-
-    //Cut "unittest" string at the end
-    char *last = strstr(end, FOLDER_UNITTEST);
-    if (NULL == last)
-    {
-        OIC_LOG_V(ERROR, TAG, "Can't find %s folder while parsing current working directory\n", FOLDER_UNITTEST);
-        return OC_STACK_ERROR;
-    }
-
-    //Generate default svr db path
-    OICStrcatPartial(path, path_len, cwd, start - cwd); //copy iotivity root path
-    OICStrcatPartial(path, path_len, end, last - end); //copy 'resource/.../provisioning' path
-    OICStrcatPartial(path, path_len, FOLDER_SAMPLE, sizeof(FOLDER_SAMPLE));
-    OICStrcatPartial(path, path_len, slash_str, sizeof(slash_str));
-    OICStrcatPartial(path, path_len, SVR_DB_FILE_NAME, sizeof(SVR_DB_FILE_NAME));
-
-    return OC_STACK_OK;
-}
-
-int main()
+int main(int argc, char *args[])
 {
     struct timespec timeout;
-
-    //Delete previous SVR DB, if exist.
-    char cwd[1024] = {0};
-    char cmd[1024] = {0};
-    GetCurrentWorkingDirectory(cwd, sizeof(cwd));
-    snprintf(cmd, sizeof(cmd), "rm -rf %s%s", cwd, CRED_FILE);
-    system(cmd);
-
-    char default_svrdb_path[1024] = {0};
-    if (OC_STACK_OK != GenerateDefaultDbPath(cwd, default_svrdb_path, sizeof(default_svrdb_path)))
+    if ( argc < 3)
     {
-        OIC_LOG(ERROR, TAG, "Can't generate default db path");
-        return 0;
+        printf("to run: %s num config_file.dat\n", args[0]);
+        exit(1);
     }
 
-    //Copy default SVR DB to current folder
-    snprintf(cmd, sizeof(cmd), "cp %s %s", default_svrdb_path, CRED_FILE);
-    system(cmd);
+    gNum = atoi(args[1]);
+    gConfigFile = args[2];
 
-    OIC_LOG(DEBUG, TAG, "OCServer is starting...");
+    OIC_LOG_V(DEBUG, TAG, "OCServer %d is starting...", gNum);
 
     // Initialize Persistent Storage for SVR database
     OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
@@ -532,26 +428,41 @@ int main()
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        OIC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(FATAL, TAG, "OCStack init error");
         return 0;
+    }
+
+    OicUuid_t uuid;
+    char uuidString[UUID_STRING_SIZE] = {0};
+    snprintf(uuidString, UUID_STRING_SIZE, "11111111-1234-1234-1234-12345678901%d",gNum);
+    ConvertStrToUuid(uuidString, &uuid);
+
+    if (OC_STACK_OK != SetDoxmDeviceID(&uuid))
+    {
+        OIC_LOG(WARNING, TAG, "Can't change deviceID in server");
     }
 
     /*
      * Declare and create the example resource: LED
      */
-    createLEDResource(gResourceUri, &LED, false, 0);
+    if (createLEDResource(gResourceUri, &LED, false, 0) != 0)
+    {
+        OIC_LOG(FATAL, TAG, "exit");
+        return -1;
+    }
 
     timeout.tv_sec  = 0;
     timeout.tv_nsec = 100000000L;
 
-    // Break from loop with Ctrl-C
+    signal(SIGTERM, handleSigInt);
+
     OIC_LOG(INFO, TAG, "Entering ocserver main loop...");
-    signal(SIGINT, handleSigInt);
+
     while (!gQuitFlag)
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OIC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(FATAL, TAG, "OCStack process error");
             return 0;
         }
         nanosleep(&timeout, NULL);
@@ -561,7 +472,7 @@ int main()
 
     if (OCStop() != OC_STACK_OK)
     {
-        OIC_LOG(ERROR, TAG, "OCStack process error");
+        OIC_LOG(FATAL, TAG, "OCStack process error");
     }
 
     return 0;
@@ -571,7 +482,7 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
 {
     if (!uri)
     {
-        OIC_LOG(ERROR, TAG, "Resource URI cannot be NULL");
+        OIC_LOG(FATAL, TAG, "Resource URI cannot be NULL");
         return -1;
     }
 
@@ -584,7 +495,16 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
             OCEntityHandlerCb,
             NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE | OC_SECURE);
-    OIC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
+
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG (FATAL, TAG, "Unable to instantiate LED resource");
+        return 1;
+    }
+    else
+    {
+        OIC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
+    }
 
     return 0;
 }

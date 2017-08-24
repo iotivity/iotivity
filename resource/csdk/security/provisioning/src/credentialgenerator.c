@@ -23,12 +23,11 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "credresource.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "srmutility.h"
 #include "stdbool.h"
-#include "securevirtualresourcetypes.h"
 
 #define TAG "OIC_SRPAPI_CG"
 

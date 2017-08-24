@@ -15,7 +15,8 @@ src_dir = gtest_env.get('SRC_DIR')
 targets_need_gtest = ['darwin', 'linux', 'msys_nt', 'windows']
 
 GTEST_VERSION = '1.7.0'
-gtest_dir = os.path.join(src_dir, 'extlibs', 'gtest', 'googletest-release-' + GTEST_VERSION)
+gtest_dir = os.path.join(src_dir, 'extlibs', 'gtest',
+                         'googletest-release-' + GTEST_VERSION)
 gtest_lib_dir = os.path.join(gtest_dir, 'lib')
 gtest_configured_sentinel = os.path.join(gtest_dir, 'Makefile')
 gtest_unpacked_sentinel = os.path.join(gtest_dir, 'CMakeLists.txt')
@@ -57,15 +58,17 @@ if target_os in ['linux']:
         print 'Configuring google unit test'
         reconfigure_ran = gtest_env.Configure(gtest_dir, 'autoreconf -i')
         if env.get('CROSS_COMPILE'):
-            configure_ran = env.Configure(gtest_dir, './configure --disable-shared --host=' + env['CROSS_COMPILE'])
+            configure_ran = env.Configure(
+                gtest_dir,
+                './configure --disable-shared --host=' + env['CROSS_COMPILE'])
         else:
-            configure_ran = env.Configure(gtest_dir, './configure --disable-shared')
+            configure_ran = env.Configure(gtest_dir,
+                                          './configure --disable-shared')
         gtest_env.Depends(configure_ran, reconfigure_ran)
 
     # Run make on gtest
     print 'Making google unit test'
     make_ran = gtest_env.Configure(gtest_dir, 'make')
-    # gtest_env.Depends(make_ran, configure_ran)
 
 elif target_os in ['darwin', 'msys_nt'] and os.path.exists(gtest_dir):
     if not os.path.exists(gtest_configured_sentinel):
@@ -95,8 +98,10 @@ elif target_os in ['windows'] and 'IOTIVITY_GTEST_HAS_BEEN_BUILT' not in env:
     gtest_build_env.AppendUnique(CPPPATH=[os.path.join(gtest_dir, 'include')])
     gtest_build_env.AppendUnique(CXXFLAGS=['/EHsc'])
     gtest_build_env.AppendUnique(CCFLAGS=['/W4', '/WX'])
-    gtest = gtest_build_env.StaticLibrary(target='gtest', source=['%s/src/gtest-all.cc' % gtest_dir])
-    gtest_main = gtest_build_env.StaticLibrary(target='gtest_main', source=['%s/src/gtest_main.cc' % gtest_dir])
+    gtest = gtest_build_env.StaticLibrary(
+        target='gtest', source=['%s/src/gtest-all.cc' % gtest_dir])
+    gtest_main = gtest_build_env.StaticLibrary(
+        target='gtest_main', source=['%s/src/gtest_main.cc' % gtest_dir])
     gtest_env.InstallTarget(gtest, 'gtest')
     gtest_env.InstallTarget(gtest_main, 'gtest_main')
 

@@ -60,6 +60,11 @@ if "%UWP_APP%" == "" (
   set UWP_APP=0
 )
 
+if "%BUILD_JAVA%" == "" (
+  REM Do not build Java by default
+  set BUILD_JAVA=0
+)
+
 set THREAD_COUNT=%NUMBER_OF_PROCESSORS%
 
 set ROUTING=EP
@@ -113,6 +118,9 @@ IF NOT "%1"=="" (
   IF /I "%1"=="-uwp" (
     set UWP_APP=1
   )
+  IF /I "%1"=="-java" (
+    set BUILD_JAVA=1
+  )
 
   SHIFT
   GOTO :processArgs
@@ -136,8 +144,7 @@ IF "%BUILD_MSYS%" == "" (
   set PATH=!PATH!;!BUILD_DIR!;C:\msys64\mingw64\bin
 )
 
-set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% UWP_APP=%UWP_APP% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% LOG_LEVEL=%LOG_LEVEL% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
-
+set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% UWP_APP=%UWP_APP% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% LOG_LEVEL=%LOG_LEVEL% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE% BUILD_JAVA=%BUILD_JAVA%
 
 REM Use MSVC_VERSION=12.0 for VS2013, or MSVC_VERSION=14.0 for VS2015.
 REM If MSVC_VERSION has not been defined here, SCons chooses automatically a VS version.
@@ -209,8 +216,24 @@ if "!RUN_ARG!"=="server" (
   echo   MSVC_VERSION=%MSVC_VERSION%
   echo   THREAD_COUNT=%THREAD_COUNT%
   echo   AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE%
+  echo   BUILD_JAVA=%BUILD_JAVA%
 
-  REM First: just build, but don't run tests.
+  REM First step:
+  REM   - Generate coap.h, to avoid race conditions during second step below (see IOT-2376).
+  REM   - Other SCons Config headers get generated during this step too, as a side effect.
+  echo.==============================================================
+  echo.run.bat : Generating Config header files...
+  echo.scons.bat -j 1 VERBOSE=1 TEST=0 %BUILD_OPTIONS% extlibs\libcoap\libcoap\include\coap\coap.h
+  call scons.bat -j 1 VERBOSE=1 TEST=0 %BUILD_OPTIONS% extlibs\libcoap\libcoap\include\coap\coap.h
+  if ERRORLEVEL 1 (
+    echo SCons failed - exiting run.bat with code 5
+    exit /B 5
+  )
+
+  REM Second step:
+  REM   - Compile everything, but don't run tests yet.
+  echo.==============================================================
+  echo.run.bat : Compiling...
   echo.scons.bat -j %THREAD_COUNT% VERBOSE=1 TEST=0 %BUILD_OPTIONS%
   call scons.bat -j %THREAD_COUNT% VERBOSE=1 TEST=0 %BUILD_OPTIONS%
   if ERRORLEVEL 1 (
@@ -218,10 +241,11 @@ if "!RUN_ARG!"=="server" (
     exit /B 3
   )
 
-  REM Second: run tests if needed, using a single SCons thread.
+  REM Third step:
+  REM   - Run tests if needed, using a single SCons thread.
   if "!TEST!"=="1" (
-    echo.
-    echo Running Tests
+    echo.==============================================================
+    echo.run.bat : Running tests...
     echo.scons.bat -j 1 VERBOSE=1 TEST=1 %BUILD_OPTIONS%
     call scons.bat -j 1 VERBOSE=1 TEST=1 %BUILD_OPTIONS%
     if ERRORLEVEL 1 (
@@ -289,6 +313,8 @@ echo.
 echo   -automaticUpdate             - Automatically update libcoap to required version.
 echo.
 echo   -uwp                         - Build for the Universal Windows Platform (UWP).
+echo.
+echo   -java                        - Build Java. The JDK path must be set in the JAVA_HOME environment variable.
 echo.
 echo.
 echo. Usage examples:

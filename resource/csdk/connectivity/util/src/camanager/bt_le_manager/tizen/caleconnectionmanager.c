@@ -27,7 +27,7 @@
 #include "camessagehandler.h"
 #include "caleserver.h"
 #include "cagattservice.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "OIC_CA_MANAGER_TZ_LE"
 
@@ -125,7 +125,11 @@ static void CAManagerConnectionMonitorHandler(CATransportAdapter_t adapter,
     {
         if (g_connStateCB)
         {
-            g_connStateCB(CA_ADAPTER_GATT_BTLE, remoteAddress, true);
+            CAEndpoint_t ep;
+            memset(&ep, 0, sizeof(ep));
+            ep.adapter = CA_ADAPTER_GATT_BTLE;
+            strcpy(ep.addr, remoteAddress);
+            g_connStateCB(&ep, true);
             OIC_LOG(DEBUG, TAG, "Pass the connected device info to upper layer");
 
             // stop le advertising
@@ -136,7 +140,11 @@ static void CAManagerConnectionMonitorHandler(CATransportAdapter_t adapter,
     {
         if (g_connStateCB)
         {
-            g_connStateCB(CA_ADAPTER_GATT_BTLE, remoteAddress, false);
+            CAEndpoint_t ep;
+            memset(&ep, 0, sizeof(ep));
+            ep.adapter = CA_ADAPTER_GATT_BTLE;
+            strcpy(ep.addr, remoteAddress);
+            g_connStateCB(&ep, false);
             OIC_LOG(DEBUG, TAG, "Pass the disconnected device info to upper layer");
 
             // start le advertising to receive new connection request.

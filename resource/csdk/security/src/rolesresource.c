@@ -32,9 +32,9 @@
 #include <inttypes.h>
 #include "oic_string.h"
 #include "cainterface.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "ocstack.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "cacommon.h"
 #include "srmresourcestrings.h"
 #include "ocpayload.h"
@@ -76,7 +76,7 @@ static RolesEntry_t         *gRoles             = NULL;
 static SymmetricRoleEntry_t *gSymmetricRoles    = NULL;
 static uint32_t             gIdCounter          = 1;
 
-/** 
+/**
  * Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching max cbor size.
  */
@@ -115,8 +115,8 @@ static OCStackResult GetPeerPublicKeyFromEndpoint(const CAEndpoint_t *endpoint,
 
     if ((NULL == sep.publicKey) || (0 == sep.publicKeyLength))
     {
-        OIC_LOG_V(ERROR, TAG, "%s: Peer did not have a public key", __func__);
-        return OC_STACK_INVALID_PARAM;
+        OIC_LOG_V(WARNING, TAG, "%s: Peer did not have a public key", __func__);
+        return OC_STACK_NO_RESOURCE;
     }
 
     *publicKey = OICCalloc(1, sep.publicKeyLength);
@@ -323,7 +323,7 @@ exit:
 static bool RoleCertChainContains(RoleCertChain_t *chain, const RoleCertChain_t* roleCert)
 {
     RoleCertChain_t *temp = NULL;
-    
+
     LL_FOREACH(chain, temp)
     {
         if (IsSameSecKey(&temp->certificate, &roleCert->certificate) &&
@@ -433,7 +433,6 @@ OCStackResult RolesToCBORPayload(const RoleCertChain_t *roles, uint8_t **cborPay
     size_t roleCount = 0;
     const RoleCertChain_t *currChain = NULL;
 
-    VERIFY_NOT_NULL_RETURN(TAG, roles, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cborPayload, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cborSize, ERROR, OC_STACK_INVALID_PARAM);
 
@@ -458,6 +457,7 @@ OCStackResult RolesToCBORPayload(const RoleCertChain_t *roles, uint8_t **cborPay
     cborEncoderResult = cbor_encode_text_string(&rolesRootMap, OIC_JSON_ROLES_NAME, strlen(OIC_JSON_ROLES_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding roles name tag");
 
+    // If roles is NULL, the "roles" array will be empty
     for (currChain = roles; NULL != currChain; currChain = currChain->next)
     {
         roleCount++;
@@ -709,7 +709,7 @@ OCStackResult CBORPayloadToRoles(const uint8_t *cborPayload, size_t size, RoleCe
                                 /* Only SIGNED_ASYMMETRIC_KEY is supported. */
                                 if (SIGNED_ASYMMETRIC_KEY != (OicSecCredType_t)credType)
                                 {
-                                    OIC_LOG_V(ERROR, TAG, "Unsupported role credential type: %llu", credType);
+                                    OIC_LOG_V(ERROR, TAG, "Unsupported role credential type: %lu", credType);
                                     goto exit;
                                 }
                             }
@@ -789,30 +789,28 @@ static OCEntityHandlerResult HandleGetRequest(OCEntityHandlerRequest *ehRequest)
     size_t publicKeyLength = 0;
 
     res = GetPeerPublicKey(&ehRequest->devAddr, &publicKey, &publicKeyLength);
-    if (OC_STACK_OK != res)
+    // OC_STACK_NO_RESOURCE means that the Peer doesn't have a Public Key.
+    if ((OC_STACK_OK != res) && (OC_STACK_NO_RESOURCE != res))
     {
         OIC_LOG_V(ERROR, TAG, "Could not get remote peer's public key: %d", res);
         ehRet = OC_EH_ERROR;
         goto exit;
     }
 
-    for (const RolesEntry_t *entry = gRoles; NULL != entry; entry = entry->next)
+    if (NULL != publicKey)
     {
-        if ((entry->publicKeyLength == publicKeyLength) &&
-            (0 == memcmp(entry->publicKey, publicKey, publicKeyLength)))
+        for (const RolesEntry_t *entry = gRoles; NULL != entry; entry = entry->next)
         {
-            roles = entry->chains;
-            break;
+            if ((entry->publicKeyLength == publicKeyLength) &&
+                (0 == memcmp(entry->publicKey, publicKey, publicKeyLength)))
+            {
+                roles = entry->chains;
+                break;
+            }
         }
     }
 
-    if (NULL == roles)
-    {
-        OIC_LOG(ERROR, TAG, "Could not find a roles list for this peer");
-        ehRet = OC_EH_ERROR;
-        goto exit;
-    }
-
+    // If roles is NULL, we will return success with an empty "roles" array
     res = RolesToCBORPayload(roles, &payload, &size);
     ehRet = (OC_STACK_OK == res) ? OC_EH_OK : OC_EH_ERROR;
 
@@ -927,7 +925,7 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
         if (strncasecmp((const char *)parseIter.attrPos, OIC_JSON_CREDID_NAME,
             parseIter.attrLen) == 0)
         {
-            int ret = sscanf((const char *)parseIter.valPos, "%lu", &credId);
+            int ret = sscanf((const char *)parseIter.valPos, "%u", &credId);
             if (1 > ret)
             {
                 OIC_LOG_V(ERROR, TAG, "credId was not valid: %s", parseIter.valPos);
@@ -1153,7 +1151,7 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
         SymmetricRoleEntry_t *curr = NULL;
         LL_FOREACH(gSymmetricRoles, curr)
         {
-            if ((UUID_LENGTH == sep.identity.id_length) && 
+            if ((UUID_LENGTH == sep.identity.id_length) &&
                 (0 == memcmp(curr->subject.id, sep.identity.id, sizeof(curr->subject.id))))
             {
                 *roles = (OicSecRole_t *)OICCalloc(1, sizeof(OicSecRole_t));

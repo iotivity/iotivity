@@ -80,7 +80,7 @@ static B64Result b64EncodeBlk(const uint8_t* in, char* out, size_t len)
 B64Result b64Encode(const uint8_t* in, const size_t inLen,
                char* outBuf, const size_t outBufSize, size_t* outLen)
 {
-    if (NULL == in || 0 == inLen || NULL ==  outBuf || NULL == outLen )
+    if (NULL == in || NULL == outBuf || NULL == outLen )
     {
         return B64_INVALID_PARAM;
     }
@@ -154,6 +154,54 @@ static uint32_t b64GetVal(char c)
 }
 
 /**
+ * Check if the input string is a valid Base64 encoded string.
+ * The string must have groups of 4 characters and only contain
+ * the US-ASCII characters `[A-Z][a-z][0-9]+/` and (pad) `=`
+ *
+ * @param[in] in is the Base64 encoded message to validate.
+ * @param[in] inLen is the byte length of the encoded message.
+ *
+ * @return
+ *    - B64_OK    if it is valid Base64 encoding string.
+ *    - B64_ERROR if string is not a valid Base64 encoded string.
+ */
+static B64Result isValidB64EncodedString(const char* in, const size_t inLen)
+{
+    // All valid Base64 encoded strings will be multiples of 4
+    if (0 != (inLen % 4))
+    {
+        return B64_ERROR;
+    }
+    for (size_t i = 0; i < inLen; ++i)
+    {
+        // "[A-Z][a-z][0-9]+/=" are the only valid
+        // letters in a Base64 encoded string
+        if ((('A' > in[i]) || ('Z' < in[i])) &&
+            (('a' > in[i]) || ('z' < in[i])) &&
+            (('0' > in[i]) || ('9' < in[i])) &&
+            ('+' != in[i]) &&
+            ('/' != in[i]) &&
+            ('=' != in[i]))
+        {
+            return B64_ERROR;
+        }
+        // Padding character "=" can only show up as last 2 characters
+        if ('=' == in[i])
+        {
+            if (i < inLen - 2)
+            {
+                return B64_ERROR;
+            }
+            if (i == inLen - 2 && '=' != in[i+1])
+            {
+                return B64_ERROR;
+            }
+        }
+    }
+    return B64_OK;
+}
+
+/**
  * Base64 block decode function.
  *
  * @param in is the Base64 encoded stream, 4 bytes.
@@ -188,22 +236,30 @@ static B64Result b64DecodeBlk(const char* in, uint8_t* out)
 B64Result b64Decode(const char* in, const size_t inLen,
                uint8_t* outBuf, size_t outBufSize, size_t* outLen)
 {
-    if (NULL == in || 0 == inLen || 0 != (inLen & 0x03) || NULL == outBuf || NULL == outLen)
+    if (NULL == in || NULL == outBuf || NULL == outLen)
+    {
+        return B64_INVALID_PARAM;
+    }
+
+    if (B64_OK != isValidB64EncodedString(in, inLen))
     {
         return B64_INVALID_PARAM;
     }
 
     *outLen = (inLen / 4) * 3;
     size_t minBufSize = (inLen / 4) * 3;
-    if ('=' == in[inLen - 1])
+    if (inLen != 0)
     {
-        minBufSize--;
-        (*outLen)--;
-    }
-    if ('=' == in[inLen - 2])
-    {
-        minBufSize--;
-        (*outLen)--;
+        if ('=' == in[inLen - 1])
+        {
+            minBufSize--;
+            (*outLen)--;
+        }
+        if ('=' == in[inLen - 2])
+        {
+            minBufSize--;
+            (*outLen)--;
+        }
     }
     if (outBufSize < minBufSize)
     {
@@ -212,7 +268,7 @@ B64Result b64Decode(const char* in, const size_t inLen,
 
     for (size_t i = 0; i < inLen / 4; i++)
     {
-        if(B64_OK != b64DecodeBlk(in + i * 4, outBuf + i * 3))
+        if (B64_OK != b64DecodeBlk(in + i * 4, outBuf + i * 3))
         {
             return B64_INVALID_PARAM;
         }
@@ -220,4 +276,3 @@ B64Result b64Decode(const char* in, const size_t inLen,
 
     return B64_OK;
 }
-

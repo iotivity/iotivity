@@ -93,6 +93,9 @@ elif liboctbstack_env.get('ROUTING') == 'EP':
 if target_os not in ['windows']:
     liboctbstack_env.AppendUnique(CFLAGS=['-Wall'])
 
+if target_os in ['tizen']:
+    liboctbstack_env.AppendUnique(LIBS = ['pthread'])
+
 liboctbstack_env.PrependUnique(LIBS=['ocsrm', 'coap'])
 
 if target_os in ['linux'] and liboctbstack_env.get('SIMULATOR', False):
@@ -125,8 +128,6 @@ if target_os in ['android', 'linux', 'tizen', 'msys_nt', 'windows']:
 if target_os not in ['windows', 'msys_nt']:
     liboctbstack_env.AppendUnique(LIBS=['m'])
 else:
-    liboctbstack_env.AppendUnique(CCFLAGS=['/W4'])
-
     # octbstack.def specifies the list of functions exported by octbstack.dll.
     liboctbstack_env.Replace(WINDOWS_INSERT_DEF=['1'])
 
@@ -266,7 +267,7 @@ if target_os not in ['arduino', 'darwin', 'ios']:
     shared_liboctbstack = liboctbstack_env.SharedLibrary(
         'octbstack', liboctbstack_src)
     octbstack_libs += Flatten(shared_liboctbstack)
-    liboctbstack_env.UserInstallTargetHeader( 'include/ocstack.h', 'resource/stack', 'ocstack.h')
+    liboctbstack_env.UserInstallTargetHeader('include/ocstack.h', 'resource/stack', 'ocstack.h')
     liboctbstack_env.UserInstallTargetHeader('include/ocpresence.h', 'resource/stack', 'ocpresence.h')
 
 if target_os not in ['windows', 'msys_nt']:
@@ -279,3 +280,5 @@ liboctbstack_env.UserInstallTargetLib(octbstack_libs, 'octbstack')
 
 liboctbstack_env.UserInstallTargetHeader('include/ocstackconfig.h', 'resource/stack', 'ocstackconfig.h')
 liboctbstack_env.UserInstallTargetHeader('include/ocpayload.h', 'resource/stack', 'ocpayload.h')
+liboctbstack_env.UserInstallTargetHeader('include/experimental/payload_logging.h',
+                                         'resource/stack/experimental', 'payload_logging.h')

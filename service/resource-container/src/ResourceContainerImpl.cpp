@@ -126,10 +126,12 @@ namespace OIC
 
             activationLock.lock();
             for (std::map< std::string, shared_ptr<BundleInfoInternal> >::iterator it = m_bundles.begin();
-                 it != m_bundles.end(); ++it)
+                 it != m_bundles.end();)
             {
+                auto next_itr = std::next (it, 1);
                 deactivateBundle(it->second);
                 unregisterBundle(it->second);
+                it = next_itr;
             }
 
             if (!m_mapServers.empty())

@@ -436,7 +436,7 @@ Java_org_oic_simulator_client_SimulatorRemoteResource_nativeStartObserve
         }, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
         std::placeholders::_4, JniListenerHolder::create(env, jListener));
 
-        resource->observe(ObserveType::OBSERVE, callback);
+        resource->observe(ObserveType::OBSERVE, queryParams, callback);
     }
     catch (InvalidArgsException &e)
     {

@@ -33,7 +33,6 @@ import java.util.Map;
 public class OcRepresentation {
 
     static {
-        System.loadLibrary("oc");
         System.loadLibrary("ocstack-jni");
     }
 

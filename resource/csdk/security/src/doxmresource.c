@@ -28,9 +28,9 @@
 
 #include "ocstack.h"
 #include "oic_malloc.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "utlist.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
 #include "cainterface.h"
@@ -45,7 +45,6 @@
 #include "dpairingresource.h"
 #include "psinterface.h"
 #include "srmresourcestrings.h"
-#include "securevirtualresourcetypes.h"
 #include "credresource.h"
 #include "srmutility.h"
 #include "pinoxmcommon.h"
@@ -1427,7 +1426,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                             OicUuid_t deviceID = {.id = {0}};
 
                             //Generate mutualVerifNum
-                            OCServerRequest * request = GetServerRequestUsingHandle(ehRequest->requestHandle);
+                            OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
 
                             char label[LABEL_LEN] = {0};
                             snprintf(label, LABEL_LEN, "%s%s", MUTUAL_VERIF_NUM, OXM_MV_JUST_WORKS);

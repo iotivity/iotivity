@@ -19,19 +19,19 @@
  * *****************************************************************/
 
 #include "octypes.h"
-#include "logger.h"
-#include "payload_logging.h"
+#include "experimental/logger.h"
+#include "experimental/payload_logging.h"
 #include "ocstack.h"
 #include "ocpayload.h"
 //#include "psinterface.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "doxmresource.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "srmutility.h"
 #include "pmutility.h"
 #include "credresource.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 
 #include "utils.h"
 #include "cloudAuth.h"

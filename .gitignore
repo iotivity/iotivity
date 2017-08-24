@@ -89,6 +89,10 @@ platform
 iotivity.pc
 tmp/
 
+# Ignore GCov generated files
+*.gcda
+*.gcno
+
 # Ignore downloaded dependencies
 *.tgz
 *.zip
@@ -127,9 +131,6 @@ extlibs/yaml/yaml
 
 # Ignore Valgrind generated files.
 *.memcheck
-
-# Ignore  generated files
-*.dat
 
 # Ignore generated documentation files
 docs/c-doc/docs/

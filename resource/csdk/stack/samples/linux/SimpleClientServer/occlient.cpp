@@ -28,6 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include "ocstack.h"
+#include "ocpayload.h"
+#include "pinoxmcommon.h"
 #include "cacommon.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -38,13 +41,21 @@
 #include <iostream>
 #include <sstream>
 #include <getopt.h>
-#include "ocstack.h"
 #include <coap/pdu.h>
-#include "logger.h"
 #include "occlient.h"
-#include "ocpayload.h"
-#include "payload_logging.h"
 #include "common.h"
+#include "experimental/logger.h"
+#include "experimental/payload_logging.h"
+
+#define VERIFY_SUCCESS(op)                          \
+do                                                  \
+{                                                   \
+    if (op != OC_STACK_OK)                          \
+    {                                               \
+        OIC_LOG_V(FATAL, TAG, "%s failed!!", #op);  \
+        goto exit;                                  \
+    }                                               \
+} while(0)
 
 #ifdef ROUTING_GATEWAY
 /**
@@ -62,10 +73,30 @@ static int UnicastDiscovery = 0;
 static int TestCase = 0;
 static int Connectivity = 0;
 static int Introspection = 0;
+static int OCFSpecVersion = 1;
 
 static const char *DEVICE_DISCOVERY_QUERY = "%s/oic/d";
 static const char *PLATFORM_DISCOVERY_QUERY = "%s/oic/p";
 static const char *RESOURCE_DISCOVERY_QUERY = "%s/oic/res";
+
+// Device information
+static const char* gDeviceName = "OCClient";
+static const char* gSpecVersion = "ocf.1.1.0";
+static const char* gDataModelVersions = "ocf.res.1.1.0,ocf.sh.1.1.0";
+static const char* gProtocolIndependentID = "31B59DA2-E68F-4A47-81C5-93E5CBF37D0B";
+
+// Platform information
+static const char* gDateOfManufacture = "2016-01-15";
+static const char* gFirmwareVersion = "myFirmwareVersion";
+static const char* gManufacturerName = "myName";
+static const char* gOperatingSystemVersion = "myOS";
+static const char* gHardwareVersion = "myHardwareVersion";
+static const char* gPlatformID = "6A47983C-CA70-4397-8280-5C34EF23B63B";
+static const char* gManufacturerUrl = "https://www.iotivity.org";
+static const char* gModelNumber = "myModelNumber";
+static const char* gPlatformVersion = "myPlatformVersion";
+static const char* gSupportUrl = "https://www.iotivity.org";
+static const char* gSystemTime = "2015-05-15T11.04";
 
 //The following variable determines the interface protocol (IPv4, IPv6, etc)
 //to be used for sending unicast messages. Default set to IP dual stack.
@@ -116,7 +147,7 @@ OCPayload* createPayload()
 
 static void PrintUsage()
 {
-    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..20> -c <0|1> -i<0|1>");
+    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..24> -c <0|1> -i <0|1> -s <0|1>");
     OIC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OIC_LOG(INFO, TAG, "-c 0 : Use Default connectivity(IP)");
     OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
@@ -157,6 +188,8 @@ static void PrintUsage()
     OIC_LOG(INFO, TAG, "-t 23 :  Discover Resources and Perform Get Requests by IPv4 + COAP + TCP "\
             "using server's endpoints information");
     OIC_LOG(INFO, TAG, "-t 24 :  Discover Introspection Resources and Perform Get Request");
+    OIC_LOG(INFO, TAG, "-s 0 :  Specify the device spec version as core.0.0.0");
+    OIC_LOG(INFO, TAG, "-s 1 :  Specify the device spec version as ocf.1.1.0");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -968,6 +1001,8 @@ int InitGetRequestWithCoap(OCDiscoveryPayload* dis, bool isUdp)
 
     // server addr
     OCDevAddr dev;
+    memset(&dev, 0, sizeof(dev));
+    dev.adapter = OC_DEFAULT_ADAPTER;
 
     // find endpoint with ipv4, UDP or TCP
     OCResourcePayload* res = dis->resources;
@@ -1046,17 +1081,94 @@ void showEndpointsInfo(OCResourcePayload* res)
     }
 }
 
+OCStackResult SetDeviceInfo()
+{
+    OCResourceHandle resourceHandle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    if (resourceHandle == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Device Resource does not exist.");
+        goto exit;
+    }
+
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, gDeviceName));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, gDataModelVersions));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, gProtocolIndependentID));
+
+    if (1 == OCFSpecVersion)
+    {
+        VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, gSpecVersion));
+    }
+
+    OIC_LOG(INFO, TAG, "Device information initialized successfully.");
+    return OC_STACK_OK;
+
+exit:
+    return OC_STACK_ERROR;
+}
+
+OCStackResult SetPlatformInfo()
+{
+    OCResourceHandle resourceHandle = OCGetResourceHandleAtUri(OC_RSRVD_PLATFORM_URI);
+    if (resourceHandle == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Platform Resource does not exist.");
+        goto exit;
+    }
+
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_ID, gPlatformID));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_NAME, gManufacturerName));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_URL, gManufacturerUrl));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MODEL_NUM, gModelNumber));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_DATE, gDateOfManufacture));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_VERSION, gPlatformVersion));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_OS_VERSION, gOperatingSystemVersion));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_HARDWARE_VERSION, gHardwareVersion));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_FIRMWARE_VERSION, gHardwareVersion));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SUPPORT_URL, gSupportUrl));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SYSTEM_TIME, gSystemTime));
+
+    OIC_LOG(INFO, TAG, "Platform information initialized successfully.");
+    return OC_STACK_OK;
+
+exit:
+    return OC_STACK_ERROR;
+}
+
 static FILE* server_fopen(const char* path, const char* mode)
 {
     return fopen(path, mode);
 }
+
+#ifdef SECURED
+void OC_CALL DisplayPinCB(char *pin, size_t pinSize, void *context)
+{
+    OC_UNUSED(context);
+
+    if ((nullptr == pin) || (0 == pinSize))
+    {
+        OIC_LOG(INFO, TAG, "Invalid PIN");
+        return;
+    }
+
+    OIC_LOG(INFO, TAG, "============================");
+    OIC_LOG_V(INFO, TAG, "    PIN CODE : %s", pin);
+    OIC_LOG(INFO, TAG, "============================");
+}
+
+void OC_CALL ClosePinDisplayCB(void)
+{
+    OIC_LOG(INFO, TAG, "============================");
+    OIC_LOG(INFO, TAG, "    PIN DISPLAY CLOSED.");
+    OIC_LOG(INFO, TAG, "============================");
+}
+#endif
 
 int main(int argc, char* argv[])
 {
     int opt;
     OCPersistentStorage ps{ server_fopen, fread, fwrite, fclose, unlink };
 
-    while ((opt = getopt(argc, argv, "u:t:c:i:")) != -1)
+    while ((opt = getopt(argc, argv, "u:t:c:i:s:")) != -1)
     {
         switch(opt)
         {
@@ -1072,18 +1184,28 @@ int main(int argc, char* argv[])
             case 'i':
                 Introspection = atoi(optarg);
                 break;
+            case 's':
+                OCFSpecVersion = atoi(optarg);
+                break;
             default:
                 PrintUsage();
                 return -1;
         }
     }
 
-    if ((UnicastDiscovery != 0 && UnicastDiscovery != 1) ||
-            (TestCase < TEST_DISCOVER_REQ || TestCase >= MAX_TESTS) ||
-            (Connectivity < CT_ADAPTER_DEFAULT || Connectivity >= MAX_CT))
+    if (((UnicastDiscovery != 0) && (UnicastDiscovery != 1)) ||
+            ((TestCase < TEST_DISCOVER_REQ) || (TestCase >= MAX_TESTS)) ||
+            ((Connectivity < CT_ADAPTER_DEFAULT) || (Connectivity >= MAX_CT)) ||
+            ((OCFSpecVersion != 0) && (OCFSpecVersion != 1)))
     {
         PrintUsage();
         return -1;
+    }
+
+    if (OC_STACK_OK != OCRegisterPersistentStorageHandler(&ps))
+    {
+        OIC_LOG(ERROR, TAG, "OCRegisterPersistentStorageHandler error");
+        return 0;
     }
 
     if (OCInit1(OC_CLIENT_SERVER, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
@@ -1092,12 +1214,34 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    if (Introspection != 0)
+#ifdef SECURED
+    // Set callbacks for handling pin display  
+    if (OC_STACK_OK != SetDisplayPinWithContextCB(DisplayPinCB, NULL))
     {
-        if (OC_STACK_OK != OCRegisterPersistentStorageHandler(&ps))
-        {
-            OIC_LOG(ERROR, TAG, "OCRegisterPersistentStorageHandler");
-        }
+        OIC_LOG(ERROR, TAG, "Failed to set display pin callback");
+        return 0;
+    }
+
+    SetClosePinDisplayCB(ClosePinDisplayCB);
+    
+    // Specify the type and length of the pin that will be generated upon request
+    if (OC_STACK_OK != SetRandomPinPolicy(8, NUM_PIN))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to set PIN policy");
+        return 0;
+    }
+#endif
+
+    if (OC_STACK_OK != SetDeviceInfo())
+    {
+        OIC_LOG(ERROR, TAG, "SetDeviceInfo failed");
+        return 0;
+    }
+
+    if (OC_STACK_OK != SetPlatformInfo())
+    {
+        OIC_LOG(ERROR, TAG, "SetPlatformInfo failed");
+        return 0;
     }
 
 #ifdef ROUTING_GATEWAY
@@ -1133,7 +1277,7 @@ int main(int argc, char* argv[])
         OIC_LOG(INFO, TAG, "IPv4: 192.168.0.15:45454\n");
         OIC_LOG(INFO, TAG, "IPv6: [fe80::20c:29ff:fe1b:9c5]:45454\n");
 
-        if (fgets(discoveryAddr, sizeof (discoveryAddr), stdin))
+        if (fgets(discoveryAddr, sizeof(discoveryAddr), stdin))
         {
             //Strip newline char from ipv4addr
             StripNewLineChar(discoveryAddr);

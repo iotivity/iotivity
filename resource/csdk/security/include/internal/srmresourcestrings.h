@@ -21,7 +21,7 @@
 #ifndef IOTVT_SRM_RSRC_STRINGS_H
 #define IOTVT_SRM_RSRC_STRINGS_H
 
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,6 +45,7 @@ extern const char * OIC_JSON_ACES_NAME;
 extern const char * OIC_JSON_ACEID_NAME;
 
 extern const char * OIC_RSRC_TYPE_SEC_ACL2;
+extern const char * OIC_RSRC_TYPE_SEC_ACE2;
 extern const char * OIC_RSRC_ACL2_URI;
 extern const char * OIC_JSON_ACL2_NAME;
 
@@ -228,7 +229,7 @@ extern const char * OIC_SEC_REST_QUERY_SEPARATOR;
 extern char OIC_SEC_REST_QUERY_DELIMETER;
 
 //Security Version
-extern const char * DEFAULT_SEC_VERSION;
+extern const char * DEFAULT_SPEC_VERSION;
 
 // Preconfigured Pin credential usage
 #ifdef MULTIPLE_OWNER

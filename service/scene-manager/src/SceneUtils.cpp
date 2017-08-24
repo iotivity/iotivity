@@ -21,7 +21,7 @@
 #include "SceneCommons.h"
 
 #include <string>
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "oic_malloc.h"
 #include "RCSException.h"
 #include "cainterface.h"

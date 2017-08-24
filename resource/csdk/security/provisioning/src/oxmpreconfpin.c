@@ -21,15 +21,15 @@
 #include <memory.h>
 
 #include "ocstack.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "doxmresource.h"
 #include "credresource.h"
 #include "cacommon.h"
 #include "cainterface.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "pbkdf2.h"
 #include "base64.h"
 #include "oxmpreconfpin.h"
@@ -214,7 +214,7 @@ OCStackResult CreateSecureSessionPreconfigPinCallback(OTMContext_t* otmCtx)
 #ifdef WITH_TCP
     else if (CA_ADAPTER_TCP == endpoint.adapter)
     {
-        endpoint.port = selDevInfo->tcpPort;
+        endpoint.port = selDevInfo->tcpSecurePort;
     }
 #endif
 

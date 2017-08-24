@@ -21,7 +21,7 @@
 #ifndef _OXM_VERIFY_COMMON_
 #define _OXM_VERIFY_COMMON_
 
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "casecurityinterface.h"
 
 #ifdef __cplusplus

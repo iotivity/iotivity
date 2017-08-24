@@ -91,19 +91,5 @@ elevator_server_src = [
     'elevatorserver.cpp'
 ]
 
-elevator_server_src_dir = os.path.join(
-    elevator_server_env.get('SRC_DIR'), 'resource', 'IPCA', 'samples',
-    'ElevatorServer') + os.sep
-elevator_server_build_dir = os.path.join(
-    elevator_server_env.get('BUILD_DIR'), 'resource', 'IPCA', 'samples',
-    'ElevatorServer') + os.sep
-
-elevator_server_env.Install(
-    elevator_server_build_dir,
-    elevator_server_src_dir + 'ElevatorServerSecurityDB.json')
-elevator_server_env.Install(
-    elevator_server_build_dir,
-    elevator_server_src_dir + 'ElevatorServerSecurityDB.dat')
-
-elevator_app = elevator_server_env.Program('ElevatorServer',
-                                           elevator_server_src)
+elevator_server_env.Program('ElevatorServer', elevator_server_src)
+elevator_server_env.ScanJSON('resource/IPCA/samples/ElevatorServer')

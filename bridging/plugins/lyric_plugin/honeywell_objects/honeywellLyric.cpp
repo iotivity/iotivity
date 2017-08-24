@@ -30,7 +30,7 @@
 #include "document.h"
 #include "stringbuffer.h"
 #include "writer.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include <math.h>  // for fmin
 #include <sstream> // for stringstream
 #include <map>

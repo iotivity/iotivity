@@ -20,7 +20,7 @@
 
 #ifndef PROVISIONING_DATABASE_MANAGER_H
 #define PROVISIONING_DATABASE_MANAGER_H
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "ocstack.h"
 #include "pmtypes.h"
 

@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <stdlib.h>
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "octypes.h"
 
 const char * SVR_DB_FILE_NAME = OC_SECURITY_DB_FILE_NAME;
@@ -40,6 +40,7 @@ const char * OIC_JSON_ACES_NAME = "aces";
 const char * OIC_JSON_ACEID_NAME = "aceid";
 
 const char * OIC_RSRC_TYPE_SEC_ACL2 = "oic.r.acl2";
+const char * OIC_RSRC_TYPE_SEC_ACE2 = "oic.r.ace2";
 const char * OIC_RSRC_ACL2_URI = "/oic/sec/acl2";
 const char * OIC_JSON_ACL2_NAME = "acl2";
 
@@ -222,8 +223,8 @@ const char * OIC_SEC_FALSE = "false";
 const char * OIC_SEC_REST_QUERY_SEPARATOR = ";";
 char OIC_SEC_REST_QUERY_DELIMETER = '=';
 
-//Security Version
-const char * DEFAULT_SEC_VERSION = "0.0.0";
+//Spec Version
+const char * DEFAULT_SPEC_VERSION = "core.0.0.0";
 
 //Preconfigured Pin credential identifier
 #ifdef MULTIPLE_OWNER

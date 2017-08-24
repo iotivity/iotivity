@@ -28,7 +28,7 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "OCPlatform.h"
@@ -94,6 +94,8 @@ void moveTransferredDevice()
 
 void OnInputPinCB(OicUuid_t deviceId, char* pinBuf, size_t bufSize)
 {
+    OC_UNUSED(deviceId);
+
     if(pinBuf)
     {
         std::cout <<"INPUT PIN : ";
@@ -178,6 +180,8 @@ static void getCallback(const HeaderOptions& headerOptions, const OCRepresentati
 
 void putCallback(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
+    OC_UNUSED(rep);
+
     if(eCode == 0)
     {
         std::cout << "PUT request was successful !!!!!!" << std::endl;
@@ -215,7 +219,6 @@ int main(void)
     try
     {
         int choice;
-        OicSecAcl_t *acl1 = nullptr, *acl2 = nullptr;
         if (OCSecure::provisionInit("") != OC_STACK_OK)
         {
             std::cout <<"PM Init failed"<< std::endl;

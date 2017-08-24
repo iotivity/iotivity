@@ -18,13 +18,16 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
+#include "iotivity_config.h"
 
 #include <mutex>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -36,7 +39,7 @@
 #include "hue_defs.h"
 #include "curlClient.h"
 #include "cJSON.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "HUE_AUTH"
 

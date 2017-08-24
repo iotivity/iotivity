@@ -30,15 +30,13 @@ target_os = eventtests_env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-eventtests_env.PrependUnique(CPPPATH = [
-        '#resource/c_common/ocevent/include'
-        ])
+eventtests_env.PrependUnique(CPPPATH=['#resource/c_common/ocevent/include'])
 
-eventtests_env.AppendUnique(LIBPATH = [eventtests_env.get('BUILD_DIR')])
-eventtests_env.Append(LIBS = ['logger'])
+eventtests_env.AppendUnique(LIBPATH=[eventtests_env.get('BUILD_DIR')])
+eventtests_env.Append(LIBS=['logger'])
 
 if eventtests_env.get('LOGGING'):
-    eventtests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    eventtests_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 ######################################################################
 # Source files and Targets
@@ -50,6 +48,6 @@ Alias("test", [eventtests])
 eventtests_env.AppendTarget('test')
 if eventtests_env.get('TEST') == '1':
     if target_os in ['linux', 'windows']:
-                run_test(eventtests_env,
-                         'resource_c_common_event_test.memcheck',
-                         'resource/c_common/ocevent/test/eventtests')
+        run_test(eventtests_env,
+                 'resource_c_common_event_test.memcheck',
+                 'resource/c_common/ocevent/test/eventtests')

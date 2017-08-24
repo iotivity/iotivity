@@ -24,7 +24,7 @@
 #include "pmtypes.h"
 #include "ocstack.h"
 #include "octypes.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "ownershiptransfermanager.h"
 
 #ifdef __cplusplus

@@ -30,13 +30,10 @@ ocprovision_env = lib_env.Clone()
 ######################################################################
 with_upstream_libcoap = ocprovision_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
-    ocprovision_env.AppendUnique(CPPPATH=[
-        '#extlibs/libcoap/libcoap/include'
-    ])
+    ocprovision_env.AppendUnique(CPPPATH=['#extlibs/libcoap/libcoap/include'])
 else:
-    ocprovision_env.AppendUnique(CPPPATH=[
-        '../csdk/connectivity/lib/libcoap-4.1.1/include'
-    ])
+    ocprovision_env.AppendUnique(
+        CPPPATH=['../csdk/connectivity/lib/libcoap-4.1.1/include'])
 
 ocprovision_env.AppendUnique(CPPPATH=[
     '../include/',

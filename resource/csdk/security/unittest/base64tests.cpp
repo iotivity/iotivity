@@ -1,41 +1,43 @@
- /******************************************************************
-  *
-  * Copyright 2015 Samsung Electronics All Rights Reserved.
-  *
-  *
-  *
-  * Licensed under the Apache License, Version 2.0 (the "License");
-  * you may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at
-  *
-  *     http://www.apache.org/licenses/LICENSE-2.0
-  *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
-  *
-  ******************************************************************/
+/******************************************************************
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #include <gtest/gtest.h>
 #include "base64.h"
+#include "oic_malloc.h"
 #include <stdlib.h>
 #include <stdint.h>
 
 // Tests for base64 encode function
-TEST(B64EncodeTest, ValidInputForEncoding)
+TEST(B64Test, ValidInputForEncoding)
 {
     char buf[128];
     size_t outputLength = 0;
     size_t i = 0;
     B64Result res = B64_OK;
 
-    const char* input = "IoTivity base64~!@#$%^&*()-=0123456789<>?;:'[]{},.\"\\|";
+    const char *input = "IoTivity base64~!@#$%^&*()-=0123456789<>?;:'[]{},.\"\\|";
 
     /**< expected output is generated from
              "http://www.convertstring.com/EncodeDecode/Base64Encode" */
-    const char* expectedOutput[53] = {
+    const char *expectedOutput[53] =
+    {
         "SQ==",
         "SW8=",
         "SW9U",
@@ -97,7 +99,7 @@ TEST(B64EncodeTest, ValidInputForEncoding)
 
         size_t expectedLength = strlen(expectedOutput[i]);
 
-        res = b64Encode((uint8_t*)input, i + 1, buf, 128, &outputLength);
+        res = b64Encode((const uint8_t *)input, i + 1, buf, 128, &outputLength);
 
         EXPECT_EQ(B64_OK, res);
         EXPECT_EQ(expectedLength, outputLength);
@@ -106,14 +108,15 @@ TEST(B64EncodeTest, ValidInputForEncoding)
 }
 
 // Tests for base64 decode function
-TEST(B64DeodeTest, ValidInputForDecoding)
+TEST(B64Test, ValidInputForDecoding)
 {
     uint8_t buf[128];
     size_t outputLength = 0;
     size_t i = 0;
     B64Result res = B64_OK;
 
-    const char* input[53] = {
+    const char *input[53] =
+    {
         "SQ==",
         "SW8=",
         "SW9U",
@@ -168,9 +171,9 @@ TEST(B64DeodeTest, ValidInputForDecoding)
         "SW9UaXZpdHkgYmFzZTY0fiFAIyQlXiYqKCktPTAxMjM0NTY3ODk8Pj87OidbXXt9LC4iXA==",
         "SW9UaXZpdHkgYmFzZTY0fiFAIyQlXiYqKCktPTAxMjM0NTY3ODk8Pj87OidbXXt9LC4iXHw="
     };
-    const char* expectedOutput = "IoTivity base64~!@#$%^&*()-=0123456789<>?;:'[]{},.\"\\|";
+    const char *expectedOutput = "IoTivity base64~!@#$%^&*()-=0123456789<>?;:'[]{},.\"\\|";
 
-    for (i = 0; i < (sizeof(input) / sizeof(char*)); i++)
+    for (i = 0; i < (sizeof(input) / sizeof(char *)); i++)
     {
         memset(buf, 0, sizeof(buf));
 
@@ -183,13 +186,14 @@ TEST(B64DeodeTest, ValidInputForDecoding)
 }
 
 // Tests for base64 decode function
-TEST(B64DeodeTest, InvalidInputForDecoding)
+TEST(B64Test, InvalidInputForDecoding)
 {
     uint8_t buf[128] = {0,};
     size_t outputLength = 0;
     size_t i = 0;
 
-    const char* input[53] = {
+    const char *input[53] =
+    {
         "SQ=",
         "Sw8=",
         "SW1U",
@@ -244,9 +248,9 @@ TEST(B64DeodeTest, InvalidInputForDecoding)
         "SW9UaXZpdHkgYmFzZTY0fiFAIyQlXiYqKCktPTAxMjM0NTY3ODk8Pj87OidbXXt9lc4iXA==",
         "SW9UaXZpdHkgYmFzZTY0fiFqKCktPTAxMjM0NTY3ODk8Pj87OidbXXt9LC4ixHw="
     };
-    const char* expectedOutput = "IoTivity base64~!@#$%^&*()-=0123456789<>?;:'[]{},.\"\\|";
+    const char *expectedOutput = "IoTivity base64~!@#$%^&*()-=0123456789<>?;:'[]{},.\"\\|";
 
-    for (i = 0; i < (sizeof(input) / sizeof(char*)); i++)
+    for (i = 0; i < (sizeof(input) / sizeof(char *)); i++)
     {
         memset(buf, 0, sizeof(buf));
 
@@ -257,3 +261,282 @@ TEST(B64DeodeTest, InvalidInputForDecoding)
     }
 }
 
+/*
+ * Expected input and output comes from section 10 of RFC4648
+ */
+TEST(B64Test, RFC4648_EncodeTestVectors)
+{
+    char buf[128];
+    size_t outputLength = 0;
+    B64Result b64Result;
+    const char *input[] =
+    {
+        "",
+        "f",
+        "fo",
+        "foo",
+        "foob",
+        "fooba",
+        "foobar"
+    };
+
+    const char *output[] =
+    {
+        "",
+        "Zg==",
+        "Zm8=",
+        "Zm9v",
+        "Zm9vYg==",
+        "Zm9vYmE=",
+        "Zm9vYmFy"
+    };
+
+    const size_t expectedOutputLenth[] =
+    {
+        0,
+        4,
+        4,
+        4,
+        8,
+        8,
+        8
+    };
+
+    size_t bufSize = (sizeof(buf)/sizeof(buf[0]));
+    size_t inputArraySize = (sizeof(input) / sizeof(input[0]));
+    size_t outputArraySize = (sizeof(output) / sizeof(output[0]));
+    size_t expectedOutputLenthArraySize = (sizeof(expectedOutputLenth) / sizeof(
+            expectedOutputLenth[0]));
+
+    ASSERT_EQ(inputArraySize, outputArraySize)
+            << "Input test data and output test data missmatch.";
+    ASSERT_EQ(inputArraySize, expectedOutputLenthArraySize)
+            << "Input test data and output test data missmatch.";
+    for (size_t i = 0; i < inputArraySize; ++i)
+    {
+        b64Result = b64Encode((const uint8_t *)input[i], strlen(input[i]), buf, bufSize, &outputLength);
+        EXPECT_EQ(B64_OK, b64Result)
+                << "Failed to Base64 encode \"" << input[i] << "\" to \"" << output[i] << "\"";
+        EXPECT_EQ(0u, outputLength % 4)
+                << "The return size for all b64Encode operations should be a multiple of 4.";
+        EXPECT_STREQ(output[i], buf)
+                << "Failed to Base64 encode \"" << input[i] << "\" to \"" << output[i] << "\"";
+        EXPECT_EQ(expectedOutputLenth[i], outputLength);
+    }
+}
+
+
+TEST(B64Test, RFC4648_DecodeTestVectors)
+{
+    uint8_t buf[128] = {0,};
+    size_t outputLength = 0;
+    B64Result b64Result;
+
+    const char *input[] =
+    {
+        "",
+        "Zg==",
+        "Zm8=",
+        "Zm9v",
+        "Zm9vYg==",
+        "Zm9vYmE=",
+        "Zm9vYmFy"
+    };
+
+    const char *output[] =
+    {
+        "",
+        "f",
+        "fo",
+        "foo",
+        "foob",
+        "fooba",
+        "foobar"
+    };
+
+    const size_t expectedOutputLenth[] =
+    {
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+    };
+
+    size_t bufSize = (sizeof(buf)/sizeof(buf[0]));
+    size_t inputArraySize = (sizeof(input) / sizeof(input[0]));
+    size_t outputArraySize = (sizeof(output) / sizeof(output[0]));
+    size_t expectedOutputLenthArraySize = (sizeof(expectedOutputLenth) / sizeof(
+            expectedOutputLenth[0]));
+
+    ASSERT_EQ(inputArraySize, outputArraySize)
+            << "Input test data and output test data missmatch.";
+    ASSERT_EQ(inputArraySize, expectedOutputLenthArraySize)
+            << "Input test data and output test data missmatch.";
+
+    for (size_t i = 0; i < inputArraySize; ++i)
+    {
+        b64Result = b64Decode(input[i], strlen(input[i]), buf, bufSize, &outputLength);
+        EXPECT_EQ(B64_OK, b64Result)
+                << "Failed to Base64 decode \"" << input[i] << "\" to \"" << output[i] << "\"";
+        EXPECT_STREQ(output[i], (char *)buf)
+                << "Failed to Base64 decode \"" << input[i] << "\" to \"" << output[i] << "\"";
+        EXPECT_EQ(expectedOutputLenth[i], outputLength);
+    }
+}
+
+TEST(B64Test, DecodeInputMissingPadding)
+{
+    uint8_t buf[128] = {0,};
+    size_t outputLength = 0;
+    B64Result b64Result;
+
+    const char *input[] =
+    {
+        "Zg",
+        "Zg="
+    };
+
+    size_t bufSize = (sizeof(buf)/sizeof(buf[0]));
+    size_t inputArraySize = (sizeof(input) / sizeof(input[0]));
+
+    for (size_t i = 0; i < inputArraySize; ++i)
+    {
+        b64Result = b64Decode(input[i], strlen(input[i]), buf, bufSize, &outputLength);
+        EXPECT_EQ(B64_INVALID_PARAM, b64Result)
+                << "Base64 decode for \"" << input[i] << "\" did not fail as expected.";
+    }
+}
+
+TEST(B64Test, DecodeInputInvalidCharacters)
+{
+    uint8_t buf[128] = {0,};
+    size_t outputLength = 0;
+    B64Result b64Result;
+    // Characters '-' and '_' chosen because the are part of other encoding
+    // standards, other characters chosen at random just to increase test
+    // coverage
+    const char *input[] =
+    {
+        "-a==",
+        "_a==",
+        "&a==",
+        "<>=="
+    };
+
+    size_t bufSize = (sizeof(buf)/sizeof(buf[0]));
+    size_t inputArraySize = (sizeof(input) / sizeof(input[0]));
+
+    for (size_t i = 0; i < inputArraySize; ++i)
+    {
+        b64Result = b64Decode(input[i], strlen(input[i]), buf, bufSize, &outputLength);
+        EXPECT_EQ(B64_INVALID_PARAM, b64Result)
+                << "Base64 decode for \"" << input[i] << "\" did not fail as expected.";
+    }
+}
+
+TEST(B64Test, DecodeInputInvalidPadding)
+{
+    uint8_t buf[128] = {0,};
+    size_t outputLength = 0;
+    B64Result b64Result;
+    const char *input[] =
+    {
+        "Zg==Zg==", // Invalid padding in middle of encoded string
+        "Zm8=Zm8=", // Invalid padding in middle of encoded string
+        "Z===", // Invalid padding max padding for Base64 string is two '=='
+        "====", // Invalid padding max padding for Base64 string is two '=='
+        "Zm=v" // Invalid padding no characters should follow padding
+    };
+
+    size_t bufSize = (sizeof(buf)/sizeof(buf[0]));
+    size_t inputArraySize = (sizeof(input) / sizeof(input[0]));
+
+    for (size_t i = 0; i < inputArraySize; ++i)
+    {
+        b64Result = b64Decode(input[i], strlen(input[i]), buf, bufSize, &outputLength);
+        EXPECT_EQ(B64_INVALID_PARAM, b64Result)
+                << "Base64 decode for \"" << input[i] << "\" did not fail as expected.";
+    }
+}
+
+// verify round trip encoding
+TEST(B64Test, EncodeThenDecode)
+{
+
+    const char input[] = "This is a string that will be passed into  the Base64 "
+                         "encoder.  After it is encoded the encoded result will "
+                         "be passed into the Base64 decoded and the result will "
+                         "be checked with the original input to make sure the "
+                         "round trip results are as expected.";
+
+    size_t b64Size = 0;
+    // encode the null character at the end of the string.
+    size_t b64BufSize = B64ENCODE_OUT_SAFESIZE(sizeof(input));
+    char *b64Buf = (char *)OICCalloc(1, b64BufSize);
+    ASSERT_NE(nullptr, b64Buf) << "memory allocation error.";
+    EXPECT_EQ(B64_OK, b64Encode((const uint8_t *)input, sizeof(input), b64Buf, b64BufSize, &b64Size));
+    EXPECT_EQ(0u, b64Size % 4) <<
+                              "The return size for all b64Encode operations should be a multiple of 4.";
+
+    size_t outSize;
+    size_t outBufSize = B64DECODE_OUT_SAFESIZE(b64Size);
+    uint8_t *outBuf = (uint8_t *)OICCalloc(1, outBufSize);
+    if (nullptr == outBuf)
+    {
+        OICFree(b64Buf);
+    }
+    ASSERT_NE(nullptr, outBuf) << "memory allocation error.";
+    EXPECT_EQ(B64_OK, b64Decode(b64Buf, b64Size, outBuf, outBufSize, &outSize));
+    EXPECT_STREQ(input, (char *)outBuf);
+    OICFree(b64Buf);
+    OICFree(outBuf);
+}
+
+TEST(B64Test, Test_B64ENCODE_OUT_SAFESIZE_macro)
+{
+    EXPECT_EQ(1, B64ENCODE_OUT_SAFESIZE(0)) << "macro tested B64ENCODE_OUT_SAFESIZE(0)";
+    EXPECT_EQ(5, B64ENCODE_OUT_SAFESIZE(1)) << "macro tested B64ENCODE_OUT_SAFESIZE(1)";
+    EXPECT_EQ(5, B64ENCODE_OUT_SAFESIZE(2)) << "macro tested B64ENCODE_OUT_SAFESIZE(2)";
+    EXPECT_EQ(5, B64ENCODE_OUT_SAFESIZE(3)) << "macro tested B64ENCODE_OUT_SAFESIZE(3)";
+    EXPECT_EQ(9, B64ENCODE_OUT_SAFESIZE(4)) << "macro tested B64ENCODE_OUT_SAFESIZE(4)";
+    EXPECT_EQ(9, B64ENCODE_OUT_SAFESIZE(5)) << "macro tested B64ENCODE_OUT_SAFESIZE(5)";
+    EXPECT_EQ(9, B64ENCODE_OUT_SAFESIZE(6)) << "macro tested B64ENCODE_OUT_SAFESIZE(6)";
+    EXPECT_EQ(13, B64ENCODE_OUT_SAFESIZE(7)) << "macro tested B64ENCODE_OUT_SAFESIZE(7)";
+    EXPECT_EQ(13, B64ENCODE_OUT_SAFESIZE(8)) << "macro tested B64ENCODE_OUT_SAFESIZE(8)";
+    EXPECT_EQ(13, B64ENCODE_OUT_SAFESIZE(9)) << "macro tested B64ENCODE_OUT_SAFESIZE(8)";
+    EXPECT_EQ(17, B64ENCODE_OUT_SAFESIZE(10)) << "macro tested B64ENCODE_OUT_SAFESIZE(10)";
+}
+
+TEST(B64Test, Test_B64DECODE_OUT_SAFESIZE_macro)
+{
+    // Valid Base64 encode string is multiples of 4 in size.
+    EXPECT_EQ(0, B64DECODE_OUT_SAFESIZE(0)) << "macro tested B64DECODE_OUT_SAFESIZE(0)";
+    EXPECT_EQ(3, B64DECODE_OUT_SAFESIZE(4)) << "macro tested B64DECODE_OUT_SAFESIZE(4)";
+    EXPECT_EQ(6, B64DECODE_OUT_SAFESIZE(8)) << "macro tested B64DECODE_OUT_SAFESIZE(8)";
+    EXPECT_EQ(9, B64DECODE_OUT_SAFESIZE(12)) << "macro tested B64DECODE_OUT_SAFESIZE(12)";
+    EXPECT_EQ(12, B64DECODE_OUT_SAFESIZE(16)) << "macro tested B64DECODE_OUT_SAFESIZE(16)";
+    EXPECT_EQ(15, B64DECODE_OUT_SAFESIZE(20)) << "macro tested B64DECODE_OUT_SAFESIZE(20)";
+}
+
+TEST(B64Test, EncodeBufferTooSmall)
+{
+    // buffer too small the size must be 5. 4 for the first encoded byte + 1
+    // for '\0' at end of string
+    const char *input = "A";
+    char b64Buf[4];
+    size_t b64Size = 0;
+    EXPECT_EQ(B64_OUTPUT_BUFFER_TOO_SMALL, b64Encode((const uint8_t *)input, strlen(input),
+              b64Buf, sizeof(b64Buf) / sizeof(char *), &b64Size));
+}
+
+TEST(B64Test, DecodeBufferTooSmall)
+{
+    uint8_t buf[2] = {0,};
+    size_t outputLength = 0;
+    const char *input = "Zm9v"; //Decodes to "foo"
+    EXPECT_EQ(B64_OUTPUT_BUFFER_TOO_SMALL, b64Decode(input, strlen(input),
+              buf, sizeof(buf) / sizeof(uint8_t), &outputLength));
+}

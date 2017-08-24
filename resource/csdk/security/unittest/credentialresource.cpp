@@ -25,12 +25,11 @@
 #include "oic_string.h"
 #include "resourcemanager.h"
 #include "credresource.h"
-#include "securevirtualresourcetypes.h"
 #include "srmtestcommon.h"
 #include "srmutility.h"
 #include "psinterface.h"
 #include "security_internals.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "SRM-CRED-UT"
 
@@ -219,7 +218,7 @@ TEST(CredResourceTest, CredToCBORPayloadNULL)
     EXPECT_EQ(OC_STACK_INVALID_PARAM, CredToCBORPayload(cred, &cborPayload, &size, secureFlag));
     OICFree(cborPayload);
     cborPayload = NULL;
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, CredToCBORPayload(NULL, &cborPayload, &size,secureFlag));
+    EXPECT_EQ(OC_STACK_OK, CredToCBORPayload(NULL, &cborPayload, &size,secureFlag));
     EXPECT_EQ(OC_STACK_INVALID_PARAM, CredToCBORPayload(cred, &cborPayload, 0, secureFlag));
     EXPECT_EQ(OC_STACK_INVALID_PARAM, CredToCBORPayload(cred, NULL, &size, secureFlag));
     DeleteCredList(cred);
@@ -317,7 +316,7 @@ TEST(CredResourceTest, GenerateCredentialValidInput)
     OICStrcpy((char *)subject.id, sizeof(subject.id), "subject11");
 
     uint8_t privateKey[] = "My private Key11";
-    OicSecKey_t key = {privateKey, sizeof(privateKey)};
+    OicSecKey_t key = {privateKey, sizeof(privateKey), OIC_ENCODING_UNKNOW};
 
     OicSecCred_t * cred  = NULL;
     cred = GenerateCredential(&subject, SYMMETRIC_PAIR_WISE_KEY, NULL,

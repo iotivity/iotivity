@@ -22,7 +22,7 @@
 #include "simulator_single_resource_impl.h"
 #include "simulator_exceptions.h"
 #include "simulator_logger.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "UPDATE_AUTOMATION_MNGR"
 

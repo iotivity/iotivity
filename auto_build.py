@@ -12,7 +12,8 @@ def helpmsg(script):
 Usage:
     build:
         python %s <targetbuild>
-        Allowed values for <target_build>: all, linux_unsecured, linux_secured, linux_unsecured_with_ra, linux_secured_with_ra, linux_unsecured_with_rd, linux_secured_with_rd, android, arduino, tizen, tizen_unsecured, tizen_secured, simulator, darwin, windows, msys
+        Allowed values for <target_build>: all, linux_unsecured, linux_secured, linux_unsecured_with_ra, linux_secured_with_ra, linux_unsecured_with_rd, linux_secured_with_rd,
+        android, android_unsecured, android_secured, arduino, tizen, tizen_unsecured, tizen_secured, simulator, darwin, windows, msys
         Note: \"linux\" will build \"linux_unsecured\", \"linux_secured\", \"linux_unsecured_with_ra\", \"linux_secured_with_ra\", \"linux_secured_with_rd\", \"linux_unsecured_with_mq\", \"linux_secured_with_tcp\" & \"linux_unsecured_with_tcp\" & \"linux_unsecured_with_rd\".
         Any selection will build both debug and release versions of all available targets in the scope you've selected.
         To choose any specific command, please use the SCons commandline directly. Please refer to [IOTIVITY_REPO]/Readme.scons.txt.
@@ -60,7 +61,8 @@ def build_all(flag, extra_option_str):
         build_linux_secured_with_java(flag, extra_option_str)
         build_simulator(flag, extra_option_str)
 
-        build_android(flag, extra_option_str)
+        build_android_unsecured(flag, extra_option_str)
+        build_android_secured(flag, extra_option_str)
         build_arduino(flag, extra_option_str)
         build_tizen(flag, extra_option_str)
 
@@ -201,6 +203,12 @@ def build_android(flag, extra_option_str):
                         'RELEASE':flag,
                     }
     call_scons(build_options, extra_option_str)
+
+def build_android_secured(flag, extra_option_str):
+    build_android(flag, extra_option_str + " SECURED=1")
+
+def build_android_unsecured(flag, extra_option_str):
+    build_android(flag, extra_option_str + " SECURED=0")
 
 def build_android_x86(flag, extra_option_str):
     """ Build Android x86 Suite """
@@ -388,7 +396,7 @@ def build_arduino(flag, extra_option_str):
 
 def build_tizen(flag, extra_option_str):
     print ("*********** Build for Tizen with options *************")
-    cmd_line = os.getcwd() + "/gbsbuild.sh"  + " " + extra_option_str
+    cmd_line = os.getcwd() + "/gbsbuild.sh" + " " + extra_option_str
     if not EXEC_MODE:
         print ("Would run : " + cmd_line)
     else:
@@ -610,6 +618,14 @@ elif arg_num == 2:
     elif str(sys.argv[1]) == "android":
         build_android("true", "")
         build_android("false", "")
+
+    elif str(sys.argv[1]) == "android_unsecured":
+        build_android_unsecured("true", "")
+        build_android_unsecured("false", "")
+
+    elif str(sys.argv[1]) == "android_secured":
+        build_android_secured("true", "")
+        build_android_secured("false", "")
 
     elif str(sys.argv[1]) == "android_x86":
         build_android_x86("true", "")

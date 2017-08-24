@@ -9,13 +9,13 @@ if 'IP' in env.get('TARGET_TRANSPORT'):
     vars.Add(
         EnumVariable('SHIELD',
                      'Network connection type',
-                     'WIFI',
+                     default='WIFI',
                      allowed_values=['ETH', 'WIFI']))
 elif 'BLE' in env.get('TARGET_TRANSPORT'):
     vars.Add(
         EnumVariable('SHIELD',
                      'Network connection type',
-                     'RBL_NRF8001',
+                     default='RBL_NRF8001',
                      allowed_values=['RBL_NRF8001']))
 vars.Update(env)
 Help(vars.GenerateHelpText(env))

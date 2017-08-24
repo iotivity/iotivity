@@ -19,9 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "base64.h"
-#include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "cainterface.h"
 #include "oxmverifycommon.h"

@@ -143,10 +143,6 @@ if 'ALL' in ca_transport:
         transports.add('bt_edr_adapter')
         transports.add('bt_le_adapter')
 
-    connectivity_env.SConscript(
-        dirs=[os.path.join(ca_path, d) for d in transports],
-        exports='connectivity_env')
-
 if 'IP' in ca_transport:
     transports.add('ip_adapter')
     if ca_os == 'arduino' and with_tcp:
@@ -173,6 +169,9 @@ if ca_os == 'android':
 
 if connectivity_env.get('SECURED') == '1':
     connectivity_env.AppendUnique(LIBS=['mbedtls', 'mbedx509'])
+
+if ca_os in ['tizen']:
+    connectivity_env.AppendUnique(LIBS=['pthread'])
 
 # c_common calls into mbedcrypto.
 connectivity_env.AppendUnique(LIBS=['mbedcrypto'])

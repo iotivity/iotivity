@@ -24,9 +24,7 @@
  * This file contains the util function for LE adapter. This maintains the
  * list of services an individual GATT Client connected to and operations on
  * that list, such as getting the service info with BD address or with
- * position etc. This is mainly useful for the multicast transmission of
- * data where client needs to have the info of all the services to which it
- * is connected.
+ * position etc.
  */
 
 #ifndef TZ_BLE_UTIL_H_
@@ -38,18 +36,42 @@
 
 typedef struct
 {
+    void *data;
+    uint32_t dataLength;
+} LEData;
+
+typedef struct _LEDataList
+{
+    LEData *data;
+    struct _LEDataList *next;
+} LEDataList;
+
+typedef enum
+{
+    LE_STATUS_INVALID = 0,
+    LE_STATUS_UNICAST_PENDING,
+    LE_STATUS_DISCOVERED,
+    LE_STATUS_CONNECTION_INITIATED,
+    LE_STATUS_CONNECTED,
+    LE_STATUS_SERVICES_DISCOVERED
+} LEDeviceStatus;
+
+typedef struct
+{
     bt_gatt_client_h clientHandle;
     bt_gatt_h serviceHandle;
     bt_gatt_h readChar;
     bt_gatt_h writeChar;
     char *remoteAddress;
+    LEDataList *pendingDataList;
+    LEDeviceStatus status;
 } LEServerInfo;
 
 typedef struct _LEServerInfoList
 {
     LEServerInfo *serverInfo;
     struct _LEServerInfoList *next;
-}LEServerInfoList;
+} LEServerInfoList;
 
 typedef struct _LEClientInfoList
 {
@@ -71,25 +93,40 @@ typedef enum
 } CHAR_TYPE;
 
 /**
- * Used to increment the registered service count.
+ * Used to add LE data to the list
+ *
+ * @param[in] dataList      Pointer to the list to which data needs to be added
+ * @param[in] data          Pointer to the data that needs to be added
+ * @param[in] dataLength    The size of the data
+ *
+ * @return ::CA_STATUS_OK or appropriate error code
+ * @retval ::CA_STATUS_OK   Successful
+ * @retval ::CA_STATUS_INVALID_PARAM Invalid input arguments
+ * @retval ::CA_MEMORY_ALLOC_FAILED Memory allocation failed
  */
-void CAIncrementRegisteredServiceCount();
+CAResult_t CAAddLEDataToList(LEDataList **dataList, const void *data, uint32_t dataLength);
 
 /**
- * Used to decrement the registered service count.
+ * Used to remove LE data from the front of the list.
+ * The data is also destroyed
+ *
+ * @param[in] dataList  Pointer to the list
  */
-void CADecrementRegisteredServiceCount();
+void CARemoveLEDataFromList(LEDataList **dataList);
 
 /**
- * Used to reset the registered service count.
+ * Destroys the LE data list
+ *
+ * @param[in] dataList  Pointer to the list the needs to be destroyed
  */
-void CAResetRegisteredServiceCount();
+void CADestroyLEDataList(LEDataList **dataList);
 
 /**
- * Used to get the total registered service count.
- * @return  Total registered service count.
+ * Destroys LE data
+ *
+ * param[in] data   Pointer to the LE data that needs to be destroyed
  */
-int32_t  CAGetRegisteredServiceCount();
+void CADestroyLEData(LEData *data);
 
 /**
  * Used to add the serverListInfo structure to the Server List.
@@ -114,7 +151,7 @@ CAResult_t CAAddLEServerInfoToList(LEServerInfoList **serverList,
  * @param[in]     remoteAddress  Remote address to be removed from the client list.
  */
 void CARemoveLEServerInfoFromList(LEServerInfoList **serverList,
-                                        const char *remoteAddress);
+                                  const char *remoteAddress);
 
 /**
  * Used to get the serviceInfo from the list.
@@ -131,22 +168,6 @@ void CARemoveLEServerInfoFromList(LEServerInfoList **serverList,
  */
 CAResult_t CAGetLEServerInfo(LEServerInfoList *serverList, const char *leAddress,
                              LEServerInfo **leServerInfo);
-
-/**
- * Used to get the clientInfo from the list by position.
- *
- * @param[in]  serverList      Pointer to the ble service list which holds the info of list
- *                             of servers registered by the client.
- * @param[in]  position        The service information of particular position in the list.
- * @param[out] leServerInfo    Info of service and characteristic handle of the given BD address
- *                              registered by client.
- * @return ::CA_STATUS_OK or Appropriate error code.
- * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
- * @retval ::CA_STATUS_FAILED Operation failed.
- */
-CAResult_t CAGetLEServerInfoByPosition(LEServerInfoList *serverList, int32_t position,
-                                       LEServerInfo **leServerInfo);
 
 /**
  * Used to clear BLE service list.
@@ -184,7 +205,7 @@ CAResult_t CAAddLEClientInfoToList(LEClientInfoList **clientList,
  * @param[in]     clientAddress  Remote address to be removed from the client list.
  */
 void CARemoveLEClientInfoFromList(LEClientInfoList **clientList,
-                                        const char *clientAddress);
+                                  const char *clientAddress);
 
 /**
  * Used to disconnect all the clients connected to the server.

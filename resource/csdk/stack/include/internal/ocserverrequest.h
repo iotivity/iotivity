@@ -109,8 +109,8 @@ typedef struct OCServerRequest
     /** Request to complete.*/
     uint8_t requestComplete;
 
-    /** Node entry in red-black tree.*/
-    RB_ENTRY(OCServerRequest) entry;
+    /** Node entry in red-black tree of linked lists.*/
+    RBL_ENTRY(OCServerRequest) entry;
 
     /** Flag indicating slow response.*/
     uint8_t slowFlag;
@@ -209,15 +209,6 @@ OCStackResult AddServerRequest (OCServerRequest ** request,
  * @return address of the node if found, otherwise NULL
  */
 OCServerRequest * GetServerRequestUsingToken (const CAToken_t token, uint8_t tokenLength);
-
-/**
- * Get a server request from the server request list using the specified handle
- *
- * @param[in]  handle           Handle of server request.
- *
- * @return address of the node if found, otherwise NULL
- */
-OCServerRequest * GetServerRequestUsingHandle (const OCServerRequest * handle);
 
 /**
  * Find a server request in the server request list and delete

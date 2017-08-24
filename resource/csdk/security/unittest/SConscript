@@ -103,8 +103,6 @@ unittest = srmtest_env.Program('unittest', [
     'crlresourcetest.cpp'
 ])
 
-Alias("test", [unittest])
-
 unittest_src_dir = os.path.join(src_dir, 'resource', 'csdk', 'security', 'unittest') + os.sep
 unittest_build_dir = os.path.join(srmtest_env.get('BUILD_DIR'), 'resource', 'csdk', 'security', 'unittest')
 unittest_build_dir = os.path.normpath(unittest_build_dir) + os.sep
@@ -114,34 +112,7 @@ srmtest_env.AppendUnique(CPPDEFINES=[
     unittest_build_dir.encode('string_escape').replace("\\", "\\\\")
 ])
 
-srmtest_env.Alias(
-    "install",
-    srmtest_env.Install(unittest_build_dir, unittest_src_dir + 'oic_unittest.json'))
-srmtest_env.Alias(
-    "install",
-    srmtest_env.Install(unittest_build_dir, unittest_src_dir + 'oic_unittest_acl1.json'))
-srmtest_env.Alias(
-    "install",
-    srmtest_env.Install(unittest_build_dir, unittest_src_dir + 'oic_unittest_default_acl.json'))
-srmtest_env.Alias(
-    "install",
-    srmtest_env.Install(unittest_build_dir, unittest_src_dir + 'oic_svr_db.json'))
-
-srmtest_env.Alias(
-    "install",
-    srmtest_env.Install(unittest_build_dir, unittest_src_dir + 'oic_unittest.dat'))
-srmtest_env.Alias(
-    "install",
-    srmtest_env.Install(unittest_build_dir, unittest_src_dir + 'oic_unittest_acl1.dat'))
-srmtest_env.Alias(
-    "install",
-    srmtest_env.Install(unittest_build_dir, unittest_src_dir + 'oic_unittest_default_acl.dat'))
-srmtest_env.Alias(
-    "install",
-    srmtest_env.Install(unittest_build_dir, unittest_src_dir + 'oic_svr_db_prov.dat'))
-srmtest_env.Alias(
-    "install",
-    srmtest_env.Install(unittest_build_dir, unittest_src_dir + 'oic_svr_db.dat'))
+unittest += srmtest_env.ScanJSON('resource/csdk/security/unittest')
 
 srmtest_env.AppendTarget('test')
 if srmtest_env.get('TEST') == '1':

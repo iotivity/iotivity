@@ -35,15 +35,14 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "utlist.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocprovisioningmanager.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
-#include "securevirtualresourcetypes.h"
 #include "srmutility.h"
 #include "pmtypes.h"
 #include "oxmverifycommon.h"
@@ -51,7 +50,7 @@
 #include "ocsecurity.h"
 #include "ocstackinternal.h"
 #include "pmutility.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 
 #ifdef _MSC_VER
 #include <io.h>
@@ -1031,7 +1030,7 @@ exit:
 /* Function to work around IOT-1927.  The ocrandom.h include is only required for the workaround.
  * @todo: when IOT-1927 is resolved remove this function
  */
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 int workAroundBug()
 {
     /* Remove credential for 31313131-3131-3131-3131-313131313131 */

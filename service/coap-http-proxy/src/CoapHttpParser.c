@@ -21,13 +21,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #include "iotivity_config.h"
 #include "CoapHttpParser.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "uarraylist.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #include <string.h>
 #include <curl/curl.h>
@@ -552,7 +553,7 @@ static size_t CHPEasyHandleWriteCb(char *buffer, size_t size, size_t num, void *
         void *newPayload = OICRealloc(resp->payload, ctx->writeOffset + dataToWrite);
         if (!newPayload)
         {
-            OIC_LOG_V(ERROR, TAG, "Realloc failed! Current: %u Extra: %u", ctx->writeOffset,
+            OIC_LOG_V(ERROR, TAG, "Realloc failed! Current: %" PRIuPTR " Extra: %" PRIuPTR, ctx->writeOffset,
                                                                            dataToWrite);
             resp->payloadLength = 0;
             ctx->writeOffset = 0;
@@ -567,7 +568,7 @@ static size_t CHPEasyHandleWriteCb(char *buffer, size_t size, size_t num, void *
     ctx->writeOffset += dataToWrite;
     resp->payloadLength = ctx->writeOffset;
 
-    OIC_LOG_V(DEBUG, TAG, "%s OUT %u : %u", __func__, resp->payloadLength, dataToWrite);
+    OIC_LOG_V(DEBUG, TAG, "%s OUT %" PRIuPTR " : %" PRIuPTR, __func__, resp->payloadLength, dataToWrite);
     return dataToWrite;
 }
 
@@ -867,4 +868,3 @@ OCStackResult CHPPostHttpRequest(HttpRequest_t *req, CHPResponseCallback httpcb,
     OIC_LOG_V(DEBUG, TAG, "%s OUT", __func__);
     return OC_STACK_OK;
 }
-

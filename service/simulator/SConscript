@@ -41,29 +41,32 @@ simulator_env.AppendUnique(CPPPATH=[
     'src/client',
     'src/server',
     'src/common',
-    '../../resource/include/',
-    '../../resource/csdk/include',
-    '../../resource/csdk/stack/include',
-    '../../resource/c_common/ocrandom/include',
-    '../../resource/csdk/logger/include',
-    '../../resource/oc_logger/include',
+    '#/resource/include/',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/c_common/ocrandom/include',
+    '#/resource/csdk/logger/include',
+    '#/resource/oc_logger/include',
     './ramlparser/raml',
     './ramlparser/raml/model',
     './ramlparser/raml/jsonSchemaParser',
-    '../../extlibs/yaml/yaml/include',
+    '#/extlibs/yaml/yaml/include'
 ])
 
 # Including Java path for building JNI files
 try:
     os.environ['JAVA_HOME']
 except KeyError:
-    print '''
+    msg = '''
 *************************************** Error *********************************
 * JAVA_HOME environment variable not set                                      
 * Simulator has dependency on java, Please set environment variable JAVA_HOME
 *******************************************************************************
-	'''
-    sys.exit(1)
+'''
+    Exit(msg)
 
 java_headers = [os.path.join(os.environ['JAVA_HOME'], 'include')]
 java_headers.append(os.path.join(java_headers[0], 'win32'))

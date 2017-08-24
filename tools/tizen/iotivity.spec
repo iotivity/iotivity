@@ -265,6 +265,7 @@ mkdir -p %{ex_install_dir}/provision-sample
 
 
 cp ./resource/csdk/security/include/*.h %{buildroot}%{_includedir}
+cp ./resource/csdk/security/include/*/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/connectivity/api/*.h %{buildroot}%{_includedir}/
 cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
@@ -282,7 +283,8 @@ cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/oic_svr_db_cl
 cp resource/c_common/*.h %{buildroot}%{_includedir}
 cp resource/csdk/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
-cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
+install -d %{buildroot}%{_includedir}/experimental/
+cp resource/csdk/logger/include/experimental/*.h %{buildroot}%{_includedir}/experimental/
 
 install -d %{buildroot}%{_includedir}/iotivity
 ln -fs ../resource %{buildroot}%{_includedir}/iotivity/

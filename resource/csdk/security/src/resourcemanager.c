@@ -20,7 +20,6 @@
 
 #include <string.h>
 #include "resourcemanager.h"
-#include "securevirtualresourcetypes.h"
 #include "aclresource.h"
 #include "pstatresource.h"
 #include "doxmresource.h"
@@ -28,14 +27,13 @@
 #include "amaclresource.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "utlist.h"
 
 //#ifdef DIRECT_PAIRING
 #include "pconfresource.h"
 #include "dpairingresource.h"
 //#endif // DIRECT_PAIRING
-#include "verresource.h"
 
 #define TAG "OIC_SRM_RM"
 
@@ -125,10 +123,6 @@ OCStackResult InitSecureResources( )
         ret = InitDpairingResource();
     }
 //#endif // DIRECT_PAIRING
-    if(OC_STACK_OK == ret)
-    {
-        ret = InitVerResource();
-    }
     if(OC_STACK_OK != ret)
     {
         //TODO: Update the default behavior if one of the SVR fails
@@ -153,7 +147,6 @@ OCStackResult DestroySecureResources( )
     DeInitPconfResource();
     DeInitDpairingResource();
 //#endif // DIRECT_PAIRING
-    DeInitVerResource();
 
     return OC_STACK_OK;
 }

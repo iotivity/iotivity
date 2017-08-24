@@ -21,11 +21,11 @@
 #ifndef ACL_LOGGING_H_
 #define ACL_LOGGING_H_
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "utlist.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C"

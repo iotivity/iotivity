@@ -21,8 +21,7 @@
 #include "deviceonboardingstate.h"
 #include "srmutility.h"
 #include "octypes.h"
-#include "logger.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/logger.h"
 #include "srmresourcestrings.h"
 #include "aclresource.h"
 #include "amaclresource.h"
@@ -78,6 +77,10 @@ static bool IsValidStateTransition(OicSecDeviceOnboardingState_t oldState,
         {
             ret = true;
         }
+        break;
+        case DOS_STATE_COUNT:
+        // The DOS_STATE_COUNT should never be passed into this function
+        assert(false);
         break;
     }
 
@@ -412,7 +415,7 @@ static bool EnterRESET()
     // Unset pstat.tm and set TAKE_OWNER
     // Set pstat.dos.s to RESET
     VERIFY_SUCCESS(TAG,
-        EnterStateGeneric(false, true, false, false, false, DOS_RESET),
+        EnterStateGeneric(false, true, false, false, true, DOS_RESET),
         ERROR);
 
 exit:
@@ -428,10 +431,12 @@ static bool EnterSRESET()
     bool ret = false;
 
     // Set pstat.isop = FALSE
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatIsop(false), ERROR);
-
-    // Set pstat.dos to SRESET
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatDosS(DOS_SRESET), ERROR);
+    // Set pstat.cm RESET and unset TAKE_OWNER
+    // Unset pstat.tm and unset TAKE_OWNER
+    // Set pstat.dos.s to RESET
+    VERIFY_SUCCESS(TAG,
+        EnterStateGeneric(false, true, false, false, false, DOS_SRESET),
+        ERROR);
 
     ret = true;
 
@@ -536,6 +541,10 @@ static OCStackResult DoStateChange(OicSecDeviceOnboardingState_t newState)
         {
             ret = OC_STACK_FORBIDDEN_REQ;
         }
+        break;
+        case DOS_STATE_COUNT:
+        // The DOS_STATE_COUNT should never be passed into this function
+        assert(false);
         break;
     }
 
