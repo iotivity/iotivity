@@ -27,6 +27,7 @@
 #include <srmutility.h>
 #include <OCProvisioningManager.hpp>
 #include <gtest/gtest.h>
+#include "provisioningdatabasemanager.h"
 
 #define TIMEOUT 5
 
@@ -44,6 +45,7 @@ namespace OCProvisioningTest
     {
         std::string dbPath("");
         EXPECT_EQ(OC_STACK_OK, OCSecure::provisionInit(dbPath));
+        EXPECT_EQ(OC_STACK_OK, PDMClose());
     }
 
     TEST(ProvisionInitTest, TestValidPath)
