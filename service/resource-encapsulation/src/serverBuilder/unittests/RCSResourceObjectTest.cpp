@@ -415,7 +415,6 @@ public:
         auto request = make_shared<OCResourceRequest>();
 
         OCEntityHandlerRequest ocEntityHandlerRequest;
-
         memset(&ocEntityHandlerRequest, 0, sizeof(OCEntityHandlerRequest));
         OC::MessageContainer mc;
 
@@ -430,9 +429,7 @@ public:
         if(!interface.empty())
         {
             const string query = string("if=" + interface);
-            auto cQuery = new char [query.size()+1];
-            std::strcpy(cQuery, query.c_str());
-            ocEntityHandlerRequest.query = const_cast<char *> (cQuery);
+            ocEntityHandlerRequest.query = strdup(query.c_str());
         }
 
         formResourceRequest(OC_REQUEST_FLAG, &ocEntityHandlerRequest, request);

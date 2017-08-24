@@ -23,7 +23,7 @@ LIB_PATH = SRC_PATH
 WJSXMPPXEP_LIBS = ['wksxmppxep', 'm', 'crypto']
 
 if with_ra_ibb:
-    env.SConscript('#extlibs/libstrophe/SConscript')
+    env.SConscript('#/extlibs/libstrophe/SConscript')
     if not os.path.exists(INC_PATH):
         raxmpp_env = Environment(ENV=os.environ)
         c = raxmpp_env.Action([

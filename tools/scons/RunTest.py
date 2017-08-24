@@ -72,7 +72,7 @@ def run_test(env, xml_file, test, test_targets = ['test']):
     env.AlwaysBuild(ut)
 
 def run_uwp_wack_test(env, cert_file, appx_file, report_output_path):
-    if env.get('TARGET_OS') != 'windows' or env.get('UWP_APP') != '1':
+    if env.get('TARGET_OS') != 'windows' or env.get('MSVC_UWP_APP') != '1':
         return
 
     import winreg
