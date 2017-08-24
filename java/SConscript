@@ -22,6 +22,12 @@ if env.get('WITH_TCP'):
     TCP = 1
 else:
     TCP = 0
+
+if env.get('WITH_WS'):
+    WS=1
+else:
+    WS=0
+
 if env.get('MULTIPLE_OWNER'):
     ANDROID_MULTIPLE_OWNER = 1
 else:
@@ -111,10 +117,10 @@ if target_os == 'android':
 jdk_env = Environment(ENV=os.environ)
 jdk_env['BUILDERS']['Gradle'] = Builder(
     action=env.get('ANDROID_GRADLE') + ' build -b ' + env.get('SRC_DIR') +
-    '/java/iotivity-%s/build.gradle -PPROJECT_VERSION=%s -PWITH_TRANSPORT_EDR=%s -PWITH_TRANSPORT_BLE=%s -PWITH_TRANSPORT_NFC=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s -PMULTIPLE_OWNER=%s -PBUILD_DIR=%s --stacktrace'
+    '/java/iotivity-%s/build.gradle -PPROJECT_VERSION=%s -PWITH_TRANSPORT_EDR=%s -PWITH_TRANSPORT_BLE=%s -PWITH_TRANSPORT_NFC=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s -PWITH_WS=%s -PMULTIPLE_OWNER=%s -PBUILD_DIR=%s --stacktrace'
     % (target_variant, PROJECT_VERSION, TRANSPORT_EDR, TRANSPORT_BLE, TRANSPORT_NFC,
        TARGET_ARCH, RELEASE, SECURED, SECURED, CLOUD, RD_MODE, MQ_PUB, MQ_SUB,
-       MQ_BROKER, TCP, ANDROID_MULTIPLE_OWNER, env.get('BUILD_DIR')),
+       MQ_BROKER, TCP, WS, ANDROID_MULTIPLE_OWNER, env.get('BUILD_DIR')),
     emitter=ensure_libs)
 jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
 cmdBuildApi = jdk_env.Gradle(
@@ -123,10 +129,10 @@ cmdBuildApi = jdk_env.Gradle(
 
 jdk_env['BUILDERS']['Gradle'] = Builder(
     action=env.get('ANDROID_GRADLE') + ' build -b ' +
-    'java/examples-%s/build.gradle -PPROJECT_VERSION=%s -DWITH_TRANSPORT_EDR=%s -DWITH_TRANSPORT_BLE=%s -DWITH_TRANSPORT_NFC=%s -PTARGET_OS=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s -PMULTIPLE_OWNER=%s -PBUILD_DIR=%s --stacktrace'
+    'java/examples-%s/build.gradle -PPROJECT_VERSION=%s -DWITH_TRANSPORT_EDR=%s -DWITH_TRANSPORT_BLE=%s -DWITH_TRANSPORT_NFC=%s -PTARGET_OS=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s -PWITH_WS=%s -PMULTIPLE_OWNER=%s -PBUILD_DIR=%s --stacktrace'
     % (target_variant, PROJECT_VERSION, TRANSPORT_EDR, TRANSPORT_BLE,
        TRANSPORT_NFC, target_os, TARGET_ARCH, RELEASE, SECURED, SECURED, CLOUD,
-       RD_MODE, MQ_PUB, MQ_SUB, MQ_BROKER, TCP, ANDROID_MULTIPLE_OWNER,
+       RD_MODE, MQ_PUB, MQ_SUB, MQ_BROKER, TCP, WS, ANDROID_MULTIPLE_OWNER,
        env.get('BUILD_DIR')))
 #cmdBuildExamples=jdk_env.Gradle(target="../examples-%s/devicediscoveryclient/apk" % (target_variant, ), source="examples-%s/devicediscoveryclient/src/main/java/org/iotivity/base/examples/DeviceDiscoveryClient.java" % (target_variant, ))
 cmdBuildExamples = jdk_env.Gradle(

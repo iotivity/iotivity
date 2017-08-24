@@ -51,9 +51,13 @@
 #include "catcpadapter.h"
 #endif
 
+#ifdef WS_ADAPTER
+#include "cawsadapter.h"
+#endif
+
 #define TAG "OIC_CA_INF_CTR"
 
-#if defined(TCP_ADAPTER) || defined(EDR_ADAPTER) || defined(LE_ADAPTER)
+#if defined(TCP_ADAPTER) || defined(EDR_ADAPTER) || defined(LE_ADAPTER) || defined(WS_ADAPTER)
 #define STATEFUL_PROTOCOL_SUPPORTED
 #endif
 
@@ -455,6 +459,15 @@ CAResult_t CAInitializeAdapters(ca_thread_pool_t handle, CATransportAdapter_t tr
                         CAAdapterErrorHandleCallback, handle);
     }
 #endif /* NFC_ADAPTER */
+
+#ifdef WS_ADAPTER
+    if ((transportType & CA_ADAPTER_WS) || (CA_DEFAULT_ADAPTER == transportType)
+            || (transportType == CA_ALL_ADAPTERS))
+    {
+        CAInitializeWS(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
+                        CAConnectionChangedCallback, CAAdapterErrorHandleCallback, handle);
+    }
+#endif /* WS_ADAPTER */
 
 #ifndef SINGLE_THREAD
     CAResult_t res = CA_STATUS_OK;

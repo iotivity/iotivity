@@ -58,7 +58,7 @@ if target_os in ['windows', 'msys_nt']:
 
 if target_os not in ['darwin', 'msys_nt', 'windows']:
     tools_env.PrependUnique(LIBS=[
-        'octbstack', 'ocsrm', 'm', 'mbedtls', 'mbedx509', 'mbedcrypto'
+        'octbstack', 'ocsrm', 'm', 'mbedtls', 'mbedx509', 'mbedcrypto', 'pthread'
     ])
 else:
     if target_os in ['darwin']:

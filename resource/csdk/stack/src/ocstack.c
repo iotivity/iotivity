@@ -166,6 +166,10 @@ void* defaultDeviceHandlerCallbackParameter = NULL;
 static const char COAP_TCP_SCHEME[] = "coap+tcp:";
 static const char COAPS_TCP_SCHEME[] = "coaps+tcp:";
 static const char CORESPEC[] = "core";
+#ifdef WS_ADAPTER
+static const char COAP_WS_SCHEME[] = "coap+ws:";
+static const char COAPS_WS_SCHEME[] = "coaps+ws:";
+#endif
 
 CAAdapterStateChangedCB g_adapterHandler = NULL;
 CAConnectionStateChangedCB g_connectionHandler = NULL;
@@ -2954,6 +2958,8 @@ CAMessageType_t qualityOfServiceToMessageType(OCQualityOfService qos)
  *      CoAP over TCP prefix    "coap+tcp://"
  *      CoAP over DTLS prefix   "coaps://"
  *      CoAP over TLS prefix    "coaps+tcp://"
+ *      CoAP over WS prefix     "coap+ws://"
+ *      CoAP over WSS prefix    "coaps+ws://"
  *  optionally one of
  *      IPv6 address            "[1234::5678]"
  *      IPv4 address            "192.168.1.1"
@@ -3006,6 +3012,9 @@ static OCStackResult ParseRequestUri(const char *fullUri,
     // process url scheme
     size_t prefixLen = slash2 - fullUri;
     bool istcp = false;
+#ifdef WS_ADAPTER
+    bool isws = false;
+#endif //WS_ADAPTER
     if (prefixLen)
     {
         if (((prefixLen == sizeof(COAP_TCP_SCHEME) - 1) && (!strncmp(fullUri, COAP_TCP_SCHEME, prefixLen)))
@@ -3013,6 +3022,13 @@ static OCStackResult ParseRequestUri(const char *fullUri,
         {
             istcp = true;
         }
+#ifdef WS_ADAPTER
+        else if (((prefixLen == sizeof(COAP_WS_SCHEME) - 1) && (!strncmp(fullUri, COAP_WS_SCHEME, prefixLen)))
+             || ((prefixLen == sizeof(COAPS_WS_SCHEME) - 1) && (!strncmp(fullUri, COAPS_WS_SCHEME, prefixLen))))
+        {
+            isws = true;
+        }
+#endif //WS_ADAPTER
     }
 
     // TODO: this logic should come in with unit tests exercising the various strings
@@ -3040,6 +3056,12 @@ static OCStackResult ParseRequestUri(const char *fullUri,
             {
                 adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_TCP);
             }
+#ifdef WS_ADAPTER
+            else if (isws)
+            {
+                adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_WS);
+            }
+#endif //WS_ADAPTER
             else
             {
                 adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_IP);
@@ -3059,6 +3081,13 @@ static OCStackResult ParseRequestUri(const char *fullUri,
                     // coap over tcp
                     adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_TCP);
                 }
+#ifdef WS_ADAPTER
+                else if (isws)
+                {
+                    // coap over web sockets
+                    adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_WS);
+                }
+#endif //WS_ADAPTER
                 else
                 {
                     adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_IP);
@@ -4146,6 +4175,9 @@ OCStackResult OC_CALL OCCreateResourceWithEp(OCResourceHandle *handle,
 #endif
 #ifdef RA_ADAPTER
     validTps = (OCTpsSchemeFlags)(validTps | OC_COAP_RA);
+#endif
+#ifdef WS_ADAPTER
+    validTps = (OCTpsSchemeFlags)(validTps | OC_COAP_WS | OC_COAPS_WS);
 #endif
 
     if ((resourceTpsTypes < OC_COAP) || ((resourceTpsTypes != OC_ALL) &&
@@ -5800,6 +5832,10 @@ CAResult_t OCSelectNetwork(OCTransportAdapter transportType)
 
 #ifdef TCP_ADAPTER
             ,CA_ADAPTER_TCP
+#endif
+
+#ifdef WS_ADAPTER
+            ,CA_ADAPTER_WS
 #endif
         };
     int numConnTypes = sizeof(connTypes)/sizeof(connTypes[0]);

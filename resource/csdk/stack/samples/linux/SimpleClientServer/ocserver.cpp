@@ -914,6 +914,15 @@ int createLightResource (char *uri, LightResource *lightResource)
         endpointFlags = (OCTpsSchemeFlags)(OC_COAP | OC_COAP_TCP);
         break;
 #endif
+#ifdef WS_ADAPTER
+        case CREATE_RESOURCE_OC_COAP_WS:
+        endpointFlags = OC_COAP_WS;
+        break;
+
+        case CREATE_RESOURCE_OC_COAP_WITH_WS:
+        endpointFlags = (OCTpsSchemeFlags)(OC_COAP | OC_COAP_WS);
+        break;
+#endif
         default:
         endpointFlags = OC_ALL;
     }
@@ -1084,6 +1093,10 @@ static void PrintUsage()
     OIC_LOG(INFO, TAG, "-e 3 : Create resource with endpoint flag OC_COAP_TCP");
     OIC_LOG(INFO, TAG, "-e 4 : Create resource with endpoint flag OC_COAP | OC_COAP_TCP");
 #endif
+#ifdef WS_ADAPTER
+    OIC_LOG(INFO, TAG, "-e 5 : Create resource with endpoint flag OC_COAP_WS");
+    OIC_LOG(INFO, TAG, "-e 6 : Create resource with endpoint flag OC_COAP | OC_COAP_WS");
+#endif
 }
 
 #ifdef RA_ADAPTER
@@ -1244,6 +1257,16 @@ int main(int argc, char* argv[])
         if (deviceFlags & OC_COAP_RFCOMM)
         {
             OICStrcat(strBuff, sizeof(strBuff), ", OC_COAP_RFCOMM");
+        }
+#endif
+#ifdef WS_ADAPTER
+        if (deviceFlags & OC_COAP_WS)
+        {
+            OICStrcat(strBuff, sizeof(strBuff), ", OC_COAP_WS");
+        }
+        if (deviceFlags & OC_COAPS_WS)
+        {
+            OICStrcat(strBuff, sizeof(strBuff), ", OC_COAPS_WS");
         }
 #endif
         OIC_LOG_V(INFO, TAG, "Endpoint flag %s is supported", strBuff);

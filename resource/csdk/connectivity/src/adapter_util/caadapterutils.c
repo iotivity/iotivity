@@ -411,6 +411,9 @@ void CALogAdapterTypeInfo(CATransportAdapter_t adapter)
         case CA_ADAPTER_TCP:
             OIC_LOG(DEBUG, ANALYZER_TAG, "Transport Type = [OC_ADAPTER_TCP]");
             break;
+        case CA_ADAPTER_WS:
+            OIC_LOG(DEBUG, ANALYZER_TAG, "Transport Type = [OC_ADAPTER_WS]");
+            break;
         case CA_ADAPTER_GATT_BTLE:
             OIC_LOG(DEBUG, ANALYZER_TAG, "Transport Type = [OC_ADAPTER_GATT_BTLE]");
             break;

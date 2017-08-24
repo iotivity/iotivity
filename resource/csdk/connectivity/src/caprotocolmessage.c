@@ -54,6 +54,39 @@ static const char COAP_URI_HEADER[] = "coap://[::]/";
 
 static char g_chproxyUri[CA_MAX_URI_LENGTH];
 
+static CAResult_t GetOptionsLength(coap_list_t *options, size_t *optsLength)
+{
+    *optsLength = 0;
+    if (options)
+    {
+        unsigned short prevOptNumber = 0;
+        for (coap_list_t *opt = options; opt; opt = opt->next)
+        {
+            unsigned short curOptNumber = COAP_OPTION_KEY(*(coap_option *) opt->data);
+            if (prevOptNumber > curOptNumber)
+            {
+                OIC_LOG(ERROR, TAG, "option list is wrong");
+                return CA_STATUS_FAILED;
+            }
+
+            size_t optValueLen = COAP_OPTION_LENGTH(*(coap_option *) opt->data);
+            size_t optLength = coap_get_opt_header_length(curOptNumber - prevOptNumber, optValueLen);
+            if (0 == optLength)
+            {
+                OIC_LOG(ERROR, TAG, "Reserved for the Payload marker for the option");
+                return CA_STATUS_FAILED;
+            }
+            *optsLength += optLength;
+            prevOptNumber = curOptNumber;
+            OIC_LOG_V(DEBUG, TAG, "curOptNumber[%d], prevOptNumber[%d], optValueLen[%zu], "
+                    "optLength[%zu], msgLength[%d]",
+                      curOptNumber, prevOptNumber, optValueLen, optLength, *optsLength);
+        }
+    }
+
+    return CA_STATUS_OK;
+}
+
 CAResult_t CASetProxyUri(const char *uri)
 {
     VERIFY_NON_NULL(uri, TAG, "uri");
@@ -191,13 +224,24 @@ coap_pdu_t *CAParsePDU(const char *data, size_t length, uint32_t *outCode,
     VERIFY_NON_NULL_RET(data, TAG, "data", NULL);
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
 
-    coap_transport_t transport = COAP_UDP;
+    coap_transport_t transport;
 #ifdef WITH_TCP
     if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         transport = coap_get_tcp_header_type_from_initbyte(((unsigned char *)data)[0] >> 4);
     }
+    else
 #endif
+#ifdef WITH_WS
+    if (CAIsSupportedCoAPOverWS(endpoint->adapter))
+    {
+        transport = COAP_WS;
+    }
+    else
+#endif
+    {
+        transport = COAP_UDP;
+    }
 
     coap_pdu_t *outpdu =
         coap_pdu_init2(0, 0, ntohs((unsigned short)COAP_INVALID_TID), length, transport);
@@ -219,6 +263,13 @@ coap_pdu_t *CAParsePDU(const char *data, size_t length, uint32_t *outCode,
 
 #ifdef WITH_TCP
     if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
+    {
+        OIC_LOG(INFO, TAG, "there is no version info in coap header");
+    }
+    else
+#endif
+#ifdef WITH_WS
+    if (CAIsSupportedCoAPOverWS(endpoint->adapter))
     {
         OIC_LOG(INFO, TAG, "there is no version info in coap header");
     }
@@ -268,32 +319,13 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
     size_t msgLength = 0;
     if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
-        if (options)
+        size_t optsLength = 0;
+        if(CA_STATUS_OK != GetOptionsLength(options, &optsLength))
         {
-            unsigned short prevOptNumber = 0;
-            for (coap_list_t *opt = options; opt; opt = opt->next)
-            {
-                unsigned short curOptNumber = COAP_OPTION_KEY(*(coap_option *) opt->data);
-                if (prevOptNumber > curOptNumber)
-                {
-                    OIC_LOG(ERROR, TAG, "option list is wrong");
-                    return NULL;
-                }
-
-                size_t optValueLen = COAP_OPTION_LENGTH(*(coap_option *) opt->data);
-                size_t optLength = coap_get_opt_header_length(curOptNumber - prevOptNumber, optValueLen);
-                if (0 == optLength)
-                {
-                    OIC_LOG(ERROR, TAG, "Reserved for the Payload marker for the option");
-                    return NULL;
-                }
-                msgLength += optLength;
-                prevOptNumber = curOptNumber;
-                OIC_LOG_V(DEBUG, TAG, "curOptNumber[%d], prevOptNumber[%d], optValueLen[%" PRIuPTR "], "
-                        "optLength[%" PRIuPTR "], msgLength[%" PRIuPTR "]",
-                          curOptNumber, prevOptNumber, optValueLen, optLength, msgLength);
-            }
+            return NULL;
         }
+
+        msgLength += optsLength;
 
         if (info->payloadSize > 0)
         {
@@ -303,6 +335,27 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
         *transport = coap_get_tcp_header_type_from_size((unsigned int)msgLength);
         length = msgLength + coap_get_tcp_header_length_for_transport(*transport)
                 + info->tokenLength;
+    }
+    else
+#endif
+#ifdef WITH_WS
+    if (CAIsSupportedCoAPOverWS(endpoint->adapter))
+    {
+        size_t msgLength = 0;
+        size_t optsLength = 0;
+        if(CA_STATUS_OK != GetOptionsLength(options, &optsLength))
+        {
+            return NULL;
+        }
+
+        msgLength += optsLength;
+
+        if (info->payloadSize > 0)
+        {
+            msgLength = msgLength + info->payloadSize + PAYLOAD_MARKER;
+        }
+        *transport = COAP_WS;
+        length = msgLength + COAP_WS_HEADER + info->tokenLength;
     }
     else
 #endif
@@ -329,6 +382,9 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
         coap_add_length(pdu, *transport, (unsigned int)msgLength);
     }
     else
+#endif
+#ifdef WITH_WS
+    if (!CAIsSupportedCoAPOverWS(endpoint->adapter))
 #endif
     {
         OIC_LOG_V(DEBUG, TAG, "msgID is %d", info->messageId);
@@ -370,6 +426,9 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
     if (CA_ADAPTER_GATT_BTLE != endpoint->adapter
 #ifdef WITH_TCP
             && !CAIsSupportedCoAPOverTCP(endpoint->adapter)
+#endif
+#ifdef WITH_WS
+            && !CAIsSupportedCoAPOverWS(endpoint->adapter)
 #endif
             )
     {
@@ -760,6 +819,13 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     }
     else
 #endif
+#ifdef WITH_WS
+    if (CAIsSupportedCoAPOverWS(endpoint->adapter))
+    {
+        transport = COAP_WS;
+    }
+    else
+#endif
     {
         transport = COAP_UDP;
     }
@@ -793,7 +859,17 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
         outInfo->payloadFormat = CA_FORMAT_UNDEFINED;
     }
     else
-#else
+#endif
+#ifdef WITH_WS
+    if (CAIsSupportedCoAPOverWS(endpoint->adapter))
+    {
+        // set type
+        outInfo->type = CA_MSG_NONCONFIRM;
+        outInfo->payloadFormat = CA_FORMAT_UNDEFINED;
+    }
+    else
+#endif
+#if !defined(WITH_TCP) && !defined(WITH_WS)
     (void) endpoint;
 #endif
     {
@@ -1118,13 +1194,24 @@ CAResult_t CAGetTokenFromPDU(const coap_hdr_transport_t *pdu_hdr,
     VERIFY_NON_NULL(outInfo, TAG, "outInfo");
     VERIFY_NON_NULL(endpoint, TAG, "endpoint");
 
-    coap_transport_t transport = COAP_UDP;
+    coap_transport_t transport;
 #ifdef WITH_TCP
     if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         transport = coap_get_tcp_header_type_from_initbyte(((unsigned char *)pdu_hdr)[0] >> 4);
     }
+    else
 #endif
+#ifdef WITH_WS
+    if (CAIsSupportedCoAPOverWS(endpoint->adapter))
+    {
+        transport = COAP_WS;
+    }
+    else
+#endif
+    {
+        transport = COAP_UDP;
+    }
 
     unsigned char* token = NULL;
     unsigned int token_length = 0;
@@ -1328,3 +1415,16 @@ bool CAIsSupportedCoAPOverTCP(CATransportAdapter_t adapter)
     return false;
 }
 #endif
+
+#ifdef WITH_WS
+bool CAIsSupportedCoAPOverWS(CATransportAdapter_t adapter)
+{
+    OIC_LOG_V(INFO, TAG, "adapter value is %d", adapter);
+    if (CA_ADAPTER_WS & adapter || CA_DEFAULT_ADAPTER == adapter)
+    {
+        return true;
+    }
+    return false;
+}
+#endif
+

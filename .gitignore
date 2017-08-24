@@ -117,6 +117,7 @@ extlibs/tinycbor/tinycbor
 extlibs/tinydtls/dtls-client
 extlibs/tinydtls/dtls-server
 extlibs/yaml/yaml
+extlibs/libwebsockets/libwebsockets
 
 # Ignore editor (e.g. Emacs) backup and autosave files
 *~

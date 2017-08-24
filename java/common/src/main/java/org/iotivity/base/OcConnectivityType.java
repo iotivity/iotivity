@@ -47,6 +47,9 @@ public enum OcConnectivityType {
     /** NFC Transport.*/
     CT_ADAPTER_NFC(1 << 21),
 
+    /** CoAP over Web Sockets.*/
+    CT_ADAPTER_WS(1 << 22),
+
     /** Insecure transport is the default (subject to change).*/
 
     /** secure the transport path.*/
@@ -126,6 +129,8 @@ public enum OcConnectivityType {
                 return CT_ADAPTER_REMOTE_ACCESS;
             case (1 << 4):
                 return CT_ADAPTER_TCP;
+            case (1 << 6):
+                return CT_ADAPTER_WS;
             default:
                 return CT_DEFAULT;
         }

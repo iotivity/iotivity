@@ -162,6 +162,12 @@ public:
         {
             transport |= OCTransportAdapter::OC_ADAPTER_NFC;
         }
+
+        if(adapter & CT_ADAPTER_WS)
+        {
+            transport |= OCTransportAdapter::OC_ADAPTER_WS;
+        }
+
         return (OCTransportAdapter)transport;
     }
 

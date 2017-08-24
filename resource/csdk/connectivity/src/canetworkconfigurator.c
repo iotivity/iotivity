@@ -55,6 +55,10 @@ static uint32_t NETWORK_RA = CA_ADAPTER_REMOTE_ACCESS;
 static uint32_t NETWORK_TCP = CA_ADAPTER_TCP;
 #endif
 
+#ifdef WS_ADAPTER
+static uint32_t NETWORK_WS = CA_ADAPTER_WS;
+#endif
+
 CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
 {
     if (NULL == g_selectedNetworkList)
@@ -139,6 +143,19 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
            CASelectedNetwork |= CA_ADAPTER_TCP;
            break;
 #endif // TCP_ADAPTER
+
+#ifdef WS_ADAPTER
+        case CA_ADAPTER_WS:
+
+           OIC_LOG(DEBUG, TAG, "Add network type(WS)");
+           if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_WS))
+           {
+               goto exit;
+           }
+           res = u_arraylist_add(g_selectedNetworkList, &NETWORK_WS);
+           CASelectedNetwork |= CA_ADAPTER_WS;
+           break;
+#endif // WS_ADAPTER
 
 
         case CA_ADAPTER_NFC:
@@ -260,6 +277,14 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
                    CASelectedNetwork = CASelectedNetwork & (~CA_ADAPTER_NFC);
                    break;
 #endif // CA_ADAPTER_NFC
+#ifdef WS_ADAPTER
+                case CA_ADAPTER_WS:
+                    OIC_LOG(DEBUG, TAG, "Remove network type(WS)");
+                    u_arraylist_remove(g_selectedNetworkList, index);
+                    CASelectedNetwork = CASelectedNetwork & (~CA_ADAPTER_WS);
+                    break;
+#endif // WS_ADAPTER
+
                 default:
                     break;
             }

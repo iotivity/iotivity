@@ -275,6 +275,15 @@ CAPayloadFormat_t CAConvertFormat(uint16_t format);
 bool CAIsSupportedCoAPOverTCP(CATransportAdapter_t adapter);
 #endif
 
+#ifdef WITH_WS
+/**
+ * check whether CoAP over WebSocket is supported or not.
+ * @param[in]   adapter             transport adapter type.
+ * @return true or false.
+ */
+bool CAIsSupportedCoAPOverWS(CATransportAdapter_t adapter);
+#endif
+
 #ifdef WITH_BWT
 /**
  * check whether blockwise transfer is supported or not.

@@ -147,10 +147,12 @@ OCPayload* createPayload()
 
 static void PrintUsage()
 {
-    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..24> -c <0|1> -i <0|1> -s <0|1>");
+    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..25> -c <0..3> -i <0|1> -s <0|1>");
     OIC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OIC_LOG(INFO, TAG, "-c 0 : Use Default connectivity(IP)");
     OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
+    OIC_LOG(INFO, TAG, "-c 2 : TCP Connectivity Type");
+    OIC_LOG(INFO, TAG, "-c 3 : Web Sockets Connectivity Type");
     OIC_LOG(INFO, TAG, "-t 1  :  Discover Resources");
     OIC_LOG(INFO, TAG, "-t 2  :  Discover Resources and Initiate Nonconfirmable Get Request");
     OIC_LOG(INFO, TAG, "-t 3  :  Discover Resources and Initiate Nonconfirmable Get Request"
@@ -187,7 +189,9 @@ static void PrintUsage()
             "using server's endpoints information");
     OIC_LOG(INFO, TAG, "-t 23 :  Discover Resources and Perform Get Requests by IPv4 + COAP + TCP "\
             "using server's endpoints information");
-    OIC_LOG(INFO, TAG, "-t 24 :  Discover Introspection Resources and Perform Get Request");
+    OIC_LOG(INFO, TAG, "-t 24 :  Discover Resources and Perform Get Requests by IPv4 + COAP + WS "\
+            "using server's endpoints information");
+    OIC_LOG(INFO, TAG, "-t 25 :  Discover Introspection Resources and Perform Get Request");
     OIC_LOG(INFO, TAG, "-s 0 :  Specify the device spec version as core.0.0.0");
     OIC_LOG(INFO, TAG, "-s 1 :  Specify the device spec version as ocf.1.1.0");
 }
@@ -544,10 +548,13 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
                 showEndpointsInfo(resource);
                 break;
             case TEST_GET_REQ_UDP:
-                InitGetRequestWithCoap(payload, true);
+                InitGetRequestWithCoap(payload, COAP_WITH_UDP);
                 break;
             case TEST_GET_REQ_TCP:
-                InitGetRequestWithCoap(payload, false);
+                InitGetRequestWithCoap(payload, COAP_WITH_TCP);
+                break;
+            case TEST_GET_REQ_WS:
+                InitGetRequestWithCoap(payload, COAP_WITH_WS);
                 break;
             case TEST_INTROSPECTION:
                 InitIntrospection(payload);
@@ -904,17 +911,21 @@ int InitPlatformDiscovery(OCQualityOfService qos)
 
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
-    snprintf(szQueryUri, sizeof (szQueryUri) - 1, PLATFORM_DISCOVERY_QUERY, discoveryAddr);
+    std::ostringstream query;
+    if(UnicastDiscovery && strlen(discoveryAddr)>0)
+    {
+        query << getUriScheme(ConnType) << discoveryAddr;
+    }
+    query << OC_RSRVD_PLATFORM_URI;
 
     cbData.cb = PlatformDiscoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
-                      (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                      &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, query.str().c_str(), NULL, 0, ConnType,
+                       (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                       &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack device error");
@@ -929,17 +940,21 @@ int InitDeviceDiscovery(OCQualityOfService qos)
 
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
-    snprintf(szQueryUri, sizeof (szQueryUri) - 1, DEVICE_DISCOVERY_QUERY, discoveryAddr);
+    std::ostringstream query;
+    if(UnicastDiscovery && strlen(discoveryAddr)>0)
+    {
+        query << getUriScheme(ConnType) << discoveryAddr;
+    }
+    query << OC_RSRVD_DEVICE_URI;
 
     cbData.cb = DeviceDiscoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
-                      (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                      &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, query.str().c_str(), NULL, 0, ConnType,
+        (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+        &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack device error");
@@ -952,9 +967,13 @@ int InitDiscovery(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOption
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
-    snprintf(szQueryUri, sizeof (szQueryUri) - 1, RESOURCE_DISCOVERY_QUERY, discoveryAddr);
+    std::ostringstream query;
+    if(UnicastDiscovery && strlen(discoveryAddr)>0)
+    {
+        query << getUriScheme(ConnType) << discoveryAddr;
+    }
+    query << OC_RSRVD_WELL_KNOWN_URI;
 
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
@@ -970,13 +989,13 @@ int InitDiscovery(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOption
         uint16_t optionID = CA_OPTION_ACCEPT;
         OCSetHeaderOption(options, &numOptions, optionID, &format, sizeof(format));
 
-        ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+        ret = OCDoRequest(NULL, OC_REST_DISCOVER, query.str().c_str(), NULL, 0, ConnType,
                               (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
                               &cbData, options, 2);
     }
     else
     {
-        ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+        ret = OCDoRequest(NULL, OC_REST_DISCOVER, query.str().c_str(), NULL, 0, ConnType,
                            (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
                            &cbData, NULL, 0);
     }
@@ -987,7 +1006,15 @@ int InitDiscovery(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOption
     return ret;
 }
 
-int InitGetRequestWithCoap(OCDiscoveryPayload* dis, bool isUdp)
+static const char * getCoapTransportStr(CLIENT_COAP_TRANSPORT_TYPE transportType){
+    switch (transportType) {
+        case COAP_WITH_UDP: return OCCLIENT_COAP_UDP;
+        case COAP_WITH_TCP: return OCCLIENT_COAP_TCP;
+        case COAP_WITH_WS:  return OCCLIENT_COAP_WS;
+    }
+    return OCCLIENT_COAP_EMPTY;
+}
+int InitGetRequestWithCoap(OCDiscoveryPayload* dis, CLIENT_COAP_TRANSPORT_TYPE transportType)
 {
     if (!dis)
     {
@@ -1005,27 +1032,52 @@ int InitGetRequestWithCoap(OCDiscoveryPayload* dis, bool isUdp)
     dev.adapter = OC_DEFAULT_ADAPTER;
 
     // find endpoint with ipv4, UDP or TCP
+    bool found = false;
     OCResourcePayload* res = dis->resources;
     while (res)
     {
+        if(strcmp(res->uri, coapServerResource.c_str()))
+        {
+            res = res->next;
+            continue;
+        }
+
         OCEndpointPayload* eps = res->eps;
         while (eps)
         {
-            if (strcmp(eps->tps, (isUdp ? COAP_UDP : COAP_TCP)) == 0 &&
+            if (strcmp(eps->tps, getCoapTransportStr(transportType)) == 0 &&
                 strlen(eps->addr) < MAX_LENGTH_IPv4_ADDR)
             {
-                OIC_LOG_V(INFO, TAG, "%s found!!!", (isUdp ? COAP_UDP : COAP_TCP));
-                dev.adapter = (isUdp ? OC_ADAPTER_IP : OC_ADAPTER_TCP);
+                OIC_LOG_V(INFO, TAG, "%s found!!!", getCoapTransportStr(transportType));
+                switch(transportType)
+                {
+                    case COAP_WITH_UDP:
+                        dev.adapter = OC_ADAPTER_IP;
+                        break;
+                    case COAP_WITH_TCP:
+                        dev.adapter = OC_ADAPTER_TCP;
+                        break;
+                    case COAP_WITH_WS:
+                        dev.adapter = OC_ADAPTER_WS;
+                        break;
+                }
                 dev.flags = OC_IP_USE_V4;
                 dev.port = eps->port;
                 memcpy(dev.addr, eps->addr, sizeof(dev.addr));
+                found = true;
+                break;
             }
             eps = eps->next;
+        }
+        if(found)
+        {
+            break;
         }
         res = res->next;
     }
 
-    if (dev.adapter == (isUdp ? OC_ADAPTER_IP : OC_ADAPTER_TCP) && dev.flags == OC_IP_USE_V4)
+    if ((dev.adapter == OC_ADAPTER_IP || dev.adapter == OC_ADAPTER_TCP  || dev.adapter == OC_ADAPTER_WS)
+        && dev.flags == OC_IP_USE_V4)
     {
         OIC_LOG_V(INFO, TAG, "dev addr is %s", dev.addr);
         OIC_LOG_V(INFO, TAG, "dev port is %d", dev.port);
@@ -1259,14 +1311,21 @@ int main(int argc, char* argv[])
         usleep(SLEEP_DURATION);
     }
 #endif
-    if (Connectivity == CT_ADAPTER_DEFAULT || Connectivity == CT_IP)
-    {
-        ConnType = CT_ADAPTER_IP;
-    }
-    else
-    {
-        OIC_LOG(INFO, TAG, "Default Connectivity type selected...");
-        PrintUsage();
+    switch(Connectivity){
+        case CT_ADAPTER_DEFAULT:
+        case CT_IP:
+            ConnType = CT_ADAPTER_IP;
+            break;
+        case CT_TCP:
+            ConnType = CT_ADAPTER_TCP;
+            break;
+        case CT_WS:
+            ConnType = CT_ADAPTER_WS;
+            break;
+        default:
+            OIC_LOG(INFO, TAG, "Default Connectivity type selected...");
+            PrintUsage();
+            return(-2);
     }
 
     discoveryAddr[0] = '\0';
@@ -1276,6 +1335,11 @@ int main(int argc, char* argv[])
         OIC_LOG(INFO, TAG, "Enter IP address of server with optional port number");
         OIC_LOG(INFO, TAG, "IPv4: 192.168.0.15:45454\n");
         OIC_LOG(INFO, TAG, "IPv6: [fe80::20c:29ff:fe1b:9c5]:45454\n");
+
+        printf("\n\t\tEnter IP address of server with optional port number");
+        printf("\t\tIPv4: 192.168.0.15:45454\n");
+        printf("\t\tIPv6: [fe80::20c:29ff:fe1b:9c5]:45454\n");
+        printf("\t\tPlease Enter IP Address: ");
 
         if (fgets(discoveryAddr, sizeof(discoveryAddr), stdin))
         {
@@ -1327,12 +1391,36 @@ int main(int argc, char* argv[])
     return 0;
 }
 
+std::string getUriScheme(OCConnectivityType connType)
+{
+    switch (connType & CT_MASK_ADAPTER)
+    {
+        case CT_ADAPTER_IP:
+            return "coap://";
+
+        case CT_ADAPTER_TCP:
+            return "coap+tcp://";
+
+        case CT_ADAPTER_WS:
+            return "coap+ws://";
+
+        default:
+            return "";
+    }
+}
+
 std::string getConnectivityType (OCConnectivityType connType)
 {
     switch (connType & CT_MASK_ADAPTER)
     {
         case CT_ADAPTER_IP:
             return "IP";
+
+        case CT_ADAPTER_TCP:
+            return "TCP";
+
+        case CT_ADAPTER_WS:
+            return "WS";
 
         case CT_IP_USE_V4:
             return "IPv4";

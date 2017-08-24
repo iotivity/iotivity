@@ -43,6 +43,16 @@ options_start(coap_pdu_t *pdu, coap_transport_t transport)
             return (*opt == COAP_PAYLOAD_START) ? NULL : opt;
         }
 #endif
+#ifdef WITH_WS
+        else if(COAP_WS == transport && (pdu->transport_hdr->ws.token +
+                ((pdu->transport_hdr->ws.header_data[0]) & 0x0f)
+                < (unsigned char *) pdu->hdr + pdu->length))
+        {
+            coap_opt_t *opt = pdu->transport_hdr->ws.token +
+                    ((pdu->transport_hdr->ws.header_data[0]) & 0x0f);
+            return (*opt == COAP_PAYLOAD_START) ? NULL : opt;
+        }
+#endif
         return NULL;
     }
     else
@@ -176,6 +186,12 @@ coap_option_iterator_init2(coap_pdu_t *pdu, coap_opt_iterator_t *oi,
             headerSize = COAP_TCP_HEADER_32_BIT;
             break;
 #endif
+#ifdef WITH_WS
+        case COAP_WS:
+            token_length = pdu->transport_hdr->ws.header_data[0] & 0x0f;
+            headerSize = COAP_WS_HEADER;
+            break;
+#endif
         default:
             token_length = pdu->transport_hdr->udp.token_length;
             headerSize = sizeof(pdu->transport_hdr->udp);
@@ -192,6 +208,16 @@ coap_option_iterator_init2(coap_pdu_t *pdu, coap_opt_iterator_t *oi,
             return NULL;
         }
     }
+#ifdef WITH_WS
+    else if(COAP_WS == transport)
+    {
+        if ((unsigned char *) &(pdu->transport_hdr->ws) + pdu->length <= oi->next_option)
+        {
+            oi->bad = 1;
+            return NULL;
+        }
+    }
+#endif
 #ifdef WITH_TCP
     else
     {

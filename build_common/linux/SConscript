@@ -71,3 +71,7 @@ if not env.get('WITH_ENV'):
         env.AppendUnique(CPPFLAGS=['-march=armv7-a'])
     elif target_arch.find('arm64') > 0:
         env.AppendUnique(CPPFLAGS=['-march=armv8-a'])
+
+# WS adpater needs openssl library.
+if env.get('SECURED') == '1' and env.get('WITH_WS') == 1:
+    env.AppendUnique(LIBPATH = ['/usr/local/ssl/lib'])

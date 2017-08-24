@@ -75,6 +75,7 @@ typedef enum {
     CT_ADAPTER_DEFAULT = 0,
     CT_IP,
     CT_EDR,
+    CT_WS,
     MAX_CT
 } CLIENT_CONNECTIVITY_TYPE;
 
@@ -86,6 +87,8 @@ int InitPresence();
 // Function prototype
 //----------------------------------------------------------------------------
 std::string getConnectivityType (OCConnectivityType connType);
+
+std::string getUriScheme(OCConnectivityType connType);
 
 /* call getResult in common.cpp to get the result in string format. */
 const char *getResult(OCStackResult result);

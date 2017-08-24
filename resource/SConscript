@@ -38,6 +38,12 @@ if target_os not in [
 # Download (if not already present) & build libcoap
 SConscript('#extlibs/libcoap/SConscript')
 
+# libwebsockets library build
+with_ws = env.get('WITH_WS')
+if with_ws:
+    if target_os in ['linux', 'tizen', 'android']:
+        SConscript('#extlibs/libwebsockets/SConscript')
+
 # Build csdk
 SConscript('csdk/SConscript')
 

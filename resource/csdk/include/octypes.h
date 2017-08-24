@@ -678,7 +678,11 @@ typedef enum
     OC_ADAPTER_TCP           = (1 << 4),
 
     /** NFC Transport for Messaging.*/
-    OC_ADAPTER_NFC           = (1 << 5)
+    OC_ADAPTER_NFC           = (1 << 5),
+
+    /** CoAP over Web Sockets.*/
+    OC_ADAPTER_WS            = (1 << 6),
+
 } OCTransportAdapter;
 
 typedef enum
@@ -849,6 +853,9 @@ typedef enum
 
     /** NFC Transport.*/
     CT_ADAPTER_NFC     = (1 << 21),
+
+    /** CoAP over Web Sockets.*/
+    CT_ADAPTER_WS      = (1 << 22),
 
     /** Insecure transport is the default (subject to change).*/
 
@@ -1391,6 +1398,13 @@ typedef enum
 #ifdef RA_ADAPTER
     /** coap + remote_access */
     OC_COAP_RA        = (1 << 9),
+#endif
+#ifdef WS_ADAPTER
+    /** coap + ws */
+    OC_COAP_WS       = (1 << 10),
+
+    /** coaps + ws */
+    OC_COAPS_WS      = (1 << 11),
 #endif
     /** Allow all endpoint.*/
     OC_ALL       = 0xffff

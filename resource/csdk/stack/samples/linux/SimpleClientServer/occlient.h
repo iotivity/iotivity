@@ -28,12 +28,15 @@
 // Defines
 //-----------------------------------------------------------------------------
 #define TAG "occlient"
-#define COAP_UDP "coap"
-#define COAP_TCP "coap+tcp"
 #define DEFAULT_CONTEXT_VALUE 0x99
 #ifndef MAX_LENGTH_IPv4_ADDR
 #define MAX_LENGTH_IPv4_ADDR 16
 #endif
+
+const char *OCCLIENT_COAP_EMPTY = "";
+const char *OCCLIENT_COAP_UDP   = "coap";
+const char *OCCLIENT_COAP_TCP   = "coap+tcp";
+const char *OCCLIENT_COAP_WS    = "coap+ws";
 
 //-----------------------------------------------------------------------------
 // Typedefs
@@ -68,6 +71,7 @@ typedef enum {
     TEST_DISCOVER_REQ_SHOW_EPS,
     TEST_GET_REQ_UDP,
     TEST_GET_REQ_TCP,
+    TEST_GET_REQ_WS,
     TEST_INTROSPECTION,
     MAX_TESTS
 } CLIENT_TEST;
@@ -79,8 +83,19 @@ typedef enum {
 typedef enum {
     CT_ADAPTER_DEFAULT = 0,
     CT_IP,
+    CT_TCP,
+    CT_WS,
     MAX_CT
 } CLIENT_CONNECTIVITY_TYPE;
+
+/**
+ * List of COAP with IP/TCP/WS Transport types
+ */
+typedef enum {
+    COAP_WITH_UDP = 0,
+    COAP_WITH_TCP,
+    COAP_WITH_WS,
+} CLIENT_COAP_TRANSPORT_TYPE;
 
 #ifdef WITH_PRESENCE
 int InitPresence();
@@ -90,6 +105,8 @@ int InitPresence();
 // Function prototype
 //----------------------------------------------------------------------------
 std::string getConnectivityType (OCConnectivityType connType);
+
+std::string getUriScheme(OCConnectivityType connType);
 
 /* call getResult in common.cpp to get the result in string format. */
 const char *getResult(OCStackResult result);
@@ -116,7 +133,7 @@ int InitGetRequest(OCQualityOfService qos);
 int InitDeviceDiscovery(OCQualityOfService qos);
 int InitPlatformDiscovery(OCQualityOfService qos);
 int InitDiscovery(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions);
-int InitGetRequestWithCoap(OCDiscoveryPayload* dis, bool isUdp);
+int InitGetRequestWithCoap(OCDiscoveryPayload* dis, CLIENT_COAP_TRANSPORT_TYPE transportType);
 int InitIntrospection(OCDiscoveryPayload* dis);
 
 /* Call delete operation on already deleted resource */

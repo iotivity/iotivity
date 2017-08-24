@@ -28,7 +28,7 @@
 #include "cafragmentation.h"
 #include "caleinterface.h"
 
-#define CA_TRANSPORT_ADAPTER_SCOPE  1000
+#define CA_TRANSPORT_ADAPTER_SCOPE  1024
 #define CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE (((CA_DEFAULT_BLE_MTU_SIZE) - (CA_BLE_HEADER_SIZE)) \
                                            - (CA_BLE_LENGTH_HEADER_SIZE))
 
@@ -81,7 +81,7 @@ void adapter_handler(CATransportAdapter_t /*adapter*/,
 {
 }
 
-void connection_handler(const CAEndpoint_t * /*endpoint*/, 
+void connection_handler(const CAEndpoint_t * /*endpoint*/,
                         bool /*connected*/)
 {
 }
@@ -222,11 +222,11 @@ void provide_supported_credential_types(bool* list, const char* /*deviceId*/)
 {
     list[1] = true;
     /*
-     * Note: there is a default implementation of this in credresource.c, exposed by 
-     * pkix_interface.h, called InitManufacturerCipherSuiteList.  If the cred resource 
-     * has a credential of the required type, it updates list accordingly. 
+     * Note: there is a default implementation of this in credresource.c, exposed by
+     * pkix_interface.h, called InitManufacturerCipherSuiteList.  If the cred resource
+     * has a credential of the required type, it updates list accordingly.
      *
-     * In a separate test, we could use the cred resource and APIs (credresource.h). 
+     * In a separate test, we could use the cred resource and APIs (credresource.h).
      */
     return;
 }
@@ -365,9 +365,9 @@ TEST_F(CATests, DISABLED_PkiTest)
 {
     // @todo: this test is disabled for now, it crashes with an invalid write. Cert data
     // provided by the provide_x509_cert_and_key is stored as const char, but ParseChain()
-    // (in ca_adapter_net_ssl.c) writes to it while reading.  We could change the test to 
+    // (in ca_adapter_net_ssl.c) writes to it while reading.  We could change the test to
     // provide data on the heap, but the CA stack should not be changing data provided to it
-    // by callbacks. 
+    // by callbacks.
 
     const char* local_addr = "127.0.0.1";
     uint16_t local_port = 5503;
@@ -391,7 +391,7 @@ TEST_F(CATests, DISABLED_PkiTest)
 
     // Register a working callback to provide the keys, expect success.
     EXPECT_EQ(CA_STATUS_OK, CAregisterPkixInfoHandler(provide_x509_cert_and_key));
-    EXPECT_EQ(CA_STATUS_OK, CAInitiateHandshake(serverAddr)); 
+    EXPECT_EQ(CA_STATUS_OK, CAInitiateHandshake(serverAddr));
 
     CADestroyEndpoint(serverAddr);
 }
@@ -608,6 +608,11 @@ TEST_F(CATests, GetSelectedNetwork)
     EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_NFC));
     EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
 #endif
+#ifdef WS_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_WS);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_WS));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
 
 #ifdef IP_ADAPTER
     SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_IP) ;
@@ -632,6 +637,11 @@ TEST_F(CATests, GetSelectedNetwork)
 #ifdef NFC_ADAPTER
     SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_NFC);
     EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_NFC));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef WS_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_WS);
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_WS));
     EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
 #endif
 }
@@ -691,6 +701,10 @@ TEST(CASetPortNumberTest, CASetPortNumberToAssign)
     EXPECT_EQ(CA_STATUS_OK, CASetPortNumberToAssign(CA_ADAPTER_TCP, CA_IPV4, 5683));
     EXPECT_EQ(CA_STATUS_OK, CASetPortNumberToAssign(CA_ADAPTER_TCP, CA_IPV6, 5683));
 #endif
+#ifdef WS_ADAPTER
+    EXPECT_EQ(CA_STATUS_OK, CASetPortNumberToAssign(CA_ADAPTER_WS, CA_IPV4, 5683));
+    EXPECT_EQ(CA_STATUS_OK, CASetPortNumberToAssign(CA_ADAPTER_WS, CA_IPV6, 5683));
+#endif
 }
 
 TEST(CAGetPortNumberTest, CAGetPortNumberToAssign)
@@ -708,6 +722,10 @@ TEST(CAGetPortNumberTest, CAGetPortNumberToAssign)
 #ifdef TCP_ADAPTER
     ASSERT_EQ(static_cast<uint16_t>(0), CAGetAssignedPortNumber(CA_ADAPTER_TCP, CA_IPV4));
     ASSERT_EQ(static_cast<uint16_t>(0), CAGetAssignedPortNumber(CA_ADAPTER_TCP, CA_IPV6));
+#endif
+#ifdef WS_ADAPTER
+    ASSERT_EQ(static_cast<uint16_t>(0), CAGetAssignedPortNumber(CA_ADAPTER_WS, CA_IPV4));
+    ASSERT_EQ(static_cast<uint16_t>(0), CAGetAssignedPortNumber(CA_ADAPTER_WS, CA_IPV6));
 #endif
 }
 

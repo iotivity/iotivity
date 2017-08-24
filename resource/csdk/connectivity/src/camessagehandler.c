@@ -599,6 +599,13 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
             }
             else
 #endif
+#ifdef WITH_WS
+            if (CAIsSupportedCoAPOverWS(data->remoteEndpoint->adapter))
+            {
+                OIC_LOG(INFO, TAG, "retransmission will be not worked");
+            }
+            else
+#endif
 #ifdef ROUTING_GATEWAY
             if (!skipRetransmission)
 #endif
@@ -631,9 +638,9 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
     else if (SEND_TYPE_MULTICAST == type)
     {
         OIC_LOG(DEBUG,TAG,"Multicast message");
-#ifdef WITH_TCP
+#if defined(WITH_TCP) || defined(WITH_WS)
         /*
-         * If CoAP over TCP is enabled, the CoAP pdu wont be same for IP and other adapters.
+         * If CoAP over TCP or CoAP over WS is enabled, the CoAP pdu wont be same for IP and other adapters.
          * That's why we need to generate two pdu's, one for IP and second for other transports.
          * Two possible cases we might have to split: a) when adapter is CA_DEFAULT_ADAPTER
          * b) when one of the adapter is IP adapter(ex: CA_ADAPTER_IP | CA_ADAPTER_GATT_BTLE)
@@ -782,6 +789,13 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
 
 #ifdef WITH_TCP
         if (CAIsSupportedCoAPOverTCP(sep->endpoint.adapter))
+        {
+            OIC_LOG(INFO, TAG, "retransmission is not supported");
+        }
+        else
+#endif
+#ifdef WITH_WS
+        if (CAIsSupportedCoAPOverWS(sep->endpoint.adapter))
         {
             OIC_LOG(INFO, TAG, "retransmission is not supported");
         }

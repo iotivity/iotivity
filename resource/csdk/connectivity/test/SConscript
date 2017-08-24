@@ -124,3 +124,7 @@ if catest_env.get('TEST') == '1':
         run_test(catest_env,
                  'resource_csdk_connectivity_test.memcheck',
                  'resource/csdk/connectivity/test/catests')
+
+if catest_env.get('WITH_WS') == True:
+    if target_os in ['linux']:
+        SConscript('ws_adapter/SConscript', exports = 'test_env');

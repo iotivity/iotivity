@@ -619,14 +619,16 @@ void PrintUsage()
 
 static FILE* client_open(const char* path, const char* mode)
 {
-    if (strcmp(path, OC_INTROSPECTION_FILE_NAME) == 0)
+    char const * filename = path;
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
     {
-        return fopen("light_introspection.json", mode);
+        filename = SVR_DB_FILE_NAME;
     }
-    else
+    else if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME))
     {
-        return fopen(SVR_DB_FILE_NAME, mode);
+        filename = "light_introspection.json";
     }
+    return fopen(filename, mode);
 }
 
 int main(int argc, char* argv[])
@@ -675,8 +677,9 @@ int main(int argc, char* argv[])
         &ps
     };
 
-    cfg.transportType = static_cast<OCTransportAdapter>(OCTransportAdapter::OC_ADAPTER_IP | 
-                                                        OCTransportAdapter::OC_ADAPTER_TCP);
+    cfg.transportType = static_cast<OCTransportAdapter>(OCTransportAdapter::OC_ADAPTER_IP |
+                                                        OCTransportAdapter::OC_ADAPTER_TCP |
+                                                        OCTransportAdapter::OC_ADAPTER_WS);
     cfg.QoS = OC::QualityOfService::LowQos;
 
     OCPlatform::Configure(cfg);

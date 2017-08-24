@@ -405,38 +405,39 @@ void foundResource(std::shared_ptr<OCResource> resource)
                 std::cout << "\t\t" << resourceEndpoints << std::endl;
             }
 
-            // If resource is found from ip based adapter.
-            if (std::string::npos != resource->host().find("coap://") ||
-                std::string::npos != resource->host().find("coaps://") ||
-                std::string::npos != resource->host().find("coap+tcp://") ||
-                std::string::npos != resource->host().find("coaps+tcp://"))
-            {
-                for(auto &resourceEndpoints : resource->getAllHosts())
-                {
-                    if (resourceEndpoints.compare(resource->host()) != 0 &&
-                        std::string::npos == resourceEndpoints.find("coap+rfcomm"))
-                    {
-                        std::string newHost = resourceEndpoints;
-
-                        if (std::string::npos != newHost.find("tcp"))
-                        {
-                            TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_TCP;
-                        }
-                        else
-                        {
-                            TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_IP;
-                        }
-                        // Change Resource host if another host exists
-                        std::cout << "\tChange host of resource endpoints" << std::endl;
-                        std::cout << "\t\t" << "Current host is "
-                                  << resource->setHost(newHost) << std::endl;
-                        break;
-                    }
-                }
-            }
-
             if(resourceURI == "/a/light")
             {
+                if (std::string::npos != resource->host().find("coap://") ||
+                    std::string::npos != resource->host().find("coaps://") ||
+                    std::string::npos != resource->host().find("coap+tcp://") ||
+                    std::string::npos != resource->host().find("coaps+tcp://") ||
+                    std::string::npos != resource->host().find("coap+ws://") ||
+                    std::string::npos != resource->host().find("coaps+ws://"))
+                {
+                    for(auto &resourceEndpoint : resource->getAllHosts())
+                    {
+                        if (resourceEndpoint.compare(resource->host()) != 0 &&
+                            std::string::npos == resourceEndpoint.find("coap+rfcomm"))
+                        {
+                            std::string newHost = resourceEndpoint;
+
+                            if ((std::string::npos != newHost.find("tcp") &&
+                                (OCConnectivityType::CT_ADAPTER_TCP == TRANSPORT_TYPE_TO_USE)) ||
+                                (std::string::npos != newHost.find("ws") &&
+                                (OCConnectivityType::CT_ADAPTER_WS == TRANSPORT_TYPE_TO_USE)) ||
+                                (std::string::npos == newHost.find("+") &&
+                                (OCConnectivityType::CT_ADAPTER_IP == TRANSPORT_TYPE_TO_USE)))
+                            {
+                                // Change Resource host if another host exists
+                                std::cout << "\tChange host of resource endpoints" << std::endl;
+                                std::cout << "\t\t" << "Current host is "
+                                          << resource->setHost(newHost) << std::endl;
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 if (resource->connectivityType() & TRANSPORT_TYPE_TO_USE)
                 {
                     curResource = resource;
@@ -470,6 +471,7 @@ void printUsage()
     std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
     std::cout << "   TransportType : 1 - IP" << std::endl;
     std::cout << "   TransportType : 2 - TCP" << std::endl;
+    std::cout << "   TransportType : 3 - WS" << std::endl;
     std::cout << "---------------------------------------------------------------------\n\n";
 }
 
@@ -503,6 +505,11 @@ void checkTransportValue(int value)
     {
         TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_TCP;
         std::cout << "<===Setting TransportType to TCP===>\n\n";
+    }
+    else if (3 == value)
+    {
+        TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_WS;
+        std::cout << "<===Setting TransportType to WS===>\n\n";
     }
     else
     {
@@ -562,8 +569,9 @@ int main(int argc, char* argv[]) {
         &ps
     };
 
-    cfg.transportType = static_cast<OCTransportAdapter>(OCTransportAdapter::OC_ADAPTER_IP | 
-                                                        OCTransportAdapter::OC_ADAPTER_TCP);
+    cfg.transportType = static_cast<OCTransportAdapter>(OCTransportAdapter::OC_ADAPTER_IP |
+                                                        OCTransportAdapter::OC_ADAPTER_TCP |
+                                                        OCTransportAdapter::OC_ADAPTER_WS);
     cfg.QoS = OC::QualityOfService::HighQos;
 
     OCPlatform::Configure(cfg);

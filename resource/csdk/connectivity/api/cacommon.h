@@ -211,6 +211,7 @@ typedef enum
 
     CA_ADAPTER_TCP           = (1 << 4),   // CoAP over TCP
     CA_ADAPTER_NFC           = (1 << 5),   // NFC Adapter
+    CA_ADAPTER_WS            = (1 << 6),   // Web Socket Adapter
 
     CA_ALL_ADAPTERS          = 0xffffffff
 } CATransportAdapter_t;
@@ -598,6 +599,15 @@ typedef struct
         uint16_t u6s;   /**< unicast IPv6 socket secure port */
     } tcp;
 #endif
+#ifdef WS_ADAPTER
+    struct wsports
+    {
+        uint16_t u4;    /**< unicast IPv4 socket port */
+        uint16_t u4s;   /**< unicast IPv6 socket secure port */
+        uint16_t u6;    /**< unicast IPv6 socket port */
+        uint16_t u6s;   /**< unicast IPv6 socket secure port */
+    } ws;
+#endif
 } CAPorts_t;
 
 typedef struct
@@ -676,6 +686,22 @@ typedef struct
         bool ipv4tcpenabled;    /**< IPv4 TCP enabled by OCInit flags */
         bool ipv6tcpenabled;    /**< IPv6 TCP enabled by OCInit flags */
     } tcp;
+#endif
+
+#ifdef WS_ADAPTER
+    /**
+     * Hold global variables for WS Adapter
+     */
+    struct websockets
+    {
+        uint16_t u4;            /**< unicast IPv4 socket port */
+        uint16_t u4s;           /**< unicast IPv6 socket secure port */
+        uint16_t u6;            /**< unicast IPv6 socket port */
+        uint16_t u6s;           /**< unicast IPv6 socket secure port */
+
+        bool ipv4wsenabled;     /**< IPv4 WS enabled by OCInit flags */
+        bool ipv6wsenabled;     /**< IPv6 WS enabled by OCInit flags */
+    } ws;
 #endif
     CATransportBTFlags_t bleFlags;   /**< flags related BLE transport */
 } CAGlobals_t;

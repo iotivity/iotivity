@@ -58,6 +58,8 @@ typedef enum
     CREATE_RESOURCE_OC_COAP,
     CREATE_RESOURCE_OC_COAP_TCP,
     CREATE_RESOURCE_OC_COAP_WITH_TCP,
+    CREATE_RESOURCE_OC_COAP_WS,
+    CREATE_RESOURCE_OC_COAP_WITH_WS,
     ENDPOINT_OPT_NONE
 } EndpointOption;
 //-----------------------------------------------------------------------------

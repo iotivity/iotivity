@@ -1188,7 +1188,7 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
 
     if (caEps && nCaEps && devAddr)
     {
-        if ((OC_ADAPTER_IP | OC_ADAPTER_TCP) & (devAddr->adapter))
+        if ((OC_ADAPTER_IP | OC_ADAPTER_TCP | OC_ADAPTER_WS) & (devAddr->adapter))
         {
             for (size_t i = 0; i < nCaEps; i++)
             {
@@ -1196,7 +1196,7 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
                 char *proto = NULL;
 
                 // consider IP or TCP adapter for payload that is visible to the client
-                if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter) && 
+                if (((CA_ADAPTER_IP | CA_ADAPTER_TCP | OC_ADAPTER_WS) & info->adapter) &&
                     (info->ifindex == devAddr->ifindex))
                 {
                     OCTpsSchemeFlags matchedTps = OC_NO_TPS;
@@ -2682,7 +2682,7 @@ static OCStackResult IsDatabaseUpdateNeeded(const char *attribute, const void *v
         }
         else
         {
-            OIC_LOG_V(ERROR, TAG, 
+            OIC_LOG_V(ERROR, TAG,
                 "Call to OCGetPropertyValue for the current PIID failed with error: %d", result);
         }
     }
@@ -2702,7 +2702,7 @@ OCStackResult OC_CALL OCSetAttribute(OCResource *resource, const char *attribute
     // write.
     if (OC_STACK_OK != IsDatabaseUpdateNeeded(attribute, value, &updateDatabase))
     {
-        OIC_LOG_V(WARNING, TAG, 
+        OIC_LOG_V(WARNING, TAG,
             "Could not determine if a database update was needed for %s. Proceeding without updating the database.",
             attribute);
         updateDatabase = false;

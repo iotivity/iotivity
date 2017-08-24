@@ -149,6 +149,9 @@ if env.get('MULTIPLE_OWNER') == 1:
 if env.get('WITH_TCP'):
     jni_env.AppendUnique(CPPDEFINES=['WITH_TCP', '__WITH_TLS__'])
 
+if env.get('WITH_WS'):
+	jni_env.AppendUnique(CPPDEFINES = ['WITH_WS'])
+
 with_mq = env.get('WITH_MQ')
 if 'SUB' in with_mq:
     jni_env.AppendUnique(CPPDEFINES=['MQ_SUBSCRIBER', 'WITH_MQ'])

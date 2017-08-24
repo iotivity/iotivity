@@ -49,6 +49,7 @@ import org.iotivity.base.ServiceType;
 
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -73,9 +74,18 @@ public class SimpleClient extends Activity implements
     //variables related observer
     private int maxSequenceNumber = 0xFFFFFF;
     private OcConnectivityType adapterFlag = OcConnectivityType.CT_ADAPTER_IP;
-    //flags related TCP transport test
-    private boolean isRequestFlag = false;
-    private boolean isTCPContained = false;
+
+    //Flags related to TCP transport test
+    private boolean performTCPTest = false;
+    private boolean completedTCPTest = false;
+    private boolean tcpSupported = false;
+    private String tcpEndpoint = null;
+
+    //Flags related to WebSocket transport test
+    private boolean performWebSocketTest = false;
+    private boolean completedWebSocketTest = false;
+    private boolean webSocketSupported = false;
+    private String websocketEndpoint = null;
 
     /**
      * A local method to configure and initialize platform, and then search for the light resources.
@@ -145,20 +155,10 @@ public class SimpleClient extends Activity implements
         }
 
         if (null != mFoundLightResource) {
-            if (ocResource.getUri().equals("/a/light")) {
-                if (ocResource.getConnectivityTypeSet().contains(OcConnectivityType.CT_ADAPTER_TCP)) {
-                    msg("Found resource which has TCP transport");
-                    if (isTCPContained == false)
-                    {
-                        isTCPContained = true;
-                        return;
-                    }
-                }
-            }
             msg("Found another resource, ignoring");
             return;
-
         }
+
         // Get the resource URI
         String resourceUri = ocResource.getUri();
         // Get the resource host address
@@ -178,30 +178,47 @@ public class SimpleClient extends Activity implements
         for (OcConnectivityType connectivityType : ocResource.getConnectivityTypeSet()) {
             msg("\t\t" + connectivityType);
         }
+        List<String> endpoints = ocResource.getAllHosts();
+        msg("\tList of resource endpoints:");
+        msg("\t\t" + endpoints);
         printLine();
 
-        //In this example we are only interested in the light resources
+        // In this example we are only interested in the light resources
         if (resourceUri.equals("/a/light")) {
-            //Assign resource reference to a global variable to keep it from being
-            //destroyed by the GC when it is out of scope.
-            if (OcConnectivityType.CT_ADAPTER_TCP == adapterFlag)
+
+            // To perform operations over TCP and WebSocket if the resource supports websocket endpoint (coap+ws).
+            if(null != endpoints)
             {
-                if (ocResource.getConnectivityTypeSet().contains(OcConnectivityType.CT_ADAPTER_TCP))
+                String endpoint = null;
+                Iterator<String> itr = endpoints.iterator();
+                while(itr.hasNext())
                 {
-                    msg("set mFoundLightResource which has TCP transport");
-                    mFoundLightResource = ocResource;
-                    // Call a local method which will internally invoke "get" API
-                    getLightResourceRepresentation();
-                    return;
+                    endpoint = itr.next();
+
+                    // Note: Only test over IPv4 endpoint due to a crash in using IPv6 endpoint for WebSocket.
+                    // TODO: Remove the ipv6 address check once the crash issue is resolved.
+                    if(null != endpoint && endpoint.indexOf('[') == -1)
+                    {
+                        if(endpoint.startsWith("coap+ws")) // WebSocket endpoint
+                        {
+                            msg("\t Resource supports WebSocket endpoint: " + endpoint);
+                            websocketEndpoint = endpoint;
+                            webSocketSupported = true;
+                            performWebSocketTest = true;
+                        }
+                        else if(endpoint.startsWith("coap+tcp")) // TCP endpoint
+                        {
+                            msg("\t Resource supports TCP endpoint: " + endpoint);
+                            tcpEndpoint = endpoint;
+                            tcpSupported = true;
+                            performTCPTest = true;
+                        }
+                    }
                 }
             }
-            else
-            {
-                msg("set mFoundLightResource which has UDP transport");
-                mFoundLightResource = ocResource;
-                // Call a local method which will internally invoke "get" API on the foundLightResource
-                getLightResourceRepresentation();
-            }
+
+            mFoundLightResource = ocResource;
+            getLightResourceRepresentation();
         }
     }
 
@@ -533,21 +550,45 @@ public class SimpleClient extends Activity implements
                 }
 
                 sleep(10);
-                resetGlobals();
-                if (true == isTCPContained && false == isRequestFlag)
+
+                mObserveCount = 0;
+
+                // Performs GET/PUT/POST/OBSERVE over TCP if resource has TCP endpoint.
+                if(tcpSupported && !completedTCPTest)
                 {
-                    msg("Start TCP test...");
-                    startSimpleClient(OcConnectivityType.CT_ADAPTER_TCP);
-                    isRequestFlag = true;
-                    return;
-                } else if (true == isRequestFlag)
-                {
+                    if(performTCPTest)
+                    {
+                        msg("Begin TCP test...");
+                        mFoundLightResource.setHost(tcpEndpoint);
+                        getLightResourceRepresentation();
+                        performTCPTest = false;
+                        return;
+                    }
+
+                    completedTCPTest = true;
                     msg("End TCP test...");
-                    isRequestFlag = false;
+                }
+
+                // Performs GET/PUT/POST/OBSERVE over websocket if resource has websocket endpoint.
+                if(webSocketSupported && !completedWebSocketTest)
+                {
+                    if(performWebSocketTest)
+                    {
+                        msg("Begin WebSocket test...");
+                        mFoundLightResource.setHost(websocketEndpoint);
+                        getLightResourceRepresentation();
+                        performWebSocketTest = false;
+                        return;
+                    }
+
+                    completedWebSocketTest = true;
+                    msg("End WebSocket test...");
                 }
 
                 msg("DONE");
+
                 //prepare for the next restart of the SimpleClient
+                resetGlobals();
                 enableStartButton();
             }
         }
@@ -596,7 +637,6 @@ public class SimpleClient extends Activity implements
                     button.setEnabled(false);
                     new Thread(new Runnable() {
                         public void run() {
-                            isTCPContained = false;
                             startSimpleClient(OcConnectivityType.CT_ADAPTER_IP);
                         }
                     }).start();
@@ -660,6 +700,18 @@ public class SimpleClient extends Activity implements
         mFoundResources.clear();
         mLight = new Light();
         mObserveCount = 0;
+
+        //Flags related to TCP transport test
+        performTCPTest = false;
+        completedTCPTest = false;
+        tcpSupported = false;
+        tcpEndpoint = null;
+
+        //Flags related to WebSocket transport test
+        performWebSocketTest = false;
+        completedWebSocketTest = false;
+        webSocketSupported = false;
+        websocketEndpoint = null;
     }
 
     @Override

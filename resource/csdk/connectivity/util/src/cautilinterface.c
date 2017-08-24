@@ -128,6 +128,33 @@ CAResult_t CASetPortNumberToAssign(CATransportAdapter_t adapter,
         }
     }
 #endif
+#ifdef WS_ADAPTER
+if (CA_ADAPTER_WS & adapter)
+{
+    if (CA_SECURE & flag)
+    {
+        if (CA_IPV6 & flag)
+        {
+            targetPort = &caglobals.ports.ws.u6s;
+        }
+        else if (CA_IPV4 & flag)
+        {
+            targetPort = &caglobals.ports.ws.u4s;
+        }
+    }
+    else
+    {
+        if (CA_IPV6 & flag)
+        {
+            targetPort = &caglobals.ports.ws.u6;
+        }
+        else if (CA_IPV4 & flag)
+        {
+            targetPort = &caglobals.ports.ws.u4;
+        }
+    }
+}
+#endif
 
     if (targetPort)
     {
@@ -193,6 +220,33 @@ uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_
             }
         }
     }
+#endif
+#ifdef WS_ADAPTER
+if (CA_ADAPTER_WS & adapter)
+{
+    if (CA_SECURE & flag)
+    {
+        if (CA_IPV6 & flag)
+        {
+            return caglobals.ws.u6s;
+        }
+        else if (CA_IPV4 & flag)
+        {
+            return caglobals.ws.u4s;
+        }
+    }
+    else
+    {
+        if (CA_IPV6 & flag)
+        {
+            return caglobals.ws.u6;
+        }
+        else if (CA_IPV4 & flag)
+        {
+            return caglobals.ws.u4;
+        }
+    }
+}
 #endif
     return 0;
 }

@@ -74,6 +74,14 @@ help_vars.Add(
                  default_arch,
                  allowed_values=os_arch_map[target_os]))
 help_vars.Add(
+    BoolVariable('WITH_TCP',
+                 'Build with TCP adapter',
+                 False))
+help_vars.Add(
+    BoolVariable('WITH_WS',
+                 'Build with WS adapter',
+                 False))
+help_vars.Add(
     EnumVariable('SECURED',
                  'Build with DTLS',
                  '1',

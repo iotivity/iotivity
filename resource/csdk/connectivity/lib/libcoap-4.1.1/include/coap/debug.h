@@ -11,6 +11,10 @@
 
 #include "config.h"
 
+#ifdef WITH_WS
+#define COAP_WS_LENGTH_LIMIT_FOR_DEBUG 65536
+#endif
+
 #ifndef COAP_DEBUG_FD
 #define COAP_DEBUG_FD stdout
 #endif

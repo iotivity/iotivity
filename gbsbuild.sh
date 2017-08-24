@@ -34,6 +34,7 @@ cp -R ./extlibs/gtest $sourcedir/tmp/extlibs
 cp -LR ./extlibs/sqlite3 $sourcedir/tmp/extlibs
 cp -R ./extlibs/rapidxml $sourcedir/tmp/extlibs
 cp -R ./extlibs/libcoap $sourcedir/tmp/extlibs
+cp -R ./extlibs/libwebsockets/ $sourcedir/tmp/extlibs
 cp -R ./resource $sourcedir/tmp
 cp -R ./service $sourcedir/tmp
 cp ./extra_options.scons $sourcedir/tmp
@@ -53,6 +54,7 @@ cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
 cd $sourcedir/tmp
 
 secured=1
+with_websockets=0
 gbsarch=${gbsarch:=armv7l}
 gbsprofile=${gbsprofile:=profile.tizen}
 gbscommand="gbs build -A ${gbsarch} -P ${gbsprofile}"
@@ -71,6 +73,9 @@ do
       if [ "SECURED" = "$optionname" ]; then
          secured=$optionvalue
       fi
+      if [ "WITH_WS" = "$optionname" ]; then
+         with_websockets=$optionvalue
+      fi
    else
       echo "'$ARGUMENT_VALUE' does not contain '='";
    fi
@@ -87,6 +92,11 @@ $SHELL ./extlibs/tinycbor/prep.sh
 
 # Remove modules history for gbs export (Applies to tinycbor, mbedtls...)
 rm -rf ./extlibs/*/*/.git
+
+if [ $with_websockets -eq 1 ];then
+  # Prepare WebSocket Library dependency
+  $SHELL ./extlibs/libwebsockets/prep.sh
+fi
 
 # Initialize Git repositoryㅣ
 if [ ! -d .git ]; then

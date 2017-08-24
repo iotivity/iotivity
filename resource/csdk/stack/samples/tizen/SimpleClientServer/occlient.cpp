@@ -56,10 +56,6 @@ static int g_connectivity = 0;
 static GMainLoop *g_mainloop = NULL;
 pthread_t g_thread;
 
-static const char *DEVICE_DISCOVERY_QUERY = "%s/oic/d";
-static const char *PLATFORM_DISCOVERY_QUERY = "%s/oic/p";
-static const char *RESOURCE_DISCOVERY_QUERY = "%s/oic/res";
-
 //The following variable determines the interface protocol (IPv4, IPv6, etc)
 //to be used for sending unicast messages. Default set to IP dual stack.
 static OCConnectivityType g_connType = CT_ADAPTER_IP;
@@ -116,6 +112,7 @@ static void PrintUsage()
     cout << "\n-c 0 : Default IP selection";
     cout << "\n-c 1 : IP Connectivity Type";
     cout << "\n-c 2 : EDR Connectivity Type (IPv6 not currently supported)";
+    cout << "\n-c 3 : WebSocket Connectivity Type";
     cout << "\n-t 1  :  Discover Resources";
     cout << "\n-t 2  :  Discover Resources and Initiate Nonconfirmable Get Request";
     cout << "\n-t 3  :  Discover Resources and Initiate Nonconfirmable Get Request with query filter";
@@ -724,15 +721,19 @@ int InitPlatformDiscovery(OCQualityOfService qos)
 
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
-    snprintf(szQueryUri, sizeof (szQueryUri) - 1, PLATFORM_DISCOVERY_QUERY, g_discoveryAddr);
+    std::ostringstream query;
+    if(g_unicastDiscovery && strlen(g_discoveryAddr)>0)
+    {
+        query << getUriScheme(g_connType) << g_discoveryAddr;
+    }
+    query << OC_RSRVD_PLATFORM_URI;
 
     cbData.cb = PlatformDiscoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, query.str().c_str(), NULL, 0, g_connType,
                       (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
                       &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
@@ -749,15 +750,19 @@ int InitDeviceDiscovery(OCQualityOfService qos)
 
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
-    snprintf(szQueryUri, sizeof (szQueryUri) - 1, DEVICE_DISCOVERY_QUERY, g_discoveryAddr);
+    std::ostringstream query;
+    if(g_unicastDiscovery && strlen(g_discoveryAddr)>0)
+    {
+        query << getUriScheme(g_connType) << g_discoveryAddr;
+    }
+    query << OC_RSRVD_DEVICE_URI;
 
     cbData.cb = DeviceDiscoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, query.str().c_str(), NULL, 0, g_connType,
                       (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
                       &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
@@ -772,15 +777,19 @@ int InitDiscovery(OCQualityOfService qos)
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
-    snprintf(szQueryUri, sizeof (szQueryUri) - 1, RESOURCE_DISCOVERY_QUERY, g_discoveryAddr);
+    std::ostringstream query;
+    if(g_unicastDiscovery && strlen(g_discoveryAddr)>0)
+    {
+        query << getUriScheme(g_connType) << g_discoveryAddr;
+    }
+    query << OC_RSRVD_WELL_KNOWN_URI;
 
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, query.str().c_str(), NULL, 0, g_connType,
                       (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
                       &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
@@ -896,6 +905,11 @@ int main(int argc, char* argv[])
         cout << "\nSelected EDR Adapter\n";
         g_connType = CT_ADAPTER_RFCOMM_BTEDR;
     }
+    else if(g_connectivity == CT_WS)
+    {
+        cout << "\nSelected Web Sockets Adapter\n";
+        g_connType = CT_ADAPTER_WS;
+    }
     else
     {
         cout << "\nDefault Connectivity type selected...";
@@ -947,12 +961,33 @@ int main(int argc, char* argv[])
     return 0;
 }
 
+std::string getUriScheme(OCConnectivityType connType)
+{
+    switch (connType & CT_MASK_ADAPTER)
+    {
+        case CT_ADAPTER_IP:
+            return "coap://";
+
+        case CT_ADAPTER_TCP:
+            return "coap+tcp://";
+
+        case CT_ADAPTER_WS:
+            return "coap+ws://";
+
+        default:
+            return "";
+    }
+}
+
 std::string getConnectivityType (OCConnectivityType connType)
 {
     switch (connType & CT_MASK_ADAPTER)
     {
         case CT_ADAPTER_IP:
             return "IP";
+
+        case CT_ADAPTER_WS:
+            return "WS";
 
         case CT_IP_USE_V4:
             return "IPv4";

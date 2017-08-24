@@ -370,14 +370,15 @@ OCStackResult OC_CALL OCCreateResource(OCResourceHandle *handle,
  * @param resourceProperties    Properties supported by resource.
  *                              Example: ::OC_DISCOVERABLE|::OC_OBSERVABLE.
  * @param resourceTpsTypes      Transport Protocol Suites(TPS) types of resource for expose
-                                resource to specific transport adapter (e.g., TCP, UDP)
+                                resource to specific transport adapter (e.g., TCP, UDP, WebSocket)
                                 with messaging protocol (e.g., COAP, COAPS).
-                                Example: "OC_COAP | OC_COAP_TCP"
+                                Example: "OC_COAP | OC_COAP_TCP | OC_COAP_WS"
  *
  * @note Only supported TPS types on stack will be mapped to resource.
-         It means "OC_COAPS" and "OC_COAPS_TCP" flags will be ignored if secure option
+         It means "OC_COAPS", "OC_COAPS_TCP", "OC_COAPS_WS" flags will be ignored if secure option
          not enabled on stack. Also "COAP_TCP" and "COAPS_TCP" flags will be ignored
-         if stack does not support tcp mode.
+         if stack does not support tcp mode. Likewise "COAP_WS" and "COAPS_WS" flags will be ignored
+         if stack does not support websocket mode.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */

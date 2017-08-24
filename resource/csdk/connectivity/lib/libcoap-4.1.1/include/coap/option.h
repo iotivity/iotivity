@@ -313,7 +313,7 @@ unsigned short coap_opt_delta(const coap_opt_t *opt);
 #define COAP_OPT_DELTA(opt) coap_opt_delta(opt)
 
 /** @deprecated { Use coap_opt_encode() instead. } */
-#ifndef WITH_TCP
+#if !defined(WITH_TCP) && !defined(WITH_WS)
 #define COAP_OPT_SETDELTA(opt,val)          \
   coap_opt_encode((opt), COAP_MAX_PDU_SIZE, (val), NULL, 0)
 #endif

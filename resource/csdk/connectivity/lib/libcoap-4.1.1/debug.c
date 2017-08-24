@@ -247,10 +247,12 @@ coap_print_addr(const struct coap_address_t *addr, unsigned char *buf, size_t le
 #ifndef WITH_CONTIKI
 void
 coap_show_pdu(const coap_pdu_t *pdu) {
-#ifndef WITH_TCP
-    unsigned char buf[COAP_MAX_PDU_SIZE]; /* need some space for output creation */
-#else
+#if defined(WITH_TCP)
     unsigned char buf[COAP_TCP_LENGTH_LIMIT_32_BIT]; /* need some space for output creation */
+#elif defined(WITH_WS)
+    unsigned char buf[COAP_WS_LENGTH_LIMIT_FOR_DEBUG]; /* need some space for output creation */
+#else
+    unsigned char buf[COAP_MAX_PDU_SIZE]; /* need some space for output creation */
 #endif
     int encode = 0, have_options = 0;
     coap_opt_iterator_t opt_iter;

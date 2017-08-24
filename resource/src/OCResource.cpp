@@ -48,6 +48,8 @@ static const char COAP_TCP[] = "coap+tcp://";
 static const char COAPS_TCP[] = "coaps+tcp://";
 static const char COAP_GATT[] = "coap+gatt://";
 static const char COAP_RFCOMM[] = "coap+rfcomm://";
+static const char COAP_WS[]="coap+ws://";
+static const char COAPS_WS[]="coaps+ws://";
 
 using OC::nil_guard;
 using OC::result_guard;
@@ -265,6 +267,25 @@ std::string OCResource::setHost(const std::string& host)
     {
         prefix_len = sizeof(COAP_RFCOMM) - 1;
         m_devAddr.adapter = OC_ADAPTER_RFCOMM_BTEDR;
+    }
+    else if (host.compare(0, sizeof(COAP_WS) - 1, COAP_WS) == 0)
+    {
+        prefix_len = sizeof(COAP_WS) - 1;
+        m_devAddr.adapter = OC_ADAPTER_WS;
+        usingIpAddr = true;
+    }
+    else if (host.compare(0, sizeof(COAPS_WS) - 1, COAPS_WS) == 0)
+    {
+        if (!OC_SECURE)
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+            m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+        }
+
+        prefix_len = sizeof(COAPS_WS) - 1;
+        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags | OC_SECURE);
+        m_devAddr.adapter = OC_ADAPTER_WS;
+        usingIpAddr = true;
     }
     else
     {
@@ -685,6 +706,17 @@ std::string OCResource::host() const
         else
         {
             ss << COAP_TCP;
+        }
+    }
+    else if (m_devAddr.adapter & OC_ADAPTER_WS)
+    {
+        if (m_devAddr.flags & OC_SECURE)
+        {
+            ss << COAPS_WS;
+        }
+        else
+        {
+            ss << COAP_WS;
         }
     }
     else if (m_devAddr.adapter & OC_ADAPTER_GATT_BTLE)

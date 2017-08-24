@@ -25,12 +25,16 @@ transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
 routing = env.get('ROUTING')
 with_mq = env.get('WITH_MQ')
+with_tcp = env.get('WITH_TCP')
+with_ws = env.get('WITH_WS')
 OIC_LIB = 'oic'
 root_dir = env.get('ROOT_DIR')
 build_dir = env.get('BUILD_DIR')
 sample_dir = build_dir
 
 print "MQ flag is %s" % with_mq
+print "WITH_TCP flag is %s" % with_tcp
+print "WITH_WS flag is %s" % with_ws
 
 env.AppendUnique(CPPFLAGS=[
     '-std=c++0x', '-fPIC', '-D__TIZEN__', '-DWITH_POSIX', '-Wall',
@@ -65,7 +69,7 @@ env.Append(LIBS=[
 
 if secured == '1':
     env.PrependUnique(CPPPATH=[root_dir + '/external/inc/'])
-    env.AppendUnique(CPPDEFINES=['__WITH_DTLS__'])
+    env.AppendUnique(CPPDEFINES=['__WITH_DTLS__', '__WITH_TLS__'])
     env.Append(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if 'ALL' in transport:
@@ -98,6 +102,11 @@ else:
     else:
         env.AppendUnique(CPPDEFINES=['NO_TCP_ADAPTER'])
 
+    if env.get('WITH_WS'):
+        env.AppendUnique(CPPDEFINES=['WS_ADAPTER', 'WITH_WS'])
+    else:
+        env.AppendUnique(CPPDEFINES=['NO_WS_ADAPTER'])
+
 if 'SUB' in with_mq:
     env.AppendUnique(CPPDEFINES=['MQ_SUBSCRIBER', 'WITH_MQ'])
     print "MQ SUB support"
@@ -120,3 +129,6 @@ sample_comm = sample_dir + 'common.cpp'
 env.Program('occlient', [sample_dir + 'occlient.cpp', sample_comm])
 env.Program('ocserver', [sample_dir + 'ocserver.cpp', sample_comm])
 env.Program('ocrouting', [sample_dir + 'ocrouting.cpp', sample_comm])
+env.Program('occlientbasicops', [sample_dir + 'secure/occlientbasicops.cpp', sample_comm])
+env.Program('ocserverbasicops', [sample_dir + 'secure/ocserverbasicops.cpp', sample_comm])
+

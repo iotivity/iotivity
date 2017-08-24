@@ -36,6 +36,7 @@ target_os = libcoap_env.get('TARGET_OS')
 src_dir = libcoap_env.get('SRC_DIR')
 ca_transport = libcoap_env.get('TARGET_TRANSPORT')
 with_tcp = libcoap_env.get('WITH_TCP')
+with_websocket = libcoap_env.get('WITH_WS')
 with_upstream_libcoap = libcoap_env.get('WITH_UPSTREAM_LIBCOAP')
 
 # Temporary LibCoAP URL is a fork of the original.
@@ -140,6 +141,10 @@ if target_os in ['linux', 'tizen', 'android', 'arduino']:
     libcoap_env.AppendUnique(LIBS=['log'])
     if 'BLE' in ca_transport or 'BT' in ca_transport or 'ALL' in ca_transport:
         libcoap_env.AppendUnique(CPPDEFINES=['WITH_TCP'])
+
+if target_os in ['linux', 'tizen', 'android']:
+    if (with_websocket == True or ('ALL' in ca_transport)):
+        libcoap_env.AppendUnique(CPPDEFINES = ['WITH_WS'])
 
 if target_os == 'arduino':
     libcoap_env.AppendUnique(CPPDEFINES=['NDEBUG', 'WITH_ARDUINO'])

@@ -41,6 +41,7 @@ Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
 %{!?WITH_MQ: %define WITH_MQ OFF}
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_TCP: %define WITH_TCP 0}
+%{!?WITH_WS: %define WITH_WS False}
 %{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
 %if "True" == "%{RELEASE}"
 %define build_mode release
@@ -63,6 +64,11 @@ BuildRequires: boost-system
 BuildRequires: boost-filesystem
 BuildRequires: scons
 
+%if "True" == "%{WITH_WS}"
+BuildRequires:  libwebsockets-devel >= 2.2
+Requires:  libwebsockets >= 2.2
+%endif
+
 
 %description
 SLP oicri application
@@ -82,6 +88,7 @@ scons %{JOB} --prefix=%{_prefix} \
     WITH_PROXY=%{WITH_PROXY} \
     WITH_TCP=%{WITH_TCP} \
     TARGET_ARCH=%{TARGET_ARCH} \
+    WITH_WS=%{WITH_WS} \
     #eol
 
 %install

@@ -128,6 +128,9 @@ help_vars.AddVariables(
     BoolVariable('WITH_TCP',
                  'Build with TCP adapter',
                  default=False),
+    BoolVariable('WITH_WS',
+                 'Build with Web Socket adapter',
+                 default=False),
     BoolVariable('WITH_PROXY',
                  'Build with CoAP-HTTP Proxy',
                  default=True),
@@ -575,6 +578,11 @@ if env.get('WITH_TCP'):
     if env.get('SECURED') == '1':
         defines.append('-D__WITH_TLS__=1')
 
+if env.get('WITH_WS'):
+    defines.append('-DWS_ADAPTER=1')
+    if env.get('SECURED') == '1':
+        defines.append('-D__WITH_TLS__=1')
+
 if env.get('SECURED') == '1':
     defines.append('-D__WITH_DTLS__=1')
     if env.get('EXC_PROV_SUPPORT') == '0':
@@ -598,6 +606,7 @@ target_transport = env.get('TARGET_TRANSPORT')
 with_mq = env.get('WITH_MQ')
 with_ra = env.get('WITH_RA')
 with_tcp = env.get('WITH_TCP')
+with_ws = env.get('WITH_WS')
 rd_mode = env.get('RD_MODE')
 with_ra_ibb = env.get('WITH_RA_IBB')
 
@@ -637,6 +646,9 @@ elif (('IP' in target_transport) or ('ALL' in target_transport)):
 if (target_os in ['linux', 'tizen', 'android'] and with_tcp):
     env.AppendUnique(CPPDEFINES=['WITH_TCP'])
 
+if (target_os in ['linux', 'tizen', 'android'] and with_ws):
+    env.AppendUnique(CPPDEFINES = ['WITH_WS'])
+
 if (target_os in ['linux', 'tizen', 'android', 'arduino', 'ios']):
     if (('BLE' in target_transport) or ('BT' in target_transport) or
         ('ALL' in target_transport)):
@@ -647,6 +659,8 @@ if 'ALL' in target_transport:
         env.AppendUnique(CPPDEFINES=['RA_ADAPTER'])
     if with_tcp:
         env.AppendUnique(CPPDEFINES=['TCP_ADAPTER'])
+    if with_ws:
+        env.AppendUnique(CPPDEFINES = ['WS_ADAPTER'])
     if (target_os in ['linux', 'yocto']):
         env.AppendUnique(
             CPPDEFINES=['IP_ADAPTER', 'NO_EDR_ADAPTER', 'LE_ADAPTER'])
@@ -690,6 +704,13 @@ else:
             Exit(msg)
     else:
         env.AppendUnique(CPPDEFINES=['NO_TCP_ADAPTER'])
+
+    if with_ws:
+        if (target_os in ['linux', 'tizen', 'android']):
+            env.AppendUnique(CPPDEFINES = ['WS_ADAPTER', 'WITH_WS'])
+        else:
+            print "CA Transport WebSockets is not supported "
+            Exit(1)
 
     if ('NFC' in target_transport):
         if (target_os == 'android'):

@@ -111,6 +111,10 @@ help_vars.Add(
                  'Enable TCP',
                  default=False))
 help_vars.Add(
+    BoolVariable('WITH_WS',
+                 'Enable WebSockets',
+                 default=False))
+help_vars.Add(
     ListVariable('WITH_MQ',
                  'Build with MQ publisher/subscriber/broker',
                  default='OFF',

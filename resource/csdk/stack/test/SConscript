@@ -60,6 +60,14 @@ if stacktest_env.get('SECURED') == '1':
 # c_common calls into mbedcrypto.
 stacktest_env.AppendUnique(LIBS=['mbedcrypto'])
 
+if (stacktest_env.get('WITH_WS') == True):
+    if target_os in ['linux']:
+        stacktest_env.AppendUnique(RPATH = [stacktest_env.get('SRC_DIR') + '/extlibs/libwebsockets/libwebsockets/build/lib/'])
+        stacktest_env.AppendUnique(LIBPATH = ['#extlibs/libwebsockets/libwebsockets/build/lib/'])
+        stacktest_env.AppendUnique(LIBS = ['websockets'])
+    if stacktest_env.get('SECURED') == '1':
+        stacktest_env.AppendUnique(LIBS = ['ssl', 'crypto'])
+
 if 'CLIENT' in rd_mode and target_os not in [
         'arduino', 'darwin', 'ios', 'windows', 'winrt'
 ]:

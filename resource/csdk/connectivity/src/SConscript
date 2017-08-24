@@ -12,6 +12,7 @@ multiple_owner = connectivity_env.get('MULTIPLE_OWNER')
 with_ra = connectivity_env.get('WITH_RA')
 with_ra_ibb = connectivity_env.get('WITH_RA_IBB')
 with_tcp = connectivity_env.get('WITH_TCP')
+with_ws = connectivity_env.get('WITH_WS')
 src_dir = connectivity_env.get('SRC_DIR')
 root_dir = os.pardir
 ca_path = os.curdir
@@ -42,6 +43,9 @@ connectivity_env.AppendUnique(CPPPATH=[
 
 if ca_os not in ['darwin', 'ios', 'windows']:
     connectivity_env.AppendUnique(LINKFLAGS=['-Wl,--no-undefined'])
+
+if ca_os in ['tizen']:
+    connectivity_env.AppendUnique(LIBS = ['pthread'])
 
 # Getting common source files
 connectivity_env.SConscript(root_dir + '/common/SConscript',
@@ -160,6 +164,11 @@ if 'NFC' in ca_transport:
 if ca_os in ['linux', 'tizen', 'android', 'ios', 'windows'] and with_tcp:
     transports.add('tcp_adapter')
 
+if ca_os in ['linux', 'tizen', 'android'] and with_ws:
+    connectivity_env.AppendUnique(CPPPATH = ['#extlibs/libwebsockets/libwebsockets/lib',
+        '#extlibs/libwebsockets/libwebsockets/build/'])
+    transports.add('ws_adapter')
+
 SConscript(dirs=list(transports), exports='connectivity_env')
 
 if ca_os == 'android':
@@ -184,6 +193,11 @@ if ca_os in ['android', 'tizen', 'linux', 'yocto']:
     connectivity_env.AppendUnique(LIBS=['coap'])
     if ca_os != 'android':
         connectivity_env.AppendUnique(LIBS=['rt'])
+    if ca_os != 'yocto': #Web Sockets supports only android, tizen and linux
+        if (with_ws == True):
+            connectivity_env.AppendUnique(RPATH = [connectivity_env.get('SRC_DIR') + '/extlibs/libwebsockets/libwebsockets/build/lib/'])
+            connectivity_env.AppendUnique(LIBPATH = ['#extlibs/libwebsockets/libwebsockets/build/lib/'])
+            connectivity_env.AppendUnique(LIBS = ['websockets'])
     static_calib = connectivity_env.StaticLibrary(
         'connectivity_abstraction', connectivity_env.get('CA_SRC'))
     shared_calib = connectivity_env.SharedLibrary(

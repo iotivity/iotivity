@@ -49,7 +49,7 @@ static int UnicastDiscovery = 0;
 static int TestCase = 0;
 static int ConnType = 0;
 static int DevOwner = 0;
-static int WithTcp = 0;
+static int ProtocolType = 0;
 
 static char DISCOVERY_QUERY[] = "%s/oic/res";
 OCConnectivityType discoveryReqConnType = CT_ADAPTER_IP;
@@ -68,8 +68,12 @@ static char CRED_FILE_NONDEVOWNER[] = "oic_svr_db_client_nondevowner.dat";
 const char * OIC_STD_URI_PREFIX = "/oic/";
 
 const char * COAPS_STR = "coaps";
-#ifdef __WITH_TLS__
+#ifdef TCP_ADAPTER
 const char * COAPS_TCP_STR = "coaps+tcp";
+#endif
+
+#ifdef WS_ADAPTER
+const char * COAPS_WS_STR = "coaps+ws";
 #endif
 
 int gQuitFlag = 0;
@@ -113,6 +117,7 @@ static void PrintUsage()
     OIC_LOG(INFO, TAG, "-d 1 : Client as Device Owner");
     OIC_LOG(INFO, TAG, "-p 0 : Use UDP protocol");
     OIC_LOG(INFO, TAG, "-p 1 : Use TCP protocol");
+    OIC_LOG(INFO, TAG, "-p 2 : Use WS protocol");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -376,8 +381,8 @@ int main(int argc, char *argv[])
                 break;
             case 'p':
                 {
-                    WithTcp = atoi(optarg);
-                    if (WithTcp > 1)
+                    ProtocolType = atoi(optarg);
+                    if (ProtocolType > 2)
                     {
                         PrintUsage();
                         return -1;
@@ -482,27 +487,40 @@ int parseClientResponse(OCClientResponse *clientResponse)
             {
                 if (eps->family & OC_FLAG_SECURE)
                 {
-#ifdef __WITH_TLS__
-                    if (WithTcp && 0 == strcmp(eps->tps, COAPS_TCP_STR))
-                    {
-                        strncpy(endpoint->addr, eps->addr, sizeof(endpoint->addr));
-                        endpoint->port = eps->port;
-                        endpoint->flags = (OCTransportFlags)(eps->family | OC_SECURE);
-                        endpoint->adapter = OC_ADAPTER_TCP;
-                        coapSecureResource = 1;
-                        OIC_LOG_V(INFO, TAG, "TLS port: %d", endpoint->port);
-                        break;
-                    }
-#endif
-                    if (!WithTcp && 0 == strcmp(eps->tps, COAPS_STR))
+                    if (ProtocolType == 0 && 0 == strcmp(eps->tps, COAPS_STR))
                     {
                         strncpy(endpoint->addr, eps->addr, sizeof(endpoint->addr));
                         endpoint->port = eps->port;
                         endpoint->flags = (OCTransportFlags)(eps->family | OC_SECURE);
                         endpoint->adapter = OC_ADAPTER_IP;
                         coapSecureResource = 1;
-                        OIC_LOG_V(INFO, TAG, "DTLS port: %d", endpoint->port);
+                        OIC_LOG_V(INFO, TAG, "DTLS port: %d for IP connection", endpoint->port);
+                        break;
                     }
+#ifdef TCP_ADAPTER
+                    else if (ProtocolType == 1 && 0 == strcmp(eps->tps, COAPS_TCP_STR))
+                    {
+                        strncpy(endpoint->addr, eps->addr, sizeof(endpoint->addr));
+                        endpoint->port = eps->port;
+                        endpoint->flags = (OCTransportFlags)(eps->family | OC_SECURE);
+                        endpoint->adapter = OC_ADAPTER_TCP;
+                        coapSecureResource = 1;
+                        OIC_LOG_V(INFO, TAG, "TLS port: %d for TCP connection", endpoint->port);
+                        break;
+                    }
+#endif
+#ifdef WS_ADAPTER
+                    else if (ProtocolType == 2 && 0 == strcmp(eps->tps, COAPS_WS_STR))
+                    {
+                        strncpy(endpoint->addr, eps->addr, sizeof(endpoint->addr));
+                        endpoint->port = eps->port;
+                        endpoint->flags = (OCTransportFlags)(eps->family | OC_SECURE);
+                        endpoint->adapter = OC_ADAPTER_WS;
+                        coapSecureResource = 1;
+                        OIC_LOG_V(INFO, TAG, "TLS port: %d for WS connection", endpoint->port);
+                        break;
+                    }
+#endif
                 }
                 eps = eps->next;
             }
@@ -517,12 +535,13 @@ int parseClientResponse(OCClientResponse *clientResponse)
         // If we discovered a secure resource, exit from here
         if (coapSecureResource)
         {
-            break;
+            return 0;
         }
 
         res = res->next;
     }
 
-    return 0;
+    OIC_LOG(INFO, TAG, "No secure resource found!");
+    return -1;
 }
 

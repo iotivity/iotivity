@@ -183,6 +183,14 @@ sptest_env.PrependUnique(LIBS=[
     'coap'
 ])
 
+if (sptest_env.get('WITH_WS') == True):
+    if target_os in ['linux']:
+        sptest_env.AppendUnique(RPATH = [sptest_env.get('SRC_DIR') + '/extlibs/libwebsockets/libwebsockets/build/lib/'])
+        sptest_env.AppendUnique(LIBPATH = ['#extlibs/libwebsockets/libwebsockets/build/lib/'])
+        sptest_env.AppendUnique(LIBS = ['websockets'])
+    if sptest_env.get('SECURED') == '1':
+        sptest_env.AppendUnique(LIBS = ['ssl', 'crypto'])
+
 if sptest_env.get('SECURED') == '1':
     sptest_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 

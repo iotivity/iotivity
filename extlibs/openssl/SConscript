@@ -1,0 +1,150 @@
+#******************************************************************
+#
+# Copyright 2017 Samsung Electronics All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+import os, sys
+
+Import('env')
+
+openssl_env = env.Clone()
+src_dir = openssl_env.get('SRC_DIR')
+openssl_dir = os.path.join(src_dir, 'extlibs', 'openssl', 'openssl')
+
+if GetOption('clean'):
+	print "Initiating openssl library clean"
+	if os.path.exists(openssl_dir):
+		result = os.system('cd ' + openssl_dir + '&& make clean')
+		if result != 0:
+			print 'Failed to clean openssl'
+	Return('env')
+
+######################################################################
+# Download OpenSSL
+######################################################################
+openssl_version          = 'OpenSSL_1_1_0f'
+openssl_repo_url         = 'https://github.com/openssl/openssl.git'
+openssl_checkout_command = 'git clone ' + openssl_repo_url + ' extlibs/openssl/openssl -b ' + openssl_version
+
+if not os.path.exists(openssl_dir):
+	print '''
+*********************************** Error: ****************************************
+* Please download OpenSSL library using the following command:
+*     $ %s\n
+***********************************************************************************
+''' % openssl_checkout_command
+        Exit(1)
+
+# Export OpenSSL source directory path
+os.environ['OPENSSL_SOURCE'] = openssl_dir
+
+android_ndk_root = os.path.join(src_dir, 'extlibs', 'android', 'ndk', 'android-ndk-r10e')
+if not os.path.exists(android_ndk_root):
+	print '''
+*********************************** Error: ****************************************
+* Android NDK doesn't exist at the following path:
+*     %s\n
+***********************************************************************************
+''' % android_ndk_root
+	Exit(1)
+
+# Android ndk early version doesn't support C++11. Detect the toolchain version
+# to make sure proper toolchain is used
+for tc_ver in ['4.7', '4.8', '4.9', '']:
+	if os.path.exists(os.path.join(android_ndk_root, 'toolchains', 'arm-linux-androideabi-' + tc_ver)):
+		break
+
+if tc_ver == '':
+	print '''
+*************************************** Warning *******************************
+*   To support C++11, the toolchain should be >= 4.7, please make sure your   *
+* android NDK is at least r8e!                                                *
+*******************************************************************************
+'''
+	Exit(1)
+
+android_ndk_root = os.path.realpath(android_ndk_root)
+android_ndk_toolchain_path = os.path.join(android_ndk_root, 'toolchains', 'arm-linux-androideabi-' + tc_ver, 'prebuilt')
+for os_ver in ['linux-x86', 'linux-x86_64', '']:
+	if os.path.exists(os.path.join(android_ndk_toolchain_path, os_ver)):
+		break
+
+if os_ver == '':
+	print '''
+*************************************** Warning *******************************
+*   Prebuilt toolchain versions linux-x86/linux-x86_64 don't exist.           *
+*******************************************************************************
+'''
+	Exit(1)
+
+android_ndk_toolchain_path = os.path.join(android_ndk_toolchain_path, os_ver, 'bin')
+android_ndk_toolchain_path = os.path.realpath(android_ndk_toolchain_path)
+
+# Export ANDROID_NDK_ROOT
+os.environ['ANDROID_NDK_ROOT'] = android_ndk_root
+
+# Export ANDROID_TOOLCHAIN and update PATH
+os.environ['ANDROID_TOOLCHAIN'] = android_ndk_toolchain_path
+os.environ['PATH'] = android_ndk_toolchain_path + os.pathsep + os.environ['PATH']
+
+# Export ANDROID_API
+android_api = 'android-21'
+os.environ['ANDROID_API'] = android_api
+
+# Export SYSROOT
+sysroot = os.path.join(android_ndk_root, 'platforms', android_api, 'arch-arm')
+os.environ['ANDROID_NDK_SYSROOT'] = sysroot
+os.environ['ANDROID_SYSROOT'] = sysroot
+os.environ['CROSS_SYSROOT'] = sysroot
+os.environ['NDK_SYSROOT'] = sysroot
+os.environ['SYSROOT'] = sysroot
+
+# Export other required environment variables
+os.environ['MACHINE'] = 'armv7'
+os.environ['SYSTEM'] = 'android'
+os.environ['ARCH'] = 'arm'
+os.environ['CROSS_COMPILE'] = 'arm-linux-androideabi-'
+os.environ['ANDROID_DEV'] = os.path.join(sysroot, 'usr')
+os.environ['HOSTCC'] = 'gcc'
+
+# Printing the value of all the exported environment variables.
+print 'PATH: %s' % os.environ['PATH']
+print 'ANDROID_NDK_ROOT: %s' % os.environ['ANDROID_NDK_ROOT']
+print 'ANDROID_TOOLCHAIN: %s' % os.environ['ANDROID_TOOLCHAIN']
+print 'ANDROID_API: %s' % os.environ['ANDROID_API']
+print 'ANDROID_NDK_SYSROOT: %s' % os.environ['ANDROID_NDK_SYSROOT']
+print 'ANDROID_SYSROOT: %s' % os.environ['ANDROID_SYSROOT']
+print 'CROSS_SYSROOT: %s' % os.environ['CROSS_SYSROOT']
+print 'NDK_SYSROOT: %s' % os.environ['NDK_SYSROOT']
+print 'SYSROOT: %s' % os.environ['SYSROOT']
+print 'MACHINE: %s' % os.environ['MACHINE']
+print 'SYSTEM: %s' % os.environ['SYSTEM']
+print 'ARCH: %s' % os.environ['ARCH']
+print 'CROSS_COMPILE: %s' % os.environ['CROSS_COMPILE']
+print 'ANDROID_DEV: %s' % os.environ['ANDROID_DEV']
+print 'HOSTCC: %s' % os.environ['HOSTCC']
+
+######################################################################
+# Build and Install
+######################################################################
+
+command = 'sh openssl_build.sh'
+result = os.system(command)
+if result != 0:
+	print 'OpenSSL library build for android platform failed'
+	Exit(1)

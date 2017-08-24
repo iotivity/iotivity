@@ -64,6 +64,14 @@ srmtest_env.PrependUnique(LIBS=[
     'coap'
 ])
 
+if (srmtest_env.get('WITH_WS') == True):
+    if target_os in ['linux']:
+        srmtest_env.AppendUnique(RPATH = [srmtest_env.get('SRC_DIR') + '/extlibs/libwebsockets/libwebsockets/build/lib/'])
+        srmtest_env.AppendUnique(LIBPATH = ['#extlibs/libwebsockets/libwebsockets/build/lib/'])
+        srmtest_env.AppendUnique(LIBS = ['websockets'])
+    if srmtest_env.get('SECURED') == '1':
+        srmtest_env.AppendUnique(LIBS = ['ssl', 'crypto'])
+
 if srmtest_env.get('SECURED') == '1':
     srmtest_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 

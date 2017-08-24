@@ -52,6 +52,11 @@ static bool g_isInitialized = false;
 extern void CAsetPkixInfoCallback(CAgetPkixInfoHandler infCallback);
 extern void CAsetPskCredentialsCallback(CAgetPskCredentialsHandler credCallback);
 extern void CAsetCredentialTypesCallback(CAgetCredentialTypesHandler credCallback);
+#ifdef WS_ADAPTER
+extern void CAWSSetPkixInfoCallback(CAgetPkixInfoHandler infoCallback);
+extern void CAWSSetCredentialTypesCallback(CAgetCredentialTypesHandler credTypesCallback);
+extern void CAWSSetPskCredentialsCallback(CAgetPskCredentialsHandler credCallback);
+#endif
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
 
@@ -211,6 +216,9 @@ CAResult_t CAregisterPskCredentialsHandler(CAgetPskCredentialsHandler getTlsCred
         return CA_STATUS_NOT_INITIALIZED;
     }
     CAsetPskCredentialsCallback(getTlsCredentialsHandler);
+#ifdef WS_ADAPTER
+    CAWSSetPskCredentialsCallback(getTlsCredentialsHandler);
+#endif
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return CA_STATUS_OK;
 }
@@ -224,6 +232,9 @@ CAResult_t CAregisterPkixInfoHandler(CAgetPkixInfoHandler getPkixInfoHandler)
         return CA_STATUS_NOT_INITIALIZED;
     }
     CAsetPkixInfoCallback(getPkixInfoHandler);
+#ifdef WS_ADAPTER
+    CAWSSetPkixInfoCallback(getPkixInfoHandler);
+#endif
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return CA_STATUS_OK;
 }
@@ -237,6 +248,9 @@ CAResult_t CAregisterGetCredentialTypesHandler(CAgetCredentialTypesHandler getCr
         return CA_STATUS_NOT_INITIALIZED;
     }
     CAsetCredentialTypesCallback(getCredTypesHandler);
+#ifdef WS_ADAPTER
+    CAWSSetCredentialTypesCallback(getCredTypesHandler);
+#endif
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return CA_STATUS_OK;
 }
@@ -319,6 +333,9 @@ static CAResult_t CASendMessageMultiAdapter(const CAEndpoint_t *object, const vo
 #endif
 #ifdef TCP_ADAPTER
             ,CA_ADAPTER_TCP
+#endif
+#ifdef WS_ADAPTER
+            ,CA_ADAPTER_WS
 #endif
         };
 
@@ -428,11 +445,21 @@ CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
                   "CAAddNetworkType(CA_ADAPTER_TCP) function returns result : %d", res);
     }
 #endif
+#ifdef NFC_ADAPTER
     else if (interestedNetwork & CA_ADAPTER_NFC)
     {
         res = CAAddNetworkType(CA_ADAPTER_NFC);
         OIC_LOG_V(DEBUG, TAG, "CAAddNetworkType(CA_ADAPTER_NFC) function returns result : %d", res);
     }
+#endif
+#ifdef WS_ADAPTER
+    else if (interestedNetwork & CA_ADAPTER_WS)
+    {
+        res = CAAddNetworkType(CA_ADAPTER_WS);
+        OIC_LOG_V(DEBUG, TAG,
+                  "CAAddNetworkType(CA_ADAPTER_WS) function returns result : %d", res);
+    }
+#endif
     else
     {
         res = CA_NOT_SUPPORTED;
@@ -481,6 +508,15 @@ CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork)
     {
         res = CARemoveNetworkType(CA_ADAPTER_TCP);
         OIC_LOG_V(DEBUG, TAG, "CARemoveNetworkType(CA_ADAPTER_TCP) function returns result : %d",
+                  res);
+    }
+#endif
+
+#ifdef WS_ADAPTER
+    else if (nonInterestedNetwork & CA_ADAPTER_WS)
+    {
+        res = CARemoveNetworkType(CA_ADAPTER_WS);
+        OIC_LOG_V(DEBUG, TAG, "CARemoveNetworkType(CA_ADAPTER_WS) function returns result : %d",
                   res);
     }
 #endif
@@ -634,4 +670,8 @@ void CARegisterKeepAliveHandler(CAKeepAliveConnectionCallback ConnHandler)
 {
     CATCPSetKeepAliveCallbacks(ConnHandler);
 }
+#endif
+
+#ifdef WS_ADAPTER
+//TODO: Check if we also need to implement a keep alive (ping pong just like TCP)
 #endif

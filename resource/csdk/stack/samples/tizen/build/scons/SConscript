@@ -60,6 +60,11 @@ else:
     else:
         env.AppendUnique(CPPDEFINES=['NO_TCP_ADAPTER'])
 
+    if env.get('WITH_WS'):
+        env.AppendUnique(CPPDEFINES=['WS_ADAPTER', 'WITH_WS'])
+    else:
+        env.AppendUnique(CPPDEFINES=['NO_WS_ADAPTER'])
+
 if 'SUB' in with_mq:
     env.AppendUnique(CPPDEFINES=['MQ_SUBSCRIBER', 'WITH_MQ'])
     print "MQ SUB support"

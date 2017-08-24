@@ -87,7 +87,16 @@ OCStackResult OCGetSupportedEndpointFlags(const OCTpsSchemeFlags givenFlags, OCT
         *out = (OCTpsSchemeFlags)(*out | OC_COAP_RA);
     }
 #endif
-
+#ifdef WS_ADAPTER
+    if ((givenFlags & (OC_COAP_WS | OC_COAPS_WS)) && (SelectedNetwork & CA_ADAPTER_WS))
+    {
+        *out = (OCTpsSchemeFlags)(*out | OC_COAP_WS);
+        if (OC_SECURE)
+        {
+            *out = (OCTpsSchemeFlags)(*out | OC_COAPS_WS);
+        }
+    }
+#endif
     return OC_STACK_OK;
 }
 
@@ -173,6 +182,23 @@ OCStackResult OCGetMatchedTpsFlags(const CATransportAdapter_t adapter,
         *out = (OCTpsSchemeFlags)(*out | OC_COAP_RA);
     }
 #endif
+#ifdef WS_ADAPTER
+    if ((adapter & OC_ADAPTER_WS) && (flags & (OC_IP_USE_V4 | OC_IP_USE_V6)))
+    {
+        if (flags & OC_FLAG_SECURE)
+        {
+            // OC_COAPS_WS
+            // typecasting to support C90(arduino)
+            *out = (OCTpsSchemeFlags)(*out | OC_COAPS_WS);
+        }
+        else
+        {
+            // OC_COAP_WS
+            // typecasting to support C90(arduino)
+            *out = (OCTpsSchemeFlags)(*out | OC_COAP_WS);
+        }
+    }
+#endif
     return OC_STACK_OK;
 }
 
@@ -202,6 +228,13 @@ static const char *ConvertTpsToString(const OCTpsSchemeFlags tps)
 #ifdef EDR_ADAPTER
         case OC_COAP_RFCOMM:
             return COAP_RFCOMM_STR;
+#endif
+#ifdef WS_ADAPTER
+        case OC_COAP_WS:
+            return COAP_WS_STR;
+
+        case OC_COAPS_WS:
+            return COAPS_WS_STR;
 #endif
         default:
             return NULL;
@@ -238,10 +271,13 @@ char* OCCreateEndpointString(const OCEndpointPayload* endpoint)
 
     if ((strcmp(endpoint->tps, COAP_STR) == 0) || (strcmp(endpoint->tps, COAPS_STR) == 0)
 #ifdef TCP_ADAPTER
-        || (strcmp(endpoint->tps, COAP_TCP_STR) == 0) ||(strcmp(endpoint->tps, COAPS_TCP_STR) == 0)
+        || (strcmp(endpoint->tps, COAP_TCP_STR) == 0) || (strcmp(endpoint->tps, COAPS_TCP_STR) == 0)
 #endif
 #ifdef HTTP_ADAPTER
-        || (strcmp(endpoint->tps, HTTP_STR) == 0) ||(strcmp(endpoint->tps, HTTPS_STR) == 0)
+        || (strcmp(endpoint->tps, HTTP_STR) == 0) || (strcmp(endpoint->tps, HTTPS_STR) == 0)
+#endif
+#ifdef WS_ADAPTER
+        || (strcmp(endpoint->tps, COAP_WS_STR) == 0) || (strcmp(endpoint->tps, COAPS_WS_STR) == 0)
 #endif
         )
     {
@@ -423,6 +459,19 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
         parsedAdapter = OC_ADAPTER_RFCOMM_BTEDR;
     }
 #endif
+#ifdef WS_ADAPTER
+    else if (strcmp(tps, COAP_WS_STR) == 0)
+    {
+        isEnabledAdapter = OC_STACK_OK;
+        parsedAdapter = OC_ADAPTER_WS;
+    }
+    else if (strcmp(tps, COAPS_WS_STR) == 0)
+    {
+        isEnabledAdapter = OC_STACK_OK;
+        parsedAdapter = OC_ADAPTER_WS;
+        isSecure = true;
+    }
+#endif
     // ignore unrecognized tps type
     if (isEnabledAdapter == OC_STACK_ADAPTER_NOT_ENABLED
         && parsedAdapter == OC_DEFAULT_ADAPTER)
@@ -560,6 +609,17 @@ OCTpsSchemeFlags OCGetSupportedTpsFlags()
     if (SelectedNetwork & CA_ADAPTER_REMOTE_ACCESS)
     {
         ret = (OCTpsSchemeFlags)(ret | OC_COAP_RA);
+    }
+#endif
+#ifdef WS_ADAPTER
+    if (SelectedNetwork & CA_ADAPTER_WS)
+    {
+        ret = (OCTpsSchemeFlags)(ret | OC_COAP_WS);
+
+        if (OC_SECURE)
+        {
+            ret = (OCTpsSchemeFlags)(ret | OC_COAPS_WS);
+        }
     }
 #endif
     return ret;

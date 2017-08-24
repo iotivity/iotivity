@@ -1,0 +1,44 @@
+#######################################################
+#	Build WS adapter
+#######################################################
+import os.path
+
+Import('connectivity_env')
+
+print "Reading WS adapter script"
+
+target_os = connectivity_env.get('TARGET_OS')
+src_dir = './ws_adapter/'
+
+# Source files to build common for all platforms
+common_files = [
+    os.path.join(src_dir, 'cawsadapter.c'),
+    os.path.join(src_dir, 'cawsadapter_lwsimpl.c'),
+    os.path.join(src_dir, 'cawsutil.c') ]
+
+if connectivity_env.get('SECURED') == '1':
+    common_files += [os.path.join(src_dir, 'cawsadapter_ssl.c')]
+    connectivity_env.AppendUnique(LIBS = ['ssl', 'crypto'])
+    if target_os in ['linux']:
+        connectivity_env.AppendUnique(CPPPATH = ['/usr/local/ssl/include'])
+        connectivity_env.AppendUnique(LIBPATH = ['/usr/local/ssl/lib'])
+    if target_os == 'android':
+        openssl_source_path = os.path.join(connectivity_env.get('SRC_DIR'), 'extlibs', 'openssl', 'openssl')
+        connectivity_env.AppendUnique(CPPPATH = [os.path.join(openssl_source_path, 'include')])
+        connectivity_env.AppendUnique(LIBPATH = [openssl_source_path])
+        connectivity_env.AppendUnique(RPATH = [openssl_source_path])
+
+connectivity_env.AppendUnique(CA_SRC = common_files)
+
+# Get list of target-specific source file base names, i.e. no parent
+# directories prepended to the path.
+#
+# Target-specific SConscript files are expected to return that list.
+
+# Check for the existence of the platform-specific SConscript file
+# relative to the top-level source directory, not the build (variant)
+# directory, before calling that SConscript file to prevent a missing
+# file warning platforms that don't provide one.
+target_sconscript = target_os + '/SConscript'
+if os.path.exists(target_sconscript):
+    SConscript(target_sconscript, exports='connectivity_env')

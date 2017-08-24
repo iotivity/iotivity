@@ -1814,13 +1814,13 @@ OCEndpointPayload* CreateEndpointPayloadList(OCTpsSchemeFlags endpointType,
     VERIFY_PARAM_NON_NULL(TAG, networkInfo, "Invalid networkInfo parameter");
     VERIFY_PARAM_NON_NULL(TAG, listHead, "Invalid listHead parameter");
 
-    if ((OC_ADAPTER_IP | OC_ADAPTER_TCP) & (devAddr->adapter))
+    if ((OC_ADAPTER_IP | OC_ADAPTER_TCP | OC_ADAPTER_WS) & (devAddr->adapter))
     {
         for (size_t i = 0; i < infoSize; i++)
         {
             CAEndpoint_t *info = networkInfo + i;
 
-            if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter &&
+            if (((CA_ADAPTER_IP | CA_ADAPTER_TCP | OC_ADAPTER_WS) & info->adapter &&
                  info->ifindex == devAddr->ifindex) ||
                 info->adapter == CA_ADAPTER_RFCOMM_BTEDR)
             {

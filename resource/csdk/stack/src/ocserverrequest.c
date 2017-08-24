@@ -687,6 +687,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                             , CA_ADAPTER_REMOTE_ACCESS
 #endif
                             , CA_ADAPTER_TCP
+                            , CA_ADAPTER_WS
                         };
 
     size_t size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
@@ -705,6 +706,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                 | CA_ADAPTER_REMOTE_ACCESS
 #endif
                 | CA_ADAPTER_TCP
+                | CA_ADAPTER_WS
             );
     }
 

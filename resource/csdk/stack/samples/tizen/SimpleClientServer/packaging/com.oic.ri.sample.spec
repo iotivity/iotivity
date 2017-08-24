@@ -29,6 +29,7 @@ Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
 %{!?WITH_MQ: %define WITH_MQ OFF}
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_TCP: %define WITH_TCP 0}
+%{!?WITH_WS: %define WITH_WS 0}
 
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(glib-2.0)
@@ -60,6 +61,7 @@ scons %{JOB} \
     WITH_MQ=%{WITH_MQ} \
     WITH_PROXY=%{WITH_PROXY} \
     WITH_TCP=%{WITH_TCP} \
+    WITH_WS=%{WITH_WS} \
     #eol
 
 %install
@@ -68,11 +70,15 @@ mkdir -p %{buildroot}%{_datadir}/packages
 mkdir -p %{buildroot}/%{_sysconfdir}/smack/accesses2.d
 mkdir -p %{buildroot}/usr/apps/com.oic.ri.sample/bin/
 mkdir -p %{buildroot}/usr/apps/com.oic.ri.sample/bin/internal
+mkdir -p %{buildroot}/usr/apps/com.oic.ri.sample/bin/secure
 
 cp -rf %{ROOTDIR}/com.oic.ri.sample.xml %{buildroot}/%{_datadir}/packages
 cp -rf %{ROOTDIR}/scons/occlient %{buildroot}/usr/apps/com.oic.ri.sample/bin/
 cp -rf %{ROOTDIR}/scons/ocserver %{buildroot}/usr/apps/com.oic.ri.sample/bin/
 cp -rf %{ROOTDIR}/scons/ocrouting %{buildroot}/usr/apps/com.oic.ri.sample/bin/
+cp -rf %{ROOTDIR}/scons/ocserverbasicops %{buildroot}/usr/apps/com.oic.ri.sample/bin/secure
+cp -rf %{ROOTDIR}/scons/occlientbasicops %{buildroot}/usr/apps/com.oic.ri.sample/bin/secure
+cp %{ROOTDIR}/secure/*.dat %{buildroot}/usr/apps/com.oic.ri.sample/bin/secure
 
 %files
 %manifest com.oic.ri.sample.manifest
@@ -80,6 +86,9 @@ cp -rf %{ROOTDIR}/scons/ocrouting %{buildroot}/usr/apps/com.oic.ri.sample/bin/
 /usr/apps/com.oic.ri.sample/bin/occlient
 /usr/apps/com.oic.ri.sample/bin/ocserver
 /usr/apps/com.oic.ri.sample/bin/ocrouting
+/usr/apps/com.oic.ri.sample/bin/secure/ocserverbasicops
+/usr/apps/com.oic.ri.sample/bin/secure/occlientbasicops
 /%{_datadir}/packages/com.oic.ri.sample.xml
+/usr/apps/com.oic.ri.sample/bin/secure/*.dat
 
 

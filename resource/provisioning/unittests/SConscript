@@ -77,6 +77,15 @@ provisiontests_env.PrependUnique(LIBS=[
     'ocsrm'
 ])
 
+if (provisiontests_env.get('WITH_WS') == True):
+    if target_os in ['linux']:
+        provisiontests_env.AppendUnique(RPATH = [provisiontests_env.get('SRC_DIR') + '/extlibs/libwebsockets/libwebsockets/build/lib/'])
+        provisiontests_env.AppendUnique(LIBPATH = ['#extlibs/libwebsockets/libwebsockets/build/lib/'])
+        provisiontests_env.AppendUnique(LIBS = ['websockets'])
+    if provisiontests_env.get('SECURED') == '1':
+        provisiontests_env.AppendUnique(LIBS = ['ssl', 'crypto'])
+
+
 if with_ra_ibb:
     provisiontests_env.AppendUnique(
         LIBS=provisiontests_env['RALIBS'],

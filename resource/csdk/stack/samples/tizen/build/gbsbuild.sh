@@ -37,6 +37,9 @@ export WITH_PROXY=$8
 echo $9
 export WITH_MQ=$9
 
+echo $10
+export WITH_WS=$10
+
 echo $TARGET_TRANSPORT
 echo $BUILD_SAMPLE
 echo $WITH_MQ
@@ -64,6 +67,9 @@ cp -R ./build_common/external_libs.scons $sourcedir/tmp/
 mkdir -p $sourcedir/tmp/build_common/
 cp -a ./build_common/*.scons $sourcedir/tmp/build_common/
 
+#Lib Websockets Changes
+cp -R ./extlibs/libwebsockets $sourcedir/tmp/extlibs
+
 # copy dependency RPMs and conf files for tizen build
 cp ./tools/tizen/*.rpm $sourcedir/tmp
 cp ./tools/tizen/*.rpm $sourcedir/tmp/resource/csdk/stack/samples/tizen/SimpleClientServer
@@ -87,7 +93,7 @@ cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp/
 
 cd $sourcedir/tmp
 
-echo `pwd`
+pwd
 # Prepare mbedTLS dependency
 $SHELL ./extlibs/mbedtls/prep.sh
 
@@ -105,14 +111,49 @@ if [ ! -d .git ]; then
 fi
 
 gbsprofile=${gbsprofile:=profile.tizen}
-gbscommand_prefix="gbs build -A ${gbsarch} -P ${gbsprofile} "
+gbsroot=${gbsroot:=~/GBS-ROOT-RI-OIC}
+gbscommand_prefix="gbs build -A ${gbsarch} -P ${gbsprofile} -B ${gbsroot}"
 nproc=$(expr 1 + $(expr `nproc --ignore=1` / 2 ) )
 gbscommand_prefix=${gbscommand_prefix}" --define '_smp_mflags -j${nproc}'"
 
+if [ "True" = ${WITH_WS} ]; then
+    # Prepare libwebsockets dependency
+    $SHELL ./extlibs/libwebsockets/prep.sh
+    mkdir -p ${sourcedir}/tmp/extlibs/libwebsockets/libwebsockets/packaging
+
+    cp ${sourcedir}/tools/tizen/.gbs.conf ${sourcedir}/tmp/extlibs/libwebsockets/libwebsockets/
+    cp ${sourcedir}/tools/tizen/iotivity.manifest ${sourcedir}/tmp/extlibs/libwebsockets/libwebsockets/packaging/libwebsockets.manifest
+    cp ${sourcedir}/tmp/extlibs/libwebsockets/libwebsockets/libwebsockets.spec ${sourcedir}/tmp/extlibs/libwebsockets/libwebsockets/packaging/libwebsockets.spec
+
+    cd ${sourcedir}/tmp/extlibs/libwebsockets/libwebsockets/
+    # Initialize Git repository
+    if [ ! -d .git ]; then
+        git init ./
+        git config user.email "you@example.com"
+        git config user.name "Your Name"
+        git add ./
+        git commit -m "Initial commit"
+    fi
+
+    echo "Calling libwebsockets gbs build command"
+    gbscommand_lws=${gbscommand_prefix}" --include-all --repository ./ --define 'LWS_WITH_SSL ${SECURED}' --define 'LWS_WITHOUT_TESTAPPS 1'"
+    echo $gbscommand_lws
+    if eval $gbscommand_lws; then
+        echo "Lib Websockets build is successful"
+    else
+        echo "Lib Websockets build failed."
+        cd $sourcedir
+        rm -rf $sourcedir/tmp/extlibs/libwebsockets/libwebsockets
+        exit 1
+    fi
+
+    cd $sourcedir/tmp
+fi
+
 echo "Calling core gbs build command"
-gbscommand=${gbscommand_prefix}" -B ~/GBS-ROOT-RI-OIC --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6' --define 'WITH_TCP $7' --define 'WITH_PROXY $8' --define 'WITH_MQ $9'"
-echo $gbscommand
-if eval $gbscommand; then
+gbscommand_core=${gbscommand_prefix}" --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6' --define 'WITH_TCP $7' --define 'WITH_PROXY $8' --define 'WITH_MQ $9' --define 'WITH_WS $10'"
+echo $gbscommand_core
+if eval $gbscommand_core; then
    echo "Core build is successful"
 else
    echo "Core build failed. Try 'find . -type f -exec dos2unix {} \;' in the 'connectivity/' folder"
@@ -123,6 +164,7 @@ fi
 
 if echo $BUILD_SAMPLE|grep -qi '^ON$'; then
    cd resource/csdk/stack/samples/tizen/SimpleClientServer
+   cp ${sourcedir}/resource/csdk/stack/samples/linux/secure/*.dat ./secure
    echo `pwd`
    # Initialize Git repository
    if [ ! -d .git ]; then
@@ -133,9 +175,9 @@ if echo $BUILD_SAMPLE|grep -qi '^ON$'; then
       git commit -m "Initial commit"
    fi
    echo "Calling sample gbs build command"
-   gbscommand=${gbscommand_prefix}" -B ~/GBS-ROOT-RI-OIC --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6' --define 'WITH_TCP $7' --define 'WITH_PROXY $8' --define 'WITH_MQ $9'"
-   echo $gbscommand
-   if eval $gbscommand; then
+   gbscommand_sample=${gbscommand_prefix}" --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6' --define 'WITH_TCP $7' --define 'WITH_PROXY $8' --define 'WITH_MQ $9' --define 'WITH_WS $10'"
+   echo $gbscommand_sample
+   if eval $gbscommand_sample; then
       echo "Sample build is successful"
    else
       echo "Sample build is failed. Try 'find . -type f -exec dos2unix {} \;' in the 'connectivity/' folder"

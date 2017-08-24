@@ -87,11 +87,13 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_TCP: %define WITH_TCP 0}
 %{!?MULTIPLE_OWNER: %define MULTIPLE_OWNER 0}
+%{!?WITH_WS: %define WITH_WS 0}
 %{!?OIC_SUPPORT_TIZEN_TRACE: %define OIC_SUPPORT_TIZEN_TRACE False}
 
 BuildRequires:  expat-devel
 BuildRequires:  python, libcurl-devel
 BuildRequires:  scons
+BuildRequires:  cmake
 BuildRequires:  openssl-devel
 BuildRequires:  boost-devel
 BuildRequires:  boost-thread
@@ -103,6 +105,12 @@ BuildRequires:  pkgconfig(sqlite3)
 %if "%{TARGET_OS}" == "tizen"
 BuildRequires:  gettext-tools
 BuildRequires:  pkgconfig(dlog)
+
+%if 0%{?WITH_WS} == 1
+BuildRequires:  libwebsockets-devel >= 2.2
+Requires:  libwebsockets >= 2.2
+%endif
+
 %if "%{OIC_SUPPORT_TIZEN_TRACE}" == "True"
 BuildRequires:  pkgconfig(ttrace)
 %endif
@@ -203,6 +211,7 @@ scons %{?_smp_mflags} --prefix=%{_prefix} \
     WITH_PROXY=%{WITH_PROXY} \
     WITH_TCP=%{WITH_TCP} \
     MULTIPLE_OWNER=%{MULTIPLE_OWNER} \
+    WITH_WS=%{WITH_WS} \
     OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
     #eol
 
@@ -228,6 +237,7 @@ scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
     WITH_PROXY=%{WITH_PROXY} \
     WITH_TCP=%{WITH_TCP} \
     MULTIPLE_OWNER=%{MULTIPLE_OWNER} \
+    WITH_WS=%{WITH_WS} \
     OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
     #eol
 

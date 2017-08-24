@@ -58,6 +58,10 @@
 #ifdef EDR_ADAPTER
 #define COAP_RFCOMM_STR              "coap+rfcomm"
 #endif
+#ifdef WS_ADAPTER
+#define COAP_WS_STR                 "coap+ws"
+#define COAPS_WS_STR                "coaps+ws"
+#endif
 
 /*
  * This function gets Supported TPS Flags in Device from givenFlag.

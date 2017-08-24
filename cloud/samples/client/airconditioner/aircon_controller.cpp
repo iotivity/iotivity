@@ -22,12 +22,13 @@
 using namespace OC;
 using namespace std;
 
-
 condition_variable  g_callbackLock;
 string         g_uid;
 string         g_accesstoken;
 
 string              g_host;
+OCConnectivityType g_connType = CT_ADAPTER_TCP;
+CATransportAdapter_t g_adapterType = CA_ADAPTER_TCP;
 OC::OCResource::Ptr g_binaryswitchResource = nullptr;
 
 OC::OCResource::Ptr g_firmwareResource = nullptr;
@@ -212,7 +213,7 @@ void getCollectionResource(const HeaderOptions &,
             cout << "Observing " << it->getUri() << endl;
             g_binaryswitchResource = OCPlatform::constructResourceObject(g_host,
                                      it->getUri(),
-                                     static_cast<OCConnectivityType>(CT_ADAPTER_TCP | CT_IP_USE_V4), true,
+                                     static_cast<OCConnectivityType>(g_connType | CT_IP_USE_V4), true,
             { string("oic.r.switch.binary") }, { string(DEFAULT_INTERFACE) });
 
             QueryParamsMap      query;
@@ -224,7 +225,7 @@ void getCollectionResource(const HeaderOptions &,
             cout << "Observing " << it->getUri() << endl;
             g_firmwareResource = OCPlatform::constructResourceObject(g_host,
                                  it->getUri(),
-                                 static_cast<OCConnectivityType>(CT_ADAPTER_TCP | CT_IP_USE_V4), true,
+                                 static_cast<OCConnectivityType>(g_connType | CT_IP_USE_V4), true,
             { string("x.org.iotivity.firmware") }, { string(DEFAULT_INTERFACE) });
 
             QueryParamsMap      query;
@@ -278,13 +279,13 @@ void foundDevice(shared_ptr<OC::OCResource> resource)
             searchQuery += resource->sid();
             cout << "Airconditioner found" << endl;
             OCPlatform::findResource(g_host, searchQuery,
-                                     static_cast<OCConnectivityType>(CT_ADAPTER_TCP | CT_IP_USE_V4),
+                                     static_cast<OCConnectivityType>(g_connType | CT_IP_USE_V4),
                                      &foundAirconditionerResource);
 
             OCPlatform::OCPresenceHandle    handle;
             if (OCPlatform::subscribeDevicePresence(handle, g_host, { resource->sid() },
                                                     static_cast<OCConnectivityType>
-                                                    (CT_ADAPTER_TCP | CT_IP_USE_V4), &onObserve) != OC_STACK_OK)
+                                                    (g_connType | CT_IP_USE_V4), &onObserve) != OC_STACK_OK)
             {
                 cout << "Device presence failed" << endl;
             }
@@ -365,11 +366,11 @@ static FILE *client_open(const char *path, const char *mode)
 
 int main(int argc, char *argv[])
 {
-    if (argc != 4)
+    if (argc != 5)
     {
-        cout << "Put \"[host-ipaddress:port] [authprovider] [authcode]\" for sign-up and sign-in and publish resources"
+        cout << "Put \"[host-ipaddress:port] [authprovider] [authcode] [ws(0/1)]\" for sign-up and sign-in and publish resources"
              << endl;
-        cout << "Put \"[host-ipaddress:port] [uid] [accessToken]\" for sign-in and publish resources" <<
+        cout << "Put \"[host-ipaddress:port] [uid] [accessToken] [ws(0/1)]\" for sign-in and publish resources" <<
              endl;
         return 0;
     }
@@ -390,20 +391,32 @@ int main(int argc, char *argv[])
 
     OCStackResult result = OC_STACK_ERROR;
 
-    g_host = "coap+tcp://";
-
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-    g_host = "coaps+tcp://";
+    if (1 == atoi(argv[4]))
+    {
+        g_connType = CT_ADAPTER_WS;
+        g_adapterType = CA_ADAPTER_WS;
+        g_host = "coap+ws://";
+#if defined(__WITH_TLS__)
+        g_host = "coaps+ws://";
 #endif
-
+    }
+    else
+    {
+        g_connType = CT_ADAPTER_TCP;
+        g_adapterType = CA_ADAPTER_TCP;
+        g_host = "coap+tcp://";
+#if defined(__WITH_TLS__)
+        g_host = "coaps+tcp://";
+#endif
+    }
 
     g_host += argv[1];
 
     OCAccountManager::Ptr accountMgr = OCPlatform::constructAccountManagerObject(g_host,
-                                       CT_ADAPTER_TCP);
+                                       g_connType);
 
 
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+#if defined(__WITH_TLS__)
     cout << "Security Mode" << endl;
     if (CA_STATUS_OK != saveTrustCert())
     {
@@ -411,7 +424,7 @@ int main(int argc, char *argv[])
     }
 
     uint16_t cipher = MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256;
-    if (CA_STATUS_OK != CASelectCipherSuite(cipher, CA_ADAPTER_TCP))
+    if (CA_STATUS_OK != CASelectCipherSuite(cipher, g_adapterType))
     {
         cout << "CASelectCipherSuite returned an error" << endl;
     }
@@ -441,7 +454,7 @@ int main(int argc, char *argv[])
     OCPlatform::OCPresenceHandle presenceHandle;
 
     result = OCPlatform::subscribePresence(presenceHandle, g_host, query,
-                                           static_cast<OCConnectivityType>(CT_ADAPTER_TCP | CT_IP_USE_V4), &presenceDevice);
+                                           static_cast<OCConnectivityType>(g_connType | CT_IP_USE_V4), &presenceDevice);
 
     cout << " result: " << result << endl;
     */
@@ -449,7 +462,7 @@ int main(int argc, char *argv[])
     cout << "Finding airconditioner ";
 
     result = OCPlatform::findResource(g_host, "/oic/res?rt=oic.wk.d",
-                                      static_cast<OCConnectivityType>(CT_ADAPTER_TCP | CT_IP_USE_V4),
+                                      static_cast<OCConnectivityType>(g_connType | CT_IP_USE_V4),
                                       &foundDevice, &errorFoundDevice);
 
     cout << " result: " << result << endl;
