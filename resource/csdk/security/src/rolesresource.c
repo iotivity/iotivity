@@ -76,7 +76,7 @@ static RolesEntry_t         *gRoles             = NULL;
 static SymmetricRoleEntry_t *gSymmetricRoles    = NULL;
 static uint32_t             gIdCounter          = 1;
 
-/** 
+/**
  * Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching max cbor size.
  */
@@ -323,7 +323,7 @@ exit:
 static bool RoleCertChainContains(RoleCertChain_t *chain, const RoleCertChain_t* roleCert)
 {
     RoleCertChain_t *temp = NULL;
-    
+
     LL_FOREACH(chain, temp)
     {
         if (IsSameSecKey(&temp->certificate, &roleCert->certificate) &&
@@ -943,7 +943,7 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
     if (OC_STACK_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "Could not get peer's public key: %d", res);
-        ehRet = OC_EH_ERROR;
+        ehRet = OC_EH_RESOURCE_DELETED;
         goto exit;
     }
 
@@ -961,8 +961,9 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
     if (NULL == entry)
     {
         /* No entry for this peer. */
-        OIC_LOG(ERROR, TAG, "No entry for this peer's public key");
-        ehRet = OC_EH_ERROR;
+        OIC_LOG(WARNING, TAG, "No roles for this peer's public key");
+        // if no entry, the request is successful by definition
+        ehRet = OC_EH_RESOURCE_DELETED;
         goto exit;
     }
 
@@ -977,7 +978,7 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
         {
             LL_DELETE(entry->chains, curr1);
             FreeRoleCertChain(curr1);
-            ehRet = OC_EH_OK;
+            ehRet = OC_EH_RESOURCE_DELETED;
             break;
         }
     }
@@ -1151,7 +1152,7 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
         SymmetricRoleEntry_t *curr = NULL;
         LL_FOREACH(gSymmetricRoles, curr)
         {
-            if ((UUID_LENGTH == sep.identity.id_length) && 
+            if ((UUID_LENGTH == sep.identity.id_length) &&
                 (0 == memcmp(curr->subject.id, sep.identity.id, sizeof(curr->subject.id))))
             {
                 *roles = (OicSecRole_t *)OICCalloc(1, sizeof(OicSecRole_t));
