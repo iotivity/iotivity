@@ -122,5 +122,5 @@ if catest_env.get('TEST') == '1':
     if target_os in ['linux', 'windows']:
         catest_env.AppendENVPath('PATH', catest_env.get('BUILD_DIR'))
         run_test(catest_env,
-                 'resource_csdk_connectivity_test.memcheck',
+                 'resource_csdk_connectivity_test_catests.memcheck',
                  'resource/csdk/connectivity/test/catests')
