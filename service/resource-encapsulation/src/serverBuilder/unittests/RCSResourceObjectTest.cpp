@@ -18,6 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "oic_malloc.h"
+#include "oic_string.h"
 #include "UnitTestHelperWithFakeOCPlatform.h"
 
 #include "RCSResourceObject.h"
@@ -430,16 +432,13 @@ public:
         if(!interface.empty())
         {
             const string query = string("if=" + interface);
-            auto cQuery = new char [query.size()+1];
-            std::strcpy(cQuery, query.c_str());
-            ocEntityHandlerRequest.query = const_cast<char *> (cQuery);
+            ocEntityHandlerRequest.query = OICStrdup(query.c_str());
         }
 
         formResourceRequest(OC_REQUEST_FLAG, &ocEntityHandlerRequest, request);
 
         OCRepPayloadDestroy((OCRepPayload *)ocEntityHandlerRequest.payload);
-
-        delete[] ocEntityHandlerRequest.query;
+        OICFreeAndSetToNull((void**) &ocEntityHandlerRequest.query);
 
         return request;
     }
