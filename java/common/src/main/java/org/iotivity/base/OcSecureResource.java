@@ -194,8 +194,8 @@ public class OcSecureResource {
     /**
      * API to select OTM method.
      *
-     * @param OxmType Method to be selected
-     * @param SelectOTMMethodListener Callback function, which will be called after completion
+     * @param oxmType Method to be selected
+     * @param selectOTMMethodListener Callback function, which will be called after completion
      *
      * @throws OcException
      */
@@ -210,8 +210,8 @@ public class OcSecureResource {
     /**
      * API to change Multiple Owner Transfer(MOT) mode.
      *
-     * @param MomType MOT mode to be selected.
-     * @param ChangeMOTModeListener Callback function, which will be called after completion
+     * @param momType MOT mode to be selected.
+     * @param changeMOTModeListener Callback function, which will be called after completion
      *
      * @throws OcException
      */
@@ -226,7 +226,7 @@ public class OcSecureResource {
     /**
      * API to Add preConfigured PIN to local SVR DB.
      *
-     * @param String pin string to be saved in svr db.
+     * @param pin string to be saved in svr db.
      *
      * @throws OcException
      */
@@ -239,8 +239,8 @@ public class OcSecureResource {
     /**
      * API to provision preConfigured PIN.
      *
-     * @param String PIN to be used while authentication.
-     * @param ProvisionPreConfigPINListener Callback function, which will be called after
+     * @param pin to be used while authentication.
+     * @param provisionPreConfigPINListener Callback function, which will be called after
      *                                      completion
      *
      * @throws OcException
@@ -256,10 +256,8 @@ public class OcSecureResource {
     /**
      * API to  do Multiple Ownership Transfer for MOT enabled devices.
      *
-     * @param MultipleOwnershipTransferListener Callback function, which will
+     * @param doMultipleOwnershipTransferListener Callback function, which will
      *                                          be called after completion.
-     *
-     * @throws OcException
      */
     public native void doMultipleOwnershipTransfer(
             DoMultipleOwnershipTransferListener doMultipleOwnershipTransferListener);

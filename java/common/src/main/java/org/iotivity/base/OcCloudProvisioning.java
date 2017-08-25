@@ -111,7 +111,7 @@ public class  OcCloudProvisioning {
 
    /**
     * Method to create ACL ID
-    * @param ownerid owner ID for which the Acl ID is created
+    * @param ownerId owner ID for which the Acl ID is created
     * @param deviceId device ID for which the Acl ID is requested
     * @param cloudcreateAclId function called by the stack on completion of request.
     * @throws OcException Indicates failure getting ACL ID for the device.
