@@ -216,6 +216,31 @@ static void FreeSymmetricRolesList(SymmetricRoleEntry_t *head)
     }
 }
 
+static bool AddNullTerminator(OicSecKey_t *key)
+{
+    size_t length = key->len;
+    uint8_t *data = key->data;
+
+    if ((length > 0) && (data != NULL) && (data[length - 1] != 0))
+    {
+        key->data = OICRealloc(data, length + 1);
+
+        if (key->data == NULL)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: OICRealloc failed", __func__);
+            OICFree(data);
+            key->len = 0;
+            return false;
+        }
+
+        OIC_LOG(DEBUG, TAG, "Adding key null terminator");
+        key->data[length] = 0;
+        key->len++;
+    }
+
+    return true;
+}
+
 OCStackResult RegisterSymmetricCredentialRole(const OicSecCred_t *cred)
 {
     VERIFY_NON_NULL_RET(cred, TAG, "Parameter cred is NULL", OC_STACK_INVALID_PARAM);
@@ -695,6 +720,9 @@ OCStackResult CBORPayloadToRoles(const uint8_t *cborPayload, size_t size, RoleCe
                             {
                                 cborFindResult = DeserializeEncodingFromCbor(&roleMap, &currEntry->certificate);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to read publicData");
+
+                                /* mbedtls_x509_crt_parse requires null string terminator */
+                                VERIFY_TRUE_OR_EXIT(TAG, AddNullTerminator(&currEntry->certificate), ERROR);
                             }
                             else if (strcmp(tagName, OIC_JSON_OPTDATA_NAME) == 0)
                             {
