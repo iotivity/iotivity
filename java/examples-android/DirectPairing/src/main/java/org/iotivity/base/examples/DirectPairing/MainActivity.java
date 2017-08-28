@@ -385,6 +385,12 @@ public class MainActivity extends Activity {
 
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        closeIOCStack();
+    }
+
     /**
      * Copy svr db CBOR dat file from assets folder to app data files dir
      */
@@ -480,6 +486,18 @@ public class MainActivity extends Activity {
             OcProvisioning.provisionInit(sqlDbPath + StringConstants.OIC_SQL_DB_FILE);
         } catch (OcException e) {
             Log.d(TAG, "provisionInit error: " + e.getMessage());
+            Log.e(TAG, e.getMessage());
+        }
+    }
+
+    private void closeIOCStack() {
+        try {
+            /*
+             * Close DataBase
+             */
+            OcProvisioning.provisionClose();
+        } catch (OcException e) {
+            Log.d(TAG, "provisionClose error: " + e.getMessage());
             Log.e(TAG, e.getMessage());
         }
     }
