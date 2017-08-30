@@ -16,13 +16,19 @@
 
 import os
 import platform
+import string
 
-def run_test(env, xml_file, test, test_targets = ['test']):
+def run_test(env, run_valgrind, test, test_targets=None):
     """
-    Run test with the given SCons Environment, dumping Valgrind
-    results to the given XML file.  If no Valgrind run is desired
-    simply pass in an empty string or None for the xml_file
-    parameter.
+    Run test using the given SCons environment.
+
+    Test results go to the test_out subdir of the build directory,
+    that path is passed to Googletest.
+
+    If run_valgrind is true, build a log filename from the test path
+    and run the test under valgrind (if the platform supports it).
+    Jenkins is configured to pick up valgrind output files ending in
+    .memcheck and include them in the build report.
 
     Note that the test path should not include the build directory
     where binaries are placed.  The build directory will be prepended
@@ -34,41 +40,65 @@ def run_test(env, xml_file, test, test_targets = ['test']):
     if not os.path.isdir(result_dir):
         os.makedirs(result_dir)
 
+    # Dump test report in XML format to the results directory.
     env.AppendENVPath('GTEST_OUTPUT', 'xml:' + result_dir, delete_existing=0)
 
-    # Make sure the Google Test libraries are in the dynamic
-    # linker/loader path.
-    env.AppendENVPath('LD_LIBRARY_PATH', [build_dir])
-    env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/googletest-release-1.7.0/lib/.libs'])
+    # Make sure tests find any iotivity shared lib they may have linked with
+    env.AppendENVPath('LD_LIBRARY_PATH', build_dir)
+
+    if not test_targets:
+        test_targets = ['test']
+
+    if run_valgrind:
+        # transform path to test to a string form
+        # we are ignoring the string value even if one was passed
+        out_file = test.replace('_', '-').replace(os.sep, '_')
+        out_file += '.memcheck'
+
+    if env.get('VALGRIND_CHECKS'):
+        have_valgrind = True
+    else:
+        have_valgrind = False
 
     test_cmd = os.path.join(build_dir, test)
 
-    have_valgrind = False
-    if env.get('TARGET_OS') not in ['windows']:
-        have_valgrind = True
+    if run_valgrind and have_valgrind:
+        # modify test command line to run test under valgrind
 
-    if xml_file and have_valgrind:
         # Environment variables to be made available during the
         # Valgrind run.
-        valgrind_environment = ''
+        valgrind_env = ''
 
         # GLib uses a custom memory allocation scheme that can
         # sometimes confuse Valgrind.  Configure GLib to be Valgrind
         # friendly.
-        valgrind_environment += 'G_DEBUG=gc-friendly G_SLICE=always-malloc'
+        valgrind_env += 'G_DEBUG=gc-friendly G_SLICE=always-malloc'
 
-        # Valgrind suppressions file.
+        # Valgrind suppressions file. This is passed to valgrind, not
+        # handled by SCons, so need the path to the real file, not variant.
         suppression_file = env.File('#tools/valgrind/iotivity.supp').srcnode().path
 
-        # Set up to run the test under Valgrind. The "--num-callers" option specifies the
-        # callstack depth (default, if not specified, is 12). We are increasing it here to
-        # allow unit test name to be visible in the leak report.
-        test_cmd = '%s valgrind --leak-check=full --suppressions=%s --num-callers=24 --xml=yes --xml-file=%s %s' % (valgrind_environment, suppression_file, xml_file, test_cmd)
+        # Set up to run the test under Valgrind.
+        # The "--num-callers" option specifies the callstack depth (default 12)
+        # We are increasing it here to allow unit test name to be visible
+        # in the leak report.
+        vg_opt = string.join([
+            "--suppressions=" + suppression_file,
+            "--leak-check=full",
+            "--num-callers=24",
+            "--xml=yes --xml-file=" + out_file,
+        ])
+        test_cmd = '%s valgrind %s %s' % (valgrind_env, vg_opt, test_cmd)
+
     if env.get('TARGET_OS') in ['linux']:
         env.Depends('ut' + test , os.path.join(build_dir, test))
-    ut = env.Command('ut' + test, None, test_cmd)
+    # a hyphen in front of the action means ignore the result: let all tests run
+    # in a Jenkins run, results are collected at the end, so
+    # we don't have to decide anything here.
+    ut = env.Command('ut' + test, None, '-' + test_cmd)
     env.Depends(ut, test_targets)
     env.AlwaysBuild(ut)
+
 
 def run_uwp_wack_test(env, cert_file, appx_file, report_output_path):
     if env.get('TARGET_OS') != 'windows' or env.get('MSVC_UWP_APP') != '1':

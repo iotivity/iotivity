@@ -249,6 +249,17 @@ if target_os in ['linux']:
                      'Make all compiler warnings into errors.',
                       default=True))
 
+targets_support_valgrind = ['linux', 'darwin']
+if target_os in targets_support_valgrind:
+    # Build option to enable unit tests to be run under valgrind.
+    # May need to disable on small-memory platforms (e.g. Raspberry Pi)
+    # Checking for memory leak and usage errors is part of the
+    # acceptance criteria for project code, so this should default to on.
+    help_vars.Add(
+        BoolVariable('VALGRIND_CHECKS',
+                     'Build support for running code coverage checks',
+                      default=True))
+
 if target_os == 'windows':
     # Builds differ based on Visual Studio version
     #   For VS2013, MSVC_VERSION is '12.0'.
