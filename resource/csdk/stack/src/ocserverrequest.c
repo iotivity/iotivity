@@ -457,9 +457,13 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMe
         case OC_EH_OK:
         case OC_EH_CHANGED: // 2.04
         case OC_EH_CONTENT: // 2.05
-            if (method == OC_REST_POST || method == OC_REST_PUT || method == OC_REST_DELETE)
+            if (method == OC_REST_POST || method == OC_REST_PUT)
             {
                 caResult = CA_CHANGED;
+            }
+            else if (method == OC_REST_DELETE)
+            {
+                caResult = CA_DELETED;
             }
             else if (method == OC_REST_GET)
             {

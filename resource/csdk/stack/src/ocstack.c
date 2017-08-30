@@ -889,6 +889,11 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
                    // GET requests.
                    ret = CA_CONTENT;
                    break;
+               case OC_REST_DELETE:
+                   // This Response Code is like HTTP 200 "OK" but only used in response to
+                   // DELETE requests.
+                   ret = CA_DELETED;
+                   break;
                default:
                    // This should not happen but,
                    // give it a value just in case but output an error
