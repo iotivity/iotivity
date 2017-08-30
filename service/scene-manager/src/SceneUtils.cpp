@@ -35,9 +35,9 @@ namespace OIC
         {
             uint8_t uuid[UUID_SIZE] = { 0, };
             char uuidStr[UUID_STRING_SIZE] = { 0, };
-            if (RAND_UUID_OK == OCGenerateUuid(uuid))
+            if (OCGenerateUuid(uuid))
             {
-                if (RAND_UUID_OK == OCConvertUuidToString(uuid, uuidStr))
+                if (OCConvertUuidToString(uuid, uuidStr))
                 {
                     return std::string(uuidStr);
                 }
@@ -74,32 +74,55 @@ namespace OIC
 
         std::string SceneUtils::getNetAddress()
         {
-            CAEndpoint_t ** netInfo = (CAEndpoint_t **)OICMalloc(sizeof(CAEndpoint_t*)*5);
-
-            if(netInfo == nullptr)
-            {
-                throw RCSException("memory allocation fail");
-            }
-
-            uint32_t size = 0;
-            CAGetNetworkInformation(netInfo, &size);
+            CAEndpoint_t * netInfo = nullptr;
+            size_t size = 0;
+            CAGetNetworkInformation(&netInfo, &size);
 
             if (size == 0)
             {
                 OICFree(netInfo);
                 throw RCSException("Disabled Network");
             }
+            std::string address_ipv4 = "", address_ipv6 = "";
 
-            for (uint32_t i = 0; i < size; ++i)
+            for (size_t i = 0; i < size; ++i)
             {
-                if (netInfo[i]->adapter == CATransportAdapter_t::CA_ADAPTER_IP)
+                if (netInfo[i].adapter == CATransportAdapter_t::CA_ADAPTER_IP)
                 {
-                    std::string retAddress
-                        = std::string(netInfo[i]->addr) + ":" + std::to_string(netInfo[i]->port);
+                    if(netInfo[i].flags == CATransportFlags_t::CA_IPV4)
+                    {
+                        address_ipv4 = std::string(netInfo[i].addr) + ":"
+                                            + std::to_string(netInfo[i].port);
+                    }
+                    else if(netInfo[i].flags == CATransportFlags_t::CA_IPV6)
+                    {
+                        char addressEncoded[CA_MAX_URI_LENGTH] = {0};
 
-                    OICFree(netInfo);
-                    return retAddress;
+                        OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
+                                                                         sizeof(addressEncoded),
+                                                                         netInfo[i].addr);
+                        if (OC_STACK_OK != result)
+                        {
+                            OICFree(netInfo);
+                            throw RCSException("address encoding error");
+                        }
+
+                        address_ipv6 = "[" + std::string(addressEncoded) + "]:"
+                                            + std::to_string(netInfo[i].port);
+                    }
                 }
+            }
+            // currently ipv6 case doesn't work due to create remote resource object api fail on v6.
+            // Even if both ipv4 & ipv6 are in the netinfo, ipv4 address will be returned as below.
+            // if create remote resource object api work well on IPv6 later, below should be fixed.
+            if (!address_ipv4.empty())
+            {
+                OICFree(netInfo);
+                return address_ipv4;
+            } else if (!address_ipv6.empty())
+            {
+                OICFree(netInfo);
+                return address_ipv6;
             }
 
             OICFree(netInfo);
@@ -115,9 +138,29 @@ namespace OIC
                 std::string hostaddress, uri;
                 SceneUtils::getHostUriString(address, &hostaddress, &uri);
 
-                OC::OCResource::Ptr pOCResource =
-                    OC::OCPlatform::constructResourceObject(
-                        hostaddress, uri, ct, false, vecRT, vecIF);
+                OC::OCResource::Ptr pOCResource = nullptr;
+
+                if(hostaddress.find("[") != std::string::npos &&
+                            hostaddress.find("]") != std::string::npos)
+                {
+                    pOCResource = OC::OCPlatform::constructResourceObject(
+                                     hostaddress,
+                                     uri,
+                                     (OCConnectivityType)(ct | CT_IP_USE_V6),
+                                     false,
+                                     vecRT,
+                                     vecIF);
+                }
+                else
+                {
+                    pOCResource = OC::OCPlatform::constructResourceObject(
+                                     hostaddress,
+                                     uri,
+                                     (OCConnectivityType)(ct | CT_IP_USE_V4),
+                                     false,
+                                     vecRT,
+                                     vecIF);
+                }
 
                 return RCSRemoteResourceObject::fromOCResource(pOCResource);
             }

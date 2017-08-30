@@ -30,9 +30,32 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+#include "ocpayload.h"
 
 using namespace OC;
 using namespace std;
+
+// Set of strings for each of platform Info fields
+std::string  platformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+std::string  manufacturerName = "OCF";
+std::string  manufacturerLink = "https://www.iotivity.org";
+std::string  modelNumber = "myModelNumber";
+std::string  dateOfManufacture = "2016-01-15";
+std::string  platformVersion = "myPlatformVersion";
+std::string  operatingSystemVersion = "myOS";
+std::string  hardwareVersion = "myHardwareVersion";
+std::string  firmwareVersion = "1.0";
+std::string  supportLink = "https://www.iotivity.org";
+std::string  systemTime = "2016-01-15T11.01";
+
+// Set of strings for each of device info fields
+std::string  deviceName = "IoTivity Garage Server";
+std::string  specVersion = "ocf.1.1.0";
+std::vector<std::string> dataModelVersions = {"ocf.res.1.1.0"};
+std::string  protocolIndependentID = "1cbab786-ca5f-4eb9-89b2-e90eb4820145";
+
+// OCPlatformInfo Contains all the platform info to be stored
+OCPlatformInfo platformInfo;
 
 // Forward declaring the entityHandler
 OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request);
@@ -178,7 +201,6 @@ OCStackResult sendResponse(std::shared_ptr<OCResourceRequest> pRequest)
     pResponse->setRequestHandle(pRequest->getRequestHandle());
     pResponse->setResourceHandle(pRequest->getResourceHandle());
     pResponse->setResourceRepresentation(myGarage.get());
-    pResponse->setErrorCode(200);
     pResponse->setResponseResult(OC_EH_OK);
 
     return OCPlatform::sendResponse(pResponse);
@@ -241,23 +263,122 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
     return ehResult;
 }
 
+void DeletePlatformInfo()
+{
+    delete[] platformInfo.platformID;
+    delete[] platformInfo.manufacturerName;
+    delete[] platformInfo.manufacturerUrl;
+    delete[] platformInfo.modelNumber;
+    delete[] platformInfo.dateOfManufacture;
+    delete[] platformInfo.platformVersion;
+    delete[] platformInfo.operatingSystemVersion;
+    delete[] platformInfo.hardwareVersion;
+    delete[] platformInfo.firmwareVersion;
+    delete[] platformInfo.supportUrl;
+    delete[] platformInfo.systemTime;
+}
+
+void DuplicateString(char ** targetString, std::string sourceString)
+{
+    *targetString = new char[sourceString.length() + 1];
+    strncpy(*targetString, sourceString.c_str(), (sourceString.length() + 1));
+}
+
+OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerName,
+    std::string manufacturerUrl, std::string modelNumber, std::string dateOfManufacture,
+    std::string platformVersion, std::string operatingSystemVersion, std::string hardwareVersion,
+    std::string firmwareVersion, std::string supportUrl, std::string systemTime)
+{
+    DuplicateString(&platformInfo.platformID, platformID);
+    DuplicateString(&platformInfo.manufacturerName, manufacturerName);
+    DuplicateString(&platformInfo.manufacturerUrl, manufacturerUrl);
+    DuplicateString(&platformInfo.modelNumber, modelNumber);
+    DuplicateString(&platformInfo.dateOfManufacture, dateOfManufacture);
+    DuplicateString(&platformInfo.platformVersion, platformVersion);
+    DuplicateString(&platformInfo.operatingSystemVersion, operatingSystemVersion);
+    DuplicateString(&platformInfo.hardwareVersion, hardwareVersion);
+    DuplicateString(&platformInfo.firmwareVersion, firmwareVersion);
+    DuplicateString(&platformInfo.supportUrl, supportUrl);
+    DuplicateString(&platformInfo.systemTime, systemTime);
+
+    return OC_STACK_OK;
+}
+
+OCStackResult SetDeviceInfo()
+{
+    OCStackResult result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+                                                        deviceName);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set device name" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                          dataModelVersions);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set data model versions" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set spec version" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          protocolIndependentID);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set piid" << endl;
+        return result;
+    }
+
+    return OC_STACK_OK;
+}
+
 int main(int /*argc*/, char** /*argv[1]*/)
 {
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Server,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
-        OC::QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
+    std::cout << "Starting server & setting platform info\n";
+
+    OCStackResult result = SetPlatformInfo(platformId, manufacturerName, manufacturerLink,
+            modelNumber, dateOfManufacture, platformVersion, operatingSystemVersion,
+            hardwareVersion, firmwareVersion, supportLink, systemTime);
+
+    result = OCPlatform::registerPlatformInfo(platformInfo);
+
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Platform Registration failed\n";
+        return -1;
+    }
+
+    result = SetDeviceInfo();
+
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Device Registration failed\n";
+        return -1;
+    }
+
     try
     {
         // Invoke createResource function of class light.
         myGarage.createResource();
 
+        DeletePlatformInfo();
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we
         // don't ever call cv.notify, this should be a non-processor intensive version
@@ -272,8 +393,7 @@ int main(int /*argc*/, char** /*argv[1]*/)
         oclog() << e.what();
     }
 
-    // No explicit call to stop the OCPlatform
-    // When OCPlatform destructor is invoked, internally we do Platform cleanup
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
 
     return 0;
 }

@@ -25,7 +25,7 @@
 #include "caremotehandler.h"
 #include "logger.h"
 
-#define TAG "CA"
+#define TAG "OIC_CA_REMOTE_HANDLER"
 
 CAEndpoint_t *CACloneEndpoint(const CAEndpoint_t *rep)
 {
@@ -119,6 +119,8 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         case CA_REQUEST_ENTITY_INCOMPLETE:
         case CA_REQUEST_ENTITY_TOO_LARGE:
         case CA_INTERNAL_SERVER_ERROR:
+        case CA_BAD_GATEWAY:
+        case CA_SERVICE_UNAVAILABLE:
         case CA_RETRANSMIT_TIMEOUT:
             break;
         default:
@@ -247,16 +249,14 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
     //Do not free clone. we cannot declare it const, as the content is modified
     if ((info->token) && (0 < info->tokenLength))
     {
-        char *temp = NULL;
-
         // allocate token field
         uint8_t len = info->tokenLength;
 
-        temp = (char *) OICMalloc(len * sizeof(char));
+        char *temp = (char *) OICMalloc(len * sizeof(char));
         if (!temp)
         {
             OIC_LOG(ERROR, TAG, "CACloneInfo Out of memory");
-            return CA_MEMORY_ALLOC_FAILED;
+            goto exit;
         }
 
         memcpy(temp, info->token, len);
@@ -274,8 +274,7 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         if (!clone->options)
         {
             OIC_LOG(ERROR, TAG, "CACloneInfo Out of memory");
-            CADestroyInfoInternal(clone);
-            return CA_MEMORY_ALLOC_FAILED;
+            goto exit;
         }
         memcpy(clone->options, info->options, sizeof(CAHeaderOption_t) * info->numOptions);
         clone->numOptions = info->numOptions;
@@ -290,8 +289,7 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         if (!temp)
         {
             OIC_LOG(ERROR, TAG, "CACloneInfo Out of memory");
-            CADestroyInfoInternal(clone);
-            return CA_MEMORY_ALLOC_FAILED;
+            goto exit;
         }
         memcpy(temp, info->payload, info->payloadSize);
 
@@ -301,6 +299,8 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
     }
     clone->payloadFormat = info->payloadFormat;
     clone->acceptFormat = info->acceptFormat;
+    clone->payloadVersion = info->payloadVersion;
+    clone->acceptVersion = info->acceptVersion;
 
     if (info->resourceUri)
     {
@@ -309,8 +309,7 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         if (!temp)
         {
             OIC_LOG(ERROR, TAG, "CACloneInfo Out of memory");
-            CADestroyInfoInternal(clone);
-            return CA_MEMORY_ALLOC_FAILED;
+            goto exit;
         }
 
         // save the resourceUri
@@ -326,4 +325,7 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
 
     return CA_STATUS_OK;
 
+exit:
+    CADestroyInfoInternal(clone);
+    return CA_MEMORY_ALLOC_FAILED;
 }

@@ -30,37 +30,51 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
-// Platform check can be extended to check and/or define more, or could be
-// moved into a config.h
-#if !defined(__ARDUINO__) && !defined(ARDUINO)
-#define HAVE_UNISTD_H 1
-#endif
+#include "iotivity_config.h"
 
 // Pull in _POSIX_TIMERS feature test macro to check for
 // clock_gettime() support.
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
-// if we have unistd.h, we're a Unix system
+#ifdef HAVE_ARDUINO_TIME_H
+#include <Time.h>
+#else
 #include <time.h>
+#endif
+
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
 #endif
 
 #include "logger.h"
 #include "string.h"
 #include "logger_types.h"
 
+// log level
+static int g_level = DEBUG;
+// private log messages are not logged unless they have been explicitly enabled by calling OCSetLogLevel().
+static bool g_hidePrivateLogEntries = true;
+
 #ifndef __TIZEN__
 static oc_log_ctx_t *logCtx = 0;
 #endif
+
+#if defined(_MSC_VER)
+#define LINE_BUFFER_SIZE (16 * 2) + 16 + 1  // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
+#else
+static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
+#endif //defined(_MSC_VER)
+
 #ifdef __ANDROID__
-#elif defined __linux__ || defined __APPLE__
+#elif defined __linux__ || defined __APPLE__ || defined _WIN32
 static oc_log_level LEVEL_XTABLE[] = {OC_LOG_DEBUG, OC_LOG_INFO,
                                       OC_LOG_WARNING, OC_LOG_ERROR, OC_LOG_FATAL};
 #endif
-
-// Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
-static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;
 
 // Convert LogLevel to platform-specific severity level.  Store in PROGMEM on Arduino
 #ifdef __ANDROID__
@@ -72,12 +86,14 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;
     static android_LogPriority LEVEL[] =
     {ANDROID_LOG_DEBUG, ANDROID_LOG_INFO, ANDROID_LOG_WARN, ANDROID_LOG_ERROR, ANDROID_LOG_FATAL};
 #endif
-#elif defined (__linux__) || defined (__APPLE__)
-    static const char *LEVEL[] __attribute__ ((unused)) =
-    {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
+#elif defined(__linux__) || defined(__APPLE__) || defined(__msys_nt__)
+    static const char * LEVEL[] __attribute__ ((unused)) = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
+#elif defined(_MSC_VER)
+    static const char * LEVEL[] = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
 #elif defined ARDUINO
 #include <stdarg.h>
 #include "Arduino.h"
+#include "oic_string.h"
 
     PROGMEM const char level0[] = "DEBUG";
     PROGMEM const char level1[] = "INFO";
@@ -87,31 +103,70 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;
 
     PROGMEM const char * const LEVEL[]  = {level0, level1, level2, level3, level4};
 
-    static void OCLogString(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logStr);
+    static void OCLogString(int level, PROGMEM const char * tag, PROGMEM const char * logStr);
 #ifdef ARDUINO_ARCH_AVR
     //Mega2560 and other 8-bit AVR microcontrollers
-    #define GET_PROGMEM_BUFFER(buffer, addr) { strcpy_P(buffer, (char*)pgm_read_word(addr));}
+    #define GET_PROGMEM_BUFFER(buffer, addr) { OICStrcpy(buffer, sizeof(buffer), (char*)pgm_read_word(addr));}
 #elif defined ARDUINO_ARCH_SAM
     //Arduino Due and other 32-bit ARM micro-controllers
-    #define GET_PROGMEM_BUFFER(buffer, addr) { strcpy_P(buffer, (char*)pgm_read_dword(addr));}
+    #define GET_PROGMEM_BUFFER(buffer, addr) { OICStrcpy(buffer, sizeof(buffer), (char*)pgm_read_dword(addr));}
 #else
     #define GET_PROGMEM_BUFFER(buffer, addr) { buffer[0] = '\0';}
 #endif
-#endif // __ANDROID__
+#else // !defined(__ANDROID__) && !defined(ARDUINO)
+    static const char *LEVEL[] __attribute__ ((unused)) =
+    {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
+#endif
+
+/**
+ * Checks if a message should be logged, based on its priority level, and removes
+ * the OC_LOG_PRIVATE_DATA bit if the message should be logged.
+ *
+ * @param level[in] - One of DEBUG, INFO, WARNING, ERROR, or FATAL plus possibly the OC_LOG_PRIVATE_DATA bit
+ *
+ * @return true if the message should be logged, false otherwise
+ */
+static bool AdjustAndVerifyLogLevel(int* level)
+{
+    int localLevel = *level;
+
+    if (OC_LOG_PRIVATE_DATA & localLevel)
+    {
+        if (g_hidePrivateLogEntries)
+        {
+            return false;
+        }
+
+        localLevel &= ~OC_LOG_PRIVATE_DATA;
+    }
+
+    if (g_level > localLevel)
+    {
+        return false;
+    }
+
+    *level = localLevel;
+    return true;
+}
 
 #ifndef ARDUINO
 
 /**
  * Output the contents of the specified buffer (in hex) with the specified priority level.
  *
- * @param level      - DEBUG, INFO, WARNING, ERROR, FATAL
+ * @param level      - One of DEBUG, INFO, WARNING, ERROR, or FATAL plus possibly the OC_LOG_PRIVATE_DATA bit
  * @param tag        - Module name
  * @param buffer     - pointer to buffer of bytes
  * @param bufferSize - max number of byte in buffer
  */
-void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint16_t bufferSize)
+void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t bufferSize)
 {
     if (!buffer || !tag || (bufferSize == 0))
+    {
+        return;
+    }
+
+    if (!AdjustAndVerifyLogLevel(&level))
     {
         return;
     }
@@ -120,15 +175,14 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
     // that this is a variable-sized object.
     char lineBuffer[LINE_BUFFER_SIZE];
     memset(lineBuffer, 0, sizeof lineBuffer);
-    int lineIndex = 0;
-    int i;
-    for (i = 0; i < bufferSize; i++)
+    size_t lineIndex = 0;
+    for (size_t i = 0; i < bufferSize; i++)
     {
         // Format the buffer data into a line
-        snprintf(&lineBuffer[lineIndex*3], sizeof(lineBuffer)-lineIndex*3, "%02X ", buffer[i]);
+        snprintf(&lineBuffer[lineIndex * 3], sizeof(lineBuffer) - lineIndex * 3, "%02X ", buffer[i]);
         lineIndex++;
         // Output 16 values per line
-        if (((i+1)%16) == 0)
+        if (((i + 1) % 16) == 0)
         {
             OCLogv(level, tag, "%s", lineBuffer);
             memset(lineBuffer, 0, sizeof lineBuffer);
@@ -141,6 +195,13 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
         OCLogv(level, tag, "%s", lineBuffer);
     }
 }
+
+void OCSetLogLevel(LogLevel level, bool hidePrivateLogEntries)
+{
+    g_level = level;
+    g_hidePrivateLogEntries = hidePrivateLogEntries;
+}
+
 #ifndef __TIZEN__
 void OCLogConfig(oc_log_ctx_t *ctx)
 {
@@ -154,7 +215,7 @@ void OCLogInit()
 
 void OCLogShutdown()
 {
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__) || defined(_WIN32)
     if (logCtx && logCtx->destroy)
     {
         logCtx->destroy(logCtx);
@@ -166,16 +227,22 @@ void OCLogShutdown()
  * Output a variable argument list log string with the specified priority level.
  * Only defined for Linux and Android
  *
- * @param level  - DEBUG, INFO, WARNING, ERROR, FATAL
+ * @param level  - One of DEBUG, INFO, WARNING, ERROR, or FATAL plus possibly the OC_LOG_PRIVATE_DATA bit
  * @param tag    - Module name
  * @param format - variadic log string
  */
-void OCLogv(LogLevel level, const char * tag, const char * format, ...)
+void OCLogv(int level, const char * tag, const char * format, ...)
 {
     if (!format || !tag) {
         return;
     }
-    char buffer[MAX_LOG_V_BUFFER_SIZE] = {};
+
+    if (!AdjustAndVerifyLogLevel(&level))
+    {
+        return;
+    }
+
+    char buffer[MAX_LOG_V_BUFFER_SIZE] = {0};
     va_list args;
     va_start(args, format);
     vsnprintf(buffer, sizeof buffer - 1, format, args);
@@ -187,15 +254,32 @@ void OCLogv(LogLevel level, const char * tag, const char * format, ...)
  * Output a log string with the specified priority level.
  * Only defined for Linux and Android
  *
- * @param level  - DEBUG, INFO, WARNING, ERROR, FATAL
+ * @param level  - One of DEBUG, INFO, WARNING, ERROR, or FATAL plus possibly the OC_LOG_PRIVATE_DATA bit
  * @param tag    - Module name
  * @param logStr - log string
  */
-void OCLog(LogLevel level, const char * tag, const char * logStr)
+void OCLog(int level, const char * tag, const char * logStr)
 {
     if (!logStr || !tag)
     {
        return;
+    }
+
+    if (!AdjustAndVerifyLogLevel(&level))
+    {
+        return;
+    }
+
+    switch(level)
+    {
+        case DEBUG_LITE:
+            level = DEBUG;
+            break;
+        case INFO_LITE:
+            level = INFO;
+            break;
+        default:
+            break;
     }
 
    #ifdef __ANDROID__
@@ -206,7 +290,7 @@ void OCLog(LogLevel level, const char * tag, const char * logStr)
        __android_log_write(LEVEL[level], tag, logStr);
    #endif
 
-   #elif defined __linux__ || defined __APPLE__
+   #else
        if (logCtx && logCtx->write_level)
        {
            logCtx->write_level(logCtx, LEVEL_XTABLE[level], logStr);
@@ -229,6 +313,12 @@ void OCLog(LogLevel level, const char * tag, const char * logStr)
                sec = when.tv_sec % 60;
                ms = when.tv_nsec / 1000000;
            }
+   #elif defined(_WIN32)
+           SYSTEMTIME systemTime = {0};
+           GetLocalTime(&systemTime);
+           min = (int)systemTime.wMinute;
+           sec = (int)systemTime.wSecond;
+           ms  = (int)systemTime.wMilliseconds;
    #else
            struct timeval now;
            if (!gettimeofday(&now, NULL))
@@ -259,19 +349,23 @@ void OCLogInit()
  * Only defined for Arduino.  Only uses PROGMEM strings
  * for the tag parameter
  *
- * @param level  - DEBUG, INFO, WARNING, ERROR, FATAL
+ * @param level  - One of DEBUG, INFO, WARNING, ERROR, or FATAL plus possibly the OC_LOG_PRIVATE_DATA bit
  * @param tag    - Module name
  * @param logStr - log string
  */
-void OCLogString(LogLevel level, PROGMEM const char * tag, const char * logStr)
+void OCLogString(int level, PROGMEM const char * tag, const char * logStr)
 {
     if (!logStr || !tag)
     {
       return;
     }
 
-    char buffer[LINE_BUFFER_SIZE];
+    if (!AdjustAndVerifyLogLevel(&level))
+    {
+        return;
+    }
 
+    char buffer[LINE_BUFFER_SIZE];
     GET_PROGMEM_BUFFER(buffer, &(LEVEL[level]));
     Serial.print(buffer);
 
@@ -291,56 +385,68 @@ void OCLogString(LogLevel level, PROGMEM const char * tag, const char * logStr)
  * Output the contents of the specified buffer (in hex) with the specified
  * priority level.
  *
- * @param level      - DEBUG, INFO, WARNING, ERROR, FATAL
+ * @param level      - One of DEBUG, INFO, WARNING, ERROR, or FATAL plus possibly the OC_LOG_PRIVATE_DATA bit
  * @param tag        - Module name
  * @param buffer     - pointer to buffer of bytes
  * @param bufferSize - max number of byte in buffer
  */
- void OCLogBuffer(LogLevel level, PROGMEM const char * tag,
-                  const uint8_t * buffer, size_t bufferSize)
- {
-     if (!buffer || !tag || (bufferSize == 0))
-     {
-         return;
-     }
+void OCLogBuffer(int level, PROGMEM const char * tag,
+                const uint8_t * buffer, size_t bufferSize)
+{
+    if (!buffer || !tag || (bufferSize == 0))
+    {
+        return;
+    }
 
-     char lineBuffer[LINE_BUFFER_SIZE] = {0};
-     uint8_t lineIndex = 0;
-     for (uint8_t i = 0; i < bufferSize; i++)
-     {
+    if (!AdjustAndVerifyLogLevel(&level))
+    {
+        return;
+    }
+
+    char lineBuffer[LINE_BUFFER_SIZE] = {0};
+    uint8_t lineIndex = 0;
+    for (uint8_t i = 0; i < bufferSize; i++)
+    {
         // Format the buffer data into a line
         snprintf(&lineBuffer[lineIndex*3], sizeof(lineBuffer)-lineIndex*3, "%02X ", buffer[i]);
         lineIndex++;
-         // Output 16 values per line
-         if (((i+1)%16) == 0)
-         {
-             OCLogString(level, tag, lineBuffer);
-             memset(lineBuffer, 0, sizeof lineBuffer);
-             lineIndex = 0;
-         }
-     }
-     // Output last values in the line, if any
-     if (bufferSize % 16)
-     {
-         OCLogString(level, tag, lineBuffer);
-     }
- }
+
+        // Output 16 values per line
+        if (((i+1)%16) == 0)
+        {
+            OCLogString(level, tag, lineBuffer);
+            memset(lineBuffer, 0, sizeof lineBuffer);
+            lineIndex = 0;
+        }
+    }
+    // Output last values in the line, if any
+    if (bufferSize % 16)
+    {
+        OCLogString(level, tag, lineBuffer);
+    }
+}
 
 /**
  * Output a log string with the specified priority level.
  * Only defined for Arduino.  Uses PROGMEM strings
  *
- * @param level  - DEBUG, INFO, WARNING, ERROR, FATAL
+ * @param level  - One of DEBUG, INFO, WARNING, ERROR, or FATAL plus possibly the OC_LOG_PRIVATE_DATA bit
  * @param tag    - Module name
  * @param logStr - log string
  */
-void OCLog(LogLevel level, PROGMEM const char *tag, const int lineNum,
+void OCLog(int level, PROGMEM const char *tag, const int lineNum,
            PROGMEM const char *logStr)
 {
     if (!logStr || !tag)
     {
         return;
     }
+
+    if (!AdjustAndVerifyLogLevel(&level))
+    {
+        return;
+    }
+
     char buffer[LINE_BUFFER_SIZE] = {0};
     GET_PROGMEM_BUFFER(buffer, &(LEVEL[level]));
     Serial.print(buffer);
@@ -366,13 +472,18 @@ void OCLog(LogLevel level, PROGMEM const char *tag, const int lineNum,
  * Output a variable argument list log string with the specified priority level.
  * Only defined for Arduino as depicted below.
  *
- * @param level  - DEBUG, INFO, WARNING, ERROR, FATAL
+ * @param level  - One of DEBUG, INFO, WARNING, ERROR, or FATAL plus possibly the OC_LOG_PRIVATE_DATA bit
  * @param tag    - Module name
  * @param format - variadic log string
  */
-void OCLogv(LogLevel level, PROGMEM const char *tag, const int lineNum,
+void OCLogv(int level, PROGMEM const char *tag, const int lineNum,
                 PROGMEM const char *format, ...)
 {
+    if (!AdjustAndVerifyLogLevel(&level))
+    {
+        return;
+    }
+
     char buffer[LINE_BUFFER_SIZE];
     va_list ap;
     va_start(ap, format);
@@ -381,7 +492,7 @@ void OCLogv(LogLevel level, PROGMEM const char *tag, const int lineNum,
 
     char c;
     Serial.print(F(": "));
-    while ((c = pgm_read_byte(tag)))
+    while (*tag && (c = pgm_read_byte(tag)))
     {
      Serial.write(c);
      tag++;
@@ -411,12 +522,17 @@ void OCLogv(LogLevel level, PROGMEM const char *tag, const int lineNum,
  * Output a variable argument list log string with the specified priority level.
  * Only defined for Arduino as depicted below.
  *
- * @param level  - DEBUG, INFO, WARNING, ERROR, FATAL
+ * @param level  - One of DEBUG, INFO, WARNING, ERROR, or FATAL plus possibly the OC_LOG_PRIVATE_DATA bit
  * @param tag    - Module name
  * @param format - variadic log string
  */
-void OCLogv(LogLevel level, const char *tag, const __FlashStringHelper *format, ...)
+void OCLogv(int level, const char *tag, const __FlashStringHelper *format, ...)
 {
+    if (!AdjustAndVerifyLogLevel(&level))
+    {
+        return;
+    }
+
     char buffer[LINE_BUFFER_SIZE];
     va_list ap;
     va_start(ap, format);

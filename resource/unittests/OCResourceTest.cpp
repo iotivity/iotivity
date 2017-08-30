@@ -67,7 +67,22 @@ namespace OCResourceTest
         return ret;
     }
 
-     //Get Test
+    //ConstructResourceObject Test
+    TEST(ConstructResourceTest, ConstructResourceObjectWithValidHost)
+    {
+        EXPECT_NO_THROW(ConstructResourceObject("coap://192.168.1.2:5000", "/resource"));
+    }
+
+    TEST(ConstructResourceTest, ConstructResourceObjectWithValidHost2)
+    {
+        EXPECT_NO_THROW(ConstructResourceObject("coap://[ffff::ffff]:5000", "/resource"));
+    }
+
+    TEST(ConstructResourceTest, ConstructResourceObjectWithValidHost3)
+    {
+        EXPECT_NO_THROW(ConstructResourceObject("coap://[ffff::ffff%25eth0]:5000", "/resource"));
+    }
+
     TEST(ConstructResourceTest, ConstructResourceObject)
     {
         EXPECT_ANY_THROW(ConstructResourceObject(std::string(""), std::string("")));
@@ -103,6 +118,16 @@ namespace OCResourceTest
         EXPECT_ANY_THROW(ConstructResourceObject("coap://:5000", "/resource"));
     }
 
+    TEST(ConstructResourceTest, ConstructResourceObjectInvalidHost3)
+    {
+        EXPECT_ANY_THROW(ConstructResourceObject("coap://[ffff:::ffff]:5000", "/resource"));
+    }
+
+    TEST(ConstructResourceTest, ConstructResourceObjectInvalidHost4)
+    {
+        EXPECT_ANY_THROW(ConstructResourceObject("coap://[ffff::ffff%eth0]:5000", "/resource"));
+    }
+
     TEST(ConstructResourceTest, ConstructResourceObjectInvalidUri)
     {
         EXPECT_ANY_THROW(ConstructResourceObject("coap://192.168.1.2:5000", "/"));
@@ -113,6 +138,7 @@ namespace OCResourceTest
         EXPECT_ANY_THROW(ConstructResourceObject("coap://192.168.1.2:5000", "resource"));
     }
 
+    //Get Test
     TEST(ResourceGetTest, DISABLED_ResourceGetForValidUri)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
@@ -479,6 +505,49 @@ namespace OCResourceTest
         EXPECT_TRUE(resource->host() == "coap://192.168.1.2:5000");
     }
 
+    TEST(HostTest, Host2)
+    {
+        OCResource::Ptr resource = ConstructResourceObject("coap://[ffff::ffff%25eth0]:5000", "/resource");
+        EXPECT_TRUE(resource != NULL);
+        EXPECT_TRUE(resource->host() == "coap://[ffff::ffff%25eth0]:5000");
+    }
+
+    // EmptyHosts Test
+    TEST(HostsTest, EmptyHosts)
+    {
+        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
+        EXPECT_TRUE(resource != NULL);
+        EXPECT_TRUE(resource->getAllHosts().empty());
+    }
+
+    // SetHost Test
+    TEST(SetHostTest, SetHost)
+    {
+        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
+        EXPECT_TRUE(resource != NULL);
+        EXPECT_TRUE(resource->host() == "coap://192.168.1.2:5000");
+        EXPECT_TRUE(resource->setHost("coap://192.168.1.1:5000") == "coap://192.168.1.1:5000");
+    }
+
+    // SetHost Test2
+    TEST(SetHostTest, SetHost2)
+    {
+        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
+        EXPECT_TRUE(resource != NULL);
+        EXPECT_TRUE(resource->host() == "coap://192.168.1.2:5000");
+        EXPECT_TRUE(resource->setHost("coap://[3731:54:65fe:2::a7]:32787") ==
+                                      "coap://[3731:54:65fe:2::a7]:32787");
+    }
+
+    // SetHost Test3
+    TEST(SetHostTest, SetHost3)
+    {
+        OCResource::Ptr resource = ConstructResourceObject("coap://[3731:54:65fe:2::a7]:32787", "/resource");
+        EXPECT_TRUE(resource != NULL);
+        EXPECT_TRUE(resource->host() == "coap://[3731:54:65fe:2::a7]:32787");
+        EXPECT_TRUE(resource->setHost("coap://192.168.1.2:5000") == "coap://192.168.1.2:5000");
+    }
+
     //Uri Test
     TEST(UriTest, Uri)
     {
@@ -488,11 +557,19 @@ namespace OCResourceTest
     }
 
     //ConnectivityType Test
-    TEST(ConnectivityTypeTest, ConnectivityType)
+    TEST(ConnectivityTypeTest, ConnectivityTypeIpv4)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
-        EXPECT_TRUE(resource->connectivityType() == CT_DEFAULT);
+        EXPECT_TRUE(resource->connectivityType() == (CT_ADAPTER_IP | CT_IP_USE_V4));
+    }
+
+    //ConnectivityType Test
+    TEST(ConnectivityTypeTest, ConnectivityTypeIpv6)
+    {
+        OCResource::Ptr resource = ConstructResourceObject("coap://[fe80::52b7:c3ff:fead:dc0d%25eth0]:5000", "/resource");
+        EXPECT_TRUE(resource != NULL);
+        EXPECT_TRUE(resource->connectivityType() == (CT_ADAPTER_IP | CT_IP_USE_V6));
     }
 
     //IsObservable Test

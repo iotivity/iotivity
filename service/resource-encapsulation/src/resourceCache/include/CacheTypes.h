@@ -73,10 +73,16 @@ namespace OIC
             FREQUENCY
         };
 
+        enum class CACHE_METHOD
+        {
+            OBSERVE_ONLY,
+            ITERATED_GET
+        };
+
         typedef int CacheID;
 
         typedef std::function<OCStackResult(std::shared_ptr<PrimitiveResource>,
-                                            const RCSResourceAttributes &)> CacheCB;
+                        const RCSResourceAttributes &, int eCode)> CacheCB;
         typedef std::map<int, std::pair<Report_Info, CacheCB>> SubscriberInfo;
         typedef std::pair<int, std::pair<Report_Info, CacheCB>> SubscriberInfoPair;
 

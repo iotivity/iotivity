@@ -20,10 +20,19 @@
 
 // OCClient.cpp : Defines the entry point for the console application.
 //
+#include "iotivity_config.h"
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <Windows.h>
+#endif
 #include <string>
 #include <map>
 #include <cstdlib>
-#include <pthread.h>
 #include <mutex>
 #include <condition_variable>
 #include "OCPlatform.h"
@@ -31,11 +40,13 @@
 
 using namespace OC;
 
+static const char* SVR_DB_FILE_NAME = "./oic_svr_db_client.dat";
 typedef std::map<OCResourceIdentifier, std::shared_ptr<OCResource>> DiscoveredResourceMap;
 
 DiscoveredResourceMap discoveredResources;
 std::shared_ptr<OCResource> curResource;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+static OCConnectivityType TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_IP;
 std::mutex curResourceLock;
 
 class Light
@@ -64,15 +75,11 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& re
 {
     try
     {
-        if(eCode == OC_STACK_OK && sequenceNumber != OC_OBSERVE_NO_OPTION)
+        if(eCode == OC_STACK_OK && sequenceNumber <= MAX_SEQUENCE_NUMBER)
         {
             if(sequenceNumber == OC_OBSERVE_REGISTER)
             {
                 std::cout << "Observe registration action is successful" << std::endl;
-            }
-            else if(sequenceNumber == OC_OBSERVE_DEREGISTER)
-            {
-                std::cout << "Observe De-registration action is successful" << std::endl;
             }
 
             std::cout << "OBSERVE RESULT:"<<std::endl;
@@ -98,9 +105,13 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& re
         }
         else
         {
-            if(sequenceNumber == OC_OBSERVE_NO_OPTION)
+            if(eCode == OC_STACK_OK)
             {
-                std::cout << "Observe registration or de-registration action is failed" << std::endl;
+                std::cout << "No observe option header is returned in the response." << std::endl;
+                std::cout << "For a registration request, it means the registration failed"
+                        << std::endl;
+                std::cout << "For a cancelation request, it means the cancelation was successful"
+                        << std::endl;
             }
             else
             {
@@ -121,7 +132,8 @@ void onPost2(const HeaderOptions& /*headerOptions*/,
 {
     try
     {
-        if(eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
+        if(eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED
+                || eCode == OC_STACK_RESOURCE_CHANGED)
         {
             std::cout << "POST request was successful" << std::endl;
 
@@ -167,7 +179,8 @@ void onPost(const HeaderOptions& /*headerOptions*/,
 {
     try
     {
-        if(eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
+        if(eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED
+                || eCode == OC_STACK_RESOURCE_CHANGED)
         {
             std::cout << "POST request was successful" << std::endl;
 
@@ -236,7 +249,7 @@ void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, 
 {
     try
     {
-        if(eCode == OC_STACK_OK)
+        if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
         {
             std::cout << "PUT request was successful" << std::endl;
 
@@ -381,11 +394,58 @@ void foundResource(std::shared_ptr<OCResource> resource)
                 std::cout << "\t\t" << resourceInterfaces << std::endl;
             }
 
+            // Get Resource current host
+            std::cout << "\tHost of resource: " << std::endl;
+            std::cout << "\t\t" << resource->host() << std::endl;
+
+            // Get Resource Endpoint Infomation
+            std::cout << "\tList of resource endpoints: " << std::endl;
+            for(auto &resourceEndpoints : resource->getAllHosts())
+            {
+                std::cout << "\t\t" << resourceEndpoints << std::endl;
+            }
+
+            // If resource is found from ip based adapter.
+            if (std::string::npos != resource->host().find("coap://") ||
+                std::string::npos != resource->host().find("coaps://") ||
+                std::string::npos != resource->host().find("coap+tcp://") ||
+                std::string::npos != resource->host().find("coaps+tcp://"))
+            {
+                for(auto &resourceEndpoints : resource->getAllHosts())
+                {
+                    if (resourceEndpoints.compare(resource->host()) != 0 &&
+                        std::string::npos == resourceEndpoints.find("coap+rfcomm"))
+                    {
+                        std::string newHost = resourceEndpoints;
+
+                        if (std::string::npos != newHost.find("tcp"))
+                        {
+                            TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_TCP;
+                        }
+                        else
+                        {
+                            TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_IP;
+                        }
+                        // Change Resource host if another host exists
+                        std::cout << "\tChange host of resource endpoints" << std::endl;
+                        std::cout << "\t\t" << "Current host is "
+                                  << resource->setHost(newHost) << std::endl;
+                        break;
+                    }
+                }
+            }
+
             if(resourceURI == "/a/light")
             {
-                curResource = resource;
-                // Call a local function which will internally invoke get API on the resource pointer
-                getLightRepresentation(resource);
+                if (resource->connectivityType() & TRANSPORT_TYPE_TO_USE)
+                {
+                    curResource = resource;
+                    // Get the resource host address
+                    std::cout << "\tAddress of selected resource: " << resource->host() << std::endl;
+
+                    // Call a local function which will internally invoke get API on the resource pointer
+                    getLightRepresentation(resource);
+                }
             }
         }
         else
@@ -405,9 +465,11 @@ void printUsage()
 {
     std::cout << std::endl;
     std::cout << "---------------------------------------------------------------------\n";
-    std::cout << "Usage : simpleclient <ObserveType>" << std::endl;
+    std::cout << "Usage : simpleclient <ObserveType> <TransportType>" << std::endl;
     std::cout << "   ObserveType : 1 - Observe" << std::endl;
     std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
+    std::cout << "   TransportType : 1 - IP" << std::endl;
+    std::cout << "   TransportType : 2 - TCP" << std::endl;
     std::cout << "---------------------------------------------------------------------\n\n";
 }
 
@@ -430,9 +492,35 @@ void checkObserverValue(int value)
     }
 }
 
-static FILE* client_open(const char* /*path*/, const char *mode)
+void checkTransportValue(int value)
 {
-    return fopen("./oic_svr_db_client.json", mode);
+    if (1 == value)
+    {
+        TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_IP;
+        std::cout << "<===Setting TransportType to IP===>\n\n";
+    }
+    else if (2 == value)
+    {
+        TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_TCP;
+        std::cout << "<===Setting TransportType to TCP===>\n\n";
+    }
+    else
+    {
+        std::cout << "<===Invalid TransportType selected."
+                  <<" Setting TransportType to IP===>\n\n";
+    }
+}
+
+static FILE* client_open(const char* path, const char* mode)
+{
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(SVR_DB_FILE_NAME, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -450,6 +538,11 @@ int main(int argc, char* argv[]) {
         {
             checkObserverValue(std::stoi(argv[1]));
         }
+        else if (argc == 3)
+        {
+            checkObserverValue(std::stoi(argv[1]));
+            checkTransportValue(std::stoi(argv[2]));
+        }
         else
         {
             std::cout << "<===Invalid number of command line arguments===>\n\n";
@@ -466,15 +559,18 @@ int main(int argc, char* argv[]) {
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Both,
-        "0.0.0.0",
-        0,
-        OC::QualityOfService::LowQos,
         &ps
     };
+
+    cfg.transportType = static_cast<OCTransportAdapter>(OCTransportAdapter::OC_ADAPTER_IP | 
+                                                        OCTransportAdapter::OC_ADAPTER_TCP);
+    cfg.QoS = OC::QualityOfService::HighQos;
 
     OCPlatform::Configure(cfg);
     try
     {
+        OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
+
         // makes it so that all boolean values are printed as 'true/false' in this stream
         std::cout.setf(std::ios::boolalpha);
         // Find all resources
@@ -499,6 +595,9 @@ int main(int argc, char* argv[]) {
         std::condition_variable cv;
         std::unique_lock<std::mutex> lock(blocker);
         cv.wait(lock);
+
+        // Perform platform clean up.
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
 
     }catch(OCException& e)
     {

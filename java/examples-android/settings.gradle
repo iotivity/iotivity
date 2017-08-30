@@ -1,0 +1,13 @@
+include ':simpleserver', ':simpleclient', ':fridgeserver', ':fridgeclient', ':guiclient', ':presenceserver', ':presenceclient', ':devicediscoveryclient', ':devicediscoveryserver', ':groupclient', ':groupserver', ':fridgegroupclient', ':fridgegroupserver'
+SECURED=System.getProperty('SECURE')
+if(SECURED== "1"){
+        include ':provisioningclient', ':DirectPairing'
+}
+if(SECURED== "1" && WITH_TCP== "1" && WITH_CLOUD== "1"){
+        include ':cloudprovisioningclient'
+}
+if(System.getProperty('WITH_TRANSPORT_EDR') == "1" && System.getProperty('WITH_TRANSPORT_BLE') == "1" && System.getProperty('WITH_TRANSPORT_NFC') == "1"){
+        println 'transport is all..simplebase will be added in sample list'
+        include ':simplebase'
+}
+

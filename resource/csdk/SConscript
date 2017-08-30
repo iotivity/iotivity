@@ -23,142 +23,28 @@
 ##
 Import('env')
 
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
-
-liboctbstack_env = lib_env.Clone()
-
 target_os = env.get('TARGET_OS')
-with_ra = env.get('WITH_RA')
-with_ra_ibb = env.get('WITH_RA_IBB')
-with_tcp = env.get('WITH_TCP')
-# As in the source code, it includes arduino Time library (C++)
-# It requires compile the .c with g++
-if target_os == 'arduino':
-	liboctbstack_env.Replace(CC = env.get('CXX'))
-	liboctbstack_env.Replace(CFLAGS = env.get('CXXFLAGS'))
+rd_mode = env.get('RD_MODE')
 
-######################################################################
-# Build flags
-######################################################################
-liboctbstack_env.PrependUnique(CPPPATH = [
-		'../../extlibs/cjson/',
-		'../../extlibs/timer/',
-		'logger/include',
-		'stack/include',
-		'stack/include/internal',
-		'../oc_logger/include',
-		'connectivity/lib/libcoap-4.1.1',
-		'connectivity/common/inc',
-		'connectivity/inc',
-		'connectivity/api',
-		'connectivity/external/inc',
-		'security/include',
-		'security/include/internal',
-		'security/provisioning/include',
-		])
 
-if target_os not in ['arduino', 'windows', 'winrt']:
-	liboctbstack_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
-	liboctbstack_env.AppendUnique(CFLAGS = ['-std=c99'])
 
-if liboctbstack_env.get('ROUTING') == 'GW':
-	liboctbstack_env.AppendUnique(CPPDEFINES = ['ROUTING_GATEWAY'])
-elif liboctbstack_env.get('ROUTING') == 'EP':
-	liboctbstack_env.AppendUnique(CPPDEFINES = ['ROUTING_EP'])
+# Build liblogger
+SConscript('logger/SConscript')
 
-if target_os not in ['windows', 'winrt']:
-	liboctbstack_env.AppendUnique(CFLAGS = ['-Wall'])
+# Build connectivity
+SConscript('connectivity/SConscript')
 
-liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+if env.get('ROUTING') in ['GW', 'EP']:
+    # Build Routing
+    SConscript('routing/SConscript')
 
-if target_os in ['android', 'linux', 'tizen']:
-	liboctbstack_env.PrependUnique(LIBS = ['connectivity_abstraction'])
+if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+    SConscript('resource-directory/SConscript')
 
-	if with_ra_ibb:
-		liboctbstack_env.AppendUnique(LIBS = liboctbstack_env['RALIBS'], LIBPATH = liboctbstack_env['RALIBPATH'], RPATH = liboctbstack_env['RARPATH'])
-	else :
-		if with_ra:
-			liboctbstack_env.AppendUnique(LIBS = ['ra_xmpp'])
+# Build libocsrm
+SConscript('security/SConscript')
 
-liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
-liboctbstack_env.PrependUnique(LIBS = ['ocsrm'])
+# Build liboctbstack
+SConscript('stack/SConscript')
 
-if target_os in ['tizen', 'linux']:
-	liboctbstack_env.ParseConfig("pkg-config --cflags --libs uuid")
-
-if target_os not in ['android', 'arduino', 'windows', 'winrt']:
-	liboctbstack_env.AppendUnique(LIBS = ['pthread'])
-
-if target_os == 'arduino':
-	liboctbstack_env.AppendUnique(CPPDEFINES = ['NDEBUG', 'WITH_ARDUINO'])
-elif target_os not in ['darwin','ios']:
-	liboctbstack_env.AppendUnique(CFLAGS = ['-fPIC'])
-if target_os in ['darwin', 'ios']:
-	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
-	liboctbstack_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
-	liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-if target_os not in ['arduino']:
-	liboctbstack_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
-if target_os == 'android':
-    liboctbstack_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,liboctbstack.so'])
-
-if env.get('SECURED') == '1':
-	liboctbstack_env.AppendUnique(LIBS = ['tinydtls'])
-
-if env.get('LOGGING'):
-	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
-if env.get('DTLS_WITH_X509') == '1':
-	liboctbstack_env.AppendUnique(CPPDEFINES = ['__WITH_X509__'])
-
-if env.get('WITH_RD') == '1':
-	liboctbstack_env.PrependUnique(CPPPATH = ['../../service/resource-directory/include'])
-	liboctbstack_env.AppendUnique(CPPDEFINES = ['-DWITH_RD'])
-	liboctbstack_env.AppendUnique(LIBS = ['resource_directory'])
-
-liboctbstack_env.Append(LIBS = ['c_common'])
-
-if liboctbstack_env.get('ROUTING') in ['GW', 'EP']:
-	liboctbstack_env.Prepend(LIBS = ['routingmanager'])
-
-######################################################################
-# Source files and Targets
-######################################################################
-OCTBSTACK_SRC = 'stack/src/'
-liboctbstack_src = [
-	'../../extlibs/cjson/cJSON.c',
-	'../../extlibs/timer/timer.c',
-	OCTBSTACK_SRC + 'ocstack.c',
-	OCTBSTACK_SRC + 'ocpayload.c',
-	OCTBSTACK_SRC + 'ocpayloadparse.c',
-	OCTBSTACK_SRC + 'ocpayloadconvert.c',
-	OCTBSTACK_SRC + 'occlientcb.c',
-	OCTBSTACK_SRC + 'ocresource.c',
-	OCTBSTACK_SRC + 'ocobserve.c',
-	OCTBSTACK_SRC + 'ocserverrequest.c',
-	OCTBSTACK_SRC + 'occollection.c',
-	OCTBSTACK_SRC + 'oicgroup.c',
-	OCTBSTACK_SRC + "rdpayload.c"
-	]
-
-if with_tcp == True:
-	liboctbstack_src.append(OCTBSTACK_SRC + 'oickeepalive.c')
-
-liboctbstack_src.extend(env['cbor_files'])
-
-if target_os in ['arduino','darwin','ios'] :
-	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
-	liboctbstack_env.InstallTarget(static_liboctbstack, 'liboctbstack')
-	liboctbstack_env.UserInstallTargetLib(static_liboctbstack, 'liboctbstack')
-	liboctbstack_env.UserInstallTargetHeader('stack/include/ocstackconfig.h', 'resource', 'ocstackconfig.h')
-	liboctbstack_env.UserInstallTargetHeader('stack/include/octypes.h', 'resource', 'octypes.h')
-else:
-	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
-	shared_liboctbstack = liboctbstack_env.SharedLibrary('octbstack', liboctbstack_src)
-	liboctbstack_env.InstallTarget([static_liboctbstack, shared_liboctbstack], 'liboctbstack')
-	liboctbstack_env.UserInstallTargetLib([static_liboctbstack, shared_liboctbstack], 'liboctbstack')
-	liboctbstack_env.UserInstallTargetHeader('stack/include/ocstackconfig.h', 'resource', 'ocstackconfig.h')
-	liboctbstack_env.UserInstallTargetHeader('stack/include/octypes.h', 'resource', 'octypes.h')
-	liboctbstack_env.UserInstallTargetHeader('stack/include/ocstack.h', 'resource', 'ocstack.h')
-	liboctbstack_env.UserInstallTargetHeader('stack/include/ocpresence.h', 'resource', 'ocpresence.h')
+env.UserInstallTargetHeader('include/octypes.h', 'resource', 'octypes.h')

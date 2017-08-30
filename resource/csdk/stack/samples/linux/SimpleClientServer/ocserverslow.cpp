@@ -18,19 +18,29 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <signal.h>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 #include <list>
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
-#include "cJSON.h"
 #include "ocserverslow.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
@@ -38,11 +48,11 @@
 volatile sig_atomic_t gQuitFlag = 0;
 
 static std::list<OCEntityHandlerRequest *> gRequestList;
-static constexpr unsigned int SLOW_RESPONSE_DELAY_SEC = 5;
+static const unsigned int SLOW_RESPONSE_DELAY_SEC = 5;
 
 static LEDResource LED;
 
-static constexpr unsigned int SAMPLE_MAX_NUM_POST_INSTANCE = 2;
+static const unsigned int SAMPLE_MAX_NUM_POST_INSTANCE = 2;
 static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 
 //char *gResourceUri= const_cast<char *>("/a/led");
@@ -138,7 +148,7 @@ void ProcessGetPutRequest (OCEntityHandlerRequest *ehRequest)
         OIC_LOG(ERROR, TAG, "Error sending response");
     }
 
-    free(getResp);
+    OCRepPayloadDestroy(getResp);
 }
 
 OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest)
@@ -186,6 +196,21 @@ OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest
     }
     return copyOfRequest;
 }
+
+#if !defined(SIGALRM)
+void AlarmHandler(int sig);
+int WINAPI AlarmThread(void *seconds)
+{
+    sleep(PtrToUlong(seconds));
+    AlarmHandler(0);
+    return 0;
+}
+
+void alarm(unsigned int seconds)
+{
+    CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AlarmThread, ULongToPtr(seconds), 0, NULL);
+}
+#endif
 
 OCEntityHandlerResult OCEntityHandlerCb (OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* /*callbackParam*/)
@@ -246,7 +271,11 @@ void handleSigInt(int signum)
 // slow response when fired
 void AlarmHandler(int sig)
 {
+#ifdef SIGALRM
     if (sig == SIGALRM)
+#else
+    OC_UNUSED(sig);
+#endif
     {
         OIC_LOG (INFO, TAG, "Server starting slow response");
         if (gRequestList.empty())
@@ -299,8 +328,10 @@ int main(int /*argc*/, char** /*argv[]*/)
     // Declare and create the example resource: LED
     createLEDResource(gResourceUri, &LED, false, 42);
 
+#ifdef SIGALRM
     // Initialize slow response alarm
     signal(SIGALRM, AlarmHandler);
+#endif
 
     // Break from loop with Ctrl-C
     OIC_LOG(INFO, TAG, "Entering ocserver main loop...");
@@ -338,7 +369,7 @@ int main(int /*argc*/, char** /*argv[]*/)
     return 0;
 }
 
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower)
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower)
 {
     if (!uri)
     {
@@ -359,4 +390,3 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
 
     return 0;
 }
-

@@ -19,6 +19,7 @@
  ******************************************************************/
 
 #include "RCSResourceObject.h"
+#include "RCSRequest.h"
 #include "OCPlatform.h"
 
 using namespace OC::OCPlatform;
@@ -29,7 +30,7 @@ struct CloseApp{};
 constexpr int RESOURCE_TEMP = 1;
 constexpr int RESOURCE_LIGHT = 2;
 
-constexpr int DEFALUT_SERVER = 1;
+constexpr int DEFAULT_SERVER = 1;
 constexpr int CUSTOM_SERVER = 2;
 
 constexpr int INCREASE = 1;
@@ -53,14 +54,20 @@ int processUserInput(int min, int max)
 {
     assert(min <= max);
 
-    int input;
+    int input = 0;
 
     std::cin >> input;
 
     if (!std::cin.fail())
     {
-        if(input == max + 1) throw CloseApp();
-        if(min <= input && input <= max) return input;
+        if (input == max + 1)
+        {
+            throw CloseApp();
+        }
+        if (min <= input && input <= max)
+        {
+            return input;
+        }
     }
 
     std::cin.clear();
@@ -89,14 +96,14 @@ void displayControlLightMenu()
 
 void printAttributes(const RCSResourceAttributes& attrs)
 {
-    for(const auto& attr : attrs)
+    for (const auto& attr : attrs)
     {
         std::cout << "\tkey : " << attr.key() << "\n\tvalue : "
                   << attr.value().toString() << std::endl;
     }
 }
 
-RCSGetResponse requestHandlerForGet(const RCSRequest&, RCSResourceAttributes& attrs)
+RCSGetResponse requestHandlerForGet(const RCSRequest & req, RCSResourceAttributes& attrs)
 {
     std::cout << "Received a Get request from Client" << std::endl;
     printAttributes(attrs);
@@ -104,10 +111,21 @@ RCSGetResponse requestHandlerForGet(const RCSRequest&, RCSResourceAttributes& at
     {
         RCSResourceObject::LockGuard lock(g_resource);
         std::cout << "\nSending response to Client : " << std::endl;
-        printAttributes(g_resource->getAttributes());
+        if (req.getInterface() == CUSTOM_INTERFACE)
+        {
+            auto attr = g_resource->getAttributes();
+            static RCSByteString::DataType binval {0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8,
+                                                   0x9, 0x0, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
+            attr["blob"] = RCSByteString {binval};
+            printAttributes(attr);
+            return RCSGetResponse::create(attr);
+        }
+        else
+        {
+            printAttributes(g_resource->getAttributes());
+            return RCSGetResponse::defaultAction();
+        }
     }
-
-    return RCSGetResponse::defaultAction();
 }
 
 RCSSetResponse requestHandlerForSet(const RCSRequest&, RCSResourceAttributes& attrs)
@@ -144,7 +162,7 @@ void updateAttribute(const std::string& attrKey, int control)
         attrs[attrKey] = attrs[attrKey].get<int>() + diff;
     }
 
-    if(control == INCREASE)
+    if (control == INCREASE)
     {
         std::cout << attrKey << " increased." << std::endl;
     }
@@ -172,7 +190,7 @@ void runResourceTypeSelection(int resourceMode)
     std::cout << "========================================================\n";
 
     int resourceType = processUserInput(RESOURCE_TEMP, RESOURCE_LIGHT);
-    DisplayControlMenuFunc displayMenuFunc;
+    DisplayControlMenuFunc displayMenuFunc = nullptr;
     std::string attrKey;
 
     switch (resourceType)
@@ -204,13 +222,13 @@ void runResourceTypeSelection(int resourceMode)
 void runResourceModeSelection()
 {
     std::cout << "========================================================          \n";
-    std::cout << DEFALUT_SERVER << ". Creation of Simple Resource Without Handlers  \n";
+    std::cout << DEFAULT_SERVER << ". Creation of Simple Resource Without Handlers  \n";
     std::cout << CUSTOM_SERVER << ". Creation of Resource With Set and Get Handlers \n";
     std::cout << CUSTOM_SERVER + 1 << ". Quit                                       \n";
     std::cout << "========================================================          \n";
 
     g_currentRun = std::bind(runResourceTypeSelection,
-            processUserInput(DEFALUT_SERVER, CUSTOM_SERVER));
+            processUserInput(DEFAULT_SERVER, CUSTOM_SERVER));
 }
 
 void runPresenceSelection()
@@ -237,17 +255,17 @@ int main(void)
 {
     g_currentRun = runPresenceSelection;
 
-    while(true)
+    while (true)
     {
         try
         {
             g_currentRun();
         }
-        catch(const std::exception& e)
+        catch (const std::exception& e)
         {
             std::cout << e.what() << std::endl;
         }
-        catch(const CloseApp&)
+        catch (const CloseApp&)
         {
             break;
         }
@@ -256,9 +274,16 @@ int main(void)
 
     g_resource.reset();
 
-    if(g_isPresenceStarted)
+    if (g_isPresenceStarted)
     {
-        stopPresence();
+        try
+        {
+            stopPresence();
+        }
+        catch(...)
+        {
+            std::cout << "presence stop fail" << std::endl;
+        }
     }
 }
 

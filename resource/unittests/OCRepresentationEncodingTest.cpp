@@ -29,6 +29,16 @@
 #include <oic_string.h>
 #include "payload_logging.h"
 
+bool operator==(const OCByteString& lhs, const OCByteString& rhs)
+{
+    bool result = (lhs.len == rhs.len);
+    if (result)
+    {
+        result = (memcmp(lhs.bytes, rhs.bytes, lhs.len) == 0);
+    }
+    return result;
+}
+
 namespace OC
 {
     bool operator==(const OC::NullType&, const OC::NullType&)
@@ -49,121 +59,214 @@ namespace OC
 // CBOR->OCPayload and OCPayload->OCRepresentation conversions
 namespace OCRepresentationEncodingTest
 {
-    static const char sid1[] = "646F6F72-4465-7669-6365-555549443030";
-    static const char devicename1[] = "device name";
-    static const char specver1[] = "spec version";
-    static const char dmver1[] = "data model version";
-    static OCStringLL *types = NULL;
+    static const char *sid1;
     // Device Payloads
     TEST(DeviceDiscoveryEncoding, Normal)
     {
-        OCResourcePayloadAddStringLL(&types, "oic.wk.d");
-        OCResourcePayloadAddStringLL(&types, "oic.d.tv");
+        sid1 = OCGetServerInstanceIDString();
+        static const char piid1[] = "e987b8f5-527a-454e-98c1-1eef2e5f1cf5";
+        const char devicename1[] = "device name";
+        OCRepPayload *device = OCRepPayloadCreate();
+        EXPECT_NE((decltype(device))NULL, device);
+        EXPECT_TRUE(OCRepPayloadAddResourceType(device, OC_RSRVD_RESOURCE_TYPE_DEVICE));
+        EXPECT_TRUE(OCRepPayloadAddResourceType(device, "oic.d.tv"));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_ID, sid1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_NAME, devicename1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_SPEC_VERSION, OC_SPEC_VERSION));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, piid1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, "x.org.iotivity.newproperty", "value"));
 
-        OCDevicePayload* device = OCDevicePayloadCreate(
-                sid1,
-                devicename1,
-                types,
-                specver1,
-                dmver1);
-        EXPECT_STREQ(sid1, device->sid);
-        EXPECT_STREQ(devicename1, device->deviceName);
-        EXPECT_STREQ(specver1, device->specVersion);
-        EXPECT_STREQ(dmver1, device->dataModelVersion);
-        EXPECT_EQ(PAYLOAD_TYPE_DEVICE, ((OCPayload*)device)->type);
-        EXPECT_STREQ("oic.wk.d", device->types->value);
-        EXPECT_STREQ("oic.d.tv", device->types->next->value);
+        size_t dim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
+        char **dt = (char **)OICMalloc(sizeof(char *) * 1);
+        EXPECT_NE((decltype(dt))NULL, dt);
+        dt[0] = OICStrdup(OC_DATA_MODEL_VERSION);
+        EXPECT_TRUE(OCRepPayloadSetStringArray(device, OC_RSRVD_DATA_MODEL_VERSION, (const char **)dt, dim));
+        OICFree(dt[0]);
+        OICFree(dt);
 
         uint8_t* cborData;
         size_t cborSize;
         OCPayload* parsedDevice;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)device, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedDevice, PAYLOAD_TYPE_DEVICE,
-                    cborData, cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)device, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedDevice, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION, cborData, cborSize));
         OICFree(cborData);
 
-        EXPECT_STREQ(device->sid, ((OCDevicePayload*)parsedDevice)->sid);
-        EXPECT_STREQ(device->deviceName, ((OCDevicePayload*)parsedDevice)->deviceName);
-        EXPECT_STREQ(device->specVersion, ((OCDevicePayload*)parsedDevice)->specVersion);
-        EXPECT_STREQ(device->dataModelVersion, ((OCDevicePayload*)parsedDevice)->dataModelVersion);
-        EXPECT_STREQ("oic.wk.d", ((OCDevicePayload*)parsedDevice)->types->value);
-        EXPECT_STREQ("oic.d.tv", ((OCDevicePayload*)parsedDevice)->types->next->value);
-        EXPECT_EQ(device->base.type, ((OCDevicePayload*)parsedDevice)->base.type);
+        OCRepPayload *parsedRep = (OCRepPayload *)parsedDevice;
+        char *value = NULL;
+        EXPECT_TRUE(OCRepPayloadGetPropString(parsedRep, OC_RSRVD_DEVICE_ID, &value));
+        EXPECT_STREQ(sid1, value);
+        OICFree(value);
+        EXPECT_TRUE(OCRepPayloadGetPropString(parsedRep, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, &value));
+        EXPECT_STREQ(piid1, value);
+        OICFree(value);
+        EXPECT_TRUE(OCRepPayloadGetPropString(parsedRep, OC_RSRVD_DEVICE_NAME, &value));
+        EXPECT_STREQ(devicename1, value);
+        OICFree(value);
+        EXPECT_TRUE(OCRepPayloadGetPropString(parsedRep, OC_RSRVD_SPEC_VERSION, &value));
+        EXPECT_STREQ(OC_SPEC_VERSION, value);
+        OICFree(value);
+        EXPECT_TRUE(OCRepPayloadGetPropString(device, "x.org.iotivity.newproperty", &value));
+        EXPECT_STREQ("value", value);
+        OICFree(value);
+        char **dmv = NULL;
+        EXPECT_TRUE(OCRepPayloadGetStringArray(parsedRep, OC_RSRVD_DATA_MODEL_VERSION, &dmv, dim));
+        EXPECT_STREQ(OC_DATA_MODEL_VERSION, dmv[0]);
+        OICFree(dmv[0]);
+        OICFree(dmv);
+        EXPECT_STREQ(OC_RSRVD_RESOURCE_TYPE_DEVICE, parsedRep->types->value);
+        EXPECT_STREQ("oic.d.tv", parsedRep->types->next->value);
+        EXPECT_EQ(device->base.type, parsedRep->base.type);
 
         OCPayloadDestroy((OCPayload*)device);
 
-        OC::MessageContainer mc;
-        mc.setPayload(parsedDevice);
-        EXPECT_EQ(1u, mc.representations().size());
-        const OC::OCRepresentation& r = mc.representations()[0];
-        EXPECT_STREQ(sid1, r.getValue<std::string>(OC_RSRVD_DEVICE_ID).c_str());
-        EXPECT_STREQ(devicename1, r.getValue<std::string>(OC_RSRVD_DEVICE_NAME).c_str());
-        EXPECT_STREQ(specver1, r.getValue<std::string>(OC_RSRVD_SPEC_VERSION).c_str());
-        EXPECT_STREQ(dmver1, r.getValue<std::string>(OC_RSRVD_DATA_MODEL_VERSION).c_str());
+        OC::MessageContainer mc1;
+        mc1.setPayload(parsedDevice);
+        EXPECT_EQ(1u, mc1.representations().size());
+        const OC::OCRepresentation &r1 = mc1.representations()[0];
+        EXPECT_STREQ(sid1, r1.getValue<std::string>(OC_RSRVD_DEVICE_ID).c_str());
+        EXPECT_STREQ(devicename1, r1.getValue<std::string>(OC_RSRVD_DEVICE_NAME).c_str());
+        EXPECT_STREQ(OC_SPEC_VERSION, r1.getValue<std::string>(OC_RSRVD_SPEC_VERSION).c_str());
+        EXPECT_STREQ("value", r1.getValue<std::string>("x.org.iotivity.newproperty").c_str());
+        std::vector<std::string> dmv2 = r1.getValue<std::vector<std::string>>(OC_RSRVD_DATA_MODEL_VERSION);
+        EXPECT_STREQ(OC_DATA_MODEL_VERSION, dmv2[0].c_str());
 
         OCPayloadDestroy(parsedDevice);
-    }
 
-    static const char uri1[] = "/testuri";
-    static char pfid1[] = "pfid";
-    static char mfgnm1[] = "mfgnm";
-    static char mfgurl1[] = "mfgurl";
-    static char modelnum1[] = "modelnum";
-    static char dom1[] = "dom";
-    static char pfver1[] = "pfver";
-    static char osver1[] = "osver";
-    static char hwver1[] = "hwver";
-    static char fwver1[] = "fwver";
-    static char url1[] = "url";
-    static char time1[] = "time";
+        device = OCRepPayloadCreate();
+        EXPECT_NE((decltype(device))NULL, device);
+        EXPECT_TRUE(OCRepPayloadAddResourceType(device, OC_RSRVD_RESOURCE_TYPE_DEVICE));
+        EXPECT_TRUE(OCRepPayloadAddResourceType(device, "oic.d.tv"));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_NAME, devicename1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_ID, sid1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, piid1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_SPEC_VERSION, OC_SPEC_VERSION));
+        size_t dim1[MAX_REP_ARRAY_DEPTH] = {2, 0, 0};
+        char **dt1 = (char **)OICMalloc(sizeof(char *) * 2);
+        EXPECT_NE((decltype(dt1))NULL, dt1);
+        dt1[0] = OICStrdup("ocf.res.1.1.0");
+        dt1[1] = OICStrdup("ocf.sh.1.1.0");
+        OCRepPayloadSetStringArray(device, OC_RSRVD_DATA_MODEL_VERSION, (const char**)dt1, dim1);
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)device, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedDevice, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION, cborData, cborSize));
+        OICFree(cborData);
+        OICFree(dt1[0]);
+        OICFree(dt1[1]);
+        OICFree(dt1);
+        char **dmv1 = NULL;
+        parsedRep = (OCRepPayload *)parsedDevice;
+        EXPECT_TRUE(OCRepPayloadGetStringArray(parsedRep, OC_RSRVD_DATA_MODEL_VERSION, &dmv1, dim));
+        EXPECT_STREQ("ocf.res.1.1.0", dmv1[0]);
+        EXPECT_STREQ("ocf.sh.1.1.0", dmv1[1]);
+        OICFree(dmv1[0]);
+        OICFree(dmv1[1]);
+        OICFree(dmv1);
+        OCPayloadDestroy((OCPayload *)device);
+        OC::MessageContainer mc2;
+        mc2.setPayload(parsedDevice);
+        EXPECT_EQ(1u, mc2.representations().size());
+        const OC::OCRepresentation r2 = mc2.representations()[0];
+        std::vector<std::string> dmv3 = r2.getValue<std::vector<std::string>>(OC_RSRVD_DATA_MODEL_VERSION);
+        EXPECT_STREQ("ocf.res.1.1.0", dmv3[0].c_str());
+        EXPECT_STREQ("ocf.sh.1.1.0", dmv3[1].c_str());
+        OCPayloadDestroy(parsedDevice);
+    }
 
     // Platform Payloads
     TEST(PlatformDiscoveryEncoding, Normal)
     {
-        OCPlatformInfo info {pfid1, mfgnm1, mfgurl1, modelnum1, dom1, pfver1, osver1, hwver1,
-            fwver1, url1, time1};
-        OCPlatformPayload* platform = OCPlatformPayloadCreate(&info);
-        EXPECT_EQ(PAYLOAD_TYPE_PLATFORM, ((OCPayload*)platform)->type);
-        EXPECT_STREQ(pfid1, platform->info.platformID);
-        EXPECT_STREQ(mfgnm1, platform->info.manufacturerName);
-        EXPECT_STREQ(mfgurl1, platform->info.manufacturerUrl);
-        EXPECT_STREQ(modelnum1, platform->info.modelNumber);
-        EXPECT_STREQ(dom1, platform->info.dateOfManufacture);
-        EXPECT_STREQ(pfver1, platform->info.platformVersion);
-        EXPECT_STREQ(osver1, platform->info.operatingSystemVersion);
-        EXPECT_STREQ(hwver1, platform->info.hardwareVersion);
-        EXPECT_STREQ(fwver1, platform->info.firmwareVersion);
-        EXPECT_STREQ(url1, platform->info.supportUrl);
-        EXPECT_STREQ(time1, platform->info.systemTime);
-        EXPECT_STREQ(OC_RSRVD_INTERFACE_DEFAULT, platform->interfaces->value);
-        EXPECT_STREQ(OC_RSRVD_INTERFACE_READ, platform->interfaces->next->value);
-        EXPECT_STREQ(OC_RSRVD_RESOURCE_TYPE_PLATFORM, platform->rt);
+        static char pfid1[] = "646F6F72-4465-7669-6365-555549443030";
+        static char mfgnm1[] = "mfgnm";
+        static char mfgurl1[] = "http://www.iotivity.org";
+        static char modelnum1[] = "modelnum";
+        static char dom1[] = "dom";
+        static char pfver1[] = "pfver";
+        static char osver1[] = "osver";
+        static char hwver1[] = "hwver";
+        static char fwver1[] = "fwver";
+        static char url1[] = "http://www.iotivity.org";
+        static char time1[] = "20161122T143938Z";
+        static char vid1[] = "Manufacturer Freeform Text";
+        OCRepPayload *platform = OCRepPayloadCreate();
+        EXPECT_TRUE(platform != NULL);
+        EXPECT_EQ(PAYLOAD_TYPE_REPRESENTATION, ((OCPayload*)platform)->type);
+        EXPECT_TRUE(OCRepPayloadAddResourceType(platform, (char *)OC_RSRVD_RESOURCE_TYPE_PLATFORM));
+        EXPECT_TRUE(OCRepPayloadAddInterface(platform, (char *)OC_RSRVD_INTERFACE_DEFAULT));
+        EXPECT_TRUE(OCRepPayloadAddInterface(platform, (char *)OC_RSRVD_INTERFACE_READ));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_PLATFORM_ID, pfid1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_MFG_NAME, mfgnm1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_MFG_URL, mfgurl1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_MODEL_NUM, modelnum1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_MFG_DATE, dom1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_OS_VERSION, osver1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_PLATFORM_VERSION, pfver1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_HARDWARE_VERSION, hwver1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_FIRMWARE_VERSION, fwver1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_SUPPORT_URL, url1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_SYSTEM_TIME, time1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(platform, OC_RSRVD_VID, vid1));
+
 
         uint8_t* cborData;
         size_t cborSize;
-        OCPayload* parsedPlatform;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)platform, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedPlatform, PAYLOAD_TYPE_PLATFORM,
-                    cborData, cborSize));
+        OCPayload* parsedPlatform = NULL;
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)platform, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&parsedPlatform, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION, cborData, cborSize));
         OICFree(cborData);
 
-        EXPECT_EQ(platform->base.type, ((OCPlatformPayload*)parsedPlatform)->base.type);
-        OCPlatformPayload* platform2 = (OCPlatformPayload*)parsedPlatform;
-        EXPECT_STREQ(platform->info.platformID, platform2->info.platformID);
-        EXPECT_STREQ(platform->info.manufacturerName, platform->info.manufacturerName);
-        EXPECT_STREQ(platform->info.manufacturerUrl, platform->info.manufacturerUrl);
-        EXPECT_STREQ(platform->info.modelNumber, platform->info.modelNumber);
-        EXPECT_STREQ(platform->info.dateOfManufacture, platform->info.dateOfManufacture);
-        EXPECT_STREQ(platform->info.platformVersion, platform->info.platformVersion);
-        EXPECT_STREQ(platform->info.operatingSystemVersion, platform->info.operatingSystemVersion);
-        EXPECT_STREQ(platform->info.hardwareVersion, platform->info.hardwareVersion);
-        EXPECT_STREQ(platform->info.firmwareVersion, platform->info.firmwareVersion);
-        EXPECT_STREQ(platform->info.supportUrl, platform->info.supportUrl);
-        EXPECT_STREQ(platform->info.systemTime, platform2->info.systemTime);
-        EXPECT_STREQ(platform->interfaces->value, platform2->interfaces->value);
-        EXPECT_STREQ(platform->rt, platform2->rt);
+        OCRepPayload *platform1 = (OCRepPayload *)parsedPlatform;
+        EXPECT_EQ(platform->base.type, platform1->base.type);
+        char *value = NULL;
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_PLATFORM_ID, &value));
+        EXPECT_STREQ(pfid1, value);
+        OICFree(value);
 
-        OCPayloadDestroy((OCPayload*)platform);
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_MFG_NAME, &value));
+        EXPECT_STREQ(mfgnm1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_MFG_URL, &value));
+        EXPECT_STREQ(mfgurl1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_MODEL_NUM, &value));
+        EXPECT_STREQ(modelnum1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_MFG_DATE, &value));
+        EXPECT_STREQ(dom1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_OS_VERSION, &value));
+        EXPECT_STREQ(osver1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_PLATFORM_VERSION, &value));
+        EXPECT_STREQ(pfver1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_HARDWARE_VERSION, &value));
+        EXPECT_STREQ(hwver1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_FIRMWARE_VERSION, &value));
+        EXPECT_STREQ(fwver1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_SUPPORT_URL, &value));
+        EXPECT_STREQ(url1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_SYSTEM_TIME, &value));
+        EXPECT_STREQ(time1, value);
+        OICFree(value);
+
+        EXPECT_TRUE(OCRepPayloadGetPropString(platform1, OC_RSRVD_VID, &value));
+        EXPECT_STREQ(vid1, value);
+        OICFree(value);
+
+        EXPECT_STREQ(platform1->types->value, OC_RSRVD_RESOURCE_TYPE_PLATFORM);
+        EXPECT_STREQ(platform1->interfaces->value, OC_RSRVD_INTERFACE_DEFAULT);
+        EXPECT_STREQ(platform1->interfaces->next->value, OC_RSRVD_INTERFACE_READ);
 
         OC::MessageContainer mc;
         mc.setPayload(parsedPlatform);
@@ -180,11 +283,15 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(fwver1, r.getValue<std::string>(OC_RSRVD_FIRMWARE_VERSION).c_str());
         EXPECT_STREQ(url1, r.getValue<std::string>(OC_RSRVD_SUPPORT_URL).c_str());
         EXPECT_STREQ(time1, r.getValue<std::string>(OC_RSRVD_SYSTEM_TIME).c_str());
+        EXPECT_STREQ(vid1, r.getValue<std::string>(OC_RSRVD_VID).c_str());
 
-        OCPayloadDestroy(parsedPlatform);
+        OCPayloadDestroy((OCPayload *)platform);
+        OCPayloadDestroy((OCPayload *)platform1);
     }
+
     TEST(PresencePayload, Normal)
     {
+        static const char uri1[] = "/testuri";
         uint32_t maxAge = 0;
         uint32_t sequenceNumber = 0;
         OCPresenceTrigger trigger = OC_PRESENCE_TRIGGER_CREATE;
@@ -193,8 +300,8 @@ namespace OCRepresentationEncodingTest
         uint8_t* cborData;
         size_t cborSize;
         OCPayload* cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)presence, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_PRESENCE,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)presence, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_PRESENCE,
                     cborData, cborSize));
         OCPayloadDestroy((OCPayload*)presence);
         OICFree(cborData);
@@ -216,6 +323,13 @@ namespace OCRepresentationEncodingTest
         startRep.setValue("DoubleAttr", 3.333);
         startRep.setValue("BoolAttr", true);
         startRep.setValue("StringAttr", std::string("String attr"));
+
+        uint8_t binval[] = {0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8,
+                            0x9, 0x0, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF
+                           };
+        OCByteString byteString = {binval, sizeof(binval)};
+        startRep.setValue("ByteStringAttr", byteString);
+
         OC::MessageContainer mc1;
         mc1.addRepresentation(startRep);
 
@@ -225,8 +339,8 @@ namespace OCRepresentationEncodingTest
         uint8_t* cborData;
         size_t cborSize;
         OCPayload* cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
         OCPayloadDestroy((OCPayload*)cstart);
         OICFree(cborData);
@@ -241,6 +355,8 @@ namespace OCRepresentationEncodingTest
         EXPECT_EQ(3.333, r.getValue<double>("DoubleAttr"));
         EXPECT_EQ(true, r.getValue<bool>("BoolAttr"));
         EXPECT_STREQ("String attr", r.getValue<std::string>("StringAttr").c_str());
+        const char *expectedByteString = "\\x1\\x2\\x3\\x4\\x5\\x6\\x7\\x8\\x9\\x0\\xa\\xb\\xc\\xd\\xe\\xf";
+        EXPECT_STREQ(expectedByteString, r.getValueToString("ByteStringAttr").c_str());
 
         OCPayloadDestroy(cparsed);
     }
@@ -249,19 +365,30 @@ namespace OCRepresentationEncodingTest
     {
         OC::OCRepresentation startRep;
         std::vector<int> iarr {};
-        startRep["iarr"] = {};
+        std::vector<double> darr {};
+        std::vector<bool> barr {};
+        std::vector<std::string> strarr {};
+        std::vector<OC::OCRepresentation> objarr {};
+        std::vector<OCByteString> bytestrarr {{NULL, 0}};
+        startRep.setValue("StringAttr", std::string(""));
+        startRep["iarr"] = iarr;
+        startRep["darr"] = darr;
+        startRep["barr"] = barr;
+        startRep["strarr"] = strarr;
+        startRep["objarr"] = objarr;
+        startRep["bytestrarr"] = bytestrarr;
+        startRep.setValue("StringAttr2", std::string("String attr"));
 
         OC::MessageContainer mc1;
         mc1.addRepresentation(startRep);
-
         OCRepPayload* cstart = mc1.getPayload();
         EXPECT_EQ(PAYLOAD_TYPE_REPRESENTATION, cstart->base.type);
 
         uint8_t *cborData = NULL;
         size_t cborSize = 0;
         OCPayload *cparsed = NULL;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
         OCPayloadDestroy((OCPayload*)cstart);
         OICFree(cborData);
@@ -271,9 +398,21 @@ namespace OCRepresentationEncodingTest
         EXPECT_EQ(1u, mc2.representations().size());
         const OC::OCRepresentation& r = mc2.representations()[0];
 
+        EXPECT_STREQ("", r.getValue<std::string>("StringAttr").c_str());
         std::vector<int> iarr2 = r["iarr"];
-
         EXPECT_EQ(iarr, iarr2);
+        std::vector<double> darr2 = r["darr"];
+        EXPECT_EQ(darr, darr2);
+        std::vector<bool> barr2 = r["barr"];
+        EXPECT_EQ(barr, barr2);
+        std::vector<std::string> strarr2 = r["strarr"];
+        EXPECT_EQ(strarr, strarr2);
+        std::vector<OC::OCRepresentation> objarr2 = r["objarr"];
+        EXPECT_EQ(objarr, objarr2);
+        std::vector<uint8_t> binAttr = r.getValue<std::vector<uint8_t>>("BinaryAttr");
+        EXPECT_EQ(bytestrarr[0].len, binAttr.size());
+        EXPECT_STREQ("String attr", r.getValue<std::string>("StringAttr2").c_str());
+        OIC_LOG_PAYLOAD(DEBUG, cparsed);
         OCPayloadDestroy(cparsed);
     }
 
@@ -286,6 +425,8 @@ namespace OCRepresentationEncodingTest
         subRep.setValue("DoubleAttr", 3.333);
         subRep.setValue("BoolAttr", true);
         subRep.setValue("StringAttr", std::string("String attr"));
+        std::vector<uint8_t> bin_data {5,3,4,5,6,0,34,2,4,5,6,3};
+        subRep.setValue("BinaryAttr", bin_data);
         startRep.setValue("Sub", subRep);
 
         OC::MessageContainer mc1;
@@ -296,9 +437,9 @@ namespace OCRepresentationEncodingTest
 
         uint8_t* cborData;
         size_t cborSize;
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, OC_FORMAT_CBOR, &cborData, &cborSize));
         OCPayload* cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
         OCPayloadDestroy((OCPayload*)cstart);
         OICFree(cborData);
@@ -315,10 +456,15 @@ namespace OCRepresentationEncodingTest
         EXPECT_EQ(3.333, newSubRep.getValue<double>("DoubleAttr"));
         EXPECT_EQ(true, newSubRep.getValue<bool>("BoolAttr"));
         EXPECT_STREQ("String attr", newSubRep.getValue<std::string>("StringAttr").c_str());
+        EXPECT_EQ(bin_data,
+                newSubRep.getValue<std::vector<uint8_t>>("BinaryAttr"));
         OCPayloadDestroy(cparsed);
     }
-
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_OneDVectors)
+#else
     TEST(RepresentationEncoding, OneDVectors)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;
@@ -338,11 +484,23 @@ namespace OCRepresentationEncodingTest
         std::vector<std::string> strarr {"item1", "item2", "item3", "item4"};
         std::vector<OC::OCRepresentation> objarr {subRep1, subRep2, subRep3};
 
+        uint8_t binval1[] = {0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8};
+        OCByteString byteStringRef1 {binval1, sizeof(binval1)};
+        OCByteString byteString1 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString1, &byteStringRef1));
+        uint8_t binval2[] = {0x9, 0x0, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
+        OCByteString byteStringRef2 {binval2, sizeof(binval2)};
+        OCByteString byteString2 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString2, &byteStringRef2));
+        std::vector<OCByteString> bytestrarrRef {byteStringRef1, byteStringRef2 };
+        std::vector<OCByteString> bytestrarr {byteString1, byteString2 };
+
         startRep["iarr"] = iarr;
         startRep["darr"] = darr;
         startRep["barr"] = barr;
         startRep["strarr"] = strarr;
         startRep["objarr"] = objarr;
+        startRep["bytestrarr"] = bytestrarr;
 
         // Encode/decode
         OC::MessageContainer mc1;
@@ -354,16 +512,16 @@ namespace OCRepresentationEncodingTest
         uint8_t* cborData;
         size_t cborSize;
         OCPayload* cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
-                    cborData, cborSize));
-        OCPayloadDestroy((OCPayload*)cstart);
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)cstart, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
+                                              cborData, cborSize));
+        OCPayloadDestroy((OCPayload *)cstart);
         OICFree(cborData);
 
         OC::MessageContainer mc2;
         mc2.setPayload(cparsed);
         EXPECT_EQ(1u, mc2.representations().size());
-        const OC::OCRepresentation& r = mc2.representations()[0];
+        const OC::OCRepresentation &r = mc2.representations()[0];
 
         // Test
         std::vector<int> iarr2 = r["iarr"];
@@ -371,16 +529,23 @@ namespace OCRepresentationEncodingTest
         std::vector<bool> barr2 = r["barr"];
         std::vector<std::string> strarr2 = r["strarr"];
         std::vector<OC::OCRepresentation> objarr2 = r["objarr"];
+        std::vector<OCByteString> bytestrarr2 = r["bytestrarr"];
 
         EXPECT_EQ(iarr, iarr2);
         EXPECT_EQ(darr, darr2);
         EXPECT_EQ(barr, barr2);
         EXPECT_EQ(strarr, strarr2);
         EXPECT_EQ(objarr, objarr2);
+
+        EXPECT_EQ(bytestrarrRef, bytestrarr2);
         OCPayloadDestroy(cparsed);
     }
 
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_TwoDVectors)
+#else
     TEST(RepresentationEncoding, TwoDVectors)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;
@@ -401,32 +566,58 @@ namespace OCRepresentationEncodingTest
         std::vector<std::vector<OC::OCRepresentation>> objarr
         {{subRep1, subRep2, subRep3}, {subRep3, subRep2, subRep1}};
 
+        uint8_t binval1[] = {0x1, 0x2, 0x3, 0x4};
+        OCByteString byteStringRef1 {binval1, sizeof(binval1) };
+        OCByteString byteString1 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString1, &byteStringRef1));
+        uint8_t binval2[] = {0x5, 0x6, 0x7, 0x8};
+        OCByteString byteStringRef2 {binval2, sizeof(binval2) };
+        OCByteString byteString2 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString2, &byteStringRef2));
+        uint8_t binval3[] = {0x9, 0x0, 0xA, 0xB};
+        OCByteString byteStringRef3 {binval3, sizeof(binval3) };
+        OCByteString byteString3 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString3, &byteStringRef3));
+        uint8_t binval4[] = {0xC, 0xD, 0xE, 0xF};
+        OCByteString byteStringRef4 {binval4, sizeof(binval4) };
+        OCByteString byteString4 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString4, &byteStringRef4));
+        std::vector<std::vector<OCByteString>> bytestrarrRef
+        {
+            {byteStringRef1, byteStringRef2}, {byteStringRef3, byteStringRef4}
+        };
+        std::vector<std::vector<OCByteString>> bytestrarr
+        {
+            {byteString1, byteString2}, {byteString3, byteString4}
+        };
+
         startRep["iarr"] = iarr;
         startRep["darr"] = darr;
         startRep["barr"] = barr;
         startRep["strarr"] = strarr;
         startRep["objarr"] = objarr;
+        startRep["bytestrarr"] = bytestrarr;
 
         // Encode/decode
         OC::MessageContainer mc1;
         mc1.addRepresentation(startRep);
 
-        OCRepPayload* cstart = mc1.getPayload();
+        OCRepPayload *cstart = mc1.getPayload();
         EXPECT_EQ(PAYLOAD_TYPE_REPRESENTATION, cstart->base.type);
 
         uint8_t* cborData;
         size_t cborSize;
         OCPayload* cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
-                    cborData, cborSize));
-        OCPayloadDestroy((OCPayload*)cstart);
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)cstart, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
+                                              cborData, cborSize));
+        OCPayloadDestroy((OCPayload *)cstart);
         OICFree(cborData);
 
         OC::MessageContainer mc2;
         mc2.setPayload(cparsed);
         EXPECT_EQ(1u, mc2.representations().size());
-        const OC::OCRepresentation& r = mc2.representations()[0];
+        const OC::OCRepresentation &r = mc2.representations()[0];
 
         // Test
         std::vector<std::vector<int>> iarr2 = r["iarr"];
@@ -434,16 +625,24 @@ namespace OCRepresentationEncodingTest
         std::vector<std::vector<bool>> barr2 = r["barr"];
         std::vector<std::vector<std::string>> strarr2 = r["strarr"];
         std::vector<std::vector<OC::OCRepresentation>> objarr2 = r["objarr"];
+        std::vector<std::vector<OCByteString>> bytestrarr2 = r["bytestrarr"];
 
         EXPECT_EQ(iarr, iarr2);
         EXPECT_EQ(darr, darr2);
         EXPECT_EQ(barr, barr2);
         EXPECT_EQ(strarr, strarr2);
         EXPECT_EQ(objarr, objarr2);
+
+        EXPECT_EQ(bytestrarrRef, bytestrarr2);
+
         OCPayloadDestroy(cparsed);
     }
 
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_TwoDVectorsJagged)
+#else
     TEST(RepresentationEncoding, TwoDVectorsJagged)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;
@@ -464,32 +663,62 @@ namespace OCRepresentationEncodingTest
         std::vector<std::vector<OC::OCRepresentation>> objarr
         {{subRep1, subRep3}, {subRep3, subRep2, subRep1}};
 
+        uint8_t binval1[] = {0x1};
+        OCByteString byteStringRef1 {binval1, sizeof(binval1) };
+        OCByteString byteString1 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString1, &byteStringRef1));
+        uint8_t binval3[] = {0x2, 0x3, 0x4};
+        OCByteString byteStringRef3 {binval3, sizeof(binval3) };
+        OCByteString byteString3 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString3, &byteStringRef3));
+        uint8_t binval4[] = {0x5, 0x6, 0x7, 0x8};
+        OCByteString byteStringRef4 {binval4, sizeof(binval4) };
+        OCByteString byteString4 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString4, &byteStringRef4));
+
+        std::vector<std::vector<OCByteString>> bytestrarrRef
+        {
+            {byteStringRef1}, {byteStringRef3, byteStringRef4}
+        };
+
+        std::vector<std::vector<OCByteString>> bytestrarr
+        {
+            {byteString1}, {byteString3, byteString4}
+        };
+
         startRep["iarr"] = iarr;
         startRep["darr"] = darr;
         startRep["barr"] = barr;
         startRep["strarr"] = strarr;
         startRep["objarr"] = objarr;
 
+        startRep["bytestrarr"] = bytestrarr;
+
+        EXPECT_STREQ("[[\\x1 ] [\\x2\\x3\\x4 \\x5\\x6\\x7\\x8 ] ]",
+                     startRep.getValueToString("bytestrarr").c_str());
         // Encode/decode
         OC::MessageContainer mc1;
         mc1.addRepresentation(startRep);
 
-        OCRepPayload* cstart = mc1.getPayload();
+        OCRepPayload *cstart = mc1.getPayload();
         EXPECT_EQ(PAYLOAD_TYPE_REPRESENTATION, cstart->base.type);
 
-        uint8_t* cborData;
+        uint8_t *cborData;
         size_t cborSize;
-        OCPayload* cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
-                    cborData, cborSize));
-        OCPayloadDestroy((OCPayload*)cstart);
+        OCPayload *cparsed;
+        OCStackResult result = OCConvertPayload((OCPayload *)cstart, OC_FORMAT_CBOR, &cborData, &cborSize);
+        EXPECT_EQ(OC_STACK_OK, result);
+        result = OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
+                                cborData, cborSize);
+        EXPECT_EQ(OC_STACK_OK, result);
+
+        OCPayloadDestroy((OCPayload *)cstart);
         OICFree(cborData);
 
         OC::MessageContainer mc2;
         mc2.setPayload(cparsed);
         EXPECT_EQ(1u, mc2.representations().size());
-        const OC::OCRepresentation& r = mc2.representations()[0];
+        const OC::OCRepresentation &r = mc2.representations()[0];
 
         // Test
         std::vector<std::vector<int>> iarr2 = r["iarr"];
@@ -497,6 +726,8 @@ namespace OCRepresentationEncodingTest
         std::vector<std::vector<bool>> barr2 = r["barr"];
         std::vector<std::vector<std::string>> strarr2 = r["strarr"];
         std::vector<std::vector<OC::OCRepresentation>> objarr2 = r["objarr"];
+
+        std::vector<std::vector<OCByteString>> bytestrarr2 = r["bytestrarr"];
 
         // Note: due to the way that the CSDK works, all 2d arrays need to be rectangular.
         // Since std::vector doesn't require this, items received on the other side end up
@@ -506,16 +737,24 @@ namespace OCRepresentationEncodingTest
         barr2[1].pop_back();
         strarr2[0].pop_back();
         objarr2[0].pop_back();
+        bytestrarr2[0].pop_back();
 
         EXPECT_EQ(iarr, iarr2);
         EXPECT_EQ(darr, darr2);
         EXPECT_EQ(barr, barr2);
         EXPECT_EQ(strarr, strarr2);
         EXPECT_EQ(objarr, objarr2);
+        EXPECT_EQ(bytestrarr.size(), bytestrarr2.size());
+        EXPECT_EQ(bytestrarrRef, bytestrarr2);
+
         OCPayloadDestroy(cparsed);
     }
 
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_ThreeDVectors)
+#else
     TEST(RepresentationEncoding, ThreeDVectors)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;
@@ -550,32 +789,96 @@ namespace OCRepresentationEncodingTest
                 {{subRep3, subRep2},{subRep1, subRep2}}
             };
 
+        uint8_t binval1[] = {0x1, 0x2, 0x3, 0x4};
+        OCByteString byteStringRef1 {binval1, sizeof(binval1)};
+        OCByteString byteString1 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString1, &byteStringRef1));
+        uint8_t binval2[] = {0x5, 0x6, 0x7, 0x8};
+        OCByteString byteStringRef2 {binval2, sizeof(binval2)};
+        OCByteString byteString2 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString2, &byteStringRef2));
+        uint8_t binval3[] = {0x9, 0x0, 0xA, 0xB};
+        OCByteString byteStringRef3 {binval3, sizeof(binval3)};
+        OCByteString byteString3 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString3, &byteStringRef3));
+        uint8_t binval4[] = {0xC, 0xD, 0xE, 0xF};
+        OCByteString byteStringRef4 {binval4, sizeof(binval4)};
+        OCByteString byteString4 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString4, &byteStringRef4));
+        uint8_t binval5[] = {0x11, 0x12, 0x13, 0x14};
+        OCByteString byteStringRef5 {binval5, sizeof(binval5)};
+        OCByteString byteString5 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString5, &byteStringRef5));
+        uint8_t binval6[] = {0x15, 0x16, 0x17, 0x18};
+        OCByteString byteStringRef6 {binval6, sizeof(binval6)};
+        OCByteString byteString6 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString6, &byteStringRef6));
+        uint8_t binval7[] = {0x19, 0x10, 0x1A, 0x1B};
+        OCByteString byteStringRef7 {binval7, sizeof(binval7)};
+        OCByteString byteString7 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString7, &byteStringRef7));
+        uint8_t binval8[] = {0x1C, 0x1D, 0x1E, 0x1F};
+        OCByteString byteStringRef8 {binval8, sizeof(binval8)};
+        OCByteString byteString8 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString8, &byteStringRef8));
+        uint8_t binval9[] = {0x21, 0x22, 0x23, 0x24};
+        OCByteString byteStringRef9 {binval9, sizeof(binval9)};
+        OCByteString byteString9 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString9, &byteStringRef9));
+        uint8_t binval10[] = {0x25, 0x26, 0x27, 0x28};
+        OCByteString byteStringRef10 {binval10, sizeof(binval10)};
+        OCByteString byteString10 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString10, &byteStringRef10));
+        uint8_t binval11[] = {0x29, 0x20, 0x2A, 0x2B};
+        OCByteString byteStringRef11 {binval11, sizeof(binval11)};
+        OCByteString byteString11 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString11, &byteStringRef11));
+        uint8_t binval12[] = {0xFF};
+        OCByteString byteStringRef12 {binval12, sizeof(binval12)};
+        OCByteString byteString12 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString12, &byteStringRef12));
+
+        std::vector<std::vector<std::vector<OCByteString>>> bytestrarrRef
+        {
+            {{byteStringRef1, byteStringRef2}, {byteStringRef3, byteStringRef4}},
+            {{byteStringRef5, byteStringRef6}, {byteStringRef7, byteStringRef8}},
+            {{byteStringRef9, byteStringRef10}, {byteStringRef11, byteStringRef12}}
+        };
+
+        std::vector<std::vector<std::vector<OCByteString>>> bytestrarr
+        {
+            {{byteString1, byteString2}, {byteString3, byteString4}},
+            {{byteString5, byteString6}, {byteString7, byteString8}},
+            {{byteString9, byteString10}, {byteString11, byteString12}}
+        };
+
         startRep["iarr"] = iarr;
         startRep["darr"] = darr;
         startRep["barr"] = barr;
         startRep["strarr"] = strarr;
         startRep["objarr"] = objarr;
+        startRep["bytestrarr"] = bytestrarr;
 
         // Encode/decode
         OC::MessageContainer mc1;
         mc1.addRepresentation(startRep);
 
-        OCRepPayload* cstart = mc1.getPayload();
+        OCRepPayload *cstart = mc1.getPayload();
         EXPECT_EQ(PAYLOAD_TYPE_REPRESENTATION, cstart->base.type);
 
-        uint8_t* cborData;
+        uint8_t *cborData;
         size_t cborSize;
-        OCPayload* cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
-                    cborData, cborSize));
-        OCPayloadDestroy((OCPayload*)cstart);
+        OCPayload *cparsed;
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)cstart, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
+                                              cborData, cborSize));
+        OCPayloadDestroy((OCPayload *)cstart);
         OICFree(cborData);
 
         OC::MessageContainer mc2;
         mc2.setPayload(cparsed);
         EXPECT_EQ(1u, mc2.representations().size());
-        const OC::OCRepresentation& r = mc2.representations()[0];
+        const OC::OCRepresentation &r = mc2.representations()[0];
 
         // Test
         std::vector<std::vector<std::vector<int>>> iarr2 = r["iarr"];
@@ -583,16 +886,22 @@ namespace OCRepresentationEncodingTest
         std::vector<std::vector<std::vector<bool>>> barr2 = r["barr"];
         std::vector<std::vector<std::vector<std::string>>> strarr2 = r["strarr"];
         std::vector<std::vector<std::vector<OC::OCRepresentation>>> objarr2 = r["objarr"];
+        std::vector<std::vector<std::vector<OCByteString>>> bytestrarr2 = r["bytestrarr"];
 
         EXPECT_EQ(iarr, iarr2);
         EXPECT_EQ(darr, darr2);
         EXPECT_EQ(barr, barr2);
         EXPECT_EQ(strarr, strarr2);
         EXPECT_EQ(objarr, objarr2);
+        EXPECT_EQ(bytestrarrRef, bytestrarr2);
         OCPayloadDestroy(cparsed);
     }
 
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_ThreeDVectorsJagged)
+#else
     TEST(RepresentationEncoding, ThreeDVectorsJagged)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;
@@ -636,32 +945,92 @@ namespace OCRepresentationEncodingTest
                 {{subRep3, subRep2}}
             };
 
+        uint8_t binval1[] = {0x1, 0x2, 0x3, 0x4};
+        OCByteString byteStringRef1 {binval1, sizeof(binval1)};
+        OCByteString byteString1 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString1, &byteStringRef1));
+        uint8_t binval2[] = {0x5, 0x6, 0x7, 0x8};
+        OCByteString byteStringRef2 {binval2, sizeof(binval2)};
+        OCByteString byteString2 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString2, &byteStringRef2));
+        uint8_t binval3[] = {0x9, 0x0, 0xA, 0xB};
+        OCByteString byteStringRef3 {binval3, sizeof(binval3)};
+        OCByteString byteString3 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString3, &byteStringRef3));
+        uint8_t binval4[] = {0xC, 0xD, 0xE, 0xF};
+        OCByteString byteStringRef4 {binval4, sizeof(binval4)};
+        OCByteString byteString4 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString4, &byteStringRef4));
+        uint8_t binval5[] = {0x11, 0x12, 0x13, 0x14};
+        OCByteString byteStringRef5 {binval5, sizeof(binval5)};
+        OCByteString byteString5 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString5, &byteStringRef5));
+        uint8_t binval6[] = {0x15, 0x16, 0x17, 0x18};
+        OCByteString byteStringRef6 {binval6, sizeof(binval6)};
+        OCByteString byteString6 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString6, &byteStringRef6));
+        uint8_t binval8[] = {0x1C, 0x1D, 0x1E, 0x1F};
+        OCByteString byteStringRef8 {binval8, sizeof(binval8)};
+        OCByteString byteString8 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString8, &byteStringRef8));
+        uint8_t binval9[] = {0x21, 0x22, 0x23, 0x24};
+        OCByteString byteStringRef9 {binval9, sizeof(binval9)};
+        OCByteString byteString9 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString9, &byteStringRef9));
+        uint8_t binval10[] = {0x25, 0x26, 0x27, 0x28};
+        OCByteString byteStringRef10 {binval10, sizeof(binval10)};
+        OCByteString byteString10 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString10, &byteStringRef10));
+        uint8_t binval11[] = {0x29, 0x20, 0x2A, 0x2B};
+        OCByteString byteStringRef11 {binval11, sizeof(binval11)};
+        OCByteString byteString11 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString11, &byteStringRef11));
+        uint8_t binval12[] = {0xFF};
+        OCByteString byteStringRef12 {binval12, sizeof(binval12)};
+        OCByteString byteString12 {NULL,0};
+        EXPECT_TRUE(OCByteStringCopy(&byteString12, &byteStringRef12));
+
+        std::vector<std::vector<std::vector<OCByteString>>> bytestrarrRef
+        {
+            {{byteStringRef1, byteStringRef2}, {byteStringRef3, byteStringRef4}},
+            {{byteStringRef5, byteStringRef6}, {byteStringRef8}},
+            {{byteStringRef9, byteStringRef10}, {byteStringRef11, byteStringRef12}}
+        };
+
+        std::vector<std::vector<std::vector<OCByteString>>> bytestrarr
+        {
+            {{byteString1, byteString2}, {byteString3, byteString4}},
+            {{byteString5, byteString6}, {byteString8}},
+            {{byteString9, byteString10}, {byteString11, byteString12}}
+        };
+
         startRep["iarr"] = iarr;
         startRep["darr"] = darr;
         startRep["barr"] = barr;
         startRep["strarr"] = strarr;
         startRep["objarr"] = objarr;
+        startRep["bytestrarr"] = bytestrarr;
 
         // Encode/decode
         OC::MessageContainer mc1;
         mc1.addRepresentation(startRep);
 
-        OCRepPayload* cstart = mc1.getPayload();
+        OCRepPayload *cstart = mc1.getPayload();
         EXPECT_EQ(PAYLOAD_TYPE_REPRESENTATION, cstart->base.type);
 
-        uint8_t* cborData;
+        uint8_t *cborData;
         size_t cborSize;
-        OCPayload* cparsed;
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
-                    cborData, cborSize));
-        OCPayloadDestroy((OCPayload*)cstart);
+        OCPayload *cparsed;
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload *)cstart, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
+                                              cborData, cborSize));
+        OCPayloadDestroy((OCPayload *)cstart);
         OICFree(cborData);
 
         OC::MessageContainer mc2;
         mc2.setPayload(cparsed);
         EXPECT_EQ(1u, mc2.representations().size());
-        const OC::OCRepresentation& r = mc2.representations()[0];
+        const OC::OCRepresentation &r = mc2.representations()[0];
 
         // Test
         std::vector<std::vector<std::vector<int>>> iarr2 = r["iarr"];
@@ -669,6 +1038,7 @@ namespace OCRepresentationEncodingTest
         std::vector<std::vector<std::vector<bool>>> barr2 = r["barr"];
         std::vector<std::vector<std::vector<std::string>>> strarr2 = r["strarr"];
         std::vector<std::vector<std::vector<OC::OCRepresentation>>> objarr2 = r["objarr"];
+        std::vector<std::vector<std::vector<OCByteString>>> bytestrarr2 = r["bytestrarr"];
 
         // Note: due to the way that the CSDK works, all 3d arrays need to be cuboidal.
         // Since std::vector doesn't require this, items received on the other side end up
@@ -679,12 +1049,14 @@ namespace OCRepresentationEncodingTest
         strarr2[1][1].pop_back();
         objarr2[1][1].pop_back();
         objarr2[2].pop_back();
+        bytestrarr2[1][1].pop_back();
 
         EXPECT_EQ(iarr, iarr2);
         EXPECT_EQ(darr, darr2);
         EXPECT_EQ(barr, barr2);
         EXPECT_EQ(strarr, strarr2);
         EXPECT_EQ(objarr, objarr2);
+        EXPECT_EQ(bytestrarrRef, bytestrarr2);
         OCPayloadDestroy(cparsed);
     }
 
@@ -704,8 +1076,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -738,8 +1110,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -772,8 +1144,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -805,8 +1177,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -840,8 +1212,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -877,8 +1249,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -914,8 +1286,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -951,8 +1323,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_DISCOVERY,
                     cborData, cborSize));
 
         EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
@@ -981,8 +1353,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1006,8 +1378,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1032,8 +1404,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1058,8 +1430,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1086,8 +1458,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1116,8 +1488,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1146,8 +1518,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1176,8 +1548,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize;
         OCPayload* cparsed;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
@@ -1219,8 +1591,8 @@ namespace OCRepresentationEncodingTest
         size_t cborSize = 0;
         OCPayload *cparsed = NULL;
 
-        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)repPayload, &cborData, &cborSize));
-        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)repPayload, OC_FORMAT_CBOR, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION,
                     cborData, cborSize));
 
         OCRepPayload *parsedPayload = (OCRepPayload *)cparsed;
@@ -1229,6 +1601,8 @@ namespace OCRepresentationEncodingTest
         EXPECT_EQ(NULL, parsedPayload->types->next);
         EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
         EXPECT_EQ(NULL, parsedPayload->interfaces->next);
+
+        OCRepPayloadValue *originalRootValues = parsedPayload->values;
 
         // To make sure rt and if are not duplicated.
         EXPECT_STREQ("BoolAttr", parsedPayload->values->name);
@@ -1256,6 +1630,9 @@ namespace OCRepresentationEncodingTest
         parsedPayload->values = parsedPayload->values->next;
 
         EXPECT_EQ(NULL, parsedPayload->values);
+
+        // Recover the original value to ensure a proper cleanup.
+        parsedPayload->values = originalRootValues;
 
         OICFree(cborData);
         OCRepPayloadDestroy(repPayload);

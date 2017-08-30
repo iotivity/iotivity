@@ -18,19 +18,20 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
+#include "iotivity_config.h"
 #include "occlientcb.h"
-#include "utlist.h"
+#include <coap/coap.h>
 #include "logger.h"
+#include "trace.h"
 #include "oic_malloc.h"
 #include <string.h>
 
-#ifdef WITH_ARDUINO
-#include "Time.h"
-#else
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#include "coap_time.h"
+#ifdef HAVE_ARDUINO_TIME_H
+#include "Time.h"
+#endif
 
 #include "cacommon.h"
 #include "cainterface.h"
@@ -39,19 +40,24 @@
 #define TAG "OIC_RI_CLIENTCB"
 
 struct ClientCB *cbList = NULL;
-static OCMulticastNode * mcPresenceNodes = NULL;
 
 OCStackResult
-AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
-             CAToken_t token, uint8_t tokenLength,
-             OCDoHandle *handle, OCMethod method,
-             OCDevAddr *devAddr, char * requestUri,
-             char * resourceTypeName, uint32_t ttl)
+AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
+            CAMessageType_t type,
+            CAToken_t token, uint8_t tokenLength,
+            CAHeaderOption_t *options, uint8_t numOptions,
+            CAPayload_t payload, size_t payloadSize,
+            CAPayloadFormat_t payloadFormat,
+            OCDoHandle *handle, OCMethod method,
+            OCDevAddr *devAddr, char *requestUri,
+            char *resourceTypeName, uint32_t ttl)
 {
-    if (!clientCB || !cbData || !handle || !requestUri || tokenLength > CA_MAX_TOKEN_LEN)
+    if (!clientCB || !cbData || !handle || tokenLength > CA_MAX_TOKEN_LEN)
     {
         return OC_STACK_INVALID_PARAM;
     }
+
+    OIC_TRACE_BEGIN(%s:AddClientCB, TAG);
 
     ClientCB *cbNode = NULL;
 
@@ -74,9 +80,58 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
         {
             OIC_LOG(INFO, TAG, "Adding client callback with token");
             OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
+            OIC_TRACE_BUFFER("OIC_RI_CLIENTCB:AddClientCB:token:",
+                             (const uint8_t *)token, tokenLength);
             cbNode->callBack = cbData->cb;
             cbNode->context = cbData->context;
             cbNode->deleteCallback = cbData->cd;
+            if (!options || !numOptions)
+            {
+                OIC_LOG (INFO, TAG, "No options present");
+                cbNode->options = NULL;
+                cbNode->numOptions = 0;
+            }
+            else
+            {
+                cbNode->options = (CAHeaderOption_t *) OICCalloc(numOptions,
+                        sizeof(CAHeaderOption_t));
+                if (!cbNode->options)
+                {
+                    OIC_LOG(ERROR, TAG, "Out of memory");
+                    OICFree(cbNode);
+
+                    return OC_STACK_NO_MEMORY;
+                }
+                memcpy(cbNode->options, options,
+                        sizeof(CAHeaderOption_t) * numOptions);
+
+                cbNode->numOptions = numOptions;
+            }
+            if (!payload || !payloadSize)
+            {
+                OIC_LOG (INFO, TAG, "No payload present");
+                cbNode->payload = NULL;
+                cbNode->payloadSize = 0;
+            }
+            else
+            {
+                cbNode->payload = (CAPayload_t) OICCalloc(1, payloadSize);
+                if (!cbNode->payload)
+                {
+                    OIC_LOG(ERROR, TAG, "Out of memory");
+                    if (cbNode->options)
+                    {
+                        OICFree(cbNode->options);
+                    }
+                    OICFree(cbNode);
+
+                    return OC_STACK_NO_MEMORY;
+                }
+                memcpy(cbNode->payload, payload, payloadSize);
+                cbNode->payloadSize = payloadSize;
+            }
+            cbNode->payloadFormat = payloadFormat;
+            cbNode->type = type;
             //Note: token memory is allocated in the caller OCDoResource
             //but freed in DeleteClientCB
             cbNode->token = token;
@@ -102,6 +157,7 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
             cbNode->requestUri = requestUri;    // I own it now
             cbNode->devAddr = devAddr;          // I own it now
             OIC_LOG_V(INFO, TAG, "Added Callback for uri : %s", requestUri);
+            OIC_TRACE_MARK(%s:AddClientCB:uri:%s, TAG, requestUri);
             LL_APPEND(cbList, cbNode);
             *clientCB = cbNode;
         }
@@ -118,7 +174,7 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
             cbData->cd(cbData->context);
         }
 
-        OICFree(token);
+        CADestroyToken(token);
         OICFree(*handle);
         OICFree(requestUri);
         OICFree(devAddr);
@@ -127,6 +183,7 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
 
     if (method == OC_REST_PRESENCE && resourceTypeName)
     {
+        OIC_TRACE_END();
         // Amend the found or created node by adding a new resourceType to it.
         return InsertResourceTypeFilter(cbNode,(char *)resourceTypeName);
         // I own resourceTypName now.
@@ -139,24 +196,41 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
     OICFree(resourceTypeName);
 #endif
 
+    OIC_TRACE_END();
     return OC_STACK_OK;
 
 exit:
+    OIC_TRACE_END();
     return OC_STACK_NO_MEMORY;
 }
 
 void DeleteClientCB(ClientCB * cbNode)
 {
+    OIC_TRACE_BEGIN(%s:DeleteClientCB, TAG);
     if (cbNode)
     {
         LL_DELETE(cbList, cbNode);
         OIC_LOG (INFO, TAG, "Deleting token");
         OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)cbNode->token, cbNode->tokenLength);
+        OIC_TRACE_BUFFER("OIC_RI_CLIENTCB:DeleteClientCB:token:",
+                         (const uint8_t *)cbNode->token, cbNode->tokenLength);
         CADestroyToken (cbNode->token);
+        if (cbNode->options)
+        {
+            OICFree(cbNode->options);
+        }
+        if(cbNode->payload)
+        {
+            OICFree(cbNode->payload);
+        }
         OICFree(cbNode->devAddr);
         OICFree(cbNode->handle);
-        OIC_LOG_V (INFO, TAG, "Deleting callback with uri %s", cbNode->requestUri);
-        OICFree(cbNode->requestUri);
+        if (cbNode->requestUri)
+        {
+            OIC_LOG_V (INFO, TAG, "Deleting callback with uri %s", cbNode->requestUri);
+            OIC_TRACE_MARK(%s:DeleteClientCB:uri:%s, TAG, cbNode->requestUri);
+            OICFree(cbNode->requestUri);
+        }
         if (cbNode->deleteCallback)
         {
             cbNode->deleteCallback(cbNode->context);
@@ -184,6 +258,7 @@ void DeleteClientCB(ClientCB * cbNode)
         OICFree(cbNode);
         cbNode = NULL;
     }
+    OIC_TRACE_END();
 }
 
 /*
@@ -214,21 +289,21 @@ static void CheckAndDeleteTimedOutCB(ClientCB* cbNode)
 }
 
 ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
-        OCDoHandle handle, const char * requestUri)
+                      OCDoHandle handle, const char * requestUri)
 {
     ClientCB* out = NULL;
 
-    if (token && *token && tokenLength <= CA_MAX_TOKEN_LEN && tokenLength > 0)
+    if (token && tokenLength <= CA_MAX_TOKEN_LEN && tokenLength > 0)
     {
         OIC_LOG (INFO, TAG,  "Looking for token");
         OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
-        OIC_LOG(INFO, TAG, "\tFound in callback list");
         LL_FOREACH(cbList, out)
         {
-            OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, tokenLength);
-
+            /* de-annotate below line if want to see all token in cbList */
+            //OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, tokenLength);
             if (memcmp(out->token, token, tokenLength) == 0)
             {
+                OIC_LOG(INFO, TAG, "Found in callback list");
                 return out;
             }
             CheckAndDeleteTimedOutCB(out);
@@ -236,10 +311,12 @@ ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
     }
     else if (handle)
     {
+        OIC_LOG (INFO, TAG,  "Looking for handle");
         LL_FOREACH(cbList, out)
         {
             if (out->handle == handle)
             {
+                OIC_LOG(INFO, TAG, "Found in callback list");
                 return out;
             }
             CheckAndDeleteTimedOutCB(out);
@@ -250,9 +327,11 @@ ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
         OIC_LOG_V(INFO, TAG, "Looking for uri %s", requestUri);
         LL_FOREACH(cbList, out)
         {
-            OIC_LOG_V(INFO, TAG, "\tFound %s", out->requestUri);
+            /* de-annotate below line if want to see all uri in cbList */
+            //OIC_LOG_V(INFO, TAG, "%s", out->requestUri);
             if (out->requestUri && strcmp(out->requestUri, requestUri ) == 0)
             {
+                OIC_LOG(INFO, TAG, "Found in callback list");
                 return out;
             }
             CheckAndDeleteTimedOutCB(out);
@@ -310,41 +389,4 @@ void FindAndDeleteClientCB(ClientCB * cbNode)
             }
         }
     }
-}
-
-OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, char* uri, uint32_t nonce)
-{
-    if (!outnode)
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    OCMulticastNode *node = (OCMulticastNode*) OICMalloc(sizeof(*node));
-    if (node)
-    {
-        node->nonce = nonce;
-        node->uri = uri;
-        LL_APPEND(mcPresenceNodes, node);
-        *outnode = node;
-        return OC_STACK_OK;
-    }
-    *outnode = NULL;
-    return OC_STACK_NO_MEMORY;
-}
-
-OCMulticastNode* GetMCPresenceNode(const char * uri)
-{
-    if (uri)
-    {
-        OCMulticastNode* out = NULL;
-        LL_FOREACH(mcPresenceNodes, out)
-        {
-            if (out->uri && strcmp(out->uri, uri) == 0)
-            {
-                return out;
-            }
-        }
-    }
-    OIC_LOG(INFO, TAG, "MulticastNode Not found !!");
-    return NULL;
 }

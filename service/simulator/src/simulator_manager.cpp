@@ -156,10 +156,10 @@ void SimulatorManager::getDeviceInfo(const std::string &host, DeviceInfoCallback
     OC::FindDeviceCallback deviceCallback = std::bind(
             [](const OC::OCRepresentation & rep, const std::string & hostUri, DeviceInfoCallback callback)
     {
-        std::string deviceName = rep.getValue<std::string>("n");
-        std::string deviceID = rep.getValue<std::string>("di");
-        std::string deviceSpecVersion = rep.getValue<std::string>("lcv");
-        std::string deviceDMV = rep.getValue<std::string>("dmv");
+        std::string deviceName = rep.getValue<std::string>(OC_RSRVD_DEVICE_NAME);
+        std::string deviceID = rep.getValue<std::string>(OC_RSRVD_DEVICE_ID);
+        std::string deviceSpecVersion = rep.getValue<std::string>(OC_RSRVD_SPEC_VERSION);
+        std::string deviceDMV = rep.getValue<std::string>(OC_RSRVD_DATA_MODEL_VERSION);
 
         DeviceInfo deviceInfo(deviceName, deviceID, deviceSpecVersion, deviceDMV);
         callback(hostUri, deviceInfo);
@@ -169,7 +169,7 @@ void SimulatorManager::getDeviceInfo(const std::string &host, DeviceInfoCallback
                                            OCConnectivityType, OC::FindDeviceCallback);
 
     invokeocplatform(static_cast<GetDeviceInfo>(OC::OCPlatform::getDeviceInfo), host.c_str(),
-                     "/oic/d", CT_DEFAULT, deviceCallback);
+                     OC_RSRVD_DEVICE_URI, CT_DEFAULT, deviceCallback);
 }
 
 void SimulatorManager::setDeviceInfo(const std::string &deviceName)
@@ -184,6 +184,19 @@ void SimulatorManager::setDeviceInfo(const std::string &deviceName)
                      ocDeviceInfo);
 }
 
+void SimulatorManager::setDeviceInfo(const std::string &deviceName, const std::string &protocolIndependentID)
+{
+    setDeviceInfo(deviceName);
+
+    typedef OCStackResult (*SetPropertyValue)(OCPayloadType, const std::string&,
+                                              const std::string&);
+
+    invokeocplatform(static_cast<SetPropertyValue>(OC::OCPlatform::setPropertyValue),
+                     PAYLOAD_TYPE_DEVICE,
+                     OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                     protocolIndependentID.c_str());
+}
+
 void SimulatorManager::getPlatformInfo(const std::string &host, PlatformInfoCallback callback)
 {
     VALIDATE_CALLBACK(callback)
@@ -192,17 +205,17 @@ void SimulatorManager::getPlatformInfo(const std::string &host, PlatformInfoCall
                 [](const OC::OCRepresentation & rep, const std::string & hostUri, PlatformInfoCallback callback)
     {
         PlatformInfo platformInfo;
-        platformInfo.setPlatformID(rep.getValue<std::string>("pi"));
-        platformInfo.setPlatformVersion(rep.getValue<std::string>("mnpv"));
-        platformInfo.setManufacturerName(rep.getValue<std::string>("mnmn"));
-        platformInfo.setManufacturerUrl(rep.getValue<std::string>("mnml"));
-        platformInfo.setModelNumber(rep.getValue<std::string>("mnmo"));
-        platformInfo.setDateOfManfacture(rep.getValue<std::string>("mndt"));
-        platformInfo.setOSVersion(rep.getValue<std::string>("mnos"));
-        platformInfo.setHardwareVersion(rep.getValue<std::string>("mnhw"));
-        platformInfo.setFirmwareVersion(rep.getValue<std::string>("mnfv"));
-        platformInfo.setSupportUrl(rep.getValue<std::string>("mnsl"));
-        platformInfo.setSystemTime(rep.getValue<std::string>("st"));
+        platformInfo.setPlatformID(rep.getValue<std::string>(OC_RSRVD_PLATFORM_ID));
+        platformInfo.setPlatformVersion(rep.getValue<std::string>(OC_RSRVD_PLATFORM_VERSION));
+        platformInfo.setManufacturerName(rep.getValue<std::string>(OC_RSRVD_MFG_NAME));
+        platformInfo.setManufacturerUrl(rep.getValue<std::string>(OC_RSRVD_MFG_URL));
+        platformInfo.setModelNumber(rep.getValue<std::string>(OC_RSRVD_MODEL_NUM));
+        platformInfo.setDateOfManfacture(rep.getValue<std::string>(OC_RSRVD_MFG_DATE));
+        platformInfo.setOSVersion(rep.getValue<std::string>(OC_RSRVD_OS_VERSION));
+        platformInfo.setHardwareVersion(rep.getValue<std::string>(OC_RSRVD_HARDWARE_VERSION));
+        platformInfo.setFirmwareVersion(rep.getValue<std::string>(OC_RSRVD_FIRMWARE_VERSION));
+        platformInfo.setSupportUrl(rep.getValue<std::string>(OC_RSRVD_SUPPORT_URL));
+        platformInfo.setSystemTime(rep.getValue<std::string>(OC_RSRVD_SYSTEM_TIME));
 
         callback(hostUri, platformInfo);
     }, std::placeholders::_1, host, callback);
@@ -211,7 +224,7 @@ void SimulatorManager::getPlatformInfo(const std::string &host, PlatformInfoCall
             OCConnectivityType, OC::FindPlatformCallback);
 
     invokeocplatform(static_cast<GetPlatformInfo>(OC::OCPlatform::getPlatformInfo), host.c_str(),
-                     "/oic/p", CT_DEFAULT, platformCallback);
+                     OC_RSRVD_PLATFORM_URI, CT_DEFAULT, platformCallback);
 }
 
 void SimulatorManager::setPlatformInfo(PlatformInfo &platformInfo)

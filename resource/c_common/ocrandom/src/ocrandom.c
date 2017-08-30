@@ -30,34 +30,63 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
-#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__)
-#include "fcntl.h"
-#include "unistd.h"
+#include "iotivity_config.h"
+#include "logger.h"
+
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#include <sys/time.h>
-#include <time.h>
+#endif
+#ifdef HAVE_STRING_H
+#include <string.h>
+#elif defined(HAVE_STRINGS_H)
+#include <strings.h>
+#endif
 #if defined(__ANDROID__)
 #include <ctype.h>
-#include <linux/time.h>
 #endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
 #endif
+
 #include "ocrandom.h"
 #include <stdio.h>
+#include <stdbool.h>
+#include <assert.h>
+#include <ctype.h>
 
-#if !defined(__ANDROID__) && (defined(__linux__) || defined(__APPLE__))
-#include <uuid/uuid.h>
-#endif
+#define OC_MIN(A,B) ((A)<(B)?(A):(B))
 
-#if !defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__) || defined(__TIZEN__)
-#define NANO_SEC 1000000000
-#endif
+#define OC_UUID_HYPHEN_1 9
+#define OC_UUID_HYPHEN_2 14
+#define OC_UUID_HYPHEN_3 19
+#define OC_UUID_HYPHEN_4 24
+#define OC_UUID_HYPHEN_COUNT 4
+
+/**
+* @def OCRANDOM_TAG
+* @brief Logging tag for module name
+*/
+#define OCRANDOM_TAG "OIC_OCRANDOM"
 
 #ifdef ARDUINO
 #include "Arduino.h"
 
-// ARM GCC compiler doesnt define srandom function.
-#if defined(ARDUINO) && !defined(ARDUINO_ARCH_SAM)
-#define HAVE_SRANDOM 1
+/*
+ * ARM GCC compiler doesnt define random/srandom functions, fallback to
+ * rand/srand.
+ */
+#if !defined(ARDUINO_ARCH_SAM)
+#define OC_arduino_srandom_function srandom
+#define OC_arduino_random_function random
+#else
+#define OC_arduino_srandom_function srand
+#define OC_arduino_random_function rand
 #endif
 
 uint8_t GetRandomBitRaw()
@@ -100,250 +129,180 @@ uint8_t GetRandomBit()
         // For other cases, try again.
     }
 }
-#endif
 
-int8_t OCSeedRandom()
+/*
+ * Currently, only the Arduino platform requires seeding. It's done
+ * automatically on the first call to OCGetRandomBytes.
+ */
+uint8_t g_isSeeded = 0;
+static void OCSeedRandom()
 {
-#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__) || defined(__TIZEN__)
-    // Get current time to Seed.
-    uint64_t currentTime = 0;
-#ifdef __ANDROID__
-    struct timespec getTs;
-    clock_gettime(CLOCK_MONOTONIC, &getTs);
-    currentTime = (getTs.tv_sec * (uint64_t)NANO_SEC + getTs.tv_nsec)/1000;
-#elif  _POSIX_TIMERS > 0
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    currentTime = (ts.tv_sec * (uint64_t)NANO_SEC + ts.tv_nsec)/ 1000;
-#else
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    currentTime = tv.tv_sec * (uint64_t)1000000 + tv.tv_usec;
-#endif
-
-    int32_t fd = open("/dev/urandom", O_RDONLY);
-    if (fd >= 0)
+    if (g_isSeeded)
     {
-        uint32_t randomSeed = 0;
-        uint32_t totalRead = 0; //how many integers were read
-        int32_t currentRead = 0;
-        while (totalRead < sizeof(randomSeed))
-        {
-            currentRead = read(fd, (uint8_t*) &randomSeed + totalRead,
-                    sizeof(randomSeed) - totalRead);
-            if (currentRead > 0)
-            {
-                totalRead += currentRead;
-            }
-        }
-        close(fd);
-        srand(randomSeed | currentTime);
-    }
-    else
-    {
-        // Do time based seed when problem in accessing "/dev/urandom"
-        srand(currentTime);
+        return;
     }
 
-    return 0;
-#elif defined ARDUINO
     uint32_t result =0;
     uint8_t i;
     for (i=32; i--;)
     {
         result += result + GetRandomBit();
     }
-#if HAVE_SRANDOM
-    srandom(result);
-#else
-    srand(result);
-#endif
-    return 0;
-#endif
+    OC_arduino_srandom_function(result);
 
+    g_isSeeded = 1;
+    return;
 }
 
-void OCFillRandomMem(uint8_t * location, uint16_t len)
+#endif /* ARDUINO */
+
+bool OCGetRandomBytes(uint8_t * output, size_t len)
 {
-    if (!location)
+    if ( (output == NULL) || (len == 0) )
     {
-        return;
+        return false;
     }
-    for (; len--;)
+
+#if defined(__unix__) || defined(__APPLE__)
+    FILE* urandom = fopen("/dev/urandom", "r");
+    if (urandom == NULL)
     {
-        *location++ = OCGetRandomByte();
+        OIC_LOG(FATAL, OCRANDOM_TAG, "Failed open /dev/urandom!");
+        assert(false);
+        return false;
     }
+
+    if (fread(output, sizeof(uint8_t), len, urandom) != len)
+    {
+        OIC_LOG(FATAL, OCRANDOM_TAG, "Failed while reading /dev/urandom!");
+        assert(false);
+        fclose(urandom);
+        return false;
+    }
+    fclose(urandom);
+
+#elif defined(_WIN32)
+    /*
+     * size_t may be 64 bits, but ULONG is always 32.
+     * If len is larger than the maximum for ULONG, just fail.
+     * It's unlikely anything ever will want to ask for this much randomness.
+     */
+    if (len > 0xFFFFFFFFULL)
+    {
+        OIC_LOG(FATAL, OCRANDOM_TAG, "Requested number of bytes too large for ULONG");
+        assert(false);
+        return false;
+    }
+
+    NTSTATUS status = BCryptGenRandom(NULL, output, (ULONG)len, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+    if (!BCRYPT_SUCCESS(status))
+    {
+        OIC_LOG_V(FATAL, OCRANDOM_TAG, "BCryptGenRandom failed (%X)!", status);
+        assert(false);
+        return false;
+    }
+
+#elif defined(ARDUINO)
+    if (!g_isSeeded)
+    {
+        OCSeedRandom();
+    }
+
+    size_t i;
+    for (i = 0; i < len; i++)
+    {
+        output[i] = OC_arduino_random_function() & 0x00ff;
+    }
+
+#else
+    #error Unrecognized platform
+#endif
+
+    return true;
 }
 
 uint32_t OCGetRandom()
 {
     uint32_t result = 0;
-    OCFillRandomMem((uint8_t*) &result, 4);
+    if (!OCGetRandomBytes((uint8_t*)&result, sizeof(result)))
+    {
+        OIC_LOG(FATAL, OCRANDOM_TAG, "OCGetRandom failed!");
+        assert(false);
+    }
     return result;
 }
 
-uint8_t OCGetRandomByte(void)
+/* Return the number of leading zeroes in x.
+ * Binary search algorithm from Section 5-3 of:
+ *     H.S. Warren Jr. Hacker's Delight. Addison-Wesley. 2003.
+ */
+static int nlz(uint32_t x)
 {
-#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__)
-    return rand() & 0x00FF;
-#elif defined ARDUINO
-#ifdef HAVE_SRANDOM
-    return random() & 0x00FF;
-#else
-    return rand() & 0x00FF;
-#endif
-#endif
+    if (x == 0)
+    {
+        return 32;
+    }
+
+    int n = 0;
+    if (x <= 0x0000FFFF) { n = n + 16; x = x << 16;}
+    if (x <= 0x00FFFFFF) { n = n + 8;  x = x << 8; }
+    if (x <= 0x0FFFFFFF) { n = n + 4;  x = x << 4; }
+    if (x <= 0x3FFFFFFF) { n = n + 2;  x = x << 2; }
+    if (x <= 0x7FFFFFFF) { n = n + 1;}
+
+    return n;
 }
 
 uint32_t OCGetRandomRange(uint32_t firstBound, uint32_t secondBound)
 {
-    uint32_t base;
-    uint32_t diff;
-    uint32_t result;
-    if (firstBound > secondBound)
-    {
-        base = secondBound;
-        diff = firstBound - secondBound;
-    }
-    else if (firstBound < secondBound)
-    {
-        base = firstBound;
-        diff = secondBound - firstBound;
-    }
-    else
+    if (firstBound == secondBound)
     {
         return secondBound;
     }
-    result = ((float)OCGetRandom()/((float)(0xFFFFFFFF))*(float)diff) + (float) base;
-    return result;
+
+    uint32_t rangeBase = OC_MIN(firstBound, secondBound);
+    uint32_t rangeWidth = (firstBound > secondBound) ? (firstBound - secondBound) : (secondBound - firstBound);
+
+    /*
+     * Compute a random number between 0 and rangeWidth. Avoid using floating
+     * point types to avoid overflow when rangeWidth is large. The condition
+     * in the while loop will be false with probability at least 1/2.
+     */
+    uint32_t rangeMask = 0xFFFFFFFF >> nlz(rangeWidth);
+    uint32_t offset = 0;
+    do
+    {
+        if(!OCGetRandomBytes((uint8_t*)&offset, sizeof(offset)))
+        {
+            OIC_LOG(FATAL, OCRANDOM_TAG, "OCGetRandomBytes failed");
+            assert(false);
+            return rangeBase;
+        }
+        offset = offset & rangeMask;
+    }
+    while (offset > rangeWidth);
+
+    return rangeBase + offset;
 }
 
-#if defined(__ANDROID__)
-uint8_t parseUuidChar(char c)
-{
-    if (isdigit(c))
-    {
-        return c - '0';
-    }
-    else
-    {
-        return c - 'a' + 10;
-    }
-}
-uint8_t parseUuidPart(const char *c)
-{
-    return (parseUuidChar(c[0])<<4) + parseUuidChar(c[1]);
-}
-#endif
-
-OCRandomUuidResult OCGenerateUuid(uint8_t uuid[UUID_SIZE])
+bool OCGenerateUuid(uint8_t uuid[UUID_SIZE])
 {
     if (!uuid)
     {
-        return RAND_UUID_INVALID_PARAM;
-    }
-#if defined(__ANDROID__)
-    char uuidString[UUID_STRING_SIZE];
-    int8_t ret = OCGenerateUuidString(uuidString);
-
-    if (ret < 0)
-    {
-        return ret;
+        OIC_LOG(ERROR, OCRANDOM_TAG, "Invalid parameter");
+        return false;
     }
 
-    uuid[ 0] = parseUuidPart(&uuidString[0]);
-    uuid[ 1] = parseUuidPart(&uuidString[2]);
-    uuid[ 2] = parseUuidPart(&uuidString[4]);
-    uuid[ 3] = parseUuidPart(&uuidString[6]);
-
-    uuid[ 4] = parseUuidPart(&uuidString[9]);
-    uuid[ 5] = parseUuidPart(&uuidString[11]);
-
-    uuid[ 6] = parseUuidPart(&uuidString[14]);
-    uuid[ 7] = parseUuidPart(&uuidString[16]);
-
-    uuid[ 8] = parseUuidPart(&uuidString[19]);
-    uuid[ 9] = parseUuidPart(&uuidString[21]);
-
-    uuid[10] = parseUuidPart(&uuidString[24]);
-    uuid[11] = parseUuidPart(&uuidString[26]);
-    uuid[12] = parseUuidPart(&uuidString[28]);
-    uuid[13] = parseUuidPart(&uuidString[30]);
-    uuid[14] = parseUuidPart(&uuidString[32]);
-    uuid[15] = parseUuidPart(&uuidString[34]);
-
-    return RAND_UUID_OK;
-#elif !defined(__ANDROID__) && (defined(__linux__) || defined(__APPLE__))
-    // note: uuid_t is typedefed as unsigned char[16] on linux/apple
-    uuid_generate(uuid);
-    return RAND_UUID_OK;
-#else
-    // Fallback for all platforms is filling the array with random data
-    OCFillRandomMem(uuid, UUID_SIZE);
-    return RAND_UUID_OK;
-#endif
+    return OCGetRandomBytes(uuid, UUID_SIZE);
 }
 
-OCRandomUuidResult OCGenerateUuidString(char uuidString[UUID_STRING_SIZE])
-{
-    if (!uuidString)
-    {
-        return RAND_UUID_INVALID_PARAM;
-    }
-#if defined(__ANDROID__)
-    int32_t fd = open("/proc/sys/kernel/random/uuid", O_RDONLY);
-    if (fd > 0)
-    {
-        ssize_t readResult = read(fd, uuidString, UUID_STRING_SIZE - 1);
-        close(fd);
-        if (readResult < 0)
-        {
-            return RAND_UUID_READ_ERROR;
-        }
-        else if (readResult < UUID_STRING_SIZE - 1)
-        {
-            uuidString[0] = '\0';
-            return RAND_UUID_READ_ERROR;
-        }
-
-        uuidString[UUID_STRING_SIZE - 1] = '\0';
-        for (char* p = uuidString; *p; ++p)
-        {
-            *p = tolower(*p);
-        }
-        return RAND_UUID_OK;
-    }
-    else
-    {
-        close(fd);
-        return RAND_UUID_READ_ERROR;
-    }
-#elif !defined(__ANDROID__) && (defined(__linux__) || defined(__APPLE__))
-    uint8_t uuid[UUID_SIZE];
-    int8_t ret = OCGenerateUuid(uuid);
-
-    if (ret != 0)
-    {
-        return ret;
-    }
-
-    uuid_unparse_lower(uuid, uuidString);
-    return RAND_UUID_OK;
-
-#else
-    uint8_t uuid[UUID_SIZE];
-    OCGenerateUuid(uuid);
-
-    return OCConvertUuidToString(uuid, uuidString);
-#endif
-}
-
-OCRandomUuidResult OCConvertUuidToString(const uint8_t uuid[UUID_SIZE],
+bool OCConvertUuidToString(const uint8_t uuid[UUID_SIZE],
                                          char uuidString[UUID_STRING_SIZE])
 {
     if (uuid == NULL || uuidString == NULL)
     {
-        return RAND_UUID_INVALID_PARAM;
+        OIC_LOG(ERROR, OCRANDOM_TAG, "Invalid parameter");
+        return false;
     }
 
 
@@ -357,8 +316,90 @@ OCRandomUuidResult OCConvertUuidToString(const uint8_t uuid[UUID_SIZE],
 
     if (ret != UUID_STRING_SIZE - 1)
     {
-        return RAND_UUID_CONVERT_ERROR;
+        OIC_LOG(ERROR, OCRANDOM_TAG, "snprintf failed");
+        return false;
     }
 
-    return RAND_UUID_OK;
+    return true;
 }
+
+bool OCConvertStringToUuid(const char uuidString[UUID_STRING_SIZE],
+                                         uint8_t uuid[UUID_SIZE])
+{
+    if(NULL == uuidString || NULL == uuid)
+    {
+        OIC_LOG(ERROR, OCRANDOM_TAG, "Invalid parameter");
+        return false;
+    }
+
+    size_t urnIdx = 0;
+    size_t uuidIdx = 0;
+    size_t strUuidLen = 0;
+    char convertedUuid[UUID_SIZE * 2] = {0};
+
+    strUuidLen = strlen(uuidString);
+    if((UUID_STRING_SIZE - 1) == strUuidLen)
+    {
+        for(uuidIdx=0, urnIdx=0; uuidIdx < UUID_SIZE ; uuidIdx++, urnIdx+=2)
+        {
+            if(*(uuidString + urnIdx) == '-')
+            {
+                urnIdx++;
+            }
+            sscanf(uuidString + urnIdx, "%2hhx", &convertedUuid[uuidIdx]);
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, OCRANDOM_TAG, "unexpected string length");
+        return false;
+    }
+
+    memcpy(uuid, convertedUuid, UUID_SIZE);
+
+    return true;
+}
+
+bool OCIsUUID(const char *uuid)
+{
+    size_t hyphens[OC_UUID_HYPHEN_COUNT] = {OC_UUID_HYPHEN_1, OC_UUID_HYPHEN_2,
+                                            OC_UUID_HYPHEN_3, OC_UUID_HYPHEN_4};
+    if (strlen(uuid) != UUID_STRING_SIZE -1)
+    {
+        //The length doesn't match
+        return false;
+    }
+
+    for (size_t i = 0, counter = 0; i < (UUID_STRING_SIZE - 1); i++)
+    {
+        char var = uuid[i];
+
+        //Check if a hyphen is expected here.
+        if (i == (hyphens[counter] - 1))
+        {
+            //We need a hyphen here.
+            if ('-' != var)
+            {
+                //The character is not a hyphen.
+                return false;
+            }
+            else
+            {
+                //Move on to the next expected hyphen position.
+                counter++;
+            }
+        }
+        else
+        {
+            //The character here should be a simple xdigit
+            if (0 == isxdigit(var))
+            {
+                //The current character is not a xdigit.
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+

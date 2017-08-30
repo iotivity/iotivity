@@ -36,46 +36,32 @@ extern "C" {
 /**
  * Initialize Amacl resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult InitAmaclResource();
 
 /**
  * Perform cleanup for Amacl resources.
- *
- * @retval  none
  */
 void DeInitAmaclResource();
 
 /**
- * This method is used by PolicyEngine to retrieve amsId for the resource.
- * If the Amacl is found for the given resource then populate the parameter
- * amsId with Amacl resource amss id.
+ * This function converts Amacl data into CBOR format.
+ * Caller needs to invoke 'free' when done using returned string.
  *
- * @param resource  resource for which AMS service is required.
- * @param amsId     ID of the ams service for the given resource
+ * @param amacl instance of @ref OicSecAmacl_t structure.
+ * @param cborPayload is the converted cbor value of @ref OicSecAmacl_t structure.
+ * @param cborSize is the size of the cbor payload. This value is the size of the
+ * cborPayload. It should not be NON-NULL value.
  *
- * @retval
- *  OC_STACK_OK     If Amacl found for the resource
- *  OC_STACK_ERROR  If no Amacl found for the resource
- *
+ * @return ::OC_STACK_OK for Success. ::OC_STACK_INVALID_PARAM in case of invalid parameters.
+ * ::OC_STACK_ERROR in case of error in converting to cbor.
  */
-OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsId);
-
-/**
- * This function converts Amacl data into JSON format.
- * Caller needs to invoke 'free' when done using
- * returned string.
- * @param Amacl  instance of OicSecAmacl_t structure.
- *
- * @retval  pointer to Amacl in json format.
- */
-char* BinToAmaclJSON(const OicSecAmacl_t * amacl);
+OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amacl, uint8_t **cborPayload,
+                                 size_t *cborSize);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif //IOTVT_SRM_AMACLR_H
-
-

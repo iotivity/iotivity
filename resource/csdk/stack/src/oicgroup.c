@@ -20,21 +20,19 @@
 
 #define _POSIX_C_SOURCE 200112L
 
+#include "iotivity_config.h"
+
 #include <string.h>
 
 #include "oicgroup.h"
-#include "cJSON.h"
 #include "cbor.h"
 #include "ocpayload.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "octhread.h"
 #include "occollection.h"
 #include "logger.h"
-#include "timer.h"
-
-#ifndef WITH_ARDUINO
-#include <pthread.h>
-#endif
+#include "octimer.h"
 
 #define TAG "OIC_RI_GROUP"
 
@@ -71,9 +69,7 @@
         pointer = NULL; \
     }
 
-#ifndef WITH_ARDUINO
-pthread_mutex_t lock;
-#endif
+oc_mutex g_scheduledResourceLock = NULL;
 
 enum ACTION_TYPE
 {
@@ -93,16 +89,14 @@ typedef struct scheduledresourceinfo
     struct scheduledresourceinfo* next;
 } ScheduledResourceInfo;
 
-ScheduledResourceInfo *scheduleResourceList = NULL;
+ScheduledResourceInfo *g_scheduleResourceList = NULL;
 
 void AddScheduledResource(ScheduledResourceInfo **head,
         ScheduledResourceInfo* add)
 {
     OIC_LOG(INFO, TAG, "AddScheduledResource Entering...");
 
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
+    oc_mutex_lock(g_scheduledResourceLock);
     ScheduledResourceInfo *tmp = NULL;
 
     if (*head != NULL)
@@ -119,25 +113,21 @@ void AddScheduledResource(ScheduledResourceInfo **head,
     {
         *head = add;
     }
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
+    oc_mutex_unlock(g_scheduledResourceLock);
 }
 
 ScheduledResourceInfo* GetScheduledResource(ScheduledResourceInfo *head)
 {
     OIC_LOG(INFO, TAG, "GetScheduledResource Entering...");
 
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
+    oc_mutex_lock(g_scheduledResourceLock);
 
     time_t t_now;
 
     ScheduledResourceInfo *tmp = NULL;
     tmp = head;
 
-#ifndef WITH_ARDUINO
+#if !defined(WITH_ARDUINO)
     time(&t_now);
 #else
     t_now = now();
@@ -148,11 +138,7 @@ ScheduledResourceInfo* GetScheduledResource(ScheduledResourceInfo *head)
         while (tmp)
         {
             time_t diffTm = 0;
-#ifndef WITH_ARDUINO
             diffTm = timespec_diff(tmp->time, t_now);
-#else
-            diffTm = timespec_diff(tmp->time, t_now);
-#endif
 
             if (diffTm <= (time_t) 0)
             {
@@ -165,9 +151,9 @@ ScheduledResourceInfo* GetScheduledResource(ScheduledResourceInfo *head)
     }
 
     exit:
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
+
+    oc_mutex_unlock(g_scheduledResourceLock);
+
     if (tmp == NULL)
     {
         OIC_LOG(INFO, TAG, "Cannot Find Call Info.");
@@ -179,9 +165,8 @@ ScheduledResourceInfo* GetScheduledResourceByActionSetName(ScheduledResourceInfo
 {
     OIC_LOG(INFO, TAG, "GetScheduledResourceByActionSetName Entering...");
 
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
+    oc_mutex_lock(g_scheduledResourceLock);
+
     ScheduledResourceInfo *tmp = NULL;
     tmp = head;
 
@@ -199,9 +184,9 @@ ScheduledResourceInfo* GetScheduledResourceByActionSetName(ScheduledResourceInfo
     }
 
 exit:
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
+
+    oc_mutex_unlock(g_scheduledResourceLock);
+
     if (tmp == NULL)
     {
         OIC_LOG(INFO, TAG, "Cannot Find Call Info.");
@@ -212,17 +197,17 @@ exit:
 void RemoveScheduledResource(ScheduledResourceInfo **head,
         ScheduledResourceInfo* del)
 {
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
+
+    oc_mutex_lock(g_scheduledResourceLock);
+
     OIC_LOG(INFO, TAG, "RemoveScheduledResource Entering...");
     ScheduledResourceInfo *tmp = NULL;
 
     if (del == NULL)
     {
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
+
+        oc_mutex_unlock(g_scheduledResourceLock);
+
         return;
     }
 
@@ -244,9 +229,8 @@ void RemoveScheduledResource(ScheduledResourceInfo **head,
     }
 
     OCFREE(del)
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
+
+    oc_mutex_unlock(g_scheduledResourceLock);
 }
 
 typedef struct aggregatehandleinfo
@@ -427,11 +411,13 @@ void DeleteAction(OCAction** action)
 
 void DeleteActionSet(OCActionSet** actionset)
 {
+    OCAction* pointer = NULL;
+    OCAction* pDel = NULL;
+
     if(*actionset == NULL)
         return;
 
-    OCAction* pointer = (*actionset)->head;
-    OCAction* pDel = NULL;
+    pointer = (*actionset)->head;
 
     while (pointer)
     {
@@ -650,7 +636,7 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
     // yyyy-mm-dd hh:mm:ss d
     iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterTokenPtr);
     VARIFY_PARAM_NULL(iterToken, result, exit)
-#ifndef WITH_ARDUINO
+#if !defined(WITH_ARDUINO)
     if( 2 != sscanf(iterToken, "%ld %u", &(*set)->timesteps, &(*set)->type) )
     {
         // If the return value should be 2, the number of items in the argument. Otherwise, it fails.
@@ -750,6 +736,7 @@ exit:
     OCFREE(desc)
     OCFREE(capa)
     OCFREE(action)
+    OCFREE((*set)->actionsetName)
     OCFREE(*set)
     OCFREE(key)
     OCFREE(value)
@@ -786,7 +773,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
         goto exit;
     }
 
-    actionTypeStr = (char *)malloc(1024);
+    actionTypeStr = (char *)OICMalloc(1024);
     if(actionTypeStr != NULL)
     {
         sprintf(actionTypeStr, "%ld %u", actionset->timesteps, actionset->type);
@@ -796,11 +783,11 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
             remaining -= strlen(actionTypeStr);
             strncat(temp, ACTION_DELIMITER, strlen(ACTION_DELIMITER));
             remaining -= strlen(ACTION_DELIMITER);
-            free(actionTypeStr);
+            OICFree(actionTypeStr);
         }
         else
         {
-            free(actionTypeStr);
+            OICFree(actionTypeStr);
             res = OC_STACK_ERROR;
             goto exit;
         }
@@ -930,46 +917,6 @@ void ActionSetCD(void *context)
     (void)context;
 }
 
-OCStackResult BuildActionJSON(OCAction* action, unsigned char* bufferPtr,
-        uint16_t *remaining)
-{
-    OCStackResult ret = OC_STACK_ERROR;
-    cJSON *json;
-    cJSON *body;
-
-    char *jsonStr;
-    uint16_t jsonLen;
-
-    OIC_LOG(INFO, TAG, "Entering BuildActionJSON");
-    json = cJSON_CreateObject();
-
-    cJSON_AddItemToObject(json, "rep", body = cJSON_CreateObject());
-
-    OCCapability* pointerCapa = action->head;
-    while (pointerCapa)
-    {
-        cJSON_AddStringToObject(body, pointerCapa->capability,
-                pointerCapa->status);
-        pointerCapa = pointerCapa->next;
-    }
-
-    jsonStr = cJSON_PrintUnformatted(json);
-
-    jsonLen = strlen(jsonStr);
-    if (jsonLen < *remaining)
-    {
-        strncat((char*) bufferPtr, jsonStr, jsonLen);
-        *remaining -= jsonLen;
-        bufferPtr += jsonLen;
-        ret = OC_STACK_OK;
-    }
-
-    cJSON_Delete(json);
-    free(jsonStr);
-
-    return ret;
-}
-
 OCPayload* BuildActionCBOR(OCAction* action)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
@@ -990,14 +937,16 @@ OCPayload* BuildActionCBOR(OCAction* action)
     return (OCPayload*) payload;
 }
 
-unsigned int GetNumOfTargetResource(OCAction *actionset)
+uint8_t GetNumOfTargetResource(OCAction *actionset)
 {
-    int numOfResource = 0;
+    uint8_t numOfResource = 0;
 
     OCAction *pointerAction = actionset;
 
     while (pointerAction != NULL)
     {
+        assert(numOfResource < UINT8_MAX);
+
         numOfResource++;
         pointerAction = pointerAction->next;
     }
@@ -1074,7 +1023,7 @@ OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
 void DoScheduledGroupAction()
 {
     OIC_LOG(INFO, TAG, "DoScheduledGroupAction Entering...");
-    ScheduledResourceInfo* info = GetScheduledResource(scheduleResourceList);
+    ScheduledResourceInfo* info = GetScheduledResource(g_scheduleResourceList);
 
     if (info == NULL)
     {
@@ -1096,13 +1045,13 @@ void DoScheduledGroupAction()
         OIC_LOG(INFO, TAG, "Target ActionSet is NULL");
         goto exit;
     }
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
+
+    oc_mutex_lock(g_scheduledResourceLock);
+
     DoAction(info->resource, info->actionset, info->ehRequest);
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
+
+    oc_mutex_unlock(g_scheduledResourceLock);
+
 
     if (info->actionset->type == RECURSIVE)
     {
@@ -1117,9 +1066,7 @@ void DoScheduledGroupAction()
 
             if (info->actionset->timesteps > 0)
             {
-#ifndef WITH_ARDUINO
-                pthread_mutex_lock(&lock);
-#endif
+                oc_mutex_lock(g_scheduledResourceLock);
                 schedule->resource = info->resource;
                 schedule->actionset = info->actionset;
                 schedule->ehRequest = info->ehRequest;
@@ -1128,11 +1075,9 @@ void DoScheduledGroupAction()
                         &schedule->timer_id,
                         &DoScheduledGroupAction);
 
-                OIC_LOG(INFO, TAG, "Reregisteration.");
-#ifndef WITH_ARDUINO
-                pthread_mutex_unlock(&lock);
-#endif
-                AddScheduledResource(&scheduleResourceList, schedule);
+                OIC_LOG(INFO, TAG, "Reregistration.");
+                oc_mutex_unlock(g_scheduledResourceLock);
+                AddScheduledResource(&g_scheduleResourceList, schedule);
             }
             else
             {
@@ -1141,7 +1086,7 @@ void DoScheduledGroupAction()
         }
     }
 
-    RemoveScheduledResource(&scheduleResourceList, info);
+    RemoveScheduledResource(&g_scheduleResourceList, info);
 
     exit:
 
@@ -1158,6 +1103,8 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
 
     char *doWhat = NULL;
     char *details = NULL;
+
+    assert(g_scheduledResourceLock != NULL);
 
     stackRet = ExtractKeyValueFromRequest(ehRequest, &doWhat, &details);
 
@@ -1252,6 +1199,7 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                 stackRet = OC_STACK_ERROR;
             }
         }
+        OCRepPayloadDestroy(payload);
     }
     else if (method == OC_REST_POST)
     {
@@ -1300,11 +1248,13 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                     {
                         OIC_LOG_V(INFO, TAG, "Execute ActionSet : %s",
                                 actionset->actionsetName);
-                        unsigned int num = GetNumOfTargetResource(
-                                actionset->head);
+                        uint8_t num = GetNumOfTargetResource(actionset->head);
 
                         ((OCServerRequest *) ehRequest->requestHandle)->ehResponseHandler =
                                 HandleAggregateResponse;
+
+                        assert(num < UINT8_MAX);
+
                         ((OCServerRequest *) ehRequest->requestHandle)->numResponses =
                                 num + 1;
 
@@ -1329,30 +1279,22 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                             OIC_LOG(INFO, TAG, "Building New Call Info.");
                             memset(schedule, 0,
                                     sizeof(ScheduledResourceInfo));
-#ifndef WITH_ARDUINO
-                            pthread_mutex_lock(&lock);
-#endif
+                            oc_mutex_lock(g_scheduledResourceLock);
                             schedule->resource = resource;
                             schedule->actionset = actionset;
                             schedule->ehRequest =
                                     (OCServerRequest*) ehRequest->requestHandle;
-#ifndef WITH_ARDUINO
-                            pthread_mutex_unlock(&lock);
-#endif
+                            oc_mutex_unlock(g_scheduledResourceLock);
                             if (delay > 0)
                             {
                                 OIC_LOG_V(INFO, TAG, "delay_time is %ld seconds.",
                                         actionset->timesteps);
-#ifndef WITH_ARDUINO
-                                pthread_mutex_lock(&lock);
-#endif
+                                oc_mutex_lock(g_scheduledResourceLock);
                                 schedule->time = registerTimer(delay,
                                         &schedule->timer_id,
                                         &DoScheduledGroupAction);
-#ifndef WITH_ARDUINO
-                                pthread_mutex_unlock(&lock);
-#endif
-                                AddScheduledResource(&scheduleResourceList,
+                                oc_mutex_unlock(g_scheduledResourceLock);
+                                AddScheduledResource(&g_scheduleResourceList,
                                         schedule);
                                 stackRet = OC_STACK_OK;
                             }
@@ -1368,13 +1310,15 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
         else if (strcmp(doWhat, "CancelAction") == 0)
         {
             ScheduledResourceInfo *info =
-                    GetScheduledResourceByActionSetName(scheduleResourceList, details);
+                    GetScheduledResourceByActionSetName(g_scheduleResourceList, details);
 
             if(info != NULL)
             {
+                oc_mutex_lock(g_scheduledResourceLock);
                 unregisterTimer(info->timer_id);
+                oc_mutex_unlock(g_scheduledResourceLock);
 
-                RemoveScheduledResource(&scheduleResourceList, info);
+                RemoveScheduledResource(&g_scheduleResourceList, info);
                 stackRet = OC_STACK_OK;
             }
             else
@@ -1386,12 +1330,12 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
         else if (strcmp(doWhat, GET_ACTIONSET) == 0)
         {
             char *plainText = NULL;
-            OCActionSet *actionset = NULL;
+            OCActionSet *tempActionSet = NULL;
 
-            GetActionSet(details, resource->actionsetHead, &actionset);
-            if (actionset != NULL)
+            GetActionSet(details, resource->actionsetHead, &tempActionSet);
+            if (tempActionSet != NULL)
             {
-                BuildStringFromActionSet(actionset, &plainText);
+                BuildStringFromActionSet(tempActionSet, &plainText);
 
                 if (plainText != NULL)
                 {
@@ -1434,6 +1378,7 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                 stackRet = OC_STACK_ERROR;
             }
         }
+        OCRepPayloadDestroy(payload);
     }
 
 exit:
@@ -1442,4 +1387,29 @@ exit:
     OCFREE(details)
 
     return stackRet;
+}
+
+OCStackResult InitializeScheduleResourceList()
+{
+    assert(g_scheduledResourceLock == NULL);
+
+    g_scheduledResourceLock = oc_mutex_new();
+    if (g_scheduledResourceLock == NULL)
+    {
+        return OC_STACK_ERROR;
+    }
+
+    g_scheduleResourceList = NULL;
+    return OC_STACK_OK;
+}
+
+void TerminateScheduleResourceList()
+{
+    assert(g_scheduleResourceList == NULL);
+
+    if (g_scheduledResourceLock != NULL)
+    {
+        oc_mutex_free(g_scheduledResourceLock);
+        g_scheduledResourceLock = NULL;
+    }
 }

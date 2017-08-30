@@ -25,56 +25,46 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "base64.h"
+#include "ocrandom.h"
+#include "doxmresource.h"
 
-#define TAG  "SRM-UTILITY"
+#define TAG  "OIC_SRM_UTILITY"
 
-/**
- * This method initializes the OicParseQueryIter_t struct
- *
- *@param query     - REST query, to be parsed
- *@param parseIter - OicParseQueryIter_t struct, to be initialized
- *
- */
-void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter)
+void ParseQueryIterInit(const unsigned char * query, OicParseQueryIter_t * parseIter)
 {
-    OIC_LOG (INFO, TAG, "Initializing coap iterator");
-    if((NULL == query) || (NULL == parseIter))
+    OIC_LOG(INFO, TAG, "Initializing coap iterator");
+    if ((NULL == query) || (NULL == parseIter))
+    {
         return;
+    }
 
     parseIter->attrPos = NULL;
     parseIter->attrLen = 0;
     parseIter->valPos = NULL;
     parseIter->valLen = 0;
-    coap_parse_iterator_init(query, strlen((char *)query),
-          (unsigned char *)OIC_SEC_REST_QUERY_SEPARATOR, (unsigned char *) "", 0, &parseIter->pi);
+    coap_parse_iterator_init((unsigned char *)query, strlen((char *)query),
+                             (unsigned char *)OIC_SEC_REST_QUERY_SEPARATOR,
+                             (unsigned char *) "", 0, &parseIter->pi);
 }
 
-/**
- * This method fills the OicParseQueryIter_t struct with next REST query's
- * attribute's and value's information
- *
- *@param parseIter - OicParseQueryIter_t struct, has next query's attribute's & value's info
- *
- * @retval
- *     OicParseQueryIter_t *  - has parsed query info
- *     NULL                   - has no query to parse
- */
 OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter)
 {
-    OIC_LOG (INFO, TAG, "Getting Next Query");
-    if(NULL == parseIter)
+    OIC_LOG(INFO, TAG, "Getting Next Query");
+    if (NULL == parseIter)
+    {
         return NULL;
+    }
 
     unsigned char * qrySeg = NULL;
     char * delimPos;
 
-    //Get the next query. Querys are separated by OIC_SEC_REST_QUERY_SEPARATOR
+    // Get the next query. Querys are separated by OIC_SEC_REST_QUERY_SEPARATOR.
     qrySeg = coap_parse_next(&parseIter->pi);
 
-    if(qrySeg)
+    if (qrySeg)
     {
         delimPos = strchr((char *)qrySeg, OIC_SEC_REST_QUERY_DELIMETER);
-        if(delimPos)
+        if (delimPos)
         {
             parseIter->attrPos = parseIter->pi.pos;
             parseIter->attrLen = (unsigned char *)delimPos - parseIter->pi.pos;
@@ -84,49 +74,6 @@ OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter)
         }
     }
     return NULL;
-}
-
-
-// TODO This functionality is replicated in all SVR's and therefore we need
-// to encapsulate it in a common method. However, this may not be the right
-// file for this method.
-OCStackResult AddUuidArray(cJSON* jsonRoot, const char* arrayItem,
-                           size_t *numUuids, OicUuid_t** uuids )
-{
-    size_t idxx = 0;
-    cJSON* jsonObj = cJSON_GetObjectItem(jsonRoot, arrayItem);
-    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-    VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
-
-    *numUuids = (size_t)cJSON_GetArraySize(jsonObj);
-    VERIFY_SUCCESS(TAG, *numUuids > 0, ERROR);
-    *uuids = (OicUuid_t*)OICCalloc(*numUuids, sizeof(OicUuid_t));
-    VERIFY_NON_NULL(TAG, *uuids, ERROR);
-
-    do
-    {
-        unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
-        uint32_t outLen = 0;
-        B64Result b64Ret = B64_OK;
-
-        cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);
-        VERIFY_NON_NULL(TAG, jsonOwnr, ERROR);
-        VERIFY_SUCCESS(TAG, cJSON_String == jsonOwnr->type, ERROR);
-
-        outLen = 0;
-        b64Ret = b64Decode(jsonOwnr->valuestring, strlen(jsonOwnr->valuestring), base64Buff,
-                sizeof(base64Buff), &outLen);
-
-        VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof((*uuids)[idxx].id)),
-                ERROR);
-        memcpy((*uuids)[idxx].id, base64Buff, outLen);
-    } while ( ++idxx < *numUuids);
-
-    return OC_STACK_OK;
-
-exit:
-    return OC_STACK_ERROR;
-
 }
 
 /**
@@ -146,8 +93,103 @@ const char* GetOxmString(OicSecOxm_t oxmType)
             return OXM_RANDOM_DEVICE_PIN;
         case OIC_MANUFACTURER_CERTIFICATE:
             return OXM_MANUFACTURER_CERTIFICATE;
+#ifdef MULTIPLE_OWNER
+        case OIC_PRECONFIG_PIN:
+            return OXM_PRECONF_PIN;
+#endif //MULTIPLE_OWNER
+        case OIC_MV_JUST_WORKS:
+            return OXM_MV_JUST_WORKS;
+        case OIC_CON_MFG_CERT:
+            return OXM_CON_MFG_CERT;
         default:
             return NULL;
     }
 }
 
+OCStackResult ConvertUuidToStr(const OicUuid_t* uuid, char** strUuid)
+{
+    if(NULL == uuid || NULL == strUuid || NULL != *strUuid)
+    {
+        OIC_LOG(ERROR, TAG, "ConvertUuidToStr : Invalid param");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    const size_t urnBufSize = (UUID_LENGTH * 2) + 4 + 1;
+    char* convertedUrn = (char*)OICCalloc(urnBufSize, sizeof(char));
+    VERIFY_NOT_NULL(TAG, convertedUrn, ERROR);
+    if(OCConvertUuidToString(uuid->id,convertedUrn))
+    {
+        *strUuid = convertedUrn;
+        return OC_STACK_OK;
+    }
+
+    return OC_STACK_INVALID_PARAM;
+
+exit:
+    return OC_STACK_NO_MEMORY;
+}
+
+OCStackResult OC_CALL ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid)
+{
+    bool result = true;
+    size_t strUuidLen = strlen(strUuid);
+
+    if (0 == strUuidLen)
+    {
+        OIC_LOG(INFO, TAG, "Converting empty UUID string to 00000000-0000-0000-0000-000000000000");
+        memset(uuid->id, 0, sizeof(uuid->id));
+    }
+    else
+    {
+        result = OCConvertStringToUuid(strUuid, uuid->id);
+    }
+
+    if (!result)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Invalid parameter '%s'", __func__, strUuid);
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    return OC_STACK_OK;
+}
+
+
+/**
+ * Compares two OicUuid_t structs.
+ *
+ * @return true if the two OicUuid_t structs are equal, else false.
+ */
+bool UuidCmp(const OicUuid_t *firstId, const OicUuid_t *secondId)
+{
+    bool ret = false;
+    VERIFY_NOT_NULL(TAG, firstId, ERROR);
+    VERIFY_NOT_NULL(TAG, secondId, ERROR);
+
+    if (0 == memcmp(firstId, secondId, sizeof(OicUuid_t)))
+    {
+        ret = true;
+    }
+
+exit:
+    OIC_LOG_V(DEBUG, TAG, "%s: returning %s.", __func__, ret?"true":"false");
+    return ret;
+}
+
+const OicUuid_t THE_NIL_UUID = {.id={0000000000000000}};
+
+/**
+ * Compares OicUuid_t to Nil UUID {.id={0000000000000000}}
+ *
+ * @return true if the OicUuid_t is the Nil UUID.
+ */
+bool IsNilUuid(const OicUuid_t *uuid)
+{
+    return UuidCmp(uuid, &THE_NIL_UUID);
+}
+
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+OCStackResult OC_CALL SetDeviceIdSeed(const uint8_t* seed, size_t seedSize)
+{
+    return SetDoxmDeviceIDSeed(seed, seedSize);
+}
+#endif

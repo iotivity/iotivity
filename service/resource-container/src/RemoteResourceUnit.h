@@ -54,7 +54,7 @@ namespace OIC
             RCSRemoteResourceObject::CacheUpdatedCallback pCacheUpdateCB;
 
             void stateChangedCB(ResourceState changedState) const;
-            void cacheUpdateCB(const RCSResourceAttributes & updatedAtt) const;
+            void cacheUpdateCB(const RCSResourceAttributes & updatedAtt, int) const;
 
         public:
             static RemoteResourceUnit::Ptr createRemoteResourceInfo(

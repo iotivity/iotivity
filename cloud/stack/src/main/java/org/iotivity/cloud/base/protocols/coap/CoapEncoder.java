@@ -1,23 +1,23 @@
 /*
- *******************************************************************
- *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
- *
- *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.cloud.base.protocols.coap;
 
@@ -29,6 +29,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 
 public class CoapEncoder extends MessageToByteEncoder<CoapMessage> {
+
+    private boolean isboolWebSocket = false;
 
     @Override
     protected void encode(ChannelHandlerContext ctx, CoapMessage msg,
@@ -42,11 +44,16 @@ public class CoapEncoder extends MessageToByteEncoder<CoapMessage> {
          * encode options
          */
         encodeOptions(optBuf, coapMessage);
+
         long length = optBuf.readableBytes();
 
         if (coapMessage.getPayloadSize() > 0) {
             // + 1 means 8bits delimiter
             length += 1 + coapMessage.getPayloadSize();
+        }
+
+        if (isboolWebSocket) {
+            length = 0;
         }
 
         calcShimHeader(coapMessage, out, length);
@@ -70,6 +77,12 @@ public class CoapEncoder extends MessageToByteEncoder<CoapMessage> {
         }
     }
 
+    public void encode(CoapMessage msg, ByteBuf out, boolean isWebsocket)
+            throws Exception {
+        isboolWebSocket = isWebsocket;
+        encode(null, msg, out);
+    }
+
     private void calcShimHeader(CoapMessage coapMessage, ByteBuf byteBuf,
             long length) {
         if (length < 13) {
@@ -83,10 +96,16 @@ public class CoapEncoder extends MessageToByteEncoder<CoapMessage> {
             byteBuf.writeByte(
                     (14 & 0x0F) << 4 | (coapMessage.getTokenLength() & 0x0F));
             byteBuf.writeShort(((int) length - 269) & 0xFFFF);
-        } else if (length < Integer.MAX_VALUE * 2) {
+        } else if (length < 4294967294L) {
             byteBuf.writeByte(
                     (15 & 0x0F) << 4 | (coapMessage.getTokenLength() & 0x0F));
-            byteBuf.writeLong((length - 65805) & 0xFFFFFFFF);
+            byte[] size = new byte[4];
+            long payload = length - 65805;
+            for (int i = 3; i > -1; i--) {
+                size[i] = (byte) (payload & 0xFF);
+                payload >>= 8;
+            }
+            byteBuf.writeBytes(size);
         } else {
             throw new IllegalArgumentException(
                     "Length must be less than 4GB " + length);
@@ -97,13 +116,21 @@ public class CoapEncoder extends MessageToByteEncoder<CoapMessage> {
             throws Exception {
         int preOptionNum = 0;
 
-        for (int i = 0; i < 40; i++) {
-            List<byte[]> values = coapMessage.getOption(i);
+        for (CoapOption opt : CoapOption.values()) {
+            int optionNum = opt.getvalue();
+            List<byte[]> values = coapMessage.getOption(optionNum);
             if (values != null) {
-                for (byte[] value : values) {
-                    writeOption(i - preOptionNum,
-                            value != null ? value.length : 0, byteBuf, value);
-                    preOptionNum = i;
+                if (values.size() > 0) {
+                    for (byte[] value : values) {
+                        writeOption(optionNum - preOptionNum,
+                                value != null ? value.length : 0, byteBuf,
+                                value);
+                        preOptionNum = optionNum;
+                    }
+
+                } else {
+                    writeOption(optionNum - preOptionNum, 0, byteBuf, null);
+                    preOptionNum = optionNum;
                 }
             }
         }

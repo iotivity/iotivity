@@ -18,14 +18,26 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <iostream>
 #include <sstream>
+#if defined(HAVE_WINDOWS_H)
+#include <windows.h>
+/** @todo stop-gap for naming issue. Windows.h does not like us to use ERROR */
+#ifdef ERROR
+#undef ERROR
+#endif
+#endif // defined(HAVE_WINDOWS_H)
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"
@@ -49,7 +61,7 @@ static char DISCOVERY_QUERY[] = "%s/oic/res";
 //Secure Virtual Resource database for Iotivity Client application
 //It contains Client's Identity and the PSK credentials
 //of other devices which the client trusts
-static char CRED_FILE[] = "oic_svr_db_client_directpairing.json";
+static char CRED_FILE[] = "oic_svr_db_client_directpairing.dat";
 
 static const OCDPDev_t *discoveredDevs = NULL;
 static const OCDPDev_t *pairedDevs = NULL;
@@ -222,9 +234,9 @@ bool printPairingMethod(const OCDPDev_t* pDev)
     }
 
     bool bAvailable = true;
-    for(size_t i=0; i<pDev->prmLen; i++)
+    for (size_t i = 0; i < pDev->prmLen; i++)
     {
-        printf("     [%ld] ", i+1);
+        printf("     [%" PRIuPTR "] ", i + 1);
         switch (pDev->prm[i])
         {
             case DP_PRE_CONFIGURED:
@@ -270,10 +282,11 @@ OCStackApplicationResult discoveryReqCB(void*, OCDoHandle,
 }
 
 // This is a function called back when direct-pairing status is changed
-void pairingReqCB(OCDPDev_t* peer, OCStackResult result)
+void pairingReqCB(void *ctx, OCDPDev_t* peer, OCStackResult result)
 {
     OIC_LOG(INFO, TAG, "Callback Context for Direct-Pairing establishment\n");
 
+    (void) ctx;
     if (OC_STACK_OK == result)
     {
         OIC_LOG_V(INFO, TAG,
@@ -322,8 +335,8 @@ int DeviceDiscovery()
     /* Start a discovery query*/
     OIC_LOG_V(INFO, TAG, "Resource Discovery : %s\n", queryUri);
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, queryUri, 0, 0, CT_DEFAULT,
-                       OC_LOW_QOS, &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, queryUri, 0, 0, CT_DEFAULT,
+                      OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -359,7 +372,7 @@ OCStackResult DoDirectPairing(OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber)
 
     // start direct pairing
     OIC_LOG(INFO, TAG, "   Start Direct Pairing..");
-    if(OC_STACK_OK != OCDoDirectPairing(peer, pmSel, pinNumber, pairingReqCB))
+    if(OC_STACK_OK != OCDoDirectPairing(NULL, peer, pmSel, pinNumber, pairingReqCB))
     {
         OIC_LOG(ERROR, TAG, "OCDoDirectPairing API error");
         return OC_STACK_ERROR;
@@ -387,8 +400,8 @@ OCStackResult SendGetRequest(OCDPDev_t* peer)
     cbData.cd = NULL;
 
     OIC_LOG(INFO, TAG, "Request to /a/light ");
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri,
-               &endpoint, NULL, peer->connType, OC_LOW_QOS, &cbData, NULL, 0);
+    ret = OCDoRequest(&handle, OC_REST_GET, szQueryUri,
+                      &endpoint, NULL, peer->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d", ret, OC_REST_GET);
@@ -399,25 +412,31 @@ OCStackResult SendGetRequest(OCDPDev_t* peer)
 
 FILE* client_fopen(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen(CRED_FILE, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 void *CLInterface(void *data)
 {
-    printf(RED_BEGIN"#Ready to operation ('h' for help)#\n"COLOR_END);
+    printf(RED_BEGIN "#Ready to operation ('h' for help)#\n" COLOR_END);
 
     (void)data;
     OCStackResult ret;
-    char query[MAX_LINE] = {0,};
-    const char prompt[] = BOLD_BEGIN"IoTivity-DP#"COLOR_END" ";
+    char query[MAX_LINE] = {0};
+    const char prompt[] = BOLD_BEGIN "IoTivity-DP#" COLOR_END" ";
     const char* helpmsg[6] = {
-            GREEN_BEGIN"# h  (or help) : show help message"COLOR_END,
-            GREEN_BEGIN"# dd (DP device discovery) : discover Direct-Pairing devices"COLOR_END,
-            GREEN_BEGIN"# dp (start Direct-Pairing) : negotiate DP method & start Direct-Pairing"COLOR_END,
-            GREEN_BEGIN"# sd (send data) : send data to device"COLOR_END,
-            GREEN_BEGIN"# ll (list all device) : list all discovered/paired devices"COLOR_END,
-            GREEN_BEGIN"# q  (quit) : quit test"COLOR_END,
+            GREEN_BEGIN "# h  (or help) : show help message" COLOR_END,
+            GREEN_BEGIN "# dd (DP device discovery) : discover Direct-Pairing devices" COLOR_END,
+            GREEN_BEGIN "# dp (start Direct-Pairing) : negotiate DP method & start Direct-Pairing" COLOR_END,
+            GREEN_BEGIN "# sd (send data) : send data to device" COLOR_END,
+            GREEN_BEGIN "# ll (list all device) : list all discovered/paired devices" COLOR_END,
+            GREEN_BEGIN "# q  (quit) : quit test" COLOR_END,
         };
 
     for (size_t i=0; i<(sizeof(helpmsg)/sizeof(char*)); i++)
@@ -514,7 +533,7 @@ void *CLInterface(void *data)
                     OIC_LOG(ERROR, TAG, "Invalid PIN");
                     continue;
                 }
-                sscanf(input, "%9s", pinNumber);
+                sscanf(input, "%8s", pinNumber);
                 printf("\n");
 
                 ret = DoDirectPairing(peer, pmSel, pinNumber);
@@ -625,7 +644,12 @@ int main(void)
             return 0;
         }
 
+#if defined(_WIN32)
+        Sleep(100);
+#else
         nanosleep(&timeout, NULL);
+#endif // defined(_WIN32)
+
     }
     OIC_LOG(INFO, TAG, "Exiting occlient main loop...");
 
@@ -636,6 +660,3 @@ int main(void)
 
     return 0;
 }
-
-
-

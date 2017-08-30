@@ -1,40 +1,40 @@
-/******************************************************************
- *
- * Copyright 2015 Samsung Electronics All Rights Reserved.
- *
- *
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- ******************************************************************/
+//******************************************************************
+//
+// Copyright 2015 Samsung Electronics All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "base64.h"
 
-/**< base character of Base64  */
+/** base character of Base64. */
 static const char g_b64TransTbl[] =
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"\
                 "ghijklmnopqrstuvwxyz0123456789+/";
 
 /**
- * base64 block encode function
+ * base64 block encode function.
  *
- * @param[in] in  octet stream, max 3 byte
- * @param[out] out  base64 encoded stream, 4 byte
- * @param[in] len  byte-length of in
+ * @param in is the octet stream, max 3 byte.
+ * @param out is the Base64 encoded stream, 4 byte.
+ * @param len is the  byte-length of octet stream.
  *
- * @return  B64_OK for Success, otherwise some error value
+ * @return ::B64_OK for Success, otherwise some error value.
  */
-static B64Result b64EncodeBlk(const uint8_t* in, char* out, uint32_t len)
+static B64Result b64EncodeBlk(const uint8_t* in, char* out, size_t len)
 {
     if (NULL == in || NULL ==  out || 0 == len )
     {
@@ -43,7 +43,7 @@ static B64Result b64EncodeBlk(const uint8_t* in, char* out, uint32_t len)
 
     out[0] = g_b64TransTbl[in[0] >> 2];
 
-    if(1 == len)
+    if (1 == len)
     {
         out[1] = g_b64TransTbl[((in[0] & 0x03) << 4)];
     }
@@ -52,7 +52,7 @@ static B64Result b64EncodeBlk(const uint8_t* in, char* out, uint32_t len)
         out[1] = g_b64TransTbl[((in[0] & 0x03) << 4) | ((in[1] & 0xf0) >> 4)];
     }
 
-    if(2 == len)
+    if (2 == len)
     {
         out[2] = g_b64TransTbl[((in[1] & 0x0f) << 2)];
     }
@@ -77,26 +77,10 @@ static B64Result b64EncodeBlk(const uint8_t* in, char* out, uint32_t len)
     return B64_OK;
 }
 
-/**
- * Encode the plain message in base64.
- *
- * @param[in] in  Plain message
- * @param[in] inLen  Byte length of 'in'
- * @param[in,out] outBuf Output buffer
- *                Base64 encoded message will be written into 'out'
- *                NOTE : This method adds a NULL to the string configuration
- * @param[in] outBufSize Size of output buffer
- * @param[out] outLen  Byte length of encoded message
- *
- * @return  B64_OK for Success, otherwise some error value
-*/
 B64Result b64Encode(const uint8_t* in, const size_t inLen,
-               char* outBuf, const size_t outBufSize, uint32_t* outLen)
+               char* outBuf, const size_t outBufSize, size_t* outLen)
 {
-    size_t i;
-    size_t minBufSize;
-
-    if (NULL == in || 0 == inLen || NULL ==  outBuf || NULL == outLen )
+    if (NULL == in || NULL == outBuf || NULL == outLen )
     {
         return B64_INVALID_PARAM;
     }
@@ -104,12 +88,13 @@ B64Result b64Encode(const uint8_t* in, const size_t inLen,
     *outLen = ((inLen / 3) * 3 == inLen) ?
               ((inLen / 3) * 4) :
               (((inLen / 3) + 1) * 4);
-    minBufSize = (*outLen + 1);
-    if(outBufSize < minBufSize)
+    size_t minBufSize = (*outLen + 1);
+    if (outBufSize < minBufSize)
     {
         return B64_OUTPUT_BUFFER_TOO_SMALL;
     }
 
+    size_t i;
     for (i = 0; i < inLen / 3; i++)
     {
         if(B64_OK != b64EncodeBlk(in + i * 3, outBuf + i * 4, 3))
@@ -118,9 +103,9 @@ B64Result b64Encode(const uint8_t* in, const size_t inLen,
         }
     }
 
-    if (i * 3 != inLen)
+    if ((i * 3) != inLen)
     {
-        if(B64_OK != b64EncodeBlk(in + i * 3, outBuf + i * 4, inLen - i * 3))
+        if (B64_OK != b64EncodeBlk(in + i * 3, outBuf + i * 4, inLen - i * 3))
         {
             return B64_INVALID_PARAM;
         }
@@ -132,11 +117,11 @@ B64Result b64Encode(const uint8_t* in, const size_t inLen,
 }
 
 /**
- * Get decoded value
+ * Get decoded value.
  *
- * @param[in] c  Base64 encoded charactor
+ * @param c is the Base64 encoded character.
  *
- * @return decoded value, 6-bit
+ * @return decoded value, 6-bit.
  */
 static uint32_t b64GetVal(char c)
 {
@@ -169,23 +154,69 @@ static uint32_t b64GetVal(char c)
 }
 
 /**
- * base64 block decode function
+ * Check if the input string is a valid Base64 encoded string.
+ * The string must have groups of 4 characters and only contain
+ * the US-ASCII characters `[A-Z][a-z][0-9]+/` and (pad) `=`
  *
- * @param[in] in  Base64 encoded stream, 4 bytes
- * @param[out] out  Octet stream, 3 bytes
+ * @param[in] in is the Base64 encoded message to validate.
+ * @param[in] inLen is the byte length of the encoded message.
  *
- * @return  B64_OK for Success, otherwise some error value
+ * @return
+ *    - B64_OK    if it is valid Base64 encoding string.
+ *    - B64_ERROR if string is not a valid Base64 encoded string.
+ */
+static B64Result isValidB64EncodedString(const char* in, const size_t inLen)
+{
+    // All valid Base64 encoded strings will be multiples of 4
+    if (0 != (inLen % 4))
+    {
+        return B64_ERROR;
+    }
+    for (size_t i = 0; i < inLen; ++i)
+    {
+        // "[A-Z][a-z][0-9]+/=" are the only valid
+        // letters in a Base64 encoded string
+        if ((('A' > in[i]) || ('Z' < in[i])) &&
+            (('a' > in[i]) || ('z' < in[i])) &&
+            (('0' > in[i]) || ('9' < in[i])) &&
+            ('+' != in[i]) &&
+            ('/' != in[i]) &&
+            ('=' != in[i]))
+        {
+            return B64_ERROR;
+        }
+        // Padding character "=" can only show up as last 2 characters
+        if ('=' == in[i])
+        {
+            if (i < inLen - 2)
+            {
+                return B64_ERROR;
+            }
+            if (i == inLen - 2 && '=' != in[i+1])
+            {
+                return B64_ERROR;
+            }
+        }
+    }
+    return B64_OK;
+}
+
+/**
+ * Base64 block decode function.
+ *
+ * @param in is the Base64 encoded stream, 4 bytes.
+ * @param out is the Octet stream, 3 bytes.
+ *
+ * @return ::B64_OK for Success, otherwise some error value.
  */
 static B64Result b64DecodeBlk(const char* in, uint8_t* out)
 {
-    uint32_t val;
-
-    if(NULL == in || NULL == out)
+    if (NULL == in || NULL == out)
     {
         return B64_INVALID_PARAM;
     }
 
-    val = (b64GetVal(in[0]) << 18) | (b64GetVal(in[1]) << 12) |
+    uint32_t val = (b64GetVal(in[0]) << 18) | (b64GetVal(in[1]) << 12) |
           (b64GetVal(in[2]) << 6) | (b64GetVal(in[3]));
 
     out[0] = (val >> 16) & 0xff;
@@ -202,49 +233,42 @@ static B64Result b64DecodeBlk(const char* in, uint8_t* out)
     return B64_OK;
 }
 
-/**
- * Decode the encoded message in base64.
- *
- * @param[in] in  Base64 encoded message
- * @param[in] inLen  Byte lenth of 'in'
- * @param[in, out] outBuf  Output buffer
- *                 Base64 decoded message will be written into 'out'
- * @param[in] outBufSize Size of output buffer
- * @param[out] outLen  Byte length of decoded message
- *
- * @return  B64_OK for Success, otherwise some error value
- */
 B64Result b64Decode(const char* in, const size_t inLen,
-               uint8_t* outBuf, size_t outBufSize, uint32_t* outLen)
+               uint8_t* outBuf, size_t outBufSize, size_t* outLen)
 {
-    uint32_t i;
-    uint32_t minBufSize;
+    if (NULL == in || NULL == outBuf || NULL == outLen)
+    {
+        return B64_INVALID_PARAM;
+    }
 
-    if (NULL == in || 0 == inLen || 0 != (inLen & 0x03) || NULL == outBuf || NULL == outLen)
+    if (B64_OK != isValidB64EncodedString(in, inLen))
     {
         return B64_INVALID_PARAM;
     }
 
     *outLen = (inLen / 4) * 3;
-    minBufSize = (inLen / 4) * 3;
-    if('=' == in[inLen - 1])
+    size_t minBufSize = (inLen / 4) * 3;
+    if (inLen != 0)
     {
-        minBufSize--;
-        (*outLen)--;
+        if ('=' == in[inLen - 1])
+        {
+            minBufSize--;
+            (*outLen)--;
+        }
+        if ('=' == in[inLen - 2])
+        {
+            minBufSize--;
+            (*outLen)--;
+        }
     }
-    if('=' == in[inLen - 2])
-    {
-        minBufSize--;
-        (*outLen)--;
-    }
-    if(outBufSize < minBufSize)
+    if (outBufSize < minBufSize)
     {
         return B64_OUTPUT_BUFFER_TOO_SMALL;
     }
 
-    for (i = 0; i < inLen / 4; i++)
+    for (size_t i = 0; i < inLen / 4; i++)
     {
-        if(B64_OK != b64DecodeBlk(in + i * 4, outBuf + i * 3))
+        if (B64_OK != b64DecodeBlk(in + i * 4, outBuf + i * 3))
         {
             return B64_INVALID_PARAM;
         }
@@ -252,4 +276,3 @@ B64Result b64Decode(const char* in, const size_t inLen,
 
     return B64_OK;
 }
-

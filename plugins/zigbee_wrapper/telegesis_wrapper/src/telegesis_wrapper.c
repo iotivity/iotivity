@@ -282,7 +282,7 @@ OCStackResult TWInitialize(PIPlugin_Zigbee* plugin, const char* deviceDevPath)
             if (out->g_plugin == plugin)
             {
                 //Ignore because it's already in the list.
-                return TW_RESULT_OK;
+	      return (OCStackResult) TW_RESULT_OK;
             }
         }
     }
@@ -420,6 +420,8 @@ OCStackResult TWSetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
                 SEPARATOR_LENGTH + strlen(attributeType) +
                 SEPARATOR_LENGTH + strlen(newValue) + 1;
 
+    TWEntry* entry = NULL;
+
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
@@ -440,7 +442,6 @@ OCStackResult TWSetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
     }
     OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     twRet = TWDequeueEntry(ctx->g_plugin, &entry, TW_WRITEATTR);
     if (twRet != TW_RESULT_OK)
     {
@@ -472,7 +473,10 @@ OCStackResult TWSetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
     ret = OC_STACK_OK;
 
 exit:
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
     OIC_LOG_V(INFO, TAG, "Leave TWSetAttribute() with ret=%d", ret);
     return ret;
@@ -504,6 +508,8 @@ OCStackResult TWGetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
                 SEPARATOR_LENGTH + strlen(clusterId) +
                 SEPARATOR_LENGTH + strlen(attributeId) + 1;
 
+    TWEntry* entry = NULL;
+
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
@@ -532,7 +538,6 @@ OCStackResult TWGetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
     }
     OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     twRet = TWDequeueEntry(ctx->g_plugin, &entry, TW_RESPATTR);
     if (twRet != TW_RESULT_OK)
     {
@@ -573,7 +578,10 @@ OCStackResult TWGetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
     ret = OC_STACK_OK;
 
 exit:
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
     OIC_LOG_V(INFO, TAG, "Leave TWGetAttribute() with ret=%d", ret);
     return ret;
@@ -614,6 +622,8 @@ OCStackResult TWSwitchOnOff(char* nodeId, char* endpointId, char* newState,
                 SEPARATOR_LENGTH + strlen(newState) + 1;
     }
 
+    TWEntry* entry = NULL;
+
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
@@ -646,7 +656,6 @@ OCStackResult TWSwitchOnOff(char* nodeId, char* endpointId, char* newState,
     }
     OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     twRet = TWDequeueEntry(ctx->g_plugin, &entry, TW_DFTREP);
     if (twRet != TW_RESULT_OK)
     {
@@ -672,7 +681,10 @@ OCStackResult TWSwitchOnOff(char* nodeId, char* endpointId, char* newState,
     ret = OC_STACK_OK;
 
 exit:
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
     OIC_LOG_V(INFO, TAG, "Leave TWSwitchOnOff() with ret=%d", ret);
     return ret;
@@ -703,6 +715,8 @@ OCStackResult TWMoveToLevel(char* nodeId, char* endpointId,
             SEPARATOR_LENGTH + strlen(onOffState) +
             SEPARATOR_LENGTH + strlen(level) +
             SEPARATOR_LENGTH + strlen(transTime) + 1;
+
+    TWEntry* entry = NULL;
 
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
@@ -736,7 +750,6 @@ OCStackResult TWMoveToLevel(char* nodeId, char* endpointId,
 
     OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     twRet = TWDequeueEntry(ctx->g_plugin, &entry, TW_DFTREP);
     if (twRet != TW_RESULT_OK)
     {
@@ -762,7 +775,10 @@ OCStackResult TWMoveToLevel(char* nodeId, char* endpointId,
     ret = OC_STACK_OK;
 
 exit:
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
     OIC_LOG_V(INFO, TAG, "Leave TWMoveToLevel() with ret=%d", ret);
     return ret;
@@ -790,6 +806,8 @@ OCStackResult TWSwitchDoorLockState(char* nodeId, char* endpointId, char* newSta
             SEPARATOR_LENGTH + strlen(endpointId) +
             SEPARATOR_LENGTH + strlen(SENDMODE) +
             SEPARATOR_LENGTH + strlen(newState) + 1;
+
+    TWEntry* entry = NULL;
 
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
@@ -821,7 +839,6 @@ OCStackResult TWSwitchDoorLockState(char* nodeId, char* endpointId, char* newSta
 
     OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     twRet = TWDequeueEntry(ctx->g_plugin, &entry, TW_DFTREP);
     if (twRet != TW_RESULT_OK)
     {
@@ -848,7 +865,10 @@ OCStackResult TWSwitchDoorLockState(char* nodeId, char* endpointId, char* newSta
     ret = OC_STACK_OK;
 
 exit:
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
     OIC_LOG_V(INFO, TAG, "Leave TWSwitchDoorLockState() with ret=%d", ret);
     return ret;
@@ -882,6 +902,8 @@ OCStackResult TWColorMoveToColorTemperature(char* nodeId, char* endpointId,
             SEPARATOR_LENGTH + strlen(colorTemperature) +
             SEPARATOR_LENGTH + strlen(transTime) + 1;
 
+    TWEntry* entry = NULL;
+
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
@@ -911,7 +933,6 @@ OCStackResult TWColorMoveToColorTemperature(char* nodeId, char* endpointId,
     }
     OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     twRet = TWDequeueEntry(ctx->g_plugin, &entry, TW_DFTREP);
     if (twRet != TW_RESULT_OK)
     {
@@ -937,7 +958,10 @@ OCStackResult TWColorMoveToColorTemperature(char* nodeId, char* endpointId,
     ret = OC_STACK_OK;
 
 exit:
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
     OIC_LOG_V(INFO, TAG, "Leave TWColorMoveToColorTemperature() with ret=%d", ret);
     return ret;
@@ -1077,12 +1101,12 @@ OCStackResult TWProcess(PIPlugin_Zigbee* plugin)
         if (ret != TW_RESULT_OK)
         {
             OIC_LOG(ERROR, TAG, "TWDequeueEntry");
-            ret = OC_STACK_ERROR;
+            ret = (TWResultCode)OC_STACK_ERROR;
             break;
         }
         if (entry == NULL)
         {
-            ret = OC_STACK_OK;
+            ret = (TWResultCode)OC_STACK_OK;
             break;
         }
 
@@ -1094,7 +1118,7 @@ OCStackResult TWProcess(PIPlugin_Zigbee* plugin)
             if(ret != TW_RESULT_OK)
             {
                 OIC_LOG(ERROR, TAG, "Failed to delete entry.");
-                ret = OC_STACK_ERROR;
+                ret = (TWResultCode)OC_STACK_ERROR;
                 break;
             }
         }
@@ -1105,13 +1129,13 @@ OCStackResult TWProcess(PIPlugin_Zigbee* plugin)
             if(ret != TW_RESULT_OK)
             {
                 OIC_LOG(ERROR, TAG, "Failed to delete entry.");
-                ret = OC_STACK_ERROR;
+                ret = (TWResultCode)OC_STACK_ERROR;
                 break;
             }
         }
     }
 
-    return ret;
+    return (OCStackResult)ret;
 }
 
 OCStackResult TWUninitialize(PIPlugin_Zigbee* plugin)
@@ -1710,6 +1734,8 @@ TWResultCode CreatePAN(TWContext* ctx)
 
     OIC_LOG(INFO, TAG, "Enter CreatePAN()");
 
+    TWEntry* entry = NULL;
+    TWEntry* entry2 = NULL;
     TWResultCode twRet1 = TW_RESULT_UNKNOWN;
     TWResultCode twRet2 = TW_RESULT_UNKNOWN;
     TWResultCode ret = TW_RESULT_UNKNOWN;
@@ -1720,8 +1746,6 @@ TWResultCode CreatePAN(TWContext* ctx)
         goto exit;
     }
     OIC_LOG_V(INFO, TAG, "Write %s", AT_CMD_GET_NETWORK_INFO);
-    TWEntry* entry = NULL;
-    TWEntry* entry2 = NULL;
     ret = TWDequeueEntry(ctx->g_plugin, &entry, TW_NETWORK_INFO);
     if (ret != TW_RESULT_OK)
     {
@@ -1782,7 +1806,7 @@ TWResultCode CreatePAN(TWContext* ctx)
     }
 
 exit:
-    if (entry)
+    if (entry != NULL)
     {
         twRet1 = TWDeleteEntry(ctx->g_plugin, entry);
         if(twRet1 != TW_RESULT_OK)
@@ -1908,7 +1932,7 @@ TWResultCode FindMatchNodes(TWContext* ctx)
     if(stringRet <= 0)
     {
         OIC_LOG(ERROR, TAG, "Build command error.");
-        ret = OC_STACK_ERROR;
+        ret = (TWResultCode)OC_STACK_ERROR;
         goto exit;
     }
     ret = TWIssueATCommand(ctx->g_plugin, cmdString);
@@ -1950,6 +1974,8 @@ TWResultCode FindClusters(char nodeId[], char endpoint[], TWContext* ctx)
                SEPARATOR_LENGTH + strlen(nodeId) +
                SEPARATOR_LENGTH + strlen(endpoint) + 1;
 
+    TWEntry* entry = NULL;
+
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
@@ -1965,7 +1991,7 @@ TWResultCode FindClusters(char nodeId[], char endpoint[], TWContext* ctx)
     if(stringRet <= 0)
     {
         OIC_LOG(ERROR, TAG, "Build command error.");
-        ret = OC_STACK_ERROR;
+        ret = (TWResultCode)OC_STACK_ERROR;
         goto exit;
     }
     ret = TWIssueATCommand(ctx->g_plugin, cmdString);
@@ -1977,7 +2003,6 @@ TWResultCode FindClusters(char nodeId[], char endpoint[], TWContext* ctx)
     }
     OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     ret = TWDequeueEntry(ctx->g_plugin, &entry, TW_SIMPLEDESC);
     if (ret != TW_RESULT_OK)
     {
@@ -2002,7 +2027,10 @@ TWResultCode FindClusters(char nodeId[], char endpoint[], TWContext* ctx)
     }
 
 exit:
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
     OIC_LOG_V(INFO, TAG, "Leave FindClusters() with ret=%d", ret);
     return ret;
@@ -2019,6 +2047,8 @@ TWResultCode GetRemoteEUI(char *nodeId, char* outRemoteEUI, TWContext* ctx)
 
     int size = strlen(AT_CMD_REMOTE_EUI_REQUEST) + strlen(nodeId) +
                SEPARATOR_LENGTH + strlen(nodeId) + 1;
+    TWEntry* entry = NULL;
+
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
@@ -2033,7 +2063,7 @@ TWResultCode GetRemoteEUI(char *nodeId, char* outRemoteEUI, TWContext* ctx)
     if(stringRet <= 0)
     {
         OIC_LOG(ERROR, TAG, "Build command error.");
-        ret = OC_STACK_ERROR;
+        ret = (TWResultCode)OC_STACK_ERROR;
         goto exit;
     }
     ret = TWIssueATCommand(ctx->g_plugin, cmdString);
@@ -2045,7 +2075,6 @@ TWResultCode GetRemoteEUI(char *nodeId, char* outRemoteEUI, TWContext* ctx)
     }
     OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     ret = TWDequeueEntry(ctx->g_plugin, &entry, TW_ADDRESS_RESPONSE);
     if (ret != TW_RESULT_OK)
     {
@@ -2085,7 +2114,10 @@ TWResultCode GetRemoteEUI(char *nodeId, char* outRemoteEUI, TWContext* ctx)
 exit:
     memset(ctx->g_WIPRemoteEUI, '\0', sizeof(ctx->g_WIPRemoteEUI));
     memset(ctx->g_WIPRemoteNodeId, '\0', sizeof(ctx->g_WIPRemoteNodeId));
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
     OIC_LOG_V(INFO, TAG, "Leave GetRemoteEUI() with ret=%d", ret);
     return ret;
@@ -2537,7 +2569,7 @@ TWResultCode TelSimpleDescInClusterHandler(int count, char* tokens[], TWContext*
     {
         OIC_LOG(ERROR, TAG, "Invalid Params");
         ret = TW_RESULT_ERROR_INVALID_PARAMS;
-	        goto exit;
+        goto exit;
     }
 
     if (ctx->g_WIPDevice == NULL)

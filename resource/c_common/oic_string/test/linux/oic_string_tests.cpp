@@ -33,12 +33,14 @@
 #define _POSIX_C_SOURCE 200809L
 #endif // _POSIX_C_SOURCE
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include <oic_string.h>
 #include <oic_malloc.h>
 
 const char SENTINEL_VALUE = 127;
+static const char SENTINEL_CHAR = '?';
+
 TEST(StringTests, StrdupNormalDup)
 {
     char param[] = "This is a normal parameter";
@@ -191,12 +193,15 @@ TEST(StringTests, StrcpyZeroSource)
 // tests a copy where the destination is of length 0
 TEST(StringTests, StrcpyZeroDestination)
 {
-    char target[0];
+    char target[1] = { SENTINEL_CHAR };
     char source[] = "123456789";
+    char beforeValue = target[0];
 
-    char *result = OICStrcpy(target, sizeof(target), source);
+    char *result = OICStrcpy(target, 0, source);
 
+    char afterValue = target[0];
     EXPECT_EQ(target, result);
+    EXPECT_EQ(beforeValue, afterValue);
 }
 
 // tests a copy where the destination is of length 0
@@ -398,11 +403,15 @@ TEST(StringTests, StrcatZeroSource)
 // Tests a cat where the Destination is zero length
 TEST(StringTests, StrcatZeroDestination)
 {
-    char target[0];
+    char target[1] = { SENTINEL_CHAR };
     char source[] = "12345";
+    char beforeValue = target[0];
 
-    char *result = OICStrcat(target, sizeof(target), source);
+    char *result = OICStrcat(target, 0, source);
+
+    char afterValue = target[0];
     EXPECT_EQ(target, result);
+    EXPECT_EQ(beforeValue, afterValue);
 }
 
 // Tests a cat where the Destination is zero length

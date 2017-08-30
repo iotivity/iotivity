@@ -19,7 +19,7 @@
 //Not supported on Arduino due lack of absolute time need to implement iCalendar
 #ifndef WITH_ARDUINO
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "iotvticalendar.h"
 #include "logger.h"
 
@@ -85,6 +85,31 @@ static void printRecur(IotvtICalRecur_t *recur)
     }
 }
 
+#ifndef HAVE_LOCALTIME_R
+
+#define localtime_r localtime_r_compat
+
+/**
+ * @description An implementation of `localtime_r` for systems which only
+ * have a `localtime` implementation.
+ */
+static tm* localtime_r_compat(const time_t* timer, tm* result)
+{
+    if (NULL == result)
+    {
+        OIC_LOG(ERROR, TAG, "localtime_r received null results parameter");
+    }
+
+    if (NULL == timer)
+    {
+        OIC_LOG(WARNING, TAG, "localtime_r received null timer parameter");
+    }
+
+    tm* tempPtr = localtime(timer);
+    memcpy(result, tempPtr, sizeof(tm));
+    return result;
+}
+#endif
 
 static void checkValidityOfRequest(char *recurStr, char *periodStr,int startTime, int endTime,
                                     int byDay)

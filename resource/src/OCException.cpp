@@ -31,6 +31,8 @@ std::string OC::OCException::reason(const OCStackResult sr)
              return OC::Exception::RESOURCE_CREATED;
         case OC_STACK_RESOURCE_DELETED:
              return OC::Exception::RESOURCE_DELETED;
+        case OC_STACK_RESOURCE_CHANGED:
+             return OC::Exception::RESOURCE_CHANGED;
         case OC_STACK_INVALID_URI:
             return OC::Exception::INVALID_URI;
         case OC_STACK_INVALID_IP:
@@ -97,6 +99,8 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::INVALID_REPRESENTATION;
         case OC_STACK_UNAUTHORIZED_REQ:
             return OC::Exception::UNAUTHORIZED_REQUEST;
+        case OC_STACK_TOO_LARGE_REQ:
+            return OC::Exception::TOO_LARGE_REQ;
         case OC_STACK_PDM_IS_NOT_INITIALIZED:
             return OC::Exception::PDM_DB_NOT_INITIALIZED;
         case OC_STACK_DUPLICATE_UUID:
@@ -105,6 +109,20 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::INCONSISTENT_DB;
         case OC_STACK_AUTHENTICATION_FAILURE:
             return OC::Exception::AUTHENTICATION_FAILURE;
+        case OC_STACK_NOT_ALLOWED_OXM:
+            return OC::Exception::NOT_ALLOWED_OXM;
+        case OC_STACK_USER_DENIED_REQ:
+            return OC::Exception::USER_DENIED_REQ;
+        case OC_STACK_NOT_ACCEPTABLE:
+            return OC::Exception::NOT_ACCEPTABLE;
+        case OC_STACK_FORBIDDEN_REQ:
+            return OC::Exception::FORBIDDEN_REQ;
+        case OC_STACK_INTERNAL_SERVER_ERROR:
+            return OC::Exception::INTERNAL_SERVER_ERROR;
+        case OC_STACK_BAD_ENDPOINT:
+            return OC::Exception::BAD_ENDPOINT;
+        case OC_STACK_GATEWAY_TIMEOUT:
+            return OC::Exception::GATEWAY_TIMEOUT;
     }
 
     return OC::Exception::UNKNOWN_ERROR;

@@ -37,6 +37,7 @@ namespace OC
                 OC_STACK_RESOURCE_CREATED,
                 OC_STACK_RESOURCE_DELETED,
                 OC_STACK_CONTINUE,
+                OC_STACK_RESOURCE_CHANGED,
                 OC_STACK_INVALID_URI,
                 OC_STACK_INVALID_QUERY,
                 OC_STACK_INVALID_IP,
@@ -64,6 +65,7 @@ namespace OC
                 OC_STACK_INVALID_DEVICE_INFO,
                 OC_STACK_INVALID_JSON,
                 OC_STACK_UNAUTHORIZED_REQ,
+                OC_STACK_TOO_LARGE_REQ,
                 OC_STACK_PRESENCE_STOPPED,
                 OC_STACK_PRESENCE_TIMEOUT,
                 OC_STACK_PRESENCE_DO_NOT_HANDLE,
@@ -71,7 +73,14 @@ namespace OC
                 OC_STACK_PDM_IS_NOT_INITIALIZED,
                 OC_STACK_DUPLICATE_UUID,
                 OC_STACK_INCONSISTENT_DB,
-                OC_STACK_AUTHENTICATION_FAILURE
+                OC_STACK_AUTHENTICATION_FAILURE,
+                OC_STACK_NOT_ALLOWED_OXM,
+                OC_STACK_USER_DENIED_REQ,
+                OC_STACK_NOT_ACCEPTABLE,
+                OC_STACK_FORBIDDEN_REQ,
+                OC_STACK_INTERNAL_SERVER_ERROR,
+                OC_STACK_BAD_ENDPOINT,
+                OC_STACK_GATEWAY_TIMEOUT
             };
 
             std::string resultMessages[]=
@@ -80,6 +89,7 @@ namespace OC
                 OC::Exception::RESOURCE_CREATED,
                 OC::Exception::RESOURCE_DELETED,
                 OC::Exception::STACK_CONTINUE,
+                OC::Exception::RESOURCE_CHANGED,
                 OC::Exception::INVALID_URI,
                 OC::Exception::INVALID_QUERY,
                 OC::Exception::INVALID_IP,
@@ -107,6 +117,7 @@ namespace OC
                 OC::Exception::INVALID_DEVICE_INFO,
                 OC::Exception::INVALID_REPRESENTATION,
                 OC::Exception::UNAUTHORIZED_REQUEST,
+                OC::Exception::TOO_LARGE_REQ,
                 OC::Exception::PRESENCE_STOPPED,
                 OC::Exception::PRESENCE_TIMEOUT,
                 OC::Exception::PRESENCE_NOT_HANDLED,
@@ -114,7 +125,14 @@ namespace OC
                 OC::Exception::PDM_DB_NOT_INITIALIZED,
                 OC::Exception::DUPLICATE_UUID,
                 OC::Exception::INCONSISTENT_DB,
-                OC::Exception::AUTHENTICATION_FAILURE
+                OC::Exception::AUTHENTICATION_FAILURE,
+                OC::Exception::NOT_ALLOWED_OXM,
+                OC::Exception::USER_DENIED_REQ,
+                OC::Exception::NOT_ACCEPTABLE,
+                OC::Exception::FORBIDDEN_REQ,
+                OC::Exception::INTERNAL_SERVER_ERROR,
+                OC::Exception::BAD_ENDPOINT,
+                OC::Exception::GATEWAY_TIMEOUT
             };
             TEST(OCExceptionTest, ReasonCodeMatches)
             {

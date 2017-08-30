@@ -47,7 +47,7 @@ public final class RcsValue {
      * @see Type
      */
     public static enum TypeId {
-        NULL, BOOLEAN, INTEGER, DOUBLE, STRING, ATTRIBUTES, ARRAY;
+        NULL, BOOLEAN, INTEGER, DOUBLE, STRING, BYTESTRING, ATTRIBUTES, ARRAY;
     }
 
     /**
@@ -88,6 +88,8 @@ public final class RcsValue {
          *
          * For non sequence types, it is equivalent to calling {@link #getId()}.
          *
+         * @param t type to get the TypeId for
+         *
          * @return identifier of type
          *
          * @see getDepth
@@ -100,7 +102,9 @@ public final class RcsValue {
         /**
          * Returns the depth of a type.
          *
-         * The return will be zero for non sequence types.
+         * @param t the type to return the depth
+         *
+         * @return will be zero for non sequence types.
          *
          * @see getBaseTypeId
          */
@@ -112,13 +116,14 @@ public final class RcsValue {
          * Factory method to create Type instance from an object.
          * Note that object must be a supported type by RcsValue.
          *
+         * @param obj object used to create Type instance from
+         *
          * @return An instance that has TypeId for obj.
          *
          * @throws NullPointerException
          *             if obj is null.
          * @throws IllegalArgumentException
          *             if obj is not supported type.
-         *
          */
         public static Type typeOf(Object obj) {
             if (obj == null) {
@@ -132,13 +137,14 @@ public final class RcsValue {
          * Factory method to create Type instance from a class.
          * Note that class must be a supported type by RcsValue.
          *
+         * @param cls class to make Type instance from
+         *
          * @return An instance that has TypeId for class.
          *
          * @throws NullPointerException
          *             if cls is null.
          * @throws IllegalArgumentException
          *             if cls is not supported type.
-         *
          */
         public static Type typeOf(Class<?> cls) {
             if (cls == null) {
@@ -189,12 +195,14 @@ public final class RcsValue {
         types.put(Integer.class, new Type(TypeId.INTEGER));
         types.put(Double.class, new Type(TypeId.DOUBLE));
         types.put(String.class, new Type(TypeId.STRING));
+        types.put(RcsByteString.class, new Type(TypeId.BYTESTRING));
         types.put(RcsResourceAttributes.class, new Type(TypeId.ATTRIBUTES));
 
         types.put(boolean[].class, new ArrayType(TypeId.BOOLEAN, 1));
         types.put(int[].class, new ArrayType(TypeId.INTEGER, 1));
         types.put(double[].class, new ArrayType(TypeId.DOUBLE, 1));
         types.put(String[].class, new ArrayType(TypeId.STRING, 1));
+        types.put(RcsByteString[].class, new ArrayType(TypeId.BYTESTRING, 1));
         types.put(RcsResourceAttributes[].class,
                 new ArrayType(TypeId.ATTRIBUTES, 1));
 
@@ -202,6 +210,7 @@ public final class RcsValue {
         types.put(int[][].class, new ArrayType(TypeId.INTEGER, 2));
         types.put(double[][].class, new ArrayType(TypeId.DOUBLE, 2));
         types.put(String[][].class, new ArrayType(TypeId.STRING, 2));
+        types.put(RcsByteString[][].class, new ArrayType(TypeId.BYTESTRING, 2));
         types.put(RcsResourceAttributes[][].class,
                 new ArrayType(TypeId.ATTRIBUTES, 2));
 
@@ -209,6 +218,7 @@ public final class RcsValue {
         types.put(int[][][].class, new ArrayType(TypeId.INTEGER, 3));
         types.put(double[][][].class, new ArrayType(TypeId.DOUBLE, 3));
         types.put(String[][][].class, new ArrayType(TypeId.STRING, 3));
+        types.put(RcsByteString[][][].class, new ArrayType(TypeId.BYTESTRING, 3));
         types.put(RcsResourceAttributes[][][].class,
                 new ArrayType(TypeId.ATTRIBUTES, 3));
 
@@ -469,9 +479,36 @@ public final class RcsValue {
     /**
      * Constructs a new value that holds a RcsResourceAttributes array.
      *
-     * @param value
-     *            a RcsResourceAttributes array
+     * @param value a RcsByteString array
+     * @throws NullPointerException if value is null.
+     */
+    public RcsValue(RcsByteString[] value) {
+        this((Object) value);
+    }
+
+    /**
+     * Constructs a new value that holds a two-dimensional RcsByteString array.
      *
+     * @param value a two-dimensional RcsByteString array
+     * @throws NullPointerException if value is null.
+     */
+    public RcsValue(RcsByteString[][] value) {
+        this((Object) value);
+    }
+
+    /**
+     * Constructs a new value that holds a three-dimensional RcsByteString array.
+     *
+     * @param value a three-dimensional RcsByteString array
+     * @throws NullPointerException if value is null.
+     */
+    public RcsValue(RcsByteString[][][] value) {
+        this((Object) value);
+    }
+
+    /**
+     * Constructs a new value that holds a RcsResourceAttributes array.
+     * @param value RcsResourceAttributes array
      * @throws NullPointerException
      *             if value is null.
      */
@@ -540,7 +577,7 @@ public final class RcsValue {
 
     /**
      * Returns the value as T.
-     *
+     * @param <T> the value type
      * @return a value as T
      *
      * @throws ClassCastException
@@ -818,6 +855,36 @@ public final class RcsValue {
      *
      */
     public String[][][] asString3DArray() {
+        return getOrNull();
+    }
+
+    /**
+     * Returns the value as an RcsByteString array, null if the value is not the
+     * desired type.
+     *
+     * @return an RcsByteString array
+     */
+    public RcsByteString[] asByteStringArray() {
+        return getOrNull();
+    }
+
+    /**
+     * Returns the value as a two-dimensional RcsByteString array, null if the
+     * value is not the desired type.
+     *
+     * @return a two-dimensional RcsByteString array
+     */
+    public RcsByteString[][] asByteString2DArray() {
+        return getOrNull();
+    }
+
+    /**
+     * Returns the value as a three-dimensional RcsByteString array, null if the
+     * value is not the desired type.
+     *
+     * @return a three-dimensional RcsByteString array
+     */
+    public RcsByteString[][][] asByteString3DArray() {
         return getOrNull();
     }
 

@@ -24,7 +24,7 @@
 #include <stdbool.h>
 #include "ocstack.h"
 #include "pmtypes.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -32,7 +32,7 @@ extern "C"
 #endif
 
 /**
- * Discover direct-pairing devices in the same IP subnet. .
+ * Discover direct-pairing devices in the same IP subnet.
  *
  * @param[in] waittime  Timeout in seconds.
  *
@@ -43,6 +43,7 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime);
 /**
  * Start direct-pairing processes.
  *
+ * @param[in] ctx  user context passed back with resultCallback.
  * @param[in] peer  target device to establish direct-pairing.
  * @param[in] pmSel  selected pairing method.
  * @param[in] pinNumber  secret value for dtls connection.
@@ -50,8 +51,8 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime);
  *
  * @return OC_STACK_OK on success otherwise error.
  */
-OCStackResult DPDirectPairing(OCDirectPairingDev_t* peer, OicSecPrm_t pmSel, char *pinNumber,
-                                                     OCDirectPairingResultCB resultCallback);
+OCStackResult DPDirectPairing(void *ctx, OCDirectPairingDev_t* peer, OicSecPrm_t pmSel,
+                                char *pinNumber, OCDirectPairingResultCB resultCallback);
 
 /**
  * This function returns discovered devices list in direct-pairing discovery

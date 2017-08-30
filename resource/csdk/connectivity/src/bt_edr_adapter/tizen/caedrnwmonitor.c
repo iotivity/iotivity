@@ -24,7 +24,6 @@
  * This file provides the APIs for EDR Network Monitor.
  */
 
-#include <glib.h>
 #include <string.h>
 #include <bluetooth.h>
 
@@ -35,33 +34,11 @@
 #include "caqueueingthread.h"
 #include "caremotehandler.h"
 
-#define MICROSECS_PER_SEC 1000000
-
-static uint64_t const INITIALIZE_TIMEOUT = 1 * MICROSECS_PER_SEC;
-
-static GMainLoop *g_mainloop = NULL;
-static ca_thread_pool_t g_threadPoolHandle = NULL;
-
 /**
  * @var g_edrNetworkChangeCallback
  * @brief Maintains the callback to be notified on local bluetooth adapter status change.
  */
 static CAEDRNetworkStatusCallback g_edrNetworkChangeCallback = NULL;
-
-/**
- * Mutex to synchronize access to
- */
-static ca_mutex g_btinitializeMutex = NULL;
-
-/**
- * Condition for gmainloop to run.
- */
-static ca_cond g_initializeCond = NULL;
-
-/**
- * Flag to check if BT stack is initialised.
- */
-static bool g_isBTStackInitialised = false;
 
 /**
  * @fn CAEDRAdapterStateChangeCallback
@@ -70,79 +47,17 @@ static bool g_isBTStackInitialised = false;
 static void CAEDRAdapterStateChangeCallback(int result, bt_adapter_state_e adapterState,
                                             void *userData);
 
-void CAEDRMainLoopThread(void *param)
-{
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
-    // Initialize Bluetooth service
-    int ret = bt_initialize();
-    if (BT_ERROR_NONE != ret)
-    {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Bluetooth initialization failed!, error num [%x]",
-                  ret);
-        return;
-    }
-
-    ret = bt_adapter_set_state_changed_cb(CAEDRAdapterStateChangeCallback, NULL);
-    if(BT_ERROR_NONE != ret)
-    {
-       OIC_LOG(ERROR, EDR_ADAPTER_TAG, "bt_adapter_set_state_changed_cb failed");
-       return;
-    }
-
-    g_mainloop = g_main_loop_new(g_main_context_default(), FALSE);
-
-    ca_mutex_lock(g_btinitializeMutex);
-    g_isBTStackInitialised = true;
-    ca_mutex_unlock(g_btinitializeMutex);
-    ca_cond_signal(g_initializeCond);
-
-    // Run gmainloop to handle the events from bt stack
-    g_main_loop_run(g_mainloop);
-
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
-}
-
 CAResult_t CAEDRInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
 {
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
-    g_threadPoolHandle = threadPool;
-
-    if (NULL == g_btinitializeMutex)
-    {
-        g_btinitializeMutex = ca_mutex_new();
-        if (NULL == g_btinitializeMutex)
-        {
-            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "ca_mutex_new failed");
-            return CA_STATUS_FAILED;
-        }
-    }
-
-    if (NULL == g_initializeCond)
-    {
-        g_initializeCond = ca_cond_new();
-        if (NULL == g_initializeCond)
-        {
-            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "ca_cond_new failed");
-            ca_mutex_free(g_btinitializeMutex);
-            return CA_STATUS_FAILED;
-        }
-    }
-
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    (void)threadPool;
     return CA_STATUS_OK;
 }
 
-void CAEDRTerminateNetworkMonitor(void)
+void CAEDRTerminateNetworkMonitor()
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     g_edrNetworkChangeCallback = NULL;
-
-    ca_mutex_free(g_btinitializeMutex);
-    g_btinitializeMutex = NULL;
-
-    ca_cond_free(g_initializeCond);
-    g_initializeCond = NULL;
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
@@ -151,11 +66,20 @@ CAResult_t CAEDRStartNetworkMonitor()
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
-    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, CAEDRMainLoopThread,
-                                                (void *) NULL))
+    // Initialize Bluetooth service
+    int ret = bt_initialize();
+    if (BT_ERROR_NONE != ret)
     {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to create thread!");
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Bluetooth initialization failed!, error num [%x]",
+                  ret);
         return CA_STATUS_FAILED;
+    }
+
+    ret = bt_adapter_set_state_changed_cb(CAEDRAdapterStateChangeCallback, NULL);
+    if(BT_ERROR_NONE != ret)
+    {
+       OIC_LOG(ERROR, EDR_ADAPTER_TAG, "bt_adapter_set_state_changed_cb failed");
+       return CA_STATUS_FAILED;
     }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
@@ -180,10 +104,6 @@ CAResult_t CAEDRStopNetworkMonitor()
         return CA_STATUS_FAILED;
     }
 
-    if (g_mainloop)
-    {
-        g_main_loop_quit(g_mainloop);
-    }
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -233,21 +153,6 @@ CAResult_t CAEDRGetAdapterEnableState(bool *state)
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
     VERIFY_NON_NULL(state, EDR_ADAPTER_TAG, "state holder is NULL!");
 
-    ca_mutex_lock(g_btinitializeMutex);
-    if (!g_isBTStackInitialised)
-    {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Wait till BT is initialised");
-        CAWaitResult_t ret = ca_cond_wait_for(g_initializeCond, g_btinitializeMutex,
-                                              INITIALIZE_TIMEOUT);
-        if (CA_WAIT_TIMEDOUT == ret)
-        {
-            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Timeout before BT initialize");
-            ca_mutex_unlock(g_btinitializeMutex);
-            return CA_STATUS_FAILED;
-        }
-    }
-    ca_mutex_unlock(g_btinitializeMutex);
-
     bt_adapter_state_e adapterState;
     int err = bt_adapter_get_state(&adapterState);
     // Get Bluetooth adapter state
@@ -273,6 +178,8 @@ void CAEDRAdapterStateChangeCallback(int result, bt_adapter_state_e adapterState
                                      void *userData)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OC_UNUSED(result);
+    OC_UNUSED(userData);
 
     if (BT_ADAPTER_ENABLED == adapterState)
     {

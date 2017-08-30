@@ -24,7 +24,8 @@
 #include <OCPlatform_impl.h>
 #include <oxmjustworks.h>
 #include <oxmrandompin.h>
-#include <OCProvisioningManager.h>
+#include <srmutility.h>
+#include <OCProvisioningManager.hpp>
 #include <gtest/gtest.h>
 
 #define TIMEOUT 5
@@ -51,6 +52,24 @@ namespace OCProvisioningTest
         EXPECT_EQ(OC_STACK_OK, OCSecure::provisionInit(dbPath));
     }
 
+    TEST(DiscoveryTest, SecureResource)
+    {
+        std::shared_ptr< OC::OCSecureResource > secureResource;
+        OicUuid_t uuid;
+        ConvertStrToUuid("11111111-1111-1111-1111-111111111111", &uuid);
+
+        EXPECT_EQ(OC_STACK_OK, OCSecure::discoverSingleDevice(TIMEOUT, &uuid, secureResource));
+    }
+
+    TEST(DiscoveryTest, SecureResourceZeroTimeout)
+    {
+        std::shared_ptr< OC::OCSecureResource > secureResource;
+        OicUuid_t uuid;
+        ConvertStrToUuid("11111111-1111-1111-1111-111111111111", &uuid);
+
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::discoverSingleDevice(0, &uuid, secureResource));
+    }
+
     TEST(DiscoveryTest, UnownedDevices)
     {
         DeviceList_t list;
@@ -60,8 +79,34 @@ namespace OCProvisioningTest
     TEST(DiscoveryTest, UnownedDevicesZeroTimeout)
     {
         DeviceList_t list;
-        EXPECT_EQ(OC_STACK_OK, OCSecure::discoverUnownedDevices(0, list));
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::discoverUnownedDevices(0, list));
     }
+
+#ifdef MULTIPLE_OWNER
+    TEST(MOTDiscoveryTest, MultipleOwnerEnabledDevices)
+    {
+        DeviceList_t list;
+        EXPECT_EQ(OC_STACK_OK, OCSecure::discoverMultipleOwnerEnabledDevices(TIMEOUT, list));
+    }
+
+    TEST(MOTDiscoveryTest, MultipleOwnerEnabledDevicesZeroTimeOut)
+    {
+        DeviceList_t list;
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::discoverMultipleOwnerEnabledDevices(0, list));
+    }
+
+    TEST(MOTDiscoveryTest, MultipleOwnedDevices)
+    {
+        DeviceList_t list;
+        EXPECT_EQ(OC_STACK_OK, OCSecure::discoverMultipleOwnedDevices(TIMEOUT, list));
+    }
+
+    TEST(MOTDiscoveryTest, MultipleOwnedDevicesZeroTimeOut)
+    {
+        DeviceList_t list;
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::discoverMultipleOwnedDevices(0, list));
+    }
+#endif
 
     TEST(DiscoveryTest, OwnedDevices)
     {
@@ -72,55 +117,68 @@ namespace OCProvisioningTest
     TEST(DiscoveryTest, OwnedDevicesZeroTimeout)
     {
         DeviceList_t list;
-        EXPECT_EQ(OC_STACK_OK, OCSecure::discoverOwnedDevices(0, list));
-    }
-
-    TEST(OwnershipTest, SetOwnershipTransferCBDataNull)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::setOwnerTransferCallbackData(
-                    OIC_JUST_WORKS, NULL, NULL));
-    }
-
-    TEST(OwnershipTest, SetOwnershipTransferCBData)
-    {
-        OTMCallbackData_t justWorksCBData;
-        justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
-        justWorksCBData.createSecureSessionCB = CreateSecureSessionJustWorksCallback;
-        justWorksCBData.createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload;
-        justWorksCBData.createOwnerTransferPayloadCB = CreateJustWorksOwnerTransferPayload;
-        EXPECT_EQ(OC_STACK_OK, OCSecure::setOwnerTransferCallbackData(OIC_JUST_WORKS,
-                                        &justWorksCBData, NULL));
-    }
-
-    TEST(OwnershipTest, SetOwnershipTransferCBDataInvalidType)
-    {
-        OTMCallbackData_t justWorksCBData;
-        justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
-        justWorksCBData.createSecureSessionCB = CreateSecureSessionJustWorksCallback;
-        justWorksCBData.createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload;
-        justWorksCBData.createOwnerTransferPayloadCB = CreateJustWorksOwnerTransferPayload;
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::setOwnerTransferCallbackData(OIC_OXM_COUNT,
-                                        &justWorksCBData, NULL));
-    }
-
-    TEST(OwnershipTest, SetOwnershipTransferCBDataNullInputPin)
-    {
-        OTMCallbackData_t pinBasedCBData;
-        pinBasedCBData.loadSecretCB = InputPinCodeCallback;
-        pinBasedCBData.createSecureSessionCB = CreateSecureSessionRandomPinCallbak;
-        pinBasedCBData.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
-        pinBasedCBData.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
-        OTMSetOwnershipTransferCallbackData(OIC_RANDOM_DEVICE_PIN, &pinBasedCBData);
-
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::setOwnerTransferCallbackData(
-                    OIC_RANDOM_DEVICE_PIN, &pinBasedCBData, NULL));
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::discoverOwnedDevices(0, list));
     }
 
     TEST(OwnershipTest, OwnershipTransferNullCallback)
     {
         OCSecureResource device;
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.doOwnershipTransfer(nullptr));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.doOwnershipTransfer(nullptr));
     }
+
+#ifdef MULTIPLE_OWNER
+    TEST(MOTOwnershipTest, MOTOwnershipTransferNullCallback)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.doMultipleOwnershipTransfer(nullptr));
+    }
+
+    TEST(selectMOTMethodTest, selectMOTMethodNullCallback)
+    {
+        OCSecureResource device;
+        const OicSecOxm_t stsecOxm = OIC_PRECONFIG_PIN;
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.selectMOTMethod(stsecOxm, nullptr));
+    }
+
+    TEST(changeMOTModeTest, changeMOTModeNullCallback)
+    {
+        OCSecureResource device;
+        const OicSecMomType_t momType = OIC_MULTIPLE_OWNER_ENABLE;
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.changeMOTMode(momType, nullptr));
+    }
+
+    TEST(addPreconfigPINTest, addPreconfigPINNullPin)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.addPreconfigPIN(nullptr, 0));
+    }
+
+    TEST(provisionPreconfPinTest, provisionPreconfPinNullCallback)
+    {
+        OCSecureResource device;
+        const char *pin = "test";
+        size_t PinLength = 4;
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.provisionPreconfPin(pin, PinLength, nullptr));
+    }
+
+    TEST(isMOTEnabledTest, isMOTEnabledWithoutDeviceInst)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(false, device.isMOTEnabled());
+    }
+
+    TEST(isMOTSupportedTest, isMOTSupportedWithoutDeviceInst)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(false, device.isMOTSupported());
+    }
+
+    TEST(getMOTMethodTest, getMOTMethodNullOxM)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.getMOTMethod(nullptr));
+    }
+#endif
 
     TEST(DeviceInfoTest, DevInfoFromNetwork)
     {
@@ -144,7 +202,7 @@ namespace OCProvisioningTest
     {
         OCSecureResource device;
         OicSecAcl_t *acl = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionACL(acl, nullptr));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.provisionACL(acl, nullptr));
         OICFree(acl);
     }
 
@@ -158,7 +216,7 @@ namespace OCProvisioningTest
     {
         OCSecureResource device, dev2;
         Credential cred;
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionCredentials(cred, dev2, nullptr));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.provisionCredentials(cred, dev2, nullptr));
     }
 
     TEST(ProvisionPairwiseTest, ProvisionPairwiseTestNullCallback)
@@ -167,10 +225,50 @@ namespace OCProvisioningTest
         Credential cred;
         OicSecAcl_t *acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
         OicSecAcl_t *acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionPairwiseDevices(cred, acl1,
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.provisionPairwiseDevices(cred, acl1,
                     dev2, acl2, nullptr));
         OICFree(acl1);
         OICFree(acl2);
     }
 
+    TEST(ProvisionDirectPairingTest, ProvisionDirectPairingTestNullPconf)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionDirectPairing(nullptr, resultCallback));
+    }
+
+    TEST(ProvisionDirectPairingTest, ProvisionDirectPairingTestNullCallback)
+    {
+        OCSecureResource device;
+        OicSecPconf_t *pconf = (OicSecPconf_t *)OICCalloc(1,sizeof(OicSecPconf_t));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.provisionDirectPairing(pconf, nullptr));
+        OICFree(pconf);
+    }
+
+    TEST(ProvisionDirectPairingTest, ProvisionDirectPairingTestNullCallbackNUllPconf)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionDirectPairing(nullptr, nullptr));
+    }
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    TEST(setDeviceIdSeed, NullParam)
+    {
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::setDeviceIdSeed(NULL, 0));
+    }
+
+    TEST(setDeviceIdSeed, InvalidParam)
+    {
+        uint8_t seed[1024] = {0};
+
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::setDeviceIdSeed(seed, 0));
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::setDeviceIdSeed(seed, sizeof(seed)));
+    }
+
+    TEST(setDeviceIdSeed, ValidValue)
+    {
+        uint8_t seed[16] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+                            0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10};
+        EXPECT_EQ(OC_STACK_OK, OCSecure::setDeviceIdSeed(seed, sizeof(seed)));
+    }
+#endif // __WITH_DTLS__ || __WITH_TLS__
 }

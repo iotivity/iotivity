@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
+# -- Dual Licence ----------------------------------------------------------
+
 ############################################################################
 # GPL License                                                              #
 #                                                                          #
 # This file is a SCons (http://www.scons.org/) builder                     #
 # Copyright (c) 2012-14, Philipp Kraus, <philipp.kraus@flashpixx.de>       #
-# Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.     #
 # This program is free software: you can redistribute it and/or modify     #
 # it under the terms of the GNU General Public License as                  #
 # published by the Free Software Foundation, either version 3 of the       #
@@ -20,16 +21,49 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.     #
 ############################################################################
 
-# This builder originated from work by Philipp Kraus and flashpixx project
-# (see https://github.com/flashpixx). Based on the Unpack.py, it only
-# contains changes to allow a complete unpacking of the archive.
-# It is assumed that the target represents a file in the archive after it
-# is unpacked.
+# --------------------------------------------------------------------------
+
+############################################################################
+# BSD 3-Clause License                                                     #
+#                                                                          #
+# This file is a SCons (http://www.scons.org/) builder                     #
+# Copyright (c) 2012-14, Philipp Kraus, <philipp.kraus@flashpixx.de>       #
+# All rights reserved.                                                     #
+#                                                                          #
+# Redistribution and use in source and binary forms, with or without       #
+# modification, are permitted provided that the following conditions are   #
+# met:                                                                     #
+#                                                                          #
+# 1. Redistributions of source code must retain the above copyright        #
+# notice, this list of conditions and the following disclaimer.            #
+#                                                                          #
+# 2. Redistributions in binary form must reproduce the above copyright     #
+# notice, this list of conditions and the following disclaimer in the      #
+# documentation and/or other materials provided with the distribution.     #
+#                                                                          #
+# 3. Neither the name of the copyright holder nor the names of its         #
+# contributors may be used to endorse or promote products derived from     #
+# this software without specific prior written permission.                 #
+#                                                                          #
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS      #
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT        #
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A  #
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT       #
+# HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,   #
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED #
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR   #
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF   #
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING     #
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS       #
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.             #
+############################################################################
+
+
 
 # The Unpack Builder can be used for unpacking archives (eg Zip, TGZ, BZ, ... ).
-# The emitter of the Builder reads the archive data and creates a returning
-# file list the builder extract the archive. The environment variable
-# stores a dictionary "UNPACK" for set different extractions (subdict "EXTRACTOR"):
+# The emitter of the Builder reads the archive data and creates a returning file list
+# the builder extract the archive. The environment variable stores a dictionary "UNPACK"
+# for set different extractions (subdict "EXTRACTOR"):
 # {
 #   PRIORITY         => a value for setting the extractor order (lower numbers = extractor is used earlier)
 #   SUFFIX           => defines a list with file suffixes, which should be handled with this extractor
@@ -59,13 +93,18 @@
 
 
 import subprocess, os
-import SCons.Errors, SCons.Warnings, SCons.Util
+
+import SCons.Errors, SCons.Warnings
+import SCons.Util
+
 
 # enables Scons warning for this builder
 class UnpackWarning(SCons.Warnings.Warning) :
     pass
 
 SCons.Warnings.enableWarningClass(UnpackWarning)
+
+
 
 # extractor function for Tar output
 # @param env environment object
@@ -115,10 +154,11 @@ def __fileextractor_win_7zip( env, count, no, i ) :
 # @param env environment object
 # @return extractor entry or None on non existing
 def __getExtractor( source, env ) :
-    # we check each unpacker and get the correct list command first, run the command and
+    # we check each unpacker and get the correc  list command first, run the command and
     # replace the target filelist with the list values, we sorte the extractors by their priority
     for unpackername, extractor in sorted(env["UNPACK"]["EXTRACTOR"].iteritems(), key = lambda (k,v) : (v["PRIORITY"],k)):
 
+        # if the run command not set, we continue the extractor search, otherwise we check the extractor parameters
         if not SCons.Util.is_String(extractor["RUN"]) :
             raise SCons.Errors.StopError("list command of the unpack builder for [%s] archives is not a string" % (unpackername))
         if not len(extractor["RUN"]) :
@@ -159,16 +199,15 @@ def __message( s, target, source, env ) :
 # action function for extracting of the data
 # @param target target packed file
 # @param source extracted files
-# @param env environment object
+# @env environment object
 def __action( target, source, env ) :
     extractor = __getExtractor(source, env)
     if not extractor :
         raise SCons.Errors.StopError( "can not find any extractor value for the source file [%s]" % (source[0]) )
 
-    extractor_cmd = extractor["EXTRACTCMD"]
 
     # if the extract command is empty, we create an error
-    if len(extractor_cmd) == 0 :
+    if len(extractor["EXTRACTCMD"]) == 0 :
         raise SCons.Errors.StopError( "the extractor command for the source file [%s] is empty" % (source[0]) )
 
     # build it now (we need the shell, because some programs need it)
@@ -177,7 +216,7 @@ def __action( target, source, env ) :
     source_path = os.path.realpath(source[0].path)
     target_path = os.path.realpath(target[0].path)
 
-    cmd = env.subst(extractor_cmd, source=source_path, target=target)
+    cmd = env.subst(extractor["EXTRACTCMD"], source=source_path, target=target)
     cwd = os.path.dirname(source_path)
 
     if env["UNPACK"]["VIWEXTRACTOUTPUT"] :
@@ -187,7 +226,7 @@ def __action( target, source, env ) :
         handle  = subprocess.Popen( cmd, shell=True, stdout=devnull, cwd=cwd)
 
     if handle.wait() <> 0 :
-        raise SCons.Errors.BuildError( "error running extractor [%s] on the source [%s]" % (cmd, source[0]) )
+        raise SCons.Errors.BuildError( "error running extractor [%s] on the source [%s]" % (cmd, source[0])  )
 
     fhandle = open(target_path, 'a')
     try:
@@ -200,13 +239,15 @@ def __action( target, source, env ) :
 # within the archive
 # @param target target packed file
 # @param source extracted files
-# @param env environment object
+# @env environment object
 def __emitter( target, source, env ) :
     return target, source
 
 
+
+
 # generate function, that adds the builder to the environment
-# @param env environment object
+# @env environment object
 def generate( env ) :
     # setup environment variable
     toolset = {
@@ -297,7 +338,7 @@ def generate( env ) :
     # read tools for Windows system
     if env["PLATFORM"] <> "darwin" and "win" in env["PLATFORM"] :
 
-        if env.WhereIs("7z") :
+        if env.WhereIs("7z"):
             toolset["EXTRACTOR"]["TARGZ"]["RUN"]           = "7z"
             toolset["EXTRACTOR"]["TARGZ"]["LISTEXTRACTOR"] = __fileextractor_win_7zip
             toolset["EXTRACTOR"]["TARGZ"]["LISTFLAGS"]     = "x"
@@ -346,7 +387,7 @@ def generate( env ) :
 
 
     # read the tools on *nix systems and sets the default parameters
-    elif env["PLATFORM"] in ["darwin", "linux", "posix"] :
+    elif env["PLATFORM"] in ["darwin", "linux", "posix", "msys"] :
 
         if env.WhereIs("unzip") :
             toolset["EXTRACTOR"]["ZIP"]["RUN"]             = "unzip"

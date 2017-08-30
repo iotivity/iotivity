@@ -88,6 +88,8 @@ public final class RcsValue {
          *
          * For non sequence types, it is equivalent to calling {@link #getId()}.
          *
+         * @param t the type identifier to get a base type of
+         *
          * @return identifier of type
          *
          * @see getDepth
@@ -100,7 +102,9 @@ public final class RcsValue {
         /**
          * Returns the depth of a type.
          *
-         * The return will be zero for non sequence types.
+         * @param t type to find the depth of
+         *
+         * @return the depth of a type. Will be zero for non sequence types.
          *
          * @see getBaseTypeId
          */
@@ -111,6 +115,8 @@ public final class RcsValue {
         /**
          * Factory method to create Type instance from an object.
          * Note that object must be a supported type by RcsValue.
+         *
+         * @param obj object to create a type instance from
          *
          * @return An instance that has TypeId for obj.
          *
@@ -131,6 +137,8 @@ public final class RcsValue {
         /**
          * Factory method to create Type instance from a class.
          * Note that class must be a supported type by RcsValue.
+         *
+         * @param cls class to create Type instance from
          *
          * @return An instance that has TypeId for class.
          *
@@ -541,6 +549,7 @@ public final class RcsValue {
     /**
      * Returns the value as T.
      *
+     * @param <T> the return type
      * @return a value as T
      *
      * @throws ClassCastException

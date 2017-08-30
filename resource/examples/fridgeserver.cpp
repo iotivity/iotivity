@@ -24,6 +24,8 @@
 /// demonstrate using std::bind to attach to instances of a class as well as using
 /// constructResourceObject
 
+#include "iotivity_config.h"
+
 #include <chrono>
 #include <iostream>
 #include <thread>
@@ -31,6 +33,7 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+#include "ocpayload.h"
 
 using namespace OC;
 namespace PH = std::placeholders;
@@ -44,6 +47,28 @@ const uint16_t TOKEN = 3000;
 // only with a server with below version and token
 const std::string FRIDGE_CLIENT_API_VERSION = "v.1.0";
 const std::string FRIDGE_CLIENT_TOKEN = "21ae43gf";
+
+// Set of strings for each of platform Info fields
+std::string  platformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+std::string  manufacturerName = "OCF";
+std::string  manufacturerLink = "https://www.iotivity.org";
+std::string  modelNumber = "myModelNumber";
+std::string  dateOfManufacture = "2016-01-15";
+std::string  platformVersion = "myPlatformVersion";
+std::string  operatingSystemVersion = "myOS";
+std::string  hardwareVersion = "myHardwareVersion";
+std::string  firmwareVersion = "1.0";
+std::string  supportLink = "https://www.iotivity.org";
+std::string  systemTime = "2016-01-15T11.01";
+
+// Set of strings for each of device info fields
+std::string  deviceName = "IoTivity Fridge Server";
+std::string  specVersion = "ocf.1.1.0";
+std::vector<std::string> dataModelVersions = {"ocf.res.1.1.0"};
+std::string  protocolIndependentID = "054718eb-b1e7-4e9e-9892-30e718a6a8f3";
+
+// OCPlatformInfo Contains all the platform info to be stored
+OCPlatformInfo platformInfo;
 
 class Resource
 {
@@ -114,6 +139,9 @@ class DeviceResource : public Resource
             std::string clientAPIVersion;
             std::string clientToken;
 
+            // Get the message ID from the request
+            std::cout << " MessageID: " << request->getMessageID() << std::endl;
+
             // Search the header options map and look for API version and Client token
             for (auto it = headerOptions.begin(); it != headerOptions.end(); ++it)
             {
@@ -160,7 +188,7 @@ class DeviceResource : public Resource
                     if(request->getRequestType() == "GET")
                     {
                         std::cout<<"DeviceResource Get Request"<<std::endl;
-                        pResponse->setErrorCode(200);
+
                         pResponse->setResponseResult(OC_EH_OK);
                         pResponse->setResourceRepresentation(get(), "");
                         if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -173,7 +201,7 @@ class DeviceResource : public Resource
                         std::cout<<"DeviceResource Delete Request"<<std::endl;
                         if(deleteDeviceResource() == OC_STACK_OK)
                         {
-                            pResponse->setErrorCode(200);
+
                             pResponse->setResponseResult(OC_EH_RESOURCE_DELETED);
                             ehResult = OC_EH_OK;
                         }
@@ -224,7 +252,7 @@ class DeviceResource : public Resource
                 if(request->getRequestType() == "GET")
                 {
                     std::cout<<"Default Entity Handler: Get Request"<<std::endl;
-                    pResponse->setErrorCode(200);
+
                     pResponse->setResourceRepresentation(get(), "");
                     if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
@@ -305,7 +333,7 @@ class LightResource : public Resource
                 if(request->getRequestType() == "GET")
                 {
                     std::cout<<"Light Get Request"<<std::endl;
-                    pResponse->setErrorCode(200);
+
                     pResponse->setResourceRepresentation(get(), "");
                     if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
@@ -316,7 +344,7 @@ class LightResource : public Resource
                 {
                     std::cout <<"Light Put Request"<<std::endl;
                     put(request->getResourceRepresentation());
-                    pResponse->setErrorCode(200);
+
                     pResponse->setResourceRepresentation(get(), "");
                     if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
@@ -405,7 +433,7 @@ class DoorResource : public Resource
                     // note that we know the side because std::bind gives us the
                     // appropriate object
                     std::cout<< m_side << " Door Get Request"<<std::endl;
-                    pResponse->setErrorCode(200);
+
                     pResponse->setResourceRepresentation(get(), "");
                     if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
@@ -416,7 +444,7 @@ class DoorResource : public Resource
                 {
                     std::cout << m_side <<" Door Put Request"<<std::endl;
                     put(request->getResourceRepresentation());
-                    pResponse->setErrorCode(200);
+
                     pResponse->setResourceRepresentation(get(),"");
                     if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
@@ -461,22 +489,122 @@ class Refrigerator
     DoorResource m_rightdoor;
 };
 
+void DeletePlatformInfo()
+{
+    delete[] platformInfo.platformID;
+    delete[] platformInfo.manufacturerName;
+    delete[] platformInfo.manufacturerUrl;
+    delete[] platformInfo.modelNumber;
+    delete[] platformInfo.dateOfManufacture;
+    delete[] platformInfo.platformVersion;
+    delete[] platformInfo.operatingSystemVersion;
+    delete[] platformInfo.hardwareVersion;
+    delete[] platformInfo.firmwareVersion;
+    delete[] platformInfo.supportUrl;
+    delete[] platformInfo.systemTime;
+}
+
+void DuplicateString(char ** targetString, std::string sourceString)
+{
+    *targetString = new char[sourceString.length() + 1];
+    strncpy(*targetString, sourceString.c_str(), (sourceString.length() + 1));
+}
+
+OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerName,
+    std::string manufacturerUrl, std::string modelNumber, std::string dateOfManufacture,
+    std::string platformVersion, std::string operatingSystemVersion, std::string hardwareVersion,
+    std::string firmwareVersion, std::string supportUrl, std::string systemTime)
+{
+    DuplicateString(&platformInfo.platformID, platformID);
+    DuplicateString(&platformInfo.manufacturerName, manufacturerName);
+    DuplicateString(&platformInfo.manufacturerUrl, manufacturerUrl);
+    DuplicateString(&platformInfo.modelNumber, modelNumber);
+    DuplicateString(&platformInfo.dateOfManufacture, dateOfManufacture);
+    DuplicateString(&platformInfo.platformVersion, platformVersion);
+    DuplicateString(&platformInfo.operatingSystemVersion, operatingSystemVersion);
+    DuplicateString(&platformInfo.hardwareVersion, hardwareVersion);
+    DuplicateString(&platformInfo.firmwareVersion, firmwareVersion);
+    DuplicateString(&platformInfo.supportUrl, supportUrl);
+    DuplicateString(&platformInfo.systemTime, systemTime);
+
+    return OC_STACK_OK;
+}
+
+OCStackResult SetDeviceInfo()
+{
+    OCStackResult result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+                                                        deviceName);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set device name" << std::endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                          dataModelVersions);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set data model versions" << std::endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set spec version" << std::endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          protocolIndependentID);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set piid" << std::endl;
+        return result;
+    }
+
+    return OC_STACK_OK;
+}
+
 int main ()
 {
     PlatformConfig cfg
     {
         ServiceType::InProc,
         ModeType::Server,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
-        QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
     Refrigerator rf;
 
+    std::cout << "Starting server & setting platform info\n";
+
+    OCStackResult result = SetPlatformInfo(platformId, manufacturerName, manufacturerLink,
+            modelNumber, dateOfManufacture, platformVersion, operatingSystemVersion,
+            hardwareVersion, firmwareVersion, supportLink, systemTime);
+
+    result = OCPlatform::registerPlatformInfo(platformInfo);
+
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Platform Registration failed\n";
+        return -1;
+    }
+
+    result = SetDeviceInfo();
+
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Device Registration failed\n";
+        return -1;
+    }
+
+    DeletePlatformInfo();
     // we will keep the server alive for at most 30 minutes
     std::this_thread::sleep_for(std::chrono::minutes(30));
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     return 0;
 }
 

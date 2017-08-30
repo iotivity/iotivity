@@ -30,7 +30,6 @@
 
 using namespace OC;
 
-const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
 std::mutex curResourceLock;
 
@@ -164,7 +163,7 @@ void printRepresentation(const OCRepresentation& rep)
 // callback handler on PUT request
 void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
     {
         std::cout << "PUT request was successful" << std::endl;
 
@@ -201,7 +200,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 // Callback handler on GET request
 void onGet(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if (eCode == OC_STACK_OK)
     {
         std::cout << "GET request was successful" << std::endl;
         std::cout << "Resource URI: " << rep.getUri() << std::endl;
@@ -337,14 +336,14 @@ int main(int argc, char* argv[]) {
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Client,
-        "0.0.0.0",
-        0,
-        OC::QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
     try
     {
+        OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
+
         // Find all resources
         requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.garage";
 
@@ -361,6 +360,8 @@ int main(int argc, char* argv[]) {
         std::condition_variable cv;
         std::unique_lock<std::mutex> lock(blocker);
         cv.wait(lock);
+
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     }
     catch(OCException& e)
     {

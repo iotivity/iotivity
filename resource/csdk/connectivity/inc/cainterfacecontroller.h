@@ -29,6 +29,7 @@
 
 #include "caadapterinterface.h"
 #include "cainterface.h"
+#include "cautilinterface.h"
 
 #ifndef SINGLE_THREAD
 #include "cathreadpool.h" /* for thread pool */
@@ -49,8 +50,9 @@ void CAInitializeAdapters();
  * Initializes different adapters based on the compilation flags.
  * @param[in]   handle           thread pool handle created by message handler
  *                               for different adapters.
+ * @param[in]   transportType    transport type to initialize.
  */
-void CAInitializeAdapters(ca_thread_pool_t handle);
+void CAInitializeAdapters(ca_thread_pool_t handle, CATransportAdapter_t transportType);
 #endif
 
 /**
@@ -70,9 +72,21 @@ void CASetErrorHandleCallback(CAErrorHandleCallback errorCallback);
  * Set the network status changed callback for CAUtil.
  * @param[in]   adapterCB       CAUtil callback to receive adapter status changes.
  * @param[in]   connCB          CAUtil callback to receive connection status changes.
+ *
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-void CASetNetworkMonitorCallbacks(CAAdapterChangeCallback adapterCB,
-                                  CAConnectionChangeCallback connCB);
+CAResult_t CASetNetworkMonitorCallbacks(CAAdapterStateChangedCB adapterCB,
+                                        CAConnectionStateChangedCB connCB);
+
+/**
+ * Unset the network status changed callback for CAUtil.
+ * @param[in]   adapterCB       CAUtil callback to receive adapter status changes.
+ * @param[in]   connCB          CAUtil callback to receive connection status changes.
+ *
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAUnsetNetworkMonitorCallbacks(CAAdapterStateChangedCB adapterCB,
+                                          CAConnectionStateChangedCB connCB);
 
 /**
  * Starting different connectivity adapters based on the network selection.
@@ -104,26 +118,30 @@ CAResult_t CASetAdapterRAInfo(const CARAInfo_t *caraInfo);
  * @param[out]   size           number of connectivity information structures.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size);
+CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, size_t *size);
 
 /**
  * Sends unicast data to the remote endpoint.
  * @param[in]   endpoint       endpoint information where the data has to be sent.
  * @param[in]   data           data that needs to be sent.
  * @param[in]   length         length of the data that needs to be sent.
+ * @param[in]   dataType       Data type which is REQUEST or RESPONSE.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length);
+CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data,
+                             uint32_t length, CADataType_t dataType);
 
 /**
  * Sends multicast data to all endpoints in the network.
  * @param[in]   endpoint       endpoint information where the data has to be sent.
  * @param[in]   data           data that needs to be sent.
  * @param[in]   length         length of the data that needs to be sent.
+ * @param[in]   dataType       Data type which is REQUEST or RESPONSE.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 
-CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length);
+CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data,
+                               uint32_t length, CADataType_t dataType);
 
 /**
  * Start listening servers to receive search requests from clients.
@@ -142,6 +160,12 @@ CAResult_t CAStopListeningServerAdapters();
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAStartDiscoveryServerAdapters();
+
+/**
+ * Check whether the endpoint is my own or not.
+ * @return  true or false.
+ */
+bool CAIsLocalEndpoint(const CAEndpoint_t *ep);
 
 /**
  * Terminates the adapters which are initialized during the initialization.

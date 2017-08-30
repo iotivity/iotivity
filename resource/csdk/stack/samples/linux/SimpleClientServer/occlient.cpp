@@ -18,18 +18,44 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+// Warning disabled globally but VS2013 ignores the /wd4200 option in C++ files.
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#pragma warning(disable : 4200)
+#endif
+
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include "ocstack.h"
+#include "ocpayload.h"
+#include "pinoxmcommon.h"
+#include "cacommon.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <iostream>
 #include <sstream>
-#include "ocstack.h"
+#include <getopt.h>
+#include <coap/pdu.h>
 #include "logger.h"
 #include "occlient.h"
-#include "ocpayload.h"
 #include "payload_logging.h"
+#include "common.h"
+
+#define VERIFY_SUCCESS(op)                          \
+do                                                  \
+{                                                   \
+    if (op != OC_STACK_OK)                          \
+    {                                               \
+        OIC_LOG_V(FATAL, TAG, "%s failed!!", #op);  \
+        goto exit;                                  \
+    }                                               \
+} while(0)
 
 #ifdef ROUTING_GATEWAY
 /**
@@ -46,10 +72,31 @@
 static int UnicastDiscovery = 0;
 static int TestCase = 0;
 static int Connectivity = 0;
+static int Introspection = 0;
+static int OCFSpecVersion = 1;
 
 static const char *DEVICE_DISCOVERY_QUERY = "%s/oic/d";
 static const char *PLATFORM_DISCOVERY_QUERY = "%s/oic/p";
 static const char *RESOURCE_DISCOVERY_QUERY = "%s/oic/res";
+
+// Device information
+static const char* gDeviceName = "OCClient";
+static const char* gSpecVersion = "ocf.1.1.0";
+static const char* gDataModelVersions = "ocf.res.1.1.0,ocf.sh.1.1.0";
+static const char* gProtocolIndependentID = "31B59DA2-E68F-4A47-81C5-93E5CBF37D0B";
+
+// Platform information
+static const char* gDateOfManufacture = "2016-01-15";
+static const char* gFirmwareVersion = "myFirmwareVersion";
+static const char* gManufacturerName = "myName";
+static const char* gOperatingSystemVersion = "myOS";
+static const char* gHardwareVersion = "myHardwareVersion";
+static const char* gPlatformID = "6A47983C-CA70-4397-8280-5C34EF23B63B";
+static const char* gManufacturerUrl = "https://www.iotivity.org";
+static const char* gModelNumber = "myModelNumber";
+static const char* gPlatformVersion = "myPlatformVersion";
+static const char* gSupportUrl = "https://www.iotivity.org";
+static const char* gSystemTime = "2015-05-15T11.04";
 
 //The following variable determines the interface protocol (IPv4, IPv6, etc)
 //to be used for sending unicast messages. Default set to IP dual stack.
@@ -57,8 +104,9 @@ static OCConnectivityType ConnType = CT_ADAPTER_IP;
 static OCDevAddr serverAddr;
 static char discoveryAddr[100];
 static std::string coapServerResource = "/a/light";
+static std::string introspectionResType = "oic.wk.introspection";
 
-void StripNewLineChar(char* str);
+int InitIntrospectionPayload(OCClientResponse * clientResponse);
 
 #ifdef WITH_PRESENCE
 // The handle for observe registration
@@ -81,13 +129,13 @@ void handleSigInt(int signum)
     }
 }
 
-OCPayload* putPayload()
+OCPayload* createPayload()
 {
     OCRepPayload* payload = OCRepPayloadCreate();
 
     if (!payload)
     {
-        std::cout << "Failed to create put payload object"<<std::endl;
+        std::cout << "Failed to create payload object"<<std::endl;
         std::exit(1);
     }
 
@@ -99,7 +147,7 @@ OCPayload* putPayload()
 
 static void PrintUsage()
 {
-    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..17> -c <0|1>");
+    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..24> -c <0|1> -i <0|1> -s <0|1>");
     OIC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OIC_LOG(INFO, TAG, "-c 0 : Use Default connectivity(IP)");
     OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
@@ -134,6 +182,14 @@ static void PrintUsage()
             "add  vendor specific header options");
     OIC_LOG(INFO, TAG, "-t 19 :  Discover Platform");
     OIC_LOG(INFO, TAG, "-t 20 :  Discover Devices");
+    OIC_LOG(INFO, TAG, "-t 21 :  Discover Resources and Display endpoints of the server information");
+    OIC_LOG(INFO, TAG, "-t 22 :  Discover Resources and Perform Get Requests by IPv4 + COAP + UDP "\
+            "using server's endpoints information");
+    OIC_LOG(INFO, TAG, "-t 23 :  Discover Resources and Perform Get Requests by IPv4 + COAP + TCP "\
+            "using server's endpoints information");
+    OIC_LOG(INFO, TAG, "-t 24 :  Discover Introspection Resources and Perform Get Request");
+    OIC_LOG(INFO, TAG, "-s 0 :  Specify the device spec version as core.0.0.0");
+    OIC_LOG(INFO, TAG, "-s 1 :  Specify the device spec version as ocf.1.1.0");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -152,9 +208,12 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(&handle, method, query.str().c_str(), remoteAddr,
-                       (method == OC_REST_PUT) ? putPayload() : NULL,
-                       (ConnType), qos, &cbData, options, numOptions);
+    OCPayload* payload = (method == OC_REST_PUT || method == OC_REST_POST) ? createPayload() : NULL;
+
+    ret = OCDoRequest(&handle, method, query.str().c_str(), remoteAddr,
+                      payload, (ConnType), qos, &cbData, options, numOptions);
+
+    OCPayloadDestroy(payload);
 
     if (ret != OC_STACK_OK)
     {
@@ -270,6 +329,16 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
             }
         }
     }
+
+    switch (TestCase)
+    {
+    case TEST_INTROSPECTION:
+        InitIntrospectionPayload(clientResponse);
+        break;
+    default:
+        break;
+    }
+
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -283,45 +352,50 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle,
 
     if (clientResponse)
     {
-        OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OIC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d",
-                gNumObserveNotifies);
-        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Obs Response"));
-        gNumObserveNotifies++;
-        if (gNumObserveNotifies > 15) //large number to test observing in DELETE case.
+        if (clientResponse->sequenceNumber <= MAX_SEQUENCE_NUMBER)
         {
-            if (TestCase == TEST_OBS_REQ_NON || TestCase == TEST_OBS_REQ_CON)
+            if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
             {
-                OIC_LOG(ERROR, TAG, "Cancelling with LOW QOS");
-                if (OCCancel (handle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
-                {
-                    OIC_LOG(ERROR, TAG, "Observe cancel error");
-                }
-                return OC_STACK_DELETE_TRANSACTION;
+                OIC_LOG(INFO, TAG, "This also serves as a registration confirmation.");
             }
-            else if (TestCase == TEST_OBS_REQ_NON_CANCEL_IMM)
+
+            OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+            OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+
+            if (clientResponse->result == OC_STACK_OK)
             {
-                OIC_LOG(ERROR, TAG, "Cancelling with HIGH QOS");
-                if (OCCancel (handle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                OIC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d",
+                        gNumObserveNotifies);
+                OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+                OIC_LOG(INFO, TAG, ("=============> Obs Response"));
+                gNumObserveNotifies++;
+
+                if (gNumObserveNotifies > 15) //large number to test observing in DELETE case.
                 {
-                    OIC_LOG(ERROR, TAG, "Observe cancel error");
+                    if (TestCase == TEST_OBS_REQ_NON || TestCase == TEST_OBS_REQ_CON)
+                    {
+                        OIC_LOG(ERROR, TAG, "Cancelling with LOW QOS");
+                        if (OCCancel (handle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
+                        {
+                            OIC_LOG(ERROR, TAG, "Observe cancel error");
+                        }
+                        return OC_STACK_DELETE_TRANSACTION;
+                    }
+                    else if (TestCase == TEST_OBS_REQ_NON_CANCEL_IMM)
+                    {
+                        OIC_LOG(ERROR, TAG, "Cancelling with HIGH QOS");
+                        if (OCCancel (handle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                        {
+                            OIC_LOG(ERROR, TAG, "Observe cancel error");
+                        }
+                    }
                 }
             }
         }
-        if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
+        else
         {
-            OIC_LOG(INFO, TAG, "This also serves as a registration confirmation");
-        }
-        else if (clientResponse->sequenceNumber == OC_OBSERVE_DEREGISTER)
-        {
-            OIC_LOG(INFO, TAG, "This also serves as a deregistration confirmation");
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-        else if (clientResponse->sequenceNumber == OC_OBSERVE_NO_OPTION)
-        {
-            OIC_LOG(INFO, TAG, "This also tells you that registration/deregistration failed");
+            OIC_LOG(INFO, TAG, "No observe option header is returned in the response.");
+            OIC_LOG(INFO, TAG, "For a registration request, it means the registration failed");
             return OC_STACK_DELETE_TRANSACTION;
         }
     }
@@ -409,7 +483,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 
         if(!found)
         {
-            OIC_LOG_V (INFO, TAG, "No /a/light in payload");
+            OIC_LOG_V (INFO, TAG, "No %s in payload", coapServerResource.c_str());
             return OC_STACK_KEEP_TRANSACTION;
         }
 
@@ -465,6 +539,18 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
                 break;
             case TEST_DISCOVER_DEV_REQ:
                 InitDeviceDiscovery(OC_LOW_QOS);
+                break;
+            case TEST_DISCOVER_REQ_SHOW_EPS:
+                showEndpointsInfo(resource);
+                break;
+            case TEST_GET_REQ_UDP:
+                InitGetRequestWithCoap(payload, true);
+                break;
+            case TEST_GET_REQ_TCP:
+                InitGetRequestWithCoap(payload, false);
+                break;
+            case TEST_INTROSPECTION:
+                InitIntrospection(payload);
                 break;
             default:
                 PrintUsage();
@@ -555,10 +641,7 @@ int InitPresence()
     {
         if (result == OC_STACK_OK)
         {
-            std::ostringstream multicastPresenceQuery;
-            multicastPresenceQuery.str("");
-            multicastPresenceQuery << "coap://" << OC_MULTICAST_PREFIX << OC_RSRVD_PRESENCE_URI;
-            result = InvokeOCDoResource(multicastPresenceQuery, &serverAddr, OC_REST_PRESENCE, OC_LOW_QOS,
+            result = InvokeOCDoResource(query, NULL, OC_REST_PRESENCE, OC_LOW_QOS,
                     presenceCB, NULL, 0);
         }
     }
@@ -575,13 +658,89 @@ int InitGetRequestToUnavailableResource(OCQualityOfService qos)
             getReqCB, NULL, 0));
 }
 
+int InitIntrospectionPayload(OCClientResponse * clientResponse)
+{
+    std::ostringstream query;
+    std::string introspectionPayloadUrl;
+    OCRepPayload *introspectionInfo = (OCRepPayload*)clientResponse->payload;
+    OCRepPayloadValue *value = introspectionInfo->values;
+
+    while (value)
+    {
+        if (strcmp(value->name, "urlInfo") == 0)
+        {
+            break;
+        }
+        value = value->next;
+    }
+
+    if (value && (value->arr.dimensions[0] > 0))
+    {
+        OCRepPayloadValue *prop = value->arr.objArray[0]->values;
+        while (prop)
+        {
+            if (strcmp(prop->name, "url") == 0)
+            {
+                introspectionPayloadUrl = prop->str;
+                break;
+            }
+            prop = prop->next;
+        }
+    }
+
+    if (introspectionPayloadUrl.length() <= 0)
+    {
+        OIC_LOG(ERROR, TAG, "\nFailed to get introspection URL from payload");
+        return OC_STACK_ERROR;
+    }
+    else
+    {
+        query << introspectionPayloadUrl;
+        OIC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
+        return (InvokeOCDoResource(query, &serverAddr, OC_REST_GET, OC_LOW_QOS,
+            getReqCB, NULL, 0));
+    }
+}
+
+int InitIntrospection(OCDiscoveryPayload* dis)
+{
+    OCResourcePayload* resource = (OCResourcePayload*)dis->resources;
+    bool found = false;
+    std::string introspectionUri;
+    while (resource && !found)
+    {
+        OCStringLL* resTypes = resource->types;
+        while (resTypes && !found)
+        {
+            if (strcmp(resTypes->value, introspectionResType.c_str()) == 0)
+            {
+                introspectionUri = resource->uri;
+                found = true;
+            }
+            resTypes = resTypes->next;
+        }
+        resource = resource->next;
+    }
+
+    if (introspectionUri.length() == 0)
+    {
+        OIC_LOG(ERROR, TAG, "Could not find URI for introspection");
+    }
+
+    std::ostringstream query;
+    query << introspectionUri;
+    OIC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
+    return (InvokeOCDoResource(query, &serverAddr, OC_REST_GET, OC_LOW_QOS,
+            getReqCB, NULL, 0));
+}
+
 int InitObserveRequest(OCQualityOfService qos)
 {
     std::ostringstream query;
     query << coapServerResource;
     OIC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
     return (InvokeOCDoResource(query, &serverAddr, OC_REST_OBSERVE,
-              (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, obsReqCB, NULL, 0));
+            (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, obsReqCB, NULL, 0));
 }
 
 int InitPutRequest(OCQualityOfService qos)
@@ -651,7 +810,11 @@ void* RequestDeleteDeathResourceTask(void* myqos)
 
     if (OC_STACK_OK != result)
     {
-        OIC_LOG(INFO, TAG, "Second DELETE call did not succeed");
+        OIC_LOG(INFO, TAG, "Second DELETE Request also failed");
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "Second DELETE Request sent successfully; Waiting for Callback");
     }
 
     return NULL;
@@ -672,20 +835,20 @@ int InitDeleteRequest(OCQualityOfService qos)
     if (OC_STACK_OK != result)
     {
         // Error can happen if for example, network connectivity is down
-        OIC_LOG(INFO, TAG, "First DELETE call did not succeed");
-    }
-    else
-    {
+        OIC_LOG(INFO, TAG, "DELETE Request did not succeed; Will try again.");
         //Create a thread to delete this resource again
         pthread_t threadId;
         pthread_create (&threadId, NULL, RequestDeleteDeathResourceTask, (void*)qos);
     }
-
-    OIC_LOG_V(INFO, TAG, "\n\nExit  %s", __func__);
+    else
+    {
+        OIC_LOG(INFO, TAG, "DELETE Request sent successfully; Waiting for Callback");
+    }
     return result;
 }
 
-int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions, bool getWithQuery)
+int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions,
+                   bool getWithQuery)
 {
 
     OCHeaderOption options[MAX_HEADER_OPTIONS];
@@ -703,17 +866,25 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
 
     if (withVendorSpecificHeaderOptions)
     {
-        uint8_t option0[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        uint8_t option1[] = { 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
-        memset(options, 0, sizeof(OCHeaderOption) * MAX_HEADER_OPTIONS);
-        options[0].protocolID = OC_COAP_ID;
-        options[0].optionID = 2048;
-        memcpy(options[0].optionData, option0, sizeof(option0));
-        options[0].optionLength = 10;
-        options[1].protocolID = OC_COAP_ID;
-        options[1].optionID = 3000;
-        memcpy(options[1].optionData, option1, sizeof(option1));
-        options[1].optionLength = 10;
+        memset(options, 0, sizeof(OCHeaderOption)* MAX_HEADER_OPTIONS);
+        size_t numOptions = 0;
+        uint8_t option0[] = { 16, 39 };
+        uint16_t optionID = COAP_OPTION_ACCEPT;
+        size_t optionDataSize = sizeof(option0);
+        OCSetHeaderOption(options,
+                          &numOptions,
+                          optionID,
+                          option0,
+                          optionDataSize);
+
+        uint8_t option1[] = { 0, 8 };
+        optionID = COAP_OPTION_ACCEPT_VERSION;
+        optionDataSize = sizeof(option1);
+        OCSetHeaderOption(options,
+                          &numOptions,
+                          optionID,
+                          option1,
+                          optionDataSize);
     }
     if (withVendorSpecificHeaderOptions)
     {
@@ -733,7 +904,7 @@ int InitPlatformDiscovery(OCQualityOfService qos)
 
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
     snprintf(szQueryUri, sizeof (szQueryUri) - 1, PLATFORM_DISCOVERY_QUERY, discoveryAddr);
 
@@ -741,9 +912,9 @@ int InitPlatformDiscovery(OCQualityOfService qos)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
-                       (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                       &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+                      (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                      &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack device error");
@@ -758,7 +929,7 @@ int InitDeviceDiscovery(OCQualityOfService qos)
 
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[100] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
     snprintf(szQueryUri, sizeof (szQueryUri) - 1, DEVICE_DISCOVERY_QUERY, discoveryAddr);
 
@@ -766,9 +937,9 @@ int InitDeviceDiscovery(OCQualityOfService qos)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
-                       (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                       &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+                      (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                      &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack device error");
@@ -777,11 +948,11 @@ int InitDeviceDiscovery(OCQualityOfService qos)
     return ret;
 }
 
-int InitDiscovery(OCQualityOfService qos)
+int InitDiscovery(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions)
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[100] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
     snprintf(szQueryUri, sizeof (szQueryUri) - 1, RESOURCE_DISCOVERY_QUERY, discoveryAddr);
 
@@ -789,9 +960,26 @@ int InitDiscovery(OCQualityOfService qos)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
-                       (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                       &cbData, NULL, 0);
+    if (withVendorSpecificHeaderOptions)
+    {
+        OCHeaderOption options[MAX_HEADER_OPTIONS];
+        memset(options, 0, sizeof(OCHeaderOption) * MAX_HEADER_OPTIONS);
+        size_t numOptions = 0;
+
+        uint8_t format = COAP_MEDIATYPE_APPLICATION_CBOR;
+        uint16_t optionID = CA_OPTION_ACCEPT;
+        OCSetHeaderOption(options, &numOptions, optionID, &format, sizeof(format));
+
+        ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+                              (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                              &cbData, options, 2);
+    }
+    else
+    {
+        ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+                           (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                           &cbData, NULL, 0);
+    }
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -799,11 +987,188 @@ int InitDiscovery(OCQualityOfService qos)
     return ret;
 }
 
+int InitGetRequestWithCoap(OCDiscoveryPayload* dis, bool isUdp)
+{
+    if (!dis)
+    {
+        OIC_LOG(INFO, TAG, "Given payload is NULL!!!");
+        return -1;
+    }
+
+    // copy query
+    std::ostringstream query;
+    query << coapServerResource;
+
+    // server addr
+    OCDevAddr dev;
+    memset(&dev, 0, sizeof(dev));
+    dev.adapter = OC_DEFAULT_ADAPTER;
+
+    // find endpoint with ipv4, UDP or TCP
+    OCResourcePayload* res = dis->resources;
+    while (res)
+    {
+        OCEndpointPayload* eps = res->eps;
+        while (eps)
+        {
+            if (strcmp(eps->tps, (isUdp ? COAP_UDP : COAP_TCP)) == 0 &&
+                strlen(eps->addr) < MAX_LENGTH_IPv4_ADDR)
+            {
+                OIC_LOG_V(INFO, TAG, "%s found!!!", (isUdp ? COAP_UDP : COAP_TCP));
+                dev.adapter = (isUdp ? OC_ADAPTER_IP : OC_ADAPTER_TCP);
+                dev.flags = OC_IP_USE_V4;
+                dev.port = eps->port;
+                memcpy(dev.addr, eps->addr, sizeof(dev.addr));
+            }
+            eps = eps->next;
+        }
+        res = res->next;
+    }
+
+    if (dev.adapter == (isUdp ? OC_ADAPTER_IP : OC_ADAPTER_TCP) && dev.flags == OC_IP_USE_V4)
+    {
+        OIC_LOG_V(INFO, TAG, "dev addr is %s", dev.addr);
+        OIC_LOG_V(INFO, TAG, "dev port is %d", dev.port);
+        OIC_LOG_V(INFO, TAG, "dev flags is %d", dev.flags);
+        OIC_LOG_V(INFO, TAG, "dev adapter is %d", dev.adapter);
+
+        // send ocdoresource
+        return (InvokeOCDoResource(query, &dev, OC_REST_GET,
+                OC_LOW_QOS, getReqCB, NULL, 0));
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "Endpoints infomation not found on given payload!!!");
+        return -1;
+    }
+}
+
+void showEndpointsInfo(OCResourcePayload* res)
+{
+    if (!res)
+    {
+        OIC_LOG(INFO, TAG, "No endpoints information in given payload");
+        return;
+    }
+
+    if (!res->eps)
+    {
+        OIC_LOG(INFO, TAG, "No endpoints information in given payload");
+        return;
+    }
+
+    OCEndpointPayload* eps = res->eps;
+
+    while (eps)
+    {
+        if (eps->family == OC_IP_USE_V6)
+        {
+            OIC_LOG_V(INFO, TAG, "Resource [%s] has endpoint [%s://[%s]:%d]",
+                      res->uri, eps->tps, eps->addr, eps->port);
+        }
+        else if (eps->family == OC_IP_USE_V4)
+        {
+            OIC_LOG_V(INFO, TAG, "Resource [%s] has endpoint [%s://%s:%d]",
+                      res->uri, eps->tps, eps->addr, eps->port);
+        }
+        else
+        {
+            OIC_LOG_V(INFO, TAG, "Resource [%s] has endpoint [%s://%s]",
+                      res->uri, eps->tps, eps->addr);
+        }
+
+        eps = eps->next;
+    }
+}
+
+OCStackResult SetDeviceInfo()
+{
+    OCResourceHandle resourceHandle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    if (resourceHandle == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Device Resource does not exist.");
+        goto exit;
+    }
+
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, gDeviceName));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, gDataModelVersions));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, gProtocolIndependentID));
+
+    if (1 == OCFSpecVersion)
+    {
+        VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, gSpecVersion));
+    }
+
+    OIC_LOG(INFO, TAG, "Device information initialized successfully.");
+    return OC_STACK_OK;
+
+exit:
+    return OC_STACK_ERROR;
+}
+
+OCStackResult SetPlatformInfo()
+{
+    OCResourceHandle resourceHandle = OCGetResourceHandleAtUri(OC_RSRVD_PLATFORM_URI);
+    if (resourceHandle == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Platform Resource does not exist.");
+        goto exit;
+    }
+
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_ID, gPlatformID));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_NAME, gManufacturerName));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_URL, gManufacturerUrl));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MODEL_NUM, gModelNumber));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_DATE, gDateOfManufacture));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_VERSION, gPlatformVersion));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_OS_VERSION, gOperatingSystemVersion));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_HARDWARE_VERSION, gHardwareVersion));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_FIRMWARE_VERSION, gHardwareVersion));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SUPPORT_URL, gSupportUrl));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SYSTEM_TIME, gSystemTime));
+
+    OIC_LOG(INFO, TAG, "Platform information initialized successfully.");
+    return OC_STACK_OK;
+
+exit:
+    return OC_STACK_ERROR;
+}
+
+static FILE* server_fopen(const char* path, const char* mode)
+{
+    return fopen(path, mode);
+}
+
+#ifdef SECURED
+void OC_CALL DisplayPinCB(char *pin, size_t pinSize, void *context)
+{
+    OC_UNUSED(context);
+
+    if ((nullptr == pin) || (0 == pinSize))
+    {
+        OIC_LOG(INFO, TAG, "Invalid PIN");
+        return;
+    }
+
+    OIC_LOG(INFO, TAG, "============================");
+    OIC_LOG_V(INFO, TAG, "    PIN CODE : %s", pin);
+    OIC_LOG(INFO, TAG, "============================");
+}
+
+void OC_CALL ClosePinDisplayCB(void)
+{
+    OIC_LOG(INFO, TAG, "============================");
+    OIC_LOG(INFO, TAG, "    PIN DISPLAY CLOSED.");
+    OIC_LOG(INFO, TAG, "============================");
+}
+#endif
+
 int main(int argc, char* argv[])
 {
     int opt;
+    OCPersistentStorage ps{ server_fopen, fread, fwrite, fclose, unlink };
 
-    while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
+    while ((opt = getopt(argc, argv, "u:t:c:i:s:")) != -1)
     {
         switch(opt)
         {
@@ -816,23 +1181,66 @@ int main(int argc, char* argv[])
             case 'c':
                 Connectivity = atoi(optarg);
                 break;
+            case 'i':
+                Introspection = atoi(optarg);
+                break;
+            case 's':
+                OCFSpecVersion = atoi(optarg);
+                break;
             default:
                 PrintUsage();
                 return -1;
         }
     }
 
-    if ((UnicastDiscovery != 0 && UnicastDiscovery != 1) ||
-            (TestCase < TEST_DISCOVER_REQ || TestCase >= MAX_TESTS) ||
-            (Connectivity < CT_ADAPTER_DEFAULT || Connectivity >= MAX_CT))
+    if (((UnicastDiscovery != 0) && (UnicastDiscovery != 1)) ||
+            ((TestCase < TEST_DISCOVER_REQ) || (TestCase >= MAX_TESTS)) ||
+            ((Connectivity < CT_ADAPTER_DEFAULT) || (Connectivity >= MAX_CT)) ||
+            ((OCFSpecVersion != 0) && (OCFSpecVersion != 1)))
     {
         PrintUsage();
         return -1;
     }
 
-    if (OCInit1(OC_CLIENT, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
+    if (OC_STACK_OK != OCRegisterPersistentStorageHandler(&ps))
+    {
+        OIC_LOG(ERROR, TAG, "OCRegisterPersistentStorageHandler error");
+        return 0;
+    }
+
+    if (OCInit1(OC_CLIENT_SERVER, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack init error");
+        return 0;
+    }
+
+#ifdef SECURED
+    // Set callbacks for handling pin display  
+    if (OC_STACK_OK != SetDisplayPinWithContextCB(DisplayPinCB, NULL))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to set display pin callback");
+        return 0;
+    }
+
+    SetClosePinDisplayCB(ClosePinDisplayCB);
+    
+    // Specify the type and length of the pin that will be generated upon request
+    if (OC_STACK_OK != SetRandomPinPolicy(8, NUM_PIN))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to set PIN policy");
+        return 0;
+    }
+#endif
+
+    if (OC_STACK_OK != SetDeviceInfo())
+    {
+        OIC_LOG(ERROR, TAG, "SetDeviceInfo failed");
+        return 0;
+    }
+
+    if (OC_STACK_OK != SetPlatformInfo())
+    {
+        OIC_LOG(ERROR, TAG, "SetPlatformInfo failed");
         return 0;
     }
 
@@ -869,7 +1277,7 @@ int main(int argc, char* argv[])
         OIC_LOG(INFO, TAG, "IPv4: 192.168.0.15:45454\n");
         OIC_LOG(INFO, TAG, "IPv6: [fe80::20c:29ff:fe1b:9c5]:45454\n");
 
-        if (fgets(discoveryAddr, sizeof (discoveryAddr), stdin))
+        if (fgets(discoveryAddr, sizeof(discoveryAddr), stdin))
         {
             //Strip newline char from ipv4addr
             StripNewLineChar(discoveryAddr);
@@ -891,7 +1299,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        InitDiscovery(OC_LOW_QOS);
+        InitDiscovery(OC_LOW_QOS, 0);
     }
 
     // Break from loop with Ctrl+C

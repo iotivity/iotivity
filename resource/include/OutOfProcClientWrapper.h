@@ -32,11 +32,44 @@ namespace OC
                                PlatformConfig /*cfg*/)
         {}
 
+        virtual OCStackResult stop()
+        {
+            return OC_STACK_NOTIMPL;
+        }
+
+        virtual OCStackResult start()
+        {
+            return OC_STACK_NOTIMPL;
+        }
+
         virtual OCStackResult ListenForResource(const std::string& /*servUrl*/,
                                                 const std::string& /*rsrcType*/,
                                                 OCConnectivityType /*connType*/,
                                                 FindCallback& /*callback*/,
                                                 QualityOfService /*QoS*/)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult ListenForResourceList(const std::string& /*servUrl*/,
+                                                const std::string& /*rsrcType*/,
+                                                OCConnectivityType /*connType*/,
+                                                FindResListCallback& /*callback*/,
+                                                QualityOfService /*QoS*/)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult ListenForResourceListWithError(const std::string& /*servUrl*/,
+                                                const std::string&  /*rsrcType*/,
+                                                OCConnectivityType /*connType*/,
+                                                FindResListCallback& /*callback*/,
+                                                FindErrorCallback&  /*errorCallback*/,
+                                                QualityOfService /*QoS*/)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult ListenErrorForResource(const std::string& /*servUrl*/,
+                                                     const std::string& /*rsrcType*/,
+                                                     OCConnectivityType /*connType*/,
+                                                     FindCallback& /*callback*/,
+                                                     FindErrorCallback& /*errorCallback*/,
+                                                     QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult ListenForDevice(const std::string& /*serviceUrl*/,
@@ -57,6 +90,7 @@ namespace OC
             const std::string& /*uri*/,
             const QueryParamsMap& /*queryParams*/,
             const HeaderOptions& /*headerOptions*/,
+            OCConnectivityType /*connectivityType*/,
             GetCallback& /*callback*/, QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 
@@ -76,6 +110,7 @@ namespace OC
             const OCRepresentation& /*attributes*/,
             const QueryParamsMap& /*queryParams*/,
             const HeaderOptions& /*headerOptions*/,
+            OCConnectivityType /*connectivityType*/,
             PostCallback& /*callback*/, QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 
@@ -83,6 +118,7 @@ namespace OC
             const OCDevAddr& /*devAddr*/,
             const std::string& /*uri*/,
             const HeaderOptions& /*headerOptions*/,
+            OCConnectivityType /*connectivityType*/,
             DeleteCallback& /*callback*/, QualityOfService /*QoS*/)
             {return OC_STACK_NOTIMPL;}
 
@@ -112,9 +148,49 @@ namespace OC
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle /*handle*/)
             {return OC_STACK_NOTIMPL;}
+#ifdef WITH_CLOUD
+        virtual OCStackResult SubscribeDevicePresence(
+            OCDoHandle* /*handle*/,
+            const std::string& /*host*/,
+            const std::vector<std::string>& /*di*/,
+            OCConnectivityType /*connectivityType*/,
+            ObserveCallback& /*callback*/)
+            {return OC_STACK_NOTIMPL;}
+#endif
 
         virtual OCStackResult GetDefaultQos(QualityOfService& /*QoS*/)
             {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult FindDirectPairingDevices(unsigned short /*waittime*/,
+                       GetDirectPairedCallback& /*callback*/)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult GetDirectPairedDevices(GetDirectPairedCallback& /*callback*/)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult DoDirectPairing(std::shared_ptr<OCDirectPairing> /*peer*/,
+                const OCPrm_t& /*pmSel*/,
+                const std::string& /*pinNumber*/, DirectPairingCallback& /*resultCallback*/)
+            {return OC_STACK_NOTIMPL;}
+
+#ifdef WITH_MQ
+        virtual OCStackResult ListenForMQTopic(const OCDevAddr& /*devAddr*/,
+                                               const std::string& /*resourceUri*/,
+                                               const QueryParamsMap& /*queryParams*/,
+                                               const HeaderOptions& /*headerOptions*/,
+                                               MQTopicCallback& /*callback*/,
+                                               QualityOfService /*QoS*/)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult PutMQTopicRepresentation(const OCDevAddr& /*devAddr*/,
+                                                       const std::string& /*uri*/,
+                                                       const OCRepresentation& /*rep*/,
+                                                       const QueryParamsMap& /*queryParams*/,
+                                                       const HeaderOptions& /*headerOptions*/,
+                                                       MQTopicCallback& /*callback*/,
+                                                       QualityOfService /*QoS*/)
+            {return OC_STACK_NOTIMPL;}
+#endif
     };
 }
 

@@ -22,8 +22,10 @@
 #define IOTVT_SRM_CREDR_H
 
 #include "cainterface.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "octypes.h"
+#include "rolesresource.h"
+#include <cbor.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,45 +34,68 @@ extern "C" {
 /**
  * Initialize credential resource by loading data from persistent storage.
  *
- * @retval
- *     OC_STACK_OK    - no errors
- *     OC_STACK_ERROR - stack process error
+ * @return ::OC_STACK_OK, if initialization is successful, else ::OC_STACK_ERROR if
+ * initialization fails.
  */
 OCStackResult InitCredResource();
 
 /**
  * Perform cleanup for credential resources.
  *
- * @retval
- *     OC_STACK_OK              - no errors
- *     OC_STACK_ERROR           - stack process error
- *     OC_STACK_NO_RESOURCE     - resource not found
- *     OC_STACK_INVALID_PARAM   - invalid param
+ * @return ::OC_STACK_OK, if no errors. ::OC_STACK_ERROR, if stack process error.
+ * ::OC_STACK_NO_RESOURCE, if resource not found.
+ * ::OC_STACK_INVALID_PARAM, if invalid param.
  */
 OCStackResult DeInitCredResource();
 
 /**
- * This method is used by tinydtls/SRM to retrieve credential for given Subject.
+ * This method is used by tinydtls/SRM to retrieve credential for given subject.
  *
- * @param subject - subject for which credential is required.
+ * @param subjectId for which credential is required.
  *
- * @retval
- *     reference to OicSecCred_t - if credential is found
- *     NULL                      - if credential not found
+ * @return reference to @ref OicSecCred_t, if credential is found, else NULL, if credential
+ * not found.
  */
-const OicSecCred_t* GetCredResourceData(const OicUuid_t* subjectId);
+OicSecCred_t* GetCredResourceData(const OicUuid_t* subjectId);
 
 /**
- * This function converts credential data into JSON format.
- * Caller needs to invoke 'free' when done using
- * returned string.
- * @param cred  pointer to instance of OicSecCred_t structure.
+ * This method is used by SRM to retrieve credential entry for given credId.
  *
- * @retval
- *      pointer to JSON credential representation - if credential for subjectId found
- *      NULL                                      - if credential for subjectId not found
+ * @note Caller needs to release this memory by calling DeleteCredList().
+ *
+ * @param credId for which credential is required.
+ *
+ * @return reference to @ref OicSecCred_t, if credential is found, else NULL, if credential
+ * not found.
  */
-char* BinToCredJSON(const OicSecCred_t* cred);
+OicSecCred_t* GetCredEntryByCredId(const uint16_t credId);
+
+/**
+ * This function converts credential data into CBOR format.
+ * Caller needs to invoke 'free' when done using returned string.
+ *
+ * @param cred is the pointer to instance of OicSecCred_t structure.
+ * @param cborPayload is the CBOR converted value.
+ * @param cborSize is the size of the CBOR.
+ * @param secureFlag shows fill or not private key.
+ *
+ * @return ::OC_STACK_OK if conversion is successful, else ::OC_STACK_ERROR if unsuccessful.
+ */
+OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
+                                size_t *cborSize, int secureFlag);
+
+#ifdef MULTIPLE_OWNER
+/**
+ * Function to check the credential access of SubOwner
+ *
+ * @param[in] uuid SubOwner's UUID
+ * @param[in] cborPayload CBOR payload of credential
+ * @param[in] size Byte length of cborPayload
+ *
+ * @return ::true for valid access, otherwise invalid access
+ */
+bool IsValidCredentialAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPayload, size_t size);
+#endif //MULTIPLE_OWNER
 
 /**
  * This function generates the bin credential data.
@@ -79,56 +104,57 @@ char* BinToCredJSON(const OicSecCred_t* cred);
  * @param credType credential type.
  * @param publicData public data such as public key.
  * @param privateData private data such as private key.
- * @param ownersLen length of owners array
- * @param owners array of owners.
+ * @param rownerID Resource owner's UUID.
+ * @param eownerID Entry owner's UUID.
  *
- * @retval
- *      pointer to instance of OicSecCred_t  - success
- *      NULL                                 - error
+ * @return pointer to instance of @ref OicSecCred_t if successful. else NULL in case of error.
+
  */
 OicSecCred_t * GenerateCredential(const OicUuid_t* subject, OicSecCredType_t credType,
-                     const char * publicData, const char * privateData, size_t ownersLen,
-                     const OicUuid_t * owners);
+                     const OicSecKey_t * publicData, const OicSecKey_t * privateData,
+                     const OicUuid_t * rownerID, const OicUuid_t * eownerID);
 
 /**
  * This function adds the new cred to the credential list.
  *
- * @param cred pointer to new credential.
+ * @param cred is the pointer to new credential.
  *
- * @retval
- *      OC_STACK_OK     - cred not NULL and persistent storage gets updated
- *      OC_STACK_ERROR  - cred is NULL or fails to update persistent storage
+ * @return ::OC_STACK_OK, cred not NULL and persistent storage gets updated.
+ * ::OC_STACK_ERROR, cred is NULL or fails to update persistent storage.
  */
 OCStackResult AddCredential(OicSecCred_t * cred);
 
 /**
- * Function to remove the credential from SVR DB.
+ * Function to remove credentials from the SVR DB for the given subject UUID.
+ * If multiple credentials exist for the UUID, they will all be removed.
  *
- * @param credId Credential ID to be deleted.
+ * @param subject is the Credential Subject to be deleted.
  *
- * @return OC_STACK_OK for success and errorcode otherwise.
+ * @return ::OC_STACK_RESOURCE_DELETED if credentials were removed, or
+ * if there are no credentials with the given UUID.  An error is returned if
+ * removing credentials failed.
  */
-OCStackResult RemoveCredential(const OicUuid_t* credId);
+OCStackResult RemoveCredential(const OicUuid_t *subject);
 
 /**
- * Remove all credential data on credential resource and persistent storage
+ * Function to remove the credential from SVR DB.
  *
- * @retval
- *     OC_STACK_OK              - no errors
- *     OC_STACK_ERROR           - stack process error
+ * @param credId is the Credential ID to be deleted.
+ *
+ * @return ::OC_STACK_OK for success, or errorcode otherwise.
  */
-OCStackResult RemoveAllCredentials(void);
+OCStackResult RemoveCredentialByCredId(uint16_t credId);
 
-#if defined(__WITH_DTLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**
  * This internal callback is used by lower stack (i.e. CA layer) to
  * retrieve PSK credentials from RI security layer.
  *
- * @param[in]  type type of PSK data required by CA layer during DTLS handshake.
- * @param[in]  desc Additional request information.
- * @param[in]  desc_len The actual length of desc.
- * @param[out] result  Must be filled with the requested information.
- * @param[in]  result_length  Maximum size of @p result.
+ * @param type of PSK data required by CA layer during DTLS handshake.
+ * @param desc Additional request information.
+ * @param desc_len is the actual length of desc.
+ * @param result  is must be filled with the requested information.
+ * @param result_length is the maximum size of @p result.
  *
  * @return The number of bytes written to @p result or a value
  *         less than zero on error.
@@ -138,48 +164,116 @@ int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
               unsigned char *result, size_t result_length);
 
 /**
- * Add temporal PSK to PIN based OxM
+ * Add temporal PSK to PIN based OxM.
  *
- * @param[in] tmpSubject UUID of target device
- * @param[in] credType Type of credential to be added
- * @param[in] pin numeric characters
- * @param[in] pinSize length of 'pin'
- * @param[in] ownersLen Number of owners
- * @param[in] owners Array of owners
- * @param[out] tmpCredSubject Generated credential's subject.
+ * @param tmpSubject is the UUID of target device
+ * @param credType is the type of credential to be added
+ * @param pin is the numeric characters
+ * @param pinSize is the length of 'pin'
+ * @param rownerID Resource owner's UUID
+ * @param tmpCredSubject is the generated credential's subject.
  *
- * @return OC_STACK_OK for success and errorcode otherwise.
+ * @return ::OC_STACK_OK for success or else errorcode.
  */
 OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t credType,
                             const char * pin, size_t pinSize,
-                            size_t ownersLen, const OicUuid_t * owners, OicUuid_t* tmpCredSubject);
+                            const OicUuid_t * rownerID,
+                            OicUuid_t* tmpCredSubject);
 
-#endif /* __WITH_DTLS__ */
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
-#ifdef __WITH_X509__
 /**
- * This function is used toretrieve certificate credentials from RI security layer.
+ * Function to getting credential list
  *
- * @param credInfo
- *     binary structure containing certificate credentials
- *
- * @retval 0  on scuccess
+ * @return instance of @ref OicSecCred_t
  */
-int GetDtlsX509Credentials(CADtlsX509Creds_t *credInfo);
-#endif /*__WITH_X509__*/
+const OicSecCred_t* GetCredList();
 
 /**
- * Function to deallocate allocated memory to OicSecCred_t
+ * Function to deallocate allocated memory to OicSecCred_t.
  *
- * @param cred pointer to cred type
+ * @param cred pointer to cred type.
  *
  */
 void DeleteCredList(OicSecCred_t* cred);
+
+/**
+ * Internal function to update resource owner
+ *
+ * @param newROwner new owner
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SetCredRownerId(const OicUuid_t* newROwner);
+
+/**
+ * Gets the OicUuid_t value for the rownerid of the cred resource.
+ *
+ * @param rowneruuid a pointer to be assigned to the rowneruuid property
+ * @return ::OC_STACK_OK if rowneruuid is assigned correctly, else ::OC_STACK_ERROR.
+ */
+OCStackResult GetCredRownerId(OicUuid_t *rowneruuid);
+
+#if defined(__WITH_TLS__) || defined(__WITH_DTLS__)
+/**
+ * Used by role certificate validator to get CA certificates as PEM
+ *
+ * @param[out] crt certificates to be filled.
+ * @param[in] usage credential usage string.
+ */
+OCStackResult GetPemCaCert(ByteArray_t * crt, const char * usage);
+
+/**
+ * Get a list of all role certificates. Used when asserting roles.
+ *
+ * @param[out] roleCerts list of role certificates
+ * @return When ::OC_STACK_OK is returned, a list of certificates (roleCerts)
+ *         that must be freed with FreeRoleCertChainList. roleCerts can still
+ *         be NULL in this case, if no role certs are installed. On error, an
+ *         error value is returned and roleCerts is NULL.
+ */
+OCStackResult GetAllRoleCerts(RoleCertChain_t** roleCerts);
+
+/**
+ * Used by mbedTLS to retrieve own certificate chain
+ *
+ * @param[out] crt certificate chain to be filled.
+ * @param[in] usage credential usage string.
+ */
+void GetPemOwnCert(ByteArray_t * crt, const char * usage);
+/**
+ * Used by mbedTLS to retrieve owm private key
+ *
+ * @param[out] key key to be filled.
+ * @param[in] usage credential usage string.
+ */
+void GetDerKey(ByteArray_t * key, const char * usage);
+/**
+ * Used by CA to retrieve credential types
+ *
+ * @param[out] list list of suites to be filled.
+ * @param[in] usage credential usage string.
+ * @param[in] device uuid.
+ */
+void InitCipherSuiteListInternal(bool *list, const char * usage, const char* deviceId);
+#endif // __WITH_TLS__
+
+// Helpers shared by cred and roles resources
+CborError SerializeEncodingToCbor(CborEncoder *rootMap, const char *tag, const OicSecKey_t *value);
+CborError SerializeSecOptToCbor(CborEncoder *rootMap, const char *tag, const OicSecOpt_t *value);
+CborError DeserializeEncodingFromCbor(CborValue *rootMap, OicSecKey_t *value);
+CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value);
+bool IsSameSecOpt(const OicSecOpt_t* sk1, const OicSecOpt_t* sk2);
+bool IsSameSecKey(const OicSecKey_t* sk1, const OicSecKey_t* sk2);
+/**
+ * Delete OicSecCred_t
+ *
+ * @param[in] cred the pointer to credential usage.
+ */
+void FreeCred(OicSecCred_t *cred);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif //IOTVT_SRM_CREDR_H
-
-

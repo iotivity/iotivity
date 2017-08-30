@@ -19,12 +19,18 @@ LOCAL_SRC_FILES := $(IOTIVITY_LIB_PATH)/librcs_server.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := ca-interface
+LOCAL_SRC_FILES := $(IOTIVITY_LIB_PATH)/libca-interface.so
+include $(PREBUILT_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
 OIC_SRC_DIR := ../../../../../..
 LOCAL_MODULE := rcs_jni
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/util
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/c_common
+LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/stack/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/extlibs/boost/boost_1_58_0
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/service/resource-encapsulation/include

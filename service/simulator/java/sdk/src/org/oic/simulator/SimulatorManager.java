@@ -28,6 +28,7 @@ import org.oic.simulator.server.SimulatorResource;
 public class SimulatorManager {
 
     static {
+        System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("oc_logger");
         System.loadLibrary("octbstack");
         System.loadLibrary("oc");
@@ -152,6 +153,8 @@ public class SimulatorManager {
     /**
      * API to set the device information.
      *
+     * @deprecated Use setDeviceInfo2 instead.
+     *
      * @param deviceInfo
      *            Device information.
      *
@@ -163,6 +166,24 @@ public class SimulatorManager {
     public static void setDeviceInfo(String deviceInfo)
             throws InvalidArgsException, SimulatorException {
         nativeSetDeviceInfo(deviceInfo);
+    }
+
+    /**
+     * API to set the device information.
+     *
+     * @param deviceInfo
+     *            Device information.
+     * @param protocolIndependentID
+     *            Protocol-independent UUID of the device.
+     *
+     * @throws InvalidArgsException
+     *             Thrown if the input parameter is empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
+     */
+    public static void setDeviceInfo2(String deviceInfo, String protocolIndependentID)
+            throws InvalidArgsException, SimulatorException {
+        nativeSetDeviceInfo2(deviceInfo, protocolIndependentID);
     }
 
     /**
@@ -247,6 +268,8 @@ public class SimulatorManager {
             FindResourceListener listener);
 
     private static native void nativeSetDeviceInfo(String deviceInfo);
+    private static native void nativeSetDeviceInfo2(String deviceInfo,
+            String protocolIndependentID);
 
     private static native void nativeFindDevices(String hostUri,
             DeviceListener listener);

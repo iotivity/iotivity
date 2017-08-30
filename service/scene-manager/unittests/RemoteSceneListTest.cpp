@@ -22,12 +22,13 @@
 #include <condition_variable>
 
 #include "RemoteSceneList.h"
-
 #include "UnitTestHelper.h"
 #include "SceneCommons.h"
 #include "SceneList.h"
 #include "RCSRemoteResourceObject.h"
 #include "OCPlatform.h"
+#include "RCSDiscoveryManager.h"
+#include "RCSAddress.h"
 
 using namespace std;
 using namespace OIC::Service;
@@ -35,16 +36,13 @@ using namespace OC;
 
 constexpr int DEFAULT_WAITTIME = 2000;
 
-class RemoteSceneListTest : public TestWithMock
-{
-protected:
-    void SetUp()
-    {
-        TestWithMock::SetUp();
-        SceneList::getInstance()->getName();
-    }
+SceneList* g_sceneList = SceneList::getInstance();
+RCSRemoteResourceObject::Ptr pListResource = nullptr;
+RemoteSceneList::Ptr pSceneList = nullptr;
 
-    void createListServer()
+void discoverSceneListServer()
+{
+    if(pListResource == nullptr)
     {
         std::vector< std::string > vecRT{ SCENE_LIST_RT };
         std::vector< std::string > vecIF{ OC_RSRVD_INTERFACE_DEFAULT, OC::BATCH_INTERFACE };
@@ -52,6 +50,16 @@ protected:
         pListResource = SceneUtils::createRCSResourceObject(
                             "coap://" + SceneUtils::getNetAddress() + SCENE_LIST_URI,
                             SCENE_CONNECTIVITY, vecRT, vecIF);
+    }
+}
+
+class RemoteSceneListTest : public TestWithMock
+{
+protected:
+    void SetUp()
+    {
+        TestWithMock::SetUp();
+        g_sceneList->getName();
     }
 
     void waitForCallback(int waitingTime = DEFAULT_WAITTIME)
@@ -61,8 +69,6 @@ protected:
     }
 
 public:
-    RCSRemoteResourceObject::Ptr pListResource;
-    RemoteSceneList::Ptr pSceneList;
     std::condition_variable cond;
     std::mutex mutex;
 
@@ -80,22 +86,30 @@ public:
 
 TEST_F(RemoteSceneListTest, createRemoteSceneListInstance)
 {
-    createListServer();
-    RemoteSceneList::createInstance(pListResource, std::bind(
-        &RemoteSceneListTest::onRemoteSceneListCreated, this, placeholders::_1, placeholders::_2));
+    discoverSceneListServer();
+    if(pSceneList == nullptr)
+    {
+        RemoteSceneList::createInstance(pListResource, std::bind(
+            &RemoteSceneListTest::onRemoteSceneListCreated, this,
+            placeholders::_1, placeholders::_2));
 
-    waitForCallback();
+        waitForCallback();
+    }
 
     EXPECT_NE(nullptr, pSceneList);
 }
 
 TEST_F(RemoteSceneListTest, setAndGetRemoteSceneListName)
 {
-    createListServer();
-    RemoteSceneList::createInstance(pListResource, std::bind(
-        &RemoteSceneListTest::onRemoteSceneListCreated, this, placeholders::_1, placeholders::_2));
+    discoverSceneListServer();
+    if(pSceneList == nullptr)
+    {
+        RemoteSceneList::createInstance(pListResource, std::bind(
+            &RemoteSceneListTest::onRemoteSceneListCreated, this,
+            placeholders::_1, placeholders::_2));
 
-    waitForCallback();
+        waitForCallback();
+    }
 
     pSceneList->setName("Test Scene List", std::bind(
         &RemoteSceneListTest::onSetName, this, placeholders::_1));

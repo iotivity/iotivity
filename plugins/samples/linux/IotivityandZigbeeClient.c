@@ -25,6 +25,7 @@
 // except for resource-specific IoTivity APIs (ie. OCCreateResource(),
 // OCDeleteResource(), EntityHandler()..etc.)
 
+#include "iotivity_config.h"
 #include "IotivityandZigbeeClient.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -199,6 +200,7 @@ OCPayload* getChangeBulbTempLevelPayload(uint32_t level)
     errno = 0;
     size_t sizeValue = sizeof(value);
     int strRet = snprintf(value, sizeValue, "%d", level);
+
     if (strRet < 0 || strRet >= (int)sizeValue)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);

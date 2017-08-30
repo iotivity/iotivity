@@ -95,7 +95,7 @@ public class ResourceClientActivity extends Activity
             Log.i(LOG_TAG, "onStateChanged");
 
             mHandler.obtainMessage(MSG_ID_PRINT_LOG,
-                    "Current Resource State : " + resourceState);
+                   "Current Resource State : " + resourceState).sendToTarget();
         }
     };
 
@@ -112,7 +112,7 @@ public class ResourceClientActivity extends Activity
 
     private OnCacheUpdatedListener mOnCacheUpdatedListener = new OnCacheUpdatedListener() {
         @Override
-        public void onCacheUpdated(RcsResourceAttributes attrs) {
+        public void onCacheUpdated(RcsResourceAttributes attrs, int eCode) {
             Log.i(LOG_TAG, "onCacheUpdated");
 
             mHandler.obtainMessage(MSG_ID_ATTRIBUTE_RECEIVED, attrs)
@@ -204,8 +204,12 @@ public class ResourceClientActivity extends Activity
     private Item mGetCachedAttribute = new Item("8. Get Cached Attribute") {
         @Override
         public void execute() throws RcsException {
-            printLog(ATTR_KEY_TEMPERATURE + " : " + mResourceObj
-                    .getCachedAttribute(ATTR_KEY_TEMPERATURE).asInt());
+            RcsValue value = mResourceObj.getCachedAttribute(ATTR_KEY_TEMPERATURE);
+            if (null != value) {
+                printLog(ATTR_KEY_TEMPERATURE + " : " + value.asInt());
+            } else {
+                printLog("Cache data is not available");
+            }
         }
     };
 
@@ -253,9 +257,9 @@ public class ResourceClientActivity extends Activity
 
     private void initMenuList() {
         Item[] items = new Item[] { mStartMonitoring, mStopMonitoring,
-                mGetRemoteAttributes, mSetRemoteAttributes, mStartCaching,
-                mGetCacheState, mGetCachedAttributes, mGetCachedAttribute,
-                mStopCaching };
+            mGetRemoteAttributes, mSetRemoteAttributes, mStartCaching,
+            mGetCacheState, mGetCachedAttributes, mGetCachedAttribute,
+            mStopCaching };
 
         mItemAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, items);

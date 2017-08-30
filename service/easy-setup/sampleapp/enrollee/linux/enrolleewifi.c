@@ -20,37 +20,32 @@
 
 
 #include "easysetup.h"
+#include "easysetup_x.h"
 
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <oic_string.h>
+#include "oic_malloc.h"
 
-#define TAG "TS"
+#define TAG "ENROLLEE_SAMPLE"
 
 void *listeningFunc(void *);
-
-/**
- * @var ssid
- * @brief Target SSID of the Soft Access point to which the device has to connect
- */
-static char ssid[] = "EasySetup123";
-
-/**
- * @var passwd
- * @brief Password of the Soft Access point to which the device has to connect
- */
-static char passwd[] = "EasySetup123";
+pthread_t thread_handle = NULL;
 
 /**
  * Secure Virtual Resource database for Iotivity Server
  * It contains Server's Identity and the PSK credentials
  * of other devices which the server trusts
  */
+#ifdef MULTIPLE_OWNER
+static char CRED_FILE[] = "oic_svr_db_server_MOT.dat";
+#else
 static char CRED_FILE[] = "oic_svr_db_server.dat";
+#endif
 
-OCPersistentStorage ps ;
-
+OCPersistentStorage ps;
 
 /**
  * @var gIsSecured
@@ -58,52 +53,110 @@ OCPersistentStorage ps ;
  */
 static bool gIsSecured = false;
 
+UserProperties g_userProperties;
+
 void PrintMenu()
 {
     printf("============\n");
     printf("S: Enabled Security\n");
-    printf("I: Init easy setup\n");
-    printf("P: start provisioning resources\n");
-    printf("T: terminate\n");
-    printf("Q: quit\n");
+    printf("I: Init & Start EasySetup\n");
+    printf("D: Set DeviceInfo\n");
+    printf("T: Terminate\n");
+    printf("U: set Callback for userdata\n");
+    printf("Q: Quit\n");
     printf("============\n");
 }
 
-void EventCallbackInApp(ESResult esResult, EnrolleeState enrolleeState)
+void ConnectRequestCbInApp(ESConnectRequest *connectRequest)
 {
-    printf("Easy setup event callback\n");
+    printf("ConnectRequestCbInApp IN\n");
 
-    if(esResult == ES_OK)
+    if(connectRequest == NULL)
     {
-        if(enrolleeState == ES_ON_BOARDED_STATE)
-        {
-            printf("Device is successfully OnBoared on Adhoc network\n");
-        }
-        else if (enrolleeState == ES_PROVISIONED_STATE)
-        {
-            printf("Device is provisioned with target network's credentials\n");
-        }
-        else if (enrolleeState == ES_ON_BOARDED_TARGET_NETWORK_STATE)
-        {
-            printf("Device is onboarded/connected with target network\n");
-        }
-        else
-        {
-            printf("Wrong state !! Easy setup is failed at Enrollee state = %d\n",enrolleeState);
-        }
-    }
-    else
-    {
-        printf("Easy stup is failed at Enrollee state = %d\n",enrolleeState);;
+        printf("connectRequest is NULL\n");
+        return ;
     }
 
-    PrintMenu();
+    for(int i = 0 ; i < connectRequest->numRequest ; ++i)
+    {
+        printf("connect : %d\n", connectRequest->connect[i]);
+    }
+
+    printf("ConnectRequestCbInApp OUT\n");
 }
+
+void WiFiConfProvCbInApp(ESWiFiConfData *eventData)
+{
+    printf("WiFiConfProvCbInApp IN\n");
+
+    if(eventData == NULL)
+    {
+        printf("ESWiFiConfData is NULL\n");
+        return ;
+    }
+
+    printf("SSID : %s\n", eventData->ssid);
+    printf("Password : %s\n", eventData->pwd);
+    printf("AuthType : %d\n", eventData->authtype);
+    printf("EncType : %d\n", eventData->enctype);
+
+    if(eventData->userdata != NULL)
+    {
+        printf("userValue : %d\n", ((UserProperties *)(eventData->userdata))->userValue_int);
+    }
+
+    printf("WiFiConfProvCbInApp OUT\n");
+}
+
+void DevConfProvCbInApp(ESDevConfData *eventData)
+{
+    printf("DevConfProvCbInApp IN\n");
+
+    if(eventData == NULL)
+    {
+        printf("ESDevConfData is NULL\n");
+        return ;
+    }
+
+    printf("DevConfProvCbInApp OUT\n");
+}
+
+void CoapCloudConfProvCbInApp(ESCoapCloudConfData *eventData)
+{
+    printf("CoapCloudConfProvCbInApp IN\n");
+
+    if(eventData == NULL)
+    {
+        printf("ESCoapCloudConfData is NULL\n");
+        return ;
+    }
+
+    printf("AuthCode : %s\n", eventData->authCode);
+    printf("AcessToken : %s\n", eventData->accessToken);
+    printf("AcessTokenType : %d\n", eventData->accessTokenType);
+    printf("AuthProvider : %s\n", eventData->authProvider);
+    printf("CI Server : %s\n", eventData->ciServer);
+
+    printf("CoapCloudConfProvCbInApp OUT\n");
+}
+
+ESProvisioningCallbacks gCallbacks = {
+    .ConnectRequestCb = &ConnectRequestCbInApp,
+    .WiFiConfProvCb = &WiFiConfProvCbInApp,
+    .DevConfProvCb = &DevConfProvCbInApp,
+    .CoapCloudConfProvCb = &CoapCloudConfProvCbInApp
+};
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    (void) path;
-    return fopen(CRED_FILE, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 void EnableSecurity()
@@ -119,48 +172,66 @@ void EnableSecurity()
 
 void StartEasySetup()
 {
-    printf("StartEasySetup and onboarding started..\n");
+    printf("StartEasySetup IN\n");
 
-    if(InitEasySetup(CT_ADAPTER_IP, ssid, passwd, gIsSecured, EventCallbackInApp) == ES_ERROR)
-    {
-        printf("StartEasySetup and onboarding Fail!!\n");
-        return;
-    }
-}
-
-void StartOICStackAndStartResources()
-{
-    printf("Starting Enrollee Provisioning\n");
-
-    // Initialize the OC Stack in Server mode
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
         printf("OCStack init error!!\n");
         return;
     }
 
-    if (InitProvisioning() == ES_ERROR)
+    ESResourceMask resourcemMask = ES_WIFICONF_RESOURCE | ES_COAPCLOUDCONF_RESOURCE | ES_DEVCONF_RESOURCE;
+    if(ESInitEnrollee(gIsSecured, resourcemMask, gCallbacks) != ES_OK)
     {
-        printf("Init Provisioning Failed!!\n");
+        printf("OCStack init error!!\n");
         return;
     }
+    printf("ESInitEnrollee Success\n");
 
-    pthread_t thread_handle;
     if (pthread_create(&thread_handle, NULL, listeningFunc, NULL))
     {
         printf("Thread creation failed\n");
     }
 
-    printf("InitProvisioning Success\n");
+    printf("StartEasySetup OUT\n");
+}
+
+void SetDeviceInfo()
+{
+    printf("SetDeviceInfo IN\n");
+
+    ESDeviceProperty deviceProperty = {
+        {{WIFI_11G, WIFI_11N, WIFI_11AC, WiFi_EOF}, WIFI_5G}, {"Test Device"}
+    };
+
+    // Set user properties if needed
+    char userValue_str[] = "user_str";
+    g_userProperties.userValue_int = 0;
+
+    strncpy(g_userProperties.userValue_str, userValue_str, strlen(userValue_str) + 1);
+    SetUserProperties(&g_userProperties);
+
+    if(ESSetDeviceProperty(&deviceProperty) == ES_ERROR)
+    {
+        printf("ESSetDeviceProperty Error\n");
+    }
+
+    printf("SetDeviceInfo OUT\n");
 }
 
 void StopEasySetup()
 {
     printf("StopEasySetup IN\n");
 
-    if (TerminateEasySetup() == ES_ERROR)
+    if (ESTerminateEnrollee() == ES_ERROR)
     {
-        printf("TerminateEasySetup Failed!!\n");
+        printf("ESTerminateEnrollee Failed!!\n");
+        return;
+    }
+
+    if (0 != pthread_cancel(thread_handle))
+    {
+        printf("Thread cancellation failed\n");
         return;
     }
 
@@ -174,20 +245,29 @@ void StopEasySetup()
     printf("StopEasySetup OUT\n");
 }
 
+void SetCallbackForUserdata()
+{
+    ESSetCallbackForUserdata(&ReadUserdataCb, &WriteUserdataCb);
+}
+
 int main()
 {
     printf("#########################\n");
     printf("EasySetup Enrollee SAMPLE\n");
     printf("#########################\n");
     PrintMenu();
-    char option = 'T'; 
+    char option = 0;
 
     while(true)
     {
-        scanf("%c",&option);
+        if(scanf("%c", &option) != 1)
+        {
+            printf("Failed to read input data\n");
+            continue;
+        }
 
-       if(option!= '\n')
-      {
+        if(option!= '\n')
+        {
             switch (option)
             {
                 case 'H': // help
@@ -203,36 +283,49 @@ int main()
                 case 'S': // Enable Security
                 case 's':
                     EnableSecurity();
+                    PrintMenu();
                     break;
 
                 case 'I': // Init EasySetup
                 case 'i':
                     StartEasySetup();
+                    PrintMenu();
                     break;
 
-                case 'P': // start provisioning
-                case 'p':
-                    StartOICStackAndStartResources();
+                case 'D': // Set Device Info
+                case 'd':
+                    SetDeviceInfo();
+                    PrintMenu();
                     break;
-
                 case 'T': // stop easy setup
                 case 't':
                     StopEasySetup();
+                    PrintMenu();
+                    break;
+                case 'U': // set callback
+                case 'u':
+                    SetCallbackForUserdata();
+                    PrintMenu();
                     break;
 
                 default:
                     printf("wrong option\n");
+                    PrintMenu();
                     break;
             }
-            if (option == 'Q' || option == 'q') break;
+            if (option == 'Q' || option == 'q')
+            {
+                break;
+            }
         }
     }
     return 0;
 }
 
-void *listeningFunc(void * a)
+void *listeningFunc(void * data)
 {
-    OCStackResult result;
+    (void)data;
+    OCStackResult result = OC_STACK_ERROR;
 
     while (true)
     {

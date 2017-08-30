@@ -68,7 +68,7 @@ CAResult_t CAEDRStopReceiveThread();
  * @param[in]  id               index of remote address.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id);
+CAResult_t CAEDRNativeReadData(JNIEnv *env, size_t id);
 
 /**
  * Start Listen Task.
@@ -82,14 +82,6 @@ void CANativeStartListenTask(JNIEnv *env);
  * @return server socket object or NULL.
  */
 jobject CAEDRNativeListen(JNIEnv *env);
-
-/**
- * This function will listen the connection from remote device.
- * @param[in]  env              JNI interface pointer.
- * @param[in]  socket           server socket object.
- * @return JNI_TRUE or JNI_FALSE.
- */
-jboolean CAEDRIsConnectedForSocket(JNIEnv *env, jobject socket);
 
 /**
  * This function will accept the connection from remote device.

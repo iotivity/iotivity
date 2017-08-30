@@ -101,7 +101,16 @@ void *OICRealloc(void *ptr, size_t size);
 void *OICCalloc(size_t num, size_t size);
 
 /**
- * Deallocate a block of memory previously allocated by a call to OCMalloc
+ * Deallocate a block of memory previously allocated by a call to OICMalloc.
+ * Furthermore the pointer is set value to NULL.
+ *
+ * @param ptr - Double Pointer to block of memory previously allocated by OICMalloc.
+ *              If ptr is a null pointer, the function does nothing.
+ */
+void OICFreeAndSetToNull(void **ptr);
+
+/**
+ * Deallocate a block of memory previously allocated by a call to OICMalloc.
  *
  * NOTE: This function is intended to be used internally by the TB Stack.
  *       It is not intended to be used by applications.
@@ -110,6 +119,20 @@ void *OICCalloc(size_t num, size_t size);
  *              If ptr is a null pointer, the function does nothing.
  */
 void OICFree(void *ptr);
+
+/**
+ * Securely zero the contents of a memory buffer in a way that won't be
+ * optimized out by the compiler. Do not use memset for this purpose, because
+ * compilers may optimize out such calls. For more information on this danger, see:
+ * https://www.securecoding.cert.org/confluence/display/c/MSC06-C.+Beware+of+compiler+optimizations
+ *
+ * This function should be used on buffers containing secret data, such as
+ * cryptographic keys.
+ *
+ * @param buf - Pointer to a block of memory to be zeroed. If NULL, nothing happens.
+ * @param n   - Size of buf in bytes. If zero, nothing happens.
+ */
+void OICClearMemory(void *buf, size_t n);
 
 #ifdef __cplusplus
 }

@@ -53,21 +53,6 @@ typedef struct OCPresence
 } OCPresence;
 
 /**
- * Data structure to hold Multicast node identity for resource discovery.
- */
-typedef struct OCMulticastNode
-{
-    /** URI of new resource.*/
-    char * uri;
-
-    /** URI of new resource that entity handler might create.*/
-    uint32_t nonce;
-
-    /** Linked list; for multicast nodes.*/
-    struct OCMulticastNode * next;
-} OCMulticastNode;
-
-/**
  * Forward declaration of resource type.
  */
 typedef struct resourcetype_t OCResourceType;
@@ -77,7 +62,6 @@ typedef struct resourcetype_t OCResourceType;
  * Data structure for holding client's callback context, methods and Time to Live,
  * connectivity Types, presence and resource type, request uri etc.
  */
-
 typedef struct ClientCB {
     /** callback method defined in application address space. */
     OCClientResponseHandler callBack;
@@ -88,11 +72,24 @@ typedef struct ClientCB {
     /** callback method to delete context data. */
     OCClientContextDeleter deleteCallback;
 
+    /** Qos for the request */
+    CAMessageType_t type;
+
     /**  when a response is recvd with this token, above callback will be invoked. */
     CAToken_t token;
 
     /** a response is recvd with this token length.*/
     uint8_t tokenLength;
+
+    CAHeaderOption_t *options;
+
+    uint8_t numOptions;
+
+    CAPayload_t payload;
+
+    size_t payloadSize;
+
+    CAPayloadFormat_t payloadFormat;
 
     /** Invocation handle tied to original call to OCDoResource().*/
     OCDoHandle handle;
@@ -112,10 +109,10 @@ typedef struct ClientCB {
 
     /** Struct to hold TTL info for presence.*/
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     OCPresence * presence;
     OCResourceType * filterResourceType;
-    #endif
+#endif
 
     /** The connectivity type on which the request was sent on.*/
     OCConnectivityType conType;
@@ -141,8 +138,15 @@ extern struct ClientCB *cbList;
  *
  * @param[out] clientCB          The resulting node from making this call. Null if out of memory.
  * @param[in] cbData             Address to client callback function.
+ * @param[in] type               Qos type.
  * @param[in] token              Identifier for OTA CoAP comms.
  * @param[in] tokenLength        Length for OTA CoAP comms.
+ * @param[in] options            The address of an array containing the vendor specific header
+ *                               options to be sent with the request.
+ * @param[in] numOptions         Number of header options to be included.
+ * @param[in] payload            Request payload.
+ * @param[in] payloadSize        Size of payload.
+ * @param[in] payloadFormat      Format of payload.
  * @param[in] handle             masked in the public API as an 'invocation handle'
  *                               Used for callback management.
  * @param[in] method             A method via which this client callback is expected to operate
@@ -155,12 +159,15 @@ extern struct ClientCB *cbList;
  *
  * @return OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult
-AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
-             CAToken_t token, uint8_t tokenLength,
-             OCDoHandle *handle, OCMethod method,
-             OCDevAddr *devAddr, char * requestUri,
-             char * resourceTypeName, uint32_t ttl);
+OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
+                          CAMessageType_t type,
+                          CAToken_t token, uint8_t tokenLength,
+                          CAHeaderOption_t *options, uint8_t numOptions,
+                          CAPayload_t payload, size_t payloadSize,
+                          CAPayloadFormat_t payloadFormat,
+                          OCDoHandle *handle, OCMethod method,
+                          OCDevAddr *devAddr, char *requestUri,
+                          char *resourceTypeName, uint32_t ttl);
 
 /** @ingroup ocstack
  *
@@ -185,7 +192,7 @@ void DeleteClientCB(ClientCB *cbNode);
  * @return address of the node if found, otherwise NULL
  */
 ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
-        OCDoHandle handle, const char * requestUri);
+                      OCDoHandle handle, const char * requestUri);
 
 #ifdef WITH_PRESENCE
 /**
@@ -218,30 +225,6 @@ void DeleteClientCBList();
  * @param[in] cbNode    Address to client callback node.
  */
 void FindAndDeleteClientCB(ClientCB * cbNode);
-
-/** @ingroup ocstack
- *
- * This method is used to search a multicast presence node from list.
- *
- * @param[in]  uri   the uri of the request.
- *
- * @return OCMulticastNode
- *              The resulting node from making this call. Null if doesn't exist.
- */
-
-OCMulticastNode* GetMCPresenceNode(const char * uri);
-
-/** @ingroup ocstack
- *
- * This method is used to add a multicast presence node to the list.
- * @param[out] outnode  the resulting node from making this call. Null if out of memory.
- * @param[in] uri       the uri of the server.
- * @param[in] nonce     current nonce for the server
- *
- * @return OC_STACK_OK for Success, otherwise some error value
- */
-
-OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, char* uri, uint32_t nonce);
 
 #endif //OC_CLIENT_CB
 

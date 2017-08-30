@@ -38,7 +38,15 @@ extern "C"
 char *OICStrdup(const char *str);
 
 /**
- * Copies a C string into destination buffer.  Ensures that the destination
+ * Convert source string to lower case characters.
+ *
+ * @param str Original valid string which needs to be converted.
+ *
+ */
+void OICStringToLower(char* str);
+
+/**
+ * Copies a C string into destination buffer. Ensures that the destination
  * is null terminated.
  *
  * @param dest Destination C buffer.

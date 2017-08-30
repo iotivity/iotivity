@@ -66,7 +66,37 @@ CAResult_t CAManagerLEClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context
  * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CAManagerLEClientTerminate(JNIEnv *env);
+
+/**
+ * set BLE scan interval time and working count.
+ * @param[in]  intervalTime         interval time(Seconds).
+ * @param[in]  workingCount         working count for selected interval time.
+ */
+void CAManagerLESetScanInterval(jint intervalTime, jint workingCount);
+
+/**
+ * stop BLE scan.
+ */
+void CAManagerLEStopScan();
 #endif
+
+/**
+ * start BLE advertising.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAManagerLEStartAdvertising();
+
+/**
+ * stop BLE advertising.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAManagerLEStopAdvertising();
+
+/**
+ * set CAUtilConfig_t configure.
+ * @param[in]  config       ::CAUtilConfig_t value
+ */
+void CAManagerSetConfigure(CAUtilConfig_t config);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -6,14 +6,16 @@ android_home = env.get('ANDROID_HOME')
 
 ANDROID_TARGET_ARCH = env.get('TARGET_ARCH')
 if env.get('RELEASE'):
-	ANDROID_RELEASE="release"
+    ANDROID_RELEASE = "release"
 else:
-	ANDROID_RELEASE="debug"
+    ANDROID_RELEASE = "debug"
 
 os.environ['ANDROID_HOME'] = env.get('ANDROID_HOME')
 os.environ['ANDROID_NDK_HOME'] = env.get('ANDROID_NDK')
 
-if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exists(android_home + '/build-tools/20.0.0'):
+if not os.path.exists(android_home +
+                      '/platforms/android-21') or not os.path.exists(
+                          android_home + '/build-tools/20.0.0'):
     print '''
 ***************************************** Info ********************************
 *   Either 'Android API 21' is not installed or 'Android SDK Build Tools      *
@@ -41,15 +43,26 @@ if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exi
 ...Opening Android SDK Manager now. Once you are finished, the build will continue.
 '''
     os.system(android_home + '/tools/android')
-    
+
+
 def ensure_libs(target, source, env):
     return target, [source, env.get('BUILD_DIR') + 'librcs_container.so']
 
+
 jdk_env = Environment(ENV=os.environ)
-jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') +
-    ' build -bservice/resource-container/android/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE),
-    emitter = ensure_libs)
+jdk_env['BUILDERS']['Gradle'] = Builder(
+    action=env.get('ANDROID_GRADLE') +
+    ' build -bservice/resource-container/android/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace'
+    % (ANDROID_TARGET_ARCH, ANDROID_RELEASE),
+    emitter=ensure_libs)
 jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
 
-jdk_env.Gradle(target="resource-container/objs",
-    source="resource-container/src/main/java/org/iotivity/service/resourcecontainer/RcsBundleInfo.java")
+cmdResourceContainerApp = jdk_env.Gradle(
+    target="resource-container/objs",
+    source=
+    "resource-container/src/main/java/org/iotivity/service/resourcecontainer/RcsBundleInfo.java"
+)
+jdk_env.Clean(cmdResourceContainerApp,
+              '#/service/resource-container/android/build')
+jdk_env.Clean(cmdResourceContainerApp,
+              '#/service/resource-container/android/resource-container/build')

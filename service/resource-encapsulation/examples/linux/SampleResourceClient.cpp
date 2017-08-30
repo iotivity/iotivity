@@ -87,12 +87,15 @@ int processUserInput(int min = std::numeric_limits<int>::min(),
 {
     assert(min <= max);
 
-    int input;
+    int input = 0;
 
     std::cin >> input;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-    if (!std::cin.fail() && min <= input && input <= max) return input;
+    if (!std::cin.fail() && min <= input && input <= max)
+    {
+        return input;
+    }
 
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -115,7 +118,7 @@ void displayItems(const std::vector<T>& items)
 
     const auto width = (items.size() + 1) / 10 + 1;
 
-    for(size_t i = 0; i < items.size(); ++i)
+    for (size_t i = 0; i < items.size(); ++i)
     {
         displayItem(width, i + 1, items[i]);
     }
@@ -127,7 +130,10 @@ void selectItem(const std::vector<T>& items)
 {
     int selected = processUserInput(1, items.size() + 1) - 1;
 
-    if(selected == static_cast<int>(items.size())) throw CloseApp();
+    if (selected == static_cast<int>(items.size()))
+    {
+        throw CloseApp();
+    }
 
     onSelected(items[selected]);
 }
@@ -176,7 +182,7 @@ void printAttributes(const RCSResourceAttributes& attributes)
        std::cout << "\tattributes is empty" << std::endl;
     }
 
-    for(const auto& attr : attributes)
+    for (const auto& attr : attributes)
     {
         printAttribute(attr.key(), attr.value());
     }
@@ -191,7 +197,7 @@ void print(const std::string& name, const std::vector< std::string >& elements)
     }
 
     std::cout << "\t" << name << " : " << std::endl;
-    for(const auto& item : elements)
+    for (const auto& item : elements)
     {
         std::cout << item << " ";
     }
@@ -200,7 +206,7 @@ void print(const std::string& name, const std::vector< std::string >& elements)
 
 void printUri(const std::string& uri)
 {
-    if(uri.empty())
+    if (uri.empty())
     {
         std::cout << "\turi is empty" << std::endl;
     }
@@ -219,14 +225,14 @@ void printRepresentation(const RCSRepresentation& rep)
 
     const auto& children = rep.getChildren();
 
-    if(children.empty())
+    if (children.empty())
     {
         std::cout << "\tchildren is empty" << std::endl;
     }
     else
     {
         int cnt = 0;
-        for(const auto& child : children)
+        for (const auto& child : children)
         {
             std::cout << "========================================================" << std::endl;
             std::cout << ++cnt << " chlid" << std::endl;
@@ -240,7 +246,7 @@ void onResourceStateChanged(ResourceState resourceState)
 {
     std::cout << "onResourceStateChanged callback" << std::endl;
 
-    switch(resourceState)
+    switch (resourceState)
     {
         case ResourceState::NONE:
             std::cout << "\tState changed to : NOT_MONITORING" << std::endl;
@@ -264,9 +270,9 @@ void onResourceStateChanged(ResourceState resourceState)
     }
 }
 
-void onCacheUpdated(const RCSResourceAttributes& attributes)
+void onCacheUpdated(const RCSResourceAttributes& attributes, int eCode)
 {
-    std::cout << "onCacheUpdated callback" << std::endl;
+    std::cout << "onCacheUpdated callback : " << eCode << std::endl;
 
     printAttributes(attributes);
 }
@@ -388,17 +394,31 @@ void getResourceCacheState()
 
 void getCachedAttributes()
 {
-    printAttributes(g_selectedResource->getCachedAttributes());
+    try
+    {
+        printAttributes(g_selectedResource->getCachedAttributes());
+    }
+    catch (const RCSBadRequestException & e)
+    {
+        std::cout << e.what() << std::endl;
+    }
 }
 
 void getCachedAttribute()
 {
-    printAttribute(g_attrKey, g_selectedResource->getCachedAttribute(g_attrKey));
+    try
+    {
+        printAttribute(g_attrKey, g_selectedResource->getCachedAttribute(g_attrKey));
+    }
+    catch (const RCSBadRequestException & e)
+    {
+        std::cout << e.what() << std::endl;
+    }
 }
 
 void stopCaching()
 {
-    if(!g_selectedResource->isCaching())
+    if (!g_selectedResource->isCaching())
     {
         std::cout << "\tCaching not started..." << std::endl;
         return;
@@ -417,12 +437,16 @@ std::string selectResourceType()
 
     switch (processUserInput(RESOURCE_TEMP, RESOURCE_LIGHT))
     {
-    case RESOURCE_TEMP:
-        g_attrKey = "Temperature";
-        return RESOURCE_TYPE_TEMP;
-    case RESOURCE_LIGHT:
-        g_attrKey = "Brightness";
-        return RESOURCE_TYPE_LIGHT;
+        case RESOURCE_TEMP:
+        {
+            g_attrKey = "Temperature";
+            return RESOURCE_TYPE_TEMP;
+        }
+        case RESOURCE_LIGHT:
+        {
+            g_attrKey = "Brightness";
+            return RESOURCE_TYPE_LIGHT;
+        }
     }
 
     throw std::logic_error("unreachable");
@@ -436,7 +460,10 @@ RCSAddress inputAddress()
 
     std::string address;
 
-    if(std::cin.peek() != '\n') std::cin >> address;
+    if (std::cin.peek() != '\n')
+    {
+        std::cin >> address;
+    }
 
     return address.empty() ? RCSAddress::multicast() : RCSAddress::unicast(address);
 }
@@ -469,7 +496,7 @@ void discoverResource()
     auto discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(address,
             resourceType, onResourceDiscovered);
 
-    while(processUserInput() != 1);
+    while (processUserInput() != 1);
 
     discoveryTask->cancel();
 }
@@ -509,7 +536,10 @@ void runDiscovery()
 
     handleItems(discoveryMenuItems);
 
-    if (g_discoveredResources.empty()) throw std::runtime_error("No resource found!");
+    if (g_discoveredResources.empty())
+    {
+        throw std::runtime_error("No resource found!");
+    }
 
     g_currentRun = runResourceSelection;
 }

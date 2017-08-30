@@ -27,6 +27,10 @@
 #include <map>
 #include <memory>
 #include <iterator>
+#include <functional>
+
+#include "iotivity_config.h"
+#include "iotivity_debug.h"
 
 #include "octypes.h"
 #include "OCHeaderOption.h"
@@ -41,10 +45,14 @@ namespace OC
     class OCResource;
     class OCResourceRequest;
     class OCResourceResponse;
+    class OCDirectPairing;
 } // namespace OC
 
 namespace OC
 {
+#if defined(_MSC_VER)
+    extern std::ostream& oclog();
+#else
     typedef boost::iostreams::stream<OC::oc_log_stream>     log_target_t;
 
     namespace detail
@@ -65,7 +73,7 @@ namespace OC
     {
         return detail::oclog_target();
     };
-
+#endif
 } // namespace OC
 
 namespace OC
@@ -139,6 +147,9 @@ namespace OC
         /** default flags for client. */
         OCConnectivityType         clientConnectivity;
 
+        /** transport type to initialize. */
+        OCTransportAdapter         transportType;
+
         /** not used. */
         std::string                ipAddress;
 
@@ -151,17 +162,47 @@ namespace OC
         /** persistant storage Handler structure (open/read/write/close/unlink). */
         OCPersistentStorage        *ps;
 
+        /**
+         * This flag allows legacy app to opt in the previous behavior of OCPlatform being
+         * cleaned up by the C++ static storage (de)initializer.
+         *
+         * The flag is set to false by default, unless a legacy constructor is used.
+         *
+         * When the flag is set to false (i.e., the new preferred behavior), users of OCPlatform
+         * are responsible for calling start() and stop() explicitly while ensuring that the calls
+         * to them are balanced as the last call to stop() shuts down the underlying stack.
+         */
+        bool                       useLegacyCleanup;
+
         public:
+            PlatformConfig(const ServiceType serviceType_,
+            const ModeType mode_,
+            OCPersistentStorage *ps_)
+                : serviceType(serviceType_),
+                mode(mode_),
+                serverConnectivity(CT_DEFAULT),
+                clientConnectivity(CT_DEFAULT),
+                transportType(OC_DEFAULT_ADAPTER),
+                ipAddress(""),
+                port(0),
+                QoS(QualityOfService::NaQos),
+                ps(ps_),
+                useLegacyCleanup(false)
+        {}
+            /* @deprecated: Use a non deprecated constructor. */
             PlatformConfig()
                 : serviceType(ServiceType::InProc),
                 mode(ModeType::Both),
                 serverConnectivity(CT_DEFAULT),
                 clientConnectivity(CT_DEFAULT),
+                transportType(OC_DEFAULT_ADAPTER),
                 ipAddress("0.0.0.0"),
                 port(0),
                 QoS(QualityOfService::NaQos),
-                ps(nullptr)
+                ps(nullptr),
+                useLegacyCleanup(true)
         {}
+            /* @deprecated: Use a non deprecated constructor. */
             PlatformConfig(const ServiceType serviceType_,
             const ModeType mode_,
             OCConnectivityType serverConnectivity_,
@@ -172,12 +213,14 @@ namespace OC
                 mode(mode_),
                 serverConnectivity(serverConnectivity_),
                 clientConnectivity(clientConnectivity_),
+                transportType(OC_DEFAULT_ADAPTER),
                 ipAddress(""),
                 port(0),
                 QoS(QoS_),
-                ps(ps_)
+                ps(ps_),
+                useLegacyCleanup(true)
         {}
-            // for backward compatibility
+            /* @deprecated: Use a non deprecated constructor. */
             PlatformConfig(const ServiceType serviceType_,
             const ModeType mode_,
             const std::string& ipAddress_,
@@ -188,11 +231,67 @@ namespace OC
                 mode(mode_),
                 serverConnectivity(CT_DEFAULT),
                 clientConnectivity(CT_DEFAULT),
+                transportType(OC_DEFAULT_ADAPTER),
+                ipAddress(ipAddress_),
+                port(port_),
+                QoS(QoS_),
+                ps(ps_),
+                useLegacyCleanup(true)
+        {}
+            /* @deprecated: Use a non deprecated constructor. */
+            PlatformConfig(const ServiceType serviceType_,
+            const ModeType mode_,
+            const std::string& ipAddress_,
+            const uint16_t port_,
+            const OCTransportAdapter transportType_,
+            const QualityOfService QoS_,
+            OCPersistentStorage *ps_ = nullptr)
+                : serviceType(serviceType_),
+                mode(mode_),
+                serverConnectivity(CT_DEFAULT),
+                clientConnectivity(CT_DEFAULT),
+                transportType(transportType_),
                 ipAddress(ipAddress_),
                 port(port_),
                 QoS(QoS_),
                 ps(ps_)
         {}
+            PlatformConfig(const ServiceType serviceType_,
+            const ModeType mode_,
+            OCTransportAdapter transportType_,
+            const QualityOfService QoS_,
+            OCPersistentStorage *ps_ = nullptr)
+                : serviceType(serviceType_),
+                mode(mode_),
+                serverConnectivity(CT_DEFAULT),
+                clientConnectivity(CT_DEFAULT),
+                transportType(transportType_),
+                ipAddress(""),
+                port(0),
+                QoS(QoS_),
+                ps(ps_),
+                useLegacyCleanup(true)
+        {}
+            /* @deprecated: Use a non deprecated constructor. */
+            PlatformConfig(const ServiceType serviceType_,
+            const ModeType mode_,
+            OCConnectivityType serverConnectivity_,
+            OCConnectivityType clientConnectivity_,
+            OCTransportAdapter transportType_,
+            const QualityOfService QoS_,
+            OCPersistentStorage *ps_ = nullptr)
+                : serviceType(serviceType_),
+                mode(mode_),
+                serverConnectivity(serverConnectivity_),
+                clientConnectivity(clientConnectivity_),
+                transportType(transportType_),
+                ipAddress(""),
+                port(0),
+                QoS(QoS_),
+                ps(ps_),
+                useLegacyCleanup(true)
+        {}
+
     };
 
     enum RequestHandlerFlag
@@ -206,15 +305,21 @@ namespace OC
         Observe,
         ObserveAll
     };
-    //
-    // Typedef for header option vector
-    // OCHeaderOption class is in HeaderOption namespace
+
+    // Typedef for list of resource handles.
+    typedef std::vector<OCResourceHandle> ResourceHandles;
+
+    // Typedef for header option vector.
+    // OCHeaderOption class is in HeaderOption namespace.
     typedef std::vector<HeaderOption::OCHeaderOption> HeaderOptions;
 
-    // Typedef for query parameter map
+    // Typedef for query parameter map.
     typedef std::map<std::string, std::string> QueryParamsMap;
 
-    // Typedef for list of observation IDs
+    // Typedef for query parameter map with Vector
+    typedef std::map< std::string, std::vector<std::string> > QueryParamsList;
+
+    // Typedef for list of observation IDs.
     typedef std::vector<OCObservationId> ObservationIds;
 
     enum class ObserveAction
@@ -249,8 +354,14 @@ namespace OC
     // Used in GET, PUT, POST methods on links to other remote resources of a group.
     const std::string GROUP_INTERFACE = "oic.mi.grp";
 
+    //Typedef for list direct paired devices
+    typedef std::vector<std::shared_ptr<OCDirectPairing>> PairedDevices;
 
     typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;
+
+    typedef std::function<void(const std::string&, const int)> FindErrorCallback;
+
+    typedef std::function<void(std::vector<std::shared_ptr<OCResource>>)> FindResListCallback;
 
     typedef std::function<void(const OCRepresentation&)> FindDeviceCallback;
 
@@ -275,6 +386,13 @@ namespace OC
 
     typedef std::function<void(const HeaderOptions&,
                                 const OCRepresentation&, const int, const int)> ObserveCallback;
+
+    typedef std::function<void(std::shared_ptr<OCDirectPairing>, OCStackResult)> DirectPairingCallback;
+
+    typedef std::function<void(const PairedDevices&)> GetDirectPairedCallback;
+
+    typedef std::function<void(const int, const std::string&,
+                               std::shared_ptr<OCResource>)> MQTopicCallback;
 } // namespace OC
 
 #endif

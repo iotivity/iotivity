@@ -22,13 +22,14 @@
 #define OC_LOGGER_H_
 
 #include "oc_logger_types.h"
+#include "platform_features.h"
 
 #ifdef __cplusplus
  extern "C" {
 #endif
 
 /* Basic interface: */
-oc_log_ctx_t *oc_log_make_ctx(
+oc_log_ctx_t * OC_CALL oc_log_make_ctx(
                 void*                 world,
                 const oc_log_level    level,
                 oc_log_init_t         init,
@@ -39,13 +40,13 @@ oc_log_ctx_t *oc_log_make_ctx(
                 oc_log_set_module_t   set_module
                );
 
-void oc_log_destroy(oc_log_ctx_t *ctx);
+void OC_CALL oc_log_destroy(oc_log_ctx_t *ctx);
 
-void oc_log_flush(oc_log_ctx_t *ctx);
-void oc_log_set_level(oc_log_ctx_t *ctx, const oc_log_level ll);
-size_t oc_log_write(oc_log_ctx_t *ctx, const char *msg);
-size_t oc_log_write_level(oc_log_ctx_t *ctx, const oc_log_level ll, const char *msg);
-int oc_log_set_module(oc_log_ctx_t *ctx, const char *module_name);
+void OC_CALL oc_log_flush(oc_log_ctx_t *ctx);
+void OC_CALL oc_log_set_level(oc_log_ctx_t *ctx, const oc_log_level ll);
+size_t OC_CALL oc_log_write(oc_log_ctx_t *ctx, const char *msg);
+size_t OC_CALL oc_log_write_level(oc_log_ctx_t *ctx, const oc_log_level ll, const char *msg);
+int OC_CALL oc_log_set_module(oc_log_ctx_t *ctx, const char *module_name);
 
 #ifdef __cplusplus
  } // extern "C"

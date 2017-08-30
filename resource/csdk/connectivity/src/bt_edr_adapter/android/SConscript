@@ -1,15 +1,17 @@
 #######################################################
 #       Build BT EDR adapter for Android
 #######################################################
+import os
 
-Import('env', 'src_dir')
-import os.path
+Import('connectivity_env')
 
-env.PrependUnique(CPPPATH = [ os.path.join(src_dir, 'android') ])
+src_dir = os.path.abspath(os.curdir)
 
-src_files = [ 'caedrclient.c',
-              'caedrutils.c',
-              'caedrnwmonitor.c',
-              'caedrserver.c', ]
+connectivity_env.PrependUnique(CPPPATH = [ src_dir ])
 
-Return('src_files')
+src_files = [ os.path.join(src_dir, 'caedrclient.c'),
+              os.path.join(src_dir, 'caedrutils.c'),
+              os.path.join(src_dir, 'caedrnwmonitor.c'),
+              os.path.join(src_dir, 'caedrserver.c'), ]
+
+connectivity_env.AppendUnique(CA_SRC = src_files)

@@ -72,7 +72,8 @@ namespace OIC
 
         void RCSDiscoveryManagerImpl::onResourceFound(
                 std::shared_ptr< PrimitiveResource > resource, ID discoveryId,
-                const RCSDiscoveryManager::ResourceDiscoveredCallback& discoverCB)
+                const RCSDiscoveryManager::ResourceDiscoveredCallback& discoverCB,
+                const std::string& uri)
         {
             {
                 std::lock_guard < std::mutex > lock(m_mutex);
@@ -83,7 +84,11 @@ namespace OIC
 
                 it->second.addKnownResource(resource);
             }
-            discoverCB(std::make_shared < RCSRemoteResourceObject > (resource));
+
+            if (uri == OC_RSRVD_WELL_KNOWN_URI || uri == resource->getUri())
+            {
+                discoverCB(std::make_shared < RCSRemoteResourceObject > (resource));
+            }
         }
 
         RCSDiscoveryManager::DiscoveryTask::Ptr RCSDiscoveryManagerImpl::startDiscovery(
@@ -102,7 +107,7 @@ namespace OIC
 
             DiscoveryRequestInfo discoveryInfo(address, relativeUri, resourceTypes,
                     std::bind(&RCSDiscoveryManagerImpl::onResourceFound, this,
-                            std::placeholders::_1, discoveryId, std::move(cb)));
+                            std::placeholders::_1, discoveryId, std::move(cb), relativeUri));
 
             discoveryInfo.discover();
 
@@ -197,7 +202,12 @@ namespace OIC
         {
             for (const auto& it : m_resourceTypes)
             {
-                discoverResource(m_address, m_relativeUri + "?rt=" + it, m_discoverCb);
+                std::string uri = std::string(OC_RSRVD_WELL_KNOWN_URI);
+                if (!it.empty())
+                {
+                    uri = std::string(OC_RSRVD_WELL_KNOWN_URI) + "?rt=" + it;
+                }
+                discoverResource(m_address, uri, m_discoverCb);
             }
         }
 

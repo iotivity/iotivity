@@ -18,39 +18,48 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-Import('env')
+import sys
 
-transport = env.get('TARGET_TRANSPORT')
+Import('stacksamples_env')
 
-arduino_simplecs_env = env.Clone()
+arduino_simplecs_env = stacksamples_env.Clone()
+transport = arduino_simplecs_env.get('TARGET_TRANSPORT')
+
 ######################################################################
 # Build flags
 ######################################################################
-arduino_simplecs_env.PrependUnique(CPPPATH = [
-		'../../../../../logger/include',
-		'../../../../../stack/include',
-		'../../../../../../oc_logger/include'
-		])
+arduino_simplecs_env.PrependUnique(CPPPATH=[
+    '../../../../../logger/include',
+    '../../../../../include',
+    '../../../../../stack/include',
+    '../../../../../../oc_logger/include'
+])
 
-arduino_simplecs_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-arduino_simplecs_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+arduino_simplecs_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
-arduino_simplecs_env.PrependUnique(LIBS = ['octbstack', 'ocsrm', 'connectivity_abstraction','coap'])
+arduino_simplecs_env.PrependUnique(LIBS=[
+    'octbstack',
+    'ocsrm',
+    'routingmanager',
+    'connectivity_abstraction',
+    'coap'
+])
 
 arduino_simplecs = arduino_simplecs_env.Program('SimpleClientServer', 'ocserver.cpp')
-env.CreateBin('SimpleClientServer')
+arduino_simplecs_env.CreateBin('SimpleClientServer')
 
-i_arduino_simplecs = arduino_simplecs_env.Install(env.get('BUILD_DIR'), arduino_simplecs)
+i_arduino_simplecs = arduino_simplecs_env.Install(
+    arduino_simplecs_env.get('BUILD_DIR'), arduino_simplecs)
 
 #The map file is intermediate file, make sure it's removed when clean build
 arduino_simplecs_env.Clean(arduino_simplecs, 'SimpleClientServer.map')
 
 Alias('arduino_simplecs', i_arduino_simplecs)
-env.AppendTarget('arduino_simplecs')
+arduino_simplecs_env.AppendTarget('arduino_simplecs')
 
-if(arduino_simplecs_env['UPLOAD'] == True):
-	from sys import platform as _platform
-	if _platform == "linux" or _platform == "linux2":
-		arduino_simplecs_env.Upload(env.get('BUILD_DIR') + '/resource/csdk/stack/samples/arduino/SimpleClientServer/ocserver/SimpleClientServer.hex')
-	else:
-		print 'Please use appropriate install method for your developing machine. Linux is the only supported platform right now.'
+if (arduino_simplecs_env['UPLOAD'] == True):
+    if sys.platform.startswith("linux"):
+        arduino_simplecs_env.Upload(
+            arduino_simplecs_env.get('BUILD_DIR') + '/resource/csdk/stack/samples/arduino/SimpleClientServer/ocserver/SimpleClientServer.hex')
+    else:
+        print 'Please use appropriate install method for your development machine. Linux is the only supported platform right now.'

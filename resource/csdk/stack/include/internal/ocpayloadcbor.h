@@ -22,15 +22,17 @@
 #define OC_PAYLOAD_CBOR_H
 
 #include "octypes.h"
+#include <cbor.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-OCStackResult OCParsePayload(OCPayload** outPayload, OCPayloadType type,
+OCStackResult OCParsePayload(OCPayload** outPayload, OCPayloadFormat format, OCPayloadType type,
         const uint8_t* payload, size_t payloadSize);
 
-OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t* size);
+OCStackResult OCConvertPayload(OCPayload* payload, OCPayloadFormat format,
+        uint8_t** outPayload, size_t* size);
 
 #ifdef __cplusplus
 }

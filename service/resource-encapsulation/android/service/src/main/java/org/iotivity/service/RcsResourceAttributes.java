@@ -134,7 +134,7 @@ public final class RcsResourceAttributes extends RcsObject {
      * @param key
      *            key with which the specified value is to be associated
      *
-     * @param value
+     * @param object
      *            value to be associated with the specified key
      *
      * @throws NullPointerException

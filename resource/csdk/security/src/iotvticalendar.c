@@ -19,12 +19,18 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Not supported on Arduino due lack of absolute time need to implement iCalendar
-#ifndef WITH_ARDUINO
+#if !defined(WITH_ARDUINO)
 
 #define _XOPEN_SOURCE  //Needed by strptime
+#include "iotivity_config.h"
 #include <string.h>
+#include <assert.h>
 #include "iotvticalendar.h"
 #include "oic_string.h"
+
+#ifndef HAVE_STRPTIME
+char *strptime(const char *buf, const char *fmt, struct tm *tm);
+#endif
 
 static char dtFormat[] =  "%Y%m%dT%H%M%S"; //date-time format
 static char dFormat[] =  "%Y%m%d";         // date format
@@ -34,35 +40,31 @@ static const char UNTIL[] = "UNTIL";
 static const char BYDAY[] = "BYDAY";
 static const char DAILY[] = "DAILY";
 
+static size_t CalculateElementLength(const char* startPosition, const char* endPosition)
+{
+    assert((NULL != startPosition) &&
+            ((NULL == endPosition) || (endPosition >= startPosition)));
+    return (NULL != endPosition) ? (size_t) (endPosition - startPosition) : strlen(startPosition);
+}
 
-/**
- * Parses periodStr and populate struct IotvtICalPeriod_t
- *
- * @param periodStr string to be parsed.
- * @param period    IotvtICalPeriod_t struct to be populated.
- *
- * @return  IOTVTICAL_INVALID_PARAMETER -- if parameter are invalid
- *          IOTVTICAL_INVALID_PERIOD    -- if period string has invalid format
- *          IOTVTICAL_INVALID_SUCCESS   -- if no error while parsing
- */
 IotvtICalResult_t ParsePeriod(const char *periodStr, IotvtICalPeriod_t *period)
 {
-    if((NULL == periodStr) || (NULL == period))
+    if ((NULL == periodStr) || (NULL == period))
     {
         return IOTVTICAL_INVALID_PARAMETER;
     }
 
     char *endDTPos;
     char *fmt = "";
-    int   startDTLen;
-    int   endDTLen;
+    size_t  startDTLen;
+    size_t  endDTLen;
 
     //Finding length of startDateTime and endDateTime in period
     //startDateTime and endDateTime can have form YYYYmmdd or YYYYmmddTHHMMSS
     //startDateTime and endDateTime must be same form
     //Eg: periodStr = "20150629T153050/20150630T203055"
     //    periodStr = "20150629/20150630"
-    if(NULL == (endDTPos = strchr(periodStr, '/')))
+    if (NULL == (endDTPos = strchr(periodStr, '/')))
     {
         return IOTVTICAL_INVALID_PERIOD;
     }
@@ -71,13 +73,13 @@ IotvtICalResult_t ParsePeriod(const char *periodStr, IotvtICalPeriod_t *period)
     endDTLen   = strlen(endDTPos);
 
     //Checking if both startDateTime and endDateTime are of same form
-    if(startDTLen == endDTLen)
+    if (startDTLen == endDTLen)
     {
-        if(8 == startDTLen) //YYYYmmdd
+        if (8 == startDTLen) //YYYYmmdd
         {
             fmt = dFormat;
         }
-        else if(15 == startDTLen) //YYYYmmddTHHMMSS
+        else if (15 == startDTLen) //YYYYmmddTHHMMSS
         {
             fmt = dtFormat;
         }
@@ -92,10 +94,10 @@ IotvtICalResult_t ParsePeriod(const char *periodStr, IotvtICalPeriod_t *period)
     }
 
     //Checking if startDateTime has right format
-    if(NULL != strptime(periodStr, fmt, &period->startDateTime))
+    if (NULL != strptime(periodStr, fmt, &period->startDateTime))
     {
         //Checking if endDateTime has right format
-        if(NULL != strptime(endDTPos, fmt, &period->endDateTime))
+        if (NULL != strptime(endDTPos, fmt, &period->endDateTime))
         {
             //Checking if endDateTime is after startDateTime
             if ((period->startDateTime.tm_year > period->endDateTime.tm_year)
@@ -131,29 +133,29 @@ IotvtICalResult_t ParsePeriod(const char *periodStr, IotvtICalPeriod_t *period)
     return IOTVTICAL_INVALID_PERIOD;
 }
 
-
 /**
- * Parses untilRule and populate "until" field of struct IotvtICalRecur_t
+ * Parses untilRule and populate "until" field of struct IotvtICalRecur_t.
  *
- * @param untilRule  string to be parsed.
- * @param recur      IotvtICalRecur_t struct to be populated.
+ * @param untilRule is a string to be parsed.
+ * @param recur is the reference to the @ref IotvtICalRecur_t to be populated.
  *
- * @return  IOTVTICAL_ERRRO             -- if untilRule has invalid format
- *          IOTVTICAL_INVALID_SUCCESS   -- if no error while parsing
+ * @return ::IOTVTICAL_SUCCESS is succesful, else in case of error
+ * ::IOTVTICAL_ERROR, if untilRule has invalid format or ::IOTVTICAL_INVALID_SUCCESS,
+ * if no error while parsing.
  */
 static IotvtICalResult_t ParseDate(char *untilRule, IotvtICalRecur_t *recur)
 {
     char *date = strchr(untilRule, '=');
 
-    if(NULL == date)
+    if (NULL == date)
     {
         return IOTVTICAL_ERROR;
     }
     date += 1;
 
-    if(strlen(date) == 8) //YYYYmmdd
+    if (strlen(date) == 8) //YYYYmmdd
     {
-        if(NULL != strptime(date, dFormat, &recur->until))
+        if (NULL != strptime(date, dFormat, &recur->until))
         {
             return IOTVTICAL_SUCCESS;
         }
@@ -161,49 +163,48 @@ static IotvtICalResult_t ParseDate(char *untilRule, IotvtICalRecur_t *recur)
     return IOTVTICAL_ERROR;
 }
 
-
 /**
- * Parses bydayRule and populate "byDay" field of struct IotvtICalRecur_t
+ * Parses bydayRule and populate "byDay" field of struct @ref IotvtICalRecur_t.
  *
- * @param bydayRule  string to be parsed.
- * @param recur      IotvtICalRecur_t struct to be populated.
+ * @param bydayRule is a string to be parsed.
+ * @param recur is a reference to @ref IotvtICalRecur_t struct to be populated.
  *
- * @return  IOTVTICAL_ERRRO             -- if bydayRule has empty weekday list or invalid weekdays
- *          IOTVTICAL_INVALID_SUCCESS   -- if no error while parsing
+ * @return ::IOTVTICAL_SUCCESS is succesful, else in case of error ::IOTVTICAL_ERROR,
+ * if bydayRule has empty weekday list or invalid weekdays.
  */
-static IotvtICalResult_t  ParseByday(char *bydayRule, IotvtICalRecur_t *recur)
+static IotvtICalResult_t  ParseByDay(char *bydayRule, IotvtICalRecur_t *recur)
 {
-    if(strstr(bydayRule, "SU"))
+    if (strstr(bydayRule, "SU"))
     {
         recur->byDay = recur->byDay | SUNDAY;
     }
-    if(strstr(bydayRule, "MO"))
+    if (strstr(bydayRule, "MO"))
     {
         recur->byDay = recur->byDay | MONDAY;
     }
-    if(strstr(bydayRule, "TU"))
+    if (strstr(bydayRule, "TU"))
     {
         recur->byDay = recur->byDay | TUESDAY;
     }
-    if(strstr(bydayRule, "WE"))
+    if (strstr(bydayRule, "WE"))
     {
         recur->byDay = recur->byDay | WEDNESDAY;
     }
-    if(strstr(bydayRule, "TH"))
+    if (strstr(bydayRule, "TH"))
     {
         recur->byDay = recur->byDay | THURSDAY;
     }
-    if(strstr(bydayRule, "FR"))
+    if (strstr(bydayRule, "FR"))
     {
         recur->byDay = recur->byDay | FRIDAY;
     }
-    if(strstr(bydayRule, "SA"))
+    if (strstr(bydayRule, "SA"))
     {
         recur->byDay = recur->byDay | SATURDAY;
     }
 
     //Checking if byDay list is empty or has inValid weekdays
-    if(recur->byDay == NO_WEEKDAY)
+    if (recur->byDay == NO_WEEKDAY)
     {
         return IOTVTICAL_ERROR;
     }
@@ -211,45 +212,34 @@ static IotvtICalResult_t  ParseByday(char *bydayRule, IotvtICalRecur_t *recur)
     return IOTVTICAL_SUCCESS;
 }
 
-
-/**
- * Parses recurStr and populate struct IotvtICalRecur_t
- *
- * @param recurStr string to be parsed.
- * @param recur    IotvtICalPeriod_t struct to be populated.
- *
- * @return  IOTVTICAL_INVALID_PARAMETER -- if parameter are invalid
- *          IOTVTICAL_INVALID_PERIOD    -- if period string has invalid format
- *          IOTVTICAL_INVALID_RRULE     -- if rrule string has invalid format
- */
 IotvtICalResult_t ParseRecur(const char *recurStr, IotvtICalRecur_t *recur)
 {
-
-    if((NULL == recurStr) || (NULL == recur))
+    if ((NULL == recurStr) || (NULL == recur))
     {
         return IOTVTICAL_INVALID_PARAMETER;
     }
 
-    const char *startPos="";
-    const char *endPos="";
+    const char *startPos = recurStr;
+    const char *endPos;
     char        buf[50];
     int         freqFlag = 0; //valid RRULE must have "FREQ" parameter.
                               //flag to track if RRULE has "FREQ" or not
 
-    startPos = recurStr;
     //Iterates though recurrence rule
-    //Eg, RRULE: FREQ=DAILY; UNTIL=20150703; BYDAY=MO, WE, FR
-    while('\0' != startPos)
+    //E.g., RRULE: FREQ=DAILY; UNTIL=20150703; BYDAY=MO, WE, FR
+    while (NULL != startPos)
     {
         endPos = strchr(startPos, ';');
-        if(endPos)
+        size_t elementLength = CalculateElementLength(startPos, endPos);
+        if (elementLength >= sizeof(buf))
         {
-            endPos += 1;
+            return IOTVTICAL_INVALID_RRULE;
         }
-        OICStrcpy(buf, (endPos - startPos), startPos);
-        if(NULL != strstr(buf, FREQ))
+
+        OICStrcpyPartial(buf, sizeof(buf), startPos, elementLength);
+        if (NULL != strstr(buf, FREQ))
         {
-            if(NULL != strstr(buf, DAILY))
+            if (NULL != strstr(buf, DAILY))
             {
                 recur->freq = FREQ_DAILY;
                 freqFlag = 1;
@@ -259,24 +249,25 @@ IotvtICalResult_t ParseRecur(const char *recurStr, IotvtICalRecur_t *recur)
                 return IOTVTICAL_INVALID_RRULE;
             }
         }
-        else if(NULL != strstr(buf, UNTIL))
+        else if (NULL != strstr(buf, UNTIL))
         {
-            if(IOTVTICAL_SUCCESS != ParseDate(buf, recur))
+            if (IOTVTICAL_SUCCESS != ParseDate(buf, recur))
             {
                 return IOTVTICAL_INVALID_RRULE;
             }
         }
-        else if(NULL != strstr(buf, BYDAY))
+        else if (NULL != strstr(buf, BYDAY))
         {
-            if(IOTVTICAL_SUCCESS != ParseByday(buf, recur))
+            if (IOTVTICAL_SUCCESS != ParseByDay(buf, recur))
             {
                 return IOTVTICAL_INVALID_RRULE;
             };
         }
-        startPos = endPos;
+
+        startPos = (NULL != endPos) ? (endPos + 1) : NULL;
     }
 
-    if(1 != freqFlag)
+    if (1 != freqFlag)
     {
         return IOTVTICAL_INVALID_RRULE;
     }
@@ -297,12 +288,12 @@ static int DiffDays(IotvtICalDateTime_t *date1, IotvtICalDateTime_t *date2)
     int days;
     int leapDays=0;
 
-    if(date2->tm_year > date1->tm_year)
+    if (date2->tm_year > date1->tm_year)
     {
-        for(int y = date1->tm_year; y < date2->tm_year; y++)
+        for (int y = date1->tm_year; y < date2->tm_year; y++)
         {
             y += TM_YEAR_OFFSET;
-            if(y % 4 == 0 && (y % 100 != 0 || y % 400 == 0))
+            if (y % 4 == 0 && (y % 100 != 0 || y % 400 == 0))
             {
                leapDays += 1;
             }
@@ -314,7 +305,6 @@ static int DiffDays(IotvtICalDateTime_t *date1, IotvtICalDateTime_t *date2)
 
     return days;
 }
-
 
 /**
  * Computes number of seconds between two time.
@@ -331,18 +321,18 @@ static int DiffSecs(IotvtICalDateTime_t *time1, IotvtICalDateTime_t *time2)
 }
 
 /**
- * Validates if the @param currentTime is with in allowable period
+ * Validates if the @param currentTime is with in allowable period.
  *
- * @param   period         -- allowable period
- * @param   currentTime    -- the time that need to be validated against allowable time
+ * @param period allowable period.
+ * @param currentTime the time that need to be validated against allowable time.
  *
- * @return  IOTVTICAL_VALID_ACCESS      -- if the request is within valid time period
- *          IOTVTICAL_INVALID_ACCESS    -- if the request is not within valid time period
- *          IOTVTICAL_INVALID_PARAMETER -- if parameter are invalid
+ * @return ::IOTVTICAL_VALID_ACCESS, if the request is within valid time period.
+ * ::IOTVTICAL_INVALID_ACCESS, if the request is not within valid time period.
+ * ::IOTVTICAL_INVALID_PARAMETER, if parameter are invalid.
  */
 static IotvtICalResult_t ValidatePeriod(IotvtICalPeriod_t *period, IotvtICalDateTime_t *currentTime)
 {
-    if(NULL == period || NULL == currentTime)
+    if (NULL == period || NULL == currentTime)
     {
         return IOTVTICAL_INVALID_PARAMETER;
     }
@@ -355,26 +345,26 @@ static IotvtICalResult_t ValidatePeriod(IotvtICalPeriod_t *period, IotvtICalDate
 
     //If today is the start day of the allowable period then check
     //currentTime > allowable period startTime
-    if(todayIsStartDay)
+    if (todayIsStartDay)
     {
         validStartTime = (0 <= DiffSecs(&period->startDateTime, currentTime)) ? true : false;
     }
 
     //If today is the end day of allowable period then check
     //currentTime < allowable period endTime
-    if(todayIsEndDay)
+    if (todayIsEndDay)
     {
         validEndTime = (0 <= DiffSecs(currentTime, &period->endDateTime)) ? true :false;
     }
 
     //Check if today is valid day between startDate and EndDate inclusive
-    if((0 <= DiffDays(&period->startDateTime, currentTime)) &&
+    if ((0 <= DiffDays(&period->startDateTime, currentTime)) &&
        (0 <= DiffDays(currentTime, &period->endDateTime)))
     {
         validDay = true;
     }
 
-    if(validDay && validStartTime && validEndTime)
+    if (validDay && validStartTime && validEndTime)
     {
         return IOTVTICAL_VALID_ACCESS;
     }
@@ -384,26 +374,12 @@ static IotvtICalResult_t ValidatePeriod(IotvtICalPeriod_t *period, IotvtICalDate
     }
 }
 
-/**
- * This API is used by policy engine to checks if the
- * request to access resource is within valid time.
- *
- * @param period string representing period.
- * @param recur string representing recurrence rule
- *
- * @return  IOTVTICAL_VALID_ACCESS      -- if the request is within valid time period
- *          IOTVTICAL_INVALID_ACCESS    -- if the request is not within valid time period
- *          IOTVTICAL_INVALID_PARAMETER -- if parameter are invalid
- *          IOTVTICAL_INVALID_PERIOD    -- if period string has invalid format
- *          IOTVTICAL_INVALID_RRULE     -- if rrule string has invalid format
- */
-
-IotvtICalResult_t IsRequestWithinValidTime(char *periodStr, char *recurStr)
+IotvtICalResult_t IsRequestWithinValidTime(const char *periodStr, const char *recurStr)
 {
     //NULL recur rule means no recurring patter exist.
     //Period can't be null. Period is used with or without
     //recur rule to compute allowable access time.
-    if(NULL == periodStr)
+    if (NULL == periodStr)
     {
         return IOTVTICAL_INVALID_PARAMETER;
     }
@@ -416,13 +392,13 @@ IotvtICalResult_t IsRequestWithinValidTime(char *periodStr, char *recurStr)
     IotvtICalDateTime_t *currentTime = localtime(&rawTime);
 
     ret  = ParsePeriod(periodStr, &period);
-    if(ret != IOTVTICAL_SUCCESS)
+    if (ret != IOTVTICAL_SUCCESS)
     {
         return ret;
     }
 
     //If recur is NULL then the access time is between period's startDateTime and endDateTime
-    if(NULL == recurStr)
+    if (NULL == recurStr)
     {
         ret = ValidatePeriod(&period, currentTime);
     }
@@ -432,15 +408,15 @@ IotvtICalResult_t IsRequestWithinValidTime(char *periodStr, char *recurStr)
     //is computed from period's startDate and the last instance is computed from
     //"UNTIL". If "UNTIL" is not specified then the recurrence goes for forever.
     //Eg, RRULE: FREQ=DAILY; UNTIL=20150703; BYDAY=MO, WE, FR
-    if(NULL != recurStr)
+    if (NULL != recurStr)
     {
         ret = ParseRecur(recurStr, &recur);
-        if(ret != IOTVTICAL_SUCCESS)
+        if (ret != IOTVTICAL_SUCCESS)
         {
             return ret;
         }
 
-        if((0 <= DiffSecs(&period.startDateTime, currentTime))&&
+        if ((0 <= DiffSecs(&period.startDateTime, currentTime))&&
            (0 <= DiffSecs(currentTime, &period.endDateTime)) &&
            (0 <= DiffDays(&period.startDateTime, currentTime)))
         {
@@ -448,7 +424,7 @@ IotvtICalResult_t IsRequestWithinValidTime(char *periodStr, char *recurStr)
             ret = IOTVTICAL_VALID_ACCESS;
 
             //"UNTIL" is an optional parameter of RRULE, checking if until present in recur
-            if(0 != memcmp(&recur.until, &emptyDT, sizeof(IotvtICalDateTime_t)))
+            if (0 != memcmp(&recur.until, &emptyDT, sizeof(IotvtICalDateTime_t)))
             {
                 if(0 > DiffDays(currentTime, &recur.until))
                 {
@@ -457,11 +433,11 @@ IotvtICalResult_t IsRequestWithinValidTime(char *periodStr, char *recurStr)
             }
 
             //"BYDAY" is an optional parameter of RRULE, checking if byday present in recur
-            if(NO_WEEKDAY != recur.byDay)
+            if (NO_WEEKDAY != recur.byDay)
             {
 
                 int isValidWD = (0x1 << currentTime->tm_wday) & recur.byDay; //Valid weekdays
-                if(!isValidWD)
+                if (!isValidWD)
                 {
                     ret = IOTVTICAL_INVALID_ACCESS;
                 }

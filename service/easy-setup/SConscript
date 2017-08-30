@@ -23,29 +23,15 @@
 ######################################################################
 Import('env')
 
-es_target = env.get ('TARGET_OS')
-es_role = env.get('ES_ROLE')
-es_target_enrollee = env.get('ES_TARGET_ENROLLEE')
+es_target = env.get('TARGET_OS')
+service_easy_setup_env = env.Clone()
 
-print "************************************************************************************"
-print "Easysetup device role --> %s " % es_role
-print "Target Platform --> %s " % es_target
-print "Target Enrollee platform --> %s " % es_target_enrollee
-print "************************************************************************************"
+if es_target in ['android', 'ios', 'linux', 'tizen']:
+    SConscript('mediator/SConscript')
 
-#Go to build sample apps
-if ('mediator' in es_role) :
-	print "Building Easysetup mediator SDKs [CSDK & RichSDK]"
+if es_target in ['linux', 'tizen']:
+    SConscript('enrollee/SConscript')
 
-	if es_target in ['linux','android']:
-		SConscript('mediator/SConscript')
-	else :
-		print "****************************Mediator supports Linux and Android platform****************************"
-
-if ('enrollee' in es_role) :
-	print "Building Easysetup enrollee SDK"
-
-	if es_target in ['linux', 'arduino', 'tizen']:
-		SConscript('enrollee/SConscript')
-	else :
-		print "****************************Enrollee supports linux, tizen and arduino platform****************************"
+if es_target in ['android', 'linux', 'tizen']:
+    service_easy_setup_env.UserInstallTargetHeader(
+        'inc/escommon.h', 'service/easy-setup', 'escommon.h')

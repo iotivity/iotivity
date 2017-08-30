@@ -46,7 +46,9 @@ namespace
         EXIT = 11
     } APPMenu;
 
-    struct CloseApp {};
+    struct CloseApp
+    {
+    };
 
     const int MAX_PATH = 2048;
 
@@ -66,10 +68,12 @@ RCSResourceContainer *g_pResourceContainer = nullptr;
 
 void getCurrentPath(std::string *pPath)
 {
-    char buffer[MAX_PATH];
+    char buffer[MAX_PATH] = {0,};
 
     if (!pPath->empty())
+    {
         pPath->clear();
+    }
 
 #if defined(__linux__)
     char *strPath = NULL;
@@ -81,7 +85,9 @@ void getCurrentPath(std::string *pPath)
         strPath = strrchr(buffer, '/');
 
         if (strPath != NULL)
+        {
             *strPath = '\0';
+        }
     }
 #endif
     pPath->append(buffer);
@@ -89,12 +95,14 @@ void getCurrentPath(std::string *pPath)
 
 int processUserInput(int min, int max)
 {
-    int input;
+    int input = 0;
 
     std::cin >> input;
 
     if (!std::cin.fail() && min <= input && input <= max)
+    {
         return input;
+    }
 
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -141,7 +149,9 @@ bool checkBundleRegistered(std::string bundleId)
         for (auto &bundle : bundleList)
         {
             if (bundle->getID().compare(bundleId) == 0)
+            {
                 return true;
+            }
         }
     }
 
@@ -160,7 +170,9 @@ bool checkResourceRegistered(std::string bundleId, std::string resourceUri)
         for (auto &resource : resourceList)
         {
             if (resource.compare(resourceUri) == 0)
+            {
                 return true;
+            }
         }
     }
 
@@ -237,7 +249,9 @@ void StopSampleBundle()
             g_bSampleBundleStarted = false;
         }
         else
+        {
             std::cout << "Sample Bundle is not started." << std::endl;
+        }
     }
     else
     {
@@ -250,7 +264,9 @@ void RemoveSampleBundle()
     if (g_pResourceContainer && g_bContainerStarted)
     {
         if (checkBundleRegistered(EXAMPLE_BUNDLE_ID))
+        {
             g_pResourceContainer->removeBundle(EXAMPLE_BUNDLE_ID);
+        }
     }
     else
     {
@@ -273,7 +289,9 @@ void AddSampleBundleResource()
                                                     resourceParams);
         }
         else
+        {
             std::cout << "Sample Bundle is not started." << std::endl;
+        }
     }
     else
     {
@@ -287,9 +305,13 @@ void RemoveSampleBundleResource()
     {
         if (checkResourceRegistered(EXAMPLE_BUNDLE_ID, EXAMPLE_RESOURCE_URI)
             && g_bSampleBundleStarted)
+        {
             g_pResourceContainer->removeResourceConfig(EXAMPLE_BUNDLE_ID, EXAMPLE_RESOURCE_URI);
+        }
         else
+        {
             std::cout << "Sample Bundle is not started." << std::endl;
+        }
     }
     else
     {
@@ -434,7 +456,9 @@ int main()
     }
 
     if (g_bContainerStarted)
+    {
         g_pResourceContainer->stopContainer();
+    }
 
     g_pResourceContainer = nullptr;
 

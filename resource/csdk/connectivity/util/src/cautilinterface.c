@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 
+#include "caadapterutils.h"
 #include "camanagerleinterface.h"
 #include "cabtpairinginterface.h"
 #include "cautilinterface.h"
@@ -25,69 +26,25 @@
 #include "cacommon.h"
 #include "logger.h"
 
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+#include "caconnectionmanager.h"
+#endif
 #define TAG "OIC_CA_COMMON_UTILS"
-
-static CAAdapterStateChangedCB g_adapterStateCB = NULL;
-static CAConnectionStateChangedCB g_connStateCB = NULL;
-
-static void CAManagerAdapterMonitorHandler(CATransportAdapter_t adapter,
-                                           CANetworkStatus_t status)
-{
-    if (CA_INTERFACE_DOWN == status)
-    {
-        if (g_adapterStateCB)
-        {
-            g_adapterStateCB(adapter, false);
-            OIC_LOG(DEBUG, TAG, "Pass the disabled adapter state to upper layer");
-        }
-    }
-    else if (CA_INTERFACE_UP == status)
-    {
-        if (g_adapterStateCB)
-        {
-            g_adapterStateCB(adapter, true);
-            OIC_LOG(DEBUG, TAG, "Pass the enabled adapter state to upper layer");
-        }
-    }
-}
-
-static void CAManagerConnectionMonitorHandler(const CAEndpoint_t *info, bool isConnected)
-{
-    if (!info || !info->addr)
-    {
-        OIC_LOG(ERROR, TAG, "remoteAddress is NULL");
-        return;
-    }
-
-    if (isConnected)
-    {
-        if (g_connStateCB)
-        {
-            g_connStateCB(info->adapter, info->addr, isConnected);
-            OIC_LOG(DEBUG, TAG, "Pass the connected device info to upper layer");
-        }
-    }
-    else
-    {
-        if (g_connStateCB)
-        {
-            g_connStateCB(info->adapter, info->addr, isConnected);
-            OIC_LOG(DEBUG, TAG, "Pass the disconnected device info to upper layer");
-        }
-    }
-}
 
 CAResult_t CARegisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateCB,
                                            CAConnectionStateChangedCB connStateCB)
 {
     OIC_LOG(DEBUG, TAG, "CARegisterNetworkMonitorHandler");
 
-    g_adapterStateCB = adapterStateCB;
-    g_connStateCB = connStateCB;
+    return CASetNetworkMonitorCallbacks(adapterStateCB, connStateCB);
+}
 
-    CASetNetworkMonitorCallbacks(CAManagerAdapterMonitorHandler,
-                                 CAManagerConnectionMonitorHandler);
-    return CA_STATUS_OK;
+CAResult_t CAUnregisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateCB,
+                                             CAConnectionStateChangedCB connStateCB)
+{
+    OIC_LOG(DEBUG, TAG, "CAUnregisterNetworkMonitorHandler");
+
+    return CAUnsetNetworkMonitorCallbacks(adapterStateCB, connStateCB);
 }
 
 CAResult_t CASetAutoConnectionDeviceInfo(const char *address)
@@ -114,6 +71,165 @@ CAResult_t CAUnsetAutoConnectionDeviceInfo(const char *address)
 #endif
 }
 
+CAResult_t CASetPortNumberToAssign(CATransportAdapter_t adapter,
+                                   CATransportFlags_t flag, uint16_t port)
+{
+    uint16_t *targetPort = 0;
+
+    if (CA_ADAPTER_IP & adapter)
+    {
+        if (CA_SECURE & flag)
+        {
+            if (CA_IPV6 & flag)
+            {
+                targetPort = &caglobals.ports.udp.u6s;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                targetPort = &caglobals.ports.udp.u4s;
+            }
+        }
+        else
+        {
+            if (CA_IPV6 & flag)
+            {
+                targetPort = &caglobals.ports.udp.u6;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                targetPort = &caglobals.ports.udp.u4;
+            }
+        }
+    }
+#ifdef TCP_ADAPTER
+    if (CA_ADAPTER_TCP & adapter)
+    {
+        if (CA_SECURE & flag)
+        {
+            if (CA_IPV6 & flag)
+            {
+                targetPort = &caglobals.ports.tcp.u6s;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                targetPort = &caglobals.ports.tcp.u4s;
+            }
+        }
+        else
+        {
+            if (CA_IPV6 & flag)
+            {
+                targetPort = &caglobals.ports.tcp.u6;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                targetPort = &caglobals.ports.tcp.u4;
+            }
+        }
+    }
+#endif
+
+    if (targetPort)
+    {
+        *targetPort = port;
+        return CA_STATUS_OK;
+    }
+
+    return CA_NOT_SUPPORTED;
+}
+
+uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_t flag)
+{
+    OIC_LOG(DEBUG, TAG, "CAGetAssignedPortNumber");
+
+    if (CA_ADAPTER_IP & adapter)
+    {
+        if (CA_SECURE & flag)
+        {
+            if (CA_IPV6 & flag)
+            {
+                return caglobals.ip.u6s.port;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                return caglobals.ip.u4s.port;
+            }
+        }
+        else
+        {
+            if (CA_IPV6 & flag)
+            {
+                return caglobals.ip.u6.port;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                return caglobals.ip.u4.port;
+            }
+        }
+    }
+#ifdef TCP_ADAPTER
+    if (CA_ADAPTER_TCP & adapter)
+    {
+        if (CA_SECURE & flag)
+        {
+            if (CA_IPV6 & flag)
+            {
+                return caglobals.tcp.ipv6s.port;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                return caglobals.tcp.ipv4s.port;
+            }
+        }
+        else
+        {
+            if (CA_IPV6 & flag)
+            {
+                return caglobals.tcp.ipv6.port;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                return caglobals.tcp.ipv4.port;
+            }
+        }
+    }
+#endif
+    return 0;
+}
+
+#if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
+CAResult_t CAUtilCMInitailize()
+{
+    return CACMInitialize();
+}
+
+CAResult_t CAUtilCMTerminate()
+{
+    return CACMTerminate();
+}
+
+CAResult_t CAUtilCMUpdateRemoteDeviceInfo(const CAEndpoint_t *endpoint, bool isCloud)
+{
+    return CACMUpdateRemoteDeviceInfo(endpoint, isCloud);
+}
+
+CAResult_t CAUtilCMResetRemoteDeviceInfo()
+{
+    return CACMResetRemoteDeviceInfo();
+}
+
+CAResult_t CAUtilCMSetConnectionUserConfig(CAConnectUserPref_t connPrefer)
+{
+    return CACMSetConnUserConfig(connPrefer);
+}
+
+CAResult_t CAUtilCMGetConnectionUserConfig(CAConnectUserPref_t *connPrefer)
+{
+    return CACMGetConnUserConfig(connPrefer);
+}
+#endif
+
+#ifdef __JAVA__
 #ifdef __ANDROID__
 /**
  * initialize client connection manager
@@ -126,6 +242,7 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
     OIC_LOG(DEBUG, TAG, "CAUtilClientInitialize");
 
     CAResult_t res = CA_STATUS_OK;
+
 #ifdef LE_ADAPTER
     if (CA_STATUS_OK != CAManagerLEClientInitialize(env, jvm, context))
     {
@@ -141,8 +258,38 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
         res = CA_STATUS_FAILED;
     }
 #endif
+
+#if !defined(LE_ADAPTER) && !defined(EDR_ADAPTER)
+    (void)env;
+    (void)jvm;
+    (void)context;
+#endif
     return res;
 }
+#else //__ANDROID__
+/**
+ * initialize client connection manager
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jvm                   invocation inferface for JAVA virtual machine.
+ */
+CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilClientInitialize");
+    (void) env;
+    (void) jvm;
+    CAResult_t res = CA_STATUS_OK;
+
+#ifdef EDR_ADAPTER
+    if (CA_STATUS_OK != CABTPairingInitialize(env, jvm))
+    {
+        OIC_LOG(ERROR, TAG, "CABTPairingInitialize has failed");
+        res = CA_STATUS_FAILED;
+    }
+#endif
+    return res;
+}
+
+#endif //__ANDROID__
 
 /**
  * terminate client connection manager
@@ -151,7 +298,7 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
 CAResult_t CAUtilClientTerminate(JNIEnv *env)
 {
     OIC_LOG(DEBUG, TAG, "CAUtilClientTerminate");
-#ifdef LE_ADAPTER
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
     return CAManagerLEClientTerminate(env);
 #else
     OIC_LOG(DEBUG, TAG, "it is not supported");
@@ -203,4 +350,89 @@ void CAUtilSetFoundDeviceListener(jobject listener)
     (void)listener;
 #endif
 }
+
+CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilSetLEScanInterval");
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
+    CAManagerLESetScanInterval(intervalTime, workingCount);
+    return CA_STATUS_OK;
+#else
+    (void)intervalTime;
+    (void)workingCount;
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
 #endif
+}
+
+CAResult_t CAUtilStopLEScan()
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilStopLEScan");
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
+    CAManagerLEStopScan();
+    return CA_STATUS_OK;
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}
+#endif // __JAVA__
+
+CAResult_t CAUtilStartLEAdvertising()
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilStartLEAdvertising");
+#if (defined(__ANDROID__) || defined(__TIZEN__)) && defined(LE_ADAPTER)
+    return CAManagerLEStartAdvertising();
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}
+
+CAResult_t CAUtilStopLEAdvertising()
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilStopLEAdvertising");
+#if (defined(__ANDROID__) || defined(__TIZEN__)) && defined(LE_ADAPTER)
+    return CAManagerLEStopAdvertising();
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}
+
+CAResult_t CAUtilSetBTConfigure(CAUtilConfig_t config)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilSetConfigure");
+#if (defined(__ANDROID__) && defined(LE_ADAPTER))
+    OIC_LOG_V(DEBUG, TAG, "bleFlag [%d]", config.bleFlags);
+    CAManagerSetConfigure(config);
+    return CA_STATUS_OK;
+#else
+    (void) config;
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}
+
+CAResult_t CAGetIpv6AddrScope(const char *addr, CATransportFlags_t *scopeLevel)
+{
+    return CAGetIpv6AddrScopeInternal(addr, scopeLevel);
+}
+
+void CAUtilSetLogLevel(CAUtilLogLevel_t level, bool hidePrivateLogEntries)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilSetLogLevel");
+    LogLevel logLevel = DEBUG;
+    switch(level)
+    {
+        case CA_LOG_LEVEL_INFO:
+            logLevel = INFO;
+            break;
+        case CA_LOG_LEVEL_ALL:
+        default:
+            logLevel = DEBUG;
+            break;
+    }
+
+    OCSetLogLevel(logLevel, hidePrivateLogEntries);
+}

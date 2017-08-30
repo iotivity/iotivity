@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ocstack.h>
+#include <getopt.h>
 
 const char *getResult(OCStackResult result)
 {
@@ -32,6 +33,8 @@ const char *getResult(OCStackResult result)
             return "OC_STACK_RESOURCE_CREATED";
         case OC_STACK_RESOURCE_DELETED:
             return "OC_STACK_RESOURCE_DELETED";
+        case OC_STACK_RESOURCE_CHANGED:
+            return "OC_STACK_RESOURCE_CHANGED";
         case OC_STACK_INVALID_URI:
             return "OC_STACK_INVALID_URI";
         case OC_STACK_INVALID_QUERY:
@@ -62,6 +65,8 @@ const char *getResult(OCStackResult result)
             return "OC_STACK_NO_OBSERVERS";
         case OC_STACK_UNAUTHORIZED_REQ:
             return "OC_STACK_UNAUTHORIZED_REQ";
+        case OC_STACK_NOT_ACCEPTABLE:
+            return "OC_STACK_NOT_ACCEPTABLE";
 #ifdef WITH_PRESENCE
         case OC_STACK_PRESENCE_STOPPED:
             return "OC_STACK_PRESENCE_STOPPED";

@@ -25,6 +25,10 @@
 #include "ocstackinternal.h"
 #include "ocserverrequest.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 /**
  * Common JSON string components used by the stack to build JSON strings.
  * These details are exposed in ocstackconfig.h file in the form of documentation.
@@ -36,13 +40,22 @@
 #define OC_JSON_SUFFIX_LEN                 (sizeof(OC_JSON_SUFFIX) - 1)
 #define OC_JSON_SEPARATOR                  ','
 #define OC_JSON_SEPARATOR_STR              ","
-#define OC_KEY_VALUE_DELIMITER             "="
 
 /**
  * Static values for various JSON attributes.
  */
 #define OC_RESOURCE_OBSERVABLE   1
 #define OC_RESOURCE_SECURE       1
+
+/**
+ * Device properties persistent store name.
+ */
+#define OC_DEVICE_PROPS_FILE_NAME  "device_properties.dat"
+
+/**
+ * Device properties name
+ */
+#define OC_JSON_DEVICE_PROPS_NAME "DeviceProperties"
 
 /**
  *  OIC Virtual resources supported by every OIC device.
@@ -67,13 +80,30 @@ typedef enum
     /** "/oic/gateway" .*/
     OC_GATEWAY_URI,
 #endif
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     /** "/oic/ad" .*/
     OC_PRESENCE,
-    #endif
+#endif
+
+#ifdef MQ_BROKER
+    /** "/oic/ps" .*/
+    OC_MQ_BROKER_URI,
+#endif
+
+#ifdef TCP_ADAPTER
+    /** "/oic/ping" .*/
+    OC_KEEPALIVE_RESOURCE_URI,
+#endif
+
+    /** "/oic/introspection" .*/
+    OC_INTROSPECTION_URI,
+
+    /** "/oic/introspection/payload" .*/
+    OC_INTROSPECTION_PAYLOAD_URI,
 
     /** Max items in the list */
     OC_MAX_VIRTUAL_RESOURCES    //<s Max items in the list
+
 } OCVirtualResources;
 
 /**
@@ -103,6 +133,12 @@ typedef enum
 } ResourceHandling;
 
 /**
+ * This function returns the virtual resource of the given URI.
+ * @return the virtual resource or ::OC_UNKNOWN_URI
+ */
+OCVirtualResources GetTypeOfVirtualURI(const char* resourceUri);
+
+/**
  * Default entity handler (ie. callback) to be used for resources with
  * no entity handler.
  */
@@ -114,7 +150,7 @@ OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
  * URI.
  * @return pointer to found resource
  */
-OCResource *FindResourceByUri(const char* resourceUri);
+OCResource * OC_CALL FindResourceByUri(const char* resourceUri);
 
 /**
  * This function checks whether the specified resource URI aligns with a pre-existing
@@ -124,8 +160,13 @@ OCResource *FindResourceByUri(const char* resourceUri);
 bool IsVirtualResource(const char* resourceUri);
 
 /**
- * Parameter @ref handling returns by-reference the type of resource handling
- * required by the internal stack based on the specified @ref request.
+ * Parameter handling returns by-reference the type of resource handling
+ * required by the internal stack based on the specified request.
+ *
+ * @param request the OCServerRequest to the internal stack
+ * @param handling the resource handling required by the internal stack
+ * @param resource the OCResource from the stack
+ *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult DetermineResourceHandling (const OCServerRequest *request,
@@ -133,8 +174,13 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
                                          OCResource **resource);
 
 /**
- * Processes the specified @ref request based on the type of resource handling
- * @ref resHandling.
+ * Processes the specified request based on the type of resource handling
+ * resHandling.
+ *
+ * @param resHandling the type of resource handling to be used
+ * @param resource the resource to process the request on
+ * @param request the request to process
+ *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult ProcessRequest(ResourceHandling resHandling,
@@ -171,7 +217,7 @@ void DeleteDeviceInfo();
  * Prepare payload for resource representation.
  */
 OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
-                    OCRepPayload** payload);
+                    OCRepPayload** payload, OCDevAddr *devAddr);
 
 /**
  * A helper function that Maps an @ref OCEntityHandlerResult type to an
@@ -179,5 +225,48 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
  */
 OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult);
 
-#endif //OC_RESOURCEHANDLER_H
+/**
+ * Data structure for holding enhanced device information
+ */
+typedef struct _OCDeviceProperties
+{
+    /** Protocol Independent Id.*/
+    char protocolIndependentId[UUID_STRING_SIZE];
+} OCDeviceProperties;
 
+/**
+ * Internal API used to initialize device properties.
+ * @return ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult InitializeDeviceProperties();
+
+/**
+ * Internal API used to clean up device properties.
+ * @param deviceProperties Pointer to OCDeviceProperties to clean up.
+ */
+void CleanUpDeviceProperties(OCDeviceProperties **deviceProperties);
+
+/**
+ * This method converts OCDeviceProperties into CBOR format.
+ * @param deviceProperties   Pointer to OCDeviceProperties to convert to CBOR.
+ * @param payload            JSON payload converted to CBOR. Passed parameter should not be NULL.
+ * @note Caller needs to invoke OICFree when they are finished using the returned string.
+ * @param size               Size of the cbor payload. Passed parameter should not be NULL.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult DevicePropertiesToCBORPayload(const OCDeviceProperties *deviceProperties, uint8_t **payload, size_t *size);
+
+/**
+ * This method converts CBOR data into OCDeviceProperties format.
+ * @param payload            CBOR payload to convert to OCDeviceProperties.
+ * @param size               Size of the cborPayload.
+ * @param deviceProperties   CBOR payload converted to OCDeviceProperties. Passed parameter should not be NULL.
+ * @note Caller needs to invoke CleanUpDeviceProperties after they are finished using the returned pointer.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult CBORPayloadToDeviceProperties(const uint8_t *payload, size_t size, OCDeviceProperties **deviceProperties);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+#endif //OC_RESOURCEHANDLER_H

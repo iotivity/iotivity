@@ -18,39 +18,37 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-Import('env')
 import os
 import os.path
-unittests_env = env.Clone()
+from tools.scons.RunTest import run_test
 
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+unittests_env = gtest_env.Clone()
 src_dir = unittests_env.get('SRC_DIR')
 pi_dir = os.path.join(src_dir, 'plugins')
-build_dir = env.get('BUILD_DIR')
+build_dir = unittests_env.get('BUILD_DIR')
+target_os = unittests_env.get('TARGET_OS')
+
 ######################################################################
 # Build flags
 ######################################################################
-unittests_env.PrependUnique(CPPPATH = [
-                os.path.join(pi_dir, 'include'),
-                '#extlibs/gtest/gtest-1.7.0/include',
-		])
+unittests_env.PrependUnique(CPPPATH=[
+    os.path.join(pi_dir, 'include'),
+])
 
-unittests_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-unittests_env.PrependUnique(LIBS = ['-lpthread'])
-unittests_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-unittests_env.AppendUnique(LIBPATH = [os.path.join(src_dir, 'extlibs', 'gtest', 'gtest-1.7.0', 'lib', '.libs')])
-unittests_env.PrependUnique(LIBS = [
-		'plugin_interface',
-		'oc',
-		'octbstack',
-		'oc_logger',
-		'connectivity_abstraction',
-		'coap',
-		'gtest',
-		'gtest_main'
-		])
+unittests_env.AppendUnique(LIBPATH=[unittests_env.get('BUILD_DIR')])
+unittests_env.PrependUnique(LIBS=[
+    'plugin_interface',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction',
+    'coap',
+])
 
-if env.get('LOGGING'):
-	unittests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+if unittests_env.get('LOGGING'):
+    unittests_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 ######################################################################
 # Source files and Targets
@@ -59,12 +57,8 @@ piunittests = unittests_env.Program('piunittests', ['plugininterfacetest.cpp'])
 
 Alias("piunittests", [piunittests])
 
-env.AppendTarget('piunittests')
-if env.get('TEST') == '1':
-	target_os = env.get('TARGET_OS')
-	if target_os == 'linux':
-                from tools.scons.RunTest import *
-                run_test(unittests_env,
-                         'plugins_unittests.memcheck',
-                         'plugins/unittests/piunittests')
-
+unittests_env.AppendTarget('piunittests')
+if unittests_env.get('TEST') == '1':
+    if target_os in ['linux']:
+        run_test(unittests_env, 'plugins_unittests.memcheck',
+                 'plugins/unittests/piunittests', piunittests)

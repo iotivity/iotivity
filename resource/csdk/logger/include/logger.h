@@ -21,11 +21,10 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
-#define IOTIVITY_VERSION "1.1.0"
-
 #include <stdint.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include "logger_types.h"
 
 #ifdef __ANDROID__
@@ -33,13 +32,19 @@
 #elif defined(__TIZEN__)
 #include <dlog.h>
 #elif defined(ARDUINO)
+#include <inttypes.h>
 #include "Arduino.h"
 #include "avr/pgmspace.h"
 #endif
 
 #ifdef __cplusplus
+#ifndef ARDUINO
+#include <cinttypes>
+#endif
 extern "C"
 {
+#else
+#include <inttypes.h>
 #endif
 
 // Use the PCF macro to wrap strings stored in FLASH on the Arduino
@@ -57,24 +62,65 @@ extern "C"
 // Max buffer size used in variable argument log function
 #define MAX_LOG_V_BUFFER_SIZE (256)
 
+// Setting this flag for a log level means that the corresponding log message
+// contains private data. This kind of message is logged only when a call to
+// OCSetLogLevel() enabled private data logging.
+#define OC_LOG_PRIVATE_DATA (1 << 31)
+
 // Log levels
 #ifdef __TIZEN__
 typedef enum {
-    DEBUG = DLOG_DEBUG,
+    DEBUG = DLOG_INFO,    // DLOG_INFO : 4
     INFO = DLOG_INFO,
-    WARNING = DLOG_WARN,
-    ERROR = DLOG_ERROR,
-    FATAL = DLOG_ERROR
+    WARNING = DLOG_WARN,  // DLOG_WARN : 5
+    ERROR = DLOG_ERROR,   // DLOG_ERROR : 6
+    FATAL = DLOG_ERROR,
+    DEBUG_LITE = DLOG_INFO,
+    INFO_LITE = DLOG_INFO,
 } LogLevel;
 #else
+
+/** @todo temporary work-around until better names with prefixes are used for the enum values. */
+#ifdef ERROR
+#undef ERROR
+#endif
+
 typedef enum {
     DEBUG = 0,
     INFO,
     WARNING,
     ERROR,
-    FATAL
+    FATAL,
+    DEBUG_LITE,       // The DEBUG log for Lite device
+    INFO_LITE,        // The INFO log for Lite device
 } LogLevel;
+
+#endif // __TIZEN__
+
+#define DEBUG_PRIVATE       ((OC_LOG_PRIVATE_DATA) | (DEBUG))
+#define INFO_PRIVATE        ((OC_LOG_PRIVATE_DATA) | (INFO))
+#define WARNING_PRIVATE     ((OC_LOG_PRIVATE_DATA) | (WARNING))
+#define ERROR_PRIVATE       ((OC_LOG_PRIVATE_DATA) | (ERROR))
+#define FATAL_PRIVATE       ((OC_LOG_PRIVATE_DATA) | (FATAL))
+
+#ifndef OC_LOG_LEVEL
+#define OC_MINIMUM_LOG_LEVEL    (DEBUG)
+#else
+#define OC_MINIMUM_LOG_LEVEL    (OC_LOG_LEVEL)
 #endif
+
+// Perform signed comparison here, to avoid compiler warnings caused by
+// unsigned comparison with DEBUG (i.e., with value 0 on some platforms).
+#define IF_OC_PRINT_LOG_LEVEL(level) \
+    if (((int)OC_MINIMUM_LOG_LEVEL) <= ((int)(level & (~OC_LOG_PRIVATE_DATA))))
+
+/**
+ * Set log level and privacy log to print.
+ *
+ * @param level                   - log level.
+ * @param hidePrivateLogEntries   - Hide Private Log.
+ */
+void OCSetLogLevel(LogLevel level, bool hidePrivateLogEntries);
 
 #ifdef __TIZEN__
 /**
@@ -85,11 +131,11 @@ typedef enum {
  * @param[in]    buffer     pointer to buffer of bytes
  * @param[in]    bufferSize max number of byte in buffer
  */
-void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint16_t bufferSize);
+void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t bufferSize);
 
-#define OCLog(level,tag,mes) LOG_(LOG_ID_MAIN, (level), (tag), mes)
-#define OCLogv(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, (level),tag,fmt,##args)
-#elif defined(ANDROID) || defined(__linux__) || defined(__APPLE__)
+#define OCLog(level,tag,mes) LOG_(LOG_ID_MAIN, ((level) & (~OC_LOG_PRIVATE_DATA)), (tag), mes)
+#define OCLogv(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, ((level) & (~OC_LOG_PRIVATE_DATA)),tag,fmt,##args)
+#elif !defined(ARDUINO)
     /**
      * Configure logger to use a context that defines a custom logger function
      *
@@ -117,7 +163,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param tag    - Module name
      * @param format - variadic log string
      */
-    void OCLogv(LogLevel level, const char * tag, const char * format, ...)
+    void OCLogv(int level, const char * tag, const char * format, ...)
 #if defined(__GNUC__)
     __attribute__ ((format(printf, 3, 4)))
 #endif
@@ -131,7 +177,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param tag    - Module name
      * @param logStr - log string
      */
-    void OCLog(LogLevel level, const char * tag, const char * logStr);
+    void OCLog(int level, const char * tag, const char * logStr);
 
     /**
      * Output the contents of the specified buffer (in hex) with the specified priority level.
@@ -141,7 +187,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param buffer     - pointer to buffer of bytes
      * @param bufferSize - max number of byte in buffer
      */
-    void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint16_t bufferSize);
+    void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t bufferSize);
 #else  // For arduino platforms
     /**
      * Initialize the serial logger for Arduino
@@ -158,7 +204,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param lineNum- line Number
      * @param logStr - log string
      */
-    void OCLog(LogLevel level, PROGMEM const char *tag, const int lineNum,
+    void OCLog(int level, PROGMEM const char *tag, const int lineNum,
                PROGMEM const char *logStr);
 
     /**
@@ -169,7 +215,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param buffer     - pointer to buffer of bytes
      * @param bufferSize - max number of byte in buffer
      */
-    void OCLogBuffer(LogLevel level, const char *tag, const uint8_t *buffer, size_t bufferSize);
+    void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t bufferSize);
 
     /**
      * Output a variable argument list log string with the specified priority level.
@@ -179,7 +225,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param lineNum- line Number
      * @param format - variadic log string
      */
-    void OCLogv(LogLevel level, PROGMEM const char *tag, const int lineNum,
+    void OCLogv(int level, PROGMEM const char *tag, const int lineNum,
                 PROGMEM const char *format, ...)
 #if defined(__GNUC__)
     __attribute__ ((format(printf, 4, 5)))
@@ -190,48 +236,97 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
 #ifdef TB_LOG
 
 #ifdef __TIZEN__
+#define OIC_LOG(level,tag,mes) \
+    do { \
+        IF_OC_PRINT_LOG_LEVEL((level)) \
+            LOG_(LOG_ID_MAIN, (level), (tag), mes); \
+    } while(0)
 
-#define OIC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, (level), (tag), mes)
-#define OIC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, level, tag, fmt, ##args)
-#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)\
-    OCLogBuffer((level), (tag), (buffer), (bufferSize))
+#define OIC_LOG_V(level,tag,fmt,args...) \
+    do { \
+        IF_OC_PRINT_LOG_LEVEL((level)) \
+            LOG_(LOG_ID_MAIN, (level), (tag), fmt, ##args); \
+    } while(0)
 
-#else // These macros are defined for Linux, Android, and Arduino
+#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize) \
+    do { \
+        IF_OC_PRINT_LOG_LEVEL((level)) \
+            OCLogBuffer((level), (tag), (buffer), (bufferSize)); \
+    } while(0)
 
+#define OIC_LOG_CA_BUFFER(level, tag, buffer, bufferSize, isHeader) \
+    do { \
+        IF_OC_PRINT_LOG_LEVEL((level)) \
+            OCPrintCALogBuffer((level), (tag), (buffer), (bufferSize), (isHeader)); \
+    } while(0)
+
+#else // NO __TIZEN__ - These macros are defined for Linux, Android, Win32, and Arduino
 #define OIC_LOG_INIT()    OCLogInit()
 
 #ifdef ARDUINO
+#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize) \
+    do { \
+        IF_OC_PRINT_LOG_LEVEL((level)) \
+            OCLogBuffer((level), PCF(tag), (buffer), (bufferSize)); \
+    } while(0)
 
-#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)  OCLogBuffer((level), PCF(tag), (buffer), (bufferSize))
 // Don't define variable argument log function for Arduino
-#define OIC_LOG_V(level, tag, format, ...) OCLogv((level), PCF(tag), __LINE__, PCF(format),__VA_ARGS__)
+#define OIC_LOG_V(level, tag, format, ...) \
+    do { \
+        IF_OC_PRINT_LOG_LEVEL((level)) \
+            OCLogv((level), PCF(tag), __LINE__, PCF(format),__VA_ARGS__); \
+    } while(0)
 
 #define OIC_LOG_CONFIG(ctx)
 #define OIC_LOG_SHUTDOWN()
-#define OIC_LOG(level, tag, logStr) OCLog((level), PCF(tag), __LINE__, PCF(logStr))
+#define OIC_LOG(level, tag, logStr) \
+    do { \
+        IF_OC_PRINT_LOG_LEVEL((level)) \
+            OCLog((level), PCF(tag), __LINE__, PCF(logStr)); \
+    } while(0)
+
 #define OIC_LOG_V(level, tag, ...)
 
-#else
+#else // NO ARDUINO
+#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize) \
+    do { \
+        IF_OC_PRINT_LOG_LEVEL((level)) \
+            OCLogBuffer((level), (tag), (buffer), (bufferSize)); \
+    } while(0)
 
-#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)  OCLogBuffer((level), (tag), (buffer), (bufferSize))
+#define OIC_LOG_CA_BUFFER(level, tag, buffer, bufferSize, isHeader) \
+    do { \
+        IF_OC_PRINT_LOG_LEVEL((level)) \
+            OCPrintCALogBuffer((level), (tag), (buffer), (bufferSize), (isHeader)); \
+    } while(0)
+
 #define OIC_LOG_CONFIG(ctx)    OCLogConfig((ctx))
 #define OIC_LOG_SHUTDOWN()     OCLogShutdown()
-#define OIC_LOG(level, tag, logStr)  OCLog((level), (tag), (logStr))
-// Define variable argument log function for Linux and Android
-#define OIC_LOG_V(level, tag, ...)  OCLogv((level), (tag), __VA_ARGS__)
+#define OIC_LOG(level, tag, logStr) \
+    do { \
+        IF_OC_PRINT_LOG_LEVEL((level)) \
+            OCLog((level), (tag), (logStr)); \
+    } while(0)
 
-#endif //ARDUINO
-#endif //__TIZEN__
+// Define variable argument log function for Linux, Android, and Win32
+#define OIC_LOG_V(level, tag, ...) \
+    do { \
+        IF_OC_PRINT_LOG_LEVEL((level)) \
+            OCLogv((level), (tag), __VA_ARGS__); \
+    } while(0)
 
-#else //TB_LOG
+#endif // ARDUINO
+#endif // __TIZEN__
 
+#else // TB_LOG
 #define OIC_LOG_CONFIG(ctx)
 #define OIC_LOG_SHUTDOWN()
 #define OIC_LOG(level, tag, logStr)
 #define OIC_LOG_V(level, tag, ...)
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)
+#define OIC_LOG_CA_BUFFER(level, tag, buffer, bufferSize, isHeader)
 #define OIC_LOG_INIT()
-#endif
+#endif // TB_LOG
 
 #ifdef __cplusplus
 }

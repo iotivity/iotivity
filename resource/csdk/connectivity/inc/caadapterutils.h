@@ -27,18 +27,28 @@
 #ifndef CA_ADAPTER_UTILS_H_
 #define CA_ADAPTER_UTILS_H_
 
+#include "iotivity_config.h"
+
 #include <stdbool.h>
-#ifdef __ANDROID__
+#ifdef __JAVA__
 #include <jni.h>
 #endif
 
-#ifndef WITH_ARDUINO
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
+#if defined(HAVE_WINSOCK2_H) && defined(HAVE_WS2TCPIP_H)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
 
 #include "cacommon.h"
 #include "logger.h"
-#include "pdu.h"
+#include <coap/pdu.h>
 #include "uarraylist.h"
 #include "cacommonutil.h"
 
@@ -196,28 +206,22 @@ void CAClearServerInfoList(u_arraylist_t *serverInfoList);
  * @param[in]    sockAddrLen  size of sockAddr.
  * @param[out]   host         address string (must be CA_IPADDR_SIZE).
  * @param[out]   port         host order port number.
+ * @return CA_STATUS_OK on success, or an appropriate error code on failure.
  */
-void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sockAddrLen,
-                         char *host, uint16_t *port);
+CAResult_t CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sockAddrLen,
+                               char *host, uint16_t *port);
 
 /**
  * Convert address from string to binary.
  * @param[in]   host      address string.
  * @param[in]   port      host order port number.
  * @param[out]  ipaddr    IP address info.
+ * @return CA_STATUS_OK on success, or an appropriate error code on failure.
  */
-void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storage *sockaddr);
+CAResult_t CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storage *sockaddr);
 #endif /* WITH_ARDUINO */
 
-#ifdef __ANDROID__
-/**
- * To set context of JNI Application.
- * This must be called by the Android API before CA Initialization.
- * @param[in]   env         JNI interface pointer.
- * @param[in]   context     context object.
- */
-void CANativeJNISetContext(JNIEnv *env, jobject context);
-
+#ifdef __JAVA__
 /**
  * To set jvm object.
  * This must be called by the Android API before CA Initialization.
@@ -226,33 +230,11 @@ void CANativeJNISetContext(JNIEnv *env, jobject context);
 void CANativeJNISetJavaVM(JavaVM *jvm);
 
 /**
- * To get context.
- * Called by adapters to get Application context.
- * @return  context object.
- */
-jobject CANativeJNIGetContext();
-
-/**
  * To get JVM object.
  * Called from adapters to get JavaVM object.
  * @return  JVM object.
  */
 JavaVM *CANativeJNIGetJavaVM();
-
-/**
- * To set Activity to JNI.
- * This must be called by the Android API before CA Initialization.
- * @param[in]   env         JNI Environment pointer.
- * @param[in]   activity    Activity object.
- */
-void CANativeSetActivity(JNIEnv *env, jobject activity);
-
-/**
- * To get Activity.
- * Called from adapters to get Activity.
- * @return  Activity object.
- */
-jobject *CANativeGetActivity();
 
 /**
  * get method ID for method Name and class
@@ -267,11 +249,85 @@ jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
                            const char* methodFormat);
 
 /**
+ * check JNI exception occurrence
+ * @param[in]   env              JNI interface pointer.
+ * @return  true(occurrence) or false(no occurrence).
+ */
+bool CACheckJNIException(JNIEnv *env);
+
+/**
  * To Delete other Global References
  * Called during CATerminate to remove global references
  */
 void CADeleteGlobalReferences();
 
+#ifdef __ANDROID__
+/**
+ * To set context of JNI Application.
+ * This must be called by the Android API before CA Initialization.
+ * @param[in]   env         JNI interface pointer.
+ * @param[in]   context     context object.
+ */
+void CANativeJNISetContext(JNIEnv *env, jobject context);
+
+/**
+ * To set Activity to JNI.
+ * This must be called by the Android API before CA Initialization.
+ * @param[in]   env         JNI Environment pointer.
+ * @param[in]   activity    Activity object.
+ */
+void CANativeSetActivity(JNIEnv *env, jobject activity);
+
+/**
+ * To get context.
+ * Called by adapters to get Application context.
+ * @return  context object.
+ */
+jobject CANativeJNIGetContext();
+
+/**
+ * To get Activity.
+ * Called from adapters to get Activity.
+ * @return  Activity object.
+ */
+jobject *CANativeGetActivity();
+#endif
+#endif
+
+#ifndef WITH_ARDUINO
+/**
+ * print send state in the adapter.
+ * @param[in]   adapter          transport adapter type.
+ * @param[in]   addr             remote address.
+ * @param[in]   port             port.
+ * @param[in]   sentLen          sent data length.
+ * @param[in]   isSuccess        sent state.
+ * @param[in]   message          detailed message.
+ */
+void CALogSendStateInfo(CATransportAdapter_t adapter,
+                        const char *addr, uint16_t port, ssize_t sentLen,
+                        bool isSuccess, const char* message);
+
+/**
+ * print adapter state in the adapter.
+ * @param[in]   adapter          transport adapter type.
+ * @param[in]   state            adapter state.
+ */
+void CALogAdapterStateInfo(CATransportAdapter_t adapter, CANetworkStatus_t state);
+
+/**
+ * print adapter type name in the adapter.
+ * @param[in]   adapter          transport adapter type.
+ */
+void CALogAdapterTypeInfo(CATransportAdapter_t adapter);
+
+/**
+ * return scope level of given ip address.
+ * @param[in]    address    remote address.
+ * @param[out]   scopeLevel scope level of given ip address.
+ * @return      ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAGetIpv6AddrScopeInternal(const char *addr, CATransportFlags_t *scopeLevel);
 #endif
 
 #ifdef __cplusplus

@@ -28,6 +28,7 @@
 #define US_PER_MS   (1000)
 #define NS_PER_US   (1000)
 #define NS_PER_MS   (1000000)
+#define HNS_PER_US  (10)
 
 
 #ifdef __cplusplus
@@ -51,6 +52,8 @@ typedef enum
  *
  * @param     precision   based on this parameter, current time is returned in milliseconds or
  *                        microseconds
+ *
+ * @warning   This function may be sensitive to system time changes on some platforms.
  *
  * @note
  *            On Arduino platform:

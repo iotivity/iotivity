@@ -33,27 +33,30 @@
 
 using namespace OC;
 
-//Set of strings for each of deviceInfo fields
-std::string dateOfManufacture = "myDateOfManufacture";
-std::string firmwareVersion = "my.Firmware.Version";
-std::string manufacturerName = "myName";
-std::string operatingSystemVersion = "myOS";
-std::string hardwareVersion = "myHardwareVersion";
-std::string platformID = "myPlatformID";
-std::string manufacturerUrl = "www.myurl.com";
-std::string modelNumber = "myModelNumber";
-std::string platformVersion = "platformVersion";
-std::string supportUrl = "www.mysupporturl.com";
-std::string systemTime = "mySystemTime";
+// Set of strings for each of platform Info fields
+std::string gPlatformID = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+std::string gManufacturerName = "myName";
+std::string gManufacturerLink = "https://www.example.com";
+std::string gModelNumber = "myModelNumber";
+std::string gDateOfManufacture = "2016-01-15";
+std::string gPlatformVersion = "platformVersion";
+std::string gOperatingSystemVersion = "myOS";
+std::string gHardwareVersion = "myHardwareVersion";
+std::string gFirmwareVersion = "1.0";
+std::string gSupportLink = "https://www.examplesupport.com";
+std::string gSystemTime = "2016-01-15T11.01";
 
-//Set of strings for each of platform info fields
-std::string deviceName = "Bill's Battlestar";
+// Set of strings for each of device info fields
+std::string  deviceName = "Bill's Battlestar";
+std::string  specVersion = "ocf.1.1.0";
+std::vector<std::string> dataModelVersions = {"ocf.res.1.1.0", "ocf.sh.1.1.0"};
+std::string  protocolIndependentID = "4cae60c1-48cb-47dc-882e-dedec114f45c";
 
-//OCPlatformInfo Contains all the platform info to be stored
+// Device type
+std::string  deviceType = "oic.d.tv";
+
+// OCPlatformInfo Contains all the platform info to be stored
 OCPlatformInfo platformInfo;
-
-//OCDeviceInfo Contains all the device info to be stored
-OCDeviceInfo deviceInfo;
 
 void DeletePlatformInfo()
 {
@@ -68,12 +71,6 @@ void DeletePlatformInfo()
     delete[] platformInfo.firmwareVersion;
     delete[] platformInfo.supportUrl;
     delete[] platformInfo.systemTime;
-}
-
-
-void DeleteDeviceInfo()
-{
-    delete[] deviceInfo.deviceName;
 }
 
 void DuplicateString(char ** targetString, std::string sourceString)
@@ -98,16 +95,60 @@ OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerNa
     DuplicateString(&platformInfo.firmwareVersion, firmwareVersion);
     DuplicateString(&platformInfo.supportUrl, supportUrl);
     DuplicateString(&platformInfo.systemTime, systemTime);
+
     return OC_STACK_OK;
 }
 
-
-OCStackResult SetDeviceInfo(std::string deviceName)
+OCStackResult SetDeviceInfo()
 {
-    DuplicateString(&deviceInfo.deviceName, deviceName);
+    OCStackResult result = OC_STACK_ERROR;
+
+    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    if (handle == NULL)
+    {
+        std::cout << "Failed to find resource " << OC_RSRVD_DEVICE_URI << std::endl;
+        return result;
+    }
+
+    result = OCBindResourceTypeToResource(handle, deviceType.c_str());
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to add device type" << std::endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, deviceName);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set device name" << std::endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                          dataModelVersions);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set data model versions" << std::endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set spec version" << std::endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          protocolIndependentID);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set piid" << std::endl;
+        return result;
+    }
+
     return OC_STACK_OK;
 }
-
 
 int main()
 {
@@ -115,55 +156,42 @@ int main()
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Server,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
-        OC::QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
 
     std::cout<<"Starting server & setting platform info\n";
 
-    OCStackResult result = SetPlatformInfo(platformID, manufacturerName, manufacturerUrl,
-            modelNumber, dateOfManufacture, platformVersion,  operatingSystemVersion,
-            hardwareVersion, firmwareVersion,  supportUrl, systemTime);
+    OCStackResult result = SetPlatformInfo(gPlatformID, gManufacturerName, gManufacturerLink,
+            gModelNumber, gDateOfManufacture, gPlatformVersion,  gOperatingSystemVersion,
+            gHardwareVersion, gFirmwareVersion,  gSupportLink, gSystemTime);
 
     result = OCPlatform::registerPlatformInfo(platformInfo);
 
-    if(result != OC_STACK_OK)
+    if (result != OC_STACK_OK)
     {
         std::cout << "Platform Registration failed\n";
         return -1;
     }
 
+    result = SetDeviceInfo();
 
-    result = SetDeviceInfo(deviceName);
-    OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.wk.d");
-    OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.d.tv");
-
-    result = OCPlatform::registerDeviceInfo(deviceInfo);
-
-    if(result != OC_STACK_OK)
+    if (result != OC_STACK_OK)
     {
         std::cout << "Device Registration failed\n";
         return -1;
     }
 
     DeletePlatformInfo();
-    DeleteDeviceInfo();
 
-    // A condition variable will free the mutex it is given, then do a non-
-    // intensive block until 'notify' is called on it.  In this case, since we
-    // don't ever call cv.notify, this should be a non-processor intensive version
-    // of while(true);
-    std::mutex blocker;
-    std::condition_variable cv;
-    std::unique_lock<std::mutex> lock(blocker);
-    cv.wait(lock, []{return false;});
+    std::cout << "Waiting. Press \"Enter\" to quit." << std::endl;
+    // Ignoring all input except for EOL.
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-    // No explicit call to stop the platform.
-    // When OCPlatform::destructor is invoked, internally we do platform cleanup
-
+    // Perform platform clean up.
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     return 0;
 
 }

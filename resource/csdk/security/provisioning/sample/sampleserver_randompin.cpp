@@ -20,26 +20,41 @@
 ///////////////////////////////////////////////////////////////////////
 //NOTE :  This sample server is generated based on ocserverbasicops.cpp
 ///////////////////////////////////////////////////////////////////////
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
 #include <signal.h>
-#include <pthread.h>
 #include "ocstack.h"
-#include "logger.h"
 #include "ocpayload.h"
 #include "pinoxmcommon.h"
+
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+/** @todo stop-gap for naming issue. Windows.h does not like us to use ERROR */
+#ifdef ERROR
+#undef ERROR
+#endif //ERROR
+#endif //HAVE_WINDOWS_H
+#include "platform_features.h"
+#include "logger.h"
 
 #define TAG "SAMPLE_RANDOMPIN"
 
 int gQuitFlag = 0;
+const char * specVersion = "ocf.1.1.0";
 
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE{
     OCResourceHandle handle;
     bool state;
-    int power;
+    int64_t power;
 } LEDResource;
 
 static LEDResource LED;
@@ -54,12 +69,12 @@ char *gResourceUri= (char *)"/a/led";
 //Secure Virtual Resource database for Iotivity Server
 //It contains Server's Identity and the PSK credentials
 //of other devices which the server trusts
-static char CRED_FILE[] = "oic_svr_db_server_randompin.json";
+static char CRED_FILE[] = "oic_svr_db_server_randompin.dat";
 
 /* Function that creates a new LED resource by calling the
  * OCCreateResource() method.
  */
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower);
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower);
 
 /* This method converts the payload to JSON format */
 OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest);
@@ -128,6 +143,43 @@ const char *getResult(OCStackResult result) {
     }
 }
 
+#ifdef MULTIPLE_OWNER
+
+#include <assert.h>
+#include <thread>
+#include <chrono>
+
+static bool volatile g_LoopFlag;
+static std::thread* oc_process_thread;
+
+static void oc_process_loop()
+{
+    while(g_LoopFlag)
+    {
+        if (OCProcess() != OC_STACK_OK)
+        {
+            OIC_LOG(ERROR, TAG, "OCStack process error");
+            g_LoopFlag = false;
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+static void StartOCProcessThread()
+{
+    g_LoopFlag = true;
+    oc_process_thread = new std::thread(oc_process_loop);
+}
+
+static void StopOCProcessThread()
+{
+    assert(oc_process_thread->joinable() == true);
+    g_LoopFlag = false;
+    oc_process_thread->join();
+}
+#endif //MULTIPLE_OWNER
+
 OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
@@ -174,7 +226,7 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
         int64_t pow;
         if(OCRepPayloadGetPropInt(input, "power", &pow))
         {
-            currLEDResource->power =pow;
+            currLEDResource->power = pow;
         }
 
         bool state;
@@ -250,7 +302,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
         {
             // Create new LED instance
             char newLedUri[15] = "/a/led/";
-            int newLedUriLength = strlen(newLedUri);
+            size_t newLedUriLength = strlen(newLedUri);
             snprintf (newLedUri + newLedUriLength, sizeof(newLedUri)-newLedUriLength, "%d", gCurrLedInstance);
 
             respPLPost_led = OCRepPayloadCreate();
@@ -263,7 +315,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
                 gLedInstance[gCurrLedInstance].state = 0;
                 gLedInstance[gCurrLedInstance].power = 0;
                 gCurrLedInstance++;
-                strncpy ((char *)response->resourceUri, newLedUri, MAX_URI_LENGTH);
+                strncpy ((char *)response->resourceUri, newLedUri, sizeof(response->resourceUri));
                 ehResult = OC_EH_RESOURCE_CREATED;
             }
         }
@@ -392,12 +444,21 @@ void handleSigInt(int signum)
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen(CRED_FILE, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE, mode);
+    }
+    else
+    {
+        // unknown file request - try to open it by the given name
+        return fopen(path, mode);
+    }
 }
 
-void GeneratePinCB(char* pin, size_t pinSize)
+void OC_CALL DisplayPinCB(char *pin, size_t pinSize, void *context)
 {
+    OC_UNUSED(context);
+
     if(NULL == pin || pinSize <= 0)
     {
         OIC_LOG(INFO, TAG, "Invalid PIN");
@@ -409,14 +470,19 @@ void GeneratePinCB(char* pin, size_t pinSize)
     OIC_LOG(INFO, TAG, "============================");
 }
 
+void OC_CALL ClosePinDisplayCB(void)
+{
+    OIC_LOG(INFO, TAG, "============================");
+    OIC_LOG(INFO, TAG, "    PIN DISPLAY CLOSED.");
+    OIC_LOG(INFO, TAG, "============================");
+}
+
 int main()
 {
-    struct timespec timeout;
-
     OIC_LOG(DEBUG, TAG, "OCServer is starting...");
 
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
+    OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, remove};
     OCRegisterPersistentStorageHandler(&ps);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -426,22 +492,64 @@ int main()
     }
 
    /**
-     * If server supported random pin based ownership transfer,
-     * callback of print PIN should be registered before runing server.
+     * If the server supports random pin based ownership transfer, the callback
+     * to display a PIN should be registered before running the server.
      */
-    SetGeneratePinCB(&GeneratePinCB);
+    SetDisplayPinWithContextCB(DisplayPinCB, NULL);
+
+    /**
+     * If the server supports random pin based OTM,
+     * the callback to close PIN display can be registered.
+     * This callback will be invoked when random PIN based OTM is done.
+     */
+    SetClosePinDisplayCB(ClosePinDisplayCB);
+
+    /**
+     * Random PIN generation policy can be changed through SetRandomPinPolicy() API.
+     * first param : byte length of random PIN ( 4 <= first param <= 32)
+     * second param : PIN type (This is bitmask)
+     */
+    if(OC_STACK_OK != SetRandomPinPolicy(8, NUM_PIN))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to setting PIN policy");
+        return 0;
+    }
+    OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, (void*) specVersion);
 
     /*
      * Declare and create the example resource: LED
      */
     createLEDResource(gResourceUri, &LED, false, 0);
 
-    timeout.tv_sec  = 0;
-    timeout.tv_nsec = 100000000L;
-
     // Break from loop with Ctrl-C
     OIC_LOG(INFO, TAG, "Entering ocserver main loop...");
     signal(SIGINT, handleSigInt);
+
+#ifdef MULTIPLE_OWNER
+    StartOCProcessThread();
+
+    while(!gQuitFlag)
+    {
+        printf("Press 'G' to generate random PIN...\n");
+        printf("Press 'E' to exit...\n");
+        char in = (char)getchar();
+        if('G' == in || 'g' == in)
+        {
+            char ranPin[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
+            GeneratePin(ranPin, sizeof(ranPin));
+        }
+        if('E' == in || 'e' == in)
+        {
+            break;
+        }
+    }
+
+    StopOCProcessThread();
+#else
+    struct timespec timeout;
+    timeout.tv_sec  = 0;
+    timeout.tv_nsec = 100000000L;
+
     while (!gQuitFlag)
     {
         if (OCProcess() != OC_STACK_OK)
@@ -451,6 +559,7 @@ int main()
         }
         nanosleep(&timeout, NULL);
     }
+#endif //MULTIPLE_OWNER
 
     OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 
@@ -462,7 +571,7 @@ int main()
     return 0;
 }
 
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower)
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower)
 {
     if (!uri)
     {

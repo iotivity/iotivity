@@ -18,18 +18,27 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <ocstack.h>
 #include <iostream>
 #include <sstream>
+#include <getopt.h>
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "logger.h"
-const char *getResult(OCStackResult result);
+#include "common.h"
+#include "oic_string.h"
+
 std::string getQueryStrForGetPut();
 
 #define TAG ("occlient")
@@ -50,6 +59,8 @@ typedef enum
     TEST_UNKNOWN_RESOURCE_GET_DEFAULT,
     TEST_UNKNOWN_RESOURCE_GET_BATCH,
     TEST_UNKNOWN_RESOURCE_GET_LINK_LIST,
+    TEST_GET_EMPTY,
+    TEST_GET_NULL,
     MAX_TESTS
 } CLIENT_TEST;
 
@@ -83,6 +94,9 @@ testToTextMap queryInterface[] = {
         {"?if=oic.if.baseline", TEST_PUT_DEFAULT},
         {"?if=oic.if.b", TEST_PUT_BATCH},
         {"?if=oic.if.ll", TEST_PUT_LINK_LIST},
+        {"", TEST_GET_EMPTY},
+        {"", TEST_GET_NULL}, // testToTextMap.text[30] can not be set to NULL.
+                             // This is a special case see InitGetRequestOnNullResource.
 };
 
 
@@ -111,6 +125,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse);
 int InitObserveRequest(OCClientResponse * clientResponse);
 int InitPutRequest(OCClientResponse * clientResponse);
+int InitGetRequestOnNullResource(OCClientResponse * clientResponse);
 int InitGetRequest(OCClientResponse * clientResponse);
 int InitDiscovery();
 
@@ -153,6 +168,11 @@ void PrintUsage()
                  "unavailable resource using batch interface.");
     OIC_LOG(INFO, TAG, "Test Case 9 : Discover Resources && Initiate GET Request on an "\
                  "unavailable resource using link list interface.");
+    OIC_LOG(INFO, TAG, "Test Case 10 : Discover Resources && Initiate GET Request on an "\
+                 "empty resource.");
+    OIC_LOG(INFO, TAG, "Test Case 11 : Discover Resources && Initiate GET Request on an "\
+                 "NULL resource.");
+
 }
 
 OCStackApplicationResult putReqCB(void* ctx, OCDoHandle /*handle*/,
@@ -234,6 +254,10 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
     {
         InitGetRequestToUnavailableResource(clientResponse);
     }
+    else if(TestType == TEST_GET_NULL)
+    {
+        InitGetRequestOnNullResource(clientResponse);
+    }
     else
     {
         InitGetRequest(clientResponse);
@@ -252,9 +276,9 @@ int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, OC_REST_GET, getQuery.str().c_str(),
-                       &clientResponse->devAddr, 0, ConnType, OC_LOW_QOS,
-                       &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_GET, getQuery.str().c_str(),
+                      &clientResponse->devAddr, 0, ConnType, OC_LOW_QOS,
+                      &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -278,9 +302,9 @@ int InitObserveRequest(OCClientResponse * clientResponse)
     OIC_LOG_PAYLOAD(INFO, payload);
     OCPayloadDestroy(payload);
 
-    ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(),
-                       &clientResponse->devAddr, 0, ConnType,
-                       OC_LOW_QOS, &cbData, NULL, 0);
+    ret = OCDoRequest(&handle, OC_REST_OBSERVE, obsReg.str().c_str(),
+                      &clientResponse->devAddr, 0, ConnType,
+                      OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -299,20 +323,20 @@ int InitPutRequest(OCClientResponse * clientResponse)
     OCCallbackData cbData;
     //* Make a PUT query*/
     std::ostringstream getQuery;
-    getQuery << "coap://" << clientResponse->devAddr.addr << ":" <<
-            clientResponse->devAddr.port <<
-            "/a/room" << queryInterface[TestType].text;
+    getQuery << "/a/room" << queryInterface[TestType].text;
     cbData.cb = putReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
     OIC_LOG_V(INFO, TAG, "PUT payload from client = ");
     OCPayload* payload = putPayload();
     OIC_LOG_PAYLOAD(INFO, payload);
+
+    ret = OCDoRequest(NULL, OC_REST_PUT, getQuery.str().c_str(),
+                      &clientResponse->devAddr, payload, ConnType,
+                      OC_LOW_QOS, &cbData, NULL, 0);
+
     OCPayloadDestroy(payload);
 
-    ret = OCDoResource(NULL, OC_REST_PUT, getQuery.str().c_str(),
-                       &clientResponse->devAddr, putPayload(), ConnType,
-                       OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -320,6 +344,30 @@ int InitPutRequest(OCClientResponse * clientResponse)
     return ret;
 }
 
+int InitGetRequestOnNullResource(OCClientResponse * clientResponse)
+{
+    OCStackResult ret;
+    OCCallbackData cbData;
+
+    //* Make a GET query*/
+    std::ostringstream getQuery;
+    char* nullResource = NULL;
+    getQuery << "/a/room" << nullResource;
+
+    std::cout << "Get Query: " << getQuery.str() << std::endl;
+
+    cbData.cb = getReqCB;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
+    cbData.cd = NULL;
+    ret = OCDoRequest(NULL, OC_REST_GET, getQuery.str().c_str(),
+                      &clientResponse->devAddr, 0, ConnType, OC_LOW_QOS,
+                      &cbData, NULL, 0);
+    if (ret != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+    }
+    return ret;
+}
 
 int InitGetRequest(OCClientResponse * clientResponse)
 {
@@ -335,9 +383,9 @@ int InitGetRequest(OCClientResponse * clientResponse)
     cbData.cb = getReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    ret = OCDoResource(NULL, OC_REST_GET, getQuery.str().c_str(),
-                       &clientResponse->devAddr, 0, ConnType, OC_LOW_QOS,
-                       &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_GET, getQuery.str().c_str(),
+                      &clientResponse->devAddr, 0, ConnType, OC_LOW_QOS,
+                      &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -350,16 +398,16 @@ int InitDiscovery()
     OCStackResult ret;
     OCCallbackData cbData;
     /* Start a discovery query*/
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
-    strcpy(szQueryUri, RESOURCE_DISCOVERY_QUERY);
+    OICStrcpy(szQueryUri, sizeof(szQueryUri), RESOURCE_DISCOVERY_QUERY);
 
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, ConnType,
-                        OC_LOW_QOS,
-            &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, ConnType,
+                      OC_LOW_QOS,
+                      &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -439,4 +487,3 @@ std::string getQueryStrForGetPut()
 {
     return "/a/room";
 }
-

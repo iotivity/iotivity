@@ -23,7 +23,11 @@
 /// This sample provides steps to define an interface for a resource
 /// (properties and methods) and host this resource on the server.
 ///
+#include "iotivity_config.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <functional>
 
 #include <pthread.h>
@@ -32,6 +36,7 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+#include "ocpayload.h"
 
 using namespace OC;
 using namespace std;
@@ -40,6 +45,28 @@ namespace PH = std::placeholders;
 int gObservation = 0;
 void * ChangeLightRepresentation (void *param);
 void * handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequest);
+
+// Set of strings for each of platform Info fields
+std::string  platformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+std::string  manufacturerName = "OCF";
+std::string  manufacturerLink = "https://www.iotivity.org";
+std::string  modelNumber = "myModelNumber";
+std::string  dateOfManufacture = "2016-01-15";
+std::string  platformVersion = "myPlatformVersion";
+std::string  operatingSystemVersion = "myOS";
+std::string  hardwareVersion = "myHardwareVersion";
+std::string  firmwareVersion = "1.0";
+std::string  supportLink = "https://www.iotivity.org";
+std::string  systemTime = "2016-01-15T11.01";
+
+// Set of strings for each of device info fields
+std::string  deviceName = "IoTivity Light Server";
+std::string  specVersion = "ocf.1.1.0";
+std::vector<std::string> dataModelVersions = {"ocf.res.1.1.0"};
+std::string  protocolIndependentID = "b0ed9259-ec95-4ac6-8f62-241d0da02683";
+
+// OCPlatformInfo Contains all the platform info to be stored
+OCPlatformInfo platformInfo;
 
 // Specifies secure or non-secure
 // false: non-secure resource
@@ -200,7 +227,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                 }
                 else // normal response case.
                 {
-                    pResponse->setErrorCode(200);
+
                     pResponse->setResponseResult(OC_EH_OK);
                     pResponse->setResourceRepresentation(get());
                     if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -217,7 +244,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                 // Do related operations related to PUT request
                 // Update the lightResource
                 put(rep);
-                pResponse->setErrorCode(200);
+
                 pResponse->setResponseResult(OC_EH_OK);
                 pResponse->setResourceRepresentation(get());
                 if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -234,7 +261,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                 // Do related operations related to POST request
                 OCRepresentation rep_post = post(rep);
                 pResponse->setResourceRepresentation(rep_post);
-                pResponse->setErrorCode(200);
+
                 if(rep_post.hasAttribute("createduri"))
                 {
                     pResponse->setResponseResult(OC_EH_RESOURCE_CREATED);
@@ -273,7 +300,7 @@ void * handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequ
     pResponse->setRequestHandle(pRequest->getRequestHandle());
     pResponse->setResourceHandle(pRequest->getResourceHandle());
     pResponse->setResourceRepresentation(lightPtr->get());
-    pResponse->setErrorCode(200);
+
     pResponse->setResponseResult(OC_EH_OK);
 
     // Set the slow response flag back to false
@@ -282,19 +309,132 @@ void * handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequ
     return NULL;
 }
 
+void DeletePlatformInfo()
+{
+    delete[] platformInfo.platformID;
+    delete[] platformInfo.manufacturerName;
+    delete[] platformInfo.manufacturerUrl;
+    delete[] platformInfo.modelNumber;
+    delete[] platformInfo.dateOfManufacture;
+    delete[] platformInfo.platformVersion;
+    delete[] platformInfo.operatingSystemVersion;
+    delete[] platformInfo.hardwareVersion;
+    delete[] platformInfo.firmwareVersion;
+    delete[] platformInfo.supportUrl;
+    delete[] platformInfo.systemTime;
+}
+
+void DuplicateString(char ** targetString, std::string sourceString)
+{
+    *targetString = new char[sourceString.length() + 1];
+    strncpy(*targetString, sourceString.c_str(), (sourceString.length() + 1));
+}
+
+OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerName,
+        std::string manufacturerUrl, std::string modelNumber, std::string dateOfManufacture,
+        std::string platformVersion, std::string operatingSystemVersion,
+        std::string hardwareVersion, std::string firmwareVersion, std::string supportUrl,
+        std::string systemTime)
+{
+    DuplicateString(&platformInfo.platformID, platformID);
+    DuplicateString(&platformInfo.manufacturerName, manufacturerName);
+    DuplicateString(&platformInfo.manufacturerUrl, manufacturerUrl);
+    DuplicateString(&platformInfo.modelNumber, modelNumber);
+    DuplicateString(&platformInfo.dateOfManufacture, dateOfManufacture);
+    DuplicateString(&platformInfo.platformVersion, platformVersion);
+    DuplicateString(&platformInfo.operatingSystemVersion, operatingSystemVersion);
+    DuplicateString(&platformInfo.hardwareVersion, hardwareVersion);
+    DuplicateString(&platformInfo.firmwareVersion, firmwareVersion);
+    DuplicateString(&platformInfo.supportUrl, supportUrl);
+    DuplicateString(&platformInfo.systemTime, systemTime);
+
+    return OC_STACK_OK;
+}
+
+OCStackResult SetDeviceInfo()
+{
+    OCStackResult result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+                                                        deviceName);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set device name" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                          dataModelVersions);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set data model versions" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set spec version" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          protocolIndependentID);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set piid" << endl;
+        return result;
+    }
+
+    return OC_STACK_OK;
+}
+
+FILE* server_fopen(const char* path, const char* mode)
+{
+    if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME))
+    {
+        return fopen("light_introspection.dat", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
+}
+
 
 int main(int /*argc*/, char** /*argv[]*/)
 {
+    // Create persistent storage handlers
+    OCPersistentStorage ps{server_fopen, fread, fwrite, fclose, unlink};
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Server,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
-        OC::QualityOfService::LowQos
+        &ps
     };
 
     OCPlatform::Configure(cfg);
+    std::cout << "Starting server & setting platform info\n";
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
+
+    OCStackResult result = SetPlatformInfo(platformId, manufacturerName, manufacturerLink,
+            modelNumber, dateOfManufacture, platformVersion, operatingSystemVersion,
+            hardwareVersion, firmwareVersion, supportLink, systemTime);
+
+    result = OCPlatform::registerPlatformInfo(platformInfo);
+
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Platform Registration failed\n";
+        return -1;
+    }
+
+    result = SetDeviceInfo();
+
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Device Registration failed\n";
+        return -1;
+    }
+
     try
     {
         // Create the instance of the resource class
@@ -306,6 +446,8 @@ int main(int /*argc*/, char** /*argv[]*/)
 
         myLight.addType(std::string("core.brightlight"));
         myLight.addInterface(std::string(LINK_INTERFACE));
+
+        DeletePlatformInfo();
 
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we
@@ -321,9 +463,8 @@ int main(int /*argc*/, char** /*argv[]*/)
        oclog() << "Exception in main: "<< e.what();
     }
 
-    // No explicit call to stop the platform.
-    // When OCPlatform::destructor is invoked, internally we do platform cleanup
-
+    // Perform platform clean up.
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     return 0;
 }
 

@@ -19,18 +19,26 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <string>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <signal.h>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <ocstack.h>
 #include <logger.h>
+#include <getopt.h>
 #include "ocpayload.h"
-
-const char *getResult(OCStackResult result);
+#include "common.h"
 
 #define TAG PCF("ocservercontainer")
 
@@ -43,7 +51,7 @@ typedef struct LIGHTRESOURCE{
     int power;
 } LightResource;
 
-static LightResource light;
+static LightResource gLight;
 
 char *gLightResourceUri= (char *)"/a/light";
 char *gRoomResourceUri= (char *)"/a/room";
@@ -311,9 +319,9 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
         {
             OIC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
                     ehRequest->method);
-            OCRepPayloadDestroy(payload);
             ret = OC_EH_ERROR;
         }
+        OCRepPayloadDestroy(payload);
     }
     else if (ehRequest && flag == OC_OBSERVE_FLAG)
     {
@@ -374,10 +382,7 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
                 ret = OC_EH_ERROR;
             }
         }
-        else
-        {
-            OCRepPayloadDestroy(payload);
-        }
+        OCRepPayloadDestroy(payload);
     }
     else if (ehRequest && flag == OC_OBSERVE_FLAG)
     {
@@ -468,12 +473,12 @@ void *ChangeLightRepresentation (void *param)
     while (!gQuitFlag)
     {
         sleep(10);
-        light.power += 5;
+        gLight.power += 5;
         if (gLightUnderObservation)
         {
             OIC_LOG_V(INFO, TAG,
-                " =====> Notifying stack of new power level %d\n", light.power);
-            result = OCNotifyAllObservers (light.handle, OC_NA_QOS);
+                " =====> Notifying stack of new power level %d\n", gLight.power);
+            result = OCNotifyAllObservers (gLight.handle, OC_NA_QOS);
             if (OC_STACK_NO_OBSERVERS == result)
             {
                 gLightUnderObservation = 0;
@@ -542,8 +547,10 @@ int main(int argc, char* argv[])
     /*
      * Cancel the light thread and wait for it to terminate
      */
+#ifdef HAVE_PTHREAD_H
     pthread_cancel(threadId);
     pthread_join(threadId, NULL);
+#endif
 
     OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 
@@ -557,7 +564,7 @@ int main(int argc, char* argv[])
 
 void createResources()
 {
-    light.state = false;
+    gLight.state = false;
 
     OCResourceHandle fan;
     OCStackResult res = OCCreateResource(&fan,

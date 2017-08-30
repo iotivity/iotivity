@@ -1,81 +1,129 @@
+# -*- mode: python; python-indent-offset: 4; indent-tabs-mode: nil -*-
 ##
-# 'googletest' script to check if Google Unit Test library is installed.  If not,
-# get it and install it
+# script to check if Google Unit Test library is installed.
+# If not, get it and install it
 #
 ##
 
 import os
-
 Import('env')
 
-target_os = env.get('TARGET_OS')
-src_dir = env.get('SRC_DIR')
+gtest_env = env.Clone()
+target_os = gtest_env.get('TARGET_OS')
+src_dir = gtest_env.get('SRC_DIR')
 
-targets_need_gtest = ['darwin','linux']
-gtest_dir      = src_dir + '/extlibs/gtest/gtest-1.7.0'
-gtest_zip_file = src_dir + '/extlibs/gtest/gtest-1.7.0.zip'
-gtest_url      = 'https://googletest.googlecode.com/files/gtest-1.7.0.zip'
+targets_need_gtest = ['darwin', 'linux', 'msys_nt', 'windows']
 
-if target_os in targets_need_gtest:
-	print '*** Checking for installation of google unit test 1.7.0 ***'
+GTEST_VERSION = '1.7.0'
+gtest_dir = os.path.join(src_dir, 'extlibs', 'gtest',
+                         'googletest-release-' + GTEST_VERSION)
+gtest_lib_dir = os.path.join(gtest_dir, 'lib')
+gtest_configured_sentinel = os.path.join(gtest_dir, 'Makefile')
+gtest_unpacked_sentinel = os.path.join(gtest_dir, 'CMakeLists.txt')
+gtest_dotlib_dir = os.path.join(gtest_lib_dir, '.libs')
+gtest_zip_file = 'release-' + GTEST_VERSION + '.zip'
+gtest_url = 'https://github.com/google/googletest/archive/' + gtest_zip_file
+gtest_zip_path = os.path.join(src_dir, 'extlibs', 'gtest', gtest_zip_file)
 
-	if not os.path.exists(gtest_dir):
-		# If the gtest zip file is not already present, download it
-		if not os.path.exists(gtest_zip_file):
-			gtest_zip = env.Download(gtest_zip_file, gtest_url)
-		else:
-			gtest_zip = gtest_zip_file
+# nothing to do if this target doesn't use gtest
+if target_os not in targets_need_gtest:
+    Return("gtest_env")
 
-		# Unzip gtest
-		print 'Unzipping google unit test'
-		env.UnpackAll(gtest_dir, gtest_zip)
+# nothing to do if asked for help
+if gtest_env.GetOption('help'):
+    Return("gtest_env")
 
+# Clean up gtest if 'clean' is specified, and it looks like has been built.
+# Implicity skips the targets which don't "configure" (e.g. windows)
+if gtest_env.GetOption('clean'):
+    print 'Cleaning google unit test'
+    if os.path.exists(gtest_configured_sentinel):
+        clean = "cd %s && make clean" % gtest_dir
+        Execute(clean)
+    Return("gtest_env")
 
-if target_os == 'darwin':
-	if os.path.exists(gtest_dir):
-		# Build gtest and store it at a temporary directory
-		gtest_lib_dir = gtest_dir + '/lib'
-		gtest_dotlib_dir = gtest_lib_dir + '/.libs'
+print '*** Checking for installation of google unit test %s ***', GTEST_VERSION
+if not os.path.exists(gtest_unpacked_sentinel):
+    # If the gtest zip file is not already present, download it
+    if not os.path.exists(gtest_zip_path):
+        gtest_zip = gtest_env.Download(gtest_zip_path, gtest_url)
+    else:
+        gtest_zip = gtest_zip_path
+    print 'Unzipping to : ' + gtest_dir
+    gtest_env.UnpackAll(gtest_dir, gtest_zip)
 
-        if not os.path.exists(gtest_lib_dir):
-#			print 'Create a directory'
-#			os.mkdir(gtest_lib_dir)
+if target_os in ['linux']:
+    if not os.path.exists(gtest_configured_sentinel):
+        # Run configure on gtest
+        print 'Configuring google unit test'
+        reconfigure_ran = gtest_env.Configure(gtest_dir, 'autoreconf -i')
+        if env.get('CROSS_COMPILE'):
+            configure_ran = env.Configure(
+                gtest_dir,
+                './configure --disable-shared --host=' + env['CROSS_COMPILE'])
+        else:
+            configure_ran = env.Configure(gtest_dir,
+                                          './configure --disable-shared')
+        gtest_env.Depends(configure_ran, reconfigure_ran)
 
+    # Run make on gtest
+    print 'Making google unit test'
+    make_ran = gtest_env.Configure(gtest_dir, 'make')
 
-			print 'Invoke cmake command to generate appropriate make files'
-			env.Configure(gtest_dir, './configure')
+elif target_os in ['darwin', 'msys_nt'] and os.path.exists(gtest_dir):
+    if not os.path.exists(gtest_configured_sentinel):
+        # Create lib dir
+        os.mkdir(gtest_lib_dir)
+        os.mkdir(gtest_dotlib_dir)
 
-			# Run make on gtest
-			print 'Making google unit test'
-			env.Configure(gtest_dir, 'make')
+        # Run configure on gtest
+        print 'Configuring google unit test for compilation'
+        gtest_env.Configure(gtest_dir, 'cmake -G "Unix Makefiles" .')
 
-#			print 'Create a directory'
-#			os.mkdir(gtest_dotlib_dir)
+    # Run make on gtest
+    print 'Making google unit test'
+    gtest_env.Configure(gtest_dir, 'make')
 
-			print 'Change to a directory'
-			os.chdir(gtest_dotlib_dir)
+    print 'Moving libraries to lib folder'
+    gtest_env.Configure(gtest_dir, 'cp libgtest.a lib')
+    gtest_env.Configure(gtest_dir, 'mv libgtest.a lib/.libs')
+    gtest_env.Configure(gtest_dir, 'cp libgtest_main.a lib')
+    gtest_env.Configure(gtest_dir, 'mv libgtest_main.a lib/.libs')
 
-##			print 'Change to a directory'
-#			os.chdir(gtest_lib_dir)
+elif target_os in ['windows'] and 'IOTIVITY_GTEST_HAS_BEEN_BUILT' not in env:
+    # Avoid building the same StaticLibrary in more than one environment,
+    # by using the IOTIVITY_GTEST_HAS_BEEN_BUILT environment variable
+    gtest_env.AppendUnique(CPPPATH=[gtest_dir])
+    gtest_build_env = gtest_env.Clone()
+    gtest_build_env.AppendUnique(CPPPATH=[os.path.join(gtest_dir, 'include')])
+    gtest_build_env.AppendUnique(CXXFLAGS=['/EHsc'])
+    gtest_build_env.AppendUnique(CCFLAGS=['/W4', '/WX'])
+    gtest = gtest_build_env.StaticLibrary(
+        target='gtest', source=['%s/src/gtest-all.cc' % gtest_dir])
+    gtest_main = gtest_build_env.StaticLibrary(
+        target='gtest_main', source=['%s/src/gtest_main.cc' % gtest_dir])
+    gtest_env.InstallTarget(gtest, 'gtest')
+    gtest_env.InstallTarget(gtest_main, 'gtest_main')
 
-			print 'Create hard links pointing to gtest libraries'
-			os.link('libgtest.a', gtest_lib_dir + 'libgtest.a')
-			os.link('libgtest_main.a', gtest_lib_dir +  'libgtest_main.a')
-			print 'Create hard links pointing to gtest libraries - DONE'
+    gtest_vars = Variables()
+    gtest_vars.AddVariables(('IOTIVITY_GTEST_HAS_BEEN_BUILT', '', '1'))
+    gtest_vars.Update(env)
 
+# Export flags once for all
+gtest_env.AppendUnique(LIBPATH=[gtest_dotlib_dir])
+gtest_env.PrependUnique(CPPPATH=[os.path.join(gtest_dir, 'include')])
+gtest_env.AppendENVPath('LD_LIBRARY_PATH', gtest_dotlib_dir)
+if 'g++' in gtest_env.get('CXX'):
+    gtest_env.AppendUnique(CXXFLAGS=['-std=c++0x'])
+    gtest_env.AppendUnique(CXXFLAGS=['-Wall'])
+    # Note: 'pthread' for android is in bionic
+    # On other platforms, if use new gcc(>4.9?) it isn't required,
+    # otherwise, it's required
+    if target_os not in ['android']:
+        gtest_env.AppendUnique(CXXFLAGS=['-pthread'])
+        gtest_env.PrependUnique(LIBS=['pthread'])
+gtest_env.PrependUnique(LIBS=['gtest', 'gtest_main'])
+if target_os in ['windows']:
+    gtest_env.AppendUnique(LINKFLAGS=['/subsystem:CONSOLE'])
 
-elif target_os == 'linux':
-	if os.path.exists(gtest_dir):
-		if not os.path.exists(gtest_dir + "/lib"):
-			# Run configure on gtest
-			print 'Configuring google unit test'
-			if env.get('CROSS_COMPILE'):
-				env.Configure(gtest_dir, './configure --host=' + env['CROSS_COMPILE'])
-			else:
-				env.Configure(gtest_dir, './configure')
-
-			# Run make on gtest
-			print 'Making google unit test'
-			env.Configure(gtest_dir, 'make')
-
-
+Return('gtest_env')

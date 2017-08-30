@@ -51,7 +51,7 @@ private:
        std::cout <<"Clientside Put response to get was: "<<std::endl;
        std::cout <<"ErrorCode: "<<eCode <<std::endl;
 
-       if(eCode == 0)
+       if(eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
        {
             std::cout<<"Successful Put.  Attributes sent were: "<<std::endl;
 
@@ -235,7 +235,7 @@ struct FooResource
         pResponse->setRequestHandle(pRequest->getRequestHandle());
         pResponse->setResourceHandle(pRequest->getResourceHandle());
         pResponse->setResourceRepresentation(get(), "");
-        pResponse->setErrorCode(200);
+
         pResponse->setResponseResult(OC_EH_OK);
 
         return OCPlatform::sendResponse(pResponse);
@@ -341,9 +341,7 @@ int main(int argc, char* argv[])
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Both,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
-        OC::QualityOfService::LowQos
+        nullptr
     };
 
     OCPlatform::Configure(cfg);
@@ -351,14 +349,18 @@ int main(int argc, char* argv[])
 
     try
     {
+        OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
 
         if(!fooRes.createResource())
         {
+            OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
             return -1;
         }
 
         ClientWorker cw(connectivityType);
         cw.start();
+
+        OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
     }
     catch(OCException& e)
     {

@@ -20,25 +20,42 @@
 ///////////////////////////////////////////////////////////////////////
 //NOTE :  This sample server is generated based on ocserverbasicops.cpp
 ///////////////////////////////////////////////////////////////////////
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <signal.h>
+#endif
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
+#include <signal.h>
 #include "ocstack.h"
-#include "logger.h"
 #include "ocpayload.h"
+#include "pinoxmcommon.h"
+
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+/** @todo stop-gap for naming issue. Windows.h does not like us to use ERROR */
+#ifdef ERROR
+#undef ERROR
+#endif //ERROR
+#endif //HAVE_WINDOWS_H
+#include "platform_features.h"
+#include "logger.h"
+
 
 #define TAG "SAMPLE_JUSTWORKS"
 
+const char * specVersion = "ocf.1.1.0";
 int gQuitFlag = 0;
 
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE{
     OCResourceHandle handle;
     bool state;
-    int power;
+    int64_t power;
 } LEDResource;
 
 static LEDResource LED;
@@ -53,12 +70,12 @@ char *gResourceUri= (char *)"/a/led";
 //Secure Virtual Resource database for Iotivity Server
 //It contains Server's Identity and the PSK credentials
 //of other devices which the server trusts
-static char CRED_FILE[] = "oic_svr_db_server_justworks.json";
+static char CRED_FILE[] = "oic_svr_db_server_justworks.dat";
 
 /* Function that creates a new LED resource by calling the
  * OCCreateResource() method.
  */
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower);
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower);
 
 /* This method converts the payload to JSON format */
 OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest);
@@ -173,7 +190,7 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
         int64_t pow;
         if(OCRepPayloadGetPropInt(input, "power", &pow))
         {
-            currLEDResource->power =pow;
+            currLEDResource->power = pow;
         }
 
         bool state;
@@ -249,8 +266,8 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
         {
             // Create new LED instance
             char newLedUri[15] = "/a/led/";
-            int newLedUriLength = strlen(newLedUri);
-            snprintf (newLedUri + newLedUriLength, sizeof(newLedUri)-newLedUriLength, "%d", gCurrLedInstance);
+            size_t newLedUriLength = strlen(newLedUri);
+            snprintf(newLedUri + newLedUriLength, sizeof(newLedUri) - newLedUriLength, "%d", gCurrLedInstance);
 
             respPLPost_led = OCRepPayloadCreate();
             OCRepPayloadSetUri(respPLPost_led, gResourceUri);
@@ -262,7 +279,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
                 gLedInstance[gCurrLedInstance].state = 0;
                 gLedInstance[gCurrLedInstance].power = 0;
                 gCurrLedInstance++;
-                strncpy ((char *)response->resourceUri, newLedUri, MAX_URI_LENGTH);
+                strncpy ((char *)response->resourceUri, newLedUri, sizeof(response->resourceUri));
                 ehResult = OC_EH_RESOURCE_CREATED;
             }
         }
@@ -391,8 +408,14 @@ void handleSigInt(int signum)
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen(CRED_FILE, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main()
@@ -402,7 +425,7 @@ int main()
     OIC_LOG(DEBUG, TAG, "OCServer is starting...");
 
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
+    OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, remove};
 
     OCRegisterPersistentStorageHandler(&ps);
 
@@ -411,6 +434,7 @@ int main()
         OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
+    OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, (void*) specVersion);
 
     /*
      * Declare and create the example resource: LED
@@ -443,7 +467,7 @@ int main()
     return 0;
 }
 
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower)
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower)
 {
     if (!uri)
     {

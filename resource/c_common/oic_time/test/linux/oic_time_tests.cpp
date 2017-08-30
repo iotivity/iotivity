@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "oic_time.h"
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <stdint.h>
 
 // Tests to get current time in milli seconds

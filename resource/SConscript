@@ -23,66 +23,40 @@
 #
 ##
 
-import os
-
 Import('env')
 
 target_os = env.get('TARGET_OS')
-src_dir = env.get('SRC_DIR')
-
-# Build liblogger
-SConscript('csdk/logger/SConscript')
-
-if target_os not in ['arduino', 'darwin', 'ios', 'android']:
-	env.AppendUnique(LIBS=['rt'])
-
-# Build libcoap
-SConscript('csdk/connectivity/lib/libcoap-4.1.1/SConscript')
 
 # Build C Common dependencies
 SConscript('c_common/SConscript')
 
-# Build connectivity
-SConscript('csdk/connectivity/SConscript')
+if target_os not in ['arduino', 'darwin', 'ios', 'android', 'msys_nt', 'windows']:
+    env.AppendUnique(LIBS=['rt'])
 
-if env.get('ROUTING') in ['GW', 'EP']:
-	# Build Routing
-	SConscript('csdk/routing/SConscript')
+# Download (if not already present) & build libcoap
+SConscript('#extlibs/libcoap/SConscript')
 
-# Build libocsrm
-SConscript('csdk/security/SConscript')
-
-# Build liboctbstack
+# Build csdk
 SConscript('csdk/SConscript')
 
-if target_os not in ['arduino','darwin','ios']:
-	# Build liboc_logger
-	SConscript('oc_logger/SConscript')
+if target_os not in ['arduino', 'darwin', 'ios']:
+    # Build liboc_logger
+    SConscript('oc_logger/SConscript')
 
-	# Build liboc
-	SConscript('src/SConscript')
+    # Build liboc
+    SConscript('src/SConscript')
+
+if target_os in ['windows', 'linux']:
+    # Build IoTivity Procedural Client API
+    SConscript('IPCA/SConscript')
 
 if target_os not in ['arduino','darwin','ios','android']:
-	# Build examples
-	SConscript('examples/SConscript')
+    # Build examples
+    SConscript('examples/SConscript')
 
-if target_os == 'linux':
-	# Build C Samples
-	SConscript('csdk/stack/samples/linux/SimpleClientServer/SConscript')
+if target_os in ['linux', 'windows', 'darwin', 'msys_nt']:
+    if target_os == 'darwin':
+        env.Command('#/out/darwin/iotivity-csdk.framework', None, '#/tools/darwin/mkfwk_osx.sh')
 
-	# Build secure samples
-	SConscript('csdk/stack/samples/linux/secure/SConscript')
-
-	# Build C/C++ unit tests
-	SConscript('unit_tests.scons')
-
-elif target_os == 'darwin':
-	env.Command('../../out/darwin/iotivity-csdk.framework',None,src_dir + '/tools/darwin/mkfwk_osx.sh')
-	# Build linux samples for now
-	SConscript('csdk/stack/samples/linux/SimpleClientServer/SConscript')
-
-	# Build C stack's unit tests.
-	SConscript('unit_tests.scons')
-
-elif target_os == 'arduino':
-	SConscript('csdk/stack/samples/arduino/SimpleClientServer/ocserver/SConscript')
+    # Build C/C++ unit tests
+    SConscript('unit_tests.scons')

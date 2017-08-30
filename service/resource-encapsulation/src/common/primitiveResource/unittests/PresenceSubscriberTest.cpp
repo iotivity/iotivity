@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <UnitTestHelper.h>
+#include "UnitTestHelperWithFakeOCPlatform.h"
 
 #include <PresenceSubscriber.h>
 #include <RCSException.h>
@@ -35,52 +35,55 @@ typedef OCStackResult (*SubscribePresence2)(OC::OCPlatform::OCPresenceHandle&,
 const std::string HOST{ "host" };
 const OCConnectivityType CONTYPE{ };
 
-
-class PresenceSubscriberNonMemberTest: public TestWithMock
+class PresenceSubscriberNonMemberTest: public TestWithExternMock
 {
 public:
     OCDoHandle handle;
 };
 
+MockRepository mocks;
+FakeOCPlatform * mockFakePlatform;
+
 TEST_F(PresenceSubscriberNonMemberTest, OCPlatformSubscribePresenceWillBeCalled)
 {
-    mocks.ExpectCallFuncOverload(
-            static_cast< SubscribePresence1 >(OC::OCPlatform::subscribePresence))
-                        .With(_, HOST,CONTYPE, _).Return(OC_STACK_OK);
+    mocks.ExpectCall(mockFakePlatform, FakeOCPlatform::subscribePresence)
+            .With(_, HOST,CONTYPE, _).Return(OC_STACK_OK);
 
     subscribePresence(handle, HOST, CONTYPE, SubscribeCallback());
 }
 
 TEST_F(PresenceSubscriberNonMemberTest, SubscribePresenceThrowsIfResultIsNotOK)
 {
-    mocks.ExpectCallFuncOverload(
-            static_cast< SubscribePresence1>(OC::OCPlatform::subscribePresence))
-                    .Return(OC_STACK_ERROR);
+    mocks.ExpectCall(mockFakePlatform, FakeOCPlatform::subscribePresence)
+            .Return(OC_STACK_ERROR);
 
     ASSERT_THROW(subscribePresence(handle, "", CONTYPE, SubscribeCallback()), RCSPlatformException);
 }
 
 TEST_F(PresenceSubscriberNonMemberTest, OCPlatformUnsubscribePresenceWillBeCalled)
 {
-    mocks.ExpectCallFuncOverload(OC::OCPlatform::unsubscribePresence).Return(OC_STACK_OK);
+    mocks.ExpectCall(mockFakePlatform, FakeOCPlatform::unsubscribePresence)
+            .Return(OC_STACK_OK);
 
     unsubscribePresence(handle);
 }
 
 TEST_F(PresenceSubscriberNonMemberTest, UnsubscribePresenceThrowIfResultIsNotOK)
 {
-    mocks.ExpectCallFuncOverload(OC::OCPlatform::unsubscribePresence).Return(OC_STACK_ERROR);
+    mocks.ExpectCall(mockFakePlatform, FakeOCPlatform::unsubscribePresence)
+            .Return(OC_STACK_ERROR);
 
     ASSERT_THROW(unsubscribePresence(handle), RCSPlatformException);
 }
 
-class PresenceSubscriberTest: public TestWithMock
+class PresenceSubscriberTest: public TestWithExternMock
 {
 protected:
-    void SetUp() {
-        mocks.OnCallFuncOverload(
-                static_cast< SubscribePresence1 >(OC::OCPlatform::subscribePresence)).Do(
+    void SetUp()
+    {
+        TestWithExternMock::SetUp();
 
+        mocks.OnCall(mockFakePlatform, FakeOCPlatform::subscribePresence).Do(
             [](OC::OCPlatform::OCPresenceHandle& handle, const std::string&,
                     OCConnectivityType, SubscribeCallback) -> OCStackResult
             {
@@ -89,7 +92,8 @@ protected:
             }
         );
 
-        mocks.OnCallFunc(OC::OCPlatform::unsubscribePresence).Return(OC_STACK_OK);
+        mocks.OnCall(mockFakePlatform, FakeOCPlatform::unsubscribePresence)
+                .Return(OC_STACK_OK);
     }
 
 };
@@ -102,9 +106,8 @@ TEST_F(PresenceSubscriberTest, IsNotSubscribingWhenCreatedWithDefaultConstructor
 
 TEST_F(PresenceSubscriberTest, ConstructorCallOCPlatformSubscribe)
 {
-    mocks.ExpectCallFuncOverload(
-            static_cast< SubscribePresence1 >(OC::OCPlatform::subscribePresence))
-                     .With(_, HOST, CONTYPE, _).Return(OC_STACK_OK);
+    mocks.ExpectCall(mockFakePlatform, FakeOCPlatform::subscribePresence)
+            .With(_, HOST, CONTYPE, _).Return(OC_STACK_OK);
 
     PresenceSubscriber subscriber{ HOST, CONTYPE, SubscribeCallback() };
 }
@@ -113,18 +116,16 @@ TEST_F(PresenceSubscriberTest, ConstructorWithResourceTypeCallOCPlatformSubscrib
 {
     const std::string resType { "resType" };
 
-    mocks.ExpectCallFuncOverload(
-            static_cast< SubscribePresence2 >(OC::OCPlatform::subscribePresence))
-                     .With(_, HOST, resType, CONTYPE, _).Return(OC_STACK_OK);
+    mocks.ExpectCall(mockFakePlatform, FakeOCPlatform::subscribePresence2)
+            .With(_, HOST, resType, CONTYPE, _).Return(OC_STACK_OK);
 
     PresenceSubscriber subscriber{ HOST, resType, CONTYPE, SubscribeCallback() };
 }
 
 TEST_F(PresenceSubscriberTest, ConstructorThrowsIfResultIsNotOK)
 {
-    mocks.ExpectCallFuncOverload(
-            static_cast< SubscribePresence1 >(OC::OCPlatform::subscribePresence))
-                    .Return(OC_STACK_ERROR);
+    mocks.ExpectCall(mockFakePlatform, FakeOCPlatform::subscribePresence)
+            .Return(OC_STACK_ERROR);
 
     ASSERT_THROW(PresenceSubscriber(HOST, CONTYPE, SubscribeCallback()), RCSPlatformException);
 }
@@ -156,7 +157,7 @@ TEST_F(PresenceSubscriberTest, IsSubscribingOfMovedSubscriberWithAssignmentRetur
     ASSERT_FALSE(subscriber.isSubscribing());
 }
 
-TEST_F(PresenceSubscriberTest, UnsubscribeWillBeCalledWhenSubscriberIsDestoryed)
+TEST_F(PresenceSubscriberTest, UnsubscribeWillBeCalledWhenSubscriberIsDestroyed)
 {
     mocks.ExpectCallFunc(OC::OCPlatform::unsubscribePresence).Return(OC_STACK_OK);
 

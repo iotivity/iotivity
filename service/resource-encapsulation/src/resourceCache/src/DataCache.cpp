@@ -31,6 +31,8 @@
 #include "RCSResourceAttributes.h"
 #include "ExpiryTimer.h"
 
+#include "ocrandom.h"
+
 namespace OIC
 {
     namespace Service
@@ -97,7 +99,7 @@ namespace OIC
             if (subscriberList != nullptr)
             {
                 subscriberList->clear();
-                subscriberList.release();
+                subscriberList.reset();
             }
 
             if (sResource->isObservable())
@@ -206,14 +208,7 @@ namespace OIC
                                   const ResponseStatement &_rep, int _result, unsigned int _seq)
         {
 
-            if (_result != OC_STACK_OK || _rep.getAttributes().empty() || lastSequenceNum > _seq)
-            {
-                return;
-            }
-            else
-            {
-                lastSequenceNum = _seq;
-            }
+            lastSequenceNum = _seq;
 
             if (state != CACHE_STATE::READY)
             {
@@ -229,7 +224,7 @@ namespace OIC
             networkTimer.cancel(networkTimeOutHandle);
             networkTimeOutHandle = networkTimer.post(CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
 
-            notifyObservers(_rep.getAttributes());
+            notifyObservers(_rep.getAttributes(), _result);
         }
 
         void DataCache::onGet(const HeaderOptions & /*_hos*/,
@@ -255,10 +250,10 @@ namespace OIC
                 pollingHandle = pollingTimer.post(CACHE_DEFAULT_REPORT_MILLITIME, pPollingCB);
             }
 
-            notifyObservers(_rep.getAttributes());
+            notifyObservers(_rep.getAttributes(), _result);
         }
 
-        void DataCache::notifyObservers(const RCSResourceAttributes Att)
+        void DataCache::notifyObservers(const RCSResourceAttributes Att, int eCode)
         {
             {
                 std::lock_guard<std::mutex> lock(att_mutex);
@@ -274,7 +269,7 @@ namespace OIC
             {
                 if (i.second.first.rf == REPORT_FREQUENCY::UPTODATE)
                 {
-                    i.second.second(this->sResource, Att);
+                    i.second.second(this->sResource, Att, eCode);
                 }
             }
         }
@@ -314,17 +309,15 @@ namespace OIC
         CacheID DataCache::generateCacheID()
         {
             CacheID retID = 0;
-            srand(time(NULL));
-
             while (1)
             {
                 if (findSubscriber(retID).first == 0 && retID != 0)
                 {
                     break;
                 }
-                retID = rand();
-            }
 
+                retID = OCGetRandom();
+            }
             return retID;
         }
 

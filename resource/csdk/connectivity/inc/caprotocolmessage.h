@@ -26,8 +26,10 @@
 #define CA_PROTOCOL_MESSAGE_H_
 
 #include "cacommon.h"
-#include "config.h"
-#include "coap.h"
+#ifndef WITH_UPSTREAM_LIBCOAP
+#include "coap/config.h"
+#endif
+#include <coap/coap.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -58,7 +60,7 @@ static const uint8_t PAYLOAD_MARKER = 1;
  * @return  generated pdu.
  */
 coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_t *endpoint,
-                          coap_list_t **optlist, coap_transport_type *transport);
+                          coap_list_t **optlist, coap_transport_t *transport);
 
 /**
  * extracts request information from received pdu.
@@ -100,7 +102,7 @@ CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endp
  */
 coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
                               const CAEndpoint_t *endpoint, coap_list_t *options,
-                              coap_transport_type *transport);
+                              coap_transport_t *transport);
 
 /**
  * parse the URI and creates the options.
@@ -121,7 +123,7 @@ CAResult_t CAParseURI(const char *uriInfo, coap_list_t **options);
  * @param[out]  optlist              options information.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target,
+CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, uint16_t target,
                              coap_list_t **optlist);
 
 /**
@@ -132,6 +134,21 @@ CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **optlist);
+
+/**
+ * Helper to parse content format and accept format header options
+ * and populate the supplied options list.
+ *
+ * @param[in]   formatOption         CoAP format header option.
+ * @param[in]   format               content or accept format.
+ * @param[in]   versionOption        CoAP version header option.
+ * @param[in]   version              value of version.
+ * @param[out]  optlist              options information.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ */
+
+CAResult_t CAParsePayloadFormatHeadOption(uint16_t formatOption, CAPayloadFormat_t format,
+        uint16_t versionOption, uint16_t version, coap_list_t **optlist);
 
 /**
  * creates option node from key length and data.
@@ -154,9 +171,10 @@ int CAOrderOpts(void *a, void *b);
 /**
  * number of options count.
  * @param[in]   opt_iter            option iteration for count.
- * @return number of options.
+ * @param[out]  optionCount         number of options.
+ * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter);
+CAResult_t CAGetOptionCount(coap_opt_iterator_t opt_iter, uint8_t *optionCount);
 
 /**
  * gets option data.
@@ -189,7 +207,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
  * @param[in]   endpoint            endpoint information.
  * @return  coap_pdu_t value.
  */
-coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
+coap_pdu_t *CAParsePDU(const char *data, size_t length, uint32_t *outCode,
                        const CAEndpoint_t *endpoint);
 
 /**
@@ -199,7 +217,8 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
  * @param[in]    endpoint            endpoint information.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo,
+CAResult_t CAGetTokenFromPDU(const coap_hdr_transport_t *pdu_hdr,
+                             CAInfo_t *outInfo,
                              const CAEndpoint_t *endpoint);
 
 /**
@@ -245,7 +264,7 @@ CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size);
  * @param[in]   format              coap format code.
  * @return format.
  */
-CAPayloadFormat_t CAConvertFormat(uint8_t format);
+CAPayloadFormat_t CAConvertFormat(uint16_t format);
 
 #ifdef WITH_TCP
 /**

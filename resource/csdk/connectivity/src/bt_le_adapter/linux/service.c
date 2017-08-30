@@ -25,13 +25,12 @@
 #include "logger.h"
 #include "oic_malloc.h"
 
-#include <inttypes.h>
 #include <stdio.h>
 #include <assert.h>
 
 
 // Logging tag.
-static char const TAG[] = "BLE_SERVICE";
+#define TAG "BLE_SERVICE"
 
 static GVariant * CAGattServiceGetProperties(GattService1 * service)
 {

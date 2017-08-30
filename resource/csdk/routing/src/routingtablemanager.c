@@ -36,12 +36,6 @@
  */
 #define RM_TAG "OIC_RM_RAP"
 
-
-/**
- * Initial Length of observer list.
- */
-#define MAX_OBSERVER_LIST_LENGTH 10
-
 static const uint64_t USECS_PER_SEC = 1000000;
 
 OCStackResult RTMInitialize(u_linklist_t **gatewayTable, u_linklist_t **endpointTable)
@@ -570,7 +564,7 @@ OCStackResult RTMAddObserver(uint32_t obsID, CAEndpoint_t devAddr, u_linklist_t 
     {
         RTMGatewayEntry_t *entry = u_linklist_get_data(iterTable);
 
-        for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
+        for (size_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
         {
             RTMDestIntfInfo_t *destCheck = u_arraylist_get(entry->destination->destIntfAddr, i);
             if (NULL != destCheck &&
@@ -614,7 +608,7 @@ bool RTMIsObserverPresent(CAEndpoint_t devAddr, OCObservationId *obsID,
             OIC_LOG(ERROR, TAG, "entry is NULL");
             return false;
         }
-        for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
+        for (size_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
         {
             RTMDestIntfInfo_t *destCheck =
                 u_arraylist_get(entry->destination->destIntfAddr, i);
@@ -712,7 +706,7 @@ OCStackResult RTMRemoveGatewayDestEntry(uint32_t gatewayId, uint32_t nextHop,
         // Update the time for NextHop entry.
         if (NULL != entry->destination && nextHop == entry->destination->gatewayId)
         {
-            for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
+            for (size_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
             {
                 RTMDestIntfInfo_t *destCheck = u_arraylist_get(entry->destination->destIntfAddr, i);
                 if(!destCheck)
@@ -935,23 +929,25 @@ CAEndpoint_t *RTMGetEndpointEntry(uint16_t endpointId, const u_linklist_t *endpo
     return NULL;
 }
 
-void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
+void RTMGetObserverList(OCObservationId **obsList, uint32_t *obsListLen,
                         const u_linklist_t *gatewayTable)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_VOID(gatewayTable, TAG, "gatewayTable");
     RM_NULL_CHECK_VOID(obsList, TAG, "obsList");
 
-    *obsList = (OCObservationId *) OICCalloc(MAX_OBSERVER_LIST_LENGTH, sizeof(OCObservationId));
+    *obsList = (OCObservationId *) OICCalloc(u_linklist_length(gatewayTable),
+                                             sizeof(OCObservationId));
     if (!(*obsList))
     {
         OIC_LOG(ERROR, TAG, "out of memory");
+        *obsListLen = 0;
         return;
     }
 
     u_linklist_iterator_t *iterTable = NULL;
     u_linklist_init_iterator(gatewayTable, &iterTable);
-    uint8_t len = 0;
+    uint32_t len = 0;
     while (NULL != iterTable)
     {
         RTMGatewayEntry_t *entry = u_linklist_get_data(iterTable);
@@ -968,11 +964,6 @@ void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
                 OIC_LOG_V(DEBUG, TAG, "Observer ID is %d", destCheck->observerId);
                 *(*obsList + len) = destCheck->observerId;
                 len++;
-            }
-            if (MAX_OBSERVER_LIST_LENGTH < len)
-            {
-                *obsList = (OCObservationId *) OICRealloc((void *)*obsList,
-                           (sizeof(OCObservationId) * (len + 1)));
             }
         }
         u_linklist_get_next(&iterTable);
@@ -999,7 +990,7 @@ OCStackResult RTMUpdateDestinationIntfAdr(uint32_t gatewayId, RTMDestIntfInfo_t 
         {
             if (addAdr)
             {
-                for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
+                for (size_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
                 {
                     RTMDestIntfInfo_t *destCheck =
                         u_arraylist_get(entry->destination->destIntfAddr, i);
@@ -1042,7 +1033,7 @@ OCStackResult RTMUpdateDestinationIntfAdr(uint32_t gatewayId, RTMDestIntfInfo_t 
                 return OC_STACK_DUPLICATE_REQUEST;
             }
 
-            for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
+            for (size_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
             {
                 RTMDestIntfInfo_t *removeAdr =
                     u_arraylist_get(entry->destination->destIntfAddr, i);
@@ -1156,7 +1147,7 @@ OCStackResult RTMUpdateDestAddrValidity(u_linklist_t **invalidTable, u_linklist_
         }
         else if (1 == entry->routeCost)
         {
-            for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
+            for (size_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
             {
                 RTMDestIntfInfo_t *destCheck = u_arraylist_get(entry->destination->destIntfAddr, i);
                 if (!destCheck)
@@ -1207,7 +1198,7 @@ OCStackResult RTMRemoveInvalidGateways(u_linklist_t **invalidTable, u_linklist_t
         }
         else if (NULL != entry->destination && (1 == entry->routeCost))
         {
-            for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
+            for (size_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
             {
                 RTMDestIntfInfo_t *destCheck = u_arraylist_get(entry->destination->destIntfAddr, i);
                 if (!destCheck && !destCheck->isValid)
@@ -1270,7 +1261,7 @@ OCStackResult RTMUpdateEntryParameters(uint32_t gatewayId, uint32_t seqNum,
         }
         if (NULL != entry->destination && gatewayId == entry->destination->gatewayId)
         {
-            for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
+            for (size_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
             {
                 RTMDestIntfInfo_t *destCheck =
                     u_arraylist_get(entry->destination->destIntfAddr, i);
@@ -1335,7 +1326,7 @@ void RTMPrintTable(const u_linklist_t *gatewayTable, const u_linklist_t *endpoin
         if (1 == hop->routeCost && NULL != hop->destination &&
             hop->destination->destIntfAddr != NULL)
         {
-            for (uint32_t i = 0; i < u_arraylist_length(hop->destination->destIntfAddr); i++)
+            for (size_t i = 0; i < u_arraylist_length(hop->destination->destIntfAddr); i++)
             {
                 RTMDestIntfInfo_t *dest = u_arraylist_get(hop->destination->destIntfAddr, i);
                 if (NULL != dest)

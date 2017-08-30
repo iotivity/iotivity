@@ -29,7 +29,7 @@ typedef struct
  FILE *out;
 } oc_console_logger_ctx;
 
-oc_log_ctx_t *oc_make_console_logger()
+oc_log_ctx_t *OC_CALL oc_make_console_logger()
 {
  return oc_log_make_ctx(
 			NULL,

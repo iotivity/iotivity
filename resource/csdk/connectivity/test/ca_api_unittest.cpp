@@ -18,17 +18,26 @@
  *
  ******************************************************************/
 
-#include "gtest/gtest.h"
+#include "platform_features.h"
+#include <gtest/gtest.h>
 #include "cainterface.h"
 #include "cautilinterface.h"
 #include "cacommon.h"
+#include "oic_string.h"
+#include "oic_malloc.h"
+#include "cafragmentation.h"
+#include "caleinterface.h"
 
 #define CA_TRANSPORT_ADAPTER_SCOPE  1000
+#define CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE (((CA_DEFAULT_BLE_MTU_SIZE) - (CA_BLE_HEADER_SIZE)) \
+                                           - (CA_BLE_LENGTH_HEADER_SIZE))
+
 
 class CATests : public testing::Test {
     protected:
-    virtual void SetUp() {
-        CAInitialize();
+    virtual void SetUp()
+    {
+        CAInitialize(CA_DEFAULT_ADAPTER);
     }
 
     virtual void TearDown()
@@ -42,7 +51,6 @@ void response_handler(CAEndpoint_t* object, CAResponseInfo_t* responseInfo);
 void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo);
 void adapter_handler(CATransportAdapter_t adapter, bool enabled);
 void connection_handler(CATransportAdapter_t adapter, const char *remote_address, bool connected);
-CAResult_t checkGetNetworkInfo();
 CAResult_t checkSelectNetwork();
 
 void request_handler(const CAEndpoint_t * /*object*/,
@@ -73,8 +81,7 @@ void adapter_handler(CATransportAdapter_t /*adapter*/,
 {
 }
 
-void connection_handler(CATransportAdapter_t /*adapter*/,
-                        const char * /*remote_address*/,
+void connection_handler(const CAEndpoint_t * /*endpoint*/, 
                         bool /*connected*/)
 {
 }
@@ -93,7 +100,6 @@ static const uint16_t PORT = 4545;
 static const char NORMAL_INFO_DATA[] =
                                     "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
                                      "\"if\":[\"oc.mi.def\"],\"obs\":1}}]}";
-
 #ifdef __WITH_DTLS__
 
 // Iotivity Device Identity.
@@ -157,19 +163,80 @@ int32_t CAGetDtlsPskCredentials( CADtlsPskCredType_t type,
     printf("CAGetDtlsPskCredentials OUT\n");
     return ret;
 }
-#endif  //__WITH_DTLS__
 
-int main(int argc, char **argv)
+const char* our_cert = "-----BEGIN CERTIFICATE-----\n"
+"MIIBhTCCASugAwIBAgIJAPZ5mB94RwYHMAoGCCqGSM49BAMCMCUxIzAhBgNVBAoM\n"
+"GklvVGl2aXR5VGVzdFNlbGZTaWduZWROYW1lMB4XDTE2MTIxNjIxMjcyMVoXDTMw\n"
+"MDgyNTIxMjcyMVowITEfMB0GA1UECgwWSW9UaXZpdHlUZXN0Q2xpZW50TmFtZTBZ\n"
+"MBMGByqGSM49AgEGCCqGSM49AwEHA0IABF8OxpJNe01ZPEFpXUUhjUV5uwJM1TF3\n"
+"ZSt0tJ71lQiRZ9cbl5z31acRpsZM+fXiR+wkR4xoP7iIyDdTHHVHtkSjSDBGMBUG\n"
+"A1UdJQQOMAwGCisGAQQBgt58AQYwDAYDVR0TAQH/BAIwADAfBgNVHSMEGDAWgBQH\n"
+"EWLwaDfA+o6U4wmQKVoK9I3B/DAKBggqhkjOPQQDAgNIADBFAiAbDHQHzSjNiDeQ\n"
+"OaJYRMLIW2dIlabiQ5pxkW/jEaRszAIhAPzuoNdrQTRbnqCy0hmS9hFt8MxDrrBh\n"
+"7jHARQm/5pko\n"
+"-----END CERTIFICATE-----\n";
+
+const char* our_key = "-----BEGIN EC PRIVATE KEY-----\n"
+"MHcCAQEEIOV0iG5CndNK6JhB8nDcqQjNjgRWe/LQWPNPua3w7nHToAoGCCqGSM49\n"
+"AwEHoUQDQgAEXw7Gkk17TVk8QWldRSGNRXm7AkzVMXdlK3S0nvWVCJFn1xuXnPfV\n"
+"pxGmxkz59eJH7CRHjGg/uIjIN1McdUe2RA==\n"
+"-----END EC PRIVATE KEY-----\n";
+
+const char* our_ca = "-----BEGIN CERTIFICATE-----\n"
+"MIIBlzCCATygAwIBAgIJALxGf3YRERn1MAoGCCqGSM49BAMCMCUxIzAhBgNVBAoM\n"
+"GklvVGl2aXR5VGVzdFNlbGZTaWduZWROYW1lMB4XDTE2MTIxNjIxMjcyMVoXDTMw\n"
+"MDgyNTIxMjcyMVowJTEjMCEGA1UECgwaSW9UaXZpdHlUZXN0U2VsZlNpZ25lZE5h\n"
+"bWUwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATo/zp8PXaA/drJQKSG3TlerO0F\n"
+"eHkpRkmXMeLFLrImqo1w9OyLfVmrpBrCDjf83BkwLYp19bkYizL2Yk9zIQ4Do1Uw\n"
+"UzAhBgNVHSUEGjAYBgorBgEEAYLefAEGBgorBgEEAYLefAEHMA8GA1UdEwEB/wQF\n"
+"MAMBAf8wHQYDVR0OBBYEFAcRYvBoN8D6jpTjCZApWgr0jcH8MAoGCCqGSM49BAMC\n"
+"A0kAMEYCIQCuZb1LMTthWy9rPgy2FQgoFHB2LXUJlgRLJeO/gTFqgQIhANRvr1Py\n"
+"5Bp6asye5FK4VUj6tARxmRNeNLvwonLrqp2w\n"
+"-----END CERTIFICATE-----\n";
+
+// Invoked by the CA stack to retrieve credentials from this module
+void provide_x509_cert_and_key(PkiInfo_t* inf)
 {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    /* PEM data must end in newline and be null terminated for IoTivity */
+
+    inf->crt.data = (uint8_t*) our_cert;
+    inf->crt.len = strlen(our_cert) + 1;
+    inf->key.data = (uint8_t*) our_key;
+    inf->key.len = strlen(our_key) + 1;
+    inf->ca.data = (uint8_t*) our_ca;
+    inf->ca.len = strlen(our_ca) + 1;
+
+    // CRL not provided
+    inf->crl.data = NULL;
+    inf->crl.len = 0;
+
+    return;
+}
+// Empty version, for testing.
+void badPkixInfoHandler(PkiInfo_t* /*inf*/)
+{
+    return;
 }
 
-// CAInitialize TC
-// check return value
-TEST(InitializeTest, TC_01_Positive_01)
+void provide_supported_credential_types(bool* list, const char* /*deviceId*/)
 {
-    EXPECT_EQ(CA_STATUS_OK, CAInitialize());
+    list[1] = true;
+    /*
+     * Note: there is a default implementation of this in credresource.c, exposed by 
+     * pkix_interface.h, called InitManufacturerCipherSuiteList.  If the cred resource 
+     * has a credential of the required type, it updates list accordingly. 
+     *
+     * In a separate test, we could use the cred resource and APIs (credresource.h). 
+     */
+    return;
+}
+
+#endif  //__WITH_DTLS__
+
+// CAInitialize TC
+TEST(InitializeTest, CAInitializeTest)
+{
+    EXPECT_EQ(CA_STATUS_OK, CAInitialize(CA_DEFAULT_ADAPTER));
     CATerminate();
 }
 
@@ -181,25 +248,36 @@ TEST_F(CATests, TerminateTest)
     char* check = (char *) "terminate success";
     EXPECT_STREQ(check, "terminate success");
 
-    CAInitialize();
+    CAInitialize(CA_DEFAULT_ADAPTER);
 }
+
 // CAStartListeningServer TC
-// check return value
-TEST(StartListeningServerTest, DISABLED_TC_03_Positive_01)
+TEST_F(CATests, StartListeningServerTestWithNonSelect)
 {
-    CASelectNetwork(CA_ADAPTER_IP);
+    EXPECT_EQ(CA_STATUS_FAILED, CAStartListeningServer());
+}
+
+// CAStartListeningServer TC
+TEST_F(CATests, StartListeningServerTest)
+{
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
     EXPECT_EQ(CA_STATUS_OK, CAStartListeningServer());
 }
 
-// CAStartDiscoveryServer TC
-// check return value
-TEST(StartDiscoveryServerTest, DISABLED_TC_04_Positive_01)
+// CAStopListeningServer TC
+TEST_F(CATests, CAStopListeningServerTestWithNonSelect)
 {
-    EXPECT_EQ(CA_STATUS_OK, CAStartDiscoveryServer());
+    EXPECT_EQ(CA_STATUS_FAILED, CAStopListeningServer());
+}
+
+// CAStopListeningServer TC
+TEST_F(CATests, CAStopListeningServerTest)
+{
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+    EXPECT_EQ(CA_STATUS_OK, CAStopListeningServer());
 }
 
 // CARegisterHandlerTest TC
-// check return value
 TEST_F(CATests, RegisterHandlerTest)
 {
     CARegisterHandler(request_handler, response_handler, error_handler);
@@ -208,7 +286,6 @@ TEST_F(CATests, RegisterHandlerTest)
 }
 
 // CACreateRemoteEndpoint TC
-// check return value
 TEST_F(CATests, CreateRemoteEndpointTestGood)
 {
     addr = (char *) ADDRESS;
@@ -234,7 +311,6 @@ TEST_F(CATests, CreateRemoteEndpointTestValues)
 }
 
 // CAGerateToken TC
-// check return value
 TEST_F(CATests, GenerateTokenTestGood)
 {
     EXPECT_EQ(CA_STATUS_OK, CAGenerateToken(&tempToken, tokenLength));
@@ -259,28 +335,18 @@ TEST_F(CATests, DestroyTokenTest)
     EXPECT_STREQ(check, "destroy success");
 }
 
-// CASendRequest TC
-// check return value
-TEST(SendRequestTest, DISABLED_TC_16_Positive_01)
+TEST_F(CATests, SendRequestTestWithInvalidAddress)
 {
-    addr = (char *) ADDRESS;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, PORT, &tempRep);
+    CARegisterHandler(request_handler, response_handler, error_handler);
+
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, "10.11.13.13.14", PORT, &tempRep);
 
     memset(&requestData, 0, sizeof(CAInfo_t));
     CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
     requestData.tokenLength = tokenLength;
-
-    int length = strlen(NORMAL_INFO_DATA) + strlen("a/light");
-    requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
-    if(!requestData.payload)
-    {
-        CADestroyToken(tempToken);
-        FAIL() << "requestData.payload allocation failed";
-    }
-    snprintf((char*)requestData.payload, length, NORMAL_INFO_DATA, "a/light");
-    requestData.payloadSize = length + 1;
-    requestData.type = CA_MSG_NONCONFIRM;
+    requestData.type = CA_MSG_CONFIRM;
 
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));
     requestInfo.method = CA_GET;
@@ -294,6 +360,44 @@ TEST(SendRequestTest, DISABLED_TC_16_Positive_01)
     tempRep = NULL;
 }
 
+#if defined(__WITH_DTLS__)
+TEST_F(CATests, DISABLED_PkiTest)
+{
+    // @todo: this test is disabled for now, it crashes with an invalid write. Cert data
+    // provided by the provide_x509_cert_and_key is stored as const char, but ParseChain()
+    // (in ca_adapter_net_ssl.c) writes to it while reading.  We could change the test to 
+    // provide data on the heap, but the CA stack should not be changing data provided to it
+    // by callbacks. 
+
+    const char* local_addr = "127.0.0.1";
+    uint16_t local_port = 5503;
+    CAEndpoint_t* serverAddr = NULL;
+
+    CARegisterHandler(request_handler, response_handler, error_handler);
+
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, local_addr, local_port, &serverAddr);
+    ASSERT_TRUE(serverAddr != NULL);
+
+    // Register a credential types handler (tells the CA layer which creds are supported)
+    EXPECT_EQ(CA_STATUS_OK, CAregisterGetCredentialTypesHandler(provide_supported_credential_types));
+
+    // Limit ourselves to 0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 since it's non-PSK
+    EXPECT_EQ(CA_STATUS_OK, CASelectCipherSuite(0xC0AE, serverAddr->adapter));
+
+    // Register an empty callback to provide the keys, expect failure when initializing the handshake.
+    EXPECT_EQ(CA_STATUS_OK, CAregisterPkixInfoHandler(badPkixInfoHandler));
+    EXPECT_EQ(CA_STATUS_FAILED, CAInitiateHandshake(serverAddr));
+
+    // Register a working callback to provide the keys, expect success.
+    EXPECT_EQ(CA_STATUS_OK, CAregisterPkixInfoHandler(provide_x509_cert_and_key));
+    EXPECT_EQ(CA_STATUS_OK, CAInitiateHandshake(serverAddr)); 
+
+    CADestroyEndpoint(serverAddr);
+}
+#endif /* defined(__WITH_DTLS__) */
+
+// CASendRequest TC
 // check return value when a NULL is passed instead of a valid CARequestInfo_t address
 TEST_F(CATests, SendRequestTestWithNullAddr)
 {
@@ -307,78 +411,38 @@ TEST_F(CATests, SendRequestTestWithNullAddr)
 }
 
 // CASendResponse TC
-// check return value
-TEST(SendResponseTest, DISABLED_TC_19_Positive_01)
+TEST_F(CATests, SendResponseTestWithInvalidCode)
 {
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+
     addr = (char *) ADDRESS;
     CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, PORT, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.type = CA_MSG_NONCONFIRM;
+    responseData.type = CA_MSG_RESET;
     responseData.messageId = 1;
-    responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+    responseData.payload = (CAPayload_t)OICMalloc(sizeof("response payload"));
+    responseData.dataType = CA_RESPONSE_DATA;
 
     EXPECT_TRUE(responseData.payload != NULL);
-    if(!responseData.payload)
+
+    if (responseData.payload)
     {
+        CAGenerateToken(&tempToken, tokenLength);
+        requestData.token = tempToken;
+        requestData.tokenLength = tokenLength;
+
+        memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
+        responseInfo.result = CA_CONTENT;
+        responseInfo.info = responseData;
+
+        EXPECT_EQ(CA_STATUS_OK, CASendResponse(tempRep, &responseInfo));
+
+        CADestroyToken(tempToken);
         CADestroyEndpoint(tempRep);
-        return;
+        OICFree(responseData.payload);
+        tempRep = NULL;
     }
-
-    memcpy(responseData.payload, "response payload", sizeof("response payload"));
-    responseData.payloadSize = sizeof("response payload");
-
-    CAGenerateToken(&tempToken, tokenLength);
-    requestData.token = tempToken;
-    requestData.tokenLength = tokenLength;
-
-    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_CONTENT;
-    responseInfo.info = responseData;
-
-    EXPECT_EQ(CA_STATUS_OK, CASendResponse(tempRep, &responseInfo));
-
-    CADestroyToken(tempToken);
-    CADestroyEndpoint(tempRep);
-    free(responseData.payload);
-    tempRep = NULL;
-}
-
-// check return value when address is NULL as multicast
-TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
-{
-    addr = NULL;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, 0, &tempRep);
-
-    memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.type = CA_MSG_NONCONFIRM;
-    responseData.messageId = 1;
-    responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
-    EXPECT_TRUE(responseData.payload != NULL);
-
-    if(!responseData.payload)
-    {
-        CADestroyEndpoint(tempRep);
-        return;
-    }
-
-    memcpy(responseData.payload, "response payload", sizeof("response payload"));
-    responseData.payloadSize = sizeof("response payload");
-
-    CAGenerateToken(&tempToken, tokenLength);
-    requestData.token = tempToken;
-    requestData.tokenLength = tokenLength;
-
-    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_CONTENT;
-    responseInfo.info = responseData;
-
-    EXPECT_EQ(CA_STATUS_OK, CASendResponse(tempRep, &responseInfo));
-
-    CADestroyToken(tempToken);
-    CADestroyEndpoint(tempRep);
-    free (responseData.payload);
-    tempRep = NULL;
 }
 
 // check return value NULL is passed instead of a valid CAResponseInfo_t address
@@ -394,7 +458,6 @@ TEST_F(CATests, SendResponseTest)
 }
 
 // CASelectNewwork TC
-// check return value
 TEST_F(CATests, SelectNetworkTestGood)
 {
     EXPECT_EQ(CA_STATUS_OK, checkSelectNetwork());
@@ -435,28 +498,154 @@ TEST_F(CATests, UnSelectNetworkTest)
 }
 
 // CAHandlerRequestResponse TC
-// check return value
 TEST_F(CATests, HandlerRequestResponseTest)
 {
     EXPECT_EQ(CA_STATUS_OK, CAHandleRequestResponse());
 }
 
 // CAGetNetworkInformation TC
-// check return value
-TEST_F (CATests, GetNetworkInformationTestGood)
+TEST_F(CATests, GetNetworkInformationTest)
 {
-    EXPECT_EQ(CA_STATUS_OK, checkGetNetworkInfo());
+    size_t tempSize = 0;
+    CAEndpoint_t *tempInfo = NULL;
+
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+    EXPECT_EQ(CA_STATUS_OK, CAGetNetworkInformation(&tempInfo, &tempSize));
+
+    for (size_t index = 0; index < tempSize; index++)
+    {
+        EXPECT_TRUE(tempInfo[index].adapter != 0);
+        EXPECT_TRUE(strlen(tempInfo[index].addr) != 0);
+    }
+
+    free(tempInfo);
+}
+
+TEST_F(CATests, GetNetworkInformationTest_EnableIPv6)
+{
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+
+    caglobals.ip.ipv6enabled = true;
+    caglobals.ip.ipv4enabled = false;
+
+    size_t tempSize = 0;
+    CAEndpoint_t *tempInfo = NULL;
+    EXPECT_EQ(CA_STATUS_OK, CAGetNetworkInformation(&tempInfo, &tempSize));
+
+    for (size_t index = 0; index < tempSize; index++)
+    {
+        EXPECT_TRUE((tempInfo[index].flags & CA_IPV6) != 0);
+    }
+
+    OICFree(tempInfo);
+}
+
+TEST_F(CATests, GetNetworkInformationTest_EnableIPv4)
+{
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+
+    caglobals.ip.ipv6enabled = false;
+    caglobals.ip.ipv4enabled = true;
+
+    size_t tempSize = 0;
+    CAEndpoint_t *tempInfo = NULL;
+    EXPECT_EQ(CA_STATUS_OK, CAGetNetworkInformation(&tempInfo, &tempSize));
+
+    for (size_t index = 0; index < tempSize; index++)
+    {
+        EXPECT_TRUE((tempInfo[index].flags & CA_IPV4) != 0);
+    }
+
+    OICFree(tempInfo);
+}
+
+TEST_F(CATests, GetNetworkInformationTest_EnableIPv4AndIPv6)
+{
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+
+    caglobals.ip.ipv6enabled = true;
+    caglobals.ip.ipv4enabled = true;
+
+    size_t tempSize = 0;
+    CAEndpoint_t *tempInfo = NULL;
+    EXPECT_EQ(CA_STATUS_OK, CAGetNetworkInformation(&tempInfo, &tempSize));
+
+    CATransportFlags_t flags = (CATransportFlags_t)(CA_IPV4|CA_IPV6);
+    for (size_t index = 0; index < tempSize; index++)
+    {
+        EXPECT_TRUE((tempInfo[index].flags & flags) != 0 );
+    }
+
+    OICFree(tempInfo);
+}
+
+TEST_F(CATests, GetSelectedNetwork)
+{
+    CATransportAdapter_t SelectedNetwork = CA_DEFAULT_ADAPTER;
+
+#ifdef IP_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_IP) ;
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef LE_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_GATT_BTLE);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_GATT_BTLE));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef EDR_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_RFCOMM_BTEDR);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_RFCOMM_BTEDR));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef TCP_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_TCP);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_TCP));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef NFC_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_NFC);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_NFC));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+
+#ifdef IP_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_IP) ;
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_IP));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef LE_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_GATT_BTLE);
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_GATT_BTLE));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef EDR_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_RFCOMM_BTEDR);
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_RFCOMM_BTEDR));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef TCP_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_TCP);
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_TCP));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef NFC_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_NFC);
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_NFC));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
 }
 
 TEST_F(CATests, RegisterDTLSCredentialsHandlerTest)
 {
 #ifdef __WITH_DTLS__
-    EXPECT_EQ(CA_STATUS_OK, CARegisterDTLSCredentialsHandler(CAGetDtlsPskCredentials));
+    EXPECT_EQ(CA_STATUS_OK, CAregisterPskCredentialsHandler(CAGetDtlsPskCredentials));
+    EXPECT_EQ(CA_STATUS_OK, CAregisterPkixInfoHandler(provide_x509_cert_and_key));
+    EXPECT_EQ(CA_STATUS_OK, CAregisterGetCredentialTypesHandler(provide_supported_credential_types));
 #endif
 }
 
 // CARegisterNetworkMonitorHandler TC
-// check return value
 TEST_F(CATests, RegisterNetworkMonitorHandler)
 {
     EXPECT_EQ(CA_STATUS_OK, CARegisterNetworkMonitorHandler(adapter_handler,
@@ -464,7 +653,6 @@ TEST_F(CATests, RegisterNetworkMonitorHandler)
 }
 
 // CASetAutoConnectionDeviceInfo TC
-// check return value
 TEST_F(CATests, SetAutoConnectionDeviceInfo)
 {
     addr = (char *) ADDRESS;
@@ -477,7 +665,6 @@ TEST_F(CATests, SetAutoConnectionDeviceInfo)
 }
 
 // CAUnsetAutoConnectionDeviceInfo TC
-// check return value
 TEST_F(CATests, UnsetAutoConnectionDeviceInfo)
 {
     addr = (char *) ADDRESS;
@@ -489,22 +676,358 @@ TEST_F(CATests, UnsetAutoConnectionDeviceInfo)
 #endif
 }
 
-CAResult_t checkGetNetworkInfo()
+TEST(CASetPortNumberTest, CASetPortNumberToAssign)
 {
-    CAEndpoint_t *tempInfo = NULL;
-    uint32_t tempSize = 0;
+    EXPECT_EQ(CA_STATUS_OK, CASetPortNumberToAssign(CA_ADAPTER_IP, CA_IPV4, 5683));
+    EXPECT_EQ(CA_STATUS_OK, CASetPortNumberToAssign(CA_ADAPTER_IP, CA_IPV6, 5683));
+    EXPECT_EQ(CA_STATUS_OK,
+              CASetPortNumberToAssign(CA_ADAPTER_IP,
+                                      static_cast<CATransportFlags_t>(CA_IPV4|CA_SECURE), 5683));
+    EXPECT_EQ(CA_STATUS_OK,
+              CASetPortNumberToAssign(CA_ADAPTER_IP,
+                                      static_cast<CATransportFlags_t>(CA_IPV6|CA_SECURE), 5683));
 
-    CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
+#ifdef TCP_ADAPTER
+    EXPECT_EQ(CA_STATUS_OK, CASetPortNumberToAssign(CA_ADAPTER_TCP, CA_IPV4, 5683));
+    EXPECT_EQ(CA_STATUS_OK, CASetPortNumberToAssign(CA_ADAPTER_TCP, CA_IPV6, 5683));
+#endif
+}
 
-    free(tempInfo);
+TEST(CAGetPortNumberTest, CAGetPortNumberToAssign)
+{
+    ASSERT_EQ(static_cast<uint16_t>(0),
+              CAGetAssignedPortNumber(CA_ADAPTER_IP, CA_IPV4));
+    ASSERT_EQ(static_cast<uint16_t>(0),
+              CAGetAssignedPortNumber(CA_ADAPTER_IP, CA_IPV6));
+    ASSERT_EQ(static_cast<uint16_t>(0),
+              CAGetAssignedPortNumber(CA_ADAPTER_IP,
+                                      static_cast<CATransportFlags_t>(CA_IPV4|CA_SECURE)));
+    ASSERT_EQ(static_cast<uint16_t>(0),
+              CAGetAssignedPortNumber(CA_ADAPTER_IP,
+                                      static_cast<CATransportFlags_t>(CA_IPV6|CA_SECURE)));
+#ifdef TCP_ADAPTER
+    ASSERT_EQ(static_cast<uint16_t>(0), CAGetAssignedPortNumber(CA_ADAPTER_TCP, CA_IPV4));
+    ASSERT_EQ(static_cast<uint16_t>(0), CAGetAssignedPortNumber(CA_ADAPTER_TCP, CA_IPV6));
+#endif
+}
 
-    if (CA_STATUS_OK == res || CA_ADAPTER_NOT_ENABLED == res ||
-            CA_NOT_SUPPORTED == res)
-    {
-        return CA_STATUS_OK;
-    }
-    else
-    {
-        return CA_STATUS_FAILED;
-    }
+TEST(CAfragmentationTest, FragmentTest)
+{
+#if defined(LE_ADAPTER)
+    const size_t dataLen = 30;
+    uint8_t *data = (uint8_t *) malloc(dataLen*sizeof(uint8_t));
+    memset(data, 'a', dataLen);
+
+    uint32_t midPacketCount = 0;
+    size_t remainingLen = 0;
+    size_t totalLength = 0;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateVariableForFragmentation(dataLen,
+                                                               &midPacketCount,
+                                                               &remainingLen,
+                                                               &totalLength,
+                                                               CA_DEFAULT_BLE_MTU_SIZE));
+
+    uint8_t dataHeader[CA_BLE_HEADER_SIZE] = {0};
+    const uint8_t tmpSourcePort = 1;
+    const uint8_t tmpDestPort = 1;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateHeader(dataHeader,
+                                             CA_BLE_PACKET_START,
+                                             tmpSourcePort,
+                                             CA_BLE_PACKET_NON_SECURE,
+                                             tmpDestPort));
+    EXPECT_TRUE(dataHeader != NULL);
+
+    uint8_t lengthHeader[CA_BLE_LENGTH_HEADER_SIZE] = {0};
+
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateHeaderPayloadLength(lengthHeader,
+                                                          CA_BLE_LENGTH_HEADER_SIZE,
+                                                          dataLen));
+    EXPECT_TRUE(lengthHeader != NULL);
+
+    uint8_t dataSegment[CA_SUPPORTED_BLE_MTU_SIZE] = {0};
+
+    EXPECT_EQ(CA_STATUS_OK, CAMakeFirstDataSegment(dataSegment,
+                                                   data,
+                                                   CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE,
+                                                   dataHeader,
+                                                   lengthHeader));
+    EXPECT_TRUE(dataSegment != NULL);
+
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateHeader(dataHeader,
+                                             CA_BLE_PACKET_NOT_START,
+                                             tmpSourcePort,
+                                             CA_BLE_PACKET_NON_SECURE,
+                                             tmpDestPort));
+    EXPECT_TRUE(dataHeader != NULL);
+
+    EXPECT_EQ(CA_STATUS_OK, CAMakeRemainDataSegment(dataSegment,
+                                                    remainingLen,
+                                                    data,
+                                                    dataLen,
+                                                    0,
+                                                    dataHeader,
+                                                    CA_DEFAULT_BLE_MTU_SIZE));
+    EXPECT_TRUE(dataSegment != NULL);
+
+    free(data);
+#endif
+}
+
+TEST(CAfragmentationTest, DefragmentTest)
+{
+#if defined(LE_ADAPTER)
+    const size_t dataLen = 30;
+    uint8_t *data = (uint8_t *) malloc(dataLen*sizeof(uint8_t));
+    memset(data, 'a', dataLen);
+
+    uint32_t midPacketCount = 0;
+    size_t remainingLen = 0;
+    size_t totalLength = 0;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateVariableForFragmentation(dataLen,
+                                                               &midPacketCount,
+                                                               &remainingLen,
+                                                               &totalLength,
+                                                               CA_SUPPORTED_BLE_MTU_SIZE));
+
+    uint8_t dataHeader[CA_BLE_HEADER_SIZE] = {0};
+    const uint8_t tmpSourcePort = 1;
+    const uint8_t tmpDestPort = 1;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateHeader(dataHeader,
+                                             CA_BLE_PACKET_START,
+                                             tmpSourcePort,
+                                             CA_BLE_PACKET_NON_SECURE,
+                                             tmpDestPort));
+    EXPECT_TRUE(dataHeader != NULL);
+
+    uint8_t lengthHeader[CA_BLE_LENGTH_HEADER_SIZE] = {0};
+
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateHeaderPayloadLength(lengthHeader,
+                                                          CA_BLE_LENGTH_HEADER_SIZE,
+                                                          dataLen));
+    EXPECT_TRUE(lengthHeader != NULL);
+
+    uint8_t dataSegment[CA_SUPPORTED_BLE_MTU_SIZE] = {0};
+
+    EXPECT_EQ(CA_STATUS_OK, CAMakeFirstDataSegment(dataSegment,
+                                                   data,
+                                                   CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE,
+                                                   dataHeader,
+                                                   lengthHeader));
+    EXPECT_TRUE(dataSegment != NULL);
+
+    CABLEPacketStart_t startFlag = CA_BLE_PACKET_NOT_START;
+    CABLEPacketSecure_t secureFlag = CA_BLE_PACKET_NON_SECURE;
+    uint16_t sourcePort = 0;
+    uint16_t destPort = 0;
+
+    EXPECT_EQ(CA_STATUS_OK, CAParseHeader(dataSegment,
+                                          &startFlag,
+                                          &sourcePort,
+                                          &secureFlag,
+                                          &destPort));
+
+    uint32_t parseDataLength = 0;
+
+    EXPECT_EQ(CA_STATUS_OK, CAParseHeaderPayloadLength(dataSegment,
+                                                       CA_BLE_LENGTH_HEADER_SIZE,
+                                                       &parseDataLength));
+
+    free(data);
+#endif
+}
+
+TEST(Ipv6ScopeLevel, getMulticastScope)
+{
+
+    const char interfaceLocalStart[] = "ff01::";
+    const char linkLocalStart[]      = "ff02::";
+    const char realmLocalStart[]     = "ff03::";
+    const char adminLocalStart[]     = "ff04::";
+    const char siteLocalStart[]      = "ff05::";
+    const char orgLocalStart[]       = "ff08::";
+    const char globalStart[]         = "ff0e::";
+
+    const char interfaceLocalMid[] = "ff81:0000:0000:f000:0000:0000:0000:0000";
+    const char linkLocalMid[]      = "ff82:0000:0000:f000:0000:0000:0000:0000";
+    const char realmLocalMid[]     = "ff83:0000:0000:f000:0000:0000:0000:0000";
+    const char adminLocalMid[]     = "ff84:0000:0000:f000:0000:0000:0000:0000";
+    const char siteLocalMid[]      = "ff85:0000:0000:f000:0000:0000:0000:0000";
+    const char orgLocalMid[]       = "ff88:0000:0000:f000:0000:0000:0000:0000";
+    const char globalMid[]         = "ff8e:0000:0000:f000:0000:0000:0000:0000";
+
+    const char interfaceLocalEnd[] = "fff1:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char linkLocalEnd[]      = "fff2:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char realmLocalEnd[]     = "fff3:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char adminLocalEnd[]     = "fff4:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char siteLocalEnd[]      = "fff5:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char orgLocalEnd[]       = "fff8:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char globalEnd[]         = "fffe:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+
+    // range start
+    CATransportFlags_t scopeLevel = CA_DEFAULT_FLAGS;
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(interfaceLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_INTERFACE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(linkLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_LINK, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(realmLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_REALM, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(adminLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_ADMIN, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(siteLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_SITE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(orgLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_ORG, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(globalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    // range mid
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(interfaceLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_INTERFACE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(linkLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_LINK, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(realmLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_REALM, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(adminLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_ADMIN, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(siteLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_SITE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(orgLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_ORG, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(globalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    // range end
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(interfaceLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_INTERFACE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(linkLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_LINK, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(realmLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_REALM, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(adminLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_ADMIN, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(siteLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_SITE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(orgLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_ORG, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(globalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+}
+
+TEST(Ipv6ScopeLevel, getUnicastScope)
+{
+    const char linkLocalLoopBack[]  = "::1";
+
+    const char linkLocalStart[]     = "fe80::";
+    const char linkLocalMid[]       = "fe80:0000:0000:0000:0f00:0000:0000:0000";
+    const char linkLocalEnd[]       = "febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+
+    const char siteLocalStart[]     = "fec0::";
+    const char siteLocalMid[]       = "fec0:0000:0000:0000:0f00:0000:0000:0000";
+    const char siteLocalEnd[]       = "feff:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+
+    const char globalStart[]   = "2000:0000:0000:0000:0000:0000:0000:0000";
+    const char globalMid[]     = "2000:0000:0000:0f00:0000:0000:0000:0000";
+    const char globalEnd[]     = "3fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+
+    // loopback
+    CATransportFlags_t scopeLevel = CA_DEFAULT_FLAGS;
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(linkLocalLoopBack, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_LINK, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    // linklocal
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(linkLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_LINK, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(linkLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_LINK, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(linkLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_LINK, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    // sitelocal
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(siteLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_SITE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(siteLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_SITE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(siteLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_SITE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    // global
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(globalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(globalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(globalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+}
+
+TEST(Ipv6ScopeLevel, invalidAddressTest)
+{
+    const char invalidAddr1[]    = "qqqq";
+    const char invalidAddr2[]    = "ffx7:ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char invalidAddr3[]    = "ffx7::::::::::dsds";
+    const char invalidAddr4[]    = "ffx7:ffff:ffff:ff@f:ffff:ffff:ffff:ffff";
+
+    CATransportFlags_t scopeLevel = CA_DEFAULT_FLAGS;
+    EXPECT_EQ(CA_STATUS_FAILED, CAGetIpv6AddrScope(invalidAddr1, &scopeLevel));
+    EXPECT_EQ(CA_STATUS_FAILED, CAGetIpv6AddrScope(invalidAddr2, &scopeLevel));
+    EXPECT_EQ(CA_STATUS_FAILED, CAGetIpv6AddrScope(invalidAddr3, &scopeLevel));
+    EXPECT_EQ(CA_STATUS_FAILED, CAGetIpv6AddrScope(invalidAddr4, &scopeLevel));
 }

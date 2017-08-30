@@ -18,12 +18,20 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <signal.h>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"
@@ -45,7 +53,7 @@ char *gResourceUri= (char *)"/a/led";
 //Secure Virtual Resource database for Iotivity Server
 //It contains Server's Identity and the PSK credentials
 //of other devices which the server trusts
-static char CRED_FILE[] = "oic_svr_db_server.json";
+static char CRED_FILE[] = "oic_svr_db_server.dat";
 
 OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
 {
@@ -87,13 +95,14 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
         gResourceUri = (char *) "/a/led/1";
     }
 
-    if(OC_REST_PUT == ehRequest->method)
+    if(OC_REST_PUT == ehRequest->method
+        || OC_REST_POST == ehRequest->method)
     {
         // Get pointer to query
         int64_t pow;
         if(OCRepPayloadGetPropInt(input, "power", &pow))
         {
-            currLEDResource->power =pow;
+            currLEDResource->power = pow;
         }
 
         bool state;
@@ -160,7 +169,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
      * resource is created with default representation (if representation is included in
      * POST payload it can be used as initial values) as long as the instance is
      * lesser than max new instance count. Once max instance count is reached, POST on
-     * /a/led updated the representation of /a/led (just like PUT)
+     * /a/led updated the representation of /a/led.
      */
 
     if (ehRequest->resource == LED.handle)
@@ -169,8 +178,8 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
         {
             // Create new LED instance
             char newLedUri[15] = "/a/led/";
-            int newLedUriLength = strlen(newLedUri);
-            snprintf (newLedUri + newLedUriLength, sizeof(newLedUri)-newLedUriLength, "%d", gCurrLedInstance);
+            size_t newLedUriLength = strlen(newLedUri);
+            snprintf((newLedUri + newLedUriLength), (sizeof(newLedUri) - newLedUriLength), "%d", gCurrLedInstance);
 
             respPLPost_led = OCRepPayloadCreate();
             OCRepPayloadSetUri(respPLPost_led, gResourceUri);
@@ -292,7 +301,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
         }
     }
 
-    OCPayloadDestroy(response.payload);
+    OCRepPayloadDestroy(payload);
     return ehResult;
 }
 
@@ -307,8 +316,14 @@ void handleSigInt(int signum)
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen(CRED_FILE, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main(int /*argc*/, char* /*argv*/[])
@@ -358,7 +373,7 @@ int main(int /*argc*/, char* /*argv*/[])
     return 0;
 }
 
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower)
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower)
 {
     if (!uri)
     {

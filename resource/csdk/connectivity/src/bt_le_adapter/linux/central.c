@@ -28,7 +28,7 @@
 
 
 // Logging tag.
-static char const TAG[] = "BLE_CENTRAL";
+#define TAG "BLE_CENTRAL"
 
 static bool CACentralGetBooleanProperty(GDBusProxy * device,
                                         char const * property)
@@ -254,7 +254,7 @@ static void CACentralDisconnect(CALEContext * context)
 {
     assert(context != NULL);
 
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     for (GList * l = context->devices; l != NULL; l = l->next)
     {
@@ -280,7 +280,7 @@ static void CACentralDisconnect(CALEContext * context)
         }
     }
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 }
 
 // -----------------------------------------------------------------------
@@ -295,7 +295,7 @@ CAResult_t CACentralStart(CALEContext * context)
       Synchronize access to the adapter information using the base
       context lock since we don't own the adapters.
      */
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     /**
      * Start discovery on all detected adapters.
@@ -309,7 +309,7 @@ CAResult_t CACentralStart(CALEContext * context)
                    CACentralStartDiscoveryImpl,
                    &result);
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     return result;
 }
@@ -343,14 +343,14 @@ CAResult_t CACentralStartDiscovery(CALEContext * context)
       Synchronize access to the adapter information using the base
       context lock since we don't own the adapters.
      */
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     // Start discovery on all detected adapters.
     g_list_foreach(context->adapters,
                    CACentralStartDiscoveryImpl,
                    &result);
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     return result;
 }
@@ -365,7 +365,7 @@ CAResult_t CACentralStopDiscovery(CALEContext * context)
       Synchronize access to the adapter information using the base
       context lock since we don't own the adapters.
      */
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     // Stop discovery on all detected adapters.
     g_list_foreach(context->adapters,
@@ -376,7 +376,7 @@ CAResult_t CACentralStopDiscovery(CALEContext * context)
      * @todo Stop notifications on all response characteristics.
      */
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     return result;
 }
@@ -431,14 +431,14 @@ bool CACentralConnectToAll(CALEContext * context)
 {
     bool connected = true;
 
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     // Connect to the LE peripherals, if we're not already connected.
     g_list_foreach(context->devices,
                    CACentralConnectToDevice,
                    &connected);
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     return connected;
 }

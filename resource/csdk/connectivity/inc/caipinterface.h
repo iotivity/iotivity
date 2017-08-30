@@ -57,7 +57,7 @@ typedef enum
  */
 typedef void (*CAIPPacketReceivedCallback)(const CASecureEndpoint_t *sep,
                                            const void *data,
-                                           uint32_t dataLength);
+                                           size_t dataLength);
 
 /**
   * Callback to notify error in the IP adapter.
@@ -69,14 +69,7 @@ typedef void (*CAIPPacketReceivedCallback)(const CASecureEndpoint_t *sep,
   * @pre  Callback must be registered using CAIPSetPacketReceiveCallback().
  */
 typedef void (*CAIPErrorHandleCallback)(const CAEndpoint_t *endpoint, const void *data,
-                                        uint32_t dataLength, CAResult_t result);
-
-/**
- * Callback to be notified when exception occures on multicast/unicast server.
- * @param  type   Type of server(#CAAdapterServerType_t).
- * @pre  Callback must be registered using CAIPSetExceptionCallback().
- */
-typedef void (*CAIPExceptionCallback)(CAAdapterServerType_t type);
+                                        size_t dataLength, CAResult_t result);
 
 /**
  * Start IP server.
@@ -127,13 +120,7 @@ CAResult_t CAIPStopListenServer();
  */
 void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback);
 
-/**
- * Set this callback for receiving exception notifications.
- *
- * @param[in]  callback  Callback to be notified on exception on running servers.
- */
-void CAIPSetExceptionCallback(CAIPExceptionCallback callback);
-
+#ifdef WITH_ARDUINO
 /**
  * Set socket description for sending unicast UDP data.
  * Once the Unicast server is started,
@@ -142,6 +129,7 @@ void CAIPSetExceptionCallback(CAIPExceptionCallback callback);
  * @param[in]  socketFD   Socket descriptor used for sending UDP data.
  */
 void CAIPSetUnicastSocket(int socketFD);
+#endif
 
 /**
  * Set the port number for sending unicast UDP data.
@@ -159,7 +147,7 @@ void CAIPSetUnicastPort(uint16_t port);
  */
 void CAIPSendData(CAEndpoint_t *endpoint,
                   const void *data,
-                  uint32_t dataLength,
+                  size_t dataLength,
                   bool isMulticast);
 
 /**
@@ -176,58 +164,10 @@ void CAIPPullData();
 
 #define CA_COAP        5683
 #define CA_SECURE_COAP 5684
-#define INTERFACE_NAME_MAX 16
-
-typedef struct
-{
-    char name[INTERFACE_NAME_MAX];
-    uint32_t index;
-    uint32_t flags;
-    uint16_t family;
-    uint32_t ipv4addr;        /**< used for IPv4 only. */
-} CAInterface_t;
-
 
 /**
- * Callback to be notified when IP adapter connection state changes.
- *
- * @param[in]  adapter      Transport adapter.
- * @param[in]  status       Connection status either ::CA_INTERFACE_UP or ::CA_INTERFACE_DOWN.
- * @see CAIPSetConnectionStateChangeCallback() for registration.
- */
-typedef void (*CAIPConnectionStateChangeCallback)(CATransportAdapter_t adapter, CANetworkStatus_t status);
-
-/**
- * Set callback for receiving local IP adapter connection status.
- *
- * @param[in]  adapter      Callback to be notified when IP adapter connection state changes.
- */
-void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback callback);
-
-/**
- * Set callback for receiving local IP adapter connection status.
- *
- * @param[in]  callback     Callback to be notified when IP adapter connection state changes.
- */
-void CAIPSetNetworkMonitorCallback(CAIPConnectionStateChangeCallback callback);
-
-/**
- * Get a list of CAInterface_t items.
- *
- * @return  List of CAInterface_t items.
- */
-u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex);
-
-/**
- * Find a new network interface.
- *
- * @return  Description of interface (or NULL if no change)
- */
-CAInterface_t *CAFindInterfaceChange();
-
-/**
- * Let the network monitor update the polling interval.
- * @param   [in] current polling interval
+ * Let the network monitor update the polling interval, in seconds.
+ * @param[in]  interval  current polling interval
  *
  * @return  desired polling interval
  */
@@ -239,25 +179,11 @@ int CAGetPollingInterval(int interval);
 void CAWakeUpForChange();
 
 /**
- * Start network monitor.
- *
- * @return ::CA_STATUS_OK or Appropriate error code.
- */
-CAResult_t CAIPStartNetworkMonitor();
-
-/**
- * Stops network monitor.
- *
- * @return ::CA_STATUS_OK or Appropriate error code.
- */
-CAResult_t CAIPStopNetworkMonitor();
-
-/**
  * Set callback for error handling.
  *
- * @param[in]  ipErrorCallback  callback to notify error to the ipadapter.
+ * @param[in]  errorHandleCallback  callback to notify error to the ipadapter.
  */
-void CAIPSetErrorHandleCallback(CAIPErrorHandleCallback ipErrorCallback);
+void CAIPSetErrorHandler(CAIPErrorHandleCallback errorHandleCallback);
 
 #ifdef __cplusplus
 }

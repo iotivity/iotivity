@@ -6,13 +6,13 @@
  * README for terms of use.
  */
 
-#include "config.h"
+#include "include/coap/config.h"
 
 #include <stdio.h>
 
-#include "debug.h"
-#include "mem.h"
-#include "str.h"
+#include "include/coap/debug.h"
+#include "include/coap/mem.h"
+#include "include/coap/str.h"
 
 str *coap_new_string(size_t size)
 {

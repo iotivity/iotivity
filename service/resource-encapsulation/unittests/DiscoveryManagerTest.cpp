@@ -18,7 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "UnitTestHelper.h"
+#include <gtest/gtest.h>
+#include <HippoMocks/hippomocks.h>
 
 #include "RCSRemoteResourceObject.h"
 #include "RCSDiscoveryManager.h"
@@ -40,7 +41,31 @@ constexpr char RESOURCE_URI[]{ "/a/TemperatureSensor" };
 constexpr char RESOURCE_TYPE[]{ "resource.type" };
 constexpr char SECOND_RESOURCETYPE[]{ "resource.type.second" };
 
-void onResourceDiscovered(RCSRemoteResourceObject::Ptr) {}
+#ifdef SECURED
+const char * SVR_DB_FILE_NAME = "./oic_svr_db_re_client.dat";
+//OCPersistent Storage Handlers
+static FILE* client_open(const char * path, const char *mode)
+{
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+#ifndef LOCAL_RUNNING
+        std::string file_name =
+            "./service/resource-encapsulation/unittests/oic_svr_db_re_client.dat";
+        if (0 == access(file_name.c_str(), F_OK))
+        {
+            return fopen(file_name.c_str(), mode);
+        }
+#endif
+        return fopen(SVR_DB_FILE_NAME, mode);
+    }
+    return fopen(path, mode);
+}
+#endif
+
+void onResourceDiscovered(RCSRemoteResourceObject::Ptr)
+{
+
+}
 
 class ScopedTask
 {
@@ -52,7 +77,10 @@ public:
 
     ~ScopedTask()
     {
-        if (m_task) m_task->cancel();
+        if (m_task)
+        {
+            m_task->cancel();
+        }
     }
 
     RCSDiscoveryManager::DiscoveryTask* operator->()
@@ -69,6 +97,14 @@ private:
 
 TEST(DiscoveryManagerTest, ThrowIfDiscoverWithEmptyCallback)
 {
+#ifdef SECURED
+    static OCPersistentStorage gps {client_open, fread, fwrite, fclose, unlink };
+    OC::PlatformConfig cfg
+    { OC::ServiceType::InProc, OC::ModeType::Both, "0.0.0.0", 0,
+            OC::QualityOfService::LowQos, &gps };
+    OC::OCPlatform::Configure(cfg);
+#endif
+
     EXPECT_THROW(RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(), { }),
             RCSInvalidParameterException);
 }
@@ -81,19 +117,24 @@ TEST(DiscoveryManagerTest, ThrowIfDiscoverWithMultipleTypesThatContainEmptyStrin
 
 TEST(DiscoveryManagerTest, DiscoverInvokesFindResource)
 {
+#ifndef HIPPOMOCKS_ISSUE
     MockRepository mocks;
     mocks.ExpectCallFuncOverload(static_cast<OCFindResource>(findResource)).Match(
         [](const std::string& host, const std::string& resourceURI, OCConnectivityType, FindCallback)
         {
-            return host.empty() && resourceURI == (std::string(RESOURCE_URI) + "?rt=" + RESOURCE_TYPE);
+            return host.empty() && resourceURI ==
+                    (std::string(OC_RSRVD_WELL_KNOWN_URI) + "?rt=" + RESOURCE_TYPE);
         }
     ).Return(OC_STACK_OK);
-
+#endif
     ScopedTask task {RCSDiscoveryManager::getInstance()->discoverResourceByType(
             RCSAddress::multicast(), RESOURCE_URI, RESOURCE_TYPE, onResourceDiscovered)};
 }
-
+#ifdef HIPPOMOCKS_ISSUE
+TEST(DiscoveryManagerTest, DISABLED_DiscoverWithMultipleTypesInvokesFindResourceMultipleTimes)
+#else
 TEST(DiscoveryManagerTest, DiscoverWithMultipleTypesInvokesFindResourceMultipleTimes)
+#endif
 {
     MockRepository mocks;
     const std::vector< std::string > resourceTypes{ RESOURCE_TYPE, SECOND_RESOURCETYPE };
@@ -125,8 +166,12 @@ TEST(DiscoveryManagerTest, TaskCanBeCanceled)
     ASSERT_FALSE(aTask->isCanceled());
     ASSERT_TRUE(aTaskToBeCanceled->isCanceled());
 }
-
-TEST(DiscoveryManagerTest, CallbackWouldNotBeCalledForSameRemoteResource) {
+#ifdef HIPPOMOCKS_ISSUE
+TEST(DiscoveryManagerTest, DISABLED_CallbackWouldNotBeCalledForSameRemoteResource)
+#else
+TEST(DiscoveryManagerTest, CallbackWouldNotBeCalledForSameRemoteResource)
+#endif
+{
     FindCallback callback;
 
     MockRepository mocks;

@@ -180,9 +180,13 @@ void onPost2(const HeaderOptions &headerOptions, const OCRepresentation &rep, co
             }
 
             if (OBSERVE_TYPE_TO_USE == ObserveType::Observe)
+            {
                 std::cout << std::endl << "Observe is used." << std::endl << std::endl;
+            }
             else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
+            {
                 std::cout << std::endl << "ObserveAll is used." << std::endl << std::endl;
+            }
 
             curResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onObserve);
 
@@ -640,9 +644,14 @@ void checkObserverValue(int value)
 
 static FILE *client_open(const char *path, const char *mode)
 {
-    (void)path;
-
-    return fopen("./oic_svr_db_client.json", mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen("./oic_svr_db_client.json", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main(int argc, char *argv[])
@@ -713,9 +722,9 @@ int main(int argc, char *argv[])
         cv.wait(lock);
 
     }
-    catch (OCException &e)
+    catch (const OCException &e)
     {
-        oclog() << "Exception in main: " << e.what();
+        std::cout << "Exception in main: " << e.what();
     }
 
     return 0;

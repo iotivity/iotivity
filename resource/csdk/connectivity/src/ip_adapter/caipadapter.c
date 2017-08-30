@@ -24,18 +24,20 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "caipnwmonitor.h"
 #include "caipinterface.h"
 #include "caqueueingthread.h"
 #include "caadapterutils.h"
 #ifdef __WITH_DTLS__
-#include "caadapternetdtls.h"
+#include "ca_adapter_net_ssl.h"
 #endif
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "caremotehandler.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "iotivity_debug.h"
 
 /**
  * Logging tag for module name.
@@ -61,6 +63,11 @@ static CAQueueingThread_t *g_sendQueueHandle = NULL;
 #endif
 
 /**
+ * List of the endpoint that has a stack-owned IP address.
+ */
+static u_arraylist_t *g_ownIpEndpointList = NULL;
+
+/**
  * Network Packet Received Callback to CA.
  */
 static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
@@ -76,11 +83,13 @@ static CAAdapterChangeCallback g_networkChangeCallback = NULL;
 static CAErrorHandleCallback g_errorCallback = NULL;
 
 static void CAIPPacketReceivedCB(const CASecureEndpoint_t *endpoint,
-                                 const void *data, uint32_t dataLength);
+                                 const void *data, size_t dataLength);
 #ifdef __WITH_DTLS__
-static void CAIPPacketSendCB(CAEndpoint_t *endpoint,
-                             const void *data, uint32_t dataLength);
+static ssize_t CAIPPacketSendCB(CAEndpoint_t *endpoint,
+                                const void *data, size_t dataLength);
 #endif
+
+static void CAUpdateStoredIPAddressInfo(CANetworkStatus_t status);
 
 #ifndef SINGLE_THREAD
 
@@ -107,11 +116,20 @@ CAResult_t CAIPInitializeQueueHandles()
         return CA_STATUS_OK;
     }
 
+    g_ownIpEndpointList = u_arraylist_create();
+    if (!g_ownIpEndpointList)
+    {
+        OIC_LOG(ERROR, TAG, "Memory allocation failed! (g_ownIpEndpointList)");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
     // Create send message queue
     g_sendQueueHandle = OICMalloc(sizeof(CAQueueingThread_t));
     if (!g_sendQueueHandle)
     {
-        OIC_LOG(ERROR, TAG, "Memory allocation failed!");
+        OIC_LOG(ERROR, TAG, "Memory allocation failed! (g_sendQueueHandle)");
+        u_arraylist_free(&g_ownIpEndpointList);
+        g_ownIpEndpointList = NULL;
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -122,6 +140,8 @@ CAResult_t CAIPInitializeQueueHandles()
         OIC_LOG(ERROR, TAG, "Failed to Initialize send queue thread");
         OICFree(g_sendQueueHandle);
         g_sendQueueHandle = NULL;
+        u_arraylist_free(&g_ownIpEndpointList);
+        g_ownIpEndpointList = NULL;
         return CA_STATUS_FAILED;
     }
 
@@ -133,12 +153,21 @@ void CAIPDeinitializeQueueHandles()
     CAQueueingThreadDestroy(g_sendQueueHandle);
     OICFree(g_sendQueueHandle);
     g_sendQueueHandle = NULL;
+
+    // Since the items in g_ownIpEndpointList are allocated once in a big chunk, we only need to
+    // free the first item. Another location this is done is in the CA_INTERFACE_DOWN handler
+    // in CAUpdateStoredIPAddressInfo().
+    OICFree(u_arraylist_get(g_ownIpEndpointList, 0));
+    u_arraylist_free(&g_ownIpEndpointList);
+    g_ownIpEndpointList = NULL;
 }
 
 #endif // SINGLE_THREAD
 
-void CAIPConnectionStateCB(CATransportAdapter_t adapter, CANetworkStatus_t status)
+void CAIPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
 {
+    CAUpdateStoredIPAddressInfo(status);
+
     if (g_networkChangeCallback)
     {
         g_networkChangeCallback(adapter, status);
@@ -147,21 +176,67 @@ void CAIPConnectionStateCB(CATransportAdapter_t adapter, CANetworkStatus_t statu
     {
         OIC_LOG(ERROR, TAG, "g_networkChangeCallback is NULL");
     }
+
+    if (CA_INTERFACE_DOWN == status)
+    {
+        OIC_LOG(DEBUG, TAG, "Network status for IP is down");
+#ifdef __WITH_DTLS__
+        OIC_LOG(DEBUG, TAG, "close all ssl session");
+        CAcloseSslConnectionAll(CA_ADAPTER_IP);
+#endif
+    }
+}
+
+static void CAUpdateStoredIPAddressInfo(CANetworkStatus_t status)
+{
+    if (CA_INTERFACE_UP == status)
+    {
+        OIC_LOG(DEBUG, TAG, "IP adapter status is on. Store the own IP address info");
+
+        CAEndpoint_t *eps = NULL;
+        size_t numOfEps = 0;
+
+        CAResult_t res = CAGetIPInterfaceInformation(&eps, &numOfEps);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CAGetIPInterfaceInformation failed");
+            return;
+        }
+
+        for (size_t i = 0; i < numOfEps; i++)
+        {
+            u_arraylist_add(g_ownIpEndpointList, (void *)&eps[i]);
+        }
+    }
+    else // CA_INTERFACE_DOWN
+    {
+        OIC_LOG(DEBUG, TAG, "IP adapter status is off. Remove the own IP address info");
+
+        CAEndpoint_t *headEp = u_arraylist_get(g_ownIpEndpointList, 0);
+        OICFree(headEp);
+        headEp = NULL;
+
+        size_t len = u_arraylist_length(g_ownIpEndpointList);
+        for (size_t i = len; i > 0; i--)
+        {
+            u_arraylist_remove(g_ownIpEndpointList, i - 1);
+        }
+    }
 }
 
 #ifdef __WITH_DTLS__
-static void CAIPPacketSendCB(CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+static ssize_t CAIPPacketSendCB(CAEndpoint_t *endpoint, const void *data, size_t dataLength)
 {
-    VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
-    VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", -1);
+    VERIFY_NON_NULL_RET(data, TAG, "data is NULL", -1);
 
     CAIPSendData(endpoint, data, dataLength, false);
+    return dataLength;
 }
 #endif
 
-
 void CAIPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
-                          uint32_t dataLength)
+                          size_t dataLength)
 {
     VERIFY_NON_NULL_VOID(sep, TAG, "sep is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
@@ -174,8 +249,33 @@ void CAIPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
     }
 }
 
+bool CAIPIsLocalEndpoint(const CAEndpoint_t *ep)
+{
+    char addr[MAX_ADDR_STR_SIZE_CA];
+    OICStrcpy(addr, MAX_ADDR_STR_SIZE_CA, ep->addr);
+
+    // drop the zone ID if the address of endpoint is IPv6. ifindex will be checked instead.
+    if ((ep->flags & CA_IPV6) && strchr(addr, '%'))
+    {
+        strtok(addr, "%");
+    }
+
+    size_t len = u_arraylist_length(g_ownIpEndpointList);
+    for (size_t i = 0; i < len; i++)
+    {
+        CAEndpoint_t *ownIpEp = u_arraylist_get(g_ownIpEndpointList, i);
+        if (!strcmp(addr, ownIpEp->addr) && ep->port == ownIpEp->port
+                                         && ep->ifindex == ownIpEp->ifindex)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void CAIPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
-                      uint32_t dataLength, CAResult_t result)
+                      size_t dataLength, CAResult_t result)
 {
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
@@ -188,14 +288,14 @@ void CAIPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
 
 static void CAInitializeIPGlobals()
 {
-    caglobals.ip.u6.fd  = -1;
-    caglobals.ip.u6s.fd = -1;
-    caglobals.ip.u4.fd  = -1;
-    caglobals.ip.u4s.fd = -1;
-    caglobals.ip.m6.fd  = -1;
-    caglobals.ip.m6s.fd = -1;
-    caglobals.ip.m4.fd  = -1;
-    caglobals.ip.m4s.fd = -1;
+    caglobals.ip.u6.fd  = OC_INVALID_SOCKET;
+    caglobals.ip.u6s.fd = OC_INVALID_SOCKET;
+    caglobals.ip.u4.fd  = OC_INVALID_SOCKET;
+    caglobals.ip.u4s.fd = OC_INVALID_SOCKET;
+    caglobals.ip.m6.fd  = OC_INVALID_SOCKET;
+    caglobals.ip.m6s.fd = OC_INVALID_SOCKET;
+    caglobals.ip.m4.fd  = OC_INVALID_SOCKET;
+    caglobals.ip.m4s.fd = OC_INVALID_SOCKET;
     caglobals.ip.u6.port  = 0;
     caglobals.ip.u6s.port = 0;
     caglobals.ip.u4.port  = 0;
@@ -232,6 +332,19 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     VERIFY_NON_NULL(handle, TAG, "thread pool handle");
 #endif
 
+#ifdef WSA_WAIT_EVENT_0
+    // Windows-specific initialization.
+    WORD wVersionRequested = MAKEWORD(2, 2);
+    WSADATA wsaData = {.wVersion = 0};
+    int err = WSAStartup(wVersionRequested, &wsaData);
+    if (0 != err)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: WSAStartup failed: %i", __func__, err);
+        return CA_STATUS_FAILED;
+    }
+    OIC_LOG(DEBUG, TAG, "WSAStartup Succeeded");
+#endif
+
     g_networkChangeCallback = netCallback;
     g_networkPacketCallback = networkPacketCallback;
     g_errorCallback = errorCallback;
@@ -239,14 +352,18 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     CAInitializeIPGlobals();
     caglobals.ip.threadpool = handle;
 
+    CAIPSetErrorHandler(CAIPErrorHandler);
     CAIPSetPacketReceiveCallback(CAIPPacketReceivedCB);
-#ifndef SINGLE_THREAD
-    CAIPSetConnectionStateChangeCallback(CAIPConnectionStateCB);
-#endif
-#ifdef __WITH_DTLS__
-    CAAdapterNetDtlsInit();
 
-    CADTLSSetAdapterCallbacks(CAIPPacketReceivedCB, CAIPPacketSendCB, 0);
+#ifdef __WITH_DTLS__
+    if (CA_STATUS_OK != CAinitSslAdapter())
+    {
+        OIC_LOG(ERROR, TAG, "Failed to init SSL adapter");
+    }
+    else
+    {
+        CAsetSslAdapterCallbacks(CAIPPacketReceivedCB, CAIPPacketSendCB, CA_ADAPTER_IP);
+    }
 #endif
 
     static const CAConnectivityHandler_t ipHandler =
@@ -271,7 +388,13 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
 
 CAResult_t CAStartIP()
 {
-    CAIPStartNetworkMonitor();
+    // Specific the port number received from application.
+    caglobals.ip.u6.port  = caglobals.ports.udp.u6;
+    caglobals.ip.u6s.port = caglobals.ports.udp.u6s;
+    caglobals.ip.u4.port  = caglobals.ports.udp.u4;
+    caglobals.ip.u4s.port = caglobals.ports.udp.u4s;
+
+    CAIPStartNetworkMonitor(CAIPAdapterHandler, CA_ADAPTER_IP);
 #ifdef SINGLE_THREAD
     uint16_t unicastPort = 55555;
     // Address is hardcoded as we are using Single Interface
@@ -372,13 +495,17 @@ static int32_t CAQueueIPData(bool isMulticast, const CAEndpoint_t *endpoint,
 }
 
 int32_t CASendIPUnicastData(const CAEndpoint_t *endpoint,
-                            const void *data, uint32_t dataLength)
+                            const void *data, uint32_t dataLength,
+                            CADataType_t dataType)
 {
+    (void)dataType;
     return CAQueueIPData(false, endpoint, data, dataLength);
 }
 
-int32_t CASendIPMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+int32_t CASendIPMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength,
+                              CADataType_t dataType)
 {
+    (void)dataType;
     return CAQueueIPData(true, endpoint, data, dataLength);
 }
 
@@ -391,7 +518,7 @@ CAResult_t CAReadIPData()
 CAResult_t CAStopIP()
 {
 #ifdef __WITH_DTLS__
-    CAAdapterNetDtlsDeInit();
+    CAdeinitSslAdapter();
 #endif
 
 #ifndef SINGLE_THREAD
@@ -401,7 +528,7 @@ CAResult_t CAStopIP()
     }
 #endif
 
-    CAIPStopNetworkMonitor();
+    CAIPStopNetworkMonitor(CA_ADAPTER_IP);
     CAIPStopServer();
     //Re-initializing the Globals to start them again
     CAInitializeIPGlobals();
@@ -412,7 +539,7 @@ CAResult_t CAStopIP()
 void CATerminateIP()
 {
 #ifdef __WITH_DTLS__
-    CADTLSSetAdapterCallbacks(NULL, NULL, 0);
+    CAsetSslAdapterCallbacks(NULL, NULL, CA_ADAPTER_IP);
 #endif
 
     CAIPSetPacketReceiveCallback(NULL);
@@ -420,6 +547,11 @@ void CATerminateIP()
 #ifndef SINGLE_THREAD
     CADeInitializeIPGlobals();
     CAIPDeinitializeQueueHandles();
+#endif
+
+#ifdef WSA_WAIT_EVENT_0
+    // Windows-specific clean-up.
+    OC_VERIFY(0 == WSACleanup());
 #endif
 }
 
@@ -446,15 +578,13 @@ void CAIPSendDataThread(void *threadData)
 #ifdef __WITH_DTLS__
         if (ipData->remoteEndpoint && ipData->remoteEndpoint->flags & CA_SECURE)
         {
-            OIC_LOG(DEBUG, TAG, "CAAdapterNetDtlsEncrypt called!");
-            CAResult_t result = CAAdapterNetDtlsEncrypt(ipData->remoteEndpoint,
-                                               ipData->data, ipData->dataLen);
+            OIC_LOG(DEBUG, TAG, "DTLS encrypt called");
+            CAResult_t result = CAencryptSsl(ipData->remoteEndpoint, ipData->data, ipData->dataLen);
             if (CA_STATUS_OK != result)
             {
-                OIC_LOG(ERROR, TAG, "CAAdapterNetDtlsEncrypt failed!");
+                OIC_LOG(ERROR, TAG, "CAencryptSsl failed!");
             }
-            OIC_LOG_V(DEBUG, TAG,
-                      "CAAdapterNetDtlsEncrypt returned with result[%d]", result);
+            OIC_LOG_V(DEBUG, TAG, "CAencryptSsl returned with result[%d]", result);
         }
         else
         {

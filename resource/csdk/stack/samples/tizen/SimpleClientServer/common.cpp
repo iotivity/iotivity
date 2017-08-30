@@ -33,6 +33,8 @@ const char *getResult(OCStackResult result)
             return "OC_STACK_RESOURCE_CREATED";
         case OC_STACK_RESOURCE_DELETED:
             return "OC_STACK_RESOURCE_DELETED";
+        case OC_STACK_RESOURCE_CHANGED:
+            return "OC_STACK_RESOURCE_CHANGED";
         case OC_STACK_INVALID_URI:
             return "OC_STACK_INVALID_URI";
         case OC_STACK_INVALID_QUERY:

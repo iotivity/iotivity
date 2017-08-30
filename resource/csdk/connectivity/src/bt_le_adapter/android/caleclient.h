@@ -25,6 +25,7 @@
 #ifndef CA_LECLIENT_H_
 #define CA_LECLIENT_H_
 
+#include "calestate.h"
 #include "cacommon.h"
 #include "cathreadpool.h"
 #include "uarraylist.h"
@@ -35,21 +36,15 @@ extern "C"
 {
 #endif
 
-static const uint16_t GATT_ERROR = 133;
-
-static const uint16_t STATE_SEND_NONE = 1;
-static const uint16_t STATE_SEND_SUCCESS = 2;
-static const uint16_t STATE_SEND_FAIL = 3;
-static const uint16_t STATE_SENDING = 4;
-
-typedef struct le_state_info
+/**
+ * BLE Scanning State.
+ */
+typedef enum
 {
-    char address[CA_MACADDR_SIZE];
-    uint16_t connectedState;
-    uint16_t sendState;
-    jboolean autoConnectFlag;
-    jboolean isDescriptorFound;
-} CALEState_t;
+    BLE_SCAN_ENABLE = 0, /**< BLE scan is working */
+    BLE_SCAN_DISABLE,    /**< BLE scan is not working */
+    BLE_SCAN_NONE        /**< Initialize State */
+} CALEScanState_t;
 
 /**
  * Callback to be notified on reception of any data from remote devices.
@@ -98,6 +93,13 @@ CAResult_t CALEClientDestroyJniInterface();
  * @param[in]   gatt                  Gatt profile object.
  */
 void CALEClientSendFinish(JNIEnv *env, jobject gatt);
+
+/**
+ * send negotiation message after gatt connection is done.
+ * @param[in]   address               remote address.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientSendNegotiationMessage(const char* address);
 
 /**
  * send data for unicast (interface).
@@ -224,6 +226,14 @@ CAResult_t CALEClientStartScan();
 CAResult_t CALEClientStartScanImpl(JNIEnv *env, jobject callback);
 
 /**
+ * start to scan whole bluetooth devices for android API level 21 (implement).
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   callback              callback to receive device object by scanning.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientStartScanImplForV21(JNIEnv *env, jobject callback);
+
+/**
  * start to scan target bluetooth devices for service uuid (implement).
  * @param[in]   env                   JNI interface pointer.
  * @param[in]   uuids                 target UUID.
@@ -232,6 +242,16 @@ CAResult_t CALEClientStartScanImpl(JNIEnv *env, jobject callback);
  */
 CAResult_t CALEClientStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids,
                                            jobject callback);
+
+/**
+ * start to scan target bluetooth devices for service uuid for android API level 21 (implement).
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   uuids                 target UUID.
+ * @param[in]   callback              callback to receive device object by scanning.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientStartScanWithUUIDImplForV21(JNIEnv *env, jobjectArray uuids,
+                                                 jobject callback);
 
 /**
  * get uuid object.
@@ -248,12 +268,6 @@ jobject CALEClientGetUUIDObject(JNIEnv *env, const char *uuid);
 CAResult_t CALEClientStopScan();
 
 /**
- * set ble scanning flag.
- * @param[in]   flag        scan flag.
- */
-void CALEClientSetScanFlag(bool flag);
-
-/**
  * stop scan (implement).
  * @param[in]   env                   JNI interface pointer.
  * @param[in]   callback              callback to receive device object by scanning.
@@ -262,23 +276,12 @@ void CALEClientSetScanFlag(bool flag);
 CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback);
 
 /**
- * set flag into State List.
+ * stop scan for android API level 21(implement).
  * @param[in]   env                   JNI interface pointer.
- * @param[in]   jni_address           remote address.
- * @param[in]   state_idx             state index.
- * @param[in]   flag                  auto connect flag.
+ * @param[in]   callback              callback to receive device object by scanning.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEClientSetFlagToState(JNIEnv *env, jstring jni_address,
-                                    jint state_idx, jboolean flag);
-
-/**
- * get flag from State List.
- * @param[in]   env                   JNI interface pointer.
- * @param[in]   jni_address           remote address.
- * @param[in]   state_idx             state index.
- * @return  current flag;
- */
-jboolean CALEClientGetFlagFromState(JNIEnv *env, jstring jni_address, jint state_idx);
+CAResult_t CALEClientStopScanImplForV21(JNIEnv *env, jobject callback);
 
 /**
  * connect to gatt server hosted.
@@ -314,6 +317,14 @@ CAResult_t CALEClientDisconnectAll(JNIEnv *env);
  */
 CAResult_t CALEClientDisconnectforAddress(JNIEnv *env, jstring remoteAddress);
 
+/**
+ * request MTU size negotiation to server.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   bluetoothGatt         gatt object.
+ * @param[in]   size                  MTU size.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientRequestMTU(JNIEnv *env, jobject bluetoothGatt, jint size);
 /**
  * start discovery server.
  * @param[in]   env                   JNI interface pointer.
@@ -496,27 +507,43 @@ CAResult_t CALEClientRemoveGattObjForAddr(JNIEnv *env, jstring addr);
 jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
 
 /**
- * update new state information.
- * @param[in]   address               remote address.
+ * update new state information by Bluetooth device object.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   device                Bluetooth device.
  * @param[in]   state_type            state type.
  * @param[in]   target_state          state index to update.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEClientUpdateDeviceState(const char* address, uint16_t state_type,
-                                       uint16_t target_state);
+CAResult_t CALEClientUpdateDeviceStateWithBtDevice(JNIEnv *env,
+                                                   jobject device,
+                                                   uint16_t state_type,
+                                                   uint16_t target_state);
 
 /**
- * check whether the remote address is existed or not.
- * @param[in]   address               remote address.
- * @return  true or false.
+ * set flag into State List.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jni_address           remote address.
+ * @param[in]   state_idx             state index.
+ * @param[in]   flag                  auto connect flag.
  */
-bool CALEClientIsDeviceInList(const char *remoteAddress);
+CAResult_t CALEClientSetFlagToState(JNIEnv *env, jstring jni_address,
+                                    jint state_idx, jboolean flag);
 
 /**
- * remove all device states.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ * get flag from State List.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jni_address           remote address.
+ * @param[in]   state_idx             state index.
+ * @return  current flag;
  */
-CAResult_t CALEClientRemoveAllDeviceState();
+jboolean CALEClientGetFlagFromState(JNIEnv *env, jstring jni_address, jint state_idx);
+
+/**
+ * get MTU size.
+ * @param[in] address      the address of the remote device.
+ * @return  mtu size negotiated from remote device.
+ */
+uint16_t CALEClientGetMtuSize(const char* address);
 
 /**
  * Reset values of device state for all of devices.
@@ -524,30 +551,6 @@ CAResult_t CALEClientRemoveAllDeviceState();
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEClientResetDeviceStateForAll();
-
-/**
- * remove the device state for a remote device.
- * @param[in]   remoteAddress         remote address.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CALEClientRemoveDeviceState(const char* remoteAddress);
-
-/**
- * get state information for a remote device.
- * @param[in]   remoteAddress         remote address.
- * @return  CALEState_t.
- */
-CALEState_t* CALEClientGetStateInfo(const char* remoteAddress);
-
-/**
- * check whether the remote address has same state with target state.
- * @param[in]   remoteAddress         remote address.
- * @param[in]   state_type            state_type.
- * @param[in]   target_state          state index to check.
- * @return  true or false.
- */
-bool CALEClientIsValidState(const char* remoteAddress, uint16_t state_type,
-                            uint16_t target_state);
 
 /**
  * create scan device list.
@@ -593,6 +596,51 @@ CAResult_t CALEClientCloseProfileProxy(JNIEnv *env, jobject gatt);
  * @return  gatt profile object
  */
 jobject CALEClientGattConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect);
+
+/**
+ * connect to GATT Server hosted by this device directly.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   bluetoothDevice       bluetooth device object.
+ * @param[in]   autoconnect           connect as soon as the device becomes avaiable(true).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientDirectConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect);
+
+/**
+ * check connection status.
+ * @param[in] address      the address of the remote device.
+ * @return  true or false.
+ */
+bool CALEClientIsConnected(const char* address);
+
+/**
+ * set new interval time and working count.
+ * @param[in]  intervalTime             interval time(Seconds).
+ * @param[in]  workingCount             working count for selected interval time.
+ * @param[in]  nextScanningStep         set next scanning state.
+ */
+void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount,
+                               CALEScanState_t nextScanningStep);
+
+/**
+ * restart scanning with new interval time and working count.
+ * @param[in]  intervalTime             interval time(Seconds).
+ * @param[in]  workingCount             working count for selected interval time.
+ * @param[in]  nextScanningStep         set next scanning state.
+ */
+void CALERestartScanWithInterval(int32_t intervalTime, int32_t workingCount,
+                                 CALEScanState_t nextScanningStep);
+
+/**
+ * start LE scanning logic with interval time and working count.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientStartScanWithInterval();
+
+/**
+ * stop LE scanning logic with interval time and cycle.
+ */
+void CALEClientStopScanWithInterval();
 
 #ifdef __cplusplus
 } /* extern "C" */

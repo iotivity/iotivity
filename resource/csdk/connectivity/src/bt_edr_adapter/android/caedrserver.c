@@ -28,7 +28,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "cathreadpool.h" /* for thread pool */
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "caadapterutils.h"
 #include "org_iotivity_ca_CaEdrInterface.h"
@@ -46,6 +46,13 @@ static ca_thread_pool_t g_threadPoolHandle = NULL;
 static JavaVM *g_jvm;
 
 /**
+ * when Both Mode(server and client) in App is set,
+ * startDiscoveryServer and startListenningServer is calling.
+ * and then both accept thread and receive thread is running redundantly.
+ */
+static bool g_isStartServer = false;
+
+/**
  * Maximum CoAP over TCP header length
  * to know the total data length.
  */
@@ -54,7 +61,7 @@ static JavaVM *g_jvm;
 /**
  * Mutex to synchronize receive server.
  */
-static ca_mutex g_mutexReceiveServer = NULL;
+static oc_mutex g_mutexReceiveServer = NULL;
 
 /**
  * Flag to control the Receive Unicast Data Thread.
@@ -64,7 +71,7 @@ static bool g_stopUnicast = false;
 /**
  * Mutex to synchronize accept server.
  */
-static ca_mutex g_mutexAcceptServer = NULL;
+static oc_mutex g_mutexAcceptServer = NULL;
 
 /**
  * Flag to control the Accept Thread.
@@ -74,7 +81,7 @@ static bool g_stopAccept = false;
 /**
  * Mutex to synchronize server socket.
  */
-static ca_mutex g_mutexServerSocket = NULL;
+static oc_mutex g_mutexServerSocket = NULL;
 
 /**
  * Flag to control the server socket.
@@ -84,12 +91,17 @@ static jobject g_serverSocket = NULL;
 /**
  * Mutex to synchronize device state list.
  */
-static ca_mutex g_mutexStateList = NULL;
+static oc_mutex g_mutexStateList = NULL;
 
 /**
  * Mutex to synchronize device object list.
  */
-static ca_mutex g_mutexObjectList = NULL;
+static oc_mutex g_mutexObjectList = NULL;
+
+/**
+ * Mutex to synchronize start server state.
+ */
+static oc_mutex g_mutexStartServerState = NULL;
 
 /**
  * Thread context information for unicast, multicast and secured unicast server.
@@ -113,12 +125,12 @@ static CAEDRDataReceivedCallback g_edrPacketReceivedCallback = NULL;
 
 static void CAReceiveHandler(void *data)
 {
-    OIC_LOG(DEBUG, TAG, "IN - CAReceiveHandler..");
+    OIC_LOG(DEBUG, TAG, "IN - CAReceiveHandler");
     // Input validation
     VERIFY_NON_NULL_VOID(data, TAG, "Invalid thread context");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -145,10 +157,10 @@ static void CAReceiveHandler(void *data)
 
         // if new socket object is added in socket list after below logic is ran.
         // new socket will be started to read after next while loop
-        uint32_t length = CAEDRGetSocketListLength();
+        size_t length = CAEDRGetSocketListLength();
         if (0 != length)
         {
-            for (uint32_t idx = 0; idx < length; idx++)
+            for (size_t idx = 0; idx < length; idx++)
             {
                 CAEDRNativeReadData(env, idx);
             }
@@ -172,7 +184,7 @@ static void CAAcceptHandler(void *data)
     VERIFY_NON_NULL_VOID(data, TAG, "data is null");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -200,16 +212,11 @@ static void CAAcceptHandler(void *data)
         return;
     }
 
-    ca_mutex_lock(g_mutexServerSocket);
+    oc_mutex_lock(g_mutexServerSocket);
     g_serverSocket = (*env)->NewGlobalRef(env, jni_obj_BTServerSocket);
-    ca_mutex_unlock(g_mutexServerSocket);
+    oc_mutex_unlock(g_mutexServerSocket);
 
     CAAdapterAcceptThreadContext_t *ctx = (CAAdapterAcceptThreadContext_t *) data;
-
-    // it should be initialized for restart accept thread
-    ca_mutex_lock(g_mutexAcceptServer);
-    g_stopAccept = false;
-    ca_mutex_unlock(g_mutexAcceptServer);
 
     while (true != *(ctx->stopFlag))
     {
@@ -217,12 +224,12 @@ static void CAAcceptHandler(void *data)
         if (!CAEDRNativeIsEnableBTAdapter(env))
         {
             OIC_LOG(INFO, TAG, "BT adapter is not enabled");
-            ca_mutex_lock(g_mutexAcceptServer);
+            oc_mutex_lock(g_mutexAcceptServer);
             g_stopAccept = true;
-            ca_mutex_unlock(g_mutexAcceptServer);
-            ca_mutex_lock(g_mutexServerSocket);
+            oc_mutex_unlock(g_mutexAcceptServer);
+            oc_mutex_lock(g_mutexServerSocket);
             g_serverSocket = NULL;
-            ca_mutex_unlock(g_mutexServerSocket);
+            oc_mutex_unlock(g_mutexServerSocket);
         }
         else
         {
@@ -252,6 +259,21 @@ CAResult_t CAEDRServerStart()
         return CA_STATUS_NOT_INITIALIZED;
     }
 
+    oc_mutex_lock(g_mutexStartServerState);
+    if (g_isStartServer)
+    {
+        OIC_LOG(DEBUG, TAG, "server already started");
+        oc_mutex_unlock(g_mutexStartServerState);
+        return CA_STATUS_OK;
+    }
+    oc_mutex_unlock(g_mutexStartServerState);
+
+    // it should be initialized for restart accept thread
+    oc_mutex_lock(g_mutexAcceptServer);
+    OIC_LOG(DEBUG, TAG, "accept flag is set false");
+    g_stopAccept = false;
+    oc_mutex_unlock(g_mutexAcceptServer);
+
     CAResult_t res = CAEDRServerStartAcceptThread();
     if (CA_STATUS_OK == res)
     {
@@ -262,6 +284,9 @@ CAResult_t CAEDRServerStart()
             CAEDRServerStop();
             return CA_STATUS_FAILED;
         }
+        oc_mutex_lock(g_mutexStartServerState);
+        g_isStartServer = true;
+        oc_mutex_unlock(g_mutexStartServerState);
     }
 
     return res;
@@ -271,9 +296,10 @@ CAResult_t CAEDRServerStop()
 {
     CAEDRStopReceiveThread();
 
-    ca_mutex_lock(g_mutexAcceptServer);
+    oc_mutex_lock(g_mutexAcceptServer);
+    OIC_LOG(DEBUG, TAG, "accept flag is set true");
     g_stopAccept = true;
-    ca_mutex_unlock(g_mutexAcceptServer);
+    oc_mutex_unlock(g_mutexAcceptServer);
 
     if (!g_jvm)
     {
@@ -282,7 +308,7 @@ CAResult_t CAEDRServerStop()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -298,6 +324,9 @@ CAResult_t CAEDRServerStop()
     }
 
     CAEDRNatvieCloseServerTask(env);
+    oc_mutex_lock(g_mutexStartServerState);
+    g_isStartServer = false;
+    oc_mutex_unlock(g_mutexStartServerState);
 
     if (isAttached)
     {
@@ -316,45 +345,51 @@ static void CAEDRServerDestroyMutex()
 {
     if (g_mutexReceiveServer)
     {
-        ca_mutex_free(g_mutexReceiveServer);
+        oc_mutex_free(g_mutexReceiveServer);
         g_mutexReceiveServer = NULL;
     }
 
     if (g_mutexAcceptServer)
     {
-        ca_mutex_free(g_mutexAcceptServer);
+        oc_mutex_free(g_mutexAcceptServer);
         g_mutexAcceptServer = NULL;
     }
 
     if (g_mutexServerSocket)
     {
-        ca_mutex_free(g_mutexServerSocket);
+        oc_mutex_free(g_mutexServerSocket);
         g_mutexServerSocket = NULL;
     }
 
     if (g_mutexStateList)
     {
-        ca_mutex_free(g_mutexStateList);
+        oc_mutex_free(g_mutexStateList);
         g_mutexStateList = NULL;
     }
 
     if (g_mutexObjectList)
     {
-        ca_mutex_free(g_mutexObjectList);
+        oc_mutex_free(g_mutexObjectList);
         g_mutexObjectList = NULL;
+    }
+
+    if (g_mutexStartServerState)
+    {
+        oc_mutex_free(g_mutexStartServerState);
+        g_mutexStartServerState = NULL;
     }
 }
 
 static CAResult_t CAEDRServerCreateMutex()
 {
-    g_mutexReceiveServer = ca_mutex_new();
+    g_mutexReceiveServer = oc_mutex_new();
     if (!g_mutexReceiveServer)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
         return CA_STATUS_FAILED;
     }
 
-    g_mutexAcceptServer = ca_mutex_new();
+    g_mutexAcceptServer = oc_mutex_new();
     if (!g_mutexAcceptServer)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -363,7 +398,7 @@ static CAResult_t CAEDRServerCreateMutex()
         return CA_STATUS_FAILED;
     }
 
-    g_mutexServerSocket = ca_mutex_new();
+    g_mutexServerSocket = oc_mutex_new();
     if (!g_mutexServerSocket)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -372,7 +407,7 @@ static CAResult_t CAEDRServerCreateMutex()
         return CA_STATUS_FAILED;
     }
 
-    g_mutexStateList = ca_mutex_new();
+    g_mutexStateList = oc_mutex_new();
     if (!g_mutexStateList)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -381,8 +416,17 @@ static CAResult_t CAEDRServerCreateMutex()
         return CA_STATUS_FAILED;
     }
 
-    g_mutexObjectList = ca_mutex_new();
+    g_mutexObjectList = oc_mutex_new();
     if (!g_mutexObjectList)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to created mutex!");
+
+        CAEDRServerDestroyMutex();
+        return CA_STATUS_FAILED;
+    }
+
+    g_mutexStartServerState = oc_mutex_new();
+    if (!g_mutexStartServerState)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
 
@@ -413,7 +457,7 @@ CAResult_t CAEDRServerInitialize(ca_thread_pool_t handle)
 CAResult_t CAEDRServerStartAcceptThread()
 {
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -436,13 +480,13 @@ CAResult_t CAEDRServerStartAcceptThread()
         (*env)->ReleaseStringUTFChars(env, jni_address, localAddress);
     }
 
-    ca_mutex_lock(g_mutexStateList);
+    oc_mutex_lock(g_mutexStateList);
     CAEDRNativeCreateDeviceStateList();
-    ca_mutex_unlock(g_mutexStateList);
+    oc_mutex_unlock(g_mutexStateList);
 
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
     CAEDRNativeCreateDeviceSocketList();
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     if (isAttached)
     {
@@ -477,7 +521,7 @@ void CAEDRServerTerminate()
         return;
     }
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -510,7 +554,7 @@ CAResult_t CAEDRStartReceiveThread(bool isSecured)
 {
     OIC_LOG(DEBUG, TAG, "CAEDRStartReceiveThread");
 
-    ca_mutex_lock(g_mutexReceiveServer);
+    oc_mutex_lock(g_mutexReceiveServer);
 
     /**
      * The task to listen for data from unicast is added to the thread pool.
@@ -524,7 +568,7 @@ CAResult_t CAEDRStartReceiveThread(bool isSecured)
     if (!ctx)
     {
         OIC_LOG(ERROR, TAG, "Out of memory!");
-        ca_mutex_unlock(g_mutexReceiveServer);
+        oc_mutex_unlock(g_mutexReceiveServer);
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -534,11 +578,11 @@ CAResult_t CAEDRStartReceiveThread(bool isSecured)
     if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, CAReceiveHandler, (void *) ctx))
     {
         OIC_LOG(ERROR, TAG, "Failed to create read thread!");
-        ca_mutex_unlock(g_mutexReceiveServer);
+        oc_mutex_unlock(g_mutexReceiveServer);
         OICFree((void *) ctx);
         return CA_STATUS_FAILED;
     }
-    ca_mutex_unlock(g_mutexReceiveServer);
+    oc_mutex_unlock(g_mutexReceiveServer);
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
@@ -548,14 +592,14 @@ CAResult_t CAEDRStopReceiveThread()
 {
     OIC_LOG(DEBUG, TAG, "CAEDRStopReceiveThread");
 
-    ca_mutex_lock(g_mutexReceiveServer);
+    oc_mutex_lock(g_mutexReceiveServer);
     g_stopUnicast = true;
-    ca_mutex_unlock(g_mutexReceiveServer);
+    oc_mutex_unlock(g_mutexReceiveServer);
 
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t idx)
+CAResult_t CAEDRNativeReadData(JNIEnv *env, size_t idx)
 {
     if ((*env)->ExceptionCheck(env))
     {
@@ -687,7 +731,7 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t idx)
 
         if (!deviceInfo->totalDataLen)
         {
-            coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+            coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
                     ((unsigned char *) deviceInfo->recvData)[0] >> 4);
             size_t headerLen = coap_get_tcp_header_length_for_transport(transport);
             if (deviceInfo->recvData && deviceInfo->recvDataLen >= headerLen)
@@ -718,9 +762,9 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t idx)
 
                 // update state to disconnect
                 // the socket will be close next read thread routine
-                ca_mutex_lock(g_mutexStateList);
+                oc_mutex_lock(g_mutexStateList);
                 CAEDRUpdateDeviceState(STATE_DISCONNECTED, address);
-                ca_mutex_unlock(g_mutexStateList);
+                oc_mutex_unlock(g_mutexStateList);
 
                 (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
                 (*env)->DeleteLocalRef(env, jni_str_address);
@@ -759,9 +803,9 @@ void CANativeStartListenTask(JNIEnv *env)
         return;
     }
 
-    ca_mutex_lock(g_mutexServerSocket);
+    oc_mutex_lock(g_mutexServerSocket);
     g_serverSocket = (*env)->NewGlobalRef(env, jni_obj_BTServerSocket);
-    ca_mutex_unlock(g_mutexServerSocket);
+    oc_mutex_unlock(g_mutexServerSocket);
 }
 
 jobject CAEDRNativeListen(JNIEnv *env)
@@ -863,7 +907,7 @@ void CAEDRNativeAccept(JNIEnv *env, jobject serverSocketObject)
 {
     OIC_LOG(DEBUG, TAG, "CAEDRNativeAccept - IN");
 
-    if (NULL != serverSocketObject)
+    if (NULL != serverSocketObject && false == g_stopAccept)
     {
         jmethodID jni_mid_accept = CAGetJNIMethodID(env, CLASSPATH_BT_SERVER_SOCKET,
                                                     "accept",
@@ -904,9 +948,9 @@ void CAEDRNativeAccept(JNIEnv *env, jobject serverSocketObject)
         OIC_LOG_V(INFO, TAG, "accept a new connection from [%s]", address);
 
         // update state
-        ca_mutex_lock(g_mutexStateList);
+        oc_mutex_lock(g_mutexStateList);
         CAEDRUpdateDeviceState(STATE_CONNECTED, address);
-        ca_mutex_unlock(g_mutexStateList);
+        oc_mutex_unlock(g_mutexStateList);
 
         (*env)->ReleaseStringUTFChars(env, j_str_address, address);
         (*env)->DeleteLocalRef(env, j_str_address);
@@ -920,9 +964,9 @@ void CAEDRNativeAccept(JNIEnv *env, jobject serverSocketObject)
             return;
         }
 
-        ca_mutex_lock(g_mutexObjectList);
+        oc_mutex_lock(g_mutexObjectList);
         CAEDRNativeAddDeviceSocketToList(env, jni_socket);
-        ca_mutex_unlock(g_mutexObjectList);
+        oc_mutex_unlock(g_mutexObjectList);
 
         (*env)->DeleteGlobalRef(env, jni_socket);
         (*env)->DeleteLocalRef(env, jni_obj_BTSocket);
@@ -940,6 +984,7 @@ void CAEDRNativeAccept(JNIEnv *env, jobject serverSocketObject)
  */
 void CAEDRNatvieCloseServerTask(JNIEnv* env)
 {
+    OIC_LOG(DEBUG, TAG, "CAEDRNatvieCloseServerTask");
     if (g_serverSocket)
     {
         OIC_LOG(DEBUG, TAG, "Accept Resource will be close");

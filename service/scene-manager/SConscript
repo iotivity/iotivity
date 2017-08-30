@@ -24,32 +24,36 @@
 
 Import('env')
 
-if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS = ['-Os'])
-    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
-else:
-    env.AppendUnique(CCFLAGS = ['-g'])
-
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 scenemanager_env = lib_env.Clone()
 
 target_os = env.get('TARGET_OS')
+
+if scenemanager_env.get('RELEASE'):
+    scenemanager_env.AppendUnique(CCFLAGS=['-Os'])
+else:
+    scenemanager_env.AppendUnique(CCFLAGS=['-g'])
 ######################################################################
 # Build flags
 ######################################################################
-scenemanager_env.AppendUnique(CPPPATH = ['./include'])
-scenemanager_env.AppendUnique(CPPPATH = ['./src'])
-scenemanager_env.AppendUnique(CPPPATH = ['../../resource/csdk/connectivity/api'])
-scenemanager_env.AppendUnique(CPPPATH = ['../resource-encapsulation/include'])
-scenemanager_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/common/primitiveResource/include'])
-scenemanager_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/common/expiryTimer/include'])
+scenemanager_env.AppendUnique(CPPPATH=[
+    './include',
+    './src',
+    '#/resource/csdk/connectivity/api',
+    '../resource-encapsulation/include',
+    '../resource-encapsulation/src/common/primitiveResource/include',
+    '../resource-encapsulation/src/common/expiryTimer/include',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include'
+])
 
-
-scenemanager_env.PrependUnique(LIBS = [
+scenemanager_env.PrependUnique(LIBS=[
     'coap',
     'connectivity_abstraction',
     'oc_logger',
@@ -57,51 +61,63 @@ scenemanager_env.PrependUnique(LIBS = [
     'oc',
     'rcs_client',
     'rcs_server',
-    'rcs_common'
-    ])
+    'rcs_common',
+])
 
-if target_os not in ['windows', 'winrt']:
-    scenemanager_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+if target_os not in ['windows']:
+    scenemanager_env.AppendUnique(
+        CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
-if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
-    scenemanager_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+if target_os not in ['darwin', 'ios', 'windows']:
+    scenemanager_env.AppendUnique(LINKFLAGS=['-Wl,--no-undefined'])
 
-if target_os == 'linux':
-    scenemanager_env.AppendUnique(LIBS = ['pthread'])
-    
+if target_os in ['linux']:
+    scenemanager_env.AppendUnique(LIBS=['pthread'])
 
 if target_os == 'android':
-    scenemanager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-    scenemanager_env.AppendUnique(LIBS = ['gnustl_shared','log'])
+    scenemanager_env.AppendUnique(CXXFLAGS=['-frtti', '-fexceptions'])
+    scenemanager_env.AppendUnique(LIBS=['gnustl_shared', 'log'])
 
-if not env.get('RELEASE'):
-    scenemanager_env.PrependUnique(LIBS = ['gcov'])
-    scenemanager_env.AppendUnique(CXXFLAGS = ['--coverage'])
+if not env.get('RELEASE') and target_os not in ['ios']:
+    scenemanager_env.PrependUnique(LIBS=['gcov'])
+    scenemanager_env.AppendUnique(CXXFLAGS=['--coverage'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-SCENE_SRC_DIR = './src/' 
+SCENE_SRC_DIR = './src/'
 scenemanager_src = Glob(SCENE_SRC_DIR + '*.cpp')
 
-if target_os in ['tizen','android'] :
-    scenemanagersdk = scenemanager_env.SharedLibrary('scene_manager', scenemanager_src)
-else :
-    scenemanagersdk = scenemanager_env.StaticLibrary('scene_manager', scenemanager_src)
+if target_os in ['tizen', 'android']:
+    scenemanagersdk = scenemanager_env.SharedLibrary('scene_manager',
+                                                     scenemanager_src)
+else:
+    scenemanagersdk = scenemanager_env.StaticLibrary('scene_manager',
+                                                     scenemanager_src)
 
 scenemanager_env.InstallTarget(scenemanagersdk, 'libscene_manager')
 scenemanager_env.UserInstallTargetLib(scenemanagersdk, 'libscene_manager')
-scenemanager_env.UserInstallTargetHeader('include/SceneList.h', 'service/scene-manager', 'SceneList.h')
-scenemanager_env.UserInstallTargetHeader('include/SceneCollection.h', 'service/scene-manager', 'SceneCollection.h')
-scenemanager_env.UserInstallTargetHeader('include/Scene.h', 'service/scene-manager', 'Scene.h')
-scenemanager_env.UserInstallTargetHeader('include/SceneAction.h', 'service/scene-manager', 'SceneAction.h')
-scenemanager_env.UserInstallTargetHeader('include/RemoteSceneList.h', 'service/scene-manager', 'RemoteSceneList.h')
-scenemanager_env.UserInstallTargetHeader('include/RemoteSceneCollection.h', 'service/scene-manager', 'RemoteSceneCollection.h')
-scenemanager_env.UserInstallTargetHeader('include/RemoteScene.h', 'service/scene-manager', 'RemoteScene.h')
-scenemanager_env.UserInstallTargetHeader('include/RemoteSceneAction.h', 'service/scene-manager', 'RemoteSceneAction.h')
+scenemanager_env.UserInstallTargetHeader(
+    'include/SceneList.h', 'service/scene-manager', 'SceneList.h')
+scenemanager_env.UserInstallTargetHeader(
+    'include/SceneCollection.h', 'service/scene-manager', 'SceneCollection.h')
+scenemanager_env.UserInstallTargetHeader('include/Scene.h',
+                                         'service/scene-manager', 'Scene.h')
+scenemanager_env.UserInstallTargetHeader(
+    'include/SceneAction.h', 'service/scene-manager', 'SceneAction.h')
+scenemanager_env.UserInstallTargetHeader(
+    'include/RemoteSceneList.h', 'service/scene-manager', 'RemoteSceneList.h')
+scenemanager_env.UserInstallTargetHeader('include/RemoteSceneCollection.h',
+                                         'service/scene-manager',
+                                         'RemoteSceneCollection.h')
+scenemanager_env.UserInstallTargetHeader(
+    'include/RemoteScene.h', 'service/scene-manager', 'RemoteScene.h')
+scenemanager_env.UserInstallTargetHeader('include/RemoteSceneAction.h',
+                                         'service/scene-manager',
+                                         'RemoteSceneAction.h')
 
 # Go to build Unit test
-if target_os == 'linux':
+if target_os in ['linux']:
     SConscript('unittests/SConscript')
 
 # Go to build sample apps

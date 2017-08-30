@@ -18,45 +18,38 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <string.h>
 #include "resourcemanager.h"
-#include "securevirtualresourcetypes.h"
 #include "aclresource.h"
 #include "pstatresource.h"
 #include "doxmresource.h"
 #include "credresource.h"
-#include "svcresource.h"
 #include "amaclresource.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
 #include "utlist.h"
-#include <string.h>
 
 //#ifdef DIRECT_PAIRING
 #include "pconfresource.h"
 #include "dpairingresource.h"
 //#endif // DIRECT_PAIRING
 
-#define TAG "SRM-RM"
+#define TAG "OIC_SRM_RM"
 
-#ifdef __WITH_X509__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 #include "crlresource.h"
-#endif // __WITH_X509__
+#include "csrresource.h"
+#include "rolesresource.h"
+#endif // __WITH_DTLS__ || __WITH_TLS__
 
-/**
- * This method is used by all secure resource modules to send responses to REST queries.
- *
- * @param ehRequest pointer to entity handler request data structure.
- * @param ehRet result code from entity handler.
- * @param rspPayload response payload in JSON.
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
-        OCEntityHandlerResult ehRet, const char *rspPayload)
+        OCEntityHandlerResult ehRet, uint8_t *cborPayload, size_t size)
 {
-    OIC_LOG (DEBUG, TAG, "SRM sending SRM response");
+    OIC_LOG(DEBUG, TAG, "SRM sending SRM response");
     OCEntityHandlerResponse response = {.requestHandle = NULL};
+    OCStackResult ret = OC_STACK_ERROR;
+
     if (ehRequest)
     {
         OCSecurityPayload ocPayload = {.base = {.type = PAYLOAD_TYPE_INVALID}};
@@ -64,21 +57,17 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         response.requestHandle = ehRequest->requestHandle;
         response.resourceHandle = ehRequest->resource;
         response.ehResult = ehRet;
-        response.payload = (OCPayload*)(&ocPayload);
+        response.payload = (OCPayload *)(&ocPayload);
         response.payload->type = PAYLOAD_TYPE_SECURITY;
-        ((OCSecurityPayload*)response.payload)->securityData = (char *)rspPayload;
+        ((OCSecurityPayload *)response.payload)->securityData = cborPayload;
+        ((OCSecurityPayload *)response.payload)->payloadSize = size;
         response.persistentBufferFlag = 0;
 
-        return OCDoResponse(&response);
+        ret = OCDoResponse(&response);
     }
-    return OC_STACK_ERROR;
+    return ret;
 }
 
-/**
- * Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult InitSecureResources( )
 {
     OCStackResult ret;
@@ -102,20 +91,29 @@ OCStackResult InitSecureResources( )
     {
         ret = InitCredResource();
     }
-#ifdef __WITH_X509__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     if(OC_STACK_OK == ret)
     {
         ret = InitCRLResource();
     }
-#endif // __WITH_X509__
     if(OC_STACK_OK == ret)
     {
-        ret = InitSVCResource();
+        ret = InitCSRResource();
     }
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitRolesResource();
+    }
+#endif // __WITH_DTLS__ || __WITH_TLS__
+#ifndef AMACL_RESOURCE_IMPLEMENTATION_COMPLETE
+    OIC_LOG_V(WARNING, TAG, "%s: /amacl Resource implementation incomplete; not initializing.", __func__);
+#endif // AMACL_RESOURCE_IMPLEMENTATION_COMPLETE
+#ifdef AMACL_RESOURCE_IMPLEMENTATION_COMPLETE
     if(OC_STACK_OK == ret)
     {
         ret = InitAmaclResource();
     }
+#endif // AMACL_RESOURCE_IMPLEMENTATION_COMPLETE
 //#ifdef DIRECT_PAIRING
     if(OC_STACK_OK == ret)
     {
@@ -134,21 +132,17 @@ OCStackResult InitSecureResources( )
     return ret;
 }
 
-/**
- * Perform cleanup for secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult DestroySecureResources( )
 {
     DeInitACLResource();
     DeInitCredResource();
     DeInitDoxmResource();
     DeInitPstatResource();
-#ifdef __WITH_X509__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     DeInitCRLResource();
-#endif // __WITH_X509__
-    DeInitSVCResource();
+    DeInitCSRResource();
+    DeInitRolesResource();
+#endif // __WITH_DTLS__ || __WITH_TLS__
     DeInitAmaclResource();
 //#ifdef DIRECT_PAIRING
     DeInitPconfResource();

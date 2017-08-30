@@ -27,19 +27,15 @@
 #ifndef CA_SECURITY_INTERFACE_H_
 #define CA_SECURITY_INTERFACE_H_
 
-#ifdef __WITH_X509__
-#include "pki.h"
-#endif //__WITH_X509__
 
 #include "cacommon.h"
+#include "experimental/byte_array.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-
-#ifdef __WITH_DTLS__
 /**
  * @enum CADtlsPskCredType_t
  * Type of PSK credential required during DTLS handshake
@@ -66,93 +62,126 @@ typedef enum
  * @return The number of bytes written to @p result or a value
  *         less than zero on error.
  */
-typedef int (*CAGetDTLSPskCredentialsHandler)( CADtlsPskCredType_t type,
-		      const unsigned char *desc, size_t desc_len,
-		      unsigned char *result, size_t result_length);
+typedef int (*CAgetPskCredentialsHandler)(CADtlsPskCredType_t type,
+              const uint8_t *desc, size_t desc_len,
+              uint8_t *result, size_t result_length);
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 
 /**
- * Register callback to receive the result of DTLS handshake.
- * @param[in] dtlsHandshakeCallback callback for get dtls handshake result
- * @return ::CA_STATUS_OK
+ * API to get security information about a connected peer
+ *
+ * @param[in] peer peer information includs IP address and port.
+ * @param[out] sep copy of secure endpoint info
+ *
+ * @return  CA_STATUS_OK on success; other error otherwise
  */
-CAResult_t CARegisterDTLSHandshakeCallback(CAErrorCallback dtlsHandshakeCallback);
+CAResult_t CAGetSecureEndpointData(const CAEndpoint_t *peer, CASecureEndpoint_t *sep);
 
 /**
- * Register callback to get DTLS PSK credentials.
- * @param[in]   GetDTLSCredentials    GetDTLS Credetials callback.
- * @return  ::CA_STATUS_OK
+ * Adds a bit to the attributes field of a secure endpoint.
+ *
+ * @param[in]  peer         remote address
+ * @param[in]  newAttribute bit to be added to the attributes field
+ *
+ * @return  true if the secure endpoint has been found, false otherwise.
  */
-CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials);
+bool CASetSecureEndpointAttribute(const CAEndpoint_t* peer, uint32_t newAttribute);
 
-#endif //__WITH_DTLS__
-
-#ifdef __WITH_X509__
 /**
- * Binary structure containing certificate chain and certificate credentials
- * for this device.
+ * Gets the attributes field of a secure endpoint.
+ *
+ * @param[in]  peer          remote address
+ * @param[out] allAttributes all the attributes bits for that remote address
+ *
+ * @return  true if the secure endpoint has been found, false otherwise.
+ */
+bool CAGetSecureEndpointAttributes(const CAEndpoint_t* peer, uint32_t* allAttributes);
+#endif // #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+
+/**
+ * This internal callback is used by CA layer to
+ * retrieve all credential types from SRM
+ *
+ * @param[out]  list of enabled credential types for CA handshake.
+ * @param[in]   device uuid.
+ *
+ */
+typedef void (*CAgetCredentialTypesHandler)(bool * list, const char* deviceId);
+/**
+ * Binary structure containing PKIX related info
+ * own certificate chain, public key, CA's and CRL's
+ * The data member of each ByteArray_t must be allocated with OICMalloc or OICCalloc.
+ * The SSL adapter takes ownership of this memory and will free it internally after use.
+ * Callers should not reference this memory after it has been provided to the SSL adapter via the
+ * callback.
  */
 typedef struct
 {
-    // certificate message  for DTLS
-    unsigned char certificateChain[MAX_CERT_MESSAGE_LEN];
-    // length of the certificate message
-    uint32_t  certificateChainLen;
-    // number of certificates in  certificate message
-    uint8_t   chainLen;
-    // x component of EC public key
-    uint8_t   rootPublicKeyX[PUBLIC_KEY_SIZE / 2];
-    // y component of EC public key
-    uint8_t   rootPublicKeyY[PUBLIC_KEY_SIZE / 2];
-    // EC private key
-    uint8_t   devicePrivateKey[PRIVATE_KEY_SIZE];
-
-} CADtlsX509Creds_t;
+    ByteArray_t crt;    /**< own certificate chain as a null-terminated PEM string of certificates */
+    ByteArray_t key;    /**< own private key as binary-encoded DER */
+    ByteArray_t ca;     /**< trusted CAs as a null-terminated PEM string of certificates */
+    ByteArray_t crl;    /**< trusted CRLs as binary-encoded DER */
+} PkiInfo_t;
 
 /**
- * @brief   Callback function type for getting certificate credentials.
- * @param   credInfo          [OUT] Certificate credentials info. Handler has to allocate new memory for
- *                                  credInfo which is then freed by CA
+ * Register callback to get types of TLS suites.
+ * @param[in]   getCredTypesHandler    Get types of TLS suites callback.
+ * @return  ::CA_STATUS_OK or appropriate error code.
+ */
+CAResult_t CAregisterGetCredentialTypesHandler(CAgetCredentialTypesHandler getCredTypesHandler);
+
+/**
+ * Register callback to receive the result of TLS handshake.
+ * @param[in] tlsHandshakeCallback callback for get tls handshake result
+ * @return ::CA_STATUS_OK
+ */
+CAResult_t CAregisterSslHandshakeCallback(CAErrorCallback tlsHandshakeCallback);
+
+/**
+ * Register callback to get TLS PSK credentials.
+ * @param[in]   getTlsCredentials    GetDTLS Credetials callback.
+ * @return  ::CA_STATUS_OK
+ */
+CAResult_t CAregisterPskCredentialsHandler(CAgetPskCredentialsHandler getTlsCredentials);
+
+/**
+ * @brief   Callback function type for getting PKIX info
+ *
+ * @param   inf[out]   PKIX related info
+ *
  * @return  NONE
  */
-typedef int (*CAGetDTLSX509CredentialsHandler)(CADtlsX509Creds_t *credInfo);
-/**
- * @brief   Callback function type for getting CRL.
- * @param   crlInfo          [OUT] Certificate credentials info. Handler has to allocate new memory for
- *                                  credInfo which is then freed by CA
- * @return  NONE
- */
-typedef void (*CAGetDTLSCrlHandler)(ByteArray crlInfo);
+typedef void (*CAgetPkixInfoHandler)(PkiInfo_t * inf);
 
 /**
- * @brief   Register callback to get DTLS Cert credentials.
- * @param   GetCertCredentials   [IN] GetCert Credetials callback
- * @return  #CA_STATUS_OK
+ * Register callback to get PKIX related info.
+ * @param[in]   getPkixInfoHandler    Get PKIX related info callback.
+ * @return  ::CA_STATUS_OK or appropriate error code.
  */
-CAResult_t CARegisterDTLSX509CredentialsHandler(CAGetDTLSX509CredentialsHandler GetX509Credentials);
-/**
- * @brief   Register callback to get CRL.
- * @param   GetCrl   [IN] GetCrl callback
- * @return  #CA_STATUS_OK
- */
-CAResult_t CARegisterDTLSCrlHandler(CAGetDTLSCrlHandler GetCrl);
-#endif //__WITH_X509__
-
-
-#ifdef __WITH_DTLS__
+CAResult_t CAregisterPkixInfoHandler(CAgetPkixInfoHandler getPkixInfoHandler);
 
 /**
  * Select the cipher suite for dtls handshake.
  *
  * @param[in] cipher  cipher suite (Note : Make sure endianness).
- *                    0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA
- *                    0xC0A8 : TLS_PSK_WITH_AES_128_CCM_8
- *                    0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
+ *                        TLS_RSA_WITH_AES_256_CBC_SHA256          0x3D
+ *                        TLS_RSA_WITH_AES_128_GCM_SHA256          0x009C
+ *                        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256  0xC02B
+ *                        TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8       0xC0AE
+ *                        TLS_ECDHE_ECDSA_WITH_AES_128_CCM         0xC0AC
+ *                        TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256  0xC023
+ *                        TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384  0xC024
+ *                        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384  0xC02C
+ *                        TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256    0xC037
+ *                        TLS_ECDH_anon_WITH_AES_128_CBC_SHA       0xC018
+ * @param[in] adapter  transport adapter (TCP/IP/BLE)
  *
  * @retval  ::CA_STATUS_OK    Successful.
  * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval  ::CA_STATUS_FAILED Operation failed.
  */
-CAResult_t CASelectCipherSuite(const uint16_t cipher);
+CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter);
 
 /**
  * Enable TLS_ECDH_anon_WITH_AES_128_CBC_SHA cipher suite in dtls.
@@ -181,7 +210,7 @@ CAResult_t CAEnableAnonECDHCipherSuite(const bool enable);
  * @param[in] provServerDeviceID  label of previous owner.
  * @param[in] provServerDeviceIDLen  byte length of provServerDeviceID.
  * @param[in,out] ownerPSK  Output buffer for owner PSK.
- * @param[in] ownerPSKSize  Byte length of the ownerPSK to be generated.
+ * @param[in] ownerPskSize  Byte length of the ownerPSK to be generated.
  *
  * @retval  ::CA_STATUS_OK    Successful.
  * @retval  ::CA_STATUS_FAILED Operation failed.
@@ -192,7 +221,7 @@ CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t *endpoint,
                               const size_t rsrcServerDeviceIDLen,
                               const uint8_t* provServerDeviceID,
                               const size_t provServerDeviceIDLen,
-                              uint8_t* ownerPSK, const size_t ownerPSKSize);
+                              uint8_t* ownerPSK, const size_t ownerPskSize);
 
 /**
  * Initiate DTLS handshake with selected cipher suite.
@@ -212,10 +241,33 @@ CAResult_t CAInitiateHandshake(const CAEndpoint_t *endpoint);
  * @retval  ::CA_STATUS_OK    Successful.
  * @retval  ::CA_STATUS_FAILED Operation failed.
  */
-CAResult_t CACloseDtlsSession(const CAEndpoint_t *endpoint);
+CAResult_t CAcloseSslSession(const CAEndpoint_t *endpoint);
 
-#endif /* __WITH_DTLS__ */
+/**
+ * Initiate TLS handshake with selected cipher suite.
+ *
+ * @param[in] endpoint information of network address.
+ *
+ * @retval  ::CA_STATUS_OK    Successful.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
+ */
+CAResult_t CAinitiateSslHandshake(const CAEndpoint_t *endpoint);
 
+/**
+ * Close the DTLS session.
+ *
+ * @param[in] endpoint  information of network address.
+ *
+ * @retval  ::CA_STATUS_OK    Successful.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
+ */
+CAResult_t CAcloseSslConnection(const CAEndpoint_t *endpoint);
+
+
+/**
+ * Close All of DTLS sessions.
+ */
+void CAcloseSslConnectionAll(CATransportAdapter_t transportType);
 
 #ifdef __cplusplus
 } /* extern "C" */

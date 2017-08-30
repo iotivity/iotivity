@@ -31,7 +31,7 @@
 
 
 // Logging tag.
-static char const TAG[] = "BLE_CHARACTERISTIC";
+#define TAG "BLE_CHARACTERISTIC"
 
 // ---------------------------------------------------------------------
 //                      GATT Request Handling
@@ -336,9 +336,9 @@ bool CAGattRequestCharacteristicInitialize(struct CAGattService * s,
         return false;
     }
 
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
     c->recv_info.on_packet_received = context->on_server_received_data;
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     c->recv_info.peer    = peer;
     c->recv_info.context = context;

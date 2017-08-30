@@ -77,6 +77,11 @@ namespace OIC
                     const OC::QueryParamsMap& queryParametersMap,
                     const RCSResourceAttributes&, GetCallback) = 0;
 
+            virtual void requestSetWith(const std::string& resourceType,
+                    const std::string& resourceInterface,
+                    const OC::QueryParamsMap& queryParametersMap,
+                    const RCSRepresentation&, SetCallback) = 0;
+
             virtual void requestPut(const RCSResourceAttributes&, PutCallback) = 0;
             virtual void requestObserve(ObserveCallback) = 0;
             virtual void cancelObserve() = 0;
@@ -86,6 +91,7 @@ namespace OIC
             virtual std::string getHost() const = 0;
             virtual std::vector< std::string > getTypes() const = 0;
             virtual std::vector< std::string > getInterfaces() const = 0;
+            virtual OCConnectivityType getConnectivityType() const = 0;
 
             virtual bool isObservable() const = 0;
 

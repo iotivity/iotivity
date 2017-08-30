@@ -1,4 +1,5 @@
-#######################################################################
+#******************************************************************
+#
 # Copyright 2016 Samsung Electronics All Rights Reserved.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -17,78 +18,88 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-Import('env')
-import os
-import os.path
-enrollee_test_env = env.Clone()
+##
+# Notification Unit Test build script
+##
 
-src_dir = enrollee_test_env.get('SRC_DIR')
+from tools.scons.RunTest import run_test
+
+Import('env')
+
+if env.get('RELEASE'):
+    env.AppendUnique(CCFLAGS=['-Os'])
+    env.AppendUnique(CPPDEFINES=['NDEBUG'])
+else:
+    env.AppendUnique(CCFLAGS=['-g'])
+
+if env.get('LOGGING'):
+    env.AppendUnique(CPPDEFINES=['TB_LOG'])
+
+lib_env = SConscript('#extlibs/gtest/SConscript')
+rd_mode = env.get('RD_MODE')
+
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+
+######################################################################
+#unit test setting
+######################################################################
+src_dir = lib_env.get('SRC_DIR')
+
+easysetup_test_env = lib_env.Clone()
+target_os = env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
 ######################################################################
+easysetup_test_env.AppendUnique(LIBPATH=[lib_env.get('BUILD_DIR')])
+easysetup_test_env.PrependUnique(LIBS=[
+    'connectivity_abstraction',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'coap',
+])
 
-enrollee_test_env.PrependUnique(CPPPATH = [
-		enrollee_test_env.get('SRC_DIR') + '/extlibs/gtest/gtest-1.7.0/include',
-		enrollee_test_env.get('SRC_DIR') + '/resource/c_common/ocrandom/include',
-		enrollee_test_env.get('SRC_DIR') + '/resource/csdk/stack/include/internal',
-		enrollee_test_env.get('SRC_DIR') + '/resource/csdk/connectivity/api',
-		enrollee_test_env.get('SRC_DIR') + '/resource/c_common/oic_malloc/include',
-		enrollee_test_env.get('SRC_DIR') + '/resource/include',
-		enrollee_test_env.get('SRC_DIR') + '/resource/csdk/logger/include',
-		enrollee_test_env.get('SRC_DIR') + '/resource/oc_logger/include',
-     	enrollee_test_env.get('SRC_DIR') + '/resource/csdk/stack/include',
-		enrollee_test_env.get('SRC_DIR') + '/resource/csdk/stack/include/internal',
-        enrollee_test_env.get('SRC_DIR') + '/resource/csdk/logger/include',
-		enrollee_test_env.get('SRC_DIR') + '/resource/csdk/security/include',
-		enrollee_test_env.get('SRC_DIR') + '/extlibs/cjson',
-		enrollee_test_env.get('SRC_DIR') + '/extlibs/sqlite3',
-		enrollee_test_env.get('SRC_DIR') + '/service/easy-setup/inc',
-		enrollee_test_env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi',
-		enrollee_test_env.get('SRC_DIR') + '/service/easy-setup/enrollee/inc',
-		enrollee_test_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'])
+if target_os not in ['windows', 'winrt']:
+    easysetup_test_env.AppendUnique(
+        CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
-enrollee_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-enrollee_test_env.AppendUnique(LIBS = ['-lpthread'])
-enrollee_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-enrollee_test_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
-enrollee_test_env.PrependUnique(LIBS = ['m',
-                                    'octbstack',
-                                    'ocsrm',
-                                    'connectivity_abstraction',
-                                    'coap',
-                                    'gtest',
-                                    'gtest_main'])
+easysetup_test_env.AddPthreadIfNeeded()
 
-target_os = env.get('TARGET_OS')
-if target_os != 'darwin':
-    enrollee_test_env.PrependUnique(LIBS = ['oc_logger'])
+easysetup_test_env.PrependUnique(CPPPATH=[
+    '#/extlibs/hippomocks/hippomocks',
+    '#/resource/include',
+    '#/resource/csdk/connectivity/api',
+    '#/resource/csdk/stack/include',
+    '#/resource/csdk/include',
+    '#/resource/oc_logger/include',
+    '#/service/easy-setup/inc',
+    '#/service/easy-setup/enrollee/inc',
+    '#/service/easy-setup/mediator/richsdk/inc'
+])
 
-if env.get('SECURED') == '1':
-    enrollee_test_env.AppendUnique(LIBS = ['tinydtls'])
-
-if env.get('LOGGING'):
-	enrollee_test_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
-if env.get('ES_SOFTAP_MODE') == 'ENROLLEE_SOFTAP':
-	print "ES_SOFTAP_MODE == ENROLLEE_SOFTAP"
-	enrollee_test_env.AppendUnique(CPPDEFINES = ['ENROLLEE_SOFTAP'])
-
-enrollee_test_env.PrependUnique(LIBS = ['ESEnrolleeSDK'])
+if easysetup_test_env.get('SECURED') == '1':
+    easysetup_test_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
-# Source files and Targets
+# Build Test
 ######################################################################
-enrolleetests = enrollee_test_env.Program('enrolleetests', ['enrolleetests.cpp'])
 
-Alias("test", [enrolleetests])
+easysetup_enrollee_test_env = easysetup_test_env.Clone()
+easysetup_enrollee_test_env.AppendUnique(
+    LIBS=['ESEnrolleeSDK', 'ESMediatorRich'])
 
-env.AppendTarget('test')
+easysetup_enrollee_test_src = env.Glob('./ESEnrolleeTest.cpp')
+easysetup_enrollee_test = easysetup_enrollee_test_env.Program(
+    'easysetup_enrollee_test', easysetup_enrollee_test_src)
+Alias("easysetup_enrollee_test", easysetup_enrollee_test)
+env.AppendTarget('easysetup_enrollee_test')
+
 if env.get('TEST') == '1':
-	target_os = env.get('TARGET_OS')
-	if target_os == 'linux':
-                from tools.scons.RunTest import *
-                run_test(enrollee_test_env,
-                         '',
-                         'service/easy-setup/enrollee/unittests/enrolleetests')
-
+    if target_os in ['linux'] and env.get('SECURED') != '1':
+        run_test(
+            easysetup_enrollee_test_env,
+            # 'service_easy-setup_enrollee_unittests_easysetup_enrollee_test.memcheck',
+            '',  # TODO enable previous line when valigrind error resolved in resource layer
+            'service/easy-setup/enrollee/unittests/easysetup_enrollee_test',
+            easysetup_enrollee_test)

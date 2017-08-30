@@ -19,7 +19,7 @@
 #include "canfcinterface.h"
 #include "caqueueingthread.h"
 #include "caadapterutils.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "caremotehandler.h"
 #include "logger.h"
@@ -68,7 +68,7 @@ static CAAdapterChangeCallback g_adapterStateCallback = NULL;
 static CAErrorHandleCallback g_errorCallback = NULL;
 
 static void CANFCPacketReceivedCB(const CASecureEndpoint_t *endpoint, const void *data,
-                                  uint32_t dataLength);
+                                  size_t dataLength);
 #ifndef SINGLE_THREAD
 
 static CAResult_t CANFCInitializeQueueHandles();
@@ -137,7 +137,7 @@ void CANFCConnectionStateCB(const char *nfcAddress, CANetworkStatus_t status)
     (void)status;
 }
 
-void CANFCPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data, uint32_t dataLength)
+void CANFCPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data, size_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -160,7 +160,7 @@ void CANFCPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data, uint
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-void CANFCErrorHandler(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength,
+void CANFCErrorHandler(const CAEndpoint_t *endpoint, const void *data, size_t dataLength,
                        CAResult_t result)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -300,13 +300,17 @@ static int32_t CAQueueNFCData(const CAEndpoint_t *endpoint, const void *data,
 
 }
 
-int32_t CASendNFCUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+int32_t CASendNFCUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength,
+                             CADataType_t dataType)
 {
+    (void)dataType;
     return CAQueueNFCData(endpoint, data, dataLength);
 }
 
-int32_t CASendNFCMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+int32_t CASendNFCMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength,
+                               CADataType_t dataType)
 {
+    (void)dataType;
     return CAQueueNFCData(endpoint, data, dataLength);
 }
 
@@ -408,7 +412,7 @@ void CANFCDataDestroyer(void *data, uint32_t size)
     (void)size;
 }
 
-CAResult_t CAGetNFCInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
+CAResult_t CAGetNFCInterfaceInformation(CAEndpoint_t **info, size_t *size)
 {
     OIC_LOG(DEBUG, TAG, "CAGetNFCInterfaceInformation not supported");
     if (!info || !size)

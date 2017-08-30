@@ -24,9 +24,25 @@
 #include "ocstack.h"
 #include "ocresourcehandler.h"
 
-uint8_t GetNumOfResourcesInCollection (OCResource *resource);
+uint8_t GetNumOfResourcesInCollection(const OCResource *resource);
 
 OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                                               OCEntityHandlerRequest *entityHandlerRequest);
+
+/**
+ * This function creates the payloadValue for links parameter of collection resource.
+ * @param[in] resourceUri Resource uri (this should be a collection resource)
+ * @param[out] linksRepPayloadValue The payloadValue for links parameter of collection
+ * @param[in] devAddr Structure pointing to the address. (from OCEntityHandlerRequest)
+ * @param[in] isOCFVer true if AcceptedVersion is OCF1.0 or higher
+ *            otherwise false in case OIC1.1 (from OCEntityHandlerRequest)
+ *
+ * @note: The destroy of OCRepPayloadValue is not supported. Instead, use
+ *        OCRepPayloadDestroy(...) to destroy RepPayload of the collection Resource
+ *
+ * @return ::true if successful otherwise false.
+ */
+bool BuildCollectionLinksPayloadValue(const char* resourceUri,
+                    OCRepPayloadValue** linksRepPayloadValue, bool isOCFContentFormat, OCDevAddr* devAddr);
 
 #endif //OC_COLLECTION_H

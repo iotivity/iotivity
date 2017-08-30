@@ -222,7 +222,7 @@ OCStackResult RMPParseRequestPayload(const uint8_t* payload, size_t payloadSize,
                                      uint32_t *gatewayId)
 {
     OCPayload *ocPayload = NULL;
-    OCParsePayload(&ocPayload, PAYLOAD_TYPE_REPRESENTATION, payload, payloadSize);
+    OCParsePayload(&ocPayload, OC_FORMAT_CBOR, PAYLOAD_TYPE_REPRESENTATION, payload, payloadSize);
     OCRepPayload *repPayload = (OCRepPayload *)ocPayload;
     OCStackResult res = RMPParseResponsePayload(repPayload, gatewayId, NULL, NULL, NULL);
     if (OC_STACK_OK != res)

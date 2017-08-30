@@ -34,7 +34,7 @@
 
 
 // Logging tag.
-static char const TAG[] = "BLE_CLIENT";
+#define TAG "BLE_CLIENT"
 
 typedef struct _CAGattClientContext
 {
@@ -70,7 +70,7 @@ typedef struct _CAGattClientContext
     GHashTable * address_map;
 
     /// Mutex used to synchronize access to context fields.
-    ca_mutex lock;
+    oc_mutex lock;
 
 } CAGattClientContext;
 
@@ -108,7 +108,7 @@ static void CAGattClientOnCharacteristicPropertiesChanged(
     char const * const object_path =
         g_dbus_proxy_get_object_path(characteristic);
 
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     char * const address =
         g_hash_table_lookup(g_context.address_map, object_path);
@@ -145,7 +145,7 @@ static void CAGattClientOnCharacteristicPropertiesChanged(
         }
     }
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 }
 
 // ---------------------------------------------------------------------
@@ -236,6 +236,16 @@ static bool CAGattClientSetupCharacteristics(
         if (strcasecmp(uuid, CA_GATT_REQUEST_CHRC_UUID) == 0)
         {
             char     * const addr = OICStrdup(address);
+
+            if (NULL == addr)
+            {
+                OIC_LOG(ERROR, TAG, "Could not duplicate addr");
+                g_variant_unref(uuid_prop);
+                g_object_unref(characteristic);
+                success = false;
+                break;
+            }
+
             gpointer * const chrc = g_object_ref(characteristic);
 
             // Map LE (MAC) address to request characteristic.
@@ -254,6 +264,16 @@ static bool CAGattClientSetupCharacteristics(
         {
             char * const p    = OICStrdup(*path);
             char * const addr = OICStrdup(address);
+
+            if (NULL == addr || NULL == p)
+            {
+                OIC_LOG_V(ERROR, TAG,
+                          "OICStrdup failed, addr= %p, path= %p", addr, p);
+                g_variant_unref(uuid_prop);
+                g_object_unref(characteristic);
+                success = false;
+                break;
+            }
 
             // Map GATT service D-Bus object path to client address.
             if (!CAGattClientMapInsert(address_map, p, addr))
@@ -483,7 +503,7 @@ static void CAGattClientOnDevicePropertiesChanged(
     {
         CALEContext * const context = user_data;
 
-        ca_mutex_lock(g_context.lock);
+        oc_mutex_lock(g_context.lock);
 
         CAGattClientSetupService(device,
                                  g_context.characteristic_map,
@@ -491,7 +511,7 @@ static void CAGattClientOnDevicePropertiesChanged(
                                  services_prop,
                                  context);
 
-        ca_mutex_unlock(g_context.lock);
+        oc_mutex_unlock(g_context.lock);
 
         g_variant_unref(services_prop);
     }
@@ -499,7 +519,7 @@ static void CAGattClientOnDevicePropertiesChanged(
 
 CAResult_t CAGattClientInitialize(CALEContext * context)
 {
-    g_context.lock = ca_mutex_new();
+    g_context.lock = oc_mutex_new();
 
     /*
       Map Bluetooth MAC address to OIC Transport Profile
@@ -521,7 +541,7 @@ CAResult_t CAGattClientInitialize(CALEContext * context)
                               OICFree,
                               OICFree);
 
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     for (GList * l = context->devices; l != NULL; l = l->next)
     {
@@ -545,14 +565,14 @@ CAResult_t CAGattClientInitialize(CALEContext * context)
                                  context);
     }
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     g_context.characteristic_map = characteristic_map;
     g_context.address_map = address_map;
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     return CA_STATUS_OK;
 }
@@ -564,7 +584,7 @@ void CAGattClientDestroy()
         return;  // Initialization did not complete.
     }
 
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     if (g_context.characteristic_map != NULL)
     {
@@ -578,9 +598,9 @@ void CAGattClientDestroy()
         g_context.address_map = NULL;
     }
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
-    ca_mutex_free(g_context.lock);
+    oc_mutex_free(g_context.lock);
     g_context.lock = NULL;
 
     /*
@@ -636,7 +656,7 @@ static CAResult_t CAGattClientSendDataImpl(GDBusProxy * characteristic,
 
         g_error_free(error);
 
-        ca_mutex_lock(context->lock);
+        oc_mutex_lock(context->lock);
 
         if (context->on_client_error != NULL)
         {
@@ -650,7 +670,7 @@ static CAResult_t CAGattClientSendDataImpl(GDBusProxy * characteristic,
                                      CA_STATUS_FAILED);
         }
 
-        ca_mutex_unlock(context->lock);
+        oc_mutex_unlock(context->lock);
 
         return CA_STATUS_FAILED;
     }
@@ -669,7 +689,7 @@ CAResult_t CAGattClientSendData(char const * address,
 
     CAResult_t result = CA_STATUS_FAILED;
 
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     GDBusProxy * const characteristic =
         G_DBUS_PROXY(
@@ -691,7 +711,7 @@ CAResult_t CAGattClientSendData(char const * address,
                                       length,
                                       context);
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     return result;
 }
@@ -704,12 +724,12 @@ CAResult_t CAGattClientSendDataToAll(uint8_t const * data,
 
     CAResult_t result = CA_STATUS_FAILED;
 
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     if (g_context.characteristic_map == NULL)
     {
         // Remote OIC GATT service was not found prior to getting here.
-        ca_mutex_unlock(g_context.lock);
+        oc_mutex_unlock(g_context.lock);
         return result;
     }
 
@@ -737,7 +757,7 @@ CAResult_t CAGattClientSendDataToAll(uint8_t const * data,
         }
     }
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     return result;
 }

@@ -28,7 +28,7 @@ constexpr int DEFAULT_SPEED = 30;
 constexpr int UP_SPEED = 50;
 constexpr int DOWN_SPEED = 10;
 
-constexpr int DEFALUT_SERVER = 1;
+constexpr int DEFAULT_SERVER = 1;
 constexpr int CUSTOM_SERVER = 2;
 constexpr int STOP = 3;
 
@@ -223,7 +223,7 @@ void initServer()
 
 int processUserInput()
 {
-    int userInput;
+    int userInput = 0;
     std::cin >> userInput;
     if (std::cin.fail())
     {
@@ -263,7 +263,7 @@ int selectServerMenu()
 {
     switch (processUserInput())
     {
-        case DEFALUT_SERVER:
+        case DEFAULT_SERVER:
             // Creation of Resource & Auto control for all requests from Client.
             initServer();
             return CORRECT_INPUT;
@@ -293,15 +293,24 @@ void process()
 
         int ret = selectServerMenu();
 
-        if (ret == QUIT) return;
-        if (ret == CORRECT_INPUT) break;
+        if (ret == QUIT)
+        {
+            return;
+        }
+        if (ret == CORRECT_INPUT)
+        {
+            break;
+        }
     }
 
     while (true)
     {
         displayControlMenu();
 
-        if (selectControlMenu() == QUIT) return;
+        if (selectControlMenu() == QUIT)
+        {
+            return;
+        }
     }
 }
 
@@ -314,6 +323,10 @@ int main(void)
     catch (const std::exception &e)
     {
         std::cout << "main exception  : " << e.what() << std::endl;
+    }
+    catch (...)
+    {
+        std::cout << "main exception  : unknown" << std::endl;
     }
 
     std::cout << "Stopping the server" << std::endl;

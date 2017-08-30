@@ -72,6 +72,21 @@ typedef struct
 } CALEData_t;
 
 /**
+ * The MTU supported for BLE adapter
+ */
+#define CA_DEFAULT_BLE_MTU_SIZE  20
+
+/**
+ * The MTU supported for BLE spec
+ */
+#define CA_SUPPORTED_BLE_MTU_SIZE  517
+
+/**
+ * The Header of the MTU supported for BLE spec
+ */
+#define CA_BLE_MTU_HEADER_SIZE  5
+
+/**
  * This will be used to notify device status changes to the LE adapter layer.
  * @param[in]  adapter_state State of the adapter.
  */
@@ -115,7 +130,7 @@ typedef CAResult_t (*CABLEDataReceivedCallback)(const char *remoteAddress,
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
  * @retval ::CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool);
+CAResult_t CAInitializeLEAdapter();
 
 /**
  * Start the LE adapter layer.
@@ -443,6 +458,25 @@ void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback);
  *                     adapter.
  */
 void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback);
+
+/**
+ * This is the callback which will be called whenever there is change in gatt connection
+ * with Client(Connected/Disconnected).
+ *
+ * @param[in]  connected      State of connection.
+ * @param[in]  remoteAddress  Mac address of the remote device in which we made connection.
+ */
+void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddress);
+
+/**
+ * This is the callback which will be called whenever there is change in gatt connection
+ * with server(Connected/Disconnected)
+ *
+ * @param[in]  connected     State of connection
+ * @param[in]  remoteAddress Mac address of the remote device in which we made connection.
+ */
+void CALEGattConnectionStateChanged(bool connected, const char *remoteAddress);
+
 #ifdef __cplusplus
 }
 #endif

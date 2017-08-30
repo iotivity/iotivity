@@ -18,19 +18,21 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 
 extern "C" {
     #include "oic_malloc.h"
 }
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <stdlib.h>
-#include <stdint.h>
 
 //-----------------------------------------------------------------------------
 // Includes
@@ -43,98 +45,133 @@ extern "C" {
 using namespace std;
 
 //-----------------------------------------------------------------------------
-// Private variables
-//-----------------------------------------------------------------------------
-static uint8_t *pBuffer;
-
-//-----------------------------------------------------------------------------
 //  Tests
 //-----------------------------------------------------------------------------
 
-TEST(OICMalloc, MallocPass1)
+struct OICCallocParams
 {
-    // Try to allocate a small buffer
-    pBuffer = (uint8_t *)OICMalloc(1);
-    EXPECT_TRUE(pBuffer);
-    OICFree(pBuffer);
+    OICCallocParams(size_t elementsCount, size_t allocatedSize) :
+        m_elementsCount(elementsCount),
+        m_allocatedSize(allocatedSize)
+    {}
+
+    size_t m_elementsCount;
+    size_t m_allocatedSize;
+};
+
+class OICAllocTestsBase : public testing::Test
+{
+public:
+    OICAllocTestsBase() :
+        m_allocatedSize(0),
+        m_pBuffer(NULL)
+    {}
+
+    virtual void TearDown()
+    {
+        OICFree(m_pBuffer);
+    }
+
+protected:
+    size_t m_allocatedSize;
+    uint8_t* m_pBuffer;
+};
+
+class OICMallocPassTests : public OICAllocTestsBase,
+                           public testing::WithParamInterface<size_t>
+{
+public:
+    virtual void SetUp()
+    {
+        m_allocatedSize = GetParam();
+    }
+};
+
+class OICMallocFailTests : public OICMallocPassTests
+{};
+
+class OICCallocPassTests : public OICAllocTestsBase,
+                           public testing::WithParamInterface<OICCallocParams>
+{
+public:
+    virtual void SetUp()
+    {
+        m_allocatedSize = GetParam().m_allocatedSize;
+        m_elementsCount = GetParam().m_elementsCount;
+    }
+
+protected:
+    size_t m_elementsCount;
+};
+
+class OICCallocFailTests : public OICCallocPassTests
+{};
+
+INSTANTIATE_TEST_CASE_P(OICMallocPassTests,
+                        OICMallocPassTests,
+                        ::testing::Values(1,
+                                          128));
+TEST_P(OICMallocPassTests, shouldPassOICMalloc)
+{
+    m_pBuffer = (uint8_t*)OICMalloc(m_allocatedSize);
+    EXPECT_NE((decltype(m_pBuffer))NULL, m_pBuffer);
 }
 
-TEST(OICMalloc, MallocPass2)
+INSTANTIATE_TEST_CASE_P(OICMallocFailTests,
+                        OICMallocFailTests,
+                        ::testing::Values(0,
+                                          SIZE_MAX,
+                                          SIZE_MAX - 1,
+                                          SIZE_MAX - 2,
+                                          SIZE_MAX - 8));
+TEST_P(OICMallocFailTests, shouldFailOICMalloc)
 {
-    // Try to allocate a small buffer
-    pBuffer = (uint8_t *)OICMalloc(128);
-    EXPECT_TRUE(pBuffer);
-    OICFree(pBuffer);
+    m_pBuffer = (uint8_t *)OICMalloc(0);
+    EXPECT_EQ((decltype(m_pBuffer))NULL, m_pBuffer);
 }
 
-TEST(OICMalloc, MallocFail1)
+INSTANTIATE_TEST_CASE_P(OICCallocPassTests,
+                        OICCallocPassTests,
+                        ::testing::Values(OICCallocParams(1, 1),
+                                          OICCallocParams(1, 128),
+                                          OICCallocParams(5, 128)));
+TEST_P(OICCallocPassTests, shouldPassOICCalloc)
 {
-    // Try to allocate a buffer of size 0
-    pBuffer = (uint8_t *)OICMalloc(0);
+    m_pBuffer = (uint8_t *)OICCalloc(m_elementsCount, m_allocatedSize);
+    EXPECT_NE((decltype(m_pBuffer))NULL, m_pBuffer);
+}
+
+INSTANTIATE_TEST_CASE_P(OICCallocFailTests,
+                        OICCallocFailTests,
+                        ::testing::Values(OICCallocParams(1, 0),
+                                          OICCallocParams(0, 5),
+                                          OICCallocParams(0, 0),
+                                          OICCallocParams(1, SIZE_MAX),
+                                          OICCallocParams(1, SIZE_MAX - 1),
+                                          OICCallocParams(1, SIZE_MAX - 2),
+                                          OICCallocParams(1, SIZE_MAX - 8),
+                                          OICCallocParams(SIZE_MAX, 1),
+                                          OICCallocParams(SIZE_MAX - 1, 1),
+                                          OICCallocParams(SIZE_MAX - 2, 1),
+                                          OICCallocParams(SIZE_MAX - 8, 1)));
+TEST_P(OICCallocFailTests, shouldFailOICCalloc)
+{
+    m_pBuffer = (uint8_t *)OICCalloc(m_elementsCount, m_allocatedSize);
+    EXPECT_EQ((decltype(m_pBuffer))NULL, m_pBuffer);
+}
+
+TEST(OICFreeAndSetToNull, FreeAndSetToNullPass1)
+{
+    // Try to deallocate a block of memory
+    uint8_t* pBuffer = (uint8_t *)OICCalloc(1, 1);
+    OICFreeAndSetToNull((void**)&pBuffer);
     EXPECT_TRUE(NULL == pBuffer);
-    OICFree(pBuffer);
 }
 
-TEST(OICMalloc, MallocFail2)
+TEST(OICFreeAndSetToNull, FreeAndSetToNullPass2)
 {
-    // Try to allocate a ridiculous amount of RAM
-    pBuffer = (uint8_t *)OICMalloc((size_t)0x7FFFFFFFFFFFFFFF);
+    // Try to deallocate a block of NULL
+    uint8_t* pBuffer = NULL;
+    OICFreeAndSetToNull((void**)&pBuffer);
     EXPECT_TRUE(NULL == pBuffer);
-    OICFree(pBuffer);
-}
-
-TEST(OICCalloc, CallocPass1)
-{
-    // Try to allocate a small buffer
-    pBuffer = (uint8_t *)OICCalloc(1, 1);
-    EXPECT_TRUE(pBuffer);
-    OICFree(pBuffer);
-}
-
-TEST(OICCalloc, CallocPass2)
-{
-    // Try to allocate a small buffer
-    pBuffer = (uint8_t *)OICCalloc(1, 128);
-    EXPECT_TRUE(pBuffer);
-    OICFree(pBuffer);
-}
-
-TEST(OICCalloc, CallocPass3)
-{
-    // Try to allocate a buffer for an array
-    pBuffer = (uint8_t *)OICCalloc(5, 128);
-    EXPECT_TRUE(pBuffer);
-    OICFree(pBuffer);
-}
-
-TEST(OICCalloc, CallocFail1)
-{
-    // Try to allocate a buffer of size 0
-    pBuffer = (uint8_t *)OICCalloc(1, 0);
-    EXPECT_TRUE(NULL == pBuffer);
-    OICFree(pBuffer);
-}
-
-TEST(OICCalloc, CallocFail2)
-{
-    // Try to allocate a buffer with num of 0
-    pBuffer = (uint8_t *)OICCalloc(0, 5);
-    EXPECT_TRUE(NULL == pBuffer);
-    OICFree(pBuffer);
-}
-
-TEST(OICCalloc, CallocFail3)
-{
-    // Try to allocate a buffer with size and num 0
-    pBuffer = (uint8_t *)OICCalloc(0, 0);
-    EXPECT_TRUE(NULL == pBuffer);
-    OICFree(pBuffer);
-}
-
-TEST(OICCalloc, CallocFail4)
-{
-    // Try to allocate a ridiculous amount of RAM
-    pBuffer = (uint8_t *)OICCalloc(1, (size_t)0x7FFFFFFFFFFFFFFF);
-    EXPECT_TRUE(NULL == pBuffer);
-    OICFree(pBuffer);
 }

@@ -21,31 +21,26 @@
 ##
 # ResourceClient Unit Test build script
 ##
+# SConscript file for Local PKI google tests
+
 import os
-Import('env')
+from tools.scons.RunTest import run_test
 
-if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS = ['-Os'])
-    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+lib_env = gtest_env.Clone()
+
+target_os = lib_env.get('TARGET_OS')
+
+if lib_env.get('RELEASE'):
+    lib_env.AppendUnique(CCFLAGS=['-Os'])
 else:
-    env.AppendUnique(CCFLAGS = ['-g'])
-
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    lib_env.AppendUnique(CCFLAGS=['-g'])
 
 # Add third party libraries
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 
-target_os = env.get('TARGET_OS')
-if target_os == 'linux':
-    # Verify that 'google unit test' library is installed.  If not,
-    # get it and install it
-    SConscript(env.get('SRC_DIR') + '/extlibs/gtest/SConscript')
-
-    # Verify that 'hippomocks' mocking code is installed.  If not,
-    # get it and install it
-    SConscript(env.get('SRC_DIR') + '/extlibs/hippomocks.scons')
+if target_os in ['linux']:
+    SConscript('#extlibs/hippomocks/SConscript')
 
 rcs_test_env = lib_env.Clone()
 
@@ -53,29 +48,26 @@ rcs_test_env = lib_env.Clone()
 #unit test setting
 ######################################################################
 src_dir = lib_env.get('SRC_DIR')
-gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
 
 ######################################################################
 # Build flags
 ######################################################################
-gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
-gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
-rcs_test_env.AppendUnique(
-        CPPPATH = [
-                src_dir + '/extlibs/hippomocks-master',
-                src_dir + '/extlibs/gtest/gtest-1.7.0/include',
-                '../include',
-                '../src/common/utils/include',
-        ])
+rcs_test_env.AppendUnique(CPPPATH=[
+    '#/extlibs/hippomocks/hippomocks',
+    '../include',
+    '../src/common/utils/include',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include',
+    '#/resource/csdk/connectivity/api'
+])
 
-if target_os not in ['windows', 'winrt']:
-        rcs_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
-        if target_os != 'android':
-                rcs_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
-                rcs_test_env.AppendUnique(LIBS = ['pthread'])
-
-rcs_test_env.PrependUnique(LIBS = [
+rcs_test_env.PrependUnique(LIBS=[
     'connectivity_abstraction',
     'oc_logger',
     'oc_logger_core',
@@ -84,22 +76,44 @@ rcs_test_env.PrependUnique(LIBS = [
     'rcs_client',
     'rcs_server',
     'rcs_common',
-    gtest,
-    gtest_main])
+])
 
-rcs_test_env.AppendUnique(LIBS = ['dl'])
+if lib_env.get('SECURED') == '1':
+    rcs_test_env.AppendUnique(CPPDEFINES=['SECURED'])
+    rcs_test_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
+
+if 'g++' in rcs_test_env.get('CXX'):
+    rcs_test_env.AppendUnique(CXXFLAGS=['-std=c++0x'])
 
 ######################################################################
 # Build Test
 ######################################################################
-rcs_test_src = env.Glob('./*.cpp')
+rcs_test_src = rcs_test_env.Glob('./*.cpp')
 
 rcs_client_test = rcs_test_env.Program('rcs_client_test', rcs_test_src)
 Alias("rcs_client_test", rcs_client_test)
-env.AppendTarget('rcs_client_test')
+rcs_test_env.AppendTarget('rcs_client_test')
 
-if env.get('TEST') == '1':
-    target_os = env.get('TARGET_OS')
-    if target_os == 'linux':
-        from tools.scons.RunTest import *
-        run_test(rcs_test_env, '', 'service/resource-encapsulation/unittests/rcs_client_test')
+
+if rcs_test_env.get('TEST') == '1':
+    if target_os in ['linux']:
+        rcs_test_env.AppendUnique(CPPDEFINES=['HIPPOMOCKS_ISSUE'])
+        run_test(
+            rcs_test_env,
+            'service_resource-encapsulation_unittests_rcs_client_test.memcheck',
+            'service/resource-encapsulation/unittests/rcs_client_test')
+else:
+    rcs_test_env.AppendUnique(CPPDEFINES=['LOCAL_RUNNING'])
+
+if lib_env.get('SECURED') == '1':
+    src_dir = rcs_test_env.get('SRC_DIR')
+    svr_db_src_dir = os.path.join(src_dir,
+                                  'service/resource-encapsulation/unittests/')
+    svr_db_build_dir = os.path.join(
+        rcs_test_env.get('BUILD_DIR'), 'service', 'resource-encapsulation',
+        'unittests') + os.sep
+    rcs_test_env.Alias("install",
+                       rcs_test_env.Install(svr_db_build_dir,
+                                            os.path.join(
+                                                svr_db_src_dir,
+                                                'oic_svr_db_re_client.dat')))

@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "RCSResourceAttributes.h"
+#include "RCSRepresentation.h"
 
 namespace OC
 {
@@ -63,6 +64,12 @@ namespace OIC
                           This is the default state after startCaching. */
             READY, /**< The data is ready.*/
             LOST_SIGNAL, /**< Failed to reach the resource. */
+        };
+
+        enum class CacheMode
+        {
+            OBSERVE_ONLY,
+            OBSERVE_WITH_POLLING
         };
 
         /**
@@ -180,7 +187,8 @@ namespace OIC
              *
              * @param attrs the updated attributes
              */
-            typedef std::function< void(const RCSResourceAttributes& attrs) > CacheUpdatedCallback;
+            typedef std::function< void(const RCSResourceAttributes& attrs, int eCode) >
+                CacheUpdatedCallback;
 
             /**
              * Callback definition to be invoked when the response of getRemoteAttributes is
@@ -248,6 +256,14 @@ namespace OIC
              */
             static RCSRemoteResourceObject::Ptr fromOCResource(
                     std::shared_ptr< OC::OCResource > ocResource);
+
+            /**
+             * Returns an equivalent OCResource using RCSRemoteResourceObject instance.
+             *
+             * @throw RCSInvalidParameterException If rcsResource is nullptr.
+             */
+            static std::shared_ptr< OC::OCResource > toOCResource(
+                    RCSRemoteResourceObject::Ptr rcsResource);
 
             /**
              * Returns whether monitoring is enabled.
@@ -334,6 +350,7 @@ namespace OIC
              * updates the cached data accordingly.
              *
              * @param cb If non-empty function, it will be invoked whenever the cache updated.
+             * @param mode if CacheMode is OBSERVE_ONLY, it will be invoked when receive observe response only.
              *
              * @throws BadRequestException If caching is already started.
              *
@@ -346,7 +363,7 @@ namespace OIC
              * @see getCachedAttribute(const std::string&) const
              *
              */
-            void startCaching(CacheUpdatedCallback cb);
+            void startCaching(CacheUpdatedCallback cb, CacheMode mode = CacheMode::OBSERVE_WITH_POLLING);
 
             /**
              * Stops caching.
@@ -504,6 +521,26 @@ namespace OIC
              * @note The callback will be invoked in an internal thread.
              */
             void set(const RCSQueryParams& queryParams, const RCSResourceAttributes& attributes,
+                    SetCallback cb);
+
+            /**
+             * Sends a set request with resource representation to the server.
+             *
+             * The SetRequest behavior depends on query parameters and the server.
+             *
+             * @param queryParams Query parameters
+             * @param rep Representation to set
+             * @param cb A callback to receive the response.
+             *
+             * @throws PlatformException If the operation failed
+             * @throws InvalidParameterException If cb is an empty function or null.
+             *
+             * @see RCSResourceObject
+             * @see RCSResourceObject::SetRequestHandlerPolicy
+             *
+             * @note The callback will be invoked in an internal thread.
+             */
+            void set(const RCSQueryParams& queryParams, const RCSRepresentation &rep,
                     SetCallback cb);
 
             /**

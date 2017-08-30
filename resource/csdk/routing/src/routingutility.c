@@ -36,11 +36,35 @@
 #define RM_TAG "OIC_RM_RAP"
 
 /**
+ * Default routing option data length is 1 byte with any of the following values.
+ * 00 - source and destination address is not present.
+ * 01 - source and destination address is present with message type as ACK.
+ * 10 - source and destination address is present with message type as RESET.
+ * 11 - source and destination address is present with message type as NORMAL.
+ */
+#define DEFAULT_ROUTE_OPTION_LEN 1
+
+/**
  * Minimum routing option data length is
- * length of src address(1byte) + length of destination address(1byte) +
- * Seq Num(2bytes) + Msg Type(1 bytes)
+ * Msg Type(1 bytes) + length of src address(1byte) + length of destination address(1byte) +
+ * Seq Num(2bytes)
  */
 #define MIN_ROUTE_OPTION_LEN 5
+
+/**
+ * Acknowledge message type is denoted as 01000000
+ */
+#define ACK_MESSAGE_TYPE (1 << 6)
+
+/**
+ * Reset message type is denoted as 10000000
+ */
+#define RST_MESSAGE_TYPE (1 << 7)
+
+/**
+ * Normal message type is denoted as 11000000
+ */
+#define NORMAL_MESSAGE_TYPE (3 << 6)
 
 /**
  * Stack mode.
@@ -56,7 +80,6 @@ void RMSetStackMode(OCMode mode)
 OCStackResult RMAddInfo(const char *destination, void *message, bool isRequest,
                         bool *doPost)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(message, TAG, "options");
 
     CAHeaderOption_t **options = NULL;
@@ -190,14 +213,12 @@ OCStackResult RMAddInfo(const char *destination, void *message, bool isRequest,
         *options = optionPtr;
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RMUpdateInfo(CAHeaderOption_t **options, uint8_t *numOptions,
                            CAEndpoint_t *endpoint)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(options, TAG, "options");
     RM_NULL_CHECK_WITH_RET(*options, TAG, "invalid option");
     RM_NULL_CHECK_WITH_RET(numOptions, TAG, "numOptions");
@@ -219,11 +240,11 @@ OCStackResult RMUpdateInfo(CAHeaderOption_t **options, uint8_t *numOptions,
     }
 
     // Update Endpoint with source address from RM header option.
-    if (0 != (*options + routeIndex)->optionLength)
+    if (DEFAULT_ROUTE_OPTION_LEN < (*options + routeIndex)->optionLength )
     {
         uint8_t dLen = 0;
-        uint16_t count = sizeof(dLen);
-        memcpy(&dLen, (*options + routeIndex)->optionData, sizeof(dLen));
+        uint16_t count = sizeof(dLen) + DEFAULT_ROUTE_OPTION_LEN;
+        memcpy(&dLen, (*options + routeIndex)->optionData + DEFAULT_ROUTE_OPTION_LEN, sizeof(dLen));
         count += dLen;
         uint8_t sLen = 0;
         memcpy(&sLen, (*options + routeIndex)->optionData + count, sizeof(sLen));
@@ -260,16 +281,20 @@ OCStackResult RMUpdateInfo(CAHeaderOption_t **options, uint8_t *numOptions,
         OICFree(*options);
         *options = NULL;
     }
-    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 void RMGetRouteOptionIndex(const CAHeaderOption_t *options, uint8_t numOptions, int8_t *index)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-    RM_NULL_CHECK_VOID(options, TAG, "options");
     RM_NULL_CHECK_VOID(index, TAG, "index");
-    for (uint32_t i = 0; i < numOptions; i++)
+
+    if (NULL == options)
+    {
+        OIC_LOG(INFO, TAG, "No existing options");
+        return;
+    }
+
+    for (uint8_t i = 0; i < numOptions; i++)
     {
         OIC_LOG_V(DEBUG, TAG, "Request- optionID: %u", options[i].optionID);
         if (RM_OPTION_MESSAGE_SWITCHING == options[i].optionID)
@@ -279,12 +304,10 @@ void RMGetRouteOptionIndex(const CAHeaderOption_t *options, uint8_t numOptions, 
             break;
         }
     }
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 OCStackResult RMCreateRouteOption(const RMRouteOption_t *optValue, CAHeaderOption_t *options)
 {
-    OIC_LOG(DEBUG, RM_TAG, "IN");
     RM_NULL_CHECK_WITH_RET(optValue, RM_TAG, "optValue");
     RM_NULL_CHECK_WITH_RET(options, RM_TAG, "options");
 
@@ -294,50 +317,100 @@ OCStackResult RMCreateRouteOption(const RMRouteOption_t *optValue, CAHeaderOptio
                         (optValue->srcEp ? ENDPOINT_ID_LENGTH:0);
 
     OIC_LOG_V(DEBUG, RM_TAG, "createoption dlen %u slen [%u]", dLen, sLen);
-    unsigned int totalLength = MIN_ROUTE_OPTION_LEN + dLen + sLen;
-    void *tempData = OICCalloc(totalLength, sizeof(char));
-    if (NULL == tempData)
+
+    uint16_t totalLength = 0;
+    uint8_t *tempData = NULL;
+
+    if (0 == dLen && 0 == sLen)
     {
-        OIC_LOG(ERROR, RM_TAG, "Calloc failed");
-        return OC_STACK_NO_MEMORY;
-    }
-    memcpy(tempData, &dLen, sizeof(dLen));
-    unsigned int count = sizeof(dLen);
-    if (0 < dLen)
-    {
-        if (optValue->destGw)
+        OIC_LOG(DEBUG, RM_TAG, "Source and destination is not present");
+        totalLength = DEFAULT_ROUTE_OPTION_LEN;
+        tempData = OICCalloc(totalLength, sizeof(char));
+        if (NULL == tempData)
         {
-            memcpy(tempData + count, &(optValue->destGw), GATEWAY_ID_LENGTH);
-            count += GATEWAY_ID_LENGTH;
+            OIC_LOG(ERROR, RM_TAG, "Calloc failed");
+            return OC_STACK_NO_MEMORY;
         }
 
-        if (optValue->destEp)
+        if (ACK == optValue->msgType)
         {
-            memcpy(tempData + count, &(optValue->destEp), ENDPOINT_ID_LENGTH);
-            count += ENDPOINT_ID_LENGTH;
+            OIC_LOG(DEBUG, RM_TAG, "OptValue ACK Message Type");
+            memset(tempData, ACK_MESSAGE_TYPE, DEFAULT_ROUTE_OPTION_LEN);
         }
-    }
-
-    memcpy(tempData + count, &sLen, sizeof(sLen));
-    count += sizeof(sLen);
-    if (0 < sLen)
-    {
-        if (optValue->srcGw)
+        else if (RST == optValue->msgType)
         {
-            memcpy(tempData + count, &(optValue->srcGw), GATEWAY_ID_LENGTH);
-            count += GATEWAY_ID_LENGTH;
+            OIC_LOG(DEBUG, RM_TAG, "OptValue RST Message Type");
+            memset(tempData, RST_MESSAGE_TYPE, DEFAULT_ROUTE_OPTION_LEN);
         }
-
-        if (optValue->srcEp)
+        else
         {
-            memcpy(tempData + count, &(optValue->srcEp), ENDPOINT_ID_LENGTH);
-            count += ENDPOINT_ID_LENGTH;
+            OIC_LOG(DEBUG, RM_TAG, "OptValue NOR Message Type");
+            memset(tempData, NORMAL_MESSAGE_TYPE, DEFAULT_ROUTE_OPTION_LEN);
         }
     }
+    else
+    {
+        totalLength = MIN_ROUTE_OPTION_LEN + dLen + sLen;
+        tempData = OICCalloc(totalLength, sizeof(char));
+        if (NULL == tempData)
+        {
+            OIC_LOG(ERROR, RM_TAG, "Calloc failed");
+            return OC_STACK_NO_MEMORY;
+        }
 
-    memcpy(tempData + count, &optValue->mSeqNum, sizeof(optValue->mSeqNum));
-    count += sizeof(optValue->mSeqNum);
-    memcpy(tempData + count, &optValue->msgType, sizeof(optValue->msgType));
+        if (ACK == optValue->msgType)
+        {
+            OIC_LOG(DEBUG, RM_TAG, "OptValue ACK Message Type");
+            memset(tempData, ACK_MESSAGE_TYPE, DEFAULT_ROUTE_OPTION_LEN);
+        }
+        else if (RST == optValue->msgType)
+        {
+            OIC_LOG(DEBUG, RM_TAG, "OptValue RST Message Type");
+            memset(tempData, RST_MESSAGE_TYPE, DEFAULT_ROUTE_OPTION_LEN);
+        }
+        else
+        {
+            OIC_LOG(DEBUG, RM_TAG, "OptValue NOR Message Type");
+            memset(tempData, NORMAL_MESSAGE_TYPE, DEFAULT_ROUTE_OPTION_LEN);
+        }
+
+        memcpy(tempData + DEFAULT_ROUTE_OPTION_LEN, &dLen, sizeof(dLen));
+        unsigned int count = sizeof(dLen) + DEFAULT_ROUTE_OPTION_LEN;
+        if (0 < dLen)
+        {
+            if (optValue->destGw)
+            {
+                memcpy(tempData + count, &(optValue->destGw), GATEWAY_ID_LENGTH);
+                count += GATEWAY_ID_LENGTH;
+            }
+
+            if (optValue->destEp)
+            {
+                memcpy(tempData + count, &(optValue->destEp), ENDPOINT_ID_LENGTH);
+                count += ENDPOINT_ID_LENGTH;
+            }
+        }
+
+        memcpy(tempData + count, &sLen, sizeof(sLen));
+        count += sizeof(sLen);
+        if (0 < sLen)
+        {
+            if (optValue->srcGw)
+            {
+                memcpy(tempData + count, &(optValue->srcGw), GATEWAY_ID_LENGTH);
+                count += GATEWAY_ID_LENGTH;
+            }
+
+            if (optValue->srcEp)
+            {
+                memcpy(tempData + count, &(optValue->srcEp), ENDPOINT_ID_LENGTH);
+                count += ENDPOINT_ID_LENGTH;
+            }
+        }
+
+        memcpy(tempData + count, &optValue->mSeqNum, sizeof(optValue->mSeqNum));
+    }
+
     memcpy(options->optionData, tempData, totalLength);
 
     options->optionID = RM_OPTION_MESSAGE_SWITCHING;
@@ -346,13 +419,11 @@ OCStackResult RMCreateRouteOption(const RMRouteOption_t *optValue, CAHeaderOptio
     OIC_LOG_V(INFO, RM_TAG, "Option Length is %d", options->optionLength);
 
     OICFree(tempData);
-    OIC_LOG(DEBUG, RM_TAG, "OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RMParseRouteOption(const CAHeaderOption_t *options, RMRouteOption_t *optValue)
 {
-    OIC_LOG(DEBUG, RM_TAG, "IN");
     RM_NULL_CHECK_WITH_RET(options, RM_TAG, "options");
     RM_NULL_CHECK_WITH_RET(optValue, RM_TAG, "optValue");
     if (0 == options->optionLength)
@@ -361,43 +432,68 @@ OCStackResult RMParseRouteOption(const CAHeaderOption_t *options, RMRouteOption_
         return OC_STACK_ERROR;
     }
 
-    uint8_t dLen = 0 ;
-    uint16_t count = sizeof(dLen);
-    memcpy(&dLen, options->optionData, sizeof(dLen));
-    if (0 < dLen)
-    {
-        memcpy(&(optValue->destGw), options->optionData + count, GATEWAY_ID_LENGTH);
-        count += GATEWAY_ID_LENGTH;
+    OIC_LOG_V(DEBUG, RM_TAG, "Option Length is %d", options->optionLength);
+    uint8_t mType = 0;
+    memcpy(&mType, options->optionData, sizeof(mType));
 
-        if (GATEWAY_ID_LENGTH < dLen)
-        {
-            memcpy(&(optValue->destEp), options->optionData + count, ENDPOINT_ID_LENGTH);
-            count += ENDPOINT_ID_LENGTH;
-        }
+    if (ACK_MESSAGE_TYPE == mType)
+    {
+        OIC_LOG(INFO, RM_TAG, "ACK_MESSAGE_TYPE");
+        optValue->msgType = ACK;
+    }
+    else if (RST_MESSAGE_TYPE == mType)
+    {
+        OIC_LOG(INFO, RM_TAG, "RST_MESSAGE_TYPE");
+        optValue->msgType = RST;
+    }
+    else if (NORMAL_MESSAGE_TYPE == mType)
+    {
+        OIC_LOG(INFO, RM_TAG, "NOR_MESSAGE_TYPE");
+        optValue->msgType = NOR;
     }
 
-    uint8_t sLen = 0;
-    memcpy(&sLen, options->optionData + count, sizeof(sLen));
-    count += sizeof(sLen);
-    if (0 < sLen)
+    if (DEFAULT_ROUTE_OPTION_LEN == options->optionLength)
     {
-        memcpy(&(optValue->srcGw), options->optionData + count, GATEWAY_ID_LENGTH);
-        count += GATEWAY_ID_LENGTH;
-
-        if (GATEWAY_ID_LENGTH < sLen)
-        {
-            memcpy(&(optValue->srcEp), options->optionData + count, ENDPOINT_ID_LENGTH);
-            count += ENDPOINT_ID_LENGTH;
-        }
+        OIC_LOG(INFO, RM_TAG, "No source and destination are present");
     }
-    memcpy(&optValue->mSeqNum, options->optionData + count, sizeof(optValue->mSeqNum));
-    count += sizeof(optValue->mSeqNum);
-    memcpy(&optValue->msgType, options->optionData + count, sizeof(optValue->msgType));
+    else
+    {
+        uint8_t dLen = 0 ;
+        uint16_t count = DEFAULT_ROUTE_OPTION_LEN;
+        memcpy(&dLen, options->optionData + count, sizeof(dLen));
+        count += sizeof(dLen);
+        if (0 < dLen)
+        {
+            memcpy(&(optValue->destGw), options->optionData + count, GATEWAY_ID_LENGTH);
+            count += GATEWAY_ID_LENGTH;
+
+            if (GATEWAY_ID_LENGTH < dLen)
+            {
+                memcpy(&(optValue->destEp), options->optionData + count, ENDPOINT_ID_LENGTH);
+                count += ENDPOINT_ID_LENGTH;
+            }
+        }
+
+        uint8_t sLen = 0;
+        memcpy(&sLen, options->optionData + count, sizeof(sLen));
+        count += sizeof(sLen);
+        if (0 < sLen)
+        {
+            memcpy(&(optValue->srcGw), options->optionData + count, GATEWAY_ID_LENGTH);
+            count += GATEWAY_ID_LENGTH;
+
+            if (GATEWAY_ID_LENGTH < sLen)
+            {
+                memcpy(&(optValue->srcEp), options->optionData + count, ENDPOINT_ID_LENGTH);
+                count += ENDPOINT_ID_LENGTH;
+            }
+        }
+        memcpy(&optValue->mSeqNum, options->optionData + count, sizeof(optValue->mSeqNum));
+    }
 
     OIC_LOG_V(INFO, RM_TAG, "Option hopcount is %d", optValue->mSeqNum);
     OIC_LOG_V(INFO, RM_TAG, "Option Sender Addr is [%u][%u]", optValue->srcGw, optValue->srcEp);
     OIC_LOG_V(INFO, RM_TAG, "Option Dest Addr is [%u][%u]", optValue->destGw, optValue->destEp);
     OIC_LOG_V(INFO, RM_TAG, "Message Type is [%u]", optValue->msgType);
-    OIC_LOG(DEBUG, RM_TAG, "OUT");
     return OC_STACK_OK;
 }

@@ -26,6 +26,7 @@
 #include <memory>
 #include <utility>
 #include <exception>
+#include <functional>
 
 #include <OCException.h>
 #include <StringConstants.h>
@@ -100,7 +101,7 @@ namespace OC
     template<typename T, typename = void>
     struct is_vector
     {
-        constexpr static bool value = false;
+        BOOST_STATIC_CONSTEXPR bool value = false;
     };
 
     template<typename T>
@@ -110,7 +111,7 @@ namespace OC
         >::type
     >
     {
-        constexpr static bool value = true;
+        BOOST_STATIC_CONSTEXPR bool value = true;
     };
 
     // type trait to remove the first type from a parameter-packed list
@@ -132,14 +133,14 @@ namespace OC
     template<typename ToTest, template <typename...> class Base, typename T>
     struct is_component<ToTest, Base<T> >
     {
-        static constexpr bool value = std::is_same<ToTest, T>::value;
+        BOOST_STATIC_CONSTEXPR bool value = std::is_same<ToTest, T>::value;
     };
 
     // Recursive specialization to handle cases with multiple values
     template<typename ToTest, template <typename...> class Base, typename T, typename ...Rest>
     struct is_component<ToTest, Base<T, Rest...> >
     {
-        static constexpr bool value = std::is_same<ToTest, T>::value
+        BOOST_STATIC_CONSTEXPR bool value = std::is_same<ToTest, T>::value
             || is_component<ToTest, Base<Rest...> >::value;
     };
 } // namespace OC

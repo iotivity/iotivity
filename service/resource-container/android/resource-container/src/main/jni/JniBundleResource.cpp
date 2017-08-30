@@ -194,7 +194,9 @@ void JniBundleResource::handleSetAttributeRequest(const std::string &attributeNa
 }
 
 
-void JniBundleResource::handleSetAttributesRequest(const RCSResourceAttributes &attrs){
+void JniBundleResource::handleSetAttributesRequest(const RCSResourceAttributes &attrs,
+        const std::map< std::string, std::string > &queryParams)
+{
     LOGD("handleSetAttributesRequest called %d", attrs.size());
 
     //m_env->CallObjectMethod(m_bundleResource, m_attributeSetRequestHandler, attrName, val);
@@ -222,7 +224,8 @@ void JniBundleResource::handleSetAttributesRequest(const RCSResourceAttributes &
     }
 }
 
-RCSResourceAttributes JniBundleResource::handleGetAttributesRequest()
+RCSResourceAttributes JniBundleResource::handleGetAttributesRequest(const
+        std::map< std::string, std::string > &queryParams)
 {
     LOGD("handleGetAttributesRequest");
 

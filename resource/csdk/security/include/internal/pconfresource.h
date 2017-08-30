@@ -42,37 +42,41 @@ OCStackResult InitPconfResource();
 OCStackResult DeInitPconfResource();
 
 /**
- * This method is used by SRM to retrieve PCONF resource data..
+ * This method is used by SRM to retrieve PCONF resource data.
  *
  * @retval  reference to @ref OicSecPconf_t, binary format of Pconf resource data
  */
 const OicSecPconf_t* GetPconfResourceData();
 
 /**
- * This method converts JSON PCONF into binary PCONF.
+ * This method converts CBOR PCONF into binary PCONF.
  * The JSON PCONF can be from persistent database or
  * or received as PUT request.
  *
- * @param[in] jsonStr  pconf data in json string.
- * @return pointer to OicSecPconf_t.
+ * @param cborPayload  pconf data in cbor format.
+ * @param size cbor payload size
+ * @param secPconf converted pconf
+ * @return OC_STACK_OK for success.
  *
  * @note Caller needs to invoke OCFree after done
  *       using the return pointer
  */
-OicSecPconf_t * JSONToPconfBin(const char * jsonStr);
+OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSecPconf_t **secPconf);
 
 /**
- * This method converts PCONF data into JSON format.
+ * This method converts PCONF data into CBOR format.
  * Caller needs to invoke 'free' when finished done using
  * return string
  *
- * @param[in] pconf  Pointer to OicSecPconf_t.
- * @return pointer to json string.
+ * @param pconf  Pointer to OicSecPconf_t.
+ * @param payload pconf converted in cbor format
+ * @param size size of the converted payload
+ * @return OC_STACK_OK for success.
  *
  * @note Caller needs to invoke OCFree after done
  *       using the return pointer
  */
-char * BinToPconfJSON(const OicSecPconf_t * pconf);
+OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,size_t *size);
 
 /**
  * This method might be used to add a paired device id after direct-pairing process complete.
@@ -113,6 +117,22 @@ void DeletePconfBinData(OicSecPconf_t* pconf);
  */
 void FreePdAclList(OicSecPdAcl_t* pdacls);
 
+/**
+ * Internal function to update resource owner
+ *
+ * @param newROwner new owner
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SetPconfRownerId(const OicUuid_t* newROwner);
+
+/**
+ * Gets the OicUuid_t value for the rownerid of the pconf resource.
+ *
+ * @param rowneruuid a pointer to be assigned to the rowneruuid property
+ * @return ::OC_STACK_OK if rowneruuid is assigned correctly, else ::OC_STACK_ERROR.
+ */
+OCStackResult GetPconfRownerId(OicUuid_t *rowneruuid);
 
 #ifdef __cplusplus
 }

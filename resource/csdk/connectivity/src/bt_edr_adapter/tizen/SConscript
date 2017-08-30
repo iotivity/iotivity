@@ -1,21 +1,21 @@
 #######################################################
 #       Build BT EDR adapter for Tizen
 #######################################################
+import os
 
-Import('env', 'src_dir')
-import os.path
+Import('connectivity_env')
 
-env.PrependUnique(CPPPATH = [ os.path.join(src_dir, 'tizen'),
-                              './con/lib/tizen/ble/inc',
-                              './con/lib/tizen/ble/inc/mobile' ])
+src_dir = os.path.abspath(os.curdir)
 
-env.ParseConfig("pkg-config --cflags --libs capi-network-bluetooth")
+connectivity_env.PrependUnique(CPPPATH = [ src_dir ])
 
-src_files = [ 'caedrclient.c',
-              'caedrdevicelist.c',
-              'caedrendpoint.c',
-              'caedrnwmonitor.c',
-              'caedrserver.c',
-              'caedrutils.c' ]
+connectivity_env.ParseConfig("pkg-config --cflags --libs capi-network-bluetooth")
 
-Return('src_files')
+src_files = [ os.path.join(src_dir, 'caedrclient.c'),
+              os.path.join(src_dir, 'caedrdevicelist.c'),
+              os.path.join(src_dir, 'caedrendpoint.c'),
+              os.path.join(src_dir, 'caedrnwmonitor.c'),
+              os.path.join(src_dir, 'caedrserver.c'),
+              os.path.join(src_dir, 'caedrutils.c') ]
+
+connectivity_env.AppendUnique(CA_SRC = src_files)

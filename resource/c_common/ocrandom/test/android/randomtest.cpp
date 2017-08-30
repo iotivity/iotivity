@@ -23,24 +23,9 @@ extern "C" {
     #include "ocrandom.h"
 }
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "math.h"
 
-
-int main(int argc, char* argv[]) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
-
-TEST(RandomGeneration,OCSeedRandom) {
-    EXPECT_EQ((uint32_t )0, OCSeedRandom());
-}
-
-TEST(RandomGeneration,OCGetRandomByte) {
-    uint8_t value = OCGetRandomByte();
-    EXPECT_LE((uint8_t )0, value);
-    EXPECT_GT(pow(2, 8), value);
-}
 
 TEST(RandomGeneration,OCGetRandom) {
     uint32_t value = OCGetRandom();
@@ -48,10 +33,10 @@ TEST(RandomGeneration,OCGetRandom) {
     EXPECT_GT(pow(2, 32), value);
 }
 
-TEST(RandomGeneration,OCFillRandomMem) {
+TEST(RandomGeneration,OCGetRandomBytes) {
     uint16_t ARR_SIZE = 20;
     uint8_t array[ARR_SIZE]={};
-    OCFillRandomMem(array + 1, ARR_SIZE - 2);
+    EXPECT_TRUE(OCGetRandomBytes(array + 1, ARR_SIZE - 2));
 
     for (int i = 1; i < ARR_SIZE - 2; i++) {
         uint8_t value = array[i];
@@ -66,9 +51,9 @@ TEST(RandomGeneration, OCGenerateUuid)
 {
     EXPECT_EQ(RAND_UUID_INVALID_PARAM, OCGenerateUuid(NULL));
 
-    uint8_t uuid[16] = {};
+    uint8_t uuid[UUID_SIZE] = {};
 
-    EXPECT_EQ(RAND_UUID_OK, OCGenerateUuid(uuid));
+    EXPECT_TRUE(OCGenerateUuid(uuid));
 
     EXPECT_FALSE(uuid[0] == '0' && uuid[1] == '0' &&
                  uuid[2] == '0' && uuid[3] == '0' &&
@@ -82,11 +67,11 @@ TEST(RandomGeneration, OCGenerateUuid)
 
 TEST(RandomGeneration, OCGenerateUuidString)
 {
-    EXPECT_EQ(RAND_UUID_INVALID_PARAM, OCGenerateUuidString(NULL));
+    char uuidString[UUID_STRING_SIZE] ={};
+    uint8_t uuid[UUID_SIZE] = {};
 
-    char uuidString[37] ={};
-
-    EXPECT_EQ(RAND_UUID_OK, OCGenerateUuidString(uuidString));
+    EXPECT_TRUE(OCGenerateUuid(uuid));
+    EXPECT_TRUE(OCConvertUuidToString(uuid, uuidString));
     EXPECT_EQ(0, uuidString[36]);
     EXPECT_EQ('-', uuidString[8]);
     EXPECT_EQ('-', uuidString[13]);

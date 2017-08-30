@@ -32,6 +32,8 @@
 #include "cacommon.h"
 #include "cainterface.h"
 
+#include "tree.h"
+
 /**
  * The signature of the internal call back functions to handle responses from entity handler
  */
@@ -47,6 +49,9 @@ typedef struct OCServerRequest
 
     /** Accept format retrieved from the received request PDU. */
     OCPayloadFormat acceptFormat;
+
+    /** Accept version retrieved from the received request PDU. */
+    uint16_t acceptVersion;
 
     /** resourceUrl will be filled in occoap using the path options in received request PDU.*/
     char resourceUrl[MAX_URI_LENGTH];
@@ -73,6 +78,9 @@ typedef struct OCServerRequest
     /** Remote endpoint address **/
     OCDevAddr devAddr;
 
+    /** The ID of server request*/
+    uint32_t requestId;
+
     /** Token for the request.*/
     CAToken_t requestToken;
 
@@ -94,14 +102,17 @@ typedef struct OCServerRequest
     /** Request to complete.*/
     uint8_t requestComplete;
 
-    /** Linked list; for multiple server request.*/
-    struct OCServerRequest * next;
+    /** Node entry in red-black tree.*/
+    RB_ENTRY(OCServerRequest) entry;
 
     /** Flag indicating slow response.*/
     uint8_t slowFlag;
 
     /** Flag indicating notification.*/
     uint8_t notificationFlag;
+
+    /** Payload format retrieved from the received request PDU. */
+    OCPayloadFormat payloadFormat;
 
     /** Payload Size.*/
     size_t payloadSize;
@@ -118,10 +129,10 @@ typedef struct OCServerRequest
  * Following structure will be created in ocstack to aggregate responses
  * (in future: for block transfer).
  */
-typedef struct OCServerResponse {
-
-    /** Linked list; for multiple server response.*/
-    struct OCServerResponse * next;
+typedef struct OCServerResponse
+{
+    /** Node entry in red-black tree.*/
+    RB_ENTRY(OCServerResponse) entry;
 
     /** this is the pointer to server payload data to be transferred.*/
     OCPayload* payload;
@@ -200,12 +211,13 @@ OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
  * @param qos                                   Request QOS.
  * @param query                                 Request query.
  * @param rcvdVendorSpecificHeaderOptions       Received vendor specific header options.
- * @param reqJSONPayload                        Request JSON payload.
+ * @param payload                               Request JSON payload.
  * @param requestToken                          Request token.
  * @param tokenLength                           Request token length.
  * @param resourceUrl                           URL of resource.
  * @param reqTotalSize                          Total size of the request.
  * @param acceptFormat                          The format requested for the payload encoding.
+ * @param acceptVersion                         The content version requested for the payload encoding.
  * @param devAddr                               Device Address.
  *
  * @return
@@ -216,10 +228,11 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
         OCQualityOfService qos, char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
-        uint8_t * payload, CAToken_t requestToken,
+        OCPayloadFormat payloadFormat, uint8_t * payload, CAToken_t requestToken,
         uint8_t tokenLength,
         char * resourceUrl, size_t reqTotalSize,
         OCPayloadFormat acceptFormat,
+        uint16_t acceptVersion,
         const OCDevAddr *devAddr);
 
 /**
@@ -228,13 +241,18 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
  * @param entityHandlerRequest      pointer to the OCEntityHandlerRequest struct that is created.
  * @param request                   Request handle.
  * @param method                    RESTful method.
+ * @param endpoint                  Device address of the requester.
  * @param resource                  Resource handle.
  * @param queryBuf                  Resource query of request.
- * @param bufReqPayload             JSON payload of request.
+ * @param payloadFormat             Content format of payload.
+ * @param payloadType               Type of payload.
+ * @param payload                   cbor value of the payload.
+ * @param payloadSize               Size of payload.
  * @param numVendorOptions          Number of vendor options.
  * @param vendorOptions             Vendor options.
  * @param observeAction             Observe action flag.
  * @param observeID                 Observe ID.
+ * @param messageID                 Message ID.
  *
  * @return
  *     OCStackResult
@@ -247,12 +265,14 @@ OCStackResult FormOCEntityHandlerRequest(
         OCResourceHandle resource,
         char * queryBuf,
         OCPayloadType payloadType,
+        OCPayloadFormat payloadFormat,
         uint8_t * payload,
         size_t payloadSize,
         uint8_t numVendorOptions,
         OCHeaderOption * vendorOptions,
         OCObserveAction observeAction,
-        OCObservationId observeID);
+        OCObservationId observeID,
+        uint16_t messageID);
 
 /**
  * Find a server request in the server request list and delete

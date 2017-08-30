@@ -129,7 +129,7 @@ int32_t CASendEDRMulticastData(const void *data, uint32_t dataLength);
  * @retval #CA_STATUS_FAILED Operation failed
  * @remarks info is allocated in this API and should be freed by the caller.
  */
-CAResult_t CAGetEDRInterfaceInformation(CAEndpoint_t **info, uint32_t *size);
+CAResult_t CAGetEDRInterfaceInformation(CAEndpoint_t **info, size_t *size);
 
 /**
  * @brief  Read Synchronous API callback.

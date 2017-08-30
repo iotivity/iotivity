@@ -29,10 +29,12 @@
 #include <boards.h>
 #include <RBL_nRF8001.h>
 
-#include "pdu.h"
+#include <coap/pdu.h>
 #include "caleinterface.h"
 #include "oic_malloc.h"
 #include "caadapterutils.h"
+
+#include "cafragmentation.h"
 
 #define TAG "LES"
 /**
@@ -66,7 +68,7 @@ static size_t g_packetDataLen = 0;
 
 void CAGetTCPHeaderDetails(unsigned char* recvBuffer, size_t *headerlen)
 {
-    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+    coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
         ((unsigned char *)recvBuffer)[0] >> 4);
     *headerlen = coap_get_tcp_header_length_for_transport(transport);
 }
@@ -77,11 +79,10 @@ void CACheckLEDataInternal()
 
     if (CAIsLEDataAvailable())
     {
-        // Allocate Memory for COAP Buffer and do ParseHeader
         if (NULL == g_coapBuffer)
         {
             OIC_LOG(DEBUG, TAG, "IN");
-            size_t bufSize = TCP_MAX_HEADER_LENGTH;
+            size_t bufSize = CA_SUPPORTED_BLE_MTU_SIZE;
             g_coapBuffer = (uint8_t *)OICCalloc(bufSize, 1);
             if (NULL == g_coapBuffer)
             {
@@ -89,56 +90,24 @@ void CACheckLEDataInternal()
                 return;
             }
 
-            g_coapBuffer[g_receivedDataLen++] = CALEReadData();
-            size_t headerLen;
-            CAGetTCPHeaderDetails(g_coapBuffer, &headerLen);
-            OIC_LOG_V(INFO, TAG, "hdr len %d", headerLen);
-            while (CAIsLEDataAvailable() && g_receivedDataLen < headerLen)
+            while (CAIsLEDataAvailable() && g_receivedDataLen <= bufSize)
             {
                 g_coapBuffer[g_receivedDataLen++] = CALEReadData();
             }
 
-            g_packetDataLen = coap_get_total_message_length(g_coapBuffer, g_receivedDataLen);
-            OIC_LOG_V(INFO, TAG, "pkt len %d", g_packetDataLen);
-            if (g_packetDataLen > COAP_MAX_PDU_SIZE)
+            OIC_LOG(DEBUG, TAG, "Read Comp BLE Pckt");
+
+            if (g_receivedDataLen > 0)
             {
-                OIC_LOG(ERROR, TAG, "len > pdu_size");
-                return;
+                OIC_LOG_V(DEBUG, TAG, "recv dataLen=%u", g_receivedDataLen);
+                uint32_t sentLength = 0;
+                g_bleServerDataReceivedCallback("", g_coapBuffer,
+                                                g_receivedDataLen, &sentLength);
             }
 
-            bufSize = g_packetDataLen;
-            uint8_t *newBuf = (uint8_t *)OICRealloc(g_coapBuffer, bufSize);
-            if (NULL == newBuf)
-            {
-                OIC_LOG(ERROR, TAG, "malloc");
-                OICFree(g_coapBuffer);
-                g_coapBuffer = NULL;
-                return;
-            }
-            g_coapBuffer = newBuf;
-        }
-
-        while (CAIsLEDataAvailable())
-        {
-            OIC_LOG(DEBUG, TAG, "In While loop");
-            g_coapBuffer[g_receivedDataLen++] = CALEReadData();
-            if (g_receivedDataLen == g_packetDataLen)
-            {
-                OIC_LOG(DEBUG, TAG, "Read Comp BLE Pckt");
-                if (g_receivedDataLen > 0)
-                {
-                    OIC_LOG_V(DEBUG, TAG, "recv dataLen=%u", g_receivedDataLen);
-                    uint32_t sentLength = 0;
-                    // g_coapBuffer getting freed by CAMesssageHandler
-                    g_bleServerDataReceivedCallback("", g_coapBuffer,
-                                                    g_receivedDataLen, &sentLength);
-                }
-
-                g_receivedDataLen = 0;
-                OICFree(g_coapBuffer);
-                g_coapBuffer = NULL;
-                break;
-            }
+            g_receivedDataLen = 0;
+            OICFree(g_coapBuffer);
+            g_coapBuffer = NULL;
         }
         OIC_LOG(DEBUG, TAG, "OUT");
     }

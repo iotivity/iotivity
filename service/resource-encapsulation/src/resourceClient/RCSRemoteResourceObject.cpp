@@ -20,6 +20,8 @@
 
 #include "RCSRemoteResourceObject.h"
 
+#include "OCPlatform.h"
+
 #include "ResourceBroker.h"
 #include "ResourceCacheManager.h"
 
@@ -90,12 +92,12 @@ namespace
     }
 
     OCStackResult cachingCallback(std::shared_ptr< PrimitiveResource >,
-            const RCSResourceAttributes& data,
+            const RCSResourceAttributes& data, int eCode,
             RCSRemoteResourceObject::CacheUpdatedCallback onCacheUpdated)
     {
         SCOPE_LOG_F(DEBUG, TAG);
 
-        onCacheUpdated(data);
+        onCacheUpdated(data, eCode);
         return OC_STACK_OK;
     }
 
@@ -166,7 +168,6 @@ namespace OIC
             return m_map;
         }
 
-
         RCSRemoteResourceObject::RCSRemoteResourceObject(
                 std::shared_ptr< PrimitiveResource > primtiveResource) :
                 m_primitiveResource{ primtiveResource },
@@ -186,7 +187,6 @@ namespace OIC
             catch(std::exception &e){
                 OIC_LOG_V(ERROR, TAG, "%s", e.what());
             }
-
         }
 
         RCSRemoteResourceObject::Ptr RCSRemoteResourceObject::fromOCResource(
@@ -199,6 +199,24 @@ namespace OIC
 
             return std::make_shared< RCSRemoteResourceObject >(
                     PrimitiveResource::create(ocResource));
+        }
+
+        std::shared_ptr< OC::OCResource > RCSRemoteResourceObject::toOCResource(
+        RCSRemoteResourceObject::Ptr rcsResource)
+        {
+            if (!rcsResource)
+            {
+                throw RCSInvalidParameterException("the rcs resource must not be nullptr.");
+            }
+
+            OC::OCResource::Ptr ocResource = OC::OCPlatform::constructResourceObject(rcsResource->getAddress(),
+                rcsResource->getUri(),
+                rcsResource->m_primitiveResource->getConnectivityType(),
+                rcsResource->isObservable(),
+                rcsResource->getTypes(),
+                rcsResource->getInterfaces());
+
+            return ocResource;
         }
 
         bool RCSRemoteResourceObject::isMonitoring() const
@@ -267,7 +285,7 @@ namespace OIC
             startCaching({ });
         }
 
-        void RCSRemoteResourceObject::startCaching(CacheUpdatedCallback cb)
+        void RCSRemoteResourceObject::startCaching(CacheUpdatedCallback cb, CacheMode mode)
         {
             SCOPE_LOG_F(DEBUG, TAG);
 
@@ -277,17 +295,30 @@ namespace OIC
                 throw RCSBadRequestException{ "Caching already started." };
             }
 
-            if (cb)
+            if (mode == CacheMode::OBSERVE_ONLY)
             {
                 m_cacheId = ResourceCacheManager::getInstance()->requestResourceCache(
                         m_primitiveResource,
-                        std::bind(cachingCallback, std::placeholders::_1, std::placeholders::_2,
-                                std::move(cb)), REPORT_FREQUENCY::UPTODATE, 0);
+                        std::bind(cachingCallback, std::placeholders::_1,
+                                  std::placeholders::_2, std::placeholders::_3,
+                                  std::move(cb)), CACHE_METHOD::OBSERVE_ONLY,
+                                  REPORT_FREQUENCY::UPTODATE, 0);
+            }
+
+            else if (cb)
+            {
+                m_cacheId = ResourceCacheManager::getInstance()->requestResourceCache(
+                        m_primitiveResource,
+                        std::bind(cachingCallback, std::placeholders::_1,
+                                std::placeholders::_2, std::placeholders::_3,
+                                std::move(cb)), CACHE_METHOD::ITERATED_GET,
+                                REPORT_FREQUENCY::UPTODATE, 0);
             }
             else
             {
                 m_cacheId = ResourceCacheManager::getInstance()->requestResourceCache(
-                        m_primitiveResource, { }, REPORT_FREQUENCY::NONE, 0);
+                        m_primitiveResource, { }, CACHE_METHOD::ITERATED_GET,
+                        REPORT_FREQUENCY::NONE, 0);
             }
 
             OIC_LOG_V(DEBUG, TAG, "startCaching CACHE ID %d", m_cacheId);
@@ -303,7 +334,19 @@ namespace OIC
                 return;
             }
 
-            ResourceCacheManager::getInstance()->cancelResourceCache(m_cacheId);
+            try
+            {
+                ResourceCacheManager::getInstance()->cancelResourceCache(m_cacheId);
+            }
+            catch (const RCSInvalidParameterException &)
+            {
+                throw;
+            }
+            catch (...)
+            {
+                m_cacheId = 0;
+                throw;
+            }
             m_cacheId = 0;
         }
 
@@ -317,7 +360,7 @@ namespace OIC
             }
 
             return convertCacheState(
-                    ResourceCacheManager::getInstance()->getResourceCacheState(m_primitiveResource));
+                    ResourceCacheManager::getInstance()->getResourceCacheState(m_cacheId));
         }
 
         bool RCSRemoteResourceObject::isCachedAvailable() const
@@ -344,7 +387,7 @@ namespace OIC
                 throw RCSBadRequestException{ "Cache data is not available." };
             }
 
-            return ResourceCacheManager::getInstance()->getCachedData(m_primitiveResource);
+            return ResourceCacheManager::getInstance()->getCachedData(m_cacheId);
         }
 
         RCSResourceAttributes::Value RCSRemoteResourceObject::getCachedAttribute(
@@ -460,6 +503,24 @@ namespace OIC
             m_primitiveResource->requestSetWith(
                     queryParams.getResourceType(), queryParams.getResourceInterface(),
                     OC::QueryParamsMap{ paramMap.begin(), paramMap.end() }, attributes,
+                    std::move(cb));
+        }
+
+        void RCSRemoteResourceObject::set(const RCSQueryParams& queryParams,
+                const RCSRepresentation& rep, SetCallback cb)
+        {
+            SCOPE_LOG_F(DEBUG, TAG);
+
+            if (!cb)
+            {
+                throw RCSInvalidParameterException{ "set : Callback is empty" };
+            }
+
+            const auto& paramMap = queryParams.getAll();
+
+            m_primitiveResource->requestSetWith(
+                    queryParams.getResourceType(), queryParams.getResourceInterface(),
+                    OC::QueryParamsMap{ paramMap.begin(), paramMap.end() }, rep,
                     std::move(cb));
         }
 

@@ -605,7 +605,6 @@ void SimulatorSingleResourceImpl::notify(int observerID, const SimulatorResource
         return;
 
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse);
-    response->setErrorCode(200);
     response->setResponseResult(OC_EH_OK);
     response->setResourceRepresentation(resModel.asOCRepresentation(), m_interfaces[0]);
 
@@ -629,7 +628,6 @@ void SimulatorSingleResourceImpl::notifyAll(const SimulatorResourceModel &resMod
         return;
 
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse);
-    response->setErrorCode(200);
     response->setResponseResult(OC_EH_OK);
     response->setResourceRepresentation(resModel.asOCRepresentation(), m_interfaces[0]);
 
@@ -647,9 +645,9 @@ void SimulatorSingleResourceImpl::notifyAll(const SimulatorResourceModel &resMod
 void SimulatorSingleResourceImpl::setCommonProperties(OC::OCRepresentation &ocResRep)
 {
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
-    ocResRep.setValue("rt", m_resourceType);
-    ocResRep.setValue("if", m_interfaces);
-    ocResRep.setValue("n", m_name);
+    ocResRep.setValue(OC_RSRVD_RESOURCE_TYPE, m_resourceType);
+    ocResRep.setValue(OC_RSRVD_INTERFACE, m_interfaces);
+    ocResRep.setValue(OC_RSRVD_DEVICE_NAME, m_name);
 }
 
 OCEntityHandlerResult SimulatorSingleResourceImpl::handleRequests(
@@ -768,9 +766,9 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handleGET(
     // Handling interface query parameter "if"
     auto interfaceType = m_interfaces[0];
     auto requestQueryParams = request->getQueryParameters();
-    if (requestQueryParams.end() != requestQueryParams.find("if"))
+    if (requestQueryParams.end() != requestQueryParams.find(OC_RSRVD_INTERFACE))
     {
-        interfaceType = requestQueryParams["if"];
+        interfaceType = requestQueryParams[OC_RSRVD_INTERFACE];
     }
 
     if (!isValidInterface(interfaceType, "GET"))
@@ -807,9 +805,9 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handlePUT(
     // Handling interface query parameter "if"
     auto interfaceType = m_interfaces[0];
     auto requestQueryParams = request->getQueryParameters();
-    if (requestQueryParams.end() != requestQueryParams.find("if"))
+    if (requestQueryParams.end() != requestQueryParams.find(OC_RSRVD_INTERFACE))
     {
-        interfaceType = requestQueryParams["if"];
+        interfaceType = requestQueryParams[OC_RSRVD_INTERFACE];
     }
 
     if (!isValidInterface(interfaceType, "PUT"))
@@ -859,9 +857,9 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handlePOST(
     // Handling interface query parameter "if"
     auto interfaceType = m_interfaces[0];
     auto requestQueryParams = request->getQueryParameters();
-    if (requestQueryParams.end() != requestQueryParams.find("if"))
+    if (requestQueryParams.end() != requestQueryParams.find(OC_RSRVD_INTERFACE))
     {
-        interfaceType = requestQueryParams["if"];
+        interfaceType = requestQueryParams[OC_RSRVD_INTERFACE];
     }
 
     if (!isValidInterface(interfaceType, "POST"))
@@ -933,7 +931,6 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::sendResponse(
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse());
     response->setRequestHandle(request->getRequestHandle());
     response->setResourceHandle(request->getResourceHandle());
-    response->setErrorCode(errorCode);
     response->setResponseResult(responseResult);
     if (OC_STACK_OK != OC::OCPlatform::sendResponse(response))
     {
@@ -956,7 +953,6 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::sendResponse(
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse());
     response->setRequestHandle(request->getRequestHandle());
     response->setResourceHandle(request->getResourceHandle());
-    response->setErrorCode(errorCode);
     response->setResponseResult(responseResult);
     response->setResourceRepresentation(payload, interfaceType);
     if (OC_STACK_OK != OC::OCPlatform::sendResponse(response))

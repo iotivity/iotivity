@@ -18,6 +18,8 @@
  *
  ******************************************************************/
 
+#include "iotivity_config.h"
+
 #include "RCSResourceObject.h"
 #include "RCSRequest.h"
 #include "RCSSeparateResponse.h"
@@ -45,7 +47,10 @@ void handleRequestWithDelay(int delayInMillis, const RCSRequest& request,
         auto& resAttrs = resObject->getAttributes();
         for (const auto& kv : requestedAttrs)
         {
-            if (resAttrs.contains(kv.key())) resAttrs[kv.key()] = kv.value();
+            if (resAttrs.contains(kv.key()))
+            {
+                resAttrs[kv.key()] = kv.value();
+            }
         }
     }
 
@@ -67,7 +72,7 @@ int processUserInput(int min, int max)
 {
     assert(min <= max);
 
-    int input;
+    int input = 0;
 
     while(true)
     {
@@ -75,7 +80,10 @@ int processUserInput(int min, int max)
 
         if (!std::cin.fail())
         {
-            if(min <= input && input <= max) return input;
+            if(min <= input && input <= max)
+            {
+                return input;
+            }
         }
 
         std::cin.clear();
@@ -145,7 +153,15 @@ void selectResourceType()
 
 int main(void)
 {
-    selectResourceType();
+    try
+    {
+        selectResourceType();
+    }
+    catch(...)
+    {
+        std::cout << "Can't select Resource Type" << std::endl;
+        return -1;
+    }
 
     std::cout << "Resource successfully created!" << std::endl;
 

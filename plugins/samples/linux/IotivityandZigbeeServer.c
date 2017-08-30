@@ -27,6 +27,16 @@
 
 #define TAG "IoTivityZigbeeServer"
 #define defaultComPort "/dev/ttyUSB0"
+
+#define VERIFY_SUCCESS(op)                          \
+{                                                   \
+    if (op !=  OC_STACK_OK)                         \
+    {                                               \
+        OIC_LOG_V(FATAL, TAG, "%s failed!!", #op);  \
+        goto exit;                                  \
+    }                                               \
+}
+
 int main()
 {
     OIC_LOG(INFO, TAG, "Initializing IoTivity...");
@@ -74,6 +84,15 @@ int main()
     }
     else
     {
+        OIC_LOG(INFO, TAG, "Performing Zigbee discovery. This process takes 15 seconds.");
+
+        result = PISetup(plugin);
+        if (result != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, TAG, "Zigbee Plugin Discovery Failed: %d", result);
+            goto IotivityStop;
+        }
+
         OIC_LOG(INFO, TAG, "Zigbee Plugin started correctly, press Ctrl-C to terminate application");
         // Loop until sigint
         while (!processSignal(false) && result == OC_STACK_OK)
@@ -136,15 +155,24 @@ OCStackResult SetPlatformInfo()
 
 OCStackResult SetDeviceInfo()
 {
-    static OCDeviceInfo deviceInfo =
-        {
-            .deviceName = "IoTivity/Zigbee Server Sample",
-        };
-    char *dup = OICStrdup("oic.wk.d");
-    deviceInfo.types = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
-    deviceInfo.types->value = dup;
-    OICFree(dup);
-    return OCSetDeviceInfo(deviceInfo);
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+                                      "IoTivity/Zigbee Server Sample"));
+
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION,
+                                      "IoTivity/Zigbee Device Spec Version"));
+
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                      "IoTivity/Zigbee Data Model Version"));
+
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                      "4ea65ac9-59a3-4eb8-8d77-76c3ee72c250"));
+
+    OIC_LOG(INFO, TAG, "Device information initialized successfully.");
+    return OC_STACK_OK;
+
+exit:
+    return OC_STACK_ERROR;
+
 }
 
 bool processSignal(bool set)

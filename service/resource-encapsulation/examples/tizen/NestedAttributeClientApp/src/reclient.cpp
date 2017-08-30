@@ -89,7 +89,7 @@ void *updateGroupLog(void *data)
 
 nestedAtrribute createNestedAttribute(int fanSpeed, int airSpeed)
 {
-    nestedAtrribute *acServer = new nestedAtrribute();
+    nestedAtrribute acServer;
 
     model["model"] = "SamsungAC";
 
@@ -129,19 +129,13 @@ nestedAtrribute createNestedAttribute(int fanSpeed, int airSpeed)
     light.push_back(red);
     light.push_back(green);
 
-    if (nullptr == acServer)
-    {
-        dlog_print(DLOG_ERROR, LOG_TAG, "#### NULL nestedAtrribute");
-        return *acServer;
-    }
+    acServer.push_back(generalInfo);
+    acServer.push_back(fan);
+    acServer.push_back(tempSensor);
+    acServer.push_back(efficiency);
+    acServer.push_back(light);
 
-    acServer->push_back(generalInfo);
-    acServer->push_back(fan);
-    acServer->push_back(tempSensor);
-    acServer->push_back(efficiency);
-    acServer->push_back(light);
-
-    return *acServer;
+    return acServer;
 }
 
 static void onDestroy()
@@ -326,13 +320,26 @@ popup_setFanSpeed_clicked_cb(void *data, Evas_Object *obj, void *event_info)
     const char *fanSpeedString = elm_entry_entry_get(entry);
     // Remove white spaces(if any) at the beginning
     int beginning = 0;
+
+    if(NULL == fanSpeedString)
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL Fan Speed Value");
+        string logMessage = "Fan Speed Cannot be NULL<br>";
+        logMessage += "----------------------<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog, &logMessage);
+        evas_object_del(popup_fields->popup);
+        free(popup_fields);
+        return;
+    }
+
     while (fanSpeedString[beginning] == ' ')
     {
         (beginning)++;
     }
 
     int len = strlen(fanSpeedString);
-    if (NULL == fanSpeedString || 1 > len)
+    if (1 > len)
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL Fan Speed Value");
         string logMessage = "Fan Speed Cannot be NULL<br>";
@@ -365,13 +372,26 @@ popup_setAirSpeed_clicked_cb(void *data, Evas_Object *obj, void *event_info)
     const char *airSpeedString = elm_entry_entry_get(entry);
     // Remove white spaces(if any) at the beginning
     int beginning = 0;
+
+    if(NULL == airSpeedString)
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL Air Circulation Speed Value");
+        string logMessage = "Air Circulation Speed Cannot be NULL<br>";
+        logMessage += "----------------------<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog, &logMessage);
+        evas_object_del(popup_fields->popup);
+        free(popup_fields);
+        return;
+    }
+
     while (airSpeedString[beginning] == ' ')
     {
         (beginning)++;
     }
 
     int len = strlen(airSpeedString);
-    if (NULL == airSpeedString || 1 > len)
+    if (1 > len)
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL Fan Speed Value");
         string logMessage = "Fan Speed Cannot be NULL<br>";

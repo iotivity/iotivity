@@ -119,7 +119,7 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      * @param configFile
      *            configuration File that contains the Bundle/Bundles
      *            information.
-     *
+     * @return collection of container bundles
      */
     public List<RcsBundleInfo> startContainer(String configFile) {
         if(configFile == null || configFile.isEmpty()){
@@ -230,7 +230,7 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
     /**
      * API for getting the list of all bundles in the container
      *
-     * @return list<RCSBundleInfo> -List of BundleInfo objects each associated
+     * @return List of BundleInfo objects each associated
      *         with a bundle
      *
      *         {@link RcsBundleInfo}
@@ -313,18 +313,27 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
         List<RcsBundleInfo> bundles = listBundles();
 
         for(RcsBundleInfo bundleInfo : bundles){
-            if(bundleInfo.getID().equals(bundleId) && bundleInfo.getPath().endsWith(".apk")){
-                Log.d(TAG, "Have to start android bundle");
-                Log.d(TAG, "bundle-id: " + bundleInfo.getID() + ", " + bundleInfo.getPath());
-                if(bundleInfo.getPath().endsWith(".apk")){
-                    startBundleFromStandaloneApp(bundleInfo);
-                }else if(bundleInfo.getID().equals(bundleId) &&
-                        bundleInfo.getPath().endsWith(".jar")){ // load classes from library
-                    startBundleFromJar(bundleInfo);
-                }
-            }else{
+            String fileName = bundleInfo.getPath();
+            String extension = fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
+
+            //* Unknown bundle handle it on native level
+            if(!bundleInfo.getID().equals(bundleId)) {
                 nativeStartBundle(bundleId);
             }
+            else
+                switch(extension)  {
+                    case "apk":
+                            Log.d(TAG, "Starting android bundle from APK");
+                            startBundleFromStandaloneApp(bundleInfo);
+                        break;
+                    case "jar":
+                            Log.d(TAG, "Starting android bundle from jar file");
+                            startBundleFromJar(bundleInfo);
+                        break;
+                    default:
+                        nativeStartBundle(bundleId);
+                        break;
+                }
         }
     }
 
@@ -394,7 +403,7 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      * @param bundleId
      *            Id of the Bundle
      *
-     * @return List<String> All the bundle resources
+     * @return List of all the bundle resources
      */
     public List<String> listBundleResources(String bundleId) {
         if(bundleId == null || bundleId.isEmpty()){
@@ -435,7 +444,7 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      * @param bundleId
      *            Id of the Bundle
      *
-     * @return List<ResourceConfig> All the resource configurations for the given bundle
+     * @return All the resource configurations for the given bundle
      */
     public List<ResourceConfig> getConfiguredBundleResources(String bundleId) {
         Log.d(TAG, "getConfiguredBundleResource " + bundleId);

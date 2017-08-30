@@ -62,7 +62,7 @@ OCStackResult RMHandleGatewayRequest(OCServerRequest *request, const OCResource 
  * the payload using routingmessageparser apis, addition or removal of
  * Gateway entries is performed.
  * @param[in]   devAddr    Address of the Device that sent the payload.
- * @param[in]   resource   Response payload.
+ * @param[in]   payload    Response payload.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
 OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPayload *payload);
@@ -86,7 +86,7 @@ OCStackResult RMGetGatewayPayload(OCRepPayload **payload);
 uint32_t RMGetGatewayId();
 
 /**
- * API to get the multicast sequence number..
+ * API to get the multicast sequence number.
  * @return  Multicast sequence number.
  */
 uint16_t RMGetMcastSeqNumber();
@@ -95,12 +95,12 @@ uint16_t RMGetMcastSeqNumber();
  * On reception of request from CA, RI sends to this function.
  * This checks if the route option is present and adds routing information to
  * to the route option data.
- * @param[in,out]  message       Received coap packet.
- * @param[in]      sender        RemoteEndpoint which sent the packet.
- * @param[out]     destination   Populated by RM by parsing message, CA then forwards packet to
- *                               "destination".
- * @param[out]     isEmptyMsg    Populated by RM by parsing the RouteOption.  If the MSGType is ACK
- *                               in route option and is for self, then this flag is set.
+ * @param[in,out]  message           Received coap packet.
+ * @param[in]      sender            RemoteEndpoint which sent the packet.
+ * @param[out]     selfDestination   Populated by RM by parsing message, CA then forwards packet to
+ *                                   "destination".
+ * @param[out]     isEmptyMsg        Populated by RM by parsing the RouteOption.  If the MSGType is ACK
+ *                                   in route option and is for self, then this flag is set.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 OCStackResult RMHandleRequest(CARequestInfo_t *message, const CAEndpoint_t *sender,
@@ -110,10 +110,10 @@ OCStackResult RMHandleRequest(CARequestInfo_t *message, const CAEndpoint_t *send
  * On reception of response from CA, RI sends to this function.
  * This checks if the route option is present and adds routing information to
  * to the route option data.
- * @param[in,out]  message       Received coap packet.
- * @param[in]      sender        RemoteEndpoint which sent the packet.
- * @param[out]     destination   Populated by RM by parsing message to know if response is
- *                               for its own.
+ * @param[in,out]  message           Received coap packet.
+ * @param[in]      sender            RemoteEndpoint which sent the packet.
+ * @param[out]     selfDestination   Populated by RM by parsing message to know if response is
+ *                                   for its own.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 OCStackResult RMHandleResponse(CAResponseInfo_t *message, const CAEndpoint_t *sender,

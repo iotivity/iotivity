@@ -22,7 +22,7 @@
 #define OC_PROVISIONING_TYPES_H
 
 #include <stdbool.h>
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,7 +49,7 @@ struct OCUuidList
     OCUuidList_t *next;
 };
 
-/*
+/**
  * Device's power on/off state.
  */
 typedef enum {
@@ -67,7 +67,14 @@ typedef struct OCProvisionDev
     OicSecDoxm_t    *doxm;           /**< Pointer to target's doxm resource. **/
     OCConnectivityType connType;     /**< Connectivity type of endpoint */
     uint16_t        securePort;      /**< secure port **/
+#ifdef WITH_TCP
+    uint16_t        tcpPort;         /**< tcp port **/
+    uint16_t        tcpSecurePort;   /**< secure tcp port **/
+#endif
+    char            specVer[SPEC_MAX_VER_LEN];         /**< spec version **/
     DeviceStatus    devStatus;       /**< status of device **/
+    OCDoHandle      handle;
+    bool            ownerAclUnauthorizedRequest;        /**< true if the provisioning client has already re-tried posting the Owner ACE **/
     struct OCProvisionDev  *next;    /**< Next pointer. **/
 }OCProvisionDev_t;
 
@@ -95,26 +102,103 @@ typedef struct OCPMResult{
     OCStackResult  res;
 }OCProvisionResult_t;
 
+typedef struct OCPMGetCsrResult
+{
+    OicUuid_t           deviceId;
+    OCStackResult       res;
+    uint8_t             *csr;
+    size_t              csrLen;
+    OicEncodingType_t   encoding; /* Determines contents of csr; either OIC_ENCODING_DER or OIC_ENCODING_PEM */
+} OCPMGetCsrResult_t;
+
+typedef struct OCPMRoleCertChain
+{
+    uint64_t            credId;         /**< credential ID */
+    OicSecKey_t         certificate;    /**< leaf certificate */
+    OicSecOpt_t         optData;        /**< intermediate CA certificates (if any) */
+} OCPMRoleCertChain_t;
+
+typedef struct OCPMGetRolesResult
+{
+    OicUuid_t           deviceId;       /**< responding device ID */
+    OCStackResult       res;            /**< result for this device */
+    OCPMRoleCertChain_t *chains;        /**< cert chains (if res is OC_STACK_OK) */
+    size_t              chainsLength;   /**< length of chains array (if res is OC_STACK_OK */
+} OCPMGetRolesResult_t;
+
+/**
+ * Owner device type
+ */
+typedef enum OwnerType{
+    SUPER_OWNER = 0,
+    SUB_OWNER = 1
+}OwnerType_t;
+
+/**
+ * Index value to access OxM allow table
+ */
+typedef enum OxmAllowTableIdx {
+    OXM_IDX_JUST_WORKS = 0,
+    OXM_IDX_MV_JUST_WORKS,
+#ifdef MULTIPLE_OWNER
+    OXM_IDX_PRECONFIG_PIN,
+#endif
+    OXM_IDX_RANDOM_DEVICE_PIN,
+    OXM_IDX_MANUFACTURER_CERTIFICATE,
+    OXM_IDX_CON_MFG_CERT,
+    OXM_IDX_DECENTRALIZED_PUBLIC_KEY,
+    OXM_IDX_COUNT,
+    OXM_IDX_UNKNOWN
+}OxmAllowTableIdx_t;
+
 /**
  * Callback function definition of provisioning API
  *
- * @param[OUT] ctx - If user set his/her context, it will be returned here.
- * @param[OUT] nOfRes - total number of results, it depends on using which provisioning API.
- * @param[OUT] arr - Array of OCPMResult_t, each OCPMResult_t contains result for target Device.
- * @param[OUT} hasError - If there is no error, it's returned with 'false' but if there is a single
+ * @param[in] ctx - If user set his/her context, it will be returned here.
+ * @param[in] nOfRes - total number of results, it depends on using which provisioning API.
+ * @param[in] arr - Array of OCPMResult_t, each OCPMResult_t contains result for target Device.
+ * @param[in] hasError - If there is no error, it's returned with 'false' but if there is a single
  *                        or more error is/are occured during operation, it will be 'true'.
  */
-typedef void (*OCProvisionResultCB)(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError);
+typedef void (*OCProvisionResultCB)(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
 
+/**
+ * Callback function definition of CSR retrieve API
+ *
+ * @param[OUT] ctx - If user set a context, it will be returned here.
+ * @param[OUT] nOfRes - total number of results
+ * @param[OUT] arr - Array of OCPMGetCsrResult_t, containing one entry for each target device. If an entry's res
+ *                   member is OC_STACK_OK, then csr and csrLen are valid; otherwise they should not be used.
+ *                   This memory is only valid while the callback is executing; callers must make copies if the data
+ *                   needs to be kept longer.
+ * @param[OUT] hasError - If all calls succeded, this will be false. One or more errors, and this will
+ *                        be true. Examine the elements of arr to discover which failed.
+ */
+typedef void (*OCGetCSRResultCB)(void* ctx, size_t nOfRes, OCPMGetCsrResult_t *arr, bool hasError);
+
+/**
+ * Callback function definition of roles retrieve API
+ *
+ * @param[OUT] ctx - If user set a context, it will be returned here.
+ * @param[OUT] nOfRes - total number of results
+ * @param[OUT] arr - Array of OCPMGetRolesResult_t, containing one entry for each target device. If an entry's res
+ *                   member is OC_STACK_OK, then chains and chainsLength are valid; otherwise they should not be used.
+ *                   This memory is only valid while the callback is executing; callers must make copies if the data
+ *                   needs to be kept longer.
+ * @param[OUT] hasError - If all calls succeeded, this will be false. One or more errors, and this will
+ *                        be true. Examine the elements of arr to discover which failed.
+ */
+typedef void (*OCGetRolesResultCB)(void* ctx, size_t nOfRes, OCPMGetRolesResult_t *arr, bool hasError);
 
 /**
  * Callback function definition of direct-pairing
  *
- * @param[OUT] peer - pairing device info.
- * @param[OUT} result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
+ * @param[in] ctx - User context which will be returned wth callback
+ * @param[in] peer - pairing device info.
+ * @param[in] result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
  *                                   if D2D pairing is success without error
  */
-typedef void (*OCDirectPairingResultCB)(OCDirectPairingDev_t *peer, OCStackResult result);
+typedef void (*OCDirectPairingResultCB)(void *ctx, OCDirectPairingDev_t *peer, OCStackResult result);
 
 
 #ifdef __cplusplus

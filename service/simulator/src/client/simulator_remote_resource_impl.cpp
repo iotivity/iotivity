@@ -42,8 +42,6 @@ static std::string requestTypeToString(RequestType type)
         default:
             return "";
     }
-
-    return ""; // Control should not reach here
 }
 
 static RequestType requestTypeToEnum(const std::string &type)
@@ -228,9 +226,9 @@ void SimulatorRemoteResourceImpl::get(const std::string &interfaceType,
     VALIDATE_CALLBACK(callback)
 
     std::map<std::string, std::string> queryParamsCpy = queryParams;
-    if (!interfaceType.empty() && queryParamsCpy.end() == queryParamsCpy.find("if"))
+    if (!interfaceType.empty() && queryParamsCpy.end() == queryParamsCpy.find(OC_RSRVD_INTERFACE))
     {
-        queryParamsCpy["if"] = interfaceType;
+        queryParamsCpy[OC_RSRVD_INTERFACE] = interfaceType;
     }
 
     SimulatorResult result = m_getRequestSender.send(queryParamsCpy, std::bind(
@@ -291,9 +289,9 @@ void SimulatorRemoteResourceImpl::put(const std::string &interfaceType,
     VALIDATE_CALLBACK(callback)
 
     std::map<std::string, std::string> queryParamsCpy = queryParams;
-    if (!interfaceType.empty() && queryParamsCpy.end() == queryParamsCpy.find("if"))
+    if (!interfaceType.empty() && queryParamsCpy.end() == queryParamsCpy.find(OC_RSRVD_INTERFACE))
     {
-        queryParamsCpy["if"] = interfaceType;
+        queryParamsCpy[OC_RSRVD_INTERFACE] = interfaceType;
     }
 
     SimulatorResult result = m_putRequestSender.send(queryParamsCpy, representation, std::bind(
@@ -354,9 +352,9 @@ void SimulatorRemoteResourceImpl::post(const std::string &interfaceType,
     VALIDATE_CALLBACK(callback)
 
     std::map<std::string, std::string> queryParamsCpy = queryParams;
-    if (!interfaceType.empty() && queryParamsCpy.end() == queryParamsCpy.find("if"))
+    if (!interfaceType.empty() && queryParamsCpy.end() == queryParamsCpy.find(OC_RSRVD_INTERFACE))
     {
-        queryParamsCpy["if"] = interfaceType;
+        queryParamsCpy[OC_RSRVD_INTERFACE] = interfaceType;
     }
 
     SimulatorResult result = m_postRequestSender.send(queryParamsCpy, representation, std::bind(

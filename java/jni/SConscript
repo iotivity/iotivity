@@ -1,0 +1,226 @@
+#******************************************************************
+#
+# Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+##
+# Examples build script
+##
+Import('env')
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
+
+jni_env = lib_env.Clone()
+rd_mode = jni_env.get('RD_MODE')
+
+######################################################################
+# Build flags
+######################################################################
+with_upstream_libcoap = jni_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+    jni_env.AppendUnique(CPPPATH=['#extlibs/libcoap/libcoap/include'])
+else:
+    jni_env.AppendUnique(CPPPATH=[
+        env.get('SRC_DIR') +
+        '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'
+    ])
+
+jni_env.AppendUnique(CPPPATH=[
+    env.get('SRC_DIR') + '/resource/csdk/connectivity/api',
+    env.get('SRC_DIR') + '/resource/include',
+    env.get('SRC_DIR') + '/resource/c_common',
+    env.get('SRC_DIR') + '/resource/c_common/oic_string/include',
+    env.get('SRC_DIR') + '/resource/c_common/oic_malloc/include',
+    env.get('SRC_DIR') + '/resource/csdk/include',
+    env.get('SRC_DIR') + '/resource/csdk/connectivity/inc',
+    env.get('SRC_DIR') + '/resource/csdk/connectivity/common/inc',
+    env.get('SRC_DIR') + '/resource/csdk/stack/include',
+    env.get('SRC_DIR') + '/resource/csdk/ocsocket/include',
+    env.get('SRC_DIR') + '/resource/csdk/resource-directory/include',
+    env.get('SRC_DIR') + '/resource/oc_logger/include',
+    env.get('SRC_DIR') + '/resource/csdk/logger/include',
+    env.get('SRC_DIR') + '/resource/../extlibs/boost/boost_1_58_0',
+    env.get('SRC_DIR') + '/resource/../build_common/android/compatibility',
+    env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include',
+    env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/cloud/',
+    env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/oxm',
+    env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
+    env.get('SRC_DIR') + '/resource/csdk/security/include'
+])
+
+target_os = env.get('TARGET_OS')
+if target_os not in ['windows', 'winrt']:
+    jni_env.AppendUnique(CCFLAGS=[
+        '-Wno-error', '-Wno-comment', '-Wno-unused-function',
+        '-Wno-unused-parameter'
+    ])
+    jni_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-pthread'])
+    # Note: 'pthread' is in libc for android. On other platform, if use
+    # new gcc(>4.9?) it isn't required, otherwise, it's required
+    if target_os != 'android':
+        jni_env.AppendUnique(LIBS=['-lpthread'])
+else:
+    # Disable the following warnings:
+    #  - warning C4047: different levels of indirection
+    #    - Disabled due un-avoidable error when using AttachCurrentThread
+    #  - warning C4022: pointer missmatch for actual parameter
+    #    - Disabled due un-avoidable error when using AttachCurrentThread
+    #  - waring C4505: unreferenced local function has been removed
+    #    - Disabled due to compiler incorrectly specifying JNI functions as
+    #      unreferenced
+    jni_env.AppendUnique(CCFLAGS=['/wd4047', '/wd4022', '/wd4505',])
+jni_env.AppendUnique(LIBPATH=['#/exlibs/sqlite3'])
+jni_env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
+# make sure we link with the static oc library. This is important since Windows does not build a shared library for the oc library
+# The oc library can not be imported into the Java on all of the platfroms so must be statically linked to make Java code work on
+# all platforms.
+jni_env.PrependUnique(LIBS=[
+    'resource_directory',
+    'oc_logger_internal',
+    'coap',
+    'octbstack_internal',
+    'ocsrm',
+    'routingmanager'
+])
+
+if target_os not in ['windows', 'winrt']:
+    jni_env.PrependUnique(LIBS=[
+        jni_env['LIBPREFIX'] + 'connectivity_abstraction' + jni_env['LIBSUFFIX'],
+        'oc_internal'
+    ])
+else:
+    jni_env.PrependUnique(LIBS=[
+        'connectivity_abstraction_internal',
+        'oc',
+        'mbedcrypto',
+        'resource_directory_internal',
+        'sqlite3'
+    ])
+
+if env.get('SECURED') == '1':
+    jni_env.AppendUnique(CPPDEFINES=['__WITH_TLS__'])
+    jni_env.PrependUnique(LIBS=['mbedtls', 'mbedx509', 'ocprovision'])
+    if target_os not in ['windows', 'winrt']:
+        jni_env.PrependUnique(LIBS=['ocpmapi'])
+    else:
+        jni_env.PrependUnique(LIBS=['ocpmapi_internal',])
+    jni_env.AppendUnique(CPPPATH=['#resource/csdk/security/include/internal',
+                                  '#extlibs/cjson'])
+    if env.get('WITH_CLOUD') == '1':
+        jni_env.AppendUnique(
+            CPPPATH=['#resource/csdk/security/provisioning/include/cloud'])
+
+if target_os == 'android':
+    jni_env.AppendUnique(CXXFLAGS=['-frtti', '-fexceptions'])
+    jni_env.AppendUnique(LINKFLAGS=['-Wl,-soname,libocstack-jni.so'])
+    jni_env.AppendUnique(LIBS=['gnustl_shared'])
+
+    if not env.get('RELEASE'):
+        jni_env.AppendUnique(LIBS=['log'])
+
+if target_os in ['darwin', 'ios']:
+    jni_env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
+
+if env.get('SECURED') == '1':
+    jni_env.AppendUnique(CPPDEFINES=['SECURED'])
+
+if env.get('WITH_CLOUD'):
+    jni_env.AppendUnique(CPPDEFINES=['WITH_CLOUD'])
+
+if env.get('MULTIPLE_OWNER') == 1:
+    jni_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
+
+if env.get('WITH_TCP'):
+    jni_env.AppendUnique(CPPDEFINES=['WITH_TCP', '__WITH_TLS__'])
+
+with_mq = env.get('WITH_MQ')
+if 'SUB' in with_mq:
+    jni_env.AppendUnique(CPPDEFINES=['MQ_SUBSCRIBER', 'WITH_MQ'])
+if 'PUB' in with_mq:
+    jni_env.AppendUnique(CPPDEFINES=['MQ_PUBLISHER', 'WITH_MQ'])
+if 'BROKER' in with_mq:
+    jni_env.AppendUnique(CPPDEFINES=['MQ_BROKER', 'WITH_MQ'])
+######################################################################
+# Source files and Targets
+######################################################################
+
+ca_interface = jni_env.SharedLibrary('ca-interface', ['JniCaInterface.c'])
+
+ocstack_files = [
+    'JniOcStack.cpp',
+    'JniUtils.cpp',
+    'JniEntityHandler.cpp',
+    'JniOnResourceFoundListener.cpp',
+    'JniOnResourcesFoundListener.cpp',
+    'JniOnDeviceInfoListener.cpp',
+    'JniOnPlatformInfoListener.cpp',
+    'JniOnPresenceListener.cpp',
+    'JniOnGetListener.cpp',
+    'JniOnPutListener.cpp',
+    'JniOnPostListener.cpp',
+    'JniOnDeleteListener.cpp',
+    'JniOnObserveListener.cpp',
+    'JniOcRepresentation.cpp',
+    'JniOcResourceHandle.cpp',
+    'JniOcPresenceHandle.cpp',
+    'JniOcRequestHandle.cpp',
+    'JniOcResourceRequest.cpp',
+    'JniOcResourceResponse.cpp',
+    'JniOcPlatform.cpp',
+    'JniOcResource.cpp',
+    'JniOcResourceIdentifier.cpp',
+    'JniOcSecurity.cpp',
+    'JniOnDPDevicesFoundListener.cpp',
+    'JniOnDirectPairingListener.cpp',
+    'JniOcDirectPairDevice.cpp',
+    'JniOnPublishResourceListener.cpp',
+    'JniOnDeleteResourceListener.cpp',
+    'JniOcRDClient.cpp',
+]
+if ('PUB' in with_mq) or ('SUB' in with_mq) or ('BROKER' in with_mq):
+    ocstack_files += [
+        'JniOnMQTopicFoundListener.cpp', 'JniOnMQSubscribeListener.cpp'
+    ]
+if env.get('SECURED') == '1':
+    ocstack_files += [
+        'JniOcSecureResource.cpp',
+        'JniOcProvisioning.cpp',
+        'JniSecureUtils.cpp',
+        'JniProvisionResultListner.cpp',
+        'JniPinCheckListener.cpp',
+        'JniDisplayPinListener.cpp',
+        'JniDisplayVerifyNumListener.cpp',
+        'JniConfirmNumListener.cpp'
+    ]
+if env.get('WITH_CLOUD'):
+    ocstack_files += [
+        'JniOcAccountManager.cpp',
+        'JniCreateAciIdListener.cpp',
+        'JniOcCloudResultListener.cpp',
+        'JniGetAclIdByDeviceListener.cpp'
+    ]
+    if env.get('SECURED') == '1':
+        ocstack_files += ['JniOcCloudProvisioning.cpp']
+
+ocstack_jni = jni_env.SharedLibrary('ocstack-jni', ocstack_files)
+
+jni_env.InstallTarget(ocstack_jni, 'ocstack-jni')
+jni_env.InstallTarget(ca_interface, 'ca-interface')
+
+env.AppendTarget('ocstack-jni')

@@ -83,7 +83,14 @@ namespace OIC
                 std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                 std::placeholders::_4, std::move(clientCB));
 
-            m_requestor->requestSceneCollectionCreation("", internalCB);
+            if(nullptr != m_requestor)
+            {
+                m_requestor->requestSceneCollectionCreation("", internalCB);
+            }
+            else
+            {
+                throw RCSInvalidParameterException{ "addNewSceneCollection : m_requestor is NULL" };
+            }
         }
 
         std::vector< RemoteSceneCollection::Ptr >
@@ -104,7 +111,14 @@ namespace OIC
                 = std::bind(&RemoteSceneList::onNameSet, this,
                 std::placeholders::_1, name, std::move(clientCB));
 
-            m_requestor->requestSetName(name, internalCB);
+            if(nullptr != m_requestor)
+            {
+                m_requestor->requestSetName(name, internalCB);
+            }
+            else
+            {
+                throw RCSInvalidParameterException{ "setName : m_requestor is NULL" };
+            }
         }
 
         std::string RemoteSceneList::getName() const
@@ -255,7 +269,9 @@ namespace OIC
                     createRemoteSceneCollection(link, id, name);
 
                 if (newCollection)
+                {
                     result = SCENE_RESPONSE_SUCCESS;
+                }
             }
 
             clientCB(newCollection, result);

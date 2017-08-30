@@ -54,6 +54,7 @@ public:
     virtual std::string host() const = 0;
     virtual std::vector<std::string> getResourceTypes() const = 0;
     virtual std::vector<std::string> getResourceInterfaces() const = 0;
+    virtual OCConnectivityType connectivityType() const = 0;
 
     virtual bool isObservable() const = 0;
 };
@@ -158,7 +159,7 @@ TEST_F(PrimitiveResourceTest, ResponseStatementHasSameValuesWithOCRepresentation
     constexpr int value{ 1999 };
 
     mocks.OnCall(fakeResource, FakeOCResource::get).Do(
-            [](const std::string&, const std::string&, const OC::QueryParamsMap&, OC::GetCallback cb)
+            [&](const std::string&, const std::string&, const OC::QueryParamsMap&, OC::GetCallback cb)
             {
                 OC::OCRepresentation ocRep;
                 ocRep[KEY] = value;
@@ -184,8 +185,10 @@ public:
     typedef OCStackResult (*FindResource)(const std::string&, const std::string&,
             OCConnectivityType, OC::FindCallback);
 
-public:
-    static void discovered(std::shared_ptr< PrimitiveResource >) {}
+    static void discovered(std::shared_ptr< PrimitiveResource >)
+    {
+        std::cout << __func__ << std::endl;
+    }
 };
 
 TEST_F(DiscoverResourceTest, CallbackIsInvokedWhenResourceIsDiscovered)
@@ -203,8 +206,11 @@ TEST_F(DiscoverResourceTest, CallbackIsInvokedWhenResourceIsDiscovered)
 
     discoverResource("", "", OCConnectivityType{ }, discovered);
 }
-
+#ifdef HIPPOMOCKS_ISSUE
+TEST_F(DiscoverResourceTest, DISABLED_ThrowsdWhenOCPlatformFindResourceReturnsNotOK)
+#else
 TEST_F(DiscoverResourceTest, ThrowsdWhenOCPlatformFindResourceReturnsNotOK)
+#endif
 {
     mocks.ExpectCallFuncOverload(static_cast<FindResource>(OC::OCPlatform::findResource)).
             Return(OC_STACK_ERROR);

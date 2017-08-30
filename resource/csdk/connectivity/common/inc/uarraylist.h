@@ -39,8 +39,8 @@ extern "C"
 typedef struct u_arraylist_t
 {
     void **data;
-    uint32_t length;
-    uint32_t capacity;
+    size_t length;
+    size_t capacity;
 } u_arraylist_t;
 
 /**
@@ -68,8 +68,9 @@ void u_arraylist_free(u_arraylist_t **list);
  * entries.
  * @param list the list to operate on.
  * @param count the size to attempt to reserve room for.
+ * @return true if success, false otherwise.
  */
-void u_arraylist_reserve(u_arraylist_t *list, size_t count);
+bool u_arraylist_reserve(u_arraylist_t *list, size_t count);
 
 /**
  * Request that the storage in the list be reduced to fit its current length.
@@ -85,7 +86,16 @@ void u_arraylist_shrink_to_fit(u_arraylist_t *list);
  * @param[in] index        index of array list.
  * @return void pointer of data if success or NULL pointer otherwise.
  */
-void *u_arraylist_get(const u_arraylist_t *list, uint32_t index);
+void *u_arraylist_get(const u_arraylist_t *list, size_t index);
+
+/**
+ * Returns the index of the data from the array list.
+ * @param[in] list         pointer of array list.
+ * @param[in] data         pointer of data.
+ * @param[out]index        index of array list.
+ * @return true if success, false otherwise.
+ */
+bool u_arraylist_get_index(const u_arraylist_t *list, const void *data, size_t *index);
 
 /**
  * Add data in the array list.
@@ -101,14 +111,14 @@ bool u_arraylist_add(u_arraylist_t *list, void *data);
  * @param[in] index      index of array list.
  * @return void pointer of the data if success or NULL pointer otherwise.
  */
-void *u_arraylist_remove(u_arraylist_t *list, uint32_t index);
+void *u_arraylist_remove(u_arraylist_t *list, size_t index);
 
 /**
  * Returns the length of the array list.
  * @param[in] list       pointer of array list.
  * @return length of the array list.
  */
-uint32_t u_arraylist_length(const u_arraylist_t *list);
+size_t u_arraylist_length(const u_arraylist_t *list);
 
 /**
  * Returns whether the data exists or not.

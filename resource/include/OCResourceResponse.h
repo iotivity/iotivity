@@ -47,7 +47,6 @@ namespace OC
 
         OCResourceResponse():
             m_newResourceUri{},
-            m_errorCode{},
             m_headerOptions{},
             m_interface{},
             m_representation{},
@@ -57,15 +56,32 @@ namespace OC
         {
         }
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+        OCResourceResponse(OCResourceResponse&& o):
+            m_newResourceUri(std::move(o.m_newResourceUri)),
+            m_headerOptions(std::move(o.m_headerOptions)),
+            m_interface(std::move(o.m_interface)),
+            m_representation(std::move(o.m_representation)),
+            m_requestHandle(std::move(o.m_requestHandle)),
+            m_resourceHandle(std::move(o.m_resourceHandle)),
+            m_responseResult(std::move(o.m_responseResult))
+        {
+        }
+        OCResourceResponse& operator=(OCResourceResponse&& o)
+        {
+            m_newResourceUri = std::move(o.m_newResourceUri);
+            m_headerOptions = std::move(o.m_headerOptions);
+            m_interface = std::move(o.m_interface);
+            m_representation = std::move(o.m_representation);
+            m_requestHandle = std::move(o.m_requestHandle);
+            m_resourceHandle = std::move(o.m_resourceHandle);
+            m_responseResult = std::move(o.m_responseResult);
+        }
+#else
         OCResourceResponse(OCResourceResponse&&) = default;
         OCResourceResponse& operator=(OCResourceResponse&&) = default;
+#endif
         virtual ~OCResourceResponse(void) {}
-
-        /**
-        *  This API sets the error code for this response
-        *  @param eCode error code to set
-        */
-        void setErrorCode(const int eCode) { m_errorCode = eCode; }
 
         /**
         *  gets new resource uri
@@ -127,20 +143,20 @@ namespace OC
         /**
         *  API to set the entire resource attribute representation
         *  @param rep reference to the resource's representation
-        *  @param interface specifies the interface
+        *  @param iface specifies the interface
         */
-        void setResourceRepresentation(OCRepresentation& rep, std::string interface) {
-            m_interface = interface;
+        void setResourceRepresentation(OCRepresentation& rep, std::string iface) {
+            m_interface = iface;
             m_representation = rep;
         }
 
         /**
         *  API to set the entire resource attribute representation
         *  @param rep rvalue reference to the resource's representation
-        *  @param interface specifies the interface
+        *  @param iface specifies the interface
         */
-        void setResourceRepresentation(OCRepresentation&& rep, std::string interface) {
-            setResourceRepresentation(rep, interface);
+        void setResourceRepresentation(OCRepresentation&& rep, std::string iface) {
+            setResourceRepresentation(rep, iface);
         }
 
         /**
@@ -163,7 +179,6 @@ namespace OC
         }
     private:
         std::string m_newResourceUri;
-        int m_errorCode;
         HeaderOptions m_headerOptions;
         std::string m_interface;
         OCRepresentation m_representation;
@@ -218,14 +233,6 @@ namespace OC
             return inf.getPayload();
         }
     public:
-
-        /**
-        * Get error code
-        */
-        int getErrorCode() const
-        {
-            return m_errorCode;
-        }
 
         /**
          * Get the Response Representation

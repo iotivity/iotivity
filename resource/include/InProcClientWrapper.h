@@ -56,6 +56,37 @@ namespace OC
                 : callback(cb), clientWrapper(cw){}
         };
 
+        struct ListenErrorContext
+        {
+            FindCallback callback;
+            FindErrorCallback errorCallback;
+            std::weak_ptr<IClientWrapper> clientWrapper;
+
+            ListenErrorContext(FindCallback cb1, FindErrorCallback cb2,
+                               std::weak_ptr<IClientWrapper> cw)
+                : callback(cb1), errorCallback(cb2), clientWrapper(cw){}
+        };
+
+        struct ListenResListContext
+        {
+            FindResListCallback callback;
+            std::weak_ptr<IClientWrapper> clientWrapper;
+
+            ListenResListContext(FindResListCallback cb, std::weak_ptr<IClientWrapper> cw)
+                : callback(cb), clientWrapper(cw){}
+        };
+
+        struct ListenResListWithErrorContext
+        {
+            FindResListCallback callback;
+            FindErrorCallback errorCallback;
+            std::weak_ptr<IClientWrapper> clientWrapper;
+
+            ListenResListWithErrorContext(FindResListCallback cb1, FindErrorCallback cb2,
+                               std::weak_ptr<IClientWrapper> cw)
+                : callback(cb1), errorCallback(cb2), clientWrapper(cw){}
+        };
+
         struct DeviceListenContext
         {
             FindDeviceCallback callback;
@@ -81,6 +112,23 @@ namespace OC
             ObserveCallback callback;
             ObserveContext(ObserveCallback cb) : callback(cb){}
         };
+
+        struct DirectPairingContext
+        {
+            DirectPairingCallback callback;
+            DirectPairingContext(DirectPairingCallback cb) : callback(cb){}
+
+        };
+
+#ifdef WITH_MQ
+        struct MQTopicContext
+        {
+            MQTopicCallback callback;
+            std::weak_ptr<IClientWrapper> clientWrapper;
+            MQTopicContext(MQTopicCallback cb, std::weak_ptr<IClientWrapper> cw)
+                : callback(cb), clientWrapper(cw){}
+        };
+#endif
     }
 
     class InProcClientWrapper : public IClientWrapper
@@ -96,6 +144,19 @@ namespace OC
             const std::string& resourceType, OCConnectivityType transportFlags,
             FindCallback& callback, QualityOfService QoS);
 
+        virtual OCStackResult ListenForResourceList(const std::string& serviceUrl,
+            const std::string& resourceType, OCConnectivityType transportFlags,
+            FindResListCallback& callback, QualityOfService QoS);
+
+        virtual OCStackResult ListenForResourceListWithError(const std::string& serviceUrl,
+            const std::string& resourceType, OCConnectivityType connectivityType,
+            FindResListCallback& callback, FindErrorCallback& errorCallback,
+            QualityOfService QoS);
+
+        virtual OCStackResult ListenErrorForResource(const std::string& serviceUrl,
+            const std::string& resourceType, OCConnectivityType transportFlags,
+            FindCallback& callback, FindErrorCallback& errorCallback, QualityOfService QoS);
+
         virtual OCStackResult ListenForDevice(const std::string& serviceUrl,
             const std::string& deviceURI, OCConnectivityType transportFlags,
             FindDeviceCallback& callback, QualityOfService QoS);
@@ -104,6 +165,7 @@ namespace OC
             const OCDevAddr& devAddr,
             const std::string& uri,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+            OCConnectivityType connectivityType,
             GetCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult PutResourceRepresentation(
@@ -116,12 +178,14 @@ namespace OC
             const OCDevAddr& devAddr,
             const std::string& uri,
             const OCRepresentation& attributes, const QueryParamsMap& queryParams,
-            const HeaderOptions& headerOptions, PostCallback& callback, QualityOfService QoS);
+            const HeaderOptions& headerOptions, OCConnectivityType connectivityType,
+            PostCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult DeleteResource(
             const OCDevAddr& devAddr,
             const std::string& uri,
             const HeaderOptions& headerOptions,
+            OCConnectivityType connectivityType,
             DeleteCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult ObserveResource(
@@ -145,13 +209,51 @@ namespace OC
             SubscribeCallback& presenceHandler);
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle);
+
+#ifdef WITH_CLOUD
+        virtual OCStackResult SubscribeDevicePresence(OCDoHandle* handle,
+                                                      const std::string& host,
+                                                      const std::vector<std::string>& di,
+                                                      OCConnectivityType connectivityType,
+                                                      ObserveCallback& callback);
+#endif
+
         OCStackResult GetDefaultQos(QualityOfService& QoS);
+
+        virtual OCStackResult FindDirectPairingDevices(unsigned short waittime,
+                       GetDirectPairedCallback& callback);
+
+        virtual OCStackResult GetDirectPairedDevices(GetDirectPairedCallback& callback);
+
+        virtual OCStackResult DoDirectPairing(std::shared_ptr<OCDirectPairing> peer, const OCPrm_t& pmSel,
+                const std::string& pinNumber, DirectPairingCallback& resultCallback);
+
+#ifdef WITH_MQ
+        virtual OCStackResult ListenForMQTopic(
+            const OCDevAddr& devAddr,
+            const std::string& resourceUri,
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+            MQTopicCallback& callback, QualityOfService QoS);
+
+        virtual OCStackResult PutMQTopicRepresentation(
+            const OCDevAddr& devAddr,
+            const std::string& uri,
+            const OCRepresentation& rep,
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+            MQTopicCallback& callback, QualityOfService QoS);
+#endif
+
+        virtual OCStackResult stop();
+        virtual OCStackResult start();
+
     private:
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);
+        std::string assembleSetResourceUri(std::string uri, const QueryParamsList& queryParams);
         OCPayload* assembleSetResourcePayload(const OCRepresentation& attributes);
         OCHeaderOption* assembleHeaderOptions(OCHeaderOption options[],
            const HeaderOptions& headerOptions);
+        void convert(const OCDPDev_t *list, PairedDevices& dpList);
         std::thread m_listeningThread;
         bool m_threadRun;
         std::weak_ptr<std::recursive_mutex> m_csdkLock;

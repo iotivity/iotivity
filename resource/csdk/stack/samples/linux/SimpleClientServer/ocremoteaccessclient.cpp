@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +31,7 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "ocremoteaccessclient.h"
+#include "common.h"
 
 #define SET_BUT_NOT_USED(x) (void) x
 // Tracking user input
@@ -43,7 +45,6 @@ static std::string coapServerResource = "/a/light";
 static OCDevAddr responseAddr;
 //Use ipv4addr for both InitDiscovery and InitPlatformOrDeviceDiscovery
 char remoteServerJabberID[MAX_ADDR_STR_SIZE];
-void StripNewLineChar(char* str);
 static uint16_t maxNotification = 15;
 
 // The handle for the observe registration
@@ -110,17 +111,20 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.context  = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd       = NULL;
 
-    OCStackResult ret = OCDoResource(
-        &handle,
-        method,
-        query.str().c_str(),
-        &responseAddr,
-        (method == OC_REST_PUT) ? putPayload() : NULL,
-        CT_ADAPTER_REMOTE_ACCESS,
-        qos,
-        &cbData,
-        options,
-        numOptions);
+    OCPayload* payload = (method == OC_REST_PUT) ? putPayload() : NULL;
+
+    OCStackResult ret = OCDoRequest(&handle,
+                                    method,
+                                    query.str().c_str(),
+                                    &responseAddr,
+                                    payload,
+                                    CT_ADAPTER_REMOTE_ACCESS,
+                                    qos,
+                                    &cbData,
+                                    options,
+                                    numOptions);
+
+    OCPayloadDestroy(payload);
 
     if (ret != OC_STACK_OK)
     {
@@ -424,17 +428,16 @@ int InitDiscovery(OCQualityOfService qos)
     dest.flags      = OC_DEFAULT_FLAGS;
     strncpy (dest.addr, remoteServerJabberID, MAX_ADDR_STR_SIZE - 1);
 
-    OCStackResult ret = OCDoResource(NULL,
-                OC_REST_GET,
-                MULTICAST_RESOURCE_DISCOVERY_QUERY,
-                &dest,
-                NULL,
-                CT_ADAPTER_REMOTE_ACCESS,
-                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                &cbData,
-                NULL,
-                0
-            );
+    OCStackResult ret = OCDoRequest(NULL,
+                                    OC_REST_GET,
+                                    MULTICAST_RESOURCE_DISCOVERY_QUERY,
+                                    &dest,
+                                    NULL,
+                                    CT_ADAPTER_REMOTE_ACCESS,
+                                    (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                                    &cbData,
+                                    NULL,
+                                    0);
 
     if (ret != OC_STACK_OK)
     {

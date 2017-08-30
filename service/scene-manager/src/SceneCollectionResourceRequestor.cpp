@@ -39,7 +39,7 @@ namespace OIC
         {
             RCSResourceAttributes attributesToSet;
             std::vector< std::string > scenenames{ name };
-            
+
             attributesToSet[SCENE_KEY_SCENEVALUES] = scenenames;
 
             RCSRemoteResourceObject::RemoteAttributesSetCallback setRequestCB
@@ -144,7 +144,7 @@ namespace OIC
             m_sceneCollectionResource->get(params, cb);
         }
 
-        RCSRemoteResourceObject::Ptr 
+        RCSRemoteResourceObject::Ptr
             SceneCollectionResourceRequestor::getRemoteResourceObject() const
         {
             return m_sceneCollectionResource;
@@ -167,7 +167,7 @@ namespace OIC
                     std::make_shared< SceneMemberResourceRequestor >(pResource, id);
 
                 pMemRequestor->setRemoteResourceObject(target);
-                
+
                 {
                     std::lock_guard< std::mutex > memberlock(m_memberRequestorLock);
                     m_memberRequestors[target->getAddress() + target->getUri()] = pMemRequestor;
@@ -212,8 +212,7 @@ namespace OIC
         {
             // TODO error code
             int resultCode = SCENE_CLIENT_BADREQUEST;
-
-            if (eCode == OC_STACK_OK)
+            if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
             {
                 try
                 {
@@ -281,7 +280,7 @@ namespace OIC
             int result = SCENE_CLIENT_BADREQUEST;
             SceneMemberResourceRequestor::Ptr memRequestor = nullptr;
 
-            if (eCode == OC_STACK_OK)
+            if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
             {
                 try
                 {
@@ -325,7 +324,7 @@ namespace OIC
             const InternalSetNameCallback &internalCB)
         {
             int result = SCENE_CLIENT_BADREQUEST;
-            if (eCode == OC_STACK_OK)
+            if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
             {
                 if (rep.getAttributes().at(SCENE_KEY_NAME).get< std::string >() == name)
                 {

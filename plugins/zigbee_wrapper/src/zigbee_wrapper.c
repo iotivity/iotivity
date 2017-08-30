@@ -42,7 +42,7 @@
 // then we are guaranteed that the 'double' type is 64-bit. Otherwise, the
 // compilation of this file should fail because we are no longer guaranteed.
 #ifndef __STDC_IEC_559__
-#error "Requires IEEE 754 floating point!"
+#warning "Requires IEEE 754 floating point!"
 #endif
 
 #include "zigbee_wrapper.h"
@@ -427,7 +427,7 @@ void deviceNodeIdChanged(const char * eui, const char * nodeId, PIPlugin_Zigbee*
                                                   nodeId);
     if(result != OC_STACK_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to update Zigbee Resource NodeId due to result: %s", result);
+        OIC_LOG_V(ERROR, TAG, "Failed to update Zigbee Resource NodeId due to result: %u", result);
     }
 }
 
@@ -435,6 +435,10 @@ OCStackResult ZigbeeInit(const char * comPort, PIPlugin_Zigbee ** plugin,
                          PINewResourceFound newResourceCB,
                          PIObserveNotificationUpdate observeNotificationUpdate)
 {
+    if (sizeof(double) != 64/8)
+    {
+        return OC_STACK_ERROR;
+    }
     if (!plugin)
     {
         return OC_STACK_INVALID_PARAM;
@@ -801,7 +805,7 @@ OCEntityHandlerResult getColourTemperatureFromString(const char* str, int64_t* o
             return OC_EH_ERROR;
         }
     }
-    OCStackResult result = getDoubleValueFromString(temp, (double *)outVal);
+    OCEntityHandlerResult result = getDoubleValueFromString(temp, (double *)outVal);
     OICFree(strstr);
     return result;
 }
@@ -863,7 +867,7 @@ OCEntityHandlerResult processGetRequest(PIPluginBase * plugin,
 
         if (stackResult != OC_STACK_OK || !outVal)
         {
-            stackResult = OC_EH_ERROR;
+            stackResult = OC_STACK_ERROR;
             OCRepPayloadDestroy(*payload);
             goto exit;
         }
@@ -974,7 +978,7 @@ OCEntityHandlerResult processGetRequest(PIPluginBase * plugin,
 
     if (boolRes == false)
     {
-        stackResult = OC_EH_ERROR;
+        stackResult = OC_STACK_ERROR;
         goto exit;
     }
 
@@ -983,7 +987,8 @@ exit:
     {
         OICFree(attributeList.list[attributeListIndex].oicAttribute);
     }
-    return stackResult;
+
+    return (stackResult != OC_STACK_OK) ? OC_EH_ERROR : OC_EH_OK;
 }
 
 OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
@@ -1026,7 +1031,7 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
         if (attributeList.list[i].oicType == OIC_ATTR_INT)
         {
             char value[MAX_STRLEN_INT] = {};
-            if (attributeList.CIEMask || CIE_MOVE_TO_LEVEL)
+            if (attributeList.CIEMask & CIE_MOVE_TO_LEVEL)
             {
                 int64_t rangeDiff = 0;
                 // OIC Dimming operates between 0-100, while Zigbee
@@ -1130,7 +1135,7 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
         else if (attributeList.list[i].oicType == OIC_ATTR_BOOL)
         {
             char * value = attributeList.list[i].val.b ? "1" : "0";
-            if (attributeList.CIEMask || CIE_RON_OFF)
+            if (attributeList.CIEMask & CIE_RON_OFF)
             {
                 stackResult = TWSwitchOnOff(piResource->nodeId, piResource->endpointId, value,
                                             (PIPlugin_Zigbee*)plugin);

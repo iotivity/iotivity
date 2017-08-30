@@ -20,8 +20,16 @@
 
 #include "ResourcePresence.h"
 
-#include <bits/atomic_base.h>
-#include <bits/shared_ptr_base.h>
+#if (defined(__APPLE__) && defined(TARGET_OS_IPHONE))
+#include <atomic>
+#else
+#ifndef __APPLE__
+    #ifndef TARGET_OS_MAC
+        #include <bits/atomic_base.h>
+        #include <bits/shared_ptr_base.h>
+    #endif
+#endif
+#endif
 #include <time.h>
 #include <unistd.h>
 #include <cstdbool>

@@ -26,12 +26,9 @@
 #ifndef CA_COMMON_H_
 #define CA_COMMON_H_
 
-#ifndef WITH_ARDUINO
-#ifdef TCP_ADAPTER
-#define HAVE_SYS_POLL_H
-#endif
-#endif
+#include "iotivity_config.h"
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -40,13 +37,23 @@
 #include <sys/poll.h>
 #endif
 
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#include <mswsock.h>
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
 /**
- * IP address Length
+ * TAG of Analyzer log.
+ */
+#define ANALYZER_TAG "OIC_ANALYZER"
+
+/**
+ * IP address Length.
  */
 #define CA_IPADDR_SIZE 16
 
@@ -56,22 +63,26 @@ extern "C"
 #define CA_RAJABBERID_SIZE 256
 
 /**
- * Mac address length for BT port
+ * Mac address length for BT port.
  */
 #define CA_MACADDR_SIZE 18
 
 /**
- * Max header options data length
+ * Max header options data length.
  */
+#ifdef ARDUINO
 #define CA_MAX_HEADER_OPTION_DATA_LENGTH 20
+#else
+#define CA_MAX_HEADER_OPTION_DATA_LENGTH 1024
+#endif
 
 /**
-* Max token length
+* Max token length.
 */
 #define CA_MAX_TOKEN_LEN (8)
 
 /**
- * Max URI length
+ * Max URI length.
  */
 #ifdef ARDUINO
 #define CA_MAX_URI_LENGTH 128  /* maximum size of URI for embedded platforms*/
@@ -80,7 +91,7 @@ extern "C"
 #endif
 
 /**
- * Max PDU length supported
+ * Max PDU length supported.
  */
 #ifdef ARDUINO
 #define COAP_MAX_PDU_SIZE           320  /* maximum size of a CoAP PDU for embedded platforms*/
@@ -93,12 +104,17 @@ extern "C"
 #endif
 
 /**
- *Maximum length of the remoteEndpoint identity
+ *Maximum length of the remoteEndpoint identity.
  */
-#define CA_MAX_ENDPOINT_IDENTITY_LEN   (32)
+#define CA_MAX_ENDPOINT_IDENTITY_LEN  CA_MAX_IDENTITY_SIZE
 
 /**
- * option types - the highest option number 63
+ * Max identity size.
+ */
+#define CA_MAX_IDENTITY_SIZE (37)
+
+/**
+ * option types - the highest option number 63.
  */
 #define CA_OPTION_IF_MATCH 1
 #define CA_OPTION_ETAG 4
@@ -114,7 +130,29 @@ extern "C"
 #define CA_OPTION_LOCATION_QUERY 20
 
 /**
- * Payload information from resource model
+ * @def UUID_PREFIX
+ * @brief uuid prefix in certificate subject field
+ */
+#define UUID_PREFIX "uuid:"
+
+/**
+ * @def SUBJECT_PREFIX
+ * @brief prefix for specifying part of a cert's subject for a particular uuid
+ */
+#define SUBJECT_PREFIX "CN=" UUID_PREFIX
+
+/**
+* TODO: Move these COAP defines to CoAP lib once approved.
+*/
+#define COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR 10000 // application/vnd.ocf+cbor
+#define CA_OPTION_ACCEPT_VERSION 2049
+#define CA_OPTION_CONTENT_VERSION 2053
+
+// The Accept Version and Content-Format Version for OCF 1.0.0 (0b0000 1000 0000 0000).
+#define DEFAULT_VERSION_VALUE 2048
+
+/**
+ * Payload information from resource model.
  */
 typedef uint8_t *CAPayload_t;
 
@@ -124,17 +162,38 @@ typedef uint8_t *CAPayload_t;
 typedef char *CAURI_t;
 
 /**
- * Token information for mapping the request and responses by resource model
+ * Token information for mapping the request and responses by resource model.
  */
 typedef char *CAToken_t;
 
-// The following flags are the same as the equivalent OIC values in
-// octypes.h, allowing direct copying with slight fixup.
-// The CA layer should used the OC types when build allows that.
+/*
+ * Socket types and error definitions.
+ */
+#ifdef HAVE_WINSOCK2_H
+# define OC_SOCKET_ERROR      SOCKET_ERROR
+# define OC_INVALID_SOCKET    INVALID_SOCKET
+typedef SOCKET CASocketFd_t;
+#else // HAVE_WINSOCK2_H
+# define OC_SOCKET_ERROR      (-1)
+# define OC_INVALID_SOCKET    (-1)
+typedef int    CASocketFd_t;
+#endif
+
+/*
+ * The following flags are the same as the equivalent OIC values in
+ * octypes.h, allowing direct copying with slight fixup.
+ * The CA layer should used the OC types when build allows that.
+ */
 #ifdef RA_ADAPTER
 #define MAX_ADDR_STR_SIZE_CA (256)
 #else
-#define MAX_ADDR_STR_SIZE_CA (40)
+/*
+ * Max Address could be "coaps+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
+ * Which is 65, +1 for null terminator => 66
+ * OCDevAddr (defined in OCTypes.h) must be the same
+ * as CAEndpoint_t (defined here)
+ */
+#define MAX_ADDR_STR_SIZE_CA (66)
 #endif
 
 typedef enum
@@ -178,11 +237,21 @@ typedef enum
     CA_SCOPE_GLOBAL    = 0xE, // IPv6 Global scope
 } CATransportFlags_t;
 
+typedef enum
+{
+    CA_DEFAULT_BT_FLAGS = 0,
+    // flags for BLE transport
+    CA_LE_ADV_DISABLE   = 0x1,   // disable BLE advertisement.
+    CA_LE_ADV_ENABLE    = 0x2,   // enable BLE advertisement.
+    CA_LE_SERVER_DISABLE = (1 << 4),   // disable gatt server.
+    // flags for EDR transport
+    CA_EDR_SERVER_DISABLE = (1 << 7)
+} CATransportBTFlags_t;
+
 #define CA_IPFAMILY_MASK (CA_IPV6|CA_IPV4)
 #define CA_SCOPE_MASK 0xf     // mask scope bits above
 
 /**
- * @enum CANetworkStatus_t
  * Information about the network status.
  */
 typedef enum
@@ -192,7 +261,7 @@ typedef enum
 } CANetworkStatus_t;
 
 /*
- * remoteEndpoint identity
+ * remoteEndpoint identity.
  */
 typedef struct
 {
@@ -201,8 +270,7 @@ typedef struct
 } CARemoteId_t;
 
 /**
- * @enum CAMessageType_t
- * Message Type for Base source code
+ * Message Type for Base source code.
  */
 typedef enum
 {
@@ -214,8 +282,7 @@ typedef enum
 } CAMessageType_t;
 
 /**
- * @enum CAMethod_t
- * Allowed method to be used by resource model
+ * Allowed method to be used by resource model.
  */
 typedef enum
 {
@@ -226,7 +293,7 @@ typedef enum
 } CAMethod_t;
 
 /**
- * block size
+ * block size.
  * it depends on defined size in libCoAP.
  */
 typedef enum
@@ -241,7 +308,7 @@ typedef enum
 } CABlockSize_t;
 
 /**
- * Endpoint information for connectivities
+ * Endpoint information for connectivities.
  * Must be identical to OCDevAddr.
  */
 typedef struct
@@ -250,25 +317,39 @@ typedef struct
     CATransportFlags_t      flags;      // transport modifiers
     uint16_t                port;       // for IP
     char                    addr[MAX_ADDR_STR_SIZE_CA]; // address for all
-    uint32_t                interface;  // usually zero for default interface
+    uint32_t                ifindex;    // usually zero for default interface
+    char                    remoteId[CA_MAX_IDENTITY_SIZE]; // device ID of remote device
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     char                    routeData[MAX_ADDR_STR_SIZE_CA]; /**< GatewayId:ClientId of
                                                                     destination. **/
 #endif
 } CAEndpoint_t;
 
+#define CA_SECURE_ENDPOINT_PUBLIC_KEY_MAX_LENGTH    (512)
+
 /**
- * Endpoint information for secure messages
+ * Endpoint information for secure messages.
  */
 typedef struct
 {
     CAEndpoint_t endpoint;      /**< endpoint */
-    CARemoteId_t identity;      /**< endpoint identity */
+    // TODO change name to deviceId
+    CARemoteId_t identity;      /**< endpoint device uuid */
+    CARemoteId_t userId;        /**< endpoint user uuid */
+    uint32_t attributes;
+    uint8_t publicKey[CA_SECURE_ENDPOINT_PUBLIC_KEY_MAX_LENGTH]; /**< Peer's DER-encoded public key (if using certificate) */
+    size_t publicKeyLength;     /**< Length of publicKey; zero if not using certificate */
 } CASecureEndpoint_t;
 
 /**
- * @enum CAResult_t
- * Enums for CA return values
+ * Endpoint used for security administration - a special type of identity that
+ * bypasses Access Control Entry checks for SVR resources, while the device is
+ * not ready for normal operation yet.
+ */
+#define CA_SECURE_ENDPOINT_ATTRIBUTE_ADMINISTRATOR  0x1
+
+/**
+ * Enums for CA return values.
  */
 typedef enum
 {
@@ -277,7 +358,7 @@ typedef enum
     CA_STATUS_INVALID_PARAM,        /**< Invalid Parameter */
     CA_ADAPTER_NOT_ENABLED,         /**< Adapter is not enabled */
     CA_SERVER_STARTED_ALREADY,      /**< Server is started already */
-    CA_SERVER_NOT_STARTED,          /**< Server is not started*/
+    CA_SERVER_NOT_STARTED,          /**< Server is not started */
     CA_DESTINATION_NOT_REACHABLE,   /**< Destination is not reachable */
     CA_SOCKET_OPERATION_FAILED,     /**< Socket operation failed */
     CA_SEND_FAILED,                 /**< Send request failed */
@@ -293,35 +374,50 @@ typedef enum
 } CAResult_t;
 
 /**
- * @enum CAResponseResult_t
- * Enums for CA Response values
+ * Enums for CA Response values.
  */
 typedef enum
 {
     /* Response status code - START HERE */
-    CA_EMPTY = 0,                    /**< Empty */
-    CA_CREATED = 201,                /**< Created */
-    CA_DELETED = 202,                /**< Deleted */
-    CA_VALID = 203,                  /**< Valid */
-    CA_CHANGED = 204,                /**< Changed */
-    CA_CONTENT = 205,                /**< Content */
-    CA_CONTINUE = 231,               /**< Continue */
-    CA_BAD_REQ = 400,                /**< Bad Request */
-    CA_UNAUTHORIZED_REQ = 401,       /**< Unauthorized Request */
-    CA_BAD_OPT = 402,                /**< Bad Option */
-    CA_FORBIDDEN_REQ = 403,          /**< Forbidden Request */
-    CA_NOT_FOUND = 404,              /**< Not found */
-    CA_NOT_ACCEPTABLE = 406,         /**< Not Acceptable */
-    CA_REQUEST_ENTITY_INCOMPLETE = 408, /**< Request Entity Incomplete */
-    CA_REQUEST_ENTITY_TOO_LARGE = 413,  /**< Request Entity Too Large */
-    CA_INTERNAL_SERVER_ERROR = 500,  /**< Internal Server Error */
-    CA_RETRANSMIT_TIMEOUT = 504      /**< Retransmit timeout */
+    CA_EMPTY = 0,                           /**< Empty */
+    CA_CREATED = 201,                       /**< Created */
+    CA_DELETED = 202,                       /**< Deleted */
+    CA_VALID = 203,                         /**< Valid */
+    CA_CHANGED = 204,                       /**< Changed */
+    CA_CONTENT = 205,                       /**< Content */
+    CA_CONTINUE = 231,                      /**< Continue */
+    CA_BAD_REQ = 400,                       /**< Bad Request */
+    CA_UNAUTHORIZED_REQ = 401,              /**< Unauthorized Request */
+    CA_BAD_OPT = 402,                       /**< Bad Option */
+    CA_FORBIDDEN_REQ = 403,                 /**< Forbidden Request */
+    CA_NOT_FOUND = 404,                     /**< Not found */
+    CA_METHOD_NOT_ALLOWED = 405,            /**< Method Not Allowed */
+    CA_NOT_ACCEPTABLE = 406,                /**< Not Acceptable */
+    CA_REQUEST_ENTITY_INCOMPLETE = 408,     /**< Request Entity Incomplete */
+    CA_REQUEST_ENTITY_TOO_LARGE = 413,      /**< Request Entity Too Large */
+    CA_INTERNAL_SERVER_ERROR = 500,         /**< Internal Server Error */
+    CA_BAD_GATEWAY = 502,
+    CA_SERVICE_UNAVAILABLE = 503,           /**< Server Unavailable */
+    CA_RETRANSMIT_TIMEOUT = 504,            /**< Retransmit timeout */
+    CA_PROXY_NOT_SUPPORTED = 505            /**< Proxy not enabled to service a request */
     /* Response status code - END HERE */
 } CAResponseResult_t;
 
 /**
- * @enum CATransportProtocolID_t
- * Transport Protocol IDs for additional options
+ * Data type whether the data is Request Message or Response Message.
+ * if there is some failure before send data on network.
+ * Type will be set as error type for error callback.
+ */
+typedef enum
+{
+    CA_REQUEST_DATA = 1,
+    CA_RESPONSE_DATA,
+    CA_ERROR_DATA,
+    CA_RESPONSE_FOR_RES
+} CADataType_t;
+
+/**
+ * Transport Protocol IDs for additional options.
  */
 typedef enum
 {
@@ -330,7 +426,6 @@ typedef enum
 } CATransportProtocolID_t;
 
 /**
- * @enum CAAdapterState_t
  * Adapter State to indicate the network changed notifications.
  */
 typedef enum
@@ -353,11 +448,21 @@ typedef enum
     CA_FORMAT_APPLICATION_EXI,
     CA_FORMAT_APPLICATION_JSON,
     CA_FORMAT_APPLICATION_CBOR,
+    CA_FORMAT_APPLICATION_VND_OCF_CBOR,
     CA_FORMAT_UNSUPPORTED
 } CAPayloadFormat_t;
 
 /**
- * Header options structure to be filled
+ * Option ID of header option. The values match CoAP option types in pdu.h.
+ */
+typedef enum
+{
+    CA_HEADER_OPTION_ID_LOCATION_PATH = 8,
+    CA_HEADER_OPTION_ID_LOCATION_QUERY = 20
+} CAHeaderOptionId_t;
+
+/**
+ * Header options structure to be filled.
  *
  * This structure is used to hold header information.
  */
@@ -371,13 +476,12 @@ typedef struct
 } CAHeaderOption_t;
 
 /**
- * Base Information received
+ * Base Information received.
  *
- * This structure is used to hold request & response base information
+ * This structure is used to hold request & response base information.
  */
 typedef struct
 {
-
     CAMessageType_t type;       /**< Qos for the request */
 #ifdef ROUTING_GATEWAY
     bool skipRetransmission;    /**< Will not attempt retransmission even if type is CONFIRM.
@@ -387,21 +491,24 @@ typedef struct
                                  * if message id is zero, it will generated by CA inside.
                                  * otherwise, you can use it */
     CAToken_t token;            /**< Token for CA */
-    uint8_t tokenLength;        /**< token length*/
+    uint8_t tokenLength;        /**< token length */
     CAHeaderOption_t *options;  /** Header Options for the request */
     uint8_t numOptions;         /**< Number of Header options */
     CAPayload_t payload;        /**< payload of the request  */
     size_t payloadSize;         /**< size in bytes of the payload */
     CAPayloadFormat_t payloadFormat;    /**< encoding format of the request payload */
     CAPayloadFormat_t acceptFormat;     /**< accept format for the response payload */
+    uint16_t payloadVersion;    /**< version of the payload */
+    uint16_t acceptVersion;     /**< expected version for the response payload */
     CAURI_t resourceUri;        /**< Resource URI information **/
     CARemoteId_t identity;      /**< endpoint identity */
+    CADataType_t dataType;      /**< data type */
 } CAInfo_t;
 
 /**
- * Request Information to be sent
+ * Request Information to be sent.
  *
- * This structure is used to hold request information
+ * This structure is used to hold request information.
  */
 typedef struct
 {
@@ -411,9 +518,9 @@ typedef struct
 } CARequestInfo_t;
 
 /**
- * Response information received
+ * Response information received.
  *
- * This structure is used to hold response information
+ * This structure is used to hold response information.
  */
 typedef struct
 {
@@ -424,9 +531,9 @@ typedef struct
 
 /**
  * Error information from CA
- *        contains error code and message information
+ *        contains error code and message information.
  *
- * This structure holds error information
+ * This structure holds error information.
  */
 typedef struct
 {
@@ -436,12 +543,12 @@ typedef struct
 } CAErrorInfo_t;
 
 /**
- * Hold global variables for CA layer (also used by RI layer)
+ * Hold global variables for CA layer. (also used by RI layer)
  */
 typedef struct
 {
-    int fd;        /**< socket fd */
-    uint16_t port; /**< socket port */
+    CASocketFd_t fd;    /**< socket fd */
+    uint16_t port;      /**< socket port */
 } CASocket_t;
 
 #define HISTORYSIZE (4)
@@ -452,6 +559,7 @@ typedef struct
     uint16_t messageId;
     char token[CA_MAX_TOKEN_LEN];
     uint8_t tokenLength;
+    uint32_t ifindex;
 } CAHistoryItem_t;
 
 typedef struct
@@ -461,12 +569,36 @@ typedef struct
 } CAHistory_t;
 
 /**
- * Hold interface index for keeping track of comings and goings
+ * Hold interface index for keeping track of comings and goings.
  */
 typedef struct
 {
     int32_t ifIndex; /**< network interface index */
 } CAIfItem_t;
+
+/**
+ * Hold the port number assigned from application.
+ * It will be used when creating a socket.
+ */
+typedef struct
+{
+    struct udpports
+    {
+        uint16_t u6;    /**< unicast IPv6 socket port */
+        uint16_t u6s;   /**< unicast IPv6 socket secure port */
+        uint16_t u4;    /**< unicast IPv4 socket port */
+        uint16_t u4s;   /**< unicast IPv4 socket secure port */
+    } udp;
+#ifdef TCP_ADAPTER
+    struct tcpports
+    {
+        uint16_t u4;    /**< unicast IPv4 socket port */
+        uint16_t u4s;   /**< unicast IPv6 socket secure port */
+        uint16_t u6;    /**< unicast IPv6 socket port */
+        uint16_t u6s;   /**< unicast IPv6 socket secure port */
+    } tcp;
+#endif
+} CAPorts_t;
 
 typedef struct
 {
@@ -475,26 +607,36 @@ typedef struct
     bool client; /**< client mode */
     bool server; /**< server mode */
 
+    CAPorts_t ports;
+
     struct sockets
     {
-        void *threadpool;   /**< threadpool between Initialize and Start */
-        CASocket_t u6;      /**< unicast   IPv6 */
-        CASocket_t u6s;     /**< unicast   IPv6 secure */
-        CASocket_t u4;      /**< unicast   IPv4 */
-        CASocket_t u4s;     /**< unicast   IPv4 secure */
-        CASocket_t m6;      /**< multicast IPv6 */
-        CASocket_t m6s;     /**< multicast IPv6 secure */
-        CASocket_t m4;      /**< multicast IPv4 */
-        CASocket_t m4s;     /**< multicast IPv4 secure */
-        int netlinkFd;      /**< netlink */
-        int shutdownFds[2]; /**< shutdown pipe */
-        int selectTimeout;  /**< in seconds */
-        int maxfd;          /**< highest fd (for select) */
-        bool started;       /**< the IP adapter has started */
-        bool terminate;     /**< the IP adapter needs to stop */
-        bool ipv6enabled;   /**< IPv6 enabled by OCInit flags */
-        bool ipv4enabled;   /**< IPv4 enabled by OCInit flags */
-        bool dualstack;     /**< IPv6 and IPv4 enabled */
+        void *threadpool;           /**< threadpool between Initialize and Start */
+        CASocket_t u6;              /**< unicast   IPv6 */
+        CASocket_t u6s;             /**< unicast   IPv6 secure */
+        CASocket_t u4;              /**< unicast   IPv4 */
+        CASocket_t u4s;             /**< unicast   IPv4 secure */
+        CASocket_t m6;              /**< multicast IPv6 */
+        CASocket_t m6s;             /**< multicast IPv6 secure */
+        CASocket_t m4;              /**< multicast IPv4 */
+        CASocket_t m4s;             /**< multicast IPv4 secure */
+#if defined(_WIN32)
+        WSAEVENT addressChangeEvent;/**< Event used to signal address changes */
+        WSAEVENT shutdownEvent;     /**< Event used to signal threads to stop */
+#else
+        int netlinkFd;              /**< netlink */
+        int shutdownFds[2];         /**< fds used to signal threads to stop */
+        CASocketFd_t maxfd;         /**< highest fd (for select) */
+#endif
+        int selectTimeout;          /**< in seconds */
+        bool started;               /**< the IP adapter has started */
+        bool terminate;             /**< the IP adapter needs to stop */
+        bool ipv6enabled;           /**< IPv6 enabled by OCInit flags */
+        bool ipv4enabled;           /**< IPv4 enabled by OCInit flags */
+        bool dualstack;             /**< IPv6 and IPv4 enabled */
+#if defined (_WIN32)
+        LPFN_WSARECVMSG wsaRecvMsg; /**< Win32 function pointer to WSARecvMsg() */
+#endif
 
         struct networkmonitors
         {
@@ -517,22 +659,34 @@ typedef struct
     {
         void *threadpool;       /**< threadpool between Initialize and Start */
         CASocket_t ipv4;        /**< IPv4 accept socket */
+        CASocket_t ipv4s;       /**< IPv4 accept socket secure */
         CASocket_t ipv6;        /**< IPv6 accept socket */
-        void *svrlist;          /**< unicast IPv4 TCP server information*/
+        CASocket_t ipv6s;       /**< IPv6 accept socket secure */
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/
+#if defined(_WIN32)
+        WSAEVENT updateEvent;   /**< Event used to signal thread to stop or update the FD list */
+#else
         int shutdownFds[2];     /**< shutdown pipe */
         int connectionFds[2];   /**< connection pipe */
-        int maxfd;              /**< highest fd (for select) */
+        CASocketFd_t maxfd;     /**< highest fd (for select) */
+#endif
         bool started;           /**< the TCP adapter has started */
-        bool terminate;         /**< the TCP adapter needs to stop */
+        volatile bool terminate;/**< the TCP adapter needs to stop */
         bool ipv4tcpenabled;    /**< IPv4 TCP enabled by OCInit flags */
         bool ipv6tcpenabled;    /**< IPv6 TCP enabled by OCInit flags */
     } tcp;
 #endif
+    CATransportBTFlags_t bleFlags;   /**< flags related BLE transport */
 } CAGlobals_t;
 
 extern CAGlobals_t caglobals;
+
+typedef enum
+{
+    CA_LOG_LEVEL_ALL = 1,             // all logs.
+    CA_LOG_LEVEL_INFO,                // debug level is disabled.
+} CAUtilLogLevel_t;
 
 /**
  * Callback function type for request delivery.

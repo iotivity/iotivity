@@ -148,7 +148,7 @@ public final class RcsRemoteResourceObject extends RcsObject {
          *            the updated attributes
          *
          */
-        public void onCacheUpdated(RcsResourceAttributes attributes);
+        public void onCacheUpdated(RcsResourceAttributes attributes, int eCode);
 
     }
 
@@ -166,8 +166,8 @@ public final class RcsRemoteResourceObject extends RcsObject {
          * Called when a response for the getRemoteAttributes request or
          * setRemoteAttributes request is received.
          *
-         * @param attributes
-         *            the resource attributes received from the remote resource
+         * @param attributes the resource attributes received from the remote resource
+         * @param errorCode error code if there was a failure with the attributes request
          *
          */
         public void onAttributesReceived(RcsResourceAttributes attributes,
@@ -508,12 +508,15 @@ public final class RcsRemoteResourceObject extends RcsObject {
 
     /**
      * Sends a set request with resource attributes to the resource.
-     * <p>
+     *
      * The SetRequest behavior depends on the server, whether updating its
      * attributes or not.
      *
      * @param attributes
      *            attributes to set for the remote resource.
+     * @param listener
+     *            OnRemoteAttributesReceivedListener that is called when the set
+     *            remote attributes has completed 
      *
      * @throws NullPointerException
      *             if attributes or listener is null

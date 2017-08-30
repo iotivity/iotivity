@@ -59,8 +59,8 @@ OCResourceHandle TemphumidResource::getHandle()
 
 void TemphumidResource::setResourceRepresentation(OCRepresentation &rep)
 {
-    int tempHumid;
-    int tempTemp;
+    int tempHumid = 0;
+    int tempTemp = 0;
 
     rep.getValue("humidity", tempTemp);
     rep.getValue("temperature", tempHumid);
@@ -152,8 +152,6 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
 
                 if (response)
                 {
-                    // TODO Error Code
-                    response->setErrorCode(200);
                     response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
                 }
             }
@@ -173,7 +171,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
 
         if (requestFlag & RequestHandlerFlag::ObserverFlag)
         {
-            pthread_t threadId;
+            pthread_t threadId = {};
 
             cout << "\t\trequestFlag : Observer\n";
             g_Observation = 1;
@@ -214,7 +212,7 @@ int main()
 
         OC::OCPlatform::stopPresence();
     }
-    catch (std::exception e)
+    catch (std::exception & e)
     {
         cout << e.what() << endl;
     }

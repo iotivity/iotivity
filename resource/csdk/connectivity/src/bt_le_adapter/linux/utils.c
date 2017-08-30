@@ -25,7 +25,7 @@
 
 
 // Logging tag.
-static char const TAG[] = "BLE_UTILS";
+#define TAG "BLE_UTILS"
 
 bool CAGetBlueZManagedObjectProxies(GList ** proxies,
                                     char const * interface,
@@ -44,11 +44,11 @@ bool CAGetBlueZManagedObjectProxies(GList ** proxies,
     */
     bool success = true;
 
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     if (context->objects == NULL)
     {
-        ca_mutex_unlock(context->lock);
+        oc_mutex_unlock(context->lock);
         return success;
     }
 
@@ -84,7 +84,7 @@ bool CAGetBlueZManagedObjectProxies(GList ** proxies,
         }
     }
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     return success;
 }

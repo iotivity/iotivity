@@ -30,7 +30,7 @@ RemoteResourceUnit::RemoteResourceUnit()
     pStateChangedCB = std::bind(&RemoteResourceUnit::stateChangedCB, this,
                         std::placeholders::_1);
     pCacheUpdateCB = std::bind(&RemoteResourceUnit::cacheUpdateCB, this,
-                    std::placeholders::_1);
+                    std::placeholders::_1, std::placeholders::_2);
 }
 
 RemoteResourceUnit::~RemoteResourceUnit()
@@ -39,19 +39,23 @@ RemoteResourceUnit::~RemoteResourceUnit()
     {
         if(remoteObject->isCaching())
         {
-            try{
+            try
+            {
                 remoteObject->stopCaching();
             }
-            catch(std::exception &e){
+            catch(std::exception &e)
+            {
                 OIC_LOG_V(ERROR, CONTAINER_TAG, "%s", e.what());
             }
         }
         if(remoteObject->isMonitoring())
         {
-            try{
+            try
+            {
                 remoteObject->stopMonitoring();
             }
-            catch(std::exception &e){
+            catch(std::exception &e)
+            {
                 OIC_LOG_V(ERROR, CONTAINER_TAG, "%s", e.what());
             }
         }
@@ -64,19 +68,6 @@ RemoteResourceUnit::Ptr RemoteResourceUnit::createRemoteResourceInfo(
     RemoteResourceUnit::Ptr retRemoteResourceUnit = std::make_shared<RemoteResourceUnit>();
     retRemoteResourceUnit->remoteObject = ptr;
     retRemoteResourceUnit->pUpdatedCB = updatedCB;
-
-    return retRemoteResourceUnit;
-}
-
-RemoteResourceUnit::Ptr RemoteResourceUnit::createRemoteResourceInfoWithStateCB(
-    RCSRemoteResourceObject::Ptr ptr, UpdatedCBFromServer updatedCB,
-    RCSRemoteResourceObject::StateChangedCallback stateCB)
-{
-    RemoteResourceUnit::Ptr retRemoteResourceUnit = std::make_shared<RemoteResourceUnit>();
-    retRemoteResourceUnit->remoteObject = ptr;
-    retRemoteResourceUnit->pUpdatedCB = updatedCB;
-
-    retRemoteResourceUnit->pStateChangedCB = stateCB;
 
     return retRemoteResourceUnit;
 }
@@ -124,7 +115,7 @@ void RemoteResourceUnit::stateChangedCB(ResourceState changedState) const
     }
 }
 
-void RemoteResourceUnit::cacheUpdateCB(const RCSResourceAttributes & updatedAtt) const
+void RemoteResourceUnit::cacheUpdateCB(const RCSResourceAttributes & updatedAtt, int) const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     (void)updatedAtt;

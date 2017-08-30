@@ -32,7 +32,7 @@
 #include "caqueueingthread.h"
 #include "oic_malloc.h"
 #include "caremotehandler.h"
-#include "pdu.h"
+#include <coap/pdu.h>
 
 /**
  * Logging tag for module name.
@@ -264,11 +264,12 @@ CAResult_t CAStartEDRDiscoveryServer()
 }
 
 int32_t CASendEDRUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data,
-                             uint32_t dataLength)
+                             uint32_t dataLength, CADataType_t dataType)
 {
     // Input validation
     VERIFY_NON_NULL_RET(remoteEndpoint, TAG, "Remote endpoint is null", -1);
     VERIFY_NON_NULL_RET(data, TAG, "Data is null", -1);
+    (void)dataType;
 
     if (0 == dataLength)
     {
@@ -296,9 +297,11 @@ int32_t CASendEDRUnicastData(const CAEndpoint_t *remoteEndpoint, const void *dat
     return sentLength;
 }
 
-int32_t CASendEDRMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+int32_t CASendEDRMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength,
+                               CADataType_t dataType)
 {
     OIC_LOG(DEBUG, TAG, "IN - CASendEDRMulticastData");
+    (void)dataType;
 
     // Input validation
     VERIFY_NON_NULL_RET(data, TAG, "Data is null", -1);
@@ -323,7 +326,7 @@ int32_t CASendEDRMulticastData(const CAEndpoint_t *endpoint, const void *data, u
     return sentLen;
 }
 
-CAResult_t CAGetEDRInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
+CAResult_t CAGetEDRInterfaceInformation(CAEndpoint_t **info, size_t *size)
 {
     VERIFY_NON_NULL(info, TAG, "LocalConnectivity info is null");
 
@@ -349,14 +352,14 @@ CAResult_t CAStopEDR()
     // Stop RFComm server if it is running
     CAEDRServerStop();
 
-    // Stop network monitor
-    CAEDRStopNetworkMonitor();
-
     // Stop the adapter
     CAEDRClientUnsetCallbacks();
 
     // Disconnect all the client connections
     CAEDRClientDisconnectAll();
+
+    // Stop network monitor
+    CAEDRStopNetworkMonitor();
 
     // Stop Send and receive Queue
     CAAdapterStopQueue();
@@ -509,12 +512,6 @@ void CAAdapterDataSendHandler(void *context)
     }
 
     const char *remoteAddress = message->remoteEndpoint->addr;
-    if(!remoteAddress)
-    {
-        OIC_LOG(ERROR, TAG, "EDR Send Message error");
-        //Error cannot be sent if remote address is NULL
-        return;
-    }
 
     CAResult_t result = CAEDRClientSendData(remoteAddress, message->data, message->dataLen);
     if(CA_STATUS_OK != result)

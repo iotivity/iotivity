@@ -182,7 +182,7 @@ void CAEDRNativeRemoveDeviceSocketBaseAddr(JNIEnv *env, jstring address);
  * @param[in]  index            index of device list.
  * @return Device socket object or NULL.
  */
-jobject CAEDRNativeGetDeviceSocket(uint32_t index);
+jobject CAEDRNativeGetDeviceSocket(size_t index);
 
 /**
  * Get device socket address.
@@ -197,13 +197,13 @@ jobject CAEDRNativeGetDeviceSocketBaseAddr(JNIEnv *env, const char* remoteAddres
  * @param[in]   index           index of device list.
  * @return Input stream object or NULL.
  */
-jobject CAEDRNativeGetInputStream(uint32_t index);
+jobject CAEDRNativeGetInputStream(size_t index);
 
 /**
  * Get length of device socket list.
  * @return length of list.
  */
-uint32_t CAEDRGetSocketListLength();
+size_t CAEDRGetSocketListLength();
 
 /**
  * Get device information from list.

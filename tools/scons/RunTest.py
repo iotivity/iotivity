@@ -15,8 +15,9 @@
 # ------------------------------------------------------------------------
 
 import os
+import platform
 
-def run_test(env, xml_file, test):
+def run_test(env, xml_file, test, test_targets = ['test']):
     """
     Run test with the given SCons Environment, dumping Valgrind
     results to the given XML file.  If no Valgrind run is desired
@@ -39,11 +40,15 @@ def run_test(env, xml_file, test):
     # Make sure the Google Test libraries are in the dynamic
     # linker/loader path.
     env.AppendENVPath('LD_LIBRARY_PATH', [build_dir])
-    env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
+    env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/googletest-release-1.7.0/lib/.libs'])
 
     test_cmd = os.path.join(build_dir, test)
 
-    if xml_file:
+    have_valgrind = False
+    if env.get('TARGET_OS') not in ['windows']:
+        have_valgrind = True
+
+    if xml_file and have_valgrind:
         # Environment variables to be made available during the
         # Valgrind run.
         valgrind_environment = ''
@@ -56,8 +61,52 @@ def run_test(env, xml_file, test):
         # Valgrind suppressions file.
         suppression_file = env.File('#tools/valgrind/iotivity.supp').srcnode().path
 
-        # Set up to run the test under Valgrind.
-        test_cmd = '%s valgrind --leak-check=full --suppressions=%s --xml=yes --xml-file=%s %s' % (valgrind_environment, suppression_file, xml_file, test_cmd)
+        # Set up to run the test under Valgrind. The "--num-callers" option specifies the
+        # callstack depth (default, if not specified, is 12). We are increasing it here to
+        # allow unit test name to be visible in the leak report.
+        test_cmd = '%s valgrind --leak-check=full --suppressions=%s --num-callers=24 --xml=yes --xml-file=%s %s' % (valgrind_environment, suppression_file, xml_file, test_cmd)
+    if env.get('TARGET_OS') in ['linux']:
+        env.Depends('ut' + test , os.path.join(build_dir, test))
+    ut = env.Command('ut' + test, None, test_cmd)
+    env.Depends(ut, test_targets)
+    env.AlwaysBuild(ut)
 
-    ut = env.Command('ut', None, test_cmd)
-    env.AlwaysBuild('ut')
+def run_uwp_wack_test(env, cert_file, appx_file, report_output_path):
+    if env.get('TARGET_OS') != 'windows' or env.get('MSVC_UWP_APP') != '1':
+        return
+
+    import winreg
+
+    # Add WACK path to path
+    appcert_reg_path = 'SOFTWARE\\Microsoft\\Windows App Certification Kit'
+    # The WACK registry key is only in the default location, i.e. SOFTWARE\\Microsoft\...
+    # If the machine is 64bit, then we need to look into the 64bit Registry View for the key
+    reg_view_64bit = (platform.machine() == 'AMD64')
+    appcert_path = env.ReadRegistryStringValue(winreg.HKEY_LOCAL_MACHINE,
+                                               appcert_reg_path,
+                                               'InstallLocation',
+                                               reg_view_64bit)
+    if not appcert_path:
+        Exit('Error: Could not Find the WACK Registry Key/Value')
+
+    env.AppendUnique(PATH = [appcert_path])
+    # Need to update the 'ENV' dictionary PATH as that's what is used when executing
+    # commands
+    env['ENV']['PATH'] = env.get('PATH')
+
+    # testid 38 is the "Supported APIs" test and verifies that all APIs used are available for
+    # store apps.
+    # Note that appcert.exe requires admin privileges and will prompt for elevation unless the
+    # build is run from an elevated command shell.
+    report_output_file = os.path.join(report_output_path, 'wack_output.xml')
+    command = 'certutil -addstore root %s' % (cert_file)
+    command += ' && appcert.exe reset'
+    command += ' && appcert.exe test -AppxPackagePath %s -reportoutputpath %s -testid [38]' \
+               % (appx_file, report_output_file)
+    command += ' && certutil %s | for /f "delims=: tokens=1*" %%i in (\'findstr "Serial Number:"\') do (certutil -delstore root %%j)' % (cert_file)
+    command += ' && findstr OVERALL_RESULT=.PASS %s' % (report_output_file)
+
+    print 'Running WACK Test'
+    wack_test = env.Command(report_output_file, appx_file, command)
+    env.AlwaysBuild(wack_test)
+

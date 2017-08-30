@@ -18,10 +18,17 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "gtest/gtest.h"
+#include "iotivity_config.h"
+#include <gtest/gtest.h>
+#ifdef HAVE_PWD_H
 #include <pwd.h>
+#endif
+#ifdef HAVE_GRP_H
 #include <grp.h>
+#endif
+#ifdef HAVE_LINUX_LIMITS_H
 #include <linux/limits.h>
+#endif
 #include "ocstack.h"
 #include "cainterface.h"
 #include "secureresourcemanager.h"
@@ -73,7 +80,7 @@ int utclose(FILE *fp)
 int utunlink(const char *path)
 {
     EXPECT_TRUE((path != NULL)) << "utunlink\n";
-    return unlink(path);
+    return remove(path);
 }
 static OCPersistentStorage gpsi;
 
@@ -101,7 +108,8 @@ TEST(RegisterHandlerTest, RegisterValidHandler)
 // PersistentStorageHandler Tests
 TEST(PersistentStorageHandlerTest, RegisterNullHandler)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM,
+    // Revert to the default storage handler by setting it to null.
+    EXPECT_EQ(OC_STACK_OK,
             SRMRegisterPersistentStorageHandler(NULL));
 }
 
@@ -119,6 +127,12 @@ TEST(PersistentStorageHandlerTest, RegisterValidHandler)
     EXPECT_TRUE(&gpsi == ps);
 }
 
+#if !(defined(HAVE_LINUX_LIMITS_H) && defined(HAVE_PWD_H))
+TEST(PersistentStorageHandlerTest, DISABLED_PersistentStorageValidHandlers)
+{
+    /** @todo: Implement test on non-Linux platform */
+}
+#else
 TEST(PersistentStorageHandlerTest, PersistentStorageValidHandlers)
 {
     OCPersistentStorage *psi = SRMGetPersistentStorageHandler();
@@ -157,3 +171,5 @@ TEST(PersistentStorageHandlerTest, PersistentStorageValidHandlers)
     }
     psi->unlink(outFilePath);
 }
+#endif
+

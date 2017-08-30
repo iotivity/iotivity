@@ -19,90 +19,89 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 ##
-# Mediator[RichSDK] Unit Test build script
+# Notification Unit Test build script
 ##
-import os
+
+from tools.scons.RunTest import run_test
+
 Import('env')
 
 if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS = ['-Os'])
-    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    env.AppendUnique(CCFLAGS=['-Os'])
+    env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
-    env.AppendUnique(CCFLAGS = ['-g'])
+    env.AppendUnique(CCFLAGS=['-g'])
 
 if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
-# Add third party libraries
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
-
-target_os = env.get('TARGET_OS')
-if target_os == 'linux':
-    # Verify that 'google unit test' library is installed.  If not,
-    # get it and install it
-    SConscript(env.get('SRC_DIR') + '/extlibs/gtest/SConscript')
-
-    # Verify that 'hippomocks' mocking code is installed.  If not,
-    # get it and install it
-    SConscript(env.get('SRC_DIR') + '/extlibs/hippomocks.scons')
-
-mediator_rich_test_env = lib_env.Clone()
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+lib_env = gtest_env.Clone()
 
 ######################################################################
 #unit test setting
 ######################################################################
 src_dir = lib_env.get('SRC_DIR')
-gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
+
+easysetup_test_env = lib_env.Clone()
+target_os = env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
 ######################################################################
-gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
-gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
-mediator_rich_test_env.AppendUnique(
-        CPPPATH = [
-                src_dir + '/extlibs/hippomocks-master',
-                src_dir + '/extlibs/gtest/gtest-1.7.0/include',
-                '../inc',
-                '../../../inc',
-        ])
+easysetup_test_env.AppendUnique(LIBPATH=[lib_env.get('BUILD_DIR')])
+easysetup_test_env.PrependUnique(LIBS=[
+    'connectivity_abstraction',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'coap',
+])
 
 if target_os not in ['windows', 'winrt']:
-        mediator_rich_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
-        if target_os != 'android':
-                mediator_rich_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
-                mediator_rich_test_env.AppendUnique(LIBS = ['pthread'])
+    easysetup_test_env.AppendUnique(
+        CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
+easysetup_test_env.AddPthreadIfNeeded()
+
+easysetup_test_env.PrependUnique(CPPPATH=[
+    '#/extlibs/hippomocks/hippomocks',
+    '#/resource/csdk/include',
+    '#/resource/csdk/connectivity/api',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include',
+    '#/service/easy-setup/inc',
+    '#/service/easy-setup/enrollee/inc',
+    '#/service/easy-setup/mediator/richsdk/inc'
+])
 
 if env.get('SECURED') == '1':
-	     mediator_rich_test_env.PrependUnique(LIBS = ['tinydtls','ocprovision', 'ocpmapi'])
-
-mediator_rich_test_env.PrependUnique(LIBS = [
-    'coap',
-    'connectivity_abstraction',
-    'oc_logger',
-    'oc_logger_core',
-    'octbstack',
-    'oc',
-    'ESMediatorRich',
-    gtest,
-    gtest_main])
-
-mediator_rich_test_env.AppendUnique(LIBS = ['dl'])
-
+    if env.get('WITH_TCP') == True:
+        easysetup_test_env.AppendUnique(
+            LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 ######################################################################
 # Build Test
 ######################################################################
-mediator_richsdk_test_src = env.Glob('./*.cpp')
 
-mediator_richsdk_test = mediator_rich_test_env.Program('mediator_richsdk_test', mediator_richsdk_test_src)
-Alias("mediator_richsdk_test", mediator_richsdk_test)
-env.AppendTarget('mediator_richsdk_test')
+easysetup_mediator_test_env = easysetup_test_env.Clone()
+easysetup_mediator_test_env.AppendUnique(
+    LIBS=['ESEnrolleeSDK', 'ESMediatorRich'])
+
+easysetup_mediator_test_src = env.Glob(
+    src_dir +
+    '/service/easy-setup/mediator/richsdk/unittests/ESMediatorTest.cpp')
+easysetup_mediator_test = easysetup_mediator_test_env.Program(
+    'easysetup_mediator_test', easysetup_mediator_test_src)
+Alias("easysetup_mediator_test", easysetup_mediator_test)
+env.AppendTarget('easysetup_mediator_test')
 
 if env.get('TEST') == '1':
-    target_os = env.get('TARGET_OS')
-    if target_os == 'linux':
-        from tools.scons.RunTest import *
-        run_test(mediator_rich_test_env, '', 'service/easy-setup/mediator/richsdk/unittests/mediator_richsdk_test')
+    if target_os in ['linux'] and env.get('SECURED') != '1':
+        run_test(
+            easysetup_mediator_test_env,
+            # 'service_easy-setup_mediator_richsdk_unittests_easysetup_mediator_test.memcheck',
+            '',  # TODO: fix this test and enable previous line
+            'service/easy-setup/mediator/richsdk/unittests/easysetup_mediator_test',
+            easysetup_mediator_test)

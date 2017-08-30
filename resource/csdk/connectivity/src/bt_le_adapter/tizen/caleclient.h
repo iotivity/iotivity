@@ -66,15 +66,6 @@ void CALEGattCharacteristicChangedCb(bt_gatt_h characteristic,
 void CALEGattCharacteristicWriteCb(int result, bt_gatt_h reqHandle, void *userData);
 
 /**
- * This is the callback which will be called whenever there is change in gatt connection
- * with server(Connected/Disconnected)
- *
- * @param[in]  connected     State of connection
- * @param[in]  remoteAddress Mac address of the remote device in which we made connection.
- */
-void CALEGattConnectionStateChanged(bool connected, const char *remoteAddress);
-
-/**
  * This is the callback which will be called when LE advertisement is found.
  *
  * @param[in]  result         The result of Scanning
@@ -83,15 +74,6 @@ void CALEGattConnectionStateChanged(bool connected, const char *remoteAddress);
  */
 void CALEAdapterScanResultCb(int result, bt_adapter_le_device_scan_result_info_s *scanInfo,
                              void *userData);
-
-/**
- * This thread will be used to initialize the Gatt Client and start device discovery.
- * 1. Setting neccessary callbacks for connection, characteristics changed and discovery.
- * 2. Start device discovery
- *
- * @param[in] data Currently it will be NULL(no parameter)
- */
-void CAStartLEGattClientThread(void *data);
 
 /**
  * This thread will be used to Start the timer for scanning.
@@ -196,4 +178,34 @@ void CADiscoverLEServicesThread (void *remoteAddress);
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CALEGattDiscoverServices(const char *remoteAddress);
+
+/**
+ * check connection status.
+ * @param[in] address      the address of the remote device.
+ * @return  true or false.
+ */
+bool CALEClientIsConnected(const char* address);
+
+/**
+ * get MTU size.
+ * @param[in] address      the address of the remote device.
+ * @return  mtu size negotiated from remote device.
+ */
+uint16_t CALEClientGetMtuSize(const char* address);
+
+/**
+ * This function is used to set MTU size
+ * which negotiated between client and server device.
+ * @param[in]   address       remote address.
+ * @param[in]   mtuSize       MTU size.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientSetMtuSize(const char* address, uint16_t mtuSize);
+
+/**
+ * Send negotiation message after gatt connection is done.
+ * @param[in]   address               remote address.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientSendNegotiationMessage(const char* address);
 #endif /* TZ_BLE_CLIENT_H_ */

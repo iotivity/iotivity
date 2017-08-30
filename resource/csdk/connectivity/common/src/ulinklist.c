@@ -27,7 +27,7 @@
 /**
  * Logging tag for module name.
  */
-#define TAG "ULINKLIST"
+#define TAG "OIC_ULINKLIST"
 
 u_linklist_t *u_linklist_create()
 {

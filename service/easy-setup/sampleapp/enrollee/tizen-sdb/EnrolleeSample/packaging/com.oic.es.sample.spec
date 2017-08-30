@@ -1,20 +1,63 @@
 %define PREFIX /usr/apps/com.oic.es.sample
 %define ROOTDIR  %{_builddir}/%{name}-%{version}
+%{!?VERBOSE: %define VERBOSE 1}
 
 Name: com-oic-es-sample
-Version:    0.1
-Release:    1
+Version:    1.3.0
+Release:    0
 Summary: Tizen adapter interfacesample application
-URL: http://slp-source.sec.samsung.net
-Source: %{name}-%{version}.tar.gz
+Group: Network & Connectivity / IoT Connectivity
 License: Apache-2.0
-Group: Applications/OICSample
+URL: https://www.iotivity.org/
+Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
+
+%define JOB "-j4"
+%if 0%{?speedpython}
+%define JOB %{?_smp_mflags}
+%endif
+%if 0%{?speedpython:1} && 0%{?en_speedpython:1}
+%en_speedpython
+%endif
+
+%ifarch armv7l armv7hl armv7nhl armv7tnhl armv7thl
+%if 3 <= 0%{?tizen_version_major}
+BuildRequires: python-accel-armv7l-cross-arm
+%endif
+%define TARGET_ARCH "armeabi-v7a"
+%endif
+%ifarch aarch64
+%if 3 <= 0%{?tizen_version_major}
+BuildRequires: python-accel-aarch64-cross-aarch64
+%endif
+%define TARGET_ARCH "arm64"
+%endif
+%ifarch x86_64
+%define TARGET_ARCH "x86_64"
+%endif
+%ifarch %{ix86}
+%define TARGET_ARCH "x86"
+%endif
+
+# Default values to be eventually overiden BEFORE or as gbs params:
+%{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
+%{!?LOGGING: %define LOGGING 1}
+%{!?RELEASE: %define RELEASE 1}
+%{!?ROUTING: %define ROUTING EP}
+%{!?SECURED: %define SECURED 0}
+%{!?TARGET_OS: %define TARGET_OS tizen}
+%{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
+%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
+%{!?VERBOSE: %define VERBOSE 1}
+
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(glib-2.0)
+BuildRequires: pkgconfig(gio-2.0)
+BuildRequires: pkgconfig(gthread-2.0)
 BuildRequires: boost-devel
 BuildRequires: boost-thread
 BuildRequires: boost-system
 BuildRequires: boost-filesystem
+BuildRequires: pkgconfig(capi-network-connection)
 BuildRequires: pkgconfig(capi-network-wifi)
 BuildRequires: pkgconfig(capi-network-bluetooth)
 BuildRequires: scons
@@ -22,6 +65,13 @@ BuildRequires: iotivity
 BuildRequires: iotivity-devel
 BuildRequires: iotivity-service
 
+## If tizen 2.x, RELEASE follows tizen_build_binary_release_type_eng. ##
+## and if tizen 3.0, RELEASE follows tizen_build_devel_mode. ##
+%if 0%{?tizen_build_devel_mode} == 1 || 0%{?tizen_build_binary_release_type_eng} == 1
+%define RELEASE False
+%else
+%define RELEASE True
+%endif
 
 %description
 EasySetup Sample application
@@ -30,8 +80,17 @@ EasySetup Sample application
 %setup -q
 
 %build
-
-scons TARGET_OS=tizen LOGGING=True TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE} ROUTING=%{ROUTING} ES_ROLE=%{ES_ROLE} ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} ES_SOFTAP_MODE=%{ES_SOFTAP_MODE}
+scons %{JOB} --prefix=%{_prefix} \
+    ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
+    LOGGING=%{LOGGING} \
+    RELEASE=%{RELEASE} \
+    ROUTING=%{ROUTING} \
+    SECURED=%{SECURED} \
+    TARGET_OS=%{TARGET_OS} \
+    TARGET_ARCH=%{TARGET_ARCH} \
+    TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
+    VERBOSE=%{VERBOSE} \
+    #eol
 
 %install
 

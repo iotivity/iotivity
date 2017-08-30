@@ -13,8 +13,9 @@ Import('env')
 
 sif_env = env.Clone()
 
-sif_lib = sif_env.StaticLibrary(env.get('BUILD_DIR') + '/c_compat',
-	env.SrcToObj(os.path.abspath('./c_compat.c'), env.get('SRC_DIR')))
+sif_lib = sif_env.StaticLibrary(
+    env.get('BUILD_DIR') + '/c_compat',
+    env.SrcToObj(os.path.abspath('./c_compat.c'), env.get('SRC_DIR')))
 
-env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-env.AppendUnique(LIBS = ['c_compat'])
+env.AppendUnique(LIBPATH=[env.get('BUILD_DIR')])
+env.AppendUnique(LIBS=['c_compat'])

@@ -37,7 +37,7 @@
 #define MICROSECS_PER_SEC 1000000
 
 // Logging tag.
-static char const TAG[] = "BLE_INTERFACE";
+#define TAG "BLE_INTERFACE"
 
 /*
     The IoTivity adapter interface currently doesn't provide a means to
@@ -55,13 +55,13 @@ static bool CALESetUpBlueZObjects(CALEContext * context);
 
 static bool CALECheckStarted()
 {
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     bool const started =
         (g_context.event_loop != NULL
          && g_main_loop_is_running(g_context.event_loop));
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     /**
      * @todo Fix potential TOCTOU race condition.  A LE transport
@@ -206,7 +206,7 @@ static void CALEHandleInterfaceAdded(GList ** proxy_list,
         return;
     }
 
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     /*
       Add the object information to the list.
@@ -217,7 +217,7 @@ static void CALEHandleInterfaceAdded(GList ** proxy_list,
     */
     *proxy_list = g_list_prepend(*proxy_list, proxy);
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     /**
      * Let the thread that may be blocked waiting for Devices to be
@@ -230,7 +230,7 @@ static void CALEHandleInterfaceAdded(GList ** proxy_list,
      */
     if (strcmp(interface, BLUEZ_DEVICE_INTERFACE) == 0)
     {
-        ca_cond_signal(g_context.condition);
+        oc_cond_signal(g_context.condition);
     }
 }
 
@@ -329,7 +329,7 @@ static void CALEOnInterfacesRemoved(GDBusConnection * connection,
         gchar const * path = NULL;
         g_variant_get_child(parameters, 0, "&o", &path);
 
-        ca_mutex_lock(g_context.lock);
+        oc_mutex_lock(g_context.lock);
 
         for (GList * l = *list; l != NULL; l = g_list_next(l))
         {
@@ -352,7 +352,7 @@ static void CALEOnInterfacesRemoved(GDBusConnection * connection,
             }
         }
 
-        ca_mutex_unlock(g_context.lock);
+        oc_mutex_unlock(g_context.lock);
 
         g_variant_unref(child);
     }
@@ -405,12 +405,12 @@ static void CALESubscribeToSignals(CALEContext * context,
                      G_CALLBACK(CALEOnInterfaceProxyPropertiesChanged),
                      context);
 
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     context->interfaces_added_sub_id   = interfaces_added_sub_id;
     context->interfaces_removed_sub_id = interfaces_removed_sub_id;
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 }
 
 static bool CALESetUpDBus(CALEContext * context)
@@ -471,10 +471,10 @@ static bool CALESetUpDBus(CALEContext * context)
 
     CALESubscribeToSignals(context, connection, object_manager);
 
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
     context->connection     = connection;
     context->object_manager = object_manager;
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     success = CALESetUpBlueZObjects(context);
 
@@ -490,7 +490,7 @@ static void CALETearDownDBus(CALEContext * context)
       global state, and pushing resource finalization outside the global
       lock.
     */
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     GDBusConnection * const connection = context->connection;
     context->connection = NULL;
@@ -513,7 +513,7 @@ static void CALETearDownDBus(CALEContext * context)
     context->interfaces_added_sub_id   = 0;
     context->interfaces_removed_sub_id = 0;
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     // Destroy the device proxies list.
     g_list_free_full(devices, g_object_unref);
@@ -599,9 +599,9 @@ static bool CALESetUpBlueZObjects(CALEContext * context)
         return success;
     }
 
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
     context->objects = objects;
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     /*
       Create a proxies to the org.bluez.Adapter1 D-Bus objects that
@@ -617,9 +617,9 @@ static bool CALESetUpBlueZObjects(CALEContext * context)
     // An empty adapters list is NULL.
     if (success && adapters != NULL)
     {
-        ca_mutex_lock(context->lock);
+        oc_mutex_lock(context->lock);
         context->adapters = adapters;
-        ca_mutex_unlock(context->lock);
+        oc_mutex_unlock(context->lock);
     }
 
     /*
@@ -635,9 +635,9 @@ static bool CALESetUpBlueZObjects(CALEContext * context)
     // An empty device list is NULL.
     if (success && devices != NULL)
     {
-        ca_mutex_lock(context->lock);
+        oc_mutex_lock(context->lock);
         context->devices = devices;
-        ca_mutex_unlock(context->lock);
+        oc_mutex_unlock(context->lock);
     }
 
     return success;
@@ -677,12 +677,12 @@ static void CALEStartEventLoop(void * data)
     */
     if (CALESetUpDBus(&g_context))
     {
-        ca_mutex_lock(context->lock);
+        oc_mutex_lock(context->lock);
 
         assert(context->event_loop == NULL);
         context->event_loop = event_loop;
 
-        ca_mutex_unlock(context->lock);
+        oc_mutex_unlock(context->lock);
 
         /*
           Add an idle handler that notifies a thread waiting for the
@@ -714,12 +714,12 @@ static void CALEStartEventLoop(void * data)
 
 static void CALEStopEventLoop(CALEContext * context)
 {
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     GMainLoop * const event_loop = context->event_loop;
     context->event_loop = NULL;
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     if (event_loop != NULL)
     {
@@ -749,13 +749,13 @@ static bool CALEWaitForNonEmptyList(GList * const * list,
 {
     bool success = false;
 
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     for (int i = 0; *list == NULL && i < retries; ++i)
     {
-        if (ca_cond_wait_for(g_context.condition,
+        if (oc_cond_wait_for(g_context.condition,
                              g_context.lock,
-                             timeout) == CA_WAIT_SUCCESS)
+                             timeout) == OC_WAIT_SUCCESS)
         {
             /*
               Condition variable was signaled before the timeout was
@@ -765,16 +765,15 @@ static bool CALEWaitForNonEmptyList(GList * const * list,
         }
     }
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     return success;
 }
 
 // -----------------------------------------------------------------------
 
-CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool)
+CAResult_t CAInitializeLEAdapter()
 {
-    (void)threadPool;
 #if !GLIB_CHECK_VERSION(2,36,0)
     /*
       Initialize the GLib type system.
@@ -883,7 +882,7 @@ CAResult_t CAGetLEAdapterState()
 {
     CAResult_t result = CA_ADAPTER_NOT_ENABLED;
 
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     for (GList * l = g_context.adapters; l != NULL; l = l->next)
     {
@@ -913,7 +912,7 @@ CAResult_t CAGetLEAdapterState()
         }
     }
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     return result;
 }
@@ -929,8 +928,8 @@ CAResult_t CAInitializeLENetworkMonitor()
      * @see @c CAStartLEAdapter() for further details.
      */
 
-    g_context.lock      = ca_mutex_new();
-    g_context.condition = ca_cond_new();
+    g_context.lock      = oc_mutex_new();
+    g_context.condition = oc_cond_new();
 
     static int const PSHARED        = 0;  // shared between threads
     static unsigned int const VALUE = 0;  // force sem_wait() to block
@@ -969,7 +968,7 @@ void CATerminateLENetworkMonitor()
 
     (void) sem_destroy(&g_context.le_started);
 
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     g_context.on_device_state_changed = NULL;
     g_context.on_server_received_data = NULL;
@@ -979,21 +978,21 @@ void CATerminateLENetworkMonitor()
     g_context.on_client_error         = NULL;
     g_context.on_server_error         = NULL;
 
-    ca_cond_free(g_context.condition);
+    oc_cond_free(g_context.condition);
     g_context.condition = NULL;
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
-    ca_mutex_free(g_context.lock);
+    oc_mutex_free(g_context.lock);
     g_context.lock = NULL;
 }
 
 CAResult_t CASetLEAdapterStateChangedCb(
     CALEDeviceStateChangedCallback callback)
 {
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
     g_context.on_device_state_changed = callback;
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     return CA_STATUS_OK;
 }
@@ -1055,7 +1054,7 @@ CAResult_t CAGetLEAddress(char **local_address)
 
     *local_address = NULL;
 
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     for (GList * l = g_context.adapters; l != NULL; l = l->next)
     {
@@ -1099,7 +1098,7 @@ CAResult_t CAGetLEAddress(char **local_address)
         break;
     }
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     return *local_address != NULL ? CA_STATUS_OK : CA_STATUS_FAILED;
 }
@@ -1129,9 +1128,9 @@ void CATerminateLEGattServer()
 
 void CASetLEReqRespServerCallback(CABLEDataReceivedCallback callback)
 {
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
     g_context.on_server_received_data = callback;
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 }
 
 CAResult_t CAUpdateCharacteristicsToGattClient(char const * address,
@@ -1158,9 +1157,9 @@ CAResult_t CAStartLEGattClient()
         return result;
     }
 
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
     bool found_peripherals = (g_context.devices != NULL);
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     if (!found_peripherals)
     {
@@ -1266,44 +1265,44 @@ CAResult_t CAUpdateCharacteristicsToAllGattServers(uint8_t const * data,
 
 void CASetLEReqRespClientCallback(CABLEDataReceivedCallback callback)
 {
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
     g_context.on_client_received_data = callback;
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 }
 
 void CASetLEServerThreadPoolHandle(ca_thread_pool_t handle)
 {
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
     g_context.server_thread_pool = handle;
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 }
 
 void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle)
 {
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
     g_context.client_thread_pool = handle;
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 }
 
 CAResult_t CAUnSetLEAdapterStateChangedCb()
 {
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
     g_context.on_device_state_changed = NULL;
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     return CA_STATUS_OK;
 }
 
 void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback)
 {
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
     g_context.on_client_error = callback;
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 }
 
 void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback)
 {
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
     g_context.on_server_error = callback;
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 }

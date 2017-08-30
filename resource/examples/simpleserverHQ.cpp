@@ -23,14 +23,23 @@
 /// (properties and methods) and host this resource on the server.
 ///
 
+#include "iotivity_config.h"
 #include <functional>
 
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <mutex>
 #include <condition_variable>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
+
+#include "ocpayload.h"
 
 using namespace OC;
 using namespace std;
@@ -38,6 +47,28 @@ namespace PH = std::placeholders;
 
 int gObservation = 0;
 void * ChangeLightRepresentation (void *param);
+
+// Set of strings for each of platform Info fields
+std::string  gPlatformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+std::string  gManufacturerName = "OCF";
+std::string  gManufacturerLink = "https://www.iotivity.org";
+std::string  gModelNumber = "myModelNumber";
+std::string  gDateOfManufacture = "2016-01-15";
+std::string  gPlatformVersion = "myPlatformVersion";
+std::string  gOperatingSystemVersion = "myOS";
+std::string  gHardwareVersion = "myHardwareVersion";
+std::string  gFirmwareVersion = "1.0";
+std::string  gSupportLink = "https://www.iotivity.org";
+std::string  gSystemTime = "2016-01-15T11.01";
+
+// Set of strings for each of device info fields
+std::string  deviceName = "IoTivity Simple Server HQ";
+std::string  specVersion = "ocf.1.1.0";
+std::vector<std::string> dataModelVersions = {"ocf.res.1.1.0"};
+std::string  protocolIndependentID = "88b3584f-d7bc-4e56-9210-0e8b305202c3";
+
+// OCPlatformInfo Contains all the platform info to be stored
+OCPlatformInfo platformInfo;
 
 // Specifies where to notify all observers or list of observers
 // 0 - notifies all observers
@@ -214,9 +245,9 @@ public:
         }
     }
 
-    void addInterface(const std::string& interface) const
+    void addInterface(const std::string& iface) const
     {
-        OCStackResult result = OCPlatform::bindInterfaceToResource(m_resourceHandle, interface);
+        OCStackResult result = OCPlatform::bindInterfaceToResource(m_resourceHandle, iface);
         if (OC_STACK_OK != result)
         {
             cout << "Binding TypeName to Resource was unsuccessful\n";
@@ -231,7 +262,7 @@ OCStackResult sendResponse(std::shared_ptr<OCResourceRequest> pRequest)
     pResponse->setRequestHandle(pRequest->getRequestHandle());
     pResponse->setResourceHandle(pRequest->getResourceHandle());
     pResponse->setResourceRepresentation(get());
-    pResponse->setErrorCode(200);
+
     pResponse->setResponseResult(OC_EH_OK);
 
     return OCPlatform::sendResponse(pResponse);
@@ -247,7 +278,7 @@ OCStackResult sendPostResponse(std::shared_ptr<OCResourceRequest> pRequest)
     OCRepresentation rep_post = post(rep);
 
     pResponse->setResourceRepresentation(rep_post);
-    pResponse->setErrorCode(200);
+
     pResponse->setResponseResult(OC_EH_OK);
 
     return OCPlatform::sendResponse(pResponse);
@@ -378,7 +409,6 @@ void * ChangeLightRepresentation (void *param)
                 std::shared_ptr<OCResourceResponse> resourceResponse =
                             std::make_shared<OCResourceResponse>();
 
-                resourceResponse->setErrorCode(200);
                 resourceResponse->setResourceRepresentation(lightPtr->get(), DEFAULT_INTERFACE);
 
                 result = OCPlatform::notifyListOfObservers(
@@ -402,6 +432,84 @@ void * ChangeLightRepresentation (void *param)
     }
 
     return NULL;
+}
+
+void DeletePlatformInfo()
+{
+    delete[] platformInfo.platformID;
+    delete[] platformInfo.manufacturerName;
+    delete[] platformInfo.manufacturerUrl;
+    delete[] platformInfo.modelNumber;
+    delete[] platformInfo.dateOfManufacture;
+    delete[] platformInfo.platformVersion;
+    delete[] platformInfo.operatingSystemVersion;
+    delete[] platformInfo.hardwareVersion;
+    delete[] platformInfo.firmwareVersion;
+    delete[] platformInfo.supportUrl;
+    delete[] platformInfo.systemTime;
+}
+
+void DuplicateString(char ** targetString, std::string sourceString)
+{
+    *targetString = new char[sourceString.length() + 1];
+    strncpy(*targetString, sourceString.c_str(), (sourceString.length() + 1));
+}
+
+OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerName,
+        std::string manufacturerUrl, std::string modelNumber, std::string dateOfManufacture,
+        std::string platformVersion, std::string operatingSystemVersion,
+        std::string hardwareVersion, std::string firmwareVersion, std::string supportUrl,
+        std::string systemTime)
+{
+    DuplicateString(&platformInfo.platformID, platformID);
+    DuplicateString(&platformInfo.manufacturerName, manufacturerName);
+    DuplicateString(&platformInfo.manufacturerUrl, manufacturerUrl);
+    DuplicateString(&platformInfo.modelNumber, modelNumber);
+    DuplicateString(&platformInfo.dateOfManufacture, dateOfManufacture);
+    DuplicateString(&platformInfo.platformVersion, platformVersion);
+    DuplicateString(&platformInfo.operatingSystemVersion, operatingSystemVersion);
+    DuplicateString(&platformInfo.hardwareVersion, hardwareVersion);
+    DuplicateString(&platformInfo.firmwareVersion, firmwareVersion);
+    DuplicateString(&platformInfo.supportUrl, supportUrl);
+    DuplicateString(&platformInfo.systemTime, systemTime);
+
+    return OC_STACK_OK;
+}
+
+OCStackResult SetDeviceInfo()
+{
+    OCStackResult result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+                                                        deviceName);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set device name" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                          dataModelVersions);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set data model versions" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set spec version" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          protocolIndependentID);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set piid" << endl;
+        return result;
+    }
+
+    return OC_STACK_OK;
 }
 
 void PrintUsage()
@@ -444,6 +552,27 @@ int main(int argc, char* argv[])
     };
 
     OCPlatform::Configure(cfg);
+    std::cout << "Starting server & setting platform info\n";
+
+    OCStackResult result = SetPlatformInfo(gPlatformId, gManufacturerName, gManufacturerLink,
+            gModelNumber, gDateOfManufacture, gPlatformVersion, gOperatingSystemVersion,
+            gHardwareVersion, gFirmwareVersion, gSupportLink, gSystemTime);
+
+    result = OCPlatform::registerPlatformInfo(platformInfo);
+
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Platform Registration failed\n";
+        return -1;
+    }
+
+    result = SetDeviceInfo();
+
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Device Registration failed\n";
+        return -1;
+    }
 
     try
     {
@@ -456,6 +585,8 @@ int main(int argc, char* argv[])
 
         myLight.addType(std::string("core.brightlight"));
         myLight.addInterface(std::string(LINK_INTERFACE));
+
+        DeletePlatformInfo();
 
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we

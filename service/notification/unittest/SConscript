@@ -1,0 +1,142 @@
+#******************************************************************
+#
+# Copyright 2016 Samsung Electronics All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+##
+# Notification Unit Test build script
+##
+import os
+from tools.scons.RunTest import run_test
+
+Import('env')
+
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+lib_env = gtest_env.Clone()
+
+SConscript('#service/third_party_libs.scons', 'lib_env')
+
+if lib_env.get('RELEASE'):
+    lib_env.AppendUnique(CCFLAGS=['-Os'])
+else:
+    lib_env.AppendUnique(CCFLAGS=['-g'])
+######################################################################
+#unit test setting
+######################################################################
+src_dir = lib_env.get('SRC_DIR')
+
+notification_test_env = lib_env.Clone()
+target_os = env.get('TARGET_OS')
+
+######################################################################
+# Build flags
+######################################################################
+notification_test_env.AppendUnique(LIBS=[
+    'resource_directory',
+    'oc',
+    'octbstack',
+    'connectivity_abstraction',
+    'oc_logger',
+    'coap',
+])
+
+if target_os not in ['windows', 'winrt']:
+    notification_test_env.AppendUnique(
+        CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+
+notification_test_env.AppendUnique(LINKFLAGS=['-Wl,--no-as-needed'])
+
+notification_test_env.AddPthreadIfNeeded()
+
+
+notification_test_env.PrependUnique(CPPPATH=[
+    '../include',
+    '../src/consumer',
+    '../src/provider',
+    '../src/common',
+    '#/resource/csdk/connectivity/api',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/c_common/oic_time/include',
+])
+
+if env.get('WITH_TCP') == True:
+    notification_test_env.AppendUnique(CPPDEFINES=['WITH_TCP'])
+if env.get('SECURED') == '1':
+    notification_test_env.AppendUnique(
+        LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
+    notification_test_env.AppendUnique(
+        CPPPATH=['#/resource/csdk/security/include'])
+
+######################################################################
+# Build Test
+######################################################################
+
+notification_consumer_test_env = notification_test_env.Clone()
+notification_consumer_test_env.AppendUnique(LIBS=['notification_consumer'])
+
+notification_provider_test_env = notification_test_env.Clone()
+notification_provider_test_env.AppendUnique(LIBS=['notification_provider'])
+
+notification_consumer_test_src = env.Glob('./NSConsumerTest2.cpp')
+notification_consumer_test = notification_consumer_test_env.Program(
+    'notification_consumer_test', notification_consumer_test_src)
+Alias("notification_consumer_test", notification_consumer_test)
+notification_consumer_test_env.AppendTarget('notification_consumer_test')
+
+notification_consumer_test_src = env.Glob('./NSConsumerTest.cpp')
+notification_consumer_internaltest = notification_consumer_test_env.Program(
+    'notification_consumer_internaltest', notification_consumer_test_src)
+Alias("notification_consumer_internaltest", notification_consumer_internaltest)
+
+notification_provider_test_src = env.Glob('./NSProviderTest2.cpp')
+notification_provider_test = notification_provider_test_env.Program(
+    'notification_provider_test', notification_provider_test_src)
+Alias("notification_provider_test", notification_provider_test)
+notification_provider_test_env.AppendTarget('notification_provider_test')
+
+notification_provider_test_src = env.Glob('./NSProviderTest.cpp')
+notification_provider_internaltest = notification_provider_test_env.Program(
+    'notification_provider_internaltest', notification_provider_test_src)
+Alias("notification_provider_internaltest", notification_provider_internaltest)
+
+if env.get('TEST') == '1':
+    if target_os in ['linux'] and env.get('SECURED') != '1':
+        run_test(
+            notification_consumer_test_env,
+            #'service_notification_unittest_notification_consumer_test.memcheck',
+            '',  # TODO: Fix this test for MLK and enable previous line
+            'service/notification/unittest/notification_consumer_test')
+        run_test(
+            notification_provider_test_env,
+            #'service_notification_unittest_notification_provider_test.memcheck',
+            '',  # TODO: Fix this test for MLK and enable previous line
+            'service/notification/unittest/notification_provider_test')
+else:
+    notification_consumer_test_env.AppendUnique(CPPDEFINES=['LOCAL_RUNNING'])
+    notification_provider_test_env.AppendUnique(CPPDEFINES=['LOCAL_RUNNING'])
+    src_dir = notification_consumer_test_env.get('SRC_DIR')
+    svr_db_src_dir = os.path.join(src_dir, 'service/notification/unittest/')
+    svr_db_build_dir = os.path.join(
+        notification_consumer_test_env.get('BUILD_DIR'), 'service',
+        'notification', 'unittest') + os.sep
+    notification_consumer_test_env.Alias(
+        "install",
+        notification_consumer_test_env.Install(
+            svr_db_build_dir, os.path.join(svr_db_src_dir, 'oic_svr_db_ns.dat')))

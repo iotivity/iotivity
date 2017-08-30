@@ -29,7 +29,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "cathreadpool.h" /* for thread pool */
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "caadapterutils.h"
 #include "caremotehandler.h"
@@ -57,40 +57,19 @@ static jobject g_context;
  * @var g_mutexStateList
  * @brief Mutex to synchronize device state list
  */
-static ca_mutex g_mutexStateList = NULL;
+static oc_mutex g_mutexStateList = NULL;
 
 /**
  * @var g_mutexObjectList
  * @brief Mutex to synchronize device object list
  */
-static ca_mutex g_mutexObjectList = NULL;
+static oc_mutex g_mutexObjectList = NULL;
 
 /**
  * @var g_edrErrorHandler
  * @brief Error callback to update error in EDR
  */
 static CAEDRErrorHandleCallback g_edrErrorHandler = NULL;
-
-typedef struct send_data
-{
-    char* address;
-    char* data;
-    uint32_t id;
-} data_t;
-
-/**
- @brief Thread context information for unicast, multicast and secured unicast server
- */
-typedef struct
-{
-    bool *stopFlag;
-    CAAdapterServerType_t type;
-} CAAdapterReceiveThreadContext_t;
-
-typedef struct
-{
-    bool *stopFlag;
-} CAAdapterAcceptThreadContext_t;
 
 /**
  * implement for BT-EDR adapter common method
@@ -210,7 +189,7 @@ CAResult_t CAEDRGetAdapterEnableState(bool *state)
         return CA_STATUS_INVALID_PARAM;
     }
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -249,7 +228,7 @@ void CAEDRJniInitContext()
 
 CAResult_t CAEDRCreateJNIInterfaceObject(jobject context)
 {
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     OIC_LOG(DEBUG, TAG, "CAEDRCreateJNIInterfaceObject");
 
     if ((*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
@@ -302,20 +281,20 @@ static void CAEDRDestroyMutex()
 {
     if (g_mutexStateList)
     {
-        ca_mutex_free(g_mutexStateList);
+        oc_mutex_free(g_mutexStateList);
         g_mutexStateList = NULL;
     }
 
     if (g_mutexObjectList)
     {
-        ca_mutex_free(g_mutexObjectList);
+        oc_mutex_free(g_mutexObjectList);
         g_mutexObjectList = NULL;
     }
 }
 
 static CAResult_t CAEDRCreateMutex()
 {
-    g_mutexStateList = ca_mutex_new();
+    g_mutexStateList = oc_mutex_new();
     if (!g_mutexStateList)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -324,7 +303,7 @@ static CAResult_t CAEDRCreateMutex()
         return CA_STATUS_FAILED;
     }
 
-    g_mutexObjectList = ca_mutex_new();
+    g_mutexObjectList = oc_mutex_new();
     if (!g_mutexObjectList)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -353,7 +332,7 @@ CAResult_t CAEDRInitialize()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -376,13 +355,13 @@ CAResult_t CAEDRInitialize()
     }
     (*env)->DeleteLocalRef(env, jni_address);
 
-    ca_mutex_lock(g_mutexStateList);
+    oc_mutex_lock(g_mutexStateList);
     CAEDRNativeCreateDeviceStateList();
-    ca_mutex_unlock(g_mutexStateList);
+    oc_mutex_unlock(g_mutexStateList);
 
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
     CAEDRNativeCreateDeviceSocketList();
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     if (isAttached)
     {
@@ -404,7 +383,7 @@ void CAEDRTerminate()
     OIC_LOG(DEBUG, TAG, "CAEDRTerminate");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -451,7 +430,7 @@ CAResult_t CAEDRDestroyJniInterface()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -531,7 +510,7 @@ CAResult_t CAEDRSendMulticastMessage(const uint8_t* data, uint32_t dataLen)
     VERIFY_NON_NULL(data, TAG, "data is null");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -572,7 +551,7 @@ CAResult_t CAEDRGetInterfaceInfo(char **address)
 void CAEDRGetLocalAddress(char **address)
 {
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -619,7 +598,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data,
     VERIFY_NON_NULL(data, TAG, "data is null");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -875,6 +854,7 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
             if ((*env)->ExceptionCheck(env))
             {
                 OIC_LOG(ERROR, TAG, "Failed to write data in outputStram");
+                CALogSendStateInfo(CA_ADAPTER_RFCOMM_BTEDR, address, 0, dataLength, false, NULL);
                 (*env)->ExceptionDescribe(env);
                 (*env)->ExceptionClear(env);
                 return CA_STATUS_FAILED;
@@ -882,12 +862,14 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
 
             OIC_LOG_V(INFO, TAG, "EDR sendTo is successful: %u bytes, to %s",
                       dataLength, address);
+            CALogSendStateInfo(CA_ADAPTER_RFCOMM_BTEDR, address, 0, dataLength, true, NULL);
         }
         else
         {
+            OIC_LOG(ERROR, TAG, "error!!");
+            CALogSendStateInfo(CA_ADAPTER_RFCOMM_BTEDR, address, 0, dataLength, false, NULL);
             (*env)->ExceptionDescribe(env);
             (*env)->ExceptionClear(env);
-            OIC_LOG(ERROR, TAG, "error!!");
             return CA_STATUS_FAILED;
         }
     }
@@ -1050,6 +1032,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
 
     if ((*env)->ExceptionCheck(env))
     {
+        CALogSendStateInfo(CA_ADAPTER_RFCOMM_BTEDR, address, 0, 0, false, "Connect has Failed");
         OIC_LOG(ERROR, TAG, "Connect is Failed!!!");
         (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);
@@ -1064,16 +1047,16 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
         (*env)->DeleteLocalRef(env, jni_obj_BTSocket);
         return CA_STATUS_FAILED;
     }
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
     CAEDRNativeAddDeviceSocketToList(env, jni_socket);
     (*env)->DeleteGlobalRef(env, jni_socket);
     (*env)->DeleteLocalRef(env, jni_obj_BTSocket);
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     // update state
-    ca_mutex_lock(g_mutexStateList);
+    oc_mutex_lock(g_mutexStateList);
     CAEDRUpdateDeviceState(STATE_CONNECTED, address);
-    ca_mutex_unlock(g_mutexStateList);
+    oc_mutex_unlock(g_mutexStateList);
 
     OIC_LOG(DEBUG, TAG, "successfully connected");
 
@@ -1119,9 +1102,9 @@ void CAEDRNativeSocketClose(JNIEnv *env, const char *address)
     CAEDRNativeRemoveDeviceSocket(env, jni_obj_socket);
 
     // update state
-    ca_mutex_lock(g_mutexStateList);
+    oc_mutex_lock(g_mutexStateList);
     CAEDRUpdateDeviceState(STATE_DISCONNECTED, address);
-    ca_mutex_unlock(g_mutexStateList);
+    oc_mutex_unlock(g_mutexStateList);
 
     OIC_LOG_V(DEBUG, TAG, "disconnected with [%s]", address);
 }

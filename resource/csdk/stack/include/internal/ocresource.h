@@ -54,24 +54,17 @@ typedef struct PRESENCERESOURCE{
 } PresenceResource;
 #endif
 
+/** Introspection URI.*/
+#define OC_RSRVD_INTROSPECTION_URI_PATH            "/introspection"
+
+/** Introspection payload URI.*/
+#define OC_RSRVD_INTROSPECTION_PAYLOAD_URI_PATH    "/introspection/payload"
+
 /**
  * Forward declarations
  */
 
 struct rsrc_t;
-
-/**
- * Typedefs for stack interface
- * IF here stands for Interface
- */
-
-typedef enum {
-    STACK_IF_DEFAULT = 0,
-    STACK_IF_LL,
-    STACK_IF_BATCH,
-    STACK_IF_GROUP,
-    STACK_IF_INVALID
-} OCStackIfTypes;
 
 /**
  * following structure will be created in occollection.
@@ -155,10 +148,10 @@ typedef struct attr_t {
     /** The name of the attribute; used to look up the attribute in list.
      *  for a given attribute SHOULD not be changed once assigned.
      */
-    const char *attrName;
+    char *attrName;
 
-    /** value of the attribute as string.*/
-    char *attrValue;
+    /** value of the attribute as void. To support both string and ::OCStringLL value*/
+    void *attrValue;
 } OCAttribute;
 
 /**
@@ -208,7 +201,7 @@ typedef struct OCResource {
     /** Resource interface(s); linked list.*/
     OCResourceInterface *rsrcInterface;
 
-    /** Resource interface(s); linked list.*/
+    /** Resource attributes; linked list.*/
     OCAttribute *rsrcAttributes;
 
     /** Array of pointers to resources; can be used to represent a container of resources.
@@ -240,6 +233,20 @@ typedef struct OCResource {
 
     /** Pointer of ActionSet which to support group action.*/
     OCActionSet *actionsetHead;
+
+    /** The instance identifier for this web link in an array of web links - used in links. */
+    union
+    {
+        /** An ordinal number that is not repeated - must be unique in the collection context. */
+        int64_t ins;
+        /** Any unique string including a URI. */
+        char *uniqueStr;
+        /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */
+        OCIdentity uniqueUUID;
+    };
+
+    /** Resource endpoint type(s). */
+    OCTpsSchemeFlags endpointType;
 } OCResource;
 
 

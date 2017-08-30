@@ -27,26 +27,33 @@ import os
 # Load common build config
 SConscript('build_common/SConscript')
 
+# The construction environment named 'env' is set up in build_common
+# and should be imported by all other scripts which need access to it.
+# Scripts which do not need to modify the global construction environment
+# should Clone() this environment and modify the clone.
+# Scripts which need to modify the global environment should not
+# work on a clone, since those changes will not propagate.
+# Normally global changes should be limited to build_common and
+# the extlibs scripts.
 Import('env')
 
-if os.environ.get('TERM') != None:
-	env['ENV']['TERM'] = os.environ['TERM']
+if os.environ.get('TERM') is not None:
+    env['ENV']['TERM'] = os.environ['TERM']
 
 # Load extra options
 SConscript('extra_options.scons')
 
 target_os = env.get('TARGET_OS')
 if target_os == 'arduino':
-	SConscript('arduino.scons')
+    SConscript('arduino.scons')
 
-if target_os == 'android':
-	SConscript('android/android_api/SConscript')
-
-# By default, src_dir is current dir, the build_dir is:
+# By default, src_dir is the current dir, build_dir is:
 #     ./out/<target_os>/<target_arch>/<release or debug>/
 #
-# The build_dir is a variant directory of the source directory(You can
-# consider build_dir as a soft link to src_dir, for detail please refer to:
+# The build_dir is a Variant directory of the source directory.
+# iotivity variant directories are set up with argument "duplicate=0",
+# which means build_dir files will behave like soft links to src_dir files.
+# For more reading on this:
 #     http://www.scons.org/doc/production/HTML/scons-user.html#f-VariantDir
 #
 # Any way, to make the output is in build_dir, when load scripts, the path should
@@ -56,26 +63,39 @@ build_dir = env.get('BUILD_DIR')
 # Build 'resource' sub-project
 SConscript(build_dir + 'resource/SConscript')
 
-if target_os not in ['arduino','darwin','ios', 'android']:
-	SConscript(build_dir + 'examples/OICMiddle/SConscript')
+if target_os not in ['arduino','darwin','ios', 'android', 'msys_nt', 'windows']:
+    SConscript(build_dir + 'examples/OICMiddle/SConscript')
+
+java_build = None
+if (env.get('BUILD_JAVA') and env.get('JAVA_HOME')) or target_os == 'android':
+    java_build = SConscript(build_dir + 'java/SConscript')
 
 # Build 'service' sub-project
-SConscript(build_dir + 'service/SConscript')
+service_build = SConscript(build_dir + 'service/SConscript')
 
-# Build "plugin interface" sub-project
-SConscript(build_dir + 'plugins/SConscript')
+if java_build:
+    Depends(service_build, java_build)
 
-# Build "cloud" sub-project
-SConscript(build_dir + 'cloud/SConscript')
+# Build other sub-projects
+SConscript(dirs=[
+    build_dir + 'cloud',
+    build_dir + 'plugins',
+    build_dir + 'bridging',
+])
 
-# Append targets information to the help information, to see help info, execute command line:
-#     $ scon [options] -h
+# Append target information to the help information (if needed)
+# To see help info, execute:
+#     $ scons [options] -h
+# Note some help is option-dependent, e.g. java-related options are
+# not added to the help unless BUILD_JAVA is seen
+#
+# This is not really needed unless requesting help, consider adding check:
+#if env.GetOption('help'):
 env.PrintTargets()
 
 # Print bin upload command line (arduino only)
 if target_os == 'arduino':
-	env.UploadHelp()
+    env.UploadHelp()
 
-# to install the generated pc file into custome prefix location
+# to install the generated pc file into custom prefix location
 env.UserInstallTargetPCFile('iotivity.pc', 'iotivity.pc')
-

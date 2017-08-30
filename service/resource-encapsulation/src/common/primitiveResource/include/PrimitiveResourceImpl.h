@@ -132,6 +132,23 @@ namespace OIC
                                 _1, _2, _3));
             }
 
+            void requestSetWith(const std::string& resourceType,
+                          const std::string& resourceInterface,
+                          const OC::QueryParamsMap& queryParametersMap,
+                          const RCSRepresentation & rep, SetCallback callback)
+            {
+                using namespace std::placeholders;
+
+                typedef OCStackResult (BaseResource::*PostFunc)(const std::string&,
+                        const std::string&, const OC::OCRepresentation&, const OC::QueryParamsMap&,
+                        OC::GetCallback);
+
+                invokeOC(m_baseResource, static_cast< PostFunc >(&BaseResource::post),
+                        resourceType, resourceInterface,
+                        RCSRepresentation::toOCRepresentation(rep), queryParametersMap,
+                        std::bind(safeCallback< SetCallback >, WeakFromThis(), std::move(callback),
+                                _1, _2, _3));
+            }
 
             void requestPut(const RCSResourceAttributes& attrs, PutCallback callback)
             {
@@ -192,6 +209,11 @@ namespace OIC
             std::vector< std::string > getInterfaces() const
             {
                 return invokeOC(m_baseResource, &BaseResource::getResourceInterfaces);
+            }
+
+            OCConnectivityType getConnectivityType() const
+            {
+                return invokeOC(m_baseResource, &BaseResource::connectivityType);
             }
 
             bool isObservable() const

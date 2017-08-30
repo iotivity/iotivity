@@ -29,11 +29,21 @@
 #include <signal.h>
 #include <pthread.h>
 #include <array>
+#include "oic_malloc.h"
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"
 #include "ocserver.h"
 using namespace std;
+
+#define VERIFY_SUCCESS(op)                          \
+{                                                   \
+    if (op != OC_STACK_OK)                          \
+    {                                               \
+        cout << #op << " failed!!" << endl;         \
+        goto exit;                                  \
+    }                                               \
+}
 
 //string length of "/a/light/" + std::numeric_limits<int>::digits10 + '\0'"
 // 9 + 9 + 1 = 19
@@ -43,6 +53,9 @@ static int gObserveNotifyType = 3;
 
 int gQuitFlag = 0;
 int gLightUnderObservation = 0;
+
+static GMainLoop *g_mainloop = NULL;
+pthread_t g_thread;
 
 static LightResource Light;
 // This variable determines instance number of the Light resource.
@@ -59,20 +72,24 @@ static int stopPresenceCount = 10;
 #endif
 
 char *gResourceUri= (char *)"/a/light";
-const char *dateOfManufacture = "myDateOfManufacture";
+const char *dateOfManufacture = "2016-01-15";
 const char *deviceName = "myDeviceName";
-const char *deviceUUID = "myDeviceUUID";
+const char *deviceUUID = "51b55ddc-ccbb-4cb3-a57f-494eeca13a21";
 const char *firmwareVersion = "myFirmwareVersion";
 const char *manufacturerName = "myName";
 const char *operatingSystemVersion = "myOS";
 const char *hardwareVersion = "myHardwareVersion";
-const char* platformID = "myPlatformID";
-const char *manufacturerUrl = "myManufacturerUrl";
+const char *platformID = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+const char *protocolIndependentID = "45a908e9-c06c-4935-b2dd-4195da863a11";
+const char *manufacturerLink = "https://www.iotivity.org";
 const char *modelNumber = "myModelNumber";
 const char *platformVersion = "myPlatformVersion";
-const char *supportUrl = "mySupportUrl";
+const char *supportLink = "https://www.iotivity.org";
 const char *version = "myVersion";
 const char *systemTime = "2015-05-15T11.04";
+const char *specVersion = "ocf.1.1.0";
+const char *dataModelVersions = "ocf.res.1.1.0,ocf.sh.1.1.0";
+const char *deviceType = "oic.d.tv";
 
 // Entity handler should check for resourceTypeName and ResourceInterface in order to GET
 // the existence of a known resource
@@ -80,7 +97,6 @@ const char *resourceTypeName = "core.light";
 const char *resourceInterface = OC_RSRVD_INTERFACE_DEFAULT;
 
 OCPlatformInfo platformInfo;
-OCDeviceInfo deviceInfo;
 
 OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
 {
@@ -499,6 +515,7 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
         }
     }
 
+    OCPayloadDestroy(response.payload);
     return ehResult;
 }
 
@@ -518,7 +535,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     cout << "\nInside entity handler - flags: " << flag;
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
-    OCEntityHandlerResponse response;
+    OCEntityHandlerResponse response = { 0, 0, OC_EH_ERROR, 0, 0, { },{ 0 }, false };
 
     // Validate pointer
     if (!entityHandlerRequest)
@@ -801,11 +818,6 @@ void DeletePlatformInfo()
     free (platformInfo.systemTime);
 }
 
-void DeleteDeviceInfo()
-{
-    free (deviceInfo.deviceName);
-}
-
 bool DuplicateString(char** targetString, const char* sourceString)
 {
     if(!sourceString)
@@ -833,12 +845,12 @@ OCStackResult SetPlatformInfo(const char* platformID, const char *manufacturerNa
 
     bool success = true;
 
-    if(manufacturerName != NULL && (strlen(manufacturerName) > MAX_MANUFACTURER_NAME_LENGTH))
+    if(manufacturerName != NULL && (strlen(manufacturerName) > MAX_PLATFORM_NAME_LENGTH))
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    if(manufacturerUrl != NULL && (strlen(manufacturerUrl) > MAX_MANUFACTURER_URL_LENGTH))
+    if(manufacturerUrl != NULL && (strlen(manufacturerUrl) > MAX_PLATFORM_URL_LENGTH))
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -907,13 +919,28 @@ OCStackResult SetPlatformInfo(const char* platformID, const char *manufacturerNa
     return OC_STACK_ERROR;
 }
 
-OCStackResult SetDeviceInfo(const char* deviceName)
+OCStackResult SetDeviceInfo()
 {
-    if(!DuplicateString(&deviceInfo.deviceName, deviceName))
+    OCResourceHandle resourceHandle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    if (resourceHandle == NULL)
     {
-        return OC_STACK_ERROR;
+        OIC_LOG(ERROR, TAG, "Device Resource does not exist.");
+        goto exit;
     }
+
+    VERIFY_SUCCESS(OCBindResourceTypeToResource(resourceHandle, deviceType));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, deviceName));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                      dataModelVersions));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                      protocolIndependentID));
+
+    OIC_LOG(INFO, TAG, "Device information initialized successfully.");
     return OC_STACK_OK;
+
+exit:
+    return OC_STACK_ERROR;
 }
 
 static void PrintUsage()
@@ -923,11 +950,40 @@ static void PrintUsage()
     cout << "\n-o 1 : Notify list of observers";
 }
 
+void *GMainLoopThread(void *param)
+{
+
+    while (!gQuitFlag)
+    {
+        if (OCProcess() != OC_STACK_OK)
+        {
+            cout << "\nOCStack process error";
+            return NULL;
+        }
+#ifndef ROUTING_GATEWAY
+        sleep(1);
+#endif
+    }
+
+    if (g_mainloop)
+    {
+        g_main_loop_quit(g_mainloop);
+    }
+    return NULL;
+}
+
 int main(int argc, char* argv[])
 {
     pthread_t threadId;
     pthread_t threadId_presence;
     int opt;
+
+    g_mainloop = g_main_loop_new(NULL, FALSE);
+    if(!g_mainloop)
+    {
+        printf("g_main_loop_new failed\n");
+        return 0;
+    }
 
     while ((opt = getopt(argc, argv, "o:")) != -1)
     {
@@ -955,6 +1011,7 @@ int main(int argc, char* argv[])
         cout << "\nOCStack init error";
         return 0;
     }
+
 #ifdef WITH_PRESENCE
     if (OCStartPresence(0) != OC_STACK_OK)
     {
@@ -966,9 +1023,9 @@ int main(int argc, char* argv[])
     OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb, NULL);
 
     OCStackResult registrationResult =
-        SetPlatformInfo(platformID, manufacturerName, manufacturerUrl, modelNumber,
+        SetPlatformInfo(platformID, manufacturerName, manufacturerLink, modelNumber,
             dateOfManufacture, platformVersion,  operatingSystemVersion,  hardwareVersion,
-            firmwareVersion,  supportUrl, systemTime);
+            firmwareVersion,  supportLink, systemTime);
 
     if (registrationResult != OC_STACK_OK)
     {
@@ -984,17 +1041,7 @@ int main(int argc, char* argv[])
         exit (EXIT_FAILURE);
     }
 
-    registrationResult = SetDeviceInfo(deviceName);
-
-    if (registrationResult != OC_STACK_OK)
-    {
-        cout << "\nDevice info setting failed locally!";
-        exit (EXIT_FAILURE);
-    }
-
-    OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.d.tv");
-
-    registrationResult = OCSetDeviceInfo(deviceInfo);
+    registrationResult = SetDeviceInfo();
 
     if (registrationResult != OC_STACK_OK)
     {
@@ -1031,21 +1078,17 @@ int main(int argc, char* argv[])
     cout << "\nEntering ocserver main loop...";
 
     DeletePlatformInfo();
-    DeleteDeviceInfo();
 
     signal(SIGINT, handleSigInt);
 
-    while (!gQuitFlag)
+    int result = pthread_create(&g_thread, NULL, GMainLoopThread, (void *)NULL);
+    if (result < 0)
     {
-        if (OCProcess() != OC_STACK_OK)
-        {
-            cout << "\nOCStack process error";
-            return 0;
-        }
-#ifndef ROUTING_GATEWAY
-        sleep(1);
-#endif
+        printf("pthread_create failed in initialize\n");
+        return 0;
     }
+
+    g_main_loop_run(g_mainloop);
 
     /*
      * Cancel the Light thread and wait for it to terminate

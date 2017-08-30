@@ -47,7 +47,7 @@ struct oc_ostream_logger_ctx
 } // namespace
 
 /* Courtesy-function: */
-oc_log_ctx_t *oc_make_ostream_logger()
+oc_log_ctx_t *OC_CALL oc_make_ostream_logger()
 {
  return oc_log_make_ctx(
             nullptr,
@@ -67,7 +67,14 @@ try
  auto *target = reinterpret_cast<std::ostream *>(world);
 
  if(nullptr == world)
+ {
+#ifdef TB_LOG
   target = &std::cout;
+#else
+  static std::ostream nullstream(0);
+  target = &nullstream;
+#endif
+ }
 
  oc_ostream_logger_ctx *my_ctx = new oc_ostream_logger_ctx(target);
 

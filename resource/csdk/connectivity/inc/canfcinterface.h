@@ -65,7 +65,7 @@ typedef void (*CANFCPacketReceivedCallback)(const CASecureEndpoint_t *endpoint, 
   * @param[in]  result       result of request.
   */
 typedef void (*CANFCErrorHandleCallback)(const CAEndpoint_t *endpoint, const void *data,
-                                         uint32_t dataLength, CAResult_t result);
+                                         size_t dataLength, CAResult_t result);
 
 /**
  * Callback to be notified when exception occures on multicast/unicast server.

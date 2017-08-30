@@ -69,8 +69,8 @@ CAResult_t CAAddLEServerInfoToList(LEServerInfoList **serverList,
 
     OIC_LOG(DEBUG, TAG, "IN");
 
-    VERIFY_NON_NULL(serverList, TAG, "clientList");
-    VERIFY_NON_NULL(leServerInfo, TAG, "leClientInfo");
+    VERIFY_NON_NULL(serverList, TAG, "serverList");
+    VERIFY_NON_NULL(leServerInfo, TAG, "leServerInfo");
 
     LEServerInfoList *node = (LEServerInfoList *) OICCalloc(1, sizeof(LEServerInfoList));
     if (NULL == node)
@@ -100,6 +100,42 @@ CAResult_t CAAddLEServerInfoToList(LEServerInfoList **serverList,
     OIC_LOG(DEBUG, TAG, "OUT");
 
     return CA_STATUS_OK;
+}
+
+void CARemoveLEServerInfoFromList(LEServerInfoList **serverList,
+                                        const char *remoteAddress)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL_VOID(serverList, TAG, "serverList");
+    VERIFY_NON_NULL_VOID(remoteAddress, TAG, "remoteAddress");
+
+    LEServerInfoList *temp = *serverList;
+    LEServerInfoList *prev = NULL;
+    while (temp)
+    {
+        if (!strcasecmp(temp->serverInfo->remoteAddress, remoteAddress))
+        {
+            if (NULL == prev)
+            {
+                *serverList = temp->next;
+            }
+            else
+            {
+                prev->next = temp->next;
+            }
+            CADecrementRegisteredServiceCount();
+            bt_gatt_client_destroy(temp->serverInfo->clientHandle);
+            OICFree(temp->serverInfo->remoteAddress);
+            OICFree(temp->serverInfo);
+            OICFree(temp);
+            OIC_LOG_V(DEBUG, TAG, "Device [%s] removed from list", remoteAddress);
+            break;
+        }
+        prev = temp;
+        temp = temp->next;
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 CAResult_t CAGetLEServerInfo(LEServerInfoList *serverList, const char *leAddress,
@@ -162,13 +198,13 @@ CAResult_t CAGetLEServerInfoByPosition(LEServerInfoList *serverList, int32_t pos
     return CA_STATUS_FAILED;
 }
 
-void CAFreeLEServerList(LEServerInfoList *clientList)
+void CAFreeLEServerList(LEServerInfoList *serverList)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    while (clientList)
+    while (serverList)
     {
-        LEServerInfoList *temp = clientList;
-        clientList = clientList->next;
+        LEServerInfoList *temp = serverList;
+        serverList = serverList->next;
         CAFreeLEServerInfo(temp->serverInfo);
         OICFree(temp);
     }
@@ -195,6 +231,95 @@ void CAFreeLEServerInfo(LEServerInfo *leServerInfo)
             OICFree(leServerInfo->remoteAddress);
         }
         OICFree(leServerInfo);
+    }
+    OIC_LOG(DEBUG, TAG, "OUT");
+}
+
+CAResult_t CAAddLEClientInfoToList(LEClientInfoList **clientList,
+                                   char *clientAddress)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL(clientList, TAG, "clientList");
+    VERIFY_NON_NULL(clientAddress, TAG, "clientAddress");
+
+    LEClientInfoList *node = (LEClientInfoList *) OICCalloc(1, sizeof(LEClientInfoList));
+    if (NULL == node)
+    {
+        OIC_LOG(ERROR, TAG, "Malloc failed!");
+        return CA_STATUS_FAILED;
+    }
+
+    node->remoteAddress= clientAddress;
+    node->next = NULL;
+
+    if (*clientList == NULL)   // Empty list
+    {
+        *clientList = node;
+    }
+    else     // Add at front end
+    {
+        node->next = *clientList;
+        *clientList = node;
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "Device [%s] added to list", clientAddress);
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+void CARemoveLEClientInfoFromList(LEClientInfoList **clientList,
+                                  const char *clientAddress)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL_VOID(clientAddress, TAG, "clientAddress");
+
+    LEClientInfoList *temp = *clientList;
+    LEClientInfoList *prev = NULL;
+    while (temp)
+    {
+        if (!strcasecmp(temp->remoteAddress, clientAddress))
+        {
+            if (NULL == prev)
+            {
+                *clientList = temp->next;
+            }
+            else
+            {
+                prev->next = temp->next;
+            }
+            OICFree(temp->remoteAddress);
+            OICFree(temp);
+            OIC_LOG_V(DEBUG, TAG, "Device [%s] removed from list", clientAddress);
+            break;
+        }
+        prev = temp;
+        temp = temp->next;
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+}
+
+void CADisconnectAllClient(LEClientInfoList *clientList)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    while (clientList)
+    {
+        LEClientInfoList *temp = clientList;
+        clientList = clientList->next;
+        if (temp->remoteAddress)
+        {
+            int32_t ret = bt_gatt_disconnect(temp->remoteAddress);
+
+            if (BT_ERROR_NONE != ret)
+            {
+                OIC_LOG_V(ERROR, TAG,
+                          "bt_gatt_disconnect Failed with ret value [%d]",
+                          ret);
+                return;
+            }
+            OICFree(temp->remoteAddress);
+        }
+        OICFree(temp);
     }
     OIC_LOG(DEBUG, TAG, "OUT");
 }

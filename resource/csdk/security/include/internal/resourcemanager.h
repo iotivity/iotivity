@@ -23,19 +23,23 @@
 
 #include <stdlib.h>
 #include "ocstack.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult InitSecureResources();
 
 /**
  * Perform cleanup for secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult DestroySecureResources();
 
@@ -44,13 +48,17 @@ OCStackResult DestroySecureResources();
  *
  * @param ehRequest pointer to entity handler request data structure.
  * @param ehRet result code from entity handler.
- * @param rspPayload response payload in JSON.
+ * @param cborPayload response payload.
+ * @param size is the cborpayload size
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
-        OCEntityHandlerResult ehRet, const char *rspPayload);
+        OCEntityHandlerResult ehRet, uint8_t *cborPayload, size_t size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //IOTVT_SRM_RM_H
-
 

@@ -32,6 +32,7 @@
 #include "cainterface.h"
 #include "caadapterinterface.h"
 #include "caipadapter.h"
+#include "caipnwmonitor.h"
 #include "caipadapterutils_eth.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
@@ -95,7 +96,8 @@ CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
     uint8_t rawIPAddr[4];
     char address[16];
     W5100.getIPAddress(rawIPAddr);
-    sprintf(address, "%d.%d.%d.%d", rawIPAddr[0], rawIPAddr[1], rawIPAddr[2], rawIPAddr[3]);
+    snprintf(address, sizeof(address), "%d.%d.%d.%d", rawIPAddr[0], rawIPAddr[1], rawIPAddr[2],
+             rawIPAddr[3]);
     OIC_LOG_V(DEBUG, TAG, "address:%s", address);
     int serverFD = 1;
     if (CAArduinoInitUdpSocket(port, &serverFD) != CA_STATUS_OK)
@@ -319,12 +321,7 @@ void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-void CAIPSetExceptionCallback(CAIPExceptionCallback callback)
-{
-    // TODO
-}
-
-void CAIPSetErrorHandleCallback(CAIPErrorHandleCallback ipErrorCallback)
+void CAIPSetErrorHandler(CAIPErrorHandleCallback errorHandleCallback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -335,7 +332,7 @@ void CAIPPullData()
     CAArduinoCheckData();
 }
 
-CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
+CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -349,7 +346,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         return CA_STATUS_FAILED;
     }
 
-    uint32_t len = u_arraylist_length(iflist);
+    size_t len = u_arraylist_length(iflist);
 
     CAEndpoint_t *eps = (CAEndpoint_t *)OICCalloc(len, sizeof (CAEndpoint_t));
     if (!eps)
@@ -359,19 +356,17 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    for (uint32_t i = 0, j = 0; i < len; i++)
+    for (size_t i = 0, j = 0; i < len; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
         if(!ifitem)
         {
             continue;
         }
-        unsigned char *addr=  (unsigned char *) &(ifitem->ipv4addr);
-        snprintf(eps[j].addr, MAX_ADDR_STR_SIZE_CA, "%d.%d.%d.%d", addr[0], addr[1], addr[2], addr[3]);
-
+        OICStrcpy(eps[j].addr, MAX_ADDR_STR_SIZE_CA, ifitem->addr);
         eps[j].flags = CA_IPV4;
         eps[j].adapter = CA_ADAPTER_IP;
-        eps[j].interface = 0;
+        eps[j].ifindex = 0;
         eps[j].port = caglobals.ip.u4.port;
         j++;
     }

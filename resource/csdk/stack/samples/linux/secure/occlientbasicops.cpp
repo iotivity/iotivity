@@ -18,13 +18,24 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+/** @todo stop-gap for naming issue. Windows.h does not like us to use ERROR */
+#ifdef ERROR
+#undef ERROR
+#endif
+#endif
 #include <iostream>
 #include <sstream>
+#include <getopt.h>
 #include "ocstack.h"
 #include "logger.h"
 #include "occlientbasicops.h"
@@ -37,10 +48,11 @@
 static int UnicastDiscovery = 0;
 static int TestCase = 0;
 static int ConnType = 0;
+static int DevOwner = 0;
+static int WithTcp = 0;
 
 static char DISCOVERY_QUERY[] = "%s/oic/res";
 OCConnectivityType discoveryReqConnType = CT_ADAPTER_IP;
-static OCDevAddr endpoint;
 
 static std::string coapServerResource;
 static int coapSecureResource;
@@ -49,8 +61,16 @@ static OCConnectivityType ocConnType;
 //Secure Virtual Resource database for Iotivity Client application
 //It contains Client's Identity and the PSK credentials
 //of other devices which the client trusts
-static char CRED_FILE[] = "oic_svr_db_client.json";
+static char CRED_FILE_DEVOWNER[] = "oic_svr_db_client_devowner.dat";
+static char CRED_FILE_NONDEVOWNER[] = "oic_svr_db_client_nondevowner.dat";
 
+//Standard uri prefix for secure virtual resources
+const char * OIC_STD_URI_PREFIX = "/oic/";
+
+const char * COAPS_STR = "coaps";
+#ifdef __WITH_TLS__
+const char * COAPS_TCP_STR = "coaps+tcp";
+#endif
 
 int gQuitFlag = 0;
 
@@ -63,20 +83,20 @@ void handleSigInt(int signum)
     }
 }
 
-OCPayload* putPayload()
+OCPayload *putPayload()
 {
-    OCRepPayload* payload = OCRepPayloadCreate();
+    OCRepPayload *payload = OCRepPayloadCreate();
 
-    if(!payload)
+    if (!payload)
     {
-        std::cout << "Failed to create put payload object"<<std::endl;
+        std::cout << "Failed to create put payload object" << std::endl;
         std::exit(1);
     }
 
     OCRepPayloadSetPropInt(payload, "power", 15);
     OCRepPayloadSetPropBool(payload, "state", true);
 
-    return (OCPayload*) payload;
+    return (OCPayload *) payload;
 }
 
 static void PrintUsage()
@@ -89,6 +109,10 @@ static void PrintUsage()
     OIC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get/Put/Post Requests");
     OIC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
     OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
+    OIC_LOG(INFO, TAG, "-d 0 : Client as Non Device Owner");
+    OIC_LOG(INFO, TAG, "-d 1 : Client as Device Owner");
+    OIC_LOG(INFO, TAG, "-p 0 : Use UDP protocol");
+    OIC_LOG(INFO, TAG, "-p 1 : Use TCP protocol");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -96,7 +120,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
                                  const OCDevAddr *dest,
                                  OCQualityOfService qos,
                                  OCClientResponseHandler cb,
-                                 OCHeaderOption * options, uint8_t numOptions)
+                                 OCHeaderOption *options, uint8_t numOptions)
 {
     OCStackResult ret;
     OCCallbackData cbData;
@@ -105,9 +129,12 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.context = NULL;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, method, query.str().c_str(), dest,
-            (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload() : NULL,
-            ocConnType, qos, &cbData, options, numOptions);
+    OCPayload *payload = (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload() : NULL;
+
+    ret = OCDoRequest(NULL, method, query.str().c_str(), dest,
+                      payload, ocConnType, qos, &cbData, options, numOptions);
+
+    OCPayloadDestroy(payload);
 
     if (ret != OC_STACK_OK)
     {
@@ -117,15 +144,15 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     return ret;
 }
 
-OCStackApplicationResult putReqCB(void*, OCDoHandle, OCClientResponse * clientResponse)
+OCStackApplicationResult putReqCB(void *, OCDoHandle, OCClientResponse *clientResponse)
 {
     OIC_LOG(INFO, TAG, "Callback Context for PUT recvd successfully");
 
-    if(clientResponse)
+    if (clientResponse)
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Put Response"));
+        OIC_LOG(INFO, TAG, "=============> Put Response");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -134,32 +161,32 @@ OCStackApplicationResult postReqCB(void *, OCDoHandle, OCClientResponse *clientR
 {
     OIC_LOG(INFO, TAG, "Callback Context for POST recvd successfully");
 
-    if(clientResponse)
+    if (clientResponse)
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Post Response"));
+        OIC_LOG(INFO, TAG, "=============> Post Response");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult getReqCB(void*, OCDoHandle, OCClientResponse * clientResponse)
+OCStackApplicationResult getReqCB(void *, OCDoHandle, OCClientResponse *clientResponse)
 {
     OIC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
 
-    if(clientResponse)
+    if (clientResponse)
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Get Response"));
+        OIC_LOG(INFO, TAG, "=============> Get Response");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
 // This is a function called back when a device is discovered
-OCStackApplicationResult discoveryReqCB(void*, OCDoHandle,
-        OCClientResponse * clientResponse)
+OCStackApplicationResult discoveryReqCB(void *, OCDoHandle,
+                                        OCClientResponse *clientResponse)
 {
     OIC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
 
@@ -167,30 +194,29 @@ OCStackApplicationResult discoveryReqCB(void*, OCDoHandle,
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
         OIC_LOG_V(INFO, TAG,
-                "Device =============> Discovered @ %s:%d",
-                clientResponse->devAddr.addr,
-                clientResponse->devAddr.port);
+                  "Device =============> Discovered @ %s:%d",
+                  clientResponse->devAddr.addr,
+                  clientResponse->devAddr.port);
 
         if (clientResponse->result == OC_STACK_OK)
         {
             OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
             ocConnType = clientResponse->connType;
-            endpoint = clientResponse->devAddr;
 
             if (parseClientResponse(clientResponse) != -1)
             {
-                switch(TestCase)
+                switch (TestCase)
                 {
                     case TEST_NON_CON_OP:
-                        InitGetRequest(OC_LOW_QOS);
-                        InitPutRequest(OC_LOW_QOS);
-                        //InitPostRequest(OC_LOW_QOS);
+                        InitGetRequest(&clientResponse->devAddr, OC_LOW_QOS);
+                        InitPutRequest(&clientResponse->devAddr, OC_LOW_QOS);
+                        InitPostRequest(&clientResponse->devAddr, OC_LOW_QOS);
                         break;
                     case TEST_CON_OP:
-                        InitGetRequest(OC_HIGH_QOS);
-                        InitPutRequest(OC_HIGH_QOS);
-                        //InitPostRequest(OC_HIGH_QOS);
+                        InitGetRequest(&clientResponse->devAddr, OC_HIGH_QOS);
+                        InitPutRequest(&clientResponse->devAddr, OC_HIGH_QOS);
+                        InitPostRequest(&clientResponse->devAddr, OC_HIGH_QOS);
                         break;
                 }
             }
@@ -200,60 +226,64 @@ OCStackApplicationResult discoveryReqCB(void*, OCDoHandle,
     return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
 
 }
-
-int InitPutRequest(OCQualityOfService qos)
+int InitPutRequest(OCDevAddr *endpoint, OCQualityOfService qos)
 {
-    OIC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+    OIC_LOG_V(INFO, TAG, "Executing %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
-    endpoint.flags = (OCTransportFlags)(endpoint.flags|OC_SECURE);
-    return (InvokeOCDoResource(query, OC_REST_PUT, &endpoint,
-            ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS), putReqCB, NULL, 0));
+
+    return (InvokeOCDoResource(query, OC_REST_PUT, endpoint,
+                               ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS), putReqCB, NULL, 0));
 }
 
-int InitPostRequest(OCQualityOfService qos)
+int InitPostRequest(OCDevAddr *endpoint, OCQualityOfService qos)
 {
     OCStackResult result;
-    OIC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+
+    OIC_LOG_V(INFO, TAG, "Executing %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
-    endpoint.flags = (OCTransportFlags)(endpoint.flags|OC_SECURE);
 
-    // First POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST, &endpoint,
-            ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
-            postReqCB, NULL, 0);
+    // First PUT operation (to create an LED instance)
+    result = InvokeOCDoResource(query, OC_REST_PUT, endpoint,
+                                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS),
+                                putReqCB, NULL, 0);
     if (OC_STACK_OK != result)
     {
         // Error can happen if for example, network connectivity is down
         OIC_LOG(INFO, TAG, "First POST call did not succeed");
     }
 
-    // Second POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST, &endpoint,
-            ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
-            postReqCB, NULL, 0);
+    // Second PUT operation (to create an LED instance)
+    result = InvokeOCDoResource(query, OC_REST_PUT, endpoint,
+                                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS),
+                                putReqCB, NULL, 0);
     if (OC_STACK_OK != result)
     {
         OIC_LOG(INFO, TAG, "Second POST call did not succeed");
     }
 
-    // This POST operation will update the original resourced /a/led
-    return (InvokeOCDoResource(query, OC_REST_POST, &endpoint,
-                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
-                postReqCB, NULL, 0));
+    // This POST operation will update the original resourced /a/led (as long as
+    // the server is set to max 2 /lcd resources)
+    result = InvokeOCDoResource(query, OC_REST_POST, endpoint,
+                                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS),
+                                postReqCB, NULL, 0);
+    if (OC_STACK_OK != result)
+    {
+        OIC_LOG(INFO, TAG, "Third POST call did not succeed");
+    }
+    return result;
 }
 
-int InitGetRequest(OCQualityOfService qos)
+int InitGetRequest(OCDevAddr *endpoint, OCQualityOfService qos)
 {
-    OIC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+    OIC_LOG_V(INFO, TAG, "Executing %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
-    endpoint.flags = (OCTransportFlags)(endpoint.flags|OC_SECURE);
 
-    return (InvokeOCDoResource(query, OC_REST_GET, &endpoint,
-                ((qos == OC_HIGH_QOS)?  OC_HIGH_QOS:OC_LOW_QOS),
-                getReqCB, NULL, 0));
+    return (InvokeOCDoResource(query, OC_REST_GET, endpoint,
+                               ((qos == OC_HIGH_QOS) ?  OC_HIGH_QOS : OC_LOW_QOS),
+                               getReqCB, NULL, 0));
 }
 
 int InitDiscovery()
@@ -287,11 +317,11 @@ int InitDiscovery()
 
     /* Start a discovery query*/
     OIC_LOG_V(INFO, TAG, "Initiating %s Resource Discovery : %s\n",
-        (UnicastDiscovery) ? "Unicast" : "Multicast",
-        queryUri);
+              (UnicastDiscovery) ? "Unicast" : "Multicast",
+              queryUri);
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, queryUri, 0, 0, CT_DEFAULT,
-                       OC_LOW_QOS, &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, queryUri, 0, 0, CT_DEFAULT,
+                      OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -299,20 +329,38 @@ int InitDiscovery()
     return ret;
 }
 
-FILE* client_fopen(const char *path, const char *mode)
+FILE *client_fopen_devowner(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen(CRED_FILE, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE_DEVOWNER, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
-int main(int argc, char* argv[])
+FILE *client_fopen_nondevowner(const char *path, const char *mode)
+{
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE_NONDEVOWNER, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
+}
+int main(int argc, char *argv[])
 {
     int opt;
     struct timespec timeout;
+    OCPersistentStorage ps;
 
-    while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
+    while ((opt = getopt(argc, argv, "u:t:c:d:p:")) != -1)
     {
-        switch(opt)
+        switch (opt)
         {
             case 'u':
                 UnicastDiscovery = atoi(optarg);
@@ -323,6 +371,19 @@ int main(int argc, char* argv[])
             case 'c':
                 ConnType = atoi(optarg);
                 break;
+            case 'd':
+                DevOwner = atoi(optarg);
+                break;
+            case 'p':
+                {
+                    WithTcp = atoi(optarg);
+                    if (WithTcp > 1)
+                    {
+                        PrintUsage();
+                        return -1;
+                    }
+                }
+                break;
             default:
                 PrintUsage();
                 return -1;
@@ -330,15 +391,15 @@ int main(int argc, char* argv[])
     }
 
     if ((UnicastDiscovery != 0 && UnicastDiscovery != 1) ||
-            (TestCase < TEST_DISCOVER_REQ || TestCase >= MAX_TESTS)||
-            (ConnType < CT_ADAPTER_DEFAULT || ConnType >= MAX_CT))
+        (TestCase < TEST_DISCOVER_REQ || TestCase >= MAX_TESTS) ||
+        (ConnType < CT_ADAPTER_DEFAULT || ConnType >= MAX_CT))
     {
         PrintUsage();
         return -1;
     }
 
 
-    if(ConnType == CT_ADAPTER_DEFAULT || ConnType ==  CT_IP)
+    if (ConnType == CT_ADAPTER_DEFAULT || ConnType ==  CT_IP)
     {
         discoveryReqConnType = CT_DEFAULT;
     }
@@ -350,7 +411,10 @@ int main(int argc, char* argv[])
 
 
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = { client_fopen, fread, fwrite, fclose, unlink };
+    if (DevOwner)
+        ps = { client_fopen_devowner, fread, fwrite, fclose, unlink };
+    else
+        ps = { client_fopen_nondevowner, fread, fwrite, fclose, unlink };
     OCRegisterPersistentStorageHandler(&ps);
 
     /* Initialize OCStack*/
@@ -388,9 +452,9 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-int parseClientResponse(OCClientResponse * clientResponse)
+int parseClientResponse(OCClientResponse *clientResponse)
 {
-    OCResourcePayload* res = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
+    OCResourcePayload *res = ((OCDiscoveryPayload *)clientResponse->payload)->resources;
 
     // Initialize all global variables
     coapServerResource.clear();
@@ -401,10 +465,51 @@ int parseClientResponse(OCClientResponse * clientResponse)
         coapServerResource.assign(res->uri);
         OIC_LOG_V(INFO, TAG, "Uri -- %s", coapServerResource.c_str());
 
-        if (res->secure)
+        if (0 == strncmp(coapServerResource.c_str(), OIC_STD_URI_PREFIX, strlen(OIC_STD_URI_PREFIX)) ||
+            0 == strncmp(coapServerResource.c_str(), "/introspection", strlen("/introspection")))
         {
-            endpoint.port = res->port;
-            coapSecureResource = 1;
+            OIC_LOG(INFO, TAG, "Skip resource");
+            res = res->next;
+            continue;
+        }
+
+        OCDevAddr *endpoint = &clientResponse->devAddr;
+        if (res && res->eps)
+        {
+            endpoint->port = 0;
+            OCEndpointPayload* eps = res->eps;
+            while (NULL != eps)
+            {
+                if (eps->family & OC_FLAG_SECURE)
+                {
+#ifdef __WITH_TLS__
+                    if (WithTcp && 0 == strcmp(eps->tps, COAPS_TCP_STR))
+                    {
+                        strncpy(endpoint->addr, eps->addr, sizeof(endpoint->addr));
+                        endpoint->port = eps->port;
+                        endpoint->flags = (OCTransportFlags)(eps->family | OC_SECURE);
+                        endpoint->adapter = OC_ADAPTER_TCP;
+                        coapSecureResource = 1;
+                        OIC_LOG_V(INFO, TAG, "TLS port: %d", endpoint->port);
+                        break;
+                    }
+#endif
+                    if (!WithTcp && 0 == strcmp(eps->tps, COAPS_STR))
+                    {
+                        strncpy(endpoint->addr, eps->addr, sizeof(endpoint->addr));
+                        endpoint->port = eps->port;
+                        endpoint->flags = (OCTransportFlags)(eps->family | OC_SECURE);
+                        endpoint->adapter = OC_ADAPTER_IP;
+                        coapSecureResource = 1;
+                        OIC_LOG_V(INFO, TAG, "DTLS port: %d", endpoint->port);
+                    }
+                }
+                eps = eps->next;
+            }
+            if (!endpoint->port)
+            {
+                OIC_LOG(INFO, TAG, "Can not find secure port information.");
+            }
         }
 
         OIC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");

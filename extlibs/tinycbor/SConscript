@@ -19,29 +19,61 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 import os
+import subprocess
 
 Import('env')
 
 src_dir = env.get('SRC_DIR')
+target_os = env.get('TARGET_OS')
 
-cborDir = os.path.join(src_dir, 'extlibs','tinycbor','tinycbor')
+cborDir = os.path.join(src_dir, 'extlibs', 'tinycbor', 'tinycbor')
+cborRevision = 'v0.4.1'
 
 if not os.path.exists(cborDir):
-    print '''
-*********************************** Error: ****************************************
-* Please download cbor using the following command:                               *
-*     $ git clone https://github.com/01org/tinycbor.git extlibs/tinycbor/tinycbor *
-***********************************************************************************
+    msg = '''
+*********************************** Error: ************************************
+* Please download cbor using the following command:
+*   $ git clone https://github.com/01org/tinycbor.git extlibs/tinycbor/tinycbor -b %s
+*******************************************************************************
+''' % cborRevision
+    Exit(msg)
+
+start_dir = os.getcwd()
+os.chdir(cborDir)
+
+# Tizen uses a separate process to sync to a particular revision of TinyCBOR.
+# Make sure tinycbor_revision stays in sync with extlibs/tinycbor/prep.sh.
+# This code also assumes tinycbor_revision is a tag; if it changes to a branch
+# or an arbitrary commit, disable this check below.
+if target_os != 'tizen' and os.path.exists('.git/HEAD'):
+    out = subprocess.check_output('git tag -l ' + cborRevision, shell=True)
+    if cborRevision not in out:
+        print out
+        msg = '''
+*********************************** Error: ************************************
+* Your TinyCBOR repo is not up to date with the version required by iotivity.
+* Please update with the following commands:
+*     $ cd extlibs/tinycbor/tinycbor
+*     $ git fetch
+*******************************************************************************
 '''
-    Exit(1)
+        Exit(msg)
+
+# Point TinyCBOR repo to desired release tag
+if os.path.exists('.git/HEAD'):
+    cmd = 'git reset --hard ' + cborRevision
+    os.system(cmd)
+else:
+    print 'Assume TinyCBOR is on tag ', cborRevision
+
+os.chdir(start_dir)
 
 cbor_src = [
-    os.path.join(cborDir,'src/cborparser.c'),
-    os.path.join(cborDir,'src/cborencoder.c'),
-    os.path.join(cborDir,'src/cborerrorstrings.c'),
-    ]
+    os.path.join(cborDir, 'src/cborparser.c'),
+    os.path.join(cborDir, 'src/cborparser_dup_string.c'),
+    os.path.join(cborDir, 'src/cborencoder.c'),
+    os.path.join(cborDir, 'src/cborerrorstrings.c'),
+]
 
 env['cbor_files'] = cbor_src
-env.AppendUnique(CPPPATH  = [os.path.join(cborDir, 'src')])
-
-
+env.AppendUnique(CPPPATH=[os.path.join(cborDir, 'src')])
