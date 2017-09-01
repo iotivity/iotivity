@@ -330,6 +330,12 @@ is_wkc(coap_key_t k)
 coap_context_t *
 coap_new_context(const coap_address_t *listen_addr)
 {
+    if (!listen_addr)
+    {
+        coap_log(LOG_EMERG, "no listen address specified\n");
+        return NULL;
+    }
+
 #if defined(WITH_POSIX) || defined(_WIN32)
     coap_context_t *c = coap_malloc( sizeof( coap_context_t ) );
     int reuse = 1;
@@ -342,16 +348,6 @@ coap_new_context(const coap_address_t *listen_addr)
 #elif WITH_LWIP
     coap_context_t *c = memp_malloc(MEMP_COAP_CONTEXT);
 #endif /* WITH_POSIX */
-    if (!listen_addr)
-    {
-        coap_log(LOG_EMERG, "no listen address specified\n");
-#if defined(WITH_POSIX)
-        coap_free_context(c);
-#elif WITH_LWIP
-        memp_free(c);
-#endif
-        return NULL;
-    }
 
     coap_clock_init();
 #ifdef WITH_LWIP
