@@ -124,6 +124,7 @@ namespace OC
             m_interfaces(std::move(o.m_interfaces)),
             m_children(std::move(m_children)),
             m_endpoints(std::move(m_endpoints)),
+            m_serverHeaderOptions(std::move(m_serverHeaderOptions)),
             m_observeHandle(std::move(m_observeHandle)),
             m_headerOptions(std::move(m_headerOptions))
         {
@@ -492,6 +493,12 @@ namespace OC
         std::vector<std::string> getAllHosts() const;
 
         /**
+         * Function to get the header options information from response
+         * @return headerOptions HeaderOptions vector consisting of OCHeaderOption objects
+         */
+        HeaderOptions getServerHeaderOptions() const;
+
+        /**
         * Function to get the URI for this resource
         * @return std::string resource URI
         */
@@ -678,6 +685,7 @@ namespace OC
         std::vector<std::string> m_interfaces;
         std::vector<std::string> m_children;
         std::vector<std::string> m_endpoints;
+        HeaderOptions m_serverHeaderOptions;
         OCDoHandle m_observeHandle;
         HeaderOptions m_headerOptions;
 
@@ -693,7 +701,8 @@ namespace OC
                     const std::string& serverId, uint8_t property,
                     const std::vector<std::string>& resourceTypes,
                     const std::vector<std::string>& interfaces,
-                    const std::vector<std::string>& endpoints);
+                    const std::vector<std::string>& endpoints,
+                    const HeaderOptions& serverHeaderOptions);
 
         OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                     const std::string& host, const std::string& uri,

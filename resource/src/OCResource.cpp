@@ -82,12 +82,14 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const std::string& serverId, uint8_t property,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces,
-                        const std::vector<std::string>& endpoints)
+                        const std::vector<std::string>& endpoints,
+                        const HeaderOptions& serverHeaderOptions)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri), m_devAddr(devAddr),
     m_isCollection(false), m_property(property),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_endpoints(endpoints),
+    m_serverHeaderOptions(serverHeaderOptions),
     m_observeHandle(nullptr)
 {
     m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE)
@@ -735,6 +737,11 @@ std::string OCResource::host() const
 std::vector<std::string> OCResource::getAllHosts() const
 {
     return m_endpoints;
+}
+
+HeaderOptions OCResource::getServerHeaderOptions() const
+{
+    return m_serverHeaderOptions;
 }
 
 std::string OCResource::uri() const

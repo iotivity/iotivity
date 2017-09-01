@@ -82,7 +82,8 @@ namespace OC
 
         public:
             ListenOCContainer(std::weak_ptr<IClientWrapper> cw,
-                    OCDevAddr& devAddr, OCDiscoveryPayload* payload)
+                    OCDevAddr& devAddr,
+                    HeaderOptions serverHeaderOption, OCDiscoveryPayload* payload)
             {
                 OCDevAddr currentDevAddr = devAddr;
                 while (payload)
@@ -112,7 +113,8 @@ namespace OC
                                     res->bitmap,
                                     StringLLToVector(res->types),
                                     StringLLToVector(res->interfaces),
-                                    epsVector
+                                    epsVector,
+                                    serverHeaderOption
                                     )));
 
 #ifdef TCP_ADAPTER
@@ -128,7 +130,8 @@ namespace OC
                                             res->bitmap,
                                             StringLLToVector(res->types),
                                             StringLLToVector(res->interfaces),
-                                            epsVector
+                                            epsVector,
+                                            serverHeaderOption
                                             )));
                         }
 #endif
