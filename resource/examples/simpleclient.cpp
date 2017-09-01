@@ -437,6 +437,38 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
             if(resourceURI == "/a/light")
             {
+                HeaderOptions headerOptions = resource->getServerHeaderOptions();
+                if (headerOptions.size() == 0)
+                {
+                    std::cout << "No header option exists" << std::endl;
+                }
+                else
+                {
+                    for (auto it = headerOptions.begin(); it != headerOptions.end(); ++it)
+                    {
+                        if (it->getOptionID() == 12)  // COAP_OPTION_CONTENT_FORMAT
+                        {
+                            size_t dataLength = it->getOptionData().length();
+                            char* optionData = new char[dataLength];
+                            strncpy(optionData, it->getOptionData().c_str(), dataLength);
+                            int format = optionData[0] * 256 + optionData[1];
+                            std::cout << "Server format in Discovery response:" << format
+                                    << std::endl;
+                            delete[] optionData;
+                        }
+                        if (it->getOptionID() == 2053) // CA_OPTION_CONTENT_VERSION
+                        {
+                            size_t dataLength = it->getOptionData().length();
+                            char* optionData = new char[dataLength];
+                            strncpy(optionData, it->getOptionData().c_str(), dataLength);
+                            int version = optionData[0] * 256;
+                            std::cout << "Server version in Discovery response:" << version
+                                    << std::endl;
+                            delete[] optionData;
+                        }
+                    }
+                }
+
                 if (resource->connectivityType() & TRANSPORT_TYPE_TO_USE)
                 {
                     curResource = resource;
