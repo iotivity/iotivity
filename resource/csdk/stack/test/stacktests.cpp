@@ -2987,9 +2987,9 @@ TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
     InitStack(OC_SERVER);
 
     size_t numResources = 0;
-    uint8_t parentBitmap = OC_DISCOVERABLE | OC_OBSERVABLE;
-    uint8_t inBitmap[2] = { OC_DISCOVERABLE | OC_OBSERVABLE,
-                            OC_DISCOVERABLE };
+    uint8_t parentBitmap = (OC_DISCOVERABLE | OC_OBSERVABLE) | OC_SECURE;
+    uint8_t inBitmap[2] = {( OC_DISCOVERABLE | OC_OBSERVABLE) | OC_SECURE,
+                            OC_DISCOVERABLE | OC_SECURE };
     int64_t outBitmap[2] = { 0 };
 
     OCResourceHandle containerHandle;
@@ -3060,7 +3060,8 @@ TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
     {
         ASSERT_TRUE(OCRepPayloadGetPropObject(linksMap[i], OC_RSRVD_POLICY, &policyMap));
         ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_BITMAP, &outBitmap[i]));
-        EXPECT_EQ(inBitmap[i], outBitmap[i]);
+        // check bitmap excluding secure bit
+        EXPECT_EQ(inBitmap[i] & ~OC_MASK_RESOURCE_SECURE, outBitmap[i]);
 
         if (devAddr)
         {
@@ -3126,7 +3127,8 @@ TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
     {
         ASSERT_TRUE(OCRepPayloadGetPropObject(linksMap[i], OC_RSRVD_POLICY, &policyMap));
         ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_BITMAP, &outBitmap[i]));
-        EXPECT_EQ(inBitmap[i], outBitmap[i]);
+        // check bitmap excluding secure bit
+        EXPECT_EQ(inBitmap[i] & ~OC_MASK_RESOURCE_SECURE, outBitmap[i]);
 
         size_t epsDim[MAX_REP_ARRAY_DEPTH] = { 0 };
         OCRepPayload **epsMap = NULL;
@@ -3157,13 +3159,13 @@ TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
             OCRepPayloadDestroy(epsMap[k]);
         }
 
-        ASSERT_GE(coap_scheme_cnt[0], (size_t) 1);
-#ifdef __WITH_TLS__
+#ifdef __WITH_DTLS__
         ASSERT_GE(coap_scheme_cnt[1], (size_t) 1);
 #ifdef TCP_ADAPTER
         ASSERT_GE(coap_scheme_cnt[3], (size_t) 1);
 #endif
 #else
+        ASSERT_GE(coap_scheme_cnt[0], (size_t) 1);
 #ifdef TCP_ADAPTER
         ASSERT_GE(coap_scheme_cnt[2], (size_t) 1);
 #endif

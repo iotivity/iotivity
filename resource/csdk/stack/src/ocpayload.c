@@ -1803,17 +1803,21 @@ void OC_CALL OCResourcePayloadAddNewEndpoint(OCResourcePayload* payload, OCEndpo
     }
 }
 
-OCEndpointPayload* CreateEndpointPayloadList(OCTpsSchemeFlags endpointType, const OCDevAddr *devAddr,
+OCEndpointPayload* CreateEndpointPayloadList(const OCResource* colResource, const OCDevAddr *devAddr,
                                             CAEndpoint_t *networkInfo, size_t infoSize,
-                                            OCEndpointPayload **listHead, size_t* epSize)
+                         OCEndpointPayload **listHead, size_t* epSize, OCEndpointPayload** selfEp)
 {
     OCEndpointPayload *headNode = NULL;
     OCEndpointPayload *lastNode = NULL;
 
+    VERIFY_PARAM_NON_NULL(TAG, colResource, "Invalid colResource parameter");
     VERIFY_PARAM_NON_NULL(TAG, devAddr, "Invalid devAddr parameter");
     VERIFY_PARAM_NON_NULL(TAG, networkInfo, "Invalid networkInfo parameter");
     VERIFY_PARAM_NON_NULL(TAG, listHead, "Invalid listHead parameter");
-	if (epSize != NULL) *epSize = 0;
+    if (epSize != NULL) *epSize = 0;
+
+    bool includeSecure = colResource->resourceProperties & OC_SECURE;
+    bool includeNonsecure = colResource->resourceProperties & OC_NONSECURE;
 
     if ((OC_ADAPTER_IP | OC_ADAPTER_TCP) & (devAddr->adapter))
     {
@@ -1834,8 +1838,11 @@ OCEndpointPayload* CreateEndpointPayloadList(OCTpsSchemeFlags endpointType, cons
                     goto exit;
                 }
 
-                if ((endpointType) & matchedTps)
+                bool isSecure = (info->flags & OC_FLAG_SECURE);
+                if (((colResource->endpointType) & matchedTps) &&
+                        ((isSecure && includeSecure) || (!isSecure && includeNonsecure)))
                 {
+                    // create payload
                     OCEndpointPayload* tmpNode = (OCEndpointPayload*)
                         OICCalloc(1, sizeof(OCEndpointPayload));
                     if (!tmpNode)
@@ -1865,6 +1872,15 @@ OCEndpointPayload* CreateEndpointPayloadList(OCTpsSchemeFlags endpointType, cons
                     tmpNode->port = info->port;
                     tmpNode->pri  = 1;
                     tmpNode->next = NULL;
+
+                    // remember endpoint that matches devAddr for use in anchor
+                    OCTransportFlags infoFlagsSecureFams = (OCTransportFlags)
+                            (info->flags & MASK_SECURE_FAMS);
+                    if ((selfEp != NULL) &&
+                            ((infoFlagsSecureFams & devAddr->flags) == infoFlagsSecureFams))
+                    {
+                        *selfEp = tmpNode;
+                    }
 
                     // store in list
                     if (!headNode)
@@ -1912,8 +1928,8 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
     OCEndpointPayload *selfEp = NULL;
     if (networkInfo && infoSize && devAddr)
     {
-        if(!CreateEndpointPayloadList(res->endpointType, devAddr, networkInfo, infoSize,
-                                      &(pl->eps), NULL))
+        if(!CreateEndpointPayloadList(res, devAddr, networkInfo, infoSize,
+                                      &(pl->eps), NULL, &selfEp))
         {
             return NULL;
         }

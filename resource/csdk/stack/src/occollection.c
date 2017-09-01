@@ -516,8 +516,8 @@ OCRepPayload** BuildCollectionLinksPayloadArray(const char* resourceUri,
             OIC_LOG_V(DEBUG, TAG, "Network Information size = %d", (int) networkSize);
 
             OCEndpointPayload *listHead = NULL;
-            CreateEndpointPayloadList(((OCResource*)colResourceHandle)->endpointType,
-                devAddr, info, networkSize, &listHead, &epSize);
+            CreateEndpointPayloadList((OCResource*)colResourceHandle,
+                devAddr, info, networkSize, &listHead, &epSize, NULL);
             OICFree(info);
             OIC_LOG_V(DEBUG, TAG, "Result of CreateEndpointPayloadList() = %s",
                                   listHead ? "true":"false");
