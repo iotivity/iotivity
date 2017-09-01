@@ -103,6 +103,11 @@ static struct in6_addr IPv6MulticastAddressOrg;
 #define IPv6_MULTICAST_GLB "ff0e::158"
 static struct in6_addr IPv6MulticastAddressGlb;
 
+/*
+ * Buffer size for the receive message buffer
+ */
+#define RECV_MSG_BUF_LEN 16384
+
 static char *ipv6mcnames[IPv6_DOMAINS] = {
     NULL,
     IPv6_MULTICAST_INT,
@@ -535,7 +540,7 @@ void CADeInitializeIPGlobals()
 
 static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
 {
-    char recvBuffer[COAP_MAX_PDU_SIZE] = {0};
+    char recvBuffer[RECV_MSG_BUF_LEN] = {0};
     int level = 0;
     int type = 0;
     int namelen = 0;
