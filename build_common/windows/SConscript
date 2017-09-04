@@ -6,7 +6,6 @@ import os
 import winreg
 import platform
 
-src_dir = env.get('SRC_DIR')
 build_dir = env.get('BUILD_DIR')
 
 def OpenRegKey(env, key, sub_key, reg_view_64bit=False):

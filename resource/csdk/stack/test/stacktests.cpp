@@ -2980,7 +2980,7 @@ TEST(StackZoneId, getZoneIdWithInvalidParams)
 }
 #endif
 
-TEST(LinksPayloadValue, BuildCollectionLinksPayloadValue)
+TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OIC_LOG(INFO, TAG, "Starting createLinksPayloadValue test");
@@ -3027,10 +3027,10 @@ TEST(LinksPayloadValue, BuildCollectionLinksPayloadValue)
     EXPECT_EQ(handle0, OCGetResourceHandleFromCollection(containerHandle, 0));
     EXPECT_EQ(handle1, OCGetResourceHandleFromCollection(containerHandle, 1));
 
-    OCRepPayloadValue* linksRepPayloadValue;
-    OCRepPayload *collectionPayload = NULL;
-    OCRepPayload *policyMap = NULL;
-    OCRepPayload **linksMap = NULL;
+    OCRepPayload** linksRepPayloadArray = NULL;
+    OCRepPayload* collectionPayload = NULL;
+    OCRepPayload* policyMap = NULL;
+    OCRepPayload** linksMap = NULL;
 
     OCDevAddr* devAddr = (OCDevAddr*)OICCalloc(1, sizeof(OCDevAddr));
     devAddr->adapter = OC_ADAPTER_IP;
@@ -3040,17 +3040,19 @@ TEST(LinksPayloadValue, BuildCollectionLinksPayloadValue)
     devAddr->ifindex = info->ifindex;
 
     //check for OIC1.1 logic
-    ASSERT_TRUE(BuildCollectionLinksPayloadValue("/a/kitchen", 
-                           &linksRepPayloadValue, false, devAddr));
-    ASSERT_TRUE(NULL != linksRepPayloadValue);
+    size_t arraySize = 0;
+    linksRepPayloadArray = BuildCollectionLinksPayloadArray("/a/kitchen", false, 
+                                                            devAddr, &arraySize);
+    ASSERT_TRUE(NULL != linksRepPayloadArray);
 
     collectionPayload = OCRepPayloadCreate();
     ASSERT_TRUE(NULL != collectionPayload);
 
     size_t dim[MAX_REP_ARRAY_DEPTH] = { numResources, 0, 0 };
+    EXPECT_EQ(numResources, arraySize);
 
     ASSERT_TRUE(OCRepPayloadSetPropObjectArrayAsOwner(collectionPayload, OC_RSRVD_LINKS,
-                                              linksRepPayloadValue->arr.objArray, dim));
+                                                      linksRepPayloadArray, dim));
 
     ASSERT_TRUE(OCRepPayloadGetPropObjectArray(collectionPayload, OC_RSRVD_LINKS, &linksMap, dim));
 
@@ -3107,17 +3109,16 @@ TEST(LinksPayloadValue, BuildCollectionLinksPayloadValue)
     OCRepPayloadDestroy(collectionPayload);
 
     //check for OCF1.0 logic
-    ASSERT_TRUE(BuildCollectionLinksPayloadValue("/a/kitchen",
-                           &linksRepPayloadValue, true, devAddr));
-    ASSERT_TRUE(NULL != linksRepPayloadValue);
+    linksRepPayloadArray = BuildCollectionLinksPayloadArray("/a/kitchen", true, devAddr, &arraySize);
+    ASSERT_TRUE(NULL != linksRepPayloadArray);
 
     collectionPayload = OCRepPayloadCreate();
     ASSERT_TRUE(NULL != collectionPayload);
 
-    dim[1] = dim[2] = 0;
+    EXPECT_EQ(numResources, arraySize);
 
     ASSERT_TRUE(OCRepPayloadSetPropObjectArrayAsOwner(collectionPayload, OC_RSRVD_LINKS,
-        linksRepPayloadValue->arr.objArray, dim));
+                                                      linksRepPayloadArray, dim));
 
     ASSERT_TRUE(OCRepPayloadGetPropObjectArray(collectionPayload, OC_RSRVD_LINKS, &linksMap, dim));
 

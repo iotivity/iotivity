@@ -6,8 +6,6 @@
 import os
 Import('env')
 
-src_dir = env.get('SRC_DIR')
-
 # Add the default lib directory
 build_dir = env.get('BUILD_DIR')
 env.AppendUnique(LIBPATH=[build_dir])

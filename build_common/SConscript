@@ -177,6 +177,10 @@ help_vars.AddVariables(
                  'Enable routing',
                  default='EP',
                  allowed_values=('GW', 'EP')),
+    EnumVariable('WITH_UPSTREAM_LIBCOAP',
+                 'Use latest stable version of LibCoAP downloaded from github',
+                 default=default_with_upstream_libcoap,
+                 allowed_values=('0', '1')),
     EnumVariable('BUILD_SAMPLE',
                  'Build with sample',
                  default='ON',
@@ -184,22 +188,9 @@ help_vars.AddVariables(
     ('DEVICE_NAME',
                  'Network display name for device (For Arduino)',
                  device_name),
-    PathVariable('ANDROID_NDK',
-                 'Android NDK path',
-                 default=None,
-                 validator=PathVariable.PathAccept),
-    PathVariable('ANDROID_HOME',
-                 'Android SDK path',
-                 default=None,
-                 validator=PathVariable.PathAccept),
-    PathVariable('ANDROID_GRADLE',
-                 'Gradle executable location',
-                 default=None,
-                 validator=PathVariable.PathIsFile),
-    EnumVariable('WITH_UPSTREAM_LIBCOAP',
-                 'Use latest stable version of LibCoAP downloaded from github',
-                 default=default_with_upstream_libcoap,
-                 allowed_values=('0', '1')),
+#    ANDROID_NDK set at end after default computed
+#    ANDROID_HOME set at end after default computed
+#    ANDROID_GRADLE set at end after default computed
     BoolVariable('WITH_ENV',
                  'Use compiler options from environment',
                  default=False),
@@ -237,6 +228,7 @@ else:
 
 if target_os in targets_without_dtls_support:
     help_vars.Add(
+        # cannot be a bool since True not allowed
         EnumVariable('SECURED',
                      'Build with DTLS',
                      default='0',
@@ -308,8 +300,6 @@ else:
         PREFIX=GetOption('prefix'),
         LIB_INSTALL_DIR=ARGUMENTS.get('LIB_INSTALL_DIR')  #for 64bit build
     )
-
-Help(help_vars.GenerateHelpText(env))
 
 if env.get('WITH_ENV'):
     env['ENV'] = os.environ
@@ -827,5 +817,41 @@ env = conf.Finish()
 ######################################################################
 
 env.SConscript('external_libs.scons')
+
+# these variables depend on a subsidiary script having set a path to
+# use as the default. Such paths may include embedded version strings,
+# for example, and we want to not embed those all over, so defer setting
+# the help until we're back from those scripts. Then we can finally
+# build the help message. However, it's also possible that we never
+# needed to call those subsidary scripts, and then we come back with
+# values unset, so deal with that as well.
+if env.get('ANDROID_NDK'):
+    android_ndk = env['ANDROID_NDK']
+else:
+    android_ndk = None
+if env.get('ANDROID_GRADLE'):
+    android_gradle = env['ANDROID_GRADLE']
+else:
+    android_gradle = None
+if env.get('ANDROID_HOME'):
+    android_sdk = env['ANDROID_HOME']
+else:
+    android_sdk = None
+help_vars.AddVariables(
+    PathVariable('ANDROID_NDK',
+                 'Android NDK path',
+                 default=android_ndk,
+                 validator=PathVariable.PathAccept),
+    PathVariable('ANDROID_GRADLE',
+                 'Gradle executable location',
+                 default=android_gradle,
+                 validator=PathVariable.PathIsFile),
+    PathVariable('ANDROID_HOME',
+                 'Android SDK path',
+                 default=android_sdk,
+                 validator=PathVariable.PathAccept),
+)
+help_vars.Update(env)
+Help(help_vars.GenerateHelpText(env, sort=cmp))
 
 Return('env')

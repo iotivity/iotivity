@@ -302,18 +302,25 @@ char* OC_CALL OCCreateString(const OCStringLL* ll);
 bool OC_CALL OCByteStringCopy(OCByteString *dest, const OCByteString *source);
 
 /**
- * This function creates the payloadValue for links parameter of collection resource.
+ * This function creates the payloadArray for links parameter of collection resource.
  * @param[in] resourceUri Resource uri (this should be a collection resource)
- * @param[out] linksRepPayloadValue The payloadValue for links parameter of collection
  * @param[in] ehRequest parameter received from Entity Handler for client request
+ * @param[out] createdArraySize return value array size, Null is allowed if no need to know size
  *
- * @note: The destroy of OCRepPayloadValue is not supported. Instead, use
+ * @note: API usage
+ *   OCRepPayload **linkArr = OCLinksPayloadArrayCreate(uri, ehRequest, &ArraySize);
+ *   For links parameter setting  (baseline interface response)
+ *    OCRepPayloadSetPropObjectArrayAsOwner(payload, OC_RSRVD_LINKS, linkArr, {ArraySize, 0,0});
+ *   For arrayPayload setting (linklist interface response)
+ *     payload = linkArr[0]; payload->next = linkArr[1]; ....
+ *     OICFree(linkArr)
+ * @note: The destroy of OCRepPayloadArray is not supported. Instead, use
  *        OCRepPayloadDestroy(...) to destroy RepPayload of the collection Resource
  *
- * @return ::true if successful otherwise false.
+ * @return linksRepPayloadArray The *RepPayload Array pointer for links parameter of collection.
  **/
-bool OC_CALL OCLinksPayloadValueCreate(const char *resourceUri,
-              OCRepPayloadValue **linksRepPayloadValue, OCEntityHandlerRequest *ehRequest);
+OCRepPayload** OC_CALL OCLinksPayloadArrayCreate(const char *resourceUri,
+                       OCEntityHandlerRequest *ehRequest, size_t* createdArraySize);
 
 #ifdef __cplusplus
 }

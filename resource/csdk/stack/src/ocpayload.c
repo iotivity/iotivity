@@ -2239,22 +2239,24 @@ void OC_CALL OCEndpointPayloadDestroy(OCEndpointPayload* payload)
     OICFree(payload);
 }
 
-bool OC_CALL OCLinksPayloadValueCreate(const char* resourceUri,
-    OCRepPayloadValue** linksRepPayloadValue, OCEntityHandlerRequest *ehRequest)
+OCRepPayload** OC_CALL OCLinksPayloadArrayCreate(const char* resourceUri,
+                       OCEntityHandlerRequest *ehRequest, size_t* createdArraySize)
 {
     OIC_LOG(DEBUG, TAG, "OCLinksPayloadValueCreate");
-    bool result = false;
-    if ((resourceUri != NULL) && (linksRepPayloadValue != NULL) && (ehRequest != NULL))
+    OCRepPayload** linksRepPayloadArray = NULL;
+    if ((resourceUri != NULL) && (ehRequest != NULL))
     {
         bool isOCFContentFormat = false;
         if (!OCRequestIsOCFContentFormat(ehRequest, &isOCFContentFormat))
-            return result;
-        result = BuildCollectionLinksPayloadValue(resourceUri, linksRepPayloadValue,
-                 isOCFContentFormat, &ehRequest->devAddr);
-        OIC_LOG_V(DEBUG, TAG, "return value of BuildCollectionLinksPayloadValue() = %s",
-                  result ? "true" : "false");
+            return NULL;
+
+        if (linksRepPayloadArray = BuildCollectionLinksPayloadArray(resourceUri, 
+                              isOCFContentFormat, &ehRequest->devAddr, createdArraySize))
+
+        OIC_LOG_V(DEBUG, TAG, "return value of BuildCollectionLinksPayloadArray() = %s",
+                 (linksRepPayloadArray != NULL) ? "true" : "false");
     }
-    return result;
+    return linksRepPayloadArray;
 }
 
 // Check on Content Version option whether request has vnd.ocf+cbor format instead of cbor
