@@ -1476,6 +1476,30 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
         case OC_EH_RESOURCE_NOT_FOUND:
             result = OC_STACK_NO_RESOURCE;
             break;
+        case OC_EH_BAD_REQ:
+            result = OC_STACK_INVALID_QUERY;
+            break;
+        case OC_EH_UNAUTHORIZED_REQ:
+            result = OC_STACK_UNAUTHORIZED_REQ;
+            break;
+        case OC_EH_BAD_OPT:
+            result = OC_STACK_INVALID_OPTION;
+            break;
+        case OC_EH_METHOD_NOT_ALLOWED:
+            result = OC_STACK_INVALID_METHOD;
+            break;
+        case OC_EH_NOT_ACCEPTABLE:
+            result = OC_STACK_NOT_ACCEPTABLE;
+            break;
+        case OC_EH_TOO_LARGE:
+            result = OC_STACK_TOO_LARGE_REQ;
+            break;
+        case OC_EH_SERVICE_UNAVAILABLE:
+            result = OC_STACK_SERVICE_UNAVAILABLE;
+            break;
+        case OC_EH_RETRANSMIT_TIMEOUT:
+            result = OC_STACK_COMM_ERROR;
+            break;
         default:
             result = OC_STACK_ERROR;
     }
