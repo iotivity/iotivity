@@ -136,6 +136,7 @@ TEST(PstatResourceTest, PstatToCBORPayloadAndCBORPayloadToPstat)
     pstat.tm = NORMAL;
     pstat.om = SINGLE_SERVICE_CLIENT_DRIVEN;
     pstat.smLen = 1;
+    memcpy(pstat.rownerID.id, "feedbeefdeadbeef", 16);
     pstat.sm = (OicSecDpom_t*)OICCalloc(pstat.smLen, sizeof(*pstat.sm));
     ASSERT_TRUE(NULL != pstat.sm);
     pstat.sm[0] = SINGLE_SERVICE_CLIENT_DRIVEN;
