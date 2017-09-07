@@ -3517,36 +3517,6 @@ static int cloneSecKey(OicSecKey_t * dst, OicSecKey_t * src)
     return 0;
 }
 
-static int cloneSecOpt(OicSecOpt_t * dst, OicSecOpt_t * src)
-{
-    if ((src == NULL) || (dst == NULL))
-    {
-        return -1;
-    }
-
-    if (src->len > 0)
-    {
-        dst->data = OICCalloc(src->len, 1);
-        if (dst == NULL)
-        {
-            OIC_LOG_V(ERROR, TAG, "%s memory allocation failed", __func__);
-            OICFree(dst);
-            return -1;
-        }
-        memcpy(dst->data, src->data, src->len);
-    }
-    else
-    {
-        dst->data = NULL;
-    }
-
-    dst->len = src->len;
-    dst->encoding = src->encoding;
-    dst->revstat = src->revstat;
-
-    return 0;
-}
-
 /* Caller must call FreeRoleCertChainList on roleEntries when finished. */
 OCStackResult GetAllRoleCerts(RoleCertChain_t ** output)
 {
@@ -3578,12 +3548,6 @@ OCStackResult GetAllRoleCerts(RoleCertChain_t ** output)
             if (cloneSecKey(&add->certificate, &temp->publicData) != 0)
             {
                 OIC_LOG_V(ERROR, TAG, "%s failed to copy certificate data", __func__);
-                goto error;
-            }
-
-            if (cloneSecOpt(&add->optData, &temp->optionalData) != 0)
-            {
-                OIC_LOG_V(ERROR, TAG, "%s failed to copy optional data", __func__);
                 goto error;
             }
         }

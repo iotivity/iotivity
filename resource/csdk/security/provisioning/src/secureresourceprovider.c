@@ -3826,14 +3826,11 @@ static void registerResultForGetRolesResourceCB(GetRolesData_t *getRolesData,
                 for (i = 0, curr = chains; NULL != curr; curr = curr->next, i++)
                 {
                     currentEntry->chains[i].credId = curr->credId;
-                    /* Take ownership of the buffers from certificate and optData, rather than copy. */
+                    /* Take ownership of the buffers from certificate rather than copy. */
                     currentEntry->chains[i].certificate = curr->certificate;
-                    currentEntry->chains[i].optData = curr->optData;
 
                     curr->certificate.data = NULL;
                     curr->certificate.len = 0;
-                    curr->optData.data = NULL;
-                    curr->optData.len = 0;
                 }
             }
             FreeRoleCertChainList(chains);
@@ -3884,14 +3881,13 @@ static OCStackApplicationResult SRPGetRolesResourceCB(void *ctx, OCDoHandle hand
                    false);
     for (size_t i = 0; i < getRolesData->numOfResults; i++)
     {
-        /* We took ownership of certificate.data and optData.data, so we must free them.
+        /* We took ownership of certificate.data so we must free it.
          * These are allocated internally by tinycbor, which uses malloc and free, so we call
          * free directly for those.
          */
         for (size_t j = 0; j < getRolesData->resArr[i].chainsLength; j++)
         {
             free(getRolesData->resArr[i].chains[j].certificate.data);
-            free(getRolesData->resArr[i].chains[j].optData.data);
         }
         OICFree(getRolesData->resArr[i].chains);
     }
