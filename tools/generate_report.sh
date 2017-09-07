@@ -16,9 +16,16 @@ report_flags="--html --html-details";
 #IOTIVITY Flags
 IOTIVITY_BASE="${PWD}"
 IOTIVITY_TARGET_OS="linux"
-IOTIVITY_TARGET_ARCH="x86"
+IOTIVITY_TARGET_ARCH="$(uname -m)"
 USE_TIMESTAMP="yes"
 UNITTEST_XML_REPORT="yes"
+
+case $IOTIVITY_TARGET_ARCH in
+i*86)
+IOTIVITY_TARGET_ARCH=x86
+;;
+esac
+
 
 usage() {
     echo "Usage: tools/generate_report.sh <options>"
