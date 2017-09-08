@@ -1,5 +1,5 @@
 Name: iotivity
-Version: 1.3.0
+Version: 1.3.1
 Release: 0
 Summary: IoT Connectivity sponsored by the OCF
 Group: Network & Connectivity / IoT Connectivity
