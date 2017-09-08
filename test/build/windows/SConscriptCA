@@ -216,6 +216,28 @@ if 'simulator' in test or 'tc' in test:
                         )
     install_targets += ca_simulator
 
+    ca_server = env_windows.Program(source = [iotivity_test_root + '/src/testapp/ca/c_cpp/src/sample_server.c'],
+                        target = 'iotivity_ca_server',
+                        CPPPATH = iotivity_include_paths + simulator_include_paths,
+                        LIBS = lib_list,
+                        LIBPATH = lib_paths,
+                        CPPFLAGS = common_cppflags,
+                        CPPDEFINES = simulator_cpp_defines,
+                        RPATH = iotivity_lib_path
+                        )
+    install_targets += ca_server
+
+    ca_client = env_windows.Program(source = [iotivity_test_root + '/src/testapp/ca/c_cpp/src/sample_client.c'],
+                        target = 'iotivity_ca_client',
+                        CPPPATH = iotivity_include_paths + simulator_include_paths,
+                        LIBS = lib_list,
+                        LIBPATH = lib_paths,
+                        CPPFLAGS = common_cppflags,
+                        CPPDEFINES = simulator_cpp_defines,
+                        RPATH = iotivity_lib_path
+                        )
+    install_targets += ca_client
+
     default_targets += env_windows.Command('config_file', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_test_root + '/res/ca_resource/config.ini'))
 
 install = env_windows.Install(iotivity_test_root + '/' + variant_dir, install_targets)
