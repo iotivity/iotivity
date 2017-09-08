@@ -83,7 +83,7 @@ typedef struct
     int numberOfTimes;
     int interval;
     int bufLength;
-    char* resourceUri;
+    char *resourceUri;
     unsigned char payload[MAX_BUF_LEN];
     int payloadSize;
     uint16_t messageId;
@@ -102,7 +102,7 @@ char g_address[CA_MACADDR_SIZE];
 
 void output(const char *format, ...)
 {
-#if defined (__LINUX__) || defined (__ANDROID_NATIVE__) || defined (__TIZEN__)
+#if defined (__LINUX__) || defined (__ANDROID_NATIVE__) || defined (__TIZEN__) || defined (__WINDOWS__)
     va_list arg;
 
     va_start (arg, format);
@@ -119,7 +119,7 @@ void output(const char *format, ...)
 }
 
 #ifdef ARDUINO
-char* getData(char readInput[])
+char *getData(char readInput[])
 {
     while (!Serial.available())
     {
@@ -194,7 +194,7 @@ int initialize()
     return 1;
 }
 
-void printChars(unsigned char* p, int length)
+void printChars(unsigned char *p, int length)
 {
     int i;
 
@@ -227,7 +227,7 @@ void dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
     }
 }
 
-void initCipherSuiteList(bool * list, const char* deviceId)
+void initCipherSuiteList(bool *list, const char *deviceId)
 {
     (void) deviceId;
 
@@ -247,7 +247,7 @@ void initCipherSuiteList(bool * list, const char* deviceId)
 }
 
 int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *desc,
-        size_t desc_len, unsigned char *result, size_t result_length)
+                               size_t desc_len, unsigned char *result, size_t result_length)
 {
     output("getDtlsPskCredentials in\n");
 
@@ -262,37 +262,37 @@ int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *de
     {
         case CA_DTLS_PSK_HINT:
         case CA_DTLS_PSK_IDENTITY:
-        output("CAGetDtlsPskCredentials CA_DTLS_PSK_IDENTITY\n");
-        if (result_length < g_identityLegth)
-        {
-            output("ERROR : Wrong value for result for storing IDENTITY\n");
-            return ret;
-        }
-
-        memcpy(result, IDENTITY, g_identityLegth);
-        ret = g_identityLegth;
-        break;
-
-        case CA_DTLS_PSK_KEY:
-        output("CAGetDtlsPskCredentials CA_DTLS_PSK_KEY\n");
-        if ((desc_len == g_identityLegth) &&
-                memcmp(desc, IDENTITY, g_identityLegth) == 0)
-        {
-            if (result_length < g_pskLength)
+            output("CAGetDtlsPskCredentials CA_DTLS_PSK_IDENTITY\n");
+            if (result_length < g_identityLegth)
             {
-                output("ERROR : Wrong value for result for storing RS_CLIENT_PSK\n");
+                output("ERROR : Wrong value for result for storing IDENTITY\n");
                 return ret;
             }
 
-            memcpy(result, RS_CLIENT_PSK, g_pskLength);
-            ret = g_pskLength;
-        }
-        break;
+            memcpy(result, IDENTITY, g_identityLegth);
+            ret = g_identityLegth;
+            break;
+
+        case CA_DTLS_PSK_KEY:
+            output("CAGetDtlsPskCredentials CA_DTLS_PSK_KEY\n");
+            if ((desc_len == g_identityLegth) &&
+                memcmp(desc, IDENTITY, g_identityLegth) == 0)
+            {
+                if (result_length < g_pskLength)
+                {
+                    output("ERROR : Wrong value for result for storing RS_CLIENT_PSK\n");
+                    return ret;
+                }
+
+                memcpy(result, RS_CLIENT_PSK, g_pskLength);
+                ret = g_pskLength;
+            }
+            break;
 
         default:
 
-        output("Wrong value passed for PSK_CRED_TYPE.\n");
-        ret = -1;
+            output("Wrong value passed for PSK_CRED_TYPE.\n");
+            ret = -1;
     }
 
     output("getDtlsPskCredentials out\n");
@@ -312,7 +312,7 @@ int setupSecurity(int selectedTransport)
         return 0;
     }
 
-    if(selectedTransport == CA_ADAPTER_TCP)
+    if (selectedTransport == CA_ADAPTER_TCP)
     {
         result = CAregisterSslHandshakeCallback(dtlsHandshakeCb);
         if (result != CA_STATUS_OK)
@@ -324,11 +324,12 @@ int setupSecurity(int selectedTransport)
 
     CAsetCredentialTypesCallback(initCipherSuiteList);
 
-    if(selectedTransport == CA_ADAPTER_IP)
+    if (selectedTransport == CA_ADAPTER_IP)
     {
-        result = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, (CATransportAdapter_t)selectedTransport);
+        result = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256,
+                                     (CATransportAdapter_t)selectedTransport);
     }
-    else if(selectedTransport == CA_ADAPTER_TCP)
+    else if (selectedTransport == CA_ADAPTER_TCP)
     {
         result = CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
     }
@@ -395,7 +396,7 @@ int selectNetwork(int argc, char *argv[])
             }
 #endif
 
-#ifdef __LINUX__
+#if defined (__LINUX__) || defined (__WINDOWS__)
             if (argc < 3)
             {
                 output("Enter Filter Address: ");
@@ -482,9 +483,10 @@ int handleMessage()
     return 1;
 }
 
-int returnResponse(const CAEndpoint_t* endpoint, char* resourceUri, unsigned char* payload, int payloadSize,
-        CAMessageType_t type, CAResponseResult_t responseCode, uint16_t messageId, CAToken_t token,
-        uint8_t tokenLength, CAHeaderOption_t *options, uint8_t numOptions)
+int returnResponse(const CAEndpoint_t *endpoint, char *resourceUri, unsigned char *payload,
+                   int payloadSize,
+                   CAMessageType_t type, CAResponseResult_t responseCode, uint16_t messageId, CAToken_t token,
+                   uint8_t tokenLength, CAHeaderOption_t *options, uint8_t numOptions)
 {
     output("[returnResponse] in\n");
 
@@ -567,7 +569,7 @@ void processRequestResponse(void)
     }
 }
 
-void returnMessage(const CAEndpoint_t* endpoint, TestConfiguration* testConfig)
+void returnMessage(const CAEndpoint_t *endpoint, TestConfiguration *testConfig)
 {
     int index = 0;
 
@@ -576,15 +578,15 @@ void returnMessage(const CAEndpoint_t* endpoint, TestConfiguration* testConfig)
     for (index = 0; index < testConfig->numberOfTimes; index++)
     {
         returnResponse(endpoint, testConfig->resourceUri, testConfig->payload,
-                testConfig->payloadSize, CA_MSG_NONCONFIRM, CA_VALID, testConfig->messageId,
-                testConfig->token, testConfig->tokenLength, NULL, 0);
+                       testConfig->payloadSize, CA_MSG_NONCONFIRM, CA_VALID, testConfig->messageId,
+                       testConfig->token, testConfig->tokenLength, NULL, 0);
         customWait(testConfig->interval);
     }
 
     output("returnMessage out\n");
 }
 
-void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* requestInfo)
+void requestHandler(const CAEndpoint_t *endpoint, const CARequestInfo_t *requestInfo)
 {
     TestConfiguration testConfig;
     char numConversion[5];
@@ -606,16 +608,16 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
     output("IP %s, Port %d\n", endpoint->addr, endpoint->port);
     output("Message Id: %d\n", requestInfo->info.messageId);
 
-#ifdef __LINUX__
+#if defined (__LINUX__) || defined (__WINDOWS__)
     if (strcmp(g_address, ""))
     {
-        if(!strcmp(g_filterCommand, "ne") && !strcmp(g_address, endpoint->addr))
+        if (!strcmp(g_filterCommand, "ne") && !strcmp(g_address, endpoint->addr))
         {
             output("Ignoring filter address\n");
             return;
         }
 
-        if(!strcmp(g_filterCommand, "eq") && strcmp(g_address, endpoint->addr))
+        if (!strcmp(g_filterCommand, "eq") && strcmp(g_address, endpoint->addr))
         {
             output("Ignoring filter address\n");
             return;
@@ -633,7 +635,7 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
         {
             output("Option ID : %d\n", requestInfo->info.options[i].optionID);
             output("Option Data[%d]: %s\n", requestInfo->info.options[i].optionLength,
-                    requestInfo->info.options[i].optionData);
+                   requestInfo->info.options[i].optionData);
         }
     }
     else
@@ -651,9 +653,10 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
 
         output("calling returnResponse ...\n");
 
-        returnResponse(endpoint, SIM_RES_ACK, (unsigned char*)str, strlen(str), CA_MSG_NONCONFIRM, CA_VALID,
-                requestInfo->info.messageId, requestInfo->info.token, requestInfo->info.tokenLength,
-                requestInfo->info.options, requestInfo->info.numOptions);
+        returnResponse(endpoint, SIM_RES_ACK, (unsigned char *)str, strlen(str), CA_MSG_NONCONFIRM,
+                       CA_VALID,
+                       requestInfo->info.messageId, requestInfo->info.token, requestInfo->info.tokenLength,
+                       requestInfo->info.options, requestInfo->info.numOptions);
 
         output("returnResponse called\n");
 
@@ -695,23 +698,24 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
                 usleep (5000000);
 
                 memset(&numConversion, 0, sizeof(numConversion));
-                strncpy(numConversion, (const char*)&requestInfo->info.payload[2], sizeof(numConversion)-1);
-                numConversion[sizeof(numConversion)-1] = 0;
+                strncpy(numConversion, (const char *)&requestInfo->info.payload[2], sizeof(numConversion) - 1);
+                numConversion[sizeof(numConversion) - 1] = 0;
                 testConfig.numberOfTimes = atoi(numConversion); //4 byte
 
                 memset(&numConversion, 0, sizeof(numConversion));
-                strncpy(numConversion, (const char*)&requestInfo->info.payload[6], sizeof(numConversion)-1);
-                numConversion[sizeof(numConversion)-1] = 0;
+                strncpy(numConversion, (const char *)&requestInfo->info.payload[6], sizeof(numConversion) - 1);
+                numConversion[sizeof(numConversion) - 1] = 0;
                 testConfig.interval = atoi(numConversion); //4 byte
 
                 memset(&numConversion, 0, sizeof(numConversion));
-                strncpy(numConversion, (const char*)&requestInfo->info.payload[10], sizeof(numConversion)-1);
-                numConversion[sizeof(numConversion)-1] = 0;
+                strncpy(numConversion, (const char *)&requestInfo->info.payload[10], sizeof(numConversion) - 1);
+                numConversion[sizeof(numConversion) - 1] = 0;
                 testConfig.bufLength = atoi(numConversion); //4 byte
                 memset(&testConfig.payload, 0, sizeof(char) * MAX_BUF_LEN);
-                strncpy((char*)testConfig.payload, (const char*)&requestInfo->info.payload[14], testConfig.bufLength);
+                strncpy((char *)testConfig.payload, (const char *)&requestInfo->info.payload[14],
+                        testConfig.bufLength);
                 testConfig.payload[testConfig.bufLength + 1] = '\0';
-                testConfig.payloadSize = strlen((const char*)testConfig.payload);
+                testConfig.payloadSize = strlen((const char *)testConfig.payload);
                 testConfig.caMethod = requestInfo->method;
                 testConfig.resourceUri = requestInfo->info.resourceUri;
                 testConfig.messageId = requestInfo->info.messageId;
@@ -780,7 +784,8 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
             sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_IP, CA_IPV4));
             strcat(payload, str);
             strcat(payload, ",secure-port:");
-            sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_IP, (CATransportFlags_t)(CA_SECURE|CA_IPV4)));
+            sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_IP,
+                    (CATransportFlags_t)(CA_SECURE | CA_IPV4)));
             strcat(payload, str);
         }
         else if (g_selectedTransport == CA_ADAPTER_TCP)
@@ -791,8 +796,10 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
             sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_TCP, CA_IPV4));
             strcat(payload, str);
             strcat(payload, ",secure-port:");
-            printf("client tcp secure port: %d\n", CAGetAssignedPortNumber(CA_ADAPTER_TCP, (CATransportFlags_t)(CA_SECURE|CA_IPV4)));
-            sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_TCP, (CATransportFlags_t)(CA_SECURE|CA_IPV4)));
+            printf("client tcp secure port: %d\n", CAGetAssignedPortNumber(CA_ADAPTER_TCP,
+                    (CATransportFlags_t)(CA_SECURE | CA_IPV4)));
+            sprintf(str, "%d", CAGetAssignedPortNumber(CA_ADAPTER_TCP,
+                    (CATransportFlags_t)(CA_SECURE | CA_IPV4)));
             strcat(payload, str);
         }
         else
@@ -804,10 +811,10 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
         output ("payload %s\n", payload);
         output("calling returnResponse ...\n");
 
-        returnResponse(endpoint, requestInfo->info.resourceUri, (unsigned char*)payload,
-                strlen(payload), messageType, CA_VALID, requestInfo->info.messageId,
-                requestInfo->info.token, requestInfo->info.tokenLength, requestInfo->info.options,
-                requestInfo->info.numOptions);
+        returnResponse(endpoint, requestInfo->info.resourceUri, (unsigned char *)payload,
+                       strlen(payload), messageType, CA_VALID, requestInfo->info.messageId,
+                       requestInfo->info.token, requestInfo->info.tokenLength, requestInfo->info.options,
+                       requestInfo->info.numOptions);
 
         output("returnResponse called\n");
     }
@@ -819,7 +826,7 @@ void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* request
     output("requestHandler out\n");
 }
 
-void responseHandler(const CAEndpoint_t* endpoint, const CAResponseInfo_t* responseInfo)
+void responseHandler(const CAEndpoint_t *endpoint, const CAResponseInfo_t *responseInfo)
 {
     output("Something Wrong!!! Response Handler shouldn't be called for CA Simulator\n");
     output("Check whether message comes from CA testcases or somewhere else\n");
@@ -839,7 +846,7 @@ void responseHandler(const CAEndpoint_t* endpoint, const CAResponseInfo_t* respo
     output("IP %s, Port %d\n", endpoint->addr, endpoint->port);
 }
 
-void errorHandler(const CAEndpoint_t *endpoint, const CAErrorInfo_t* errorInfo)
+void errorHandler(const CAEndpoint_t *endpoint, const CAErrorInfo_t *errorInfo)
 {
     output("errorHandler in\n");
 
@@ -1040,28 +1047,28 @@ void loop()
 
     if (Serial.available() > 0)
     {
-        char readInput[MAX_BUF_LEN+1];
-        char* buffer = getData(readInput);
+        char readInput[MAX_BUF_LEN + 1];
+        char *buffer = getData(readInput);
         switch (toupper(buffer[0]))
         {
             case 'P':
-            g_simulatorProcess = false;
-            Serial.println("Simulator paused");
-            break;
+                g_simulatorProcess = false;
+                Serial.println("Simulator paused");
+                break;
 
             case 'R':
-            g_simulatorProcess = true;
-            Serial.println("Simulator resumed");
-            break;
+                g_simulatorProcess = true;
+                Serial.println("Simulator resumed");
+                break;
             case 'E':
-            g_simulatorProcess = false;
-            loop_status = 0;
-            Serial.println("Simulator stopped");
-            break;
+                g_simulatorProcess = false;
+                loop_status = 0;
+                Serial.println("Simulator stopped");
+                break;
         }
     }
 
-    if(!loop_status)
+    if (!loop_status)
     {
         exit(0);
     }
@@ -1069,7 +1076,7 @@ void loop()
 
 #endif
 
-#if defined (__LINUX__) || defined (__ANDROID_NATIVE__) || defined (__TIZEN__)
+#if defined (__LINUX__) || defined (__ANDROID_NATIVE__) || defined (__TIZEN__) || defined (__WINDOWS__)
 int main(int argc, char *argv[])
 {
     clearDisplay();
@@ -1078,7 +1085,7 @@ int main(int argc, char *argv[])
 
 #ifdef __TIZEN__
     g_mainloop = g_main_loop_new(NULL, FALSE);
-    if(!g_mainloop)
+    if (!g_mainloop)
     {
         output("g_main_loop_new failed\n");
         return -1;
@@ -1098,38 +1105,40 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    if(!selectNetwork(argc, argv))
+    if (!selectNetwork(argc, argv))
     {
         return -1;
     }
 
-    if(!startServer())
+    if (!startServer())
     {
         return -1;
     }
 
-    if(!registerMessageHandler())
+    if (!registerMessageHandler())
     {
         return -1;
     }
 
 #ifdef __WITH_DTLS__
-    if(!setupSecurity(g_selectedTransport))
+    if (!setupSecurity(g_selectedTransport))
     {
         return -1;
     }
 #endif
 
-    if(g_selectedTransport == CA_ADAPTER_IP)
+    if (g_selectedTransport == CA_ADAPTER_IP)
     {
         output("Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_IP, CA_IPV4));
-        output("Secure Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_IP, (CATransportFlags_t)(CA_SECURE|CA_IPV4)));
+        output("Secure Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_IP,
+                (CATransportFlags_t)(CA_SECURE | CA_IPV4)));
     }
-    else if(g_selectedTransport == CA_ADAPTER_TCP)
+    else if (g_selectedTransport == CA_ADAPTER_TCP)
     {
         output("Mulitcast Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_IP, CA_IPV4));
         output("TCP Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_TCP, CA_IPV4));
-        output("TCP Secure Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_TCP, (CATransportFlags_t)(CA_SECURE|CA_IPV4)));
+        output("TCP Secure Port: %d;\n", CAGetAssignedPortNumber(CA_ADAPTER_TCP,
+                (CATransportFlags_t)(CA_SECURE | CA_IPV4)));
     }
 
     processRequestResponse();
