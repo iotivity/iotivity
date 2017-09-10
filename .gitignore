@@ -98,6 +98,8 @@ out/
 platform
 iotivity.pc
 tmp/
+*.tmp
+*.tmp.*
 
 # Ignore GCov generated files
 *.gcda
