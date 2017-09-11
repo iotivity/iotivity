@@ -76,11 +76,10 @@ typedef struct
 static const std::string NEST_THERMOSTAT_IF = "oic.if.a";
 static const std::string NEST_THERMOSTAT_RT = "oic.r.temperature";
 
-static const char CRED_FILE[] = "./oic_svr_db_nest.dat";
-
-FILE *nestSecurityFile(const char *, const char *mode)
+FILE *nestSecurityFile(const char *path, const char *mode)
 {
-    return fopen(CRED_FILE, mode);
+    std::string filename = std::string("nest_") + path;
+    return fopen(filename.c_str(), mode);
 }
 
 /*******************************************************************************
