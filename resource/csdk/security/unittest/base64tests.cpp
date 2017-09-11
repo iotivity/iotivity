@@ -317,7 +317,7 @@ TEST(B64Test, RFC4648_EncodeTestVectors)
         b64Result = b64Encode((const uint8_t *)input[i], strlen(input[i]), buf, bufSize, &outputLength);
         EXPECT_EQ(B64_OK, b64Result)
                 << "Failed to Base64 encode \"" << input[i] << "\" to \"" << output[i] << "\"";
-        EXPECT_EQ(0, outputLength % 4)
+        EXPECT_EQ(0u, outputLength % 4)
                 << "The return size for all b64Encode operations should be a multiple of 4.";
         EXPECT_STREQ(output[i], buf)
                 << "Failed to Base64 encode \"" << input[i] << "\" to \"" << output[i] << "\"";
@@ -478,7 +478,7 @@ TEST(B64Test, EncodeThenDecode)
     char *b64Buf = (char *)OICCalloc(1, b64BufSize);
     ASSERT_NE(nullptr, b64Buf) << "memory allocation error.";
     EXPECT_EQ(B64_OK, b64Encode((const uint8_t *)input, sizeof(input), b64Buf, b64BufSize, &b64Size));
-    EXPECT_EQ(0, b64Size % 4) <<
+    EXPECT_EQ(0u, b64Size % 4) <<
                               "The return size for all b64Encode operations should be a multiple of 4.";
 
     size_t outSize;

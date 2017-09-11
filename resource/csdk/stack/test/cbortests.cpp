@@ -426,7 +426,7 @@ TEST(CborEmptyArrayTest, EmptyArrayArraySetGetTest)
 
     for(size_t i = 0; i < MAX_REP_ARRAY_DEPTH; i++)
     {
-        EXPECT_EQ(0, dimensions_out[i]);
+        EXPECT_EQ(0u, dimensions_out[i]);
     }
 
     // Cleanup
