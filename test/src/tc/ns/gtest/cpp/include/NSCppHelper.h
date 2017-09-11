@@ -27,8 +27,8 @@
 using namespace OIC::Service;
 
 #define PROVIDER_SIMULATOR "./ns_provider_cpp_simulator"
-#define PROVIDER_SIMULATOR_ALLOW "'./ns_provider_cpp_simulator 0'"
-#define PROVIDER_SIMULATOR_NOT_ALLOW "'./ns_provider_cpp_simulator 1'"
+#define PROVIDER_SIMULATOR_ALLOW "./ns_provider_cpp_simulator 0"
+#define PROVIDER_SIMULATOR_NOT_ALLOW "./ns_provider_cpp_simulator 1"
 #define CONSUMER_SIMULATOR "./ns_consumer_cpp_simulator"
 #define CONSUMER_SIMULATOR_OPTION "./ns_consumer_cpp_simulator 0"
 
