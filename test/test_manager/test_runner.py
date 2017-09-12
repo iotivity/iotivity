@@ -49,6 +49,11 @@ oparser.add_option("--testsuite", action="store", dest="testsuite")
 oparser.add_option("-c", action="store", dest="testcase")
 oparser.add_option("--testcase", action="store", dest="testcase")
 
+oparser.add_option("--memcheck", action = "store", dest = "memcheck", default= "0")
+oparser.add_option("-v", action= "store", dest= "memcheck", default="0")
+oparser.add_option("--memcheckLocation", action="store", dest ="memcheckLocation", default = "")
+oparser.add_option("-g", action="store", dest ="memcheckLocation", default = "")
+
 oparser.set_defaults(file_filter='', platform=platform.system().lower(), target='', testlist='', testprogress='', testresult='', 
                      standalone=TEST_STANDALONE, runonce=False)
 
@@ -65,9 +70,12 @@ testresult = opts.testresult
 standalone = opts.standalone
 runonce = opts.runonce
 given_testsuite = opts.testsuite
+memcheckOn = opts.memcheck
+memcheckLocation = opts.memcheckLocation
 
 if testresult == '':
     testresult = TEST_RESULT_RUN_DIR
+
 
 if not os.path.exists(testresult):
     os.makedirs(testresult)
@@ -75,6 +83,13 @@ if not os.path.exists(testresult):
 if not testlist == '':
     list_analyzer = TCListReporter()
     testgroup = list_analyzer.analyze(testlist)
+
+if memcheckOn == "1":
+    if memcheckLocation =='':
+        memcheckLocation = MEMCHECK_RESULT_RUN_DIR
+    if not os.path.exists(memcheckLocation):
+        os.makedirs(memcheckLocation)
+
 
 testspec_path = os.path.join(testresult, TEST_SPEC_XML_FOR_RESULT)    
 if not os.path.exists(testspec_path) and os.path.exists(API_TC_SRC_DIR):
@@ -88,6 +103,7 @@ if not os.path.exists(testspec_path) and os.path.exists(API_TC_SRC_DIR):
 file_filter = file_filter.replace(TC_BIN_PREFIX, '')
 total_found_tc = 0
 runner = TestRunner()
+
 for fname in os.listdir(TC_BIN_DIR):
     if "." in fname:
         if fname.endswith('.exe'):
@@ -189,6 +205,8 @@ for fname in os.listdir(TC_BIN_DIR):
     option.transport = transport
     option.network = network
     option.result_dir = testresult
+    option.memcheckOn = memcheckOn
+    option.memcheckLocation = memcheckLocation
     option.runtime = TEST_REPEAT
     option.run_standalone = standalone
     option.testprogress_path = testprogress

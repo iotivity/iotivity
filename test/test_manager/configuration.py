@@ -29,6 +29,11 @@ TEST_RESULT_RUN_DIR = TEST_RESULT_DIR + ""+os.sep+"__run__"
 TEST_SPEC_DIR = TEST_REPORT_DIR + ""+os.sep+"Spec"
 TEST_DEFECT_DIR = TEST_REPORT_DIR + ""+os.sep+"Defect"
 
+MEMCHECK_REPORT_DIR = ".."+os.sep+"MemCheckRerport"
+MEMCHECK_RESULT_DIR = MEMCHECK_REPORT_DIR + os.sep + "Result"
+MEMCHECK_RESULT_RUN_DIR = MEMCHECK_RESULT_DIR + ""+os.sep+"__run__"
+
+
 # Test Spec Configuration
 SPEC_REPORT_TYPE = {
                     'TXT' : True,
@@ -48,3 +53,6 @@ TEST_SPEC_XML_FOR_RESULT = "TestSpec.xml"
 
 # Jira Defect Configuration
 TEST_JIRA_DEFECT_FILE_PATH = TEST_DEFECT_DIR + ""+os.sep+"SearchRequest.xml"
+
+# Valgrind Configurations
+VALGRIND_SUPPRESSION_FILE= 'tools/valgrind/iotivity.supp'

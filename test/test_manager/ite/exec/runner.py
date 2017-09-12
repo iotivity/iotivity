@@ -57,7 +57,7 @@ class TestRunner:
                 subprocess.call('taskkill /pid %s /f' % str(PID), shell=True)
 
 
-    def run_gtest(self, exe_path, is_shuffle, repeat, filter_str, output, log_path):
+    def run_gtest(self, exe_path, is_shuffle, repeat, filter_str, output, log_path, memcheck_xml = ""):
         shuffle_option = ''
         if is_shuffle:
             shuffle_option = "--gtest_shuffle"
@@ -65,10 +65,24 @@ class TestRunner:
         repeat_option = "--gtest_repeat=" + str(repeat)
         filter_option = "--gtest_filter=" + filter_str
         output_option = "--gtest_output=xml:" + output
+        valgrind_environment = ""
+        test_cmd =""
+        if len(memcheck_xml) > 0:
+            currentWorkingDir = os.getcwd();
 
-        if platform.system().lower() == 'linux':
-            command = ["./%s" % os.path.basename(exe_path), shuffle_option, repeat_option, output_option, filter_option]
+            suppressionFilePath = os.path.join((currentWorkingDir[:currentWorkingDir.rfind('/test/')]),'tools/valgrind/iotivity.supp')
+            print (suppressionFilePath)
+            test_cmd = ['valgrind', '--leak-check=full',
+                        '--num-callers=24', '--xml=yes', '--suppressions=%s' %suppressionFilePath, '--xml-file=%s' %memcheck_xml]
+            
+        if platform.system().lower() == 'linux' and len(memcheck_xml) > 0:
+            command = test_cmd+["./%s" %os.path.basename(exe_path), shuffle_option, repeat_option, output_option, filter_option]
             proc = subprocess.Popen(command, cwd=os.path.dirname(exe_path), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        elif platform.system().lower() == 'linux':
+            command =  ["./%s" %os.path.basename(exe_path), shuffle_option, repeat_option, output_option, filter_option]
+            proc = subprocess.Popen(command, cwd=os.path.dirname(exe_path), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
 
         elif platform.system().lower() == 'windows':
             command = ["%s" % os.path.basename(exe_path), shuffle_option, repeat_option, output_option, filter_option]
@@ -122,16 +136,19 @@ class TestRunner:
             txt.close()
 
 
-    def create_test_file_info(self, platform, target, transport, network, exe_path, result_dir):
+    def create_test_file_info(self, platform, target, transport, network, exe_path, result_dir, memcheckOn="", memcheckLocation="", filterstr=""):
         timestring = datetime.now().strftime("%Y%m%d_%H%M%S.%f")
         file_name = "%s_%s_%s_%s_%s_%s" % (platform, target, transport, network, timestring, os.path.basename(exe_path))
+        memCheck_xml = ""
         while os.path.exists(os.path.join(result_dir, "%s.log" % file_name)):
             file_name += "_"
 
+        if memcheckOn == "1":
+             memCheck_xml=os.path.join(os.path.abspath(memcheckLocation), "%s_%s.xml" %(file_name, filterstr))
         log_file = os.path.join(result_dir, "%s.log" % file_name)
         xml_file = os.path.join(os.path.abspath(result_dir), "%s.xml" % file_name)
 
-        return log_file, xml_file
+        return log_file, xml_file, memCheck_xml
 
     def write_test_progress(self, progress_path, testfilter, testkey, status):
         if progress_path == None or progress_path == '' or testkey == None:
@@ -150,19 +167,18 @@ class TestRunner:
 
         txt.close()
 
-    def complete_test(self, platform, target, transport, network, exe_path, result_dir, testset, run_standalone, progress_path, testkey):
+    def complete_test(self, platform, target, transport, network, exe_path, result_dir, testset, run_standalone, progress_path, testkey, memcheckOn ="", memcheckLocation=""):
         crashedset = set()
         failedset = set()
         analyzer = TestResultCollector()
-        #filter_str = '*'
         filter_str = ':'.join(testset)
         while True :
-            log_file, xml_file = self.create_test_file_info(platform, target, transport, network, exe_path, result_dir)
-
             if run_standalone:
                 filter_str = testset.pop()
 
-            self.run_gtest(exe_path, True, 1, filter_str, xml_file, log_file)
+            log_file, xml_file, memcheck_xml = self.create_test_file_info(platform, target, transport, network, exe_path, result_dir, memcheckOn, memcheckLocation, filter_str)
+
+            self.run_gtest(exe_path, True, 1, filter_str, xml_file, log_file, memcheck_xml)
 
             results = analyzer.analyze_result_log(log_file)
             for result in results:
@@ -194,14 +210,15 @@ class TestRunner:
 
         return failedset, crashedset
 
-    def repeat_test_standalone(self, platform, target, transport, network, exe_path, result_dir, testset):
+
+    def repeat_test_standalone(self, platform, target, transport, network, exe_path, result_dir, testset, memcheckOn, memcheckLocation):
         for test in testset:
-            log_file, xml_file = self.create_test_file_info(platform, target, transport, network, exe_path, result_dir)
+            log_file, xml_file, memcheck_xml = self.create_test_file_info(platform, target, transport, network, exe_path, result_dir, memcheckOn, memcheckLocation, test)
 
             filter_str = test
             print("==> Repeat TC: " + filter_str)
+            self.run_gtest(exe_path, True, 1, filter_str, xml_file, log_file, memcheck_xml)
 
-            self.run_gtest(exe_path, True, 1, filter_str, xml_file, log_file)
 
     def run_test_executable(self, option):
         if (not os.path.isfile(option.exe_path)):
@@ -219,13 +236,13 @@ class TestRunner:
             else:
                 standalone = option.run_standalone;
 
-            failedset, crashedset = self.complete_test(option.platform, option.target, option.transport, option.network, option.exe_path, option.result_dir, testset, standalone, option.testprogress_path, option.testkey)
+            failedset, crashedset = self.complete_test(option.platform, option.target, option.transport, option.network, option.exe_path, option.result_dir, testset, standalone, option.testprogress_path, option.testkey, option.memcheckOn, option.memcheckLocation)
 
             if option.repeat_failed:
-                self.repeat_test_standalone(option.platform, option.target, option.transport, option.network, option.exe_path, option.result_dir, failedset)
+                self.repeat_test_standalone(option.platform, option.target, option.transport, option.network, option.exe_path, option.result_dir, failedset, option.memcheckOn, option.memcheckLocation)
 
             if option.repeat_crashed :
-                self.repeat_test_standalone(option.platform, option.target, option.transport, option.network, option.exe_path, option.result_dir, crashedset)
+                self.repeat_test_standalone(option.platform, option.target, option.transport, option.network, option.exe_path, option.result_dir, crashedset, option.memcheckOn, option.memcheckLocation)
 
             option.runtime -= 1
 
