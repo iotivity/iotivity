@@ -40,6 +40,7 @@
 #include "mbedtls/pem.h"
 #include "mbedtls/x509_csr.h"
 #include "occertutility.h"
+#include "pmutility.h"
 
 #ifdef _MSC_VER
 #include <io.h>
@@ -63,6 +64,7 @@ extern "C"
 #define _14_MOT_DISCOV_SINGLE_DEV_  14
 #endif //MULTIPLE_OWNER
 #define _20_REGIST_DEVS_            20
+#define _21_REGIST_DEVS_            21
 #define _30_PROVIS_PAIR_DEVS_       30
 #define _31_PROVIS_CRED_            31
 #define _32_PROVIS_ACL_             32
@@ -664,7 +666,7 @@ static int discoverSingleMOTEnabledDevice(void)
 }
 #endif //MULTIPLE_OWNER
 
-static int registerDevices(void)
+static int registerDevices(int fSelect)
 {
     // check |unown_list| for registering devices
     if(!g_unown_list || 0>=g_unown_cnt)
@@ -674,12 +676,78 @@ static int registerDevices(void)
         return 0;  // normal case
     }
 
+    OCProvisionDev_t *p, *t, *devList = NULL;
+    int devListLen = 0;
+
+    if(fSelect)
+    {
+        for(;;)
+        {
+            printf("************************************************************\n");
+            printf("OTM device candidate list:\n");
+            g_unown_cnt = printDevList(g_unown_list);
+            if(0 == g_unown_cnt)
+            {
+                break;
+            }
+
+            printf("Select number device from list\nor: 0 - start OTM -1 - escape\n");
+            int c = 0;
+
+            if (!scanf("%d",&c))
+            {
+                continue;
+            }
+
+            if(0 == c && NULL != devList)
+            {
+                break;
+            }
+
+            if(-1 == c)
+            {
+                if(devListLen)
+                {
+                    p = NULL;
+                    t = NULL;
+                    LL_FOREACH_SAFE(devList, p, t)
+                    {
+                        LL_APPEND(g_unown_list, p);
+                        LL_DELETE(devList, t);
+                    }
+                }
+                return 0;
+            }
+
+            if(c > g_unown_cnt)
+            {
+                continue;
+            }
+
+            p = g_unown_list;
+            for(int lst_cnt = 1; p && lst_cnt != c; lst_cnt++, p = p->next);
+
+            if(p)
+            {
+                LL_DELETE(g_unown_list, p);
+                LL_APPEND(devList, p);
+            }
+
+            printf("OTM device list:\n");
+            devListLen = printDevList(devList);
+        }
+    }
+    else
+    {
+        devList = g_unown_list;
+    }
     // call |OCDoOwnershipTransfer| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
     printf("   Registering All Discovered Unowned Devices..\n");
-    OCStackResult rst = OCDoOwnershipTransfer((void*) g_ctx, g_unown_list, ownershipTransferCB);
+    OCStackResult rst = OCDoOwnershipTransfer((void*) g_ctx, devList, ownershipTransferCB);
+
     if(OC_STACK_OK != rst)
     {
         OIC_LOG_V(ERROR, TAG, "OCDoOwnershipTransfer API error: %d", rst);
@@ -2361,7 +2429,7 @@ static int printDevList(const OCProvisionDev_t* dev_lst)
     {
         printf("     [%d] ", ++lst_cnt);
         printUuid((const OicUuid_t*) &lst->doxm->deviceID);
-        printf("    %s", lst->specVer);
+        printf("   %s:%d   %s", lst->endpoint.addr, lst->endpoint.port,lst->specVer);
         printf("\n");
         lst = lst->next;
     }
@@ -2669,7 +2737,8 @@ static void printMenu(void)
 #endif //MULTIPLE_OWNER
 
     printf("** [B] REGISTER/OWN ALL DISCOVERED UNOWNED DEVICES\n");
-    printf("** 20. Register/Own All Discovered Unowned Devices\n\n");
+    printf("** 20. Register/Own All Discovered Unowned Devices\n");
+    printf("** 21. Register/Own All Discovered Unowned Devices List Selected\n\n");
 
     printf("** [C] PROVISION/LINK PAIRWISE THINGS\n");
     printf("** 30. Provision/Link Pairwise Things\n");
@@ -2812,9 +2881,15 @@ int main()
             break;
 #endif //MULTIPLE_OWNER
         case _20_REGIST_DEVS_:
-            if(registerDevices())
+            if(registerDevices(0))
             {
                 OIC_LOG(ERROR, TAG, "_20_REGIST_DEVS_: error");
+            }
+            break;
+        case _21_REGIST_DEVS_:
+            if(registerDevices(1))
+            {
+                OIC_LOG(ERROR, TAG, "_21_REGIST_DEVS_: error");
             }
             break;
         case _30_PROVIS_PAIR_DEVS_:
