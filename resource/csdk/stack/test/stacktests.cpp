@@ -30,6 +30,11 @@ extern "C"
     #include "oic_time.h"
     #include "ocresourcehandler.h"
     #include "occollection.h"
+    #include "mbedtls/ssl_ciphersuites.h"
+    #include "octypes.h"
+#if defined (WITH_POSIX) && (defined (__WITH_DTLS__) || defined(__WITH_TLS__))
+    #include "ca_adapter_net_ssl.h"
+#endif
 }
 
 #include <gtest/gtest.h>
@@ -2987,9 +2992,9 @@ TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
     InitStack(OC_SERVER);
 
     size_t numResources = 0;
-    uint8_t parentBitmap = OC_DISCOVERABLE | OC_OBSERVABLE;
-    uint8_t inBitmap[2] = { OC_DISCOVERABLE | OC_OBSERVABLE,
-                            OC_DISCOVERABLE };
+    uint8_t parentBitmap = (OC_DISCOVERABLE | OC_OBSERVABLE) | OC_SECURE;
+    uint8_t inBitmap[2] = {( OC_DISCOVERABLE | OC_OBSERVABLE) | OC_SECURE,
+                            OC_DISCOVERABLE | OC_SECURE };
     int64_t outBitmap[2] = { 0 };
 
     OCResourceHandle containerHandle;
@@ -3060,7 +3065,8 @@ TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
     {
         ASSERT_TRUE(OCRepPayloadGetPropObject(linksMap[i], OC_RSRVD_POLICY, &policyMap));
         ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_BITMAP, &outBitmap[i]));
-        EXPECT_EQ(inBitmap[i], outBitmap[i]);
+        // check bitmap excluding secure bit
+        EXPECT_EQ(inBitmap[i] & ~OC_MASK_RESOURCE_SECURE, outBitmap[i]);
 
         if (devAddr)
         {
@@ -3126,7 +3132,8 @@ TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
     {
         ASSERT_TRUE(OCRepPayloadGetPropObject(linksMap[i], OC_RSRVD_POLICY, &policyMap));
         ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_BITMAP, &outBitmap[i]));
-        EXPECT_EQ(inBitmap[i], outBitmap[i]);
+        // check bitmap excluding secure bit
+        EXPECT_EQ(inBitmap[i] & ~OC_MASK_RESOURCE_SECURE, outBitmap[i]);
 
         size_t epsDim[MAX_REP_ARRAY_DEPTH] = { 0 };
         OCRepPayload **epsMap = NULL;
@@ -3157,13 +3164,13 @@ TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
             OCRepPayloadDestroy(epsMap[k]);
         }
 
-        ASSERT_GE(coap_scheme_cnt[0], (size_t) 1);
-#ifdef __WITH_TLS__
+#ifdef __WITH_DTLS__
         ASSERT_GE(coap_scheme_cnt[1], (size_t) 1);
 #ifdef TCP_ADAPTER
         ASSERT_GE(coap_scheme_cnt[3], (size_t) 1);
 #endif
 #else
+        ASSERT_GE(coap_scheme_cnt[0], (size_t) 1);
 #ifdef TCP_ADAPTER
         ASSERT_GE(coap_scheme_cnt[2], (size_t) 1);
 #endif
@@ -3434,3 +3441,23 @@ TEST(OCIpv6ScopeLevel, invalidAddressTest)
     EXPECT_EQ(OC_STACK_ERROR, OCGetIpv6AddrScope(invalidAddr3, &scopeLevel));
     EXPECT_EQ(OC_STACK_ERROR, OCGetIpv6AddrScope(invalidAddr4, &scopeLevel));
 }
+
+#if defined (WITH_POSIX) && (defined (__WITH_DTLS__) || defined(__WITH_TLS__))
+TEST(SelectCipherSuite,SelectPositiveAdapter)
+{
+
+    CAinitSslAdapter();
+
+    uint16_t cipher = 0xC0AE;
+    EXPECT_EQ(OC_STACK_OK,OCSelectCipherSuite(cipher, OC_ADAPTER_IP));
+    EXPECT_EQ(OC_STACK_OK,OCSelectCipherSuite(cipher, OC_ADAPTER_GATT_BTLE));
+    EXPECT_EQ(OC_STACK_OK,OCSelectCipherSuite(cipher, OC_ADAPTER_RFCOMM_BTEDR));
+    EXPECT_EQ(OC_STACK_OK,OCSelectCipherSuite(cipher, OC_ADAPTER_TCP));
+    EXPECT_EQ(OC_STACK_OK,OCSelectCipherSuite(cipher, OC_ADAPTER_NFC));
+
+    #ifdef RA_ADAPTER
+        EXPECT_EQ(OC_STACK_OK,OCSelectCipherSuite(cipher, OC_ADAPTER_REMOTE_ACCESS));
+    #endif
+
+}
+#endif

@@ -81,17 +81,9 @@ static OCEntityHandlerResult handleGetRequest(const OCEntityHandlerRequest *ehRe
         return OC_STACK_NO_MEMORY;
     }
 
-    const char *id = OCGetServerInstanceIDString();
-    if (id)
-    {
-        OCRepPayloadSetPropString(rdPayload, OC_RSRVD_DEVICE_ID, id);
-    }
     OCRepPayloadSetPropInt(rdPayload, OC_RSRVD_RD_DISCOVERY_SEL, OC_RD_DISC_SEL);
-
     OCRepPayloadAddResourceType(rdPayload, OC_RSRVD_RESOURCE_TYPE_RD);
-
     OCRepPayloadAddInterface(rdPayload, OC_RSRVD_INTERFACE_DEFAULT);
-
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
 
     if (OC_STACK_OK != sendResponse(ehRequest, rdPayload, OC_EH_OK))

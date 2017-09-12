@@ -33,8 +33,7 @@ extern "C" {
 
 typedef struct RoleCertChain {
     uint32_t                credId;             /**< locally assigned ID number for use with DELETE */
-    OicSecKey_t             certificate;        /**< leaf certificate data */
-    OicSecOpt_t             optData;            /**< intermediate CA certificates */
+    OicSecKey_t             certificate;        /**< certificate chain including leaf and intermediate CA certificates */
 
     struct RoleCertChain    *next;              /**< next chain in list */
 } RoleCertChain_t;

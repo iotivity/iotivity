@@ -96,9 +96,9 @@ exit:
     return false;
 }
 
-static int GetNumberOfResource(const OicSecAce_t* ace)
+static size_t GetNumberOfResource(const OicSecAce_t* ace)
 {
-    int ret = 0;
+    size_t ret = 0;
     OicSecRsrc_t* rsrc = NULL;
     LL_FOREACH(ace->resources, rsrc)
     {
@@ -237,7 +237,7 @@ TEST(ACLResourceTest, CBORACLConversion)
             numberOfCheckedAce++;
         }
     }
-    EXPECT_EQ(3, numberOfCheckedAce);
+    EXPECT_EQ(3u, numberOfCheckedAce);
 
     DeleteACLList(acl);
     DeleteACLList(secAcl);
@@ -542,7 +542,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     OicSecAce_t* savePtr = NULL;
     const OicSecAce_t* subjectAce1 = GetACLResourceData(&acl.aces->subjectuuid, &savePtr);
     ASSERT_TRUE(NULL != subjectAce1);
-    EXPECT_EQ(2, GetNumberOfResource(subjectAce1));
+    EXPECT_EQ(2u, GetNumberOfResource(subjectAce1));
 
     printf("\n\n");
     OicSecRsrc_t* rsrc = NULL;
@@ -565,7 +565,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     savePtr = NULL;
     const OicSecAce_t* subjectAce2 = GetACLResourceData(&acl.aces->subjectuuid, &savePtr);
     ASSERT_TRUE(NULL != subjectAce2);
-    EXPECT_EQ(1, GetNumberOfResource(subjectAce2));
+    EXPECT_EQ(1u, GetNumberOfResource(subjectAce2));
 
     // Perform cleanup
     OCPayloadDestroy((OCPayload *)securityPayload);

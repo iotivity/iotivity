@@ -84,59 +84,6 @@ static const unsigned char s_ekuRole[] = { 0x30, 0x0C, 0x06, 0x0A, 0x2B, 0x06, 0
 /* ASN.1 DER encoding of the EKU for both identity and roles (for use by CAs) */
 static const unsigned char s_ekuCA[] = { 0x30, 0x18, 0x06, 0x0A, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0xDE, 0x7C, 0x01, 0x06, 0x06, 0x0A, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0xDE, 0x7C, 0x01, 0x07 };
 
-/**
- * Generates elliptic curve keypair.
- *
- * @param[out]  pk    mbedtls public key container
- *
- * @return  0 on success or <0 on error
- */
-static int GenerateEccKeyPair(mbedtls_pk_context *pk)
-{
-    int ret = 0;
-    mbedtls_entropy_context entropy;
-    mbedtls_ctr_drbg_context ctr_drbg;
-
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    VERIFY_NON_NULL_RET(pk, TAG, "Param pk is NULL", -1);
-
-    // Initialize the DRBG context
-    mbedtls_ctr_drbg_init(&ctr_drbg);
-    mbedtls_entropy_init(&entropy);
-    ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
-                                &entropy, (const unsigned char *)PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING));
-
-    if (0 > ret)
-    {
-        OIC_LOG_V(ERROR, TAG, "Seed initialization failed! %d", ret);
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        goto exit;
-    }
-    mbedtls_ctr_drbg_set_prediction_resistance(&ctr_drbg, MBEDTLS_CTR_DRBG_PR_ON);
-    ret = mbedtls_pk_setup(pk, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY));
-    if (0 > ret)
-    {
-        OIC_LOG_V(ERROR, TAG, "mbedtls_pk_setup error %d", ret);
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        goto exit;
-    }
-    ret = mbedtls_ecp_gen_key(MBEDTLS_ECP_DP_SECP256R1, mbedtls_pk_ec(*pk), mbedtls_ctr_drbg_random, &ctr_drbg);
-    if (0 > ret)
-    {
-        OIC_LOG(ERROR, TAG, "mbedtls_ecp_gen_keypair error");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        goto exit;
-    }
-
-exit:
-
-    mbedtls_ctr_drbg_free(&ctr_drbg);
-    mbedtls_entropy_free(&entropy);
-
-    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-    return 0;
-}
-
 OCStackResult OC_CALL OCGenerateRandomSerialNumber(char **serial, size_t *serialLen)
 {
     int ret = 0;
@@ -402,7 +349,9 @@ static OCStackResult GenerateCertificate(
             s_ekuRole, sizeof(s_ekuRole));
         VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
         ret = snprintf(buf, sizeof(buf), "CN=%s%s%s", role, (NULL != authority) ? ",OU=" : "", (NULL != authority) ? authority : "");
-        VERIFY_SUCCESS(TAG, ret < sizeof(buf), ERROR);
+        // To prevent sign-compare warning sizeof(buf) is cast to int. This is safe because the max size of buf fits into int.
+        // Note ret value from snprintf may be negative if there was an error so it should not be cast to size_t.
+        VERIFY_SUCCESS(TAG, ret < (int)sizeof(buf), ERROR);
         names.next = NULL;
         names.general_name.name_type = MBEDTLS_X509_GENERALNAME_DIRECTORYNAME;
         ret = mbedtls_x509_string_to_names(&names.general_name.directory_name, buf);

@@ -1658,112 +1658,6 @@ exit:
     return false;
 }
 
-/**
- * Compares credential
- *
- * @return CRED_CMP_EQUAL if credentials are equal
- *         CRED_CMP_NOT_EQUAL if not equal
- *         otherwise error.
- */
-
-static CredCompareResult_t CompareCredential(const OicSecCred_t * l, const OicSecCred_t * r)
-{
-    CredCompareResult_t cmpResult = CRED_CMP_ERROR;
-    bool isCompared = false;
-    OIC_LOG(DEBUG, TAG, "IN CompareCredetial");
-
-    VERIFY_NOT_NULL(TAG, l, ERROR);
-    VERIFY_NOT_NULL(TAG, r, ERROR);
-
-    cmpResult = CRED_CMP_NOT_EQUAL;
-
-    VERIFY_SUCCESS(TAG, (l->credType == r->credType), INFO);
-    VERIFY_SUCCESS(TAG, (0 == memcmp(l->subject.id, r->subject.id, sizeof(l->subject.id))), INFO);
-    VERIFY_SUCCESS(TAG, (0 == memcmp(&l->roleId, &r->roleId, sizeof(l->roleId))), INFO);
-
-    switch(l->credType)
-    {
-        case SYMMETRIC_PAIR_WISE_KEY:
-        case SYMMETRIC_GROUP_KEY:
-        case PIN_PASSWORD:
-        {
-            if(l->privateData.data && r->privateData.data)
-            {
-                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->privateData, &r->privateData), INFO);
-                isCompared = true;
-            }
-            break;
-        }
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-        case ASYMMETRIC_KEY:
-        case SIGNED_ASYMMETRIC_KEY:
-        {
-            if(l->publicData.data && r->publicData.data)
-            {
-                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->publicData, &r->publicData), INFO);
-                isCompared = true;
-            }
-
-            if(l->optionalData.data && r->optionalData.data)
-            {
-                VERIFY_SUCCESS(TAG, IsSameSecOpt(&l->optionalData, &r->optionalData), INFO);
-                isCompared = true;
-            }
-
-            if(l->credUsage && r->credUsage)
-            {
-                VERIFY_SUCCESS(TAG, (strlen(l->credUsage) == strlen(r->credUsage)), INFO);
-                VERIFY_SUCCESS(TAG, (0 == strncmp(l->credUsage, r->credUsage, strlen(l->credUsage))), INFO);
-                isCompared = true;
-            }
-            break;
-        }
-        case ASYMMETRIC_ENCRYPTION_KEY:
-        {
-            if(l->privateData.data && r->privateData.data)
-            {
-                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->privateData, &r->privateData), INFO);
-                isCompared = true;
-            }
-
-            if(l->publicData.data && r->publicData.data)
-            {
-                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->publicData, &r->publicData), INFO);
-                isCompared = true;
-            }
-
-            if(l->optionalData.data && r->optionalData.data)
-            {
-                VERIFY_SUCCESS(TAG, IsSameSecOpt(&l->optionalData, &r->optionalData), INFO);
-                isCompared = true;
-            }
-
-            break;
-        }
-#endif //__WITH_DTLS__ or __WITH_TLS__
-        default:
-        {
-            cmpResult = CRED_CMP_ERROR;
-            break;
-        }
-    }
-
-    if(isCompared)
-    {
-        OIC_LOG(DEBUG, TAG, "Same Credentials");
-        cmpResult = CRED_CMP_EQUAL;
-    }
-    else
-    {
-        OIC_LOG(DEBUG, TAG, "Can not find the key data in credential");
-        cmpResult = CRED_CMP_ERROR;
-    }
-exit:
-    OIC_LOG(DEBUG, TAG, "OUT CompareCredetial");
-
-    return cmpResult;
-}
-
 #if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
 static bool IsNewPreconfigPinCredential(OicSecCred_t * oldCred, OicSecCred_t * newCred)
 {
@@ -3517,36 +3411,6 @@ static int cloneSecKey(OicSecKey_t * dst, OicSecKey_t * src)
     return 0;
 }
 
-static int cloneSecOpt(OicSecOpt_t * dst, OicSecOpt_t * src)
-{
-    if ((src == NULL) || (dst == NULL))
-    {
-        return -1;
-    }
-
-    if (src->len > 0)
-    {
-        dst->data = OICCalloc(src->len, 1);
-        if (dst == NULL)
-        {
-            OIC_LOG_V(ERROR, TAG, "%s memory allocation failed", __func__);
-            OICFree(dst);
-            return -1;
-        }
-        memcpy(dst->data, src->data, src->len);
-    }
-    else
-    {
-        dst->data = NULL;
-    }
-
-    dst->len = src->len;
-    dst->encoding = src->encoding;
-    dst->revstat = src->revstat;
-
-    return 0;
-}
-
 /* Caller must call FreeRoleCertChainList on roleEntries when finished. */
 OCStackResult GetAllRoleCerts(RoleCertChain_t ** output)
 {
@@ -3578,12 +3442,6 @@ OCStackResult GetAllRoleCerts(RoleCertChain_t ** output)
             if (cloneSecKey(&add->certificate, &temp->publicData) != 0)
             {
                 OIC_LOG_V(ERROR, TAG, "%s failed to copy certificate data", __func__);
-                goto error;
-            }
-
-            if (cloneSecOpt(&add->optData, &temp->optionalData) != 0)
-            {
-                OIC_LOG_V(ERROR, TAG, "%s failed to copy optional data", __func__);
                 goto error;
             }
         }

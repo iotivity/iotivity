@@ -114,8 +114,7 @@ typedef struct OCPMGetCsrResult
 typedef struct OCPMRoleCertChain
 {
     uint64_t            credId;         /**< credential ID */
-    OicSecKey_t         certificate;    /**< leaf certificate */
-    OicSecOpt_t         optData;        /**< intermediate CA certificates (if any) */
+    OicSecKey_t         certificate;    /**< certificate chain including leaf and intermediate CA certificates */
 } OCPMRoleCertChain_t;
 
 typedef struct OCPMGetRolesResult

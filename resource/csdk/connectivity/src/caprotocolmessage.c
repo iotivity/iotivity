@@ -204,6 +204,7 @@ coap_pdu_t *CAParsePDU(const char *data, size_t length, uint32_t *outCode,
     if (NULL == outpdu)
     {
         OIC_LOG(ERROR, TAG, "outpdu is null");
+        OIC_LOG_V(DEBUG, TAG, "data length: %" PRIuPTR, length);
         return NULL;
     }
 

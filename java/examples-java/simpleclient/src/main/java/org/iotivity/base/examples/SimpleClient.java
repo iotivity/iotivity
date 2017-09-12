@@ -466,10 +466,8 @@ public class SimpleClient implements
                                                 int sequenceNumber) {
         if (OcResource.OnObserveListener.REGISTER == sequenceNumber) {
             msg("Observe registration action is successful:");
-        } else if (OcResource.OnObserveListener.DEREGISTER == sequenceNumber) {
+        } else if (OcResource.OnObserveListener.MAX_SEQUENCE_NUMBER + 1 == sequenceNumber) {
             msg("Observe De-registration action is successful");
-        } else if (OcResource.OnObserveListener.NO_OPTION == sequenceNumber) {
-            msg("Observe registration or de-registration action is failed");
         }
 
         msg("OBSERVE Result:");

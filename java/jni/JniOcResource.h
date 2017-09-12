@@ -116,23 +116,23 @@ public:
     JniOnMQSubscribeListener* addOnMQTopicSubscribeListener(JNIEnv* env, jobject jListener);
     void removeOnMQTopicSubscribeListener(JNIEnv* env, jobject jListener);
 
-    OCStackResult discoveryMQTopics(JNIEnv* env, const QueryParamsMap &queryParametersMap,
+    OCStackResult discoveryMQTopics(JNIEnv* env, const OC::QueryParamsMap &queryParametersMap,
                                     jobject jListener, OC::QualityOfService QoS);
     OCStackResult createMQTopic(JNIEnv* env, const OC::OCRepresentation &representation,
                                 const std::string &targetUri,
-                                const QueryParamsMap &queryParametersMap,
+                                const OC::QueryParamsMap &queryParametersMap,
                                 jobject jListener, OC::QualityOfService QoS);
 #endif
 #ifdef MQ_SUBSCRIBER
-    OCStackResult subscribeMQTopic(JNIEnv* env, const QueryParamsMap &queryParametersMap,
+    OCStackResult subscribeMQTopic(JNIEnv* env, const OC::QueryParamsMap &queryParametersMap,
                                    jobject jListener, OC::QualityOfService QoS);
     OCStackResult unsubscribeMQTopic(OC::QualityOfService QoS);
-    OCStackResult requestMQPublish(JNIEnv* env, const QueryParamsMap &queryParametersMap,
+    OCStackResult requestMQPublish(JNIEnv* env, const OC::QueryParamsMap &queryParametersMap,
                                    jobject jListener, OC::QualityOfService QoS);
 #endif
 #ifdef MQ_PUBLISHER
     OCStackResult publishMQTopic(JNIEnv* env, const OC::OCRepresentation &representation,
-                                 const QueryParamsMap &queryParametersMap,
+                                 const OC::QueryParamsMap &queryParametersMap,
                                  jobject jListener, OC::QualityOfService QoS);
 #endif
 

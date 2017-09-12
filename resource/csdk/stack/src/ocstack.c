@@ -3631,11 +3631,15 @@ OCStackResult OC_CALL OCDoRequest(OCDoHandle *handle,
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     /* Check whether we should assert role certificates before making this request. */
-    if ((endpoint.flags & CA_SECURE) && (isProxyRequest ||
-        ((strcmp(requestInfo.info.resourceUri, OIC_RSRC_ROLES_URI) != 0) &&
-        (strcmp(requestInfo.info.resourceUri, OIC_RSRC_DOXM_URI) != 0)) &&
-        ((CT_ADAPTER_TCP == connectivityType) &&
-                strcmp(requestInfo.info.resourceUri, OC_RSRVD_KEEPALIVE_URI) != 0)))
+    bool isEndpointSecure = ((endpoint.flags & CA_SECURE) != 0);
+    bool requestContainsRolesUri = (strcmp(requestInfo.info.resourceUri, OIC_RSRC_ROLES_URI) == 0);
+    bool requestContainsDoxmResource = (strcmp(requestInfo.info.resourceUri, OIC_RSRC_DOXM_URI) == 0);
+    bool isTcpConnectivityType = (CT_ADAPTER_TCP == connectivityType);
+    bool requestContainsKeepaliveUri = (strcmp(requestInfo.info.resourceUri, OC_RSRVD_KEEPALIVE_URI) == 0);
+
+    if (isEndpointSecure && (isProxyRequest ||
+        (!requestContainsRolesUri && !requestContainsDoxmResource &&
+         isTcpConnectivityType && !requestContainsKeepaliveUri)))
     {
         CASecureEndpoint_t sep;
         CAResult_t caRes = CAGetSecureEndpointData(&endpoint, &sep);

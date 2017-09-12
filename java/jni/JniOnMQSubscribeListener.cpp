@@ -23,6 +23,8 @@
 #include "JniOcRepresentation.h"
 #include "JniUtils.h"
 
+using namespace OC;
+
 JniOnMQSubscribeListener::JniOnMQSubscribeListener(JNIEnv *env,
                                                    jobject jListener,
                                                    JniOcResource* owner)

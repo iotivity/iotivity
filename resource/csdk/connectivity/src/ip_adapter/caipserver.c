@@ -103,6 +103,11 @@ static struct in6_addr IPv6MulticastAddressOrg;
 #define IPv6_MULTICAST_GLB "ff0e::158"
 static struct in6_addr IPv6MulticastAddressGlb;
 
+/*
+ * Buffer size for the receive message buffer
+ */
+#define RECV_MSG_BUF_LEN 16384
+
 static char *ipv6mcnames[IPv6_DOMAINS] = {
     NULL,
     IPv6_MULTICAST_INT,
@@ -151,6 +156,18 @@ static void CAEventReturned(CASocketFd_t socket);
 
 static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags);
 
+static void CACloseFDs()
+{
+#if !defined(WSA_WAIT_EVENT_0)
+    if (caglobals.ip.shutdownFds[0] != -1)
+    {
+        close(caglobals.ip.shutdownFds[0]);
+        caglobals.ip.shutdownFds[0] = -1;
+    }
+#endif
+    CADeInitializeIPGlobals();
+}
+
 static void CAReceiveHandler(void *data)
 {
     (void)data;
@@ -159,6 +176,7 @@ static void CAReceiveHandler(void *data)
     {
         CAFindReadyMessage();
     }
+    CACloseFDs();
 }
 
 #define CLOSE_SOCKET(TYPE) \
@@ -535,7 +553,7 @@ void CADeInitializeIPGlobals()
 
 static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
 {
-    char recvBuffer[COAP_MAX_PDU_SIZE] = {0};
+    char recvBuffer[RECV_MSG_BUF_LEN] = {0};
     int level = 0;
     int type = 0;
     int namelen = 0;
@@ -1005,13 +1023,13 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
 
 void CAIPStopServer()
 {
-    caglobals.ip.started = false;
     caglobals.ip.terminate = true;
 
 #if !defined(WSA_WAIT_EVENT_0)
     if (caglobals.ip.shutdownFds[1] != -1)
     {
         close(caglobals.ip.shutdownFds[1]);
+        caglobals.ip.shutdownFds[1] = -1;
         // receive thread will stop immediately
     }
     else
@@ -1025,6 +1043,12 @@ void CAIPStopServer()
         OIC_LOG_V(DEBUG, TAG, "set shutdown event failed: %d", WSAGetLastError());
     }
 #endif
+
+    if (!caglobals.ip.started)
+    { // Close fd's since receive handler was not started
+        CACloseFDs();
+    }
+    caglobals.ip.started = false;
 }
 
 void CAWakeUpForChange()

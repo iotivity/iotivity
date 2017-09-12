@@ -268,7 +268,7 @@ static OCStackResult ConvertJSONStringToCBORFile(const char *jsonStr, const char
         OIC_LOG(ERROR, TAG, "Unable to parse JSON string");
         goto exit;
     }
-    size = strlen(jsonStr);
+    size = strlen(jsonStr) + 1;
     size_t bufferSize = 0;
     buffer = (uint8_t *)OICMalloc(size);
     if (!buffer)
