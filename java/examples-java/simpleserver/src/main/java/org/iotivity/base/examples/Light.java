@@ -77,7 +77,7 @@ public class Light implements OcPlatform.EntityHandler {
                     mResourceTypeName,
                     mResourceInterface,
                     this,
-                    EnumSet.of(ResourceProperty.DISCOVERABLE, ResourceProperty.OBSERVABLE)
+                    EnumSet.of(ResourceProperty.DISCOVERABLE, ResourceProperty.OBSERVABLE, ResourceProperty.SECURE)
             );
         }
     }
