@@ -45,21 +45,21 @@ def maskFlags(flags):
 ######################################################################
 
 nest_env.PrependUnique(CPPPATH=[
-    os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
-    os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
-    os.path.join(src_dir, 'resource', 'c_common'),
-    os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
-    os.path.join(src_dir, 'resource', 'include'),
-    os.path.join(src_dir, 'extlibs', 'cjson'),
-    os.path.join(src_dir, 'extlibs', 'tinycbor', 'src'),
-    os.path.join(src_dir, 'extlibs', 'rapidjson', 'rapidjson', 'include', 'rapidjson')
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/c_common',
+    '#/resource/oc_logger/include',
+    '#/resource/csdk/logger/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/extlibs/cjson',
+    '#/extlibs/tinycbor/src',
+    '#/extlibs/rapidjson/rapidjson/include/rapidjson'
 ])
 nest_env.AppendUnique(CPPPATH=[
-    os.path.join(bridging_path, 'include'),
-    os.path.join(bridging_path, 'plugins', 'nest_plugin', 'nest_objects')
+    '#/bridging/include',
+    '#/bridging/plugins/nest_plugin/nest_objects',
 ])
 
 if target_os not in ['arduino', 'windows']:
@@ -78,10 +78,11 @@ if nest_env.get('LOGGING'):
     nest_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 nest_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
-nest_env.AppendUnique(LINKFLAGS=['-Wl,--allow-shlib-undefined'])
 nest_env.AppendUnique(LINKFLAGS=[
+    '-Wl,--allow-shlib-undefined',
     '-Wl,--whole-archive',
-    nest_env.get('BUILD_DIR') + 'libmpmcommon.a', '-Wl,-no-whole-archive'
+    nest_env.get('BUILD_DIR') + 'libmpmcommon.a',
+    '-Wl,-no-whole-archive',
 ])
 
 nest_env.PrependUnique(LIBS=[
@@ -98,9 +99,9 @@ nest_env.PrependUnique(LIBS=[
 ######################################################################
 
 nest_src = [
-    os.path.join(bridging_path, 'plugins', 'nest_plugin', 'nestResource.cpp'),
-    os.path.join(bridging_path, 'plugins', 'nest_plugin', 'nest_objects', 'nest.cpp'),
-    os.path.join(bridging_path, 'plugins', 'nest_plugin', 'nest_objects', 'nestThermostat.cpp'),
+    'nestResource.cpp',
+    'nest_objects/nest.cpp',
+    'nest_objects/nestThermostat.cpp',
 ]
 
 nest_env.AppendUnique(NEST_SRC=nest_src)
