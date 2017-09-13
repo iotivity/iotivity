@@ -41,15 +41,19 @@ void printNotification(OIC::Service::NSMessage notification)
 
 void onProviderStateChanged(OIC::Service::NSProviderState state)
 {
-    std::cout << "onProviderStateChangedCb" << std::endl;
+    cout << "NSProviderStateCallback called" << endl;
     if (state == OIC::Service::NSProviderState::ALLOW)
     {
-        std::cout << "Provider Subscription Accepted" << std::endl;
+        cout << "Provider changed to NS_ALLOW State. " << endl;
     }
     else if (state == OIC::Service::NSProviderState::DENY)
     {
-        std::cout << "Provider Subscription Denied" << std::endl;
-        std::cout << "------------------------------------" << std::endl;
+        cout << "Provider changed to NS_DENY State. " << endl;
+        cout << "------------------------------------" << endl;
+    }
+    else if (state == OIC::Service::NSProviderState::STOPPED)
+    {
+        cout << "Provider changed to NS_STOPPED State. " << endl;
     }
     else if (state == OIC::Service::NSProviderState::TOPIC)
     {
@@ -57,13 +61,14 @@ void onProviderStateChanged(OIC::Service::NSProviderState state)
                 g_provider->getProviderId());
         if (provider)
         {
+            cout << "Provider changed to NS_TOPIC State. " << endl;
             shared_ptr< NSTopicsList > topicList = provider->getTopicList();
             if (topicList)
             {
                 for (auto topic : topicList->getTopicsList())
                 {
-                    std::cout << "Topic Name: " << topic.getTopicName() << std::endl;
-                    std::cout << "Topic state: " << (int) topic.getState() << std::endl;
+                    cout << "Topic Name: " << topic.getTopicName() << endl;
+                    cout << "Topic state: " << (int) topic.getState() << endl;
                 }
             }
         }
@@ -72,6 +77,7 @@ void onProviderStateChanged(OIC::Service::NSProviderState state)
 
 void onNotificationPosted(OIC::Service::NSMessage notification)
 {
+    cout << "NSMessageReceivedCallback called" << endl;
     g_message = &notification;
     cout << "Receiving Notification" << endl;
     printNotification(notification);
@@ -79,6 +85,7 @@ void onNotificationPosted(OIC::Service::NSMessage notification)
 
 void onNotificationSync(OIC::Service::NSSyncInfo sync)
 {
+    cout << "NSSyncInfoReceivedCallback called" << endl;
     cout << "Consumer SyncInfo changed for providerID: " << sync.getProviderId() << " Message ID: "
             << sync.getMessageId() << endl;
 
@@ -107,6 +114,7 @@ void onDiscoverNotificationProvider(shared_ptr< OIC::Service::NSProvider > provi
 {
     if (provider)
     {
+        cout << "Notification Resource Discovered" << endl;
         g_provider = provider;
         g_providerList.push_back(provider);
 
@@ -261,7 +269,7 @@ void sendSyncInfo()
 
 void getTopics()
 {
-    cout << "Getting Topic List" << std::endl;
+    cout << "Getting Topic List" << endl;
     for (shared_ptr< OIC::Service::NSProvider > provider : g_providerList)
     {
         shared_ptr< NSTopicsList > topicList = provider->getTopicList();
@@ -269,8 +277,8 @@ void getTopics()
         {
             for (auto topic : topicList->getTopicsList())
             {
-                std::cout << "Topic Name: " << topic.getTopicName() << std::endl;
-                std::cout << "Topic state: " << (int) topic.getState() << std::endl;
+                cout << "Topic Name: " << topic.getTopicName() << endl;
+                cout << "Topic state: " << (int) topic.getState() << endl;
             }
         }
     }
@@ -278,7 +286,7 @@ void getTopics()
 
 void updateTopics()
 {
-    cout << "Updating Topic List" << std::endl;
+    cout << "Updating Topic List" << endl;
     for (shared_ptr< OIC::Service::NSProvider > provider : g_providerList)
     {
         shared_ptr< NSTopicsList > topicList;
@@ -362,7 +370,7 @@ void *OCProcessThread(void *ptr)
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            std::cout << "OCStack process error" << std::endl;
+            cout << "OCStack process error" << endl;
             return NULL;
         }
     }
@@ -377,7 +385,7 @@ int main(void)
 
     if (OCInit(NULL, 0, OC_CLIENT_SERVER) != OC_STACK_OK)
     {
-        std::cout << "OCStack init error" << std::endl;
+        cout << "OCStack init error" << endl;
         return 0;
     }
 

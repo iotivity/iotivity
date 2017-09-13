@@ -19,26 +19,14 @@
  *
  ******************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#include <pthread.h>
-#endif
-#include <signal.h>
-#include "ocstack.h"
-#include "logger.h"
-#include "ocpayload.h"
-#include "srmutility.h"
-#include "doxmresource.h"
-#include "pinoxmcommon.h"
-#include "oxmverifycommon.h"
-
+#include "CommonUtil.h"
 #include "IotivityTest_Logger.h"
+#include "SecurityCommonUtil.h"
 
 #define TAG "SAMPLE_JUSTWORKS"
 #define SAMPLE_MAX_NUM_POST_INSTANCE  2
+
+const char *specVersion = "ocf.1.1.0";
 
 #ifdef __WINDOWS__
 std::string g_appName;
@@ -81,55 +69,6 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
 OCEntityHandlerResult
 OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest *entityHandlerRequest,
         void* callbackParam);
-
-const char *getResult(OCStackResult result)
-{
-    switch (result)
-    {
-        case OC_STACK_OK:
-            return "OC_STACK_OK";
-        case OC_STACK_RESOURCE_CREATED:
-            return "OC_STACK_RESOURCE_CREATED";
-        case OC_STACK_RESOURCE_DELETED:
-            return "OC_STACK_RESOURCE_DELETED";
-        case OC_STACK_INVALID_URI:
-            return "OC_STACK_INVALID_URI";
-        case OC_STACK_INVALID_QUERY:
-            return "OC_STACK_INVALID_QUERY";
-        case OC_STACK_INVALID_IP:
-            return "OC_STACK_INVALID_IP";
-        case OC_STACK_INVALID_PORT:
-            return "OC_STACK_INVALID_PORT";
-        case OC_STACK_INVALID_CALLBACK:
-            return "OC_STACK_INVALID_CALLBACK";
-        case OC_STACK_INVALID_METHOD:
-            return "OC_STACK_INVALID_METHOD";
-        case OC_STACK_NO_MEMORY:
-            return "OC_STACK_NO_MEMORY";
-        case OC_STACK_COMM_ERROR:
-            return "OC_STACK_COMM_ERROR";
-        case OC_STACK_INVALID_PARAM:
-            return "OC_STACK_INVALID_PARAM";
-        case OC_STACK_NOTIMPL:
-            return "OC_STACK_NOTIMPL";
-        case OC_STACK_NO_RESOURCE:
-            return "OC_STACK_NO_RESOURCE";
-        case OC_STACK_RESOURCE_ERROR:
-            return "OC_STACK_RESOURCE_ERROR";
-        case OC_STACK_SLOW_RESOURCE:
-            return "OC_STACK_SLOW_RESOURCE";
-        case OC_STACK_NO_OBSERVERS:
-            return "OC_STACK_NO_OBSERVERS";
-#ifdef WITH_PRESENCE
-            case OC_STACK_PRESENCE_STOPPED:
-            return "OC_STACK_PRESENCE_STOPPED";
-#endif
-        case OC_STACK_ERROR:
-            return "OC_STACK_ERROR";
-        default:
-            return "UNKNOWN";
-    }
-}
 
 OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
 {
@@ -418,9 +357,9 @@ OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_L
     IOTIVITYTEST_LOG(DEBUG, "[Test Server] displayNumCB IN");
     IOTIVITYTEST_LOG(DEBUG, "[Test Server] ############ mutualVerifNum ############");
 
-    for(int i = 0; i< MUTUAL_VERIF_NUM_LEN ; i++)
+    for (int i = 0; i < MUTUAL_VERIF_NUM_LEN; i++)
     {
-        IOTIVITYTEST_LOG(DEBUG, "[Test Server] %02X ", mutualVerifNum[i] );
+        IOTIVITYTEST_LOG(DEBUG, "[Test Server] %02X ", mutualVerifNum[i]);
     }
 
     IOTIVITYTEST_LOG(DEBUG, "[Test Server] ############ mutualVerifNum ############");
@@ -455,18 +394,18 @@ int main(int argc, char **argv)
 {
     struct timespec timeout;
 
-    strncpy(fileName, argv[1], strlen(argv[1]));
+    strcpy(fileName, argv[1]);
 
-    if(!strcmp(argv[2], "4"))
+    if (!strcmp(argv[2], "4"))
     {
         SetDisplayNumCB(NULL, displayNumCB);
         SetUserConfirmCB(NULL, confirmNumCB);
-        SetVerifyOption((VerifyOptionBitmask_t)(0 | 1|2|3|4));
+        SetVerifyOption((VerifyOptionBitmask_t) (DISPLAY_NUM | USER_CONFIRM));
     }
 
     // Initialize Persistent Storage for SVR database
     OCPersistentStorage ps =
-    { server_fopen, fread, fwrite, fclose, unlink };
+    { server_fopen, fread, fwrite, fclose, remove };
 
     OCRegisterPersistentStorageHandler(&ps);
 
@@ -475,6 +414,8 @@ int main(int argc, char **argv)
         IOTIVITYTEST_LOG(ERROR, "OCStack init error");
         return 0;
     }
+
+    OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, (void*) specVersion);
 
     char *deviceId = NULL;
     OicUuid_t uuid;
@@ -565,10 +506,11 @@ int createLEDResource(char *uri, LEDResource *ledResource, bool resourceState, i
     ledResource->state = resourceState;
     ledResource->power = resourcePower;
     OCStackResult res = OCCreateResource(&(ledResource->handle), "core.test",
-            OC_RSRVD_INTERFACE_DEFAULT, uri, OCEntityHandlerCb, NULL,
+    OC_RSRVD_INTERFACE_DEFAULT, uri, OCEntityHandlerCb, NULL,
             OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
 
-    IOTIVITYTEST_LOG(INFO, "Created LED resource with result: %s", getResult(res));
+    IOTIVITYTEST_LOG(INFO, "Created LED resource with result: %s",
+            CommonUtil::getOCStackResult(res));
 
     return 0;
 }

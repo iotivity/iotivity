@@ -27,7 +27,7 @@ public interface NSAppUtility {
     String  MSG_TITLE                 = "NS Android Msg Title";
     String  MSG_BODY                  = "NS Android Msg  Body";
     String  MSG_SOURCE                = "OCF";
-    String  TOPIC_NAME                = "OCF_ANDROID_TOPIC";
+    String  TOPIC_NAME                = "TESTAPP_Topic_";
 
     Boolean IS_SECURED                = false;
 

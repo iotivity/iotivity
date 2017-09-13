@@ -214,8 +214,8 @@ void CommonUtil::launchApp(std::string app, bool withGnome)
 #endif
 
     cmd += app;
-    cmd += " &";
-    printf("Launch App Command %s\nResult: %d\n",cmd.c_str(), system(cmd.c_str()));
+    cmd += " & echo $! >> pid_list.txt";
+    printf("Launch App Command %s\nResult: %d\n", cmd.c_str(), system(cmd.c_str()));
 #endif
 }
 
@@ -376,6 +376,67 @@ bool CommonUtil::writeFile(std::string filePath, std::string fileName, std::stri
     return true;
 }
 
+std::string CommonUtil::getLocalIPAll(InternetProtocolVersion ipVersion, std::string types)
+{
+    std::string ip = "";
+
+#ifdef __LINUX__
+
+    struct ifaddrs * ifAddrStruct = NULL;
+    struct ifaddrs * ifa = NULL;
+    void * tmpAddrPtr = NULL;
+
+    getifaddrs(&ifAddrStruct);
+
+    for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if (!ifa->ifa_addr)
+        {
+            continue;
+        }
+
+        if (ipVersion == IPv4)
+        {
+            if (ifa->ifa_addr->sa_family == AF_INET)
+            {
+                tmpAddrPtr = &((struct sockaddr_in *) ifa->ifa_addr)->sin_addr;
+                char addressBuffer[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
+                std::string token = ifa->ifa_name;
+
+                if (token.compare(types) == 0)
+                {
+                    ip = addressBuffer;
+                }
+            }
+        }
+        else if (ipVersion == IPv6)
+        {
+            if (ifa->ifa_addr->sa_family == AF_INET6)
+            {
+                tmpAddrPtr = &((struct sockaddr_in6 *) ifa->ifa_addr)->sin6_addr;
+                char addressBuffer[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
+
+                std::string token = ifa->ifa_name;
+                if (token.compare(types) == 0)
+                {
+                    ip = addressBuffer;
+                }
+            }
+        }
+    }
+
+    if (ifAddrStruct != NULL)
+    {
+        freeifaddrs(ifAddrStruct);
+    }
+
+#endif
+
+    return ip;
+}
+
 std::string CommonUtil::getLocalIP(InternetProtocolVersion ipVersion)
 {
     std::string ip = "";
@@ -456,3 +517,42 @@ void CommonUtil::getCurrentTime(struct tm& currentTime)
             << currentTime.tm_sec << std::endl;
 }
 
+string CommonUtil::getPIDFromPort(string port)
+{
+    FILE *fp;
+    char pid[1035];
+    port = PID_FIND_COMMAND + port;
+
+    fp = popen(port.c_str(), "r");
+    if (fp == NULL)
+    {
+        cout << "Failed to run command" << endl;
+        exit(1);
+    }
+
+    while (fgets(pid, sizeof(pid) - 1, fp) != NULL)
+    {
+        cout << "Found PID is: " << pid << endl;
+    }
+
+    pclose(fp);
+    return string(pid);
+}
+
+void CommonUtil::killPID(string pid)
+{
+    string cmd = KILL_ALL_COMMAND + pid;
+
+#ifndef __ANDROID__
+    string myPid = to_string(getpid());
+#else
+    std::stringstream ss;
+    ss << getpid();
+    string myPid = ss.str();
+#endif
+
+    if (myPid.compare(pid) != 0)
+    {
+        system(cmd.c_str());
+    }
+}

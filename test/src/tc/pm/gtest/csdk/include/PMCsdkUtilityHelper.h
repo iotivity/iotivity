@@ -40,6 +40,9 @@
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "oxmverifycommon.h"
+#ifdef MULTIPLE_OWNER
+#include "securevirtualresourcetypes.h"
+#endif //MULTIPLE_OWNER
 #include "OCAccountManager.h"
 #include "OCApi.h"
 #include "OCPlatform.h"
@@ -47,14 +50,18 @@
 #include "payload_logging.h"
 #include "pmtypes.h"
 #include "rd_client.h"
-#include "securevirtualresourcetypes.h"
 #include "srmutility.h"
 #include "ssl_ciphersuites.h"
 #include "utils.h"
 #include "utlist.h"
+#include "mbedtls/config.h"
+#include "mbedtls/pem.h"
+#include "mbedtls/x509_csr.h"
+#include "occertutility.h"
 
 #include "CommonUtil.h"
 #include "CommonTestUtil.h"
+#include "SecurityCommonUtil.h"
 #include "CommonProperties.h"
 #include "IotivityTest_Logger.h"
 
@@ -65,9 +72,10 @@ using namespace OC;
 /**
  *  Server and Client Resources
  */
-#define KILL_SERVERS "iotivity_pm_server"
+#define KILL_SERVERS "iotivity_pm_ser"
 
 #define SVR_DB_FILE_NAME "oic_svr_db_client.dat"
+#define AUTO_PROVISION_SVR_DB_FILE_NAME "oic_autoprvn_mng.db"
 #define PRVN_DB_FILE_NAME "oic_prvn_mng.db"
 #define JUSTWORKS_SERVER1 "./iotivity_pm_server oic_svr_db_server.dat 1"
 #define JUSTWORKS_SERVER2 "./iotivity_pm_server oic_svr_db_server_justworks.dat 1"
@@ -83,10 +91,13 @@ using namespace OC;
 #define CLIENT_CBOR "./oic_svr_db_client.dat"
 #define CLIENT_CBOR_BACKUP "../oic_svr_db_client.dat"
 #define CLIENT_DATABASE "./oic_prvn_mng.db"
+#define AUTO_PROVISION_CLIENT_DATABASE "./oic_autoprvn_mng.db"
 #define DATABASE_PDM "./PDM.db"
 
 #define MV_JUSTWORKS_SERVER_CBOR "./oic_svr_db_server_mvjustworks.dat"
 #define MV_JUSTWORKS_SERVER_CBOR_BACKUP "../oic_svr_db_server_mvjustworks.dat"
+
+#define DEVICE_PROPERTIES "./device_properties.dat"
 
 /**
  * MOT Resources
@@ -102,7 +113,7 @@ using namespace OC;
 #define PRECONFIG_SERVER2 "./iotivity_pm_server preconfig_server_2.dat 3"
 #define PRECONFIG_SERVER1_CBOR "./preconfig_server_1.dat"
 #define PRECONFIG_SERVER1_CBOR_BACKUP "../preconfig_server_1.dat"
-#define PRECONFIG_SERVER2_CBOR "../preconfig_server_2.dat"
+#define PRECONFIG_SERVER2_CBOR "./preconfig_server_2.dat"
 #define PRECONFIG_SERVER2_CBOR_BACKUP "../preconfig_server_2.dat"
 
 #define MOT_CTX "MOT Context"
@@ -118,32 +129,36 @@ using namespace OC;
 #define CTX_CERT_REQ_ISSUE "Cert Request Context"
 #define CTX_PROV_TRUST_CERT "Trust Cert Context"
 #define ROOT_CERT_FILE "rootca.crt"
+#define ROOT_CERT_FILE_TMP "./rootca.crt"
 #define ROOT_CERT_FILE_BACKUP "../rootca.crt"
+#define TEST_CERT_ROLE1 "IoTivity-test-role1"
 
 class PMCsdkUtilityHelper
 {
 
-    public:
+public:
 
-        static OCProvisionDev_t *getDevInst(OCProvisionDev_t *dev_lst, const int dev_num);
+    static OCProvisionDev_t* getDevInst(OCProvisionDev_t* dev_lst, const int dev_num);
 
-        static int printDevList(OCProvisionDev_t *);
+    static int printDevList(OCProvisionDev_t*);
 
-        static int printResultList(const OCProvisionResult_t *, const size_t);
+    static bool checkResultList(const OCProvisionResult_t* rslt_lst, const size_t rslt_cnt, int expectedResult);
 
-        static size_t printUuidList(const OCUuidList_t *);
+    static int printResultList(const OCProvisionResult_t*, const size_t);
 
-        static void printUuid(const OicUuid_t *);
+    static size_t printUuidList(const OCUuidList_t*);
 
-        static char *getOxmType(OicSecOxm_t oxmType);
+    static void printUuid(const OicUuid_t*);
 
-        static void removeAllResFile();
+    static char* getOxmType(OicSecOxm_t oxmType);
 
-        static std::string setFailureMessage(OCStackResult actualResult, OCStackResult expectedResult);
+    static void removeAllResFile();
 
-        static std::string setFailureMessage(OicSecOxm_t actualResult, OicSecOxm_t expectedResult);
+    static std::string setFailureMessage(OCStackResult actualResult, OCStackResult expectedResult);
 
-        static std::string setFailureMessage(std::string errorMessage);
+    static std::string setFailureMessage(OicSecOxm_t actualResult, OicSecOxm_t expectedResult);
+
+    static std::string setFailureMessage(std::string errorMessage);
 };
 
 #endif /* PMCsdkUtilityHelper_H_ */

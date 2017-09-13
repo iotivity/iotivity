@@ -327,8 +327,12 @@ void menuSelection(ConsumerAppMenu menu)
             break;
 
         case CONSUMER_EXIT:
-            cout << "Quit from NS Consumer TestApp..." << endl << endl;
+            cout << "Quit from NS Consumer TestApp..." << endl;
             g_IsExit = true;
+            break;
+
+        default:
+            cout << "Invalid input, please choose a valid menu option!!" << endl;
             break;
     }
 }
@@ -359,7 +363,7 @@ void showMainMenu()
 // This function is for taking input from console and processing input as necessary
 int userInputProcessing(int max, int min)
 {
-    int input=0;
+    int input = 0;
 
     if (g_IsTCRunning)
     {
@@ -376,6 +380,7 @@ int userInputProcessing(int max, int min)
                 cout << input << endl;
                 break;
             }
+            CommonUtil::waitInSecond(WAIT_TIME_MIN);
         }
     }
     else
@@ -390,6 +395,7 @@ int userInputProcessing(int max, int min)
 
     cin.clear();
     cin.ignore(numeric_limits< streamsize >::max(), '\n');
+    cout << "Recireved Invalid Input: " << input << endl;
     throw runtime_error("Invalid Input, please try again");
 }
 

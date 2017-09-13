@@ -22,6 +22,7 @@
 #ifndef PMCppHelper_H_
 #define PMCppHelper_H_
 
+#include "PMCppCallbackHelper.h"
 #include "PMCppUtilityHelper.h"
 
 class PMCppHelper
@@ -34,122 +35,130 @@ class PMCppHelper
 
         PMCppHelper();
 
-        static FILE *clientOpen(const char *UNUSED_PARAM, const char *mode);
+    static FILE* clientOpen(const char *UNUSED_PARAM, const char *mode);
 
-        bool provisionInit(const std::string &dbPath = CLIENT_DATABASE);
+    bool provisionInit(const std::string& dbPath = CLIENT_DB_01);
 
-        bool setRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType, OCStackResult expectedResult);
+    static FILE* clientOpen2(const char *UNUSED_PARAM, const char *mode);
 
-        bool setDisplayPinCB(GeneratePinCallback displayPin, OCStackResult expectedResult);
+	bool provisionInit2(const std::string& dbPath = CLIENT_DB_01);
 
-        bool unsetDisplayPinCB(OCStackResult expectedResult);
+    bool pdmCleanupForTimeout(OCStackResult expectedResult);
 
-        bool registerInputPinCallback(InputPinCB inputPinCB,
-                                      InputPinCallbackHandle *inputPinCallbackHandle, OCStackResult expectedResult);
+    bool configSelfOwnership(OCStackResult expectedResult);
 
-        bool deregisterInputPinCallback(InputPinCallbackHandle inputPinCallbackHandle,
-                                        OCStackResult expectedResult);
+    bool setRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType, OCStackResult expectedResult);
 
-        bool registerDisplayPinCallback(DisplayPinCB displayPinCB,
-                                        DisplayPinCallbackHandle *displayPinCallbackHandle, OCStackResult expectedResult);
+    bool setDisplayPinCB(GeneratePinCallback displayPin, OCStackResult expectedResult);
 
-        bool deregisterDisplayPinCallback(DisplayPinCallbackHandle displayPinCallbackHandle,
-                                          OCStackResult expectedResult);
+    bool unsetDisplayPinCB(OCStackResult expectedResult);
 
-        bool setInputPinCallback(InputPinCallback inputPin, OCStackResult expectedResult);
+    bool registerInputPinCallback(InputPinCB inputPinCB,
+            InputPinCallbackHandle* inputPinCallbackHandle, OCStackResult expectedResult);
 
-        bool unsetInputPinCallback(OCStackResult expectedResult);
+    bool deregisterInputPinCallback(InputPinCallbackHandle inputPinCallbackHandle,
+            OCStackResult expectedResult);
 
-        bool registerDisplayNumCallback(DisplayNumCB displayNumCB, OCStackResult expectedResult);
+    bool registerDisplayPinCallback(DisplayPinCB displayPinCB,
+            DisplayPinCallbackHandle* displayPinCallbackHandle, OCStackResult expectedResult);
 
-        bool deregisterDisplayNumCallback(OCStackResult expectedResult);
+    bool deregisterDisplayPinCallback(DisplayPinCallbackHandle displayPinCallbackHandle,
+            OCStackResult expectedResult);
 
-        bool registerUserConfirmCallback(UserConfirmNumCB userConfirmCB, OCStackResult expectedResult);
+    bool setInputPinCallback(InputPinCallback inputPin, OCStackResult expectedResult);
 
-        bool deregisterUserConfirmCallback(OCStackResult expectedResult);
+    bool unsetInputPinCallback(OCStackResult expectedResult);
 
-        bool discoverUnownedDevices(int time, DeviceList_t &data, OCStackResult expectedResult);
+    bool registerDisplayNumCallback(DisplayNumCB displayNumCB, OCStackResult expectedResult);
 
-        bool discoverSingleDevice(unsigned short timeout, const OicUuid_t *deviceID,
-                                  std::shared_ptr< OCSecureResource > &foundDevice, OCStackResult expectedResult);
+    bool deregisterDisplayNumCallback(OCStackResult expectedResult);
 
-        bool discoverSingleDeviceInUnicast(unsigned short timeout, const OicUuid_t *deviceID,
-                                           const std::string &hostAddress, OCConnectivityType connType,
-                                           std::shared_ptr< OCSecureResource > &foundDevice, OCStackResult expectedResult);
+    bool registerUserConfirmCallback(UserConfirmNumCB userConfirmCB, OCStackResult expectedResult);
 
-        bool discoverOwnedDevices(int time, DeviceList_t &data, OCStackResult expectedResult);
+    bool deregisterUserConfirmCallback(OCStackResult expectedResult);
 
-        bool getDevInfoFromNetwork(unsigned short time, DeviceList_t &ownedDevList,
-                                   DeviceList_t &unownedDevList, OCStackResult expectedResult);
+    bool discoverUnownedDevices(int time, DeviceList_t& data, OCStackResult expectedResult);
 
-        bool setOwnerTransferCallbackData(int num, OTMCallbackData_t &data, InputPinCallback inputPin,
-                                          OCStackResult expectedResult);
+    bool discoverSingleDevice(unsigned short timeout, const OicUuid_t* deviceID,
+            std::shared_ptr< OCSecureResource > &foundDevice, OCStackResult expectedResult);
 
-        bool doOwnershipTransfer(DeviceList_t &data, ResultCallBack resultCallback,
-                                 OCStackResult expectedResult);
+    bool discoverSingleDeviceInUnicast(unsigned short timeout, const OicUuid_t* deviceID,
+            const std::string& hostAddress, OCConnectivityType connType,
+            std::shared_ptr< OCSecureResource > &foundDevice, OCStackResult expectedResult);
 
-        bool provisionACL(DeviceList_t &deviceList, const OicSecAcl_t *acl,
-                          ResultCallBack resultCallback, OCStackResult expectedResult);
+    bool discoverOwnedDevices(int time, DeviceList_t& data, OCStackResult expectedResult);
 
-        bool provisionCredentials(DeviceList_t &deviceList, const Credential &cred,
-                                  const OCSecureResource &device2, ResultCallBack resultCallback,
-                                  OCStackResult expectedResult);
+    bool getDevInfoFromNetwork(unsigned short time, DeviceList_t& ownedDevList,
+            DeviceList_t &unownedDevList, OCStackResult expectedResult);
 
-        bool provisionPairwiseDevices(DeviceList_t &deviceList, const Credential &cred,
-                                      const OicSecAcl_t *acl1, const OCSecureResource &device2, const OicSecAcl_t *acl2,
-                                      ResultCallBack resultCallback, OCStackResult expectedResult);
+    bool setOwnerTransferCallbackData(int num, OTMCallbackData_t& data, InputPinCallback inputPin,
+            OCStackResult expectedResult);
 
-        bool getLinkedDevices(DeviceList_t &deviceList, UuidList_t &uuidList,
-                              OCStackResult expectedResult);
+    bool doOwnershipTransfer(DeviceList_t &data, ResultCallBack resultCallback,
+            OCStackResult expectedResult);
 
-        bool getOTMethod(DeviceList_t &deviceList, OicSecOxm_t *oxm, OCStackResult expectedResult);
+    bool provisionACL(DeviceList_t& deviceList, const OicSecAcl_t* acl,
+            ResultCallBack resultCallback, OCStackResult expectedResult);
 
-        bool getSelectedOwnershipTransferMethod(DeviceList_t &deviceList, OicSecOxm_t expectedResult);
+    bool provisionCredentials(DeviceList_t& deviceList, const Credential &cred,
+            const OCSecureResource &device2, ResultCallBack resultCallback,
+            OCStackResult expectedResult);
 
-        bool unlinkDevices(DeviceList_t &deviceList, const OCSecureResource &device2,
-                           ResultCallBack resultCallback, OCStackResult expectedResult);
+    bool provisionPairwiseDevices(DeviceList_t& deviceList, const Credential &cred,
+            const OicSecAcl_t* acl1, const OCSecureResource &device2, const OicSecAcl_t* acl2,
+            ResultCallBack resultCallback, OCStackResult expectedResult);
 
-        bool removeDevice(DeviceList_t &deviceList, unsigned short waitTimeForOwnedDeviceDiscovery,
-                          ResultCallBack resultCallback, OCStackResult expectedResult);
+    bool getLinkedDevices(DeviceList_t& deviceList, UuidList_t &uuidList,
+            OCStackResult expectedResult);
 
-        bool removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery, std::string uuid,
-                                  ResultCallBack resultCallback, OCStackResult expectedResult);
+    bool getOTMethod(DeviceList_t& deviceList, OicSecOxm_t* oxm, OCStackResult expectedResult);
 
-        bool saveACL(const OicSecAcl_t *acl, OCStackResult expectedResult);
+    bool getSelectedOwnershipTransferMethod(DeviceList_t& deviceList, OicSecOxm_t expectedResult);
 
-        bool provisionTrustCertChain(DeviceList_t &deviceList, OicSecCredType_t type, uint16_t credId,
-                                     ResultCallBack resultCallback, OCStackResult expectedResult);
+    bool unlinkDevices(DeviceList_t& deviceList, const OCSecureResource &device2,
+            ResultCallBack resultCallback, OCStackResult expectedResult);
 
-        static void createAcl(OicSecAcl_t *acl, const int dev_num, int nPermission,
-                              DeviceList_t &m_OwnedDevList);
+    bool removeDevice(DeviceList_t& deviceList, unsigned short waitTimeForOwnedDeviceDiscovery,
+            ResultCallBack resultCallback, OCStackResult expectedResult);
 
-        static OicSecAcl_t *createAclForLEDAccess(const OicUuid_t *subject);
+    bool removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery, std::string uuid,
+            ResultCallBack resultCallback, OCStackResult expectedResult);
 
-        static void ownershipTransferCB(PMResultList_t *result, int hasError);
+    bool saveACL(const OicSecAcl_t* acl, OCStackResult expectedResult);
 
-        static void provisionCB(PMResultList_t *result, int hasError);
+    bool provisionTrustCertChain(DeviceList_t& deviceList, OicSecCredType_t type, uint16_t credId,
+            ResultCallBack resultCallback, OCStackResult expectedResult);
 
-        static void inputPinCB(char *pinBuf, size_t bufSize);
+    static void createAcl(OicSecAcl_t *acl, const int dev_num, int nPermission,
+            DeviceList_t &m_OwnedDevList);
 
-        static void OnInputPinCB(OicUuid_t deviceId, char *pinBuf, size_t bufSize);
+    static OicSecAcl_t* createAclForLEDAccess(const OicUuid_t* subject);
 
-        static void OnDisplayPinCB(char *pinData, size_t pinSize);
+    static void ownershipTransferCB(PMResultList_t *result, int hasError);
 
-        static OCStackResult displayMutualVerifNumCB(uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN]);
+    static void provisionCB(PMResultList_t *result, int hasError);
 
-        static OCStackResult confirmMutualVerifNumCB(void);
+    static void inputPinCB(char* pinBuf, size_t bufSize);
 
-        static OicSecPdAcl_t *createPdAcl(int nPermission);
+    static void OnInputPinCB(OicUuid_t deviceId, char* pinBuf, size_t bufSize);
 
-        bool deleteACLList(OicSecAcl_t *pAcl);
+    static void OnDisplayPinCB(char* pinData, size_t pinSize);
 
-        OCProvisionDev_t *getDevInst(const OCProvisionDev_t *dev_lst, const int dev_num);
+    static OCStackResult displayMutualVerifNumCB(uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN]);
 
-        std::string getFailureMessage();
+    static OCStackResult confirmMutualVerifNumCB(void);
 
-        int waitCallbackRet();
+    static OicSecPdAcl_t* createPdAcl(int nPermission);
 
-        bool convertStrToUuid(std::string uuid, OicUuid_t *deviceID, OCStackResult expectedResult);
+    bool deleteACLList(OicSecAcl_t* pAcl);
+
+    OCProvisionDev_t* getDevInst(const OCProvisionDev_t* dev_lst, const int dev_num);
+
+    std::string getFailureMessage();
+
+    int waitCallbackRet();
+
+    bool convertStrToUuid(std::string uuid, OicUuid_t* deviceID, OCStackResult expectedResult);
 };
 
 #endif

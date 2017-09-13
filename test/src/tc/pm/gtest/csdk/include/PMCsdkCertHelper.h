@@ -52,6 +52,10 @@
 #define CRED_TYPE_UOBV 30
 #define CRED_TYPE_LOBV -3
 
+#define TEST_CERT_NOT_BEFORE "20170101000000" // Not before field for certificates, in format YYYYMMDDhhmmss
+#define TEST_CERT_NOT_AFTER "20270101000000"
+#define CA_SUBJECT "C=US, O=Open Connectivity Foundation, CN=IoTivity test code CA"
+
 // function declaration(s) for calling them before implementing
 
 /**
@@ -59,55 +63,92 @@
  */
 class PMCsdkCertHelper
 {
-    private:
-        std::string m_failureMessage;
+private:
+    std::string m_failureMessage;
 
-    public:
-        static int g_OwnDevCount;
-        static int g_UnownDevCount;
-        static int g_motPMDevCount;
-        static bool g_CBInvoked;
+public:
+    static int g_OwnDevCount;
+    static int g_UnownDevCount;
+    static int g_motPMDevCount;
+    static bool g_CBInvoked;
+    static char* g_csrVal;
 
-        static OCPersistentStorage pstStr;
-        static ByteArray s_trustCertChainArray;
+    static OCPersistentStorage pstStr;
+    static ByteArray s_trustCertChainArray;
 
-        PMCsdkCertHelper();
+    PMCsdkCertHelper();
 
-        static FILE *fopenProvManager(const char *, const char *);
+    static FILE* fopenProvManager(const char*, const char*);
 
-        bool initProvisionClient(int clientOTMType, char *chDBPath);
+    bool initProvisionClient(int clientOTMType, char* chDBPath);
 
-        bool readTrustCertChain(uint16_t credId, uint8_t **trustCertChain, size_t *chainSize,
-                                OCStackResult expectedResult);
+    bool readTrustCertChain(uint16_t credId, uint8_t **trustCertChain, size_t *chainSize,
+            OCStackResult expectedResult);
 
-        bool removeTrustCertChainNotifier();
+    bool provisionCertificate(void *ctx, const OCProvisionDev_t *pDev, const char* pemCert,
+            OCProvisionResultCB resultCallback, OCStackResult expectedResult);
 
-        bool registerTrustCertChainNotifier(void *cb, TrustCertChainChangeCB CB,
-                                            OCStackResult expectedResult);
+    bool saveOwnCertChain(const char* cert, const char* key, uint16_t *credId,
+            OCStackResult expectedResult);
 
-        bool saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
-                                OicEncodingType_t encodingType, uint16_t *credId, OCStackResult expectedResult);
+    bool saveOwnRoleCert(const char* cert, uint16_t *credId, OCStackResult expectedResult);
 
-        bool provisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
-                                     const OCProvisionDev_t *selectedDeviceInfo, OCProvisionResultCB resultCallback,
-                                     OCStackResult expectedResult);
+    bool removeTrustCertChainNotifier();
 
-        bool provisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecCrl_t *crl,
-                          OCProvisionResultCB resultCallback, OCStackResult expectedResult);
-        /**
-         * All Callback Methods for Provision Manager
-         */
-        static void provisionCertCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
+    bool registerTrustCertChainNotifier(void *cb, TrustCertChainChangeCB CB,
+            OCStackResult expectedResult);
 
-        static void trustCertChainChangeCB(void *ctx, uint16_t credId, uint8_t *trustCertChain,
-                                           size_t chainSize);
+    bool saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
+            OicEncodingType_t encodingType, uint16_t *credId, OCStackResult expectedResult);
 
-        static ByteArray getTrustCertChainArray(); bool readFile(const char *name, OCByteString *out);
-        /**
-         * All Utility Methods for Provision Manager
-         */
-        static int waitCallbackRet(void);
+    bool provisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
+            const OCProvisionDev_t *selectedDeviceInfo, OCProvisionResultCB resultCallback,
+            OCStackResult expectedResult);
 
-        std::string getFailureMessage();
+    bool provisionCRL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecCrl_t *crl,
+            OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+
+    bool generateKeyPair(char **publicKey, size_t *publicKeyLen, char **privateKey,
+            size_t *privateKeyLen, OCStackResult expectedResult);
+
+    bool generateRandomSerialNumber(char **serial, size_t *serialLen, OCStackResult expectedResult);
+
+    bool generateCACertificate(const char *subject, const char *subjectPublicKey,
+            const char *issuerCert, const char *issuerPrivateKey, const char *serial,
+            const char *notValidBefore, const char *notValidAfter, char **certificate,
+            size_t *certificateLen, OCStackResult expectedResult);
+
+    bool getDeviceId(OCUUIdentity *deviceId, OCStackResult expectedResult);
+
+    bool getUuidFromCSR(const char* csr, OicUuid_t* uuid, OCStackResult expectedResult);
+
+    bool getPublicKeyFromCSR(const char* csr, char** publicKey, OCStackResult expectedResult);
+
+    bool generateIdentityCertificate(const OicUuid_t *subjectUuid, const char *subjectPublicKey,
+            const char *issuerCert, const char *issuerPrivateKey, const char *serial,
+            const char *notValidBefore, const char *notValidAfter, char **certificate,
+            size_t *certificateLen, OCStackResult expectedResult);
+
+    bool getCSRResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+            OCGetCSRResultCB resultCallback, OCStackResult expectedResult);
+
+    bool verifyCSRSignature(const char* csr, OCStackResult expectedResult);
+
+    /**
+     * All Callback Methods for Provision Manager
+     */
+    static void trustCertChainChangeCB(void *ctx, uint16_t credId, uint8_t *trustCertChain,
+            size_t chainSize);
+
+    static void getCsrForCertProvCB(void* ctx, size_t nOfRes, OCPMGetCsrResult_t* arr,
+    bool hasError);
+
+    static ByteArray getTrustCertChainArray();bool readFile(const char *name, OCByteString *out);
+    /**
+     * All Utility Methods for Provision Manager
+     */
+    static int waitCallbackRet(void);
+
+    std::string getFailureMessage();
 };
 #endif

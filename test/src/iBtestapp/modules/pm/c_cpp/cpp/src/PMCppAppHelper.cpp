@@ -384,7 +384,12 @@ bool doOwnershipTransfer(DeviceList_t &data, ResultCallBack resultCallback,
     {
         g_cbInvoked = CALLBACK_NOT_INVOKED;
 
+        if(data[i]->getDevAddr().find("wlan0")) {
+            continue;
+        }
+
         res = data[i]->doOwnershipTransfer(resultCallback);
+
         IOTIVITYTEST_LOG(DEBUG, "[API Return Code] doOwnershipTransfer returns : %s\n",
                 getOCStackResultCPP(res).c_str());
 

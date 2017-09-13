@@ -78,7 +78,7 @@ bool PMCppUtilityHelper::readFile(const char *name, OCByteString *out)
     out->len = length;
 
     result = true;
-exit: fclose(file);
+    exit: fclose(file);
     return result;
 }
 
@@ -94,39 +94,39 @@ void PMCppUtilityHelper::printDevices(DeviceList_t &list)
     }
 }
 
-char *PMCppUtilityHelper::getOxmType(OicSecOxm_t oxmType)
+char* PMCppUtilityHelper::getOxmType(OicSecOxm_t oxmType)
 {
 
-    char *resultString = NULL;
+    char* resultString = NULL;
 
     switch (oxmType)
     {
         case OIC_JUST_WORKS:
-            resultString = (char *) "OIC_JUST_WORKS";
+            resultString = (char*) "OIC_JUST_WORKS";
             break;
         case OIC_RANDOM_DEVICE_PIN:
-            resultString = (char *) "OIC_RANDOM_DEVICE_PIN";
+            resultString = (char*) "OIC_RANDOM_DEVICE_PIN";
             break;
         case OIC_MANUFACTURER_CERTIFICATE:
-            resultString = (char *) "OIC_MANUFACTURER_CERTIFICATE";
+            resultString = (char*) "OIC_MANUFACTURER_CERTIFICATE";
             break;
         case OIC_DECENTRALIZED_PUBLIC_KEY:
-            resultString = (char *) "OIC_DECENTRALIZED_PUBLIC_KEY";
+            resultString = (char*) "OIC_DECENTRALIZED_PUBLIC_KEY";
             break;
         case OIC_OXM_COUNT:
-            resultString = (char *) "OIC_OXM_COUNT";
+            resultString = (char*) "OIC_OXM_COUNT";
             break;
         case OIC_PRECONFIG_PIN:
-            resultString = (char *) "OIC_PRECONFIG_PIN";
+            resultString = (char*) "OIC_PRECONFIG_PIN";
             break;
         case OIC_MV_JUST_WORKS:
-            resultString = (char *) "OC_STACK_RESOURCE_CREATED";
+            resultString = (char*) "OC_STACK_RESOURCE_CREATED";
             break;
         case OIC_CON_MFG_CERT:
-            resultString = (char *) "OIC_CON_MFG_CERT";
+            resultString = (char*) "OIC_CON_MFG_CERT";
             break;
         default:
-            resultString = (char *) "UNKNOWN_OXM_TYPE";
+            resultString = (char*) "UNKNOWN_OXM_TYPE";
     }
 
     return resultString;
@@ -156,9 +156,13 @@ void PMCppUtilityHelper::removeAllResFile()
 
     CommonUtil::rmFile(MOT_CLIENT_DATABASE);
     CommonUtil::rmFile(MOT_CLIENT_CBOR);
+
+    CommonUtil::rmFile(DEVICE_PROPERTIES);
+
+    CommonUtil::rmFile(ROOT_CERT_FILE_TMP);
 }
 
-OCProvisionDev_t *PMCppUtilityHelper::getDevInst(OCProvisionDev_t *dev_lst, const int dev_num)
+OCProvisionDev_t* PMCppUtilityHelper::getDevInst(OCProvisionDev_t* dev_lst, const int dev_num)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getDevInst IN");
 
@@ -168,7 +172,7 @@ OCProvisionDev_t *PMCppUtilityHelper::getDevInst(OCProvisionDev_t *dev_lst, cons
         return NULL;
     }
 
-    OCProvisionDev_t *lst = (OCProvisionDev_t *) dev_lst;
+    OCProvisionDev_t* lst = (OCProvisionDev_t*) dev_lst;
 
     for (int i = 0; lst;)
     {
@@ -184,7 +188,7 @@ OCProvisionDev_t *PMCppUtilityHelper::getDevInst(OCProvisionDev_t *dev_lst, cons
     return NULL; // in here |lst| is always |NULL|
 }
 
-int PMCppUtilityHelper::printDevList(OCProvisionDev_t *dev_lst)
+int PMCppUtilityHelper::printDevList(OCProvisionDev_t* dev_lst)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printDevList IN");
 
@@ -194,13 +198,13 @@ int PMCppUtilityHelper::printDevList(OCProvisionDev_t *dev_lst)
         return 0;
     }
 
-    OCProvisionDev_t *lst = (OCProvisionDev_t *) dev_lst;
+    OCProvisionDev_t* lst = (OCProvisionDev_t*) dev_lst;
     int lst_cnt = 0;
 
     for (; lst;)
     {
         printf("     [%d] ", ++lst_cnt);
-        printUuid((const OicUuid_t *) &lst->doxm->deviceID);
+        printUuid((const OicUuid_t*) &lst->doxm->deviceID);
         printf("\n");
         lst = lst->next;
     }
@@ -210,7 +214,7 @@ int PMCppUtilityHelper::printDevList(OCProvisionDev_t *dev_lst)
     return lst_cnt;
 }
 
-size_t PMCppUtilityHelper::printUuidList(const OCUuidList_t *uid_lst)
+size_t PMCppUtilityHelper::printUuidList(const OCUuidList_t* uid_lst)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printUuidList IN");
 
@@ -220,13 +224,13 @@ size_t PMCppUtilityHelper::printUuidList(const OCUuidList_t *uid_lst)
         return 0;
     }
 
-    OCUuidList_t *lst = (OCUuidList_t *) uid_lst;
+    OCUuidList_t* lst = (OCUuidList_t*) uid_lst;
     size_t lst_cnt = 0;
 
     for (; lst;)
     {
         printf("     [%zu] ", ++lst_cnt);
-        printUuid((const OicUuid_t *) &lst->dev);
+        printUuid((const OicUuid_t*) &lst->dev);
         printf("\n");
         lst = lst->next;
     }
@@ -236,7 +240,7 @@ size_t PMCppUtilityHelper::printUuidList(const OCUuidList_t *uid_lst)
     return lst_cnt;
 }
 
-int PMCppUtilityHelper::printResultList(const OCProvisionResult_t *rslt_lst, const int rslt_cnt)
+int PMCppUtilityHelper::printResultList(const OCProvisionResult_t* rslt_lst, const int rslt_cnt)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printResultList IN");
 
@@ -250,7 +254,7 @@ int PMCppUtilityHelper::printResultList(const OCProvisionResult_t *rslt_lst, con
     for (; rslt_cnt > lst_cnt; ++lst_cnt)
     {
         printf("     [%d] ", lst_cnt + 1);
-        printUuid((const OicUuid_t *) &rslt_lst[lst_cnt].deviceId);
+        printUuid((const OicUuid_t*) &rslt_lst[lst_cnt].deviceId);
         printf(" - result: %s\n", CommonUtil::getOCStackResult(rslt_lst[lst_cnt].res));
     }
     printf("\n");
@@ -259,7 +263,7 @@ int PMCppUtilityHelper::printResultList(const OCProvisionResult_t *rslt_lst, con
     return lst_cnt;
 }
 
-void PMCppUtilityHelper::printUuid(const OicUuid_t *uid)
+void PMCppUtilityHelper::printUuid(const OicUuid_t* uid)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printUuid IN");
 
@@ -279,8 +283,8 @@ void PMCppUtilityHelper::printUuid(const OicUuid_t *uid)
 /**
  * Function to set failure message
  */
-std::string PMCppUtilityHelper::setFailureMessage(OCStackResult actualResult,
-        OCStackResult expectedResult)
+std::string PMCppUtilityHelper::setFailureMessage(OCStackResult expectedResult,
+        OCStackResult actualResult)
 {
     std::string errorMessage("\033[1;31m[Error] Expected : ");
     errorMessage.append(CommonUtil::getOCStackResult(expectedResult));
@@ -293,8 +297,8 @@ std::string PMCppUtilityHelper::setFailureMessage(OCStackResult actualResult,
 /**
  * Function to set failure message
  */
-std::string PMCppUtilityHelper::setFailureMessage(OicSecOxm_t actualResult,
-        OicSecOxm_t expectedResult)
+std::string PMCppUtilityHelper::setFailureMessage(OicSecOxm_t expectedResult,
+        OicSecOxm_t actualResult)
 {
     std::string errorMessage("\033[1;31m[Error] Expected : ");
     errorMessage.append(PMCppUtilityHelper::getOxmType(expectedResult));

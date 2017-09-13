@@ -789,6 +789,189 @@ bool resetSVRDB(OCStackResult expectedResult)
     return true;
 }
 
+OCStackResult LedCBProvisiong(void *ctx, OCDoHandle UNUSED, OCClientResponse *clientResponse)
+{
+    if(clientResponse)
+    {
+        if(OC_STACK_OK == clientResponse->result)
+        {
+            IOTIVITYTEST_LOG(DEBUG, "Received OC_STACK_OK from server\n");
+
+            if(clientResponse->payload)
+            {
+                IOTIVITYTEST_LOG(DEBUG, "Response ===================> %s\n",(char*)clientResponse->payload);
+            }
+        }
+        else if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
+        {
+            IOTIVITYTEST_LOG(DEBUG, "Received OC_STACK_RESOURCE_CHANGED from server\n");
+        }
+        else
+        {
+            IOTIVITYTEST_LOG(ERROR, "Error in response : %d\n", clientResponse->result);
+        }
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(ERROR, "Hit the response callback but can not find response data\n");
+    }
+
+    g_CBInvoked = true;
+    return OC_STACK_OK;
+}
+
+/**
+ * Helper Method for OCDoResource
+ */
+bool getLedResourcesProvisioning(OCProvisionDev_t *selDev,OCStackResult expectedResult)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getLedResourcesProvisioning IN");
+    char query[256] = {0};
+    OCCallbackData cbData;
+    cbData.cb = &LedCBProvisiong;
+    cbData.context = NULL;
+    cbData.cd = NULL;
+
+    if(PMGenerateQuery(true, selDev->endpoint.addr, selDev->securePort, selDev->connType, query, sizeof(query), MOT_LED_RESOURCE))
+        {
+            g_CBInvoked = CALLBACK_NOT_INVOKED;
+            IOTIVITYTEST_LOG(DEBUG, "[PMHelper] query=%s\n",query);
+
+            OCStackResult res = OCDoResource(NULL, OC_REST_GET, query, NULL, NULL, selDev->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+            if (expectedResult != res)
+            {
+                IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+                return false;
+            }
+            if (OC_STACK_OK == res)
+            {
+                if (CALLBACK_NOT_INVOKED == waitCallbackRet())
+                {
+                    IOTIVITYTEST_LOG(ERROR, "Callback not Invoked");
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            IOTIVITYTEST_LOG(ERROR, "Failed to generate GET request for /a/led\n");
+            return false;
+        }
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getLedResourcesProvisioning OUT");
+}
+
+bool putLedResourcesProvisioning(OCProvisionDev_t *selDev,OCStackResult expectedResult)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] putLedResourcesProvisioning IN");
+    char query[256] = {0};
+    OCCallbackData cbData;
+    cbData.cb = &LedCBProvisiong;
+    cbData.context = NULL;
+    cbData.cd = NULL;
+
+    if(PMGenerateQuery(true, selDev->endpoint.addr, selDev->securePort, selDev->connType, query, sizeof(query), MOT_LED_RESOURCE))
+        {
+        g_CBInvoked = CALLBACK_NOT_INVOKED;
+            IOTIVITYTEST_LOG(DEBUG, "[PMHelper] query=%s\n",query);
+            OCStackResult res = OCDoResource(NULL, OC_REST_PUT, query, NULL, NULL, selDev->connType, OC_LOW_QOS, &cbData, NULL, 0);
+            if (expectedResult != res)
+            {
+                IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+                return false;
+            }
+            if (OC_STACK_OK == res)
+            {
+                if (CALLBACK_NOT_INVOKED == waitCallbackRet())
+                {
+                    IOTIVITYTEST_LOG(ERROR, "Callback not Invoked");
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            IOTIVITYTEST_LOG(ERROR, "Failed to generate GET request for /a/led\n");
+            return false;
+        }
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] putLedResourcesProvisioning OUT");
+}
+
+bool postLedResourcesProvisioning(OCProvisionDev_t *selDev,OCStackResult expectedResult)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] postLedResourcesProvisioning IN");
+    char query[256] = {0};
+    OCCallbackData cbData;
+    cbData.cb = &LedCBProvisiong;
+    cbData.context = NULL;
+    cbData.cd = NULL;
+
+    if(PMGenerateQuery(true, selDev->endpoint.addr, selDev->securePort, selDev->connType, query, sizeof(query), MOT_LED_RESOURCE))
+        {
+        g_CBInvoked = CALLBACK_NOT_INVOKED;
+            IOTIVITYTEST_LOG(DEBUG, "[PMHelper] query=%s\n",query);
+            OCStackResult res = OCDoResource(NULL, OC_REST_POST, query, NULL, NULL, selDev->connType, OC_LOW_QOS, &cbData, NULL, 0);
+            if (expectedResult != res)
+            {
+                IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+                return false;
+            }
+            if (OC_STACK_OK == res)
+            {
+                if (CALLBACK_NOT_INVOKED == waitCallbackRet())
+                {
+                    IOTIVITYTEST_LOG(ERROR, "Callback not Invoked");
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            IOTIVITYTEST_LOG(ERROR, "Failed to generate GET request for /a/led\n");
+            return false;
+        }
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] postLedResourcesProvisioning OUT");
+}
+
+bool deleteLedResourcesProvisioning(OCProvisionDev_t *selDev,OCStackResult expectedResult)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] deleteLedResourcesProvisioning IN");
+    char query[256] = {0};
+    OCCallbackData cbData;
+    cbData.cb = &LedCBProvisiong;
+    cbData.context = NULL;
+    cbData.cd = NULL;
+
+    if(PMGenerateQuery(true, selDev->endpoint.addr, selDev->securePort, selDev->connType, query, sizeof(query), MOT_LED_RESOURCE))
+        {
+        g_CBInvoked = CALLBACK_NOT_INVOKED;
+            IOTIVITYTEST_LOG(DEBUG, "[PMHelper] query=%s\n",query);
+            OCStackResult res = OCDoResource(NULL, OC_REST_DELETE, query, NULL, NULL, selDev->connType, OC_LOW_QOS, &cbData, NULL, 0);
+            if (expectedResult != res)
+            {
+                IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+                return false;
+            }
+            if (OC_STACK_OK == res)
+            {
+                if (CALLBACK_NOT_INVOKED == waitCallbackRet())
+                {
+                    IOTIVITYTEST_LOG(ERROR, "Callback not Invoked");
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            IOTIVITYTEST_LOG(ERROR, "Failed to generate GET request for /a/led\n");
+            return false;
+        }
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] deleteLedResourcesProvisioning OUT");
+}
+
 OTMCallbackData_t otmCbRegister(int otmType)
 {
     OTMCallbackData_t otmcb;

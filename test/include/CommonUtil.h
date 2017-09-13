@@ -47,17 +47,21 @@
 #endif
 #include <ctime>
 #include <iostream>
+#include <sstream>
 #define BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
 #include "boost/assign.hpp"
 #include "octypes.h"
+#include "platform_features.h"
 //#include "gtest_custom.h"
 //#include "gtest/gtest.h"
 
 #define APP_START_STOP_TIMEOUT 2
 
 using namespace std;
+static const string KILL_ALL_COMMAND = "kill -9 ";
+static const string PID_FIND_COMMAND = "/usr/bin/lsof -t -i:";
 
 typedef enum
 {
@@ -212,6 +216,17 @@ public:
     static std::string getLocalIP(InternetProtocolVersion ipVersion);
 
     /**
+     * API for Getting Local IP
+     *
+     * @param ipVersion - InternetProtocolVersion enum
+     *
+     * @return string - ip of the local machine
+     *
+     * NOTE: This API will be supported in other platforms
+     */
+    static std::string getLocalIPAll(InternetProtocolVersion ipVersion, std::string token);
+
+    /**
      * API for Getting current system time
      *
      * @param [out] currentTime - struct tm type object
@@ -219,5 +234,20 @@ public:
      */
     static void getCurrentTime(struct tm& currentTime);
 
+    /**
+     * API for Getting Process Id from Port
+     *
+     * @param [in] port - Port Number of a process
+     *
+     */
+    static string getPIDFromPort(string port);
+
+    /**
+     * API for Kiling a Process
+     *
+     * @param [in] pid - pid of a process
+     *
+     */
+    static void killPID(string pid);
 };
 #endif

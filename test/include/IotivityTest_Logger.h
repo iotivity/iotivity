@@ -222,8 +222,6 @@ static void vPrintf(const char* timebuffer, const char* const format, ...)
     if (getenv(envLogWriteFile) == NULL && _initLogFile() != NULL)
         fprintf(g_logfile_out, "%s %s\n", timebuffer, buffer);
     va_end(args);
-    if (g_logfile_out)
-        fclose(g_logfile_out);
 }
 
 

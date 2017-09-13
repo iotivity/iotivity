@@ -22,6 +22,7 @@
 #ifndef PMCppCertHelper_H_
 #define PMCppCertHelper_H_
 
+#include "PMCppHelper.h"
 #include "PMCppUtilityHelper.h"
 
 class PMCppCertHelper

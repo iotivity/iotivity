@@ -107,6 +107,10 @@ bool resetSVRDB(OCStackResult expectedResult);
 bool getLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t** uuidList, size_t* numOfDevices,
         OCStackResult expectedResult);
 bool saveACL(const OicSecAcl_t* acl, OCStackResult expectedResult);
+bool getLedResourcesProvisioning(OCProvisionDev_t *selDev,OCStackResult expectedResult);
+bool putLedResourcesProvisioning(OCProvisionDev_t *selDev,OCStackResult expectedResult);
+bool postLedResourcesProvisioning(OCProvisionDev_t *selDev,OCStackResult expectedResult);
+bool deleteLedResourcesProvisioning(OCProvisionDev_t *selDev,OCStackResult expectedResult);
 
 /**
  * All Callback Methods for Provision Manager
@@ -123,5 +127,7 @@ OCStackResult confirmNumCB(void * ctx);
 
 OCStackResult displayMutualVerifNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN]);
 OCStackResult confirmMutualVerifNumCB(void * ctx);
+
+OCStackResult LedCBProvisiong(void *ctx, OCDoHandle UNUSED, OCClientResponse *clientResponse);
 
 #endif

@@ -20,7 +20,7 @@
  ******************************************************************/
 #ifndef PMCsdkMotHelper_H_
 #define PMCsdkMotHelper_H_
-#if defined(__MOT__)
+#ifdef __MOT__
 #include "PMCsdkUtilityHelper.h"
 
 #define ctxProvisionPreconfPin "ProvisionPreconfPin Context"
@@ -29,60 +29,59 @@
 
 class PMCsdkMotHelper
 {
-    private:
-        std::string m_failureMessage;
+private:
+    std::string m_failureMessage;
 
-    public:
+public:
 
-        PMCsdkMotHelper();
+    PMCsdkMotHelper();
 
-        static FILE *fopenMotClient(const char *, const char *);
+    static FILE* fopenMotClient(const char*, const char*);
 
-        bool initMotClient();
+    bool initMotClient();
 
-        bool discoverMultipleOwnerEnabledDevices(int nTime, OCProvisionDev_t **motdev_list,
-                OCStackResult expectedResult);
+    bool discoverMultipleOwnerEnabledDevices(int nTime, OCProvisionDev_t** motdev_list,
+            OCStackResult expectedResult);
 
-        bool discoverMultipleOwnerEnabledSingleDevice(unsigned short timeoutSeconds,
-                const OicUuid_t *deviceID, OCProvisionDev_t **motdev_list, OCStackResult expectedResult);
+    bool discoverMultipleOwnerEnabledSingleDevice(unsigned short timeoutSeconds,
+            const OicUuid_t *deviceID, OCProvisionDev_t **motdev_list, OCStackResult expectedResult);
 
-        bool discoverMultipleOwnedDevices(int nTime, OCProvisionDev_t **motOnwedDev_list,
-                                          OCStackResult expectedResult);
+    bool discoverMultipleOwnedDevices(int nTime, OCProvisionDev_t** motOnwedDev_list,
+            OCStackResult expectedResult);
 
-        bool addPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo, const char *preconfPIN,
-                             size_t preconfPINLen, OCStackResult expectedResult);
+    bool addPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo, const char* preconfPIN,
+            size_t preconfPINLen, OCStackResult expectedResult);
 
-        bool doMultipleOwnershipTransfer(void *ctx, OCProvisionDev_t *targetDevices,
-                                         OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+    bool doMultipleOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices,
+            OCProvisionResultCB resultCallback, OCStackResult expectedResult);
 
-        bool provisionPreconfPin(void *ctx, OCProvisionDev_t *targetDeviceInfo, const char *preconfPin,
-                                 size_t preconfPinLen, OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+    bool isSubownerOfDevice(OCProvisionDev_t *device, bool *isSubowner,
+            OCStackResult expectedResult, bool expectedVal);
 
-        bool changeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
-                           const OicSecMomType_t momType, OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+    bool provisionPreconfPin(void* ctx, OCProvisionDev_t *targetDeviceInfo, const char * preconfPin, size_t preconfPinLen, OCProvisionResultCB resultCallback, OCStackResult expectedResult);
 
-        bool selectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
-                             const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+    bool changeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecMomType_t momType, OCProvisionResultCB resultCallback, OCStackResult expectedResult);
 
-        static void provisionPreconfPinCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr,
-                                          bool hasError);
+    bool selectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback, OCStackResult expectedResult);
 
-        static void changeMOTModeCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
+    static void provisionPreconfPinCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
 
-        static void selectMOTMethodCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
+    static void changeMOTModeCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
 
-        /**
-         * Callback Methods
-         */
-        static void multipleOwnershipTransferCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr,
-                                                bool hasError);
+    static void selectMOTMethodCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError);
 
-        /**
-         * All Utility Methods for Provision Manager
-         */
-        std::string getFailureMessage();
+    /**
+     * Callback Methods
+     */
+    static void multipleOwnershipTransferCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr,
+            bool hasError);
 
-        int waitCallbackRet(void);
+    /**
+     * All Utility Methods for Provision Manager
+     */
+    std::string getFailureMessage();
+
+    int waitCallbackRet(void);
 };
 #endif /*_MOT_*/
 #endif /*PMCsdkMotHelper_H_*/

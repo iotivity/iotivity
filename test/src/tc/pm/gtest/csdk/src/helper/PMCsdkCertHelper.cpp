@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,17 +19,19 @@
  *
  ******************************************************************/
 #include "PMCsdkCertHelper.h"
+#include "PMCsdkCallbackHelper.h"
 #include "PMCsdkUtilityHelper.h"
 
 int PMCsdkCertHelper::g_OwnDevCount = 0;
 int PMCsdkCertHelper::g_UnownDevCount = 0;
 int PMCsdkCertHelper::g_motPMDevCount = 0;
-bool PMCsdkCertHelper::g_CBInvoked = CALLBACK_NOT_INVOKED;
-OCPersistentStorage PMCsdkCertHelper::pstStr = {0, 0, 0, 0, 0};
+char* PMCsdkCertHelper::g_csrVal = NULL;
+OCPersistentStorage PMCsdkCertHelper::pstStr =
+{ 0, 0, 0, 0, 0 };
 ByteArray s_trustCertChainArray =
 { 0, 0 };
 
-FILE *PMCsdkCertHelper::fopenProvManager(const char *path, const char *mode)
+FILE* PMCsdkCertHelper::fopenProvManager(const char* path, const char* mode)
 {
     OC_UNUSED(path);
     return fopen(SVR_DB_FILE_NAME, mode);
@@ -43,7 +45,7 @@ int PMCsdkCertHelper::waitCallbackRet(void)
     {
         IOTIVITYTEST_LOG(DEBUG, "PMCsdkCertHelper::waitCallbackRet Loop = %d", i);
 
-        if (true == PMCsdkCertHelper::g_CBInvoked)
+        if (true == PMCsdkCallbackHelper::s_CBInvoked)
         {
             return CALLBACK_INVOKED;
         }
@@ -61,35 +63,70 @@ int PMCsdkCertHelper::waitCallbackRet(void)
     return CALLBACK_NOT_INVOKED;
 }
 
-void PMCsdkCertHelper::provisionCertCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr,
-                                       bool hasError)
-{
-    if (!hasError)
-    {
-        IOTIVITYTEST_LOG(INFO, "Provision Cert SUCCEEDED - ctx: %s", (char *) ctx);
-        PMCsdkCertHelper::g_CBInvoked = true;
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(ERROR, "Ownership Transfer FAILED - ctx: %s", (char *) ctx);
-        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t *) arr, nOfRes);
-    }
-}
+
 
 void PMCsdkCertHelper::trustCertChainChangeCB(void *ctx, uint16_t credId, uint8_t *trustCertChain,
         size_t chainSize)
 {
     __FUNC_IN__
 
-    IOTIVITYTEST_LOG(INFO, "Provision Cert SUCCEEDED - ctx: %s", (char *) ctx);
+    IOTIVITYTEST_LOG(INFO, "Provision Cert SUCCEEDED - ctx: %s", (char* ) ctx);
 
     IOTIVITYTEST_LOG(INFO, "CRED ID : %d", credId);
 
     OIC_LOG_BUFFER(DEBUG, "Cert Cb", trustCertChain, chainSize);
 
-    PMCsdkCertHelper::g_CBInvoked = true;
+    PMCsdkCallbackHelper::s_CBInvoked= true;
 
     __FUNC_OUT__
+}
+
+void PMCsdkCertHelper::getCsrForCertProvCB(void* ctx, size_t nOfRes, OCPMGetCsrResult_t* arr,
+bool hasError)
+{
+    if (!hasError)
+    {
+        if (nOfRes != 1)
+        {
+            IOTIVITYTEST_LOG(ERROR, "getCsrForCertProvCB FAILED - ctx: %s", (char* )ctx);
+        }
+
+        if (arr[0].encoding == OIC_ENCODING_DER)
+        {
+            OCStackResult res = OCConvertDerCSRToPem((char*) arr[0].csr, arr[0].csrLen, &g_csrVal);
+            if (res != OC_STACK_OK)
+            {
+                IOTIVITYTEST_LOG(ERROR,
+                        "getCsrForCertProvCB FAILED (CSR re-encoding failed) - error: %d, ctx: %s",
+                        res, (char* )ctx);
+            }
+            PMCsdkCallbackHelper::s_CBInvoked= true;
+        }
+        else if (arr[0].encoding == OIC_ENCODING_PEM)
+        {
+            g_csrVal = (char*) OICCalloc(1, arr[0].csrLen);
+            if (g_csrVal == NULL)
+            {
+                IOTIVITYTEST_LOG(ERROR, "getCsrForCertProvCB FAILED (memory allocation) - ctx: %s",
+                        (char* )ctx);
+            }
+
+            memcpy(g_csrVal, arr[0].csr, arr[0].csrLen);
+
+            IOTIVITYTEST_LOG(INFO, "getCsrForCertProvCB success");
+            PMCsdkCallbackHelper::s_CBInvoked= true;
+        }
+        else
+        {
+            IOTIVITYTEST_LOG(ERROR, "getCsrForCertProvCB FAILED (unknown encoding) - ctx: %s",
+                    (char* )ctx);
+        }
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(ERROR, "getCsrForCertProvCB FAILED - ctx: %s", (char* )ctx);
+    }
+
 }
 
 // CAPI for Provisioning Manager
@@ -99,7 +136,7 @@ PMCsdkCertHelper::PMCsdkCertHelper()
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] Constructor");
 }
 
-bool PMCsdkCertHelper::initProvisionClient(int clientOTMType, char *chDBPath)
+bool PMCsdkCertHelper::initProvisionClient(int clientOTMType, char* chDBPath)
 {
     __FUNC_IN__
 
@@ -143,17 +180,17 @@ bool PMCsdkCertHelper::initProvisionClient(int clientOTMType, char *chDBPath)
     return true;
 }
 
-bool PMCsdkCertHelper::provisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
-                                    OicSecCrl_t *crl, OCProvisionResultCB resultCallback, OCStackResult expectedResult)
+bool PMCsdkCertHelper::provisionCRL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+        OicSecCrl_t *crl, OCProvisionResultCB resultCallback, OCStackResult expectedResult)
 {
     __FUNC_IN__
 
-    PMCsdkCertHelper::g_CBInvoked = CALLBACK_NOT_INVOKED;
+    PMCsdkCallbackHelper::s_CBInvoked= CALLBACK_NOT_INVOKED;
     OCStackResult result = OC_STACK_OK;
     //OCProvisionCRL(ctx, selectedDeviceInfo, crl, resultCallback);
 
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCProvisionCRL returns %s",
-                     CommonUtil::getOCStackResult(result));
+            CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
     {
@@ -180,11 +217,11 @@ bool PMCsdkCertHelper::provisionTrustCertChain(void *ctx, OicSecCredType_t type,
 {
     __FUNC_IN__
 
-    PMCsdkCertHelper::g_CBInvoked = CALLBACK_NOT_INVOKED;
+    PMCsdkCallbackHelper::s_CBInvoked= CALLBACK_NOT_INVOKED;
     OCStackResult result = OCProvisionTrustCertChain(ctx, type, credId, selectedDeviceInfo,
-                           resultCallback);
+            resultCallback);
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] provisionTrustCertChain returns %s",
-                     CommonUtil::getOCStackResult(result));
+            CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
     {
@@ -210,11 +247,11 @@ bool PMCsdkCertHelper::saveTrustCertChain(uint8_t *trustCertChain, size_t chainS
 {
     __FUNC_IN__
 
-    PMCsdkCertHelper::g_CBInvoked = CALLBACK_NOT_INVOKED;
+    PMCsdkCallbackHelper::s_CBInvoked= CALLBACK_NOT_INVOKED;
 
     OCStackResult result = OCSaveTrustCertChain(trustCertChain, chainSize, encodingType, credId);
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCSaveTrustCertChain returns %s",
-                     CommonUtil::getOCStackResult(result));
+            CommonUtil::getOCStackResult(result));
 
     IOTIVITYTEST_LOG(INFO, "CredId of Saved Trust Cert. Chain into Cred of SVR : %d", *credId);
 
@@ -233,11 +270,11 @@ bool PMCsdkCertHelper::registerTrustCertChainNotifier(void *cb, TrustCertChainCh
 {
     __FUNC_IN__
 
-    PMCsdkCertHelper::g_CBInvoked = CALLBACK_NOT_INVOKED;
+    PMCsdkCallbackHelper::s_CBInvoked= CALLBACK_NOT_INVOKED;
 
     OCStackResult result = OCRegisterTrustCertChainNotifier(cb, CB);
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCRegisterTrustCertChainNotifier returns %s",
-                     CommonUtil::getOCStackResult(result));
+            CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
     {
@@ -264,12 +301,12 @@ bool PMCsdkCertHelper::readTrustCertChain(uint16_t credId, uint8_t **trustCertCh
 {
     __FUNC_IN__
 
-    PMCsdkCertHelper::g_CBInvoked = CALLBACK_NOT_INVOKED;
+    PMCsdkCallbackHelper::s_CBInvoked= CALLBACK_NOT_INVOKED;
 
     OCStackResult result = OCReadTrustCertChain(credId, trustCertChain, chainSize);
 
     IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCReadTrustCertChain returns %s",
-                     CommonUtil::getOCStackResult(result));
+            CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
     {
@@ -277,12 +314,276 @@ bool PMCsdkCertHelper::readTrustCertChain(uint16_t credId, uint8_t **trustCertCh
         return false;
     }
 
-    if ( OC_STACK_OK == result && OC_STACK_OK == expectedResult)
+    if (OC_STACK_OK == result && OC_STACK_OK == expectedResult)
     {
         OIC_LOG_BUFFER(DEBUG, TAG, *trustCertChain, *chainSize);
     }
 
     __FUNC_OUT__
+    return true;
+}
+
+bool PMCsdkCertHelper::provisionCertificate(void *ctx, const OCProvisionDev_t *pDev,
+        const char* pemCert, OCProvisionResultCB resultCallback, OCStackResult expectedResult)
+{
+    __FUNC_IN__
+
+    PMCsdkCallbackHelper::s_CBInvoked= CALLBACK_NOT_INVOKED;
+    OCStackResult result = OCProvisionCertificate(ctx, pDev, pemCert, resultCallback);
+    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCProvisionCertificate returns %s",
+            CommonUtil::getOCStackResult(result));
+
+    if (expectedResult != result)
+    {
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(result, expectedResult);
+        return false;
+    }
+
+    if (OC_STACK_OK == result)
+    {
+        if (CALLBACK_NOT_INVOKED == PMCsdkCertHelper::waitCallbackRet())
+        {
+            IOTIVITYTEST_LOG(ERROR, "[Cloud] CALLBACK_NOT_INVOKED");
+            return false;
+        }
+    }
+
+    __FUNC_OUT__
+    return true;
+}
+
+bool PMCsdkCertHelper::saveOwnCertChain(const char* cert, const char* key, uint16_t *credId,
+        OCStackResult expectedResult)
+{
+    __FUNC_IN__
+
+    PMCsdkCallbackHelper::s_CBInvoked= CALLBACK_NOT_INVOKED;
+
+    OCStackResult result = OCSaveOwnCertChain(cert, key, credId);
+    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCSaveOwnCertChain returns %s",
+            CommonUtil::getOCStackResult(result));
+
+    IOTIVITYTEST_LOG(INFO, "CredId of Saved Trust Cert. Chain into Cred of SVR : %d", *credId);
+
+    if (expectedResult != result)
+    {
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(result, expectedResult);
+        return false;
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "OCSaveOwnCertChain OUT");
+    return true;
+}
+
+bool PMCsdkCertHelper::saveOwnRoleCert(const char* cert, uint16_t *credId,
+        OCStackResult expectedResult)
+{
+    __FUNC_IN__
+
+    PMCsdkCallbackHelper::s_CBInvoked= CALLBACK_NOT_INVOKED;
+
+    OCStackResult result = OCSaveOwnRoleCert(cert, credId);
+    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCSaveOwnRoleCert returns %s",
+            CommonUtil::getOCStackResult(result));
+
+    IOTIVITYTEST_LOG(INFO, "CredId of Saved Trust Cert. Chain into Cred of SVR : %d", *credId);
+
+    if (expectedResult != result)
+    {
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(result, expectedResult);
+        return false;
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "OCSaveOwnCertChain OUT");
+    return true;
+}
+
+bool PMCsdkCertHelper::generateKeyPair(char **publicKey, size_t *publicKeyLen, char **privateKey,
+        size_t *privateKeyLen, OCStackResult expectedResult)
+{
+    __FUNC_IN__
+
+    OCStackResult result = OCGenerateKeyPair(publicKey, publicKeyLen, privateKey, privateKeyLen);
+    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCGenerateKeyPair returns %s",
+            CommonUtil::getOCStackResult(result));
+
+    if (expectedResult != result)
+    {
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(result, expectedResult);
+        return false;
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "OCGenerateKeyPair OUT");
+    return true;
+}
+
+bool PMCsdkCertHelper::generateRandomSerialNumber(char **serial, size_t *serialLen,
+        OCStackResult expectedResult)
+{
+    __FUNC_IN__
+
+    OCStackResult result = OCGenerateRandomSerialNumber(serial, serialLen);
+    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCGenerateRandomSerialNumber returns %s",
+            CommonUtil::getOCStackResult(result));
+
+    if (expectedResult != result)
+    {
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(result, expectedResult);
+        return false;
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "OCGenerateRandomSerialNumber OUT");
+    return true;
+}
+
+bool PMCsdkCertHelper::generateCACertificate(const char *subject, const char *subjectPublicKey,
+        const char *issuerCert, const char *issuerPrivateKey, const char *serial,
+        const char *notValidBefore, const char *notValidAfter, char **certificate,
+        size_t *certificateLen, OCStackResult expectedResult)
+{
+    __FUNC_IN__
+
+    OCStackResult result = OCGenerateCACertificate(subject, subjectPublicKey, issuerCert,
+            issuerPrivateKey, serial, notValidBefore, notValidAfter, certificate, certificateLen);
+    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCGenerateCACertificate returns %s",
+            CommonUtil::getOCStackResult(result));
+
+    if (expectedResult != result)
+    {
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(result, expectedResult);
+        return false;
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "OCGenerateCACertificate OUT");
+    return true;
+}
+
+bool PMCsdkCertHelper::getDeviceId(OCUUIdentity *deviceId, OCStackResult expectedResult)
+{
+    __FUNC_IN__
+
+    OCStackResult result = OCGetDeviceId(deviceId);
+    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCGetDeviceId returns %s",
+            CommonUtil::getOCStackResult(result));
+
+    if (expectedResult != result)
+    {
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(result, expectedResult);
+        return false;
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "OCGetDeviceId OUT");
+    return true;
+}
+
+bool PMCsdkCertHelper::getUuidFromCSR(const char* csr, OicUuid_t* uuid,
+        OCStackResult expectedResult)
+{
+    __FUNC_IN__
+
+    OCStackResult result = OCGetUuidFromCSR(csr, uuid);
+    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCGetUuidFromCSR returns %s",
+            CommonUtil::getOCStackResult(result));
+
+    if (expectedResult != result)
+    {
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(result, expectedResult);
+        return false;
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "OCGetUuidFromCSR OUT");
+    return true;
+}
+
+bool PMCsdkCertHelper::getPublicKeyFromCSR(const char* csr, char** publicKey,
+        OCStackResult expectedResult)
+{
+    __FUNC_IN__
+
+    OCStackResult result = OCGetPublicKeyFromCSR(csr, publicKey);
+    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCGetPublicKeyFromCSR returns %s",
+            CommonUtil::getOCStackResult(result));
+
+    if (expectedResult != result)
+    {
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(result, expectedResult);
+        return false;
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "OCGetPublicKeyFromCSR OUT");
+    return true;
+}
+
+bool PMCsdkCertHelper::generateIdentityCertificate(const OicUuid_t *subjectUuid,
+        const char *subjectPublicKey, const char *issuerCert, const char *issuerPrivateKey,
+        const char *serial, const char *notValidBefore, const char *notValidAfter,
+        char **certificate, size_t *certificateLen, OCStackResult expectedResult)
+{
+    __FUNC_IN__
+
+    OCStackResult result = OCGenerateIdentityCertificate(subjectUuid, subjectPublicKey, issuerCert,
+            issuerPrivateKey, serial, notValidBefore, notValidAfter, certificate, certificateLen);
+    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCGenerateIdentityCertificate returns %s",
+            CommonUtil::getOCStackResult(result));
+
+    if (expectedResult != result)
+    {
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(result, expectedResult);
+        return false;
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "OCGenerateIdentityCertificate OUT");
+    return true;
+}
+
+/**
+ * Helper Method for OCGetCSRResource
+ */
+bool PMCsdkCertHelper::getCSRResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+        OCGetCSRResultCB resultCallback, OCStackResult expectedResult)
+{
+    __FUNC_IN__
+
+    PMCsdkCallbackHelper::s_CBInvoked = false;
+
+    OCStackResult res = OCGetCSRResource(ctx, selectedDeviceInfo, resultCallback);
+    IOTIVITYTEST_LOG(INFO, "[Cloud Acl]  OCGetCSRResource API returns: %s",
+            CommonUtil::getOCStackResult(res));
+
+    if (expectedResult != res)
+    {
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(res, expectedResult);
+        return false;
+    }
+
+    if (OC_STACK_OK == res)
+    {
+        if (CALLBACK_NOT_INVOKED == PMCsdkCertHelper::waitCallbackRet())
+        {
+            m_failureMessage = PMCsdkUtilityHelper::setFailureMessage("CALLBACK Not invoked");
+            return false;
+        }
+    }
+
+    __FUNC_OUT__
+    return true;
+}
+
+bool PMCsdkCertHelper::verifyCSRSignature(const char* csr, OCStackResult expectedResult)
+{
+    __FUNC_IN__
+
+    OCStackResult result = OCVerifyCSRSignature(csr);
+    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCVerifyCSRSignature returns %s",
+            CommonUtil::getOCStackResult(result));
+
+    if (expectedResult != result)
+    {
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(result, expectedResult);
+        return false;
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "OCVerifyCSRSignature OUT");
     return true;
 }
 
@@ -342,7 +643,7 @@ bool PMCsdkCertHelper::readFile(const char *name, OCByteString *out)
     out->len = length;
 
     result = true;
-exit: fclose(file);
+    exit: fclose(file);
     return result;
 }
 

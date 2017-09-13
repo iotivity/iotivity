@@ -85,6 +85,7 @@ const char* getExecutableName()
 
 void onProviderSyncInfo(OIC::Service::NSSyncInfo syncInfo)
 {
+    cout << "syncInfoCallback Called" << endl;
     cout << "Provider SyncInfo changed for providerID: " << syncInfo.getProviderId()
             << " Message ID: " << syncInfo.getMessageId() << endl;
 
@@ -113,9 +114,10 @@ void onSubscribeRequest(shared_ptr< OIC::Service::NSConsumer > consumer)
 {
     if (consumer)
     {
+        cout << "subRequestCallback Called" << endl;
 
         cout << "Subscription request received from Consumer with ID: "
-                << consumer->getConsumerId();
+                << consumer->getConsumerId() << endl;
         bool exist = false;
         for (string id : m_ConsumerList)
         {
@@ -327,17 +329,25 @@ void menuSelection(ProviderCppAppMenu menu)
 
             if (OIC::Service::NSResult::OK == result)
             {
-                std::cout << "registerTopic completed" << std::endl;
+                std::cout << "Registered topic Successfully" << std::endl;
             }
             else
             {
-                std::cout << "registerTopic failed" << std::endl;
+                std::cout << "Register topic failed...." << std::endl;
             }
         }
             break;
 
         case DELETE_TOPIC:
-            g_providerService->unregisterTopic(TOPIC_2);
+            result = g_providerService->unregisterTopic(TOPIC_2);
+            if (OIC::Service::NSResult::OK  == result)
+            {
+                std::cout << "Unregistered topic Successfully" << std::endl;
+            }
+            else
+            {
+                std::cout << "Unregister topic failed...." << std::endl;
+            }
             break;
 
         case SELECT_TOPIC:
@@ -504,6 +514,8 @@ int main(void)
         std::cout << "OCStack init error" << std::endl;
         return 0;
     }
+
+//    pthread_create(&processThread, NULL, OCProcessThread, NULL);
 
     try
     {

@@ -42,10 +42,10 @@
 using namespace std;
 using namespace OIC::Service;
 
-#define TOPIC_1 "OCF_TOPIC1"
-#define TOPIC_2 "OCF_TOPIC2"
-#define TOPIC_3 "OCF_TOPIC3"
-#define TOPIC_4 "OCF_TOPIC4"
+#define TOPIC_1 "TESTAPP_Topic_1"
+#define TOPIC_2 "TESTAPP_Topic_2"
+#define TOPIC_3 "TESTAPP_Topic_3"
+#define TOPIC_4 "TESTAPP_Topic_4"
 
 typedef enum
 {
@@ -74,11 +74,11 @@ typedef enum
     START_CONSUMER = 201,
     STOP_CONSUMER,
     CONSUMER_SUBSCRIBE,
-    CONSUMER_UNSUBSCRIBE,
     RESCAN_PROVIDER,
     SEND_SYNCINFO,
     CONSUMER_GET_TOPICS,
     CONSUMER_UPDATE_TOPICS,
+    CONSUMER_UNSUBSCRIBE,
     CONSUMER_ENABLE_REMOTE_SERVICE
 } ConsumerCppAppMenu;
 

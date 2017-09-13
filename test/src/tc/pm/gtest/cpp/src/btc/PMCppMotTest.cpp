@@ -22,46 +22,48 @@
 #include "PMCppHelper.h"
 #include "PMCppMotHelper.h"
 #include "PMCppUtilityHelper.h"
+#include "CommonTestUtil.h"
+
 #if defined(__MOT__)
 class PMCppMotTest_btc: public ::testing::Test
 {
-    protected:
-        PMCppHelper m_PMCppHelper;
-        PMCppMotHelper m_PMCppMotHelper;
-        DeviceList_t m_UnownedDevList, m_OwnedDevList, m_motEnabledDevList, m_motOwnedDevList;
-        OicSecAcl_t *m_acl1, *m_acl2;
-        std::shared_ptr< OCSecureResource > m_SingleDevList;
-        OicUuid_t devUuid;
-        bool subowner;
+protected:
+    PMCppHelper m_PMCppHelper;
+    PMCppMotHelper m_PMCppMotHelper;
+    DeviceList_t m_UnownedDevList, m_OwnedDevList, m_motEnabledDevList, m_motOwnedDevList;
+    OicSecAcl_t *m_acl1, *m_acl2;
+    std::shared_ptr< OCSecureResource > m_SingleDevList;
+    OicUuid_t devUuid;
+    bool subowner;
 
-        virtual void SetUp()
-        {
-            CommonUtil::killApp(KILL_SERVERS);
-            CommonUtil::waitInSecond(DELAY_MEDIUM);
-            PMCppUtilityHelper::removeAllResFile();
-            CommonUtil::waitInSecond(DELAY_MEDIUM);
-            CommonUtil::copyFile(PRECONFIG_SERVER1_CBOR_BACKUP, PRECONFIG_SERVER1_CBOR);
-            CommonUtil::copyFile(RANDOMPIN_SERVER_CBOR_BACKUP, RANDOMPIN_SERVER_CBOR);
-            CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
-            CommonUtil::copyFile(JUSTWORKS_SERVER7_CBOR_BACKUP, JUSTWORKS_SERVER7_CBOR);
-            CommonUtil::copyFile(PRECONFIG_SERVER2_CBOR_BACKUP, PRECONFIG_SERVER2_CBOR);
-            CommonUtil::copyFile(MOT_CLIENT_CBOR_BACKUP, MOT_CLIENT_CBOR);
-            m_UnownedDevList.clear();
-            m_OwnedDevList.clear();
-            m_motEnabledDevList.clear();
-            m_motOwnedDevList.clear();
-            m_acl1 = NULL;
-            m_acl2 = NULL;
-            devUuid =
-            {   0, 0};
-            m_SingleDevList = nullptr;
-        }
+    virtual void SetUp()
+    {
+        CommonUtil::killApp(KILL_SERVERS);
+        PMCppUtilityHelper::removeAllResFile();
+        CommonUtil::waitInSecond(DELAY_MEDIUM);
+        CommonUtil::copyFile(PRECONFIG_SERVER1_CBOR_BACKUP, PRECONFIG_SERVER1_CBOR);
+        CommonUtil::copyFile(RANDOMPIN_SERVER_CBOR_BACKUP, RANDOMPIN_SERVER_CBOR);
+        CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
+        CommonUtil::copyFile(JUSTWORKS_SERVER7_CBOR_BACKUP, JUSTWORKS_SERVER7_CBOR);
+        CommonUtil::copyFile(PRECONFIG_SERVER2_CBOR_BACKUP, PRECONFIG_SERVER2_CBOR);
+        CommonUtil::copyFile(MOT_CLIENT_CBOR_BACKUP, MOT_CLIENT_CBOR);
+        CommonUtil::waitInSecond(DELAY_MEDIUM);
+        m_UnownedDevList.clear();
+        m_OwnedDevList.clear();
+        m_motEnabledDevList.clear();
+        m_motOwnedDevList.clear();
+        m_acl1 = NULL;
+        m_acl2 = NULL;
+        devUuid =
+        {   0,0};
+        m_SingleDevList = nullptr;
+    }
 
-        virtual void TearDown()
-        {
-            CommonTestUtil::runCommonTCTearDownPart();
-            CommonUtil::killApp(KILL_SERVERS);
-        }
+    virtual void TearDown()
+    {
+        CommonTestUtil::runCommonTCTearDownPart();
+        CommonUtil::killApp(KILL_SERVERS);
+    }
 };
 
 /**
@@ -88,33 +90,31 @@ TEST_F(PMCppMotTest_btc, changeMOTMode_RV_SRC_P)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
     }
@@ -145,33 +145,31 @@ TEST_F(PMCppMotTest_btc, changeMOTModeDisable_RV_SRC_P)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_DISABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_DISABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
     }
@@ -202,33 +200,31 @@ TEST_F(PMCppMotTest_btc, changeMOTModeResultCallback_NV_N)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, NULL,
-                                        OC_STACK_INVALID_CALLBACK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
     }
@@ -261,40 +257,38 @@ TEST_F(PMCppMotTest_btc, DiscoverMultipleOwnerEnabledDevices_RV_SRC_P)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
     }
@@ -327,40 +321,37 @@ TEST_F(PMCppMotTest_btc, DiscoverMultipleOwnerEnabledDevices_LBV_P)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT_ONE,
-            m_motEnabledDevList, OC_STACK_OK))
+    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT_ONE,m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
     }
@@ -393,40 +384,37 @@ TEST_F(PMCppMotTest_btc, DiscoverMultipleOwnerEnabledDevices_LOBV_N)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT_ZERO,
-            m_motEnabledDevList, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT_ZERO,m_motEnabledDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
     }
@@ -459,46 +447,43 @@ TEST_F(PMCppMotTest_btc, DiscoverMultipleOwnerEnabledDevicesWithDeviceID_RV_SRC_
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.convertStrToUuid(m_OwnedDevList[0]->getDeviceID(), &devUuid, OC_STACK_OK))
+    if(!m_PMCppHelper.convertStrToUuid(m_OwnedDevList[0]->getDeviceID(), &devUuid, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevice(DISCOVERY_TIMEOUT, &devUuid,
-            m_SingleDevList, OC_STACK_OK))
+    if(!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevice(DISCOVERY_TIMEOUT, &devUuid, m_SingleDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -532,46 +517,43 @@ TEST_F(PMCppMotTest_btc, DiscoverMultipleOwnerEnabledDevicesWithDeviceID_LBV_P)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.convertStrToUuid(m_OwnedDevList[0]->getDeviceID(), &devUuid, OC_STACK_OK))
+    if(!m_PMCppHelper.convertStrToUuid(m_OwnedDevList[0]->getDeviceID(), &devUuid, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevice(DISCOVERY_TIMEOUT_ONE, &devUuid,
-            m_SingleDevList, OC_STACK_OK))
+    if(!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevice(DISCOVERY_TIMEOUT_ONE, &devUuid, m_SingleDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -605,46 +587,43 @@ TEST_F(PMCppMotTest_btc, DiscoverMultipleOwnerEnabledDevicesWithDeviceID_LOBV_N)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.convertStrToUuid(m_OwnedDevList[0]->getDeviceID(), &devUuid, OC_STACK_OK))
+    if(!m_PMCppHelper.convertStrToUuid(m_OwnedDevList[0]->getDeviceID(), &devUuid, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevice(DISCOVERY_TIMEOUT_ZERO, &devUuid,
-            m_SingleDevList, OC_STACK_INVALID_PARAM))
+    if(!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevice(DISCOVERY_TIMEOUT_ZERO, &devUuid, m_SingleDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -678,40 +657,37 @@ TEST_F(PMCppMotTest_btc, DiscoverMultipleOwnerEnabledDevicesWithDeviceID_NV_N)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevice(DISCOVERY_TIMEOUT, NULL, m_SingleDevList,
-            OC_STACK_INVALID_PARAM))
+    if(!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevice(DISCOVERY_TIMEOUT, NULL, m_SingleDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -747,47 +723,43 @@ TEST_F(PMCppMotTest_btc, ProvisionPreconfPin_RV_SRC_P)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT, m_motEnabledDevList,
-            OC_STACK_OK))
+    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.provisionPreconfPin(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN,
-            strlen(MOT_DEFAULT_PRE_CONFIG_PIN), PMCppMotHelper::provisionPreconfPinCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.provisionPreconfPin(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN, strlen(MOT_DEFAULT_PRE_CONFIG_PIN), PMCppMotHelper::provisionPreconfPinCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -823,47 +795,43 @@ TEST_F(PMCppMotTest_btc, ProvisionPreconfPinPreconfPin_NV_N)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT, m_motEnabledDevList,
-            OC_STACK_OK))
+    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.provisionPreconfPin(m_motEnabledDevList, NULL,
-            strlen(MOT_DEFAULT_PRE_CONFIG_PIN), PMCppMotHelper::provisionPreconfPinCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppMotHelper.provisionPreconfPin(m_motEnabledDevList, NULL, strlen(MOT_DEFAULT_PRE_CONFIG_PIN), PMCppMotHelper::provisionPreconfPinCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -899,47 +867,43 @@ TEST_F(PMCppMotTest_btc, ProvisionPreconfPinpreconfPinLength_NV_N)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT, m_motEnabledDevList,
-            OC_STACK_OK))
+    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.provisionPreconfPin(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN,
-            MOT_PRECONFIG_PIN_ZERO_SIZE, PMCppMotHelper::provisionPreconfPinCB, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppMotHelper.provisionPreconfPin(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN, MOT_PRECONFIG_PIN_ZERO_SIZE, PMCppMotHelper::provisionPreconfPinCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -975,47 +939,43 @@ TEST_F(PMCppMotTest_btc, ProvisionPreconfPinResultCallback_NV_N)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT, m_motEnabledDevList,
-            OC_STACK_OK))
+    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.provisionPreconfPin(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN,
-            strlen(MOT_DEFAULT_PRE_CONFIG_PIN), NULL, OC_STACK_INVALID_CALLBACK))
+    if (!m_PMCppMotHelper.provisionPreconfPin(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN, strlen(MOT_DEFAULT_PRE_CONFIG_PIN), NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1053,54 +1013,50 @@ TEST_F(PMCppMotTest_btc, SelectMOTMethod_RV_SRC_P)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.provisionPreconfPin(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN,
-            strlen(MOT_DEFAULT_PRE_CONFIG_PIN), PMCppMotHelper::provisionPreconfPinCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.provisionPreconfPin(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN, strlen(MOT_DEFAULT_PRE_CONFIG_PIN), PMCppMotHelper::provisionPreconfPinCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.selectMOTMethod(m_motEnabledDevList, OIC_PRECONFIG_PIN,
-                                          PMCppMotHelper::selectMOTMethodCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.selectMOTMethod(m_motEnabledDevList, OIC_PRECONFIG_PIN, PMCppMotHelper::selectMOTMethodCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
     }
@@ -1137,54 +1093,49 @@ TEST_F(PMCppMotTest_btc, SelectMOTMethodResultCallback_NV_N)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE,
-                                        PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.changeMOTMode(m_OwnedDevList, OIC_MULTIPLE_OWNER_ENABLE, PMCppMotHelper::changeMOTModeCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT, m_motEnabledDevList,
-            OC_STACK_OK))
+    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.provisionPreconfPin(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN,
-            strlen(MOT_DEFAULT_PRE_CONFIG_PIN), PMCppMotHelper::provisionPreconfPinCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.provisionPreconfPin(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN, strlen(MOT_DEFAULT_PRE_CONFIG_PIN), PMCppMotHelper::provisionPreconfPinCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.selectMOTMethod(m_motEnabledDevList, OIC_PRECONFIG_PIN, NULL,
-                                          OC_STACK_INVALID_CALLBACK))
+    if (!m_PMCppMotHelper.selectMOTMethod(m_motEnabledDevList, OIC_PRECONFIG_PIN, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
     }
@@ -1215,8 +1166,7 @@ TEST_F(PMCppMotTest_btc, SelectDiscoverMultipleOwnerEnabledDevices_RV_SRC_P)
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT, m_motEnabledDevList,
-            OC_STACK_OK))
+    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1248,8 +1198,7 @@ TEST_F(PMCppMotTest_btc, SelectDiscoverMultipleOwnerEnabledDevices_LBV_P)
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT_ONE,
-            m_motEnabledDevList, OC_STACK_OK))
+    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT_ONE,m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1281,8 +1230,7 @@ TEST_F(PMCppMotTest_btc, SelectDiscoverMultipleOwnerEnabledDevices_LOBV_N)
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT_ZERO,
-            m_motEnabledDevList, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT_ZERO,m_motEnabledDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1317,14 +1265,13 @@ TEST_F(PMCppMotTest_btc, AddPreconfigPIN_RV_SRC_P)
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN,
-                                          OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
+    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1358,15 +1305,13 @@ TEST_F(PMCppMotTest_btc, AddPreconfigPINPreconfPIN_NV_N)
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT, m_motEnabledDevList,
-            OC_STACK_OK))
+    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, NULL, OXM_PRECONFIG_PIN_MAX_SIZE,
-                                          OC_STACK_INVALID_PARAM))
+    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, NULL, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1400,15 +1345,13 @@ TEST_F(PMCppMotTest_btc, AddPreconfigPINPreconfPINLength_LOBV_N)
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT, m_motEnabledDevList,
-            OC_STACK_OK))
+    if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN,
-                                          MOT_PRECONFIG_PIN_ZERO_SIZE, OC_STACK_INVALID_PARAM))
+    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN, MOT_PRECONFIG_PIN_ZERO_SIZE, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1445,21 +1388,19 @@ TEST_F(PMCppMotTest_btc, DoMultipleOwnershipTransfer_RV_SRC_P)
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN,
-                                          OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
+    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.doMultipleOwnershipTransfer(m_motEnabledDevList,
-            PMCppMotHelper::multipleOwnershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.doMultipleOwnershipTransfer(m_motEnabledDevList,PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1496,21 +1437,19 @@ TEST_F(PMCppMotTest_btc, DoMultipleOwnershipTransferResultCallback_NV_N)
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN,
-                                          OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
+    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.doMultipleOwnershipTransfer(m_motEnabledDevList, NULL,
-            OC_STACK_INVALID_CALLBACK))
+    if (!m_PMCppMotHelper.doMultipleOwnershipTransfer(m_motEnabledDevList,NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1549,28 +1488,25 @@ TEST_F(PMCppMotTest_btc, DiscoverMultipleOwnedDevices_RV_SRC_P)
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN,
-                                          OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
+    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.doMultipleOwnershipTransfer(m_motEnabledDevList,
-            PMCppMotHelper::multipleOwnershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.doMultipleOwnershipTransfer(m_motEnabledDevList,PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT, m_motOwnedDevList,
-            OC_STACK_OK))
+    if (!m_PMCppMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT,m_motOwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1609,28 +1545,25 @@ TEST_F(PMCppMotTest_btc, DiscoverMultipleOwnedDevices_LBV_P)
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN,
-                                          OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
+    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.doMultipleOwnershipTransfer(m_motEnabledDevList,
-            PMCppMotHelper::multipleOwnershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.doMultipleOwnershipTransfer(m_motEnabledDevList,PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT_ONE, m_motOwnedDevList,
-            OC_STACK_OK))
+    if (!m_PMCppMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT_ONE,m_motOwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1669,28 +1602,25 @@ TEST_F(PMCppMotTest_btc, DiscoverMultipleOwnedDevices_LOBV_N)
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN,
-                                          OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
+    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.doMultipleOwnershipTransfer(m_motEnabledDevList,
-            PMCppMotHelper::multipleOwnershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.doMultipleOwnershipTransfer(m_motEnabledDevList,PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT_ZERO, m_motOwnedDevList,
-            OC_STACK_INVALID_PARAM))
+    if (!m_PMCppMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT_ZERO,m_motOwnedDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1725,7 +1655,7 @@ TEST_F(PMCppMotTest_btc, GetMOTMethod_RV_SRC_P)
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1767,7 +1697,7 @@ TEST_F(PMCppMotTest_btc, GetMOTMethodOxm_NV_N)
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1809,13 +1739,13 @@ TEST_F(PMCppMotTest_btc, IsMOTSupported_RV_SRC_P)
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.isMOTSupported(m_motEnabledDevList, true))
+    if (!m_PMCppMotHelper.isMOTSupported(m_motEnabledDevList,true))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1847,32 +1777,31 @@ TEST_F(PMCppMotTest_btc, IsMOTSupported_NV_N)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.isMOTSupported(m_OwnedDevList, false))
+    if (!m_PMCppMotHelper.isMOTSupported(m_OwnedDevList,false))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1907,13 +1836,13 @@ TEST_F(PMCppMotTest_btc, IsMOTEnabled_RV_SRC_P)
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.isMOTEnabled(m_motEnabledDevList, true))
+    if (!m_PMCppMotHelper.isMOTEnabled(m_motEnabledDevList,true))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -1945,32 +1874,31 @@ TEST_F(PMCppMotTest_btc, IsMOTEnabled_NV_N)
     CommonUtil::launchApp(PRECONFIG_SERVER1);
     CommonUtil::waitInSecond(DELAY_LONG);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.isMOTEnabled(m_OwnedDevList, false))
+    if (!m_PMCppMotHelper.isMOTEnabled(m_OwnedDevList,false))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -2011,34 +1939,31 @@ TEST_F(PMCppMotTest_btc, IsSubownerOfDevice_RV_SRC_P)
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN,
-                                          OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
+    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.doMultipleOwnershipTransfer(m_motEnabledDevList,
-            PMCppMotHelper::multipleOwnershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.doMultipleOwnershipTransfer(m_motEnabledDevList,PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT, m_motOwnedDevList,
-            OC_STACK_OK))
+    if (!m_PMCppMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT,m_motOwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.isSubownerOfDevice(m_motOwnedDevList, &subowner, OC_STACK_OK, true))
+    if (!m_PMCppMotHelper.isSubownerOfDevice(m_motOwnedDevList,&subowner,OC_STACK_OK,true))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -2073,13 +1998,13 @@ TEST_F(PMCppMotTest_btc, IsSubownerOfDeviceWithoutOwnership_SRC_P)
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.isSubownerOfDevice(m_motEnabledDevList, &subowner, OC_STACK_OK, false))
+    if (!m_PMCppMotHelper.isSubownerOfDevice(m_motEnabledDevList,&subowner,OC_STACK_OK,false))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -2114,13 +2039,13 @@ TEST_F(PMCppMotTest_btc, IsSubownerOfDeviceSubowner_NV_N)
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.isSubownerOfDevice(m_motEnabledDevList, NULL, OC_STACK_INVALID_PARAM, false))
+    if (!m_PMCppMotHelper.isSubownerOfDevice(m_motEnabledDevList,NULL,OC_STACK_INVALID_PARAM,false))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
@@ -2161,43 +2086,39 @@ TEST_F(PMCppMotTest_btc, ProvisionACLForMultipleOwnedDevices_RV_SRC_P)
     }
 
     if (!m_PMCppMotHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-            m_motEnabledDevList, OC_STACK_OK))
+                    m_motEnabledDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN,
-                                          OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
+    if (!m_PMCppMotHelper.addPreconfigPIN(m_motEnabledDevList, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.doMultipleOwnershipTransfer(m_motEnabledDevList,
-            PMCppMotHelper::multipleOwnershipTransferCB, OC_STACK_OK))
+    if (!m_PMCppMotHelper.doMultipleOwnershipTransfer(m_motEnabledDevList,PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT, m_motOwnedDevList,
-            OC_STACK_OK))
+    if (!m_PMCppMotHelper.discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT,m_motOwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppMotHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.convertStrToUuid(m_motOwnedDevList[0]->getDeviceID(), &devUuid, OC_STACK_OK))
+    if(!m_PMCppHelper.convertStrToUuid(m_motOwnedDevList[0]->getDeviceID(), &devUuid, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    OicSecAcl_t *m_acl1 = PMCppHelper::createAclForLEDAccess(
-                              &m_motOwnedDevList[0]->getDevPtr()->doxm->subOwners->uuid);
+    OicSecAcl_t* m_acl1 = PMCppHelper::createAclForLEDAccess(&m_motOwnedDevList[0]->getDevPtr()->doxm->subOwners->uuid);
 
-    if (!m_PMCppHelper.provisionACL(m_motOwnedDevList, m_acl1, PMCppHelper::provisionCB, OC_STACK_OK))
+    if(!m_PMCppHelper.provisionACL(m_motOwnedDevList, m_acl1, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;

@@ -36,6 +36,7 @@
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "oxmverifycommon.h"
+#include "securevirtualresourcetypes.h"
 #include "OCAccountManager.h"
 #include "OCApi.h"
 #include "OCCloudProvisioning.hpp"
@@ -45,15 +46,16 @@
 #include "payload_logging.h"
 #include "pmtypes.h"
 #include "rd_client.h"
-#include "securevirtualresourcetypes.h"
 #include "srmutility.h"
 #include "utils.h"
 #include "utlist.h"
+#include "aclresource.h"
+#include "coap/utlist.h"
 
 #include "CommonUtil.h"
-#include "CommonTestUtil.h"
 #include "CommonProperties.h"
 #include "IotivityTest_Logger.h"
+#include "SecurityCommonUtil.h"
 
 using namespace std;
 using namespace OC;
@@ -64,9 +66,16 @@ using namespace OC;
 #define CBOR_DB_PATH "./oic_svr_db_client.dat"
 #define RANDOM_PIN_TEXT_FILE "server_pincode.txt"
 #define PIN_MAX_SIZE 9
-#define INVALID_PIN_TYPE 5
+#define INVALID_PIN_TYPE 8
 #define DP_PIN_LENGTH 8
 #define CRED_ID_ONE 1
+
+#ifdef __LINUX__
+#define ALLOWED_NETWORK "eth0"
+#elif __TIZEN__
+#define ALLOWED_NETWORK "wlan"
+#endif
+
 /**
  * Secured Resource
  */
@@ -121,6 +130,9 @@ using namespace OC;
 #define PRECONFIG_SERVER2_CBOR "./preconfig_server_2.dat"
 #define PRECONFIG_SERVER2_CBOR_BACKUP "../preconfig_server_2.dat"
 
+#define DEVICE_PROPERTIES "./device_properties.dat"
+#define ROOT_CERT_FILE_TMP "./rootca.crt"
+
 /*
  * Device Status
  */
@@ -128,16 +140,6 @@ using namespace OC;
 #define OFF 0
 #define DEVICE_OWNED true
 #define DEVICE_UNOWNED false
-
-/*
- * Ownership Transfer Related Resource
- */
-#define OTM_INVALID_LOBV -1
-#define OTM_INVALID_UOBV 10
-#define OTM_NONE 0
-#define OTM_JUSTWORK 0
-#define OTM_RANDOMPIN 2
-#define OTM_ALL 3
 
 /*
  * Credential Representative value
@@ -149,32 +151,32 @@ using namespace OC;
 class PMCppUtilityHelper
 {
 
-    public:
-        static bool readFile(const char *name, OCByteString *out);
+public:
+    static bool readFile(const char *name, OCByteString *out);
 
-        static char *getOxmType(OicSecOxm_t oxmType);
+    static char *getOxmType(OicSecOxm_t oxmType);
 
-        static void printDevices(DeviceList_t &list);
+    static void printDevices(DeviceList_t &list);
 
-        static void printUuid(OicUuid_t uuid);
+    static void printUuid(OicUuid_t uuid);
 
-        static OCProvisionDev_t *getDevInst(OCProvisionDev_t *dev_lst, const int dev_num);
+    static OCProvisionDev_t* getDevInst(OCProvisionDev_t* dev_lst, const int dev_num);
 
-        static int printDevList(OCProvisionDev_t *);
+    static int printDevList(OCProvisionDev_t*);
 
-        static int printResultList(const OCProvisionResult_t *, const int);
+    static int printResultList(const OCProvisionResult_t*, const int);
 
-        static size_t printUuidList(const OCUuidList_t *);
+    static size_t printUuidList(const OCUuidList_t*);
 
-        static void printUuid(const OicUuid_t *);
+    static void printUuid(const OicUuid_t*);
 
-        static void removeAllResFile();
+    static void removeAllResFile();
 
-        static std::string setFailureMessage(OCStackResult actualResult, OCStackResult expectedResult);
+    static std::string setFailureMessage(OCStackResult actualResult, OCStackResult expectedResult);
 
-        static std::string setFailureMessage(OicSecOxm_t actualResult, OicSecOxm_t expectedResult);
+    static std::string setFailureMessage(OicSecOxm_t actualResult, OicSecOxm_t expectedResult);
 
-        static std::string setFailureMessage(std::string errorMessage);
+    static std::string setFailureMessage(std::string errorMessage);
 };
 
 #endif /* PMCppUtilityHelper_H_ */

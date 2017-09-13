@@ -40,8 +40,6 @@
 using namespace OC;
 using namespace std;
 
-static string killAllCommand = "kill -9 ";
-static string pidFindCommand = "/usr/bin/lsof -t -i:";
 static string udpPortPrefix = "coap";
 static string tcpPortPrefix = "tcp";
 vector< shared_ptr< OCResource > > g_foundResourceList;
@@ -58,8 +56,6 @@ void onResourceFound(shared_ptr< OCResource > );
 OCStackResult initiateServer(void);
 void findAllResources(string host = "", string query = "");
 void waitForCallback(void);
-string getPIDFromPort(string);
-void killPID(string pid);
 
 void handler(int sig)
 {
@@ -106,48 +102,18 @@ int main(int argc, char* argv[])
     for (auto tcpPort : g_tcpPortList)
     {
         cout << "found tcp port: " << tcpPort.first << endl;
-        killPID(getPIDFromPort(tcpPort.first));
+        CommonUtil::killPID(CommonUtil::getPIDFromPort(tcpPort.first));
     }
     for (auto udpPort : g_udpPortList)
     {
         cout << "found udp port: " << udpPort.first << endl;
 
-        killPID(getPIDFromPort(udpPort.first));
+        CommonUtil::killPID(CommonUtil::getPIDFromPort(udpPort.first));
     }
 
     cout << "Signing off from serial killer duty .... Done!!" << endl;
 
     return 0;
-}
-
-string getPIDFromPort(string port)
-{
-    FILE *fp;
-      char pid[1035];
-      port = pidFindCommand + port;
-
-      fp = popen(port.c_str(), "r");
-      if (fp == NULL) {
-        cout << "Failed to run command" << endl;
-        exit(1);
-      }
-
-      while (fgets(pid, sizeof(pid)-1, fp) != NULL) {
-        cout << "Found PID is: " << pid << endl;
-      }
-
-      pclose(fp);
-      return string(pid);
-}
-
-void killPID(string pid)
-{
-    string cmd = killAllCommand + pid;
-    string myPid = to_string(getpid());
-    if (myPid.compare(pid) != 0)
-    {
-        system(cmd.c_str());
-    }
 }
 
 void onResourceFound(shared_ptr< OCResource > resource)

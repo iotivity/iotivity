@@ -38,11 +38,11 @@ typedef enum
     START_JUSTWORKS_SERVER = 11,
     START_JUSTWORKS_SERVER2,
     START_RANDOMPIN_SERVER,
-	START_PRECONFIG_SERVER,
-	START_MVJUSTWORK_SERVER,
+    START_PRECONFIG_SERVER,
+    START_MVJUSTWORK_SERVER,
 
     START_PM_CLIENT = 20,
-	DISCOVER_SINGLE_DEVICE,
+    DISCOVER_SINGLE_DEVICE,
     JUSTWORKS_OWNERSHIP_TRANSFER,
     RANDOMPIN_OWNERSHIP_TRANSFER,
     RANDOMPIN_OWNERSHIP_TRANSFER_WITH_WRONG_PIN,
@@ -50,13 +50,17 @@ typedef enum
     PROVISION_CREDENTIAL,
     PROVISIONING_PAIRWISE_DEVICES,
     GET_LINKED_DEVICES,
-	SAVE_ACL,
+    SAVE_ACL,
     UNLINK_DEVICE,
     REMOVE_DEVICES,
-	REMOVE_DEVICES_WITH_UUID,
-	RESET_DEVICES,
-	RESET_SVRDB,
+    REMOVE_DEVICES_WITH_UUID,
+    RESET_DEVICES,
+    RESET_SVRDB,
     ENABLE_MOT_FOR_JUSTWORK_SERVER,
+    PROVISIONING_GET_LED_RESOURCE,
+    PROVISIONING_PUT_LED_RESOURCE,
+    PROVISIONING_POST_LED_RESOURCE,
+    PROVISIONING_DELETE_LED_RESOURCE,
 
 #if defined(__MOT__)
 START_MOT_CLIENT = 61,
@@ -73,9 +77,9 @@ PROVISION_MOT_CREDENTIAL,
 
 void clearScreen()
 {
-    const char* CLEAR_SCREE_ANSI = "\e[1;1H\e[2J";
-    ssize_t bytes = write(STDOUT_FILENO, CLEAR_SCREE_ANSI, 12);
-    OC_UNUSED(bytes);
+const char* CLEAR_SCREE_ANSI = "\e[1;1H\e[2J";
+ssize_t bytes = write(STDOUT_FILENO, CLEAR_SCREE_ANSI, 12);
+OC_UNUSED(bytes);
 }
 
 static void printMenu(void)
@@ -104,7 +108,11 @@ printf("%d. Remove Devices\n", REMOVE_DEVICES);
 printf("%d. Remove Devices With Uuid\n", REMOVE_DEVICES_WITH_UUID);
 printf("%d. Reset Devices\n", RESET_DEVICES);
 printf("%d. Reset SVRDB\n", RESET_SVRDB);
-printf("%d. ENABLE MOT DEV\n\n", ENABLE_MOT_FOR_JUSTWORK_SERVER);
+printf("%d. ENABLE MOT DEV\n", ENABLE_MOT_FOR_JUSTWORK_SERVER);
+printf("%d. Get LED resource [Provisioning]\n", PROVISIONING_GET_LED_RESOURCE);
+printf("%d. Put LED resource [Provisioning]\n", PROVISIONING_PUT_LED_RESOURCE);
+printf("%d. Post LED resource [Provisioning]\n", PROVISIONING_POST_LED_RESOURCE);
+printf("%d. Delete LED resource [Provisioning]\n\n", PROVISIONING_DELETE_LED_RESOURCE);
 
 #if defined(__MOT__)
 printf("====================MOT CLIENT=========================\n");
@@ -139,8 +147,8 @@ switch (userInput)
         break;
 
     case START_PRECONFIG_SERVER:
-		startServer(4);
-		break;
+        startServer(4);
+        break;
 
     case START_MVJUSTWORK_SERVER:
         startServer(5);
@@ -151,14 +159,14 @@ switch (userInput)
         break;
 
     case DISCOVER_SINGLE_DEVICE:
-		g_unownList = NULL;
-		discoverUnownedDevices(DISCOVERY_TIMEOUT, &g_unownList, OC_STACK_OK);
-		{
-			OCProvisionDev_t *device1 = g_unownList;
-			OicUuid_t rev = device1->doxm->deviceID;
-			discoverSingleDevice(DISCOVERY_TIMEOUT, &rev, &g_targetDev, OC_STACK_OK);
-		}
-		break;
+        g_unownList = NULL;
+        discoverUnownedDevices(DISCOVERY_TIMEOUT, &g_unownList, OC_STACK_OK);
+        {
+            OCProvisionDev_t *device1 = g_unownList;
+            OicUuid_t rev = device1->doxm->deviceID;
+            discoverSingleDevice(DISCOVERY_TIMEOUT, &rev, &g_targetDev, OC_STACK_OK);
+        }
+        break;
 
     case JUSTWORKS_OWNERSHIP_TRANSFER:
         g_unownList = NULL;
@@ -222,15 +230,15 @@ switch (userInput)
         break;
 
     case SAVE_ACL:
-    	g_OwnList = NULL;
-		discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
-		{
-			OCProvisionDev_t *device1 = g_OwnList;
-			OicUuid_t rev = device1->doxm->deviceID;
-			g_Acl = createSimpleAcl(rev);
-			saveACL(g_Acl, OC_STACK_OK);
-		}
-		break;
+        g_OwnList = NULL;
+        discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
+        {
+            OCProvisionDev_t *device1 = g_OwnList;
+            OicUuid_t rev = device1->doxm->deviceID;
+            g_Acl = createSimpleAcl(rev);
+            saveACL(g_Acl, OC_STACK_OK);
+        }
+        break;
 
     case UNLINK_DEVICE:
         g_OwnList = NULL;
@@ -254,28 +262,28 @@ switch (userInput)
         break;
 
     case REMOVE_DEVICES_WITH_UUID:
-    	g_OwnList = NULL;
-		discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
-		{
-			OCProvisionDev_t *device1 = g_OwnList;
-			OicUuid_t rev = device1->doxm->deviceID;
-			removeDeviceWithUuid((void*) ctxRemoveDeviceWithUuid, DISCOVERY_TIMEOUT, &rev, removeDeviceCB,
-					OC_STACK_OK);
+        g_OwnList = NULL;
+        discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
+        {
+            OCProvisionDev_t *device1 = g_OwnList;
+            OicUuid_t rev = device1->doxm->deviceID;
+            removeDeviceWithUuid((void*) ctxRemoveDeviceWithUuid, DISCOVERY_TIMEOUT, &rev,
+                    removeDeviceCB, OC_STACK_OK);
 
-		}
-		break;
+        }
+        break;
 
     case RESET_DEVICES:
-		g_OwnList = NULL;
-		discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
-		{
-			OCProvisionDev_t *device1 = g_OwnList;
-			OicUuid_t rev = device1->doxm->deviceID;
-			resetDevice((void*) ctxResetDevice, DISCOVERY_TIMEOUT, device1, syncDeviceCB,
-					OC_STACK_OK);
+        g_OwnList = NULL;
+        discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
+        {
+            OCProvisionDev_t *device1 = g_OwnList;
+            OicUuid_t rev = device1->doxm->deviceID;
+            resetDevice((void*) ctxResetDevice, DISCOVERY_TIMEOUT, device1, syncDeviceCB,
+                    OC_STACK_OK);
 
-		}
-		break;
+        }
+        break;
 
     case RESET_SVRDB:
         g_OwnList = NULL;
@@ -287,8 +295,48 @@ switch (userInput)
 
         }
         break;
+
+    case PROVISIONING_GET_LED_RESOURCE:
+        g_OwnList = NULL;
+        discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
+        {
+            g_targetDev = getDevInst((OCProvisionDev_t*) g_OwnList, DEVICE_INDEX_ONE);
+            getLedResourcesProvisioning(g_targetDev, OC_STACK_OK);
+
+        }
+        break;
+    case PROVISIONING_PUT_LED_RESOURCE:
+        g_OwnList = NULL;
+        discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
+        {
+            g_targetDev = getDevInst((OCProvisionDev_t*) g_OwnList, DEVICE_INDEX_ONE);
+            putLedResourcesProvisioning(g_targetDev, OC_STACK_OK);
+
+        }
+        break;
+
+    case PROVISIONING_POST_LED_RESOURCE:
+        g_OwnList = NULL;
+        discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
+        {
+            g_targetDev = getDevInst((OCProvisionDev_t*) g_OwnList, DEVICE_INDEX_ONE);
+            postLedResourcesProvisioning(g_targetDev, OC_STACK_OK);
+
+        }
+        break;
+
+    case PROVISIONING_DELETE_LED_RESOURCE:
+        g_OwnList = NULL;
+        discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
+        {
+            g_targetDev = getDevInst((OCProvisionDev_t*) g_OwnList, DEVICE_INDEX_ONE);
+            deleteLedResourcesProvisioning(g_targetDev, OC_STACK_OK);
+
+        }
+        break;
+
 #if defined(__MOT__)
-    case ENABLE_MOT_FOR_JUSTWORK_SERVER:
+        case ENABLE_MOT_FOR_JUSTWORK_SERVER:
         g_OwnList = NULL;
         discoverOwnedDevices(DISCOVERY_TIMEOUT, &g_OwnList, OC_STACK_OK);
 
@@ -309,81 +357,81 @@ switch (userInput)
 
         break;
 
-    case START_MOT_CLIENT:
-		initMotClient();
-		break;
+        case START_MOT_CLIENT:
+        initMotClient();
+        break;
 
-	case DISCOVER_MOT_ENABLED_DEVICE:
-		g_motEnabledDevList = NULL;
-		discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,&g_motEnabledDevList, OC_STACK_OK);
-		break;
-
-	case DO_MULTIPLE_OWNERSHIP_TRANSFER:
-	    g_motEnabledDevList = NULL;
+        case DISCOVER_MOT_ENABLED_DEVICE:
+        g_motEnabledDevList = NULL;
         discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,&g_motEnabledDevList, OC_STACK_OK);
-		g_targetDev = getDevInst((OCProvisionDev_t*) g_motEnabledDevList, DEVICE_INDEX_ONE);
-		addPreconfigPIN(g_targetDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK);
-		doMultipleOwnershipTransfer((void*)MOT_CTX, g_targetDev,multipleOwnershipTransferCB, OC_STACK_OK);
-		break;
+        break;
 
-	case DISCOVER_MOT_OWNED_DEVICE:
-		g_motOwnedDevList = NULL;
-		discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT,&g_motOwnedDevList, OC_STACK_OK);
-		break;
+        case DO_MULTIPLE_OWNERSHIP_TRANSFER:
+        g_motEnabledDevList = NULL;
+        discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,&g_motEnabledDevList, OC_STACK_OK);
+        g_targetDev = getDevInst((OCProvisionDev_t*) g_motEnabledDevList, DEVICE_INDEX_ONE);
+        addPreconfigPIN(g_targetDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_MAX_SIZE, OC_STACK_OK);
+        doMultipleOwnershipTransfer((void*)MOT_CTX, g_targetDev,multipleOwnershipTransferCB, OC_STACK_OK);
+        break;
 
-	case GET_LED_RESOURCE:
-		g_motOwnedDevList = NULL;
-		discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT, &g_motOwnedDevList, OC_STACK_OK);
-		{
-			g_targetDev = getDevInst((OCProvisionDev_t*) g_motOwnedDevList, DEVICE_INDEX_ONE);
-			getLedResources(g_targetDev,OC_STACK_OK);
+        case DISCOVER_MOT_OWNED_DEVICE:
+        g_motOwnedDevList = NULL;
+        discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT,&g_motOwnedDevList, OC_STACK_OK);
+        break;
 
-		}
-		break;
+        case GET_LED_RESOURCE:
+        g_motOwnedDevList = NULL;
+        discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT, &g_motOwnedDevList, OC_STACK_OK);
+        {
+            g_targetDev = getDevInst((OCProvisionDev_t*) g_motOwnedDevList, DEVICE_INDEX_ONE);
+            getLedResources(g_targetDev,OC_STACK_OK);
 
-	case PUT_LED_RESOURCE:
-		g_motOwnedDevList = NULL;
-		discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT, &g_motOwnedDevList, OC_STACK_OK);
-		{
-			g_targetDev = getDevInst((OCProvisionDev_t*) g_motOwnedDevList, DEVICE_INDEX_ONE);
-			putLedResources(g_targetDev,OC_STACK_OK);
+        }
+        break;
 
-		}
-		break;
+        case PUT_LED_RESOURCE:
+        g_motOwnedDevList = NULL;
+        discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT, &g_motOwnedDevList, OC_STACK_OK);
+        {
+            g_targetDev = getDevInst((OCProvisionDev_t*) g_motOwnedDevList, DEVICE_INDEX_ONE);
+            putLedResources(g_targetDev,OC_STACK_OK);
 
-	case PROVISION_MOT_ACL_FOR_LED:
-		g_motOwnedDevList = NULL;
-		discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT, &g_motOwnedDevList, OC_STACK_OK);
-		{
-			g_targetDev = getDevInst((OCProvisionDev_t*) g_motOwnedDevList, DEVICE_INDEX_ONE);
-			OicUuid_t rev = g_targetDev->doxm->subOwners->uuid;
-			g_Acl = createAclForLEDAccess(&rev);
-			provisionACL((void*) g_mctx, g_targetDev, g_Acl, provisionAclCB, OC_STACK_OK);
-		}
-		break;
+        }
+        break;
+
+        case PROVISION_MOT_ACL_FOR_LED:
+        g_motOwnedDevList = NULL;
+        discoverMultipleOwnedDevices(DISCOVERY_TIMEOUT, &g_motOwnedDevList, OC_STACK_OK);
+        {
+            g_targetDev = getDevInst((OCProvisionDev_t*) g_motOwnedDevList, DEVICE_INDEX_ONE);
+            OicUuid_t rev = g_targetDev->doxm->subOwners->uuid;
+            g_Acl = createAclForLEDAccess(&rev);
+            provisionACL((void*) g_mctx, g_targetDev, g_Acl, provisionAclCB, OC_STACK_OK);
+        }
+        break;
 #endif
-	default:
+    default:
         printf("Wrong Input, Please provide Input Again");
         return;
-    }
+}
 
 }
 
 int main()
 {
-    for (;;)
+for (;;)
+{
+    printMenu();
+
+    if (!scanf("%d", &g_userInput))
     {
-        printMenu();
-
-        if (!scanf("%d", &g_userInput))
-        {
-            printf("Wrong Input, Please provide Input Again");
-        }
-
-        if (!g_userInput)
-        {
-            break;
-        }
-        doAction(g_userInput);
+        printf("Wrong Input, Please provide Input Again");
     }
+
+    if (!g_userInput)
+    {
+        break;
+    }
+    doAction(g_userInput);
+}
 }

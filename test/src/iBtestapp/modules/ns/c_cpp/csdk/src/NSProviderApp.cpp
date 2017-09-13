@@ -401,7 +401,7 @@ void showMainMenu()
 // This function is for taking input from console and processing input as necessary
 int userInputProcessing(int max, int min)
 {
-    int input=0;
+    int input = 0;
 
     if (g_IsTCRunning)
     {

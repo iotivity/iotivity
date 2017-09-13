@@ -21,51 +21,47 @@
 
 #include "PMCppHelper.h"
 #include "PMCppUtilityHelper.h"
+#include "CommonTestUtil.h"
 
 class PMCppOtmTest_btc: public ::testing::Test
 {
-    protected:
-        PMCppHelper m_PMCppHelper;
-        DeviceList_t m_UnownedDevList, m_OwnedDevList;
-        std::shared_ptr< OCSecureResource > m_TargetList;
-        OicUuid_t deviceUuid;
-        OicSecAcl_t *m_acl1, *m_acl2;
-        InputPinCallbackHandle callbackHandle;
-        DisplayPinCallbackHandle displayPinCallbackHandle;
+protected:
+    PMCppHelper m_PMCppHelper;
+    DeviceList_t m_UnownedDevList, m_OwnedDevList;
+    std::shared_ptr< OCSecureResource > m_TargetList;
+    OicUuid_t deviceUuid;
+    OicSecAcl_t *m_acl1, *m_acl2;
+    InputPinCallbackHandle callbackHandle;
+    DisplayPinCallbackHandle displayPinCallbackHandle;
 
-        virtual void SetUp()
-        {
-            CommonTestUtil::runCommonTCSetUpPart();
-            CommonUtil::killApp(KILL_SERVERS);
-            CommonUtil::waitInSecond(DELAY_MEDIUM);
-            PMCppUtilityHelper::removeAllResFile();
-            CommonUtil::waitInSecond(DELAY_MEDIUM);
-            CommonUtil::rmFile(DATABASE_PDM);
-            CommonUtil::rmFile(JUSTWORKS_SERVER1_CBOR);
-            CommonUtil::rmFile(JUSTWORKS_SERVER2_CBOR);
-            CommonUtil::rmFile(MV_JUSTWORKS_SERVER_CBOR);
-            CommonUtil::rmFile(CLIENT_CBOR);
-            CommonUtil::waitInSecond(DELAY_MEDIUM);
-            CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
-            CommonUtil::copyFile(JUSTWORKS_SERVER2_CBOR_BACKUP, JUSTWORKS_SERVER2_CBOR);
-            CommonUtil::copyFile(MV_JUSTWORKS_SERVER_CBOR_BACKUP, MV_JUSTWORKS_SERVER_CBOR);
-            CommonUtil::copyFile(RANDOMPIN_SERVER_CBOR_BACKUP, RANDOMPIN_SERVER_CBOR);
-            CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
-            m_UnownedDevList.clear();
-            m_OwnedDevList.clear();
-            m_acl1 = NULL;
-            m_acl2 = NULL;
-            m_TargetList = NULL;
+    virtual void SetUp()
+    {
+        CommonTestUtil::runCommonTCSetUpPart();
+        CommonUtil::killApp(KILL_SERVERS);
+        CommonUtil::waitInSecond(DELAY_MEDIUM);
+        PMCppUtilityHelper::removeAllResFile();
+        CommonUtil::copyFile(JUSTWORKS_SERVER_CBOR_O1_UNOWNED_BACKUP, JUSTWORKS_SERVER_CBOR_O1);
+        CommonUtil::copyFile(JUSTWORKS_SERVER_CBOR_O2_UNOWNED_BACKUP, JUSTWORKS_SERVER_CBOR_O2);
+        CommonUtil::copyFile(RANDOMPIN_SERVER_CBOR_01_UNOWNED_BACKUP, RANDOMPIN_SERVER_CBOR_01);
+        CommonUtil::copyFile(CLIENT_CBOR_01_UNOWNED_BACKUP, CLIENT_CBOR_01);
+        CommonUtil::copyFile(MV_JUSTWORKS_CBOR_01_UNOWNED_BACKUP, MV_JUSTWORKS_CBOR_01);
+        CommonUtil::waitInSecond(DELAY_LONG);
 
-            callbackHandle = nullptr;
-            displayPinCallbackHandle = nullptr;
-        }
+        m_UnownedDevList.clear();
+        m_OwnedDevList.clear();
+        m_acl1 = NULL;
+        m_acl2 = NULL;
+        m_TargetList = NULL;
 
-        virtual void TearDown()
-        {
-            CommonTestUtil::runCommonTCTearDownPart();
-            CommonUtil::killApp(KILL_SERVERS);
-        }
+        callbackHandle = nullptr;
+        displayPinCallbackHandle = nullptr;
+    }
+
+    virtual void TearDown()
+    {
+        CommonTestUtil::runCommonTCTearDownPart();
+        CommonUtil::killApp(KILL_SERVERS);
+    }
 };
 
 /**
@@ -74,7 +70,7 @@ class PMCppOtmTest_btc: public ::testing::Test
  * @objective       test discoverUnownedDevices positively
  * @target          static OCStackResult discoverUnownedDevices(unsigned short timeout, DeviceList_t &list)
  * @test_data       timeout = DISCOVERY_TIMEOUT
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  * @post_condition  None
@@ -87,13 +83,13 @@ TEST_F(PMCppOtmTest_btc, DiscoverUnownedDevices_RV_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -106,7 +102,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverUnownedDevices_RV_P)
  * @objective       test discoverUnownedDevices positively with Lower Boundary Value of Time
  * @target          static OCStackResult discoverUnownedDevices(unsigned short timeout, DeviceList_t &list)
  * @test_data       timeout = DISCOVERY_TIMEOUT_ONE
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  * @post_condition  None
@@ -119,13 +115,13 @@ TEST_F(PMCppOtmTest_btc, DiscoverUnownedDevicesTime_LBV_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT_ONE, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT_ONE, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -138,7 +134,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverUnownedDevicesTime_LBV_P)
  * @objective       test discoverUnownedDevices negatively with Out of Lower Boundary value of Time
  * @target          static OCStackResult discoverUnownedDevices(unsigned short timeout, DeviceList_t &list)
  * @test_data       timeout = DISCOVERY_TIMEOUT_ZERO
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  * @post_condition  None
@@ -151,14 +147,13 @@ TEST_F(PMCppOtmTest_btc, DiscoverUnownedDevicesTime_LOBV_N)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT_ZERO, m_UnownedDevList,
-            OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT_ZERO, m_UnownedDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -171,7 +166,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverUnownedDevicesTime_LOBV_N)
  * @objective       test discoverOwnedDevices positively
  * @target          static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
  * @test_data       timeout = DISCOVERY_TIMEOUT
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverOwnedDevices
  * @post_condition  None
@@ -184,13 +179,13 @@ TEST_F(PMCppOtmTest_btc, DiscoverOwnedDevices_RV_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -203,7 +198,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverOwnedDevices_RV_P)
  * @objective       test discoverOwnedDevices positively with Lower Boundary Value of Time
  * @target          static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
  * @test_data       timeout = DISCOVERY_TIMEOUT_ONE
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverOwnedDevices
  * @post_condition  None
@@ -216,13 +211,13 @@ TEST_F(PMCppOtmTest_btc, DiscoverOwnedDevicesTime_LBV_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT_ONE, m_OwnedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT_ONE, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -235,7 +230,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverOwnedDevicesTime_LBV_P)
  * @objective       test discoverOwnedDevices negatively with Outer Lower Boundary Value of Time
  * @target          static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
  * @test_data       timeout = DISCOVERY_TIMEOUT_ZERO
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverOwnedDevices
  * @post_condition  None
@@ -248,14 +243,13 @@ TEST_F(PMCppOtmTest_btc, DiscoverOwnedDevicesTime_LOBV_N)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT_ZERO, m_OwnedDevList,
-                                            OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT_ZERO, m_OwnedDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -269,7 +263,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverOwnedDevicesTime_LOBV_N)
  * @objective       test discoverUnownedDevices positively
  * @target          static OCStackResult discoverSingleDevice(unsigned short timeout, const OicUuid_t* deviceID, std::shared_ptr<OCSecureResource> foundDevice)
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3. call discoverSingleDevice
@@ -283,25 +277,25 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDevice_RV_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.convertStrToUuid(m_UnownedDevList[0]->getDeviceID(), &deviceUuid, OC_STACK_OK))
+    if(!m_PMCppHelper.convertStrToUuid(m_UnownedDevList[0]->getDeviceID(), &deviceUuid,OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverSingleDevice(DISCOVERY_TIMEOUT, &deviceUuid, m_TargetList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverSingleDevice(DISCOVERY_TIMEOUT,&deviceUuid,m_TargetList,OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -315,7 +309,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDevice_RV_P)
  * @objective       test discoverUnownedDevices positively with timeout=DISCOVERY_TIMEOUT_ONE
  * @target          static OCStackResult discoverSingleDevice(unsigned short timeout, const OicUuid_t* deviceID, std::shared_ptr<OCSecureResource> foundDevice)
  * @test_data       timeout=DISCOVERY_TIMEOUT_ONE
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3. call discoverSingleDevice
@@ -329,26 +323,25 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDevice_LBV_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.convertStrToUuid(m_UnownedDevList[0]->getDeviceID(), &deviceUuid, OC_STACK_OK))
+    if(!m_PMCppHelper.convertStrToUuid(m_UnownedDevList[0]->getDeviceID(), &deviceUuid,OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverSingleDevice(DISCOVERY_TIMEOUT_ONE, &deviceUuid, m_TargetList,
-                                            OC_STACK_OK))
+    if(!m_PMCppHelper.discoverSingleDevice(DISCOVERY_TIMEOUT_ONE,&deviceUuid,m_TargetList,OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -362,7 +355,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDevice_LBV_P)
  * @objective       test discoverUnownedDevices negatively with timeout=DISCOVERY_TIMEOUT_ZERO
  * @target          static OCStackResult discoverSingleDevice(unsigned short timeout, const OicUuid_t* deviceID, std::shared_ptr<OCSecureResource> foundDevice)
  * @test_data       timeout=DISCOVERY_TIMEOUT_ZERO
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3. call discoverSingleDevice
@@ -376,26 +369,25 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDevice_LOBV_N)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.convertStrToUuid(m_UnownedDevList[0]->getDeviceID(), &deviceUuid, OC_STACK_OK))
+    if(!m_PMCppHelper.convertStrToUuid(m_UnownedDevList[0]->getDeviceID(), &deviceUuid,OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverSingleDevice(DISCOVERY_TIMEOUT_ZERO, &deviceUuid, m_TargetList,
-                                            OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.discoverSingleDevice(DISCOVERY_TIMEOUT_ZERO,&deviceUuid,m_TargetList,OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -409,7 +401,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDevice_LOBV_N)
  * @objective       test discoverUnownedDevices negatively with deviceID=NULL
  * @target          static OCStackResult discoverSingleDevice(unsigned short timeout, const OicUuid_t* deviceID, std::shared_ptr<OCSecureResource> foundDevice)
  * @test_data       deviceID=NULL
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3. call discoverSingleDevice
@@ -423,20 +415,19 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDeviceDeviceID_NV_N)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverSingleDevice(DISCOVERY_TIMEOUT, NULL, m_TargetList,
-                                            OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.discoverSingleDevice(DISCOVERY_TIMEOUT,NULL,m_TargetList,OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -450,7 +441,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDeviceDeviceID_NV_N)
  * @objective       test discoverSingleDeviceInUnicast positively
  * @target          static OCStackResult discoverSingleDeviceInUnicast(unsigned short timeout,const OicUuid_t* deviceID,const std::string& hostAddress,OCConnectivityType connType,std::shared_ptr<OCSecureResource> &foundDevice)
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3. call discoverSingleDeviceInUnicast
@@ -464,13 +455,13 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDeviceInUnicast_RV_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.convertStrToUuid(m_UnownedDevList[0]->getDeviceID(), &deviceUuid, OC_STACK_OK))
+    if(!m_PMCppHelper.convertStrToUuid(m_UnownedDevList[0]->getDeviceID(), &deviceUuid,OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -478,8 +469,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDeviceInUnicast_RV_P)
 
     std::string hostAddr = m_UnownedDevList[0]->getDevPtr()->endpoint.routeData;
 
-    if (!m_PMCppHelper.discoverSingleDeviceInUnicast(DISCOVERY_TIMEOUT, &deviceUuid, hostAddr,
-            CT_DEFAULT, m_TargetList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverSingleDeviceInUnicast(DISCOVERY_TIMEOUT,&deviceUuid,hostAddr,CT_DEFAULT,m_TargetList,OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -493,7 +483,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDeviceInUnicast_RV_P)
  * @objective       test discoverSingleDeviceInUnicast positively with timeout=DISCOVERY_TIMEOUT_ONE
  * @target          static OCStackResult discoverSingleDeviceInUnicast(unsigned short timeout,const OicUuid_t* deviceID,const std::string& hostAddress,OCConnectivityType connType,std::shared_ptr<OCSecureResource> &foundDevice)
  * @test_data       timeout=DISCOVERY_TIMEOUT_ONE
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3. call discoverSingleDeviceInUnicast
@@ -507,13 +497,13 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDeviceInUnicast_LBV_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.convertStrToUuid(m_UnownedDevList[0]->getDeviceID(), &deviceUuid, OC_STACK_OK))
+    if(!m_PMCppHelper.convertStrToUuid(m_UnownedDevList[0]->getDeviceID(), &deviceUuid,OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -521,8 +511,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDeviceInUnicast_LBV_P)
 
     std::string hostAddr = m_UnownedDevList[0]->getDevPtr()->endpoint.routeData;
 
-    if (!m_PMCppHelper.discoverSingleDeviceInUnicast(DISCOVERY_TIMEOUT_ONE, &deviceUuid, hostAddr,
-            CT_DEFAULT, m_TargetList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverSingleDeviceInUnicast(DISCOVERY_TIMEOUT_ONE,&deviceUuid,hostAddr,CT_DEFAULT,m_TargetList,OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -536,7 +525,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDeviceInUnicast_LBV_P)
  * @objective       test discoverSingleDeviceInUnicast negatively with timeout=DISCOVERY_TIMEOUT_ZERO
  * @target          static OCStackResult discoverSingleDeviceInUnicast(unsigned short timeout,const OicUuid_t* deviceID,const std::string& hostAddress,OCConnectivityType connType,std::shared_ptr<OCSecureResource> &foundDevice)
  * @test_data       timeout=DISCOVERY_TIMEOUT_ZERO
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3. call discoverSingleDeviceInUnicast
@@ -550,13 +539,13 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDeviceInUnicast_LOBV_N)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.convertStrToUuid(m_UnownedDevList[0]->getDeviceID(), &deviceUuid, OC_STACK_OK))
+    if(!m_PMCppHelper.convertStrToUuid(m_UnownedDevList[0]->getDeviceID(), &deviceUuid,OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -564,8 +553,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDeviceInUnicast_LOBV_N)
 
     std::string hostAddr = m_UnownedDevList[0]->getDevPtr()->endpoint.routeData;
 
-    if (!m_PMCppHelper.discoverSingleDeviceInUnicast(DISCOVERY_TIMEOUT_ZERO, &deviceUuid, hostAddr,
-            CT_DEFAULT, m_TargetList, OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.discoverSingleDeviceInUnicast(DISCOVERY_TIMEOUT_ZERO,&deviceUuid,hostAddr,CT_DEFAULT,m_TargetList,OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -579,7 +567,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDeviceInUnicast_LOBV_N)
  * @objective       test discoverSingleDeviceInUnicast negatively with deviceID=NULL
  * @target          static OCStackResult discoverSingleDeviceInUnicast(unsigned short timeout,const OicUuid_t* deviceID,const std::string& hostAddress,OCConnectivityType connType,std::shared_ptr<OCSecureResource> &foundDevice)
  * @test_data       deviceID=NULL
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3. call discoverSingleDeviceInUnicast
@@ -593,7 +581,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDeviceInUnicastDeviceID_NV_N)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -601,8 +589,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDeviceInUnicastDeviceID_NV_N)
 
     std::string hostAddr = m_UnownedDevList[0]->getDevPtr()->endpoint.routeData;
 
-    if (!m_PMCppHelper.discoverSingleDeviceInUnicast(DISCOVERY_TIMEOUT, NULL, hostAddr, CT_DEFAULT,
-            m_TargetList, OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.discoverSingleDeviceInUnicast(DISCOVERY_TIMEOUT,NULL,hostAddr,CT_DEFAULT,m_TargetList,OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -615,7 +602,7 @@ TEST_F(PMCppOtmTest_btc, DiscoverSingleDeviceInUnicastDeviceID_NV_N)
  * @objective       test getDevInfoFromNetwork positively
  * @target          static OCStackResult getDevInfoFromNetwork(unsigned short timeout, DeviceList_t &ownedDevList, DeviceList_t &unownedDevList)
  * @test_data       timeout = DISCOVERY_TIMEOUT
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call getDevInfoFromNetwork
  * @post_condition  None
@@ -628,14 +615,13 @@ TEST_F(PMCppOtmTest_btc, GetDevInfoFromNetwork_RV_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.getDevInfoFromNetwork(DISCOVERY_TIMEOUT, m_OwnedDevList, m_UnownedDevList,
-            OC_STACK_OK))
+    if(!m_PMCppHelper.getDevInfoFromNetwork(DISCOVERY_TIMEOUT, m_OwnedDevList, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -648,7 +634,7 @@ TEST_F(PMCppOtmTest_btc, GetDevInfoFromNetwork_RV_P)
  * @objective       test getDevInfoFromNetwork positively with Lower Boundary Value of Time
  * @target          static OCStackResult getDevInfoFromNetwork(unsigned short timeout, DeviceList_t &ownedDevList, DeviceList_t &unownedDevList)
  * @test_data       timeout = DISCOVERY_TIMEOUT_TWO
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call getDevInfoFromNetwork
  * @post_condition  None
@@ -661,14 +647,13 @@ TEST_F(PMCppOtmTest_btc, GetDevInfoFromNetworkTime_LBV_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.getDevInfoFromNetwork(DISCOVERY_TIMEOUT_TWO, m_OwnedDevList, m_UnownedDevList,
-            OC_STACK_OK))
+    if(!m_PMCppHelper.getDevInfoFromNetwork(DISCOVERY_TIMEOUT_TWO, m_OwnedDevList, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -681,7 +666,7 @@ TEST_F(PMCppOtmTest_btc, GetDevInfoFromNetworkTime_LBV_P)
  * @objective       test getDevInfoFromNetwork negatively with Outer Lower Boundary Value of Time
  * @target          static OCStackResult getDevInfoFromNetwork(unsigned short timeout, DeviceList_t &ownedDevList, DeviceList_t &unownedDevList)
  * @test_data       timeout = DISCOVERY_TIMEOUT_ONE
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call getDevInfoFromNetwork
  * @post_condition  None
@@ -694,14 +679,13 @@ TEST_F(PMCppOtmTest_btc, GetDevInfoFromNetworkTime_LOBV_N)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.getDevInfoFromNetwork(DISCOVERY_TIMEOUT_ONE, m_OwnedDevList, m_UnownedDevList,
-            OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.getDevInfoFromNetwork(DISCOVERY_TIMEOUT_ONE, m_OwnedDevList, m_UnownedDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -728,7 +712,7 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataJustWork_RV_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -737,13 +721,13 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataJustWork_RV_P)
     OTMCallbackData_t justWorksCBData;
     justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
     justWorksCBData.createSecureSessionCB =
-        CreateSecureSessionJustWorksCallback;
+    CreateSecureSessionJustWorksCallback;
     justWorksCBData.createSelectOxmPayloadCB =
-        CreateJustWorksSelectOxmPayload;
+    CreateJustWorksSelectOxmPayload;
     justWorksCBData.createOwnerTransferPayloadCB =
-        CreateJustWorksOwnerTransferPayload;
+    CreateJustWorksOwnerTransferPayload;
 
-    if (!m_PMCppHelper.setOwnerTransferCallbackData(OIC_JUST_WORKS, justWorksCBData, NULL, OC_STACK_OK))
+    if(!m_PMCppHelper.setOwnerTransferCallbackData(OIC_JUST_WORKS, justWorksCBData, NULL, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -769,7 +753,7 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataJustWork_REV_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -778,13 +762,13 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataJustWork_REV_P)
     OTMCallbackData_t justWorksCBData;
     justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
     justWorksCBData.createSecureSessionCB =
-        CreateSecureSessionJustWorksCallback;
+    CreateSecureSessionJustWorksCallback;
     justWorksCBData.createSelectOxmPayloadCB =
-        CreateJustWorksSelectOxmPayload;
+    CreateJustWorksSelectOxmPayload;
     justWorksCBData.createOwnerTransferPayloadCB =
-        CreateJustWorksOwnerTransferPayload;
+    CreateJustWorksOwnerTransferPayload;
 
-    if (!m_PMCppHelper.setOwnerTransferCallbackData(OTM_JUSTWORK, justWorksCBData, NULL, OC_STACK_OK))
+    if(!m_PMCppHelper.setOwnerTransferCallbackData(OTM_JUSTWORK, justWorksCBData, NULL, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -810,7 +794,7 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataJustWorkInvalidCB_N)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -819,14 +803,13 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataJustWorkInvalidCB_N)
     OTMCallbackData_t justWorksCBData;
     justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
     justWorksCBData.createSecureSessionCB =
-        CreateSecureSessionJustWorksCallback;
+    CreateSecureSessionJustWorksCallback;
     justWorksCBData.createSelectOxmPayloadCB =
-        CreateJustWorksSelectOxmPayload;
+    CreateJustWorksSelectOxmPayload;
     justWorksCBData.createOwnerTransferPayloadCB =
-        CreateJustWorksOwnerTransferPayload;
+    CreateJustWorksOwnerTransferPayload;
 
-    if (!m_PMCppHelper.setOwnerTransferCallbackData(OIC_OXM_COUNT, justWorksCBData, NULL,
-            OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.setOwnerTransferCallbackData(OIC_OXM_COUNT, justWorksCBData, NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -852,13 +835,13 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataJustWorkInvalidParam_N)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.setOwnerTransferCallbackData(OIC_JUST_WORKS, NULL, NULL, OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.setOwnerTransferCallbackData(OIC_JUST_WORKS, NULL, NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -883,7 +866,7 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataJustWorkOxm_UOBV_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -892,14 +875,13 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataJustWorkOxm_UOBV_P)
     OTMCallbackData_t justWorksCBData;
     justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
     justWorksCBData.createSecureSessionCB =
-        CreateSecureSessionJustWorksCallback;
+    CreateSecureSessionJustWorksCallback;
     justWorksCBData.createSelectOxmPayloadCB =
-        CreateJustWorksSelectOxmPayload;
+    CreateJustWorksSelectOxmPayload;
     justWorksCBData.createOwnerTransferPayloadCB =
-        CreateJustWorksOwnerTransferPayload;
+    CreateJustWorksOwnerTransferPayload;
 
-    if (!m_PMCppHelper.setOwnerTransferCallbackData((OicSecOxm_t) OTM_INVALID_UOBV, justWorksCBData,
-            NULL, OC_STACK_OK))
+    if(!m_PMCppHelper.setOwnerTransferCallbackData((OicSecOxm_t) OTM_INVALID_UOBV, justWorksCBData, NULL, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -925,7 +907,7 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataRanDomPin_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -934,17 +916,17 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataRanDomPin_P)
     OTMCallbackData_t pinBasedCBData;
     pinBasedCBData.loadSecretCB = InputPinCodeCallback;
     pinBasedCBData.createSecureSessionCB =
-        CreateSecureSessionRandomPinCallback;
+    CreateSecureSessionRandomPinCallback;
     pinBasedCBData.createSelectOxmPayloadCB =
-        CreatePinBasedSelectOxmPayload;
+    CreatePinBasedSelectOxmPayload;
     pinBasedCBData.createOwnerTransferPayloadCB =
-        CreatePinBasedOwnerTransferPayload;
+    CreatePinBasedOwnerTransferPayload;
     OCSecure::setOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN,
-                                           &pinBasedCBData, PMCppHelper::InputPinCB);
+            &pinBasedCBData, PMCppHelper::InputPinCB);
 
     OCStackResult expetedResult = OC_STACK_OK;
     OCStackResult actualResult = OCSecure::setOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN,
-                                 &pinBasedCBData, PMCppHelper::InputPinCB);
+            &pinBasedCBData, PMCppHelper::InputPinCB);
 
     ASSERT_EQ(expetedResult, actualResult);
 }
@@ -969,7 +951,7 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataRanDomPinCB_NV_N)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -978,17 +960,17 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataRanDomPinCB_NV_N)
     OTMCallbackData_t pinBasedCBData;
     pinBasedCBData.loadSecretCB = InputPinCodeCallback;
     pinBasedCBData.createSecureSessionCB =
-        CreateSecureSessionRandomPinCallback;
+    CreateSecureSessionRandomPinCallback;
     pinBasedCBData.createSelectOxmPayloadCB =
-        CreatePinBasedSelectOxmPayload;
+    CreatePinBasedSelectOxmPayload;
     pinBasedCBData.createOwnerTransferPayloadCB =
-        CreatePinBasedOwnerTransferPayload;
+    CreatePinBasedOwnerTransferPayload;
     OCSecure::setOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN,
-                                           &pinBasedCBData, PMCppHelper::InputPinCB);
+            &pinBasedCBData, PMCppHelper::InputPinCB);
 
     OCStackResult expetedResult = OC_STACK_INVALID_PARAM;
     OCStackResult actualResult = OCSecure::setOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN,
-                                 &pinBasedCBData, NULL);
+            &pinBasedCBData, NULL);
 
     ASSERT_EQ(expetedResult, actualResult);
 }
@@ -1013,7 +995,7 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataRanDomPinData_NV_N)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1021,7 +1003,7 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataRanDomPinData_NV_N)
 
     OCStackResult expetedResult = OC_STACK_INVALID_PARAM;
     OCStackResult actualResult = OCSecure::setOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN,
-                                 NULL, PMCppHelper::InputPinCB);
+            NULL, PMCppHelper::InputPinCB);
 
     ASSERT_EQ(expetedResult, actualResult);
 }
@@ -1036,7 +1018,7 @@ TEST_F(PMCppOtmTest_btc, SetOwnerTransferCBDataRanDomPinData_NV_N)
  * @objective       test doOwnershipTransfer positively for OIC_JUST_WORKS
  * @target          OCStackResult doOwnershipTransfer(ResultCallBack resultCallback)
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3. call doOwnershipTransfer
@@ -1050,20 +1032,19 @@ TEST_F(PMCppOtmTest_btc, DoOwnershipTransferJustWork_RV_SRC_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -1080,7 +1061,7 @@ TEST_F(PMCppOtmTest_btc, DoOwnershipTransferJustWork_RV_SRC_P)
  * @test_data       regular data
  * @pre_condition   start one randompin serer simulators
  * @procedure       1. call provisionInit
- *                  2. call registerDisplayPinCallback
+ * 					2. call registerDisplayPinCallback
  *                  3. call discoverUnownedDevices
  *                  4. call doOwnershipTransfer
  *                  5. call deregisterDisplayPinCallback
@@ -1093,33 +1074,31 @@ TEST_F(PMCppOtmTest_btc, DoOwnershipTransferRandomPin_RV_SRC_P)
     CommonUtil::launchApp(RANDOMPIN_SERVER);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerInputPinCallback(PMCppHelper::OnInputPinCB, &callbackHandle,
-            OC_STACK_OK))
+    if(!m_PMCppHelper.registerInputPinCallback(PMCppHelper::OnInputPinCB, &callbackHandle, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.deregisterInputPinCallback(callbackHandle, OC_STACK_OK))
+    if(!m_PMCppHelper.deregisterInputPinCallback(callbackHandle, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1134,7 +1113,7 @@ TEST_F(PMCppOtmTest_btc, DoOwnershipTransferRandomPin_RV_SRC_P)
  * @objective       test doOwnershipTransfer negatively for OIC_JUST_WORKS
  * @target          OCStackResult doOwnershipTransfer(ResultCallBack resultCallback)
  * @test_data       resultCallback = NULL
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3. call doOwnershipTransfer
@@ -1148,19 +1127,19 @@ TEST_F(PMCppOtmTest_btc, DoOwnershipTransferJustWorkCB_NV_N)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, NULL, OC_STACK_INVALID_CALLBACK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }
@@ -1174,7 +1153,7 @@ TEST_F(PMCppOtmTest_btc, DoOwnershipTransferJustWorkCB_NV_N)
  * @objective       test getOTMethod positively
  * @target          OCStackResult getOTMethod(OicSecOxm_t* oxm)
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3. call getOTMethod
@@ -1188,13 +1167,13 @@ TEST_F(PMCppOtmTest_btc, getOTMethod_RV_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1216,7 +1195,7 @@ TEST_F(PMCppOtmTest_btc, getOTMethod_RV_P)
  * @objective       test getOTMethod negatively with oxm=NULL
  * @target          OCStackResult getOTMethod(OicSecOxm_t* oxm)
  * @test_data       oxm=NULL
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3. call getOTMethod
@@ -1230,13 +1209,13 @@ TEST_F(PMCppOtmTest_btc, getOTMethod_NV_N)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1258,7 +1237,7 @@ TEST_F(PMCppOtmTest_btc, getOTMethod_NV_N)
  * @objective       test getSelectedOwnershipTransferMethod positively
  * @target          OicSecOxm_t getSelectedOwnershipTransferMethod()
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3. call getSelectedOwnershipTransferMethod
@@ -1271,19 +1250,43 @@ TEST_F(PMCppOtmTest_btc, getSelectedOwnershipTransferMethod_RV_P)
     CommonUtil::launchApp(RANDOMPIN_SERVER);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.registerInputPinCallback(PMCppHelper::OnInputPinCB, &callbackHandle, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.getSelectedOwnershipTransferMethod(m_UnownedDevList, OIC_RANDOM_DEVICE_PIN))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if (!m_PMCppHelper.getSelectedOwnershipTransferMethod(m_OwnedDevList, OIC_RANDOM_DEVICE_PIN))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.deregisterInputPinCallback(callbackHandle, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1298,7 +1301,7 @@ TEST_F(PMCppOtmTest_btc, getSelectedOwnershipTransferMethod_RV_P)
  * @objective       test getDeviceID positively
  * @target          std::string getDeviceID()
  * @test_data       None
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3, call getDeviceID
@@ -1312,7 +1315,7 @@ TEST_F(PMCppOtmTest_btc, GetDeviceID_SRC_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1342,7 +1345,7 @@ TEST_F(PMCppOtmTest_btc, GetDeviceID_SRC_P)
  * @objective       test getDevAddr positively
  * @target          std::string getDevAddr()
  * @test_data       None
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3, call getDevAddr
@@ -1356,7 +1359,7 @@ TEST_F(PMCppOtmTest_btc, GetDevAddr_SRC_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1386,7 +1389,7 @@ TEST_F(PMCppOtmTest_btc, GetDevAddr_SRC_P)
  * @objective       test getDeviceStatus positively
  * @target          int getDeviceStatus()
  * @test_data       None
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3, call getDeviceStatus
@@ -1400,7 +1403,7 @@ TEST_F(PMCppOtmTest_btc, GetDeviceStatusOn_SRC_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1426,7 +1429,7 @@ TEST_F(PMCppOtmTest_btc, GetDeviceStatusOn_SRC_P)
  * @objective       test getOwnedStatus positively
  * @target          int getOwnedStatus()
  * @test_data       None
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3, call getOwnedStatus
@@ -1440,7 +1443,7 @@ TEST_F(PMCppOtmTest_btc, GetOwnedStatusUnowned_SRC_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1468,7 +1471,7 @@ TEST_F(PMCppOtmTest_btc, GetOwnedStatusUnowned_SRC_P)
  * @objective       test getOwnedStatus positively to Check if Owned devices return Owned Status as DEVICE_OWNED
  * @target          bool getOwnedStatus()
  * @test_data       Outer Upper Boundary Value of keySize
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
  *                  3. call doOwnershipTransfer
@@ -1482,38 +1485,27 @@ TEST_F(PMCppOtmTest_btc, GetOwnedStatusUnowned_SRC_P)
 TEST_F(PMCppOtmTest_btc, GetOwnedStatusOwned_SRCC_P)
 {
     CommonUtil::launchApp(JUSTWORKS_SERVER1);
-    CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
-    }
-
-    m_acl1 = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
-    PMCppHelper::createAcl(m_acl1, DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
-
-    if (!m_PMCppHelper.provisionACL(m_OwnedDevList, m_acl1, PMCppHelper::provisionCB, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1523,8 +1515,6 @@ TEST_F(PMCppOtmTest_btc, GetOwnedStatusOwned_SRCC_P)
     {
         SET_FAILURE("getOwnedStatus Failed");
     }
-
-    m_PMCppHelper.deleteACLList(m_acl1);
 }
 #endif
 
@@ -1535,7 +1525,7 @@ TEST_F(PMCppOtmTest_btc, GetOwnedStatusOwned_SRCC_P)
  * @objective       test getDevPtr positively
  * @target          OCProvisionDev_t* getDevPtr()const
  * @test_data       resultCallback = NULL
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call discoverOwnedDevices
  *                  3. call getDevPtr
@@ -1549,13 +1539,13 @@ TEST_F(PMCppOtmTest_btc, GetDevPtr_SRC_P)
     CommonUtil::launchApp(JUSTWORKS_SERVER2);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1578,7 +1568,7 @@ TEST_F(PMCppOtmTest_btc, GetDevPtr_SRC_P)
  * @objective       test setRandomPinPolicy negatively with pinSize = OXM_RANDOM_PIN_MIN_SIZE - 1
  * @target          static OCStackResult setRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType)
  * @test_data       pinSize = OXM_RANDOM_PIN_MIN_SIZE - 1
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call setRandomPinPolicy
  * @post_condition  None
@@ -1590,13 +1580,13 @@ TEST_F(PMCppOtmTest_btc, setRandomPinPolicy_LOBV_N)
     CommonUtil::launchApp(RANDOMPIN_SERVER);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.setRandomPinPolicy(OXM_RANDOM_PIN_MIN_SIZE - 1, NUM_PIN, OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.setRandomPinPolicy(OXM_RANDOM_PIN_MIN_SIZE - 1, NUM_PIN, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1610,7 +1600,7 @@ TEST_F(PMCppOtmTest_btc, setRandomPinPolicy_LOBV_N)
  * @objective       test setRandomPinPolicy negatively with pinSize = OXM_RANDOM_PIN_MAX_SIZE + 1
  * @target          static OCStackResult setRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType)
  * @test_data       pinSize = OXM_RANDOM_PIN_MAX_SIZE + 1
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call setRandomPinPolicy
  * @post_condition  None
@@ -1622,13 +1612,13 @@ TEST_F(PMCppOtmTest_btc, setRandomPinPolicy_UOBV_N)
     CommonUtil::launchApp(RANDOMPIN_SERVER);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.setRandomPinPolicy(OXM_RANDOM_PIN_MAX_SIZE + 1, NUM_PIN, OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.setRandomPinPolicy(OXM_RANDOM_PIN_MAX_SIZE + 1, NUM_PIN, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1642,7 +1632,7 @@ TEST_F(PMCppOtmTest_btc, setRandomPinPolicy_UOBV_N)
  * @objective       test setRandomPinPolicy negatively with pinType = INVALID_PIN_TYPE
  * @target          static OCStackResult setRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType)
  * @test_data       pinType = INVALID_PIN_TYPE
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call setRandomPinPolicy
  * @post_condition  None
@@ -1654,14 +1644,13 @@ TEST_F(PMCppOtmTest_btc, setRandomPinPolicy_NV_N)
     CommonUtil::launchApp(RANDOMPIN_SERVER);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.setRandomPinPolicy(OXM_RANDOM_PIN_DEFAULT_SIZE,
-                                          (OicSecPinType_t) INVALID_PIN_TYPE, OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.setRandomPinPolicy(OXM_RANDOM_PIN_DEFAULT_SIZE, (OicSecPinType_t) INVALID_PIN_TYPE, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1675,7 +1664,7 @@ TEST_F(PMCppOtmTest_btc, setRandomPinPolicy_NV_N)
  * @objective       test setDisplayPinCB positively
  * @target          static OCStackResult setDisplayPinCB(GeneratePinCallback displayPin)
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call setDisplayPinCB
  * @post_condition  None
@@ -1684,13 +1673,13 @@ TEST_F(PMCppOtmTest_btc, setRandomPinPolicy_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppOtmTest_btc, SetDisplayPinCB_SRC_P)
 {
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.setDisplayPinCB(PMCppHelper::inputPinCB, OC_STACK_OK))
+    if(!m_PMCppHelper.setDisplayPinCB(PMCppHelper::inputPinCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1704,7 +1693,7 @@ TEST_F(PMCppOtmTest_btc, SetDisplayPinCB_SRC_P)
  * @objective       test setDisplayPinCB negatively with displayPin as nullptr
  * @target          static OCStackResult setDisplayPinCB(GeneratePinCallback displayPin)
  * @test_data       displayPin == nullptr
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call setDisplayPinCB
  * @post_condition  None
@@ -1713,13 +1702,13 @@ TEST_F(PMCppOtmTest_btc, SetDisplayPinCB_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppOtmTest_btc, SetDisplayPinCB_N)
 {
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.setDisplayPinCB(NULL, OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.setDisplayPinCB(NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1734,7 +1723,7 @@ TEST_F(PMCppOtmTest_btc, SetDisplayPinCB_N)
  * @objective       test unsetDisplayPinCB positively
  * @target          static OCStackResult unsetDisplayPinCB()
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call setDisplayPinCB
  *                  3. call unsetDisplayPinCB
@@ -1744,19 +1733,19 @@ TEST_F(PMCppOtmTest_btc, SetDisplayPinCB_N)
 #if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppOtmTest_btc, unsetDisplayPinCB_SRC_P)
 {
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.setDisplayPinCB(PMCppHelper::inputPinCB, OC_STACK_OK))
+    if(!m_PMCppHelper.setDisplayPinCB(PMCppHelper::inputPinCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.unsetDisplayPinCB(OC_STACK_OK))
+    if(!m_PMCppHelper.unsetDisplayPinCB(OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1770,7 +1759,7 @@ TEST_F(PMCppOtmTest_btc, unsetDisplayPinCB_SRC_P)
  * @objective       test setInputPinCallback positively
  * @target          static OCStackResult setInputPinCallback(InputPinCallback inputPin)
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call setInputPinCallback
  * @post_condition  None
@@ -1780,13 +1769,13 @@ TEST_F(PMCppOtmTest_btc, unsetDisplayPinCB_SRC_P)
 TEST_F(PMCppOtmTest_btc, setInputPinCallback_SRC_P)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.setInputPinCallback(PMCppHelper::inputPinCB, OC_STACK_OK))
+    if(!m_PMCppHelper.setInputPinCallback(PMCppHelper::inputPinCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1800,7 +1789,7 @@ TEST_F(PMCppOtmTest_btc, setInputPinCallback_SRC_P)
  * @objective       test setInputPinCallback negatively with inputPin=NULL
  * @target          static OCStackResult setInputPinCallback(InputPinCallback inputPin)
  * @test_data       inputPin=NULL
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call setInputPinCallback
  * @post_condition  None
@@ -1810,13 +1799,13 @@ TEST_F(PMCppOtmTest_btc, setInputPinCallback_SRC_P)
 TEST_F(PMCppOtmTest_btc, setInputPinCallbackInputPIn_NV_N)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.setInputPinCallback(NULL, OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.setInputPinCallback(NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1831,7 +1820,7 @@ TEST_F(PMCppOtmTest_btc, setInputPinCallbackInputPIn_NV_N)
  * @objective       test unsetInputPinCallback positively
  * @target          static OCStackResult unsetInputPinCallback()
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call setInputPinCallback
  *                  3. call unsetInputPinCallback
@@ -1842,19 +1831,19 @@ TEST_F(PMCppOtmTest_btc, setInputPinCallbackInputPIn_NV_N)
 TEST_F(PMCppOtmTest_btc, unsetInputPinCallback_SRC_P)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.setInputPinCallback(PMCppHelper::inputPinCB, OC_STACK_OK))
+    if(!m_PMCppHelper.setInputPinCallback(PMCppHelper::inputPinCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.unsetInputPinCallback(OC_STACK_OK))
+    if(!m_PMCppHelper.unsetInputPinCallback(OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1868,7 +1857,7 @@ TEST_F(PMCppOtmTest_btc, unsetInputPinCallback_SRC_P)
  * @objective       test registerInputPinCallback positively
  * @target          static OCStackResult registerInputPinCallback(InputPinCB inputPinCB, InputPinCallbackHandle* inputPinCallbackHandle);
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call registerInputPinCallback
  * @post_condition  None
@@ -1878,14 +1867,13 @@ TEST_F(PMCppOtmTest_btc, unsetInputPinCallback_SRC_P)
 TEST_F(PMCppOtmTest_btc, registerInputPinCallback_SRC_P)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerInputPinCallback(PMCppHelper::OnInputPinCB, &callbackHandle,
-            OC_STACK_OK))
+    if(!m_PMCppHelper.registerInputPinCallback(PMCppHelper::OnInputPinCB, &callbackHandle, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1899,7 +1887,7 @@ TEST_F(PMCppOtmTest_btc, registerInputPinCallback_SRC_P)
  * @objective       test registerInputPinCallback negatively with inputPinCB = NULL
  * @target          static OCStackResult registerInputPinCallback(InputPinCB inputPinCB, InputPinCallbackHandle* inputPinCallbackHandle);
  * @test_data       inputPinCB = NULL
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call registerInputPinCallback
  * @post_condition  None
@@ -1909,13 +1897,13 @@ TEST_F(PMCppOtmTest_btc, registerInputPinCallback_SRC_P)
 TEST_F(PMCppOtmTest_btc, registerInputPinCallback_NV_N)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerInputPinCallback(NULL, &callbackHandle, OC_STACK_INVALID_CALLBACK))
+    if(!m_PMCppHelper.registerInputPinCallback(NULL, &callbackHandle, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1929,7 +1917,7 @@ TEST_F(PMCppOtmTest_btc, registerInputPinCallback_NV_N)
  * @objective       test registerInputPinCallback negatively with inputPinCallbackHandle = NULL
  * @target          static OCStackResult registerInputPinCallback(InputPinCB inputPinCB, InputPinCallbackHandle* inputPinCallbackHandle);
  * @test_data       inputPinCallbackHandle = NULL
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call registerInputPinCallback
  * @post_condition  None
@@ -1939,14 +1927,13 @@ TEST_F(PMCppOtmTest_btc, registerInputPinCallback_NV_N)
 TEST_F(PMCppOtmTest_btc, registerInputPinCallbackInputPinCallbackHandle_NV_N)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerInputPinCallback(PMCppHelper::OnInputPinCB, NULL,
-            OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.registerInputPinCallback(PMCppHelper::OnInputPinCB, NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1961,7 +1948,7 @@ TEST_F(PMCppOtmTest_btc, registerInputPinCallbackInputPinCallbackHandle_NV_N)
  * @objective       test deregisterInputPinCallback positively
  * @target          static OCStackResult deregisterInputPinCallback(InputPinCallbackHandle inputPinCallbackHandle)
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call registerInputPinCallback
  *                  3. call deregisterInputPinCallback
@@ -1972,20 +1959,19 @@ TEST_F(PMCppOtmTest_btc, registerInputPinCallbackInputPinCallbackHandle_NV_N)
 TEST_F(PMCppOtmTest_btc, deregisterInputPinCallback_SRC_P)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerInputPinCallback(PMCppHelper::OnInputPinCB, &callbackHandle,
-            OC_STACK_OK))
+    if(!m_PMCppHelper.registerInputPinCallback(PMCppHelper::OnInputPinCB, &callbackHandle, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.deregisterInputPinCallback(callbackHandle, OC_STACK_OK))
+    if(!m_PMCppHelper.deregisterInputPinCallback(callbackHandle, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -1999,7 +1985,7 @@ TEST_F(PMCppOtmTest_btc, deregisterInputPinCallback_SRC_P)
  * @objective       test registerInputPinCallback positively
  * @target          static OCStackResult registerDisplayPinCallback(DisplayPinCB displayPinCB, DisplayPinCallbackHandle* displayPinCallbackHandle);
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call registerDisplayPinCallback
  * @post_condition  None
@@ -2009,14 +1995,13 @@ TEST_F(PMCppOtmTest_btc, deregisterInputPinCallback_SRC_P)
 TEST_F(PMCppOtmTest_btc, registerDisplayPinCallback_SRC_P)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerDisplayPinCallback(PMCppHelper::OnDisplayPinCB,
-            &displayPinCallbackHandle, OC_STACK_OK))
+    if(!m_PMCppHelper.registerDisplayPinCallback(PMCppHelper::OnDisplayPinCB, &displayPinCallbackHandle, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -2030,7 +2015,7 @@ TEST_F(PMCppOtmTest_btc, registerDisplayPinCallback_SRC_P)
  * @objective       test registerInputPinCallback Negatively
  * @target          static OCStackResult registerDisplayPinCallback(DisplayPinCB displayPinCB, DisplayPinCallbackHandle* displayPinCallbackHandle);
  * @test_data       displayPinCB = NULL
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call registerDisplayPinCallback
  * @post_condition  None
@@ -2040,14 +2025,13 @@ TEST_F(PMCppOtmTest_btc, registerDisplayPinCallback_SRC_P)
 TEST_F(PMCppOtmTest_btc, registerDisplayPinCallbackCB_NV_N)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerDisplayPinCallback(NULL, &displayPinCallbackHandle,
-            OC_STACK_INVALID_CALLBACK))
+    if(!m_PMCppHelper.registerDisplayPinCallback(NULL, &displayPinCallbackHandle, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -2061,7 +2045,7 @@ TEST_F(PMCppOtmTest_btc, registerDisplayPinCallbackCB_NV_N)
  * @objective       test registerInputPinCallback Negatively
  * @target          static OCStackResult registerDisplayPinCallback(DisplayPinCB displayPinCB, DisplayPinCallbackHandle* displayPinCallbackHandle);
  * @test_data       displayPinCallbackHandle = NULL
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call registerDisplayPinCallback
  * @post_condition  None
@@ -2071,14 +2055,13 @@ TEST_F(PMCppOtmTest_btc, registerDisplayPinCallbackCB_NV_N)
 TEST_F(PMCppOtmTest_btc, registerDisplayPinCallbackDisplayPinCallbackHandle_NV_N)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerDisplayPinCallback(PMCppHelper::OnDisplayPinCB, NULL,
-            OC_STACK_INVALID_PARAM))
+    if(!m_PMCppHelper.registerDisplayPinCallback(PMCppHelper::OnDisplayPinCB, NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -2093,7 +2076,7 @@ TEST_F(PMCppOtmTest_btc, registerDisplayPinCallbackDisplayPinCallbackHandle_NV_N
  * @objective       test deregisterDisplayPinCallback positively
  * @target          static OCStackResult deregisterDisplayPinCallback(DisplayPinCallbackHandle displayPinCallbackHandle);
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call registerDisplayPinCallback
  *                  3. call deregisterDisplayPinCallback
@@ -2104,20 +2087,19 @@ TEST_F(PMCppOtmTest_btc, registerDisplayPinCallbackDisplayPinCallbackHandle_NV_N
 TEST_F(PMCppOtmTest_btc, deregisterDisplayPinCallback_SRC_P)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerDisplayPinCallback(PMCppHelper::OnDisplayPinCB,
-            &displayPinCallbackHandle, OC_STACK_OK))
+    if(!m_PMCppHelper.registerDisplayPinCallback(PMCppHelper::OnDisplayPinCB, &displayPinCallbackHandle, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.deregisterDisplayPinCallback(displayPinCallbackHandle, OC_STACK_OK))
+    if(!m_PMCppHelper.deregisterDisplayPinCallback(displayPinCallbackHandle, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -2131,7 +2113,7 @@ TEST_F(PMCppOtmTest_btc, deregisterDisplayPinCallback_SRC_P)
  * @objective       test registerDisplayNumCallback positively
  * @target          static OCStackResult registerDisplayNumCallback(DisplayNumCB displayNumCB)
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call registerDisplayNumCallback
  * @post_condition  None
@@ -2141,13 +2123,13 @@ TEST_F(PMCppOtmTest_btc, deregisterDisplayPinCallback_SRC_P)
 TEST_F(PMCppOtmTest_btc, registerDisplayNumCallback_SRC_P)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerDisplayNumCallback(PMCppHelper::displayMutualVerifNumCB, OC_STACK_OK))
+    if(!m_PMCppHelper.registerDisplayNumCallback(PMCppHelper::displayMutualVerifNumCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -2161,7 +2143,7 @@ TEST_F(PMCppOtmTest_btc, registerDisplayNumCallback_SRC_P)
  * @objective       test registerDisplayNumCallback negatively with displayNumCB=NULL
  * @target          static OCStackResult registerDisplayNumCallback(DisplayNumCB displayNumCB)
  * @test_data       displayNumCB=NULL
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call registerDisplayNumCallback
  * @post_condition  None
@@ -2171,13 +2153,13 @@ TEST_F(PMCppOtmTest_btc, registerDisplayNumCallback_SRC_P)
 TEST_F(PMCppOtmTest_btc, registerDisplayNumCallback_NV_N)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerDisplayNumCallback(NULL, OC_STACK_INVALID_CALLBACK))
+    if(!m_PMCppHelper.registerDisplayNumCallback(NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -2192,7 +2174,7 @@ TEST_F(PMCppOtmTest_btc, registerDisplayNumCallback_NV_N)
  * @objective       test deregisterDisplayNumCallback positively
  * @target          static OCStackResult deregisterDisplayNumCallback()
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call registerDisplayNumCallback
  *                  3. call deregisterDisplayNumCallback
@@ -2203,19 +2185,19 @@ TEST_F(PMCppOtmTest_btc, registerDisplayNumCallback_NV_N)
 TEST_F(PMCppOtmTest_btc, deregisterDisplayNumCallback_SRC_P)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerDisplayNumCallback(PMCppHelper::displayMutualVerifNumCB, OC_STACK_OK))
+    if(!m_PMCppHelper.registerDisplayNumCallback(PMCppHelper::displayMutualVerifNumCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.deregisterDisplayNumCallback(OC_STACK_OK))
+    if(!m_PMCppHelper.deregisterDisplayNumCallback(OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -2229,7 +2211,7 @@ TEST_F(PMCppOtmTest_btc, deregisterDisplayNumCallback_SRC_P)
  * @objective       test registerUserConfirmCallback positively
  * @target          static OCStackResult registerUserConfirmCallback(UserConfirmNumCB userConfirmCB)
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call registerUserConfirmCallback
  * @post_condition  None
@@ -2239,13 +2221,13 @@ TEST_F(PMCppOtmTest_btc, deregisterDisplayNumCallback_SRC_P)
 TEST_F(PMCppOtmTest_btc, registerUserConfirmCallback_SRC_P)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerUserConfirmCallback(PMCppHelper::confirmMutualVerifNumCB, OC_STACK_OK))
+    if(!m_PMCppHelper.registerUserConfirmCallback(PMCppHelper::confirmMutualVerifNumCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -2259,7 +2241,7 @@ TEST_F(PMCppOtmTest_btc, registerUserConfirmCallback_SRC_P)
  * @objective       test registerUserConfirmCallback negatively userConfirmCB=NULL
  * @target          static OCStackResult registerUserConfirmCallback(UserConfirmNumCB userConfirmCB)
  * @test_data       userConfirmCB=NULL
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call registerUserConfirmCallback
  * @post_condition  None
@@ -2269,13 +2251,13 @@ TEST_F(PMCppOtmTest_btc, registerUserConfirmCallback_SRC_P)
 TEST_F(PMCppOtmTest_btc, registerUserConfirmCallback_NV_N)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerUserConfirmCallback(NULL, OC_STACK_INVALID_CALLBACK))
+    if(!m_PMCppHelper.registerUserConfirmCallback(NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -2290,7 +2272,7 @@ TEST_F(PMCppOtmTest_btc, registerUserConfirmCallback_NV_N)
  * @objective       test deregisterUserConfirmCallback positively
  * @target          static OCStackResult deregisterUserConfirmCallback()
  * @test_data       regular data
- * @pre_condition   start two justworks simulators
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
  * @procedure       1. call provisionInit
  *                  2. call registerUserConfirmCallback
  *                  3. call deregisterUserConfirmCallback
@@ -2301,19 +2283,19 @@ TEST_F(PMCppOtmTest_btc, registerUserConfirmCallback_NV_N)
 TEST_F(PMCppOtmTest_btc, deregisterUserConfirmCallback_SRC_P)
 {
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerUserConfirmCallback(PMCppHelper::confirmMutualVerifNumCB, OC_STACK_OK))
+    if(!m_PMCppHelper.registerUserConfirmCallback(PMCppHelper::confirmMutualVerifNumCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.deregisterUserConfirmCallback(OC_STACK_OK))
+    if(!m_PMCppHelper.deregisterUserConfirmCallback(OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -2344,45 +2326,129 @@ TEST_F(PMCppOtmTest_btc, OwnershipTransferMVJustwork_RV_SRC_P)
     CommonUtil::launchApp(MV_JUSTWORKS_SERVER);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
 
-    if (!m_PMCppHelper.provisionInit())
+    if(!m_PMCppHelper.provisionInit())
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerInputPinCallback(PMCppHelper::OnInputPinCB, &callbackHandle,
-            OC_STACK_OK))
+    if(!m_PMCppHelper.registerInputPinCallback(PMCppHelper::OnInputPinCB, &callbackHandle, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerDisplayNumCallback(PMCppHelper::displayMutualVerifNumCB, OC_STACK_OK))
+    if(!m_PMCppHelper.registerDisplayNumCallback(PMCppHelper::displayMutualVerifNumCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.registerUserConfirmCallback(PMCppHelper::confirmMutualVerifNumCB, OC_STACK_OK))
+    if(!m_PMCppHelper.registerUserConfirmCallback(PMCppHelper::confirmMutualVerifNumCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB,
-                                           OC_STACK_OK))
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if (!m_PMCppHelper.deregisterInputPinCallback(callbackHandle, OC_STACK_OK))
+    if(!m_PMCppHelper.deregisterInputPinCallback(callbackHandle, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+}
+#endif
+
+/**
+ * @since           2017-04-18
+ * @see             static OCStackResult provisionInit(const std::string& dbPath)
+ * @see             static OCStackResult discoverUnownedDevices(unsigned short timeout, DeviceList_t &list)
+ * @see             OCStackResult doOwnershipTransfer(ResultCallBack resultCallback)
+ * @see             static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
+ * @objective       Test OCPDMCleanupForTimeout positively
+ * @target          OCStackResult pdmCleanupForTimeout()
+ * @test_data       Regular data of  pdmCleanupForTimeout API
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
+ * @procedure       1. call provisionInit
+ *                  2. call discoverUnownedDevices
+ *                  3. call doOwnershipTransfer
+ *                  4. call discoverOwnedDevices
+ *                  5. call pdmCleanupForTimeout
+ * @post_condition  None
+ * @expected        pdmCleanupForTimeout will return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(PMCppOtmTest_btc, pdmCleanupForTimeout_RV_SRC_P)
+{
+    CommonUtil::launchApp(JUSTWORKS_SERVER1);
+    CommonUtil::launchApp(JUSTWORKS_SERVER2);
+    CommonUtil::waitInSecond(DELAY_MEDIUM);
+
+    if(!m_PMCppHelper.provisionInit())
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.pdmCleanupForTimeout(OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+}
+#endif
+
+/**
+ * @since           2017-04-24
+ * @see             static OCStackResult provisionInit(const std::string& dbPath)
+ * @objective       Test configSelfOwnership positively
+ * @target          OCStackResult configSelfOwnership()
+ * @test_data       Regular data of  configSelfOwnership API
+ * @pre_condition   start two justworks simulators using cbor files from 'unowned' directory
+ * @procedure       1. call provisionInit
+ *                  2. call configSelfOwnership
+ * @post_condition  None
+ * @expected        configSelfOwnership will return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(PMCppOtmTest_btc, configSelfOwnership_RV_SRC_P)
+{
+    if(!m_PMCppHelper.provisionInit2())
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.configSelfOwnership(OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;

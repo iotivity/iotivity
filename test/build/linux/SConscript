@@ -119,7 +119,7 @@ if 'ic' in module or 'cs' in module:
                     LIBPATH = ['.', '/usr/local/lib'],
                     CPPFLAGS = cppflags + common_linux_cppflags)
 
-if 'pm' in module:
+if 'pm' in module or 'ri' in module:
 #if len(module) > 1 or (len(module) == 1 and 'ca' not in module):
     print ('calling SConscriptSK')
     SConscript('SConscriptSK', exports = 'env_linux')

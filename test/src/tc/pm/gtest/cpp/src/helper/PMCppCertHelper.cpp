@@ -20,18 +20,21 @@
  ******************************************************************/
 
 #include "PMCppCertHelper.h"
+#include "PMCppCallbackHelper.h"
 #include "PMCppUtilityHelper.h"
 
-int PMCppCertHelper::s_cbInvoked = CALLBACK_NOT_INVOKED;
 OCPersistentStorage PMCppCertHelper::s_ps =
 { 0, 0, 0, 0, 0 };
+ByteArray_t PMCppCertHelper::s_trustCertChainArray =
+{ 0, 0 };
+uint16_t PMCppCertHelper::s_credId = 0;
 
-FILE *PMCppCertHelper::clientOpen(const char *UNUSED_PARAM, const char *mode)
+FILE* PMCppCertHelper::clientOpen(const char *UNUSED_PARAM, const char *mode)
 {
     return fopen(CBOR_DB_PATH, mode);
 }
 
-bool PMCppCertHelper::provisionInit(const std::string &dbPath)
+bool PMCppCertHelper::provisionInit(const std::string& dbPath)
 {
     PMCppCertHelper::s_ps.open = PMCppCertHelper::clientOpen;
     PMCppCertHelper::s_ps.read = fread;
@@ -40,10 +43,8 @@ bool PMCppCertHelper::provisionInit(const std::string &dbPath)
     PMCppCertHelper::s_ps.unlink = unlink;
 
     PlatformConfig cfg
-    {
-        OC::ServiceType::InProc, OC::ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos,
-        &PMCppCertHelper::s_ps
-    };
+    { OC::ServiceType::InProc, OC::ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos,
+            &PMCppCertHelper::s_ps };
 
     OCPlatform::Configure(cfg);
 
@@ -71,39 +72,11 @@ void PMCppCertHelper::certChainCB(uint16_t credId, uint8_t *trustCertChain, size
 
     OIC_LOG_BUFFER(DEBUG, "Cert Cb", trustCertChain, chainSize);
 
-    PMCppCertHelper::s_cbInvoked = CALLBACK_INVOKED;
+    PMCppCallbackHelper::s_isCBInvoked = CALLBACK_INVOKED;
 
     __FUNC_OUT__
 }
 
-/**
- * Callback function for provisioning.
- *
- * @param[in] result Result list
- * @param[in] hasError indicates if the result has error
- */
-void PMCppCertHelper::provisionCB(PMResultList_t *result, int hasError)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMCppCertHelper] provisionCB IN");
-
-    if (hasError)
-    {
-        IOTIVITYTEST_LOG(ERROR, "[PMCppCertHelper] Provisioning ERROR %d!!!", hasError);
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(DEBUG, "[PMCppCertHelper] Received provisioning results: ");
-
-        for (unsigned int i = 0; i < result->size(); i++)
-        {
-            std::cout << "Result is = " << result->at(i).res << " for device ";
-            PMCppUtilityHelper::printUuid(result->at(i).deviceId);
-        }
-        PMCppCertHelper::s_cbInvoked = CALLBACK_INVOKED;
-        delete result;
-    }
-    IOTIVITYTEST_LOG(DEBUG, "[PMCppCertHelper] provisionCB OUT");
-}
 /**
  * Function for getting failure message
  */
@@ -120,7 +93,7 @@ int PMCppCertHelper::waitCallbackRet()
     {
         IOTIVITYTEST_LOG(DEBUG, "waitCallbackRet Loop = %d", i);
 
-        if (CALLBACK_INVOKED == PMCppCertHelper::s_cbInvoked)
+        if (CALLBACK_INVOKED == PMCppCallbackHelper::s_isCBInvoked)
         {
             return CALLBACK_INVOKED;
         }
@@ -144,9 +117,9 @@ bool PMCppCertHelper::saveTrustCertChain(uint8_t *trustCertChain, size_t chainSi
     __FUNC_IN__
 
     OCStackResult result = OCSecure::saveTrustCertChain(trustCertChain, chainSize, encodingType,
-                           credId);
+            credId);
     IOTIVITYTEST_LOG(INFO, "[PM CERT] OCSaveTrustCertChain returns %s",
-                     CommonUtil::getOCStackResult(result));
+            CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
     {
@@ -170,7 +143,7 @@ bool PMCppCertHelper::readTrustCertChain(uint16_t credId, uint8_t **trustCertCha
 
     OCStackResult result = OCSecure::readTrustCertChain(credId, trustCertChain, chainSize);
     IOTIVITYTEST_LOG(INFO, "[PM Cert] readTrustCertChain returns %s",
-                     CommonUtil::getOCStackResult(result));
+            CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
     {
@@ -187,11 +160,11 @@ bool PMCppCertHelper::registerTrustCertChangeNotifier(CertChainCallBack Callback
 {
     __FUNC_IN__
 
-    PMCppCertHelper::s_cbInvoked = CALLBACK_NOT_INVOKED;
+    PMCppCallbackHelper::s_isCBInvoked = CALLBACK_NOT_INVOKED;
 
     OCStackResult result = OCSecure::registerTrustCertChangeNotifier(Callback);
     IOTIVITYTEST_LOG(INFO, "[PM CERT] registerTrustCertChangeNotifier returns %s",
-                     CommonUtil::getOCStackResult(result));
+            CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
     {
@@ -209,26 +182,26 @@ bool PMCppCertHelper::removeTrustCertChangeNotifier()
 
     OCStackResult result = OCSecure::removeTrustCertChangeNotifier();
     IOTIVITYTEST_LOG(INFO, "[PM CERT] registerTrustCertChangeNotifier returns %s",
-                     CommonUtil::getOCStackResult(result));
+            CommonUtil::getOCStackResult(result));
 
     __FUNC_OUT__
     return true;
 }
 
-bool PMCppCertHelper::provisionTrustCertChain(DeviceList_t &deviceList, OicSecCredType_t type,
+bool PMCppCertHelper::provisionTrustCertChain(DeviceList_t& deviceList, OicSecCredType_t type,
         uint16_t credId, ResultCallBack resultCallback, OCStackResult expectedResult)
 {
     __FUNC_IN__
 
-    PMCppCertHelper::s_cbInvoked = CALLBACK_NOT_INVOKED;
+    PMCppCallbackHelper::s_isCBInvoked = CALLBACK_NOT_INVOKED;
 
     OCStackResult result = deviceList[0]->provisionTrustCertChain(type, credId, resultCallback);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] provisionTrustCertChain returns : %s",
-                     CommonUtil::getOCStackResult(result));
+            CommonUtil::getOCStackResult(result));
 
     if (result != expectedResult)
     {
-        m_failureMessage = PMCppUtilityHelper::setFailureMessage(expectedResult, result);
+        m_failureMessage = PMCppUtilityHelper::setFailureMessage(result, expectedResult);
         return false;
     }
 

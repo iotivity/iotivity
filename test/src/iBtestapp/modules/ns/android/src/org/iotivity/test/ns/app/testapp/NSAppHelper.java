@@ -526,6 +526,7 @@ public class NSAppHelper extends Base implements
     // Provider Callback
     @Override
     public void onMessageSynchronized(SyncInfo syncInfo) {
+        showLog("syncInfoCallback Called", false);
         showLog(LogLevel.INFO,
                 "onMessageSynchronized Listener Called for Message ID: "
                         + syncInfo.getMessageId(), false);
@@ -535,6 +536,7 @@ public class NSAppHelper extends Base implements
 
     @Override
     public void onConsumerSubscribed(Consumer consumer) {
+        showLog("subRequestCallback Called", false);
         showLog(LogLevel.INFO,
                 "onConsumerSubscribed Listener Called with ConsumerID: "
                         + consumer.getConsumerId(), false);
@@ -545,6 +547,7 @@ public class NSAppHelper extends Base implements
     // Consumer Callback
     @Override
     public void onSyncInfoReceived(SyncInfo sync) {
+        showLog("NSSyncInfoReceivedCallback called", false);
         showLog(LogLevel.INFO,
                 "onSyncInfoReceived Listener Called from Provider "
                         + sync.getMessageId() + " Message ID: "
@@ -553,12 +556,14 @@ public class NSAppHelper extends Base implements
 
     @Override
     public void onProviderStateReceived(ProviderState state) {
+        showLog("NSProviderStateCallback called", false);
         showLog(LogLevel.INFO, "onProviderStateReceived Listener Called with "
                 + getProviderState(state) + " ...", false);
     }
 
     @Override
     public void onMessageReceived(Message message) {
+        showLog("NSMessageReceivedCallback called", false);
         showLog(LogLevel.INFO, "onMessageReceived Listener Called...", false);
 
         mNotification = message;
@@ -568,6 +573,7 @@ public class NSAppHelper extends Base implements
 
     @Override
     public void onProviderDiscovered(Provider provider) {
+        showLog("Notification Resource Discovered", false);
         showLog(LogLevel.INFO,
                 "onProviderDiscovered Listener Called with ProviderID: "
                         + provider.getProviderId(), false);
@@ -585,7 +591,7 @@ public class NSAppHelper extends Base implements
         String log = "MessageID: " + message.getMessageId();
         log += " Title = " + message.getTitle();
         log += " Body = " + message.getContentText();
-        log += " Topic = " + message.getTopic();
+        log += " Topic Name: " + message.getTopic();
         log += " ProviderID = " + message.getProviderId();
 
         showLog(LogLevel.INFO, log, false);
@@ -594,15 +600,19 @@ public class NSAppHelper extends Base implements
     String getProviderState(ProviderState state) {
         switch (state) {
             case ALLOW:
+                showLog("Provider changed to NS_ALLOW State. ", false);
                 return "ALLOW";
 
             case DENY:
+                showLog("Provider changed to NS_DENY State. ", false);
                 return "DENY";
 
             case TOPIC:
+                showLog("Provider changed to NS_TOPIC State. ", false);
                 return "TOPIC";
 
             case STOPPED:
+                showLog("Provider changed to NS_STOPPED State. ", false);
                 return "STOPPED";
 
             default:

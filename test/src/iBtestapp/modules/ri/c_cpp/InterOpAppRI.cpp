@@ -964,7 +964,7 @@ AttributeValue getResourceAttributeValue(string uri, string& key)
     static string directionValue = "left";
     static int hourValue = 1;
     static bool swingerValue = true;
-    static bool binaryValue = false;
+    static bool binaryValue = BINARY_SWITCH_VALUE;
 
     if (!uri.compare(AC_SWITCH_URI) || !uri.compare(AC_SWITCH_URI_CHILD))
     {
@@ -991,6 +991,11 @@ AttributeValue getResourceAttributeValue(string uri, string& key)
     {
         key = string("x.com.vendor.swing.on");
         value = swingerValue = !swingerValue;
+    }
+    else if (!uri.compare(AC_SWITCH_URI) || !uri.compare(AC_SWITCH_URI_CHILD))
+    {
+        key = string(BINARY_SWITCH_KEY);
+        value = binaryValue = !binaryValue;
     }
 
     return value;
