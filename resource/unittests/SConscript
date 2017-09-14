@@ -34,24 +34,29 @@ with_mq = unittests_env.get('WITH_MQ')
 # Build flags
 ######################################################################
 unittests_env.PrependUnique(CPPPATH=[
-    '../include',
-    '../oc_logger/include',
-    '../csdk/include',
-    '../csdk/stack/include',
-    '../csdk/security/include',
-    '../csdk/stack/include/internal',
-    '../csdk/connectivity/api',
-    '../csdk/connectivity/external/inc',
-    '../csdk/ocsocket/include',
-    '../c_common/ocrandom/include',
-    '../csdk/logger/include',
+    '#/resource/include',
+    '#/resource/oc_logger/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/csdk/security/include',
+    '#/resource/csdk/stack/include/internal',
+    '#/resource/csdk/connectivity/api',
+    '#/resource/csdk/connectivity/external/inc',
+    '#/resource/csdk/ocsocket/include',
+    '#/resource/c_common',
+    '#/resource/c_common/ocrandom/include',
+    '#/resource/c_common/octhread/include',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/c_common/oic_time/include',
+    '#/resource/csdk/logger/include',
     '#/extlibs/hippomocks/hippomocks',
-])
+    ])
 
 if target_os in ['windows']:
     # Non-Windows platforms find the boost headers under /usr/include or similar path.
-    unittests_env.AppendUnique(CPPPATH=['#/extlibs/boost/boost'])
-    unittests_env.AppendUnique(LIBS=['sqlite3'])
+    unittests_env.AppendUnique(CPPPATH=['#extlibs/boost/boost'])
+    unittests_env.AppendUnique(LIBS=['sqlite3', 'win_helper'])
 
     if unittests_env['CC'] == 'cl':
         # Fix for: resource\unittests\OCRepresentationEncodingTest.cpp "fatal error C1128:
@@ -67,21 +72,20 @@ unittests_env.PrependUnique(LIBS=[
     'ocsrm',
     'routingmanager',
     'oc_logger_internal',
+    'logger',
     'connectivity_abstraction_internal',
     'coap',
+    'c_common',
 ])
+
+if target_os in ['linux', 'tizen']:
+    unittests_env.AppendUnique(LIBS = ['rt'])
 
 if unittests_env.get('SECURED') == '1':
     unittests_env.AppendUnique(LIBS=['mbedtls', 'mbedx509'])
 
 # c_common calls into mbedcrypto.
 unittests_env.AppendUnique(LIBS=['mbedcrypto'])
-
-if unittests_env.get('LOGGING'):
-    unittests_env.AppendUnique(CPPDEFINES=['TB_LOG'])
-
-if unittests_env.get('WITH_CLOUD'):
-    unittests_env.AppendUnique(CPPDEFINES=['WITH_CLOUD'])
 
 ######################################################################
 # Source files and Targets

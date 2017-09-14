@@ -167,9 +167,9 @@ protected:
 
             g_isStartedStack = true;
 
-            strncpy(g_title, "Title", strlen("Title"));
-            strncpy(g_body, "ContentText", strlen("ContentText"));
-            strncpy(g_sourceName, "OIC", strlen("OIC"));
+            strcpy(g_title, "Title");
+            strcpy(g_body, "ContentText");
+            strcpy(g_sourceName, "OIC");
         }
 
     }

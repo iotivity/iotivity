@@ -943,7 +943,7 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
     if (OC_STACK_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "Could not get peer's public key: %d", res);
-        ehRet = OC_EH_ERROR;
+        ehRet = OC_EH_RESOURCE_DELETED;
         goto exit;
     }
 
@@ -961,8 +961,9 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
     if (NULL == entry)
     {
         /* No entry for this peer. */
-        OIC_LOG(ERROR, TAG, "No entry for this peer's public key");
-        ehRet = OC_EH_ERROR;
+        OIC_LOG(WARNING, TAG, "No roles for this peer's public key");
+        // if no entry, the request is successful by definition
+        ehRet = OC_EH_RESOURCE_DELETED;
         goto exit;
     }
 
@@ -977,7 +978,7 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
         {
             LL_DELETE(entry->chains, curr1);
             FreeRoleCertChain(curr1);
-            ehRet = OC_EH_OK;
+            ehRet = OC_EH_RESOURCE_DELETED;
             break;
         }
     }

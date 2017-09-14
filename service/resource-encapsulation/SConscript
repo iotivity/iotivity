@@ -27,24 +27,6 @@ Import('env')
 SConscript('src/common/SConscript')
 SConscript('src/serverBuilder/SConscript')
 
-######################################################################
-#building Resource client, resourceBroker and resourceCache
-######################################################################
-
-if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS=['-Os'])
-    env.AppendUnique(CPPDEFINES=['NDEBUG'])
-else:
-    env.AppendUnique(CCFLAGS=['-g'])
-
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES=['TB_LOG'])
-
-target_os = env.get('TARGET_OS')
-
-if target_os in ['ios']:
-    env.AppendUnique(CPPDEFINES=['TARGET_OS_IPHONE'])
-
 # Add third party libraries
 lib_env = env.Clone()
 SConscript('#service/third_party_libs.scons', 'lib_env')
@@ -52,11 +34,28 @@ SConscript('#service/third_party_libs.scons', 'lib_env')
 resourceClient_env = lib_env.Clone()
 
 ######################################################################
+#building Resource client, resourceBroker and resourceCache
+######################################################################
+
+if resourceClient_env.get('RELEASE'):
+    resourceClient_env.AppendUnique(CCFLAGS=['-Os'])
+else:
+    resourceClient_env.AppendUnique(CCFLAGS=['-g'])
+
+target_os = env.get('TARGET_OS')
+
+if target_os in ['ios']:
+    resourceClient_env.AppendUnique(CPPDEFINES=['TARGET_OS_IPHONE'])
+
+######################################################################
 # Build flags
 ######################################################################
 resourceClient_env.AppendUnique(CPPPATH=[
     'include',
     '#/resource/include',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
     '#/resource/oc_logger/include',
@@ -68,13 +67,12 @@ resourceClient_env.AppendUnique(CPPPATH=[
 ])
 
 resourceClient_env.PrependUnique(
-    LIBS=['oc', 'rcs_common', 'octbstack', 'oc_logger'])
+    LIBS=['c_common', 'oc', 'rcs_common', 'octbstack', 'oc_logger', 'logger'])
 
 if target_os not in ['windows']:
     resourceClient_env.AppendUnique(CXXFLAGS=['-Wall', '-std=c++0x'])
     resourceClient_env.AppendUnique(LIBS=['dl'])
-    if target_os in ['linux']:
-        resourceClient_env.AppendUnique(LIBS=['pthread'])
+    resourceClient_env.AddPthreadIfNeeded()
 
 if target_os in ['android']:
     resourceClient_env.AppendUnique(CXXFLAGS=['-frtti', '-fexceptions'])

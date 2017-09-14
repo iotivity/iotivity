@@ -516,6 +516,10 @@ def __append_target(ienv, name, targets=None):
     env.AppendUnique(TS=[name])
 
 
+def __add_pthread_if_needed(ienv):
+    if 'gcc' == ienv.get('CC') and target_os not in ['android']:
+        ienv.AppendUnique(LINKFLAGS="-pthread")
+
 def __print_targets(env):
     Help('''
 ===============================================================================
@@ -535,6 +539,7 @@ env.AddMethod(__set_dir, 'SetDir')
 env.AddMethod(__print_targets, 'PrintTargets')
 env.AddMethod(__src_to_obj, 'SrcToObj')
 env.AddMethod(__append_target, 'AppendTarget')
+env.AddMethod(__add_pthread_if_needed, 'AddPthreadIfNeeded')
 env.AddMethod(__install, 'InstallTarget')
 env.AddMethod(__installlib, 'UserInstallTargetLib')
 env.AddMethod(__installbin, 'UserInstallTargetBin')

@@ -875,6 +875,9 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
             // update om
             gPstat->om = pstat->om;
 
+            // update tm
+            gPstat->tm = pstat->tm;
+
             // update rownerID
             gPstat->rownerID = pstat->rownerID;
 

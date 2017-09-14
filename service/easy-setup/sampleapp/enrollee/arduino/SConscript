@@ -44,9 +44,7 @@ enrollee_env.PrependUnique(CPPPATH=[
     env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'
 ])
 
-enrollee_env.AppendUnique(CPPDEFINES=['TB_LOG', 'ESWIFI'])
-
-enrollee_env.AppendUnique(LIBPATH=[env.get('BUILD_DIR')])
+enrollee_env.AppendUnique(CPPDEFINES=['ESWIFI'])
 
 enrollee_env.PrependUnique(LIBS=[
     'octbstack',
