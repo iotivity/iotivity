@@ -1998,6 +1998,21 @@ OCStackResult InitDoxmResource()
     }
 #endif // defined(__WITH_DTLS__) && defined(MULTIPLE_OWNER)
 
+// If DTLS or TLS enabled, and device unowned, check if JW OTM is selected.
+// If so, register handshake callback and enable Anon Ciphersuite.
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    if (NULL != gDoxm) {
+        if (false == gDoxm->owned) {
+            if (OIC_JUST_WORKS == gDoxm->oxmSel) {
+                RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
+                OIC_LOG_V(INFO, TAG, "%s: enabling AnonECDHCipherSuite", __func__);
+                ret = (CAEnableAnonECDHCipherSuite(true) == CA_STATUS_OK) ? OC_STACK_OK : OC_STACK_ERROR;
+            }
+            ret = OC_STACK_OK;
+        }
+    }
+#endif // __WITH_DTLS__ or __WITH_TLS__
+
     return ret;
 }
 

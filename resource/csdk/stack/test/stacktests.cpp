@@ -2980,16 +2980,16 @@ TEST(StackZoneId, getZoneIdWithInvalidParams)
 }
 #endif
 
-TEST(LinksPayloadValue, BuildCollectionLinksPayloadValue)
+TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OIC_LOG(INFO, TAG, "Starting createLinksPayloadValue test");
     InitStack(OC_SERVER);
 
     size_t numResources = 0;
-    uint8_t parentBitmap = OC_DISCOVERABLE | OC_OBSERVABLE;
-    uint8_t inBitmap[2] = { OC_DISCOVERABLE | OC_OBSERVABLE,
-                            OC_DISCOVERABLE };
+    uint8_t parentBitmap = (OC_DISCOVERABLE | OC_OBSERVABLE) | OC_SECURE;
+    uint8_t inBitmap[2] = {( OC_DISCOVERABLE | OC_OBSERVABLE) | OC_SECURE,
+                            OC_DISCOVERABLE | OC_SECURE };
     int64_t outBitmap[2] = { 0 };
 
     OCResourceHandle containerHandle;
@@ -3027,10 +3027,10 @@ TEST(LinksPayloadValue, BuildCollectionLinksPayloadValue)
     EXPECT_EQ(handle0, OCGetResourceHandleFromCollection(containerHandle, 0));
     EXPECT_EQ(handle1, OCGetResourceHandleFromCollection(containerHandle, 1));
 
-    OCRepPayloadValue* linksRepPayloadValue;
-    OCRepPayload *collectionPayload = NULL;
-    OCRepPayload *policyMap = NULL;
-    OCRepPayload **linksMap = NULL;
+    OCRepPayload** linksRepPayloadArray = NULL;
+    OCRepPayload* collectionPayload = NULL;
+    OCRepPayload* policyMap = NULL;
+    OCRepPayload** linksMap = NULL;
 
     OCDevAddr* devAddr = (OCDevAddr*)OICCalloc(1, sizeof(OCDevAddr));
     devAddr->adapter = OC_ADAPTER_IP;
@@ -3040,17 +3040,19 @@ TEST(LinksPayloadValue, BuildCollectionLinksPayloadValue)
     devAddr->ifindex = info->ifindex;
 
     //check for OIC1.1 logic
-    ASSERT_TRUE(BuildCollectionLinksPayloadValue("/a/kitchen", 
-                           &linksRepPayloadValue, false, devAddr));
-    ASSERT_TRUE(NULL != linksRepPayloadValue);
+    size_t arraySize = 0;
+    linksRepPayloadArray = BuildCollectionLinksPayloadArray("/a/kitchen", false, 
+                                                            devAddr, &arraySize);
+    ASSERT_TRUE(NULL != linksRepPayloadArray);
 
     collectionPayload = OCRepPayloadCreate();
     ASSERT_TRUE(NULL != collectionPayload);
 
     size_t dim[MAX_REP_ARRAY_DEPTH] = { numResources, 0, 0 };
+    EXPECT_EQ(numResources, arraySize);
 
     ASSERT_TRUE(OCRepPayloadSetPropObjectArrayAsOwner(collectionPayload, OC_RSRVD_LINKS,
-                                              linksRepPayloadValue->arr.objArray, dim));
+                                                      linksRepPayloadArray, dim));
 
     ASSERT_TRUE(OCRepPayloadGetPropObjectArray(collectionPayload, OC_RSRVD_LINKS, &linksMap, dim));
 
@@ -3058,7 +3060,8 @@ TEST(LinksPayloadValue, BuildCollectionLinksPayloadValue)
     {
         ASSERT_TRUE(OCRepPayloadGetPropObject(linksMap[i], OC_RSRVD_POLICY, &policyMap));
         ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_BITMAP, &outBitmap[i]));
-        EXPECT_EQ(inBitmap[i], outBitmap[i]);
+        // check bitmap excluding secure bit
+        EXPECT_EQ(inBitmap[i] & ~OC_MASK_RESOURCE_SECURE, outBitmap[i]);
 
         if (devAddr)
         {
@@ -3107,17 +3110,16 @@ TEST(LinksPayloadValue, BuildCollectionLinksPayloadValue)
     OCRepPayloadDestroy(collectionPayload);
 
     //check for OCF1.0 logic
-    ASSERT_TRUE(BuildCollectionLinksPayloadValue("/a/kitchen",
-                           &linksRepPayloadValue, true, devAddr));
-    ASSERT_TRUE(NULL != linksRepPayloadValue);
+    linksRepPayloadArray = BuildCollectionLinksPayloadArray("/a/kitchen", true, devAddr, &arraySize);
+    ASSERT_TRUE(NULL != linksRepPayloadArray);
 
     collectionPayload = OCRepPayloadCreate();
     ASSERT_TRUE(NULL != collectionPayload);
 
-    dim[1] = dim[2] = 0;
+    EXPECT_EQ(numResources, arraySize);
 
     ASSERT_TRUE(OCRepPayloadSetPropObjectArrayAsOwner(collectionPayload, OC_RSRVD_LINKS,
-        linksRepPayloadValue->arr.objArray, dim));
+                                                      linksRepPayloadArray, dim));
 
     ASSERT_TRUE(OCRepPayloadGetPropObjectArray(collectionPayload, OC_RSRVD_LINKS, &linksMap, dim));
 
@@ -3125,7 +3127,8 @@ TEST(LinksPayloadValue, BuildCollectionLinksPayloadValue)
     {
         ASSERT_TRUE(OCRepPayloadGetPropObject(linksMap[i], OC_RSRVD_POLICY, &policyMap));
         ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_BITMAP, &outBitmap[i]));
-        EXPECT_EQ(inBitmap[i], outBitmap[i]);
+        // check bitmap excluding secure bit
+        EXPECT_EQ(inBitmap[i] & ~OC_MASK_RESOURCE_SECURE, outBitmap[i]);
 
         size_t epsDim[MAX_REP_ARRAY_DEPTH] = { 0 };
         OCRepPayload **epsMap = NULL;
@@ -3156,13 +3159,13 @@ TEST(LinksPayloadValue, BuildCollectionLinksPayloadValue)
             OCRepPayloadDestroy(epsMap[k]);
         }
 
-        ASSERT_GE(coap_scheme_cnt[0], (size_t) 1);
-#ifdef __WITH_TLS__
+#ifdef __WITH_DTLS__
         ASSERT_GE(coap_scheme_cnt[1], (size_t) 1);
 #ifdef TCP_ADAPTER
         ASSERT_GE(coap_scheme_cnt[3], (size_t) 1);
 #endif
 #else
+        ASSERT_GE(coap_scheme_cnt[0], (size_t) 1);
 #ifdef TCP_ADAPTER
         ASSERT_GE(coap_scheme_cnt[2], (size_t) 1);
 #endif

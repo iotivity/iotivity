@@ -886,23 +886,6 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
             {
                 ehRet = OC_EH_OK;
             }
-            if (true == (pstat->cm & RESET))
-            {
-                if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
-                {
-                    ehRet = OC_EH_ERROR;
-                    OIC_LOG_V(ERROR, TAG, "%s: SendSRMResponse failed.", __func__);
-                    DeletePstatBinData(pstat);
-                    return ehRet;
-                }
-                ret = ResetSecureResourceInPS();
-                if (OC_STACK_OK == ret)
-                {
-                    ehRet = OC_EH_OK;
-                }
-                DeletePstatBinData(pstat);
-                return ehRet;
-            }
         }
     }
 

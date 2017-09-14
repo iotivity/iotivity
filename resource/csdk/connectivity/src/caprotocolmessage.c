@@ -718,8 +718,6 @@ CAResult_t CAGetOptionCount(coap_opt_iterator_t opt_iter, uint8_t *optionCount)
         if (COAP_OPTION_URI_PATH != opt_iter.type && COAP_OPTION_URI_QUERY != opt_iter.type
             && COAP_OPTION_BLOCK1 != opt_iter.type && COAP_OPTION_BLOCK2 != opt_iter.type
             && COAP_OPTION_SIZE1 != opt_iter.type && COAP_OPTION_SIZE2 != opt_iter.type
-            && COAP_OPTION_CONTENT_FORMAT != opt_iter.type
-            && CA_OPTION_CONTENT_VERSION != opt_iter.type
             && COAP_OPTION_URI_HOST != opt_iter.type && COAP_OPTION_URI_PORT != opt_iter.type
             && COAP_OPTION_ETAG != opt_iter.type && COAP_OPTION_MAXAGE != opt_iter.type
             && COAP_OPTION_PROXY_SCHEME != opt_iter.type)
@@ -928,39 +926,6 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             {
                 OIC_LOG_V(DEBUG, TAG, "option[%d] will be filtering", opt_iter.type);
             }
-            else if (COAP_OPTION_CONTENT_FORMAT == opt_iter.type)
-            {
-                if (1 == COAP_OPT_LENGTH(option))
-                {
-                    outInfo->payloadFormat = CAConvertFormat((uint8_t)buf[0]);
-                }
-                else if (2 == COAP_OPT_LENGTH(option))
-                {
-                    unsigned int decodedFormat = coap_decode_var_bytes(COAP_OPT_VALUE(option), COAP_OPT_LENGTH(option));
-                    assert(decodedFormat <= UINT16_MAX);
-                    outInfo->payloadFormat = CAConvertFormat((uint16_t)decodedFormat);
-                }
-                else
-                {
-                    outInfo->payloadFormat = CA_FORMAT_UNSUPPORTED;
-                    OIC_LOG(DEBUG, TAG, "option has an unsupported format");
-                }
-            }
-            else if (CA_OPTION_CONTENT_VERSION == opt_iter.type)
-            {
-                if (2 == COAP_OPT_LENGTH(option))
-                {
-                    unsigned int decodedVersion = coap_decode_var_bytes(COAP_OPT_VALUE(option), COAP_OPT_LENGTH(option));
-                    assert(decodedVersion <= UINT16_MAX);
-                    outInfo->payloadVersion = (uint16_t)decodedVersion;
-                }
-                else
-                {
-                    OIC_LOG(DEBUG, TAG, "unsupported content version");
-                    outInfo->payloadVersion = DEFAULT_VERSION_VALUE;
-
-                }
-            }
             else if (COAP_OPTION_URI_PORT == opt_iter.type ||
                     COAP_OPTION_URI_HOST == opt_iter.type ||
                     COAP_OPTION_ETAG == opt_iter.type ||
@@ -1010,6 +975,41 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                         OIC_LOG(DEBUG, TAG, "option has an unsupported accept format");
                     }
                 }
+                else if (CA_OPTION_CONTENT_VERSION == opt_iter.type)
+                {
+                    if (2 == COAP_OPT_LENGTH(option))
+                    {
+                        unsigned int decodedVersion = coap_decode_var_bytes(COAP_OPT_VALUE(option),
+                                COAP_OPT_LENGTH(option));
+                        assert(decodedVersion <= UINT16_MAX);
+                        outInfo->payloadVersion = (uint16_t) decodedVersion;
+                    }
+                    else
+                    {
+                        OIC_LOG(DEBUG, TAG, "unsupported payload version");
+                        outInfo->payloadVersion = DEFAULT_VERSION_VALUE;
+                    }
+                }
+                else if (COAP_OPTION_CONTENT_FORMAT == opt_iter.type)
+                {
+                    if (1 == COAP_OPT_LENGTH(option))
+                    {
+                        outInfo->payloadFormat = CAConvertFormat((uint8_t) buf[0]);
+                    }
+                    else if (2 == COAP_OPT_LENGTH(option))
+                    {
+                        unsigned int decodedFormat = coap_decode_var_bytes(COAP_OPT_VALUE(option),
+                                COAP_OPT_LENGTH(option));
+                        assert(decodedFormat <= UINT16_MAX);
+                        outInfo->payloadFormat = CAConvertFormat((uint16_t) decodedFormat);
+                    }
+                    else
+                    {
+                        outInfo->payloadFormat = CA_FORMAT_UNSUPPORTED;
+                        OIC_LOG(DEBUG, TAG, "option has an unsupported accept format");
+                    }
+                }
+
                 if (idx < count)
                 {
                     if (bufLength <= sizeof(outInfo->options[0].optionData))

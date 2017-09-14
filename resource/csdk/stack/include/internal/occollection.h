@@ -30,19 +30,19 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                                               OCEntityHandlerRequest *entityHandlerRequest);
 
 /**
- * This function creates the payloadValue for links parameter of collection resource.
+ * This function creates the RepPayloadArray for links parameter of collection resource.
  * @param[in] resourceUri Resource uri (this should be a collection resource)
- * @param[out] linksRepPayloadValue The payloadValue for links parameter of collection
  * @param[in] devAddr Structure pointing to the address. (from OCEntityHandlerRequest)
  * @param[in] isOCFVer true if AcceptedVersion is OCF1.0 or higher
  *            otherwise false in case OIC1.1 (from OCEntityHandlerRequest)
- *
+ * @param[out] createdArraySize return value array size, Null is allowed if no need to know size
  * @note: The destroy of OCRepPayloadValue is not supported. Instead, use
  *        OCRepPayloadDestroy(...) to destroy RepPayload of the collection Resource
  *
- * @return ::true if successful otherwise false.
+ * @return linksRepPayloadArray The *RepPayload Array pointer for links parameter of collection
+ * @see OCLinksPayloadArrayCreate API doxygen for API usage
  */
-bool BuildCollectionLinksPayloadValue(const char* resourceUri,
-                    OCRepPayloadValue** linksRepPayloadValue, bool isOCFContentFormat, OCDevAddr* devAddr);
+OCRepPayload** BuildCollectionLinksPayloadArray(const char* resourceUri,
+                    bool isOCFContentFormat, OCDevAddr* devAddr, size_t* createdArraySize);
 
 #endif //OC_COLLECTION_H

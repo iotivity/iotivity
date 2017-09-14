@@ -142,6 +142,32 @@ namespace OC
         return root;
     }
 
+    void parseServerHeaderOptions(OCClientResponse* clientResponse,
+                    HeaderOptions& serverHeaderOptions)
+    {
+        if (clientResponse)
+        {
+            // Parse header options from server
+            uint16_t optionID;
+            std::string optionData;
+
+            for(size_t i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
+            {
+                optionID = clientResponse->rcvdVendorSpecificHeaderOptions[i].optionID;
+                optionData = reinterpret_cast<const char*>
+                                (clientResponse->rcvdVendorSpecificHeaderOptions[i].optionData);
+                HeaderOption::OCHeaderOption headerOption(optionID, optionData);
+                serverHeaderOptions.push_back(headerOption);
+            }
+        }
+        else
+        {
+            // clientResponse is invalid
+            // TODO check proper logging
+            std::cout << " Invalid response " << std::endl;
+        }
+    }
+
     OCStackApplicationResult listenCallback(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
     {
@@ -180,7 +206,10 @@ namespace OC
 
         try
         {
+            HeaderOptions serverHeaderOptions;
+            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
+                                    serverHeaderOptions,
                                     reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
             // loop to ensure valid construction of all resources
 
@@ -230,8 +259,11 @@ namespace OC
                 return OC_STACK_KEEP_TRANSACTION;
             }
 
+            HeaderOptions serverHeaderOptions;
+            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
-                                        reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
+                    serverHeaderOptions,
+                    reinterpret_cast< OCDiscoveryPayload* >(clientResponse->payload));
             // loop to ensure valid construction of all resources
             for (auto resource : container.Resources())
             {
@@ -376,8 +408,11 @@ namespace OC
 
         try
         {
+            HeaderOptions serverHeaderOptions;
+            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
-                                    reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
+                    serverHeaderOptions,
+                    reinterpret_cast< OCDiscoveryPayload* >(clientResponse->payload));
 
             OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
             std::thread exec(context->callback, container.Resources());
@@ -475,8 +510,11 @@ namespace OC
 
         try
         {
+            HeaderOptions serverHeaderOptions;
+            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
-                            reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
+                    serverHeaderOptions,
+                    reinterpret_cast< OCDiscoveryPayload* >(clientResponse->payload));
 
             OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
             std::thread exec(context->callback, container.Resources());
@@ -575,8 +613,11 @@ namespace OC
 
         try
         {
+            HeaderOptions serverHeaderOptions;
+            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
-                                        (OCRepPayload *) clientResponse->payload);
+                    serverHeaderOptions,
+                    (OCRepPayload *) clientResponse->payload);
 
             // loop to ensure valid construction of all resources
             for (auto resource : container.Resources())
@@ -706,32 +747,6 @@ namespace OC
             result = OC_STACK_ERROR;
         }
         return result;
-    }
-
-    void parseServerHeaderOptions(OCClientResponse* clientResponse,
-                    HeaderOptions& serverHeaderOptions)
-    {
-        if (clientResponse)
-        {
-            // Parse header options from server
-            uint16_t optionID;
-            std::string optionData;
-
-            for(size_t i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
-            {
-                optionID = clientResponse->rcvdVendorSpecificHeaderOptions[i].optionID;
-                optionData = reinterpret_cast<const char*>
-                                (clientResponse->rcvdVendorSpecificHeaderOptions[i].optionData);
-                HeaderOption::OCHeaderOption headerOption(optionID, optionData);
-                serverHeaderOptions.push_back(headerOption);
-            }
-        }
-        else
-        {
-            // clientResponse is invalid
-            // TODO check proper logging
-            std::cout << " Invalid response " << std::endl;
-        }
     }
 
 #ifdef WITH_MQ

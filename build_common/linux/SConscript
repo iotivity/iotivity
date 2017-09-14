@@ -6,8 +6,6 @@
 import os
 Import('env')
 
-src_dir = env.get('SRC_DIR')
-
 # Test Coverage Flags and Library (if RELEASE=0)
 if not env.get('RELEASE'):
     env.AppendUnique(LIBS=['gcov'])

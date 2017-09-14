@@ -42,7 +42,7 @@ if gtest_env.GetOption('clean'):
         Execute(clean)
     Return("gtest_env")
 
-print '*** Checking for installation of google unit test %s ***', GTEST_VERSION
+print '*** Checking for installation of google unit test %s ***' % GTEST_VERSION
 if not os.path.exists(gtest_unpacked_sentinel):
     # If the gtest zip file is not already present, download it
     if not os.path.exists(gtest_zip_path):

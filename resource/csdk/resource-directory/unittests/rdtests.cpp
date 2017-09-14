@@ -556,7 +556,7 @@ TEST_P(RDDiscoverTests, ResourceQueryMatchesRemoteOnly)
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *)repPayload);
 
     itst::Callback publishCB(&handlePublishCB);
-    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_POST, "127.0.0.1/oic/rd?rt=oic.wk.rdpub", NULL,
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_POST, "127.0.0.1/oic/rd", NULL,
                     (OCPayload *)repPayload, CT_DEFAULT, OC_HIGH_QOS, publishCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, publishCB.Wait(100));
 
