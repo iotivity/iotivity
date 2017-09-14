@@ -32,8 +32,6 @@ namespace OIC
     namespace Service
     {
         #define ES_REMOTE_ENROLLEE_RES_TAG "ES_ENROLLEE_RESOURCE"
-        #define OCF_CONTENT_FORMAT_VERSION_OPTION_ID 2053
-        #define OCF_CONTENT_FORMAT_VERSION_VALUE 2048
 
         EnrolleeResource::EnrolleeResource(std::shared_ptr< OC::OCResource > resource)
         {

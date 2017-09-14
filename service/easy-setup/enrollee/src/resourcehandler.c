@@ -53,6 +53,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
 OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
 OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
 void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input);
+void updateEasySetupConnectProperty(OCRepPayload* input);
 void updateWiFiConfResource(OCRepPayload* input);
 void updateCoapCloudConfResource(OCRepPayload* input);
 void updateDevConfResource(OCRepPayload* input);
@@ -341,6 +342,64 @@ void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* in
 {
     OIC_LOG_V(DEBUG, ES_RH_TAG, "g_ESEasySetupResource.status %d", g_ESEasySetupResource.status);
 
+    // Below call is to allow cn update without 'rep' property.
+    // Can remove if no longer needed to support this way.
+    updateEasySetupConnectProperty(input);
+
+    if (ehRequest->query)
+    {
+        if (CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
+        {
+            // When Provisioning resource has a POST with BatchInterface
+            // Parsing POST request on Batch Interface cosidering same format as GET using batch.
+            OCRepPayload *children = input;
+
+            while(children)
+            {
+                char* href = NULL;
+                OCRepPayloadGetPropString(children, OC_RSRVD_HREF, &href);
+                OIC_LOG_V(DEBUG, ES_RH_TAG, "href [%s]", href);
+                ///TODO: Check why href value is null even though available in payload
+
+                OCRepPayload *repPayload = NULL;
+                OCRepPayloadGetPropObject(children, OC_RSRVD_REPRESENTATION, &repPayload);
+
+                char* uri = children->uri;
+                OIC_LOG_V(DEBUG, ES_RH_TAG, "uri [%s]", uri);
+
+                if(NULL == uri || NULL == repPayload)
+                {
+                    children = children->next;
+                    continue;
+                }
+
+                if (0 == strcmp(uri, OC_RSRVD_ES_URI_EASYSETUP))
+                {
+                    updateEasySetupConnectProperty(repPayload);
+                }
+                else if (0 == strcmp(uri, OC_RSRVD_ES_URI_WIFICONF))
+                {
+                    updateWiFiConfResource(repPayload);
+                }
+                else if (0 == strcmp(uri, OC_RSRVD_ES_URI_COAPCLOUDCONF))
+                {
+                    updateCoapCloudConfResource(repPayload);
+                }
+                else if (0 == strcmp(uri, OC_RSRVD_ES_URI_DEVCONF))
+                {
+                    updateDevConfResource(repPayload);
+                }
+
+                children = children->next;
+                OCRepPayloadDestroy(repPayload);
+                OICFree(href);
+             }
+        }
+    }
+}
+
+void updateEasySetupConnectProperty(OCRepPayload* input)
+{
     int64_t *connect_req = NULL;
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
     if (OCRepPayloadGetIntArray(input, OC_RSRVD_ES_CONNECT, &connect_req, dimensions))
@@ -384,17 +443,6 @@ void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* in
             {
                 OIC_LOG(ERROR, ES_RH_TAG, "gConnectRequestEvtCb is NULL");
             }
-        }
-    }
-
-    if (ehRequest->query)
-    {
-        if (CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
-        {
-            // When Provisioning resource has a POST with BatchInterface
-            updateCoapCloudConfResource(input);
-            updateWiFiConfResource(input);
-            updateDevConfResource(input);
         }
     }
 }
@@ -1296,7 +1344,6 @@ OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMa
             OIC_LOG_V(ERROR, ES_RH_TAG, "Bind WiFiConfResource result: %s", getResult(res));
             return res;
         }
-
     }
 
     if ((resourceMask & ES_COAPCLOUDCONF_RESOURCE) == ES_COAPCLOUDCONF_RESOURCE)
@@ -1595,6 +1642,7 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest * ehRequest,
 
     return ehResult;
 }
+
 /**
  * This is the entity handler for the registered resource.
  * This is invoked by OCStack whenever it recevies a request for this resource.

@@ -45,6 +45,8 @@ using namespace OC;
 using namespace std;
 
 #define ES_RICH_COMMON_TAG "ES_MEDIATOR_COMMON"
+#define OCF_CONTENT_FORMAT_VERSION_OPTION_ID 2053
+#define OCF_CONTENT_FORMAT_VERSION_VALUE 2048
 
 #ifndef WITH_ARDUINO
 namespace OIC
@@ -316,6 +318,57 @@ namespace OIC
             {
                 return m_rep;
             }
+
+            /**
+             * Update Cloud property representation as per OCF Specification.
+             *
+             * Resource Schema for CloudConf resource is different in older Enrollee following
+             * OIC Spec compared to newer Enrollee following OCF Spec. This function updates
+             * the representation as per spec version.
+             */
+            void updateOCRepresentation(int specVersion)
+            {
+                if(0 == specVersion) // OIC Server does not contain CONTENT FORMAT VERSION
+                {
+                    // Representation is already stored as per older resource schemas.
+                    return;
+                }
+
+                // Representation should be updated as per OCF 1.3 Easy Setup resource schemas.
+                std::string authCode = m_rep.getValue<std::string>(OC_RSRVD_ES_AUTHCODE);
+                std::string authProvider = m_rep.getValue<std::string>(OC_RSRVD_ES_AUTHPROVIDER);
+                std::string ciServer = m_rep.getValue<std::string>(OC_RSRVD_ES_CISERVER);
+
+                std::string accessToken = m_rep.getValue<std::string>(OC_RSRVD_ES_ACCESSTOKEN);
+                OAUTH_TOKENTYPE accessTokenType = static_cast<OAUTH_TOKENTYPE>(
+                                m_rep.getValue<int>(OC_RSRVD_ES_ACCESSTOKEN_TYPE));
+
+                OCRepresentation rootRep;
+                rootRep.setUri(OC_RSRVD_ES_URI_EASYSETUP);
+
+                OCRepresentation cloudDataRep;
+
+                if(authCode.length() > 0)
+                    cloudDataRep.setValue(OC_RSRVD_ES_AUTHCODE, authCode);
+
+                if(accessToken.length() > 0)
+                {
+                    cloudDataRep.setValue(OC_RSRVD_ES_ACCESSTOKEN, accessToken);
+                    cloudDataRep.setValue(OC_RSRVD_ES_ACCESSTOKEN_TYPE, accessTokenType);
+                }
+
+                cloudDataRep.setValue(OC_RSRVD_ES_AUTHPROVIDER, authProvider);
+                cloudDataRep.setValue(OC_RSRVD_ES_CISERVER, ciServer);
+
+                OCRepresentation cloudconfRep;
+                cloudconfRep.setUri(OC_RSRVD_ES_URI_COAPCLOUDCONF);
+                cloudconfRep.setValue(OC_RSRVD_HREF, std::string(OC_RSRVD_ES_URI_COAPCLOUDCONF));
+                cloudconfRep.setValue(OC_RSRVD_REPRESENTATION, cloudDataRep);
+
+                rootRep.addChild(cloudconfRep);
+                m_rep = rootRep;
+            }
+
         protected:
             OCRepresentation m_rep;
             std::string m_cloudID;
@@ -448,13 +501,11 @@ namespace OIC
             }
 
             /**
-             * Get OCRepresentation object
+             * Update Device and Wi-Fi representation as per OCF Specification.
              *
              * Resource Schema for WiFiConf resource is different in older Enrollee following
              * OIC Spec compared to newer Enrollee following OCF Spec. This function updates
              * the representation as per spec version.
-             *
-             * Update representation as per OCF Specification.
              */
             void updateOCRepresentation(int specVersion)
             {
@@ -468,8 +519,22 @@ namespace OIC
                 WIFI_AUTHTYPE authtype = static_cast<WIFI_AUTHTYPE> (m_rep.getValue<int>(OC_RSRVD_ES_AUTHTYPE));
                 WIFI_ENCTYPE enctype = static_cast<WIFI_ENCTYPE> (m_rep.getValue<int>(OC_RSRVD_ES_ENCTYPE));
 
-                m_rep.setValue(OC_RSRVD_ES_AUTHTYPE, getAuthTypeAsString(authtype));
-                m_rep.setValue(OC_RSRVD_ES_ENCTYPE, getEncTypeAsString(enctype));
+                OCRepresentation rootRep;
+                rootRep.setUri(OC_RSRVD_ES_URI_EASYSETUP);
+
+                OCRepresentation wifiDataRep;
+                wifiDataRep.setValue(OC_RSRVD_ES_SSID, m_rep.getValue<std::string>(OC_RSRVD_ES_SSID));
+                wifiDataRep.setValue(OC_RSRVD_ES_CRED, m_rep.getValue<std::string>(OC_RSRVD_ES_CRED));
+                wifiDataRep.setValue(OC_RSRVD_ES_AUTHTYPE, getAuthTypeAsString(authtype));
+                wifiDataRep.setValue(OC_RSRVD_ES_ENCTYPE, getEncTypeAsString(enctype));
+
+                OCRepresentation wificonfRep;
+                wificonfRep.setUri(OC_RSRVD_ES_URI_WIFICONF);
+                wificonfRep.setValue(OC_RSRVD_HREF, std::string(OC_RSRVD_ES_URI_WIFICONF));
+                wificonfRep.setValue(OC_RSRVD_REPRESENTATION, wifiDataRep);
+
+                rootRep.addChild(wificonfRep);
+                m_rep = rootRep;
             }
 
         protected:
