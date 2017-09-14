@@ -26,6 +26,12 @@
 #include "oic_malloc.h"
 #include "cautilinterface.h"
 
+// TODO: Remove this flag and enable the code it guards.
+// This is a temporary workaround to ignore the failure of OCLinksPayloadArrayCreate
+// in some cases. This allows the response to still be made, even though links property will be
+// missing.
+#define ES_IGNORE_OCLinksPayloadArrayCreate_FAILIURE
+
 /**
  * @var ES_RH_TAG
  * @brief Logging tag for module name.
@@ -970,238 +976,138 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
         return NULL;
     }
 
+    OIC_LOG_V(DEBUG, ES_RH_TAG, "constructResponseOfEasySetup: qry = %s",
+            (ehRequest->query) ? (ehRequest->query) : "null");
+
     // Requested interface is Link list interface
-    if (!ehRequest->query ||
-        (ehRequest->query && !strcmp(ehRequest->query, "")) ||
-        (ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_LL)) ||
-        (ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT)))
-    {
-        const OCRepPayload *arrayPayload[3] = {NULL};
+     if (!ehRequest->query ||
+         (ehRequest->query && !strcmp(ehRequest->query, "")) ||
+         (ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_LL)) ||
+         (ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT)))
+     {
+        size_t arraySize;
+        OCRepPayload **linkArr = OCLinksPayloadArrayCreate(OC_RSRVD_ES_URI_EASYSETUP, ehRequest,
+                &arraySize);
 
-        int childResCnt = 0;
+#ifdef ES_IGNORE_OCLinksPayloadArrayCreate_FAILIURE
+        bool linkArrConstructed = true; // TODO: Remove this when
+                                        // ES_IGNORE_OCLinksPayloadArrayCreate_FAILIURE is removed.
+#endif
 
-        if (g_ESWiFiConfResource.handle != NULL)
+        if (!linkArr || (arraySize == 0))
         {
-            OCRepPayload *add = OCRepPayloadCreate();
-            if (!add)
-            {
-                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
-                return NULL;
-            }
+            OIC_LOG(ERROR, ES_RH_TAG, "Failed to create Easy Setup collections ll response.");
 
-            size_t dimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
-            char **resourceType = NULL;
-            resourceType = (char **)OICMalloc(sizeof(char *) * 1);
-            char **resourceInterface = NULL;
-            resourceInterface = (char **)OICMalloc(sizeof(char *) * 1);
-
-            if (!resourceType || !resourceInterface)
-            {
-                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
-                return NULL;
-            }
-
-            resourceType[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_WIFICONF);
-            resourceInterface[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-
-            add->base.type = PAYLOAD_TYPE_REPRESENTATION;
-            OCRepPayloadSetPropString(add, OC_RSRVD_HREF, OC_RSRVD_ES_URI_WIFICONF);
-            OCRepPayloadSetStringArray(add, OC_RSRVD_RESOURCE_TYPE,
-                                            (const char **)resourceType, dimensions);
-            OCRepPayloadSetStringArray(add, OC_RSRVD_INTERFACE,
-                                            (const char **)resourceInterface, dimensions);
-
-            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)g_ESWiFiConfResource.handle);
-            OCRepPayload *policy = OCRepPayloadCreate();
-            if (!policy)
-            {
-                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
-                return NULL;
-            }
-
-            OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP,
-                                    ((p & OC_DISCOVERABLE) | (p & OC_OBSERVABLE)));
-            if (p & OC_SECURE)
-            {
-                OCRepPayloadSetPropBool(policy, OC_RSRVD_SECURE, p & OC_SECURE);
-                uint16_t securePort = CAGetAssignedPortNumber(ehRequest->devAddr.adapter,
-                                                                    ehRequest->devAddr.flags);
-                OCRepPayloadSetPropInt(policy, OC_RSRVD_HOSTING_PORT, securePort);
-            }
-
-            OCRepPayloadSetPropObject(add, OC_RSRVD_POLICY, policy);
-
-            arrayPayload[childResCnt++] = add;
+#ifdef ES_IGNORE_OCLinksPayloadArrayCreate_FAILIURE
+            linkArrConstructed = false;
+#else
+            OICFree(linkArr);
+            OCRepPayloadDestroy(payload);
+            return NULL;
+#endif
         }
-
-        if (g_ESDevConfResource.handle != NULL)
+#ifndef ES_IGNORE_OCLinksPayloadArrayCreate_FAILIURE
+        else
         {
-            OCRepPayload *add = OCRepPayloadCreate();
-            if (!add)
+#endif
+            OIC_LOG(DEBUG, ES_RH_TAG, "Constructed links payload.");
+
+            if (!ehRequest->query || (ehRequest->query && !strcmp(ehRequest->query, ""))
+                    || (ehRequest->query
+                            && CompareResourceInterface(ehRequest->query,
+                                    OC_RSRVD_INTERFACE_DEFAULT)))
             {
-                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
-                return NULL;
-            }
+                OIC_LOG(DEBUG, ES_RH_TAG, "constructResponse EasySetup res (Default interface)");
+                OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_EASYSETUP);
+                OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
+                OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_LL);
+                OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_BATCH);
+                OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_EASYSETUP);
+                OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_COL);
 
-            size_t dimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
-            char **resourceType = NULL;
-            resourceType = (char **)OICMalloc(sizeof(char *) * 1);
-            char **resourceInterface = NULL;
-            resourceInterface = (char **)OICMalloc(sizeof(char *) * 1);
+                OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS,
+                        g_ESEasySetupResource.status);
+                OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE,
+                        g_ESEasySetupResource.lastErrCode);
 
-            if (!resourceType || !resourceInterface)
-            {
-                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
-                return NULL;
-            }
-
-            resourceType[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_DEVCONF);
-            resourceInterface[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-
-            add->base.type = PAYLOAD_TYPE_REPRESENTATION;
-            OCRepPayloadSetPropString(add, OC_RSRVD_HREF, OC_RSRVD_ES_URI_DEVCONF);
-            OCRepPayloadSetStringArray(add, OC_RSRVD_RESOURCE_TYPE,
-                                            (const char **)resourceType, dimensions);
-            OCRepPayloadSetStringArray(add, OC_RSRVD_INTERFACE,
-                                            (const char **)resourceInterface, dimensions);
-
-            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)g_ESDevConfResource.handle);
-            OCRepPayload *policy = OCRepPayloadCreate();
-            if (!policy)
-            {
-                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
-                return NULL;
-            }
-
-            OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP,
-                                    ((p & OC_DISCOVERABLE) | (p & OC_OBSERVABLE)));
-            if (p & OC_SECURE)
-            {
-                OCRepPayloadSetPropBool(policy, OC_RSRVD_SECURE, p & OC_SECURE);
-                uint16_t securePort = CAGetAssignedPortNumber(ehRequest->devAddr.adapter,
-                                                                    ehRequest->devAddr.flags);
-                OCRepPayloadSetPropInt(policy, OC_RSRVD_HOSTING_PORT, securePort);
-            }
-
-            OCRepPayloadSetPropObject(add, OC_RSRVD_POLICY, policy);
-
-            arrayPayload[childResCnt++] = add;
-        }
-
-        if (g_ESCoapCloudConfResource.handle != NULL)
-        {
-            OCRepPayload *add = OCRepPayloadCreate();
-            if (!add)
-            {
-                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
-                return NULL;
-            }
-
-            size_t dimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
-            char **resourceType = NULL;
-            resourceType = (char **)OICMalloc(sizeof(char *) * 1);
-            char **resourceInterface = NULL;
-            resourceInterface = (char **)OICMalloc(sizeof(char *) * 1);
-
-            if (!resourceType || !resourceInterface)
-            {
-                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
-                return NULL;
-            }
-
-            resourceType[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF);
-            resourceInterface[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-
-            add->base.type = PAYLOAD_TYPE_REPRESENTATION;
-            OCRepPayloadSetPropString(add, OC_RSRVD_HREF, OC_RSRVD_ES_URI_COAPCLOUDCONF);
-            OCRepPayloadSetStringArray(add, OC_RSRVD_RESOURCE_TYPE,
-                                            (const char **)resourceType, dimensions);
-            OCRepPayloadSetStringArray(add, OC_RSRVD_INTERFACE,
-                                            (const char **)resourceInterface, dimensions);
-
-            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)g_ESCoapCloudConfResource.handle);
-            OCRepPayload *policy = OCRepPayloadCreate();
-            if (!policy)
-            {
-                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
-                return NULL;
-            }
-
-            OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP,
-                                    ((p & OC_DISCOVERABLE) | (p & OC_OBSERVABLE)));
-            if (p & OC_SECURE)
-            {
-                OCRepPayloadSetPropBool(policy, OC_RSRVD_SECURE, p & OC_SECURE);
-                uint16_t securePort = CAGetAssignedPortNumber(ehRequest->devAddr.adapter,
-                                                                    ehRequest->devAddr.flags);
-                OCRepPayloadSetPropInt(policy, OC_RSRVD_HOSTING_PORT, securePort);
-            }
-
-            OCRepPayloadSetPropObject(add, OC_RSRVD_POLICY, policy);
-
-            arrayPayload[childResCnt++] = add;
-        }
-
-        size_t dimensions[MAX_REP_ARRAY_DEPTH] = {childResCnt, 0, 0};
-
-        if (!ehRequest->query ||
-            (ehRequest->query && !strcmp(ehRequest->query, "")) ||
-            (ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT)))
-        {
-            OIC_LOG(DEBUG, ES_RH_TAG, "constructResponse EasySetup res (Default interface)");
-            OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_EASYSETUP);
-            OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
-            OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_LL);
-            OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_BATCH);
-            OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_EASYSETUP);
-            OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_COL);
-
-            OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, g_ESEasySetupResource.status);
-            OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESEasySetupResource.lastErrCode);
-
-            if (g_ESEasySetupResource.numRequest > 0)
-            {
-                size_t dimensions[MAX_REP_ARRAY_DEPTH] = {g_ESEasySetupResource.numRequest, 0, 0};
-                int64_t *connectRequest = (int64_t *)OICMalloc(g_ESEasySetupResource.numRequest  * sizeof(int64_t));
-                if (!connectRequest)
+                if (g_ESEasySetupResource.numRequest > 0)
                 {
-                    OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
-                    return NULL;
+                    size_t dimensions[MAX_REP_ARRAY_DEPTH] = { g_ESEasySetupResource.numRequest, 0,
+                            0 };
+                    int64_t *connectRequest = (int64_t *) OICMalloc(
+                            g_ESEasySetupResource.numRequest * sizeof(int64_t));
+                    if (!connectRequest)
+                    {
+                        OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+                        return NULL;
+                    }
+
+                    for (int i = 0; i < g_ESEasySetupResource.numRequest; ++i)
+                    {
+                        connectRequest[i] = g_ESEasySetupResource.connectRequest[i];
+                    }
+
+                    bool b = OCRepPayloadSetIntArrayAsOwner(payload, OC_RSRVD_ES_CONNECT,
+                            (int64_t *) connectRequest, dimensions);
+                    if (!b)
+                    {
+                        OIC_LOG(ERROR, ES_RH_TAG, "Failed to set array value for Connect property");
+                        OICFree(connectRequest);
+                    }
+                }
+                else
+                {
+                    OIC_LOG(DEBUG, ES_RH_TAG, "g_ESEasySetupResource.numRequest is 0");
+                    size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0, 0, 0 };
+                    OCRepPayloadSetIntArrayAsOwner(payload, OC_RSRVD_ES_CONNECT, NULL, dimensions);
                 }
 
-                for(int i = 0 ; i < g_ESEasySetupResource.numRequest  ; ++i)
+                if (gWriteUserdataCb)
                 {
-                    connectRequest[i] = g_ESEasySetupResource.connectRequest[i];
+                    gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_EASYSETUP);
                 }
 
-                bool b = OCRepPayloadSetIntArrayAsOwner(payload, OC_RSRVD_ES_CONNECT, (int64_t *)connectRequest, dimensions);
-                if (!b)
+#ifdef ES_IGNORE_OCLinksPayloadArrayCreate_FAILIURE
+                if(linkArrConstructed)
                 {
-                    OIC_LOG(ERROR, ES_RH_TAG, "Failed to set array value for Connect property");
-                    OICFree(connectRequest);
+#endif
+                    size_t dimensions[MAX_REP_ARRAY_DEPTH] = { arraySize, 0, 0 };
+                    OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_LINKS,
+                            (const OCRepPayload **) linkArr, dimensions);
+
+                    for (size_t i = 0; i < arraySize - 1; ++i)
+                    {
+                        OCRepPayloadDestroy(linkArr[i]);
+                    }
+#ifdef ES_IGNORE_OCLinksPayloadArrayCreate_FAILIURE
                 }
+#endif
             }
-            else
+            else // link list interface
             {
-                OIC_LOG(DEBUG, ES_RH_TAG, "g_ESEasySetupResource.numRequest is 0");
-                size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
-                OCRepPayloadSetIntArrayAsOwner(payload, OC_RSRVD_ES_CONNECT, NULL, dimensions);
+#ifdef ES_IGNORE_OCLinksPayloadArrayCreate_FAILIURE
+                if(linkArrConstructed)
+                {
+#endif
+                    for (size_t i = 0; i < arraySize - 1; ++i)
+                    {
+                        linkArr[i]->next = linkArr[i + 1];
+                    }
+
+                    // payload is directly the linkArr array, so free up earlier allocated memory.
+                    OCRepPayloadDestroy(payload);
+                    payload = linkArr[0];
+#ifdef ES_IGNORE_OCLinksPayloadArrayCreate_FAILIURE
+                }
+#endif
             }
-
-            if (gWriteUserdataCb)
-            {
-                gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_EASYSETUP);
-            }
-
-            OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_ES_LINKS, arrayPayload, dimensions);
+#ifndef ES_IGNORE_OCLinksPayloadArrayCreate_FAILIURE
         }
-        else    // link list interface
-        {
-            OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_ES_LINKS, arrayPayload, dimensions);
-        }
-    } else if (
-        ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
-
+#endif
+        OICFree(linkArr);
+    }
+    else if (ehRequest->query
+            && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "constructResponse EasySetup res (Batch Interface)");
         OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_EASYSETUP);
@@ -1215,8 +1121,8 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
             return NULL;
         }
 
-        size_t interfacesDimensions[MAX_REP_ARRAY_DEPTH] = {3, 0, 0};
-        char **interfaces = (char **)OICMalloc(3 * sizeof(char*));
+        size_t interfacesDimensions[MAX_REP_ARRAY_DEPTH] = { 3, 0, 0 };
+        char **interfaces = (char **) OICMalloc(3 * sizeof(char*));
         if (!interfaces)
         {
             OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
@@ -1227,10 +1133,11 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
         interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_LL);
         interfaces[2] = OICStrdup(OC_RSRVD_INTERFACE_BATCH);
 
-        OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_INTERFACE, (const char **)interfaces, interfacesDimensions);
+        OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_INTERFACE, (const char **) interfaces,
+                interfacesDimensions);
 
-        size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {2, 0, 0};
-        char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
+        size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = { 2, 0, 0 };
+        char **resourceTypes = (char **) OICMalloc(2 * sizeof(char*));
         if (!resourceTypes)
         {
             OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
@@ -1240,26 +1147,30 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
         resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_EASYSETUP);
         resourceTypes[1] = OICStrdup(OC_RSRVD_ES_RES_TYPE_COL);
 
-        OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_RES_TYPE, (const char **)resourceTypes, resourceTypesDimensions);
+        OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_RES_TYPE, (const char **) resourceTypes,
+                resourceTypesDimensions);
 
         OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_PROVSTATUS, g_ESEasySetupResource.status);
-        OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESEasySetupResource.lastErrCode);
+        OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_LAST_ERRORCODE,
+                g_ESEasySetupResource.lastErrCode);
         if (g_ESEasySetupResource.numRequest > 0)
         {
-            size_t dimensions[MAX_REP_ARRAY_DEPTH] = {g_ESEasySetupResource.numRequest, 0, 0};
-            int64_t *connectRequest = (int64_t *)OICMalloc(g_ESEasySetupResource.numRequest  * sizeof(int64_t));
+            size_t dimensions[MAX_REP_ARRAY_DEPTH] = { g_ESEasySetupResource.numRequest, 0, 0 };
+            int64_t *connectRequest = (int64_t *) OICMalloc(
+                    g_ESEasySetupResource.numRequest * sizeof(int64_t));
             if (!connectRequest)
             {
                 OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
                 return NULL;
             }
 
-            for (int i = 0 ; i < g_ESEasySetupResource.numRequest  ; ++i)
+            for (int i = 0; i < g_ESEasySetupResource.numRequest; ++i)
             {
                 connectRequest[i] = g_ESEasySetupResource.connectRequest[i];
             }
 
-            bool b = OCRepPayloadSetIntArrayAsOwner(repPayload, OC_RSRVD_ES_CONNECT, (int64_t *)connectRequest, dimensions);
+            bool b = OCRepPayloadSetIntArrayAsOwner(repPayload, OC_RSRVD_ES_CONNECT,
+                    (int64_t *) connectRequest, dimensions);
             if (!b)
             {
                 OIC_LOG(ERROR, ES_RH_TAG, "Failed to set array value for Connect property");
@@ -1269,7 +1180,7 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
         else
         {
             OIC_LOG(DEBUG, ES_RH_TAG, "g_ESEasySetupResource.numRequest is 0");
-            size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
+            size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0, 0, 0 };
             OCRepPayloadSetIntArrayAsOwner(repPayload, OC_RSRVD_ES_CONNECT, NULL, dimensions);
         }
 
@@ -1279,37 +1190,32 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
         }
 
         OCRepPayloadSetPropObject(payload, OC_RSRVD_REPRESENTATION, repPayload);
-    }
 
-    if (ehRequest->query)
-    {
-        if (CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
-        {// When Provisioning resource has a GET with BatchInterface
-            OCRepPayload* head = payload;
-            OCRepPayload* nextPayload = NULL;
+        OCRepPayload* head = payload;
+        OCRepPayload* nextPayload = NULL;
 
-            nextPayload = constructResponseOfWiFiConf(OC_RSRVD_INTERFACE_BATCH);
-            if (nextPayload != NULL)
-            {
-                payload->next = nextPayload;
-                payload = payload->next;
-            }
-
-            nextPayload = constructResponseOfCoapCloudConf(OC_RSRVD_INTERFACE_BATCH);
-            if (nextPayload != NULL)
-            {
-                payload->next = nextPayload;
-                payload = payload->next;
-            }
-
-            nextPayload = constructResponseOfDevConf(OC_RSRVD_INTERFACE_BATCH);
-            if (nextPayload != NULL)
-            {
-                payload->next = nextPayload;
-            }
-
-            payload = head;
+        nextPayload = constructResponseOfWiFiConf(OC_RSRVD_INTERFACE_BATCH);
+        if (nextPayload != NULL)
+        {
+            payload->next = nextPayload;
+            payload = payload->next;
         }
+
+        nextPayload = constructResponseOfCoapCloudConf(OC_RSRVD_INTERFACE_BATCH);
+        if (nextPayload != NULL)
+        {
+            payload->next = nextPayload;
+            payload = payload->next;
+        }
+
+        nextPayload = constructResponseOfDevConf(OC_RSRVD_INTERFACE_BATCH);
+        if (nextPayload != NULL)
+        {
+            payload->next = nextPayload;
+        }
+
+        payload = head;
+
     }
 
     return payload;
