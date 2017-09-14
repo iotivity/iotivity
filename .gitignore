@@ -96,6 +96,10 @@ tmp/
 *.gcda
 *.gcno
 
+# Ignore GCov generated files
+*.gcda
+*.gcno
+
 # Ignore downloaded dependencies
 *.tgz
 *.zip

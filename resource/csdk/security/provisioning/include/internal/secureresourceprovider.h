@@ -26,6 +26,25 @@
 #include "pmtypes.h"
 #include "octypes.h"
 
+// Enum type index for data types.
+typedef enum
+{
+    CHAIN_TYPE = 0,                       /**< Certificate trust chain.**/
+    ACL_TYPE,                             /**< Access control list.**/
+    PSK_TYPE,                             /**< Pre-Shared Key.**/
+    CERT_TYPE,                            /**< X.509 certificate.**/
+    MOT_TYPE                              /**< Multiple Ownership Transfer.**/
+} DataType_t;
+
+/**
+ * Structure to carry general data to callback.
+ */
+typedef struct Data
+{
+    void *ctx;                                   /**< Pointer to user context.**/
+    DataType_t type;                             /**< Data type of the context.**/
+} Data_t;
+
 
 #ifdef __cplusplus
 extern "C"
@@ -348,6 +367,33 @@ OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
  */
 OCStackResult SRPReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
                                      size_t *chainSize);
+
+/**
+ * Function for certificate provisioning.
+ * @param[in] ctx Application context to be returned in result callback.
+ * @param[in] pDev Selected target device.
+ * @param[in] pemCert the certificate in PEM.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request receives a response from resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPProvisionCertificate(void *ctx, const OCProvisionDev_t *pDev,
+        const char* pemCert, OCProvisionResultCB resultCallback);
+
+/**
+ * Updates pstat resource of server.
+ *
+ * @param[in] data Structure for the application context
+ * @param[in] dos DOS mode
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from first resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t dos,
+                            OCClientResponseHandler resultCallback);
+
+void FreeData(Data_t *data);
+
 #ifdef __cplusplus
 }
 #endif

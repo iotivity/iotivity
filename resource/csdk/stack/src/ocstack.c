@@ -5928,11 +5928,7 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
     {
         OIC_LOG(DEBUG, TAG, "update the ins of published resource");
 
-        char rdPubUri[MAX_URI_LENGTH] = { 0 };
-        snprintf(rdPubUri, MAX_URI_LENGTH, "%s?rt=%s", OC_RSRVD_RD_URI,
-                 OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
-
-        if (strcmp(rdPubUri, targetUri) == 0)
+        if (strcmp(OC_RSRVD_RD_URI, targetUri) == 0)
         {
             // Update resource unique id in stack.
             if (response)

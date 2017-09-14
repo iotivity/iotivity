@@ -1803,9 +1803,9 @@ void OC_CALL OCResourcePayloadAddNewEndpoint(OCResourcePayload* payload, OCEndpo
     }
 }
 
-OCEndpointPayload* CreateEndpointPayloadList(OCTpsSchemeFlags endpointType,
-                                             const OCDevAddr *devAddr, CAEndpoint_t *networkInfo,
-                                             size_t infoSize, OCEndpointPayload **listHead)
+OCEndpointPayload* CreateEndpointPayloadList(OCTpsSchemeFlags endpointType, const OCDevAddr *devAddr,
+                                            CAEndpoint_t *networkInfo, size_t infoSize,
+                                            OCEndpointPayload **listHead, size_t* epSize)
 {
     OCEndpointPayload *headNode = NULL;
     OCEndpointPayload *lastNode = NULL;
@@ -1813,6 +1813,7 @@ OCEndpointPayload* CreateEndpointPayloadList(OCTpsSchemeFlags endpointType,
     VERIFY_PARAM_NON_NULL(TAG, devAddr, "Invalid devAddr parameter");
     VERIFY_PARAM_NON_NULL(TAG, networkInfo, "Invalid networkInfo parameter");
     VERIFY_PARAM_NON_NULL(TAG, listHead, "Invalid listHead parameter");
+	if (epSize != NULL) *epSize = 0;
 
     if ((OC_ADAPTER_IP | OC_ADAPTER_TCP) & (devAddr->adapter))
     {
@@ -1829,6 +1830,7 @@ OCEndpointPayload* CreateEndpointPayloadList(OCTpsSchemeFlags endpointType,
                                                         info->flags,
                                                         &matchedTps))
                 {
+                    OIC_LOG_V(ERROR, TAG, "OCGetMatchedTpsFlags err");
                     goto exit;
                 }
 
@@ -1838,12 +1840,14 @@ OCEndpointPayload* CreateEndpointPayloadList(OCTpsSchemeFlags endpointType,
                         OICCalloc(1, sizeof(OCEndpointPayload));
                     if (!tmpNode)
                     {
+                        OIC_LOG_V(ERROR, TAG, "Fail creating tmpNode->addr");
                         goto exit;
                     }
 
                     OCStackResult ret = OCConvertTpsToString(matchedTps, &(tmpNode->tps));
                     if (ret != OC_STACK_OK)
                     {
+                        OIC_LOG_V(DEBUG, TAG, "OCConvertTpsToString(%s) is false", tmpNode->tps);
                         OCDiscoveryEndpointDestroy(tmpNode);
                         goto exit;
                     }
@@ -1851,6 +1855,7 @@ OCEndpointPayload* CreateEndpointPayloadList(OCTpsSchemeFlags endpointType,
                     tmpNode->addr = (char*)OICCalloc(MAX_ADDR_STR_SIZE, sizeof(char));
                     if (!tmpNode->addr)
                     {
+                        OIC_LOG_V(ERROR, TAG, "Fail creating tmpNode->addr");
                         OCDiscoveryEndpointDestroy(tmpNode);
                         goto exit;
                     }
@@ -1872,7 +1877,12 @@ OCEndpointPayload* CreateEndpointPayloadList(OCTpsSchemeFlags endpointType,
                         lastNode->next = tmpNode;
                         lastNode = tmpNode;
                     }
+                    if (epSize != NULL) (*epSize)++;
                 }
+            }
+            else
+            {
+                OIC_LOG_V(DEBUG, TAG, "CATransportAdapter_t value = %d", info->adapter);
             }
         }
     }
@@ -1902,7 +1912,8 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
     OCEndpointPayload *selfEp = NULL;
     if (networkInfo && infoSize && devAddr)
     {
-        if(!CreateEndpointPayloadList(res->endpointType, devAddr, networkInfo, infoSize, &(pl->eps)))
+        if(!CreateEndpointPayloadList(res->endpointType, devAddr, networkInfo, infoSize,
+                                      &(pl->eps), NULL))
         {
             return NULL;
         }
@@ -2216,14 +2227,58 @@ void OC_CALL OCDiagnosticPayloadDestroy(OCDiagnosticPayload* payload)
     OICFree(payload);
 }
 
-OCStackResult OC_CALL OCLinksPayloadValueCreate(const char* resourceUri, OCRepPayloadValue** linksRepPayloadValue,
-    OCDevAddr* devAddr)
+void OC_CALL OCEndpointPayloadDestroy(OCEndpointPayload* payload)
+{
+    if (!payload)
+    {
+        return;
+    }
+    OICFree(payload->tps);
+    OICFree(payload->addr);
+    OCEndpointPayloadDestroy(payload->next);
+    OICFree(payload);
+}
+
+bool OC_CALL OCLinksPayloadValueCreate(const char* resourceUri,
+    OCRepPayloadValue** linksRepPayloadValue, OCEntityHandlerRequest *ehRequest)
 {
     OIC_LOG(DEBUG, TAG, "OCLinksPayloadValueCreate");
-    OCStackResult result = OC_STACK_ERROR;
-    if ((resourceUri != NULL) & (linksRepPayloadValue != NULL) )
+    bool result = false;
+    if ((resourceUri != NULL) && (linksRepPayloadValue != NULL) && (ehRequest != NULL))
     {
-        result = BuildCollectionLinksPayloadValue(resourceUri, linksRepPayloadValue, devAddr);
+        bool isOCFContentFormat = false;
+        if (!OCRequestIsOCFContentFormat(ehRequest, &isOCFContentFormat))
+            return result;
+        result = BuildCollectionLinksPayloadValue(resourceUri, linksRepPayloadValue,
+                 isOCFContentFormat, &ehRequest->devAddr);
+        OIC_LOG_V(DEBUG, TAG, "return value of BuildCollectionLinksPayloadValue() = %s",
+                  result ? "true" : "false");
     }
     return result;
+}
+
+// Check on Content Version option whether request has vnd.ocf+cbor format instead of cbor
+bool OCRequestIsOCFContentFormat(OCEntityHandlerRequest *ehRequest, bool* isOCFContentFormat)
+{
+    if ((ehRequest == NULL)||(isOCFContentFormat == NULL))
+        return false;
+
+    OCServerRequest* serverRequest = (OCServerRequest*) ehRequest->requestHandle;
+
+    if (OC_FORMAT_VND_OCF_CBOR == serverRequest->acceptFormat)
+    {
+        *isOCFContentFormat = true;
+        OIC_LOG_V(INFO, TAG, "Content format is application/vnd.ocf+cbor");
+    }
+    else if (OC_FORMAT_CBOR == serverRequest->acceptFormat)
+    {
+        *isOCFContentFormat = false;
+        OIC_LOG_V(INFO, TAG, "Content format is application/cbor");
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Content format is neither application/vnd.ocf+cbor nor /cbor");
+        return false;
+    }
+    return true;
 }

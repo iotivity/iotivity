@@ -278,7 +278,7 @@ exit:
 /**
  * This function frees OicSecCred_t object's fields and object itself.
  */
-static void FreeCred(OicSecCred_t *cred)
+void FreeCred(OicSecCred_t *cred)
 {
     if(NULL == cred)
     {
@@ -311,6 +311,8 @@ static void FreeCred(OicSecCred_t *cred)
     //Clean eowner
     OICFree(cred->eownerID);
 #endif
+
+    cred->next = NULL;
 
     //Clean Cred node itself
     OICFree(cred);
@@ -1339,6 +1341,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
 
     OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(*cred));
     VERIFY_NOT_NULL(TAG, cred, ERROR);
+    cred->next = NULL;
 
     //CredId is assigned before appending new cred to the existing
     //credential list and updating svr database in AddCredential().
@@ -3259,9 +3262,9 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
             (0 == strcmp(temp->credUsage, usage)) && (false == temp->optionalData.revstat))
         {
 
-            if ((OIC_ENCODING_BASE64 != temp->optionalData.encoding) &&
-                (OIC_ENCODING_PEM != temp->optionalData.encoding) &&
-                (OIC_ENCODING_DER != temp->optionalData.encoding))
+            if ((OIC_ENCODING_BASE64 != temp->publicData.encoding) &&
+                (OIC_ENCODING_PEM != temp->publicData.encoding) &&
+                (OIC_ENCODING_DER != temp->publicData.encoding))
             {
                 OIC_LOG_V(WARNING, TAG, "%s: Unknown encoding type", __func__);
                 continue;
@@ -3269,12 +3272,12 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
 
             if (OIC_ENCODING_DER == desiredEncoding)
             {
-                if ((OIC_ENCODING_BASE64 == temp->optionalData.encoding) ||
-                    (OIC_ENCODING_PEM == temp->optionalData.encoding))
+                if ((OIC_ENCODING_BASE64 == temp->publicData.encoding) ||
+                    (OIC_ENCODING_PEM == temp->publicData.encoding))
                 {
                     uint8_t* buf = NULL;
                     size_t outSize = 0;
-                    int ret = ConvertPemCertToDer((const char*)temp->optionalData.data, temp->optionalData.len, &buf, &outSize);
+                    int ret = ConvertPemCertToDer((const char*)temp->publicData.data, temp->publicData.len, &buf, &outSize);
                     if (0 > ret)
                     {
                         OIC_LOG(ERROR, TAG, "Could not convert PEM cert to DER");
@@ -3297,15 +3300,15 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
                 else
                 {
                     uint8_t *savePtr = crt->data;
-                    crt->data = OICRealloc(crt->data, crt->len + temp->optionalData.len);
+                    crt->data = OICRealloc(crt->data, crt->len + temp->publicData.len);
                     if (NULL == crt->data)
                     {
                         OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
                         OICFree(savePtr);
                         return OC_STACK_NO_MEMORY;
                     }
-                    memcpy(crt->data + crt->len, temp->optionalData.data, temp->optionalData.len);
-                    crt->len += temp->optionalData.len;
+                    memcpy(crt->data + crt->len, temp->publicData.data, temp->publicData.len);
+                    crt->len += temp->publicData.len;
                 }
                 OIC_LOG_V(DEBUG, TAG, "%s found", usage);
             }
@@ -3314,15 +3317,15 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
                 /* PEM/Base64 */
                 uint8_t *pem = NULL;
                 size_t pemLen = 0;
-                if ((OIC_ENCODING_BASE64 == temp->optionalData.encoding) ||
-                    (OIC_ENCODING_PEM == temp->optionalData.encoding))
+                if ((OIC_ENCODING_BASE64 == temp->publicData.encoding) ||
+                    (OIC_ENCODING_PEM == temp->publicData.encoding))
                 {
-                    pem = temp->optionalData.data;
-                    pemLen = temp->optionalData.len;
+                    pem = temp->publicData.data;
+                    pemLen = temp->publicData.len;
                 }
                 else
                 {
-                    int ret = ConvertDerCertToPem(temp->optionalData.data, temp->optionalData.len, &pem);
+                    int ret = ConvertDerCertToPem(temp->publicData.data, temp->publicData.len, &pem);
                     if (0 > ret)
                     {
                         OIC_LOG_V(ERROR, TAG, "Failed converting DER cert to PEM: %d", ret);
@@ -3349,6 +3352,29 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
         OIC_LOG_V(WARNING, TAG, "%s not found", usage);
         return OC_STACK_NO_RESOURCE;
     }
+
+    if (OIC_ENCODING_PEM == desiredEncoding)
+    {
+        /* mbedtls_x509_crt_parse requires a null terminator to determine that the format is PEM */
+        size_t crtLength = crt->len;
+        bool addNull = (crt->data[crtLength - 1] != 0);
+
+        if (addNull)
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: adding null terminator at the end of the cert", __func__);
+            uint8_t *oldData = crt->data;
+            crt->data = OICRealloc(crt->data, crtLength + 1);
+            if (NULL == crt->data)
+            {
+                OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
+                OICFree(oldData);
+                return OC_STACK_NO_MEMORY;
+            }
+            crt->data[crtLength] = 0;
+            crt->len = crtLength + 1;
+        }
+    }
+
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return OC_STACK_OK;
 }
@@ -3603,11 +3629,25 @@ void GetDerKey(ByteArray_t * key, const char * usage)
                 /* Convert PEM to DER */
                 const char* pemHeader = "-----BEGIN EC PRIVATE KEY-----"; /* no newlines allowed here */
                 const char* pemFooter = "-----END EC PRIVATE KEY-----";
+                uint8_t *data = temp->privateData.data;
+                size_t length = temp->privateData.len;
+                bool freeData = false;
 
-                if (temp->privateData.data[temp->privateData.len - 1] != 0)
+                if (data[length - 1] != 0)
                 {
-                    OIC_LOG(ERROR, TAG, "Bad PEM private key data (not null terminated)");
-                    return;
+                    /* Add a null terminator, because mbedtls_pem_read_buffer requires it */
+                    OIC_LOG_V(DEBUG, TAG, "%s: adding null terminator to privateData", __func__);
+
+                    data = OICMalloc(length + 1);
+                    if (NULL == data)
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                        return;
+                    }
+
+                    memcpy(data, temp->privateData.data, length);
+                    data[length] = 0;
+                    freeData = true;
                 }
 
                 mbedtls_pem_context ctx;
@@ -3615,7 +3655,13 @@ void GetDerKey(ByteArray_t * key, const char * usage)
                 size_t usedLen;
 
                 mbedtls_pem_init(&ctx);
-                ret = mbedtls_pem_read_buffer(&ctx, pemHeader, pemFooter, (const uint8_t*)temp->privateData.data, NULL, 0, &usedLen);
+                ret = mbedtls_pem_read_buffer(&ctx, pemHeader, pemFooter, data, NULL, 0, &usedLen);
+
+                if (freeData)
+                {
+                    OICFree(data);
+                }
+
                 if (ret != 0)
                 {
                     OIC_LOG_V(ERROR, TAG, "%s: failed reading PEM key", __func__);

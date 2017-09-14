@@ -417,6 +417,7 @@ public:
         auto request = make_shared<OCResourceRequest>();
 
         OCEntityHandlerRequest ocEntityHandlerRequest;
+
         memset(&ocEntityHandlerRequest, 0, sizeof(OCEntityHandlerRequest));
         OC::MessageContainer mc;
 
@@ -437,7 +438,8 @@ public:
         formResourceRequest(OC_REQUEST_FLAG, &ocEntityHandlerRequest, request);
 
         OCRepPayloadDestroy((OCRepPayload *)ocEntityHandlerRequest.payload);
-        OICFreeAndSetToNull((void**) &ocEntityHandlerRequest.query);
+
+        delete[] ocEntityHandlerRequest.query;
 
         return request;
     }

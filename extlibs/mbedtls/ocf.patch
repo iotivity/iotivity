@@ -1,13 +1,15 @@
-From 43cd2295dcf0f83f2f11539050e3769d3fe79d7c Mon Sep 17 00:00:00 2001
-From: Kevin Kane <kkane@microsoft.com>
-Date: Thu, 18 May 2017 09:12:14 -0700
-Subject: [PATCH] With patches
+From 733d8f0e5ada9a77a4fbc917c9e0fd9366d720e4 Mon Sep 17 00:00:00 2001
+From: Dan Mihai <Daniel.Mihai@microsoft.com>
+Date: Thu, 17 Aug 2017 21:23:23 -0700
+Subject: [PATCH] Avoid MBEDTLS_ERR_ASN1_OUT_OF_DATA error
 
+Missing public key was already detected by checking for an
+MBEDTLS_ERR_ASN1_UNEXPECTED_TAG error code. But, (p == end) also means
+that the public key is missing.
 ---
  include/mbedtls/certs.h                     |   4 +
  include/mbedtls/check_config.h              |   5 +
  include/mbedtls/compat-1.3.h                |   5 +
- include/mbedtls/config.h                    |  43 +++++-
  include/mbedtls/net_sockets.h               |  19 ++-
  include/mbedtls/ssl.h                       |  50 ++++++-
  include/mbedtls/ssl_ciphersuites.h          |   6 +-
@@ -23,6 +25,7 @@ Subject: [PATCH] With patches
  library/md.c                                |   3 +-
  library/net_sockets.c                       |  34 ++---
  library/pkcs5.c                             |   5 +-
+ library/pkparse.c                           |  53 +++----
  library/rsa.c                               |   5 +-
  library/ssl_ciphersuites.c                  |  18 +++
  library/ssl_cli.c                           | 144 +++++++++++++-----
@@ -45,7 +48,7 @@ Subject: [PATCH] With patches
  tests/suites/test_suite_x509parse.data      |  16 ++
  tests/suites/test_suite_x509write.data      |  12 ++
  tests/suites/test_suite_x509write.function  | 125 ++++++++++++++++
- 41 files changed, 1376 insertions(+), 117 deletions(-)
+ 41 files changed, 1362 insertions(+), 141 deletions(-)
  create mode 100644 tests/data_files/server1-bothnames.crt
  create mode 100644 tests/data_files/server1-directoryname.crt
  create mode 100644 tests/data_files/server1-dnsname.crt
@@ -112,88 +115,6 @@ index af51b5f8..71af7eed 100644
  #define TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA MBEDTLS_TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA
  #define TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA MBEDTLS_TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA
  #define TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256 MBEDTLS_TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256
-diff --git a/include/mbedtls/config.h b/include/mbedtls/config.h
-index 0f7e29bc..7e840cb2 100644
---- a/include/mbedtls/config.h
-+++ b/include/mbedtls/config.h
-@@ -648,6 +648,21 @@
- #define MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED
- 
- /**
-+ * \def MBEDTLS_KEY_EXCHANGE_ECDH_ANON_ENABLED
-+ *
-+ * Enable the ECDHE-ANON based ciphersuite modes in SSL / TLS.
-+ *
-+ * Requires: MBEDTLS_ECDH_C
-+ *
-+ *
-+ * This enables the following ciphersuites (if other requisites are
-+ * enabled as well):
-+ *      MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256
-+ */
-+#define MBEDTLS_KEY_EXCHANGE_ECDH_ANON_ENABLED
-+
-+
-+/**
-  * \def MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
-  *
-  * Enable the ECDHE-ECDSA based ciphersuite modes in SSL / TLS.
-@@ -1233,7 +1248,7 @@
-  *
-  * Comment this macro to disable support for SSL session tickets
-  */
--#define MBEDTLS_SSL_SESSION_TICKETS
-+//#define MBEDTLS_SSL_SESSION_TICKETS
- 
- /**
-  * \def MBEDTLS_SSL_EXPORT_KEYS
-@@ -1360,6 +1375,21 @@
- #define MBEDTLS_X509_RSASSA_PSS_SUPPORT
- 
- /**
-+ * \def MBEDTLS_X509_EXPANDED_SUBJECT_ALT_NAME_SUPPORT
-+ *
-+ * Enable parsing of all supported subtypes of the Subject Alternative Name
-+ * extension. When enabled, the subject_alt_names field of mbedtls_x509_crt
-+ * is defined as an mbedtls_x509_subject_alt_name_sequence, each element of
-+ * which can describe a different subtype of the GeneralName choice as defined
-+ * by the standard.
-+ *
-+ * Comment this macro to only support dNSName subtypes, and to define the
-+ * subject_alt_names field as an mbedtls_x509_sequence. Any other subtypes will
-+ * be ignored. This was the behavior in earlier versions.
-+ */
-+#define MBEDTLS_X509_EXPANDED_SUBJECT_ALT_NAME_SUPPORT
-+
-+/**
-  * \def MBEDTLS_ZLIB_SUPPORT
-  *
-  * If set, the SSL/TLS module uses ZLIB to support compression and
-@@ -1473,6 +1503,7 @@
-  *      MBEDTLS_TLS_PSK_WITH_AES_128_GCM_SHA256
-  *      MBEDTLS_TLS_PSK_WITH_AES_128_CBC_SHA256
-  *      MBEDTLS_TLS_PSK_WITH_AES_128_CBC_SHA
-+ *      MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256
-  *
-  * PEM_PARSE uses AES for decrypting encrypted keys.
-  */
-@@ -1949,6 +1980,16 @@
- //#define MBEDTLS_MEMORY_BUFFER_ALLOC_C
- 
- /**
-+ * \def MBEDTLS_HAVE_WINSOCK2
-+ *
-+ * Windows builds using winsock2.h will need this macro to correctly resognize
-+ * the type used for sockets.
-+ *
-+ * Uncomment if your system has winsock2.h.
-+ */
-+#define MBEDTLS_HAVE_WINSOCK2
-+
-+/**
-  * \def MBEDTLS_NET_C
-  *
-  * Enable the TCP and UDP over IPv6/IPv4 networking routines.
 diff --git a/include/mbedtls/net_sockets.h b/include/mbedtls/net_sockets.h
 index de335526..a835534d 100644
 --- a/include/mbedtls/net_sockets.h
@@ -774,6 +695,73 @@ index e28d5a84..7405fc3f 100644
 +    size_t j;
      unsigned char *out_p = output;
      unsigned char counter[4];
+ 
+diff --git a/library/pkparse.c b/library/pkparse.c
+index efdf4374..fcd5ea82 100644
+--- a/library/pkparse.c
++++ b/library/pkparse.c
+@@ -793,34 +793,37 @@ static int pk_parse_key_sec1_der( mbedtls_ecp_keypair *eck,
+          * Is 'publickey' present? If not, or if we can't read it (eg because it
+          * is compressed), create it from the private key.
+          */
+-        if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
+-                        MBEDTLS_ASN1_CONTEXT_SPECIFIC | MBEDTLS_ASN1_CONSTRUCTED | 1 ) ) == 0 )
++        if( p != end )
+         {
+-            end2 = p + len;
+-
+-            if( ( ret = mbedtls_asn1_get_bitstring_null( &p, end2, &len ) ) != 0 )
+-                return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
+-
+-            if( p + len != end2 )
+-                return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT +
+-                        MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
+-
+-            if( ( ret = pk_get_ecpubkey( &p, end2, eck ) ) == 0 )
+-                pubkey_done = 1;
+-            else
++            if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
++                            MBEDTLS_ASN1_CONTEXT_SPECIFIC | MBEDTLS_ASN1_CONSTRUCTED | 1 ) ) == 0 )
+             {
+-                /*
+-                 * The only acceptable failure mode of pk_get_ecpubkey() above
+-                 * is if the point format is not recognized.
+-                 */
+-                if( ret != MBEDTLS_ERR_ECP_FEATURE_UNAVAILABLE )
+-                    return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT );
++                end2 = p + len;
++
++                if( ( ret = mbedtls_asn1_get_bitstring_null( &p, end2, &len ) ) != 0 )
++                    return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
++
++                if( p + len != end2 )
++                    return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT +
++                            MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
++
++                if( ( ret = pk_get_ecpubkey( &p, end2, eck ) ) == 0 )
++                    pubkey_done = 1;
++                else
++                {
++                    /*
++                     * The only acceptable failure mode of pk_get_ecpubkey() above
++                     * is if the point format is not recognized.
++                     */
++                    if( ret != MBEDTLS_ERR_ECP_FEATURE_UNAVAILABLE )
++                        return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT );
++                }
++            }
++            else if( ret != MBEDTLS_ERR_ASN1_UNEXPECTED_TAG )
++            {
++                mbedtls_ecp_keypair_free( eck );
++                return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
+             }
+-        }
+-        else if( ret != MBEDTLS_ERR_ASN1_UNEXPECTED_TAG )
+-        {
+-            mbedtls_ecp_keypair_free( eck );
+-            return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
+         }
+     }
  
 diff --git a/library/rsa.c b/library/rsa.c
 index 40ef2a94..29d7a5b3 100644
@@ -2849,5 +2837,5 @@ index 89be31f9..184ac2ce 100644
  void mbedtls_x509_string_to_names( char *name, char *parsed_name, int result )
  {
 -- 
-2.12.2.gvfs.2.14.gfbee0b9
+2.11.0.windows.1
 

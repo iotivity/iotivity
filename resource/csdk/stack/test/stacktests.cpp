@@ -29,6 +29,7 @@ extern "C"
     #include "oic_string.h"
     #include "oic_time.h"
     #include "ocresourcehandler.h"
+    #include "occollection.h"
 }
 
 #include <gtest/gtest.h>
@@ -2979,17 +2980,17 @@ TEST(StackZoneId, getZoneIdWithInvalidParams)
 }
 #endif
 
-TEST(LinksPayloadValue, createLinksPayloadValue)
+TEST(LinksPayloadValue, BuildCollectionLinksPayloadValue)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OIC_LOG(INFO, TAG, "Starting createLinksPayloadValue test");
     InitStack(OC_SERVER);
 
     size_t numResources = 0;
-    uint8_t inBitmap[3] = { OC_DISCOVERABLE | OC_OBSERVABLE,
-                            OC_DISCOVERABLE | OC_OBSERVABLE,
+    uint8_t parentBitmap = OC_DISCOVERABLE | OC_OBSERVABLE;
+    uint8_t inBitmap[2] = { OC_DISCOVERABLE | OC_OBSERVABLE,
                             OC_DISCOVERABLE };
-    int64_t outBitmap[3] = {0};
+    int64_t outBitmap[2] = { 0 };
 
     OCResourceHandle containerHandle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&containerHandle,
@@ -2998,8 +2999,7 @@ TEST(LinksPayloadValue, createLinksPayloadValue)
         "/a/kitchen",
         0,
         NULL,
-        inBitmap[0]));
-    ++numResources;
+        parentBitmap));
 
     OCResourceHandle handle0;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
@@ -3008,7 +3008,7 @@ TEST(LinksPayloadValue, createLinksPayloadValue)
         "/a/led0",
         0,
         NULL,
-        inBitmap[1]));
+        inBitmap[0]));
     ++numResources;
 
     OCResourceHandle handle1;
@@ -3018,7 +3018,7 @@ TEST(LinksPayloadValue, createLinksPayloadValue)
         "/a/led1",
         0,
         NULL,
-        inBitmap[2]));
+        inBitmap[1]));
     ++numResources;
 
     EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle0));
@@ -3028,11 +3028,23 @@ TEST(LinksPayloadValue, createLinksPayloadValue)
     EXPECT_EQ(handle1, OCGetResourceHandleFromCollection(containerHandle, 1));
 
     OCRepPayloadValue* linksRepPayloadValue;
-    OCDevAddr* devAddr = NULL;
-    EXPECT_EQ(OC_STACK_OK, OCLinksPayloadValueCreate("/a/kitchen", &linksRepPayloadValue, devAddr));
+    OCRepPayload *collectionPayload = NULL;
+    OCRepPayload *policyMap = NULL;
+    OCRepPayload **linksMap = NULL;
+
+    OCDevAddr* devAddr = (OCDevAddr*)OICCalloc(1, sizeof(OCDevAddr));
+    devAddr->adapter = OC_ADAPTER_IP;
+    CAEndpoint_t *info = NULL;
+    size_t size = 0;
+    CAGetNetworkInformation(&info, &size);
+    devAddr->ifindex = info->ifindex;
+
+    //check for OIC1.1 logic
+    ASSERT_TRUE(BuildCollectionLinksPayloadValue("/a/kitchen", 
+                           &linksRepPayloadValue, false, devAddr));
     ASSERT_TRUE(NULL != linksRepPayloadValue);
 
-    OCRepPayload *collectionPayload = OCRepPayloadCreate();
+    collectionPayload = OCRepPayloadCreate();
     ASSERT_TRUE(NULL != collectionPayload);
 
     size_t dim[MAX_REP_ARRAY_DEPTH] = { numResources, 0, 0 };
@@ -3040,8 +3052,6 @@ TEST(LinksPayloadValue, createLinksPayloadValue)
     ASSERT_TRUE(OCRepPayloadSetPropObjectArrayAsOwner(collectionPayload, OC_RSRVD_LINKS,
                                               linksRepPayloadValue->arr.objArray, dim));
 
-    OCRepPayload *policyMap = NULL;
-    OCRepPayload **linksMap = NULL;
     ASSERT_TRUE(OCRepPayloadGetPropObjectArray(collectionPayload, OC_RSRVD_LINKS, &linksMap, dim));
 
     for (size_t i = 0; i < numResources; i++)
@@ -3054,14 +3064,29 @@ TEST(LinksPayloadValue, createLinksPayloadValue)
         {
 #ifdef TCP_ADAPTER
 #ifdef __WITH_TLS__
-            // tls
-            int64_t outTlsPort = 0;
-            ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_TLS_PORT, &outTlsPort));
+            bool isSecure = false;
+            ASSERT_TRUE(OCRepPayloadGetPropBool(policyMap, OC_RSRVD_SECURE, &isSecure));
+            if (isSecure)
+            {
+                // tls
+                int64_t outTlsPort = 0;
+                ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_TLS_PORT, &outTlsPort));
 
-            uint16_t tlsPort = 0;
-            GetTCPPortInfo(devAddr, &tlsPort, true);
+                uint16_t tlsPort = 0;
+                GetTCPPortInfo(devAddr, &tlsPort, true);
+                EXPECT_EQ(tlsPort, outTlsPort);
+            }
+            else
+            {
+                // tcp
+                int64_t outTcpPort = 0;
+                ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_TCP_PORT, &outTcpPort));
 
-            EXPECT_EQ(tlsPort, outTlsPort);
+                uint16_t tcpPort = 0;
+                GetTCPPortInfo(devAddr, &tcpPort, false);
+
+                EXPECT_EQ(tcpPort, outTcpPort);
+            }
 #else
             // tcp
             int64_t outTcpPort = 0;
@@ -3075,6 +3100,76 @@ TEST(LinksPayloadValue, createLinksPayloadValue)
 #endif
         }
         OCRepPayloadDestroy(linksMap[i]);
+    }
+
+    OICFree(linksMap);
+    OCRepPayloadDestroy(policyMap);
+    OCRepPayloadDestroy(collectionPayload);
+
+    //check for OCF1.0 logic
+    ASSERT_TRUE(BuildCollectionLinksPayloadValue("/a/kitchen",
+                           &linksRepPayloadValue, true, devAddr));
+    ASSERT_TRUE(NULL != linksRepPayloadValue);
+
+    collectionPayload = OCRepPayloadCreate();
+    ASSERT_TRUE(NULL != collectionPayload);
+
+    dim[1] = dim[2] = 0;
+
+    ASSERT_TRUE(OCRepPayloadSetPropObjectArrayAsOwner(collectionPayload, OC_RSRVD_LINKS,
+        linksRepPayloadValue->arr.objArray, dim));
+
+    ASSERT_TRUE(OCRepPayloadGetPropObjectArray(collectionPayload, OC_RSRVD_LINKS, &linksMap, dim));
+
+    for (size_t i = 0; i < numResources; i++)
+    {
+        ASSERT_TRUE(OCRepPayloadGetPropObject(linksMap[i], OC_RSRVD_POLICY, &policyMap));
+        ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_BITMAP, &outBitmap[i]));
+        EXPECT_EQ(inBitmap[i], outBitmap[i]);
+
+        size_t epsDim[MAX_REP_ARRAY_DEPTH] = { 0 };
+        OCRepPayload **epsMap = NULL;
+        ASSERT_TRUE(OCRepPayloadGetPropObjectArray(linksMap[i], OC_RSRVD_ENDPOINTS, &epsMap, epsDim));
+
+        size_t count = calcDimTotal(epsDim);
+        size_t coap_scheme_cnt[4] = { 0, 0, 0, 0 };
+        const char* coap_scheme[4] = { "coap", "coaps://", "coap+tcp://", "coaps+tcp://" };
+        char* outUri;
+        for (size_t k = 0; k < count; k++)
+        {
+            ASSERT_TRUE(OCRepPayloadGetPropString(epsMap[k], OC_RSRVD_ENDPOINT, &outUri));
+
+            if (!strncmp(outUri, coap_scheme[3], strlen(coap_scheme[3])))
+                coap_scheme_cnt[3]++;
+            else if (!strncmp(outUri, coap_scheme[2], strlen(coap_scheme[2])))
+                coap_scheme_cnt[2]++;
+            else if (!strncmp(outUri, coap_scheme[1], strlen(coap_scheme[1])))
+                coap_scheme_cnt[1]++;
+            else if (!strncmp(outUri, coap_scheme[0], strlen(coap_scheme[0])))
+                coap_scheme_cnt[0]++;
+            else
+            {
+                ASSERT_TRUE(false);
+                OIC_LOG_V(ERROR, TAG, "ep uri = %s \n", outUri);
+            }
+
+            OCRepPayloadDestroy(epsMap[k]);
+        }
+
+        ASSERT_GE(coap_scheme_cnt[0], (size_t) 1);
+#ifdef __WITH_TLS__
+        ASSERT_GE(coap_scheme_cnt[1], (size_t) 1);
+#ifdef TCP_ADAPTER
+        ASSERT_GE(coap_scheme_cnt[3], (size_t) 1);
+#endif
+#else
+#ifdef TCP_ADAPTER
+        ASSERT_GE(coap_scheme_cnt[2], (size_t) 1);
+#endif
+#endif
+
+        OCRepPayloadDestroy(linksMap[i]);
+        OICFree(epsMap);
     }
 
     OICFree(linksMap);

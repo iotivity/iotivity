@@ -530,8 +530,7 @@ OCStackResult OC_CALL OCProvisionCertificate(void *ctx,
     const char* pemCert,
     OCProvisionResultCB resultCallback)
 {
-    return SRPProvisionCredentials(ctx, SIGNED_ASYMMETRIC_KEY, 0,
-        pDev, NULL, pemCert, NULL, NULL, resultCallback);
+    return SRPProvisionCertificate(ctx, pDev, pemCert, resultCallback);
 }
 #endif
 
