@@ -1264,7 +1264,7 @@ exit:
  * @param   errorInfo [IN] Error information from the endpoint.
  * @return  NONE
  */
-static void MOTDtlsHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
+static CAResult_t MOTDtlsHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 
@@ -1301,7 +1301,8 @@ static void MOTDtlsHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t
     }
 
 exit:
-    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+    OIC_LOG_V(INFO, TAG, "Out %s", __func__);
+    return CA_STATUS_OK;
 }
 
 /**

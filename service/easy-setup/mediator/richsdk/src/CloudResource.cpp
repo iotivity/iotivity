@@ -54,12 +54,59 @@ namespace OIC
             }
         }
 
+        int CloudResource::GetOCFServerVersion()
+        {
+            OIC_LOG (DEBUG, ES_CLOUD_RES_TAG, "GetOCFServerVersion IN");
+
+            HeaderOptions headerOptions = m_ocResource->getServerHeaderOptions();
+            if (headerOptions.size() == 0)
+            {
+                OIC_LOG (ERROR, ES_CLOUD_RES_TAG, "No header option exists");
+            }
+            else
+            {
+                for (auto it = headerOptions.begin(); it != headerOptions.end(); ++it)
+                {
+                   if (it->getOptionID() == OCF_CONTENT_FORMAT_VERSION_OPTION_ID) // OPTION_CONTENT_VERSION
+                   {
+                        size_t dataLength = it->getOptionData().length();
+                        if (dataLength == 0)
+                        {
+                            OIC_LOG (ERROR, ES_CLOUD_RES_TAG,
+                                "GetOCFServerVersion: version value not found!");
+
+                            // Content Format Version Header Option ID exist but not value.
+                            // As OIC server don't use this header option ID, assuming as OCF Server.
+                            return 1;
+                        }
+
+                        int version = (it->getOptionData().c_str()[0]) * 256;
+                        OIC_LOG_V (INFO, ES_CLOUD_RES_TAG, "GetOCFServerVersion: Version [%d]", version);
+
+                        if(OCF_CONTENT_FORMAT_VERSION_VALUE == version)
+                        {
+                            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG,
+                                "GetOCFServerVersion: Version matches OCF 1.0");
+                        }
+
+                        return version;
+                   }
+                }
+            }
+
+            OIC_LOG (DEBUG, ES_CLOUD_RES_TAG, "GetOCFServerVersion OUT version option not found");
+            return 0;
+        }
 
         void CloudResource::provisionProperties(const CloudProp& cloudProp)
         {
             OIC_LOG(DEBUG, ES_CLOUD_RES_TAG, "provisionProperties IN");
 
-            OCRepresentation provisioningRepresentation = cloudProp.toOCRepresentation();
+            int version = GetOCFServerVersion();
+            CloudProp cloudPropCopy = cloudProp;
+            cloudPropCopy.updateOCRepresentation(version);
+
+            OCRepresentation provisioningRepresentation = cloudPropCopy.toOCRepresentation();
 
             ESCloudResourceCb cb = std::bind(&CloudResource::onCloudProvResponseSafetyCb,
                             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,

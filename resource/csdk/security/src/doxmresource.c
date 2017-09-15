@@ -1050,8 +1050,8 @@ OCStackResult DoxmUpdateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t*
  * @param[out]   object           remote device information.
  * @param[out]   errorInfo        CA Error information.
  */
-void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
-                                const CAErrorInfo_t *errorInfo)
+CAResult_t MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
+                                        const CAErrorInfo_t *errorInfo)
 {
     OIC_LOG(DEBUG, TAG, "IN MultipleOwnerDTLSHandshakeCB");
 
@@ -1064,14 +1064,14 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
             if (!gDoxm)
             {
                 OIC_LOG_V(WARNING, TAG, "%s: gDoxm is NULL", __func__);
-                return;
+                return CA_HANDLE_ERROR_OTHER_MODULE;
             }
 
             if (0 == memcmp(authenticationSubOwnerInfo.identity.id, gDoxm->owner.id,
                             authenticationSubOwnerInfo.identity.id_length))
             {
                 OIC_LOG(WARNING, TAG, "Super owner tried MOT, this request will be ignored.");
-                return;
+                return CA_HANDLE_ERROR_OTHER_MODULE;
             }
 
             OicSecSubOwner_t* subOwnerInst = NULL;
@@ -1094,14 +1094,14 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
                     if (sizeof(subOwnerInst->uuid.id) < authenticationSubOwnerInfo.identity.id_length)
                     {
                         OIC_LOG(ERROR, TAG, "Identity id is too long");
-                        return;
+                        return CA_HANDLE_ERROR_OTHER_MODULE;
                     }
                     memcpy(subOwnerInst->uuid.id, authenticationSubOwnerInfo.identity.id,
                            authenticationSubOwnerInfo.identity.id_length);
                     if(OC_STACK_OK != ConvertUuidToStr(&subOwnerInst->uuid, &strUuid))
                     {
                         OIC_LOG(ERROR, TAG, "Failed to allocate memory.");
-                        return;
+                        return CA_HANDLE_ERROR_OTHER_MODULE;
                     }
                     OIC_LOG_V(DEBUG, TAG, "Adding New SubOwner(%s)", strUuid);
                     OICFree(strUuid);
@@ -1125,6 +1125,7 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
     }
 
     OIC_LOG(DEBUG, TAG, "OUT MultipleOwnerDTLSHandshakeCB");
+    return CA_STATUS_OK;
 }
 #endif //MULTIPLE_OWNER
 #endif // defined(__WITH_DTLS__) || defined (__WITH_TLS__)
@@ -1169,7 +1170,7 @@ static bool ValidateOxmsel(const OicSecOxm_t *supportedMethods,
 }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-static void DoxmDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
+static CAResult_t DoxmDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s(%p, %p)", __func__, endpoint, info);
 
@@ -1184,19 +1185,404 @@ static void DoxmDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_
     }
 
     OIC_LOG_V(DEBUG, TAG, "Out %s(%p, %p)", __func__, endpoint, info);
+    return CA_STATUS_OK;
 }
 
-static void RegisterOTMSslHandshakeCallback(CAErrorCallback callback)
+static void RegisterOTMSslHandshakeCallback(CAHandshakeErrorCallback callback)
 {
     OC_VERIFY(CA_STATUS_OK == CAregisterSslHandshakeCallback(callback));
 }
+
+#ifdef MULTIPLE_OWNER
+void HandleDoxmPostRequestMom(OicSecDoxm_t *newDoxm, OCEntityHandlerRequest *ehRequest)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+    //handle mom
+    if (gDoxm->mom)
+    {
+        if (OIC_MULTIPLE_OWNER_DISABLE != gDoxm->mom->mode)
+        {
+            CAResult_t caRes = CA_STATUS_FAILED;
+            if (OIC_PRECONFIG_PIN == gDoxm->oxmSel || OIC_RANDOM_DEVICE_PIN == gDoxm->oxmSel)
+            {
+                caRes = CAEnableAnonECDHCipherSuite(false);
+                VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+
+                RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
+                caRes = CASelectCipherSuite((uint16_t)MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256,
+                                            (CATransportAdapter_t)ehRequest->devAddr.adapter);
+                VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                OIC_LOG(INFO, TAG, "ECDHE_PSK CipherSuite will be used for MOT");
+
+                //Set the device id to derive temporal PSK
+                SetUuidForPinBasedOxm(&gDoxm->deviceID);
+            }
+            else
+            {
+                OIC_LOG(WARNING, TAG, "Unsupported OxM for Multiple Ownership Transfer.");
+            }
+
+            CAregisterSslHandshakeCallback(MultipleOwnerDTLSHandshakeCB);
+        }
+        else
+        {
+            //if MOM is disabled, revert the DTLS handshake callback
+            if (CA_STATUS_OK != CAregisterSslHandshakeCallback(NULL))
+            {
+                OIC_LOG(WARNING, TAG, "Error while revert the DTLS Handshake Callback.");
+            }
+        }
+    }
+
+    if (newDoxm->subOwners)
+    {
+        OicSecSubOwner_t *subowner = NULL;
+        OicSecSubOwner_t *temp = NULL;
+
+        OIC_LOG(DEBUG, TAG, "dectected 'subowners' property");
+
+        if (gDoxm->subOwners)
+        {
+            LL_FOREACH_SAFE(gDoxm->subOwners, subowner, temp)
+            {
+                LL_DELETE(gDoxm->subOwners, subowner);
+                OICFree(subowner);
+            }
+        }
+
+        subowner = NULL;
+        temp = NULL;
+        LL_FOREACH_SAFE(newDoxm->subOwners, subowner, temp)
+        {
+            LL_DELETE(newDoxm->subOwners, subowner);
+            LL_APPEND(gDoxm->subOwners, subowner);
+        }
+    }
+exit:
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+}
+#endif //MULTIPLE_OWNER
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
-static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRequest)
+int HandleDoxmPostRequestSVR()
 {
-    OIC_LOG (DEBUG, TAG, "Doxm EntityHandle  processing POST request");
+    OCStackResult ownerRes = SetAclRownerId(&gDoxm->owner);
+    if (OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: set acl RownerId", __func__);
+        return 1;
+    }
+    ownerRes = SetCredRownerId(&gDoxm->owner);
+    if (OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: set cred RownerId", __func__);
+        return 1;
+    }
+    ownerRes = SetPstatRownerId(&gDoxm->owner);
+    if (OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: set pstat RownerId", __func__);
+        return 1;
+    }
+    ownerRes = SetDpairingRownerId(&gDoxm->owner);
+    if (OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: set dpairing RownerId", __func__);
+        return 1;
+    }
+    ownerRes = SetPconfRownerId(&gDoxm->owner);
+    if (OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: set pconf RownerId", __func__);
+        return 1;
+    }
+
+    return 0;
+}
+
+OCEntityHandlerResult HandleDoxmPostRequestUpdatePS(bool fACE)
+{
+    //Update new state in persistent storage
+    if (UpdatePersistentStorage(gDoxm) == true)
+    {
+        //Update default ACE of security resource to prevent anonymous user access.
+        if (fACE)
+        {
+            if (OC_STACK_OK == UpdateDefaultSecProvACE())
+            {
+                return  OC_EH_OK;
+            }
+            else
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: Failed to remove default ACL for security provisioning", __func__);
+                return OC_EH_ERROR;
+            }
+        }
+        return OC_EH_OK;
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Failed to update DOXM in persistent storage", __func__);
+        return OC_EH_ERROR;
+    }
+}
+
+OCEntityHandlerResult HandleDoxmPostRequestJustWork(OicSecDoxm_t *newDoxm,
+        OCEntityHandlerRequest *ehRequest,
+        bool isDuplicatedMsg)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+    OCEntityHandlerResult ehRet = OC_EH_OK;
+
+#if !(defined(__WITH_DTLS__) || defined(__WITH_TLS__))
+    OC_UNUSED(isDuplicatedMsg);
+    OC_UNUSED(ehRequest);
+#endif // not __WITH_DTLS__ and not __WITH_TLS__
+
+    if (IsNilUuid(&newDoxm->owner))
+    {
+        gDoxm->oxmSel = newDoxm->oxmSel;
+        /*
+        * If current state of the device is un-owned, enable
+        * anonymous ECDH cipher in tinyDTLS so that Provisioning
+        * tool can initiate JUST_WORKS ownership transfer process.
+        */
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+        RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
+        OIC_LOG(INFO, TAG, "Doxm EntityHandle  enabling AnonECDHCipherSuite");
+        ehRet = (CAEnableAnonECDHCipherSuite(true) == CA_STATUS_OK) ? OC_EH_OK : OC_EH_ERROR;
+#endif // __WITH_DTLS__ or __WITH_TLS__
+        goto exit;
+    }
+    else
+    {
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+        //Save the owner's UUID to derive owner credential
+        memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
+
+        /*
+         * Disable anonymous ECDH cipher in tinyDTLS since device is now
+         * in owned state.
+         */
+        RegisterOTMSslHandshakeCallback(NULL);
+        CAResult_t caRes = CA_STATUS_OK;
+        caRes = CAEnableAnonECDHCipherSuite(false);
+        VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+        OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+
+        //In case of Mutual Verified Just-Works, verify mutualVerifNum
+        if (OIC_MV_JUST_WORKS == newDoxm->oxmSel && false == newDoxm->owned &&
+            false == isDuplicatedMsg)
+        {
+            uint8_t preMutualVerifNum[OWNER_PSK_LENGTH_128] = {0};
+            uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN] = {0};
+            OicUuid_t deviceID = {.id = {0}};
+
+            //Generate mutualVerifNum
+            OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
+
+            char label[LABEL_LEN] = {0};
+            snprintf(label, LABEL_LEN, "%s%s", MUTUAL_VERIF_NUM, OXM_MV_JUST_WORKS);
+            if (OC_STACK_OK != GetDoxmDeviceID(&deviceID))
+            {
+                OIC_LOG(ERROR, TAG, "Error while retrieving Owner's device ID");
+                ehRet = OC_EH_ERROR;
+                goto exit;
+
+            }
+
+            CAResult_t pskRet = CAGenerateOwnerPSK((CAEndpoint_t *)&request->devAddr,
+                                                   (uint8_t *)label,
+                                                   strlen(label),
+                                                   gDoxm->owner.id, sizeof(gDoxm->owner.id),
+                                                   gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id),
+                                                   preMutualVerifNum, OWNER_PSK_LENGTH_128);
+            if (CA_STATUS_OK != pskRet)
+            {
+                OIC_LOG(WARNING, TAG, "Failed to remove the invaild owner credential");
+                ehRet = OC_EH_ERROR;
+                goto exit;
+
+            }
+
+            memcpy(mutualVerifNum, preMutualVerifNum + OWNER_PSK_LENGTH_128 - sizeof(mutualVerifNum),
+                   sizeof(mutualVerifNum));
+
+            //Wait for user confirmation
+            if (OC_STACK_OK != VerifyOwnershipTransfer(mutualVerifNum, DISPLAY_NUM | USER_CONFIRM))
+            {
+                ehRet = OC_EH_NOT_ACCEPTABLE;
+            }
+            else
+            {
+                ehRet = OC_EH_OK;
+            }
+        }
+#endif // __WITH_DTLS__ or __WITH_TLS__
+    }
+exit:
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+    return ehRet;
+}
+
+OCEntityHandlerResult HandleDoxmPostRequestRandomPin(OicSecDoxm_t *newDoxm,
+        OCEntityHandlerRequest *ehRequest,
+        bool isDuplicatedMsg)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+    OCEntityHandlerResult ehRet = OC_EH_OK;
+
+#if !(defined(__WITH_DTLS__) || defined(__WITH_TLS__))
+    OC_UNUSED(isDuplicatedMsg);
+    OC_UNUSED(ehRequest);
+#endif // not __WITH_DTLS__ and not __WITH_TLS__
+
+    if (IsNilUuid(&newDoxm->owner))
+    {
+        gDoxm->oxmSel = newDoxm->oxmSel;
+        /*
+        * If current state of the device is un-owned, enable
+        * ECDHE_PSK cipher so that the Provisioning tool can
+        * initiate the ownership transfer.
+        */
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+        CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
+        VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+        OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+
+        RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
+        caRes = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256,
+                                    (CATransportAdapter_t)ehRequest->devAddr.adapter);
+        VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+
+        if (!isDuplicatedMsg)
+        {
+            char ranPin[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
+            if (OC_STACK_OK == GeneratePin(ranPin, sizeof(ranPin)))
+            {
+                //Set the device id to derive temporal PSK
+                SetUuidForPinBasedOxm(&gDoxm->deviceID);
+
+                /**
+                 * Since PSK will be used directly by DTLS layer while PIN based ownership transfer,
+                 * Credential should not be saved into SVR.
+                 * For this reason, use a temporary get_psk_info callback to random PIN OxM.
+                 */
+                caRes = CAregisterPskCredentialsHandler(GetDtlsPskForRandomPinOxm);
+                VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                ehRet = OC_EH_OK;
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "Failed to generate random PIN");
+                ehRet = OC_EH_ERROR;
+            }
+        }
+#endif // __WITH_DTLS__ or __WITH_TLS__
+    }
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    else
+    {
+        //Save the owner's UUID to derive owner credential
+        memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
+
+        // In case of random-pin based OTM, close the PIN display if callback is registered.
+        if (!isDuplicatedMsg)
+        {
+            ClosePinDisplay();
+        }
+    }
+#endif // __WITH_DTLS__ or __WITH_TLS__
+    goto exit;
+exit:
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+    return ehRet;
+}
+
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+OCEntityHandlerResult HandleDoxmPostRequestMfg(OicSecDoxm_t *newDoxm,
+        OCEntityHandlerRequest *ehRequest,
+        bool isDuplicatedMsg)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+    OCEntityHandlerResult ehRet = OC_EH_OK;
+
+
+        //In case of Confirm Manufacturer Cert, get user confirmation
+        if (OIC_CON_MFG_CERT == newDoxm->oxmSel && false == newDoxm->owned &&
+            false == isDuplicatedMsg && !IsNilUuid(&newDoxm->owner))
+        {
+            if (OC_STACK_OK != VerifyOwnershipTransfer(NULL, USER_CONFIRM))
+            {
+                ehRet = OC_EH_NOT_ACCEPTABLE;
+                goto exit;
+            }
+            else
+            {
+                ehRet = OC_EH_OK;
+            }
+        }
+
+        //Save the owner's UUID to derive owner credential
+        memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
+        gDoxm->oxmSel = newDoxm->oxmSel;
+
+        RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
+        CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
+        VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+        OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+
+        //Unset pre-selected ciphersuite, if any
+        caRes = CASelectCipherSuite(0,(CATransportAdapter_t)ehRequest->devAddr.adapter);
+        VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+        OIC_LOG(DEBUG, TAG, "No ciphersuite preferred");
+
+        VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterPkixInfoHandler(GetManufacturerPkixInfo), ERROR);
+        VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterGetCredentialTypesHandler(
+                           InitManufacturerCipherSuiteList), ERROR);
+exit:
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+    return ehRet;
+    }
+#endif // __WITH_DTLS__ or __WITH_TLS__
+
+//Change the SVR's resource owner as owner device.
+OCEntityHandlerResult HandleDoxmPostRequestSrv(OicSecDoxm_t *newDoxm,
+        OCEntityHandlerRequest *ehRequest,
+        bool isDuplicatedMsg)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+    OCEntityHandlerResult ehRet = OC_EH_OK;
+
+    switch (newDoxm->oxmSel)
+    {
+        case OIC_JUST_WORKS:
+        case OIC_MV_JUST_WORKS:
+            ehRet = HandleDoxmPostRequestJustWork(newDoxm, ehRequest, isDuplicatedMsg);
+            break;
+        case OIC_RANDOM_DEVICE_PIN:
+            ehRet = HandleDoxmPostRequestRandomPin(newDoxm, ehRequest, isDuplicatedMsg);
+            break;
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+        case OIC_MANUFACTURER_CERTIFICATE:
+        case OIC_CON_MFG_CERT:
+            ehRet = HandleDoxmPostRequestMfg(newDoxm, ehRequest, isDuplicatedMsg);
+            break;
+#endif // __WITH_DTLS__ or __WITH_TLS__
+        default:
+            break;
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+    return ehRet;
+}
+
+
+static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest *ehRequest)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
     OCEntityHandlerResult ehRet = OC_EH_INTERNAL_SERVER_ERROR;
-    OicUuid_t emptyOwner = {.id = {0} };
     static uint16_t previousMsgId = 0;
     bool isDuplicatedMsg = false;
 
@@ -1206,491 +1592,150 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
      */
     OicSecDoxm_t *newDoxm = NULL;
 
-    if (ehRequest->payload)
+    VERIFY_NOT_NULL(TAG, ehRequest, ERROR);
+    VERIFY_NOT_NULL(TAG, ehRequest->payload, ERROR);
+
+    uint8_t *payload = ((OCSecurityPayload *)ehRequest->payload)->securityData;
+    VERIFY_NOT_NULL(TAG, payload, ERROR);
+    size_t size = ((OCSecurityPayload *)ehRequest->payload)->payloadSize;
+    bool roParsed = false;
+    OicSecDostype_t onboardingState;
+    //get new doxm
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&onboardingState), ERROR);
+    OCStackResult res = CBORPayloadToDoxmBin(payload, size, &newDoxm, &roParsed,
+                        onboardingState.state);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
+    VERIFY_NOT_NULL(TAG, newDoxm, ERROR);
+
+    /*
+     * message ID is supported for CoAP over UDP only according to RFC 7252
+     * So we should check message ID to prevent duplicate request handling in case of OC_ADAPTER_IP.
+     * In case of other transport adapter, duplicate message check is not required.
+     */
+    if (OC_ADAPTER_IP == ehRequest->devAddr.adapter &&
+        previousMsgId == ehRequest->messageID)
     {
-        uint8_t *payload = ((OCSecurityPayload *)ehRequest->payload)->securityData;
-        size_t size = ((OCSecurityPayload *)ehRequest->payload)->payloadSize;
-        bool roParsed = false;
-        OicSecDostype_t onboardingState;
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&onboardingState), ERROR);
-        OCStackResult res = CBORPayloadToDoxmBin(payload, size, &newDoxm, &roParsed,
-            onboardingState.state);
-        if (newDoxm && OC_STACK_OK == res)
+        isDuplicatedMsg = true;
+    }
+
+    // Check request on RO property
+    if (true == roParsed)
+    {
+        OIC_LOG(ERROR, TAG, "Not acceptable request because of read-only properties");
+        ehRet = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
+    }
+
+    VERIFY_NOT_NULL(TAG, gDoxm, ERROR);
+
+    // in owned state
+    if (true == gDoxm->owned)
+    {
+        if (false == ValidateOxmsel(gDoxm->oxm, gDoxm->oxmLen, &newDoxm->oxmSel))
         {
-            /*
-             * message ID is supported for CoAP over UDP only according to RFC 7252
-             * So we should check message ID to prevent duplicate request handling in case of OC_ADAPTER_IP.
-             * In case of other transport adapter, duplicate message check is not required.
-             */
-            if (OC_ADAPTER_IP == ehRequest->devAddr.adapter &&
-                 previousMsgId == ehRequest->messageID)
-            {
-                isDuplicatedMsg = true;
-            }
+            OIC_LOG(ERROR, TAG, "Not acceptable request because oxmsel is not supported on Server");
+            ehRet = OC_EH_NOT_ACCEPTABLE;
+            goto exit;
+        }
 
-            // Check request on RO property
-            if (true == roParsed)
-            {
-                OIC_LOG(ERROR, TAG, "Not acceptable request because of read-only properties");
-                ehRet = OC_EH_NOT_ACCEPTABLE;
-                goto exit;
-            }
-
-            VERIFY_NOT_NULL(TAG, gDoxm, ERROR);
-
-            // in owned state
-            if (true == gDoxm->owned)
-            {
-                if (false == ValidateOxmsel(gDoxm->oxm, gDoxm->oxmLen, &newDoxm->oxmSel))
-                {
-                    OIC_LOG(ERROR, TAG, "Not acceptable request because oxmsel is not supported on Server");
-                    ehRet = OC_EH_NOT_ACCEPTABLE;
-                    goto exit;
-                }
-
-                // Update gDoxm based on newDoxm
-                res = DoxmUpdateWriteableProperty(newDoxm, gDoxm);
-                if (OC_STACK_OK != res)
-                {
-                    OIC_LOG(ERROR, TAG, "gDoxm properties were not able to be updated so we cannot handle the request.");
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
-                }
+        // Update gDoxm based on newDoxm
+        res = DoxmUpdateWriteableProperty(newDoxm, gDoxm);
+        if (OC_STACK_OK != res)
+        {
+            OIC_LOG(ERROR, TAG,
+                    "gDoxm properties were not able to be updated so we cannot handle the request.");
+            ehRet = OC_EH_ERROR;
+            goto exit;
+        }
 
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 #ifdef MULTIPLE_OWNER
-                //handle mom
-                if(gDoxm->mom)
-                {
-                    if(OIC_MULTIPLE_OWNER_DISABLE != gDoxm->mom->mode)
-                    {
-                        CAResult_t caRes = CA_STATUS_FAILED;
-                        if(OIC_PRECONFIG_PIN == gDoxm->oxmSel || OIC_RANDOM_DEVICE_PIN == gDoxm->oxmSel)
-                        {
-                            caRes = CAEnableAnonECDHCipherSuite(false);
-                            VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                            OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
-
-                            RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
-                            caRes = CASelectCipherSuite((uint16_t)MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, ehRequest->devAddr.adapter);
-                            VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                            OIC_LOG(INFO, TAG, "ECDHE_PSK CipherSuite will be used for MOT");
-
-                            //Set the device id to derive temporal PSK
-                            SetUuidForPinBasedOxm(&gDoxm->deviceID);
-                        }
-                        else
-                        {
-                            OIC_LOG(WARNING, TAG, "Unsupported OxM for Multiple Ownership Transfer.");
-                        }
-
-                        CAregisterSslHandshakeCallback(MultipleOwnerDTLSHandshakeCB);
-                    }
-                    else
-                    {
-                        //if MOM is disabled, revert the DTLS handshake callback
-                        if(CA_STATUS_OK != CAregisterSslHandshakeCallback(NULL))
-                        {
-                            OIC_LOG(WARNING, TAG, "Error while revert the DTLS Handshake Callback.");
-                        }
-                    }
-                }
-
-                if(newDoxm->subOwners)
-                {
-                    OicSecSubOwner_t* subowner = NULL;
-                    OicSecSubOwner_t* temp = NULL;
-
-                    OIC_LOG(DEBUG, TAG, "dectected 'subowners' property");
-
-                    if(gDoxm->subOwners)
-                    {
-                        LL_FOREACH_SAFE(gDoxm->subOwners, subowner, temp)
-                        {
-                            LL_DELETE(gDoxm->subOwners, subowner);
-                            OICFree(subowner);
-                        }
-                    }
-
-                    subowner = NULL;
-                    temp = NULL;
-                    LL_FOREACH_SAFE(newDoxm->subOwners, subowner, temp)
-                    {
-                        LL_DELETE(newDoxm->subOwners, subowner);
-                        LL_APPEND(gDoxm->subOwners, subowner);
-                    }
-                }
+        HandleDoxmPostRequestMom(newDoxm, ehRequest);
 #endif //MULTIPLE_OWNER
 #endif // defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 
-                //Update new state in persistent storage
-                if (UpdatePersistentStorage(gDoxm) == true)
-                {
-                    ehRet = OC_EH_OK;
-                }
-                else
-                {
-                    OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
-                    ehRet = OC_EH_ERROR;
-                }
-                goto exit;
-            }
-
-            // in unowned state
-            // TODO [IOT-2107] this logic assumes that the only POST to /doxm in
-            // unowned state is either a) changing to owned or b) setting oxmsel and
-            // therefore (in case b) should enable the proper cipher for OTM.  But it's
-            // allowable for Client to be posting other things such as /doxm.rowneruuid
-            // when owned == false, too.  Added a workaround (see 'workaround' below)
-            // but this POST handler needs to be fixed per IOT-2107.
-            if ((false == gDoxm->owned) && (false == newDoxm->owned))
-            {
-                if (false == ValidateOxmsel(gDoxm->oxm, gDoxm->oxmLen, &newDoxm->oxmSel))
-                {
-                    OIC_LOG(ERROR, TAG, "Not acceptable request because oxmsel does not support on Server");
-                    ehRet = OC_EH_NOT_ACCEPTABLE;
-                    goto exit;
-                }
-
-                // workaround
-                // We wouldn't be at this point in the
-                // code if the POST contained R-only Properties for the current /pstat.dos.s
-                // state, so we want to update writeable properties now that we've validated
-                // oxmsel is a valid oxm for this device.
-                res = DoxmUpdateWriteableProperty(newDoxm, gDoxm);
-                if (OC_STACK_OK != res)
-                {
-                    OIC_LOG(ERROR, TAG, "gDoxm properties were not able to be updated so we cannot handle the request.");
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
-                }
-
-                if (OIC_JUST_WORKS == newDoxm->oxmSel || OIC_MV_JUST_WORKS == newDoxm->oxmSel)
-                {
-                    /*
-                     * If current state of the device is un-owned, enable
-                     * anonymous ECDH cipher in tinyDTLS so that Provisioning
-                     * tool can initiate JUST_WORKS ownership transfer process.
-                     */
-                    if (memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) == 0)
-                    {
-                        gDoxm->oxmSel = newDoxm->oxmSel;
-                        //Update new state in persistent storage
-                        if ((UpdatePersistentStorage(gDoxm) == true))
-                        {
-                            ehRet = OC_EH_OK;
-                        }
-                        else
-                        {
-                            OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
-                            ehRet = OC_EH_ERROR;
-                            goto exit;
-                        }
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-                        RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
-                        OIC_LOG(INFO, TAG, "Doxm EntityHandle  enabling AnonECDHCipherSuite");
-                        ehRet = (CAEnableAnonECDHCipherSuite(true) == CA_STATUS_OK) ? OC_EH_OK : OC_EH_ERROR;
-#endif // __WITH_DTLS__ or __WITH_TLS__
-                        goto exit;
-                    }
-                    else
-                    {
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-                        //Save the owner's UUID to derive owner credential
-                        memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
-
-                        // Update new state in persistent storage
-                        if (true == UpdatePersistentStorage(gDoxm))
-                        {
-                            ehRet = OC_EH_OK;
-                        }
-                        else
-                        {
-                            OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
-                            ehRet = OC_EH_ERROR;
-                            goto exit;
-                        }
-
-                        /*
-                         * Disable anonymous ECDH cipher in tinyDTLS since device is now
-                         * in owned state.
-                         */
-                        RegisterOTMSslHandshakeCallback(NULL);
-                        CAResult_t caRes = CA_STATUS_OK;
-                        caRes = CAEnableAnonECDHCipherSuite(false);
-                        VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                        OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
-
-                        //In case of Mutual Verified Just-Works, verify mutualVerifNum
-                        if (OIC_MV_JUST_WORKS == newDoxm->oxmSel && false == newDoxm->owned &&
-                            false == isDuplicatedMsg)
-                        {
-                            uint8_t preMutualVerifNum[OWNER_PSK_LENGTH_128] = {0};
-                            uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN] = {0};
-                            OicUuid_t deviceID = {.id = {0}};
-
-                            //Generate mutualVerifNum
-                            OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
-
-                            char label[LABEL_LEN] = {0};
-                            snprintf(label, LABEL_LEN, "%s%s", MUTUAL_VERIF_NUM, OXM_MV_JUST_WORKS);
-                            if (OC_STACK_OK != GetDoxmDeviceID(&deviceID))
-                            {
-                                OIC_LOG(ERROR, TAG, "Error while retrieving Owner's device ID");
-                                ehRet = OC_EH_ERROR;
-                                goto exit;
-
-                            }
-
-                            CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
-                            CopyDevAddrToEndpoint(&request->devAddr, &endpoint);
-                            CAResult_t pskRet = CAGenerateOwnerPSK(&endpoint,
-                                    (uint8_t *)label,
-                                    strlen(label),
-                                    gDoxm->owner.id, sizeof(gDoxm->owner.id),
-                                    gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id),
-                                    preMutualVerifNum, OWNER_PSK_LENGTH_128);
-                            if (CA_STATUS_OK != pskRet)
-                            {
-                                OIC_LOG(WARNING, TAG, "Failed to remove the invaild owner credential");
-                                ehRet = OC_EH_ERROR;
-                                goto exit;
-
-                            }
-
-                            memcpy(mutualVerifNum, preMutualVerifNum + OWNER_PSK_LENGTH_128 - sizeof(mutualVerifNum),
-                                    sizeof(mutualVerifNum));
-
-                            //Wait for user confirmation
-                            if (OC_STACK_OK != VerifyOwnershipTransfer(mutualVerifNum, DISPLAY_NUM | USER_CONFIRM))
-                            {
-                                ehRet = OC_EH_NOT_ACCEPTABLE;
-                            }
-                            else
-                            {
-                                ehRet = OC_EH_OK;
-                            }
-                        }
-
-#endif // __WITH_DTLS__ or __WITH_TLS__
-                    }
-                }
-                else if (OIC_RANDOM_DEVICE_PIN == newDoxm->oxmSel)
-                {
-                    /*
-                     * If current state of the device is un-owned, enable
-                     * ECDHE_PSK cipher so that the Provisioning tool can
-                     * initiate the ownership transfer.
-                     */
-                    if(memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) == 0)
-                    {
-                        gDoxm->oxmSel = newDoxm->oxmSel;
-                        //Update new state in persistent storage
-                        if ((UpdatePersistentStorage(gDoxm) == true))
-                        {
-                            ehRet = OC_EH_OK;
-                        }
-                        else
-                        {
-                            OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
-                            ehRet = OC_EH_ERROR;
-                        }
-
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-                        CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
-                        VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                        OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
-
-                        RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
-                        caRes = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256,
-                                                    ehRequest->devAddr.adapter);
-                        VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-
-                        if (!isDuplicatedMsg)
-                        {
-                            char ranPin[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
-                            if (OC_STACK_OK == GeneratePin(ranPin, sizeof(ranPin)))
-                            {
-                                //Set the device id to derive temporal PSK
-                                SetUuidForPinBasedOxm(&gDoxm->deviceID);
-
-                                /**
-                                 * Since PSK will be used directly by DTLS layer while PIN based ownership transfer,
-                                 * Credential should not be saved into SVR.
-                                 * For this reason, use a temporary get_psk_info callback to random PIN OxM.
-                                 */
-                                caRes = CAregisterPskCredentialsHandler(GetDtlsPskForRandomPinOxm);
-                                VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                                ehRet = OC_EH_OK;
-                            }
-                            else
-                            {
-                                OIC_LOG(ERROR, TAG, "Failed to generate random PIN");
-                                ehRet = OC_EH_ERROR;
-                            }
-                        }
-#endif // __WITH_DTLS__ or __WITH_TLS__
-                    }
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-                    else
-                    {
-                        //Save the owner's UUID to derive owner credential
-                        memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
-
-                        // In case of random-pin based OTM, close the PIN display if callback is registered.
-                        if (!isDuplicatedMsg)
-                        {
-                            ClosePinDisplay();
-                        }
-
-                        //Update new state in persistent storage
-                        if (UpdatePersistentStorage(gDoxm) == true)
-                        {
-                            ehRet = OC_EH_OK;
-                        }
-                        else
-                        {
-                            OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
-                            ehRet = OC_EH_ERROR;
-                        }
-                    }
-#endif // __WITH_DTLS__ or __WITH_TLS__
-                }
-#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
-                else if (OIC_MANUFACTURER_CERTIFICATE ==  newDoxm->oxmSel || OIC_CON_MFG_CERT == newDoxm->oxmSel)
-                {
-                    //In case of Confirm Manufacturer Cert, get user confirmation
-                    if (OIC_CON_MFG_CERT == newDoxm->oxmSel && false == newDoxm->owned &&
-                        false == isDuplicatedMsg &&
-                        memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) != 0)
-                    {
-                        if (OC_STACK_OK != VerifyOwnershipTransfer(NULL, USER_CONFIRM))
-                        {
-                            ehRet = OC_EH_NOT_ACCEPTABLE;
-                            goto exit;
-                        }
-                        else
-                        {
-                            ehRet = OC_EH_OK;
-                        }
-                    }
-
-                    //Save the owner's UUID to derive owner credential
-                    memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
-                    gDoxm->oxmSel = newDoxm->oxmSel;
-                    //Update new state in persistent storage
-                    if (UpdatePersistentStorage(gDoxm))
-                    {
-                        ehRet = OC_EH_OK;
-                    }
-                    else
-                    {
-                        OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
-                        ehRet = OC_EH_ERROR;
-                    }
-
-                    RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
-                    CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
-                    VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                    OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
-
-                    //Unset pre-selected ciphersuite, if any
-                    caRes = CASelectCipherSuite(0, ehRequest->devAddr.adapter);
-                    VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                    OIC_LOG(DEBUG, TAG, "No ciphersuite preferred");
-
-                    VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterPkixInfoHandler(GetManufacturerPkixInfo), ERROR);
-                    VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterGetCredentialTypesHandler(InitManufacturerCipherSuiteList), ERROR);
-                }
-#endif // __WITH_DTLS__ or __WITH_TLS__
-            }
-
-            /*
-             * When current state of the device is un-owned and Provisioning
-             * Tool is attempting to change the state to 'Owned' with a
-             * qualified value for the field 'Owner'
-             */
-            // TODO [IOT-2107] reconcile POST handler behavior with Specification
-            if ((false == gDoxm->owned) && (true == newDoxm->owned) &&
-                    (memcmp(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t)) == 0))
-            {
-                //Change the SVR's resource owner as owner device.
-                OCStackResult ownerRes = SetAclRownerId(&gDoxm->owner);
-                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
-                {
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
-                }
-                ownerRes = SetCredRownerId(&gDoxm->owner);
-                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
-                {
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
-                }
-                ownerRes = SetPstatRownerId(&gDoxm->owner);
-                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
-                {
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
-                }
-                ownerRes = SetDpairingRownerId(&gDoxm->owner);
-                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
-                {
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
-                }
-                ownerRes = SetPconfRownerId(&gDoxm->owner);
-                if(OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
-                {
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
-                }
-
-                gDoxm->owned = true;
-                memcpy(&gDoxm->rownerID, &gDoxm->owner, sizeof(OicUuid_t));
-
-                // Update new state in persistent storage
-                if (UpdatePersistentStorage(gDoxm))
-                {
-                    //Update default ACE of security resource to prevent anonymous user access.
-                    if(OC_STACK_OK == UpdateDefaultSecProvACE())
-                    {
-                        ehRet = OC_EH_OK;
-                    }
-                    else
-                    {
-                        OIC_LOG(ERROR, TAG, "Failed to remove default ACL for security provisioning");
-                        ehRet = OC_EH_ERROR;
-                    }
-                }
-                else
-                {
-                    OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
-                    ehRet = OC_EH_ERROR;
-                }
-#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
-                if (OIC_MANUFACTURER_CERTIFICATE == gDoxm->oxmSel ||
-                                            OIC_CON_MFG_CERT== gDoxm->oxmSel)
-                {
-                    CAregisterPkixInfoHandler(GetPkixInfo);
-                    CAregisterGetCredentialTypesHandler(InitCipherSuiteList);
-                }
-#endif // __WITH_DTLS__ or __WITH_TLS__
-            }
-        }
+        //Update new state in persistent storage
+        ehRet = HandleDoxmPostRequestUpdatePS(false);
+        goto exit;
     }
 
-exit:
-    if(OC_EH_OK != ehRet)
+    // in unowned state
+    // TODO [IOT-2107] this logic assumes that the only POST to /doxm in
+    // unowned state is either a) changing to owned or b) setting oxmsel and
+    // therefore (in case b) should enable the proper cipher for OTM.  But it's
+    // allowable for Client to be posting other things such as /doxm.rowneruuid
+    // when owned == false, too.  Added a workaround (see 'workaround' below)
+    // but this POST handler needs to be fixed per IOT-2107.
+    if ((false == gDoxm->owned) && (false == newDoxm->owned))
     {
-
-        /*
-         * If some error is occured while ownership transfer,
-         * ownership transfer related resource should be revert back to initial status.
-        */
-        if(gDoxm)
+        if (false == ValidateOxmsel(gDoxm->oxm, gDoxm->oxmLen, &newDoxm->oxmSel))
         {
-            if(!gDoxm->owned)
+            OIC_LOG(ERROR, TAG, "Not acceptable request because oxmsel does not support on Server");
+            ehRet = OC_EH_NOT_ACCEPTABLE;
+            goto exit;
+        }
+
+        // workaround
+        // We wouldn't be at this point in the
+        // code if the POST contained R-only Properties for the current /pstat.dos.s
+        // state, so we want to update writeable properties now that we've validated
+        // oxmsel is a valid oxm for this device.
+        res = DoxmUpdateWriteableProperty(newDoxm, gDoxm);
+        if (OC_STACK_OK != res)
+        {
+            OIC_LOG(ERROR, TAG,
+                    "gDoxm properties were not able to be updated so we cannot handle the request.");
+            ehRet = OC_EH_ERROR;
+            goto exit;
+        }
+
+        ehRet = HandleDoxmPostRequestSrv(newDoxm, ehRequest, isDuplicatedMsg);
+        VERIFY_SUCCESS(TAG, OC_EH_OK == ehRet, ERROR);
+
+        // Update new state in persistent storage
+        ehRet = HandleDoxmPostRequestUpdatePS(false);
+    }
+
+    /*
+     * When current state of the device is un-owned and Provisioning
+     * Tool is attempting to change the state to 'Owned' with a
+     * qualified value for the field 'Owner'
+     */
+    // TODO [IOT-2107] reconcile POST handler behavior with Specification
+    if ((false == gDoxm->owned) && (true == newDoxm->owned) &&
+            UuidCmp(&gDoxm->owner, &newDoxm->owner))
+    {
+        if (HandleDoxmPostRequestSVR())
+        {
+            ehRet = OC_EH_ERROR;
+            goto exit;
+        }
+
+        gDoxm->owned = true;
+        memcpy(&gDoxm->rownerID, &gDoxm->owner, sizeof(OicUuid_t));
+
+        // Update new state in persistent storage
+        ehRet = HandleDoxmPostRequestUpdatePS(true);
+
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+        if (OIC_MANUFACTURER_CERTIFICATE == gDoxm->oxmSel ||
+            OIC_CON_MFG_CERT == gDoxm->oxmSel)
+        {
+            CAregisterPkixInfoHandler(GetPkixInfo);
+            CAregisterGetCredentialTypesHandler(InitCipherSuiteList);
+        }
+#endif // __WITH_DTLS__ or __WITH_TLS__
+    }
+exit:
+    if (OC_EH_OK != ehRet)
+    {
+    /*
+     * If some error is occured while ownership transfer,
+     * ownership transfer related resource should be revert back to initial status.
+    */
+    if (gDoxm)
+        {
+            if (!gDoxm->owned)
             {
                 OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
 
@@ -1714,12 +1759,15 @@ exit:
 
     //Send payload to request originator
     ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
-                   OC_EH_OK : OC_EH_ERROR;
+            OC_EH_OK : OC_EH_ERROR;
 
     DeleteDoxmBinData(newDoxm);
 
+    OIC_LOG_V (DEBUG, TAG, "%s: OUT", __func__);
+
     return ehRet;
 }
+
 
 OCEntityHandlerResult DoxmEntityHandler(OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,

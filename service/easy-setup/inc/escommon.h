@@ -38,7 +38,10 @@ extern "C"
 #define OIC_URI_STRING_MAX_VALUE    256
 #define MAX_WEBLINKLEN              3
 #define NUM_WIFIMODE                10
+#define NUM_WIFIFREQ                5
 #define NUM_CONNECT_TYPE            3
+#define NUM_WIFIAUTHTYPE            4
+#define NUM_WIFIENCTYPE             6
 
 /**
  * Attributes used to form a proper easysetup conforming JSON message.
@@ -48,6 +51,8 @@ extern "C"
 #define OC_RSRVD_ES_LINKS                  "links"
 #define OC_RSRVD_ES_SUPPORTEDWIFIMODE      "swmt"
 #define OC_RSRVD_ES_SUPPORTEDWIFIFREQ      "swf"
+#define OC_RSRVD_ES_SUPPORTEDWIFIAUTHTYPE  "swat"
+#define OC_RSRVD_ES_SUPPORTEDWIFIENCTYPE   "swet"
 #define OC_RSRVD_ES_SSID                   "tnn"
 #define OC_RSRVD_ES_CRED                   "cd"
 #define OC_RSRVD_ES_AUTHTYPE               "wat"
@@ -78,6 +83,7 @@ extern "C"
 /**
  * @brief  Supported WIFI frequency like 2.4G and 5G
  */
+//TODO: Remove WIFI_BOTH & WIFI_FREQ_NONE, if they are not used anymore. Array should be used to specify multiple values.
 typedef enum
 {
     WIFI_24G = 0,       /**< 2.4G **/
@@ -95,10 +101,8 @@ typedef enum
     WIFI_11B,           /**< 802.11b **/
     WIFI_11G,           /**< 802.11g **/
     WIFI_11N,           /**< 802.11n **/
-    WIFI_11AC,          /**< 802.11ac **/
-    WiFi_EOF = 999
+    WIFI_11AC           /**< 802.11ac **/
 } WIFI_MODE;
-
 
 /**
  * @brief  WIFI Authentication tlype of the Enroller

@@ -362,7 +362,7 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     }
     else
     {
-        CAsetSslAdapterCallbacks(CAIPPacketReceivedCB, CAIPPacketSendCB, CA_ADAPTER_IP);
+        CAsetSslAdapterCallbacks(CAIPPacketReceivedCB, CAIPPacketSendCB, CAIPErrorHandler, CA_ADAPTER_IP);
     }
 #endif
 
@@ -388,6 +388,9 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
 
 CAResult_t CAStartIP()
 {
+    //Initializing the Globals
+    CAInitializeIPGlobals();
+
     // Specific the port number received from application.
     caglobals.ip.u6.port  = caglobals.ports.udp.u6;
     caglobals.ip.u6s.port = caglobals.ports.udp.u6s;
@@ -530,8 +533,6 @@ CAResult_t CAStopIP()
 
     CAIPStopNetworkMonitor(CA_ADAPTER_IP);
     CAIPStopServer();
-    //Re-initializing the Globals to start them again
-    CAInitializeIPGlobals();
 
     return CA_STATUS_OK;
 }
@@ -539,13 +540,12 @@ CAResult_t CAStopIP()
 void CATerminateIP()
 {
 #ifdef __WITH_DTLS__
-    CAsetSslAdapterCallbacks(NULL, NULL, CA_ADAPTER_IP);
+    CAsetSslAdapterCallbacks(NULL, NULL, NULL, CA_ADAPTER_IP);
 #endif
 
     CAIPSetPacketReceiveCallback(NULL);
 
 #ifndef SINGLE_THREAD
-    CADeInitializeIPGlobals();
     CAIPDeinitializeQueueHandles();
 #endif
 

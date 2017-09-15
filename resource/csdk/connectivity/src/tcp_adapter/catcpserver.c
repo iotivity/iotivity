@@ -1224,6 +1224,7 @@ size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen)
     if (!pdu)
     {
         OIC_LOG(ERROR, TAG, "outpdu is null");
+        OIC_LOG_V(DEBUG, TAG, "data length: %" PRIuPTR, dlen);
         return 0;
     }
 

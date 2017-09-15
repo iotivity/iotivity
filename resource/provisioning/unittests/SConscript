@@ -106,7 +106,7 @@ if provisiontests_env.get('SECURED') == '1':
 ######################################################################
 ocprovisiontest_src = ['OCProvisioningTest.cpp']
 
-if provisiontests_env.get('WITH_TCP') == True:
+if provisiontests_env.get('WITH_TCP') == True and provisiontests_env.get('WITH_CLOUD') == True:
     ocprovisiontest_src = ocprovisiontest_src + ['OCCloudProvisioningTest.cpp']
 
 unittests = provisiontests_env.Program('provisiontests', ocprovisiontest_src)

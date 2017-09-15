@@ -268,7 +268,7 @@ static OCStackResult ConvertJSONStringToCBORFile(const char *jsonStr, const char
         OIC_LOG(ERROR, TAG, "Unable to parse JSON string");
         goto exit;
     }
-    size = strlen(jsonStr);
+    size = strlen(jsonStr) + 1;
     size_t bufferSize = 0;
     buffer = (uint8_t *)OICMalloc(size);
     if (!buffer)
@@ -1327,13 +1327,13 @@ OicSecCred_t *JSONToCredBin(const char *jsonStr)
     }
 
     // rownerid
-    cJSON *jsonCredObj = cJSON_GetObjectItem(jsonCredMap, OIC_JSON_ROWNERID_NAME);
+/*    cJSON *jsonCredObj = cJSON_GetObjectItem(jsonCredMap, OIC_JSON_ROWNERID_NAME);
     VERIFY_NOT_NULL(TAG, jsonCredObj, ERROR);
     VERIFY_SUCCESS(TAG, cJSON_String == jsonCredObj->type, ERROR);
     ret = ConvertStrToUuid(jsonCredObj->valuestring, &headCred->rownerID);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
     ret = OC_STACK_OK;
-
+*/  
 exit:
     cJSON_Delete(jsonRoot);
     if (OC_STACK_OK != ret)
