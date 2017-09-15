@@ -370,6 +370,8 @@ void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* in
                 if(NULL == uri || NULL == repPayload)
                 {
                     children = children->next;
+                    OCRepPayloadDestroy(repPayload);
+                    OICFree(href);
                     continue;
                 }
 
