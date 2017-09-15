@@ -1,0 +1,78 @@
+{
+    "acl": {
+        "aclist2": [
+            {
+                "aceid": 1,
+                "subject": { "conntype": "anon-clear" },
+                "resources": [
+                    { "href": "/oic/res" },
+                    { "href": "/oic/d" },
+                    { "href": "/oic/p" },
+                    { "href": "/oic/sec/doxm" }
+                ],
+                "permission": 2
+            },
+            {
+                "aceid": 2,
+                "subject": { "conntype": "auth-crypt" },
+                "resources": [
+                    { "href": "/oic/res" },
+                    { "href": "/oic/d" },
+                    { "href": "/oic/p" },
+                    { "href": "/oic/sec/doxm" }
+                ],
+                "permission": 2
+            },
+            {
+                "aceid": 5,
+                "subject": {"uuid": "32323232-3232-3232-3232-323232323232"},
+                "resources":[
+                    { "href":"/switch",
+                      "rt" : ["oic.r.switch.binary"],
+                      "if" : ["oic.if.baseline", "oic.if.a"]}
+                ],
+                "permission": 7
+            }
+        ],
+        "rowneruuid": "32323232-3232-3232-3232-323232323232",
+        "rt": ["oic.r.acl"],
+        "if": ["oic.if.baseline"]
+    },
+    "pstat": {
+        "dos": { "s": 3, "p": false },
+        "isop": true,
+        "cm": 0,
+        "tm": 0,
+        "om": 4,
+        "sm": 4,
+        "rowneruuid": "32323232-3232-3232-3232-323232323232",
+        "rt": ["oic.r.pstat"],
+        "if": ["oic.if.baseline"]
+    },
+    "doxm": {
+        "oxms": [0],
+        "oxmsel": 0,
+        "sct": 9,
+        "owned": true,
+        "deviceuuid": "12345678-1234-1234-1234-123456789012",
+        "devowneruuid": "32323232-3232-3232-3232-323232323232",
+        "rowneruuid": "32323232-3232-3232-3232-323232323232",
+        "rt": ["oic.r.doxm"],
+        "if": ["oic.if.baseline"]
+    },
+    "cred":{
+        "creds": [
+            {
+                "credid": 1,
+                "subjectuuid": "32323232-3232-3232-3232-323232323232",
+                "credtype": 1,
+                "privatedata":{
+                    "data":"AAAAAAAAAAAAAAAA",
+                    "encoding": "oic.sec.encoding.raw"
+                }
+            }],
+        "rowneruuid": "32323232-3232-3232-3232-323232323232",
+        "rt": ["oic.r.cred"],
+        "if": ["oic.if.baseline"]
+    }
+}
