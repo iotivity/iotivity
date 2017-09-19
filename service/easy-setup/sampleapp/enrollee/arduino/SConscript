@@ -66,4 +66,4 @@ if (enrollee_env['UPLOAD'] == True):
         enrollee_env.Upload(
             env.get('BUILD_DIR') + '/service/easy-setup/sampleapp/enrollee/arduino/enrollee.hex')
     else:
-        print 'Please use appropriate install method for your developing machine. Linux is the only supported platform right now.'
+        print('Please use appropriate install method for your developing machine. Linux is the only supported platform right now.')

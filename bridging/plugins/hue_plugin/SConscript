@@ -32,7 +32,7 @@ bridging_path = os.path.join(src_dir, 'bridging')
 
 hue_env = env.Clone()
 
-print "Reading Hue Plugin script"
+print("Reading Hue Plugin script")
 
 
 def maskFlags(flags):

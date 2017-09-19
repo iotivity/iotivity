@@ -29,7 +29,7 @@ target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 pi_path = os.path.join(src_dir, 'plugins')
 
-print "Reading PI script"
+print("Reading PI script")
 
 ######################################################################
 # Build flags

@@ -32,7 +32,7 @@ bridging_path = os.path.join(src_dir, 'bridging')
 
 nest_env = env.Clone()
 
-print "Reading Nest Plugin script"
+print("Reading Nest Plugin script")
 
 
 def maskFlags(flags):

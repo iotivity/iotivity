@@ -71,8 +71,8 @@ if 'msys_nt' in host:
     host = 'msys_nt'
 
 if host not in host_target_map:
-    print "\nError: Current system (%s) isn't supported\n" % host
-    Exit(1)
+    msg = "\nError: Current system (%s) is not supported\n" % host
+    Exit(msg)
 
 ######################################################################
 # Get build options (the optins from command line)
@@ -80,9 +80,9 @@ if host not in host_target_map:
 target_os = ARGUMENTS.get('TARGET_OS', host).lower()  # target os
 
 if target_os not in host_target_map[host]:
-    print "\nError: Unsupported target os: %s (supported values: %s)\n" % (
+    msg = "\nError: Unsupported target os: %s (supported values: %s)\n" % (
         target_os, host_target_map[host])
-    Exit(1)
+    Exit(msg)
 
 if target_os == 'android':
     default_arch = 'x86'
@@ -116,9 +116,8 @@ else:
 targets_without_dtls_support = ['arduino']
 if ARGUMENTS.get(
         'SECURED') == '1' and target_os in targets_without_dtls_support:
-    print "\nError: DTLS not supported on target os: %s MUST build with SECURED=0\n" % (
-        target_os)
-    Exit(1)
+    msg = "\nError: DTLS not supported on target os: %s MUST build with SECURED=0\n" % target_os
+    Exit(msg)
 
 ######################################################################
 # Common build options (release, target os, target arch)
@@ -291,25 +290,25 @@ if env.get('WITH_ENV'):
     env['ENV'] = os.environ
     if 'CC' in os.environ:
         env['CC'] = Split(os.environ['CC'])
-        print "using CC from environment: %s" % env['CC']
+        print("using CC from environment: %s" % env['CC'])
     if 'CXX' in os.environ:
         env['CXX'] = Split(os.environ['CXX'])
-        print "using CXX from environment: %s" % env['CXX']
+        print("using CXX from environment: %s" % env['CXX'])
     if 'CFLAGS' in os.environ:
         env['CFLAGS'] = Split(os.environ['CFLAGS'])
-        print "using CFLAGS from environment: %s" % env['CFLAGS']
+        print("using CFLAGS from environment: %s" % env['CFLAGS'])
     if 'CXXFLAGS' in os.environ:
         env['CXXFLAGS'] = Split(os.environ['CXXFLAGS'])
-        print "using CXXFLAGS from environment: %s" % env['CXXFLAGS']
+        print("using CXXFLAGS from environment: %s" % env['CXXFLAGS'])
     if 'CCFLAGS' in os.environ:
         env['CCFLAGS'] = Split(os.environ['CCFLAGS'])
-        print "using CCFLAGS from environment: %s" % env['CCFLAGS']
+        print("using CCFLAGS from environment: %s" % env['CCFLAGS'])
     if 'CPPFLAGS' in os.environ:
         env['CPPFLAGS'] = Split(os.environ['CPPFLAGS'])
-        print "using CPPFLAGS from environment: %s" % env['CPPFLAGS']
+        print("using CPPFLAGS from environment: %s" % env['CPPFLAGS'])
     if 'LDFLAGS' in os.environ:
         env['LINKFLAGS'] = Split(os.environ['LDFLAGS'])
-        print "using LDFLAGS/LINKFLAGS from environment: %s" % env['LINKFLAGS']
+        print("using LDFLAGS/LINKFLAGS from environment: %s" % env['LINKFLAGS'])
 
 tc_set_msg = '''
 ************************************ Warning **********************************
@@ -345,7 +344,7 @@ if target_os in targets_support_cc:
         env.AppendUnique(LINKFLAGS=['--sysroot=' + sys_root])
 
     if prefix or tc_path:
-        print tc_set_msg
+        print(tc_set_msg)
 
 # Import env variables only if reproductibility is ensured
 if target_os in ['yocto']:
@@ -354,7 +353,7 @@ else:
     env['CONFIG_ENVIRONMENT_IMPORT'] = False
 
 if env['CONFIG_ENVIRONMENT_IMPORT'] == True:
-    print "warning: importing some environment variables for OS: %s" % target_os
+    print("warning: importing some environment variables for OS: %s" % target_os)
     for ev in [
             'PATH', 'PKG_CONFIG', 'PKG_CONFIG_PATH', 'PKG_CONFIG_SYSROOT_DIR'
     ]:
@@ -377,13 +376,13 @@ env.SConscriptChdir(1)
 
 def __set_dir(env, dir):
     if not os.path.exists(dir + '/SConstruct'):
-        print '''
+        msg = '''
 *************************************** Error *********************************
 * The directory(%s) seems isn't a source code directory, no SConstruct file is
 * found. *
 *******************************************************************************
 ''' % dir
-        Exit(1)
+        Exit(msg)
 
     if env.get('RELEASE'):
         build_dir = dir + '/out/' + target_os + '/' + target_arch + '/release/'
@@ -601,8 +600,8 @@ if 'ALL' in target_transport:
 else:
     if ('BT' in target_transport):
         if (target_os == 'linux'):
-            print "CA Transport BT is not supported "
-            Exit(1)
+            msg = "CA Transport BT is not supported "
+            Exit(msg)
         else:
             env.AppendUnique(CPPDEFINES=['EDR_ADAPTER'])
     else:
@@ -624,8 +623,8 @@ else:
         ]):
             env.AppendUnique(CPPDEFINES=['TCP_ADAPTER', 'WITH_TCP'])
         else:
-            print "CA Transport TCP is not supported "
-            Exit(1)
+            msg = "CA Transport TCP is not supported "
+            Exit(msg)
     else:
         env.AppendUnique(CPPDEFINES=['NO_TCP_ADAPTER'])
 
@@ -633,8 +632,8 @@ else:
         if (target_os == 'android'):
             env.AppendUnique(CPPDEFINES=['NFC_ADAPTER'])
         else:
-            print "CA Transport NFC is not supported "
-            Exit(1)
+            msg = "CA Transport NFC is not supported "
+            Exit(msg)
     else:
         env.AppendUnique(CPPDEFINES=['NO_NFC_ADAPTER'])
 
@@ -699,8 +698,8 @@ if target_os == "yocto":
                         break
         env['CROSS_COMPILE'] = target_prefix[:len(target_prefix) - 1]
     except:
-        print "ERROR in Yocto cross-toolchain environment"
-        Exit(1)
+        msg = "ERROR in Yocto cross-toolchain environment"
+        Exit(msg)
     '''
     Now reset TARGET_OS to linux so that all linux specific build configurations
     hereupon apply for the entirety of the build process.
