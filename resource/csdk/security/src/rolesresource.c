@@ -1131,11 +1131,11 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
     memset(&trustedCaCerts, 0, sizeof(trustedCaCerts));
 
     OCStackResult res = GetPeerPublicKeyFromEndpoint(endpoint, &publicKey, &publicKeyLength);
-    if (OC_STACK_INVALID_PARAM == res)
+    if ((OC_STACK_INVALID_PARAM == res) || (OC_STACK_NO_RESOURCE == res))
     {
         /*
-         * OC_STACK_INVALID_PARAM means the endpoint didn't authenticate with a certificate.
-         * Look for a symmetric key-based role and return that if present.
+         * OC_STACK_INVALID_PARAM or OC_STACK_NO_RESOURCE indicate the endpoint didn't authenticate
+         * with a certificate. Look for a symmetric key-based role and return that if present.
          */
         CASecureEndpoint_t sep;
         CAResult_t caRes = GetCASecureEndpointData(endpoint, &sep);
