@@ -30,7 +30,7 @@ target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 zw_path = os.path.join(src_dir, 'plugins')
 
-print "Reading Zigbee Wrapper (ZW) script"
+print("Reading Zigbee Wrapper (ZW) script")
 
 ######################################################################
 # Build flags

@@ -40,12 +40,12 @@ resource_path = src_dir + '/resource'
 if target_os in ['linux']:
     if not env.GetOption('help') and not env.GetOption('clean'):
         if target_arch != platform.machine():
-            print '''
+            print('''
 *********************************** Warning ***********************************
 * You are trying cross build, please make sure (%s) version libraries are
 * installed!                                                                  *
 *******************************************************************************
-''' % target_arch
+''' % target_arch)
         #Test Coverage Flags and Library (if RELEASE=0)
         if not env.get('RELEASE'):
             conf = Configure(lib_env.Clone(LIBS=['gcov']))
@@ -54,12 +54,12 @@ if target_os in ['linux']:
 
         if target_os not in ['tizen']:
             if not conf.CheckLib('boost_thread', language='C++'):
-                print 'Did not find boost_thread, exiting!'
-                Exit(1)
+                msg = 'Did not find boost_thread, exiting!'
+                Exit(msg)
 
             if not conf.CheckLib('boost_system', language='C++'):
-                print 'Did not find boost_system, exiting!'
-                Exit(1)
+                msg = 'Did not find boost_system, exiting!'
+                Exit(msg)
 
         conf.Finish()
 
@@ -83,11 +83,11 @@ if target_os == 'android':
 
     if target_arch not in ['x86', 'x86_64', 'armeabi', 'armeabi-v7a']:
         if not env.GetOption('help') and not env.GetOption('clean'):
-            print '''
+            print('''
 *********************************** Warning ***********************************
 * current only x86, x86_64, armeabi, armeabi-v7a libraries are provided!      *
 *******************************************************************************
-'''
+''')
     else:
         # Too much boost warning, suppress the warning
         lib_env.AppendUnique(CCFLAGS=['-w'])

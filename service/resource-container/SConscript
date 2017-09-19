@@ -34,8 +34,7 @@ def filtered_glob(env,
                   ondisk=True,
                   source=False,
                   strings=False):
-    return filter(lambda f: os.path.basename(f.path) not in omit,
-                  env.Glob(pattern))
+    return [f for f in env.Glob(pattern) if os.path.basename(f.path) not in omit]
 
 
 env.AddMethod(filtered_glob, "FilteredGlob")
@@ -52,11 +51,11 @@ target_os = env.get('TARGET_OS')
 
 if int(containerJavaSupport):
     try:
-        print 'Java Home: ', os.environ['JAVA_HOME']
-        print 'Java Lib: ', os.environ['JAVA_LIB']
+        print('Java Home: ' + os.environ['JAVA_HOME'])
+        print('Java Lib: ' + os.environ['JAVA_LIB'])
         resource_container_env.Append(CPPDEFINES={'JAVA_SUPPORT': 1})
     except KeyError:
-        print '''
+        print('''
 *********************************** Error *************************************
 * Building resource container without Java support. JAVA_HOME or JAVA_LIB are not set properly
 * Please configure JAVA_HOME to point to your Java 7 JDK and
@@ -64,7 +63,7 @@ if int(containerJavaSupport):
 * Example: export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-i386
 *          export JAVA_LIB=/usr/lib/jvm/java-7-openjdk-i386/jre/lib/i386/server
 *******************************************************************************
-'''
+''')
         resource_container_env.Append(CPPDEFINES={'JAVA_SUPPORT': 0})
 
 resource_container_env.AppendUnique(CPPPATH=[
@@ -89,7 +88,7 @@ if int(containerJavaSupport):
             os.environ['JAVA_HOME'] + '/include/linux'
         ])
     except KeyError:
-        print ''
+        print('')
 
 if target_os not in ['windows']:
     resource_container_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall'])
@@ -106,7 +105,7 @@ if target_os == 'android':
 try:
     resource_container_env.AppendUnique(LIBPATH=[os.environ['JAVA_LIB']])
 except KeyError:
-    print ''
+    print('')
 
 resource_container_env.PrependUnique(LIBS=[
     'coap',
@@ -129,10 +128,10 @@ if resource_container_env.get('SECURED') == '1':
 
 if int(containerJavaSupport):
     try:
-        print 'Java Lib: ', os.environ['JAVA_LIB']
+        print('Java Lib: ' + os.environ['JAVA_LIB'])
         resource_container_env.AppendUnique(LIBS=['jvm'])
     except KeyError:
-        print ''
+        print('')
 
 ######################################################################
 # Source files and Targets
@@ -239,7 +238,7 @@ if target_os in ['linux', 'tizen', 'android']:
 
 conf2 = Configure(lib_env)
 if not conf2.CheckLib('curl'):
-    print '''
+    print('''
 *********************************** Error *************************************
 * Cannot build hue sample. Please install libcurl.
 * Example (Ubuntu):
@@ -248,7 +247,7 @@ if not conf2.CheckLib('curl'):
 * Hint: check with pkg-config --libs libcurl and clear scons cache.
 * Skipping hue sample build.
 *******************************************************************************
-    '''
+    ''')
 else:
     hue_resource_bundle_env = resource_container_env.Clone()
     hue_resource_bundle_env.AppendUnique(CCFLAGS=['-fPIC'])

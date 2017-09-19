@@ -40,8 +40,7 @@ def filtered_glob(env,
                   ondisk=True,
                   source=False,
                   strings=False):
-    return filter(lambda f: os.path.basename(f.path) not in omit,
-                  lib_env.Glob(pattern))
+    return [f for f in lib_env.Glob(pattern) if os.path.basename(f.path) not in omit]
 
 
 lib_env.AddMethod(filtered_glob, "FilteredGlob")
@@ -59,11 +58,11 @@ container_gtest_env = lib_env.Clone()
 
 if int(containerJavaSupport):
     try:
-        print 'Java Home: ', os.environ['JAVA_HOME']
-        print 'Java Lib: ', os.environ['JAVA_LIB']
+        print('Java Home: ' + os.environ['JAVA_HOME'])
+        print('Java Lib: ' + os.environ['JAVA_LIB'])
         container_gtest_env.Append(CPPDEFINES={'JAVA_SUPPORT_TEST': 1})
     except KeyError:
-        print '''
+        print('''
 *********************************** Error *************************************
 * Building resource container without Java support. JAVA_HOME or JAVA_LIB are not set properly
 * Please configure JAVA_HOME to point to your Java 7 JDK and
@@ -71,7 +70,7 @@ if int(containerJavaSupport):
 * Example: export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-i386
 *          export JAVA_LIB=/usr/lib/jvm/java-7-openjdk-i386/jre/lib/i386/server/
 *******************************************************************************
-'''
+''')
         container_gtest_env.Append(CPPDEFINES={'JAVA_SUPPORT_TEST': 0})
 
 ######################### unit test setting ##########################
@@ -100,7 +99,7 @@ if int(containerJavaSupport):
             os.environ['JAVA_HOME'] + '/include/linux'
         ])
     except KeyError:
-        print ''
+        print('')
 
 if target_os not in ['windows']:
     container_gtest_env.AppendUnique(LIBS=['dl'])
@@ -130,7 +129,7 @@ if int(containerJavaSupport):
     try:
         container_gtest_env.AppendUnique(LIBPATH=[os.environ['JAVA_LIB']])
     except KeyError:
-        print ''
+        print('')
 container_gtest_env.PrependUnique(LIBS=[
     'rcs_container',
     'rcs_client',
@@ -146,10 +145,10 @@ container_gtest_env.PrependUnique(LIBS=[
 
 if int(containerJavaSupport):
     try:
-        print 'Java Lib: ', os.environ['JAVA_LIB']
+        print('Java Lib: ' + os.environ['JAVA_LIB'])
         container_gtest_env.AppendUnique(LIBS=['jvm'])
     except KeyError:
-        print ''
+        print('')
 
 if container_gtest_env.get('SECURED') == '1':
     container_gtest_env.AppendUnique(CPPDEFINES=['SECURED'])

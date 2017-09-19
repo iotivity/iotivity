@@ -27,7 +27,7 @@ target_os = env.get('TARGET_OS')
 
 manager_env = env.Clone()
 
-print "Reading MPM script"
+print("Reading MPM script")
 
 ######################################################################
 # Build flags

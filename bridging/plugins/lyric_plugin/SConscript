@@ -32,7 +32,7 @@ bridging_path = os.path.join(src_dir, 'bridging')
 
 lyric_env = env.Clone()
 
-print "Reading Lyric Plugin script"
+print("Reading Lyric Plugin script")
 
 
 def maskFlags(flags):

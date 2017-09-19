@@ -32,7 +32,7 @@ bridging_path = os.path.join(src_dir, 'bridging')
 
 lifx_env = env.Clone()
 
-print "Reading LifX Plugin script"
+print("Reading LifX Plugin script")
 
 def maskFlags(flags):
     flags = [flags.replace('-Wl,--no-undefined', '') for flags in flags]

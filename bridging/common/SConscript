@@ -32,7 +32,7 @@ bridging_path = os.path.join(src_dir, 'bridging')
 
 mpmcommon_env = env.Clone()
 
-print "Reading MPM Common Plugin script"
+print("Reading MPM Common Plugin script")
 
 
 def maskFlags(flags):

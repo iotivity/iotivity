@@ -103,7 +103,7 @@ src_files = [os.path.join(this_src_dir, src_file) for src_file in src_files]
 glue_files = []
 updated_files = []
 
-for file, prefix in dbus_introspection_xml.items():
+for file, prefix in list(dbus_introspection_xml.items()):
     source_xml = file + '.xml'
     glue = file + '-glue'
     glue_source = glue + '.c'

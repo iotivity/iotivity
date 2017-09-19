@@ -25,7 +25,7 @@ import os.path
 
 Import('env')
 
-print "Reading top Zigbee Wrapper."
+print("Reading top Zigbee Wrapper.")
 
 env.SConscript('telegesis_wrapper/SConscript')
 

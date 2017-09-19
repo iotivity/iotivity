@@ -45,8 +45,8 @@ else:
 ##### The following lines must be uncommented, if target Enrollee is not Arduino
 target_enrollee = env.get('ES_TARGET_ENROLLEE')
 if target_enrollee == 'arduino':
-    print "REMOTE_ARDUINO_ENROLEE flag is defined."
-    print "The Mediator application will be working only with Arduino Enrollee."
+    print("REMOTE_ARDUINO_ENROLEE flag is defined.")
+    print("The Mediator application will be working only with Arduino Enrollee.")
     easy_setup_env.AppendUnique(CPPDEFINES=['REMOTE_ARDUINO_ENROLEE'])
 target_os = env.get('TARGET_OS')
 
@@ -148,7 +148,7 @@ if not env.get('RELEASE') and target_os not in ['ios']:
 # Source files and Targets
 ######################################################################
 
-print "easysetup_path %s" % easysetup_path
+print("easysetup_path %s" % easysetup_path)
 
 es_src = None
 
@@ -187,7 +187,7 @@ for filename in filenames:
     easy_setup_env.UserInstallTargetHeader(
         'inc/' + filename, "service/easy-setup", filename)
 
-print "Files path is %s" % env.get('es_src')
+print("Files path is %s" % env.get('es_src'))
 
 ######################################################################
 # Generate RichSDK Mediator AAR

@@ -71,7 +71,7 @@ if 'ALL' in TARGET_TRANSPORT:
     TRANSPORT_EDR = 1
     TRANSPORT_BLE = 1
     TRANSPORT_NFC = 1
-    print "Android Transport is ALL"
+    print("Android Transport is ALL")
 else:
     if 'BT' in TARGET_TRANSPORT:
         TRANSPORT_EDR = 1
@@ -160,11 +160,11 @@ def find_scons_java_version(env):
         if ' 1.9' in line:
             print('\tJava version 1.9 found.')
             if StrictVersion(scons_version) <= StrictVersion('2.2.0'):
-                print('\tJava 1.9 not supported in SCons ' + scons_version + ', max supported Java 1.6.')
+                print(('\tJava 1.9 not supported in SCons ' + scons_version + ', max supported Java 1.6.'))
                 print('\tSetting JAVAVERSION to 1.6')
                 return '1.6'
             if StrictVersion(scons_version) <= StrictVersion('2.3.2'):
-                print('\tJava 1.9 not supported in SCons ' + scons_version + ', max supported Java 1.7.')
+                print(('\tJava 1.9 not supported in SCons ' + scons_version + ', max supported Java 1.7.'))
                 print('\tSetting JAVAVERSION to 1.7')
                 return '1.7'
             if StrictVersion(scons_version) > StrictVersion('2.5.1'):
@@ -173,29 +173,29 @@ def find_scons_java_version(env):
                 print('\t***** Unrecognized version of SCons found in java version Check. Build script may need to be updated *****')
                 # drop through to the next if statement.
             if StrictVersion(scons_version) > StrictVersion('2.3.2'):
-                print('\tJava 1.9 not supported in SCons ' + scons_version + ', max supported Java 1.8.')
+                print(('\tJava 1.9 not supported in SCons ' + scons_version + ', max supported Java 1.8.'))
                 print('\tSetting JAVAVERSION to 1.8')
                 return '1.8'
         if ' 1.8' in line:
             print('\tJava version 1.8 found.')
             if StrictVersion(scons_version) <= StrictVersion('2.2.0'):
-                print('\tJava 1.8 not supported in SCons ' + scons_version + ', max supported Java 1.6.')
+                print(('\tJava 1.8 not supported in SCons ' + scons_version + ', max supported Java 1.6.'))
                 print('\tSetting JAVAVERSION to 1.6')
                 return '1.6'
             if StrictVersion(scons_version) <= StrictVersion('2.3.2'):
-                print('\tJava 1.8 not supported in SCons ' + scons_version + ', max supported Java 1.7.')
+                print(('\tJava 1.8 not supported in SCons ' + scons_version + ', max supported Java 1.7.'))
                 print('\tSetting JAVAVERSION to 1.7')
                 return '1.7'
         if ' 1.7' in line:
             print('\tJava version 1.7 found.')
             if StrictVersion(scons_version) <= StrictVersion('2.2.0'):
-                print('\tJava 1.7 not supported in SCons ' + scons_version + ', max supported Java 1.6.')
+                print(('\tJava 1.7 not supported in SCons ' + scons_version + ', max supported Java 1.6.'))
                 print('\tSetting JAVAVERSION to 1.6')
                 return '1.6'
         # handle versions supported by SCons
         for v in possible_versions:
             if (' ' + v) in line:
-                print('\tSetting JAVAVERSION to ' + v)
+                print(('\tSetting JAVAVERSION to ' + v))
                 return v
     print('\tJava version NOT found!')
     return None
