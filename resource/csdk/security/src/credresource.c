@@ -1680,6 +1680,17 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
 
     bool found = false;
 
+    OicSecDostype_t dos;
+
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
+    if ((DOS_RESET == dos.state) ||
+        (DOS_RFNOP == dos.state))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s /cred resource is read-only in RESET and RFNOP.", __func__);
+        result = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
+    }
+
     //leave IOT-1936 fix for preconfig pin
 #if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
     LL_FOREACH_SAFE(gCred, cred, tempCred)
@@ -1743,7 +1754,7 @@ saveToDB:
     {
         result = OC_STACK_OK;
     }
-
+exit:
     return result;
 }
 
