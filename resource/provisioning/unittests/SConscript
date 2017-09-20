@@ -67,6 +67,11 @@ elif target_os in ['tizen', 'linux']:
     provisiontests_env.ParseConfig(
         'pkg-config --cflags --libs sqlite3 gobject-2.0 gio-2.0 glib-2.0')
 
+if target_os in ['msys_nt', 'windows']:
+    calib = 'connectivity_abstraction_internal'
+else:
+    calib = 'connectivity_abstraction'
+
 provisiontests_env.PrependUnique(LIBS=[
     'ocprovision',
     'oc',
@@ -75,7 +80,7 @@ provisiontests_env.PrependUnique(LIBS=[
     'routingmanager',
     'oc_logger_internal',
     'logger',
-    'connectivity_abstraction_internal',
+    calib,
     'coap',
     'ocsrm',
     'routingmanager',
