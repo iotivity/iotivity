@@ -64,7 +64,7 @@ public class RIResourceTest extends InstrumentationTestCase {
 
     protected void setUp() {
         m_riHelper = RIHelper.getInstance(getInstrumentation()
-                .getTargetContext());
+                                          .getTargetContext());
         m_resource = null;
         m_resource = m_riHelper.constructResource();
 
@@ -152,7 +152,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      * @target void get(Map<String, String> queryParamsMap,
      * OnGetListener onGetListener)
      * @test_data 1. queryParamsMap map with query paramter and value
-     * `			2. onGetListener event handler
+     * `            2. onGetListener event handler
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call get() API using resource
@@ -184,7 +184,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      * @target void get(Map<String, String> queryParamsMap,
      * OnGetListener onGetListener)
      * @test_data 1. queryParamsMap map with query paramter and value
-     * `			2. onGetListener event handler
+     * `            2. onGetListener event handler
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call get() API using resource
@@ -219,7 +219,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      * @target void get(Map<String, String> queryParamsMap,
      * OnGetListener onGetListener)
      * @test_data 1. queryParamsMap map with query paramter and value
-     * `			2. onGetListener event handler
+     * `            2. onGetListener event handler
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call get() API using resource
@@ -254,7 +254,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      * @target void get(Map<String, String> queryParamsMap,
      * OnGetListener onGetListener, QualityOfService qualityOfService)
      * @test_data 1. queryParamsMap map with query paramter and value
-     * `			2. onGetListener event handler
+     * `            2. onGetListener event handler
      * 3. qualityOfService High
      * @pre_condition 1. configure platform
      * 2. construct resource object
@@ -287,7 +287,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      * @target void get(Map<String, String> queryParamsMap,
      * OnGetListener onGetListener, QualityOfService qualityOfService)
      * @test_data 1. queryParamsMap map with query paramter and value
-     * `			2. onGetListener event handler
+     * `            2. onGetListener event handler
      * 3. qualityOfService Low
      * @pre_condition 1. configure platform
      * 2. construct resource object
@@ -322,7 +322,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      * OnPutListener onPutListener)
      * @test_data 1. representation representation of the resource
      * 2. queryParamsMap map with query paramter and value
-     * `			3. OnPutListener event handler
+     * `            3. OnPutListener event handler
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call put() API using resource
@@ -356,7 +356,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      *OnPutListener onPutListener)
      * @test_data 1. representation null
      * 2. queryParamsMap map with query paramter and value
-     * `			3. OnPutListener event handler
+     * `            3. OnPutListener event handler
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call put() API using resource
@@ -393,7 +393,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      *OnPutListener onPutListener)
      * @test_data 1. representation representation of the resource
      * 2. queryParamsMap map with query paramter and value
-     * `			3. OnPutListener null
+     * `            3. OnPutListener null
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call put() API using resource
@@ -430,7 +430,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      *OnPutListener onPutListener)
      * @test_data 1. representation representation of the resource
      * 2. queryParamsMap null
-     * `			3. OnPutListener event handler
+     * `            3. OnPutListener event handler
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call put() API using resource
@@ -468,8 +468,8 @@ public class RIResourceTest extends InstrumentationTestCase {
      * QualityOfService qualityOfService)
      * @test_data 1. representation representation of the resource
      * 2. queryParamsMap map with query paramter and value
-     * `			3. OnPutListener event handler
-     * `				4. qualityOfService High
+     * `            3. OnPutListener event handler
+     * `                4. qualityOfService High
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call put() API(with high qos) using resource
@@ -504,8 +504,8 @@ public class RIResourceTest extends InstrumentationTestCase {
      * QualityOfService qualityOfService)
      * @test_data 1. representation representation of the resource
      * 2. queryParamsMap map with query paramter and value
-     * `			3. OnPutListener event handler
-     * `				4. qualityOfService Low
+     * `            3. OnPutListener event handler
+     * `                4. qualityOfService Low
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure call put() API(with low qos) using resource
@@ -539,7 +539,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      * OnPostListener onPostListener)
      * @test_data 1. representation representation of the resource
      * 2. queryParamsMap map with query paramter and value
-     * `			3. onPostListener event handler
+     * `            3. onPostListener event handler
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call post() API using resource
@@ -573,7 +573,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      * OnPostListener onPostListener)
      * @test_data 1. representation null
      * 2. queryParamsMap map with query paramter and value
-     * `			3. onPostListener event handler
+     * `            3. onPostListener event handler
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call post() API using resource
@@ -610,7 +610,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      * OnPostListener onPostListener)
      * @test_data 1. representation representation of the resource
      * 2. queryParamsMap map with query paramter and value
-     * `			3. OnPostListener null
+     * `            3. OnPostListener null
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call post() API using resource
@@ -647,7 +647,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      * OnPostListener onPostListener)
      * @test_data 1. representation representation of the resource
      * 2. queryParamsMap null
-     * `			3. OnPostListener event handler
+     * `            3. OnPostListener event handler
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call post() API using resource
@@ -685,8 +685,8 @@ public class RIResourceTest extends InstrumentationTestCase {
      * QualityOfService qualityOfService)
      * @test_data 1. representation representation of the resource
      * 2. queryParamsMap map with query paramter and value
-     * `			3. onPostListener event handler
-     * `				4. qualityOfService High
+     * `            3. onPostListener event handler
+     * `                4. qualityOfService High
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call post() API(with high qos) using resource
@@ -721,8 +721,8 @@ public class RIResourceTest extends InstrumentationTestCase {
      * QualityOfService qualityOfService)
      * @test_data 1. representation representation of the resource
      * 2. queryParamsMap map with query paramter and value
-     * `			3. onPostListener event handler
-     * `				4. qualityOfService Low
+     * `            3. onPostListener event handler
+     * `                4. qualityOfService Low
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure call post() API(with low qos) using resource
@@ -875,7 +875,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      * OnObserveListener onObserveListener)
      * @test_data 1. observeType observe type
      * 2. queryParamsMap map with query paramter and value
-     * `			3. onObserveListener event handler
+     * `            3. onObserveListener event handler
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call observe() API using resource
@@ -909,7 +909,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      * OnObserveListener onObserveListener)
      * @test_data 1. observeType null
      * 2. queryParamsMap map with query paramter and value
-     * `			3. onObserveListener event handler
+     * `            3. onObserveListener event handler
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call observe() API using resource
@@ -946,7 +946,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      * OnObserveListener onObserveListener)
      * @test_data 1. observeType observe type
      * 2. queryParamsMap map with query paramter and value
-     * `			3. onObserveListener null
+     * `            3. onObserveListener null
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call observe() API using resource
@@ -983,7 +983,7 @@ public class RIResourceTest extends InstrumentationTestCase {
      * OnObserveListener onObserveListener)
      * @test_data 1. observeType observe type
      * 2. queryParamsMap null
-     * `			3. onObserveListener event handler
+     * `            3. onObserveListener event handler
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call observe() API using resource
@@ -1021,8 +1021,8 @@ public class RIResourceTest extends InstrumentationTestCase {
      * QualityOfService qualityOfService)
      * @test_data 1. observeType observe type
      * 2. queryParamsMap map with query paramter and value
-     * `			3. onObserveListener event handler
-     * `			4. qualityOfService High
+     * `            3. onObserveListener event handler
+     * `            4. qualityOfService High
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure Call observe() API(with high qos) using resource
@@ -1057,8 +1057,8 @@ public class RIResourceTest extends InstrumentationTestCase {
      * QualityOfService qualityOfService)
      * @test_data 1. observeType observe type
      * 2. queryParamsMap map with query paramter and value
-     * `			3. onObserveListener event handler
-     * `			4. qualityOfService Low
+     * `            3. onObserveListener event handler
+     * `            4. qualityOfService Low
      * @pre_condition 1. configure platform
      * 2. construct resource object
      * @procedure call observe() API(with low qos) using resource

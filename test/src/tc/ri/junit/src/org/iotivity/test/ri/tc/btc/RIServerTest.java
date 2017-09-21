@@ -55,7 +55,7 @@ public class RIServerTest extends InstrumentationTestCase {
 
     protected void setUp() {
         m_riHelper = RIHelper.getInstance(getInstrumentation()
-                .getTargetContext());
+                                          .getTargetContext());
         m_resourceHandle = null;
         Log.i(LOG_TAG, "SetUp Finished");
     }
@@ -98,8 +98,8 @@ public class RIServerTest extends InstrumentationTestCase {
     public void testConfigureServerInProc_SRC_P() {
         try {
             PlatformConfig cfg = new PlatformConfig(getInstrumentation()
-                    .getTargetContext(), ServiceType.IN_PROC, ModeType.SERVER,
-                    "0.0.0.0", 0, QualityOfService.HIGH);
+                                                    .getTargetContext(), ServiceType.IN_PROC, ModeType.SERVER,
+                                                    "0.0.0.0", 0, QualityOfService.HIGH);
             OcPlatform.Configure(cfg);
         } catch (Exception e) {
             e.printStackTrace();
@@ -122,8 +122,8 @@ public class RIServerTest extends InstrumentationTestCase {
     public void testConfigureServerOutOfProc_SRC_P() {
         try {
             PlatformConfig cfg = new PlatformConfig(getInstrumentation()
-                    .getTargetContext(), ServiceType.OUT_OF_PROC,
-                    ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.HIGH);
+                                                    .getTargetContext(), ServiceType.OUT_OF_PROC,
+                                                    ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.HIGH);
             OcPlatform.Configure(cfg);
         } catch (Exception e) {
             e.printStackTrace();
@@ -148,8 +148,8 @@ public class RIServerTest extends InstrumentationTestCase {
     public void testConfigureServerNon_SRC_P() {
         try {
             PlatformConfig cfg = new PlatformConfig(getInstrumentation()
-                    .getTargetContext(), ServiceType.IN_PROC, ModeType.SERVER,
-                    "0.0.0.0", 0, QualityOfService.LOW);
+                                                    .getTargetContext(), ServiceType.IN_PROC, ModeType.SERVER,
+                                                    "0.0.0.0", 0, QualityOfService.LOW);
             OcPlatform.Configure(cfg);
         } catch (Exception e) {
             e.printStackTrace();
@@ -203,7 +203,7 @@ public class RIServerTest extends InstrumentationTestCase {
      * @target OcResourceHandle registerResource( String resourceUri, String
      * resourceTypeName, String resourceInterface, EntityHandler
      * entityHandler, EnumSet<ResourceProperty> resourcePropertySet)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName "oic.r.temperature"
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
@@ -221,10 +221,10 @@ public class RIServerTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
         try {
             m_resourceHandle = OcPlatform.registerResource(
-                    RIHelper.RESOURCE_URI_TEMPERATURE,
-                    RIHelper.RESOURCE_TYPE_TEMPERATURE,
-                    OcPlatform.DEFAULT_INTERFACE, entityHandler,
-                    m_riHelper.m_resourceProperty);
+                                   RIHelper.RESOURCE_URI_TEMPERATURE,
+                                   RIHelper.RESOURCE_TYPE_TEMPERATURE,
+                                   OcPlatform.DEFAULT_INTERFACE, entityHandler,
+                                   m_riHelper.m_resourceProperty);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -255,9 +255,9 @@ public class RIServerTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
         try {
             m_resourceHandle = OcPlatform.registerResource(
-                    RIHelper.EMPTY_STRING, RIHelper.RESOURCE_TYPE_TEMPERATURE,
-                    OcPlatform.DEFAULT_INTERFACE, entityHandler,
-                    m_riHelper.m_resourceProperty);
+                                   RIHelper.EMPTY_STRING, RIHelper.RESOURCE_TYPE_TEMPERATURE,
+                                   OcPlatform.DEFAULT_INTERFACE, entityHandler,
+                                   m_riHelper.m_resourceProperty);
             fail("OcException should occur");
         } catch (OcException e) {
             e.printStackTrace();
@@ -273,7 +273,7 @@ public class RIServerTest extends InstrumentationTestCase {
      * @target OcResourceHandle registerResource( String resourceUri, String
      * resourceTypeName, String resourceInterface, EntityHandler
      * entityHandler, EnumSet<ResourceProperty> resourcePropertySet)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName ""
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
@@ -289,9 +289,9 @@ public class RIServerTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
         try {
             m_resourceHandle = OcPlatform.registerResource(
-                    RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.EMPTY_STRING,
-                    OcPlatform.DEFAULT_INTERFACE, entityHandler,
-                    m_riHelper.m_resourceProperty);
+                                   RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.EMPTY_STRING,
+                                   OcPlatform.DEFAULT_INTERFACE, entityHandler,
+                                   m_riHelper.m_resourceProperty);
             fail("OcException should occur");
         } catch (OcException e) {
             e.printStackTrace();
@@ -307,7 +307,7 @@ public class RIServerTest extends InstrumentationTestCase {
      * @target OcResourceHandle registerResource( String resourceUri, String
      * resourceTypeName, String resourceInterface, EntityHandler
      * entityHandler, EnumSet<ResourceProperty> resourcePropertySet)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName ""
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler null
@@ -325,10 +325,10 @@ public class RIServerTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
         try {
             m_resourceHandle = OcPlatform.registerResource(
-                    RIHelper.RESOURCE_URI_TEMPERATURE,
-                    RIHelper.RESOURCE_TYPE_TEMPERATURE,
-                    OcPlatform.DEFAULT_INTERFACE, null,
-                    m_riHelper.m_resourceProperty);
+                                   RIHelper.RESOURCE_URI_TEMPERATURE,
+                                   RIHelper.RESOURCE_TYPE_TEMPERATURE,
+                                   OcPlatform.DEFAULT_INTERFACE, null,
+                                   m_riHelper.m_resourceProperty);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -354,8 +354,8 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testUnregisterResource_SRC_P() {
         m_resourceHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_TEMPERATURE,
-                RIHelper.RESOURCE_TYPE_TEMPERATURE);
+                               RIHelper.RESOURCE_URI_TEMPERATURE,
+                               RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
@@ -385,8 +385,8 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testUnregisterResourceHandle_NV_N() {
         m_resourceHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_TEMPERATURE,
-                RIHelper.RESOURCE_TYPE_TEMPERATURE);
+                               RIHelper.RESOURCE_URI_TEMPERATURE,
+                               RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
@@ -420,13 +420,13 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testBindTypeToResource_SRC_P() {
         m_resourceHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_TEMPERATURE,
-                RIHelper.RESOURCE_TYPE_TEMPERATURE);
+                               RIHelper.RESOURCE_URI_TEMPERATURE,
+                               RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
             OcPlatform.bindTypeToResource(m_resourceHandle,
-                    RIHelper.RESOURCE_TYPE_LIGHT);
+                                          RIHelper.RESOURCE_TYPE_LIGHT);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -454,8 +454,8 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testBindTypeToResourceHandle_NV_ETC_N() {
         m_resourceHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_TEMPERATURE,
-                RIHelper.RESOURCE_TYPE_TEMPERATURE);
+                               RIHelper.RESOURCE_URI_TEMPERATURE,
+                               RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
@@ -489,13 +489,13 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testBindInterfaceToResource_SRC_P() {
         m_resourceHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_TEMPERATURE,
-                RIHelper.RESOURCE_TYPE_TEMPERATURE);
+                               RIHelper.RESOURCE_URI_TEMPERATURE,
+                               RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
             OcPlatform.bindInterfaceToResource(m_resourceHandle,
-                    OcPlatform.BATCH_INTERFACE);
+                                               OcPlatform.BATCH_INTERFACE);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -523,13 +523,13 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testBindIntefaceToResourceHandle_NV_ETC_N() {
         m_resourceHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_TEMPERATURE,
-                RIHelper.RESOURCE_TYPE_TEMPERATURE);
+                               RIHelper.RESOURCE_URI_TEMPERATURE,
+                               RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
             OcPlatform
-                    .bindInterfaceToResource(null, OcPlatform.BATCH_INTERFACE);
+            .bindInterfaceToResource(null, OcPlatform.BATCH_INTERFACE);
             fail("OcException should occur");
         } catch (OcException e) {
             e.printStackTrace();
@@ -560,10 +560,10 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testBindResource_SRC_P() {
         OcResourceHandle lightHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_LIGHT, RIHelper.RESOURCE_TYPE_LIGHT);
+                                           RIHelper.RESOURCE_URI_LIGHT, RIHelper.RESOURCE_TYPE_LIGHT);
         assertNotNull("Can not create resource", lightHandle);
         OcResourceHandle fanHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_FAN, RIHelper.RESOURCE_TYPE_FAN);
+                                         RIHelper.RESOURCE_URI_FAN, RIHelper.RESOURCE_TYPE_FAN);
         assertNotNull("Can not create resource", fanHandle);
 
         try {
@@ -634,10 +634,10 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testUnbindResource_SRC_P() {
         OcResourceHandle lightHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_LIGHT, RIHelper.RESOURCE_TYPE_LIGHT);
+                                           RIHelper.RESOURCE_URI_LIGHT, RIHelper.RESOURCE_TYPE_LIGHT);
         assertNotNull("Can not create resource", lightHandle);
         OcResourceHandle fanHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_FAN, RIHelper.RESOURCE_TYPE_FAN);
+                                         RIHelper.RESOURCE_URI_FAN, RIHelper.RESOURCE_TYPE_FAN);
         assertNotNull("Can not create resource", fanHandle);
 
         try {
@@ -670,7 +670,7 @@ public class RIServerTest extends InstrumentationTestCase {
      * @test_data 1. ocResourceCollectionHandle null
      * 2. ocResourceHandle null
      * @pre_condition 1. Configure platform
-     * 2. Call registerResource() API for	two resources
+     * 2. Call registerResource() API for   two resources
      * 3. Call bindResource() API
      * @procedure Call unbindResource() API
      * @post_condition Call unregisterResource() API for two resources
@@ -686,10 +686,10 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testUnbindResourceHandle_NV_N() {
         OcResourceHandle lightHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_LIGHT, RIHelper.RESOURCE_TYPE_LIGHT);
+                                           RIHelper.RESOURCE_URI_LIGHT, RIHelper.RESOURCE_TYPE_LIGHT);
         assertNotNull("Can not create resource", lightHandle);
         OcResourceHandle fanHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_FAN, RIHelper.RESOURCE_TYPE_FAN);
+                                         RIHelper.RESOURCE_URI_FAN, RIHelper.RESOURCE_TYPE_FAN);
         assertNotNull("Can not create resource", fanHandle);
 
         try {
@@ -737,14 +737,14 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testBindResources_SRC_P() {
         m_resourceHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_TEMPERATURE,
-                RIHelper.RESOURCE_TYPE_TEMPERATURE);
+                               RIHelper.RESOURCE_URI_TEMPERATURE,
+                               RIHelper.RESOURCE_TYPE_TEMPERATURE);
 
         OcResourceHandle lightHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_LIGHT, RIHelper.RESOURCE_TYPE_LIGHT);
+                                           RIHelper.RESOURCE_URI_LIGHT, RIHelper.RESOURCE_TYPE_LIGHT);
         assertNotNull("Can not create resource", lightHandle);
         OcResourceHandle fanHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_FAN, RIHelper.RESOURCE_TYPE_FAN);
+                                         RIHelper.RESOURCE_URI_FAN, RIHelper.RESOURCE_TYPE_FAN);
         assertNotNull("Can not create resource", fanHandle);
 
         List<OcResourceHandle> resourceHandleList = new ArrayList<OcResourceHandle>();
@@ -820,14 +820,14 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testUnbindResources_SRC_P() {
         m_resourceHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_TEMPERATURE,
-                RIHelper.RESOURCE_TYPE_TEMPERATURE);
+                               RIHelper.RESOURCE_URI_TEMPERATURE,
+                               RIHelper.RESOURCE_TYPE_TEMPERATURE);
 
         OcResourceHandle lightHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_LIGHT, RIHelper.RESOURCE_TYPE_LIGHT);
+                                           RIHelper.RESOURCE_URI_LIGHT, RIHelper.RESOURCE_TYPE_LIGHT);
         assertNotNull("Can not create resource", lightHandle);
         OcResourceHandle fanHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_FAN, RIHelper.RESOURCE_TYPE_FAN);
+                                         RIHelper.RESOURCE_URI_FAN, RIHelper.RESOURCE_TYPE_FAN);
         assertNotNull("Can not create resource", fanHandle);
 
         List<OcResourceHandle> resourceHandleList = new ArrayList<OcResourceHandle>();
@@ -1002,8 +1002,8 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testNotifyAllObservers_NV_N() {
         m_resourceHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_TEMPERATURE,
-                RIHelper.RESOURCE_TYPE_TEMPERATURE);
+                               RIHelper.RESOURCE_URI_TEMPERATURE,
+                               RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
         try {
             OcPlatform.notifyAllObservers(null);
@@ -1037,8 +1037,8 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testNotifyAllObserversWithQos_NV_N() {
         m_resourceHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_TEMPERATURE,
-                RIHelper.RESOURCE_TYPE_TEMPERATURE);
+                               RIHelper.RESOURCE_URI_TEMPERATURE,
+                               RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
         try {
             OcPlatform.notifyAllObservers(null, QualityOfService.HIGH);
@@ -1073,8 +1073,8 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testNotifyListOfObservers_NV_N() {
         m_resourceHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_TEMPERATURE,
-                RIHelper.RESOURCE_TYPE_TEMPERATURE);
+                               RIHelper.RESOURCE_URI_TEMPERATURE,
+                               RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
@@ -1112,13 +1112,13 @@ public class RIServerTest extends InstrumentationTestCase {
      **/
     public void testNotifyListOfObserversWithQos_NV_N() {
         m_resourceHandle = m_riHelper.registerResource(
-                RIHelper.RESOURCE_URI_TEMPERATURE,
-                RIHelper.RESOURCE_TYPE_TEMPERATURE);
+                               RIHelper.RESOURCE_URI_TEMPERATURE,
+                               RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
             OcPlatform.notifyListOfObservers(m_resourceHandle, null, null,
-                    QualityOfService.HIGH);
+                                             QualityOfService.HIGH);
             fail("OcException should occur");
         } catch (OcException e) {
             e.printStackTrace();

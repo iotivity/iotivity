@@ -68,7 +68,7 @@ public class RIHelper {
     public static final String KEY_FIRMWARE_VERSION = "mnfv";
     public static final String KEY_SUPPORT_URL = "mnsl";
     public static final String KEY_SYSTEM_TIME = "st";
-    
+
     public static final String PLATFORM_ID = "436f6e66-6f72-6d61-6e63-6553696d756c";
     public static final String MANUFACTURER_NAME = "Vendor";
     public static final String MANUFACTURER_URL = "www.default-vendor.com";
@@ -81,19 +81,20 @@ public class RIHelper {
     public static final String SUPPORT_URL = "support.default-vendor.com";
     public static final String SYSTEM_TIME = "2016-06-20T10:10:10Z";
 
-    public static final String KEY_DEVICE_NAME = "n"; 
+    public static final String KEY_DEVICE_NAME = "n";
     public static final String DEVICE_NAME = "IotivitySmartRoom";
     public static final String DEVICE_TYPE_AC = "AirCondition";
 
-    public static final String RESOURCE_URI_TEMPERATURE = "/a/temperature";
+    public static final String RESOURCE_URI_TEMPERATURE = "/test/ri/android/temperature";
     public static final String RESOURCE_TYPE_TEMPERATURE = "oic.r.temperature";
     public static final String RESOURCE_URI_LIGHT = "/a/light";
     public static final String RESOURCE_TYPE_LIGHT = "core.light";
     public static final String RESOURCE_URI_FAN = "/a/fan";
     public static final String RESOURCE_TYPE_FAN = "core.fan";
 
-    public static final String TEMPERATURE_RESOURCE_QUERY = OcPlatform.WELL_KNOWN_QUERY + "?rt=" + RESOURCE_TYPE_TEMPERATURE;
-    
+    public static final String TEMPERATURE_RESOURCE_QUERY = OcPlatform.WELL_KNOWN_QUERY + "?rt=" +
+            RESOURCE_TYPE_TEMPERATURE;
+
     private static final String HOST = "coap://192.168.1.2:5000";
 
     public final int INT_ZERO = 0;
@@ -105,7 +106,7 @@ public class RIHelper {
     public final int CALLBACK_WAIT_MAX = 10;
     public final int CALLBACK_WAIT_MIN = 1;
     public final int SUCCESS_RESPONSE = 0;
-    
+
     public static final int     COAP_RESPONSE_CODE_SUCCESS               = 205;
     public static final int     COAP_RESPONSE_CODE_CREATED               = 201;
     public static final int     COAP_RESPONSE_CODE_DELETED               = 202;
@@ -115,24 +116,24 @@ public class RIHelper {
     public static final int     COAP_RESPONSE_CODE_RESOURCE_UNAUTHORIZED = 401;
     public static final int     COAP_RESPONSE_CODE_RESOURCE_NOT_FOUND    = 404;
     public static final int     COAP_RESPONSE_CODE_METHOD_NOT_ALLOWED    = 405;
-    
-    public static final String KEY_TEMPERATURE    = "temperature";
-    public static final String KEY_HOUR    = "hour";
-        
-    private final String LOG_TAG = this.getClass().getSimpleName();    
+
+    public static final String  KEY_TEMPERATURE    = "temperature";
+    public static final String  KEY_HOUR           = "hour";
+
+    private final String LOG_TAG = this.getClass().getSimpleName();
 
     private static Context s_helperContext;
 
     private OcResourceHandle m_resourceHandle = null;
     public EnumSet<ResourceProperty> m_resourceProperty;
-    
+
     private OcRepresentation m_representation = new OcRepresentation();
-    
+
     public int m_temp;
     public int m_hour;
-    
+
     public static boolean s_isServerOk;
-    
+
     public static String s_errorMsg;
 
     private RIHelper() {
@@ -169,7 +170,7 @@ public class RIHelper {
      */
     public void configClientServerPlatform() {
         PlatformConfig cfg = new PlatformConfig(s_helperContext, ServiceType.IN_PROC,
-                ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.HIGH);
+                                                ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.HIGH);
         OcPlatform.Configure(cfg);
     }
 
@@ -201,22 +202,22 @@ public class RIHelper {
         configClientServerPlatform();
 
         OcDeviceInfo deviceInfo = new OcDeviceInfo(DEVICE_NAME,
-                Arrays.asList(new String[]{
-                        DEVICE_TYPE_AC}));
+                Arrays.asList(new String[] {
+                                  DEVICE_TYPE_AC
+                              }));
         return deviceInfo;
     }
 
-    void setTemperatureRep()
-    {
-    	try {
-			m_representation.setValue(RIHelper.KEY_TEMPERATURE, m_temp);
-			m_representation.setValue(RIHelper.KEY_HOUR, m_hour);
-		} catch (OcException e) {
-			Log.i(LOG_TAG, "Exception occured iside setValue");
-			e.printStackTrace();			
-		}    	
+    void setTemperatureRep() {
+        try {
+            m_representation.setValue(RIHelper.KEY_TEMPERATURE, m_temp);
+            m_representation.setValue(RIHelper.KEY_HOUR, m_hour);
+        } catch (OcException e) {
+            Log.i(LOG_TAG, "Exception occured iside setValue");
+            e.printStackTrace();
+        }
     }
-    
+
     private void handleResponse(OcResourceRequest request) {
         OcResourceResponse response = new OcResourceResponse();
         response.setRequestHandle(request.getRequestHandle());
@@ -228,127 +229,126 @@ public class RIHelper {
                 .getRequestHandlerFlagSet();
 
         if (requestFlag.contains(RequestHandlerFlag.REQUEST)) {
-        	Log.i(LOG_TAG, "\t\trequestFlag : Request");
-        	Log.i(LOG_TAG, "\t\t\trequestType : " + requestType);
+            Log.i(LOG_TAG, "\t\trequestFlag : Request");
+            Log.i(LOG_TAG, "\t\t\trequestType : " + requestType);
 
             // If the request type is GET
-            if (requestType == RequestType.GET) {                               
+            if (requestType == RequestType.GET) {
                 setTemperatureRep();
                 response.setResourceRepresentation(m_representation);
-                
+
                 try {
                     OcPlatform.sendResponse(response);
                     s_isServerOk = true;
                     Log.i(LOG_TAG, "\tServer response sent successfully");
                 } catch (Exception e) {
-                    e.printStackTrace();  
+                    e.printStackTrace();
                     Log.i(LOG_TAG, "Server Response failed");
                     s_isServerOk = false;
-                    s_errorMsg = s_errorMsg +"Server: Exception occured inside sendResponse for get request. ";
+                    s_errorMsg = s_errorMsg + "Server: Exception occured inside sendResponse for get request. ";
                 }
 
             } else if (requestType == RequestType.PUT) {
                 OcRepresentation incomingRepresentation = request
                         .getResourceRepresentation();
                 try {
-					if(incomingRepresentation.getValue(KEY_TEMPERATURE) == null || 
-							incomingRepresentation.getValue(KEY_HOUR) == null)
-					{
-	                    s_isServerOk = false;
-	                    s_errorMsg = s_errorMsg +"Representation in put does not have temperature or hour attribute. ";
-	                    return;
-					}
-				} catch (OcException e1) {
-					Log.i(LOG_TAG, "Exception occured inside getValue");
-					s_isServerOk = false;
-                    s_errorMsg = s_errorMsg +"Exception occured inside getValue. ";                    
-					e1.printStackTrace();
-					return;
-				}
-                                
-                try {
-                	m_temp = incomingRepresentation.getValue(KEY_TEMPERATURE);
-					m_hour = incomingRepresentation.getValue(KEY_HOUR);
-				} catch (OcException e1) {
-					e1.printStackTrace();
-					return;
-				}
-                
-                setTemperatureRep();
-                response.setResourceRepresentation(m_representation);
-                
-                try {
-                    OcPlatform.sendResponse(response);
-                    s_isServerOk = true;
-                    Log.i(LOG_TAG, "\tServer response sent successfully");
-                } catch (Exception e) {
-                    e.printStackTrace();  
-                    Log.i(LOG_TAG, "Server Response failed");
+                    if (incomingRepresentation.getValue(KEY_TEMPERATURE) == null ||
+                        incomingRepresentation.getValue(KEY_HOUR) == null) {
+                        s_isServerOk = false;
+                        s_errorMsg = s_errorMsg + "Representation in put does not have temperature or hour attribute. ";
+                        return;
+                    }
+                } catch (OcException e1) {
+                    Log.i(LOG_TAG, "Exception occured inside getValue");
                     s_isServerOk = false;
-                    s_errorMsg = s_errorMsg +"Server: Exception occured inside sendResponse for put request. ";
-                }
-            } else if (requestType == RequestType.POST) {
-            	OcRepresentation incomingRepresentation = request
-                        .getResourceRepresentation();
-                try {
-					if(incomingRepresentation.getValue(KEY_TEMPERATURE) == null || 
-							incomingRepresentation.getValue(KEY_HOUR) == null)
-					{
-	                    s_isServerOk = false;
-	                    s_errorMsg = s_errorMsg +"Representation in post does not have temperature or hour attribute. ";
-	                    return;
-					}
-				} catch (OcException e1) {
-					Log.i(LOG_TAG, "Exception occured inside getValue");
-					s_isServerOk = false;
-                    s_errorMsg = s_errorMsg +"Exception occured inside getValue. ";                    
-					e1.printStackTrace();
-					return;
-				}
-                                
-                try {
-                	m_temp = incomingRepresentation.getValue(KEY_TEMPERATURE);
-					m_hour = incomingRepresentation.getValue(KEY_HOUR);
-				} catch (OcException e1) {
-					e1.printStackTrace();
-					return;
-				}
-                
-                setTemperatureRep();
-                response.setResourceRepresentation(m_representation);
-                
-                try {
-                    OcPlatform.sendResponse(response);
-                    s_isServerOk = true;
-                    Log.i(LOG_TAG, "\tServer response sent successfully");
-                } catch (Exception e) {
-                    e.printStackTrace();  
-                    Log.i(LOG_TAG, "Server Response failed");
-                    s_isServerOk = false;
-                    s_errorMsg = s_errorMsg +"Server: Exception occured inside sendResponse for post request. ";
-                }
-            } else if (requestType == RequestType.DELETE) {          
-            	
-            	response.setResponseResult(EntityHandlerResult.RESOURCE_DELETED);
-            	try {
-                    OcPlatform.sendResponse(response);
-                    s_isServerOk = true;
-                    Log.i(LOG_TAG, "\tServer response sent successfully");
-                } catch (Exception e) {
-                    e.printStackTrace();  
-                    Log.i(LOG_TAG, "Server Response failed");
-                    s_isServerOk = false;
-                    s_errorMsg = s_errorMsg +"Server: Exception occured inside sendResponse for delete request. ";
+                    s_errorMsg = s_errorMsg + "Exception occured inside getValue. ";
+                    e1.printStackTrace();
                     return;
                 }
-            	try {
-					OcPlatform.unregisterResource(m_resourceHandle);
-					Log.i(LOG_TAG, "\tResource unregistered successfully");
-				} catch (OcException e) {
-					e.printStackTrace();
-					s_isServerOk = false;
-					s_errorMsg = s_errorMsg +"Server: Exception occured inside unregisterResource for delete request. ";
-				}
+
+                try {
+                    m_temp = incomingRepresentation.getValue(KEY_TEMPERATURE);
+                    m_hour = incomingRepresentation.getValue(KEY_HOUR);
+                } catch (OcException e1) {
+                    e1.printStackTrace();
+                    return;
+                }
+
+                setTemperatureRep();
+                response.setResourceRepresentation(m_representation);
+
+                try {
+                    OcPlatform.sendResponse(response);
+                    s_isServerOk = true;
+                    Log.i(LOG_TAG, "\tServer response sent successfully");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.i(LOG_TAG, "Server Response failed");
+                    s_isServerOk = false;
+                    s_errorMsg = s_errorMsg + "Server: Exception occured inside sendResponse for put request. ";
+                }
+            } else if (requestType == RequestType.POST) {
+                OcRepresentation incomingRepresentation = request
+                        .getResourceRepresentation();
+                try {
+                    if (incomingRepresentation.getValue(KEY_TEMPERATURE) == null ||
+                        incomingRepresentation.getValue(KEY_HOUR) == null) {
+                        s_isServerOk = false;
+                        s_errorMsg = s_errorMsg + "Representation in post does not have temperature or hour attribute. ";
+                        return;
+                    }
+                } catch (OcException e1) {
+                    Log.i(LOG_TAG, "Exception occured inside getValue");
+                    s_isServerOk = false;
+                    s_errorMsg = s_errorMsg + "Exception occured inside getValue. ";
+                    e1.printStackTrace();
+                    return;
+                }
+
+                try {
+                    m_temp = incomingRepresentation.getValue(KEY_TEMPERATURE);
+                    m_hour = incomingRepresentation.getValue(KEY_HOUR);
+                } catch (OcException e1) {
+                    e1.printStackTrace();
+                    return;
+                }
+
+                setTemperatureRep();
+                response.setResourceRepresentation(m_representation);
+
+                try {
+                    OcPlatform.sendResponse(response);
+                    s_isServerOk = true;
+                    Log.i(LOG_TAG, "\tServer response sent successfully");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.i(LOG_TAG, "Server Response failed");
+                    s_isServerOk = false;
+                    s_errorMsg = s_errorMsg + "Server: Exception occured inside sendResponse for post request. ";
+                }
+            } else if (requestType == RequestType.DELETE) {
+
+                response.setResponseResult(EntityHandlerResult.RESOURCE_DELETED);
+                try {
+                    OcPlatform.sendResponse(response);
+                    s_isServerOk = true;
+                    Log.i(LOG_TAG, "\tServer response sent successfully");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.i(LOG_TAG, "Server Response failed");
+                    s_isServerOk = false;
+                    s_errorMsg = s_errorMsg + "Server: Exception occured inside sendResponse for delete request. ";
+                    return;
+                }
+                try {
+                    OcPlatform.unregisterResource(m_resourceHandle);
+                    Log.i(LOG_TAG, "\tResource unregistered successfully");
+                } catch (OcException e) {
+                    e.printStackTrace();
+                    s_isServerOk = false;
+                    s_errorMsg = s_errorMsg +
+                                 "Server: Exception occured inside unregisterResource for delete request. ";
+                }
             }
         }
     }
@@ -364,13 +364,10 @@ public class RIHelper {
 
             Log.i(LOG_TAG, "In Server entity handler:");
 
-            if(request != null)
-            {
-            	handleResponse(request);
-            }
-            else
-            {
-            	Log.i(LOG_TAG, "In Server entity handler:");
+            if (request != null) {
+                handleResponse(request);
+            } else {
+                Log.i(LOG_TAG, "In Server entity handler:");
             }
             return result;
         }
@@ -383,8 +380,9 @@ public class RIHelper {
     public OcResourceHandle registerResource(String resourceUri, String resourceType) {
         configClientServerPlatform();
         try {
-            m_resourceHandle = OcPlatform.registerResource(resourceUri, resourceType, OcPlatform.DEFAULT_INTERFACE,
-                    entityHandler, m_resourceProperty);
+            m_resourceHandle = OcPlatform.registerResource(resourceUri, resourceType,
+                               OcPlatform.DEFAULT_INTERFACE,
+                               entityHandler, m_resourceProperty);
         } catch (Exception e) {
             e.printStackTrace();
             Log.i(LOG_TAG, "Exception occured inside registerResource");
@@ -406,25 +404,26 @@ public class RIHelper {
         interfaceList.add(OcPlatform.DEFAULT_INTERFACE);
         OcResource resource = null;
         try {
-            resource = OcPlatform.constructResourceObject(HOST, RIHelper.RESOURCE_URI_TEMPERATURE, EnumSet.of(OcConnectivityType.CT_DEFAULT), true,
-                    resourceTypeList, interfaceList);
+            resource = OcPlatform.constructResourceObject(HOST, RIHelper.RESOURCE_URI_TEMPERATURE,
+                       EnumSet.of(OcConnectivityType.CT_DEFAULT), true,
+                       resourceTypeList, interfaceList);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
         return resource;
     }
-    
+
     /**
-	 * @brief function for waiting
-	 * @param[in] second - seconds to wait
-	 */
-	public void waitInSecond(int second) {
-		try {
-			Thread.sleep(second * 1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
+     * @brief function for waiting
+     * @param[in] second - seconds to wait
+     */
+    public void waitInSecond(int second) {
+        try {
+            Thread.sleep(second * 1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 }
 

@@ -56,7 +56,7 @@ using namespace std;
 namespace PH = std::placeholders;
 
 #define EMPTY_STRING ""
-#define TEMPERATURE_URI "/a/temperature"
+#define TEMPERATURE_URI "/test/ri/cpp/temperature"
 #define TEMPERATURE_TYPE "oic.r.temperature"
 #define KEY_TEMPERATURE "temperature"
 #define KEY_HOUR "hour"

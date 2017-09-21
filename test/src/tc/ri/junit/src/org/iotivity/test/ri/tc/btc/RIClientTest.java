@@ -61,7 +61,7 @@ public class RIClientTest extends InstrumentationTestCase {
 
     protected void setUp() {
         m_riHelper = RIHelper.getInstance(getInstrumentation()
-                .getTargetContext());
+                                          .getTargetContext());
         m_presenceHandle = null;
         Log.i(LOG_TAG, "SetUp Finished");
     }
@@ -121,8 +121,8 @@ public class RIClientTest extends InstrumentationTestCase {
     public void testConfigureClient_SRC_P() {
         try {
             PlatformConfig cfg = new PlatformConfig(getInstrumentation()
-                    .getTargetContext(), ServiceType.IN_PROC,
-                    ModeType.CLIENT, "0.0.0.0", 0, QualityOfService.HIGH);
+                                                    .getTargetContext(), ServiceType.IN_PROC,
+                                                    ModeType.CLIENT, "0.0.0.0", 0, QualityOfService.HIGH);
             OcPlatform.Configure(cfg);
         } catch (Exception e) {
             e.printStackTrace();
@@ -152,7 +152,8 @@ public class RIClientTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
 
         try {
-            OcPlatform.findResource(m_host, OcPlatform.WELL_KNOWN_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, OcPlatform.WELL_KNOWN_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -215,7 +216,8 @@ public class RIClientTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
 
         try {
-            OcPlatform.findResource(m_host, OcPlatform.WELL_KNOWN_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), null);
+            OcPlatform.findResource(m_host, OcPlatform.WELL_KNOWN_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), null);
             fail("OcException should occur");
         } catch (OcException e) {
             e.printStackTrace();
@@ -248,8 +250,9 @@ public class RIClientTest extends InstrumentationTestCase {
     public void testFindResourceWithHighQos_SRC_P() {
         m_riHelper.configClientServerPlatform();
         try {
-            OcPlatform.findResource(m_host, OcPlatform.WELL_KNOWN_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound,
-                    QualityOfService.HIGH);
+            OcPlatform.findResource(m_host, OcPlatform.WELL_KNOWN_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound,
+                                    QualityOfService.HIGH);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -279,8 +282,9 @@ public class RIClientTest extends InstrumentationTestCase {
     public void testFindResourceWithLowQos_SRC_P() {
         m_riHelper.configClientServerPlatform();
         try {
-            OcPlatform.findResource(m_host, OcPlatform.WELL_KNOWN_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound,
-                    QualityOfService.HIGH);
+            OcPlatform.findResource(m_host, OcPlatform.WELL_KNOWN_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound,
+                                    QualityOfService.HIGH);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -309,7 +313,8 @@ public class RIClientTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
 
         try {
-            OcPlatform.getDeviceInfo(m_host, OcPlatform.WELL_KNOWN_DEVICE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onDeviceInfoReceived);
+            OcPlatform.getDeviceInfo(m_host, OcPlatform.WELL_KNOWN_DEVICE_QUERY,
+                                     EnumSet.of(OcConnectivityType.CT_DEFAULT), onDeviceInfoReceived);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -339,7 +344,8 @@ public class RIClientTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
 
         try {
-            OcPlatform.getDeviceInfo(m_host, null, EnumSet.of(OcConnectivityType.CT_DEFAULT), onDeviceInfoReceived);
+            OcPlatform.getDeviceInfo(m_host, null, EnumSet.of(OcConnectivityType.CT_DEFAULT),
+                                     onDeviceInfoReceived);
             fail("OcException should occur");
         } catch (OcException e) {
             e.printStackTrace();
@@ -372,7 +378,8 @@ public class RIClientTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
 
         try {
-            OcPlatform.getDeviceInfo(m_host, OcPlatform.WELL_KNOWN_DEVICE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), null);
+            OcPlatform.getDeviceInfo(m_host, OcPlatform.WELL_KNOWN_DEVICE_QUERY,
+                                     EnumSet.of(OcConnectivityType.CT_DEFAULT), null);
             fail("OcException should occur");
         } catch (OcException e) {
             e.printStackTrace();
@@ -405,8 +412,9 @@ public class RIClientTest extends InstrumentationTestCase {
     public void testGetDeviceInfoWithHighQos_SRC_P() {
         m_riHelper.configClientServerPlatform();
         try {
-            OcPlatform.getDeviceInfo(m_host, OcPlatform.WELL_KNOWN_DEVICE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onDeviceInfoReceived,
-                    QualityOfService.HIGH);
+            OcPlatform.getDeviceInfo(m_host, OcPlatform.WELL_KNOWN_DEVICE_QUERY,
+                                     EnumSet.of(OcConnectivityType.CT_DEFAULT), onDeviceInfoReceived,
+                                     QualityOfService.HIGH);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -436,8 +444,9 @@ public class RIClientTest extends InstrumentationTestCase {
     public void testGetDeviceInfoWithLowQos_SRC_P() {
         m_riHelper.configClientServerPlatform();
         try {
-            OcPlatform.getDeviceInfo(m_host, OcPlatform.WELL_KNOWN_DEVICE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onDeviceInfoReceived,
-                    QualityOfService.HIGH);
+            OcPlatform.getDeviceInfo(m_host, OcPlatform.WELL_KNOWN_DEVICE_QUERY,
+                                     EnumSet.of(OcConnectivityType.CT_DEFAULT), onDeviceInfoReceived,
+                                     QualityOfService.HIGH);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -466,7 +475,8 @@ public class RIClientTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
 
         try {
-            OcPlatform.getPlatformInfo(m_host, OcPlatform.WELL_KNOWN_PLATFORM_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onPlatformInfoReceived);
+            OcPlatform.getPlatformInfo(m_host, OcPlatform.WELL_KNOWN_PLATFORM_QUERY,
+                                       EnumSet.of(OcConnectivityType.CT_DEFAULT), onPlatformInfoReceived);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -496,7 +506,8 @@ public class RIClientTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
 
         try {
-            OcPlatform.getPlatformInfo(m_host, null, EnumSet.of(OcConnectivityType.CT_DEFAULT), onPlatformInfoReceived);
+            OcPlatform.getPlatformInfo(m_host, null, EnumSet.of(OcConnectivityType.CT_DEFAULT),
+                                       onPlatformInfoReceived);
             fail("OcException should occur");
         } catch (OcException e) {
             e.printStackTrace();
@@ -529,7 +540,8 @@ public class RIClientTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
 
         try {
-            OcPlatform.getPlatformInfo(m_host, OcPlatform.WELL_KNOWN_PLATFORM_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), null);
+            OcPlatform.getPlatformInfo(m_host, OcPlatform.WELL_KNOWN_PLATFORM_QUERY,
+                                       EnumSet.of(OcConnectivityType.CT_DEFAULT), null);
             fail("OcException should occur");
         } catch (OcException e) {
             e.printStackTrace();
@@ -562,8 +574,9 @@ public class RIClientTest extends InstrumentationTestCase {
     public void testGetPlatformInfoWithHighQos_SRC_P() {
         m_riHelper.configClientServerPlatform();
         try {
-            OcPlatform.getPlatformInfo(m_host, OcPlatform.WELL_KNOWN_PLATFORM_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onPlatformInfoReceived,
-                    QualityOfService.HIGH);
+            OcPlatform.getPlatformInfo(m_host, OcPlatform.WELL_KNOWN_PLATFORM_QUERY,
+                                       EnumSet.of(OcConnectivityType.CT_DEFAULT), onPlatformInfoReceived,
+                                       QualityOfService.HIGH);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -593,8 +606,9 @@ public class RIClientTest extends InstrumentationTestCase {
     public void testGetPlatformInfoWithLowQos_SRC_P() {
         m_riHelper.configClientServerPlatform();
         try {
-            OcPlatform.getPlatformInfo(m_host, OcPlatform.WELL_KNOWN_PLATFORM_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onPlatformInfoReceived,
-                    QualityOfService.HIGH);
+            OcPlatform.getPlatformInfo(m_host, OcPlatform.WELL_KNOWN_PLATFORM_QUERY,
+                                       EnumSet.of(OcConnectivityType.CT_DEFAULT), onPlatformInfoReceived,
+                                       QualityOfService.HIGH);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -621,7 +635,8 @@ public class RIClientTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
 
         try {
-            m_presenceHandle = OcPlatform.subscribePresence(m_host, EnumSet.of(OcConnectivityType.CT_DEFAULT), onPresenceReceived);
+            m_presenceHandle = OcPlatform.subscribePresence(m_host, EnumSet.of(OcConnectivityType.CT_DEFAULT),
+                               onPresenceReceived);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -650,7 +665,8 @@ public class RIClientTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
 
         try {
-            m_presenceHandle = OcPlatform.subscribePresence(m_host, EnumSet.of(OcConnectivityType.CT_DEFAULT), null);
+            m_presenceHandle = OcPlatform.subscribePresence(m_host, EnumSet.of(OcConnectivityType.CT_DEFAULT),
+                               null);
             fail("OcException should occur");
         } catch (OcException e) {
             e.printStackTrace();
@@ -683,7 +699,7 @@ public class RIClientTest extends InstrumentationTestCase {
 
         try {
             m_presenceHandle = OcPlatform.subscribePresence(m_host, RIHelper.RESOURCE_TYPE_TEMPERATURE,
-                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onPresenceReceived);
+                               EnumSet.of(OcConnectivityType.CT_DEFAULT), onPresenceReceived);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -715,7 +731,7 @@ public class RIClientTest extends InstrumentationTestCase {
 
         try {
             m_presenceHandle = OcPlatform.subscribePresence(m_host, RIHelper.RESOURCE_TYPE_TEMPERATURE,
-                    EnumSet.of(OcConnectivityType.CT_DEFAULT), null);
+                               EnumSet.of(OcConnectivityType.CT_DEFAULT), null);
             fail("OcException should occur");
         } catch (OcException e) {
             e.printStackTrace();
@@ -746,7 +762,8 @@ public class RIClientTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
 
         try {
-            m_presenceHandle = OcPlatform.subscribePresence(m_host, EnumSet.of(OcConnectivityType.CT_DEFAULT), onPresenceReceived);
+            m_presenceHandle = OcPlatform.subscribePresence(m_host, EnumSet.of(OcConnectivityType.CT_DEFAULT),
+                               onPresenceReceived);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured in subscribePresence");
@@ -783,7 +800,8 @@ public class RIClientTest extends InstrumentationTestCase {
         m_riHelper.configClientServerPlatform();
 
         try {
-            m_presenceHandle = OcPlatform.subscribePresence(m_host, EnumSet.of(OcConnectivityType.CT_DEFAULT), onPresenceReceived);
+            m_presenceHandle = OcPlatform.subscribePresence(m_host, EnumSet.of(OcConnectivityType.CT_DEFAULT),
+                               onPresenceReceived);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured in subscribePresence");

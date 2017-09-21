@@ -53,12 +53,16 @@ protected:
             false;bool isObserveCorrect = false;
     int m_temp = 20;
     int m_hour = 20;
-    std::string m_temperatureResourceQuery = "/oic/res?rt=oic.r.temperature";
+    std::string m_temperatureResourceQuery = "/oic/res?rt=";
 
     virtual void SetUp()
     {
+
+        m_temperatureResourceQuery += std::string(TEMPERATURE_TYPE);
         CommonTestUtil::runCommonTCSetUpPart();
         m_RIHelper = RIHelper::getInstance();
+        m_foundAllDeviceInfo = true;
+        m_foundAllPlatformInfo = true;
     }
 
     virtual void TearDown()
@@ -76,18 +80,20 @@ public:
         { "di", "Device ID        ", "n", "Device name      ", "lcv", "Spec version url ", "dmv",
                 "Data Model Version ", };
 
-        for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]); i += 2)
-        {
-            if (rep.getValue(values[i], value))
+        if (!m_foundAllDeviceInfo){
+            for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]); i += 2)
             {
-                if (values[i] == "n")
+                if (rep.getValue(values[i], value))
                 {
-                    if (value != DEVICE_NAME)
+                    if (values[i] == "n")
                     {
-                        m_foundAllDeviceInfo = false;
+                        if (value != DEVICE_NAME)
+                        {
+                            m_foundAllDeviceInfo = false;
+                        }
                     }
+                    IOTIVITYTEST_LOG(INFO, "%s : %s", values[i + 1].c_str(), value.c_str());
                 }
-                IOTIVITYTEST_LOG(INFO, "%s : %s", values[i + 1].c_str(), value.c_str());
             }
         }
     }
@@ -232,7 +238,7 @@ public:
                 for (std::string resourceTypes : resource->getResourceTypes())
                 {
                     IOTIVITYTEST_LOG(INFO, "\t\t\t%s", resourceTypes.c_str());
-                    if (resourceTypes == m_TemperatureType)
+                    if (resourceTypes == m_TemperatureType && resourceURI == TEMPERATURE_URI)
                     {
                         IOTIVITYTEST_LOG(INFO, "Found temperature resource");
                         m_temperatureResource = resource;

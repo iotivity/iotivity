@@ -1211,14 +1211,14 @@ OCDoHandle RICsdkHelper::doResource(OCMethod method, const char *requestUri, OCQ
     else if (method == OC_REST_GET)
     {
         m_cbData.cb = getReqCB;
-        requestUri = "/TemperatureResURI?if=oic.if.baseline";
+        requestUri = TEMPERATURE_URI"?if=oic.if.baseline";
         s_coapQuery = "";
         IOTIVITYTEST_LOG(INFO, "get request selected");
     }
     else if (method == OC_REST_PUT)
     {
         m_cbData.cb = putReqCB;
-        requestUri = "/TemperatureResURI";
+        requestUri = TEMPERATURE_URI;
         s_coapQuery = "";
 
         OCRepPayload* payload = OCRepPayloadCreate();
@@ -1236,7 +1236,7 @@ OCDoHandle RICsdkHelper::doResource(OCMethod method, const char *requestUri, OCQ
     else if (method == OC_REST_POST)
     {
         m_cbData.cb = postReqCB;
-        requestUri = "/TemperatureResURI?if=oic.if.baseline";
+        requestUri = TEMPERATURE_URI"?if=oic.if.baseline";
         s_coapQuery = "";
         OCRepPayload* payload = OCRepPayloadCreate();
 
@@ -1253,14 +1253,14 @@ OCDoHandle RICsdkHelper::doResource(OCMethod method, const char *requestUri, OCQ
     else if (method == OC_REST_DELETE)
     {
         m_cbData.cb = deleteReqCB;
-        requestUri = "/TemperatureResURI";
+        requestUri = TEMPERATURE_URI;
         s_coapQuery = "";
         IOTIVITYTEST_LOG(INFO, "delete request selected");
     }
     else if (method == OC_REST_OBSERVE)
     {
         m_cbData.cb = obsReqCB;
-        requestUri = "/TemperatureResURI";
+        requestUri = TEMPERATURE_URI;
         s_coapQuery = "";
         IOTIVITYTEST_LOG(INFO, "observer request selected");
     }

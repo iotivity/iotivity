@@ -78,7 +78,7 @@ public class RIIntegrationTest extends InstrumentationTestCase {
 
     protected void setUp() {
         m_riHelper = RIHelper.getInstance(getInstrumentation()
-                .getTargetContext());
+                                          .getTargetContext());
         m_resourceHandle = null;
         m_isCallback = false;
         m_temperatureResource = null;
@@ -114,13 +114,15 @@ public class RIIntegrationTest extends InstrumentationTestCase {
 
             if (resource != null) {
                 m_isCallback = true;
+                String resourceUri = resource.getUri();
                 Log.i(LOG_TAG, "\tHost of found resource: " + resource.getHost());
                 Log.i(LOG_TAG, "\tdi( OCResource.sid() ) of found resource is = " + resource.getServerId());
                 Log.i(LOG_TAG, "\tunique identifier of found resource is = " + resource.getUniqueIdentifier());
-                Log.i(LOG_TAG, "\turi of the found resource is: " + resource.getUri());
+                Log.i(LOG_TAG, "\turi of the found resource is: " + resourceUri);
                 for (String resourceType : resource.getResourceTypes()) {
                     Log.i(LOG_TAG, "\t\tResource Type: " + resourceType);
-                    if (resourceType.equals(RIHelper.RESOURCE_TYPE_TEMPERATURE)) {
+                    if (resourceType.equals(RIHelper.RESOURCE_TYPE_TEMPERATURE)
+                        && resourceUri.equals(RIHelper.RESOURCE_URI_TEMPERATURE)) {
                         Log.i(LOG_TAG, "\t\tFound temperature resource");
                         m_temperatureResource = resource;
                     }
@@ -144,9 +146,10 @@ public class RIIntegrationTest extends InstrumentationTestCase {
             Log.i(LOG_TAG, "Device Information received ---->");
             m_isCallback = true;
             String value = "";
-            String values[] =
-                    {"di", "Device ID        ", "n", "Device name      ", "lcv", "Spec version url ", "dmv",
-                            "Data Model Model ",};
+            String values[] = {
+                "di", "Device ID        ", "n", "Device name      ", "lcv", "Spec version url ", "dmv",
+                "Data Model Model ",
+            };
 
             for (int i = 0; i < values.length; i += 2) {
                 if (rep.hasAttribute(values[i])) {
@@ -175,13 +178,14 @@ public class RIIntegrationTest extends InstrumentationTestCase {
             Log.i(LOG_TAG, "Platform Information received ---->");
             m_isCallback = true;
             String value = "";
-            String values[] =
-                    {"pi", "Platform ID                    ", "mnmn", "Manufacturer name              ", "mnml",
-                            "Manufacturer url               ", "mnmo", "Manufacturer Model No          ", "mndt",
-                            "Manufactured Date              ", "mnpv", "Manufacturer Platform Version  ", "mnos",
-                            "Manufacturer OS version        ", "mnhw", "Manufacturer hardware version  ", "mnfv",
-                            "Manufacturer firmware version  ", "mnsl", "Manufacturer support url       ", "st",
-                            "Manufacturer system time       "};
+            String values[] = {
+                "pi", "Platform ID                    ", "mnmn", "Manufacturer name              ", "mnml",
+                "Manufacturer url               ", "mnmo", "Manufacturer Model No          ", "mndt",
+                "Manufactured Date              ", "mnpv", "Manufacturer Platform Version  ", "mnos",
+                "Manufacturer OS version        ", "mnhw", "Manufacturer hardware version  ", "mnfv",
+                "Manufacturer firmware version  ", "mnsl", "Manufacturer support url       ", "st",
+                "Manufacturer system time       "
+            };
 
             for (int i = 0; i < values.length; i += 2) {
                 if (rep.hasAttribute(values[i])) {
@@ -339,7 +343,7 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * String resourceUri,
      * EnumSet<OcConnectivityType> connectivityTypeSet,
      * OnResourceFoundListener onResourceFoundListener)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName "oic.r.temperature"
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
@@ -359,11 +363,13 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @since 2016-09-08
      */
     public void testCreateAndFindResource_SQV_CV_P() {
-        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.RESOURCE_TYPE_TEMPERATURE);
+        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE,
+                           RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
-            OcPlatform.findResource(m_host, OcPlatform.WELL_KNOWN_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, OcPlatform.WELL_KNOWN_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -386,7 +392,7 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * String resourceUri,
      * EnumSet<OcConnectivityType> connectivityTypeSet,
      * OnResourceFoundListener onResourceFoundListener)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName "oic.r.temperature"
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
@@ -406,11 +412,13 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @since 2016-09-08
      */
     public void testCreateAndFindResourceUsingResourceType_SQV_CV_P() {
-        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.RESOURCE_TYPE_TEMPERATURE);
+        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE,
+                           RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -433,7 +441,7 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * String resourceUri,
      * EnumSet<OcConnectivityType> connectivityTypeSet,
      * OnResourceFoundListener onResourceFoundListener)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName "oic.r.temperature"
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
@@ -456,12 +464,14 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @since 2016-09-08
      */
     public void testCreateAndFindResourceTwice_VLCC_P() {
-        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.RESOURCE_TYPE_TEMPERATURE);
+        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE,
+                           RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         Log.i(LOG_TAG, "Finding Resource for the first time");
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -477,7 +487,8 @@ public class RIIntegrationTest extends InstrumentationTestCase {
         Log.i(LOG_TAG, "Finding Resource for the second time");
 
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -501,7 +512,7 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * EnumSet<OcConnectivityType> connectivityTypeSet,
      * OnResourceFoundListener onResourceFoundListener,
      * QualityOfService qualityOfService)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName "oic.r.temperature"
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
@@ -522,12 +533,14 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @since 2016-09-08
      */
     public void testCreateAndFindResourceWithQos_SQV_CV_P() {
-        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.RESOURCE_TYPE_TEMPERATURE);
+        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE,
+                           RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound,
-                    QualityOfService.HIGH);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound,
+                                    QualityOfService.HIGH);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -551,7 +564,7 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * EnumSet<OcConnectivityType> connectivityTypeSet,
      * OnResourceFoundListener onResourceFoundListener,
      * QualityOfService qualityOfService)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName "oic.r.temperature"
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
@@ -575,13 +588,15 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @since 2016-09-08
      */
     public void testCreateAndFindResourceWithQosTwice_VLCC_P() {
-        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.RESOURCE_TYPE_TEMPERATURE);
+        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE,
+                           RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         Log.i(LOG_TAG, "Finding Resource for the first time");
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound,
-                    QualityOfService.HIGH);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound,
+                                    QualityOfService.HIGH);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -597,8 +612,9 @@ public class RIIntegrationTest extends InstrumentationTestCase {
         Log.i(LOG_TAG, "Finding Resource for the second time");
 
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound,
-                    QualityOfService.HIGH);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound,
+                                    QualityOfService.HIGH);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -644,7 +660,8 @@ public class RIIntegrationTest extends InstrumentationTestCase {
         }
 
         try {
-            OcPlatform.getDeviceInfo(m_host, OcPlatform.WELL_KNOWN_DEVICE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onDeviceInfoReceived);
+            OcPlatform.getDeviceInfo(m_host, OcPlatform.WELL_KNOWN_DEVICE_QUERY,
+                                     EnumSet.of(OcConnectivityType.CT_DEFAULT), onDeviceInfoReceived);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -692,8 +709,9 @@ public class RIIntegrationTest extends InstrumentationTestCase {
         }
 
         try {
-            OcPlatform.getDeviceInfo(m_host, OcPlatform.WELL_KNOWN_DEVICE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onDeviceInfoReceived,
-                    QualityOfService.HIGH);
+            OcPlatform.getDeviceInfo(m_host, OcPlatform.WELL_KNOWN_DEVICE_QUERY,
+                                     EnumSet.of(OcConnectivityType.CT_DEFAULT), onDeviceInfoReceived,
+                                     QualityOfService.HIGH);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -738,7 +756,8 @@ public class RIIntegrationTest extends InstrumentationTestCase {
         }
 
         try {
-            OcPlatform.getPlatformInfo(m_host, OcPlatform.WELL_KNOWN_PLATFORM_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onPlatformInfoReceived);
+            OcPlatform.getPlatformInfo(m_host, OcPlatform.WELL_KNOWN_PLATFORM_QUERY,
+                                       EnumSet.of(OcConnectivityType.CT_DEFAULT), onPlatformInfoReceived);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -785,8 +804,9 @@ public class RIIntegrationTest extends InstrumentationTestCase {
         }
 
         try {
-            OcPlatform.getPlatformInfo(m_host, OcPlatform.WELL_KNOWN_PLATFORM_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onPlatformInfoReceived,
-                    QualityOfService.HIGH);
+            OcPlatform.getPlatformInfo(m_host, OcPlatform.WELL_KNOWN_PLATFORM_QUERY,
+                                       EnumSet.of(OcConnectivityType.CT_DEFAULT), onPlatformInfoReceived,
+                                       QualityOfService.HIGH);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -806,13 +826,13 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * entityHandler, EnumSet<ResourceProperty> resourcePropertySet)
      * @target void get(Map<String, String> queryParamsMap,
      * OnGetListener onGetListener)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName "oic.r.temperature"
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
      * 5. resourcePropertySet indicates property of the resource
      * 6. queryParamsMap map with query paramter and value
-     * `				7. onGetListener event handler
+     * `                7. onGetListener event handler
      * @pre_condition Configure platform for client server mode
      * @procedure 1. Perform registerResource() API
      * 2. Perform findResource() API with resource type in query
@@ -832,11 +852,13 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @since 2016-09-08
      */
     public void testCreateResourceAndSendGetRequest_SQV_CV_P() {
-        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.RESOURCE_TYPE_TEMPERATURE);
+        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE,
+                           RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -873,13 +895,13 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * entityHandler, EnumSet<ResourceProperty> resourcePropertySet)
      * @target void get(Map<String, String> queryParamsMap,
      * OnGetListener onGetListener, QualityOfService qualityOfService)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName "oic.r.temperature"
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
      * 5. resourcePropertySet indicates property of the resource
      * 6. queryParamsMap map with query paramter and value
-     * `				7. onGetListener event handler
+     * `                7. onGetListener event handler
      * 8. qualityOfService High
      * @pre_condition Configure platform for client server mode
      * @procedure 1. Perform registerResource() API
@@ -900,11 +922,13 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @since 2016-09-08
      */
     public void testCreateResourceAndSendGetRequestWithQos_SQV_CV_P() {
-        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.RESOURCE_TYPE_TEMPERATURE);
+        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE,
+                           RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -942,14 +966,14 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @target void put(OcRepresentation representation,
      * Map<String, String> queryParamsMap,
      * OnPutListener onPutListener)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName "oic.r.temperature"
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
      * 5. resourcePropertySet indicates property of the resource
      * 6. representation representation to set
      * 7. queryParamsMap map with query paramter and value
-     * `				8. onPutListener event handler
+     * `                8. onPutListener event handler
      * @pre_condition Configure platform for client server mode
      * @procedure 1. Perform registerResource() API
      * 2. Perform findResource() API with resource type in query
@@ -969,11 +993,13 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @since 2016-09-08
      */
     public void testCreateResourceAndSendPutRequest_SQV_CV_P() {
-        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.RESOURCE_TYPE_TEMPERATURE);
+        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE,
+                           RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -1022,14 +1048,14 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * Map<String, String> queryParamsMap,
      * OnPutListener onPutListener,
      * QualityOfService qualityOfService)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName "oic.r.temperature"
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
      * 5. resourcePropertySet indicates property of the resource
      * 6. representation representation to set
      * 7. queryParamsMap map with query paramter and value
-     * `				8. onPutListener event handler
+     * `                8. onPutListener event handler
      * 9. qualityOfService High
      * @pre_condition Configure platform for client server mode
      * @procedure 1. Perform registerResource() API
@@ -1050,11 +1076,13 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @since 2016-09-08
      */
     public void testCreateResourceAndSendPutRequestWithQos_SQV_CV_P() {
-        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.RESOURCE_TYPE_TEMPERATURE);
+        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE,
+                           RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -1102,14 +1130,14 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @target void post(OcRepresentation ocRepresentation,
      * Map<String, String> queryParamsMap,
      * OnPostListener onPostListener)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName "oic.r.temperature"
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
      * 5. resourcePropertySet indicates property of the resource
      * 6. representation representation to set
      * 7. queryParamsMap map with query paramter and value
-     * `				8. onPostListener event handler
+     * `                8. onPostListener event handler
      * @pre_condition Configure platform for client server mode
      * @procedure 1. Perform registerResource() API
      * 2. Perform findResource() API with resource type in query
@@ -1129,11 +1157,13 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @since 2016-09-08
      */
     public void testCreateResourceAndSendPostRequest_SQV_CV_P() {
-        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.RESOURCE_TYPE_TEMPERATURE);
+        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE,
+                           RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -1182,14 +1212,14 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * Map<String, String> queryParamsMap,
      * OnPostListener onPostListener,
      * QualityOfService qualityOfService)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName "oic.r.temperature"
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
      * 5. resourcePropertySet indicates property of the resource
      * 6. representation representation to set
      * 7. queryParamsMap map with query paramter and value
-     * `				8. onPostListener event handler
+     * `                8. onPostListener event handler
      * 9. qualityOfService High
      * @pre_condition Configure platform for client server mode
      * @procedure 1. Perform registerResource() API
@@ -1210,11 +1240,13 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @since 2016-09-08
      */
     public void testCreateResourceAndSendPostRequestWithQos_SQV_CV_P() {
-        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.RESOURCE_TYPE_TEMPERATURE);
+        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE,
+                           RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -1260,7 +1292,7 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * resourceTypeName, String resourceInterface, EntityHandler
      * entityHandler, EnumSet<ResourceProperty> resourcePropertySet)
      * @target void deleteResource(OnDeleteListener onDeleteListener)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName "oic.r.temperature"
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
@@ -1288,11 +1320,13 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @since 2016-09-08
      */
     public void testCreateResourceAndSendDeleteRequest_SQV_CV_P() {
-        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.RESOURCE_TYPE_TEMPERATURE);
+        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE,
+                           RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -1323,7 +1357,8 @@ public class RIIntegrationTest extends InstrumentationTestCase {
         m_temperatureResource = null;
 
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -1331,7 +1366,8 @@ public class RIIntegrationTest extends InstrumentationTestCase {
 
         m_riHelper.waitInSecond(m_riHelper.CALLBACK_WAIT_DEFAULT);
 
-        assertNull("Temperature Resource should not be found after delete operation", m_temperatureResource);
+        assertNull("Temperature Resource should not be found after delete operation",
+                   m_temperatureResource);
     }
 
     /**
@@ -1341,7 +1377,7 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * resourceTypeName, String resourceInterface, EntityHandler
      * entityHandler, EnumSet<ResourceProperty> resourcePropertySet)
      * @target void deleteResource(OnDeleteListener onDeleteListener,QualityOfService qualityOfService)
-     * @test_data 1. resourceUri "/a/temperature"
+     * @test_data 1. resourceUri "/test/ri/android/temperature"
      * 2. resourceTypeName "oic.r.temperature"
      * 3. resourceInterface DEFAULT_INTERFACE
      * 4. entityHandler entity handler
@@ -1370,11 +1406,13 @@ public class RIIntegrationTest extends InstrumentationTestCase {
      * @since 2016-09-08
      */
     public void testCreateResourceAndSendDeleteRequestWithQos_SQV_CV_P() {
-        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE, RIHelper.RESOURCE_TYPE_TEMPERATURE);
+        m_resourceHandle = m_riHelper.registerResource(RIHelper.RESOURCE_URI_TEMPERATURE,
+                           RIHelper.RESOURCE_TYPE_TEMPERATURE);
         assertNotNull("Can not create resource", m_resourceHandle);
 
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -1406,7 +1444,8 @@ public class RIIntegrationTest extends InstrumentationTestCase {
         m_temperatureResource = null;
 
         try {
-            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY, EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
+            OcPlatform.findResource(m_host, RIHelper.TEMPERATURE_RESOURCE_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), onResourceFound);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
@@ -1414,6 +1453,7 @@ public class RIIntegrationTest extends InstrumentationTestCase {
 
         m_riHelper.waitInSecond(m_riHelper.CALLBACK_WAIT_DEFAULT);
 
-        assertNull("Temperature Resource should not be found after delete operation", m_temperatureResource);
+        assertNull("Temperature Resource should not be found after delete operation",
+                   m_temperatureResource);
     }
 }
