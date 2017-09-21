@@ -98,7 +98,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     env->DeleteLocalRef(clazz);
 
     g_mid_EnrolleeConf_ctor = env->GetMethodID(g_cls_EnrolleeConf, "<init>",
-                                "(Lorg/iotivity/base/OcRepresentation;)V");
+                                "(Lorg/iotivity/base/OcRepresentation;I)V");
     if (!g_mid_EnrolleeConf_ctor) return JNI_ERR;
 
     // getEnrolleeStatus
