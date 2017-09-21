@@ -44,7 +44,7 @@
 #define PLUGINSPECIFICDETAILS   "PluginSpecificDetails"
 #define RESOURCES               "RESOURCES"
 
-#define VERIFY_CBOR_SUCCESS(log_tag, err, log_message) \
+#define VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(log_tag, err, log_message) \
     if ((CborNoError != (err)) && (CborErrorOutOfMemory != (err))) \
     { \
         if ((log_tag) && (log_message)) \
@@ -134,38 +134,38 @@ int64_t MPMFormMetaData(MPMResourceList *list, MPMDeviceSpecificData *deviceDeta
     cbor_encoder_init(&encoder, buff, size, 0);
 
     err = cbor_encoder_create_array(&encoder, &rootArray, 1);
-    VERIFY_CBOR_SUCCESS(TAG, err, " Creating Root Array");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Creating Root Array");
 
     err = cbor_encoder_create_map(&rootArray, &rootMap, CborIndefiniteLength);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Creating Root MAP");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Creating Root MAP");
 
     if (deviceDetails)
     {
         err = AddTextStringToMap(&rootMap, NAME, sizeof(NAME) - 1,
                                  deviceDetails->devName);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Adding device name");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Adding device name");
 
         err = AddTextStringToMap(&rootMap, MANUFACTURER, sizeof(MANUFACTURER) - 1,
                                  deviceDetails->manufacturerName);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Adding Manufacture name");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Adding Manufacture name");
 
         err = AddTextStringToMap(&rootMap, DEVICETYPE, sizeof(DEVICETYPE) - 1,
                                  deviceDetails->devType);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Adding Device Type");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Adding Device Type");
     }
 
     if (details)
     {
         err = AddstructureToMap(&rootMap, PLUGINSPECIFICDETAILS, sizeof(PLUGINSPECIFICDETAILS) - 1,
                                 (const char *)details, payloadSize);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Adding Plugin specific Details");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Adding Plugin specific Details");
     }
 
     err = cbor_encode_text_string(&rootMap, RESOURCES, sizeof(RESOURCES) - 1);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Encoding Resources string");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Encoding Resources string");
 
     err = cbor_encoder_create_array(&rootMap, &linkArray, CborIndefiniteLength);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Creating Link Array");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Creating Link Array");
 
     for ( ; list ; )
     {
@@ -174,30 +174,30 @@ int64_t MPMFormMetaData(MPMResourceList *list, MPMDeviceSpecificData *deviceDeta
                   list->interfaces, list->bitmap);
         // resource map inside the links array.
         err = cbor_encoder_create_map(&linkArray, &linkMap, 4);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Creating Link Map");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Creating Link Map");
 
         err = AddTextStringToMap(&linkMap, OC::Key::RESOURCETYPESKEY.c_str(),
                                  OC::Key::RESOURCETYPESKEY.size(),
                                  list->rt);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Adding Resource type");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Adding Resource type");
 
         err = AddTextStringToMap(&linkMap, OC::Key::URIKEY.c_str(), OC::Key::URIKEY.size(),
                                  list->href);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Adding OC::Key::URIKEY");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Adding OC::Key::URIKEY");
 
         err = AddTextStringToMap(&linkMap, OC::Key::INTERFACESKEY.c_str(),
                                  OC::Key::INTERFACESKEY.size(), list->interfaces);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Adding Resource Interface");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Adding Resource Interface");
 
         err = cbor_encode_text_string(&linkMap, OC::Key::BMKEY.c_str(), OC::Key::BMKEY.size());
-        VERIFY_CBOR_SUCCESS(TAG, err, "Encoding Bitmap string");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Encoding Bitmap string");
 
         err = cbor_encode_int(&linkMap, list->bitmap);
-        VERIFY_CBOR_SUCCESS(TAG, err, "encoding bit map");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "encoding bit map");
 
         // close link map inside link array
         err = cbor_encoder_close_container(&linkArray, &linkMap);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Closing link map");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Closing link map");
 
         list = list -> next;
         OICFree(temp);
@@ -205,15 +205,15 @@ int64_t MPMFormMetaData(MPMResourceList *list, MPMDeviceSpecificData *deviceDeta
 
     // Close links array inside the root map.
     err = cbor_encoder_close_container(&rootMap, &linkArray);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Closing link array");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Closing link array");
 
     // close root map inside the root array.
     err = cbor_encoder_close_container(&rootArray, &rootMap);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Closing Root Map");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Closing Root Map");
 
     // Close the final root array.
     err = cbor_encoder_close_container(&encoder, &rootArray);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Closing root Array");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Closing root Array");
 
     return err;
 }
@@ -229,13 +229,13 @@ void MPMParseMetaData(const uint8_t *buff, size_t size, MPMResourceList **list, 
     int bitmap;
 
     err = cbor_parser_init(buff, size, 0, &parser, &rootValue);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Parser cbor init");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Parser cbor init");
 
     if (cbor_value_is_array(&rootValue))
     {
         OIC_LOG_V(DEBUG, TAG, "ENCODED DATA - %s ", (char *)buff);
         err = cbor_value_enter_container(&rootValue, &rootMapValue);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Entering root array");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Entering root array");
         if (!cbor_value_is_map(&rootMapValue))
         {
             OIC_LOG(ERROR, TAG, "ERROR, Malformed packet");
@@ -246,7 +246,7 @@ void MPMParseMetaData(const uint8_t *buff, size_t size, MPMResourceList **list, 
         {
             // Parsing device details
             err = cbor_value_map_find_value(&rootMapValue, NAME, &curVal);
-            VERIFY_CBOR_SUCCESS(TAG, err, "finding Name in map");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "finding Name in map");
             if (cbor_value_is_valid(&curVal))
             {
                 if (cbor_value_is_text_string(&curVal))
@@ -254,7 +254,7 @@ void MPMParseMetaData(const uint8_t *buff, size_t size, MPMResourceList **list, 
                     size_t len = 0;
                     char *input = NULL;
                     err = cbor_value_dup_text_string(&curVal, &input, &len, NULL);
-                    VERIFY_CBOR_SUCCESS(TAG, err, "Duplicating name string");
+                    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Duplicating name string");
                     OIC_LOG_V(DEBUG, TAG, "\"NAME\":%s\n", input);
                     free(input);
                 }
@@ -262,7 +262,7 @@ void MPMParseMetaData(const uint8_t *buff, size_t size, MPMResourceList **list, 
         }
 
         err = cbor_value_map_find_value(&rootMapValue, MANUFACTURER, &curVal);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Finding Manufacturer details in map");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Finding Manufacturer details in map");
         if (cbor_value_is_valid(&curVal))
         {
             if (cbor_value_is_text_string(&curVal))
@@ -270,14 +270,14 @@ void MPMParseMetaData(const uint8_t *buff, size_t size, MPMResourceList **list, 
                 size_t len = 0;
                 char *input = NULL;
                 err = cbor_value_dup_text_string(&curVal, &input, &len, NULL);
-                VERIFY_CBOR_SUCCESS(TAG, err, " Copying Text string");
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Copying Text string");
                 OIC_LOG_V(DEBUG, TAG, "\"MF\":%s\n", input);
                 free(input);
             }
         }
 
         err = cbor_value_map_find_value(&rootMapValue, PLUGINSPECIFICDETAILS, &curVal);
-        VERIFY_CBOR_SUCCESS(TAG, err, " Finding PLUGINSPECIFICDETAILS in map ");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Finding PLUGINSPECIFICDETAILS in map ");
         if (cbor_value_is_valid(&curVal))
         {
             if (cbor_value_is_text_string(&curVal))
@@ -285,20 +285,20 @@ void MPMParseMetaData(const uint8_t *buff, size_t size, MPMResourceList **list, 
                 size_t len = 0;
                 char *input = NULL;
                 err = cbor_value_dup_text_string(&curVal, &input, &len, NULL);
-                VERIFY_CBOR_SUCCESS(TAG, err, " Copying Text string");
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Copying Text string");
                 *details = (void *)input;
             }
         }
 
         err = cbor_value_map_find_value(&rootMapValue, RESOURCES, &linkMapValue);
-        VERIFY_CBOR_SUCCESS(TAG, err, " Finding RESOURCES in map ");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Finding RESOURCES in map ");
         // Enter the links array and start iterating through the array processing
         // each resource which shows up as a map.
         if (cbor_value_is_valid(&linkMapValue))
         {
 
             err = cbor_value_enter_container(&linkMapValue, &resourceMapValue);
-            VERIFY_CBOR_SUCCESS(TAG, err, " Entering Link map ");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Entering Link map ");
             while (cbor_value_is_map(&resourceMapValue))
             {
                 MPMResourceList *tempPtr;
@@ -311,39 +311,39 @@ void MPMParseMetaData(const uint8_t *buff, size_t size, MPMResourceList **list, 
                 size_t len = 0;
                 char *input = NULL;
                 err = cbor_value_map_find_value(&resourceMapValue, OC::Key::URIKEY.c_str(), &curVal);
-                VERIFY_CBOR_SUCCESS(TAG, err, " Finding Uri in map ");
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Finding Uri in map ");
 
                 err = cbor_value_dup_text_string(&curVal, &input, &len, NULL);
-                VERIFY_CBOR_SUCCESS(TAG, err, " Copying Text string");
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Copying Text string");
                 strncpy(tempPtr->href, input, MPM_MAX_LENGTH_64);
                 OIC_LOG_V(DEBUG, TAG, "\"ref\":%s\n", input);
                 free(input);
                 input = NULL;
 
                 err = cbor_value_map_find_value(&resourceMapValue, OC::Key::RESOURCETYPESKEY.c_str(), &curVal);
-                VERIFY_CBOR_SUCCESS(TAG, err, " Finding Rt in link map ");
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Finding Rt in link map ");
                 err = cbor_value_dup_text_string(&curVal, &input, &len, NULL);
-                VERIFY_CBOR_SUCCESS(TAG, err, " Copying Text string");
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Copying Text string");
                 strncpy(tempPtr->rt, input, MPM_MAX_LENGTH_64);
                 OIC_LOG_V(DEBUG, TAG, "\"rt\":%s\n", input);
                 free(input);
                 input = NULL;
 
                 err = cbor_value_map_find_value(&resourceMapValue, OC::Key::INTERFACESKEY.c_str(), &curVal);
-                VERIFY_CBOR_SUCCESS(TAG, err, " Finding If's in link map ");
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Finding If's in link map ");
                 err = cbor_value_dup_text_string(&curVal, &input, &len, NULL);
-                VERIFY_CBOR_SUCCESS(TAG, err, " Copying Text string");
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Copying Text string");
                 strncpy(tempPtr->interfaces, input, MPM_MAX_LENGTH_64);
                 OIC_LOG_V(DEBUG, TAG, "\"if\":%s\n", input);
                 free(input);
                 input = NULL;
 
                 err = cbor_value_map_find_value(&resourceMapValue, OC::Key::BMKEY.c_str(), &curVal);
-                VERIFY_CBOR_SUCCESS(TAG, err, " Finding Bms in link map ");
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Finding Bms in link map ");
                 if (cbor_value_is_integer(&curVal))
                 {
                     err = cbor_value_get_int(&curVal, &bitmap);
-                    VERIFY_CBOR_SUCCESS(TAG, err, " Getting bit map value fromx link map ");
+                    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Getting bit map value fromx link map ");
                     tempPtr->bitmap = bitmap;
                     OIC_LOG_V(DEBUG, TAG, "\"bm\":%d\n", bitmap);
                 }
@@ -351,7 +351,7 @@ void MPMParseMetaData(const uint8_t *buff, size_t size, MPMResourceList **list, 
                 tempPtr->next = *list;
                 *list  = tempPtr;
                 err = cbor_value_advance(&resourceMapValue);
-                VERIFY_CBOR_SUCCESS(TAG, err, "in resource map value advance");
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "in resource map value advance");
             }
         }
     }
