@@ -806,8 +806,7 @@ static int InputCredUsage(char **credUsage)
                 for (int ret = 0; 1 != ret; )
                 {
                     ret = scanf("%128s", inputUsage);
-                    for ( ; 0x20 <= getchar(); ); // for removing overflow garbages
-                    // '0x20<=code' is character region
+                    while ('\n' != getchar());
                 }
                 *credUsage = OICStrdup(inputUsage);
                 break;
@@ -1143,8 +1142,7 @@ static int InputCredentialData(OicSecCred_t *cred)
                 for (int ret = 0; 1 != ret; )
                 {
                     ret = scanf("%32s", pinPass);
-                    for ( ; 0x20 <= getchar(); ); // for removing overflow garbages
-                    // '0x20<=code' is character region
+                    while ('\n' != getchar());
                 }
                 cred->privateData.data = (uint8_t *)OICStrdup(pinPass);
                 if (NULL == cred->privateData.data)
