@@ -654,7 +654,7 @@ exit:
 static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t *motCtx,
         OCProvisionDev_t *selectedDevice);
 
-static bool IsComplete(OTMContext_t* otmCtx)
+static bool IsComplete(OTMContext_t *otmCtx)
 {
     for (size_t i = 0; i < otmCtx->ctxResultArraySize; i++)
     {

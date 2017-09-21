@@ -312,6 +312,7 @@ void FreeCred(OicSecCred_t *cred)
     //Clean eowner
     OICFree(cred->eownerID);
 #endif
+    cred->next = NULL;
 
     cred->next = NULL;
 
