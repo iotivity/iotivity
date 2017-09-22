@@ -966,18 +966,29 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
 
     InvalidateRoleCache(entry);
 
-    RoleCertChain_t *curr1 = NULL;
-    RoleCertChain_t *curr2 = NULL;
-    LL_FOREACH_SAFE(entry->chains, curr1, curr2)
+    if (NULL != entry->chains)
     {
-        // credId of zero means delete all creds; we never assign zero as a credId.
-        if ((0 == credId) || (curr1->credId == credId))
+        RoleCertChain_t *curr1 = NULL;
+        RoleCertChain_t *curr2 = NULL;
+        LL_FOREACH_SAFE(entry->chains, curr1, curr2)
         {
-            LL_DELETE(entry->chains, curr1);
-            FreeRoleCertChain(curr1);
-            ehRet = OC_EH_RESOURCE_DELETED;
-            break;
+            // credId of zero means delete all creds; we never assign zero as a credId.
+            if ((0 == credId) || (curr1->credId == credId))
+            {
+                LL_DELETE(entry->chains, curr1);
+                FreeRoleCertChain(curr1);
+                ehRet = OC_EH_RESOURCE_DELETED;
+                break;
+            }
         }
+    }
+    else
+    {
+        /* No cert chains are present in the entry. */
+        OIC_LOG(WARNING, TAG, "No cert chains are present in the entry");
+        /* Request is successful since everything has been removed. */
+        ehRet = OC_EH_RESOURCE_DELETED;
+        goto exit;
     }
 
 exit:
