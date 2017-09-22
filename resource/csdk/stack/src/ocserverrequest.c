@@ -626,7 +626,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                 else
                 {
                     payloadFormat = CA_FORMAT_UNSUPPORTED;
-                    IsPayloadFormatSet = true;
+                    IsPayloadFormatSet = false;
                     OIC_LOG_V(DEBUG, TAG, "option has an unsupported format");
                 }
             }
