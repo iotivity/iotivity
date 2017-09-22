@@ -1261,8 +1261,10 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
         return res;
     }
 
-    for (RoleCertChain_t *chain = targetEntry->chains; NULL != chain; chain = chain->next)
+    RoleCertChain_t *chain = targetEntry->chains;
+    while (NULL != chain)
     {
+        RoleCertChain_t *chainToRemove = NULL;
         OicSecRole_t *currCertRoles = NULL;
         size_t currCertRolesCount = 0;
         struct tm notValidAfter;
@@ -1277,7 +1279,7 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
             OIC_LOG_V(ERROR, TAG, "Failed to verify a role certificate: %d", res);
             /* Remove the invalid cert chain, but don't exit; try all certificates presented. */
             LL_DELETE(targetEntry->chains, chain);
-            FreeRoleCertChain(chain);
+            chainToRemove = chain;
         }
         else
         {
@@ -1315,6 +1317,13 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
         {
             memcpy(&targetEntry->cacheValidUntil, &notValidAfter, sizeof(targetEntry->cacheValidUntil));
         }
+
+        /*
+         * If the cert chain was invalid it has already been removed from the list.
+         * We clean it up here so that we can continue checking all of the certificates.
+         */
+        chain = chain->next;
+        FreeRoleCertChain(chainToRemove);
     }
 
     targetEntry->cachedRoles = rolesToReturn;
