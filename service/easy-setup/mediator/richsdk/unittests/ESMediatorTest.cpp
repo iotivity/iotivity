@@ -240,8 +240,10 @@ TEST_F(GetConfigurationTest, GetConfigurationSucceed)
                 EnrolleeConf conf = status->getEnrolleeConf();
                 if(!conf.getWiFiModes().empty())
                 {
-                    if(conf.getWiFiModes().at(0) == WIFI_11G &&
-                        conf.getWiFiFreq() == WIFI_5G &&
+
+                    if(conf.getWiFiModes().size() > 0 &&
+                        conf.getWiFiModes().at(0) == WIFI_11G &&
+                        conf.getWiFiFreq() == WIFI_BOTH &&
                         !strcmp(conf.getDeviceName().c_str(), "Test Device"))
                     {
                         isWellConstructed = true;

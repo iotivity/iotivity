@@ -146,6 +146,12 @@ docs/c-doc/doxygen.log
 docs/cpp-doc/docs/
 docs/cpp-doc/doxygen.log
 
+# Ignore generated documentation files
+docs/c-doc/docs/
+docs/c-doc/doxygen.log
+docs/cpp-doc/docs/
+docs/cpp-doc/doxygen.log
+
 # Ignore debian generated files
 debian/files
 debian/*.debhelper.log

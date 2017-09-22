@@ -109,8 +109,7 @@ OCStackResult OCInternalIsValidCertChain(const uint8_t *buf, size_t bufLen);
  * from the /oic/sec/cred resource in a form suitable for the trustedCaCerts and trustedCaCertsLength
  * parameters.
  *
- * @param[in] certificate           OicSecKey_t containing the leaf certificate
- * @param[in] optData               Optional OicSecOpt_t containing intermediate CAs and revocation status
+ * @param[in] certificateChain      OicSecKey_t containing one or more certificates
  * @param[in] trustedCaCerts        PEM string containing the trusted CAs certificates
  * @param[in] trustedCaCertsLength  Length of trustedCaCerts (including terminating NULL)
  * @param[out] roles                Pointer to receive array of OicSecRole_t objects listing roles
@@ -122,8 +121,7 @@ OCStackResult OCInternalIsValidCertChain(const uint8_t *buf, size_t bufLen);
  *         OC_STACK_INVALID_PARAM if the certificate is not valid.
  *         OC_STACK_NO_MEMORY or OC_STACK_ERROR if some other error arose during validation.
  */
-OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificate, const OicSecOpt_t *optData,
-                                              const uint8_t *trustedCaCerts, size_t trustedCaCertsLength,
-                                              OicSecRole_t **roles, size_t *rolesLength,
-                                              struct tm *notValidAfter);
+OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificateChain, const uint8_t *trustedCaCerts,
+                                              size_t trustedCaCertsLength, OicSecRole_t **roles,
+                                              size_t *rolesLength, struct tm *notValidAfter);
 #endif

@@ -373,7 +373,7 @@ exit:
  * @param   errorInfo [IN] Error information from the endpoint.
  * @return  NONE
  */
-void DPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
+CAResult_t DPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
     OIC_LOG(INFO, TAG, "IN DPairingDTLSHandshakeCB");
 
@@ -401,6 +401,7 @@ void DPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *
     }
 
     OIC_LOG(INFO, TAG, "OUT DPairingDTLSHandshakeCB");
+    return CA_STATUS_OK;
 }
 
 static OCEntityHandlerResult HandleDpairingPostRequest (const OCEntityHandlerRequest * ehRequest)

@@ -674,6 +674,12 @@ int InitIntrospectionPayload(OCClientResponse * clientResponse)
     std::ostringstream query;
     std::string introspectionPayloadUrl;
     OCRepPayload *introspectionInfo = (OCRepPayload*)clientResponse->payload;
+    if (NULL == introspectionInfo)
+    {
+        OIC_LOG(ERROR, TAG, "\nFailed to get introspection info from NULL payload");
+        return OC_STACK_ERROR;
+    }
+
     OCRepPayloadValue *value = introspectionInfo->values;
 
     while (value)
@@ -1134,7 +1140,7 @@ OCStackResult SetPlatformInfo()
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_VERSION, gPlatformVersion));
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_OS_VERSION, gOperatingSystemVersion));
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_HARDWARE_VERSION, gHardwareVersion));
-    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_FIRMWARE_VERSION, gHardwareVersion));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_FIRMWARE_VERSION, gFirmwareVersion));
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SUPPORT_URL, gSupportUrl));
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SYSTEM_TIME, gSystemTime));
 
@@ -1226,7 +1232,7 @@ int main(int argc, char* argv[])
     }
 
 #ifdef SECURED
-    // Set callbacks for handling pin display  
+    // Set callbacks for handling pin display
     if (OC_STACK_OK != SetDisplayPinWithContextCB(DisplayPinCB, NULL))
     {
         OIC_LOG(ERROR, TAG, "Failed to set display pin callback");
@@ -1234,7 +1240,7 @@ int main(int argc, char* argv[])
     }
 
     SetClosePinDisplayCB(ClosePinDisplayCB);
-    
+
     // Specify the type and length of the pin that will be generated upon request
     if (OC_STACK_OK != SetRandomPinPolicy(8, NUM_PIN))
     {

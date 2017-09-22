@@ -148,7 +148,6 @@ static void FreeRoleCertChain(RoleCertChain_t *roleCert)
         return;
     }
 
-    OICFree(roleCert->optData.data);
     OICFree(roleCert->certificate.data);
     OICFree(roleCert);
 }
@@ -214,6 +213,31 @@ static void FreeSymmetricRolesList(SymmetricRoleEntry_t *head)
             FreeSymmetricRoleEntry(entryTmp1);
         }
     }
+}
+
+static bool AddNullTerminator(OicSecKey_t *key)
+{
+    size_t length = key->len;
+    uint8_t *data = key->data;
+
+    if ((length > 0) && (data != NULL) && (data[length - 1] != 0))
+    {
+        key->data = OICRealloc(data, length + 1);
+
+        if (key->data == NULL)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: OICRealloc failed", __func__);
+            OICFree(data);
+            key->len = 0;
+            return false;
+        }
+
+        OIC_LOG(DEBUG, TAG, "Adding key null terminator");
+        key->data[length] = 0;
+        key->len++;
+    }
+
+    return true;
 }
 
 OCStackResult RegisterSymmetricCredentialRole(const OicSecCred_t *cred)
@@ -290,21 +314,6 @@ static OCStackResult DuplicateRoleCertChain(const RoleCertChain_t *roleCert, Rol
     tmp->certificate.encoding = roleCert->certificate.encoding;
     memcpy(tmp->certificate.data, roleCert->certificate.data, roleCert->certificate.len);
 
-    if (NULL != roleCert->optData.data)
-    {
-        tmp->optData.data = (uint8_t *)OICCalloc(1, roleCert->optData.len);
-        if (NULL == tmp->optData.data)
-        {
-            OIC_LOG(ERROR, TAG, "No memory for optional data");
-            res = OC_STACK_NO_MEMORY;
-            goto exit;
-        }
-        tmp->optData.len = roleCert->optData.len;
-        tmp->optData.encoding = roleCert->optData.encoding;
-        tmp->optData.revstat = roleCert->optData.revstat;
-        memcpy(tmp->optData.data, roleCert->optData.data, roleCert->optData.len);
-    }
-
     *duplicate = tmp;
     res = OC_STACK_OK;
 
@@ -326,8 +335,7 @@ static bool RoleCertChainContains(RoleCertChain_t *chain, const RoleCertChain_t*
 
     LL_FOREACH(chain, temp)
     {
-        if (IsSameSecKey(&temp->certificate, &roleCert->certificate) &&
-            IsSameSecOpt(&temp->optData, &roleCert->optData))
+        if (IsSameSecKey(&temp->certificate, &roleCert->certificate))
         {
             return true;
         }
@@ -471,11 +479,6 @@ OCStackResult RolesToCBORPayload(const RoleCertChain_t *roles, uint8_t **cborPay
         CborEncoder roleMap;
         size_t mapSize = ROLE_MAP_SIZE;
 
-        if (NULL != currChain->optData.data)
-        {
-            mapSize++;
-        }
-
         cborEncoderResult = cbor_encoder_create_map(&rolesArray, &roleMap, mapSize);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding role map");
 
@@ -494,13 +497,6 @@ OCStackResult RolesToCBORPayload(const RoleCertChain_t *roles, uint8_t **cborPay
         // publicData - mandatory
         cborEncoderResult = SerializeEncodingToCbor(&roleMap, OIC_JSON_PUBLICDATA_NAME, &currChain->certificate);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding publicData");
-
-        // optionalData
-        if (NULL != currChain->optData.data)
-        {
-            cborEncoderResult = SerializeSecOptToCbor(&roleMap, OIC_JSON_OPTDATA_NAME, &currChain->optData);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding optional data");
-        }
 
         // credType - mandatory
         cborEncoderResult = cbor_encode_text_string(&roleMap, OIC_JSON_CREDTYPE_NAME, strlen(OIC_JSON_CREDTYPE_NAME));
@@ -695,11 +691,9 @@ OCStackResult CBORPayloadToRoles(const uint8_t *cborPayload, size_t size, RoleCe
                             {
                                 cborFindResult = DeserializeEncodingFromCbor(&roleMap, &currEntry->certificate);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to read publicData");
-                            }
-                            else if (strcmp(tagName, OIC_JSON_OPTDATA_NAME) == 0)
-                            {
-                                cborFindResult = DeserializeSecOptFromCbor(&roleMap, &currEntry->optData);
-                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to read optionalData");
+
+                                /* mbedtls_x509_crt_parse requires null string terminator */
+                                VERIFY_TRUE_OR_EXIT(TAG, AddNullTerminator(&currEntry->certificate), ERROR);
                             }
                             else if (strcmp(tagName, OIC_JSON_CREDTYPE_NAME) == 0)
                             {
@@ -854,16 +848,6 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest *ehRequest
 
         for (curr = chains; NULL != curr; curr = curr->next)
         {
-            if (NULL != curr->optData.data)
-            {
-                if (OC_STACK_OK != OCInternalIsValidCertChain(curr->optData.data, curr->optData.len))
-                {
-                    OIC_LOG(ERROR, TAG, "Optional data is not a valid cert chain");
-                    ehRet = OC_EH_ERROR;
-                    goto exit;
-                }
-            }
-
             if (OC_STACK_OK != OCInternalIsValidRoleCertificate(curr->certificate.data, curr->certificate.len,
                 &pubKey, &pubKeyLength))
             {
@@ -1260,10 +1244,9 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
         struct tm notValidAfter;
         memset(&notValidAfter, 0, sizeof(notValidAfter));
 
-        res = OCInternalVerifyRoleCertificate(&chain->certificate, &chain->optData,
-                                              trustedCaCerts.data, trustedCaCerts.len,
-                                              &currCertRoles, &currCertRolesCount,
-                                              &notValidAfter);
+        res = OCInternalVerifyRoleCertificate(&chain->certificate, trustedCaCerts.data,
+                                              trustedCaCerts.len, &currCertRoles,
+                                              &currCertRolesCount, &notValidAfter);
 
         if (OC_STACK_OK != res)
         {

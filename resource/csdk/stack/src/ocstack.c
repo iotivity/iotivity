@@ -3966,6 +3966,12 @@ OCStackResult OC_CALL OCStartPresence(const uint32_t ttl)
 {
     OIC_LOG(INFO, TAG, "Entering OCStartPresence");
     uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+    if (NULL == presenceResource.handle)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid Presence Resource Handle: Not Initialized");
+        return OC_STACK_ERROR;
+    }
+
     OCChangeResourceProperty(
             &(((OCResource *)presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 1);
@@ -5865,6 +5871,10 @@ OCStackResult CAResultToOCResult(CAResult_t caResult)
             return OC_STACK_ERROR;
         case CA_NOT_SUPPORTED:
             return OC_STACK_NOTIMPL;
+        case CA_HANDLE_ERROR_OTHER_MODULE:
+            return OC_STACK_COMM_ERROR;
+        case CA_CONTINUE_OPERATION:
+            return OC_STACK_CONTINUE_OPERATION;
         default:
             return OC_STACK_ERROR;
     }

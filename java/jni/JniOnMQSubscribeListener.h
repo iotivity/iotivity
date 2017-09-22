@@ -30,7 +30,7 @@ class JniOnMQSubscribeListener
 public:
     JniOnMQSubscribeListener(JNIEnv *env, jobject jListener, JniOcResource* owner);
     ~JniOnMQSubscribeListener();
-    void onSubscribeCallback(const HeaderOptions headerOptions, const OCRepresentation& rep,
+    void onSubscribeCallback(const OC::HeaderOptions headerOptions, const OC::OCRepresentation& rep,
         const int& eCode, const int& sequenceNumber);
 private:
     jweak m_jwListener;

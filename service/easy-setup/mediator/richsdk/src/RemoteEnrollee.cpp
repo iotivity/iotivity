@@ -622,7 +622,6 @@ namespace OIC
                     m_cloudEnrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource);
                 }
 
-
                 res = m_cloudEnrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
                                                                           cloudProp.getCredID());
 

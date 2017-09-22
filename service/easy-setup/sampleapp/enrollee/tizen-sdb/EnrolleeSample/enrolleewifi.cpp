@@ -246,9 +246,16 @@ void SetDeviceInfo()
 {
     cout << "SetDeviceInfo IN" << endl;
 
-    ESDeviceProperty deviceProperty = {
-        {{WIFI_11G, WIFI_11N, WIFI_11AC, WiFi_EOF}, WIFI_5G}, {"Tizen Device"}
-    };
+    ESDeviceProperty deviceProperty =
+        {
+            {
+                { WIFI_11G, WIFI_11N, WIFI_11AC }, 3,
+                { WIFI_24G, WIFI_5G }, 2,
+                { WPA_PSK, WPA2_PSK }, 2,
+                { AES, TKIP_AES }, 2
+            },
+            { "Test Device"}
+        };
 
     // Set user properties if needed
 

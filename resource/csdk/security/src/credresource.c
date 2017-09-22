@@ -95,6 +95,7 @@ static const uint8_t ROLEID_MAP_SIZE = 1;
 
 static OicSecCred_t        *gCred = NULL;
 static OCResourceHandle    gCredHandle = NULL;
+static OicUuid_t           gRownerId = { .id = { 0 } };
 
 typedef enum CredCompareResult{
     CRED_CMP_EQUAL = 0,
@@ -699,7 +700,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
 
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
-    size_t credRootMapSize = (NULL == cred)? CRED_EMPTY_ROOT_MAP_SIZE : CRED_ROOT_MAP_SIZE;
+    size_t credRootMapSize = CRED_ROOT_MAP_SIZE;
 
     // Create CRED Root Map (creds, rownerid)
     cborEncoderResult = cbor_encoder_create_map(&encoder, &credRootMap, credRootMapSize);
@@ -902,16 +903,13 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_ROWNERID_NAME,
             strlen(OIC_JSON_ROWNERID_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding rownerid Name.");
-        OicUuid_t emptyUuid = { .id = { 0 } };
-        const OicUuid_t* rownerID = (NULL == cred)? &emptyUuid : &cred->rownerID;
-        ret = ConvertUuidToStr(rownerID, &rowner);
+        ret = ConvertUuidToStr(&gRownerId, &rowner);
         VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
         cborEncoderResult = cbor_encode_text_string(&credRootMap, rowner, strlen(rowner));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding rownerid Value.");
         OICFree(rowner);
     }
 
-    if (cred != NULL)
     {
         //RT -- Mandatory
         CborEncoder rtArray;
@@ -987,7 +985,7 @@ exit:
 }
 
 OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
-                                OicSecCred_t **secCred)
+                                OicSecCred_t **secCred, OicUuid_t **rownerid)
 {
     if (NULL == cborPayload || NULL == secCred || NULL != *secCred || 0 == size)
     {
@@ -1262,16 +1260,13 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                 char *stRowner = NULL;
                 cborFindResult = cbor_value_dup_text_string(&CredRootMap, &stRowner, &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Rownerid Value.");
-
-                ret = ConvertStrToUuid(stRowner, &headCred->rownerID);
+                *rownerid = (OicUuid_t *) OICCalloc(1, sizeof(OicUuid_t));
+                VERIFY_NOT_NULL(TAG, *rownerid, ERROR);
+                ret = ConvertStrToUuid(stRowner, *rownerid);
                 //Because cbor using malloc directly
                 //It is required to use free() instead of OICFree
                 free(stRowner);
                 VERIFY_SUCCESS(TAG, (ret == OC_STACK_OK), ERROR);
-            }
-            else if (NULL != gCred)
-            {
-                memcpy(&(headCred->rownerID), &(gCred->rownerID), sizeof(OicUuid_t));
             }
             //Because cbor using malloc directly
             //It is required to use free() instead of OICFree
@@ -1309,20 +1304,23 @@ bool IsValidCredentialAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cb
 {
     OicSecCred_t* cred = NULL;
     bool isValidCred = false;
+    OicUuid_t *rownerId = NULL;
 
     OIC_LOG_BUFFER(DEBUG, TAG, cborPayload, size);
 
     VERIFY_NOT_NULL(TAG, uuid, ERROR);
     VERIFY_NOT_NULL(TAG, cborPayload, ERROR);
     VERIFY_SUCCESS(TAG, 0 != size, ERROR);
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == CBORPayloadToCred(cborPayload, size, &cred), ERROR);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == CBORPayloadToCred(cborPayload, size, &cred, &rownerId), ERROR);
     VERIFY_NOT_NULL(TAG, cred, ERROR);
     VERIFY_NOT_NULL(TAG, cred->eownerID, ERROR);
+    VERIFY_NOT_NULL(TAG, rownerId, ERROR);
     VERIFY_SUCCESS(TAG, (memcmp(cred->eownerID->id, uuid->id, sizeof(uuid->id)) == 0), ERROR);
 
     isValidCred = true;
 
 exit:
+    OICFree(rownerId);
     DeleteCredList(cred);
 
     return isValidCred;
@@ -1733,13 +1731,11 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
     OIC_LOG(DEBUG, TAG, "Adding New Cred");
     LL_APPEND(gCred, newCred);
 
-    if (gCred != NULL)
+
+    OicUuid_t emptyOwner = { .id = {0} };
+    if (memcmp(&(newCred->rownerID), &emptyOwner, sizeof(OicUuid_t)) != 0)
     {
-        OicUuid_t emptyOwner = { .id = {0} };
-        if (memcmp(&(newCred->rownerID), &emptyOwner, sizeof(OicUuid_t)) != 0)
-        {
-            memcpy(&(gCred->rownerID), &(newCred->rownerID), sizeof(OicUuid_t));
-        }
+        memcpy(&(gRownerId), &(newCred->rownerID), sizeof(OicUuid_t));
     }
 
 saveToDB:
@@ -2334,12 +2330,6 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
     {
         if(IsEmptyCred(cred))
         {
-            if(memcmp(cred->rownerID.id, emptyUuid.id, sizeof(emptyUuid.id)) != 0)
-            {
-                OIC_LOG(INFO, TAG, "CRED's rowner will be updated.");
-                if (gCred != NULL)
-                {
-                    memcpy(gCred->rownerID.id, cred->rownerID.id, sizeof(cred->rownerID.id));
                     if (UpdatePersistentStorage(gCred))
                     {
                         ret = OC_EH_CHANGED;
@@ -2348,12 +2338,6 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
                     {
                         ret = OC_EH_ERROR;
                     }
-                }
-            }
-            else
-            {
-                ret = OC_EH_ERROR;
-            }
         }
         else
         {
@@ -2390,6 +2374,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest* ehRequest
     static uint16_t previousMsgId = 0;
     // Get binary representation of cbor
     OicSecCred_t *cred = NULL;
+    OicUuid_t     *rownerId = NULL;
     uint8_t *payload = (((OCSecurityPayload*)ehRequest->payload)->securityData);
     size_t size = (((OCSecurityPayload*)ehRequest->payload)->payloadSize);
 
@@ -2404,7 +2389,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest* ehRequest
         goto exit;
     }
 
-    res = CBORPayloadToCred(payload, size, &cred);
+    res = CBORPayloadToCred(payload, size, &cred, &rownerId);
 
     if (OC_STACK_OK == res)
     {
@@ -2436,9 +2421,14 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest* ehRequest
                 break;
             }
         }
+        if (OC_EH_CHANGED == ret && NULL != rownerId)
+        {
+            memcpy(&gRownerId, rownerId, sizeof(OicUuid_t));
+        }
     }
 
 exit:
+    OICFree(rownerId);
     if (OC_EH_CHANGED != ret)
     {
         if (NULL != cred)
@@ -2593,6 +2583,7 @@ OCStackResult InitCredResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecCred_t* cred = NULL;
+    OicUuid_t   *rownerId = NULL;
 
     //Read Cred resource from PS
     uint8_t *data = NULL;
@@ -2607,7 +2598,7 @@ OCStackResult InitCredResource()
     if ((ret == OC_STACK_OK) && data)
     {
         // Read Cred resource from PS
-        ret = CBORPayloadToCred(data, size, &gCred);
+        ret = CBORPayloadToCred(data, size, &gCred, &rownerId);
 
 #ifdef HAVE_WINDOWS_H
         /* On Windows, if the credential payload isn't cleartext CBOR, it is encrypted. Decrypt and retry. */
@@ -2637,7 +2628,7 @@ OCStackResult InitCredResource()
                 CRYPTPROTECT_UI_FORBIDDEN,
                 &decryptedPayload))
             {
-                ret = CBORPayloadToCred(decryptedPayload.pbData, decryptedPayload.cbData, &gCred);
+                ret = CBORPayloadToCred(decryptedPayload.pbData, decryptedPayload.cbData, &gCred, &rownerId);
 
                 /* For the returned data from CryptUnprotectData, LocalFree must be used to free. Don't use OICFree. */
                 OICClearMemory(decryptedPayload.pbData, decryptedPayload.cbData);
@@ -2695,9 +2686,13 @@ OCStackResult InitCredResource()
             }
         }
 
-        if (0 == memcmp(&gCred->rownerID, &emptyUuid, sizeof(OicUuid_t)))
+        if (NULL == rownerId || 0 == memcmp(rownerId, &emptyUuid, sizeof(OicUuid_t)))
         {
-            memcpy(&gCred->rownerID, &deviceID, sizeof(OicUuid_t));
+            memcpy(&gRownerId, &deviceID, sizeof(OicUuid_t));
+        }
+        else
+        {
+            memcpy(&gRownerId, rownerId, sizeof(OicUuid_t));
         }
 
         if (!UpdatePersistentStorage(gCred))
@@ -2712,6 +2707,7 @@ exit:
     OIC_LOG(DEBUG, TAG, "OUT InitCredResource.");
     OICClearMemory(data, size);
     OICFree(data);
+    OICFree(rownerId);
     return ret;
 }
 
@@ -2769,7 +2765,6 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId)
             cred->credId = tmpCred->credId;
             cred->credType = tmpCred->credType;
             memcpy(cred->subject.id, tmpCred->subject.id , sizeof(cred->subject.id));
-            memcpy(cred->rownerID.id, tmpCred->rownerID.id , sizeof(cred->rownerID.id));
             if (tmpCred->period)
             {
                 cred->period = OICStrdup(tmpCred->period);
@@ -3114,15 +3109,11 @@ OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
     {
         ret = OC_STACK_INVALID_PARAM;
     }
-    if(NULL == gCred)
-    {
-        ret = OC_STACK_NO_RESOURCE;
-    }
 
-    if (newROwner && gCred)
+    if (newROwner)
     {
-        memcpy(prevId.id, gCred->rownerID.id, sizeof(prevId.id));
-        memcpy(gCred->rownerID.id, newROwner->id, sizeof(newROwner->id));
+        memcpy(prevId.id, gRownerId.id, sizeof(prevId.id));
+        memcpy(gRownerId.id, newROwner->id, sizeof(newROwner->id));
 
         VERIFY_SUCCESS(TAG, UpdatePersistentStorage(gCred), ERROR);
 
@@ -3132,15 +3123,15 @@ OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
     return ret;
 
 exit:
-    memcpy(gCred->rownerID.id, prevId.id, sizeof(prevId.id));
+    memcpy(gRownerId.id, prevId.id, sizeof(prevId.id));
     return ret;
 }
 
 OCStackResult GetCredRownerId(OicUuid_t *rowneruuid)
 {
-    if (gCred && rowneruuid)
+    if (rowneruuid)
     {
-        memcpy(&(rowneruuid->id), &(gCred->rownerID.id), sizeof(rowneruuid->id));
+        memcpy(&(rowneruuid->id), &(gRownerId.id), sizeof(rowneruuid->id));
         return OC_STACK_OK;
     }
     return OC_STACK_ERROR;
@@ -3412,36 +3403,6 @@ static int cloneSecKey(OicSecKey_t * dst, OicSecKey_t * src)
     return 0;
 }
 
-static int cloneSecOpt(OicSecOpt_t * dst, OicSecOpt_t * src)
-{
-    if ((src == NULL) || (dst == NULL))
-    {
-        return -1;
-    }
-
-    if (src->len > 0)
-    {
-        dst->data = OICCalloc(src->len, 1);
-        if (dst == NULL)
-        {
-            OIC_LOG_V(ERROR, TAG, "%s memory allocation failed", __func__);
-            OICFree(dst);
-            return -1;
-        }
-        memcpy(dst->data, src->data, src->len);
-    }
-    else
-    {
-        dst->data = NULL;
-    }
-
-    dst->len = src->len;
-    dst->encoding = src->encoding;
-    dst->revstat = src->revstat;
-
-    return 0;
-}
-
 /* Caller must call FreeRoleCertChainList on roleEntries when finished. */
 OCStackResult GetAllRoleCerts(RoleCertChain_t ** output)
 {
@@ -3473,12 +3434,6 @@ OCStackResult GetAllRoleCerts(RoleCertChain_t ** output)
             if (cloneSecKey(&add->certificate, &temp->publicData) != 0)
             {
                 OIC_LOG_V(ERROR, TAG, "%s failed to copy certificate data", __func__);
-                goto error;
-            }
-
-            if (cloneSecOpt(&add->optData, &temp->optionalData) != 0)
-            {
-                OIC_LOG_V(ERROR, TAG, "%s failed to copy optional data", __func__);
                 goto error;
             }
         }
