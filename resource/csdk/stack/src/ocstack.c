@@ -2152,7 +2152,11 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
         response->identity.id_length = errorInfo->info.identity.id_length;
         response->result = CAResultToOCResult(errorInfo->result);
 
-        cbNode->callBack(cbNode->context, cbNode->handle, response);
+        OCStackApplicationResult cbResult = cbNode->callBack(cbNode->context, cbNode->handle, response);
+        if (cbResult == OC_STACK_DELETE_TRANSACTION)
+        {
+            FindAndDeleteClientCB(cbNode);
+        }
         OICFree(response);
     }
 
