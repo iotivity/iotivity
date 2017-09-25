@@ -39,29 +39,31 @@ resource_path = src_dir + '/resource'
 ######################################################################
 if target_os in ['linux']:
     if not env.GetOption('help') and not env.GetOption('clean'):
-        if target_arch != platform.machine():
+        if target_arch != platform.machine() and \
+           not (target_arch == 'x86' and platform.machine() in ('i586', 'i686')):
             print '''
 *********************************** Warning ***********************************
-* You are trying cross build, please make sure (%s) version libraries are
-* installed!                                                                  *
+* You are trying cross build, please make sure cross (%s) libraries are
+* installed!
 *******************************************************************************
 ''' % target_arch
-        #Test Coverage Flags and Library (if RELEASE=0)
-        if not env.get('RELEASE'):
-            conf = Configure(lib_env.Clone(LIBS=['gcov']))
-        else:
-            conf = Configure(lib_env.Clone(LIBS=[]))
 
-        if target_os not in ['tizen']:
-            if not conf.CheckLib('boost_thread', language='C++'):
-                print 'Did not find boost_thread, exiting!'
-                Exit(1)
+    #Test Coverage Flags and Library (if RELEASE=0)
+    if not env.get('RELEASE'):
+        conf = Configure(lib_env.Clone(LIBS=['gcov']))
+    else:
+        conf = Configure(lib_env.Clone(LIBS=[]))
 
-            if not conf.CheckLib('boost_system', language='C++'):
-                print 'Did not find boost_system, exiting!'
-                Exit(1)
+    if target_os not in ['tizen']:
+        if not conf.CheckLib('boost_thread', language='C++'):
+            msg = 'Did not find boost_thread, exiting!'
+            Exit(msg)
 
-        conf.Finish()
+        if not conf.CheckLib('boost_system', language='C++'):
+            msg = 'Did not find boost_system, exiting!'
+            Exit(msg)
+
+    conf.Finish()
 
 ######################################################################
 # The 'include' path of external libraries
@@ -89,7 +91,7 @@ if target_os == 'android':
 *******************************************************************************
 '''
     else:
-        # Too much boost warning, suppress the warning
+        # Boost warnings too noisy, suppress
         lib_env.AppendUnique(CCFLAGS=['-w'])
 
 elif target_os == 'ios':
