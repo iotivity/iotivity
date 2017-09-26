@@ -28,6 +28,7 @@ if not env.get('RELEASE'):
 env.AppendUnique(CPPDEFINES=['WITH_POSIX', '__linux__'])
 env.AppendUnique(CFLAGS=['-std=gnu99'])
 env.AppendUnique(CCFLAGS=['-Wall', '-Wextra', '-fPIC'])
+env.AppendUnique(SHLINKFLAGS=['-Wl,--as-needed'])
 env.AppendUnique(LIBS=['dl', 'pthread', 'uuid'])
 
 # The -Wno-error=missing-field-initializers is used due to a bug in versions
