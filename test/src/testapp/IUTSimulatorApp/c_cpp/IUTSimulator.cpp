@@ -43,6 +43,7 @@
 #include "pinoxmcommon.h"
 #include "cautilinterface.h"
 #include "cacommon.h"
+#include "oic_malloc.h"
 
 #include "easysetup.h"
 #include "escommon.h"

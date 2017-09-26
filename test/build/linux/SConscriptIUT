@@ -66,6 +66,7 @@ include_paths = [
     iotivity_root + '/resource/csdk/logger/include',
     iotivity_root + '/resource/csdk/resource-directory/include',
     iotivity_root + '/resource/c_common/',
+    iotivity_root + '/resource/c_common/oic_malloc/include',
     iotivity_root + '/resource/oc_logger/include',
     iotivity_root + '/service/easy-setup/inc',
     iotivity_root + '/service/easy-setup/enrollee/inc',
