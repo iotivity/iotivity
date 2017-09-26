@@ -35,24 +35,27 @@
 
 #include <iomanip>
 #include "SampleResource.h"
+#include "SampleCollection.h"
 #include "ResourceHelper.h"
 #include "OCPlatform.h"
+#include "ocpayload.h"
 #include "OCApi.h"
 #include "pinoxmcommon.h"
 #include "cautilinterface.h"
 #include "cacommon.h"
+
+#include "easysetup.h"
+#include "escommon.h"
+#include "ESEnrolleeCommon.h"
 
 #ifdef HAVE_WINDOWS_H
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
 
-#include "easysetup.h"
-#include "escommon.h"
-#include "ESEnrolleeCommon.h"
-
 #include <windows.h>
 #endif
+
 #ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
 #endif
@@ -105,6 +108,10 @@ SampleResource *g_extraSwitchResource;
 SampleResource *g_extraBrightnessResource;
 SampleCollection *g_extraLightCollection;
 
+#define MAXLEN_STRING 100
+#define USERPROPERTY_KEY_INT "x.user.property.int"
+#define USERPROPERTY_KEY_STR "x.user.property.str"
+
 bool g_hasCallbackArrived = false;
 bool g_isObservingResource = false;
 bool g_isGroupCreated = false;
@@ -124,6 +131,14 @@ pthread_t g_processThread;
 QualityOfService g_qos = QualityOfService::LowQos;
 ResourceHelper *g_resourceHelper;
 ESProvisioningCallbacks g_esCallbacks;
+
+typedef struct UserProperties_t
+{
+    int userValue_int;  /**< User-specific property in WiFi resource **/
+    char userValue_str[MAXLEN_STRING]; /**< User-specific property in DevConf resource **/
+} UserProperties;
+
+UserProperties g_userProperties;
 
 static mutex s_mutex;
 static const char CRED_FILE_SERVER[] = "oic_svr_db_server.dat";
@@ -207,11 +222,17 @@ void updateGroup(void);
 void updateLocalResource(void);
 void sendSpecialPost(void);
 void prepareForWES(void);
+void setDeviceWESInfo(void);
+void SetUserProperties(const UserProperties *prop);
+void ReadUserdataCb(OCRepPayload* payload,char* resourceType, void** userdata);
+void WriteUserdataCb(OCRepPayload* payload,char* resourceType);
+void SetCallbackForUserdata(void);
 vector< OCRepresentation > createLinkRepresentation(void);
 void addIntoLinksArray(vector< OCRepresentation >& childrenList, SampleResource* resource);
 string getHost();
 FILE* server_fopen(const char*, const char*);
 FILE* client_fopen(const char*, const char*);
+void updateLec(void);
 
 void handler(int sig)
 {
@@ -232,6 +253,66 @@ void handler(int sig)
 
     exit(1);
 }
+
+void SetUserProperties(const UserProperties *prop)
+{
+    if(prop != NULL)
+    {
+        strncpy(g_userProperties.userValue_str, prop->userValue_str, MAXLEN_STRING);
+        g_userProperties.userValue_int = prop->userValue_int;
+    }
+}
+
+void ReadUserdataCb(OCRepPayload* payload, char*resourceType,void** userdata)
+{
+    cout << "ReadUserdataCb IN" << endl;
+
+    if(payload != NULL)
+    {
+        if(strstr(resourceType, OC_RSRVD_ES_RES_TYPE_WIFICONF))
+        {
+            int64_t value = -1;
+            if (OCRepPayloadGetPropInt(payload, USERPROPERTY_KEY_INT, &value))
+            {
+                if(*userdata != NULL)
+                {
+                    *userdata = (void*)OICMalloc(sizeof(UserProperties));
+                    ((UserProperties*)(*userdata))->userValue_int = value;
+                }
+
+                cout << "[User specific property]" << USERPROPERTY_KEY_INT << ":" <<  value;
+                g_userProperties.userValue_int = value;
+            }
+        }
+    }
+
+    cout << "ReadUserdataCb OUT" << endl;
+}
+
+void WriteUserdataCb(OCRepPayload* payload,char* resourceType)
+{
+    cout << "WriteUserdataCb IN" << endl;
+
+    if(payload != NULL)
+    {
+        if(strstr(resourceType,OC_RSRVD_ES_RES_TYPE_WIFICONF))
+        {
+             OCRepPayloadSetPropInt(payload,USERPROPERTY_KEY_INT,g_userProperties.userValue_int);
+        }
+
+        if(strstr(resourceType,OC_RSRVD_ES_RES_TYPE_DEVCONF))
+        {
+             OCRepPayloadSetPropString(payload,USERPROPERTY_KEY_STR,g_userProperties.userValue_str);
+        }
+     }
+     cout<<"WriteUserdataCb OUT" << endl;
+}
+
+void SetCallbackForUserdata()
+{
+     ESSetCallbackForUserdata(&ReadUserdataCb,&WriteUserdataCb);
+}
+
 
 void replaceDatFile(int modeType, int securityType)
 {
@@ -550,7 +631,7 @@ void onWiFiConfProvReceived(ESWiFiConfData *eventData)
     string outputString = g_resourceHelper->executeCommand(nmcliCommand.c_str());
     if (outputString == "")
     {
-        ESSetErrorCode(0);
+        ESSetErrorCode(ES_ERRCODE_NO_ERROR);
     }
 #endif
 
@@ -2958,6 +3039,145 @@ void updateGroup()
     }
 }
 
+void updateLec()
+{
+    int maxValue = 13,minValue=1;
+    ESErrorCode errCode = ES_ERRCODE_NO_ERROR;
+    string userInput;
+    bool validChoice= false;
+    int choice;
+    do
+    {
+        cout << "Please select ErrorCode as reported by Enrollee and press Enter: " << endl;
+        cout << "\t\t 1. WiFi's SSID is not found" << endl;
+        cout << "\t\t 2. WiFi's password is wrong" << endl;
+        cout << "\t\t 3. IP Address not allocated" << endl;
+        cout << "\t\t 4. No Internet Connection" << endl;
+        cout << "\t\t 5. Timeout occured" << endl;
+        cout << "\t\t 6. Cloud server is not reachable" << endl;
+        cout << "\t\t 7. No response is arrived from cloud server" << endl;
+        cout << "\t\t 8. Delivered authcode is not valid" << endl;
+        cout << "\t\t 9. Given access token is not valid due to its expiration" << endl;
+        cout << "\t\t 10. Refresh of expired access token is failed" << endl;
+        cout << "\t\t 11. Target device is not discovered in cloud server" << endl;
+        cout << "\t\t 12. Target user does not exist in cloud server" << endl;
+        cout << "\t\t 13. Unsupported WiFi frequency" << endl;
+
+        cin >> userInput;
+
+        choice = strtol(userInput.c_str(), NULL, 10);
+	if (choice >= minValue && choice <= maxValue)
+        {
+            validChoice = true;
+        }
+        else
+        {
+            validChoice = false;
+            cout << "Invalid input for error value. Please select between " << minValue <<  "and" << maxValue << endl;
+        }
+
+    } while (!validChoice);
+    switch(choice)
+    {
+
+    /**
+     * Error Code that given WiFi's SSID is not found
+     */
+        case 1:
+                errCode = ES_ERRCODE_SSID_NOT_FOUND;
+                break;
+
+    /**
+     * Error Code that given WiFi's Password is wrong
+     */
+        case 2:
+                errCode = ES_ERRCODE_PW_WRONG;
+                break;
+    /**
+     * Error Code that IP address is not allocated
+     */
+        case 3:
+                errCode = ES_ERRCODE_IP_NOT_ALLOCATED;
+                break;
+
+    /**
+     * Error Code that there is no Internet connection
+     */
+        case 4:
+                errCode = ES_ERRCODE_NO_INTERNETCONNECTION;
+                break;
+
+    /**
+     * Error Code that Timeout occured
+     */
+        case 5:
+                errCode = ES_ERRCODE_TIMEOUT;
+                break;
+
+    /**
+     * Error Code that cloud server is not reachable due to wrong URL of cloud server, for example.
+     */
+        case 6:
+                errCode = ES_ERRCODE_FAILED_TO_ACCESS_CLOUD_SERVER;
+                break;
+
+    /**
+     * Error Code that no response is arrived from cloud server
+     */
+       case 7:
+               errCode = ES_ERRCODE_NO_RESPONSE_FROM_CLOUD_SERVER;
+                break;
+
+    /**
+     * Error Code that a delivered authcode is not valid.
+     */
+       case 8:
+                errCode = ES_ERRCODE_INVALID_AUTHCODE;
+                break;
+
+    /**
+     * Error Code that a given access token is not valid due to its expiration, for example.
+     */
+       case 9:
+                errCode = ES_ERRCODE_INVALID_ACCESSTOKEN;
+                break;
+
+    /**
+     * Error Code that a refresh of expired access token is failed due to some reasons.
+     */
+       case 10:
+                errCode = ES_ERRCODE_FAILED_TO_REFRESH_ACCESSTOKEN;
+                break;
+
+    /**
+     * Error Code that a target device is not discovered in cloud server
+     */
+       case 11:
+                errCode = ES_ERRCODE_FAILED_TO_FIND_REGISTERED_DEVICE_IN_CLOUD;
+                break;
+
+    /**
+     * Error Code that a target user does not exist in cloud server.
+     */
+       case 12:
+                errCode = ES_ERRCODE_FAILED_TO_FIND_REGISTERED_USER_IN_CLOUD;
+                break;
+
+    /**
+     * Error Code that an enrollee can not connect to a target WiFi AP because the AP resides in
+     * an unsupported WiFi frequency.
+     */
+       case 13:
+                errCode = ES_ERRCODE_UNSUPPORTED_WIFI_FREQUENCY;
+                break;
+
+       default:
+                errCode = ES_ERRCODE_UNKNOWN;
+                break;
+    }
+    ESSetErrorCode(errCode);
+}
+
 AttributeValue getAttributeValueFromUser()
 {
     AttributeValue value;
@@ -3394,6 +3614,35 @@ void cancelObservePassively()
     }
 }
 
+void setDeviceWESInfo()
+{
+    cout << "SetDeviceInfo IN" << endl;
+    ESDeviceProperty deviceProperty =
+    {
+        {
+            {WIFI_11G, WIFI_11N, WIFI_11AC},3,
+            {WIFI_24G, WIFI_5G},2,
+            {WPA_PSK, WPA2_PSK},2,
+            {AES,TKIP_AES},2
+        },
+        { "Test Device"}
+    };
+
+	// Set user properties if needed
+    char userValue_str[] = "user_str";
+    g_userProperties.userValue_int = 0;
+
+    strncpy(g_userProperties.userValue_str, userValue_str, strlen(userValue_str) + 1);
+    SetUserProperties(&g_userProperties);
+
+    if(ESSetDeviceProperty(&deviceProperty) == ES_ERROR)
+    {
+        cout << "ESSetDeviceProperty Error" << endl;
+    }
+
+    cout << "SetDeviceInfo OUT" << endl;
+}
+
 void prepareForWES()
 {
     cout << "Getting ready for Wifi Easy SetuUp" << endl;
@@ -3558,6 +3807,7 @@ void showMenu(int argc, char* argv[])
     cout << "\t\t " << setw(3) << "111" << ". Update Published Resources To RD" << endl;
     cout << "\t\t " << setw(3) << "112" << ". Delete Published Resources From RD" << endl;
     cout << "\t\t " << setw(3) << "113" << ". Create Extra Device" << endl;
+    cout << "\t\t " << setw(3) << "114" << ". Update Last Error Code" << endl;
 
 
     g_hasCallbackArrived = false;
@@ -3857,6 +4107,8 @@ void selectMenu(int choice)
             break;
 
         case 109:
+            setDeviceWESInfo();
+            SetCallbackForUserdata();
             prepareForWES();
             break;
 
@@ -3874,6 +4126,10 @@ void selectMenu(int choice)
 
         case 113:
             createExtraDevice(true);
+            break;
+
+        case 114:
+            updateLec();
             break;
 
         case 0:
