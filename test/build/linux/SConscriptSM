@@ -88,7 +88,7 @@ testapp_src = [
     Glob(test_src_root + '/iBtestapp/modules/sm/c_cpp/src/*.cpp'),
 ]
 
-cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermissive -D __WITH_DTLS__ -DWITH_TCP -O2 -g -Wall -fmessage-length=0 -std=c++0x -Os -Wall -Wextra -fPIC -pthread -DNDEBUG -DWITH_POSIX -DIP_ADAPTER -DNO_EDR_ADAPTER -DLE_ADAPTER -DROUTING_EP -DWITH_BWT -DCA_DBUS_GATT_SERVICE_NAME='"org.iotivity.gatt.service"' -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_32')
+cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermissive -fprofile-arcs -ftest-coverage -D __WITH_DTLS__ -DWITH_TCP -O2 -g -Wall -fmessage-length=0 -std=c++0x -Os -Wall -Wextra -fPIC -pthread -DNDEBUG -DWITH_POSIX -DIP_ADAPTER -DNO_EDR_ADAPTER -DLE_ADAPTER -DROUTING_EP -DWITH_BWT -DCA_DBUS_GATT_SERVICE_NAME='"org.iotivity.gatt.service"' -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_32')
 
 libs = Split('connectivity_abstraction oc octbstack coap resource_directory boost_system boost_filesystem boost_thread dl expat oc oc_logger oc_logger_core coap glib-2.0 gcov uuid scene_manager rcs_client rcs_server rcs_common common_util pthread')
 
