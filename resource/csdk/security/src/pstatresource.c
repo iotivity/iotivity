@@ -854,19 +854,6 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                 pstat->cm &= ~UPDATE_SOFTWARE; // Unset the cm bit, per spec
             }
 
-            // update om
-            gPstat->om = pstat->om;
-
-            // update tm
-            OIC_LOG_V(INFO, TAG, "%s setting gPstat->tm = %u", __func__, pstat->tm);
-            gPstat->tm = pstat->tm;
-
-            // update rownerID
-            gPstat->rownerID = pstat->rownerID;
-
-            // update dos LAST of all Properties, as changing dos can also
-            // change other Properties and we want the dos-asserted values
-            // to "stick" rather than being over-written by prior values.
             if (pstat->dos.state != gPstat->dos.state)
             {
                 OCStackResult stateChangeResult = OC_STACK_ERROR;
@@ -897,10 +884,26 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                 }
             }
 
+            // update om
+            gPstat->om = pstat->om;
+
+            // update tm
+            OIC_LOG_V(INFO, TAG, "%s setting gPstat->tm = %u", __func__, pstat->tm);
+            gPstat->tm = pstat->tm;
+
+            // set rowner and save
+            OicUuid_t prevId = {.id={0}};
+            memcpy(&prevId, &gPstat->rownerID, sizeof(OicUuid_t));
+            memcpy(&gPstat->rownerID, &pstat->rownerID, sizeof(OicUuid_t));
+
             // Convert pstat data into CBOR for update to persistent storage
             if (UpdatePersistentStorage(gPstat))
             {
                 ehRet = OC_EH_OK;
+            }
+            else
+            {
+                memcpy(&gPstat->rownerID, &prevId, sizeof(OicUuid_t));
             }
         }
     }
@@ -1107,39 +1110,21 @@ OCStackResult GetPstatRownerId(OicUuid_t *rowneruuid)
 
 OCStackResult SetPstatRownerId(const OicUuid_t *rowneruuid)
 {
-    OCStackResult ret = OC_STACK_ERROR;
-    uint8_t *cborPayload = NULL;
-    size_t size = 0;
+    OCStackResult ret = OC_STACK_OK;
     OicUuid_t prevId = {.id={0}};
 
-    if(NULL == rowneruuid)
+    VERIFY_NOT_NULL_RETURN(TAG, rowneruuid, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, gPstat, ERROR, OC_STACK_NO_RESOURCE);
+
+    memcpy(&prevId, &gPstat->rownerID, sizeof(OicUuid_t));
+    memcpy(&gPstat->rownerID, rowneruuid, sizeof(OicUuid_t));
+
+    if (!UpdatePersistentStorage(gPstat))
     {
-        ret = OC_STACK_INVALID_PARAM;
-    }
-    if(NULL == gPstat)
-    {
-        ret = OC_STACK_NO_RESOURCE;
-    }
-
-    if(rowneruuid && gPstat)
-    {
-        memcpy(prevId.id, gPstat->rownerID.id, sizeof(prevId.id));
-        memcpy(gPstat->rownerID.id, rowneruuid->id, sizeof(gPstat->rownerID.id));
-
-        ret = PstatToCBORPayload(gPstat, &cborPayload, &size);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-
-        ret = UpdateSecureResourceInPS(OIC_JSON_PSTAT_NAME, cborPayload, size);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-
-        OICFree(cborPayload);
+        memcpy(&gPstat->rownerID, &prevId, sizeof(OicUuid_t));
+        ret = OC_STACK_ERROR;
     }
 
-    return ret;
-
-exit:
-    OICFree(cborPayload);
-    memcpy(gPstat->rownerID.id, prevId.id, sizeof(gPstat->rownerID.id));
     return ret;
 }
 
