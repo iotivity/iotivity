@@ -41,13 +41,15 @@ public enum ESResult {
         this.value = value;
     }
 
-	public int getValue() {
+    public int getValue() {
         return value;
     }
 
-	public static ESResult fromInt(int i) {
+    public static ESResult fromInt(int i) {
         for (ESResult b : ESResult.values()) {
-            if (b.getValue() == i) { return b; }
+            if (b.getValue() == i) {
+                return b;
+            }
         }
         return null;
     }

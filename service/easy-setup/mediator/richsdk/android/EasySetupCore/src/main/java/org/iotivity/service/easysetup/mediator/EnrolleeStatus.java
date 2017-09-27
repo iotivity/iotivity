@@ -60,7 +60,7 @@ public class EnrolleeStatus
                 return ProvStatus.fromInt(provStatus);
             }
         } catch (OcException e) {
-            Log.e(TAG, "getProvStatus is failed.");
+            Log.e(TAG, "getProvStatus is failed: " + e.toString());
         }
         return ProvStatus.fromInt(0);
     }
@@ -79,7 +79,7 @@ public class EnrolleeStatus
                 return ESErrorCode.fromInt(errCode);
             }
         } catch (OcException e) {
-            Log.e(TAG, "getLastErrCode is failed.");
+            Log.e(TAG, "getLastErrCode is failed: " + e.toString());
         }
         return ESErrorCode.fromInt(0);
     }

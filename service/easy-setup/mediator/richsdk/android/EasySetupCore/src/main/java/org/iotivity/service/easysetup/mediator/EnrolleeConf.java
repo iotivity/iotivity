@@ -29,7 +29,6 @@ import org.iotivity.service.easysetup.mediator.enums.WIFI_FREQ;
 import org.iotivity.service.easysetup.mediator.enums.WIFI_MODE;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -93,7 +92,7 @@ public class EnrolleeConf
                         return (String) rep.getValue(ESConstants.OC_RSRVD_ES_DEVNAME);
                     }
                 } catch (OcException e) {
-                    Log.e(TAG, "getWiFiModes is failed.");
+                    Log.e(TAG, "getWiFiModes is failed: " + e.toString());
                 }
             }
         }
@@ -133,7 +132,7 @@ public class EnrolleeConf
                         return (String) rep.getValue(ESConstants.OC_RSRVD_ES_MODELNUMBER);
                     }
                 } catch (OcException e) {
-                    Log.e(TAG, "getModelNumber is failed.");
+                    Log.e(TAG, "getModelNumber is failed: " + e.toString());
                 }
             }
         }
@@ -190,7 +189,7 @@ public class EnrolleeConf
                         }
                     }
                 } catch (OcException e) {
-                    Log.e(TAG, "getWiFiModes is failed.");
+                    Log.e(TAG, "getWiFiModes is failed: " + e.toString());
                 }
             }
         }
@@ -239,7 +238,7 @@ public class EnrolleeConf
                         }
                     }
                 } catch (OcException e) {
-                    Log.e(TAG, "getWiFiFreq is failed.");
+                    Log.e(TAG, "getWiFiFreq is failed: " + e.toString());
                 }
             }
         }

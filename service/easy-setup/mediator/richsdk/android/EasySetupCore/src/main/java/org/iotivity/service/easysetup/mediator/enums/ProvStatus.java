@@ -92,7 +92,9 @@ public enum ProvStatus {
 
     public static ProvStatus fromInt(int i) {
         for (ProvStatus b : ProvStatus.values()) {
-            if (b.getValue() == i) { return b; }
+            if (b.getValue() == i) {
+                return b;
+            }
         }
         return null;
     }
