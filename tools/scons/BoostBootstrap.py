@@ -32,7 +32,7 @@ import SCons.Builder, SCons.Node, SCons.Errors
 # @param source source name
 # @param env environment object
 def __message( s, target, source, env ) :
-    print 'bootstrapping using [%s] ...' % (source[0])
+    print('bootstrapping using [%s] ...' % (source[0]))
 
 
 # Create the builder action which executes the bootstrap script
@@ -64,7 +64,7 @@ def __action( target, source, env ) :
     devnull = open(os.devnull, 'wb')
     handle  = subprocess.Popen( cmd, shell=True, cwd=cwd, stdout=devnull )
 
-    if handle.wait() <> 0 :
+    if handle.wait() != 0 :
         raise SCons.Errors.BuildError( 'Bootstrapping script [%s] on the source [%s]' % (cmd, source[0])  )
 
 # Define the emitter of the builder
