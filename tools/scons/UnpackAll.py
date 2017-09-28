@@ -193,7 +193,7 @@ def __getExtractor( source, env ) :
 # @param source source name
 # @param env environment object
 def __message( s, target, source, env ) :
-    print "extract [%s] ..." % (source[0])
+    print("extract [%s] ..." % (source[0]))
 
 
 # action function for extracting of the data
@@ -225,7 +225,7 @@ def __action( target, source, env ) :
         devnull = open(os.devnull, "wb")
         handle  = subprocess.Popen( cmd, shell=True, stdout=devnull, cwd=cwd)
 
-    if handle.wait() <> 0 :
+    if handle.wait() != 0 :
         raise SCons.Errors.BuildError( "error running extractor [%s] on the source [%s]" % (cmd, source[0])  )
 
     fhandle = open(target_path, 'a')
@@ -336,7 +336,7 @@ def generate( env ) :
     }
 
     # read tools for Windows system
-    if env["PLATFORM"] <> "darwin" and "win" in env["PLATFORM"] :
+    if env["PLATFORM"] != "darwin" and "win" in env["PLATFORM"] :
 
         if env.WhereIs("7z"):
             toolset["EXTRACTOR"]["TARGZ"]["RUN"]           = "7z"
@@ -428,9 +428,17 @@ def generate( env ) :
     else :
         raise SCons.Errors.StopError("Unpack tool detection on this platform [%s] unkown" % (env["PLATFORM"]))
 
-    # the target_factory must be a "Entry", because the target list can be files and dirs, so we can not specified the targetfactory explicite
+    # the target_factory must be an "Entry", because the target list can be
+    # files and dirs, so we can not specify the targetfactory explicitly
     env.Replace(UNPACK = toolset)
-    env["BUILDERS"]["UnpackAll"] = SCons.Builder.Builder( action = __action,  emitter = __emitter,  target_factory = SCons.Node.FS.Entry,  source_factory = SCons.Node.FS.File,  single_source = True,  PRINT_CMD_LINE_FUNC = __message )
+    env["BUILDERS"]["UnpackAll"] = SCons.Builder.Builder(
+        action=__action,
+        emitter=__emitter,
+        target_factory=SCons.Node.FS.Entry,
+        source_factory=SCons.Node.FS.File,
+        single_source=True,
+        PRINT_CMD_LINE_FUNC=__message
+    )
 
 
 # existing function of the builder
