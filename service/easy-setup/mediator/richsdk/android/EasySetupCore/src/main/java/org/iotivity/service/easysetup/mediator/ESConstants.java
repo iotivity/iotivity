@@ -22,6 +22,8 @@ package org.iotivity.service.easysetup.mediator;
 
 public class ESConstants {
 
+    private ESConstants() {}
+
     public static final String OC_RSRVD_REPRESENTATION = "rep";
 
     public static final String OC_RSRVD_ES_PROVSTATUS = "ps";
@@ -46,7 +48,7 @@ public class ESConstants {
     public static final String OC_RSRVD_ES_LOCATION = "loc";
 
 /**
-* Easysetup defined resoruce types and uris
+* Easysetup defined resource types and uris
 */
     public static final String OC_RSRVD_ES_RES_TYPE_EASYSETUP = "oic.r.easysetup";
     public static final String OC_RSRVD_ES_URI_EASYSETUP = "/EasySetupResURI";

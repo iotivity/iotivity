@@ -37,6 +37,9 @@ notification_sample_env.AppendUnique(CPPPATH=[
     '../../provider/inc',
     '../../consumer/inc',
     '../../common',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
     '#/resource/csdk/connectivity/api',
@@ -73,29 +76,13 @@ if not env.get('RELEASE'):
     notification_sample_env.PrependUnique(LIBS=['gcov'])
     notification_sample_env.AppendUnique(CCFLAGS=['--coverage'])
 
-if env.get('WITH_CLOUD') == True:
-    notification_sample_env.AppendUnique(CPPDEFINES=['WITH_CLOUD'])
 
-with_mq = env.get('WITH_MQ')
-if 'SUB' in with_mq:
-    notification_sample_env.AppendUnique(
-        CPPDEFINES=['MQ_SUBSCRIBER', 'WITH_MQ'])
-    print("MQ SUB support")
 
-if 'PUB' in with_mq:
-    notification_sample_env.AppendUnique(
-        CPPDEFINES=['MQ_PUBLISHER', 'WITH_MQ'])
-    print("MQ PUB support")
-
-if 'BROKER' in with_mq:
-    notification_sample_env.AppendUnique(CPPDEFINES=['MQ_BROKER', 'WITH_MQ'])
-    print("MQ Broker support")
-
-if env.get('WITH_TCP') == True:
-    notification_sample_env.AppendUnique(CPPDEFINES=['WITH_TCP'])
 if env.get('SECURED') == '1':
     notification_sample_env.AppendUnique(
         LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
+if target_os in ['linux', 'tizen']:
+    notification_sample_env.AppendUnique(LIBS=['rt'])
 
 ####################################################################
 # Source files and Targets

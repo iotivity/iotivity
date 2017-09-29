@@ -55,7 +55,7 @@ public enum ESErrorCode {
      */
     ES_ERRCODE_TIMEOUT(5),
 
-	/**
+    /**
      * Error Code that cloud server is not reachable due to wrong URL of cloud server, for example.
      */
     ES_ERRCODE_FAILED_TO_ACCESS_CLOUD_SERVER(6),
@@ -113,7 +113,9 @@ public enum ESErrorCode {
 
     public static ESErrorCode fromInt(int i) {
         for (ESErrorCode b : ESErrorCode.values()) {
-            if (b.getValue() == i) { return b; }
+            if (b.getValue() == i) {
+                return b;
+            }
         }
         return null;
     }

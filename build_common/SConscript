@@ -7,7 +7,7 @@ import os
 import platform
 import re
 
-project_version = '1.3.0'
+project_version = '1.3.1'
 
 # Map of build host to possible target os
 host_target_map = {
@@ -62,12 +62,15 @@ if target_os not in host_target_map[host]:
     msg += "\n\tchoices: %s\n" % host_target_map[host]
     Exit(msg)
 
+# work out a reasonable default for target_arch if not specified by user
 if target_os == 'android':
     default_arch = 'x86'
 else:
     default_arch = platform.machine()
     if target_os == 'windows':
         default_arch = default_arch.lower()
+    if target_os == 'linux' and default_arch in ('i586', 'i686'):
+        default_arch = 'x86'
 
 target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch)  # target arch
 
@@ -597,7 +600,6 @@ rd_mode = env.get('RD_MODE')
 with_ra_ibb = env.get('WITH_RA_IBB')
 
 env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 
 if (env.get('WITH_UPSTREAM_LIBCOAP') == '1'):
     env.AppendUnique(CPPDEFINES=['WITH_UPSTREAM_LIBCOAP'])
@@ -788,6 +790,11 @@ else:
     '''
     # Load config of target os
     env.SConscript(target_os + '/SConscript')
+
+if env.get('CROSS_COMPILE'):
+    env.Append(RPATH=env.Literal('\\$$ORIGIN'))
+else:
+    env.Append(RPATH=env.get('BUILD_DIR'))
 
 # Delete the temp files of configuration
 if env.GetOption('clean'):

@@ -42,7 +42,7 @@ raml_env.AppendUnique(CXXFLAGS=[
     '-fmessage-length=0'
 ])
 raml_env.AppendUnique(CPPDEFINES=['LINUX'])
-raml_env.Append(RPATH=env.Literal('\\$$ORIGIN'))
+raml_env['RPATH']=env.Literal('\\$$ORIGIN')
 
 raml_env.PrependUnique(LIBS=['octbstack', 'YamlParser'])
 raml_env.AppendUnique(LIBS=['pthread', 'm', 'cjson'])

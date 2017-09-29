@@ -60,19 +60,22 @@ mediator_env.PrependUnique(CPPPATH=[
     '#/service/easy-setup/inc',
 ])
 
-if env.get('SECURED') == '1':
-    mediator_env.PrependUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
+mediator_env.PrependUnique(LIBS=['ESMediatorRich'])
 
-mediator_env.PrependUnique(LIBS=[
-    'ESMediatorRich',
-    'oc',
+if env.get('SECURED') == '1':
+    mediator_env.AppendUnique(LIBS=[
+        'ocpmapi',
+        'ocprovision',
+        'mbedtls',
+        'mbedx509',
+        'mbedcrypto',
+    ])
+
+mediator_env.AppendUnique(LIBS=['oc',
     'octbstack',
     'oc_logger',
     'connectivity_abstraction',
 ])
-
-if env.get('SECURED') == '1':
-    mediator_env.PrependUnique(LIBS=['ocpmapi', 'ocprovision'])
 
 mediator = mediator_env.Program('mediator', 'mediator.cpp')
 submediator = mediator_env.Program('submediator', 'submediator.cpp')

@@ -25,13 +25,10 @@ package org.iotivity.service.easysetup.mediator;
 import android.content.Context;
 import android.util.Log;
 
-import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcResource;
 import org.iotivity.base.OcPlatform;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
 
 /**
  * This provides an API to instanciate a new RemoteEnrollee object correspondent to Enrollee
@@ -56,7 +53,7 @@ public class EasySetup {
         {
             System.loadLibrary("ocprovision");
         } catch (UnsatisfiedLinkError e) {
-            Log.i(TAG, "ocprovision library does not exist. (Unsecure mode)");
+            Log.i(TAG, "ocprovision library does not exist (Unsecure mode): " + e.toString());
         }
 
         System.loadLibrary("ocstack-jni");
@@ -74,7 +71,7 @@ public class EasySetup {
      * @param context android context
      * @return a initialized singleton instance of EasySetup
      */
-    public synchronized static EasySetup getInstance(Context context) {
+    public static synchronized EasySetup getInstance(Context context) {
         if (sInstance == null) {
             sInstance = new EasySetup();
             mContext = context;
