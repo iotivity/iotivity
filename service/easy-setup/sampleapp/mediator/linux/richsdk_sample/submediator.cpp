@@ -597,6 +597,10 @@ int main()
         }
     }
 
+#ifdef __WITH_DTLS__
+    // close provisioning db
+    OCSecure::provisionClose();
+#endif
     std::cout << "Stopping the client" << std::endl;
 
     return 0;

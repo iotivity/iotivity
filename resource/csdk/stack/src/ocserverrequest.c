@@ -465,7 +465,6 @@ OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerR
     return OC_STACK_INVALID_PARAM;
 }
 
-
 /**
  * Handler function for sending a response from a single resource
  *

@@ -45,6 +45,14 @@ public class OcProvisioning {
     public static native void provisionInit(String dbPath) throws OcException;
 
     /**
+     * Method is used by provisioning manager to close provisioning database.
+     *
+     * @throws OcException Indicate failure.
+     *                     Use OcException.GetErrorCode() for more details.
+     */
+    public static native void provisionClose() throws OcException;
+
+    /**
      * Method to Discover un-owned devices in its subnet.Un-owned devices need
      * to be owned by calling ownershipTransferCBdata.
      *

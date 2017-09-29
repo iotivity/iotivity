@@ -122,6 +122,8 @@ def ensure_libs(target, source, env):
                                 env.get('BUILD_DIR') + 'ocstack-jni.dll']
     else:
         return target, [source, env.get('BUILD_DIR') + 'libca-interface.so',
+                                env.get('BUILD_DIR') + 'liboc.so',
+                                env.get('BUILD_DIR') + 'liboc_logger.so',
                                 env.get('BUILD_DIR') + 'libocstack-jni.so']
 
 def find_scons_java_version(env):
@@ -281,8 +283,6 @@ if target_os == 'android':
                   '#/java/examples-android/devicediscoveryclient/build/')
     jdk_env.Clean(cmdBuildExamples,
                   '#/java/examples-android/devicediscoveryserver/build/')
-    jdk_env.Clean(cmdBuildExamples,
-                  '#/java/examples-android/DirectPairing/build/')
     jdk_env.Clean(cmdBuildExamples,
                   '#/java/examples-android/fridgeclient/build/')
     jdk_env.Clean(cmdBuildExamples,

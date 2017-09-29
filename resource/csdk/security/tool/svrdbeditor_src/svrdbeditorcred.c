@@ -521,6 +521,8 @@ void PrintCredList(const OicSecCred_t *creds)
                     PRINT_DATA("%-17s : ", OIC_JSON_ENCODING_NAME);
                     PrintCredEncodingType(cred->publicData.encoding);
 
+                    PrintBuffer(cred->publicData.data, cred->publicData.len);
+
                     if (cred->credUsage &&
                         (0 == strcmp(cred->credUsage, PRIMARY_CERT) ||
                          0 == strcmp(cred->credUsage, MF_PRIMARY_CERT)))
@@ -541,6 +543,7 @@ void PrintCredList(const OicSecCred_t *creds)
                         {
                             PRINT_INFO("[Cert #%d]", (i + 1));
                             mbedtls_x509_crt_info( buf, sizeof(buf) - 1, "", tmpCrt );
+                            PrintBuffer(inf.crt.data, inf.crt.len);
                             PRINT_DATA("%s", buf);
                         }
                         mbedtls_x509_crt_free(&crt);

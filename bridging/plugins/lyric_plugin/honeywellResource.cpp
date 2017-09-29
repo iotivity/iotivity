@@ -122,11 +122,10 @@ OCRepPayload *getPayload(const std::string uri, const THERMOSTAT &data);
 
 void *accessTokenMonitorThread(void *pointer);
 
-static const char CRED_FILE[] = "./oic_svr_db_lyric.dat";
-
-FILE *honeywellFopen(const char *, const char *mode)
+FILE *honeywellFopen(const char *path, const char *mode)
 {
-    return fopen(CRED_FILE, mode);
+    std::string filename = std::string("lyric_") + path;
+    return fopen(filename.c_str(), mode);
 }
 
 MPMPluginCtx *g_pluginCtx = NULL;

@@ -32,11 +32,11 @@
 #define TAG "STUB_PLUGIN"
 
 MPMPluginCtx *g_plugin_ctx = NULL;
-static char CRED_FILE[] = "./oic_svr_db_sample.dat";
 
 FILE *sec_file(const char *, const char *mode)
 {
-    return fopen(CRED_FILE, mode);
+    std::string filename = "sample_" + path;
+    return fopen(filename.c_str(), mode);
 }
 
 MPMResult pluginCreate(MPMPluginCtx **pluginSpecificCtx)

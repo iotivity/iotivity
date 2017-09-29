@@ -66,6 +66,7 @@ namespace OC
 
         delete context;
     }
+
     OCStackResult OCSecure::provisionInit(const std::string& dbPath)
     {
         OCStackResult result;
@@ -75,6 +76,25 @@ namespace OC
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCInitPM(dbPath.c_str());
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
+    OCStackResult OCSecure::provisionClose()
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCClosePM();
         }
         else
         {
@@ -1413,40 +1433,6 @@ namespace OC
                 }
                 OCDeleteUuidList(linkedDevs);
             }
-        }
-        else
-        {
-            oclog() <<"Mutex not found";
-            result = OC_STACK_ERROR;
-        }
-        return result;
-    }
-
-    OCStackResult OCSecureResource::provisionDirectPairing( const OicSecPconf_t* pconf,
-            ResultCallBack resultCallback)
-    {
-        if (!pconf)
-        {
-            oclog() <<"PCONF can't be null";
-            return OC_STACK_INVALID_PARAM;
-        }
-        if (!resultCallback)
-        {
-            oclog() <<"result callback can not be null";
-            return OC_STACK_INVALID_CALLBACK;
-        }
-
-        OCStackResult result;
-        auto cLock = m_csdkLock.lock();
-
-        if (cLock)
-        {
-            ProvisionContext* context = new ProvisionContext(resultCallback);
-
-            std::lock_guard<std::recursive_mutex> lock(*cLock);
-            result = OCProvisionDirectPairing(static_cast<void*>(context),
-                    devPtr, const_cast<OicSecPconf_t*>(pconf),
-                    &OCSecureResource::callbackWrapper);
         }
         else
         {

@@ -217,6 +217,32 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_provisionInit
 
 /*
  * Class:     org_iotivity_base_OcProvisioning
+ * Method:    provisionClose
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_provisionClose
+  (JNIEnv *env, jclass thiz)
+{
+    OC_UNUSED(thiz);
+    LOGD("OcProvisioning_provisionClose");
+    try
+    {
+        OCStackResult result = OCSecure::provisionClose();
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OCSecure::provisionClose Failed");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+    }
+}
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
  * Method:    discoverOwnedDevices
  * Signature: (I)[Lorg/iotivity/base/OcSecureResource;
  */
