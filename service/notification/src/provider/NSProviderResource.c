@@ -59,7 +59,7 @@ NSResult NSPublishResourceToCloud(char *serverAddress)
 
     OCResourceHandle resourceHandles[1] = { NotificationResource.handle };
     OCStackResult res = OCRDPublish(NULL, serverAddress, CT_ADAPTER_TCP, resourceHandles, 1,
-            &cbData, OC_LOW_QOS);
+            OIC_RD_PUBLISH_TTL, &cbData, OC_LOW_QOS);
 
     if (res != OC_STACK_OK)
     {
