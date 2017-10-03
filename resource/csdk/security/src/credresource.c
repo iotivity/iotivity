@@ -2153,7 +2153,11 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     OicUuid_t emptyUuid = {.id={0}};
     const OicSecDoxm_t *doxm = GetDoxmResourceData();
-    if(NO_SECURITY_MODE != cred->credType && doxm && false == doxm->owned && memcmp(&(doxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0)
+    if( NO_SECURITY_MODE != cred->credType 
+        && doxm
+        && false == doxm->owned
+        && memcmp(&(doxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0
+        && memcmp(&(doxm->owner), &cred->subject, sizeof(OicUuid_t)) == 0 )
     {
         //in case of owner PSK
         switch(cred->credType)
