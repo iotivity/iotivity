@@ -6,11 +6,6 @@
 import os
 Import('env')
 
-# Test Coverage Flags and Library (if RELEASE=0)
-if not env.get('RELEASE'):
-    env.AppendUnique(LIBS=['gcov'])
-    env.AppendUnique(CCFLAGS=['--coverage', '-fPIC', '-O0'])
-
 # Add the default lib directory
 build_dir = env.get('BUILD_DIR')
 env.AppendUnique(LIBPATH=[build_dir])
@@ -24,8 +19,8 @@ else:
 
 # Test Coverage Flags and Library (if RELEASE=0)
 if not env.get('RELEASE'):
-    env.AppendUnique(LIBS=['gcov'])
     env.AppendUnique(CCFLAGS=['--coverage', '-fPIC', '-O0'])
+    env.AppendUnique(LINKFLAGS=['--coverage'])
 
 env.AppendUnique(CPPDEFINES=['WITH_POSIX', '__linux__'])
 env.AppendUnique(CFLAGS=['-std=gnu99'])
