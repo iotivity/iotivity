@@ -70,10 +70,10 @@ extern "C" {
     /*
     * Class:     org_iotivity_base_OcPlatform
     * Method:    configure
-    * Signature: (IILjava/lang/String;IILjava/lang/String;I)V
+    * Signature: (IILjava/lang/String;IILjava/lang/String;Ljava/lang/String;I)V
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
-        (JNIEnv *, jclass, jint, jint, jstring, jint, jint, jstring, jint);
+        (JNIEnv *, jclass, jint, jint, jstring, jint, jint, jstring, jstring, jint);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
