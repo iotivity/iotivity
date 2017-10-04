@@ -1993,13 +1993,15 @@ void createExtraDevice(bool isSecured)
                 LIGHT_DEVICE_INTERFACE);
 
         OCRepresentation lightRep;
-        lightRep.setValue(NAME_KEY, ENGLISH_NAME_VALUE);
+        string deviceName = ENGLISH_NAME_VALUE;
+        lightRep.setValue(NAME_KEY, deviceName);
         g_extraLightResource->setAsReadOnly(NAME_KEY);
 
         lightRep.setValue(DEVICE_ID_KEY, g_di);
         g_extraLightResource->setAsReadOnly(DEVICE_ID_KEY);
 
-        lightRep.setValue(ICV_KEY, CORE_SPEC_VERSION);
+        string icvValue = CORE_SPEC_VERSION;
+        lightRep.setValue(ICV_KEY, icvValue);
         g_extraLightResource->setAsReadOnly(ICV_KEY);
 
         string dmvValue = RESOURCE_TYPE_SPEC_VERSION;
@@ -2008,7 +2010,8 @@ void createExtraDevice(bool isSecured)
         lightRep.setValue(DMV_KEY, dmvValue);
         g_extraLightResource->setAsReadOnly(DMV_KEY);
 
-        lightRep.setValue(PIID_KEY, PLATFORM_ID);
+        string piid = PLATFORM_ID;
+        lightRep.setValue(PIID_KEY, piid);
         g_extraLightResource->setAsReadOnly(PIID_KEY);
 
         g_extraLightResource->setResourceRepresentation(lightRep);
@@ -2455,16 +2458,6 @@ void createGroup(string groupType)
             OCPlatform::bindInterfaceToResource(g_collectionHandle, BATCH_INTERFACE);
             OCPlatform::bindInterfaceToResource(g_collectionHandle, DEFAULT_INTERFACE);
 
-            resourceURI = COLLECTION_RESOURCE_URI_VENDOR;
-            OCPlatform::registerResource(g_collectionHandleVendor, resourceURI, groupType,
-                    LINK_INTERFACE, &entityHandlerCollection, // entityHandler
-                    collectionProperty);
-
-            cout << "Create Group is called for Vendor handler." << endl;
-
-            OCPlatform::bindTypeToResource(g_collectionHandleVendor, GROUP_TYPE_AIRCON_VENDOR);
-            OCPlatform::bindInterfaceToResource(g_collectionHandleVendor, BATCH_INTERFACE);
-            OCPlatform::bindInterfaceToResource(g_collectionHandleVendor, DEFAULT_INTERFACE);
 
             g_isGroupCreated = true;
             cout << "Successfully Created Group!!" << endl;
