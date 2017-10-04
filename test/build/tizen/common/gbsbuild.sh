@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 #----------------------------------------------------------------------
 # Main Build Script For all module in tizen platform
 #----------------------------------------------------------------------
@@ -15,6 +15,12 @@ done
 
 arg_parts=(${args//=/ })
 len=${#arg_parts[@]}
+
+# Default values if unset
+iotivity_root="${PWD}"
+iotivity_test_root="${iotivity_root}/test"
+target_arch="armv7l"
+gbs_root="${iotivity_root}/tmp/gbs"
 
 parameters=''
 offline_mode=''
@@ -244,5 +250,5 @@ else
     exit 127
 fi
 
-echo "Deleting Tmp Directory"
+#echo "Deleting Tmp Directory"
 #rm -rf ${tmp_dir}
