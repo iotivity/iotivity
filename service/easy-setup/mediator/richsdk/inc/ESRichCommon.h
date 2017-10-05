@@ -775,11 +775,12 @@ namespace OIC
 
                         if(rep.hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
                         {
+                            // Response from OIC Server does not contain spec version in header, so assumed as 0.
                             if(0 == m_OCFServerVersion)
                             {
                                 OIC_LOG(DEBUG, ES_RICH_COMMON_TAG, "getWiFiModes() with OIC Spec");
 
-                                /* Considering Representation as per OIC Core Spec */
+                                // Considering Representation as per OIC Core Spec.
                                 for(auto it : rep.getValue
                                         <std::vector<int>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
                                 {
@@ -790,7 +791,7 @@ namespace OIC
                             {
                                 OIC_LOG(DEBUG, ES_RICH_COMMON_TAG, "getWiFiModes() with OCF Spec");
 
-                                /* Considering Representation as per OCF 1.0 / 1.x Core Spec */
+                                // Considering Representation as per OCF 1.0 / 1.x Core Spec.
                                 for(auto it : rep.getValue
                                         <std::vector<std::string>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
                                 {
@@ -829,11 +830,12 @@ namespace OIC
 
                         if(rep.hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
                         {
+                            // Response from OIC Server does not contain spec version in header, so assumed as 0.
                             if(0 == m_OCFServerVersion)
                             {
                                 OIC_LOG(DEBUG, ES_RICH_COMMON_TAG, "getWiFiFreq() with OIC Spec");
 
-                                /* Considering Representation as per OIC Core Spec */
+                                // Considering Representation as per OIC Core Spec.
                                 return static_cast<WIFI_FREQ>(
                                             rep.getValue<int>(OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
                             }
@@ -841,7 +843,7 @@ namespace OIC
                             {
                                 OIC_LOG(DEBUG, ES_RICH_COMMON_TAG, "getWiFiFreq() with OCF Spec");
 
-                                /* Considering Representation as per OCF 1.0 / 1.x Core Spec */
+                                // Considering Representation as per OCF 1.0 / 1.x Core Spec.
                                 return getWiFiFreqAsEnum(rep.getValue
                                         <std::vector<std::string>>(OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
                             }

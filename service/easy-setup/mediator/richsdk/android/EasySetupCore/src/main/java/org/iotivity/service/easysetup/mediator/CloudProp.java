@@ -63,7 +63,7 @@ public class CloudProp {
             mRep.setValue(ESConstants.OC_RSRVD_ES_AUTHPROVIDER, authProvider);
             mRep.setValue(ESConstants.OC_RSRVD_ES_CISERVER, ciServer);
         } catch (OcException e) {
-            Log.e(TAG, "setCloudProp is failed.");
+            Log.e(TAG, "setCloudProp is failed: " + e.toString());
         }
     }
 
@@ -88,7 +88,7 @@ public class CloudProp {
             mRep.setValue(ESConstants.OC_RSRVD_ES_AUTHPROVIDER, authProvider);
             mRep.setValue(ESConstants.OC_RSRVD_ES_CISERVER, ciServer);
         } catch (OcException e) {
-            Log.e(TAG, "setCloudPropWithAccessToken is failed.");
+            Log.e(TAG, "setCloudPropWithAccessToken is failed: "  + e.toString());
         }
     }
 
@@ -119,7 +119,7 @@ public class CloudProp {
         }
         catch (OcException e)
         {
-            Log.e(TAG, "getAuthCode is failed.");
+            Log.e(TAG, "getAuthCode is failed: "  + e.toString());
         }
         return null;
     }
@@ -142,7 +142,7 @@ public class CloudProp {
         }
         catch (OcException e)
         {
-            Log.e(TAG, "getAuthProvider is failed.");
+            Log.e(TAG, "getAuthProvider is failed: "  + e.toString());
         }
         return null;
     }
@@ -165,7 +165,7 @@ public class CloudProp {
         }
         catch (OcException e)
         {
-            Log.e(TAG, "getCiServer is failed.");
+            Log.e(TAG, "getCiServer is failed: "  + e.toString());
         }
         return null;
     }
@@ -206,7 +206,7 @@ public class CloudProp {
         }
         catch (OcException e)
         {
-            Log.e(TAG, "getAccessToken is failed.");
+            Log.e(TAG, "getAccessToken is failed: "  + e.toString());
         }
         return null;
     }
@@ -229,7 +229,7 @@ public class CloudProp {
         }
         catch (OcException e)
         {
-            Log.e(TAG, "getAccessTokenType is failed.");
+            Log.e(TAG, "getAccessTokenType is failed: "  + e.toString());
         }
         return OAUTH_TOKENTYPE.NONE_OAUTH_TOKENTYPE;
     }

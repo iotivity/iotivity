@@ -82,8 +82,8 @@ void JniGetConfigurationStatusListener::getConfigurationStatusCallback (
 
     EnrolleeConf enrolleeConf = getConfigurationStatusCb->getEnrolleeConf();
     OCRepresentation m_ProvRep = enrolleeConf.getEasySetupRep();
-
     OCRepresentation* rep = new OCRepresentation(m_ProvRep);
+
     jlong handle = reinterpret_cast<jlong>(rep);
     jobject jRepresentation = env->NewObject(g_cls_OcRepresentation, g_mid_OcRepresentation_N_ctor_bool,
                                             handle, true);
@@ -98,8 +98,9 @@ void JniGetConfigurationStatusListener::getConfigurationStatusCallback (
         return;
     }
 
+    jint jSpecVersion = enrolleeConf.getOCFSpecVersion();
     jobject jEnrolleeConf = NULL;
-    jEnrolleeConf = env->NewObject(g_cls_EnrolleeConf, g_mid_EnrolleeConf_ctor, (jobject)jRepresentation);
+    jEnrolleeConf = env->NewObject(g_cls_EnrolleeConf, g_mid_EnrolleeConf_ctor, jRepresentation, jSpecVersion);
     if (!jEnrolleeConf) {
         ES_LOGE("JniGetConfigurationStatusListener::getConfigurationStatusCallback Unable to create the jEnrolleeConf");
         return ;

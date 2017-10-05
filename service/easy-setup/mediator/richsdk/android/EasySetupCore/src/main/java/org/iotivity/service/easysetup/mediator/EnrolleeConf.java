@@ -29,7 +29,6 @@ import org.iotivity.service.easysetup.mediator.enums.WIFI_FREQ;
 import org.iotivity.service.easysetup.mediator.enums.WIFI_MODE;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -40,15 +39,19 @@ public class EnrolleeConf
 {
     private static final String TAG = EnrolleeConf.class.getName();
     protected OcRepresentation mEasySetupRep = null;
+    protected int mSpecVersion = 0;
+
     /**
      * Constructor
      *
      * @param rep received properties in a form of OcRepresentation
+     * @param specVersion Indicates the spec version of enrollee.
      *
      */
-    public EnrolleeConf(OcRepresentation rep)
+    public EnrolleeConf(OcRepresentation rep, int specVersion)
     {
         mEasySetupRep = rep;
+        mSpecVersion = specVersion;
     }
 
     public EnrolleeConf(EnrolleeConf enrolleeConf)
@@ -89,7 +92,7 @@ public class EnrolleeConf
                         return (String) rep.getValue(ESConstants.OC_RSRVD_ES_DEVNAME);
                     }
                 } catch (OcException e) {
-                    Log.e(TAG, "getWiFiModes is failed.");
+                    Log.e(TAG, "getWiFiModes is failed: " + e.toString());
                 }
             }
         }
@@ -129,7 +132,7 @@ public class EnrolleeConf
                         return (String) rep.getValue(ESConstants.OC_RSRVD_ES_MODELNUMBER);
                     }
                 } catch (OcException e) {
-                    Log.e(TAG, "getModelNumber is failed.");
+                    Log.e(TAG, "getModelNumber is failed: " + e.toString());
                 }
             }
         }
@@ -165,13 +168,28 @@ public class EnrolleeConf
                     }
 
                     if (rep.hasAttribute(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE)) {
-                        int modes_int[] = rep.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE);
-                        for (int i = 0 ; i < modes_int.length ; ++i) {
-                            modes.add(WIFI_MODE.fromInt(modes_int[i]));
+                        // Response from OIC Server does not contain spec version in header, so assumed as 0.
+                        if(0 == mSpecVersion) {
+                            // Considering Representation as per OIC Core Spec.
+                            int modes_int[] = rep.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE);
+                            for (int i = 0 ; i < modes_int.length ; ++i) {
+                                modes.add(WIFI_MODE.fromInt(modes_int[i]));
+                            }
+                        }
+                        else {
+                            // Considering Representation as per OCF 1.0 / 1.x Core Spec.
+                            String modes_str[] = rep.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE);
+                            for (int i = 0 ; i < modes_str.length ; ++i) {
+                                for(WIFI_MODE mode : WIFI_MODE.values()) {
+                                    if(mode.name().contains(modes_str[i])) {
+                                       modes.add(mode);
+                                    }
+                                }
+                            }
                         }
                     }
                 } catch (OcException e) {
-                    Log.e(TAG, "getWiFiModes is failed.");
+                    Log.e(TAG, "getWiFiModes is failed: " + e.toString());
                 }
             }
         }
@@ -206,11 +224,21 @@ public class EnrolleeConf
                         return null;
                     }
 
-                    if(rep.hasAttribute(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
-                        return WIFI_FREQ.fromInt(
-                                (int)rep.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
+                    if(rep.hasAttribute(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ)) {
+                        // Response from OIC Server does not contain spec version in header, so assumed as 0.
+                        if(0 == mSpecVersion) {
+                            // Considering Representation as per OIC Core Spec.
+                            return WIFI_FREQ.fromInt(
+                                    (int)rep.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
+                        }
+                        else {
+                            // Considering Representation as per OCF 1.0 / 1.x Core Spec.
+                            String freqs[] = rep.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ);
+                            return getWiFiFreqAsEnum(freqs);
+                        }
+                    }
                 } catch (OcException e) {
-                    Log.e(TAG, "getWiFiFreq is failed.");
+                    Log.e(TAG, "getWiFiFreq is failed: " + e.toString());
                 }
             }
         }
@@ -245,6 +273,37 @@ public class EnrolleeConf
     {
         return mEasySetupRep;
     }
+
+    private WIFI_FREQ getWiFiFreqAsEnum(String[] freqs)
+    {
+        WIFI_FREQ freq_res = WIFI_FREQ.WIFI_FREQ_NONE;
+        boolean b_2_4G = false;
+        boolean b_5G = false;
+        for (String freq : freqs)
+        {
+            if(freq.equals("2.4G"))
+            {
+                b_2_4G = true;
+            }
+            else if(freq.equals("5G"))
+            {
+                b_5G = true;
+            }
+        }
+
+        if(b_2_4G && b_5G) {
+            freq_res = WIFI_FREQ.WIFI_BOTH;
+        }
+        else if(b_2_4G) {
+            freq_res = WIFI_FREQ.WIFI_24G;
+        }
+        else if(b_5G) {
+            freq_res = WIFI_FREQ.WIFI_5G;
+        }
+        else {
+            freq_res = WIFI_FREQ.WIFI_FREQ_NONE;
+        }
+
+        return freq_res;
+    }
 }
-
-

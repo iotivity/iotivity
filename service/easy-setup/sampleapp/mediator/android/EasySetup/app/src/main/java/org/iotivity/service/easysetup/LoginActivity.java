@@ -23,48 +23,13 @@
 package org.iotivity.service.easysetup;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.UrlQuerySanitizer;
-import android.net.wifi.WifiConfiguration;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.RadioButton;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import org.iotivity.base.ModeType;
-import org.iotivity.base.OcException;
-import org.iotivity.base.OcPlatform;
-import org.iotivity.base.OcProvisioning;
-import org.iotivity.base.PlatformConfig;
-import org.iotivity.base.QualityOfService;
-import org.iotivity.base.ServiceType;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 
 public class LoginActivity extends Activity {
     private static final String TAG = "Easysetup Login: ";
@@ -82,15 +47,10 @@ public class LoginActivity extends Activity {
         mWebView.setVisibility(View.VISIBLE);
         mWebView.setInitialScale(200);
         mWebView.getSettings().setJavaScriptEnabled(true);
-        //mWebView.getSettings().setSupportZoom(true);
         mWebView.getSettings().setBuiltInZoomControls(true);
         mWebView.setWebViewClient(new WebViewClientClass());
 
         mWebView.loadUrl("https://github.com/login?return_to=%2Flogin%2Foauth%2Fauthorize%3Fclient_id%3Dea9c18f540323b0213d0%26redirect_uri%3Dhttp%253A%252F%252Fwww.example.com%252Foauth_callback%252F");
-    }
-
-    public void onDestroy() {
-        super.onDestroy();
     }
 
     private class WebViewClientClass extends WebViewClient {
@@ -108,8 +68,7 @@ public class LoginActivity extends Activity {
                 sanitizer.setAllowUnregisteredParamaters(true);
                 sanitizer.parseUrl(url);
 
-                String mAuthCode = null;
-                mAuthCode = sanitizer.getValue("code");
+                String mAuthCode = sanitizer.getValue("code");
 
                 Intent intent = getIntent();
                 intent.putExtra("authCode", mAuthCode);

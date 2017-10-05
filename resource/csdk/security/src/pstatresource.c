@@ -214,7 +214,7 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
 
     // Top Level Pstat Map
     cborEncoderResult = cbor_encoder_create_map(&encoder, &pstatMap, pstatMapSize);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Pstat Map.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Pstat Map.");
 
     // dos Property
     if (propertiesToInclude[PSTAT_DOS])
@@ -223,29 +223,29 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
         // Device Onboarding State Property tag
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_DOS_NAME,
             strlen(OIC_JSON_DOS_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding dos Name Tag.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding dos Name Tag.");
 
         // Device Onboarding State Property map
         CborEncoder dosMap;
         cborEncoderResult = cbor_encoder_create_map(&pstatMap, &dosMap, PSTAT_DOS_MAP_SIZE);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed creating pstat.dos map");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed creating pstat.dos map");
 
         cborEncoderResult = cbor_encode_text_string(&dosMap, OIC_JSON_S_NAME,
             strlen(OIC_JSON_S_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding pstat.dos.s tag.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding pstat.dos.s tag.");
 
         cborEncoderResult = cbor_encode_int(&dosMap, pstat->dos.state);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding pstat.dos.s value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding pstat.dos.s value.");
 
         cborEncoderResult = cbor_encode_text_string(&dosMap, OIC_JSON_P_NAME,
             strlen(OIC_JSON_P_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding pstat.dos.p tag.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding pstat.dos.p tag.");
 
         cborEncoderResult = cbor_encode_boolean(&dosMap, pstat->dos.pending);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding pstat.dos.p value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding pstat.dos.p value.");
 
         cborEncoderResult = cbor_encoder_close_container(&pstatMap, &dosMap);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed closing pstat.dos map");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed closing pstat.dos map");
     }
 
     // isop Property
@@ -254,9 +254,9 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
         OIC_LOG_V(DEBUG, TAG, "%s: including isop Property.", __func__);
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ISOP_NAME,
             strlen(OIC_JSON_ISOP_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ISOP Name Tag.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding ISOP Name Tag.");
         cborEncoderResult = cbor_encode_boolean(&pstatMap, pstat->isOp);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ISOP Name Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding ISOP Name Value.");
     }
 
     // cm Property
@@ -265,9 +265,9 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
         OIC_LOG_V(DEBUG, TAG, "%s: including cm Property.", __func__);
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_CM_NAME,
             strlen(OIC_JSON_CM_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CM Name Tag.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding CM Name Tag.");
         cborEncoderResult = cbor_encode_int(&pstatMap, pstat->cm);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CM Name Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding CM Name Value.");
     }
 
     // tm Property
@@ -276,9 +276,9 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
         OIC_LOG_V(DEBUG, TAG, "%s: including tm Property.", __func__);
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_TM_NAME,
             strlen(OIC_JSON_TM_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding TM Name Tag.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding TM Name Tag.");
         cborEncoderResult = cbor_encode_int(&pstatMap, pstat->tm);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding TM Name Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding TM Name Value.");
     }
 
     // om Property
@@ -287,9 +287,9 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
         OIC_LOG_V(DEBUG, TAG, "%s: including om Property.", __func__);
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_OM_NAME,
             strlen(OIC_JSON_OM_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding OM Name Tag.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding OM Name Tag.");
         cborEncoderResult = cbor_encode_int(&pstatMap, pstat->om);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding OM Name Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding OM Name Value.");
     }
 
     // sm Property
@@ -298,9 +298,9 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
         OIC_LOG_V(DEBUG, TAG, "%s: including sm Property.", __func__);
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_SM_NAME,
             strlen(OIC_JSON_SM_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Name Tag.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding SM Name Tag.");
         cborEncoderResult = cbor_encode_int(&pstatMap, pstat->sm[0]);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Name Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding SM Name Value.");
     }
 
     // rowneruuid property
@@ -309,11 +309,11 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
         OIC_LOG_V(DEBUG, TAG, "%s: including rowneruuid Property.", __func__);
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ROWNERID_NAME,
             strlen(OIC_JSON_ROWNERID_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Tag.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding ROwner Id Tag.");
         ret = ConvertUuidToStr(&pstat->rownerID, &strUuid);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
         cborEncoderResult = cbor_encode_text_string(&pstatMap, strUuid, strlen(strUuid));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ROwner Id Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding ROwner Id Value.");
         OICFree(strUuid);
         strUuid = NULL;
     }
@@ -322,36 +322,36 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
     CborEncoder rtArray;
     cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_RT_NAME,
             strlen(OIC_JSON_RT_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
     cborEncoderResult = cbor_encoder_create_array(&pstatMap, &rtArray, 1);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Value.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding RT Value.");
     for (size_t i = 0; i < 1; i++)
     {
         cborEncoderResult = cbor_encode_text_string(&rtArray, OIC_RSRC_TYPE_SEC_PSTAT,
                 strlen(OIC_RSRC_TYPE_SEC_PSTAT));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding RT Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding RT Value.");
     }
     cborEncoderResult = cbor_encoder_close_container(&pstatMap, &rtArray);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RT.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Closing RT.");
 
     //IF-- Mandatory
     CborEncoder ifArray;
     cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_IF_NAME,
        strlen(OIC_JSON_IF_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
     cborEncoderResult = cbor_encoder_create_array(&pstatMap, &ifArray, 1);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding IF Value.");
     for (size_t i = 0; i < 1; i++)
     {
         cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
                 strlen(OC_RSRVD_INTERFACE_DEFAULT));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding IF Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding IF Value.");
     }
     cborEncoderResult = cbor_encoder_close_container(&pstatMap, &ifArray);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing IF.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Closing IF.");
 
     cborEncoderResult = cbor_encoder_close_container(&encoder, &pstatMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Closing PSTAT Map.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Closing PSTAT Map.");
 
     if (CborNoError == cborEncoderResult)
     {
@@ -449,11 +449,11 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
 
     // Enter pstat Map
     cborFindResult = cbor_value_enter_container(&pstatCbor, &pstatMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering pstat Map.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering pstat Map.");
 
     // Find pstat.dos tag
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_DOS_NAME, &pstatMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding dos tag.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding dos tag.");
 
     if (CborInvalidType != pstatMap.type)
     {
@@ -463,7 +463,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
         {
             OIC_LOG(DEBUG, TAG, "Found pstat.dos cbor container; entering.");
             cborFindResult = cbor_value_enter_container(&pstatMap, &dosMap);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering dos map.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering dos map.");
             if (roParsed)
             {
                 if (IsPropertyReadOnly(PSTAT_DOS, stateForReadOnlyCheck))
@@ -475,9 +475,9 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
         while (cbor_value_is_valid(&dosMap) && cbor_value_is_text_string(&dosMap))
         {
             cborFindResult = cbor_value_dup_text_string(&dosMap, &dosTagName, &dosLen, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting dos map next tag.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed getting dos map next tag.");
             cborFindResult = cbor_value_advance(&dosMap);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed advancing dos map.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed advancing dos map.");
 
             if (NULL != dosTagName)
             {
@@ -486,7 +486,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
                     OIC_LOG(DEBUG, TAG, "Found pstat.dos.s tag; getting int value.");
                     int s = -1;
                     cborFindResult = cbor_value_get_int(&dosMap, &s);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting pstat.dos.s value.");
+                    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed getting pstat.dos.s value.");
                     OIC_LOG_V(DEBUG, TAG, "Read pstat.dos.s value = %d.", s);
                     pstat->dos.state = (OicSecDeviceOnboardingState_t)s;
                 }
@@ -495,7 +495,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
                     OIC_LOG(DEBUG, TAG, "Found pstat.dos.p tag; getting boolean value.");
                     bool p = false;
                     cborFindResult = cbor_value_get_boolean(&dosMap, &p);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting pstat.dos.p value.");
+                    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed getting pstat.dos.p value.");
                     OIC_LOG_V(DEBUG, TAG, "Read pstat.dos.p value = %s.", p?"true":"false");
                     pstat->dos.pending = p;
                 }
@@ -510,7 +510,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
             if (cbor_value_is_valid(&dosMap))
             {
                 cborFindResult = cbor_value_advance(&dosMap);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed advancing dos map.");
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed advancing dos map.");
             }
         }
     }
@@ -531,7 +531,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
     if (CborNoError == cborFindResult && cbor_value_is_boolean(&pstatMap))
     {
         cborFindResult = cbor_value_get_boolean(&pstatMap, &pstat->isOp);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding isOp Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding isOp Value.");
 
         if (roParsed)
         {
@@ -554,7 +554,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
         int cm;
 
         cborFindResult = cbor_value_get_int(&pstatMap, &cm);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CM.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding CM.");
         pstat->cm = (OicSecDpm_t)cm;
 
         if (roParsed)
@@ -578,7 +578,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
         int tm;
 
         cborFindResult = cbor_value_get_int(&pstatMap, &tm);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding TM.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding TM.");
         pstat->tm = (OicSecDpm_t)tm;
 
         if (roParsed)
@@ -603,7 +603,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
         int om;
 
         cborFindResult = cbor_value_get_int(&pstatMap, &om);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding OM.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding OM.");
         pstat->om = (OicSecDpom_t)om;
 
         if (roParsed)
@@ -630,7 +630,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
         pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
         VERIFY_NOT_NULL(TAG, pstat->sm, ERROR);
         cborFindResult = cbor_value_get_int(&pstatMap, &sm);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SM.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding SM.");
         pstat->sm[0] = (OicSecDpom_t)sm;
 
         if (roParsed)
@@ -656,7 +656,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
     if (CborNoError == cborFindResult && cbor_value_is_text_string(&pstatMap))
     {
         cborFindResult = cbor_value_dup_text_string(&pstatMap, &strUuid , &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding ROwner Id Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding ROwner Id Value.");
         ret = ConvertStrToUuid(strUuid , &pstat->rownerID);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
         OICFree(strUuid );

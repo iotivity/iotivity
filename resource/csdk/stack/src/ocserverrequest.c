@@ -582,7 +582,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                 else
                 {
                     payloadFormat = CA_FORMAT_UNSUPPORTED;
-                    IsPayloadFormatSet = true;
+                    IsPayloadFormatSet = false;
                     OIC_LOG_V(DEBUG, TAG, "option has an unsupported format");
                 }
             }
@@ -614,7 +614,10 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 
         // TODO: This exposes CoAP specific details.  At some point, this should be
         // re-factored and handled in the CA layer.
-        if(serverRequest->observeResult == OC_STACK_OK)
+        // Stack sets MAX_SEQUENCE_NUMBER+1 to sequence number on observe cancel request.
+        // And observe option should not be part of CoAP response for observe cancel request.
+        if(serverRequest->observeResult == OC_STACK_OK
+           && serverRequest->observationOption != MAX_SEQUENCE_NUMBER + 1)
         {
             responseInfo.info.options[0].protocolID = CA_COAP_ID;
             responseInfo.info.options[0].optionID = COAP_OPTION_OBSERVE;

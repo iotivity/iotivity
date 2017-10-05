@@ -156,7 +156,6 @@ namespace OIC
             else
             {
                 EnrolleeConf enrolleeConf(rep, version);
-
                 std::shared_ptr< GetConfigurationStatus > getConfigurationStatus = std::make_shared<
                         GetConfigurationStatus >(ESResult::ES_OK, enrolleeConf);
                 m_getConfigurationStatusCb(getConfigurationStatus);

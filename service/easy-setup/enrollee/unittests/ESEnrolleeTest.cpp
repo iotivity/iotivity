@@ -325,8 +325,7 @@ TEST_F(EasysetupEnrolleeTest, DevicePropertyIsWellConstructedInResponsePayload)
             {
                 EnrolleeConf conf = status->getEnrolleeConf();
                 if(conf.getWiFiModes().size() > 0 && conf.getWiFiModes().at(0) == WIFI_11G &&
-                    conf.getWiFiFreq() == WIFI_BOTH &&
-                    !strcmp(conf.getDeviceName().c_str(), "Test Device"))
+                    conf.getWiFiFreq() == WIFI_BOTH && conf.getDeviceName() ==  "Test Device")
                 {
                     isWellConstructed = true;
                 }
