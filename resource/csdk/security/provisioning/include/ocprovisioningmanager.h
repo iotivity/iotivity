@@ -38,11 +38,22 @@ extern "C" {
  * TODO: In addition, if there is a device(s) which has not up-to-date credentials, this function will
  * automatically try to update the deivce(s).
  *
+ * @see OCClosePM()
+ *
  * @param[in] dbPath file path of the sqlite3 db
  *
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OC_CALL OCInitPM(const char* dbPath);
+
+/**
+ * This method is used by provisioning manager to close provisioning database.
+ *
+ * @see OCInitPM()
+ *
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OC_CALL OCClosePM();
 
 /**
  * API to cleanup PDM in case of timeout.
@@ -326,19 +337,6 @@ OCStackResult OC_CALL OCDeleteRoleCertificateByCredId(void *ctx, const OCProvisi
                                               OCProvisionResultCB resultCallback, uint32_t credId);
 
 /**
- * this function sends Direct-Pairing Configuration to a device.
- *
- * @param[in] ctx Application context returned in the result callback.
- * @param[in] selectedDeviceInfo Selected target device.
- * @param[in] pconf PCONF pointer.
- * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
-              request recieves a response from resource server.
- * @return  OC_STACK_OK in case of success and other value otherwise.
- */
-OCStackResult OC_CALL OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecPconf_t *pconf,
-                             OCProvisionResultCB resultCallback);
-
-/**
  * API to provision credential to devices.
  *
  * @param[in] ctx Application context returned in the result callback.
@@ -593,13 +591,6 @@ void OC_CALL OCDeleteUuidList(OCUuidList_t* pList);
  * @param pAcl Pointer to OicSecAcl_t structure.
  */
 void OC_CALL OCDeleteACLList(OicSecAcl_t* pAcl);
-
-/**
- * This function deletes PDACL data.
- *
- * @param pPdAcl Pointer to OicSecPdAcl_t structure.
- */
-void OC_CALL OCDeletePdAclList(OicSecPdAcl_t* pPdAcl);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**

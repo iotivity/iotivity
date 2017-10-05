@@ -102,20 +102,7 @@ MPMPluginCtx *g_plugin_context = NULL;
  * It contains Server's Identity and the PSK credentials
  * of other devices which the server trusts
  */
-static char CRED_FILE[] = "./oic_svr_db_server.json";
 extern MPMCommonPluginCtx *g_com_ctx;
-
-FILE *serverFOpen(const char *path, const char *mode)
-{
-    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
-    {
-        return fopen(CRED_FILE, mode);
-    }
-    else
-    {
-        return fopen(path, mode);
-    }
-}
 
 std::unique_ptr<ConcurrentIotivityUtils> iotivityUtils = NULL;
 

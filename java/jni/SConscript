@@ -87,44 +87,22 @@ else:
     jni_env.AppendUnique(CCFLAGS=['/wd4047', '/wd4022', '/wd4505',])
 jni_env.AppendUnique(LIBPATH=['#/exlibs/sqlite3'])
 jni_env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
-# make sure we link with the static oc library. This is important since Windows does not build a shared library for the oc library
-# The oc library can not be imported into the Java on all of the platfroms so must be statically linked to make Java code work on
-# all platforms.
 jni_env.PrependUnique(LIBS=[
     'resource_directory',
-    'oc_logger_internal',
-    'coap',
-    'octbstack_internal',
-    'ocsrm',
-    'routingmanager'
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction'
 ])
-
-if target_os not in ['windows', 'winrt']:
-    jni_env.PrependUnique(LIBS=[
-        jni_env['LIBPREFIX'] + 'connectivity_abstraction' + jni_env['LIBSUFFIX'],
-        'oc_internal'
-    ])
-else:
-    jni_env.PrependUnique(LIBS=[
-        'connectivity_abstraction_internal',
-        'oc',
-        'mbedcrypto',
-        'resource_directory_internal',
-        'sqlite3'
-    ])
 
 if env.get('SECURED') == '1':
     jni_env.AppendUnique(CPPDEFINES=['__WITH_TLS__'])
-    jni_env.PrependUnique(LIBS=['mbedtls', 'mbedx509', 'ocprovision'])
-    if target_os not in ['windows', 'winrt']:
-        jni_env.PrependUnique(LIBS=['ocpmapi'])
-    else:
-        jni_env.PrependUnique(LIBS=['ocpmapi_internal',])
-    jni_env.AppendUnique(CPPPATH=['#resource/csdk/security/include/internal',
-                                  '#extlibs/cjson'])
+    jni_env.PrependUnique(LIBS=['mbedtls', 'ocprovision', 'ocpmapi'])
+    jni_env.AppendUnique(CPPPATH=['#/resource/csdk/security/include/internal',
+                                  '#/extlibs/cjson'
+    ])
     if env.get('WITH_CLOUD') == '1':
-        jni_env.AppendUnique(
-            CPPPATH=['#resource/csdk/security/provisioning/include/cloud'])
+        jni_env.AppendUnique(CPPPATH=['#/resource/csdk/security/provisioning/include/cloud'])
 
 if target_os == 'android':
     jni_env.AppendUnique(CXXFLAGS=['-frtti', '-fexceptions'])
@@ -186,9 +164,6 @@ ocstack_files = [
     'JniOcResource.cpp',
     'JniOcResourceIdentifier.cpp',
     'JniOcSecurity.cpp',
-    'JniOnDPDevicesFoundListener.cpp',
-    'JniOnDirectPairingListener.cpp',
-    'JniOcDirectPairDevice.cpp',
     'JniOnPublishResourceListener.cpp',
     'JniOnDeleteResourceListener.cpp',
     'JniOcRDClient.cpp',

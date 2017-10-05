@@ -102,7 +102,6 @@ example_names = [
     'simpleserver',
     'simpleclient',
     'simpleclientserver',
-    'directpairingclient',
     'devicediscoveryserver',
     'devicediscoveryclient',
     'simpleserverHQ',

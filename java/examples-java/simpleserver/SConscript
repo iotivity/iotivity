@@ -32,3 +32,5 @@ example_jar = jdk_env.Jar(target='simpleserver.jar',
             source=['classes', 'MANIFEST.MF'],
             JARCHDIR='$SOURCE')
 jdk_env.Install("../..", example_jar)
+if jdk_env.get('SECURED') == '1':
+    jdk_env.Install(target="../..", source=['src/main/assets/oic_svr_db_server.dat'])

@@ -99,11 +99,10 @@ const uint BINARY_SWITCH_CALLBACK = 0;
 const uint BRIGHTNESS_CALLBACK = 1;
 const uint CHROMA_CALLBACK = 2;
 
-const static char CRED_FILE[] = "./oic_svr_db_hue.dat";
-
-FILE *hue_fopen(const char * , const char *mode)
+FILE *hue_fopen(const char *path, const char *mode)
 {
-    return fopen(CRED_FILE, mode);
+    std::string filename = std::string("hue_") + path;
+    return fopen(filename.c_str(), mode);
 }
 
 MPMResult pluginCreate(MPMPluginCtx **pluginSpecificCtx)

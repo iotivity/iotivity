@@ -41,8 +41,6 @@
 #include "deviceonboardingstate.h"
 #include "aclresource.h"
 #include "amaclresource.h"
-#include "pconfresource.h"
-#include "dpairingresource.h"
 #include "psinterface.h"
 #include "srmresourcestrings.h"
 #include "credresource.h"
@@ -1207,7 +1205,7 @@ void HandleDoxmPostRequestMom(OicSecDoxm_t *newDoxm, OCEntityHandlerRequest *ehR
             {
                 caRes = CAEnableAnonECDHCipherSuite(false);
                 VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+                OIC_LOG_V(INFO, TAG, "%s: ECDH_ANON CipherSuite is DISABLED", __func__);
 
                 RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
                 caRes = CASelectCipherSuite((uint16_t)MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256,
@@ -1285,19 +1283,6 @@ int HandleDoxmPostRequestSVR()
         OIC_LOG_V(ERROR, TAG, "%s: set pstat RownerId", __func__);
         return 1;
     }
-    ownerRes = SetDpairingRownerId(&gDoxm->owner);
-    if (OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: set dpairing RownerId", __func__);
-        return 1;
-    }
-    ownerRes = SetPconfRownerId(&gDoxm->owner);
-    if (OC_STACK_OK != ownerRes && OC_STACK_NO_RESOURCE != ownerRes)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: set pconf RownerId", __func__);
-        return 1;
-    }
-
     return 0;
 }
 
@@ -1343,15 +1328,12 @@ OCEntityHandlerResult HandleDoxmPostRequestJustWork(OicSecDoxm_t *newDoxm,
     if (IsNilUuid(&newDoxm->owner))
     {
         gDoxm->oxmSel = newDoxm->oxmSel;
-        /*
-        * If current state of the device is un-owned, enable
-        * anonymous ECDH cipher in tinyDTLS so that Provisioning
-        * tool can initiate JUST_WORKS ownership transfer process.
-        */
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-        RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
-        OIC_LOG(INFO, TAG, "Doxm EntityHandle  enabling AnonECDHCipherSuite");
-        ehRet = (CAEnableAnonECDHCipherSuite(true) == CA_STATUS_OK) ? OC_EH_OK : OC_EH_ERROR;
+        OCStackResult res = EnableAnonCipherSuiteIfUnOwnedAndJustWorksSelected(NULL);
+        if (OC_STACK_OK != res)
+        {
+            ehRet = OC_EH_ERROR;
+        }
 #endif // __WITH_DTLS__ or __WITH_TLS__
         goto exit;
     }
@@ -1369,7 +1351,7 @@ OCEntityHandlerResult HandleDoxmPostRequestJustWork(OicSecDoxm_t *newDoxm,
         CAResult_t caRes = CA_STATUS_OK;
         caRes = CAEnableAnonECDHCipherSuite(false);
         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-        OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+        OIC_LOG_V(INFO, TAG, "%s: ECDH_ANON CipherSuite is DISABLED", __func__);
 
         //In case of Mutual Verified Just-Works, verify mutualVerifNum
         if (OIC_MV_JUST_WORKS == newDoxm->oxmSel && false == newDoxm->owned &&
@@ -1449,7 +1431,7 @@ OCEntityHandlerResult HandleDoxmPostRequestRandomPin(OicSecDoxm_t *newDoxm,
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-        OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+        OIC_LOG_V(INFO, TAG, "%s: ECDH_ANON CipherSuite is DISABLED", __func__);
 
         RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
         caRes = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256,
@@ -1531,7 +1513,7 @@ OCEntityHandlerResult HandleDoxmPostRequestMfg(OicSecDoxm_t *newDoxm,
         RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
         CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-        OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+        OIC_LOG_V(INFO, TAG, "%s: ECDH_ANON CipherSuite is DISABLED", __func__);
 
         //Unset pre-selected ciphersuite, if any
         caRes = CASelectCipherSuite(0,(CATransportAdapter_t)ehRequest->devAddr.adapter);
@@ -1960,7 +1942,7 @@ static void PrepareMOT(const OicSecDoxm_t* doxm)
         {
             caRes = CAEnableAnonECDHCipherSuite(false);
             VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-            OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+            OIC_LOG_V(INFO, TAG, "%s: ECDH_ANON CipherSuite is DISABLED", __func__);
 
             RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
             caRes = CASelectCipherSuite((uint16_t)MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, CA_ADAPTER_IP);
@@ -2046,19 +2028,14 @@ OCStackResult InitDoxmResource()
     }
 #endif // defined(__WITH_DTLS__) && defined(MULTIPLE_OWNER)
 
-// If DTLS or TLS enabled, and device unowned, check if JW OTM is selected.
-// If so, register handshake callback and enable Anon Ciphersuite.
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-    if (NULL != gDoxm) {
-        if (false == gDoxm->owned) {
-            if (OIC_JUST_WORKS == gDoxm->oxmSel) {
-                RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
-                OIC_LOG_V(INFO, TAG, "%s: enabling AnonECDHCipherSuite", __func__);
-                ret = (CAEnableAnonECDHCipherSuite(true) == CA_STATUS_OK) ? OC_STACK_OK : OC_STACK_ERROR;
-            }
-            ret = OC_STACK_OK;
-        }
+    bool isAnonEnabled = false;
+    if (OC_STACK_OK != EnableAnonCipherSuiteIfUnOwnedAndJustWorksSelected(&isAnonEnabled))
+    {
+        ret = OC_STACK_ERROR;
     }
+    OIC_LOG_V(INFO, TAG, "%s: Anon Ciphersuite %sENABLED.", __func__,
+        isAnonEnabled ? "" : "NOT ");
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
     return ret;
@@ -2545,3 +2522,64 @@ bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2)
     return true;
 #endif
 }
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+OCStackResult EnableAnonCipherSuiteIfUnOwnedAndJustWorksSelected(bool *enabled)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    OIC_LOG_V(INFO, TAG, "%s: function enter.", __func__);
+
+    // If device unowned, check if JW OTM is selected.
+    // If so, register handshake callback, and enable Anon Ciphersuite.
+    if (NULL != gDoxm) {
+        if (false == gDoxm->owned) {
+            if (OIC_JUST_WORKS == gDoxm->oxmSel) {
+                RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
+                OIC_LOG_V(INFO, TAG, "%s: enabling AnonECDHCipherSuite", __func__);
+                ret = (CAEnableAnonECDHCipherSuite(true) == CA_STATUS_OK) ? OC_STACK_OK : OC_STACK_ERROR;
+                if (OC_STACK_OK == ret)
+                {
+                    OIC_LOG_V(INFO, TAG, "%s: AnonECDHCipherSuite ENABLED.", __func__);
+                    if (NULL != enabled)
+                    {
+                        *enabled = true;
+                    }
+                }
+                else
+                {
+                    OIC_LOG_V(ERROR, TAG, "%s: Error attempting to enable AnonECDHCipherSuite!", __func__);
+                }
+            }
+            else
+            {
+                OIC_LOG_V(INFO, TAG, "%s: JustWorks not selected; NOT enabling AnonECDHCipherSuite.", __func__);
+                ret = OC_STACK_OK;
+            }
+        }
+        else
+        {
+            OIC_LOG_V(INFO, TAG, "%s: Device is owned; NOT enabling AnonECDHCipherSuite.", __func__);
+            ret = OC_STACK_OK;
+        }
+    }
+    else
+    {
+        OIC_LOG_V(INFO, TAG, "%s: gDoxm is NULL; NOT enabling AnonECDHCipherSuite.", __func__);
+        ret = OC_STACK_OK;
+    }
+
+    if (NULL != enabled)
+    {
+        if (true != *enabled)
+        {
+            *enabled = false;
+        }
+    }
+
+    OIC_LOG_V(INFO, TAG, "%s: function exit, returning %s.", __func__,
+        (OC_STACK_OK == ret) ? "OC_STACK_OK" : "OC_STACK_ERROR");
+
+    return ret;
+}
+#endif // __WITH_DTLS__ or __WITH_TLS__

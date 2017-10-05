@@ -62,6 +62,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_provisionInit
 
 /*
  * Class:     org_iotivity_base_OcProvisioning
+ * Method:    provisionClose
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_provisionClose
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
  * Method:    discoverOwnedDevices
  * Signature: (I)[Lorg/iotivity/base/OcSecureResource;
  */

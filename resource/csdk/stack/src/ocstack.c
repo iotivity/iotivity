@@ -91,10 +91,6 @@
 #include "oickeepalive.h"
 #endif
 
-//#ifdef DIRECT_PAIRING
-#include "directpairing.h"
-//#endif
-
 #ifdef HAVE_ARDUINO_TIME_H
 #include "Time.h"
 #endif
@@ -866,6 +862,11 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
                    // This Response Code is like HTTP 200 "OK" but only used in response to
                    // GET requests.
                    ret = CA_CONTENT;
+                   break;
+               case OC_REST_DELETE:
+                   // This Response Code is like HTTP 200 "OK" but only used in response to
+                   // DELETE requests.
+                   ret = CA_DELETED;
                    break;
                default:
                    // This should not happen but,
@@ -5044,44 +5045,6 @@ OCStackResult OC_CALL OCDoResponse(OCEntityHandlerResponse *ehResponse)
     OIC_TRACE_END();
     return result;
 }
-
-//#ifdef DIRECT_PAIRING
-const OCDPDev_t* OC_CALL OCDiscoverDirectPairingDevices(unsigned short waittime)
-{
-    OIC_LOG(INFO, TAG, "Start OCDiscoverDirectPairingDevices");
-    if(OC_STACK_OK != DPDeviceDiscovery(waittime))
-    {
-        OIC_LOG(ERROR, TAG, "Fail to discover Direct-Pairing device");
-        return NULL;
-    }
-
-    return (const OCDPDev_t*)DPGetDiscoveredDevices();
-}
-
-const OCDPDev_t* OC_CALL OCGetDirectPairedDevices()
-{
-    return (const OCDPDev_t*)DPGetPairedDevices();
-}
-
-OCStackResult OC_CALL OCDoDirectPairing(void *ctx, OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
-                                        OCDirectPairingCB resultCallback)
-{
-    OIC_LOG(INFO, TAG, "Start OCDoDirectPairing");
-    if(NULL ==  peer || NULL == pinNumber)
-    {
-        OIC_LOG(ERROR, TAG, "Invalid parameters");
-        return OC_STACK_INVALID_PARAM;
-    }
-    if (NULL == resultCallback)
-    {
-        OIC_LOG(ERROR, TAG, "Invalid callback");
-        return OC_STACK_INVALID_CALLBACK;
-    }
-
-    return DPDirectPairing(ctx, (OCDirectPairingDev_t*)peer, (OicSecPrm_t)pmSel,
-                                           pinNumber, (OCDirectPairingResultCB)resultCallback);
-}
-//#endif // DIRECT_PAIRING
 
 //-----------------------------------------------------------------------------
 // Private internal function definitions

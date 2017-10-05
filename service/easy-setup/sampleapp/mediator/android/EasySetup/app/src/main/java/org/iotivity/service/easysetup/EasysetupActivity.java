@@ -388,6 +388,18 @@ public class EasysetupActivity extends Activity
         }
     }
 
+    private void closeIOCStack() {
+        try {
+            /*
+             * Close DataBase
+             */
+            OcProvisioning.provisionClose();
+        } catch (OcException e) {
+            logMessage(TAG + "provisionClose error: " + e.getMessage());
+            Log.e(TAG, e.getMessage());
+        }
+    }
+
     OcPlatform.OnResourceFoundListener listener =
             new OcPlatform.OnResourceFoundListener() {
                 @Override
@@ -1150,5 +1162,6 @@ public class EasysetupActivity extends Activity
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        closeIOCStack();
     }
 }

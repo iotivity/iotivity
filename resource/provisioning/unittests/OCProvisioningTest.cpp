@@ -45,13 +45,14 @@ namespace OCProvisioningTest
     {
         std::string dbPath("");
         EXPECT_EQ(OC_STACK_OK, OCSecure::provisionInit(dbPath));
-        EXPECT_EQ(OC_STACK_OK, PDMClose());
+        EXPECT_EQ(OC_STACK_OK, OCSecure::provisionClose());
     }
 
     TEST(ProvisionInitTest, TestValidPath)
     {
         std::string dbPath("./dbPath.tmp");
         EXPECT_EQ(OC_STACK_OK, OCSecure::provisionInit(dbPath));
+        EXPECT_EQ(OC_STACK_OK, OCSecure::provisionClose());
     }
 
     TEST(DiscoveryTest, SecureResource)
@@ -184,9 +185,12 @@ namespace OCProvisioningTest
 
     TEST(DeviceInfoTest, DevInfoFromNetwork)
     {
+        std::string dbPath("./dbPath");
+        EXPECT_EQ(OC_STACK_OK, OCSecure::provisionInit(dbPath));
         DeviceList_t owned, unowned;
         EXPECT_EQ(OC_STACK_OK, OCSecure::getDevInfoFromNetwork(TIMEOUT,
                     owned, unowned));
+        EXPECT_EQ(OC_STACK_OK, OCSecure::provisionClose());
     }
 
     TEST(SetDisplayPinCBTest, SetDisplayPinCBTestNullCB)
@@ -233,25 +237,6 @@ namespace OCProvisioningTest
         OICFree(acl2);
     }
 
-    TEST(ProvisionDirectPairingTest, ProvisionDirectPairingTestNullPconf)
-    {
-        OCSecureResource device;
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionDirectPairing(nullptr, resultCallback));
-    }
-
-    TEST(ProvisionDirectPairingTest, ProvisionDirectPairingTestNullCallback)
-    {
-        OCSecureResource device;
-        OicSecPconf_t *pconf = (OicSecPconf_t *)OICCalloc(1,sizeof(OicSecPconf_t));
-        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.provisionDirectPairing(pconf, nullptr));
-        OICFree(pconf);
-    }
-
-    TEST(ProvisionDirectPairingTest, ProvisionDirectPairingTestNullCallbackNUllPconf)
-    {
-        OCSecureResource device;
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionDirectPairing(nullptr, nullptr));
-    }
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     TEST(setDeviceIdSeed, NullParam)
     {

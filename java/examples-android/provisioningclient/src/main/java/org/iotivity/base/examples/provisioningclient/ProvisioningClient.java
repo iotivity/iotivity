@@ -242,32 +242,38 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
         };
 
     @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setContentView(R.layout.activity_secure_provision_client);
-            mEventsTextView = new TextView(this);
-            mEventsTextView.setGravity(Gravity.BOTTOM);
-            mEventsTextView.setMovementMethod(new ScrollingMovementMethod());
-            LinearLayout layout = (LinearLayout) findViewById(R.id.linearLayout);
-            layout.addView(mEventsTextView, new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
-                    );
-            filePath = getFilesDir().getPath() + "/"; //  data/data/<package>/files/
-            //copy CBOR file when application runs first time
-            SharedPreferences wmbPreference = PreferenceManager.getDefaultSharedPreferences(this);
-            boolean isFirstRun = wmbPreference.getBoolean("FIRSTRUN", true);
-            if (isFirstRun) {
-                copyCborFromAsset();
-                SharedPreferences.Editor editor = wmbPreference.edit();
-                editor.putBoolean("FIRSTRUN", false);
-                editor.commit();
-            }
-            initOICStack();
-            saveCertChain();
-            int ret = CaInterface.setCipherSuite(OicCipher.TLS_ECDH_anon_WITH_AES_128_CBC_SHA,
-                                                    OcConnectivityType.CT_ADAPTER_IP);
-            Log.e(TAG,"CaInterface.setCipherSuite returned = "+ret);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_secure_provision_client);
+        mEventsTextView = new TextView(this);
+        mEventsTextView.setGravity(Gravity.BOTTOM);
+        mEventsTextView.setMovementMethod(new ScrollingMovementMethod());
+        LinearLayout layout = (LinearLayout) findViewById(R.id.linearLayout);
+        layout.addView(mEventsTextView, new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
+                );
+        filePath = getFilesDir().getPath() + "/"; //  data/data/<package>/files/
+        //copy CBOR file when application runs first time
+        SharedPreferences wmbPreference = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isFirstRun = wmbPreference.getBoolean("FIRSTRUN", true);
+        if (isFirstRun) {
+            copyCborFromAsset();
+            SharedPreferences.Editor editor = wmbPreference.edit();
+            editor.putBoolean("FIRSTRUN", false);
+            editor.commit();
         }
+        initOICStack();
+        saveCertChain();
+        int ret = CaInterface.setCipherSuite(OicCipher.TLS_ECDH_anon_WITH_AES_128_CBC_SHA,
+                                                OcConnectivityType.CT_ADAPTER_IP);
+        Log.e(TAG,"CaInterface.setCipherSuite returned = "+ret);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        closeIOCStack();
+    }
 
     /**
      * configure OIC platform and call findResource
@@ -328,6 +334,18 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
             Log.e(TAG, e.getMessage());
         }
         new DiscoveryOTTransferAsyncTask().execute();
+    }
+
+    private void closeIOCStack() {
+        try {
+            /*
+             * Close DataBase
+             */
+            OcProvisioning.provisionClose();
+        } catch (OcException e) {
+            logMessage(TAG + "provisionClose error: " + e.getMessage());
+            Log.e(TAG, e.getMessage());
+        }
     }
 
     @Override

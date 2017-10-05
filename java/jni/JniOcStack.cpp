@@ -81,7 +81,6 @@ jclass g_cls_OcOicSecAcl_ace = nullptr;
 jclass g_cls_OcOicSecAcl_resr = nullptr;
 jclass g_cls_OcOicSecAcl_validity = nullptr;
 jclass g_cls_OcOicSecPdAcl = nullptr;
-jclass g_cls_OcDirectPairDevice = nullptr;
 
 #ifdef WITH_CLOUD
 jclass g_cls_OcAccountManager = nullptr;
@@ -123,8 +122,6 @@ jmethodID g_mid_OcPresenceStatus_get = nullptr;
 jmethodID g_mid_OcResourceIdentifier_N_ctor = nullptr;
 jmethodID g_mid_OcProvisionResult_ctor = nullptr;
 jmethodID g_mid_OcSecureResource_ctor = nullptr;
-jmethodID g_mid_OcDirectPairDevice_ctor = nullptr;
-jmethodID g_mid_OcDirectPairDevice_dev_ctor = nullptr;
 #ifdef WITH_CLOUD
 jmethodID g_mid_OcAccountManager_ctor = nullptr;
 #endif
@@ -512,17 +509,6 @@ JNI_OnLoad(JavaVM* vm, void* reserved)
     g_mid_OcProvisionResult_ctor = env->GetMethodID(g_cls_OcProvisionResult, "<init>", "(Ljava/lang/String;I)V");
     VERIFY_VARIABLE_NULL(g_mid_OcProvisionResult_ctor);
 
-    //OcDirectPairDevice
-    clazz = env->FindClass("org/iotivity/base/OcDirectPairDevice");
-    VERIFY_VARIABLE_NULL(clazz);
-    g_cls_OcDirectPairDevice =  (jclass)env->NewGlobalRef(clazz);
-    g_mid_OcDirectPairDevice_ctor = env->GetMethodID(g_cls_OcDirectPairDevice, "<init>", "(J)V");
-    VERIFY_VARIABLE_NULL(g_mid_OcDirectPairDevice_ctor);
-
-    g_mid_OcDirectPairDevice_dev_ctor = env->GetMethodID(g_cls_OcDirectPairDevice, "<init>", "(Ljava/lang/String;)V");
-    VERIFY_VARIABLE_NULL(g_mid_OcDirectPairDevice_dev_ctor);
-    env->DeleteLocalRef(clazz);
-
 #ifdef WITH_CLOUD
     //OcAccountManager
     clazz = env->FindClass("org/iotivity/base/OcAccountManager");
@@ -725,7 +711,6 @@ JNI_OnUnload(JavaVM *vm, void *reserved)
         env->DeleteGlobalRef(g_cls_OcResourceIdentifier);
         env->DeleteGlobalRef(g_cls_OcSecureResource);
         env->DeleteGlobalRef(g_cls_OcProvisionResult);
-        env->DeleteGlobalRef(g_cls_OcDirectPairDevice);
         env->DeleteGlobalRef(g_cls_byte1DArray);
         env->DeleteGlobalRef(g_cls_byte2DArray);
         env->DeleteGlobalRef(g_cls_byte3DArray);

@@ -28,7 +28,6 @@ OCCreateResourceWithEp
 OCDeleteResource
 OCDiagnosticPayloadCreate
 OCDiagnosticPayloadDestroy
-OCDiscoverDirectPairingDevices
 OCDiscoveryEndpointDestroy
 OCDiscoveryPayloadAddResource
 OCDiscoveryPayloadAddNewResource
@@ -37,7 +36,6 @@ OCDiscoveryPayloadDestroy
 OCDiscoveryPayloadGetResource
 OCDiscoveryPayloadGetResourceCount
 OCDiscoveryResourceDestroy
-OCDoDirectPairing
 OCDoResource
 OCDoResponse
 OCDoRequest
@@ -47,7 +45,6 @@ OCEndpointPayloadGetEndpointCount
 OCFreeOCStringLL
 OCGetDeviceId
 OCGetDeviceOwnedState
-OCGetDirectPairedDevices
 OCGetHeaderOption
 OCGetIpv6AddrScope
 OCGetNumberOfResources

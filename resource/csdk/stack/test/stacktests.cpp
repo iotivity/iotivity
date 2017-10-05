@@ -99,13 +99,6 @@ extern "C"  OCStackApplicationResult asyncDoResourcesCallback(void* ctx,
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-static void resultCallback(void *UNUSED1, OCDPDev_t *UNUSED2, OCStackResult UNUSED3)
-{
-    (void) (UNUSED1);
-    (void) (UNUSED2);
-    (void) (UNUSED3);
-}
-
 extern "C" OCStackApplicationResult discoveryCallback(void* ctx,
         OCDoHandle /*handle*/, OCClientResponse * clientResponse)
 {
@@ -2349,21 +2342,6 @@ TEST(PODTests, OCCallbackData)
 }
 #endif
 
-TEST(OCDoDirectPairingTests, Nullpeer)
-{
-    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(NULL, NULL, pmSel, &pinNumber, &resultCallback));
-}
-
-TEST(OCDoDirectPairingTests, NullCallback)
-{
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK,OCDoDirectPairing(NULL, &peer, pmSel, &pinNumber, NULL));
-}
-
-TEST(OCDoDirectPairingTests, NullpinNumber)
-{
-    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(NULL, &peer, pmSel, NULL, &resultCallback));
-}
-
 TEST(StackResource, MultipleResourcesDiscovery)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
@@ -2992,8 +2970,8 @@ TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
     InitStack(OC_SERVER);
 
     size_t numResources = 0;
-    uint8_t parentBitmap = (OC_DISCOVERABLE | OC_OBSERVABLE) | OC_SECURE;
-    uint8_t inBitmap[2] = {( OC_DISCOVERABLE | OC_OBSERVABLE) | OC_SECURE,
+    uint8_t parentBitmap = OC_DISCOVERABLE | OC_OBSERVABLE;
+    uint8_t inBitmap[2] = { OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE,
                             OC_DISCOVERABLE | OC_SECURE };
     int64_t outBitmap[2] = { 0 };
 
@@ -3165,14 +3143,18 @@ TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
         }
 
 #ifdef __WITH_DTLS__
-        ASSERT_GE(coap_scheme_cnt[1], (size_t) 1);
+        EXPECT_EQ(coap_scheme_cnt[0], (size_t) 0);
+        EXPECT_GE(coap_scheme_cnt[1], (size_t) 1);
 #ifdef TCP_ADAPTER
-        ASSERT_GE(coap_scheme_cnt[3], (size_t) 1);
+        EXPECT_EQ(coap_scheme_cnt[2], (size_t) 0);
+        EXPECT_GE(coap_scheme_cnt[3], (size_t) 1);
 #endif
 #else
-        ASSERT_GE(coap_scheme_cnt[0], (size_t) 1);
+        EXPECT_GE(coap_scheme_cnt[0], (size_t) 1);
+        EXPECT_EQ(coap_scheme_cnt[1], (size_t) 0);
 #ifdef TCP_ADAPTER
-        ASSERT_GE(coap_scheme_cnt[2], (size_t) 1);
+        EXPECT_GE(coap_scheme_cnt[2], (size_t) 1);
+        EXPECT_EQ(coap_scheme_cnt[3], (size_t) 0);
 #endif
 #endif
 
