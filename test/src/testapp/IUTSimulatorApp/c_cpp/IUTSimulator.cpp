@@ -34,6 +34,9 @@
 #include <stdlib.h>
 
 #include <iomanip>
+#include <thread>
+#include <chrono>
+
 #include "SampleResource.h"
 #include "SampleCollection.h"
 #include "ResourceHelper.h"
@@ -66,6 +69,14 @@
 
 using namespace OC;
 using namespace std;
+
+
+// Local configuration for WES
+static const char WES_ENROLLER_SSID[] = "TEST_AP_NAME";/// Update this to correct value as per setup
+static const char WES_ENROLLER_PASSWORD[] = "TEST_AP_PASSWORD"; /// Update this to correct value as per setup
+static const WIFI_AUTHTYPE WES_ENROLLER_AUTH_TYPE = WPA2_PSK;
+static const WIFI_ENCTYPE WES_ENROLLER_ENC_TYPE = AES;
+///////////
 
 vector< SampleResource * > g_createdResourceList;
 vector< shared_ptr< OCResource > > g_foundResourceList;
@@ -607,6 +618,44 @@ void onConnectRequestReceived(ESConnectRequest *connectRequest)
     cout << "ConnectRequestCbInApp OUT" << endl;
 }
 
+void ESWorkerThreadRoutine(string ssid, string pwd)
+{
+    cout << "ESWorkerThreadRoutine IN" << endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    cout << "ESWorkerThreadRoutine Woke up from sleep" << endl;
+
+    cout << "ssid: " << ssid << endl;
+    cout << "password: " << pwd << endl;
+
+#ifdef __LINUX__
+
+    cout << "#1. Stopping Soft AP" << endl;
+
+    string outputString = g_resourceHelper->executeCommand("sudo service hostapd stop");
+    cout << "outputString 1:" << outputString << endl;
+    outputString = g_resourceHelper->executeCommand("sudo nmcli nm wifi on");
+    cout << "outputString 2:" << outputString << endl;
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    string nmcliCommand = "nmcli d wifi connect ";
+    nmcliCommand += ssid.c_str();
+    nmcliCommand += " password ";
+    nmcliCommand += pwd.c_str();
+
+    cout << "executing command:" << nmcliCommand << endl;
+
+    outputString = g_resourceHelper->executeCommand(nmcliCommand.c_str());
+    cout << "outputString 3:" << outputString << endl;
+    if (outputString == "")
+    {
+        ESSetErrorCode(ES_ERRCODE_NO_ERROR);
+    }
+#endif
+
+    cout << "ESWorkerThreadRoutine OUT" << endl;
+}
+
 void onWiFiConfProvReceived(ESWiFiConfData *eventData)
 {
     cout << "WiFiConfProvCbInApp IN" << endl;
@@ -624,17 +673,56 @@ void onWiFiConfProvReceived(ESWiFiConfData *eventData)
 
     cout << "Authentication Type : " << eventData->authtype << endl;
 
-#ifdef __LINUX__
-    string nmcliCommand = "nmcli d wifi connect ";
-    nmcliCommand += eventData->ssid;
-    nmcliCommand += " password ";
-    nmcliCommand += eventData->pwd;
-    string outputString = g_resourceHelper->executeCommand(nmcliCommand.c_str());
-    if (outputString == "")
+    if(0 != strcmp(eventData->ssid, WES_ENROLLER_SSID))
     {
-        ESSetErrorCode(ES_ERRCODE_NO_ERROR);
+        cout << "SSID Received is Invalid" << endl;
+        ESSetErrorCode((ESErrorCode)1);
+
+        cout << "WiFiConfProvCbInApp OUT 1" << endl;
+        return;
     }
-#endif
+
+    if(0 != strcmp(eventData->pwd, WES_ENROLLER_PASSWORD))
+    {
+        cout << "Password Received is Invalid" << endl;
+        ESSetErrorCode((ESErrorCode)2);
+
+        cout << "WiFiConfProvCbInApp OUT 2" << endl;
+        return;
+    }
+
+    if(WES_ENROLLER_AUTH_TYPE != eventData->authtype)
+    {
+        cout << "AUTH Type Received is Invalid" << endl;
+        ESSetErrorCode((ESErrorCode)8);
+
+        cout << "WiFiConfProvCbInApp OUT 3" << endl;
+        return;
+    }
+
+    if(WES_ENROLLER_ENC_TYPE != eventData->enctype)
+    {
+        cout << "ENC Type Received is Invalid" << endl;
+        ESSetErrorCode((ESErrorCode)9);
+
+        cout << "WiFiConfProvCbInApp OUT 4" << endl;
+        return;
+    }
+
+    cout << "" << endl;
+    cout << "===========================" << endl;
+    cout << "Connect To Network --> [" << eventData->ssid << "]" << endl;
+    cout << "ALSO SWITCH OFF SOFT AP Network" << endl;
+    cout << "===========================" << endl;
+    cout << "" << endl;
+
+    ESSetErrorCode(ES_ERRCODE_NO_ERROR);
+
+    string ssid(eventData->ssid);
+    string password(eventData->pwd);
+
+    std::thread esThread(ESWorkerThreadRoutine, ssid, password);
+    esThread.detach();
 
     cout << "WiFiConfProvCbInApp OUT" << endl;
 }
