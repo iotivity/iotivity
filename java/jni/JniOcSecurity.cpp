@@ -36,17 +36,23 @@ namespace OC {
         return s_dbPath;
     }
 
+    string& JniOcSecurity::store_introspection()
+    {
+        static string s_introspectionPath;
+        return s_introspectionPath;
+    }
     void JniOcSecurity::StoreDbPath(const string &path)
     {
         store_path() = path;
     }
 
+    void JniOcSecurity::StoreIntrospection(const string &path)
+    {
+        store_introspection() = path;
+    }
+
     OCPersistentStorage* JniOcSecurity::getOCPersistentStorage()
     {
-        if (store_path().empty())
-        {
-            return nullptr;
-        }
         static OCPersistentStorage s_ps { &JniOcSecurity::client_open, fread,
             fwrite, fclose, unlink };
         return &s_ps;
@@ -54,10 +60,15 @@ namespace OC {
 
     FILE* JniOcSecurity::client_open(const char *path, const char *mode)
     {
-        if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+        if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME) && !store_path().empty())
         {
             LOGI("Opening SVR Database file '%s' with mode '%s'\n", store_path().c_str(), mode);
             return fopen(store_path().c_str(), mode); 
+        }
+        else if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME) && !store_introspection().empty())
+        {
+            LOGI("Opening introspection file '%s' with mode '%s'\n", store_path().c_str(), mode);
+            return fopen(store_introspection().c_str(), mode);
         }
         else
         {

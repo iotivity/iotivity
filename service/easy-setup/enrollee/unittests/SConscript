@@ -23,22 +23,18 @@
 ##
 
 from tools.scons.RunTest import run_test
-
 Import('env')
 
-if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS=['-Os'])
-    env.AppendUnique(CPPDEFINES=['NDEBUG'])
-else:
-    env.AppendUnique(CCFLAGS=['-g'])
-
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES=['TB_LOG'])
-
-lib_env = SConscript('#extlibs/gtest/SConscript')
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+lib_env = gtest_env.Clone()
 rd_mode = env.get('RD_MODE')
 
 SConscript('#service/third_party_libs.scons', 'lib_env')
+
+if lib_env.get('RELEASE'):
+    lib_env.AppendUnique(CCFLAGS = ['-Os'])
+else:
+    lib_env.AppendUnique(CCFLAGS = ['-g'])
 
 ######################################################################
 #unit test setting
@@ -51,7 +47,6 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-easysetup_test_env.AppendUnique(LIBPATH=[lib_env.get('BUILD_DIR')])
 easysetup_test_env.PrependUnique(LIBS=[
     'connectivity_abstraction',
     'oc',
@@ -65,10 +60,12 @@ if target_os not in ['windows', 'winrt']:
         CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 easysetup_test_env.AddPthreadIfNeeded()
-
 easysetup_test_env.PrependUnique(CPPPATH=[
     '#/extlibs/hippomocks/hippomocks',
     '#/resource/include',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/csdk/connectivity/api',
     '#/resource/csdk/stack/include',
     '#/resource/csdk/include',
@@ -90,10 +87,11 @@ easysetup_enrollee_test_env.AppendUnique(
     LIBS=['ESEnrolleeSDK', 'ESMediatorRich'])
 
 easysetup_enrollee_test_src = env.Glob('./ESEnrolleeTest.cpp')
+
 easysetup_enrollee_test = easysetup_enrollee_test_env.Program(
     'easysetup_enrollee_test', easysetup_enrollee_test_src)
 Alias("easysetup_enrollee_test", easysetup_enrollee_test)
-env.AppendTarget('easysetup_enrollee_test')
+easysetup_enrollee_test_env.AppendTarget('easysetup_enrollee_test')
 
 if env.get('TEST') == '1':
     if target_os in ['linux'] and env.get('SECURED') != '1':

@@ -2126,7 +2126,11 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
         response->identity.id_length = errorInfo->info.identity.id_length;
         response->result = CAResultToOCResult(errorInfo->result);
 
-        cbNode->callBack(cbNode->context, cbNode->handle, response);
+        OCStackApplicationResult cbResult = cbNode->callBack(cbNode->context, cbNode->handle, response);
+        if (cbResult == OC_STACK_DELETE_TRANSACTION)
+        {
+            DeleteClientCB(cbNode);
+        }
         OICFree(response);
     }
 
@@ -6153,29 +6157,11 @@ void OCDefaultAdapterStateChangedHandler(CATransportAdapter_t adapter, bool enab
 
     OC_UNUSED(adapter);
     OC_UNUSED(enabled);
-
-#ifdef WITH_PRESENCE
-    if (presenceResource.handle)
-    {
-        OCResource *resourceHandle = (OCResource *)presenceResource.handle;
-        resourceHandle->sequenceNum = OCGetRandom();
-        SendPresenceNotification(resourceHandle->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
-    }
-#endif
 }
 
 void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isConnected)
 {
     OIC_LOG(DEBUG, TAG, "OCDefaultConnectionStateChangedHandler");
-
-#ifdef WITH_PRESENCE
-    if (presenceResource.handle)
-    {
-        OCResource *resourceHandle = (OCResource *)presenceResource.handle;
-        resourceHandle->sequenceNum = OCGetRandom();
-        SendPresenceNotification(resourceHandle->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
-    }
-#endif
 
     /*
      * If the client observes one or more resources over a reliable connection,
