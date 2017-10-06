@@ -1258,7 +1258,7 @@ OicSecCred_t *JSONToCredBin(const char *jsonStr)
 
                 ret = (jsonObjLen % 2 == 0) ? ret : OC_STACK_ERROR;
 
-                char tmp[2];
+                char tmp[3];
                 char *buf = (char *)OICCalloc(1, jsonObjLen/2);
                 for(size_t i = 0, p = 0 ; i < jsonObjLen; i+=2, ++p)
                 {
@@ -1285,7 +1285,7 @@ OicSecCred_t *JSONToCredBin(const char *jsonStr)
 
                 ret = (jsonObjLen % 2 == 0) ? ret : OC_STACK_ERROR;
 
-                char tmp[2];
+                char tmp[3];
                 char *buf = (char *)OICCalloc(1, jsonObjLen/2);
                 for(size_t i = 0, p = 0 ; i < jsonObjLen; i+=2, ++p)
                 {
@@ -1312,7 +1312,7 @@ OicSecCred_t *JSONToCredBin(const char *jsonStr)
                 jsonObjLen = strlen(jsonOpt->valuestring);
 
                 ret = (jsonObjLen % 2 == 0) ? ret : OC_STACK_ERROR;
-                char tmp[2];
+                char tmp[3];
                 char *buf = (char *)OICCalloc(1, jsonObjLen/2);
                 for(size_t i = 0, p = 0; i < jsonObjLen; i+=2, ++p)
                 {
