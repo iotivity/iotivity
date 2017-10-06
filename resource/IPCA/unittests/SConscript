@@ -59,8 +59,14 @@ ipcatest_env.AppendUnique(CPPPATH=[
     '../src/inc',
 ])
 
+if target_os in ['windows', 'ios']:
+    oclib = 'oc'
+else:
+    oclib = 'oc_internal',
+
 ipcatest_env.PrependUnique(LIBS=[
         'oc_logger_internal',
+        oclib,
         'octbstack',
         'ipca_static',
         'logger',
@@ -110,7 +116,6 @@ if use_iotivity == 0:
         'mockInProcServerWrapper.cpp',
         'mockOCPlatform_impl.cpp',
         'mockOCProvision.cpp',
-        '#/resource/src/OCRepresentation.cpp'
     ]
 
 if target_os not in ['windows', 'msys_nt']:
