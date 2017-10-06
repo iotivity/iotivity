@@ -26,6 +26,7 @@ lws_env = env.Clone()
 src_dir = lws_env.get('SRC_DIR')
 lws_dir = os.path.join(src_dir, 'extlibs', 'libwebsockets', 'libwebsockets')
 target_os = env.get('TARGET_OS')
+target_arch = env.get('TARGET_ARCH')
 
 # OpenSSL library
 if ((env.get('SECURED') == '1') and (target_os == 'android')):
@@ -71,10 +72,22 @@ if target_os == 'android':
 ''' % android_ndk_path
 		Exit(1)
 
+	# Export TARGET_ARM_ARCH
+	os.environ['TARGET_ARM_ARCH'] = target_arch
+
+	if target_arch == 'x86':
+		toolchain = 'x86-'
+	elif target_arch == 'x86_64':
+		toolchain = 'x86_64-'
+	elif target_arch == 'arm64-v8a':
+		toolchain = 'aarch64-linux-android-'
+	else:
+		toolchain = 'arm-linux-androideabi-'
+
 	# Android ndk early version doesn't support C++11. Detect the toolchain version
 	# to make sure proper toolchain is used
 	for tc_ver in ['4.7', '4.8', '4.9', '']:
-		if os.path.exists(os.path.join(android_ndk_path, 'toolchains', 'arm-linux-androideabi-' + tc_ver)):
+		if os.path.exists(os.path.join(android_ndk_path, 'toolchains', toolchain + tc_ver)):
 			break
 
 	if tc_ver == '':
@@ -90,7 +103,7 @@ if target_os == 'android':
 	os.environ['ANDROID_NDK_TOOLCHAIN_VERSION'] = tc_ver
 
 	android_ndk_path = os.path.realpath(android_ndk_path)
-	android_ndk_toolchain_path = os.path.join(android_ndk_path, 'toolchains', 'arm-linux-androideabi-' + tc_ver, 'prebuilt')
+	android_ndk_toolchain_path = os.path.join(android_ndk_path, 'toolchains', toolchain + tc_ver, 'prebuilt')
 	for os_ver in ['linux-x86', 'linux-x86_64', '']:
 		if os.path.exists(os.path.join(android_ndk_toolchain_path, os_ver)):
 			break

@@ -38,7 +38,7 @@ fi
 
 android_toolchain=''
 if [ $3 = 1 ]; then
-	android_toolchain='-DCMAKE_TOOLCHAIN_FILE=../cross-arm-android.cmake'
+	android_toolchain='-DCMAKE_TOOLCHAIN_FILE=../android-toolchain.cmake'
 fi
 
 cmake .. -DCMAKE_BUILD_TYPE=$build_type -DCMAKE_INSTALL_PREFIX:PATH=. $android_toolchain -DLWS_WITH_SSL=$ssl -DLWS_WITHOUT_TESTAPPS=1
