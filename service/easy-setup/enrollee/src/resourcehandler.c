@@ -25,6 +25,7 @@
 #include "oic_string.h"
 #include "oic_malloc.h"
 #include "cautilinterface.h"
+#include "payload_logging.h"
 
 /**
  * @var ES_RH_TAG
@@ -342,10 +343,6 @@ void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* in
 {
     OIC_LOG_V(DEBUG, ES_RH_TAG, "g_ESEasySetupResource.status %d", g_ESEasySetupResource.status);
 
-    // Below call is to allow cn update without 'rep' property.
-    // Can remove if no longer needed to support this way.
-    updateEasySetupConnectProperty(input);
-
     if (ehRequest->query)
     {
         if (CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
@@ -356,22 +353,31 @@ void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* in
 
             while(children)
             {
-                char* href = NULL;
-                OCRepPayloadGetPropString(children, OC_RSRVD_HREF, &href);
-                OIC_LOG_V(DEBUG, ES_RH_TAG, "href [%s]", href);
-                ///TODO: Check why href value is null even though available in payload
+                char* uri = children->uri;
+                if(NULL == uri)
+                {
+                    OIC_LOG(DEBUG, ES_RH_TAG,
+                        "No URI found in request, applying same request to all links in collection");
+
+                    ///TODO: Need to check if "input" should be passed, or the value of property OC_RSRVD_REPRESENTATION.
+                    updateEasySetupConnectProperty(input);
+                    updateWiFiConfResource(input);
+                    updateCoapCloudConfResource(input);
+                    updateDevConfResource(input);
+
+                    // As the request is applied to children already, no need to check next child.
+                    break;
+                }
+
+                OIC_LOG_V(DEBUG, ES_RH_TAG, "uri [%s]", uri);
 
                 OCRepPayload *repPayload = NULL;
                 OCRepPayloadGetPropObject(children, OC_RSRVD_REPRESENTATION, &repPayload);
 
-                char* uri = children->uri;
-                OIC_LOG_V(DEBUG, ES_RH_TAG, "uri [%s]", uri);
-
-                if(NULL == uri || NULL == repPayload)
+                if(NULL == repPayload)
                 {
+                    OIC_LOG(ERROR, ES_RH_TAG, "repPayload is null!");
                     children = children->next;
-                    OCRepPayloadDestroy(repPayload);
-                    OICFree(href);
                     continue;
                 }
 
@@ -394,10 +400,16 @@ void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* in
 
                 children = children->next;
                 OCRepPayloadDestroy(repPayload);
-                OICFree(href);
              }
         }
+        else if (CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT))
+        {
+            OIC_LOG(DEBUG, ES_RH_TAG, "Handling POST request on default interface");
+            updateEasySetupConnectProperty(input);
+        }
     }
+
+    OIC_LOG(DEBUG, ES_RH_TAG, "updateEasySetupResource exit");
 }
 
 void updateEasySetupConnectProperty(OCRepPayload* input)
@@ -1538,6 +1550,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
 OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload)
 {
     OIC_LOG(DEBUG, ES_RH_TAG, "ProcessPostRequest enter");
+
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
@@ -1551,6 +1564,8 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         OIC_LOG(ERROR, ES_RH_TAG, "Failed to parse");
         return ehResult;
     }
+
+    OIC_LOG_PAYLOAD(DEBUG, (OCPayload *)input);
 
     if (ehRequest->resource == g_ESEasySetupResource.handle)
     {
