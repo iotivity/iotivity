@@ -3082,11 +3082,11 @@ TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
 #endif
 #endif
         }
+        OCRepPayloadDestroy(policyMap);
         OCRepPayloadDestroy(linksMap[i]);
     }
 
     OICFree(linksMap);
-    OCRepPayloadDestroy(policyMap);
     OCRepPayloadDestroy(collectionPayload);
 
     //check for OCF1.0 logic
@@ -3138,6 +3138,7 @@ TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
                 OIC_LOG_V(ERROR, TAG, "ep uri = %s \n", outUri);
             }
 
+            OICFree(outUri);
             OCRepPayloadDestroy(epsMap[k]);
         }
 
@@ -3158,11 +3159,13 @@ TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
 #endif
 
         OCRepPayloadDestroy(linksMap[i]);
+        OCRepPayloadDestroy(policyMap);
         OICFree(epsMap);
     }
 
     OICFree(linksMap);
-    OCRepPayloadDestroy(policyMap);
+    OICFree(info);
+    OICFree(devAddr);
     OCRepPayloadDestroy(collectionPayload);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
