@@ -424,7 +424,7 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
    *           2. No crash occurs
    */
   public void testIsObseravable_USTC_N() {
-    boolean isObservable;
+    boolean isObservable = false;
     try {
       isObservable = m_Resource.isMonitoring();
       if (isObservable) {
@@ -437,13 +437,17 @@ public class REResourceBrokerTest extends InstrumentationTestCase {
 
     m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
     try {
-      isObservable= m_Resource.isObservable();
-     if (!isObservable) {
-      fail("isObservable() is false after startMonitoring.");
-    }
-     m_Resource.stopMonitoring();
+      isObservable = m_Resource.isObservable();
     } catch (RcsException e) {
       fail("Should not throw exception when calling isObservable API.");
+    }
+    if (!isObservable) {
+      fail("isObservable() is false after startMonitoring.");
+    }
+    try {
+        m_Resource.stopMonitoring();
+    } catch (RcsException e) {
+          fail("Should not throw exception when calling stopMonitoring API.");
     }
   }
 }

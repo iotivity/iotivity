@@ -26,18 +26,14 @@ class RERepresentationAPITest_stc: public ::testing::Test
 {
     virtual void SetUp()
     {
-#ifdef __LINUX__
         CommonUtil::launchApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
     }
 
     virtual void TearDown()
     {
-#ifdef __LINUX__
         CommonUtil::killApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
     }
 };
 

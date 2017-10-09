@@ -34,10 +34,8 @@ protected:
     {
         CommonTestUtil::runCommonTCSetUpPart();
 
-#ifdef __LINUX__
         CommonUtil::launchApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
 
         m_pREHelper = REHelper::getInstance();
 
@@ -55,11 +53,8 @@ protected:
 
     virtual void TearDown()
     {
-
-#ifdef __LINUX__
         CommonUtil::killApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
         CommonTestUtil::runCommonTCTearDownPart();
     }
 

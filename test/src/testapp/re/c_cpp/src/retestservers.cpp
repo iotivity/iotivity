@@ -43,7 +43,6 @@ int main()
     resourceObjectFan = pBuilderFan->build();
     resourceObjectFan->setAttribute(DEFAULT_POWER_KEY, DEFAULT_POWER_VALUE);
     resourceObjectFan->setAttribute(DEFAULT_INTENSITY_KEY, DEFAULT_INTENSITY_VALUE);
-    resourceObjectLight->setAttribute(DEFAULT_TEMPETATURE_KEY, DEFAULT_TEMPETATURE_VALUE);
 
     if (resourceObjectFan == NULL || resourceObjectLight == NULL)
     {

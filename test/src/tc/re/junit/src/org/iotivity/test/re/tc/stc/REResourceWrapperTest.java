@@ -429,7 +429,7 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
     try {
       RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
           .getInstance().discoverResourceByType(RcsAddress.multicast()
-              , RESOURCE_TYPE_TEMPERATURE, mOnResourceDiscoveredListener);
+              , LIGHT_TYPE, mOnResourceDiscoveredListener);
 
       m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
 
@@ -460,13 +460,13 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
     try {
       RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
           .getInstance().discoverResourceByType(RcsAddress.multicast()
-              , RESOURCE_TYPE_TEMPERATURE, mOnResourceDiscoveredListener);
+              , LIGHT_TYPE, mOnResourceDiscoveredListener);
       m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
       discoveryTask.cancel();
 
       RcsDiscoveryManager.DiscoveryTask discoveryTask2 = RcsDiscoveryManager
           .getInstance().discoverResourceByType(RcsAddress.multicast()
-              , RESOURCE_TYPE_TEMPERATURE, mOnResourceDiscoveredListener);
+              , LIGHT_TYPE, mOnResourceDiscoveredListener);
       m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
       discoveryTask2.cancel();
 
@@ -488,7 +488,7 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
    *         listener)
    * @test_data 1. Resource Address 2. Resource Type 3. Callback
    * @pre_condition None
-   * @procedure Perform discoverResourceByType() API twice
+   * @procedure Perform discoverResourceByType() API repeatedly
    * @post_condition None
    * @expected returned discovery manager should not be null
    **/
@@ -523,13 +523,13 @@ public class REResourceWrapperTest extends InstrumentationTestCase {
     try {
       RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
           .getInstance().discoverResourceByType(RcsAddress.multicast(),
-              OC_RSRVD_WELL_KNOWN_URI, RESOURCE_TYPE_TEMPERATURE, mOnResourceDiscoveredListener);
+              OC_RSRVD_WELL_KNOWN_URI, LIGHT_TYPE, mOnResourceDiscoveredListener);
       m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
       discoveryTask.cancel();
 
       RcsDiscoveryManager.DiscoveryTask discoveryTask2 = RcsDiscoveryManager
           .getInstance().discoverResourceByType(RcsAddress.multicast(),
-              OC_RSRVD_WELL_KNOWN_URI, RESOURCE_TYPE_TEMPERATURE, mOnResourceDiscoveredListener);
+              OC_RSRVD_WELL_KNOWN_URI, LIGHT_TYPE, mOnResourceDiscoveredListener);
       m_REHelper.waitInSecond(CALLBACK_WAIT_MAX);
       discoveryTask2.cancel();
 

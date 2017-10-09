@@ -37,15 +37,11 @@ protected:
     virtual void SetUp()
     {
         CommonTestUtil::runCommonTCSetUpPart();
-
-#ifdef __LINUX__
         CommonUtil::launchApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
+
         m_pREHelper = REHelper::getInstance();
-
         callbackcheck = false;
-
         discoveryTask = nullptr;
         m_foundResourceList.clear();
         m_errorMsg = "";
@@ -55,10 +51,8 @@ protected:
     {
 
         m_foundResourceList.clear();
-#ifdef __LINUX__
         CommonUtil::killApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
         CommonTestUtil::runCommonTCTearDownPart();
     }
 

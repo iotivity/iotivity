@@ -34,13 +34,12 @@ protected:
     {
         CommonTestUtil::runCommonTCSetUpPart();
 
-#ifdef __LINUX__
         CommonUtil::launchApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
-        m_pREHelper = REHelper::getInstance();
 
+        m_pREHelper = REHelper::getInstance();
         bool isResourceAvailable = m_pREHelper->findPrimitiveResources(RESOURCE_TYPE_LIGHT);
+
         if (isResourceAvailable)
         {
             m_resource = m_pREHelper->getFoundResourceList().at(0);
@@ -54,10 +53,8 @@ protected:
 
     virtual void TearDown()
     {
-#ifdef __LINUX__
         CommonUtil::killApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
         CommonTestUtil::runCommonTCTearDownPart();
     }
 

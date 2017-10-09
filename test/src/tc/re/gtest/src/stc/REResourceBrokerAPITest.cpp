@@ -34,13 +34,10 @@ protected:
     virtual void SetUp()
     {
         CommonTestUtil::runCommonTCSetUpPart();
-
-#ifdef __LINUX__
         CommonUtil::launchApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
-        m_pREHelper = REHelper::getInstance();
 
+        m_pREHelper = REHelper::getInstance();
         bool isResourceAvailable = m_pREHelper->findPrimitiveResources(RESOURCE_TYPE_LIGHT);
         if (isResourceAvailable)
         {
@@ -56,11 +53,8 @@ protected:
 
     virtual void TearDown()
     {
-
-#ifdef __LINUX__
         CommonUtil::killApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
         CommonTestUtil::runCommonTCTearDownPart();
     }
 
@@ -408,7 +402,7 @@ TEST_F(REResourceBrokerAPITest_stc, IsMonitoring_SCV_P)
  * @pre_condition Remote Resource Object should be instantialized
  * @procedure 1. Check the value of isMonitoring()
  *            2. Perform startMonitoring() API
- *               3. Check the value of isMonitoring()
+ *            3. Check the value of isMonitoring()
  *            4. Perform stopMonitoring() API
  * @post_condition None
  * @expected No crash should occur

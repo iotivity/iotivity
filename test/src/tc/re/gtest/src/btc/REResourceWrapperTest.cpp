@@ -34,11 +34,9 @@ protected:
 
     virtual void SetUp() {
         CommonTestUtil::runCommonTCSetUpPart();
-
-#ifdef __LINUX__   		
         CommonUtil::launchApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
+
         m_pREHelper = REHelper::getInstance();
         bool isResourceAvailable = m_pREHelper->findPrimitiveResources(
                 RESOURCE_TYPE_LIGHT);
@@ -52,10 +50,8 @@ protected:
     }
 
     virtual void TearDown() {
-#ifdef __LINUX__  		
         CommonUtil::killApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif		
         CommonTestUtil::runCommonTCTearDownPart();
     }
 

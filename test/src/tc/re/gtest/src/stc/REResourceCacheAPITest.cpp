@@ -44,10 +44,9 @@ protected:
     virtual void SetUp()
     {
         CommonTestUtil::runCommonTCSetUpPart();
-#ifdef __LINUX__
         CommonUtil::launchApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
+
         m_isResourceStateChanged = false;
         m_isResourceStateUpdated = false;
         m_isResourceStateReceived = false;
@@ -72,10 +71,8 @@ protected:
 
     virtual void TearDown()
     {
-#ifdef __LINUX__
         CommonUtil::killApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-#endif
         CommonTestUtil::runCommonTCTearDownPart();
     }
 
