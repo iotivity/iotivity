@@ -42,6 +42,8 @@ public class PlatformConfig {
     private int mTransportType;
 
     /**
+     * @param activity           app activity
+     * @param context            app context
      * @param serviceType        indicate IN_PROC or OUT_OF_PROC
      * @param modeType           indicate whether we want to do server, client or both
      * @param ipAddress          ip address of server
@@ -54,7 +56,8 @@ public class PlatformConfig {
      * @param dbPath             Persistant storage file for SVR Database.
      * @param introspectionPath  Persistant storage file for introspection data.
      */
-    public PlatformConfig(
+    public PlatformConfig(Activity activity,
+                          Context context,
                           ServiceType serviceType,
                           ModeType modeType,
                           String ipAddress,
@@ -62,6 +65,8 @@ public class PlatformConfig {
                           QualityOfService qualityOfService,
                           String dbPath,
                           String introspectionPath) {
+        this.mActivity=activity;
+        this.mContext = context;
         this.mServiceType = serviceType;
         this.mModeType = modeType;
         this.mIpAddress = ipAddress;
