@@ -374,14 +374,23 @@ static void CATerminateMutexVariables()
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
 
-    oc_mutex_free(g_continueLWSServiceMutex);
-    g_continueLWSServiceMutex = NULL;
+    if (g_continueLWSServiceMutex)
+    {
+        oc_mutex_free(g_continueLWSServiceMutex);
+        g_continueLWSServiceMutex = NULL;
+    }
 
-    oc_cond_free(g_LWSServiceStoppedCond);
-    g_LWSServiceStoppedCond = NULL;
+    if (g_LWSServiceStoppedCond)
+    {
+        oc_cond_free(g_LWSServiceStoppedCond);
+        g_LWSServiceStoppedCond = NULL;
+    }
 
-    oc_mutex_free(g_connInfoListMutex);
-    g_connInfoListMutex = NULL;
+    if (g_connInfoListMutex)
+    {
+        oc_mutex_free(g_connInfoListMutex);
+        g_connInfoListMutex = NULL;
+    }
 }
 
 static CAResult_t CALWSInitClient()
@@ -521,6 +530,7 @@ CAResult_t CAWSStart(const ca_thread_pool_t threadPool)
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "Failed to initialize mutex variables");
+        CATerminateMutexVariables();
         return ret;
     }
 
@@ -529,6 +539,7 @@ CAResult_t CAWSStart(const ca_thread_pool_t threadPool)
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "Failed to initialize security!");
+        CATerminateMutexVariables();
         return ret;
     }
 #endif
@@ -540,6 +551,7 @@ CAResult_t CAWSStart(const ca_thread_pool_t threadPool)
         if (CA_STATUS_OK != ret)
         {
             OIC_LOG(ERROR, TAG, "Failed to initialize client");
+            CATerminateMutexVariables();
             return ret;
         }
     }
@@ -550,6 +562,7 @@ CAResult_t CAWSStart(const ca_thread_pool_t threadPool)
         if (CA_STATUS_OK != ret)
         {
             OIC_LOG(ERROR, TAG, "Failed to initialize server");
+            CATerminateMutexVariables();
             return ret;
         }
     }
@@ -560,6 +573,9 @@ CAResult_t CAWSStart(const ca_thread_pool_t threadPool)
     {
         OIC_LOG(ERROR, TAG, "Could not add CALWSService task to theadPool");
         g_continueLWSService = false;
+        CATerminateMutexVariables();
+        lws_context_destroy(g_context);
+        g_context = NULL;
         return ret;
     }
 

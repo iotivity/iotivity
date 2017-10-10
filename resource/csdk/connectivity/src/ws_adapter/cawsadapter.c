@@ -220,6 +220,9 @@ static CAResult_t CAWSInitializeQueueHandles()
     if (!g_receiveQueueHandle)
     {
         OIC_LOG(ERROR, TAG, "Memory allocation failed! (g_receiveQueueHandle)");
+        CAQueueingThreadDestroy(g_sendQueueHandle);
+        OICFree(g_sendQueueHandle);
+        g_sendQueueHandle = NULL;
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -228,7 +231,10 @@ static CAResult_t CAWSInitializeQueueHandles()
             CAWSReceiveDataThread, CAWSDataDestroyer))
     {
         OIC_LOG(ERROR, TAG, "Failed to Initialize receive queue thread");
+        CAQueueingThreadDestroy(g_sendQueueHandle);
+        OICFree(g_sendQueueHandle);
         OICFree(g_receiveQueueHandle);
+        g_sendQueueHandle = NULL;
         g_receiveQueueHandle = NULL;
         return CA_STATUS_FAILED;
     }
@@ -238,13 +244,19 @@ static CAResult_t CAWSInitializeQueueHandles()
 
 static void CAWSDeinitializeQueueHandles()
 {
-    CAQueueingThreadDestroy(g_sendQueueHandle);
-    OICFree(g_sendQueueHandle);
-    g_sendQueueHandle = NULL;
+    if (g_sendQueueHandle)
+    {
+        CAQueueingThreadDestroy(g_sendQueueHandle);
+        OICFree(g_sendQueueHandle);
+        g_sendQueueHandle = NULL;
+    }
 
-    CAQueueingThreadDestroy(g_receiveQueueHandle);
-    OICFree(g_receiveQueueHandle);
-    g_receiveQueueHandle = NULL;
+    if (g_receiveQueueHandle)
+    {
+        CAQueueingThreadDestroy(g_receiveQueueHandle);
+        OICFree(g_receiveQueueHandle);
+        g_receiveQueueHandle = NULL;
+    }
 }
 
 static void CAInitializeWSGlobals()
@@ -322,19 +334,21 @@ CAResult_t CAStartWS()
     if (CA_STATUS_OK != CAWSInitializeQueueHandles())
     {
         OIC_LOG(ERROR, TAG, "Failed to Initialize Queue Handle");
-        CATerminateWS();
         return CA_STATUS_FAILED;
     }
 
     if (CA_STATUS_OK != CAQueueingThreadStart(g_sendQueueHandle))
     {
         OIC_LOG(ERROR, TAG, "Failed to Start Send Data Thread");
+        CAWSDeinitializeQueueHandles();
         return CA_STATUS_FAILED;
     }
 
     if (CA_STATUS_OK != CAQueueingThreadStart(g_receiveQueueHandle))
     {
         OIC_LOG(ERROR, TAG, "Failed to Start Receive Data Thread");
+        CAQueueingThreadStop(g_sendQueueHandle);
+        CAWSDeinitializeQueueHandles();
         return CA_STATUS_FAILED;
     }
 
@@ -342,6 +356,9 @@ CAResult_t CAStartWS()
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "Failed to start ws");
+        CAQueueingThreadStop(g_sendQueueHandle);
+        CAQueueingThreadStop(g_receiveQueueHandle);
+        CAWSDeinitializeQueueHandles();
         return ret;
     }
 
@@ -414,6 +431,7 @@ CAResult_t CAStopWS()
     {
         CAQueueingThreadStop(g_receiveQueueHandle);
     }
+    CAWSDeinitializeQueueHandles();
 
     CAWSStop();
 
@@ -423,7 +441,6 @@ CAResult_t CAStopWS()
 void CATerminateWS()
 {
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
-    CAWSDeinitializeQueueHandles();
 }
 
 CANetworkPacketReceivedCallback CAGetWSNetworkPacketReceivedCallback()
