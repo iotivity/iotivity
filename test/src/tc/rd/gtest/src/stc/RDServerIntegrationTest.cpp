@@ -107,7 +107,9 @@ TEST_F(RDServerIntegrationTest_stc, StartStopRDServer_VLCC_P)
  * @post_condition  OCRDStop
  * @expected        OCRDCheckPublishedResource will succeed and return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__WINDOWS__)
+
+
+#if defined(__WINDOWS__)
 TEST_F(RDServerIntegrationTest_stc, RDCheckPublishedResource_SQV_P)
 {
     try
@@ -140,6 +142,7 @@ TEST_F(RDServerIntegrationTest_stc, RDCheckPublishedResource_SQV_P)
 }
 #endif
 
+
 /**
  * @since             2015-08-26
  * @see                OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
@@ -158,7 +161,9 @@ TEST_F(RDServerIntegrationTest_stc, RDCheckPublishedResource_SQV_P)
  * @expected         OCRDCheckPublishedResource will not succeed and will return OC_STACK_ERROR
  *                     as we didn't published resource from client side
  */
-#if defined(__LINUX__) || defined(__WINDOWS__)
+
+
+#if defined(__WINDOWS__)
 TEST_F(RDServerIntegrationTest_stc, RDCheckPublishedResourceWithoutPublish_DSCC_N)
 {
     try
@@ -183,6 +188,7 @@ TEST_F(RDServerIntegrationTest_stc, RDCheckPublishedResourceWithoutPublish_DSCC_
 }
 #endif
 
+
 /**
  * @since             2015-08-26
  * @see                OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
@@ -204,7 +210,8 @@ TEST_F(RDServerIntegrationTest_stc, RDCheckPublishedResourceWithoutPublish_DSCC_
  * @post_condition     OCRDStop
  * @expected         OCRDCheckPublishedResource will succeed and return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__WINDOWS__)
+
+#if defined(__WINDOWS__)
 TEST_F(RDServerIntegrationTest_stc, RDCheckPublishedResourceDifferentResourceMultiple_SQV_P)
 {
     try
@@ -291,7 +298,9 @@ TEST_F(RDServerIntegrationTest_stc, StartRDServer_DSCC_N)
  * @post_condition     OCRDStop
  * @expected         OCRDCheckPublishedResource will not succeed and will return OC_STACK_ERROR for invalid resource
  */
-#if defined(__LINUX__) || defined(__WINDOWS__)
+
+
+#if defined(__WINDOWS__)
 TEST_F(RDServerIntegrationTest_stc, RDCheckPublishedWithInvalidResource_DICC_N)
 {
     try

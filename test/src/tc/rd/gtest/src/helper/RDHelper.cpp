@@ -263,6 +263,7 @@ OCStackResult RDHelper::rdPublish(char *addr,uint16_t port,int num)
     }
 }
 
+#if defined(__WINDOWS__)
 OCStackResult RDHelper::rdCheckPublishedResource(const char *interfaceType, const char *resourceType)
 {
     try
@@ -278,6 +279,7 @@ OCStackResult RDHelper::rdCheckPublishedResource(const char *interfaceType, cons
         return OC_STACK_ERROR;
     }
 }
+#endif
 
 void RDHelper::startClient()
 {

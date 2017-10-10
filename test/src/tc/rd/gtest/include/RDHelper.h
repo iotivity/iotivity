@@ -153,7 +153,7 @@ public:
     * @param addr 			A device address
     * @return 				::OC_STACK_OK upon success, ::OC_STACK_ERROR is returned except the case that OC_STACK_SUCCESS is returned
     */
-    OCStackResult rdCheckPublishedResource(const char *interfaceType, const char *resourceType);
+   // OCStackResult rdCheckPublishedResource(const char *interfaceType, const char *resourceType);
 
     /**
     * @brief   				Publish resource on the RD
@@ -161,9 +161,9 @@ public:
     */
     OCStackResult rdPublish();
 
-	/**
-	* @brief 				foundResource callback function invoked when bias factor is returned by the Resource Directory Server
-	*/
+    /**
+    * @brief 				foundResource callback function invoked when bias factor is returned by the Resource Directory Server
+    */
     static void rdFoundResourceCB(std::shared_ptr< OC::OCResource > resource);
 
     /**

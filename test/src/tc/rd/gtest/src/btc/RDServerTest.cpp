@@ -122,7 +122,7 @@ TEST_F(RDServerTest_btc, StopRDServer_ETC_P)
  * @expected         OCRDStop will be executed and will return OC_STACK_ERROR
  */
 
-#if defined(__LINUX__) || defined(__WINDOWS__)
+#if defined(__WINDOWS__)
 TEST_F(RDServerTest_btc, RDCheckPublishedResource_ETC_P)
 {
     try
@@ -155,7 +155,8 @@ TEST_F(RDServerTest_btc, RDCheckPublishedResource_ETC_P)
  * @post_condition    none
  * @expected          OCRDCheckPublishedResource will not succeed and will not return return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__WINDOWS__)
+
+#if defined(__WINDOWS__)
 TEST_F(RDServerTest_btc, RDCheckPublishedResource_USV_N)
 {
     try
@@ -188,7 +189,8 @@ TEST_F(RDServerTest_btc, RDCheckPublishedResource_USV_N)
  * @post_condition     none
  * @expected         OCRDCheckPublishedResource will not succeed and will not return return OC_STACK_OK
  */
-#if defined(__LINUX__) || defined(__WINDOWS__)
+
+#if defined(__WINDOWS__)
 TEST_F(RDServerTest_btc, RDCheckPublishedResource_NV_N)
 {
     try
