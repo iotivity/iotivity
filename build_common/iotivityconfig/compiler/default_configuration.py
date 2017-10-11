@@ -14,7 +14,7 @@
 # limitations under the License.
 # ------------------------------------------------------------------------
 
-from configuration import Configuration
+from .configuration import Configuration
 
 # Default (very simple) compiler configuration
 class DefaultConfiguration(Configuration):

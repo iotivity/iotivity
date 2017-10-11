@@ -4,6 +4,7 @@
 #    release/debug, target os, target arch, cross toolchain, build environment etc
 ##
 import os
+import sys
 import platform
 import re
 
@@ -507,6 +508,7 @@ def __add_pthread_if_needed(ienv):
     if 'gcc' == ienv.get('CC') and target_os not in ['android']:
         ienv.AppendUnique(LINKFLAGS="-pthread")
 
+
 def __print_targets(env):
     Help('''
 ===============================================================================
@@ -547,7 +549,10 @@ user_prefix = env.get('PREFIX')
 user_lib = env.get('LIB_INSTALL_DIR')
 
 if not user_prefix:
-    user_prefix = env.get('BUILD_DIR').encode('string_escape')
+    try:
+        user_prefix = env.get('BUILD_DIR').encode('string_escape')
+    except LookupError:
+        user_prefix = env.get('BUILD_DIR').encode('unicode_escape')
 
 if not user_lib:
     user_lib = '$${prefix}/lib'
@@ -892,7 +897,7 @@ help_vars.AddVariables(
                  validator=PathVariable.PathAccept),
 )
 help_vars.Update(env)
-Help(help_vars.GenerateHelpText(env, sort=cmp))
+Help(help_vars.GenerateHelpText(env, sort=True))
 # Replicate change that occured after help_var initialisation from env
 if target_os == "yocto":
     env['TARGET_OS'] = 'linux'

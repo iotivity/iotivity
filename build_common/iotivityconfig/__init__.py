@@ -17,7 +17,7 @@
 # This file contains compiler tests for use in scons 'Configure'
 # tests.
 
-from compiler import factory
+from .compiler import factory
 
 def _check_for_broken_gcc_headers(context, flag):
     # Check for issue in some older (pre-C++11) C library headers that

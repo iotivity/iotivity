@@ -26,7 +26,6 @@ Import('test_env')
 
 # SConscript file for Local PKI google tests
 srmtest_env = test_env.Clone()
-src_dir = srmtest_env.get('SRC_DIR')
 target_os = srmtest_env.get('TARGET_OS')
 rd_mode = srmtest_env.get('RD_MODE')
 
@@ -102,13 +101,17 @@ unittest = srmtest_env.Program('unittest', [
     'crlresourcetest.cpp'
 ])
 
-unittest_src_dir = os.path.join(src_dir, 'resource', 'csdk', 'security', 'unittest') + os.sep
-unittest_build_dir = os.path.join(srmtest_env.get('BUILD_DIR'), 'resource', 'csdk', 'security', 'unittest')
-unittest_build_dir = os.path.normpath(unittest_build_dir) + os.sep
-
+# this path will be passed as a command-line parameter,
+# so needs encoding to avoid problems with escapes on Windows
+unittest_build_dir = Dir('.').abspath + os.sep
+try:                   # if success, this will be Python 2.x
+    unittest_build_dir = unittest_build_dir.encode('string_escape')
+    unittest_build_dir = unittest_build_dir.replace("\\", "\\\\")
+except LookupError:    # this will be Python 3.x - unicode strings
+    unittest_build_dir = unittest_build_dir.encode('unicode_escape')
+    unittest_build_dir = str(unittest_build_dir).replace("\\", "\\\\")
 srmtest_env.AppendUnique(CPPDEFINES=[
-    'SECURITY_BUILD_UNITTEST_DIR=' +
-    unittest_build_dir.encode('string_escape').replace("\\", "\\\\")
+    'SECURITY_BUILD_UNITTEST_DIR=' + unittest_build_dir
 ])
 
 unittest += srmtest_env.ScanJSON('resource/csdk/security/unittest')

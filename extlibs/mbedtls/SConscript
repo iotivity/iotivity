@@ -20,6 +20,7 @@
 
 Import('env')
 import SCons.Errors
+import SCons.Util
 import os
 import sys
 import re
@@ -53,8 +54,8 @@ os.chdir(mbedtls_dir)
 # with that name doesn't exist.
 # Tizen uses its own process to prepare the mbedTLS repo in gbsbuild.sh.
 if os.path.exists('.git/HEAD'):
-    out = subprocess.check_output('git tag -l ' + mbedtls_revision, shell=True)
-    if mbedtls_revision not in out:
+    out = subprocess.check_output('git tag -l ' + mbedtls_revision, shell=True).rstrip()
+    if mbedtls_revision not in SCons.Util.to_String(out):
         print(out)
         msg = '''
 *********************************** Error: ************************************

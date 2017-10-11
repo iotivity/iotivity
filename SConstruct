@@ -23,6 +23,8 @@
 #
 ##
 import os
+import SCons
+print("Processing using SCons version " + SCons.__version__)
 
 # Load common build config
 SConscript('build_common/SConscript')

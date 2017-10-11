@@ -20,6 +20,7 @@
 
 import os
 import subprocess
+import SCons.Util
 
 Import('env')
 
@@ -46,8 +47,8 @@ os.chdir(cborDir)
 # This code also assumes tinycbor_revision is a tag; if it changes to a branch
 # or an arbitrary commit, disable this check below.
 if target_os != 'tizen' and os.path.exists('.git/HEAD'):
-    out = subprocess.check_output('git tag -l ' + cborRevision, shell=True)
-    if cborRevision not in out:
+    out = subprocess.check_output('git tag -l ' + cborRevision, shell=True).rstrip()
+    if cborRevision not in SCons.Util.to_String(out):
         print(out)
         msg = '''
 *********************************** Error: ************************************

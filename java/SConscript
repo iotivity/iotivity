@@ -157,7 +157,7 @@ def find_scons_java_version(env):
         print('\t***** Java build will likely fail or have errors in the build output. *****')
         print('\t***** Recommend updating to the latest version of SCons               *****')
         return None
-    for line in java_ver.split('\n'):
+    for line in SCons.Util.to_String(java_ver).split('\n'):
         # handle building with versions of Java not supported by SCons
         if ' 1.9' in line:
             print('\tJava version 1.9 found.')

@@ -28,6 +28,7 @@ import os
 import glob
 import datetime
 import subprocess
+import SCons.Util
 
 Import('env')
 
@@ -68,8 +69,8 @@ if with_upstream_libcoap == '1':
         Exit(msg)
 
     os.chdir(libcoap_dir)
-    out = subprocess.check_output('git log --format=%d -n 1', shell=True)
-    if libcoap_version not in out:
+    out = subprocess.check_output('git log --format=%d -n 1', shell=True).rstrip()
+    if libcoap_version not in SCons.Util.to_String(out):
         print('''
 ******************************* Info: *****************************************
 * Your libCoAP repo is not up to date with the latest version we require (%s).
