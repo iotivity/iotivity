@@ -14,7 +14,7 @@ with_ra_ibb = connectivity_env.get('WITH_RA_IBB')
 with_tcp = connectivity_env.get('WITH_TCP')
 root_dir = os.pardir
 
-print "Reading ca script; transports requested: %s" % ca_transport
+print("Reading ca script; transports requested: %s" % ca_transport)
 
 #####################################################################
 # Source files and Target(s)
