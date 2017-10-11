@@ -410,8 +410,8 @@ static bool EnterRESET()
     VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatRownerId(&THE_NIL_UUID), ERROR);
 
     // Set pstat.isop = FALSE
-    // Set pstat.cm RESET and unset TAKE_OWNER
-    // Unset pstat.tm and set TAKE_OWNER
+    // Set pstat.cm RESET, and unset TAKE_OWNER
+    // Unset pstat.tm RESET, and set TAKE_OWNER
     // Set pstat.dos.s to RESET
     VERIFY_SUCCESS(TAG,
         EnterStateGeneric(false, true, false, false, true, DOS_RESET),
@@ -442,8 +442,8 @@ static bool EnterSRESET()
     bool ret = false;
 
     // Set pstat.isop = FALSE
-    // Set pstat.cm RESET and unset TAKE_OWNER
-    // Unset pstat.tm and unset TAKE_OWNER
+    // Set pstat.cm RESET, and unset TAKE_OWNER
+    // Unset pstat.tm RESET, and unset TAKE_OWNER
     // Set pstat.dos.s to RESET
     VERIFY_SUCCESS(TAG,
         EnterStateGeneric(false, true, false, false, false, DOS_SRESET),
