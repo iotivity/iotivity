@@ -1302,6 +1302,9 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
             rep.getValue(string(OC_RSRVD_INTROSPECTION_URL_INFO), urlInfo);
             string url;
             urlInfo.front().getValue(string(OC_RSRVD_INTROSPECTION_URL), url);
+            url = url.substr(url.find_first_of("/") + 2);
+            url = url.substr(url.find_first_of("/") );
+            cout << "URI to send is: " << url << endl;
 
             vector<string> resourceTypes;
             resourceTypes.push_back(OC_RSRVD_RESOURCE_TYPE_INTROSPECTION_PAYLOAD);
@@ -4111,7 +4114,7 @@ void selectMenu(int choice)
             break;
 
         case 111:
-//            updateResourcesToRD();
+            publishResourcesToRD();
             break;
 
         case 112:
