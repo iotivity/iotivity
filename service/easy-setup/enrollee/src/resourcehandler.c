@@ -1039,7 +1039,7 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
      {
         size_t arraySize;
         OCRepPayload **linkArr = OCLinksPayloadArrayCreate(OC_RSRVD_ES_URI_EASYSETUP, ehRequest,
-                &arraySize);
+            true, &arraySize);
 
 #ifdef ES_IGNORE_OCLinksPayloadArrayCreate_FAILIURE
         bool linkArrConstructed = true; // TODO: Remove this when
