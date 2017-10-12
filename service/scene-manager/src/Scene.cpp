@@ -30,7 +30,9 @@ namespace OIC
     {
         Scene::Scene(const std::string& sceneName,
                 SceneCollectionResource::Ptr sceneCollectionResource) :
-                m_name(sceneName), m_sceneCollectionResource(sceneCollectionResource) {}
+                m_name(sceneName), m_sceneCollectionResource(sceneCollectionResource)
+        {
+        }
 
         SceneAction::Ptr Scene::addNewSceneAction(
                const RCSRemoteResourceObject::Ptr& pRCSRemoteResourceObject,

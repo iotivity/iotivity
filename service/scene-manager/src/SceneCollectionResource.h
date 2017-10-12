@@ -78,7 +78,9 @@ namespace OIC
                 typedef std::shared_ptr<SceneExecuteResponseHandler> Ptr;
 
                 SceneExecuteResponseHandler()
-                : m_numOfMembers(0), m_responseMembers(0), m_errorCode(0) { }
+                : m_numOfMembers(0), m_responseMembers(0), m_errorCode(0)
+                {
+                }
                 ~SceneExecuteResponseHandler() = default;
 
                 int m_numOfMembers;

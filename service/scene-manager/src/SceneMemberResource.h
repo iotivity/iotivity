@@ -61,7 +61,9 @@ namespace OIC
                         const std::string & scene,
                         const std::string & keyName,
                         const RCSResourceAttributes::Value & val)
-                :sceneName(scene), key(keyName), value(val) { }
+                :sceneName(scene), key(keyName), value(val)
+                {
+                }
 
                 MappingInfo(MappingInfo &&) = default;
                 MappingInfo(const MappingInfo &) = default;
