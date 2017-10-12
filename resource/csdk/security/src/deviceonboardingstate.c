@@ -409,6 +409,11 @@ static bool EnterRESET()
     VERIFY_SUCCESS(TAG, OC_STACK_OK == SetDoxmRownerId(&THE_NIL_UUID), ERROR);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatRownerId(&THE_NIL_UUID), ERROR);
 
+    // clear all bits in cm and tm before setting the 2 lsbs
+    OicSecDpm_t dpmZero = 0;
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatCm(dpmZero), ERROR);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatTm(dpmZero), ERROR);
+
     // Set pstat.isop = FALSE
     // Set pstat.cm RESET, and unset TAKE_OWNER
     // Unset pstat.tm RESET, and set TAKE_OWNER
