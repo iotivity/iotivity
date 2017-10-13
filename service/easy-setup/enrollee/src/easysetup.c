@@ -211,6 +211,17 @@ ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty)
     return ES_OK;
 }
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+/*
+ * Prevent reporting esState < ES_STATE_INT and esErrCode < ES_ERRCODE_NO_ERROR as type-limits
+ * The type used for an enum is decided by the compiler the only way to know that the value
+ * passed in by the user is within the limits is to check.
+ * Note this warning is seems to be limited to older compilers.
+ */
+#pragma GCC diagnostic ignored "-Wtype-limits"
+#endif
+
 ESResult ESSetState(ESEnrolleeState esState)
 {
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetState IN");
@@ -252,6 +263,10 @@ ESResult ESSetErrorCode(ESErrorCode esErrCode)
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetErrorCode OUT");
     return ES_OK;
 }
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 ESResult ESTerminateEnrollee()
 {
