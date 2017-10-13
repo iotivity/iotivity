@@ -127,7 +127,7 @@ void EventCallbackInApp(ESResult esResult, ESEnrolleeState enrolleeState)
             Serial.println("Device is successfully OnBoarded");
             g_OnBoardingSucceeded = true;
         }
-        else if(g_OnBoardingSucceeded & enrolleeState == ES_ON_BOARDED_STATE){
+        else if(g_OnBoardingSucceeded && enrolleeState == ES_ON_BOARDED_STATE){
             Serial.println("Device is successfully OnBoared with SoftAP");
             g_ProvisioningSucceeded = true;
         }
@@ -242,12 +242,13 @@ void setup()
 // The loop function is called in an endless loop
 void loop()
 {
-    char buffer[5] = {0};
-    size_t len;
     if (Serial.available() > 0)
     {
+        char buffer[5] = {0};
+        size_t len = 0;
+
         GetData(buffer, sizeof(buffer), &len);
-        if (0 >= len)
+        if (0 == len)
         {
             Serial.println("Input Error err");
             return;

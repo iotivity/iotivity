@@ -115,12 +115,12 @@ void WiFiConfProvCbInApp(ESWiFiConfData *eventData)
     memset(gPasswd, 0, OIC_STRING_MAX_VALUE);
     if(eventData->ssid != NULL)
     {
-        strncpy(gSSID, eventData->ssid, strlen(eventData->ssid));
+        strncpy(gSSID, eventData->ssid, OIC_STRING_MAX_VALUE);
     }
 
     if(eventData->pwd != NULL)
     {
-        strncpy(gPasswd, eventData->pwd, strlen(eventData->pwd));
+        strncpy(gPasswd, eventData->pwd, OIC_STRING_MAX_VALUE);
     }
 
     cout << "WiFiConfProvCbInApp OUT" << endl;

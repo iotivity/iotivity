@@ -36,9 +36,7 @@ extern "C"
 // false is returned by the function.
 
 const char* WiFiModeEnumToString(WIFI_MODE val);
-bool WiFiModeStringToEnum(const char *valIn, WIFI_MODE *valOut);
 const char* WiFiFreqEnumToString(WIFI_FREQ val);
-bool WiFiFreqStringToEnum(const char *val, WIFI_FREQ *valOut);
 const char* WiFiAuthTypeEnumToString(WIFI_AUTHTYPE val);
 bool WiFiAuthTypeStringToEnum(const char *val, WIFI_AUTHTYPE *valOut);
 const char* WiFiEncTypeEnumToString(WIFI_ENCTYPE val);

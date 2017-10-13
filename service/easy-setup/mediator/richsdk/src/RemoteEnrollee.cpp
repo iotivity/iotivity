@@ -504,10 +504,7 @@ namespace OIC
         {
             OIC_LOG(INFO, ES_REMOTE_ENROLLEE_TAG, "initCloudResource IN");
 
-            ESResult result = ES_ERROR;
-
-            result = discoverResource();
-
+            ESResult result = discoverResource();
             if (result == ES_ERROR)
             {
                 OIC_LOG(ERROR, ES_REMOTE_ENROLLEE_TAG,
