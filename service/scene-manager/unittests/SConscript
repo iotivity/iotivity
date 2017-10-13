@@ -32,12 +32,8 @@ lib_env = gtest_env.Clone()
 
 if lib_env.get('RELEASE'):
     lib_env.AppendUnique(CCFLAGS=['-Os'])
-    lib_env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
     lib_env.AppendUnique(CCFLAGS=['-g'])
-
-if lib_env.get('LOGGING'):
-    lib_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 SConscript('#service/third_party_libs.scons', 'lib_env')
 
@@ -53,7 +49,6 @@ target_os = scene_test_env.get('TARGET_OS')
 # Build flags
 ######################################################################
 
-scene_test_env.AppendUnique(LIBPATH=[lib_env.get('BUILD_DIR')])
 scene_test_env.AppendUnique(LIBS=[
     'scene_manager',
     'rcs_server',
@@ -81,6 +76,9 @@ scene_test_env.PrependUnique(CPPPATH=[
     '#/service/resource-encapsulation/include',
     '#/service/resource-encapsulation/src/common/primitiveResource/include',
     '#/service/resource-encapsulation/src/common/utils/include',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/csdk/security/include',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',

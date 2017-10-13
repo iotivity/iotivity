@@ -219,7 +219,7 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
     // dos Property
     if (propertiesToInclude[PSTAT_DOS])
     {
-        OIC_LOG_V(DEBUG, TAG, "%s: including dos Property.", __func__);
+        OIC_LOG_V(DEBUG, TAG, "%s: including dos Property (s = %d).", __func__, pstat->dos.state);
         // Device Onboarding State Property tag
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_DOS_NAME,
             strlen(OIC_JSON_DOS_NAME));
@@ -251,7 +251,7 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
     // isop Property
     if (propertiesToInclude[PSTAT_ISOP])
     {
-        OIC_LOG_V(DEBUG, TAG, "%s: including isop Property.", __func__);
+        OIC_LOG_V(DEBUG, TAG, "%s: including isop Property (isop = %s).", __func__, (pstat->isOp ? "true" : "false"));
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ISOP_NAME,
             strlen(OIC_JSON_ISOP_NAME));
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding ISOP Name Tag.");
@@ -262,7 +262,7 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
     // cm Property
     if (propertiesToInclude[PSTAT_CM])
     {
-        OIC_LOG_V(DEBUG, TAG, "%s: including cm Property.", __func__);
+        OIC_LOG_V(DEBUG, TAG, "%s: including cm Property (cm = %d).", __func__, pstat->cm);
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_CM_NAME,
             strlen(OIC_JSON_CM_NAME));
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding CM Name Tag.");
@@ -273,7 +273,7 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
     // tm Property
     if (propertiesToInclude[PSTAT_TM])
     {
-        OIC_LOG_V(DEBUG, TAG, "%s: including tm Property.", __func__);
+        OIC_LOG_V(DEBUG, TAG, "%s: including tm Property (tm = %d).", __func__, pstat->tm);
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_TM_NAME,
             strlen(OIC_JSON_TM_NAME));
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding TM Name Tag.");
@@ -284,7 +284,7 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
     // om Property
     if (propertiesToInclude[PSTAT_OM])
     {
-        OIC_LOG_V(DEBUG, TAG, "%s: including om Property.", __func__);
+        OIC_LOG_V(DEBUG, TAG, "%s: including om Property (om = %d).", __func__, pstat->om);
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_OM_NAME,
             strlen(OIC_JSON_OM_NAME));
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding OM Name Tag.");
@@ -295,7 +295,7 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
     // sm Property
     if (propertiesToInclude[PSTAT_SM])
     {
-        OIC_LOG_V(DEBUG, TAG, "%s: including sm Property.", __func__);
+        OIC_LOG_V(DEBUG, TAG, "%s: including sm Property (sm = %d).", __func__, pstat->sm[0]);
         cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_SM_NAME,
             strlen(OIC_JSON_SM_NAME));
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding SM Name Tag.");
@@ -311,6 +311,7 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
             strlen(OIC_JSON_ROWNERID_NAME));
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding ROwner Id Tag.");
         ret = ConvertUuidToStr(&pstat->rownerID, &strUuid);
+        OIC_LOG_V(DEBUG, TAG, "%s: rowneruuid = %s.", __func__, strUuid);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
         cborEncoderResult = cbor_encode_text_string(&pstatMap, strUuid, strlen(strUuid));
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding ROwner Id Value.");

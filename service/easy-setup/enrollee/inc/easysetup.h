@@ -69,7 +69,6 @@ typedef void (*ESReadUserdataCb)(OCRepPayload* payload, char* resourceType, void
  */
 ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvisioningCallbacks callbacks);
 
-
 /**
  * This function Sets Device Information.
  *
@@ -80,7 +79,6 @@ ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvision
  */
 ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty);
 
-
 /**
  * This function Sets Enrollee's State.
  *
@@ -90,7 +88,6 @@ ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty);
  * @see ESEnrolleeState
  */
 ESResult ESSetState(ESEnrolleeState esState);
-
 
 /**
  * This function Sets Enrollee's Error Code.

@@ -353,78 +353,98 @@ typedef enum
 typedef enum
 {
     /**
-     * Init Error Code
+     * Init Error Code.
      */
     ES_ERRCODE_NO_ERROR = 0,
 
     /**
-     * Error Code that given WiFi's SSID is not found
+     * WiFi's SSID is not found.
      */
     ES_ERRCODE_SSID_NOT_FOUND,
 
     /**
-     * Error Code that given WiFi's Password is wrong
+     * WiFi's Password is wrong.
      */
     ES_ERRCODE_PW_WRONG,
 
     /**
-     * Error Code that IP address is not allocated
+     * IP address is not allocated.
      */
     ES_ERRCODE_IP_NOT_ALLOCATED,
 
     /**
-     * Error Code that there is no Internet connection
+     * There is no Internet connection.
      */
     ES_ERRCODE_NO_INTERNETCONNECTION,
 
     /**
-     * Error Code that Timeout occured
+     * Timeout occured.
      */
     ES_ERRCODE_TIMEOUT,
 
     /**
-     * Error Code that cloud server is not reachable due to wrong URL of cloud server, for example.
+     * Auth type is not supported by the Enrollee.
+     */
+    ES_ERRCODE_AUTH_TYPE_NOT_SUPPORTED,
+
+    /**
+     * Enc type is not supported by the Enrollee.
+     */
+    ES_ERRCODE_ENC_TYPE_NOT_SUPPORTED,
+
+    /**
+     * Auth type is not supported by the Enroller.
+     */
+    ES_ERRCODE_AUTH_TYPE_INVALID,
+
+    /**
+     * Enc type is not supported by the Enroller.
+     */
+    ES_ERRCODE_ENC_TYPE_INVALID,
+
+    /**
+     * Cloud server is not reachable due to wrong URL of cloud server, for example.
      */
     ES_ERRCODE_FAILED_TO_ACCESS_CLOUD_SERVER,
 
     /**
-     * Error Code that no response is arrived from cloud server
+     * No response from cloud server.
      */
     ES_ERRCODE_NO_RESPONSE_FROM_CLOUD_SERVER,
 
     /**
-     * Error Code that a delivered authcode is not valid.
+     * Delivered authcode is not valid.
      */
     ES_ERRCODE_INVALID_AUTHCODE,
 
     /**
-     * Error Code that a given access token is not valid due to its expiration, for example.
+     * Access token is not valid due to its expiration, for example.
      */
     ES_ERRCODE_INVALID_ACCESSTOKEN,
 
     /**
-     * Error Code that a refresh of expired access token is failed due to some reasons.
+     * Refresh of expired access token is failed due to some reasons.
      */
     ES_ERRCODE_FAILED_TO_REFRESH_ACCESSTOKEN,
 
     /**
-     * Error Code that a target device is not discovered in cloud server
+     * Target device is not discovered in cloud server.
      */
     ES_ERRCODE_FAILED_TO_FIND_REGISTERED_DEVICE_IN_CLOUD,
 
     /**
-     * Error Code that a target user does not exist in cloud server.
+     * Target user does not exist in cloud server.
      */
     ES_ERRCODE_FAILED_TO_FIND_REGISTERED_USER_IN_CLOUD,
 
     /**
-     * Error Code that an enrollee can not connect to a target WiFi AP because the AP resides in
+     * Enrollee can not connect to a target WiFi AP because the AP resides in
      * an unsupported WiFi frequency.
      */
     ES_ERRCODE_UNSUPPORTED_WIFI_FREQUENCY,
 
     /**
-     * Error Code that Unknown error occured
+     * Unknown error occured.
      */
     ES_ERRCODE_UNKNOWN = 255
 } ESErrorCode;

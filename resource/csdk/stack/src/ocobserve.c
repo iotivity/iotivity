@@ -458,18 +458,19 @@ ResourceObserver* GetObserverUsingId(OCResource *resource,
 {
     ResourceObserver *out = NULL;
 
-    if (observeId)
+    LL_FOREACH (resource->observersHead, out)
     {
-        LL_FOREACH (resource->observersHead, out)
+        if (out->observeId == observeId)
         {
-            if (out->observeId == observeId)
-            {
-                return out;
-            }
-            CheckTimedOutObserver(out, resource);
+            return out;
         }
+        CheckTimedOutObserver(out, resource);
     }
-    OIC_LOG(INFO, TAG, "Observer node not found!!");
+
+    if (!out)
+    {
+        OIC_LOG(INFO, TAG, "Observer node not found!!");
+    }
     return NULL;
 }
 

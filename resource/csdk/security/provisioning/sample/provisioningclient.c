@@ -98,10 +98,6 @@ static const char* ACL_PEMISN[5] = {"CREATE", "READ", "WRITE", "DELETE", "NOTIFY
 static const char* SVR_DB_FILE_NAME = "oic_svr_db_client.dat";
         // '_' for separaing from the same constant variable in |srmresourcestrings.c|
 static const char* PRVN_DB_FILE_NAME = "oic_prvn_mng.db";
-static const OicSecPrm_t  SUPPORTED_PRMS[1] =
-{
-    PRM_PRE_CONFIGURED,
-};
 
 static char* TEST_CERT_NOT_BEFORE = "20170101000000"; // Not before field for certificates, in format YYYYMMDDhhmmss
 static char* TEST_CERT_NOT_AFTER = "20270101000000";  // + ten years
@@ -2513,6 +2509,20 @@ static FILE* fopen_prvnMng(const char* path, const char* mode)
     }
 }
 
+static CAResult_t peerCNVerifyCallback(const unsigned char *cn, size_t cnLen)
+{
+    if (NULL != cn && 0 != cnLen)
+    {
+        OIC_LOG(INFO, TAG, "peer certificate CN: ");
+        OIC_LOG_BUFFER(INFO, TAG, cn, cnLen);
+        return CA_STATUS_OK;
+    }
+    else
+    {
+        return CA_STATUS_FAILED;
+    }
+}
+
 static int waitCallbackRet(void)
 {
     for (int i = 0; !g_doneCB && (CALLBACK_TIMEOUT > i); ++i)
@@ -2745,6 +2755,9 @@ int main()
     // set callbacks for verification options
     SetDisplayNumCB(NULL, displayNumCB);
     SetUserConfirmCB(NULL, confirmNumCB);
+
+    // set callback for checking peer certificate information
+    OCSetPeerCNVerifyCallback(peerCNVerifyCallback);
 
 #ifdef MULTIPLE_OWNER
     SetPreconfigPin("12341234", 8);

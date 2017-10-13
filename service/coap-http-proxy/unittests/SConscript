@@ -31,12 +31,8 @@ CoAP_test_env = gtest_env.Clone()
 
 if CoAP_test_env.get('RELEASE'):
     CoAP_test_env.AppendUnique(CCFLAGS=['-Os'])
-    CoAP_test_env.AppendUnique(CPPDEFINES=['NDEBUG'])
 else:
     CoAP_test_env.AppendUnique(CCFLAGS=['-g'])
-
-if CoAP_test_env.get('LOGGING'):
-    CoAP_test_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 #SConscript('#service/third_party_libs.scons', 'lib_env')
 
@@ -50,7 +46,6 @@ target_os = CoAP_test_env.get('TARGET_OS')
 # Build flags 'coap_http_proxy','oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'cjson'])
 ######################################################################
 
-CoAP_test_env.AppendUnique(LIBPATH=[CoAP_test_env.get('BUILD_DIR')])
 CoAP_test_env.AppendUnique(LIBS=[
     'coap_http_proxy',
     'octbstack',
@@ -70,7 +65,11 @@ if not CoAP_test_env.get('RELEASE'):
 CoAP_test_env.AppendUnique(CPPPATH=[
     '#/extlibs/hippomocks/hippomocks',
     '../include',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/csdk/include',
+    '#/resource/csdk/logger/include',
     '#/resource/csdk/stack/include',
     '#/resource/csdk/connectivity/common/inc/',
     '#/resource/csdk/connectivity/lib/libcoap-4.1.1',
