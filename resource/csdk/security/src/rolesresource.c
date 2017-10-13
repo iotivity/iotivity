@@ -978,7 +978,10 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
                 LL_DELETE(entry->chains, curr1);
                 FreeRoleCertChain(curr1);
                 ehRet = OC_EH_RESOURCE_DELETED;
-                break;
+                if (0 != credId)
+                {
+                    break;
+                }
             }
         }
     }
