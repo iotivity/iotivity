@@ -53,11 +53,13 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
 OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
 OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
 OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
-void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input);
+OCEntityHandlerResult updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input);
 void updateEasySetupConnectProperty(OCRepPayload* input);
-void updateWiFiConfResource(OCRepPayload* input);
+OCEntityHandlerResult updateWiFiConfResource(OCRepPayload* input);
 void updateCoapCloudConfResource(OCRepPayload* input);
 void updateDevConfResource(OCRepPayload* input);
+bool isAuthTypeSupported(WIFI_AUTHTYPE authType);
+bool isEncTypeSupported(WIFI_ENCTYPE encType);
 const char *getResult(OCStackResult result);
 
 ESConnectRequestCB gConnectRequestEvtCb = NULL;
@@ -339,18 +341,20 @@ OCStackResult initDevConfResource(bool isSecured)
 
 }
 
-void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input)
+OCEntityHandlerResult updateEasySetupResource(OCEntityHandlerRequest* ehRequest,
+    OCRepPayload* input)
 {
     OIC_LOG_V(DEBUG, ES_RH_TAG, "g_ESEasySetupResource.status %d", g_ESEasySetupResource.status);
 
+    OCEntityHandlerResult ehResult = OC_EH_OK;
     if (ehRequest->query)
     {
         if (CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
         {
+            bool hasError = false;
             // When Provisioning resource has a POST with BatchInterface
             // Parsing POST request on Batch Interface cosidering same format as GET using batch.
             OCRepPayload *children = input;
-
             while(children)
             {
                 char* uri = children->uri;
@@ -387,7 +391,13 @@ void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* in
                 }
                 else if (0 == strcmp(uri, OC_RSRVD_ES_URI_WIFICONF))
                 {
-                    updateWiFiConfResource(repPayload);
+                    if (updateWiFiConfResource(repPayload) != OC_EH_OK)
+                    {
+                        // Possibility of failure exist only when updating WiFiConf resource.
+                        // So error code is checked only for this function.
+                        OIC_LOG(ERROR, ES_RH_TAG, "Failed to update WiFiConf resource.");
+                        hasError = true;
+                    }
                 }
                 else if (0 == strcmp(uri, OC_RSRVD_ES_URI_COAPCLOUDCONF))
                 {
@@ -401,12 +411,18 @@ void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* in
                 children = children->next;
                 OCRepPayloadDestroy(repPayload);
              }
+
+             if (hasError)
+             {
+                ehResult = OC_EH_BAD_REQ;
+             }
         }
         else if (CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT))
         {
             OIC_LOG(DEBUG, ES_RH_TAG, "Handling POST request on default interface");
             updateEasySetupConnectProperty(input);
         }
+    return ehResult;
     }
 
     OIC_LOG(DEBUG, ES_RH_TAG, "updateEasySetupResource exit");
@@ -461,23 +477,74 @@ void updateEasySetupConnectProperty(OCRepPayload* input)
     }
 }
 
-void updateWiFiConfResource(OCRepPayload* input)
+OCEntityHandlerResult updateWiFiConfResource(OCRepPayload* input)
 {
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
     ESWiFiConfData* wiFiData = (ESWiFiConfData*) OICMalloc(sizeof(ESWiFiConfData));
-
     if (wiFiData == NULL)
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "OICMalloc is failed");
-        return;
+        return ehResult;
     }
 
+    char* ssid = NULL;
+    char* cred = NULL;
+    char *authType = NULL;
+    char *encType = NULL;
     memset(wiFiData->ssid, 0, OIC_STRING_MAX_VALUE);
     memset(wiFiData->pwd, 0, OIC_STRING_MAX_VALUE);
     wiFiData->authtype = NONE_AUTH;
     wiFiData->enctype = NONE_AUTH;
     wiFiData->userdata = NULL;
 
-    char* ssid = NULL;
+    bool validAuthType = false;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHTYPE, &authType))
+    {
+        WIFI_AUTHTYPE tmp;
+        validAuthType = WiFiAuthTypeStringToEnum(authType, &tmp);
+        if (validAuthType && isAuthTypeSupported(tmp))
+        {
+            wiFiData->authtype = tmp;
+            OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESWiFiConfResource.authType %u",
+                    wiFiData->authtype);
+        }
+        else
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "AuthType is not supported.");
+            ehResult = OC_EH_BAD_REQ;
+            goto EXIT;
+        }
+    }
+
+    bool validEncType = false;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_ENCTYPE, &encType))
+    {
+        WIFI_ENCTYPE tmp;
+        validEncType = WiFiEncTypeStringToEnum(encType, &tmp);
+        if (validEncType && isEncTypeSupported(tmp))
+        {
+            wiFiData->enctype = tmp;
+            OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESWiFiConfResource.encType %u",
+                    wiFiData->enctype);
+        }
+        else
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "EncType is not supported.");
+            ehResult = OC_EH_BAD_REQ;
+            goto EXIT;
+        }
+    }
+
+    if (validAuthType)
+    {
+        g_ESWiFiConfResource.authType = wiFiData->authtype;
+    }
+
+    if (validEncType)
+    {
+        g_ESWiFiConfResource.encType = wiFiData->enctype;
+    }
+
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_SSID, &ssid))
     {
         OICStrcpy(g_ESWiFiConfResource.ssid, sizeof(g_ESWiFiConfResource.ssid), ssid);
@@ -486,43 +553,12 @@ void updateWiFiConfResource(OCRepPayload* input)
                 g_ESWiFiConfResource.ssid);
     }
 
-    char* cred = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CRED, &cred))
     {
         OICStrcpy(g_ESWiFiConfResource.cred, sizeof(g_ESWiFiConfResource.cred), cred);
         OICStrcpy(wiFiData->pwd, sizeof(wiFiData->pwd), cred);
         OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESWiFiConfResource.cred %s",
                 g_ESWiFiConfResource.cred);
-    }
-
-    bool validAuthType = false;
-    char *authType = NULL;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHTYPE, &authType))
-    {
-        WIFI_AUTHTYPE tmp;
-        validAuthType = WiFiAuthTypeStringToEnum(authType, &tmp);
-        if (validAuthType == true)
-        {
-            g_ESWiFiConfResource.authType = tmp;
-            wiFiData->authtype = g_ESWiFiConfResource.authType;
-            OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESWiFiConfResource.authType %u",
-                    g_ESWiFiConfResource.authType);
-        }
-    }
-
-    bool validEncType = false;
-    char *encType = NULL;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_ENCTYPE, &encType))
-    {
-        WIFI_ENCTYPE tmp;
-        validEncType = WiFiEncTypeStringToEnum(encType, &tmp);
-        if (validEncType == true)
-        {
-            g_ESWiFiConfResource.encType = tmp;
-            wiFiData->enctype = g_ESWiFiConfResource.encType;
-            OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESWiFiConfResource.encType %u",
-                    g_ESWiFiConfResource.encType);
-        }
     }
 
     if (gReadUserdataCb)
@@ -550,11 +586,15 @@ void updateWiFiConfResource(OCRepPayload* input)
         OIC_LOG(DEBUG, ES_RH_TAG, "Enrollee doesn't have any observer.");
     }
 
+    ehResult = OC_EH_OK;
+
+EXIT:
     OICFree(encType);
     OICFree(authType);
     OICFree(cred);
     OICFree(ssid);
     OICFree(wiFiData);
+    return ehResult;
 }
 
 void updateCoapCloudConfResource(OCRepPayload* input)
@@ -660,7 +700,7 @@ void updateDevConfResource(OCRepPayload* input)
 
     // If a writable property in oic.r.devconf is added later,
     // a condition for calling a resistered callback should be implemented also.
-    if( devConfData->userdata != NULL )
+    if (devConfData->userdata != NULL)
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "Send DevConfRsrc Callback To ES");
 
@@ -1495,7 +1535,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
         OIC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
         return ehResult;
     }
-    if(!isValidESResourceHandle(ehRequest->resource))
+    if (!isValidESResourceHandle(ehRequest->resource))
     {
         OIC_LOG(ERROR, ES_RH_TAG, "Request does not have a valid Easy Setup Resource handle");
         return ehResult;
@@ -1511,7 +1551,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
 
     char *iface_name = NULL;
     GetInterfaceNameFromQuery(ehRequest->query, &iface_name);
-    if(!iface_name)
+    if (!iface_name)
     {
         iface_name = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
     }
@@ -1579,7 +1619,11 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         }
         else
         {
-            updateEasySetupResource(ehRequest, input);
+            if (updateEasySetupResource(ehRequest, input) != OC_EH_OK)
+            {
+                OIC_LOG(ERROR, ES_RH_TAG, "Failed to update EasySetup resource.");
+                return OC_EH_BAD_REQ;
+            }
         }
     }
     else if (ehRequest->resource == g_ESWiFiConfResource.handle)
@@ -1591,7 +1635,11 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         }
         else
         {
-            updateWiFiConfResource(input);
+            if (updateWiFiConfResource(input) != OC_EH_OK)
+            {
+                OIC_LOG(ERROR, ES_RH_TAG, "Failed to update WifiConf resource.");
+                return OC_EH_BAD_REQ;
+            }
         }
     }
     else if (ehRequest->resource == g_ESCoapCloudConfResource.handle)
@@ -1864,6 +1912,34 @@ OCEntityHandlerResult CheckEhRequestPayload(OCEntityHandlerRequest *ehRequest)
         return OC_EH_BAD_REQ;
     }
     return OC_EH_OK;
+}
+
+bool isAuthTypeSupported(WIFI_AUTHTYPE authType)
+{
+    bool supported = false;
+    for (uint8_t i = 0; i < g_ESWiFiConfResource.numSupportedAuthType; ++i)
+    {
+        if (g_ESWiFiConfResource.supportedAuthType[i] == authType)
+        {
+            supported = true;
+            break;
+        }
+    }
+    return supported;
+}
+
+bool isEncTypeSupported(WIFI_ENCTYPE encType)
+{
+    bool supported = false;
+    for (uint8_t i = 0; i < g_ESWiFiConfResource.numSupportedEncType; ++i)
+    {
+        if (g_ESWiFiConfResource.supportedEncType[i] == encType)
+        {
+            supported = true;
+            break;
+        }
+    }
+    return supported;
 }
 
 const char *getResult(OCStackResult result)
