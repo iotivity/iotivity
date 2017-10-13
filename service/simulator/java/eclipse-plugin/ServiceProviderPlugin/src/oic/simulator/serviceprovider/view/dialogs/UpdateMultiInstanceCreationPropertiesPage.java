@@ -157,7 +157,7 @@ public class UpdateMultiInstanceCreationPropertiesPage extends WizardPage {
         }
 
         this.resName = resName;
-        if (null != resName && !resNameTxt.isDisposed())
+        if (!resNameTxt.isDisposed())
             resNameTxt.setText(resName);
     }
 
@@ -167,7 +167,7 @@ public class UpdateMultiInstanceCreationPropertiesPage extends WizardPage {
         }
 
         this.resType = resType;
-        if (null != resType && !resTypeTxt.isDisposed())
+        if (!resTypeTxt.isDisposed())
             resTypeTxt.setText(resType);
     }
 

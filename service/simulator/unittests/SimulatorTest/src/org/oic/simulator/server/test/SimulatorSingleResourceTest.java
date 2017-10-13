@@ -83,8 +83,10 @@ public class SimulatorSingleResourceTest extends TestCase {
         try {
             singleResource.getAttribute(null);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -233,8 +235,10 @@ public class SimulatorSingleResourceTest extends TestCase {
             assertTrue(singleResource.addAttribute(stringAttribute));
             singleResource.removeAttribute(null);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -246,7 +250,9 @@ public class SimulatorSingleResourceTest extends TestCase {
         try {
             result = singleResource.removeAttribute("");
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
         } catch (SimulatorException e) {
+            e.printStackTrace();
         }
 
         assertFalse(result);
@@ -403,8 +409,10 @@ public class SimulatorSingleResourceTest extends TestCase {
             singleResource.startResourceUpdation(
                     SimulatorResource.AutoUpdateType.ONE_TIME, 500, null);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -474,8 +482,10 @@ public class SimulatorSingleResourceTest extends TestCase {
             singleResource.startAttributeUpdation("intensity",
                     SimulatorResource.AutoUpdateType.ONE_TIME, 1000, null);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 

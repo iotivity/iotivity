@@ -197,6 +197,11 @@ public class Utility {
                 arr[i++] = (int) itr.next();
             }
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             return null;
         }
         return arr;
@@ -214,6 +219,11 @@ public class Utility {
                 arr[i++] = (double) itr.next();
             }
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             return null;
         }
         return arr;
@@ -231,6 +241,11 @@ public class Utility {
                 arr[i++] = (boolean) itr.next();
             }
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             return null;
         }
         return arr;
@@ -248,6 +263,11 @@ public class Utility {
                 arr[i++] = (String) itr.next();
             }
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             return null;
         }
         return arr;
@@ -265,6 +285,11 @@ public class Utility {
                 resultVec.add((Integer) itr.next());
             }
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             return null;
         }
         return resultVec;
@@ -282,6 +307,11 @@ public class Utility {
                 resultVec.add((Double) itr.next());
             }
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             return null;
         }
         return resultVec;
@@ -299,6 +329,11 @@ public class Utility {
                 resultVec.add((String) itr.next());
             }
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             return null;
         }
         return resultVec;
@@ -381,7 +416,7 @@ public class Utility {
         return strArr;
     }
 
-    public static Comparator<Resource>         resourceComparator       = new Comparator<Resource>() {
+    public static final Comparator<Resource>         resourceComparator       = new Comparator<Resource>() {
                                                                             public int compare(
                                                                                     Resource res1,
                                                                                     Resource res2) {
@@ -427,7 +462,7 @@ public class Utility {
                                                                             }
                                                                         };
 
-    public static Comparator<SingleResource>   singleResourceComparator = new Comparator<SingleResource>() {
+    public static final Comparator<SingleResource>   singleResourceComparator = new Comparator<SingleResource>() {
                                                                             public int compare(
                                                                                     SingleResource res1,
                                                                                     SingleResource res2) {
@@ -473,7 +508,7 @@ public class Utility {
                                                                             }
                                                                         };
 
-    public static Comparator<AttributeElement> attributeComparator      = new Comparator<AttributeElement>() {
+    public static final Comparator<AttributeElement> attributeComparator      = new Comparator<AttributeElement>() {
                                                                             public int compare(
                                                                                     AttributeElement att1,
                                                                                     AttributeElement att2) {

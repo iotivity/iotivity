@@ -59,6 +59,7 @@ import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -430,10 +431,13 @@ public class LogView extends ViewPart {
                     sb.append(entry.toString());
                 }
                 String data = sb.toString();
+                FileOutputStream fos = null;
+                Writer osw = null;
                 BufferedWriter out = null;
                 try {
-                    out = new BufferedWriter(new OutputStreamWriter(
-                            new FileOutputStream(name), "UTF-8"));
+                    fos = new FileOutputStream(name);
+                    osw = new OutputStreamWriter(fos, "UTF-8");
+                    out = new BufferedWriter(osw);
                     out.write(data);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -446,6 +450,32 @@ public class LogView extends ViewPart {
                     try {
                         if (null != out) {
                             out.close();
+                        }
+                    } catch (IOException e) {
+                        Activator
+                                .getDefault()
+                                .getLogManager()
+                                .log(Level.ERROR.ordinal(),
+                                        new Date(),
+                                        "[" + e.getClass().getSimpleName()
+                                                + "]" + e.getMessage());
+                    }
+                    try {
+                        if (null != osw) {
+                            osw.close();
+                        }
+                    } catch (IOException e) {
+                        Activator
+                                .getDefault()
+                                .getLogManager()
+                                .log(Level.ERROR.ordinal(),
+                                        new Date(),
+                                        "[" + e.getClass().getSimpleName()
+                                                + "]" + e.getMessage());
+                    }
+                    try {
+                        if (null != fos) {
+                            fos.close();
                         }
                     } catch (IOException e) {
                         Activator

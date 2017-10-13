@@ -49,10 +49,12 @@ import org.eclipse.ui.dialogs.FilteredTree;
 import org.eclipse.ui.dialogs.PatternFilter;
 import org.eclipse.ui.part.ViewPart;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 import org.oic.simulator.SimulatorException;
+import org.oic.simulator.ILogger.Level;
 
 import oic.simulator.clientcontroller.Activator;
 import oic.simulator.clientcontroller.listener.IFindResourceUIListener;
@@ -60,6 +62,7 @@ import oic.simulator.clientcontroller.manager.ResourceManager;
 import oic.simulator.clientcontroller.manager.UiListenerHandler;
 import oic.simulator.clientcontroller.remoteresource.RemoteResource;
 import oic.simulator.clientcontroller.utils.Constants;
+import oic.simulator.clientcontroller.utils.Utility;
 import oic.simulator.clientcontroller.view.dialogs.FindResourceWizard;
 import oic.simulator.clientcontroller.view.dialogs.LoadRAMLDialog;
 import oic.simulator.clientcontroller.view.dialogs.ResourceWizardDialog;
@@ -436,6 +439,11 @@ public class ResourceManagerView extends ViewPart {
                                                 "Failed to obtain the details from the given RAML.");
                             }
                         } catch (SimulatorException e) {
+                            Activator
+                                .getDefault()
+                                .getLogManager()
+                                .log(Level.ERROR.ordinal(), new Date(),
+                                        Utility.getSimulatorErrorString(e, null));
                             MessageDialog.openInformation(Display.getDefault()
                                     .getActiveShell(), "Invalid RAML",
                                     "Given configuration file is invalid.");

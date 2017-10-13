@@ -36,6 +36,7 @@ import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.manager.ResourceManager;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.SingleResource;
+import oic.simulator.serviceprovider.utils.Utility;
 
 /**
  * This class creates a UI wizard for delete resource operation.
@@ -98,6 +99,11 @@ public class DeleteResourceWizard extends Wizard {
                         monitor.worked(1);
                         success = true;
                     } catch (SimulatorException e) {
+                        Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(), new Date(),
+                                    Utility.getSimulatorErrorString(e, null));
                         success = false;
                     } finally {
                         monitor.done();
