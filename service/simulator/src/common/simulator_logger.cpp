@@ -41,7 +41,8 @@ class FileLogger : public ILogger
 
         bool open()
         {
-            m_out.open(m_filePath, std::ofstream::out);
+            if (!m_out.is_open())
+                m_out.open(m_filePath, std::ofstream::out);
             return m_out.is_open();
         }
 
