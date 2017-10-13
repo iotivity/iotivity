@@ -123,10 +123,9 @@ void NSConsumerMessageHandlerExit()
     while (!NSIsQueueEmpty(g_queue))
     {
         NSConsumerQueueObject * obj = NSPopQueue(g_queue);
-        NS_LOG_V(DEBUG, "Execute remaining task type : %d", ((NSTask *)(obj->data))->taskType);
-
         if (obj)
         {
+            NS_LOG_V(DEBUG, "Execute remaining task type : %d", ((NSTask *)(obj->data))->taskType);
             NSConsumerTaskProcessing((NSTask *)(obj->data));
             NSOICFree(obj);
         }
