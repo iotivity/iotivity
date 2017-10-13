@@ -7,6 +7,7 @@ import org.iotivity.service.client.RcsRemoteResourceObject;
 import org.iotivity.service.server.RcsResourceObject;
 
 import android.test.InstrumentationTestCase;
+import android.util.Log;
 
 public abstract class TestBase extends InstrumentationTestCase {
     protected static final String RESOURCEURI       = "/a/TemperatureSensor";
@@ -21,6 +22,8 @@ public abstract class TestBase extends InstrumentationTestCase {
 
     protected RcsResourceObject       mServer;
     protected RcsRemoteResourceObject mClient;
+
+    private final String TAG = TestBase.class.getName();
 
     private OnResourceDiscoveredListener mOnResourceDiscoveredListener = new OnResourceDiscoveredListener() {
         @Override
@@ -63,7 +66,7 @@ public abstract class TestBase extends InstrumentationTestCase {
 
                 discoveryTask.cancel();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Log.e(TAG, "caught exception: " + e.toString());
             }
         }
     }
