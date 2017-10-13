@@ -74,9 +74,9 @@ public class ProviderSample
     }
 
     private void configurePlatform() {
-
+        String ipAddress = "0.0.0.0";
         PlatformConfig platformConfig = new PlatformConfig(mContext,
-                ServiceType.IN_PROC, ModeType.CLIENT_SERVER, "0.0.0.0",
+                ServiceType.IN_PROC, ModeType.CLIENT_SERVER, ipAddress,
                 0, // Uses randomly available port
                 QualityOfService.LOW);
 
