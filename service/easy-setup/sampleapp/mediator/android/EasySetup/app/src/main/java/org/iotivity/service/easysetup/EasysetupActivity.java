@@ -399,6 +399,13 @@ public class EasysetupActivity extends Activity
             OcProvisioning.provisionClose();
         } catch (OcException e) {
             Log.e(TAG, "provisionClose error: " + e.getMessage());
+        } catch (UnsatisfiedLinkError e) {
+            // Note : Easy setup is built with SECURED = 0, but user still selects Security feature
+            // while running the Mediator App it couldn't find "libocprovision.so".
+            // As per the programmer guide, security feature should be invoked only if build is done with SECURED = 1.
+            mSecurityMode.setChecked(false);
+            Log.e(TAG, "Easy setup is built with secured = 0, but executed with security feature");
+            return;
         }
     }
 
