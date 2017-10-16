@@ -422,10 +422,9 @@ OCEntityHandlerResult updateEasySetupResource(OCEntityHandlerRequest* ehRequest,
             OIC_LOG(DEBUG, ES_RH_TAG, "Handling POST request on default interface");
             updateEasySetupConnectProperty(input);
         }
-    return ehResult;
     }
-
     OIC_LOG(DEBUG, ES_RH_TAG, "updateEasySetupResource exit");
+    return ehResult;
 }
 
 void updateEasySetupConnectProperty(OCRepPayload* input)
