@@ -1577,7 +1577,7 @@ FILE* server_fopen(const char *path, const char *mode)
         return fopen(INTROSPECTION_SWAGGER_FILE, mode);
     }
 #ifdef __SECURED__
-    else
+    else if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
     {
         return fopen(CRED_FILE_SERVER, mode);
     }
@@ -1587,8 +1587,17 @@ FILE* server_fopen(const char *path, const char *mode)
 
 FILE* client_fopen(const char *path, const char *mode)
 {
-    (void) path;
-    return fopen(CRED_FILE_CLIENT, mode);
+    if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME))
+    {
+        return fopen(INTROSPECTION_SWAGGER_FILE, mode);
+    }
+#ifdef __SECURED__
+    else if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(CRED_FILE_CLIENT, mode);
+    }
+#endif
+    return fopen(path, mode);
 }
 
 void createResourceWithUrl()
