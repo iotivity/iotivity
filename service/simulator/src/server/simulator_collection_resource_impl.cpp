@@ -661,6 +661,7 @@ OCEntityHandlerResult SimulatorCollectionResourceImpl::sendResponse(
     const std::shared_ptr<OC::OCResourceRequest> &request, const int errorCode,
     OCEntityHandlerResult responseResult)
 {
+    OC_UNUSED(errorCode);
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse());
     response->setRequestHandle(request->getRequestHandle());
     response->setResourceHandle(request->getResourceHandle());

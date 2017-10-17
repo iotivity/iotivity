@@ -477,7 +477,7 @@ void addInterface()
     resource->addInterface(OC_RSRVD_INTERFACE_ACTUATOR);
 }
 
-int main(int argc, char *argv[])
+int main()
 {
     printMainMenu();
     bool cont = true;

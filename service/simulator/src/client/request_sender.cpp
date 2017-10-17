@@ -54,6 +54,7 @@ void GETRequestSender::onResponseReceived(const OC::HeaderOptions &headerOptions
         const OC::OCRepresentation &rep, const int errorCode, RequestInfo &requestInfo,
         ResponseCallback callback)
 {
+    OC_UNUSED(headerOptions);
     SIM_LOG(ILogger::INFO, "Response received for GET." << "\n" << getPayloadString(rep));
     SimulatorResourceModel resourceModel = SimulatorResourceModel::build(rep);
     callback(static_cast<SimulatorResult>(errorCode), resourceModel, requestInfo);
@@ -92,6 +93,7 @@ void PUTRequestSender::onResponseReceived(const OC::HeaderOptions &headerOptions
         const OC::OCRepresentation &rep, const int errorCode, RequestInfo &requestInfo,
         ResponseCallback callback)
 {
+    OC_UNUSED(headerOptions);
     SIM_LOG(ILogger::INFO, "Response received for PUT." << "\n" << getPayloadString(rep));
     SimulatorResourceModel resourceModel = SimulatorResourceModel::build(rep);
     callback(static_cast<SimulatorResult>(errorCode), resourceModel, requestInfo);
@@ -130,6 +132,7 @@ void POSTRequestSender::onResponseReceived(const OC::HeaderOptions &headerOption
         const OC::OCRepresentation &rep, const int errorCode, RequestInfo &requestInfo,
         ResponseCallback callback)
 {
+    OC_UNUSED(headerOptions);
     SIM_LOG(ILogger::INFO, "Response received for POST." << "\n" << getPayloadString(rep));
     SimulatorResourceModel resourceModel = SimulatorResourceModel::build(rep);
     callback(static_cast<SimulatorResult>(errorCode), resourceModel, requestInfo);
