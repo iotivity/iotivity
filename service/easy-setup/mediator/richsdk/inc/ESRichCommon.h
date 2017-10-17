@@ -349,7 +349,9 @@ namespace OIC
                 OCRepresentation cloudDataRep;
 
                 if(authCode.length() > 0)
+                {
                     cloudDataRep.setValue(OC_RSRVD_ES_AUTHCODE, authCode);
+                }
 
                 if(accessToken.length() > 0)
                 {
@@ -1076,13 +1078,19 @@ namespace OIC
                 }
 
                 if(b_2_4G && b_5G)
+                {
                     return WIFI_BOTH;
+                }
 
                 if(b_2_4G)
+                {
                     return WIFI_24G;
+                }
 
                 if(b_5G)
+                {
                     return WIFI_5G;
+                }
 
                 return WIFI_FREQ_NONE;
             }

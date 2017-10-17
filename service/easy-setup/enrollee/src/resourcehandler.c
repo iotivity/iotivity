@@ -106,7 +106,7 @@ void GetInterfaceNameFromQuery(const char *query, char **iface)
 
 bool CompareResourceInterface(const char *from, const char *iface)
 {
-    char *if_ptr;
+    char *if_ptr = NULL;
     GetInterfaceNameFromQuery(from, &if_ptr);
     if (!if_ptr)
     {
@@ -261,6 +261,13 @@ OCStackResult initWiFiConfResource(bool isSecured)
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
     }
 
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, ES_RH_TAG, "Failed to create WiFiConf resource with result: %s",
+            getResult(res));
+        return res;
+    }
+
     res = OCBindResourceInterfaceToResource(g_ESWiFiConfResource.handle,
     OC_RSRVD_INTERFACE_READ_WRITE);
     if (res != OC_STACK_OK)
@@ -303,6 +310,13 @@ OCStackResult initCoapCloudConfResource(bool isSecured)
                 NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
     }
 
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, ES_RH_TAG, "Failed to create CoapCloudConf resource with result: %s",
+            getResult(res));
+        return res;
+    }
+
     res = OCBindResourceInterfaceToResource(g_ESCoapCloudConfResource.handle,
             OC_RSRVD_INTERFACE_READ_WRITE);
     if (res != OC_STACK_OK)
@@ -334,6 +348,13 @@ OCStackResult initDevConfResource(bool isSecured)
         OC_RSRVD_INTERFACE_DEFAULT,
         OC_RSRVD_ES_URI_DEVCONF, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
+    }
+
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, ES_RH_TAG, "Failed to create DevConf resource with result: %s",
+            getResult(res));
+        return res;
     }
 
     res = OCBindResourceInterfaceToResource(g_ESDevConfResource.handle, OC_RSRVD_INTERFACE_READ);
@@ -417,12 +438,12 @@ OCEntityHandlerResult updateEasySetupResource(OCEntityHandlerRequest* ehRequest,
 
                 children = children->next;
                 OCRepPayloadDestroy(repPayload);
-             }
+            }
 
-             if (hasError)
-             {
-                ehResult = OC_EH_BAD_REQ;
-             }
+            if (hasError)
+            {
+               ehResult = OC_EH_BAD_REQ;
+            }
         }
         else if (CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT))
         {
@@ -430,6 +451,7 @@ OCEntityHandlerResult updateEasySetupResource(OCEntityHandlerRequest* ehRequest,
             updateEasySetupConnectProperty(input);
         }
     }
+
     OIC_LOG(DEBUG, ES_RH_TAG, "updateEasySetupResource exit");
     return ehResult;
 }
@@ -1756,7 +1778,7 @@ OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty)
     {
         g_ESWiFiConfResource.supportedEncType[i] = (deviceProperty->WiFi).supportedEncType[i];
         OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "WiFi Enc Type : %d",
-                g_ESWiFiConfResource.supportedAuthType[i]);
+                g_ESWiFiConfResource.supportedEncType[i]);
     }
 
     OICStrcpy(g_ESDevConfResource.devName, OIC_STRING_MAX_VALUE,

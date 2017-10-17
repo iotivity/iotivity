@@ -288,7 +288,7 @@ namespace OIC
                     }
                 }
             }
-            catch(std::exception& e)
+            catch(const std::exception& e)
             {
                 OIC_LOG_V(INFO, ES_REMOTE_ENROLLEE_TAG,
                         "Exception in foundResource: %s", e.what());
