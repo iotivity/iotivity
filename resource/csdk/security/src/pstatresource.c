@@ -846,6 +846,19 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                 pstat->cm &= ~UPDATE_SOFTWARE; // Unset the cm bit, per spec
             }
 
+            // update om
+            gPstat->om = pstat->om;
+
+            // update tm
+            OIC_LOG_V(INFO, TAG, "%s setting gPstat->tm = %u", __func__, pstat->tm);
+            gPstat->tm = pstat->tm;
+
+            // update rownerID
+            gPstat->rownerID = pstat->rownerID;
+
+            // update dos LAST of all Properties, as changing dos can also
+            // change other Properties and we want the dos-asserted values
+            // to "stick" rather than being over-written by prior values.
             if (pstat->dos.state != gPstat->dos.state)
             {
                 OCStackResult stateChangeResult = OC_STACK_ERROR;
@@ -875,16 +888,6 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                     break;
                 }
             }
-
-            // update om
-            gPstat->om = pstat->om;
-
-            // update tm
-            OIC_LOG_V(INFO, TAG, "%s setting gPstat->tm = %u", __func__, pstat->tm);
-            gPstat->tm = pstat->tm;
-
-            // update rownerID
-            gPstat->rownerID = pstat->rownerID;
 
             // Convert pstat data into CBOR for update to persistent storage
             if (UpdatePersistentStorage(gPstat))
