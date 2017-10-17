@@ -122,7 +122,10 @@ namespace OIC
         {
             for (auto r : allowed)
             {
-                if (actual == r) return;
+                if (actual == r)
+                {
+                    return;
+                }
             }
 
             throw RCSPlatformException(actual);
@@ -147,7 +150,10 @@ namespace OIC
         invokeOCFuncWithResultExpect(std::initializer_list<OCStackResult> allowed,
                 FUNC&& fn, PARAMS&& ...params)
         {
-            if (Detail::TerminationChecker::isInTermination()) return;
+            if (Detail::TerminationChecker::isInTermination())
+            {
+                return;
+            }
 
             try
             {
@@ -165,7 +171,10 @@ namespace OIC
                 OCStackResult >::type
         invokeOCFunc(FUNC&& fn, PARAMS&& ...params)
         {
-            if (Detail::TerminationChecker::isInTermination()) return;
+            if (Detail::TerminationChecker::isInTermination())
+            {
+                return;
+            }
 
             try
             {
@@ -182,7 +191,10 @@ namespace OIC
                         Detail::NotOCStackResult >::type
         invokeOCFunc(FUNC* fn, PARAMS&& ...params)
         {
-            if (Detail::TerminationChecker::isInTermination()) return;
+            if (Detail::TerminationChecker::isInTermination())
+            {
+                return;
+            }
 
             try
             {
@@ -201,8 +213,10 @@ namespace OIC
                 decltype((obj->*fn)(std::forward< PARAMS >(params)...)), OCStackResult>::
                 type
         {
-            if (Detail::TerminationChecker::isInTermination()) return;
-
+            if (Detail::TerminationChecker::isInTermination())
+            {
+                return;
+            }
             try
             {
                 expectOCStackResultOK(obj->*fn(std::forward< PARAMS >(params)...));
@@ -221,7 +235,10 @@ namespace OIC
                     Detail::NotOCStackResult>::
                     type
         {
-            if (Detail::TerminationChecker::isInTermination()) return;
+            if (Detail::TerminationChecker::isInTermination())
+            {
+                return;
+            }
 
             try
             {
@@ -240,7 +257,10 @@ namespace OIC
                     decltype((obj.get()->*fn)(std::forward< PARAMS >(params)...)), OCStackResult>::
                     type
         {
-            if (Detail::TerminationChecker::isInTermination()) return;
+            if (Detail::TerminationChecker::isInTermination())
+            {
+                return;
+            }
 
             try
             {
@@ -260,7 +280,10 @@ namespace OIC
                    Detail::NotOCStackResult>::
                    type
         {
-            if (Detail::TerminationChecker::isInTermination()) return { };
+            if (Detail::TerminationChecker::isInTermination())
+            {
+                return { };
+            }
 
             try
             {

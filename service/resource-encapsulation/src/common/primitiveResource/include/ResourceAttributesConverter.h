@@ -114,7 +114,8 @@ namespace OIC
                 void insertItem(Detail::Int2Type< DEPTH >,
                         const OC::OCRepresentation::AttributeItem& item)
                 {
-                    switch (item.base_type()) {
+                    switch (item.base_type())
+                    {
                         case OC::AttributeType::Null:
                             return putValue(item.attrname(), nullptr);
 

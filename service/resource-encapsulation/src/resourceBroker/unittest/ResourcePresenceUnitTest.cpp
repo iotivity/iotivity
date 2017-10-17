@@ -117,7 +117,6 @@ TEST_F(ResourcePresenceTest,addBrokerRequester_ReturnNormalValueIfNormalParams)
     id = 1;
     instance->addBrokerRequester(id,cb);
     EXPECT_FALSE(instance->isEmptyRequester());
-
 }
 
 TEST_F(ResourcePresenceTest,removeBrokerRequester_NormalHandlingIfNormalId)

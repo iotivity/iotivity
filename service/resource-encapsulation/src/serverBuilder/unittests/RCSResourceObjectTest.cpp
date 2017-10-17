@@ -175,7 +175,8 @@ protected:
                         .Return(OC_STACK_OK);
     }
 
-    virtual void initResourceObject() {
+    virtual void initResourceObject()
+    {
         server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::NEVER);
     }
 };
@@ -280,7 +281,8 @@ protected:
                         .Return(OC_STACK_OK);
     }
 
-    virtual void initResourceObject() {
+    virtual void initResourceObject()
+    {
         // intended blank
     }
 };
@@ -878,7 +880,10 @@ TEST_F(ResourceObjectSynchronizationTest, MultipleAccessToServerResourceWithRequ
             for (int i=0; i<10000; ++i)
 #endif
             {
-                if (i % 5 == 0) handler(createRequest(OC_REST_OBSERVE));
+                if (i % 5 == 0)
+                {
+                    handler(createRequest(OC_REST_OBSERVE));
+                }
                 handler(createRequest((i & 1) ? OC_REST_GET : OC_REST_POST));
             }
         }

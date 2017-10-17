@@ -45,7 +45,8 @@ namespace OIC
                 try
                 {
                     presenceSubscriber.unsubscribe();
-                } catch (std::exception & e)
+                }
+                catch (std::exception & e)
                 {
                     OIC_LOG_V(DEBUG,BROKER_TAG,"unsubscribed presence : %s", e.what());
                 }
@@ -66,10 +67,11 @@ namespace OIC
                 OIC_LOG_V(DEBUG, BROKER_TAG, "subscribe Presence");
                 presenceSubscriber
                 = PresenceSubscriber(address, BROKER_TRANSPORT, pSubscribeRequestCB);
-            } catch(RCSPlatformException &e)
+            }
+            catch(RCSPlatformException &e)
             {
                 OIC_LOG_V(DEBUG, BROKER_TAG,
-                        "exception in subscribe Presence %s", e.getReason().c_str());
+                "exception in subscribe Presence %s", e.getReason().c_str());
                 throw;
             }
             presenceTimerHandle

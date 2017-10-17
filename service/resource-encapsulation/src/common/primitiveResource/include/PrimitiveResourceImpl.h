@@ -50,7 +50,10 @@ namespace OIC
             {
                 auto checkedRes = resource.lock();
 
-                if (!checkedRes) return;
+                if (!checkedRes)
+                {
+                    return;
+                }
 
                 cb(std::forward< ARGS >(args)...);
             }
