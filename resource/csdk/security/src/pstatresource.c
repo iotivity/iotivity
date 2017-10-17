@@ -821,7 +821,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
             {
                 if(gPstat->sm[i] == pstat->om)
                 {
-                    OIC_LOG_V(ERROR, TAG, "%s: %d is a supported Operation Mode",
+                    OIC_LOG_V(DEBUG, TAG, "%s: %d is a supported Operation Mode",
                         __func__, (int) pstat->om);
                     supportedOm = true;
                 }
