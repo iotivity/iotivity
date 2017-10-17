@@ -124,6 +124,12 @@ std::string getPayloadTypeString(OCPayloadType type)
         case PAYLOAD_TYPE_DISCOVERY:
             typeStr = "PAYLOAD_TYPE_DISCOVERY";
             break;
+        case PAYLOAD_TYPE_DEVICE:
+            typeStr = "PAYLOAD_TYPE_DEVICE";
+            break;
+        case PAYLOAD_TYPE_PLATFORM:
+            typeStr = "PAYLOAD_TYPE_PLATFORM";
+            break;
         case PAYLOAD_TYPE_REPRESENTATION:
             typeStr = "PAYLOAD_TYPE_REPRESENTATION";
             break;
@@ -132,6 +138,12 @@ std::string getPayloadTypeString(OCPayloadType type)
             break;
         case PAYLOAD_TYPE_PRESENCE:
             typeStr = "PAYLOAD_TYPE_PRESENCE";
+            break;
+        case PAYLOAD_TYPE_DIAGNOSTIC:
+            typeStr = "PAYLOAD_TYPE_DIAGNOSTIC";
+            break;
+        case PAYLOAD_TYPE_INTROSPECTION:
+            typeStr = "PAYLOAD_TYPE_INTROSPECTION";
             break;
     }
     return typeStr;

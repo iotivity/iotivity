@@ -22,6 +22,7 @@
 #include "resource_model_schema_builder.h"
 #include "logger.h"
 #include "Raml.h"
+#include <assert.h>
 
 #define TAG "REQ_MODEL_BUILDER"
 
@@ -37,6 +38,10 @@ static std::string getRequestType(RAML::ActionType actionType)
             return "POST";
         case RAML::ActionType::DELETE:
             return "DELETE";
+        default:
+            OIC_LOG(ERROR, TAG, "Unsupported RequestType!");
+            assert(0);
+            return "";
     }
 
     return ""; // This code should never reach
