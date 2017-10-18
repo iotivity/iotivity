@@ -148,9 +148,13 @@ void SimulatorCollectionResourceImpl::setObservable(bool state)
     }
 
     if (state)
+    {
         m_property = static_cast<OCResourceProperty>(m_property | OC_OBSERVABLE);
+    }
     else
+    {
         m_property = static_cast<OCResourceProperty>(m_property ^ OC_OBSERVABLE);
+    }
 }
 
 void SimulatorCollectionResourceImpl::setDiscoverable(bool state)
@@ -163,9 +167,13 @@ void SimulatorCollectionResourceImpl::setDiscoverable(bool state)
     }
 
     if (state)
+    {
         m_property = static_cast<OCResourceProperty>(m_property | OC_DISCOVERABLE);
+    }
     else
+    {
         m_property = static_cast<OCResourceProperty>(m_property ^ OC_DISCOVERABLE);
+    }
 }
 
 void SimulatorCollectionResourceImpl::setObserverCallback(ObserverCallback callback)
@@ -269,7 +277,9 @@ void SimulatorCollectionResourceImpl::notify(int observerID)
 {
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     if (!m_resourceHandle)
+    {
         return;
+    }
 
     OC::ObservationIds observers {static_cast<OCObservationId>(observerID)};
     sendNotification(observers);
@@ -279,14 +289,20 @@ void SimulatorCollectionResourceImpl::notifyAll()
 {
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     if (!m_resourceHandle)
+    {
         return;
+    }
 
     if (!m_observersList.size())
+    {
         return;
+    }
 
     OC::ObservationIds observers;
     for (auto &observer : m_observersList)
+    {
         observers.push_back(observer.id);
+    }
     sendNotification(observers);
 }
 
@@ -310,7 +326,9 @@ void SimulatorCollectionResourceImpl::addChildResource(const SimulatorResourceSP
 
     // Notify application and observers
     if (m_modelCallback)
+    {
         m_modelCallback(m_uri, m_resModel);
+    }
     notifyAll();
 }
 
@@ -329,7 +347,9 @@ void SimulatorCollectionResourceImpl::removeChildResource(const SimulatorResourc
 
     // Notify application and observers
     if (m_modelCallback)
+    {
         m_modelCallback(m_uri, m_resModel);
+    }
     notifyAll();
 }
 
@@ -348,7 +368,9 @@ void SimulatorCollectionResourceImpl::removeChildResource(const std::string &uri
 
     // Notify application and observers
     if (m_modelCallback)
+    {
         m_modelCallback(m_uri, m_resModel);
+    }
     notifyAll();
 }
 
@@ -441,7 +463,9 @@ OCEntityHandlerResult SimulatorCollectionResourceImpl::handleRequests(
         if (response)
         {
             if (OC_STACK_OK != OC::OCPlatform::sendResponse(response))
+            {
                 return OC_EH_ERROR;
+            }
         }
         else
         {
@@ -467,7 +491,9 @@ OCEntityHandlerResult SimulatorCollectionResourceImpl::handleRequests(
             m_observersList.push_back(info);
 
             if (m_observeCallback)
+            {
                 m_observeCallback(m_uri, ObservationStatus::REGISTER, info);
+            }
         }
         else if (OC::ObserveAction::ObserveUnregister == observationInfo.action)
         {
@@ -484,7 +510,9 @@ OCEntityHandlerResult SimulatorCollectionResourceImpl::handleRequests(
             }
 
             if (m_observeCallback)
+            {
                 m_observeCallback(m_uri, ObservationStatus::UNREGISTER, info);
+            }
         }
     }
 
@@ -577,7 +605,9 @@ void SimulatorCollectionResourceImpl::addLink(const SimulatorResourceSP &resourc
 {
     std::lock_guard<std::mutex> lock(m_modelLock);
     if (!m_resModel.contains(OC_RSRVD_LINKS))
+    {
         return;
+    }
 
     // Create new OIC Link
     SimulatorResourceModel newLink;

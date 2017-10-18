@@ -124,7 +124,10 @@ namespace RAML
                  *
                  * @return size of Properties map
                  */
-            int propertiesSize() const { return m_properties.size(); }
+            int propertiesSize() const
+            {
+                return m_properties.size();
+            }
 
             /**
                  * This method is for getting Properties from Definitions.

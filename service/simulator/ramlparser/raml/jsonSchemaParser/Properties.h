@@ -405,7 +405,10 @@ namespace RAML
              *
              * @return true if present and false if not present
              */
-            bool isDefaultValue() const { return ((m_value != nullptr) ? true : false); }
+            bool isDefaultValue() const
+            {
+                return ((m_value != nullptr) ? true : false);
+            }
 
             /**
              * This method is for getting ValueProperty from Properties.

@@ -82,14 +82,19 @@ void POSTRequestGenerator::SendAllRequests()
 
         for (auto &attributeGen : attributeGenList)
         {
-            if (m_stopRequested) break;
+            if (m_stopRequested)
+            {
+                break;
+            }
 
             while (!m_stopRequested && attributeGen.hasNext())
             {
                 SimulatorResourceModel repModel;
                 SimulatorResourceAttribute attribute;
                 if (true == attributeGen.next(attribute))
+                {
                     repModel.add(attribute.getName(), attribute.getValue());
+                }
 
                 // Send the request
                 m_requestSender.send(queryParam, repModel,

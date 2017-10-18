@@ -30,8 +30,14 @@ class RequestGeneration
 
         RequestGeneration(RequestType type, int id,
                           ProgressStateCallback callback);
-        RequestType type() const { return m_type;}
-        int id() const {return m_id;}
+        RequestType type() const
+        {
+            return m_type;
+        }
+        int id() const
+        {
+            return m_id;
+        }
         void start();
         void stop();
 

@@ -57,7 +57,9 @@ std::unordered_map<std::string, RequestModelSP> RequestModelBuilder::build(
     {
         // Pick the resource based on the resource uri.
         if (std::string::npos == uri.find((resource.second)->getResourceUri()))
+        {
             continue;
+        }
 
         // Construct Request and Response Model from RAML::Action
         for (auto &action :  (resource.second)->getActions())

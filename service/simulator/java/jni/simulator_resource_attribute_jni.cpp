@@ -44,7 +44,9 @@ bool SimulatorResourceAttributeToCpp(JNIEnv *env, jobject jAttribute,
                                      SimulatorResourceAttribute &attribute)
 {
     if (!jAttribute)
+    {
         return false;
+    }
 
     static jfieldID nameFID = env->GetFieldID(gSimulatorClassRefs.simulatorResourceAttributeCls,
                               "mName", "Ljava/lang/String;");
@@ -58,7 +60,9 @@ bool SimulatorResourceAttributeToCpp(JNIEnv *env, jobject jAttribute,
     jobject jAttrProperty = env->GetObjectField(jAttribute, propertyFID);
 
     if (!jAttrName || !jAttrValue)
+    {
         return false;
+    }
 
     JniString attrName(env, jAttrName);
     AttributeValueVariant value;

@@ -32,7 +32,9 @@ namespace RAML
     void JsonSchema::readJson()
     {
         if (! m_cjson)
+        {
             return;
+        }
 
         cJSON *jsonId = cJSON_GetObjectItem(m_cjson, "id");
         if (jsonId)
@@ -90,9 +92,13 @@ namespace RAML
 
         cJSON *jsonAdditionalProperties = cJSON_GetObjectItem(m_cjson, "additionalProperties");
         if (jsonAdditionalProperties)
+        {
             m_additionalProperties = (jsonAdditionalProperties->type == cJSON_True);
+        }
         else
+        {
             m_additionalProperties = true;
+        }
 
         cJSON *jsonReference = cJSON_GetObjectItem(m_cjson, "$ref");
         if (jsonReference)
@@ -109,7 +115,9 @@ namespace RAML
                 setRequiredValue(it);
             }
             if (m_type.empty())
+            {
                 m_type = param.getType();
+            }
         }
         cJSON *jsonAllOf = cJSON_GetObjectItem(m_cjson, "allOf");
         if (jsonAllOf)
@@ -127,7 +135,9 @@ namespace RAML
                 setRequiredValue(it);
             }
             if (m_type.empty())
+            {
                 m_type = param.getType();
+            }
         }
         cJSON *jsonRequiredValues = cJSON_GetObjectItem(m_cjson, "required");
         if (jsonRequiredValues)
@@ -195,7 +205,9 @@ namespace RAML
                 definition->setRequiredValue(it);
             }
             if (definition->getType().empty())
+            {
                 definition->setType(param.getType());
+            }
         }
         cJSON *defAllOf = cJSON_GetObjectItem(childDefinitions, "allOf");
         if (defAllOf)
@@ -212,7 +224,9 @@ namespace RAML
                 definition->setRequiredValue(it);
             }
             if (definition->getType().empty())
+            {
                 definition->setType(param.getType());
+            }
         }
         return definition;
     }
@@ -267,9 +281,13 @@ namespace RAML
         else if (defaultValue->type == cJSON_Number)
         {
             if (attType == "number")
+            {
                 property->setValue((double)defaultValue->valuedouble);
+            }
             else
+            {
                 property->setValue((int)defaultValue->valueint );
+            }
         }
         else if (defaultValue->type == cJSON_True)
         {
@@ -296,7 +314,9 @@ namespace RAML
             while ( ++idx < size);
             property->setValueProperty(std::make_shared<ValueProperty>(allwdValues));
             if (attType.empty())
+            {
                 attType = "string";
+            }
         }
         else if ((cJSON_GetArrayItem(allowedvalues, 0)->type) == cJSON_Number)
         {
@@ -322,7 +342,9 @@ namespace RAML
                 while ( ++idx < size);
                 property->setValueProperty(std::make_shared<ValueProperty>(allwdValues));
                 if (attType.empty())
+                {
                     attType = "integer";
+                }
             }
         }
         else if (((cJSON_GetArrayItem(allowedvalues, 0)->type) == cJSON_True)
@@ -334,14 +356,20 @@ namespace RAML
             do
             {
                 if (cJSON_GetArrayItem(allowedvalues, idx)->type != cJSON_False)
+                {
                     allwdValues.push_back(true);
+                }
                 else
+                {
                     allwdValues.push_back(false);
+                }
             }
             while ( ++idx < size);
             property->setValueProperty(std::make_shared<ValueProperty>(allwdValues));
             if (attType.empty())
+            {
                 attType = "boolean";
+            }
         }
     }
 
@@ -380,12 +408,18 @@ namespace RAML
             if (exclusiveMax)
             {
                 if (exclusiveMax->type == cJSON_True)
+                {
                     max = --(stringMax->valueint);
+                }
                 else
+                {
                     max = stringMax->valueint;
+                }
             }
             else
+            {
                 max = stringMax->valueint;
+            }
         }
         cJSON *stringMin = cJSON_GetObjectItem(childProperties, "minLength");
         if (stringMin)
@@ -394,15 +428,24 @@ namespace RAML
             if (exclusiveMin)
             {
                 if (exclusiveMin->type == cJSON_True)
+                {
                     min = ++(stringMin->valueint);
+                }
                 else
+                {
                     min = stringMin->valueint;
+                }
             }
             else
+            {
                 min = stringMin->valueint;
+            }
         }
+
         if (min != INT_MIN || max != INT_MAX)
+        {
             property->setValueProperty(std::make_shared<ValueProperty>(min, max, 0));
+        }
 
         cJSON *stringFormat = cJSON_GetObjectItem(childProperties, "format");
         if (stringFormat)
@@ -429,12 +472,18 @@ namespace RAML
             if (exclusiveMax)
             {
                 if (exclusiveMax->type == cJSON_True)
+                {
                     max = --(Max->valueint);
+                }
                 else
+                {
                     max = Max->valueint;
+                }
             }
             else
+            {
                 max = Max->valueint;
+            }
         }
         cJSON *Min = cJSON_GetObjectItem(childProperties, "minimum");
         if (Min)
@@ -443,12 +492,18 @@ namespace RAML
             if (exclusiveMin)
             {
                 if (exclusiveMin->type == cJSON_True)
+                {
                     min = ++(Min->valueint);
+                }
                 else
+                {
                     min = Min->valueint;
+                }
             }
             else
+            {
                 min = Min->valueint;
+            }
         }
         cJSON *MultipleOff = cJSON_GetObjectItem(childProperties, "multipleOf");
         if (MultipleOff)
@@ -456,8 +511,9 @@ namespace RAML
             multipleOf = MultipleOff->valueint;
         }
         if (min != INT_MIN || max != INT_MAX)
+        {
             property->setValueProperty(std::make_shared<ValueProperty>(min, max, multipleOf));
-
+        }
     }
 
     void JsonSchema::readDouble(cJSON *childProperties,  PropertiesPtr &property)
@@ -471,12 +527,18 @@ namespace RAML
             if (exclusiveMax)
             {
                 if (exclusiveMax->type == cJSON_True)
+                {
                     max = --(Max->valuedouble);
+                }
                 else
+                {
                     max = Max->valuedouble;
+                }
             }
             else
+            {
                 max = Max->valuedouble;
+            }
         }
         cJSON *Min = cJSON_GetObjectItem(childProperties, "minimum");
         if (Min)
@@ -485,12 +547,18 @@ namespace RAML
             if (exclusiveMin)
             {
                 if (exclusiveMin->type == cJSON_True)
+                {
                     min = ++(Min->valuedouble);
+                }
                 else
+                {
                     min = Min->valuedouble;
+                }
             }
             else
+            {
                 min = Min->valuedouble;
+            }
         }
 
         cJSON *MultipleOff = cJSON_GetObjectItem(childProperties, "multipleOf");
@@ -499,8 +567,9 @@ namespace RAML
             multipleOf = MultipleOff->valueint;
         }
         if (min != INT_MIN || max != INT_MAX)
+        {
             property->setValueProperty(std::make_shared<ValueProperty>(min, max, multipleOf));
-
+        }
     }
 
     void JsonSchema::readArray(cJSON *childProperties,  PropertiesPtr &property)
@@ -534,12 +603,18 @@ namespace RAML
             if (exclusiveMax)
             {
                 if (exclusiveMax->type == cJSON_True)
+                {
                     max = --(itemsMax->valueint);
+                }
                 else
+                {
                     max = itemsMax->valueint;
+                }
             }
             else
+            {
                 max = itemsMax->valueint;
+            }
         }
         cJSON *itemsMin = cJSON_GetObjectItem(childProperties, "minItems");
         if (itemsMin)
@@ -548,12 +623,18 @@ namespace RAML
             if (exclusiveMin)
             {
                 if (exclusiveMin->type == cJSON_True)
+                {
                     min = ++(itemsMin->valueint);
+                }
                 else
+                {
                     min = itemsMin->valueint;
+                }
             }
             else
+            {
                 min = itemsMin->valueint;
+            }
         }
         cJSON *uniqueItems = cJSON_GetObjectItem(childProperties, "uniqueItems");
         if (uniqueItems)
@@ -731,7 +812,9 @@ namespace RAML
         std::string name = fileName;
         std::transform(name.begin(), name.end(), name.begin(), ::tolower);
         if (name.compare("oic.baseresource.json") == 0)
+        {
             return;
+        }
 
         cJSON *json = m_includeResolver->readToJson(fileName);
         JsonSchemaPtr Refparser = std::make_shared<JsonSchema>(json, m_includeResolver);
@@ -746,14 +829,18 @@ namespace RAML
         std::string name = fileName;
         std::transform(name.begin(), name.end(), name.begin(), ::tolower);
         if (name.compare("oic.baseresource.json") == 0)
+        {
             return;
+        }
 
         cJSON *json = m_includeResolver->readToJson(fileName);
         JsonSchemaPtr Refparser = std::make_shared<JsonSchema>(json, m_includeResolver);
 
         DefinitionsPtr definition = Refparser->getDefinition(defName);
         if (definition == nullptr)
+        {
             throw JsonException("Definition Name Incorrect");
+        }
 
         param.addProperties(definition->getProperties());
         param.addRequired(definition->getRequiredValues());
@@ -813,7 +900,9 @@ namespace RAML
                 if (!(defName.empty()))
                 {
                     if (getDefinition(defName) == nullptr)
+                    {
                         throw JsonException("Definition Name Incorrect");
+                    }
                     param.addProperties(getDefinition(defName)->getProperties());
                     param.addRequired(getDefinition(defName)->getRequiredValues());
                     param.setType(getDefinition(defName)->getType());

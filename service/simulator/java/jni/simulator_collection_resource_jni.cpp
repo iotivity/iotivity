@@ -37,7 +37,9 @@ static SimulatorCollectionResourceSP simulatorCollectionResourceToCpp(JNIEnv *en
     JniSharedObjectHolder<SimulatorCollectionResource> *jniResource =
         getHandle<JniSharedObjectHolder<SimulatorCollectionResource>>(env, object);
     if (jniResource)
+    {
         return jniResource->get();
+    }
     return nullptr;
 }
 

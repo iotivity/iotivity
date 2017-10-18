@@ -149,13 +149,17 @@ void SimulatorRemoteResourceImpl::observe(ObserveType type,
 
     OC::ObserveType observeType = OC::ObserveType::Observe;
     if (type == ObserveType::OBSERVE_ALL)
+    {
         observeType = OC::ObserveType::ObserveAll;
+    }
 
     try
     {
         OCStackResult ocResult = m_ocResource->observe(observeType, queryParams, observeCallback);
         if (OC_STACK_OK != ocResult)
+        {
             throw SimulatorException(static_cast<SimulatorResult>(ocResult), OC::OCException::reason(ocResult));
+        }
 
         SIM_LOG(ILogger::INFO, "[URI: " << getURI() << "] Sent OBSERVE request.")
     }
