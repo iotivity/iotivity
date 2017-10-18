@@ -172,7 +172,8 @@ static bool UpdatePersistentStorage(OicSecPstat_t *pstat)
 OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
                                         uint8_t **payload,
                                         size_t *size,
-                                        const bool *propertiesToInclude)
+                                        const bool *propertiesToInclude,
+                                        const bool includeDosP)
 {
     if (NULL == pstat || NULL == payload || NULL != *payload || NULL == size)
     {
@@ -237,15 +238,18 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
         cborEncoderResult = cbor_encode_int(&dosMap, pstat->dos.state);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding pstat.dos.s value.");
 
-        cborEncoderResult = cbor_encode_text_string(&dosMap, OIC_JSON_P_NAME,
-            strlen(OIC_JSON_P_NAME));
-        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding pstat.dos.p tag.");
+        if (includeDosP)
+        {
+            cborEncoderResult = cbor_encode_text_string(&dosMap, OIC_JSON_P_NAME,
+                strlen(OIC_JSON_P_NAME));
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding pstat.dos.p tag.");
 
-        cborEncoderResult = cbor_encode_boolean(&dosMap, pstat->dos.pending);
-        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding pstat.dos.p value.");
+            cborEncoderResult = cbor_encode_boolean(&dosMap, pstat->dos.pending);
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding pstat.dos.p value.");
+        }
 
         cborEncoderResult = cbor_encoder_close_container(&pstatMap, &dosMap);
-        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed closing pstat.dos map");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed closing pstat.dos map");
     }
 
     // isop Property
@@ -369,7 +373,7 @@ exit:
         // Since the allocated initial memory failed, double the memory.
         cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
-        ret = PstatToCBORPayloadPartial(pstat, payload, &cborLen, propertiesToInclude);
+        ret = PstatToCBORPayloadPartial(pstat, payload, &cborLen, propertiesToInclude, includeDosP);
         if (OC_STACK_OK == ret)
         {
             *size = cborLen;
@@ -398,7 +402,7 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat,
         allProps[i] = true;
     }
 
-    return PstatToCBORPayloadPartial(pstat, payload, size, allProps);
+    return PstatToCBORPayloadPartial(pstat, payload, size, allProps, true);
 }
 
 OCStackResult CBORPayloadToPstat(const uint8_t *cborPayload, const size_t size,
@@ -493,6 +497,10 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
                 }
                 else if (strcmp(dosTagName, OIC_JSON_P_NAME) == 0)
                 {
+                    if (roParsed)
+                    {
+                        *roParsed = true;
+                    }
                     OIC_LOG(DEBUG, TAG, "Found pstat.dos.p tag; getting boolean value.");
                     bool p = false;
                     cborFindResult = cbor_value_get_boolean(&dosMap, &p);
