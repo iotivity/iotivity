@@ -134,8 +134,6 @@ help_vars.Add(BoolVariable('RELEASE', 'Build for release?',
 help_vars.Add(
     EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))
 
-help_vars.Add(
-    BoolVariable('WITH_RA', 'Build with Remote Access module', False))
 help_vars.Add(BoolVariable('WITH_TCP', 'Build with TCP adapter', False))
 help_vars.Add(BoolVariable('WITH_PROXY', 'Build with CoAP-HTTP Proxy', False))
 help_vars.Add(
@@ -150,10 +148,6 @@ help_vars.Add(
                  ['CLIENT', 'SERVER']))
 
 help_vars.Add(BoolVariable('SIMULATOR', 'Build with simulator module', False))
-
-help_vars.Add(
-    BoolVariable('WITH_RA_IBB', 'Build with Remote Access module(workssys)',
-                 False))
 
 if target_os in targets_disallow_multitransport:
     help_vars.Add(

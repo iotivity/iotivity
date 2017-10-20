@@ -38,7 +38,40 @@ public class PlatformConfig {
     private QualityOfService mQualityOfService;
     private String mSvrDbPath; //TODO: Instead of SVRDB file, it should be Persistent Storage.
                               //this is only for 0.9.2
+    private String mIntrospectPath;
     private int mTransportType;
+
+    /**
+     * @param serviceType        indicate IN_PROC or OUT_OF_PROC
+     * @param modeType           indicate whether we want to do server, client or both
+     * @param ipAddress          ip address of server
+     *                           if you specify 0.0.0.0 : it listens on any interface
+     * @param port               port of server
+     *                           if you specifiy 0 : next available random port is used
+     *                           if you specify 5683 : client discovery can work even if they don't
+     *                           specify port
+     * @param qualityOfService   quality of service
+     * @param dbPath             Persistant storage file for SVR Database.
+     * @param introspectionPath  Persistant storage file for introspection data.
+     */
+    public PlatformConfig(
+                          ServiceType serviceType,
+                          ModeType modeType,
+                          String ipAddress,
+                          int port,
+                          QualityOfService qualityOfService,
+                          String dbPath,
+                          String introspectionPath) {
+        this.mServiceType = serviceType;
+        this.mModeType = modeType;
+        this.mIpAddress = ipAddress;
+        this.mPort = port;
+        this.mQualityOfService = qualityOfService;
+        this.mSvrDbPath = dbPath;
+        this.mIntrospectPath = introspectionPath;
+        this.mTransportType = 0;
+    }
+
     /**
      * @param activity         app activity
      * @param context          app context
@@ -166,6 +199,10 @@ public class PlatformConfig {
 
     public String getSvrDbPath() {
         return mSvrDbPath;
+    }
+
+    public String getIntrospectionPath() {
+        return mIntrospectPath;
     }
 
     public Activity getActivity() {

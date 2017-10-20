@@ -103,6 +103,7 @@ public final class OcPlatform {
                     platformConfig.getPort(),
                     platformConfig.getQualityOfService().getValue(),
                     platformConfig.getSvrDbPath(),
+                    platformConfig.getIntrospectionPath(),
                     platformConfig.getAvailableTransportType()
             );
 
@@ -122,6 +123,7 @@ public final class OcPlatform {
                                          int port,
                                          int qualityOfService,
                                          String dbPath,
+                                         String introspectionPath,
                                          int transport);
 
     /**

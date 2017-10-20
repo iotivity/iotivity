@@ -1255,10 +1255,20 @@ OicSecCred_t *JSONToCredBin(const char *jsonStr)
                 cJSON *jsonPriv = cJSON_GetObjectItem(jsonObj, OIC_JSON_DATA_NAME);
                 VERIFY_NOT_NULL(TAG, jsonPriv, ERROR);
                 jsonObjLen = strlen(jsonPriv->valuestring);
-                cred->privateData.data = (uint8_t *)OICCalloc(1, jsonObjLen);
+
+                ret = (jsonObjLen % 2 == 0) ? ret : OC_STACK_ERROR;
+
+                char tmp[3];
+                char *buf = (char *)OICCalloc(1, jsonObjLen/2);
+                for(size_t i = 0, p = 0 ; i < jsonObjLen; i+=2, ++p)
+                {
+                    sprintf(tmp, "%c%c", jsonPriv->valuestring[i], jsonPriv->valuestring[i+1]);
+                    buf[p] = (char)strtol(tmp, NULL, 16);
+                }
+                cred->privateData.len = jsonObjLen/2;
+                cred->privateData.data = (uint8_t *)OICCalloc(1, cred->privateData.len);
                 VERIFY_NOT_NULL(TAG, (cred->privateData.data), ERROR);
-                memcpy(cred->privateData.data, jsonPriv->valuestring, jsonObjLen);
-                cred->privateData.len = jsonObjLen;
+                memcpy(cred->privateData.data, buf, cred->privateData.len);
 
                 cJSON *jsonEncoding = cJSON_GetObjectItem(jsonObj, OIC_JSON_ENCODING_NAME);
                 VERIFY_NOT_NULL(TAG, jsonEncoding, ERROR);
@@ -1267,18 +1277,28 @@ OicSecCred_t *JSONToCredBin(const char *jsonStr)
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PUBLICDATA_NAME);
-
             if (NULL != jsonObj)
             {
                 cJSON *jsonPub = cJSON_GetObjectItem(jsonObj, OIC_JSON_DATA_NAME);
                 VERIFY_NOT_NULL(TAG, jsonPub, ERROR);
                 jsonObjLen = strlen(jsonPub->valuestring);
-                cred->publicData.data = (uint8_t *)OICCalloc(1, jsonObjLen);
+
+                ret = (jsonObjLen % 2 == 0) ? ret : OC_STACK_ERROR;
+
+                char tmp[3];
+                char *buf = (char *)OICCalloc(1, jsonObjLen/2);
+                for(size_t i = 0, p = 0 ; i < jsonObjLen; i+=2, ++p)
+                {
+                    sprintf(tmp, "%c%c", jsonPub->valuestring[i], jsonPub->valuestring[i+1]);
+                    buf[p] = (char)strtol(tmp, NULL, 16);
+                }
+                cred->publicData.len = jsonObjLen/2;
+                cred->publicData.data = (uint8_t *)OICCalloc(1, cred->publicData.len);
                 VERIFY_NOT_NULL(TAG, (cred->publicData.data), ERROR);
-                memcpy(cred->publicData.data, jsonPub->valuestring, jsonObjLen);
-                cred->publicData.len = jsonObjLen;
+                memcpy(cred->publicData.data, buf, cred->publicData.len);
 
                 cJSON *jsonEncoding = cJSON_GetObjectItem(jsonObj, OIC_JSON_ENCODING_NAME);
+
                 VERIFY_NOT_NULL(TAG, jsonEncoding, ERROR);
                 cred->publicData.encoding = GetEncodingTypeFromStr(jsonEncoding->valuestring);
             }
@@ -1290,10 +1310,20 @@ OicSecCred_t *JSONToCredBin(const char *jsonStr)
                 cJSON *jsonOpt = cJSON_GetObjectItem(jsonObj, OIC_JSON_DATA_NAME);
                 VERIFY_NOT_NULL(TAG, jsonOpt, ERROR);
                 jsonObjLen = strlen(jsonOpt->valuestring);
-                cred->optionalData.data =  (uint8_t *)OICCalloc(1, jsonObjLen);
+
+                ret = (jsonObjLen % 2 == 0) ? ret : OC_STACK_ERROR;
+                char tmp[3];
+                char *buf = (char *)OICCalloc(1, jsonObjLen/2);
+                for(size_t i = 0, p = 0; i < jsonObjLen; i+=2, ++p)
+                {
+                    sprintf(tmp, "%c%c", jsonOpt->valuestring[i], jsonOpt->valuestring[i+1]);
+                    buf[p] = (char)strtol(tmp, NULL, 16);
+                }
+                cred->optionalData.len = jsonObjLen/2;
+
+                cred->optionalData.data =  (uint8_t *)OICCalloc(1, cred->optionalData.len);
                 VERIFY_NOT_NULL(TAG, (cred->optionalData.data), ERROR);
-                memcpy(cred->optionalData.data, jsonOpt->valuestring, jsonObjLen);
-                cred->optionalData.len = jsonObjLen;
+                memcpy(cred->optionalData.data, buf, cred->optionalData.len);
 
                 cJSON *jsonEncoding = cJSON_GetObjectItem(jsonObj, OIC_JSON_ENCODING_NAME);
                 VERIFY_NOT_NULL(TAG, jsonEncoding, ERROR);
@@ -1333,7 +1363,7 @@ OicSecCred_t *JSONToCredBin(const char *jsonStr)
     ret = ConvertStrToUuid(jsonCredObj->valuestring, &headCred->rownerID);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
     ret = OC_STACK_OK;
-*/  
+*/
 exit:
     cJSON_Delete(jsonRoot);
     if (OC_STACK_OK != ret)

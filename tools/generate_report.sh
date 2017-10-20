@@ -75,7 +75,7 @@ process_cmd_args() {
                         report_flags="";
                         ;;
                     "xml")
-                        report_flags="--xml --xml-pretty";
+                        report_flags="--xml";
                         ;;
                 esac
                 shift 2

@@ -471,17 +471,18 @@ void RemoveOnObserveListener(JNIEnv* env, jobject jListener)
 /*
 * Class:     org_iotivity_base_OcPlatform
 * Method:    configure
-* Signature: (IILjava/lang/String;IILjava/lang/String;I)V
+* Signature: (IILjava/lang/String;IILjava/lang/String;Ljava/lang/String;I)V
 */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
 (JNIEnv *env, jclass clazz, jint jServiceType, jint jModeType, jstring jIpAddress, jint jPort,
- jint jQOS, jstring jDbPath, jint jTransport)
+ jint jQOS, jstring jDbPath, jstring jIntrospectionPath, jint jTransport)
 {
     OC_UNUSED(clazz);
     LOGI("OcPlatform_configure");
 
     std::string ipAddress;
     std::string dbfile;
+    std::string introspectionfile;
     if (jIpAddress)
     {
         ipAddress = env->GetStringUTFChars(jIpAddress, nullptr);
@@ -490,6 +491,11 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
     {
         dbfile = env->GetStringUTFChars(jDbPath, nullptr);
         JniOcSecurity::StoreDbPath(dbfile);
+    }
+    if (jIntrospectionPath)
+    {
+        introspectionfile = env->GetStringUTFChars(jIntrospectionPath, nullptr);
+        JniOcSecurity::StoreIntrospection(introspectionfile);
     }
     uint16_t port = 0;
     if (jPort > 0)
