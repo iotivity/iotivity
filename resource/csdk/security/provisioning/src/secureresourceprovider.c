@@ -516,7 +516,7 @@ static OCStackApplicationResult ProvisionCredentialDosCB1(void *ctx, OCDoHandle 
                 res = ProvisionLocalCredential(ctx, credInfo);
             }
 
-            if ((NULL != deviceInfo) || (OC_STACK_OK != res))
+            if (OC_STACK_OK != res)
             {
                 DeleteCredList(credInfo);
             }
