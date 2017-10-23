@@ -204,7 +204,7 @@ public class ProviderService {
     /**
      * Request topics list already registered by provider user
      *
-     *
+     * @return topics list
      * @throws NSException failed to get topics list
      */
     public TopicsList getRegisteredTopicList() throws NSException {
