@@ -20,7 +20,8 @@ host_target_map = {
 os_arch_map = {
     'linux': [
         'x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64', 'mips',
-        'mipsel', 'mips64', 'mips64el', 'i386', 'powerpc', 'sparc', 'aarch64'
+        'mipsel', 'mips64', 'mips64el', 'i386', 'powerpc', 'sparc', 'aarch64',
+        'armv6l', 'armv7l'
     ],
     'tizen': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64'],
     'android': [
