@@ -19,6 +19,7 @@
  ******************************************************************/
 
 #include "cawsutil.h"
+#include "caadapterutils.h"
 #include "experimental/logger.h"
 #include "oic_malloc.h"
 

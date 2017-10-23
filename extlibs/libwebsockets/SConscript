@@ -45,8 +45,16 @@ if GetOption('clean'):
 ######################################################################
 # Download libwebsockets
 ######################################################################
-lws_version          = 'v2.2.1'
-lws_repo_url         = 'https://github.com/warmcat/libwebsockets.git'
+# NOTE: Patch (bd1b017d1006ad583bc0ef2d10bdf83d5da98c5d) for allowing
+# user to provide certificates without using filepaths is required to
+# build ws adapter code for creating secure server context. This patch
+# has been merged to libwebsockets upstream master branch, but we are
+# using v2.2.1 tagged code base. Thus v2.2.1 is forked to new branch
+# applied required patch and using the same forked libwebsockets repo.
+# Please change to upstream libwebsockets repo when updating to libwebsockets
+# 2.4 version.
+lws_version          = 'v2.2.1_Iotivity'
+lws_repo_url         = 'https://github.com/HarishSRIB/libwebsockets.git'
 lws_checkout_command = 'git clone ' + lws_repo_url + ' extlibs/libwebsockets/libwebsockets -b ' + lws_version
 
 if not os.path.exists(lws_dir):

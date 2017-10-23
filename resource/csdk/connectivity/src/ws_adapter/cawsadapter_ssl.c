@@ -20,11 +20,13 @@
 
 #include "cawsadapter_ssl.h"
 #include "cacommonutil.h"
+#include "cawsutil.h"
 #include "oic_malloc.h"
 #include "uarraylist.h"
 #include "octhread.h"
 #include "memory.h"
 #include "experimental/logger.h"
+#include "string.h"
 
 #define TAG "OIC_CA_WS_ADAP_SSL"
 
@@ -124,7 +126,7 @@ static char *formCipherString(int *selectCiphers, int size)
 {
     char *ciphersStr = NULL;
     int ciphersLen = 0;
-    int i = 0, found = -1;
+    int i = 0;
     int pos = 0;
 
     if (size <= 0)
@@ -294,7 +296,6 @@ static size_t parseCertChain(X509_STORE *certStore, uint8_t *buf, size_t bufLen,
     size_t pemCertFooterLen = sizeof(pemCertFooter);
 
     size_t len = 0;
-    uint8_t *tmp = NULL;
     size_t count = 0;
     size_t pos = 0;
 
@@ -599,7 +600,7 @@ static unsigned int pskClientCallback(SSL *ssl, const char *hint,
     VERIFY_NON_NULL_RET(ssl, TAG, "ssl pointer is NULL", 0);
     VERIFY_NON_NULL_RET(hint, TAG, "Hint is NULL", 0);
 
-    OIC_LOG_BUFFER(DEBUG, TAG, hint, strlen(hint));
+    OIC_LOG_BUFFER(DEBUG, TAG, (uint8_t*)hint, strlen(hint));
 
     // Set client's idetity
     int len;
@@ -619,11 +620,11 @@ static unsigned int pskClientCallback(SSL *ssl, const char *hint,
     }
 
     OIC_LOG_V(DEBUG, TAG, "Identity:");
-    OIC_LOG_BUFFER(DEBUG, TAG, identity, len);
+    OIC_LOG_BUFFER(DEBUG, TAG, (uint8_t*)identity, len);
 
     // Set client's pre-shared key
     uint8_t keyBuf[PSK_LENGTH] = {0};
-    len = g_getCredentialsCallback(CA_DTLS_PSK_KEY, hint, strlen(hint), keyBuf, PSK_LENGTH);
+    len = g_getCredentialsCallback(CA_DTLS_PSK_KEY, (uint8_t*)hint, strlen(hint), keyBuf, PSK_LENGTH);
     if (len < 0)
     {
         OIC_LOG(ERROR, TAG, "Failed to retrieve pre-shared key!");
@@ -631,9 +632,9 @@ static unsigned int pskClientCallback(SSL *ssl, const char *hint,
     }
 
     OIC_LOG_V(DEBUG, TAG, "PSK:");
-    OIC_LOG_BUFFER(DEBUG, TAG, keyBuf, len);
+    OIC_LOG_BUFFER(DEBUG, TAG, (uint8_t*)keyBuf, len);
 
-    if (len > maxPskLen)
+    if ((unsigned int)len > maxPskLen)
     {
         OIC_LOG_V(ERROR, TAG, "PSK key buffer is small (%d) for key (%d)!", maxPskLen, len);
         return 0;
@@ -667,7 +668,7 @@ static void setServerPSKHint()
     {
         OIC_LOG(DEBUG, TAG, "Server Hint:");
         OIC_LOG_BUFFER(DEBUG, TAG, idBuf, ret);
-        SSL_CTX_use_psk_identity_hint(g_serverSslCtx, idBuf);
+        SSL_CTX_use_psk_identity_hint(g_serverSslCtx, (char*)idBuf);
     }
 
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
@@ -684,11 +685,11 @@ static unsigned int pskServerCallback(SSL *ssl, const char *identity,
     VERIFY_NON_NULL_RET(identity, TAG, "identity is NULL", 0);
 
     OIC_LOG(DEBUG, TAG, "identity:");
-    OIC_LOG_BUFFER(DEBUG, TAG, identity, strlen(identity));
+    OIC_LOG_BUFFER(DEBUG, TAG, (uint8_t*)identity, strlen(identity));
 
     int pskLen;
     uint8_t keyBuf[PSK_LENGTH] = {0};
-    pskLen = g_getCredentialsCallback(CA_DTLS_PSK_KEY, identity, strlen(identity), keyBuf, PSK_LENGTH);
+    pskLen = g_getCredentialsCallback(CA_DTLS_PSK_KEY, (uint8_t*)identity, strlen(identity), keyBuf, PSK_LENGTH);
     if (pskLen < 0)
     {
         OIC_LOG(ERROR, TAG, "PSK key not found!");
@@ -696,7 +697,7 @@ static unsigned int pskServerCallback(SSL *ssl, const char *identity,
     }
 
     OIC_LOG(DEBUG, TAG, "PSK:");
-    OIC_LOG_BUFFER(DEBUG, TAG, keyBuf, pskLen);
+    OIC_LOG_BUFFER(DEBUG, TAG, (uint8_t*)keyBuf, pskLen);
 
     if (pskLen > (int)maxPskLen)
     {

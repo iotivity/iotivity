@@ -30,6 +30,7 @@
 #include "caremotehandler.h"
 #include "experimental/logger.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 #ifdef __WITH_TLS__
 #include "cawsadapter_ssl.h"
@@ -98,7 +99,7 @@ static int CALWSCallback(struct lws *wsi, enum lws_callback_reasons reason,
             if (NULL != in)
             {
                 // TODO: is in NULL terminated?
-                OIC_LOG_V(ERROR, TAG, "[LWS] Connection error: [%s]", in);
+                OIC_LOG_V(ERROR, TAG, "[LWS] Connection error: [%s]", (char*) in);
             }
 
             CAWSRemoveWSConnInfoFromList(&g_connInfoList, connInfo);
@@ -429,10 +430,7 @@ static CAResult_t CALWSInitServer()
 #ifdef __WITH_TLS__
     port = caglobals.ws.u4s;
     contextInfo.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
-
-    // TODO: This option is not available in libwebsockets.
-    // Patch for this is under review in libwebsockets repo.
-    contextInfo.options |= LWS_SERVER_OPTION_SKIP_LOADING_CERT;
+    contextInfo.options |= LWS_SERVER_OPTION_CREATE_VHOST_SSL_CTX;
 #endif
 
     if (!caglobals.ws.ipv4wsenabled)
@@ -502,9 +500,10 @@ static void CALWSConnect(WSConnInfo *connInfo)
     lws_client_connect_via_info(&lwsConnInfo);
 }
 
-static void CALWSService(void *data)
+static void CALWSService(void* data)
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
+    OC_UNUSED(data);
 
     while (true)
     {

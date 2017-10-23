@@ -183,7 +183,7 @@ void CAWSPacketReceivedCallback(const CASecureEndpoint_t *sep, const void *data,
     VERIFY_NON_NULL_VOID(sep, TAG, "sep is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
 
-    if (dataLength != CAQueueWSData(g_receiveQueueHandle, sep, data, dataLength))
+    if (-1 == CAQueueWSData(g_receiveQueueHandle, sep, data, dataLength))
     {
         OIC_LOG(ERROR, TAG, "could not add to receive queue");
     }
@@ -388,6 +388,7 @@ int32_t CASendWSUnicastData(const CAEndpoint_t *endpoint,
                             CADataType_t dataType)
 {
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
+    OC_UNUSED(dataType);
 
     OIC_LOG(DEBUG, TAG, "Need to send:");
     OIC_LOG_BUFFER(DEBUG, TAG, data, dataLength);
@@ -397,11 +398,16 @@ int32_t CASendWSUnicastData(const CAEndpoint_t *endpoint,
     return CAQueueWSData(g_sendQueueHandle, &sep, data, dataLength);
 }
 
-int32_t CASendWSMulticastData(const CAEndpoint_t *endpoint,
-                              const void *data, uint32_t dataLength,
+int32_t CASendWSMulticastData(const CAEndpoint_t* endpoint,
+                              const void* data, uint32_t dataLength,
                               CADataType_t dataType)
 {
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
+    OC_UNUSED(endpoint);
+    OC_UNUSED(data);
+    OC_UNUSED(dataLength);
+    OC_UNUSED(dataType);
+
     return 0;
 }
 

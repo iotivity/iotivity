@@ -72,6 +72,14 @@ CAResult_t CAWSSendData(const CAEndpoint_t *endpoint, const void *data,
 void CAWSSetPacketReceivedCallback(CANetworkPacketReceivedCallback networkPacketCallback);
 
 /**
+ * Used to set callback to be notified on connection state changes.
+ *
+ * @param[in]  connCallback    The callback which will be notified
+ *                                       when connection state is changed.
+ */
+void CAWSSetConnectionChangeCallback(CAConnectionChangeCallback connCallback);
+
+/**
  * set error callback to notify error in WS adapter.
  *
  * @param[in]  errorCallback Callback function to notify the error
