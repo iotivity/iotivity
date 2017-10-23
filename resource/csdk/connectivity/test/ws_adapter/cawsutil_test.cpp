@@ -307,3 +307,10 @@ TEST(CAWSFindWSConnInfoFromList, RetrievingConnectionFromListHavingMultipleEntry
     CAWSDestroyWSConnInfoList(connInfoList);
 }
 
+TEST(CAWSGetPeerAddress, InvalidSocketFD)
+{
+    char address[66];
+    uint16_t port;
+    CAResult_t res = CAWSGetPeerAddress(-1, address, &port, NULL);
+    EXPECT_EQ(CA_STATUS_FAILED, res);
+}
