@@ -211,6 +211,54 @@ TEST_F(ESRichCommonTest_btc, setCloudID_SRC_P)
 }
 
 /**
+ * @since 2017-10-24
+ * @objective Test 'getCredID' API with positive basic way
+ * @target std::string getCredID() const;
+ * @test_data    None
+ * @pre_condition None
+ * @procedure Perform getCredID()
+ * @post_condition None
+ * @expected successfully called api
+ **/
+TEST_F(ESRichCommonTest_btc, GetCredID_SRC_P)
+{
+    try
+    {
+        const OCRepresentation mDevConfRep;
+        CloudProp cloudProp(mDevConfRep);
+        cloudProp.setCredID(CLOUD_ID);
+        ASSERT_EQ(cloudProp.getCredID(), CLOUD_ID);
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred in get CredID: " + std::string(e.what()));
+    }
+}
+
+/**
+ * @since 2017-10-24
+ * @objective Test 'getCredID' API in negative way(without set; trying to get Cred)
+ * @target std::string getCredID() const;
+ * @test_data    None
+ * @pre_condition None
+ * @procedure Perform getCredID()
+ * @post_condition None
+ * @expected successfully called api & should return empty string
+ **/
+TEST_F(ESRichCommonTest_btc, GetCredID_DSCC_N)
+{
+    try
+    {
+        const OCRepresentation mDevConfRep;
+        CloudProp cloudProp(mDevConfRep);
+        ASSERT_NE(cloudProp.getCredID(), EMPTY_STRING);
+    }
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred in get Ssid: " + std::string(e.what()));
+    }
+}
+/**
  * @since 2016-08-18
  * @objective Test 'setCloudID' API in negative way with empty value
  * @target Void setCloudID();
