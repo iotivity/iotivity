@@ -88,7 +88,6 @@ static const uint16_t CBOR_SIZE = 2048;
 
 /** CRED size - Number of mandatory items. */
 static const uint8_t CRED_ROOT_MAP_SIZE = 4;
-static const uint8_t CRED_EMPTY_ROOT_MAP_SIZE = 2;
 static const uint8_t CRED_MAP_SIZE = 3;
 static const uint8_t ROLEID_MAP_SIZE = 1;
 
@@ -1688,9 +1687,7 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
     if ((DOS_RESET == dos.state) ||
         (DOS_RFNOP == dos.state))
     {
-        OIC_LOG_V(ERROR, TAG, "%s /cred resource is read-only in RESET and RFNOP.", __func__);
-        result = OC_EH_NOT_ACCEPTABLE;
-        goto exit;
+        OIC_LOG_V(WARNING, TAG, "%s /cred resource is read-only in RESET and RFNOP.", __func__);
     }
 
     //leave IOT-1936 fix for preconfig pin

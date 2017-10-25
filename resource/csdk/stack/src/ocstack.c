@@ -918,6 +918,12 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
         case OC_STACK_SERVICE_UNAVAILABLE:
             ret = CA_SERVICE_UNAVAILABLE;
             break;
+        case OC_STACK_INVALID_METHOD:
+            ret = CA_METHOD_NOT_ALLOWED;
+            break;
+        case OC_STACK_TOO_LARGE_REQ:
+            ret = CA_REQUEST_ENTITY_TOO_LARGE;
+            break;
         default:
             break;
     }

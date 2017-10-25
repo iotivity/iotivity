@@ -438,8 +438,7 @@ public:
         formResourceRequest(OC_REQUEST_FLAG, &ocEntityHandlerRequest, request);
 
         OCRepPayloadDestroy((OCRepPayload *)ocEntityHandlerRequest.payload);
-
-        delete[] ocEntityHandlerRequest.query;
+        OICFreeAndSetToNull((void**) &ocEntityHandlerRequest.query);
 
         return request;
     }
