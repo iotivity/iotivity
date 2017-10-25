@@ -225,7 +225,7 @@ private:
     OCStackResult msgResourceCancelObserve(OC::QualityOfService qos)
     {
         //Check the m_msgResource before calling
-        OCStackResult result = OC_STACK_OK;
+        OCStackResult result = OC_STACK_ERROR;
         if(m_msgResource != NULL) {
             result = m_msgResource->cancelObserve(qos);
         }
@@ -235,7 +235,7 @@ private:
     OCStackResult syncResourceCancelObserve(OC::QualityOfService qos)
     {
         //Check the m_syncResource before calling
-        OCStackResult result = OC_STACK_OK;
+        OCStackResult result = OC_STACK_ERROR;
         if(m_syncResource != NULL) {
             result = m_syncResource->cancelObserve(qos);
         }
