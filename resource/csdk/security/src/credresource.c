@@ -3673,6 +3673,91 @@ void GetDerKey(ByteArray_t * key, const char * usage)
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 
+void GetPrimaryCertKey(ByteArray_t * key)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    VERIFY_NOT_NULL(TAG, key, ERROR);
+    
+    key->len = 0;
+    OicSecCred_t * temp = NULL;
+
+    LL_FOREACH(gCred, temp)
+    {
+        size_t length = temp->privateData.len;
+
+        if ((SIGNED_ASYMMETRIC_KEY == temp->credType || ASYMMETRIC_KEY == temp->credType) &&
+            (0 < length) &&
+            (NULL != temp->credUsage) &&
+            (0 == strcmp(temp->credUsage, PRIMARY_CERT)))
+        {
+            switch (temp->privateData.encoding)
+            {
+                case OIC_ENCODING_PEM:
+                case OIC_ENCODING_DER:
+                case OIC_ENCODING_RAW:
+                {
+                    bool addNull = false;
+                    uint8_t *data = temp->privateData.data;
+
+                    if ((OIC_ENCODING_PEM == temp->privateData.encoding) &&
+                        (0 != data[length - 1]))
+                    {
+                        /* mbedtls_pk_parse_key needs null terminator to determine the PEM key format */
+                        OIC_LOG_V(DEBUG, TAG, "%s: adding null terminator to key", __func__);
+                        addNull = true;
+                        data = OICCalloc(length + 1, sizeof(*data));
+                    }
+                    else
+                    {
+                        data = OICCalloc(length, sizeof(*data));
+                    }
+
+                    if (NULL == data)
+                    {
+                        key->data = NULL;
+                        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                        return;
+                    }
+
+                    memcpy(data, temp->privateData.data, length);
+
+                    if (addNull)
+                    {
+                        data[length] = 0;
+                        length++;
+                    }
+
+                    key->data = data;
+                    key->len = length;
+
+                    OIC_LOG(DEBUG, TAG, "Key for PRIMARY_CERT found");
+                    break;
+                }
+
+                default:
+                {
+                    OIC_LOG_V(WARNING, TAG, "Key for PRIMARY_CERT found, but it has an unknown encoding (%d)", temp->privateData.encoding);
+                    break;
+                }
+            }
+
+            if (0 != key->len)
+            {
+                break;
+            }
+        }
+    }
+
+    if(0 == key->len)
+    {
+        OIC_LOG(WARNING, TAG, "Key for PRIMARY_CERT not found");
+    }
+
+exit:
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+}
+
 void InitCipherSuiteListInternal(bool * list, const char * usage, const char *deviceId)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
