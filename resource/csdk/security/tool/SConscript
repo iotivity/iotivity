@@ -20,10 +20,30 @@
 #
 Import('libocsrm_env')
 import os
+from distutils.dir_util import copy_tree
 
 tools_env = libocsrm_env.Clone()
 src_dir = tools_env.get('SRC_DIR')
 target_os = tools_env.get('TARGET_OS')
+
+if ((target_os == 'windows') and (tools_env.get('MSVC_UWP_APP') == '1') and \
+    (not tools_env.GetOption('clean'))):
+    # If you are building for UWP, then you can't build and run a regular desktop program/exe.
+    # Make sure that the win32 version is built and copy it to the uwp build output directory.
+    tool_path = os.path.join(tools_env.get('BUILD_DIR'), 'resource/csdk/security/tool')
+    tool_path_win32 = tool_path.replace('/uwp/', '/win32/')
+    json2cbor_win32_file = os.path.join(tool_path_win32, 'json2cbor' + tools_env.get('PROGSUFFIX'))
+    if os.path.exists(json2cbor_win32_file):
+        # Copy the win32 version to use here
+        copy_tree(tool_path_win32, tool_path)
+        print('Copied the win32 security tools to %s' % tool_path)
+        Return()
+    else:
+        # win32 version doesn't exist, output message
+        err_msg = 'Error: Please build the win32 version of the security tool ' + \
+                  '(resource/csdk/security/tool) and then run the UWP build again'
+        print(err_msg)
+        Exit(1)
 
 ######################################################################
 # Build flags

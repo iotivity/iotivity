@@ -144,7 +144,7 @@ IF "%BUILD_MSYS%" == "" (
   set PATH=!PATH!;!BUILD_DIR!;C:\msys64\mingw64\bin
 )
 
-set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% MSVC_UWP_APP=%MSVC_UWP_APP% RELEASE=%RELEASE% TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% LOG_LEVEL=%LOG_LEVEL% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE% BUILD_JAVA=%BUILD_JAVA%
+set BUILD_OPTIONS=TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=%RELEASE% TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% LOG_LEVEL=%LOG_LEVEL% RD_MODE=%RD_MODE% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% AUTOMATIC_UPDATE=%AUTOMATIC_UPDATE% BUILD_JAVA=%BUILD_JAVA%
 
 REM Use MSVC_VERSION=12.0 for VS2013, or MSVC_VERSION=14.0 for VS2015.
 REM If MSVC_VERSION has not been defined here, SCons chooses automatically a VS version.
@@ -223,19 +223,33 @@ if "!RUN_ARG!"=="server" (
   REM   - Other SCons Config headers get generated during this step too, as a side effect.
   echo.==============================================================
   echo.run.bat : Generating Config header files...
-  echo.scons.bat -j 1 VERBOSE=1 TEST=0 %BUILD_OPTIONS% extlibs\libcoap\libcoap\include\coap\coap.h
-  call scons.bat -j 1 VERBOSE=1 TEST=0 %BUILD_OPTIONS% extlibs\libcoap\libcoap\include\coap\coap.h
+  echo.scons.bat -j 1 VERBOSE=1 TEST=0 MSVC_UWP_APP=0 %BUILD_OPTIONS% extlibs\libcoap\libcoap\include\coap\coap.h
+  call scons.bat -j 1 VERBOSE=1 TEST=0 MSVC_UWP_APP=0 %BUILD_OPTIONS% extlibs\libcoap\libcoap\include\coap\coap.h
   if ERRORLEVEL 1 (
     echo SCons failed - exiting run.bat with code 5
     exit /B 5
+  )
+
+  if "!MSVC_UWP_APP!"=="1" (
+    REM Extra step:
+    REM   - Generate the win32 security tools (json2cbor, svrdbeditor) from resource/csdk/security/tool
+    REM   - This needs to be done because you cannot build regular desktop programs when building for UWP
+    echo.==============================================================
+    echo.run.bat : Generating security tools, json2cbor, etc...
+    echo.scons.bat -j %THREAD_COUNT% VERBOSE=1 TEST=0 MSVC_UWP_APP=0 %BUILD_OPTIONS% resource\csdk\security\tool
+    call scons.bat -j %THREAD_COUNT% VERBOSE=1 TEST=0 MSVC_UWP_APP=0 %BUILD_OPTIONS% resource\csdk\security\tool
+    if ERRORLEVEL 1 (
+      echo SCons failed - exiting run.bat with code 6
+      exit /B 6
+    )
   )
 
   REM Second step:
   REM   - Compile everything, but don't run tests yet.
   echo.==============================================================
   echo.run.bat : Compiling...
-  echo.scons.bat -j %THREAD_COUNT% VERBOSE=1 TEST=0 %BUILD_OPTIONS%
-  call scons.bat -j %THREAD_COUNT% VERBOSE=1 TEST=0 %BUILD_OPTIONS%
+  echo.scons.bat -j %THREAD_COUNT% VERBOSE=1 TEST=0 MSVC_UWP_APP=%MSVC_UWP_APP% %BUILD_OPTIONS%
+  call scons.bat -j %THREAD_COUNT% VERBOSE=1 TEST=0 MSVC_UWP_APP=%MSVC_UWP_APP% %BUILD_OPTIONS%
   if ERRORLEVEL 1 (
     echo SCons failed - exiting run.bat with code 3
     exit /B 3
@@ -246,8 +260,8 @@ if "!RUN_ARG!"=="server" (
   if "!TEST!"=="1" (
     echo.==============================================================
     echo.run.bat : Running tests...
-    echo.scons.bat -j 1 VERBOSE=1 TEST=1 %BUILD_OPTIONS%
-    call scons.bat -j 1 VERBOSE=1 TEST=1 %BUILD_OPTIONS%
+    echo.scons.bat -j 1 VERBOSE=1 TEST=1 MSVC_UWP_APP=%MSVC_UWP_APP% %BUILD_OPTIONS%
+    call scons.bat -j 1 VERBOSE=1 TEST=1 MSVC_UWP_APP=%MSVC_UWP_APP% %BUILD_OPTIONS%
     if ERRORLEVEL 1 (
         echo SCons failed - exiting run.bat with code 4
         exit /B 4
@@ -256,11 +270,24 @@ if "!RUN_ARG!"=="server" (
 ) else if "!RUN_ARG!"=="clean" (
   echo Cleaning IoTivity build
   del /S *.ilk
-  echo.scons.bat -j 1 VERBOSE=1 TEST=%TEST% %BUILD_OPTIONS% -c
-  call scons.bat -j 1 VERBOSE=1 TEST=%TEST% %BUILD_OPTIONS% -c
+  echo.scons.bat -j 1 VERBOSE=1 TEST=%TEST% MSVC_UWP_APP=%MSVC_UWP_APP% %BUILD_OPTIONS% -c
+  call scons.bat -j 1 VERBOSE=1 TEST=%TEST% MSVC_UWP_APP=%MSVC_UWP_APP% %BUILD_OPTIONS% -c
   if ERRORLEVEL 1 (
     echo SCons failed - exiting run.bat with code 2
     exit /B 2
+  )
+
+  if "!MSVC_UWP_APP!"=="1" (
+    REM Extra step:
+    REM   - Clean the win32 security tools (json2cbor, svrdbeditor) from resource/csdk/security/tool
+    echo.==============================================================
+    echo.run.bat : Cleaning win32 security tools, json2cbor, etc...
+    echo.scons.bat -j 1 VERBOSE=1 TEST=0 MSVC_UWP_APP=0 %BUILD_OPTIONS% resource\csdk\security\tool -c
+    call scons.bat -j 1 VERBOSE=1 TEST=0 MSVC_UWP_APP=0 %BUILD_OPTIONS% resource\csdk\security\tool -c
+    if ERRORLEVEL 1 (
+      echo SCons failed - exiting run.bat with code 7
+      exit /B 7
+    )
   )
 ) else if "!RUN_ARG!"=="cleangtest" (
   rd /s /q extlibs\gtest\googletest-release-1.7.0
