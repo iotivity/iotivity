@@ -2121,7 +2121,7 @@ exit:
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
 
-static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehRequest, OicSecCred_t *cred, uint16_t previousMsgId)
+static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehRequest, OicSecCred_t *cred)
 {
     OCEntityHandlerResult ret = OC_EH_INTERNAL_SERVER_ERROR;
 
@@ -2228,34 +2228,6 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
                 break;
             }
         }
-
-        if(OC_EH_CHANGED != ret)
-        {
-            /*
-                * If some error is occured while ownership transfer,
-                * ownership transfer related resource should be revert back to initial status.
-                */
-            const OicSecDoxm_t *ownershipDoxm =  GetDoxmResourceData();
-            if(ownershipDoxm)
-            {
-                if(!ownershipDoxm->owned)
-                {
-                    OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
-
-                    if((OC_ADAPTER_IP == ehRequest->devAddr.adapter && previousMsgId != ehRequest->messageID)
-                        || OC_ADAPTER_TCP == ehRequest->devAddr.adapter)
-                    {
-                        RestoreDoxmToInitState();
-                        RestorePstatToInitState();
-                        OIC_LOG(WARNING, TAG, "DOXM will be reverted.");
-                    }
-                }
-            }
-            else
-            {
-                OIC_LOG(ERROR, TAG, "Invalid DOXM resource");
-            }
-        }
     }
 #ifdef MULTIPLE_OWNER
     // In case SubOwner Credential
@@ -2347,7 +2319,6 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
         * list and updating svr database.
         */
     ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_CHANGED : OC_EH_ERROR;
-    OC_UNUSED(previousMsgId);
     OC_UNUSED(ehRequest);
 #endif//__WITH_DTLS__ or __WITH_TLS__
 
@@ -2360,7 +2331,6 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest* ehRequest
     OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest IN");
 
     OicSecDostype_t dos;
-    static uint16_t previousMsgId = 0;
     // Get binary representation of cbor
     OicSecCred_t *cred = NULL;
     OicUuid_t     *rownerId = NULL;
@@ -2387,7 +2357,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest* ehRequest
 
         LL_FOREACH_SAFE(cred, newCred, newCredTemp)
         {
-            ret = HandleNewCredential(ehRequest, newCred, previousMsgId);
+            ret = HandleNewCredential(ehRequest, newCred);
 
             if (OC_EH_CHANGED != ret)
             {
@@ -2423,13 +2393,6 @@ exit:
         if (NULL != cred)
         {
             DeleteCredList(cred);
-        }
-    }
-    else
-    {
-        if (OC_ADAPTER_IP == ehRequest->devAddr.adapter)
-        {
-            previousMsgId = ehRequest->messageID++;
         }
     }
 
