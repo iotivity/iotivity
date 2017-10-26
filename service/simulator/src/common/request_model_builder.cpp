@@ -22,6 +22,7 @@
 #include "resource_model_schema_builder.h"
 #include "experimental/logger.h"
 #include "Raml.h"
+#include <assert.h>
 
 #define TAG "REQ_MODEL_BUILDER"
 
@@ -37,6 +38,10 @@ static std::string getRequestType(RAML::ActionType actionType)
             return "POST";
         case RAML::ActionType::DELETE:
             return "DELETE";
+        default:
+            OIC_LOG(ERROR, TAG, "Unsupported RequestType!");
+            assert(0);
+            return "";
     }
 
     return ""; // This code should never reach
@@ -57,7 +62,9 @@ std::unordered_map<std::string, RequestModelSP> RequestModelBuilder::build(
     {
         // Pick the resource based on the resource uri.
         if (std::string::npos == uri.find((resource.second)->getResourceUri()))
+        {
             continue;
+        }
 
         // Construct Request and Response Model from RAML::Action
         for (auto &action :  (resource.second)->getActions())

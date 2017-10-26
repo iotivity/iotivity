@@ -159,36 +159,60 @@ namespace RAML
             std::string key = READ_NODE_AS_STRING(it->first);
 
             if (key == Keys::Description)
+            {
                 setDescription(READ_NODE_AS_STRING(it->second));
+            }
             else if (key == Keys::Default)
+            {
                 setDefaultValue(READ_NODE_AS_STRING(it->second));
+            }
             else if (key == Keys::DisplayName)
+            {
                 setDisplayName(READ_NODE_AS_STRING(it->second));
-
+            }
             else if (key == Keys::Example)
+            {
                 setExample(READ_NODE_AS_STRING(it->second));
+            }
             else if (key == Keys::Maximum)
+            {
                 setMaximum(READ_NODE_AS_LONG(it->second));
+            }
             else if (key == Keys::Minimum)
+            {
                 setMinimum(READ_NODE_AS_LONG(it->second));
+            }
             else if (key == Keys::MaxLength)
+            {
                 setMaxLength(READ_NODE_AS_INT(it->second));
+            }
             else if (key == Keys::MinLength)
+            {
                 setMinLength(READ_NODE_AS_INT(it->second));
-
+            }
             else if (key == Keys::Pattern)
+            {
                 setPattern(READ_NODE_AS_STRING(it->second));
+            }
             else if (key == Keys::Repeat)
+            {
                 setRepeat(READ_NODE_AS_BOOL(it->second));
+            }
             else if (key == Keys::Required)
+            {
                 setRequired(READ_NODE_AS_BOOL(it->second));
+            }
             else if (key == Keys::Type)
+            {
                 setType(READ_NODE_AS_STRING(it->second));
+            }
             else if (key == Keys::Enum)
             {
                 YAML::Node enumNode = it->second;
                 for ( YAML::const_iterator tt = enumNode.begin(); tt != enumNode.end(); ++tt )
+                {
                     setEnumeration(READ_NODE_AS_STRING(*tt));
+                }
             }
         }
     }

@@ -24,6 +24,7 @@
 #include "oic_malloc.h"
 #include "experimental/logger.h"
 #include "ocpayload.h"
+#include <inttypes.h>
 
 /**
  * @var ESX_ENROLLEE_TAG
@@ -58,7 +59,7 @@ void ReadUserdataCb(OCRepPayload* payload, char* resourceType, void** userdata)
                     *userdata = (void*)OICMalloc(sizeof(UserProperties));
                     ((UserProperties*)(*userdata))->userValue_int = value;
                 }
-                OIC_LOG_V(INFO, ESX_ENROLLEE_TAG, "[User specific property] %s : %lld",
+                OIC_LOG_V(INFO, ESX_ENROLLEE_TAG, "[User specific property] %s : %" PRId64,
                                                                             USERPROPERTY_KEY_INT, value);
                 g_userProperties.userValue_int = value;
             }

@@ -42,14 +42,18 @@ AttributeGenerator::AttributeGenerator(const std::string &name,
 bool AttributeGenerator::hasNext()
 {
     if (m_valueGen)
+    {
         return m_valueGen->hasNext();
+    }
     return false;
 }
 
 bool AttributeGenerator::next(SimulatorResourceAttribute &attribute)
 {
     if (!hasNext())
+    {
         return false;
+    }
 
     if (m_valueGen)
     {
@@ -74,7 +78,9 @@ SimulatorResourceAttribute AttributeGenerator::current()
 void AttributeGenerator::reset()
 {
     if (m_valueGen)
+    {
         m_valueGen->reset();
+    }
 }
 
 AttributeCombinationGen::AttributeCombinationGen(
@@ -126,7 +132,9 @@ bool AttributeCombinationGen::next(SimulatorResourceModel &resModel)
             if (!m_attrGenList[index].hasNext())
             {
                 if (!index)
+                {
                     return false;
+                }
 
                 m_attrGenList[index].reset();
                 updateAttributeInModel(index);
@@ -148,5 +156,7 @@ void AttributeCombinationGen::updateAttributeInModel(int index)
 {
     SimulatorResourceAttribute attribute;
     if (m_attrGenList[index].next(attribute))
+    {
         m_resModel.update(attribute.getName(), attribute.getValue());
+    }
 }

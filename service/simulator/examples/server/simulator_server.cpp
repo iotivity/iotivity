@@ -146,7 +146,9 @@ void displayResource()
 {
     int index = selectResource();
     if (-1 == index)
+    {
         return;
+    }
 
     SimulatorSingleResourceSP resource = g_singleResources[index - 1];
 
@@ -168,7 +170,9 @@ void startResource()
 {
     int index = selectResource();
     if (-1 == index)
+    {
         return;
+    }
 
     SimulatorSingleResourceSP resource = g_singleResources[index - 1];
     resource->start();
@@ -179,7 +183,9 @@ void stopResource()
 {
     int index = selectResource();
     if (-1 == index)
+    {
         return;
+    }
 
     SimulatorSingleResourceSP resource = g_singleResources[index - 1];
     resource->stop();
@@ -197,14 +203,18 @@ void automateResourceUpdate()
 
     int index = selectResource();
     if (-1 == index)
+    {
         return;
+    }
 
     AutoUpdateType type = AutoUpdateType::ONE_TIME;
     int choice = 0;
     std::cout << "Press 1 if you want recurrent automation: ";
     std::cin >> choice;
     if (1 == choice)
+    {
         type = AutoUpdateType::REPEAT;
+    }
 
     try
     {
@@ -230,7 +240,9 @@ void automateAttributeUpdate()
 
     int index = selectResource();
     if (-1 == index)
+    {
         return;
+    }
 
     SimulatorSingleResourceSP resource = g_singleResources[index - 1];
     std::map<std::string, SimulatorResourceAttribute> attributes =
@@ -274,7 +286,9 @@ void automateAttributeUpdate()
     std::cout << "Press 1 if you want recurrent automation: ";
     std::cin >> choice;
     if (1 == choice)
+    {
         type = AutoUpdateType::REPEAT;
+    }
 
     std::cout << "Requesting attribute automation for " << attributeName <<
               std::endl;
@@ -295,7 +309,9 @@ void stopAutomation()
 {
     int index = selectResource();
     if (-1 == index)
+    {
         return;
+    }
 
     SimulatorSingleResourceSP resource = g_singleResources[index - 1];
 
@@ -326,7 +342,9 @@ void getObservers()
 {
     int index = selectResource();
     if (-1 == index)
+    {
         return;
+    }
 
     SimulatorSingleResourceSP resource = g_singleResources[index - 1];
 
@@ -380,7 +398,9 @@ void setLogger()
         case 1:
             {
                 if (false == SimulatorManager::getInstance()->setConsoleLogger())
+                {
                     std::cout << "Failed to set the default console logger" << std::endl;
+                }
             } break;
         case 2:
             {
@@ -388,7 +408,9 @@ void setLogger()
                 std::cout << "Enter the file path (without file name) : ";
                 std::cin >> filePath;
                 if (false == SimulatorManager::getInstance()->setFileLogger(filePath))
+                {
                     std::cout << "Failed to set default file logger" << std::endl;
+                }
             } break;
         case 3: SimulatorManager::getInstance()->setLogger(gAppLogger);
     }
@@ -446,14 +468,16 @@ void addInterface()
 
     int index = selectResource();
     if (-1 == index)
+    {
         return;
+    }
 
     SimulatorSingleResourceSP resource = g_singleResources[index - 1];
     resource->addInterface(OC_RSRVD_INTERFACE_SENSOR);
     resource->addInterface(OC_RSRVD_INTERFACE_ACTUATOR);
 }
 
-int main(int argc, char *argv[])
+int main()
 {
     printMainMenu();
     bool cont = true;

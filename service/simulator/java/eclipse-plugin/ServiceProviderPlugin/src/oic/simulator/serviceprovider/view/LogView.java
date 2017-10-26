@@ -59,8 +59,10 @@ import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -73,6 +75,7 @@ import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.listener.ILogListener;
 import oic.simulator.serviceprovider.manager.LogManager;
 import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
 import oic.simulator.serviceprovider.view.dialogs.FilterDialog;
 import oic.simulator.serviceprovider.view.dialogs.LogDetailsDialog;
 
@@ -429,10 +432,13 @@ public class LogView extends ViewPart {
                     sb.append(entry.toString());
                 }
                 String data = sb.toString();
+                FileOutputStream fos = null;
+                Writer osw = null;
                 BufferedWriter out = null;
                 try {
-                    out = new BufferedWriter(new OutputStreamWriter(
-                            new FileOutputStream(name), "UTF-8"));
+                    fos = new FileOutputStream(name);
+                    osw = new OutputStreamWriter(fos, "UTF-8");
+                    out = new BufferedWriter(osw);
                     out.write(data);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -447,7 +453,33 @@ public class LogView extends ViewPart {
                             out.close();
                         }
                     } catch (IOException e) {
-                        System.out.println("Error occurred during close.");
+                        Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(), new Date(),
+                                    Utility.getSimulatorErrorString(e, null));
+                    }
+                    try {
+                        if (null != osw) {
+                            osw.close();
+                        }
+                    } catch (IOException e) {
+                        Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(), new Date(),
+                                    Utility.getSimulatorErrorString(e, null));
+                    }
+                    try {
+                        if (null != fos) {
+                            fos.close();
+                        }
+                    } catch (IOException e) {
+                        Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(), new Date(),
+                                    Utility.getSimulatorErrorString(e, null));
                     }
                 }
             }

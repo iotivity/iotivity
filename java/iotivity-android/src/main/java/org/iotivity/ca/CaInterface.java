@@ -257,6 +257,15 @@ public class CaInterface {
 
     /**
      *  set BT configure
+     *  flags for BLE transport
+     *  {@code
+     *    0:        default BT flag
+     *    0x1:      disable BLE advertisement.
+     *    0x2:      enable BLE advertisement.
+     *    (1 << 4): disable gatt server.
+     *    (1 << 7): disable EDR transport.
+     *  }
+     *  @param flag use value indicated above
      */
     public synchronized static void setBTConfigure(int flag){
         CaInterface.setBTConfigureImpl(flag);
@@ -271,6 +280,7 @@ public class CaInterface {
     /**
      * Set Connection Manager configuration.
      * It can be set a connection manager configuration.(default: CA_CLOUD)
+     * @param connPriority User Preference of connectivity channel for connection manager
      */
     public synchronized static void setConnectionUserConfig(CaIpConnectionPreference connPriority) {
         CaInterface.caManagerSetConnectionUserConfig(connPriority.getValue());

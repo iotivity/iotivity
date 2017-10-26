@@ -82,14 +82,19 @@ void POSTRequestGenerator::SendAllRequests()
 
         for (auto &attributeGen : attributeGenList)
         {
-            if (m_stopRequested) break;
+            if (m_stopRequested)
+            {
+                break;
+            }
 
             while (!m_stopRequested && attributeGen.hasNext())
             {
                 SimulatorResourceModel repModel;
                 SimulatorResourceAttribute attribute;
                 if (true == attributeGen.next(attribute))
+                {
                     repModel.add(attribute.getName(), attribute.getValue());
+                }
 
                 // Send the request
                 m_requestSender.send(queryParam, repModel,
@@ -108,6 +113,9 @@ void POSTRequestGenerator::SendAllRequests()
 void POSTRequestGenerator::onResponseReceived(SimulatorResult result,
         const SimulatorResourceModel &repModel, const RequestInfo &reqInfo)
 {
+    OC_UNUSED(result);
+    OC_UNUSED(repModel);
+    OC_UNUSED(reqInfo);
     OIC_LOG(DEBUG, TAG, "Response recieved");
     m_responseCnt++;
     completed();

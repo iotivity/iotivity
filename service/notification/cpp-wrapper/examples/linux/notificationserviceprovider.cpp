@@ -102,11 +102,11 @@ std::shared_ptr<OIC::Service::NSConsumer> printAvailableConsumers()
         std::cin.clear();
         std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
-    option--;
     if (option > discoveredConsumers.size())
     {
         return NULL;
     }
+    option--;
     std::string consumerId = discoveredConsumers[option];
     std::shared_ptr<OIC::Service::NSConsumer> consumer =
         NSProviderService::getInstance()->getConsumer(consumerId);

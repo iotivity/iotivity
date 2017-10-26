@@ -38,7 +38,9 @@ jobject JniVector::toJava(std::vector<std::string> &cppVector)
 
     jobject vectorObject = toJava();
     if (!vectorObject)
+    {
         return nullptr;
+    }
 
     for (size_t index = 0; index < cppVector.size(); index++)
     {

@@ -1,5 +1,7 @@
 package org.iotivity.service;
 
+import android.util.Log;
+
 import static org.iotivity.service.client.RcsRemoteResourceObject.CacheState;
 import static org.iotivity.service.client.RcsRemoteResourceObject.OnCacheUpdatedListener;
 import static org.iotivity.service.client.RcsRemoteResourceObject.OnRemoteAttributesReceivedListener;
@@ -14,6 +16,8 @@ import static org.mockito.Mockito.verify;
 import org.mockito.Mockito;
 
 public class RemoteResourceObjectTest extends TestBase {
+
+    private final String TAG = RemoteResourceObjectTest.class.getName();
 
     private RcsResourceAttributes createAttrs() {
         RcsResourceAttributes attrs = new RcsResourceAttributes();
@@ -78,6 +82,7 @@ public class RemoteResourceObjectTest extends TestBase {
             mClient.startMonitoring(listener);
             fail("No exception thrown");
         } catch (RcsIllegalStateException e) {
+            Log.e(TAG, "caught exception: " + e.toString());
         }
     }
 
@@ -104,6 +109,7 @@ public class RemoteResourceObjectTest extends TestBase {
             mClient.startCaching();
             fail("No exception thrown");
         } catch (RcsIllegalStateException e) {
+            Log.e(TAG, "caught exception: " + e.toString());
         }
     }
 
@@ -146,6 +152,7 @@ public class RemoteResourceObjectTest extends TestBase {
             mClient.getCachedAttributes();
             fail("No exception thrown");
         } catch (RcsIllegalStateException e) {
+            Log.e(TAG, "caught exception: " + e.toString());
         }
     }
 
@@ -169,6 +176,7 @@ public class RemoteResourceObjectTest extends TestBase {
             mClient.getCachedAttribute("some_key");
             fail("No exception thrown");
         } catch (RcsIllegalStateException e) {
+            Log.e(TAG, "caught exception: " + e.toString());
         }
     }
 
@@ -203,6 +211,7 @@ public class RemoteResourceObjectTest extends TestBase {
             mClient.getUri();
             fail("No exception thrown");
         } catch (RcsDestroyedObjectException e) {
+            Log.e(TAG, "caught exception: " + e.toString());
         }
     }
 }

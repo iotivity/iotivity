@@ -306,6 +306,11 @@ public class ResourceManagerView extends ViewPart {
                                             resourceManager
                                                     .resourceSelectionChanged(null);
                                         } catch (SimulatorException e1) {
+                                            Activator
+                                                .getDefault()
+                                                .getLogManager()
+                                                .log(Level.ERROR.ordinal(), new Date(),
+                                                        Utility.getSimulatorErrorString(e1, null));
                                             MessageDialog
                                                     .openInformation(Display
                                                             .getDefault()

@@ -581,6 +581,11 @@ public class PutRequestDialog extends TitleAreaDialog {
             value = Utility.cloneAttributeValue(new AttributeValue(
                     modelValue[0]));
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             return null;
         }
 

@@ -186,7 +186,9 @@ void RequestAutomationMngr::onProgressChange(int sessionId, OperationState state
         RequestGeneration::ProgressStateCallback clientCallback)
 {
     if (!isValid(sessionId))
+    {
         return;
+    }
 
     // Remove the request generator from list if it is completed
     if (state == OP_COMPLETE || state == OP_ABORT)
@@ -215,7 +217,9 @@ bool RequestAutomationMngr::isInProgress(RequestType type)
     for (auto &session : m_requestGenList)
     {
         if ((session.second)->type() == type)
+        {
             return true;
+        }
     }
 
     return false;

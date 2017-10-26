@@ -42,7 +42,9 @@ class JniIntegerProperty
         static jobject toJava(JNIEnv *env, const std::shared_ptr<IntegerProperty> &property)
         {
             if (!property)
+            {
                 return nullptr;
+            }
 
             // Create Java IntegerProperty.Builder object
             jobject jPropertyBuilder = nullptr;
@@ -138,7 +140,9 @@ class JniDoubleProperty
         static jobject toJava(JNIEnv *env, const std::shared_ptr<DoubleProperty> &property)
         {
             if (!property)
+            {
                 return nullptr;
+            }
 
             // Create Java DoubleProperty.Builder object
             jobject jPropertyBuilder = nullptr;
@@ -235,7 +239,9 @@ class JniBooleanProperty
         static jobject toJava(JNIEnv *env, const std::shared_ptr<BooleanProperty> &property)
         {
             if (!property)
+            {
                 return nullptr;
+            }
 
             // Create Java BooleanProperty.Builder object
             jobject jPropertyBuilder = nullptr;
@@ -270,7 +276,9 @@ class JniStringProperty
         static jobject toJava(JNIEnv *env, const std::shared_ptr<StringProperty> &property)
         {
             if (!property)
+            {
                 return nullptr;
+            }
 
             // Create Java StringProperty.Builder object
             jobject jPropertyBuilder = nullptr;
@@ -343,7 +351,9 @@ class JniStringProperty
                 jint min = env->GetIntField(jProperty, minFID);
                 jint max = env->GetIntField(jProperty, maxFID);
                 if (min >= 0 && max >= 0)
+                {
                     stringProperty->setRange(static_cast<size_t>(min), static_cast<size_t>(max));
+                }
             }
             else
             {
@@ -373,7 +383,9 @@ class JniArrayProperty
         static jobject toJava(JNIEnv *env, const std::shared_ptr<ArrayProperty> &property)
         {
             if (!property)
+            {
                 return nullptr;
+            }
 
             // Create Java ArrayProperty.Builder object
             jobject jPropertyBuilder = nullptr;
@@ -453,7 +465,9 @@ class JniArrayProperty
                 jint min = env->GetIntField(jProperty, minFID);
                 jint max = env->GetIntField(jProperty, maxFID);
                 if (min >= 0 && max >= 0)
+                {
                     arrayProperty->setRange(static_cast<size_t>(min), static_cast<size_t>(max));
+                }
             }
 
             if (jElementProperty)
@@ -471,7 +485,9 @@ class JniModelProperty
         static jobject toJava(JNIEnv *env, const std::shared_ptr<ModelProperty> &property)
         {
             if (!property)
+            {
                 return nullptr;
+            }
 
             // Create Java ModelProperty object
             jobject jModelProperty = nullptr;
@@ -547,7 +563,9 @@ jobject AttributePropertyToJava(JNIEnv *env,
                                 const std::shared_ptr<AttributeProperty> &property)
 {
     if (!property)
+    {
         return nullptr;
+    }
 
     if (property->isInteger())
     {
@@ -581,7 +599,9 @@ std::shared_ptr<AttributeProperty> AttributePropertyToCpp(JNIEnv *env,
         jobject &jProperty)
 {
     if (!jProperty)
+    {
         return nullptr;
+    }
 
     switch (getType(env, jProperty))
     {

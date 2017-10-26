@@ -34,11 +34,11 @@ public class Activator extends AbstractUIPlugin {
     // The shared instance
     private static Activator       plugin;
 
-    private static ResourceManager resourceManager;
+    private ResourceManager resourceManager;
 
-    private static LogManager      logManager;
+    private LogManager      logManager;
 
-    private static ImageManager    imageManager;
+    private ImageManager    imageManager;
 
     public Activator() {
     }
@@ -75,16 +75,16 @@ public class Activator extends AbstractUIPlugin {
         return resourceManager;
     }
 
-    private static void setResourceManager(ResourceManager manager) {
-        Activator.resourceManager = manager;
+    private void setResourceManager(ResourceManager manager) {
+        resourceManager = manager;
     }
 
     public LogManager getLogManager() {
         return logManager;
     }
 
-    private static void setLogManager(LogManager logManager) {
-        Activator.logManager = logManager;
+    private void setLogManager(LogManager manager) {
+        logManager = manager;
     }
 
     public ImageManager getImageManager() {

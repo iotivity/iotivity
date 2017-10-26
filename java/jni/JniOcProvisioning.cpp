@@ -376,7 +376,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_unsetDisplayNumList
  * Method:    setPinType0
  * Signature: (II)I
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setPinType0
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setPinType0
   (JNIEnv *env, jclass thiz, jint pinSize, jint pinType)
 {
     OC_UNUSED(thiz);
@@ -396,7 +396,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setPinType0
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
     }
-    return result;
+    return;
 }
 
 /*

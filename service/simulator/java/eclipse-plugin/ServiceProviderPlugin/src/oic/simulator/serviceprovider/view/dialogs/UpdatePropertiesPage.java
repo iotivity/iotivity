@@ -186,7 +186,7 @@ public class UpdatePropertiesPage extends WizardPage {
         }
 
         this.resName = resName;
-        if (null != resName && !resNameTxt.isDisposed())
+        if (!resNameTxt.isDisposed())
             resNameTxt.setText(resName);
     }
 
@@ -196,7 +196,7 @@ public class UpdatePropertiesPage extends WizardPage {
         }
 
         this.resURI = resURI;
-        if (null != resUriTxt && !resUriTxt.isDisposed())
+        if (!resUriTxt.isDisposed())
             resUriTxt.setText(resURI);
     }
 

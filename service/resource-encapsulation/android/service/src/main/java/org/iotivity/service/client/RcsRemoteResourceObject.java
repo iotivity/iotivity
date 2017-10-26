@@ -144,8 +144,8 @@ public final class RcsRemoteResourceObject extends RcsObject {
         /**
          * Called when the cache is updated.
          *
-         * @param attributes
-         *            the updated attributes
+         * @param attributes the updated attributes
+         * @param eCode Cache updated error code 
          *
          */
         public void onCacheUpdated(RcsResourceAttributes attributes, int eCode);

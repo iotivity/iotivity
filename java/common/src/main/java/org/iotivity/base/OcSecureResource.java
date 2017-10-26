@@ -197,7 +197,7 @@ public class OcSecureResource {
      * @param oxmType Method to be selected
      * @param selectOTMMethodListener Callback function, which will be called after completion
      *
-     * @throws OcException
+     * @throws OcException Indicate failure selecting OTM method
      */
     public void selectMOTMethod(OxmType oxmType,
             SelectOTMMethodListener selectOTMMethodListener) throws OcException {
@@ -213,7 +213,7 @@ public class OcSecureResource {
      * @param momType MOT mode to be selected.
      * @param changeMOTModeListener Callback function, which will be called after completion
      *
-     * @throws OcException
+     * @throws OcException Indicate failure changing the MOT mode
      */
     public void changeMOTMode(MomType momType,
             ChangeMOTModeListener changeMOTModeListener) throws OcException {
@@ -228,7 +228,7 @@ public class OcSecureResource {
      *
      * @param pin string to be saved in svr db.
      *
-     * @throws OcException
+     * @throws OcException Indicate failure adding PIN
      */
     public void addPreConfigPIN(String pin) throws OcException {
         this.addPreConfigPIN0(pin, pin.length());
@@ -243,7 +243,7 @@ public class OcSecureResource {
      * @param provisionPreConfigPINListener Callback function, which will be called after
      *                                      completion
      *
-     * @throws OcException
+     * @throws OcException Indicate failure provisioning PIN
      */
     public void  provisionPreConfigPIN(String pin,
             ProvisionPreConfigPINListener provisionPreConfigPINListener) throws OcException {

@@ -41,6 +41,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.part.ViewPart;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -48,6 +49,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.oic.simulator.SimulatorException;
+import org.oic.simulator.ILogger.Level;
 
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
@@ -225,7 +227,7 @@ public class MetaPropertiesView extends ViewPart {
                                 .getResourceInterfaces();
                         // Adding default interface to local set if removed.
                         updatedIfSet.add(Constants.BASELINE_INTERFACE);
-                        if (null != curIfSet && null != updatedIfSet) {
+                        if (null != curIfSet) {
                             if (curIfSet.size() != updatedIfSet.size()) {
                                 update = true;
                                 interfaceChange = true;
@@ -273,6 +275,11 @@ public class MetaPropertiesView extends ViewPart {
                                                     updatedIfSet);
 
                             } catch (SimulatorException ex) {
+                                Activator
+                                    .getDefault()
+                                    .getLogManager()
+                                    .log(Level.ERROR.ordinal(), new Date(),
+                                            Utility.getSimulatorErrorString(ex, null));
                                 result = false;
                             }
                             if (!result) {

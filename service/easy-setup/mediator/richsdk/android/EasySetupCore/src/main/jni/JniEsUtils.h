@@ -42,13 +42,4 @@ using namespace OIC::Service;
  */
 void throwESException(JNIEnv *env, std::string reason);
 
-/**
-* @brief Convert integer to OCconnectivity Enum
-*/
-OCConnectivityType  getOCConnectivityTypeFromInt(int connectivityType);
-
-WIFI_AUTHTYPE getWifiAuthTypeFromInt(int authType);
-WIFI_ENCTYPE getWifiEncTypeFromInt(int encType);
-int convertNativeWifiFreqToInt(WIFI_FREQ wifiFreq);
-int convertNativeWifiModeToInt(WIFI_MODE wifiMode);
 #endif //__JNI_ES_UTILS_H_

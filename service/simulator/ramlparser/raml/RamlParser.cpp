@@ -108,7 +108,9 @@ namespace RAML
                             for (; iter != schemas.end(); iter++)
                             {
                                 if (((*iter).first) == schemaValue)
+                                {
                                     break;
+                                }
                             }
                             if (iter != schemas.end())
                             {
@@ -136,17 +138,23 @@ namespace RAML
             for (; iter != resourceTypes.end(); iter++)
             {
                 if (((*iter).first) == typeValue)
+                {
                     break;
+                }
             }
             if (iter != resourceTypes.end())
             {
                 if ((*iter).second->getActions().empty())
+                {
                     return;
+                }
 
                 for (auto resActions : (*iter).second->getActions())
                 {
                     if (it.second->getActions().count(resActions.first) == 0)
+                    {
                         it.second->setAction(resActions.first, std::make_shared<Action>(*(resActions.second)));
+                    }
                 }
             }
             setTypes(it.second->getResources());
@@ -169,24 +177,32 @@ namespace RAML
                     for (; iter != trait.end(); iter++)
                     {
                         if (((*iter).first) == traitValue)
+                        {
                             break;
+                        }
                     }
                     if (iter != trait.end())
                     {
                         for (auto head : (*iter).second->getHeaders())
                         {
                             if (act.second->getHeaders().count(head.first) == 0)
+                            {
                                 act.second->setHeader(head.first, head.second);
+                            }
                         }
                         for (auto query : (*iter).second->getQueryParameters())
                         {
                             if (act.second->getQueryParameters().count(query.first) == 0)
+                            {
                                 act.second->setQueryParameter(query.first, query.second);
+                            }
                         }
                         for (auto resp : (*iter).second->getResponses())
                         {
                             if (act.second->getResponses().count(resp.first) == 0)
+                            {
                                 act.second->setResponse(resp.first, resp.second);
+                            }
                         }
                     }
                 }
@@ -197,7 +213,9 @@ namespace RAML
                 for (; iter != trait.end(); iter++)
                 {
                     if (((*iter).first) == traitValue)
+                    {
                         break;
+                    }
                 }
                 if (iter != trait.end())
                 {
@@ -206,17 +224,23 @@ namespace RAML
                         for (auto head : (*iter).second->getHeaders())
                         {
                             if (act.second->getHeaders().count(head.first) == 0)
+                            {
                                 act.second->setHeader(head.first, head.second);
+                            }
                         }
                         for (auto query : (*iter).second->getQueryParameters())
                         {
                             if (act.second->getQueryParameters().count(query.first) == 0)
+                            {
                                 act.second->setQueryParameter(query.first, query.second);
+                            }
                         }
                         for (auto resp : (*iter).second->getResponses())
                         {
                             if (act.second->getResponses().count(resp.first) == 0)
+                            {
                                 act.second->setResponse(resp.first, resp.second);
+                            }
                         }
                     }
                 }

@@ -41,14 +41,19 @@ class FileLogger : public ILogger
 
         bool open()
         {
-            m_out.open(m_filePath, std::ofstream::out);
+            if (!m_out.is_open())
+            {
+                m_out.open(m_filePath, std::ofstream::out);
+            }
             return m_out.is_open();
         }
 
         void close()
         {
             if (m_out.is_open())
+            {
                 m_out.close();
+            }
         }
 
         void write(std::string time, ILogger::Level level, std::string message)
@@ -64,7 +69,9 @@ class FileLogger : public ILogger
 bool Logger::setDefaultConsoleTarget()
 {
     if (nullptr != m_target)
+    {
         return false;
+    }
 
     m_target = std::make_shared<ConsoleLogger>();
     return true;
@@ -73,12 +80,16 @@ bool Logger::setDefaultConsoleTarget()
 bool Logger::setDefaultFileTarget(const std::string &path)
 {
     if (nullptr != m_target || path.empty())
+    {
         return false;
+    }
 
     time_t timeInfo = time(NULL);
     struct tm *localTime = localtime(&timeInfo);
     if (nullptr == localTime)
+    {
         return false;
+    }
     std::ostringstream newFileName;
     newFileName << path << "/Simulator_";
     newFileName << localTime->tm_year << localTime->tm_mon << localTime->tm_mday << localTime->tm_hour
@@ -107,7 +118,9 @@ void Logger::write(ILogger::Level level, std::ostringstream &str)
         time_t timeInfo = time(NULL);
         struct tm *localTime = localtime(&timeInfo);
         if (nullptr == localTime)
+        {
             return;
+        }
         std::ostringstream timeStr;
         timeStr << localTime->tm_hour << "." << localTime->tm_min << "." << localTime->tm_sec;
         m_target->write(timeStr.str(), level, str.str());

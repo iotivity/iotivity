@@ -42,7 +42,9 @@ class JNILogger : public ILogger
         {
             JNIEnv *env = GetEnv();
             if (nullptr == env)
+            {
                 return;
+            }
 
             jobject logger = env->NewLocalRef(m_logger);
             if (!logger)
@@ -82,7 +84,9 @@ static void onResourceFound(jobject listener, SimulatorRemoteResourceSP remoteRe
 {
     JNIEnv *env = GetEnv();
     if (!env)
+    {
         return;
+    }
 
     jclass listenerCls = env->GetObjectClass(listener);
     jmethodID callbackMethod = env->GetMethodID(listenerCls, "onResourceFound",
@@ -90,7 +94,9 @@ static void onResourceFound(jobject listener, SimulatorRemoteResourceSP remoteRe
 
     jobject resource = CreateSimulatorRemoteResource(env, remoteResource);
     if (!resource)
+    {
         return;
+    }
 
     env->CallVoidMethod(listener, callbackMethod, resource);
     ReleaseEnv();
@@ -101,7 +107,9 @@ static void onDeviceInfoReceived(jobject listener, const std::string &hostUri,
 {
     JNIEnv *env = GetEnv();
     if (!env)
+    {
         return;
+    }
 
     jclass listenerCls = env->GetObjectClass(listener);
     jmethodID listenerMethodId = env->GetMethodID(listenerCls, "onDeviceFound",
@@ -131,7 +139,9 @@ static void onPlatformInfoReceived(jobject listener, const std::string &hostUri,
 {
     JNIEnv *env = GetEnv();
     if (!env)
+    {
         return;
+    }
 
     jclass listenerCls = env->GetObjectClass(listener);
     jmethodID listenerMethodId = env->GetMethodID(listenerCls, "onPlatformFound",

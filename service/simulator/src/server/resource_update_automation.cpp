@@ -44,13 +44,17 @@ AttributeUpdateAutomation::AttributeUpdateAutomation(
         m_thread(nullptr)
 {
     if (m_updateInterval < 0)
+    {
         m_updateInterval = 0;
+    }
 }
 
 AttributeUpdateAutomation::~AttributeUpdateAutomation()
 {
     if (!m_stopRequested)
+    {
         m_thread->detach();
+    }
 }
 
 void AttributeUpdateAutomation::start()
@@ -74,7 +78,9 @@ void AttributeUpdateAutomation::stop()
 
     m_condVariable.notify_one();
     if (m_thread)
+    {
         m_thread->join();
+    }
 }
 
 void AttributeUpdateAutomation::updateAttribute(SimulatorResourceAttribute attribute)
@@ -91,7 +97,9 @@ void AttributeUpdateAutomation::updateAttribute(SimulatorResourceAttribute attri
             while (!m_stopRequested && true == attributeGen.next(attribute))
             {
                 if (false == m_resource->updateAttributeValue(attribute))
+                {
                     break;
+                }
 
                 // Wait for interval
                 now = std::chrono::system_clock::now();
@@ -122,7 +130,9 @@ void AttributeUpdateAutomation::updateAttribute(SimulatorResourceAttribute attri
 
     // Notify application through callback
     if (m_callback)
+    {
         m_callback(m_resource->getURI(), m_id);
+    }
 
     if (m_finishedCallback && !m_stopRequested)
     {
@@ -145,13 +155,17 @@ ResourceUpdateAutomation::ResourceUpdateAutomation(
         m_thread(nullptr)
 {
     if (m_updateInterval < 0)
+    {
         m_updateInterval = 0;
+    }
 }
 
 ResourceUpdateAutomation::~ResourceUpdateAutomation()
 {
     if (!m_stopRequested)
+    {
         m_thread->detach();
+    }
 }
 
 void ResourceUpdateAutomation::start()
@@ -180,7 +194,9 @@ void ResourceUpdateAutomation::stop()
 
     m_condVariable.notify_one();
     if (m_thread)
+    {
         m_thread->join();
+    }
 }
 
 void ResourceUpdateAutomation::updateAttributes(
@@ -220,7 +236,9 @@ void ResourceUpdateAutomation::updateAttributes(
 
     // Notify application
     if (m_callback)
+    {
         m_callback(m_resource->getURI(), m_id);
+    }
 
     if (m_finishedCallback)
     {

@@ -265,7 +265,7 @@ int processUserInput(int min, int max)
 {
     assert(min <= max);
 
-    int input;
+    int input = 0;
 
     std::cin >> input;
 

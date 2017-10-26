@@ -255,25 +255,49 @@ namespace RAML
             class JsonParameters
             {
                 public:
-                    std::map<std::string, PropertiesPtr > getProperties() const { return m_properties; }
-                    void addProperties(const std::string &name, const PropertiesPtr &prop) { m_properties[name] = prop; }
+                    std::map<std::string, PropertiesPtr > getProperties() const
+                    {
+                        return m_properties;
+                    }
+
+                    void addProperties(const std::string &name, const PropertiesPtr &prop)
+                    {
+                        m_properties[name] = prop;
+                    }
+
                     void addProperties(const std::map<std::string, PropertiesPtr > &properties)
                     {
                         for (auto prop : properties)
                             m_properties[prop.first] = prop.second;
                     }
-                    std::vector<std::string> getRequired() const { return m_required; }
-                    void addRequired(const std::string &req) { m_required.push_back(req); }
+
+                    std::vector<std::string> getRequired() const
+                    {
+                        return m_required;
+                    }
+
+                    void addRequired(const std::string &req)
+                    {
+                        m_required.push_back(req);
+                    }
+
                     void addRequired(const std::vector<std::string> &required)
                     {
                         for (auto req : required)
                             m_required.push_back(req);
                     }
-                    std::string getType() const { return m_type; }
+
+                    std::string getType() const
+                    {
+                        return m_type;
+                    }
+
                     void setType(const std::string &type)
                     {
                         if (m_type.empty())
+                        {
                             m_type = type;
+                        }
                     }
 
                 private:

@@ -562,6 +562,7 @@ public class OcResource {
 
     /**
      * Function to change host of this reource
+     * @param host host address to change to
      * @return New host Address.
      *         Not observable.
      */

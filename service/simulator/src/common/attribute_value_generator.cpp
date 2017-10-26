@@ -24,7 +24,9 @@ std::unique_ptr<AttributeValueGen> AttributeValueGenFactory::create(
     const std::shared_ptr<AttributeProperty> &property)
 {
     if (!property)
+    {
         return nullptr;
+    }
 
     if (property->isInteger())
     {

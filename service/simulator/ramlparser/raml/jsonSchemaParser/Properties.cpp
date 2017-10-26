@@ -121,13 +121,21 @@ namespace RAML
         else if (!m_typeString.empty()) //to read properties even if default value is not present
         {
             if (m_typeString == "string")
+            {
                 return Properties::TypeInfo(VariantType::STRING, VariantType::STRING, 0);
+            }
             else if (m_typeString == "integer")
+            {
                 return Properties::TypeInfo(VariantType::INTEGER, VariantType::INTEGER, 0);
+            }
             else if (m_typeString == "number")
+            {
                 return Properties::TypeInfo(VariantType::DOUBLE, VariantType::DOUBLE, 0);
+            }
             else if (m_typeString == "boolean")
+            {
                 return Properties::TypeInfo(VariantType::BOOLEAN, VariantType::BOOLEAN, 0);
+            }
         }
         return Properties::TypeInfo();
     }
@@ -161,7 +169,9 @@ namespace RAML
     {
         if (m_type == rhs.type() && m_baseType == rhs.baseType()
             && m_depth == rhs.depth())
+        {
             return true;
+        }
         return false;
     }
 
@@ -170,14 +180,18 @@ namespace RAML
     {
         if (m_type != rhs.type() || m_baseType != rhs.baseType()
             || m_depth != rhs.depth())
+        {
             return true;
+        }
         return false;
     }
 
     ValueVariant Properties::getValue() const
     {
         if (!isDefaultValue())
+        {
             throw JsonException("Reading Empty Property Value");
+        }
         return *m_value;
     }
 
@@ -218,7 +232,9 @@ namespace RAML
         for (; it != m_required.end(); ++it)
         {
             if (*it == reqValue)
+            {
                 break;
+            }
         }
         if (m_required.end() == it)
         {
@@ -346,10 +362,14 @@ namespace RAML
             m_type = ValueProperty::Type::ARRAY;
 
             if (minItems > 0)
+            {
                 m_minItems = minItems;
+            }
 
             if (maxItems != INT_MAX && maxItems > m_minItems)
+            {
                 m_maxItems = maxItems;
+            }
 
             m_unique = unique;
             m_additionalItems = additionalItems;
