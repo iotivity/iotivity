@@ -219,7 +219,6 @@ public class Light implements OcPlatform.EntityHandler {
         response.setRequestHandle(request.getRequestHandle());
         response.setResourceHandle(request.getResourceHandle());
 
-        response.setErrorCode(SUCCESS);
         response.setResponseResult(EntityHandlerResult.OK);
         response.setResourceRepresentation(getOcRepresentation());
     }

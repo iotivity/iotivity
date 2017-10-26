@@ -96,9 +96,9 @@ void InputPinCB(char* pin, size_t len)
 
 void OnInputPinCB(OicUuid_t deviceId, char* pinBuf, size_t bufSize)
 {
-    if(pinBuf)
+    if (pinBuf)
     {
-        std::cout <<"INPUT PIN : ";
+        std::cout << "INPUT PIN : ";
         std::string ptr;
         std::cin >> ptr;
         strcpy(pinBuf, (const char*) ptr.c_str());
@@ -111,9 +111,9 @@ OCStackResult displayMutualVerifNumCB(uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LE
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] displayNumCB IN");
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] ############ mutualVerifNum ############");
 
-    for(int i = 0; i< MUTUAL_VERIF_NUM_LEN ; i++)
+    for (int i = 0; i < MUTUAL_VERIF_NUM_LEN; i++)
     {
-        IOTIVITYTEST_LOG(DEBUG, "[Test Server] %02X ", mutualVerifNum[i] );
+        IOTIVITYTEST_LOG(DEBUG, "[Test Server] %02X ", mutualVerifNum[i]);
     }
 
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] ############ mutualVerifNum ############");
@@ -131,11 +131,12 @@ OCStackResult confirmMutualVerifNumCB(void)
         printf("   > Press 1 if the mutual verification numbers are the same\n");
         printf("   > Press 0 if the mutual verification numbers are not the same\n");
 
-        for (int ret=0; 1!=ret; )
+        for (int ret = 0; 1 != ret;)
         {
             ret = scanf("%d", &clientConfirm);
-            for (; 0x20<=getchar(); );  // for removing overflow garbage
-                                        // '0x20<=code' is character region
+            for (; 0x20 <= getchar();)
+                ; // for removing overflow garbage
+                  // '0x20<=code' is character region
         }
 
         if (1 == clientConfirm)
@@ -235,7 +236,6 @@ bool provisionInit()
         return false;
     }
 
-
     IOTIVITYTEST_LOG(DEBUG, "Provision Initialization Successful\n");
     return true;
 }
@@ -268,25 +268,25 @@ bool discoverUnownedDevices(int time, DeviceList_t& deviceList, OCStackResult ex
 }
 
 bool discoverSingleDevice(unsigned short timeout, const OicUuid_t* deviceID,
-		std::shared_ptr<OCSecureResource> &foundDevice, OCStackResult expectedResult)
+        std::shared_ptr< OCSecureResource > &foundDevice, OCStackResult expectedResult)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] discoverSingleDevice IN");
 
     OCStackResult res = OC_STACK_OK;
-    res = OCSecure::discoverSingleDevice(timeout, deviceID,foundDevice);
+    res = OCSecure::discoverSingleDevice(timeout, deviceID, foundDevice);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] discoverSingleDevice returns : %s",
-    		getOCStackResultCPP(res).c_str());
+            getOCStackResultCPP(res).c_str());
 
     if (res != expectedResult)
     {
-    	IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+        IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
         return false;
     }
 
-    if (foundDevice!=NULL)
-	{
-    	std::cout << "[PMCppHelper] Found secure devices: " << foundDevice->getDeviceID() << endl;
-	}
+    if (foundDevice != NULL)
+    {
+        std::cout << "[PMCppHelper] Found secure devices: " << foundDevice->getDeviceID() << endl;
+    }
 
     IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] discoverSingleDevice OUT");
     return true;
@@ -384,7 +384,8 @@ bool doOwnershipTransfer(DeviceList_t &data, ResultCallBack resultCallback,
     {
         g_cbInvoked = CALLBACK_NOT_INVOKED;
 
-        if(data[i]->getDevAddr().find("wlan0")) {
+        if (data[i]->getDevAddr().find("wlan0"))
+        {
             continue;
         }
 
@@ -443,26 +444,25 @@ bool provisionACL(DeviceList_t& deviceList, const OicSecAcl_t* acl, ResultCallBa
     return true;
 }
 
-bool saveACL(const OicSecAcl_t* acl,OCStackResult expectedResult)
+bool saveACL(const OicSecAcl_t* acl, OCStackResult expectedResult)
 {
-	IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] saveACL IN");
-	    OCStackResult res = OC_STACK_OK;
-	    g_cbInvoked = CALLBACK_NOT_INVOKED;
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] saveACL IN");
+    OCStackResult res = OC_STACK_OK;
+    g_cbInvoked = CALLBACK_NOT_INVOKED;
 
-	    res = OCSecure::saveACL(acl);
-	    IOTIVITYTEST_LOG(DEBUG, "[API Return Code] saveACL returns : %s",
-	    		getOCStackResultCPP(res).c_str());
+    res = OCSecure::saveACL(acl);
+    IOTIVITYTEST_LOG(DEBUG, "[API Return Code] saveACL returns : %s",
+            getOCStackResultCPP(res).c_str());
 
-	    if (res != expectedResult)
-	    {
-	        IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
-	        return false;
-	    }
+    if (res != expectedResult)
+    {
+        IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+        return false;
+    }
 
-	    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] saveACL OUT");
-	    return true;
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] saveACL OUT");
+    return true;
 }
-
 
 bool provisionCredentials(DeviceList_t& deviceList, const Credential &cred,
         const OCSecureResource &device2, ResultCallBack resultCallback,
@@ -618,20 +618,20 @@ bool removeDevice(DeviceList_t& deviceList, unsigned short waitTimeForOwnedDevic
     return true;
 }
 
-bool removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery,
-        std::string uuid, ResultCallBack resultCallback, OCStackResult expectedResult)
+bool removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery, std::string uuid,
+        ResultCallBack resultCallback, OCStackResult expectedResult)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] removeDeviceWithUuid IN");
     OCStackResult res = OC_STACK_OK;
     g_cbInvoked = CALLBACK_NOT_INVOKED;
 
-    res = OCSecure::removeDeviceWithUuid(waitTimeForOwnedDeviceDiscovery, uuid,resultCallback);
+    res = OCSecure::removeDeviceWithUuid(waitTimeForOwnedDeviceDiscovery, uuid, resultCallback);
     IOTIVITYTEST_LOG(DEBUG, "[API Return Code] removeDeviceWithUuid returns : %s",
-    		getOCStackResultCPP(res).c_str());
+            getOCStackResultCPP(res).c_str());
 
     if (res != expectedResult)
     {
-    	IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+        IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
         return false;
     }
 
@@ -670,7 +670,6 @@ void ownershipTransferCB(PMResultList_t *result, int hasError)
         delete result;
         g_cbInvoked = CALLBACK_INVOKED;
     }
-
 
     IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] ownershipTransferCB OUT");
 }
@@ -770,14 +769,13 @@ std::string getOCStackResultCPP(OCStackResult ocstackresult)
             return "OC_STACK_ERROR";
             break;
         case OC_STACK_INVALID_DEVICE_INFO:
-			return "OC_STACK_INVALID_DEVICE_INFO";
-			break;
+            return "OC_STACK_INVALID_DEVICE_INFO";
+            break;
         case OC_STACK_NOT_ACCEPTABLE:
-			return "OC_STACK_NOT_ACCEPTABLE";
-			break;
+            return "OC_STACK_NOT_ACCEPTABLE";
+            break;
         default:
             resultString = "UNKNOWN_STATE";
-            break;
     }
 
     return resultString;
@@ -812,59 +810,59 @@ int waitCallbackRet()
 /**
  * Function for Convert String to Device Uuid
  */
-bool convertStrToUuid(std::string uuid,OicUuid_t* deviceID,OCStackResult expectedResult)
+bool convertStrToUuid(std::string uuid, OicUuid_t* deviceID, OCStackResult expectedResult)
 {
-	IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] convertStrToUuid IN");
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] convertStrToUuid IN");
 
-	OCStackResult rst;
+    OCStackResult rst;
 
-	rst = ConvertStrToUuid(uuid.c_str(), deviceID);
-	IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] convertStrToUuid returns : %s",
-			getOCStackResultCPP(rst).c_str());
+    rst = ConvertStrToUuid(uuid.c_str(), deviceID);
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] convertStrToUuid returns : %s",
+            getOCStackResultCPP(rst).c_str());
 
-	if(OC_STACK_OK != rst)
-	{
-		IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
-		return false;
-	}
+    if (OC_STACK_OK != rst)
+    {
+        IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+        return false;
+    }
 
-	IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] convertStrToUuid OUT");
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] convertStrToUuid OUT");
 
-	return true;
+    return true;
 }
 
 void removeAllResFile(int resFile)
 {
-    if(resFile == JUSTWORK1)
+    if (resFile == JUSTWORK1)
     {
         CommonUtil::rmFile(JUSTWORKS_SERVER2_CBOR);
     }
-    else if(resFile == JUSTWORK2)
+    else if (resFile == JUSTWORK2)
     {
         CommonUtil::rmFile(JUSTWORKS_SERVER1_CBOR);
     }
-    else if(resFile == MVJUSTWORK)
+    else if (resFile == MVJUSTWORK)
     {
         CommonUtil::rmFile(MVJUSTWORKS_SERVER_CBOR);
     }
-    else if(resFile == RANDOMPIN)
+    else if (resFile == RANDOMPIN)
     {
         CommonUtil::rmFile(RANDOMPIN_SERVER_CBOR);
     }
-    else if(resFile == PRECONFIGPIN1)
+    else if (resFile == PRECONFIGPIN1)
     {
         CommonUtil::rmFile(PRECONFIG_SERVER1_CBOR);
     }
-    else if(resFile == PRECONFIGPIN2)
+    else if (resFile == PRECONFIGPIN2)
     {
         CommonUtil::rmFile(PRECONFIG_SERVER2_CBOR);
     }
-    else if(resFile == CLIENT)
+    else if (resFile == CLIENT)
     {
         CommonUtil::rmFile(DATABASE_PDM);
         CommonUtil::rmFile(CLIENT_CBOR);
     }
-    else if(resFile == MOTCLIENT)
+    else if (resFile == MOTCLIENT)
     {
         CommonUtil::rmFile(MOT_DB_FILE_NAME);
         CommonUtil::rmFile(MOT_CLIENT_CBOR);
@@ -873,35 +871,35 @@ void removeAllResFile(int resFile)
 
 void copyAllResFile(int resFile)
 {
-    if(resFile == JUSTWORK1)
+    if (resFile == JUSTWORK1)
     {
         CommonUtil::copyFile(JUSTWORKS_SERVER2_CBOR_BACKUP, JUSTWORKS_SERVER2_CBOR);
     }
-    else if(resFile == JUSTWORK2)
+    else if (resFile == JUSTWORK2)
     {
         CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
     }
-    else if(resFile == MVJUSTWORK)
+    else if (resFile == MVJUSTWORK)
     {
         CommonUtil::copyFile(MVJUSTWORKS_SERVER_CBOR_BACKUP, MVJUSTWORKS_SERVER_CBOR);
     }
-    else if(resFile == RANDOMPIN)
+    else if (resFile == RANDOMPIN)
     {
         CommonUtil::copyFile(RANDOMPIN_SERVER_CBOR_BACKUP, RANDOMPIN_SERVER_CBOR);
     }
-    else if(resFile == PRECONFIGPIN1)
+    else if (resFile == PRECONFIGPIN1)
     {
         CommonUtil::copyFile(PRECONFIG_SERVER1_CBOR_BACKUP, PRECONFIG_SERVER1_CBOR);
     }
-    else if(resFile == PRECONFIGPIN2)
+    else if (resFile == PRECONFIGPIN2)
     {
         CommonUtil::copyFile(PRECONFIG_SERVER2_CBOR_BACKUP, PRECONFIG_SERVER2_CBOR);
     }
-    else if(resFile == CLIENT)
+    else if (resFile == CLIENT)
     {
         CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
     }
-    else if(resFile == MOTCLIENT)
+    else if (resFile == MOTCLIENT)
     {
         CommonUtil::copyFile(MOT_CLIENT_CBOR_BACKUP, MOT_CLIENT_CBOR);
     }

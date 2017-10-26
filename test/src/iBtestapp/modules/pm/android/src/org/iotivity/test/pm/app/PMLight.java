@@ -1,24 +1,23 @@
-/*
- * //******************************************************************
- * //
- * // Copyright 2015 Intel Corporation.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- */
+/******************************************************************
+ *
+ * Copyright 2017 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ ******************************************************************/
 package org.iotivity.test.pm.app;
 
 import android.content.Context;
@@ -44,7 +43,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class Light implements OcPlatform.EntityHandler {
+public class PMLight implements OcPlatform.EntityHandler {
   private static final String NAME_KEY  = "name";
   private static final String STATE_KEY = "state";
   private static final String POWER_KEY = "power";
@@ -58,7 +57,7 @@ public class Light implements OcPlatform.EntityHandler {
   private boolean             mState;             // light state
   private int                 mPower;             // light power
 
-  public Light(String resourceUri, String name, boolean state, int power) {
+  public PMLight(String resourceUri, String name, boolean state, int power) {
     mResourceUri = resourceUri;
     mResourceTypeName = "core.light";
     mResourceInterface = OcPlatform.DEFAULT_INTERFACE;
@@ -186,10 +185,6 @@ public class Light implements OcPlatform.EntityHandler {
     response.setRequestHandle(request.getRequestHandle());
     response.setResourceHandle(request.getResourceHandle());
     String newUri = "/a/light" + (++sUriCounter);
-    // if(null != mContext && mContext instanceof SimpleServer) {
-    // ((SimpleServer) mContext).createNewLightResource(newUri, "John's light "
-    // + sUriCounter);
-    // }
     OcRepresentation rep_post = getOcRepresentation();
     try {
       rep_post.setValue(OcResource.CREATED_URI_KEY, newUri);
@@ -364,7 +359,7 @@ public class Light implements OcPlatform.EntityHandler {
     }
   }
 
-  private final static String TAG                = Light.class.getSimpleName();
+  private final static String TAG                = PMLight.class.getSimpleName();
   private final static int    SUCCESS            = 200;
   private boolean             mIsSlowResponse    = false;
   private boolean             mIsListOfObservers = false;

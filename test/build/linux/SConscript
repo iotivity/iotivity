@@ -60,9 +60,9 @@ install_targets = []
 
 SConscript(iotivity_test_root + '/extlibs/gtest-1.7.0/SConscript')
 
-iotivity_common_includes_paths = [ 
-    iotivity_root + '/resource/csdk/logger/include', 
-    iotivity_root + '/resource/csdk/stack/include', 
+iotivity_common_includes_paths = [
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/stack/include',
     iotivity_root + '/resource/c_common',
     iotivity_root + '/resource/c_common/oic_malloc/include',
     iotivity_root + '/resource/c_common/oic_string/include',
@@ -88,22 +88,22 @@ if env_linux.get('COVERAGE'):
 
 env_linux.Append(COMMON_LINUX_CPPFLAGS = common_linux_cppflags)
 
-install_targets += env_linux.StaticLibrary('common_util', 
+install_targets += env_linux.StaticLibrary('common_util',
                     source = [test_src_root + '/common/commonutil/c_cpp/CommonUtil.cpp',
                         test_src_root + '/common/commonutil/c_cpp/Configuration.cpp'
-                    ], 
-                    CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths, 
+                    ],
+                    CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
                     LIBS = ['boost_system', 'boost_filesystem', 'boost_thread'],
                     LIBPATH = ['/usr/local/lib'],
                     CPPFLAGS = cppflags + common_linux_cppflags)
 
 if 'tc' in test:
-    tc_util = env_linux.StaticLibrary('tc_util', 
+    tc_util = env_linux.StaticLibrary('tc_util',
                 source = [
                             test_src_root + '/common/commonutil/c_cpp/trace.c',
                             test_src_root + '/common/testcase/gtest/IotivitySECTestMain.cpp',
                             test_src_root + '/common/commonutil/c_cpp/CommonTestUtil.cpp',
-                        ], 
+                        ],
                 CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
                 LIBS = ['boost_system', 'boost_filesystem', 'boost_thread'],
                 LIBPATH = ['/usr/local/lib'],
@@ -112,15 +112,14 @@ if 'tc' in test:
 if 'ic' in module or 'cs' in module:
     if tls_mode == 1:
         cppflags.append(['-D__TLS_ON__'])
-    cloud_util = env_linux.StaticLibrary('cloud_util', 
-                    source = [test_src_root + '/common/commonutil/c_cpp/CloudCommonUtil.cpp'], 
+    cloud_util = env_linux.StaticLibrary('cloud_util',
+                    source = [test_src_root + '/common/commonutil/c_cpp/CloudCommonUtil.cpp'],
                     CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
                     LIBS = ['curl', 'boost_system', 'boost_filesystem', 'boost_thread', 'common_util' ],
                     LIBPATH = ['.', '/usr/local/lib'],
                     CPPFLAGS = cppflags + common_linux_cppflags)
 
 if 'pm' in module or 'ri' in module:
-#if len(module) > 1 or (len(module) == 1 and 'ca' not in module):
     print ('calling SConscriptSK')
     SConscript('SConscriptSK', exports = 'env_linux')
 else:

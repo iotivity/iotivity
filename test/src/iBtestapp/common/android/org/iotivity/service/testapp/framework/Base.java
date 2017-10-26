@@ -27,7 +27,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
+import java.util.ArrayList;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -35,6 +35,8 @@ import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -54,11 +56,11 @@ import android.widget.TextView;
 import android.text.method.ScrollingMovementMethod;
 import android.view.Display;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.os.StrictMode;
 import android.os.Message;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 public class Base extends Activity {
     private static final String        REGISTER_DIALOG_MESSAGE        = "Register dialog first";
@@ -92,6 +94,9 @@ public class Base extends Activity {
     private static boolean             isfinished;
     static Handler                     handler;
     private static boolean             mResult;
+    public static ArrayList<String> mListInput = new ArrayList<>();
+
+    private EditText inputEditTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +110,9 @@ public class Base extends Activity {
         display.getMetrics(metrics);
         screenWidth = metrics.widthPixels;
         screenHeight = metrics.heightPixels;
+
+        IntentFilter intentFilter = new IntentFilter("org.iotivity.test.INPUT_INTENT");
+        registerReceiver(new InputReceiver(), intentFilter);
     }
 
     public static Context getContext() {
@@ -177,7 +185,7 @@ public class Base extends Activity {
         menuTextView.setVerticalScrollBarEnabled(true);
         menuTextView.setMovementMethod(new ScrollingMovementMethod());
 
-        final EditText inputEditTextView = new EditText(this);
+        inputEditTextView = new EditText(this);
 
         menuTextView.setLayoutParams(rowParams);
         inputRow.addView(inputEditTextView);
@@ -226,31 +234,20 @@ public class Base extends Activity {
             }
         });
 
-        actionButton.setOnClickListener(new OnClickListener() {
+        final InputHandler inputHandler = new InputHandler(menuMap);
+        Thread thread = new Thread(inputHandler);
+        thread.start();
 
+        actionButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View arg0) {
                 String inputText = inputEditTextView.getText().toString();
-                if (!inputText.isEmpty()) {
-                    String key = EMPTY_TEXT_STRING;
-                    String argument = null;
-                    if (inputText.contains(EMPTY_TEXT_STRING)) {
-                        String temptext[] = inputText.split(SPLIT_TEXT);
-                        key = temptext[0];
-                        if (temptext.length > 1)
-                            argument = temptext[1];
-                    } else {
-                        key = inputText;
-                    }
-                    if (menuMap.containsKey(key)) {
-                        executeAction(menuMap, key, argument,
-                                inputEditTextView);
-                    } else
-                        showOutPut(INVALID_MENU_OPTION_MESSAGE);
+                synchronized(this){
+                    mListInput.add(inputText);
                 }
-
+                InputMethodManager inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputManager.hideSoftInputFromWindow(inputEditTextView.getWindowToken(), 0);
             }
-
         });
     }
 
@@ -268,21 +265,38 @@ public class Base extends Activity {
         return text;
     }
 
-    protected MenuInfo getMenuInfo(Map<String, MenuInfo> menuMap, String key) {
+    protected static MenuInfo getMenuInfo(Map<String, MenuInfo> menuMap, String key) {
         MenuInfo menuInfo = menuMap.get(key);
         return menuInfo;
 
     }
 
-    public static void showOutPut(String outputText) {
-        Base.outPutString += outputText + NEW_LINE;
-        outputTextView.setText(outPutString);
-        Log.d(getContext().getPackageName(), outputText);
+    public static void showOutPut(final String outputText) {
+
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                Log.d("OutputTextBox", outputText);
+                Base.outPutString += outputText + NEW_LINE;
+                outputTextView.setText(outPutString);
+            }
+        };
+
+        final Handler UIHandler = new Handler(Looper.getMainLooper());
+        UIHandler.post(runnable);
     }
 
     public static void clearOutPut() {
-        outPutString = LOG_HEADER;
-        outputTextView.setText(outPutString);
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                outPutString = LOG_HEADER;
+                outputTextView.setText(outPutString);
+            }
+        };
+
+        final Handler UIHandler = new Handler(Looper.getMainLooper());
+        UIHandler.post(runnable);
     }
 
     private void registerActions(Object actionClassObj) {
@@ -308,44 +322,10 @@ public class Base extends Activity {
             }
         } else
             showOutPut(ACTIONS_REGISTER_MESSAGE);
-
         return null;
     }
 
-    private void executeAction(Map<String, MenuInfo> menuMap, String key,
-            String argument, EditText inputEditView) {
-        MenuInfo menuInfo = getMenuInfo(menuMap, key);
-        Method action = null;
-
-        if (argument == null) {
-            action = getDeclaredMethod(actionObject, menuInfo.actionName);
-        } else {
-            Class[] cArg = new Class[1];
-            cArg[0] = String.class;
-            action = getDeclaredMethod(actionObject, menuInfo.actionName,
-                    cArg[0]);
-        }
-        if (null != action) {
-            try {
-                if (argument == null) {
-                    action.invoke(actionObject);
-                } else
-                    action.invoke(actionObject, new String(argument));
-            } catch (IllegalAccessException e) {
-                showOutPut(ILLEGAL_ACCESS_EXCEPTION);
-            } catch (IllegalArgumentException e) {
-                showOutPut(ILLEGAL_ARGUMENT_EXCEPTION);
-            } catch (InvocationTargetException e) {
-                showOutPut(INVOCATION_TARGET_EXCEPTION);
-            }
-        } else {
-            showOutPut(ACTION_NOT_FOUND_MESSAGE);
-        }
-
-        InputMethodManager inputManager = (InputMethodManager) getSystemService(
-                Context.INPUT_METHOD_SERVICE);
-        inputManager.hideSoftInputFromWindow(inputEditView.getWindowToken(), 0);
-    }
+    
 
     private void createDialog(String title, String message) {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
@@ -387,5 +367,124 @@ public class Base extends Activity {
 
     public static String getDialogText() {
         return dialogInputText;
+    }
+
+    private class InputHandler implements Runnable
+    {
+        private Map<String, MenuInfo> menuMap;
+
+        InputHandler(Map<String, MenuInfo> menuMap)
+        {
+            this.menuMap = menuMap;
+        }
+
+        public void run()
+        {
+            while(true)
+            {
+                try
+                {
+                    Thread.sleep(1000);
+                }
+                catch(Exception ex)
+                {
+                }
+                for(;;)
+                {
+                    String input = null;
+                    synchronized (this)
+                    {
+                        if(mListInput.isEmpty())
+                        {
+                            break;
+                        }
+                        input = mListInput.get(0);
+                        mListInput.remove(0);
+                    }
+                    executeAction(input);
+                }
+            }
+        }
+
+        private void executeAction(String inputText)
+        {
+            String key = EMPTY_TEXT_STRING;
+            String argument = null;
+
+            if (!inputText.isEmpty()) {
+                if (inputText.contains(EMPTY_TEXT_STRING)) {
+                    String temptext[] = inputText.split(SPLIT_TEXT);
+                    key = temptext[0];
+                    if (temptext.length > 1)
+                        argument = temptext[1];
+                } else {
+                    key = inputText;
+                }
+                if (!menuMap.containsKey(key)) {
+                    showOutPut(INVALID_MENU_OPTION_MESSAGE);
+                    return;
+                }
+            } else {
+                return;
+            }
+
+            MenuInfo menuInfo = getMenuInfo(menuMap, key);
+            Method action = null;
+
+            if (argument == null) {
+                action = getDeclaredMethod(actionObject, menuInfo.actionName);
+            } else {
+                Class[] cArg = new Class[1];
+                cArg[0] = String.class;
+                action = getDeclaredMethod(actionObject, menuInfo.actionName,
+                        cArg[0]);
+            }
+            if (null != action) {
+                try {
+                    if (argument == null) {
+                        action.invoke(actionObject);
+                    } else
+                        action.invoke(actionObject, new String(argument));
+                } catch (IllegalAccessException e) {
+                    showOutPut(ILLEGAL_ACCESS_EXCEPTION);
+                    e.printStackTrace();
+                } catch (IllegalArgumentException e) {
+                    showOutPut(ILLEGAL_ARGUMENT_EXCEPTION);
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    showOutPut(INVOCATION_TARGET_EXCEPTION);
+                    e.printStackTrace();
+                }
+            } else {
+                showOutPut(ACTION_NOT_FOUND_MESSAGE);
+            }
+        }
+    }
+
+    public static String getInput()
+    {
+        String input = null;
+
+        while(mListInput.isEmpty())
+        {
+            try
+            {
+                Thread.sleep(1000);
+            }
+            catch(Exception ex)
+            {
+            }
+        }
+
+        synchronized (mListInput)
+        {
+            if (!mListInput.isEmpty())
+            {
+                input = mListInput.get(0);
+                mListInput.remove(0);
+            }
+        }
+
+        return input;
     }
 }

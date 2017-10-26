@@ -230,7 +230,6 @@ public:
     static std::string exec(const char* cmd);
 
     OTMCallbackData_t otmCbRegister(int otmType);
-    static void testF();
 };
 #endif
 #endif //#ifdef __SECURED__

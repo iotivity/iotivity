@@ -855,9 +855,4 @@ std::string SecurityCommonUtil::exec(const char* cmd) {
     return result;
 }
 
-
-void SecurityCommonUtil::testF() {
-
-}
-
 #endif // #ifdef __SECURED__

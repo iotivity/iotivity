@@ -158,7 +158,7 @@ void handler(int sig)
     // print out all the frames to stderr
     fprintf(stderr, "Error: signal %d:\n", sig);
 
-#ifdef __LINUX__    
+#ifdef __LINUX__
     backtrace_symbols_fd(array, size, STDERR_FILENO);
 #endif
 

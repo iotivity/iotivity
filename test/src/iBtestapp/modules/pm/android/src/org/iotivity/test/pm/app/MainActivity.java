@@ -74,7 +74,7 @@ public class MainActivity extends Base {
                 .put("2", new MenuInfo("Discover Owned Devices", "discoverOwendDev"));
         menuMap.put("0", new MenuInfo("Clear Log", "clearLog"));
 
-        RegisterApp("Provisioning Manager", menuMap, new Action(
+        RegisterApp("Provisioning Manager", menuMap, new PMAction(
                 getApplicationContext()));
 
         showOutPut("Test");

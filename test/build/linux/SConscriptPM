@@ -112,6 +112,8 @@ client_simulator_include_paths = [
 
 
 lib_paths = [
+    '.',
+    '/usr/local/lib',
     iotivity_lib_path,
     iotivity_lib_path + '/resource/csdk/logger',
     iotivity_lib_path + '/resource/csdk/security',
@@ -151,7 +153,7 @@ csdk_lib_list = Split('boost_system boost_filesystem boost_thread c_common coap 
 
 cpp_lib_list = Split('boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction dl expat gcov gio-2.0 gobject-2.0 glib-2.0 m logger oc oc_logger octbstack ocpmapi ocprovision ocsrm octbstack pthread rt uuid mbedtls mbedx509 mbedcrypto routingmanager resource_directory common_util')
 
-cppdefines = ['__SECURED__', 'WITH_CLOUD', 'RD_CLIENT', 'WITH_CLOUD', 'MULTIPLE_OWNER', 'NDEBUG', 'WITH_POSIX', '__linux__', 'TCP_ADAPTER', 'IP_ADAPTER', 'NO_EDR_ADAPTER', 'LE_ADAPTER', 'MQ_SUBSCRIBER', 'WITH_MQ', 'MQ_PUBLISHER', 'SHA2_USE_INTTYPES_H', '__WITH_DTLS__', '__WITH_TLS__', '_ENABLE_MULTIPLE_OWNER_', 'ROUTING_EP', 'WITH_BWT', 'CA_DBUS_GATT_SERVICE_NAME', 'GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_32', 'WITH_TCP'] 
+cppdefines = ['__SECURED__', 'WITH_CLOUD', 'RD_CLIENT', 'WITH_CLOUD', 'MULTIPLE_OWNER', 'NDEBUG', 'WITH_POSIX', '__linux__', 'TCP_ADAPTER', 'IP_ADAPTER', 'NO_EDR_ADAPTER', 'LE_ADAPTER', 'MQ_SUBSCRIBER', 'WITH_MQ', 'MQ_PUBLISHER', 'SHA2_USE_INTTYPES_H', '__WITH_DTLS__', '__WITH_TLS__', '_ENABLE_MULTIPLE_OWNER_', 'ROUTING_EP', 'WITH_BWT', 'CA_DBUS_GATT_SERVICE_NAME', 'GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_32', 'WITH_TCP']
 
 cppflags1 = ['-w', '-s', '-pthread', '-march=native', '-pthread', '-fpermissive']
 
@@ -169,7 +171,7 @@ if 'tc' in test:
                             target = 'iotivity_pm_csdk_test',
                             CPPPATH = iotivity_include_paths + cert_include_paths + csdk_tc_include_paths,
                             LIBS = csdk_lib_list + ['gtest', 'tc_util', 'dl'],
-                            LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                            LIBPATH = lib_paths,
                             RPATH = iotivity_lib_path,
                             CPPFLAGS = cppflags + common_linux_cppflags,
                             CXXFLAGS = cxxflags)
@@ -180,7 +182,7 @@ if 'tc' in test:
                             target = 'iotivity_pm_cpp_test',
                             CPPPATH = iotivity_include_paths + cpp_tc_include_paths,
                             LIBS = csdk_lib_list + ['gtest', 'tc_util', 'dl'],
-                            LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                            LIBPATH = lib_paths,
                             RPATH = iotivity_lib_path,
                             CPPFLAGS = cppflags + common_linux_cppflags,
                             CXXFLAGS = cxxflags)
@@ -191,7 +193,7 @@ if 'tc' in test or 'simulator' in test:
                     target = 'iotivity_pm_server',
                     CPPPATH = iotivity_include_paths + simulator_include_paths,
                     LIBS = csdk_lib_list,
-                    LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                    LIBPATH = lib_paths,
                     RPATH = iotivity_lib_path,
                     CPPFLAGS = cppflags + common_linux_cppflags,
                     CXXFLAGS = cxxflags)
@@ -204,7 +206,7 @@ if 'tc' in test or 'simulator' in test:
                     target = 'iotivity_pm_client',
                     CPPPATH = iotivity_include_paths + simulator_include_paths,
                     LIBS = csdk_lib_list,
-                    LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                    LIBPATH = lib_paths,
                     RPATH = iotivity_lib_path,
                     CPPFLAGS = cppflags + common_linux_cppflags,
                     CXXFLAGS = cxxflags)
@@ -217,7 +219,7 @@ if 'app' in test:
                     target = 'iotivity_pm_csdk_app',
                     CPPPATH = iotivity_include_paths + cert_include_paths + csdk_tc_include_paths + csdk_testapp_include_paths,
                     LIBS = csdk_lib_list,
-                    LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                    LIBPATH = lib_paths,
                     RPATH = iotivity_lib_path,
                     CPPFLAGS = cppflags + common_linux_cppflags,
                     CXXFLAGS = cxxflags)
@@ -228,7 +230,7 @@ if 'app' in test:
                     target = 'iotivity_pm_cpp_app',
                     CPPPATH = iotivity_include_paths + cert_include_paths + cpp_tc_include_paths + cpp_testapp_include_paths,
                     LIBS = csdk_lib_list,
-                    LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                    LIBPATH = lib_paths,
                     RPATH = iotivity_lib_path,
                     CPPFLAGS = cppflags + common_linux_cppflags,
                     CXXFLAGS = cxxflags)

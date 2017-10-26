@@ -26,21 +26,21 @@ import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
 
-public class Action extends Base {
+public class PMAction extends Base {
 
   public static PMHelper                 mPMHelper                 = new PMHelper();
   public static OCPlatformHelper         mOCPlatformHelper         = new OCPlatformHelper();
   public static OcDirectPairDeviceHelper mOcDirectPairDeviceHelper = new OcDirectPairDeviceHelper();
   int                                    unownedDevCount           = PMConstants.NUMBER_ZERO;
-  List<Light>                            lights                    = new LinkedList<>();
+  List<PMLight>                          lights                    = new LinkedList<>();
 
-  public Action(Context context1) {
-    Log.i(PMConstants.TAG, "Action Contructor called.");
+  public PMAction(Context context1) {
+    Log.i(PMConstants.TAG, "PMAction Contructor called.");
   }
 
   public void createNewLightResource(String resourceUri, String resourceName) {
 
-    Light light = new Light(resourceUri, // URI
+    PMLight light = new PMLight(resourceUri, // URI
         resourceName, // name
         false, // state
         0 // power
