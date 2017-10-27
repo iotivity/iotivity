@@ -831,6 +831,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest *ehRequest
     {
         RoleCertChain_t *curr;
 
+        // Validate the new roles.
         for (curr = chains; NULL != curr; curr = curr->next)
         {
             bool freeData = false;
@@ -846,7 +847,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest *ehRequest
                 {
                     OIC_LOG_V(ERROR, TAG, "%s: OICMalloc failed", __func__);
                     res = OC_STACK_NO_MEMORY;
-                    goto exit;
+                    break;
                 }
 
                 OIC_LOG(DEBUG, TAG, "Adding null terminator");
@@ -869,25 +870,38 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest *ehRequest
             {
                 OIC_LOG(ERROR, TAG, "Could not verify certificate is a valid role certificate");
                 ehRet = OC_EH_ERROR;
-                goto exit;
+                break;
             }
 
             if ((pubKeyLength != peerPubKeyLen) ||
                 (0 != memcmp(pubKey, peerPubKey, pubKeyLength)))
             {
                 OIC_LOG(ERROR, TAG, "Peer sent us certificate not for its public key");
-                continue;
-            }
-
-            if (OC_STACK_OK != AddRoleCertificate(curr, pubKey, pubKeyLength))
-            {
-                OIC_LOG(ERROR, TAG, "Could not AddRoleCertificate");
                 ehRet = OC_EH_ERROR;
-                goto exit;
+                break;
             }
         }
 
-        ehRet = OC_EH_OK;
+        // Check if the loop above verified the new roles successfully.
+        if (NULL != curr)
+        {
+            assert(OC_EH_OK != ehRet);
+        }
+        else
+        {
+            // Store the new roles.
+            for (curr = chains; NULL != curr; curr = curr->next)
+            {
+                if (OC_STACK_OK != AddRoleCertificate(curr, pubKey, pubKeyLength))
+                {
+                    OIC_LOG(ERROR, TAG, "Could not AddRoleCertificate");
+                    ehRet = OC_EH_ERROR;
+                    break;
+                }
+            }
+
+            ehRet = OC_EH_OK;
+        }
     }
 
 exit:
