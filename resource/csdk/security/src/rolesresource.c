@@ -215,31 +215,6 @@ static void FreeSymmetricRolesList(SymmetricRoleEntry_t *head)
     }
 }
 
-static bool AddNullTerminator(OicSecKey_t *key)
-{
-    size_t length = key->len;
-    uint8_t *data = key->data;
-
-    if ((length > 0) && (data != NULL) && (data[length - 1] != 0))
-    {
-        key->data = OICRealloc(data, length + 1);
-
-        if (key->data == NULL)
-        {
-            OIC_LOG_V(ERROR, TAG, "%s: OICRealloc failed", __func__);
-            OICFree(data);
-            key->len = 0;
-            return false;
-        }
-
-        OIC_LOG(DEBUG, TAG, "Adding key null terminator");
-        key->data[length] = 0;
-        key->len++;
-    }
-
-    return true;
-}
-
 OCStackResult RegisterSymmetricCredentialRole(const OicSecCred_t *cred)
 {
     VERIFY_NON_NULL_RET(cred, TAG, "Parameter cred is NULL", OC_STACK_INVALID_PARAM);
@@ -704,9 +679,6 @@ OCStackResult CBORPayloadToRoles(const uint8_t *cborPayload, size_t size, RoleCe
                             {
                                 cborFindResult = DeserializeEncodingFromCbor(&roleMap, &currEntry->certificate);
                                 VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to read publicData");
-
-                                /* mbedtls_x509_crt_parse requires null string terminator */
-                                VERIFY_TRUE_OR_EXIT(TAG, AddNullTerminator(&currEntry->certificate), ERROR);
                             }
                             else if (strcmp(tagName, OIC_JSON_CREDTYPE_NAME) == 0)
                             {
@@ -861,8 +833,39 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest *ehRequest
 
         for (curr = chains; NULL != curr; curr = curr->next)
         {
-            if (OC_STACK_OK != OCInternalIsValidRoleCertificate(curr->certificate.data, curr->certificate.len,
-                &pubKey, &pubKeyLength))
+            bool freeData = false;
+            uint8_t *data = curr->certificate.data;
+            size_t dataLength = curr->certificate.len;
+
+            if ((dataLength > 0) && (data[dataLength - 1] != 0))
+            {
+                /* mbedtls_x509_crt_parse requires null terminator */
+                data = OICMalloc(dataLength + 1);
+
+                if (data == NULL)
+                {
+                    OIC_LOG_V(ERROR, TAG, "%s: OICMalloc failed", __func__);
+                    res = OC_STACK_NO_MEMORY;
+                    goto exit;
+                }
+
+                OIC_LOG(DEBUG, TAG, "Adding null terminator");
+                memcpy(data, curr->certificate.data, dataLength);
+                data[dataLength] = 0;
+                dataLength++;
+                freeData = true;
+            }
+
+            OCStackResult validationResult = OCInternalIsValidRoleCertificate(data, dataLength,
+                &pubKey, &pubKeyLength);
+
+            if (freeData)
+            {
+                OICFree(data);
+                freeData = false;
+            }
+
+            if (OC_STACK_OK != validationResult)
             {
                 OIC_LOG(ERROR, TAG, "Could not verify certificate is a valid role certificate");
                 ehRet = OC_EH_ERROR;
