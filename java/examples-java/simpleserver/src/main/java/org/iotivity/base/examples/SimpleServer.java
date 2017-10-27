@@ -64,7 +64,7 @@ public class SimpleServer {
                 0,         // Uses randomly available port
                 QualityOfService.LOW,
                 path + "/oic_svr_db_server.dat",
-                path + "/light_introspection.dat"
+                path + "/simpleserver_introspection.dat"
         );
 
         msg("Configuring platform.");

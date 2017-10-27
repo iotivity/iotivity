@@ -626,7 +626,7 @@ static FILE* client_open(const char* path, const char* mode)
     }
     else if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME))
     {
-        filename = "light_introspection.json";
+        filename = "simpleserver_introspection.dat";
     }
     return fopen(filename, mode);
 }

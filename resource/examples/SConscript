@@ -133,7 +133,6 @@ examples = list(map(make_single_file_cpp_program, example_names))
 ######################################################################
 # Other examples
 ######################################################################
-
 cbor = examples_env.ScanJSON()
 examples_env.Alias("install", cbor)
 examples += cbor
