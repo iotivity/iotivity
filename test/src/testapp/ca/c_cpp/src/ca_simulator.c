@@ -208,24 +208,19 @@ void printChars(unsigned char *p, int length)
 
 CAResult_t dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
-    if (NULL != endpoint)
+    if (NULL == endpoint)
     {
-        output("Remote device Address %s:%d:", endpoint->addr, endpoint->port);
-    }
-    else
-    {
-        output("endpoint is null");
+      output("endpoint is null");
+      return CA_STATUS_FAILED;
     }
 
-    if (NULL != info)
+    if (NULL == info)
     {
         output("ErrorInfo: %d", info->result);
+        return CA_STATUS_FAILED;
     }
-    else
-    {
-        output("ErrorInfo is null");
-    }
-
+    output("Remote device Address %s:%d:", endpoint->addr, endpoint->port);
+    output("ErrorInfo is null");
     return CA_STATUS_OK;
 }
 

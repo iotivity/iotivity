@@ -71,24 +71,19 @@ void getString(char a[], char str[], int length)
 
 CAResult_t dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
-    if (NULL != endpoint)
+    if (NULL == endpoint)
     {
-        printf("Remote device Address %s:%d:", endpoint->addr, endpoint->port);
-    }
-    else
-    {
-        printf("endpoint is null");
+      output("endpoint is null");
+      return CA_STATUS_FAILED;
     }
 
-    if (NULL != info)
+    if (NULL == info)
     {
-        printf("ErrorInfo: %d", info->result);
+        output("ErrorInfo: %d", info->result);
+        return CA_STATUS_FAILED;
     }
-    else
-    {
-        printf("ErrorInfo is null");
-    }
-
+    output("Remote device Address %s:%d:", endpoint->addr, endpoint->port);
+    output("ErrorInfo is null");
     return CA_STATUS_OK;
 }
 

@@ -1418,25 +1418,21 @@ void CAHelper::initCipherSuiteList(bool * list, const char* deviceId)
 
 CAResult_t CAHelper::dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
-    if (NULL != endpoint)
-    {
+        if (NULL == endpoint)
+               {
+                        IOTIVITYTEST_LOG(DEBUG, "endpoint is null");
+                        return CA_STATUS_FAILED;
+               }
+
+        if (NULL == info)
+               {
+                        IOTIVITYTEST_LOG(DEBUG, "ErrorInfo is null");
+                        return CA_STATUS_FAILED;
+               }
+
         IOTIVITYTEST_LOG(DEBUG, "Remote device Address %s:%d:", endpoint->addr, endpoint->port);
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(DEBUG, "endpoint is null");
-    }
-
-    if (NULL != info)
-    {
         IOTIVITYTEST_LOG(DEBUG, "ErrorInfo: %d", info->result);
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(DEBUG, "ErrorInfo is null");
-    }
-
-    return CA_STATUS_OK;
+        return CA_STATUS_OK;
 }
 
 int32_t CAHelper::getDtlsPskCredentials( CADtlsPskCredType_t type,
