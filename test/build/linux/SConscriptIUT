@@ -74,7 +74,8 @@ include_paths = [
     iotivity_root + '/extlibs/timer/',
     iotivity_root + '/extlibs/tinycbor/tinycbor/src/',
     iotivity_root + '/extlibs/mbedtls/mbedtls/include',
-    iotivity_root + '/extlibs/timer/'
+    iotivity_root + '/extlibs/timer/',
+    iotivity_lib_path + '/resource/c_common'
 ]
 
 libs = Split('libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap pthread libglib-2.0 gcov')
