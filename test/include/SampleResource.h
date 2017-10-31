@@ -38,6 +38,7 @@ private:
     shared_ptr< OCResourceResponse > m_pResponse;
     vector< string > m_resourceList;
     map< string, string > m_accessmodifier;
+    SampleResource* m_pSensorTwin;
 
 public:
     SampleResource(void);
@@ -47,6 +48,8 @@ public:
     void setAsReadOnly(string key);
 
     bool isReadonly(string key);
+
+    void setSensorTwin(SampleResource* p_sensorResource);
 
     virtual void onResourceServerStarted(bool &isRegisteredForPresence, int &presenceInterval);
 

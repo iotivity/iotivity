@@ -96,6 +96,7 @@ public:
 
 
 private:
+    void setBaselineResponse(vector<OCRepresentation> allChildren, shared_ptr<OCResourceResponse> response);
 
     void addIntoLinksArray(vector< OCRepresentation >& childrenList, SampleResource* resource);
 

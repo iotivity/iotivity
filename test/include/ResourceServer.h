@@ -302,7 +302,7 @@ public:
     /**
       * API to set Device info of the current device
       *
-      * @param[in] - deviceName - Human radable name of the device
+      * @param[in] - deviceName - Human readable name of the device
       * @param[in] - deviceTypes - List of device types of the device(Optional)
       *
       */

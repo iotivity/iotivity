@@ -342,15 +342,7 @@ void SampleCollection::handleGetRequest(QueryParamsMap &queryParamsMap,
                 {
                     cout << "Found baseline/readonly query, adding rt & if into response payload" << endl;
 
-                    completeRep = m_representation;
-                    completeRep.setValue(LINKS_KEY, allChildren);
-                    completeRep.setValue(NAME_KEY, m_collectionName);
-                    completeRep.setResourceInterfaces(interfaceList);
-                    completeRep.setResourceTypes(resourceTypeList);
-
-                    responseInterface = DEFAULT_INTERFACE;
-
-                    response->setResourceRepresentation(completeRep, responseInterface);
+                    setBaselineResponse(allChildren, response);
 
                 }
                 else if (queryValue.compare(LINK_INTERFACE) == 0)
@@ -396,13 +388,6 @@ void SampleCollection::handleGetRequest(QueryParamsMap &queryParamsMap,
             else if (key.compare(RESOURCE_TYPE_KEY) == 0)
             {
                 vector< string > resourceTypeList;
-//                            if ((queryValue.compare(GROUP_TYPE_ROOM) == 0)
-//                                    || (queryValue.compare(GROUP_TYPE_AIRCON_VENDOR) == 0))
-//                            {
-//                                cout << "The resource type  used in query is oic.wk.col" << endl;
-//                                response->setResourceRepresentation(rep, responseInterface);
-//                            }
-//                            else
                 vector < SampleResource* > matchedChildren = getChildResourcesFromType(queryValue);
 
                 if (matchedChildren.size() > 0)
@@ -426,6 +411,11 @@ void SampleCollection::handleGetRequest(QueryParamsMap &queryParamsMap,
             }
 
         }
+    }
+    else if (m_resourceTypeNames.size() > 1)
+    {
+        cout << "No query found. As collection has mnulti value rt, responding as baseline:" << endl;
+        setBaselineResponse(allChildren, response);
     }
     else
     {
@@ -460,6 +450,17 @@ void SampleCollection::handleGetRequest(QueryParamsMap &queryParamsMap,
         cerr << "Unable to send response for GET Request" << endl;
     }
 
+}
+
+void SampleCollection::setBaselineResponse(vector<OCRepresentation> allChildren, shared_ptr<OCResourceResponse> response)
+{
+    OCRepresentation completeRep = m_representation;
+    completeRep.setValue(LINKS_KEY, allChildren);
+    completeRep.setValue(NAME_KEY, m_collectionName);
+    completeRep.setResourceInterfaces(m_resourceInterfaces);
+    completeRep.setResourceTypes(m_resourceTypeNames);
+
+    response->setResourceRepresentation(completeRep, DEFAULT_INTERFACE);
 }
 
 void SampleCollection::handlePutRequest(QueryParamsMap &queryParamsMap,

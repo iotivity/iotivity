@@ -106,6 +106,9 @@ SampleResource *g_tvMediaSourceListResource;
 SampleResource *g_acSwitchResource;
 SampleResource *g_acAirFlowResource;
 SampleResource *g_acTemperatureResource;
+SampleResource *g_acTemperatureSensor;
+SampleResource *g_acChromaResource;
+SampleResource *g_acDimmingResource;
 SampleResource *g_acTimerResource;
 SampleResource *g_acSwingResource;
 SampleResource *g_acSwitchResourceHidden;
@@ -1555,7 +1558,6 @@ void onResourcePublished(const OCRepresentation& rep, const int& eCode)
     }
 }
 
-
 void waitForCallback()
 {
     int elapsedSecond = 0;
@@ -1770,7 +1772,6 @@ void createTvDevice(bool isSecured)
 
 void createSingleAirConResource(bool isSecured)
 {
-
     OCStackResult result = OC_STACK_ERROR;
     cout << "Creating AirCon Device Resources!!" << endl;
     uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE;
@@ -1803,6 +1804,138 @@ void createSingleAirConResource(bool isSecured)
         else
         {
             cout << "Unable to create AirConditioner Binary Switch resource" << endl;
+        }
+    }
+    else
+    {
+        cout << "Already Smart Home AirCon Device Resources are  created!!" << endl;
+    }
+}
+
+void createResourceForIntrospection(bool isSecured )
+{
+    OCStackResult result = OC_STACK_ERROR;
+    cout << "Creating AirCon Device Resources!!" << endl;
+    uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE;
+    if (isSecured)
+    {
+        resourceProperty = resourceProperty | OC_SECURE;
+    }
+    if (g_isAirConDeviceCreated == false)
+    {
+        vector<string> acDeviceTypes;
+        string value = "";
+        vector< int > range;
+        vector< double > rangeTemperature;
+        vector< double > chromaSpaceCoordinates;
+        acDeviceTypes.push_back(Device_TYPE_AC);
+        acDeviceTypes.push_back(Device_TYPE_VENDOR);
+        SampleResource::setDeviceInfo(ENGLISH_NAME_VALUE, acDeviceTypes);
+
+        g_acSwitchResource = new SampleResource();
+        g_acSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,
+                SWITCH_RESOURCE_INTERFACE);
+        OCRepresentation switchRep;
+        switchRep.setValue(ON_OFF_KEY, true);
+        g_acSwitchResource->setResourceRepresentation(switchRep);
+
+        result = g_acSwitchResource->startResource(resourceProperty);
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "AirConditioner Binary Switch Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_acSwitchResource);
+            g_isAirConDeviceCreated = true;
+        }
+        else
+        {
+            cout << "Unable to create AirConditioner Binary Switch resource" << endl;
+        }
+
+        g_acTemperatureResource = new SampleResource();
+        g_acTemperatureSensor = new SampleResource();
+        g_acTemperatureResource->setResourceProperties(AC_TEMPERATURE_URI,
+                TEMPERATURE_RESOURCE_TYPE, TEMPERATURE_RESOURCE_INTERFACE);
+        g_acTemperatureSensor->setResourceProperties(AC_SENSOR_URI,
+                TEMPERATURE_RESOURCE_TYPE, TEMPERATURE_SENSOR_INTERFACE);
+        OCRepresentation temperatureRep;
+        OCRepresentation sensorRep;
+        value = UNITS_VALUE;
+        temperatureRep.setValue(UNITS_KEY, value);
+        sensorRep.setValue(UNITS_KEY, value);
+        g_acTemperatureResource->setAsReadOnly(UNITS_KEY);
+        g_acTemperatureSensor->setAsReadOnly(UNITS_KEY);
+        rangeTemperature.push_back(LOWEST_TEMPERATURE_VALUE);
+        rangeTemperature.push_back(HIGHEST_TEMPERATURE_VALUE);
+        temperatureRep.setValue(RANGE_KEY, rangeTemperature);
+        g_acTemperatureResource->setAsReadOnly(RANGE_KEY);
+        g_acTemperatureSensor->setAsReadOnly(RANGE_KEY);
+        double temperature = DEFAULT_TEMPERATURE_VALUE;
+        temperatureRep.setValue(TEMPERATURE_KEY, temperature);
+        sensorRep.setValue(TEMPERATURE_KEY, temperature);
+        g_acTemperatureSensor->setAsReadOnly(TEMPERATURE_KEY);
+        g_acTemperatureResource->setResourceRepresentation(temperatureRep);
+        g_acTemperatureSensor->setResourceRepresentation(sensorRep);
+        g_acTemperatureResource->setSensorTwin(g_acTemperatureSensor);
+        result = g_acTemperatureResource->startResource(resourceProperty);
+        result = g_acTemperatureSensor->startResource(resourceProperty);
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "Air Conditioner Temperature Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_acTemperatureResource);
+            g_createdResourceList.push_back(g_acTemperatureSensor);
+            g_isAirConDeviceCreated = true;
+        }
+        else
+        {
+            cout << "Unable to create Air Conditioner Temperature resource" << endl;
+        }
+
+        g_acDimmingResource = new SampleResource();
+        g_acDimmingResource->setResourceProperties(AC_DIMMING_URI, DIMMING_RESOURCE_TYPE,
+                DIMMING_RESOURCE_INTERFACE);
+        OCRepresentation dimRep;
+        dimRep.setValue(DIMMING_SETTING_KEY, DIMMING_VALUE);
+        g_acDimmingResource->setResourceRepresentation(dimRep);
+
+        result = g_acDimmingResource->startResource(resourceProperty);
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "AirConditioner Dimming Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_acDimmingResource);
+            g_isAirConDeviceCreated = true;
+        }
+        else
+        {
+            cout << "Unable to create AirConditioner Dimming resource" << endl;
+        }
+
+        g_acChromaResource = new SampleResource();
+        g_acChromaResource->setResourceProperties(AC_CHROMA_URI, CHROMA_RESOURCE_TYPE,
+                CHROMA_RESOURCE_INTERFACE);
+        OCRepresentation chromaRep;
+
+        chromaSpaceCoordinates.push_back(CSC_X_VALUE);
+        chromaSpaceCoordinates.push_back(CSC_Y_VALUE);
+        chromaRep.setValue(CHROMA_CSC_KEY, chromaSpaceCoordinates);
+        chromaRep.setValue(CHROMA_CT_KEY, CT_VALUE);
+        chromaRep.setValue(CHROMA_HUE_KEY, HUE_VALUE);
+        chromaRep.setValue(CHROMA_SATURATION_KEY, SATURATION_VALUE);
+        g_acChromaResource->setResourceRepresentation(chromaRep);
+
+        result = g_acChromaResource->startResource(resourceProperty);
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "AirConditioner Chroma Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_acChromaResource);
+            g_isAirConDeviceCreated = true;
+        }
+        else
+        {
+            cout << "Unable to create AirConditioner Chroma resource" << endl;
         }
     }
     else
@@ -1867,16 +2000,16 @@ void createAirConDevice(bool isSecured)
         g_acTemperatureResourceHidden->setResourceProperties(AC_TEMPERATURE_URI_CHILD,
                 TEMPERATURE_RESOURCE_TYPE, TEMPERATURE_RESOURCE_INTERFACE);
         OCRepresentation temperatureRep;
-        value = "C";
-        temperatureRep.setValue("units", value);
-        g_acTemperatureResource->setAsReadOnly("units");
-        g_acTemperatureResourceHidden->setAsReadOnly("units");
-        rangeTemperature.push_back(10.01);
-        rangeTemperature.push_back(40.99);
-        temperatureRep.setValue("range", rangeTemperature);
-        g_acTemperatureResource->setAsReadOnly("range");
-        g_acTemperatureResourceHidden->setAsReadOnly("range");
-        double temperature = 24.50;
+        value = UNITS_VALUE;
+        temperatureRep.setValue(UNITS_KEY, value);
+        g_acTemperatureResource->setAsReadOnly(UNITS_KEY);
+        g_acTemperatureResourceHidden->setAsReadOnly(UNITS_KEY);
+        rangeTemperature.push_back(LOWEST_TEMPERATURE_VALUE);
+        rangeTemperature.push_back(HIGHEST_TEMPERATURE_VALUE);
+        temperatureRep.setValue(RANGE_KEY, rangeTemperature);
+        g_acTemperatureResource->setAsReadOnly(RANGE_KEY);
+        g_acTemperatureResourceHidden->setAsReadOnly(RANGE_KEY);
+        double temperature = DEFAULT_TEMPERATURE_VALUE;
         temperatureRep.setValue(TEMPERATURE_KEY, temperature);
         g_acTemperatureResource->setResourceRepresentation(temperatureRep);
         g_acTemperatureResourceHidden->setResourceRepresentation(temperatureRep);
@@ -1904,16 +2037,16 @@ void createAirConDevice(bool isSecured)
                 AIR_FLOW_RESOURCE_TYPE, AIR_FLOW_RESOURCE_INTERFACE);
 
         OCRepresentation airFlowRep;
-        int speed = 10;
-        value = "up";
+        int speed = DEFAULT_SPEED_VALUE;
+        value = DEFAULT_DIRECTION_VALUE;
         airFlowRep.setValue(DIRECTION_KEY, value);
         airFlowRep.setValue(SPEED_KEY, speed);
         range.clear();
-        range.push_back(0);
-        range.push_back(30);
-        airFlowRep.setValue("range", range);
-        g_acAirFlowResource->setAsReadOnly("range");
-        g_acAirFlowResourceHidden->setAsReadOnly("range");
+        range.push_back(LOWEST_AIR_FLOW_VALUE);
+        range.push_back(HIGHEST_AIR_FLOW_VALUE);
+        airFlowRep.setValue(RANGE_KEY, range);
+        g_acAirFlowResource->setAsReadOnly(RANGE_KEY);
+        g_acAirFlowResourceHidden->setAsReadOnly(RANGE_KEY);
         g_acAirFlowResource->setResourceRepresentation(airFlowRep);
         g_acAirFlowResourceHidden->setResourceRepresentation(airFlowRep);
 
@@ -1947,12 +2080,15 @@ void createAirConDevice(bool isSecured)
         TIMER_RESOURCE_INTERFACE);
 
         OCRepresentation clockRep;
-        int time = 10;
-        clockRep.setValue("x.com.vendor.timer.hour", time);
-        time = 30;
-        clockRep.setValue("x.com.vendor.timer.minute", time);
-        clockRep.setValue("x.com.vendor.timer.second", time);
-        clockRep.setValue("x.com.vendor.timer.reset", false);
+        int time = DEFAULT_TIME_VALUE;
+        clockRep.setValue(HOUR_KEY, time);
+        time = DEFAULT_TIME_VALUE + DEFAULT_TIME_VALUE + DEFAULT_TIME_VALUE;
+        clockRep.setValue(MINUTE_KEY, time);
+        clockRep.setValue(SECOND_KEY, time);
+        clockRep.setValue(RESET_KEY, false);
+        string longLocation = VERY_BIG_VALUE;
+        clockRep.setValue(TIMER_LOCATION_KEY, longLocation);
+
 
         g_acTimerResource->setResourceRepresentation(clockRep);
         g_acTimerResourceHidden->setResourceRepresentation(clockRep);
@@ -1986,8 +2122,8 @@ void createAirConDevice(bool isSecured)
         value = SWING_MOVEMENT_VALUE;
         swingRep.setValue(SWING_MOVEMENT_KEY, value);
         vector<string> supportedDirection;
-        supportedDirection.push_back("আনুভূমিক");
-        supportedDirection.push_back("উল্লম্ব");
+        supportedDirection.push_back(SWING_MOVEMENT_VALUE);
+        supportedDirection.push_back(SWING_MOVEMENT_OTHER_VALUE);
         swingRep.setValue(SWING_SUPPOTED_DIRECTION_KEY, supportedDirection);
 
         g_acSwingResource->setResourceRepresentation(swingRep);
@@ -3902,7 +4038,7 @@ void showMenu(int argc, char* argv[])
     cout << "\t\t " << setw(3) << "112" << ". Delete Published Resources From RD" << endl;
     cout << "\t\t " << setw(3) << "113" << ". Create Extra Device" << endl;
     cout << "\t\t " << setw(3) << "114" << ". Update Last Error Code" << endl;
-
+    cout << "\t\t " << setw(3) << "115" << ". Create Complex Device For Introspection" << endl;
 
     g_hasCallbackArrived = false;
     handleMenu(argc, argv);
@@ -4224,6 +4360,10 @@ void selectMenu(int choice)
 
         case 114:
             updateLec();
+            break;
+
+        case 115:
+            createResourceForIntrospection(g_isSecuredServer);
             break;
 
         case 0:

@@ -470,10 +470,12 @@ bool ResourceServer::isSecuredResource(void)
 void ResourceServer::addResourceType(string resourceType)
 {
     OCPlatform::bindTypeToResource(getResourceHandle(), resourceType);
+    m_resourceTypeNames.push_back(resourceType);
 }
 
 void ResourceServer::addResourceInterface(string resourceInterface)
 {
     OCPlatform::bindInterfaceToResource(getResourceHandle(), resourceInterface);
+    m_resourceInterfaces.push_back(resourceInterface);
 }
 

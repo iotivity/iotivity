@@ -54,6 +54,7 @@ SampleResource::SampleResource(void)
     m_listOfObservers.clear();
     m_resourceList.clear();
     m_accessmodifier.clear();
+    m_pSensorTwin = nullptr;
 
     cout << "Current resource info: " << m_representation.getPayload()->values->str << endl;
 
@@ -386,6 +387,11 @@ void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
                         updateRepresentation(key, incomingRepresentation, response);
                         isSameAttributeValue = false;
                         isRepUpdated = true;
+
+                        if (m_pSensorTwin != nullptr)
+                        {
+                            m_pSensorTwin->updateRepresentation(key, incomingRepresentation);
+                        }
                     }
                     else
                     {
@@ -1072,4 +1078,9 @@ void SampleResource::supportCreateAndOthersForPUT(QueryParamsMap &queryParamsMap
             cerr << "Unable to send response for PUT Request" << endl;
         }
     }
+}
+
+void SampleResource::setSensorTwin(SampleResource* p_sensorResource)
+{
+    m_pSensorTwin = p_sensorResource;
 }
