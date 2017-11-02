@@ -336,15 +336,15 @@ TEST_F(CANetworkTest_btc, CASelectNetwork_P)
  * @since 2017-06-22
  * @see CAResult_t CAInitialize()
  * @see void CATerminate()
- * @objective Test 'CAGetSelectedNetwork_' should match with selectnetwork
+ * @objective Test 'CAGetSelectedNetwork' API. Whether API returns with selected transport
  * @target CAResult_t CAGetSelectedNetwork()
- * @test_data valid IP Adapter
+ * @test_data valid transport Adapter
  * @pre_condition Initialize CA using CAInitialize
- * @procedure  1. Call SelectNetowrk to select IP as network
- *             2. call getSelectNetwork to get selected network
-               3. Check selected network with  m_availableNetwork
+ * @procedure  1. Select a valid transport adapter using CASelectNetowrk API
+ *             2. call CAGetSelectedNetwork to obtained selected transport
+ *             3. Check obtained transport value with selected transport value
  * @post_condition Terminate CA using CATerminate API
- * @expected getSelectNetwork value should match with m_availableNetwork
+ * @expected  Obtained transport value should be same as selected transport value
  */
 #if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CANetworkTest_btc, CAGetSelectedNetwork_P)
@@ -354,11 +354,16 @@ TEST_F(CANetworkTest_btc, CAGetSelectedNetwork_P)
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
-    if (!m_caHelper.selectNetwork())
+
+    CAResult_t result = CASelectNetwork(m_caHelper.m_availableNetwork);
+    if (result != CA_STATUS_OK)
     {
-        SET_FAILURE(m_caHelper.getFailureMessage());
+        SET_FAILURE(m_caHelper.getFailureMessage("CASelectNetwork", CA_STATUS_OK));
+        CATerminate();
+        return;
     }
-     if (m_caHelper.m_availableNetwork != m_caHelper.getselectNetwork())
+
+    if (m_caHelper.m_availableNetwork != m_caHelper.getselectNetwork())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
     }
@@ -369,19 +374,30 @@ TEST_F(CANetworkTest_btc, CAGetSelectedNetwork_P)
 
 /**
  * @since 2017-06-22
- * @objective Test 'CAGetSelectedNetwork_' should match with selectnetwork
+ * @objective Test 'CAGetSelectedNetwork' API without call CASelectNetwork API
  * @target CAResult_t CAGetSelectedNetwork()
- * @procedure  1. call getSelectNetwork to get selected network
-               2. Check selected network with  m_availableNetwork
- * @expected getSelectNetwork value should match with m_availableNetwork
+ * @test_data valid IP Adapter
+ * @pre_condition Initialize CA using CAInitialize
+ * @procedure  1. call CAGetSelectedNetwork to obtained selected network
+ *             2. Compare obtained network value against a valid transport
+ * @post_condition Terminate CA using CATerminate API
+ * @expected obtained network value should not be any valid transport
  */
 #if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__) || defined(__WINDOWS__)) && defined(__ALL_TRANSPORT__)
 TEST_F(CANetworkTest_btc, CAGetSelectedNetwork_N)
 {
-    CATransportAdapter_t CATransportAdapter = m_caHelper.getselectNetwork();
-    printf("Adapter value: %d\n",CATransportAdapter);
-    printf("m_availableNetwork: %d\n",m_caHelper.m_availableNetwork);
-    if (m_caHelper.m_availableNetwork !=  CATransportAdapter)
+    if (!m_caHelper.initialize())
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+        return;
+    }
+
+    CATransportAdapter_t obtainedAdapter = m_caHelper.getselectNetwork();
+
+    IOTIVITYTEST_LOG(DEBUG, "Obtained Adapter value: %d\n", obtainedAdapter);
+    IOTIVITYTEST_LOG(DEBUG, "Valid Adapter value: %d\n", m_caHelper.m_availableNetwork);
+
+    if (m_caHelper.m_availableNetwork == obtainedAdapter)
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
     }

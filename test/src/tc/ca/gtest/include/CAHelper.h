@@ -200,7 +200,7 @@ public:
     static size_t s_pskLength;
     bool setDtls();
     static void initCipherSuiteList(bool * list, const char* deviceId);
-    static void dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info);
+    static CAResult_t dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info);
     static int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *desc, size_t desc_len, unsigned char *result, size_t result_length);
 #endif
 

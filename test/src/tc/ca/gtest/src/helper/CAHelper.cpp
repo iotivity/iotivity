@@ -155,7 +155,7 @@ bool CAHelper::initialize()
     }
 #endif
 
-    m_result = CAInitialize(m_availableNetwork);
+    m_result = CAInitialize(CA_DEFAULT_ADAPTER);
 
     if (m_result != CA_STATUS_OK)
     {
@@ -188,7 +188,6 @@ bool CAHelper::selectNetwork(int interestedNetwork, CAResult_t expectedResult)
     IOTIVITYTEST_LOG(DEBUG, "[selectNetwork] IN");
 
     m_result = CASelectNetwork((CATransportAdapter_t)interestedNetwork);
-
     if (m_result != expectedResult)
     {
         getFailureMessage("CASelectNetwork", expectedResult);
@@ -1417,7 +1416,7 @@ void CAHelper::initCipherSuiteList(bool * list, const char* deviceId)
     IOTIVITYTEST_LOG(DEBUG, "Out %s", __func__);
 }
 
-void CAHelper::dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
+CAResult_t CAHelper::dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
     if (NULL != endpoint)
     {
@@ -1436,6 +1435,8 @@ void CAHelper::dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t
     {
         IOTIVITYTEST_LOG(DEBUG, "ErrorInfo is null");
     }
+
+    return CA_STATUS_OK;
 }
 
 int32_t CAHelper::getDtlsPskCredentials( CADtlsPskCredType_t type,

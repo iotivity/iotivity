@@ -69,7 +69,7 @@ void getString(char a[], char str[], int length)
 
 #ifdef __WITH_DTLS__
 
-void dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
+CAResult_t dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
     if (NULL != endpoint)
     {
@@ -88,6 +88,8 @@ void dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
     {
         printf("ErrorInfo is null");
     }
+
+    return CA_STATUS_OK;
 }
 
 void initCipherSuiteList(bool * list, const char* deviceId)
