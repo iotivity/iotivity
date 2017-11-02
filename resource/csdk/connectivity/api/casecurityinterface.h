@@ -108,6 +108,7 @@ bool CAGetSecureEndpointAttributes(const CAEndpoint_t* peer, uint32_t* allAttrib
  *
  */
 typedef void (*CAgetCredentialTypesHandler)(bool * list, const char* deviceId);
+
 /**
  * Binary structure containing PKIX related info
  * own certificate chain, public key, CA's and CRL's
@@ -118,9 +119,9 @@ typedef void (*CAgetCredentialTypesHandler)(bool * list, const char* deviceId);
  */
 typedef struct
 {
-    ByteArray_t crt;    /**< own certificate chain as a null-terminated PEM string of certificates */
+    ByteArrayLL_t crt;  /**< own certificate chain as a null-terminated PEM string of certificates */
     ByteArray_t key;    /**< own private key as binary-encoded DER */
-    ByteArray_t ca;     /**< trusted CAs as a null-terminated PEM string of certificates */
+    ByteArrayLL_t ca;   /**< trusted CAs as a null-terminated PEM string of certificates */
     ByteArray_t crl;    /**< trusted CRLs as binary-encoded DER */
 } PkiInfo_t;
 
@@ -297,4 +298,3 @@ void CAcloseSslConnectionAll(CATransportAdapter_t transportType);
 
 
 #endif /* CA_SECURITY_INTERFACE_H_ */
-
