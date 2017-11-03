@@ -64,7 +64,7 @@ OCEntityHandlerResult updateEasySetupResource(OCEntityHandlerRequest* ehRequest,
 void updateEasySetupConnectProperty(OCRepPayload* input);
 OCEntityHandlerResult updateWiFiConfResource(OCRepPayload* input);
 void updateCoapCloudConfResource(OCRepPayload* input);
-void updateDevConfResource(OCRepPayload* input);
+OCEntityHandlerResult updateDevConfResource(OCRepPayload* input);
 bool isAuthTypeSupported(WIFI_AUTHTYPE authType);
 bool isEncTypeSupported(WIFI_ENCTYPE encType);
 const char *getResult(OCStackResult result);
@@ -408,7 +408,17 @@ OCEntityHandlerResult updateEasySetupResource(OCEntityHandlerRequest* ehRequest,
                 // otherwise its applied to specific target resources.
                 if (NULL == uri || 0 == strlen(uri) || 0 == strcmp(uri, OC_RSRVD_ES_URI_EASYSETUP))
                 {
-                    updateEasySetupConnectProperty(repPayload);
+                    // If payload has read-only properties, then the request is considered as a bad request.
+                    if (!OCRepPayloadIsNull(children, OC_RSRVD_ES_PROVSTATUS) ||
+                        !OCRepPayloadIsNull(children, OC_RSRVD_ES_LAST_ERRORCODE))
+                    {
+                        OIC_LOG(ERROR, ES_RH_TAG, "Read-only property cannot be updated.");
+                        hasError = true;
+                    }
+                    else
+                    {
+                        updateEasySetupConnectProperty(repPayload);
+                    }
                 }
 
                 if (NULL == uri || 0 == strlen(uri)
@@ -416,8 +426,6 @@ OCEntityHandlerResult updateEasySetupResource(OCEntityHandlerRequest* ehRequest,
                 {
                     if (updateWiFiConfResource(repPayload) != OC_EH_OK)
                     {
-                        // Possibility of failure exist only when updating WiFiConf resource.
-                        // So error code is checked only for this function.
                         OIC_LOG(ERROR, ES_RH_TAG, "Failed to update WiFiConf resource.");
                         hasError = true;
                     }
@@ -432,7 +440,11 @@ OCEntityHandlerResult updateEasySetupResource(OCEntityHandlerRequest* ehRequest,
                 if (NULL == uri ||  0 == strlen(uri)
                     || 0 == strcmp(uri, OC_RSRVD_ES_URI_DEVCONF))
                 {
-                    updateDevConfResource(repPayload);
+                    if (updateDevConfResource(repPayload) != OC_EH_OK)
+                    {
+                        OIC_LOG(ERROR, ES_RH_TAG, "Failed to update DevConf resource.");
+                        hasError = true;
+                    }
                 }
 
                 children = children->next;
@@ -447,7 +459,17 @@ OCEntityHandlerResult updateEasySetupResource(OCEntityHandlerRequest* ehRequest,
         else if (CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT))
         {
             OIC_LOG(DEBUG, ES_RH_TAG, "Handling POST request on default interface");
-            updateEasySetupConnectProperty(input);
+            // If payload has read-only properties, then the request is considered as a bad request.
+            if (!OCRepPayloadIsNull(input, OC_RSRVD_ES_PROVSTATUS) ||
+                !OCRepPayloadIsNull(input, OC_RSRVD_ES_LAST_ERRORCODE))
+            {
+                OIC_LOG(ERROR, ES_RH_TAG, "Read-only property cannot be updated.");
+                ehResult = OC_EH_BAD_REQ;
+            }
+            else
+            {
+                updateEasySetupConnectProperty(input);
+            }
         }
     }
 
@@ -506,6 +528,16 @@ void updateEasySetupConnectProperty(OCRepPayload* input)
 
 OCEntityHandlerResult updateWiFiConfResource(OCRepPayload* input)
 {
+    // If payload has read-only properties, then the request is considered as a bad request.
+    if (!OCRepPayloadIsNull(input, OC_RSRVD_ES_SUPPORTEDWIFIMODE) ||
+        !OCRepPayloadIsNull(input, OC_RSRVD_ES_SUPPORTEDWIFIFREQ) ||
+        !OCRepPayloadIsNull(input, OC_RSRVD_ES_SUPPORTEDWIFIAUTHTYPE) ||
+        !OCRepPayloadIsNull(input, OC_RSRVD_ES_SUPPORTEDWIFIENCTYPE))
+    {
+        OIC_LOG(ERROR, ES_RH_TAG, "Read-only property cannot be updated.");
+        return OC_EH_BAD_REQ;
+    }
+
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     ESWiFiConfData* wiFiData = (ESWiFiConfData*) OICMalloc(sizeof(ESWiFiConfData));
     if (wiFiData == NULL)
@@ -709,14 +741,14 @@ void updateCoapCloudConfResource(OCRepPayload* input)
     OICFree(cloudData);
 }
 
-void updateDevConfResource(OCRepPayload* input)
+OCEntityHandlerResult updateDevConfResource(OCRepPayload* input)
 {
     ESDevConfData* devConfData = (ESDevConfData*)OICMalloc(sizeof(ESDevConfData));
 
     if (devConfData == NULL)
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "OICMalloc is failed");
-        return;
+        return OC_EH_ERROR;
     }
     devConfData->userdata = NULL;
 
@@ -748,6 +780,7 @@ void updateDevConfResource(OCRepPayload* input)
     }
 
     OICFree(devConfData);
+    return OC_EH_OK;
 }
 
 OCRepPayload* constructResponseOfWiFiConf(char *interface)
@@ -1598,16 +1631,11 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
     }
     else if (ehRequest->resource == g_ESDevConfResource.handle)
     {
-        if (ehRequest->query && strcmp(ehRequest->query, "")
-                && !CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT))
-        {
-            OIC_LOG(ERROR, ES_RH_TAG, "Not supported Interface");
-            return OC_EH_BAD_REQ;
-        }
-        else
-        {
-            updateDevConfResource(input);
-        }
+        // Reject POST request for DevConf resource as it has only a single read-only property.
+        // TODO As DevConf also supports user-defined properties, we need to find another way
+        // to reject the POST requests based on the presence of read-only properties in the payload.
+        OIC_LOG(ERROR, ES_RH_TAG, "Failed to update DevConf resource.");
+        return OC_EH_BAD_REQ;
     }
 
     OCRepPayload *getResp = NULL;
