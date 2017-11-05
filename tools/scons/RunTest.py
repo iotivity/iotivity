@@ -34,8 +34,7 @@ def run_test(env, xml_file, test, test_targets = ['test']):
     if not os.path.isdir(result_dir):
         os.makedirs(result_dir)
 
-    # Dump test report in XML format to the results directory.
-    env.AppendENVPath('GTEST_OUTPUT', ['xml:' + result_dir])
+    env.AppendENVPath('GTEST_OUTPUT', 'xml:' + result_dir, delete_existing=0)
 
     # Make sure the Google Test libraries are in the dynamic
     # linker/loader path.
