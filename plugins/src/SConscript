@@ -30,8 +30,8 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-with_unforked_libcoap = env.get('WITH_UNFORKED_LIBCOAP')
-if with_unforked_libcoap == '1':
+with_upstream = env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream == '1':
     env.PrependUnique(CPPPATH=['#extlibs/libcoap/libcoap/include'])
 else:
     env.PrependUnique(CPPPATH=['#/resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
