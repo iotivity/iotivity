@@ -34,6 +34,7 @@
 #include "ocendpoint.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "cainterface.h"
 
 #define TAG "OIC_RI_RESOURCEDIRECTORY"
 
@@ -77,7 +78,7 @@ if (SQLITE_OK != (arg)) \
     goto exit; \
 }
 
-OCStackResult OCRDDatabaseSetStorageFilename(const char *filename)
+OCStackResult OC_CALL OCRDDatabaseSetStorageFilename(const char *filename)
 {
     if (!filename)
     {
@@ -88,7 +89,7 @@ OCStackResult OCRDDatabaseSetStorageFilename(const char *filename)
     return OC_STACK_OK;
 }
 
-const char *OCRDDatabaseGetStorageFilename()
+const char *OC_CALL OCRDDatabaseGetStorageFilename()
 {
     return gRDPath;
 }
@@ -133,7 +134,8 @@ exit:
 }
 
 /* stmt is of form "SELECT * FROM RD_DEVICE_LINK_LIST ..." */
-static OCStackResult ResourcePayloadCreate(sqlite3_stmt *stmt, OCDiscoveryPayload *discPayload)
+static OCStackResult ResourcePayloadCreate(sqlite3_stmt *stmt, OCDevAddr *devAddr,
+        OCDiscoveryPayload *discPayload)
 {
     int res = sqlite3_step(stmt);
     if (SQLITE_ROW != res)
@@ -208,6 +210,16 @@ static OCStackResult ResourcePayloadCreate(sqlite3_stmt *stmt, OCDiscoveryPayloa
 
         resourcePayload->bitmap = (uint8_t)(bitmap & (OC_OBSERVABLE | OC_DISCOVERABLE));
 
+        CAEndpoint_t *networkInfo = NULL;
+        size_t infoSize = 0;
+        if (devAddr)
+        {
+            CAResult_t caResult = CAGetNetworkInformation(&networkInfo, &infoSize);
+            if (CA_STATUS_FAILED == caResult)
+            {
+                OIC_LOG(WARNING, TAG, "CAGetNetworkInformation has error on parsing network infomation");
+            }
+        }
         const char ep[] = "SELECT ep,pri FROM RD_LINK_EP WHERE LINK_ID=@id";
         int epSize = (int)sizeof(ep);
         VERIFY_SQLITE(sqlite3_prepare_v2(gRDDB, ep, epSize, &stmtEP, NULL));
@@ -224,16 +236,45 @@ static OCStackResult ResourcePayloadCreate(sqlite3_stmt *stmt, OCDiscoveryPayloa
             }
             sqlite3_int64 pri = sqlite3_column_int64(stmtEP, pri_value_index);
             epPayload->pri = (uint16_t)pri;
-            OCEndpointPayload **tmp = &resourcePayload->eps;
-            while (*tmp)
+            bool includeEp = true;
+            if (devAddr)
             {
-                tmp = &(*tmp)->next;
+                CAEndpoint_t *info = NULL;
+                for (size_t i = 0; i < infoSize; ++i)
+                {
+                    if (!strcmp(epPayload->addr, networkInfo[i].addr))
+                    {
+                        info = &networkInfo[i];
+                        break;
+                    }
+                }
+                includeEp = info &&
+                        (((OC_ADAPTER_IP | OC_ADAPTER_TCP) & (devAddr->adapter)) &&
+                        ((((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter) &&
+                                (info->ifindex == devAddr->ifindex)) ||
+                                info->adapter == CA_ADAPTER_RFCOMM_BTEDR));
             }
-            *tmp = epPayload;
+            if (includeEp)
+            {
+                OCEndpointPayload **tmp = &resourcePayload->eps;
+                while (*tmp)
+                {
+                    tmp = &(*tmp)->next;
+                }
+                *tmp = epPayload;
+            }
+            else
+            {
+                OICFree(epPayload);
+            }
             epPayload = NULL;
         }
         VERIFY_SQLITE(sqlite3_finalize(stmtEP));
         stmtEP = NULL;
+        if (networkInfo)
+        {
+            OICFree(networkInfo);
+        }
 
         const char di[] = "SELECT di FROM RD_DEVICE_LIST "
             "INNER JOIN RD_DEVICE_LINK_LIST ON RD_DEVICE_LINK_LIST.DEVICE_ID = RD_DEVICE_LIST.ID "
@@ -270,7 +311,7 @@ exit:
 }
 
 static OCStackResult CheckResources(const char *interfaceType, const char *resourceType,
-        OCDiscoveryPayload *discPayload)
+        OCDevAddr *devAddr, OCDiscoveryPayload *discPayload)
 {
     if (!interfaceType && !resourceType)
     {
@@ -328,7 +369,7 @@ static OCStackResult CheckResources(const char *interfaceType, const char *resou
             VERIFY_SQLITE(sqlite3_bind_text(stmt, sqlite3_bind_parameter_index(stmt, "@interfaceType"),
                             interfaceType, (int)interfaceTypeLength, SQLITE_STATIC));
         }
-        result = ResourcePayloadCreate(stmt, discPayload);
+        result = ResourcePayloadCreate(stmt, devAddr, discPayload);
     }
     else if (interfaceType)
     {
@@ -356,7 +397,7 @@ static OCStackResult CheckResources(const char *interfaceType, const char *resou
             VERIFY_SQLITE(sqlite3_bind_text(stmt, sqlite3_bind_parameter_index(stmt, "@interfaceType"),
                             interfaceType, (int)interfaceTypeLength, SQLITE_STATIC));
         }
-        result = ResourcePayloadCreate(stmt, discPayload);
+        result = ResourcePayloadCreate(stmt, devAddr, discPayload);
     }
 
 exit:
@@ -364,9 +405,14 @@ exit:
     return result;
 }
 
-OCStackResult OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType,
-        const char *resourceType,
-        OCDiscoveryPayload **payload)
+OCStackResult OC_CALL OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType,
+        const char *resourceType, OCDiscoveryPayload **payload)
+{
+    return OCRDDatabaseDiscoveryPayloadCreateWithEp(interfaceType, resourceType, NULL, payload);
+}
+
+OCStackResult OC_CALL OCRDDatabaseDiscoveryPayloadCreateWithEp(const char *interfaceType,
+        const char *resourceType, OCDevAddr *endpoint, OCDiscoveryPayload **payload)
 {
     OCStackResult result;
     OCDiscoveryPayload *head = NULL;
@@ -396,9 +442,10 @@ OCStackResult OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType,
     }
 
     const char *serverID = OCGetServerInstanceIDString();
-    const char input[] = "SELECT di FROM RD_DEVICE_LIST";
+    const char input[] = "SELECT di, external_host FROM RD_DEVICE_LIST";
     int inputSize = (int)sizeof(input);
     const uint8_t di_index = 0;
+    const uint8_t external_host_index = 1;
     VERIFY_SQLITE(sqlite3_prepare_v2(gRDDB, input, inputSize, &stmt, NULL));
     while (SQLITE_ROW == sqlite3_step(stmt))
     {
@@ -407,13 +454,14 @@ OCStackResult OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType,
         {
             continue;
         }
+        sqlite3_int64 externalHost = sqlite3_column_int64(stmt, external_host_index);
         *tail = OCDiscoveryPayloadCreate();
         result = OC_STACK_INTERNAL_SERVER_ERROR;
         VERIFY_NON_NULL(*tail);
         (*tail)->sid = (char *)OICCalloc(1, UUID_STRING_SIZE);
         VERIFY_NON_NULL((*tail)->sid);
         memcpy((*tail)->sid, di, UUID_STRING_SIZE);
-        result = CheckResources(interfaceType, resourceType, *tail);
+        result = CheckResources(interfaceType, resourceType, externalHost ? NULL : endpoint, *tail);
         if (OC_STACK_OK == result)
         {
             tail = &(*tail)->next;

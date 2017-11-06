@@ -22,7 +22,7 @@
 #define IOTVT_SRM_CREDR_H
 
 #include "cainterface.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "octypes.h"
 #include "rolesresource.h"
 #include <cbor.h>
@@ -72,7 +72,8 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId);
 
 /**
  * This function converts credential data into CBOR format.
- * Caller needs to invoke 'free' when done using returned string.
+ * Caller needs to invoke 'OICFree' when done using returned string.
+ * Wrapper over the CredToCBORPayloadWithRowner.
  *
  * @param cred is the pointer to instance of OicSecCred_t structure.
  * @param cborPayload is the CBOR converted value.
@@ -82,6 +83,22 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId);
  * @return ::OC_STACK_OK if conversion is successful, else ::OC_STACK_ERROR if unsuccessful.
  */
 OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
+                                size_t *cborSize, int secureFlag);
+
+/**
+ * This function converts credential data into CBOR format.
+ * Caller needs to invoke 'OICFree' when done using returned string.
+ *
+ * @param cred is the pointer to instance of OicSecCred_t structure.
+ * @param rownerId resource owner's UUID
+ * @param cborPayload is the CBOR converted value.
+ * @param cborSize is the size of the CBOR.
+ * @param secureFlag shows fill or not private key.
+ *
+ * @return ::OC_STACK_OK if conversion is successful, else ::OC_STACK_ERROR if unsuccessful.
+ */
+
+OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUuid_t *rownerId, uint8_t **cborPayload,
                                 size_t *cborSize, int secureFlag);
 
 #ifdef MULTIPLE_OWNER
@@ -104,7 +121,6 @@ bool IsValidCredentialAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cb
  * @param credType credential type.
  * @param publicData public data such as public key.
  * @param privateData private data such as private key.
- * @param rownerID Resource owner's UUID.
  * @param eownerID Entry owner's UUID.
  *
  * @return pointer to instance of @ref OicSecCred_t if successful. else NULL in case of error.
@@ -112,7 +128,7 @@ bool IsValidCredentialAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cb
  */
 OicSecCred_t * GenerateCredential(const OicUuid_t* subject, OicSecCredType_t credType,
                      const OicSecKey_t * publicData, const OicSecKey_t * privateData,
-                     const OicUuid_t * rownerID, const OicUuid_t * eownerID);
+                     const OicUuid_t * eownerID);
 
 /**
  * This function adds the new cred to the credential list.
@@ -242,12 +258,18 @@ OCStackResult GetAllRoleCerts(RoleCertChain_t** roleCerts);
  */
 void GetPemOwnCert(ByteArray_t * crt, const char * usage);
 /**
- * Used by mbedTLS to retrieve owm private key
+ * Used by mbedTLS to retrieve own private key
  *
  * @param[out] key key to be filled.
  * @param[in] usage credential usage string.
  */
 void GetDerKey(ByteArray_t * key, const char * usage);
+/**
+ * Used by mbedTLS to retrieve own primary cert private key
+ *
+ * @param[out] key key to be filled.
+ */
+void GetPrimaryCertKey(ByteArray_t * key);
 /**
  * Used by CA to retrieve credential types
  *
@@ -265,6 +287,12 @@ CborError DeserializeEncodingFromCbor(CborValue *rootMap, OicSecKey_t *value);
 CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value);
 bool IsSameSecOpt(const OicSecOpt_t* sk1, const OicSecOpt_t* sk2);
 bool IsSameSecKey(const OicSecKey_t* sk1, const OicSecKey_t* sk2);
+/**
+ * Delete OicSecCred_t
+ *
+ * @param[in] cred the pointer to credential usage.
+ */
+void FreeCred(OicSecCred_t *cred);
 
 #ifdef __cplusplus
 }

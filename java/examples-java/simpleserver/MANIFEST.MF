@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+Class-Path: iotivity.jar
+Main-Class: org.iotivity.base.examples.SimpleServer

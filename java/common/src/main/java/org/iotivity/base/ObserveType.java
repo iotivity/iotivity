@@ -24,7 +24,7 @@ package org.iotivity.base;
 
 public enum ObserveType {
     OBSERVE(0),
-    OBSERVE_ALL(1),;
+    OBSERVE_ALL(1);
 
     private int value;
 

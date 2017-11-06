@@ -23,8 +23,6 @@
 #ifndef _Included_org_iotivity_base_OcResource_OnMQSubscribeListener
 #define _Included_org_iotivity_base_OcResource_OnMQSubscribeListener
 
-using namespace OC;
-
 class JniOcResource;
 
 class JniOnMQSubscribeListener
@@ -32,7 +30,7 @@ class JniOnMQSubscribeListener
 public:
     JniOnMQSubscribeListener(JNIEnv *env, jobject jListener, JniOcResource* owner);
     ~JniOnMQSubscribeListener();
-    void onSubscribeCallback(const HeaderOptions headerOptions, const OCRepresentation& rep,
+    void onSubscribeCallback(const OC::HeaderOptions headerOptions, const OC::OCRepresentation& rep,
         const int& eCode, const int& sequenceNumber);
 private:
     jweak m_jwListener;

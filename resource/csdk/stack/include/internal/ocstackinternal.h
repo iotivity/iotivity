@@ -42,7 +42,7 @@
 
 #include "cacommon.h"
 #include "cainterface.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -283,9 +283,9 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
         OCResourceProperty resourceProperties, uint8_t enable);
 #endif
 
-const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
+const char *OC_CALL convertTriggerEnumToString(OCPresenceTrigger trigger);
 
-OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
+OCPresenceTrigger OC_CALL convertTriggerStringToEnum(const char * triggerStr);
 
 void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out);
 
@@ -364,6 +364,32 @@ void OCDiscoveryPayloadAddResourceWithEps(OCDiscoveryPayload *payload, const OCR
 /* This method will retrieve the tcp port */
 OCStackResult GetTCPPortInfo(OCDevAddr *endpoint, uint16_t *port, bool secured);
 #endif
+
+/**
+ * This function creates list of OCEndpointPayload structure,
+ * which matches with the resource's endpointType from list of
+ * CAEndpoint_t.
+ *
+ * @param[in] resource the resource
+ * @param[in] devAddr devAddr Structure pointing to the address.
+ * @param[in] networkInfo array of CAEndpoint_t
+ * @param[in] infoSize size of array
+ * @param[out] listHead pointer to HeadNode pointer
+ * @param[out] epSize size of array(set NULL not to use it)
+ * @param[out] selfEp endpoint that matches devAddr for use in anchor(set NULL not to use it)
+ *
+ * @return if success return pointer else NULL
+ */
+OCEndpointPayload* CreateEndpointPayloadList(const OCResource *resource,
+    const OCDevAddr *devAddr, CAEndpoint_t *networkInfo,
+    size_t infoSize, OCEndpointPayload **listHead, size_t* epSize, OCEndpointPayload** selfEp);
+
+/*
+* This function returns to destroy endpoint payload
+*
+*/
+void OC_CALL OCEndpointPayloadDestroy(OCEndpointPayload* payload);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

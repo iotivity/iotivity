@@ -257,9 +257,9 @@ public class ResourceClientActivity extends Activity
 
     private void initMenuList() {
         Item[] items = new Item[] { mStartMonitoring, mStopMonitoring,
-                mGetRemoteAttributes, mSetRemoteAttributes, mStartCaching,
-                mGetCacheState, mGetCachedAttributes, mGetCachedAttribute,
-                mStopCaching };
+            mGetRemoteAttributes, mSetRemoteAttributes, mStartCaching,
+            mGetCacheState, mGetCachedAttributes, mGetCachedAttribute,
+            mStopCaching };
 
         mItemAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, items);

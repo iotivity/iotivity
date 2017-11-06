@@ -26,6 +26,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
+#include <inttypes.h>
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "cacommon.h"
@@ -84,60 +85,7 @@ static const unsigned char s_ekuRole[] = { 0x30, 0x0C, 0x06, 0x0A, 0x2B, 0x06, 0
 /* ASN.1 DER encoding of the EKU for both identity and roles (for use by CAs) */
 static const unsigned char s_ekuCA[] = { 0x30, 0x18, 0x06, 0x0A, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0xDE, 0x7C, 0x01, 0x06, 0x06, 0x0A, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0xDE, 0x7C, 0x01, 0x07 };
 
-/**
- * Generates elliptic curve keypair.
- *
- * @param[out]  pk    mbedtls public key container
- *
- * @return  0 on success or <0 on error
- */
-static int GenerateEccKeyPair(mbedtls_pk_context *pk)
-{
-    int ret = 0;
-    mbedtls_entropy_context entropy;
-    mbedtls_ctr_drbg_context ctr_drbg;
-
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    VERIFY_NON_NULL_RET(pk, TAG, "Param pk is NULL", -1);
-
-    // Initialize the DRBG context
-    mbedtls_ctr_drbg_init(&ctr_drbg);
-    mbedtls_entropy_init(&entropy);
-    ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
-                                &entropy, (const unsigned char *)PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING));
-
-    if (0 > ret)
-    {
-        OIC_LOG_V(ERROR, TAG, "Seed initialization failed! %d", ret);
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        goto exit;
-    }
-    mbedtls_ctr_drbg_set_prediction_resistance(&ctr_drbg, MBEDTLS_CTR_DRBG_PR_ON);
-    ret = mbedtls_pk_setup(pk, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY));
-    if (0 > ret)
-    {
-        OIC_LOG_V(ERROR, TAG, "mbedtls_pk_setup error %d", ret);
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        goto exit;
-    }
-    ret = mbedtls_ecp_gen_key(MBEDTLS_ECP_DP_SECP256R1, mbedtls_pk_ec(*pk), mbedtls_ctr_drbg_random, &ctr_drbg);
-    if (0 > ret)
-    {
-        OIC_LOG(ERROR, TAG, "mbedtls_ecp_gen_keypair error");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        goto exit;
-    }
-
-exit:
-
-    mbedtls_ctr_drbg_free(&ctr_drbg);
-    mbedtls_entropy_free(&entropy);
-
-    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-    return 0;
-}
-
-OCStackResult OCGenerateRandomSerialNumber(char **serial, size_t *serialLen)
+OCStackResult OC_CALL OCGenerateRandomSerialNumber(char **serial, size_t *serialLen)
 {
     int ret = 0;
     OCStackResult res = OC_STACK_ERROR;
@@ -153,7 +101,7 @@ OCStackResult OCGenerateRandomSerialNumber(char **serial, size_t *serialLen)
     VERIFY_SUCCESS(TAG, OCGetRandomBytes(random, sizeof(random)), ERROR);
 
     /* Per RFC 5280, 20 octets is the maximum length of a serial number. In ASN.1, if the highest-order
-     * bit is set it causes a padding octet to be written, which would be 21 and non-compliant. 
+     * bit is set it causes a padding octet to be written, which would be 21 and non-compliant.
      * Therefore, always clear the highest-order bit. Integers in ASN.1 are always big-Endian.
      */
     random[0] &= 0x7F;
@@ -187,8 +135,8 @@ exit:
     return res;
 }
 
-OCStackResult OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen,
-                                char **privateKey, size_t *privateKeyLen)
+OCStackResult OC_CALL OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen,
+                                        char **privateKey, size_t *privateKeyLen)
 {
     int ret = 0;
     mbedtls_pk_context keyPair;
@@ -377,7 +325,7 @@ static OCStackResult GenerateCertificate(
     {
         ret = mbedtls_x509write_crt_set_basic_constraints(&outCertCtx, 1, -1);
         VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
-        ret = mbedtls_x509write_crt_set_key_usage(&outCertCtx, 
+        ret = mbedtls_x509write_crt_set_key_usage(&outCertCtx,
             MBEDTLS_X509_KU_DIGITAL_SIGNATURE | MBEDTLS_X509_KU_KEY_CERT_SIGN);
         VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
     }
@@ -392,7 +340,7 @@ static OCStackResult GenerateCertificate(
             MBEDTLS_X509_KU_KEY_AGREEMENT);
         VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
     }
-    
+
     switch (certType)
     {
     case CERT_TYPE_ROLE:
@@ -402,7 +350,9 @@ static OCStackResult GenerateCertificate(
             s_ekuRole, sizeof(s_ekuRole));
         VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
         ret = snprintf(buf, sizeof(buf), "CN=%s%s%s", role, (NULL != authority) ? ",OU=" : "", (NULL != authority) ? authority : "");
-        VERIFY_SUCCESS(TAG, ret < sizeof(buf), ERROR);
+        // To prevent sign-compare warning sizeof(buf) is cast to int. This is safe because the max size of buf fits into int.
+        // Note ret value from snprintf may be negative if there was an error so it should not be cast to size_t.
+        VERIFY_SUCCESS(TAG, ret < (int)sizeof(buf), ERROR);
         names.next = NULL;
         names.general_name.name_type = MBEDTLS_X509_GENERALNAME_DIRECTORYNAME;
         ret = mbedtls_x509_string_to_names(&names.general_name.directory_name, buf);
@@ -464,7 +414,7 @@ exit:
     return res;
 }
 
-OCStackResult OCGenerateCACertificate(
+OCStackResult OC_CALL OCGenerateCACertificate(
     const char *subject,
     const char *subjectPublicKey,
     const char *issuerCert,
@@ -477,7 +427,7 @@ OCStackResult OCGenerateCACertificate(
 {
     OCStackResult res = OC_STACK_OK;
     OCByteString byteStr = { 0 };
-    
+
     res = GenerateCertificate(
         CERT_TYPE_CA,
         subject,
@@ -500,7 +450,7 @@ OCStackResult OCGenerateCACertificate(
     return res;
 }
 
-OCStackResult OCGenerateIdentityCertificate(
+OCStackResult OC_CALL OCGenerateIdentityCertificate(
     const OicUuid_t *subjectUuid,
     const char *subjectPublicKey,
     const char *issuerCert,
@@ -555,7 +505,7 @@ OCStackResult OCGenerateIdentityCertificate(
     return res;
 }
 
-OCStackResult OCGenerateRoleCertificate(
+OCStackResult OC_CALL OCGenerateRoleCertificate(
     const OicUuid_t *subjectUuid,
     const char *subjectPublicKey,
     const char *issuerCert,
@@ -686,7 +636,7 @@ static int VerifyCSRSignature(mbedtls_x509_csr* csr)
     return ret;
 }
 
-OCStackResult OCVerifyCSRSignature(const char* csr)
+OCStackResult OC_CALL OCVerifyCSRSignature(const char* csr)
 {
     mbedtls_x509_csr csrObj;
 
@@ -711,7 +661,7 @@ OCStackResult OCVerifyCSRSignature(const char* csr)
     return OC_STACK_OK;
 }
 
-OCStackResult OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid)
+OCStackResult OC_CALL OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid)
 {
     mbedtls_x509_csr csrObj;
 
@@ -728,7 +678,7 @@ OCStackResult OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid)
     ret = mbedtls_x509_dn_gets(uuidStr, sizeof(uuidStr), &csrObj.subject);
     if (ret != (sizeof(uuidStr) - 1))
     {
-        OIC_LOG_V(ERROR, TAG, "mbedtls_x509_dn_gets returned length or error: %d, expected %d", ret, sizeof(uuidStr) - 1);
+        OIC_LOG_V(ERROR, TAG, "mbedtls_x509_dn_gets returned length or error: %d, expected %" PRIuPTR, ret, sizeof(uuidStr) - 1);
         mbedtls_x509_csr_free(&csrObj);
         return OC_STACK_ERROR;
     }
@@ -751,7 +701,7 @@ OCStackResult OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid)
     return OC_STACK_OK;
 }
 
-OCStackResult OCGetPublicKeyFromCSR(const char* csr, char** publicKey)
+OCStackResult OC_CALL OCGetPublicKeyFromCSR(const char* csr, char** publicKey)
 {
     mbedtls_x509_csr csrObj;
 
@@ -788,7 +738,7 @@ OCStackResult OCGetPublicKeyFromCSR(const char* csr, char** publicKey)
     return OC_STACK_OK;
 }
 
-OCStackResult OCConvertDerCSRToPem(const char* derCSR, size_t derCSRLen, char** pemCSR)
+OCStackResult OC_CALL OCConvertDerCSRToPem(const char* derCSR, size_t derCSRLen, char** pemCSR)
 {
     const char* pemHeader = "-----BEGIN CERTIFICATE REQUEST-----\n";
     const char* pemFooter = "-----END CERTIFICATE REQUEST-----\n";

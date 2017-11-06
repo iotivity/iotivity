@@ -48,7 +48,7 @@ extern "C" {
 //-----------------------------------------------------------------------------
 
 /** Version of IoTivity. */
-#define IOTIVITY_VERSION                      "1.3.0"
+#define IOTIVITY_VERSION                      "1.3.1"
 
 /**
  * OIC Virtual resources supported by every OIC device.
@@ -183,11 +183,11 @@ extern "C" {
 /** To represent interface.*/
 #define OC_RSRVD_INTERFACE              "if"
 
-/** To indicate how long RD should publish this item.*/
-#define OC_RSRVD_DEVICE_TTL             "lt"
-
 /** To represent time to live.*/
 #define OC_RSRVD_TTL                    "ttl"
+
+/** To indicate how long RD should publish this item.*/
+#define OC_RSRVD_DEVICE_TTL             OC_RSRVD_TTL
 
 /** To represent non*/
 #define OC_RSRVD_NONCE                  "non"
@@ -538,13 +538,13 @@ extern "C" {
 
 #define OC_RSRVD_LAST_UPDATE              "lu"
 
-#define OC_RSRVD_THIS_UPDATE              "tu"
+#define OC_RSRVD_THIS_UPDATE              "thisupdate"
 
 #define OC_RSRVD_NEXT_UPDATE              "nu"
 
 #define OC_RSRVD_SERIAL_NUMBERS           "rcsn"
 
-#define OC_RSRVD_CRL                      "crl"
+#define OC_RSRVD_CRL                      "crldata"
 
 #define OC_RSRVD_CRL_ID                   "crlid"
 
@@ -1067,7 +1067,7 @@ typedef enum
     OC_STACK_INVALID_IP,
     OC_STACK_INVALID_PORT,
     OC_STACK_INVALID_CALLBACK,
-    OC_STACK_INVALID_METHOD,
+    OC_STACK_INVALID_METHOD,        /** 405 */
 
     /** Invalid parameter.*/
     OC_STACK_INVALID_PARAM,
@@ -1114,6 +1114,7 @@ typedef enum
      */
     OC_STACK_AUTHENTICATION_FAILURE,
     OC_STACK_NOT_ALLOWED_OXM,
+    OC_STACK_CONTINUE_OPERATION,
 
     /** Request come from endpoint which is not mapped to the resource. */
     OC_STACK_BAD_ENDPOINT,
@@ -1127,12 +1128,13 @@ typedef enum
 
     /** Request is denied by the user*/
     OC_STACK_USER_DENIED_REQ,
-    OC_STACK_NOT_ACCEPTABLE,
+    OC_STACK_NOT_ACCEPTABLE,         /** 406 */
 
     /** ERROR code from server */
     OC_STACK_FORBIDDEN_REQ,          /** 403*/
     OC_STACK_INTERNAL_SERVER_ERROR,  /** 500*/
     OC_STACK_GATEWAY_TIMEOUT,        /** 504*/
+    OC_STACK_SERVICE_UNAVAILABLE,    /** 503*/
 
     /** ERROR in stack.*/
     OC_STACK_ERROR = 255
@@ -1713,7 +1715,7 @@ typedef struct
     /** An array of the vendor specific header options the entity handler wishes to use in response.*/
     OCHeaderOption sendVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
 
-    /** URI of new resource that entity handler might create.*/
+    /** Resource path of new resource that entity handler might create.*/
     char resourceUri[MAX_URI_LENGTH];
 
     /** Server sets to true for persistent response buffer,false for non-persistent response buffer*/
@@ -1877,17 +1879,6 @@ typedef OCEntityHandlerResult (*OCEntityHandler)
 typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
 (OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest, char* uri, void* callbackParam);
 
-//#ifdef DIRECT_PAIRING
-/**
- * Callback function definition of direct-pairing
- *
- * @param[OUT] ctx - user context returned in the callback.
- * @param[OUT] peer - pairing device info.
- * @param[OUT] result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
- *                                   if D2D pairing is success without error
- */
-typedef void (*OCDirectPairingCB)(void *ctx, OCDPDev_t *peer, OCStackResult result);
-//#endif // DIRECT_PAIRING
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**
  * Callback function definition for Change in TrustCertChain

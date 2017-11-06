@@ -22,6 +22,8 @@
 # Build script for Arduino Enrollee Sample App
 ######################################################################
 
+import sys
+
 Import('env')
 
 enrollee_env = env.Clone()
@@ -30,22 +32,27 @@ transport = enrollee_env.get('TARGET_TRANSPORT')
 ######################################################################
 # Build flags
 ######################################################################
-enrollee_env.PrependUnique(CPPPATH = [
-        env.get('SRC_DIR') + '/resource/oc_logger/include',
-        env.get('SRC_DIR') + '/resource/csdk/logger/include',
-        env.get('SRC_DIR') + '/resource/csdk/include',
-        env.get('SRC_DIR') + '/resource/csdk/stack/include',
-		env.get('SRC_DIR') + '/extlibs/cjson',
-		env.get('SRC_DIR') + '/service/easy-setup/inc',
-		env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/wifi',
-		env.get('SRC_DIR') + '/service/easy-setup/enrollee/inc',
-		env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'])
+enrollee_env.PrependUnique(CPPPATH=[
+    env.get('SRC_DIR') + '/resource/oc_logger/include',
+    env.get('SRC_DIR') + '/resource/csdk/logger/include',
+    env.get('SRC_DIR') + '/resource/csdk/include',
+    env.get('SRC_DIR') + '/resource/csdk/stack/include',
+    env.get('SRC_DIR') + '/extlibs/cjson',
+    env.get('SRC_DIR') + '/service/easy-setup/inc',
+    env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/wifi',
+    env.get('SRC_DIR') + '/service/easy-setup/enrollee/inc',
+    env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'
+])
 
-enrollee_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
+enrollee_env.AppendUnique(CPPDEFINES=['ESWIFI'])
 
-enrollee_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-
-enrollee_env.PrependUnique(LIBS = ['octbstack','ocsrm','connectivity_abstraction','coap', 'ESEnrolleeSDK'])
+enrollee_env.PrependUnique(LIBS=[
+    'octbstack',
+    'ocsrm',
+    'connectivity_abstraction',
+    'coap',
+    'ESEnrolleeSDK',
+])
 enrollee = enrollee_env.Program('enrollee', 'enrolleewifi.cpp')
 env.CreateBin('enrollee')
 
@@ -54,9 +61,9 @@ i_enrollee = enrollee_env.Install(env.get('BUILD_DIR'), enrollee)
 Alias('enrollee', i_enrollee)
 env.AppendTarget('enrollee')
 
-if(enrollee_env['UPLOAD'] == True):
-	from sys import platform as _platform
-	if _platform == "linux" or _platform == "linux2":
-		enrollee_env.Upload(env.get('BUILD_DIR') + '/service/easy-setup/sampleapp/enrollee/arduino/enrollee.hex')
-	else:
-		print 'Please use appropriate install method for your developing machine. Linux is the only supported platform right now.'
+if (enrollee_env['UPLOAD'] == True):
+    if sys.platform.startswith("linux"):
+        enrollee_env.Upload(
+            env.get('BUILD_DIR') + '/service/easy-setup/sampleapp/enrollee/arduino/enrollee.hex')
+    else:
+        print 'Please use appropriate install method for your developing machine. Linux is the only supported platform right now.'

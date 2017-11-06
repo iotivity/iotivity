@@ -37,6 +37,6 @@ public abstract class CloudPropProvisioningCallback {
      *          a result of cloud property provisioning
      *          a state of cloud property provisioning
      */
-	public abstract void onProgress(CloudPropProvisioningStatus status);
+    public abstract void onProgress(CloudPropProvisioningStatus status);
 }
 

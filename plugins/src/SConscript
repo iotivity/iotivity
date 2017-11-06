@@ -29,64 +29,61 @@ target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 pi_path = os.path.join(src_dir, 'plugins')
 
-print"Reading PI script"
+print "Reading PI script"
 
 ######################################################################
 # Build flags
 ######################################################################
 with_unforked_libcoap = env.get('WITH_UNFORKED_LIBCOAP')
 if with_unforked_libcoap == '1':
-    env.PrependUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+    env.PrependUnique(CPPPATH=['#extlibs/libcoap/libcoap/include'])
 else:
-    env.PrependUnique(CPPPATH = [os.path.join(src_dir, 'resource', 'csdk', 'connectivity', 'lib', 'libcoap-4.1.1', 'include')])
+    env.PrependUnique(CPPPATH=[
+        os.path.join(src_dir, 'resource', 'csdk', 'connectivity', 'lib',
+                     'libcoap-4.1.1', 'include')
+    ])
 
-env.PrependUnique(CPPPATH = [ os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
-                              os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
-                              os.path.join(src_dir, 'resource', 'c_common', 'oic_time', 'include'),
-                              os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
-                              os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
-                              os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
-                              os.path.join(src_dir, 'resource', 'csdk', 'security', 'include'),
-                              os.path.join(src_dir, 'resource', 'csdk', 'include')
-                            ])
-env.AppendUnique(CPPPATH = [ os.path.join(pi_path, 'include'),
-                             os.path.join(pi_path, 'include', 'internal'),
-                             os.path.join(pi_path, 'zigbee_wrapper', 'include'),
-                             os.path.join(pi_path, 'include', 'internal')
-                           ])
+env.PrependUnique(CPPPATH=[
+    os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
+    os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
+    os.path.join(src_dir, 'resource', 'c_common', 'oic_time', 'include'),
+    os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
+    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
+    os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
+    os.path.join(src_dir, 'resource', 'csdk', 'security', 'include'),
+    os.path.join(src_dir, 'resource', 'csdk', 'include')
+])
+env.AppendUnique(CPPPATH=[
+    os.path.join(pi_path, 'include'),
+    os.path.join(pi_path, 'include', 'internal'),
+    os.path.join(pi_path, 'zigbee_wrapper', 'include'),
+    os.path.join(pi_path, 'include', 'internal')
+])
 
 if target_os not in ['arduino', 'windows']:
-	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
+    env.AppendUnique(CPPDEFINES=['WITH_POSIX'])
 
-if target_os in ['darwin','ios']:
-	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+if target_os in ['darwin', 'ios']:
+    env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
 
-env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
-env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
-env.PrependUnique(LIBS = ['zigbee_wrapper'])
-
-if env.get('LOGGING'):
-	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+env.PrependUnique(LIBS=['zigbee_wrapper'])
 
 #####################################################################
 # Source files and Target(s)
 ######################################################################
 pi_src = [
-         os.path.join(src_dir, 'resource', 'csdk', 'logger', 'src', 'logger.c'),
-         'pluginlist.c',
-         'plugininterface.c',
-	     ]
+    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'src', 'logger.c'),
+    'pluginlist.c',
+    'plugininterface.c',
+]
 
-env.AppendUnique(PI_SRC = pi_src)
+env.AppendUnique(PI_SRC=pi_src)
 
-print "Include path is %s" % env.get('CPPPATH')
-print "Files path is %s" % env.get('PI_SRC')
 if target_os in ['android', 'tizen']:
-	calib = env.SharedLibrary('plugin_interface', env.get('PI_SRC'))
+    calib = env.SharedLibrary('plugin_interface', env.get('PI_SRC'))
 else:
-	calib = env.StaticLibrary('plugin_interface', env.get('PI_SRC'))
+    calib = env.StaticLibrary('plugin_interface', env.get('PI_SRC'))
 env.InstallTarget(calib, 'plugin_interface')
 env.UserInstallTargetLib(calib, 'plugin_interface')
-

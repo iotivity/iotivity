@@ -64,12 +64,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array
@@ -102,12 +99,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array
@@ -140,12 +134,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array
@@ -178,12 +169,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array
@@ -216,12 +204,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array
@@ -249,12 +234,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array
@@ -279,12 +261,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array
@@ -309,12 +288,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array
@@ -339,12 +315,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array
@@ -369,12 +342,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array
@@ -399,12 +369,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array
@@ -429,12 +396,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array
@@ -459,12 +423,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array
@@ -489,12 +450,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array
@@ -519,12 +477,9 @@ class ArrayValueValidator implements
             return false;
 
         // Validating length of array
-        if (mProperty.hasRange()) {
-            if (values.length < mProperty.minItems()
-                    || (values.length > mProperty.maxItems() && !mProperty
-                            .isVariable())) {
-                return false;
-            }
+        if (mProperty.hasRange() && (values.length < mProperty.minItems()
+                    || (values.length > mProperty.maxItems() && !mProperty.isVariable()))) {
+            return false;
         }
 
         // Validating elements of array

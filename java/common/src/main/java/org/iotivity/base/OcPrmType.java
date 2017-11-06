@@ -44,8 +44,7 @@ public enum OcPrmType {
     }
 
     public static OcPrmType convertOcPrmType(int value) {
-        switch (value)
-        {
+        switch (value) {
             case 0:
                 return OcPrmType.DP_NOT_ALLOWED;
             case 1:

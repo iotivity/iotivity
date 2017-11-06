@@ -29,9 +29,15 @@ extern "C"
     #include "oic_string.h"
     #include "oic_time.h"
     #include "ocresourcehandler.h"
+    #include "occollection.h"
+    #include "mbedtls/ssl_ciphersuites.h"
+    #include "octypes.h"
+#if defined (WITH_POSIX) && (defined (__WITH_DTLS__) || defined(__WITH_TLS__))
+    #include "ca_adapter_net_ssl.h"
+#endif
 }
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -68,9 +74,6 @@ namespace itst = iotivity::test;
 char gDeviceUUID[] = "fe3f9a68-4931-4cb0-9ea4-81702b43116c";
 char gDevicePIID[] = "32684bf3-4c44-47b0-99fe-6a9a59b73a8d";
 char gManufacturerName[] = "myName";
-static OCPrm_t pmSel;
-static char pinNumber;
-static OCDPDev_t peer;
 
 std::chrono::seconds const SHORT_TEST_TIMEOUT = std::chrono::seconds(5);
 std::chrono::seconds const LONG_TEST_TIMEOUT = std::chrono::seconds(450);
@@ -91,13 +94,6 @@ extern "C"  OCStackApplicationResult asyncDoResourcesCallback(void* ctx,
     OIC_LOG_V(INFO, TAG, "result = %d", clientResponse->result);
 
     return OC_STACK_KEEP_TRANSACTION;
-}
-
-static void resultCallback(void *UNUSED1, OCDPDev_t *UNUSED2, OCStackResult UNUSED3)
-{
-    (void) (UNUSED1);
-    (void) (UNUSED2);
-    (void) (UNUSED3);
 }
 
 extern "C" OCStackApplicationResult discoveryCallback(void* ctx,
@@ -2343,21 +2339,6 @@ TEST(PODTests, OCCallbackData)
 }
 #endif
 
-TEST(OCDoDirectPairingTests, Nullpeer)
-{
-    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(NULL, NULL, pmSel, &pinNumber, &resultCallback));
-}
-
-TEST(OCDoDirectPairingTests, NullCallback)
-{
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK,OCDoDirectPairing(NULL, &peer, pmSel, &pinNumber, NULL));
-}
-
-TEST(OCDoDirectPairingTests, NullpinNumber)
-{
-    EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(NULL, &peer, pmSel, NULL, &resultCallback));
-}
-
 TEST(StackResource, MultipleResourcesDiscovery)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
@@ -2435,6 +2416,45 @@ TEST(StackPayload, CloneByteString)
     OICFree(cloneByteString.bytes);
 
     OCRepPayloadDestroy(clone);
+}
+
+TEST(StackPayload, EmptyByteString)
+{
+    OCByteString value = { NULL, 0 };
+
+    OCByteString dest = { NULL, 0 };
+    EXPECT_TRUE(OCByteStringCopy(&dest, &value));
+    EXPECT_EQ(0, memcmp(&dest, &value, sizeof(OCByteString)));
+
+    OCRepPayload *payload = OCRepPayloadCreate();
+    ASSERT_TRUE(payload != NULL);
+
+    EXPECT_TRUE(OCRepPayloadSetPropByteString(payload, "value", value));
+    EXPECT_TRUE(OCRepPayloadGetPropByteString(payload, "value", &dest));
+    EXPECT_EQ(0, memcmp(&dest, &value, sizeof(OCByteString)));
+
+    OCByteString array[] = {
+        { NULL, 0 },
+        { NULL, 0 }
+    };
+    size_t dim[MAX_REP_ARRAY_DEPTH] = { 2, 0, 0 };
+    EXPECT_TRUE(OCRepPayloadSetByteStringArray(payload, "array", array, dim));
+    OCByteString *destArray = NULL;
+    size_t destDim[MAX_REP_ARRAY_DEPTH] = { 0 };
+    EXPECT_TRUE(OCRepPayloadGetByteStringArray(payload, "array", &destArray, destDim));
+    EXPECT_EQ(0, memcmp(destDim, dim, sizeof(destDim)));
+    size_t dimTotal = calcDimTotal(dim);
+    for (size_t i = 0; i < dimTotal; ++i)
+    {
+        EXPECT_EQ(0, memcmp(&destArray[i], &array[i], sizeof(OCByteString)));
+    }
+
+    for(size_t i = 0; i < dimTotal; i++)
+    {
+        OICFree(destArray[i].bytes);
+    }
+    OICFree(destArray);
+    OCRepPayloadDestroy(payload);
 }
 
 TEST(StackUri, Rfc6874_Noop_1)
@@ -2940,17 +2960,17 @@ TEST(StackZoneId, getZoneIdWithInvalidParams)
 }
 #endif
 
-TEST(LinksPayloadValue, createLinksPayloadValue)
+TEST(LinksPayloadArray, BuildCollectionLinksPayloadArray)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OIC_LOG(INFO, TAG, "Starting createLinksPayloadValue test");
     InitStack(OC_SERVER);
 
     size_t numResources = 0;
-    uint8_t inBitmap[3] = { OC_DISCOVERABLE | OC_OBSERVABLE,
-                            OC_DISCOVERABLE | OC_OBSERVABLE,
-                            OC_DISCOVERABLE };
-    int64_t outBitmap[3] = {0};
+    uint8_t parentBitmap = OC_DISCOVERABLE | OC_OBSERVABLE;
+    uint8_t inBitmap[2] = { OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE,
+                            OC_DISCOVERABLE | OC_SECURE };
+    int64_t outBitmap[2] = { 0 };
 
     OCResourceHandle containerHandle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&containerHandle,
@@ -2959,8 +2979,7 @@ TEST(LinksPayloadValue, createLinksPayloadValue)
         "/a/kitchen",
         0,
         NULL,
-        inBitmap[0]));
-    ++numResources;
+        parentBitmap));
 
     OCResourceHandle handle0;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
@@ -2969,7 +2988,7 @@ TEST(LinksPayloadValue, createLinksPayloadValue)
         "/a/led0",
         0,
         NULL,
-        inBitmap[1]));
+        inBitmap[0]));
     ++numResources;
 
     OCResourceHandle handle1;
@@ -2979,7 +2998,7 @@ TEST(LinksPayloadValue, createLinksPayloadValue)
         "/a/led1",
         0,
         NULL,
-        inBitmap[2]));
+        inBitmap[1]));
     ++numResources;
 
     EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle0));
@@ -2988,41 +3007,69 @@ TEST(LinksPayloadValue, createLinksPayloadValue)
     EXPECT_EQ(handle0, OCGetResourceHandleFromCollection(containerHandle, 0));
     EXPECT_EQ(handle1, OCGetResourceHandleFromCollection(containerHandle, 1));
 
-    OCRepPayloadValue* linksRepPayloadValue;
-    OCDevAddr* devAddr = NULL;
-    EXPECT_EQ(OC_STACK_OK, OCLinksPayloadValueCreate("/a/kitchen", &linksRepPayloadValue, devAddr));
-    ASSERT_TRUE(NULL != linksRepPayloadValue);
+    OCRepPayload** linksRepPayloadArray = NULL;
+    OCRepPayload* collectionPayload = NULL;
+    OCRepPayload* policyMap = NULL;
+    OCRepPayload** linksMap = NULL;
 
-    OCRepPayload *collectionPayload = OCRepPayloadCreate();
+    OCDevAddr* devAddr = (OCDevAddr*)OICCalloc(1, sizeof(OCDevAddr));
+    devAddr->adapter = OC_ADAPTER_IP;
+    CAEndpoint_t *info = NULL;
+    size_t size = 0;
+    CAGetNetworkInformation(&info, &size);
+    devAddr->ifindex = info->ifindex;
+
+    //check for OIC1.1 logic
+    size_t arraySize = 0;
+    linksRepPayloadArray = BuildCollectionLinksPayloadArray("/a/kitchen", false,
+                                                            devAddr, false, &arraySize);
+    ASSERT_TRUE(NULL != linksRepPayloadArray);
+
+    collectionPayload = OCRepPayloadCreate();
     ASSERT_TRUE(NULL != collectionPayload);
 
     size_t dim[MAX_REP_ARRAY_DEPTH] = { numResources, 0, 0 };
+    EXPECT_EQ(numResources, arraySize);
 
     ASSERT_TRUE(OCRepPayloadSetPropObjectArrayAsOwner(collectionPayload, OC_RSRVD_LINKS,
-                                              linksRepPayloadValue->arr.objArray, dim));
+                                                      linksRepPayloadArray, dim));
 
-    OCRepPayload *policyMap = NULL;
-    OCRepPayload **linksMap = NULL;
     ASSERT_TRUE(OCRepPayloadGetPropObjectArray(collectionPayload, OC_RSRVD_LINKS, &linksMap, dim));
 
     for (size_t i = 0; i < numResources; i++)
     {
         ASSERT_TRUE(OCRepPayloadGetPropObject(linksMap[i], OC_RSRVD_POLICY, &policyMap));
         ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_BITMAP, &outBitmap[i]));
-        EXPECT_EQ(inBitmap[i], outBitmap[i]);
+        // check bitmap excluding secure bit
+        EXPECT_EQ(inBitmap[i] & ~OC_MASK_RESOURCE_SECURE, outBitmap[i]);
 
         if (devAddr)
         {
 #ifdef TCP_ADAPTER
 #ifdef __WITH_TLS__
-            // tls
-            int64_t outTlsPort = 0;
-            ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_TLS_PORT, &outTlsPort));
+            bool isSecure = false;
+            ASSERT_TRUE(OCRepPayloadGetPropBool(policyMap, OC_RSRVD_SECURE, &isSecure));
+            if (isSecure)
+            {
+                // tls
+                int64_t outTlsPort = 0;
+                ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_TLS_PORT, &outTlsPort));
 
-            uint16_t tlsPort = 0;
-            GetTCPPortInfo(devAddr, &tlsPort, true);
+                uint16_t tlsPort = 0;
+                GetTCPPortInfo(devAddr, &tlsPort, true);
+                EXPECT_EQ(tlsPort, outTlsPort);
+            }
+            else
+            {
+                // tcp
+                int64_t outTcpPort = 0;
+                ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_TCP_PORT, &outTcpPort));
 
-            EXPECT_EQ(tlsPort, outTlsPort);
+                uint16_t tcpPort = 0;
+                GetTCPPortInfo(devAddr, &tcpPort, false);
+
+                EXPECT_EQ(tcpPort, outTcpPort);
+            }
 #else
             // tcp
             int64_t outTcpPort = 0;
@@ -3036,6 +3083,82 @@ TEST(LinksPayloadValue, createLinksPayloadValue)
 #endif
         }
         OCRepPayloadDestroy(linksMap[i]);
+    }
+
+    OICFree(linksMap);
+    OCRepPayloadDestroy(policyMap);
+    OCRepPayloadDestroy(collectionPayload);
+
+    //check for OCF1.0 logic
+    linksRepPayloadArray = BuildCollectionLinksPayloadArray("/a/kitchen", true, devAddr, false,
+        &arraySize);
+
+    ASSERT_TRUE(NULL != linksRepPayloadArray);
+
+    collectionPayload = OCRepPayloadCreate();
+    ASSERT_TRUE(NULL != collectionPayload);
+
+    EXPECT_EQ(numResources, arraySize);
+
+    ASSERT_TRUE(OCRepPayloadSetPropObjectArrayAsOwner(collectionPayload, OC_RSRVD_LINKS,
+                                                      linksRepPayloadArray, dim));
+
+    ASSERT_TRUE(OCRepPayloadGetPropObjectArray(collectionPayload, OC_RSRVD_LINKS, &linksMap, dim));
+
+    for (size_t i = 0; i < numResources; i++)
+    {
+        ASSERT_TRUE(OCRepPayloadGetPropObject(linksMap[i], OC_RSRVD_POLICY, &policyMap));
+        ASSERT_TRUE(OCRepPayloadGetPropInt(policyMap, OC_RSRVD_BITMAP, &outBitmap[i]));
+        // check bitmap excluding secure bit
+        EXPECT_EQ(inBitmap[i] & ~OC_MASK_RESOURCE_SECURE, outBitmap[i]);
+
+        size_t epsDim[MAX_REP_ARRAY_DEPTH] = { 0 };
+        OCRepPayload **epsMap = NULL;
+        ASSERT_TRUE(OCRepPayloadGetPropObjectArray(linksMap[i], OC_RSRVD_ENDPOINTS, &epsMap, epsDim));
+
+        size_t count = calcDimTotal(epsDim);
+        size_t coap_scheme_cnt[4] = { 0, 0, 0, 0 };
+        const char* coap_scheme[4] = { "coap", "coaps://", "coap+tcp://", "coaps+tcp://" };
+        char* outUri;
+        for (size_t k = 0; k < count; k++)
+        {
+            ASSERT_TRUE(OCRepPayloadGetPropString(epsMap[k], OC_RSRVD_ENDPOINT, &outUri));
+
+            if (!strncmp(outUri, coap_scheme[3], strlen(coap_scheme[3])))
+                coap_scheme_cnt[3]++;
+            else if (!strncmp(outUri, coap_scheme[2], strlen(coap_scheme[2])))
+                coap_scheme_cnt[2]++;
+            else if (!strncmp(outUri, coap_scheme[1], strlen(coap_scheme[1])))
+                coap_scheme_cnt[1]++;
+            else if (!strncmp(outUri, coap_scheme[0], strlen(coap_scheme[0])))
+                coap_scheme_cnt[0]++;
+            else
+            {
+                ASSERT_TRUE(false);
+                OIC_LOG_V(ERROR, TAG, "ep uri = %s \n", outUri);
+            }
+
+            OCRepPayloadDestroy(epsMap[k]);
+        }
+
+#ifdef __WITH_DTLS__
+        EXPECT_EQ(coap_scheme_cnt[0], (size_t) 0);
+        EXPECT_GE(coap_scheme_cnt[1], (size_t) 1);
+#ifdef TCP_ADAPTER
+        EXPECT_EQ(coap_scheme_cnt[2], (size_t) 0);
+        EXPECT_GE(coap_scheme_cnt[3], (size_t) 1);
+#endif
+#else
+        EXPECT_GE(coap_scheme_cnt[0], (size_t) 1);
+        EXPECT_EQ(coap_scheme_cnt[1], (size_t) 0);
+#ifdef TCP_ADAPTER
+        EXPECT_GE(coap_scheme_cnt[2], (size_t) 1);
+        EXPECT_EQ(coap_scheme_cnt[3], (size_t) 0);
+#endif
+#endif
+
+        OCRepPayloadDestroy(linksMap[i]);
+        OICFree(epsMap);
     }
 
     OICFree(linksMap);
@@ -3299,3 +3422,23 @@ TEST(OCIpv6ScopeLevel, invalidAddressTest)
     EXPECT_EQ(OC_STACK_ERROR, OCGetIpv6AddrScope(invalidAddr3, &scopeLevel));
     EXPECT_EQ(OC_STACK_ERROR, OCGetIpv6AddrScope(invalidAddr4, &scopeLevel));
 }
+
+#if defined (WITH_POSIX) && (defined (__WITH_DTLS__) || defined(__WITH_TLS__))
+TEST(SelectCipherSuite,SelectPositiveAdapter)
+{
+
+    CAinitSslAdapter();
+
+    uint16_t cipher = 0xC0AE;
+    EXPECT_EQ(OC_STACK_OK,OCSelectCipherSuite(cipher, OC_ADAPTER_IP));
+    EXPECT_EQ(OC_STACK_OK,OCSelectCipherSuite(cipher, OC_ADAPTER_GATT_BTLE));
+    EXPECT_EQ(OC_STACK_OK,OCSelectCipherSuite(cipher, OC_ADAPTER_RFCOMM_BTEDR));
+    EXPECT_EQ(OC_STACK_OK,OCSelectCipherSuite(cipher, OC_ADAPTER_TCP));
+    EXPECT_EQ(OC_STACK_OK,OCSelectCipherSuite(cipher, OC_ADAPTER_NFC));
+
+    #ifdef RA_ADAPTER
+        EXPECT_EQ(OC_STACK_OK,OCSelectCipherSuite(cipher, OC_ADAPTER_REMOTE_ACCESS));
+    #endif
+
+}
+#endif

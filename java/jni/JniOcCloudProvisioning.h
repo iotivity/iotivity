@@ -27,15 +27,12 @@
 #include "JniCreateAciIdListener.h"
 #include <mutex>
 
-
-using namespace OC;
-
 #ifndef _Included_org_iotivity_base_OcCloudProvisioning
 #define _Included_org_iotivity_base_OcCloudProvisioning
 class JniOcCloudProvisioning
 {
     public:
-        JniOcCloudProvisioning(std::shared_ptr<OCCloudProvisioning> cloudObject);
+        JniOcCloudProvisioning(std::shared_ptr<OC::OCCloudProvisioning> cloudObject);
         ~JniOcCloudProvisioning();
 
         static JniOcCloudProvisioning* getJniOcCloudProvisioningPtr(JNIEnv *env, jobject thiz);
@@ -64,7 +61,7 @@ class JniOcCloudProvisioning
         std::mutex resultMapLock;
         std::mutex aclresultMapLock;
         std::mutex createresultMapLock;
-        std::shared_ptr<OCCloudProvisioning>m_sharedCloudObject;
+        std::shared_ptr<OC::OCCloudProvisioning>m_sharedCloudObject;
 };
 
 

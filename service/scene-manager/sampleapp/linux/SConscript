@@ -8,42 +8,51 @@ lib_env = env.Clone()
 SConscript('#service/third_party_libs.scons', 'lib_env')
 scenemanager_sample_env = lib_env.Clone()
 rd_mode = lib_env.get('RD_MODE')
+target_os = lib_env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
 ######################################################################
-scenemanager_sample_env.AppendUnique(CPPPATH = [
+scenemanager_sample_env.AppendUnique(CPPPATH=[
     '../../include',
     '../../src',
     '#/service/resource-encapsulation/include',
     '#/extlibs/cjson',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/csdk/connectivity/api',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
     '#/resource/include',
     '#/resource/oc_logger/include'
 ])
-scenemanager_sample_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+scenemanager_sample_env.AppendUnique(
+    CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
-scenemanager_sample_env.PrependUnique(LIBS = ['scene_manager'])
-scenemanager_sample_env.AppendUnique(LIBS = ['rcs_client'])
-scenemanager_sample_env.AppendUnique(LIBS = ['rcs_server'])
-scenemanager_sample_env.AppendUnique(LIBS = ['rcs_common'])
-scenemanager_sample_env.AppendUnique(LIBS = ['oc'])
-scenemanager_sample_env.AppendUnique(LIBS = ['octbstack'])
-scenemanager_sample_env.AppendUnique(LIBS = ['oc_logger'])
-scenemanager_sample_env.AppendUnique(LIBS = ['connectivity_abstraction'])
-scenemanager_sample_env.AppendUnique(LIBS = ['coap'])
+scenemanager_sample_env.PrependUnique(LIBS=['scene_manager'])
+scenemanager_sample_env.AppendUnique(LIBS=[
+    'rcs_client',
+    'rcs_server',
+    'rcs_common',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction',
+    'coap',
+])
 
 if env.get('SECURED') == '1':
-   	scenemanager_sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
-
-if 'rt' in scenemanager_sample_env.get('LIBS'):
-    scenemanager_sample_env.Append(LIBS = ['rt'])
+    scenemanager_sample_env.AppendUnique(
+        LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if not env.get('RELEASE'):
-    scenemanager_sample_env.PrependUnique(LIBS = ['gcov'])
-    scenemanager_sample_env.AppendUnique(CXXFLAGS = ['--coverage'])
+    scenemanager_sample_env.PrependUnique(LIBS=['gcov'])
+    scenemanager_sample_env.AppendUnique(CXXFLAGS=['--coverage'])
+
+if 'gcc' == lib_env.get('CC') and target_os not in ['android']:
+    scenemanager_sample_env.AppendUnique(CFLAGS=['-pthread'])
+    scenemanager_sample_env.AppendUnique(LIBS=['pthread'])
 ####################################################################
 # Source files and Targets
 ######################################################################

@@ -276,19 +276,9 @@ OCStackResult OCInternalIsValidRoleCertificate(const uint8_t *buf, size_t bufLen
 
     mbedtls_x509_crt_init(&parsedCert);
     int mbedRet = mbedtls_x509_crt_parse(&parsedCert, buf, bufLen);
-
     if (0 > mbedRet)
     {
         OIC_LOG(ERROR, TAG, "Could not parse cert chain");
-        goto exit;
-    }
-
-    bool valid = false;
-    /* There should only be one certificate. */
-    if (NULL != parsedCert.next)
-    {
-        OIC_LOG(ERROR, TAG, "Expected only one certificate, but buffer contained more than one.");
-        res = OC_STACK_INVALID_PARAM;
         goto exit;
     }
 
@@ -319,7 +309,7 @@ OCStackResult OCInternalIsValidRoleCertificate(const uint8_t *buf, size_t bufLen
         goto exit;
     }
 
-    valid = false;
+    bool valid = false;
     /* Check for at least one subjAltName with a role in it. */
     for (const mbedtls_x509_general_names *nameCur = &parsedCert.subject_alt_names;
             NULL != nameCur;
@@ -450,12 +440,15 @@ static const mbedtls_x509_crt_profile s_certProfile = {
     0                                                   /* RSA minimum key length - not used because we only use EC key pairs */
 };
 
-OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificate, const OicSecOpt_t *optData,
-                                              const uint8_t *trustedCaCerts, size_t trustedCaCertsLength,
-                                              OicSecRole_t **roles, size_t *rolesLength,
-                                              struct tm *notValidAfter)
+OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificateChain, const uint8_t *trustedCaCerts,
+                                              size_t trustedCaCertsLength, OicSecRole_t **roles,
+                                              size_t *rolesLength, struct tm *notValidAfter)
 {
-    VERIFY_NOT_NULL_RETURN(TAG, certificate, ERROR, OC_STACK_INVALID_PARAM);
+    bool freeData = false;
+    uint8_t *data = certificateChain->data;
+    size_t dataLength = certificateChain->len;
+
+    VERIFY_NOT_NULL_RETURN(TAG, certificateChain, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, trustedCaCerts, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, roles, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, rolesLength, ERROR, OC_STACK_INVALID_PARAM);
@@ -472,33 +465,41 @@ OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificate, co
 
     OIC_LOG(DEBUG, TAG, "OCInternalVerifyRoleCertificate IN");
 
+    if ((dataLength > 0) && (data[dataLength - 1] != 0))
+    {
+        /* mbedtls_x509_crt_parse requires null terminator */
+        data = OICMalloc(dataLength + 1);
+
+        if (data == NULL)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: OICMalloc failed", __func__);
+            res = OC_STACK_NO_MEMORY;
+            goto exit;
+        }
+
+        OIC_LOG(DEBUG, TAG, "Adding null terminator");
+        memcpy(data, certificateChain->data, dataLength);
+        data[dataLength] = 0;
+        dataLength++;
+        freeData = true;
+    }
+
     mbedtls_x509_crt_init(&certChain);
     mbedtls_x509_crt_init(&trustedCas);
 
-    res = OCInternalIsValidRoleCertificate(certificate->data, certificate->len, NULL, NULL);
+    res = OCInternalIsValidRoleCertificate(data, dataLength, NULL, NULL);
     if (OC_STACK_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "Certificate is not valid as a role certificate: %d", res);
         goto exit;
     }
 
-    mbedRet = mbedtls_x509_crt_parse(&certChain, certificate->data, certificate->len);
+    mbedRet = mbedtls_x509_crt_parse(&certChain, data, dataLength);
     if (0 > mbedRet)
     {
-        OIC_LOG_V(ERROR, TAG, "Could not parse certificate: %d", mbedRet);
+        OIC_LOG_V(ERROR, TAG, "Could not parse certificates: %d", mbedRet);
         res = OC_STACK_ERROR;
         goto exit;
-    }
-
-    if ((NULL != optData) && (0 != optData->len))
-    {
-        mbedRet = mbedtls_x509_crt_parse(&certChain, optData->data, optData->len);
-        if (0 > mbedRet)
-        {
-            OIC_LOG_V(ERROR, TAG, "Could not parse optional data: %d", mbedRet);
-            res = OC_STACK_ERROR;
-            goto exit;
-        }
     }
 
     mbedRet = mbedtls_x509_crt_parse(&trustedCas, trustedCaCerts, trustedCaCertsLength);
@@ -537,6 +538,7 @@ OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificate, co
             if (MBEDTLS_X509_GENERALNAME_DIRECTORYNAME == nameCur->general_name.name_type)
             {
                 bool advanceCount = false;
+                bool addAuthority = true;
                 for (const mbedtls_x509_name *dirName = nameCur->general_name.directory_name;
                      NULL != dirName;
                      dirName = dirName->next)
@@ -559,12 +561,32 @@ OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificate, co
                     {
                         assert(dirName->val.len < ROLEID_LENGTH);
                         memcpy(rolesTmp[rolesTmpCount].authority, dirName->val.p, dirName->val.len);
+                        addAuthority = false;
                     }
-
                 }
 
                 if (advanceCount)
                 {
+                    /* If the authority was absent in the subject alternative name we know that the certificate
+                     * issuer defined the role. We add the issuer as the authority here so that access checks
+                     * function properly when invoked.
+                     */
+                    if (addAuthority)
+                    {
+                        for (const mbedtls_x509_name *issuerName = &certChain.issuer;
+                             NULL != issuerName;
+                             issuerName = issuerName->next)
+                        {
+                            if ((MBEDTLS_OID_SIZE(MBEDTLS_OID_AT_CN) == issuerName->oid.len) &&
+                                (0 == memcmp(MBEDTLS_OID_AT_CN, issuerName->oid.p, MBEDTLS_OID_SIZE(MBEDTLS_OID_AT_CN))))
+                            {
+                                assert(issuerName->val.len < ROLEID_LENGTH);
+                                memcpy(rolesTmp[rolesTmpCount].authority, issuerName->val.p, issuerName->val.len);
+                                OIC_LOG_V(DEBUG, TAG, "Adding authority %s to role", rolesTmp[rolesTmpCount].authority);
+                            }
+                        }
+                    }
+
                     rolesTmpCount++;
                 }
             }
@@ -610,6 +632,10 @@ exit:
 
     mbedtls_x509_crt_free(&trustedCas);
     mbedtls_x509_crt_free(&certChain);
+
+    if (freeData) {
+        OICFree(data);
+    }
 
     OIC_LOG_V(DEBUG, TAG, "OCInternalVerifyRoleCertificate out: %d", res);
 

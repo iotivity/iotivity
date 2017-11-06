@@ -20,7 +20,6 @@
 
 #include <string.h>
 #include "resourcemanager.h"
-#include "securevirtualresourcetypes.h"
 #include "aclresource.h"
 #include "pstatresource.h"
 #include "doxmresource.h"
@@ -30,12 +29,8 @@
 #include "oic_string.h"
 #include "logger.h"
 #include "utlist.h"
+#include "psinterface.h"
 
-//#ifdef DIRECT_PAIRING
-#include "pconfresource.h"
-#include "dpairingresource.h"
-//#endif // DIRECT_PAIRING
-#include "verresource.h"
 
 #define TAG "OIC_SRM_RM"
 
@@ -116,20 +111,6 @@ OCStackResult InitSecureResources( )
         ret = InitAmaclResource();
     }
 #endif // AMACL_RESOURCE_IMPLEMENTATION_COMPLETE
-//#ifdef DIRECT_PAIRING
-    if(OC_STACK_OK == ret)
-    {
-        ret = InitPconfResource();
-    }
-    if(OC_STACK_OK == ret)
-    {
-        ret = InitDpairingResource();
-    }
-//#endif // DIRECT_PAIRING
-    if(OC_STACK_OK == ret)
-    {
-        ret = InitVerResource();
-    }
     if(OC_STACK_OK != ret)
     {
         //TODO: Update the default behavior if one of the SVR fails
@@ -140,6 +121,8 @@ OCStackResult InitSecureResources( )
 
 OCStackResult DestroySecureResources( )
 {
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+
     DeInitACLResource();
     DeInitCredResource();
     DeInitDoxmResource();
@@ -150,11 +133,40 @@ OCStackResult DestroySecureResources( )
     DeInitRolesResource();
 #endif // __WITH_DTLS__ || __WITH_TLS__
     DeInitAmaclResource();
-//#ifdef DIRECT_PAIRING
-    DeInitPconfResource();
-    DeInitDpairingResource();
-//#endif // DIRECT_PAIRING
-    DeInitVerResource();
+
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 
     return OC_STACK_OK;
+}
+
+OCStackResult ResetSecureResources()
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    ret = DestroySecureResources();
+
+    if (OC_STACK_OK == ret)
+    {
+        ret = InitSecureResources();
+    }
+
+    if (OC_STACK_OK == ret)
+    {
+        ret = ResetSecureResourceInPS();
+    }
+
+    if (OC_STACK_OK != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: resetting device to mfr defaults failed!",
+            __func__);
+        // TODO: vendor may wish to fall back to hard-coded defaults
+        // if the persistent storage backup values cannot be restored.
+        // However in this case, vendor should ensure hard-coded
+        // defaults match intended settings, especially the supported
+        // OTMs default in /doxm resource.  IoTivity for example disables
+        // JustWorks OTM in hard-coded defaults, which may not be suitable
+        // to some devices.
+    }
+
+    return ret;
 }

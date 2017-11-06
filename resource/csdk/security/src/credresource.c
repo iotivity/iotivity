@@ -93,6 +93,7 @@ static const uint8_t ROLEID_MAP_SIZE = 1;
 
 static OicSecCred_t        *gCred = NULL;
 static OCResourceHandle    gCredHandle = NULL;
+static OicUuid_t           gRownerId = { .id = { 0 } };
 
 typedef enum CredCompareResult{
     CRED_CMP_EQUAL = 0,
@@ -100,15 +101,27 @@ typedef enum CredCompareResult{
     CRED_CMP_ERROR = 2
 }CredCompareResult_t;
 
-static bool ValueWithinBounds(uint64_t value, uint64_t maxValue)
-{
-    if (value > maxValue)
-    {
-        OIC_LOG_V(ERROR, TAG, "The value (%" PRId64 ") is greater than allowed maximum of %" PRId64 ".", value, maxValue);
-        return false;
-    }
+typedef struct CredIdList CredIdList_t;
 
-    return true;
+struct CredIdList
+{
+    uint16_t credId;
+    CredIdList_t *next;
+};
+
+static void DeleteCredIdList(CredIdList_t** list)
+{
+    if (list)
+    {
+        CredIdList_t *head = *list;
+
+        while (head)
+        {
+            CredIdList_t *tmp = head->next;
+            OICFree(head);
+            head = tmp;
+        }
+    }
 }
 
 /**
@@ -231,6 +244,7 @@ exit:
     return false;
 }
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 static bool IsEmptyCred(const OicSecCred_t* cred)
 {
     OicUuid_t emptyUuid = {.id={0}};
@@ -239,21 +253,20 @@ static bool IsEmptyCred(const OicSecCred_t* cred)
     VERIFY_SUCCESS(TAG, !IsNonEmptyRole(&cred->roleId), ERROR);
     VERIFY_SUCCESS(TAG, (0 == cred->credId), ERROR);
     VERIFY_SUCCESS(TAG, (0 == cred->credType), ERROR);
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     VERIFY_SUCCESS(TAG, (NULL == cred->privateData.data), ERROR);
     VERIFY_SUCCESS(TAG, (NULL == cred->publicData.data), ERROR);
     VERIFY_SUCCESS(TAG, (NULL == cred->optionalData.data), ERROR);
     VERIFY_SUCCESS(TAG, (NULL == cred->credUsage), ERROR);
-#endif
     return true;
 exit:
     return false;
 }
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
 /**
  * This function frees OicSecCred_t object's fields and object itself.
  */
-static void FreeCred(OicSecCred_t *cred)
+void FreeCred(OicSecCred_t *cred)
 {
     if(NULL == cred)
     {
@@ -286,6 +299,8 @@ static void FreeCred(OicSecCred_t *cred)
     //Clean eowner
     OICFree(cred->eownerID);
 #endif
+
+    cred->next = NULL;
 
     //Clean Cred node itself
     OICFree(cred);
@@ -362,14 +377,14 @@ static CborError SerializeEncodingToCborInternal(CborEncoder *map, const OicSecK
     {
         cborEncoderResult = cbor_encode_text_string(map, OIC_JSON_ENCODING_NAME,
             strlen(OIC_JSON_ENCODING_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Encoding Tag.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Encoding Tag.");
         cborEncoderResult = cbor_encode_text_string(map, encoding,
             strlen(encoding));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Encoding Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Encoding Value.");
 
         cborEncoderResult = cbor_encode_text_string(map, OIC_JSON_DATA_NAME,
             strlen(OIC_JSON_DATA_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Name Tag.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Name Tag.");
         if (OIC_ENCODING_DER == value->encoding ||
             OIC_ENCODING_RAW == value->encoding)
         {
@@ -381,7 +396,7 @@ static CborError SerializeEncodingToCborInternal(CborEncoder *map, const OicSecK
             cborEncoderResult = cbor_encode_text_string(map,
                     (char*)value->data, value->len);
         }
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Name Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Name Value.");
     }
     else
     {
@@ -399,16 +414,16 @@ CborError SerializeEncodingToCbor(CborEncoder *rootMap, const char* tag, const O
     const size_t mapSize = 2;
 
     cborEncoderResult = cbor_encode_text_string(rootMap, tag, strlen(tag));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PrivateData Tag.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding PrivateData Tag.");
 
     cborEncoderResult = cbor_encoder_create_map(rootMap, &map, mapSize);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Map");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Map");
 
     cborEncoderResult = SerializeEncodingToCborInternal(&map, value);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding OicSecKey_t structure");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding OicSecKey_t structure");
 
     cborEncoderResult = cbor_encoder_close_container(rootMap, &map);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Map.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Closing Map.");
 
     exit:
     return cborEncoderResult;
@@ -421,10 +436,10 @@ CborError SerializeSecOptToCbor(CborEncoder *rootMap, const char* tag, const Oic
     const size_t mapSize = 3;
 
     cborEncoderResult = cbor_encode_text_string(rootMap, tag, strlen(tag));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PrivateData Tag.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding PrivateData Tag.");
 
     cborEncoderResult = cbor_encoder_create_map(rootMap, &map, mapSize);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Map");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Map");
 
     OicSecKey_t in;
     in.data = value->data;
@@ -432,16 +447,16 @@ CborError SerializeSecOptToCbor(CborEncoder *rootMap, const char* tag, const Oic
     in.len = value->len;
 
     cborEncoderResult = SerializeEncodingToCborInternal(&map, &in);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding OicSecKey_t structure");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding OicSecKey_t structure");
 
     cborEncoderResult = cbor_encode_text_string(&map, OIC_JSON_REVOCATION_STATUS_NAME,
         strlen(OIC_JSON_REVOCATION_STATUS_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional revstat Tag.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding optional revstat Tag.");
     cborEncoderResult = cbor_encode_boolean(&map, value->revstat);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional revstat Value.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding optional revstat Value.");
 
     cborEncoderResult = cbor_encoder_close_container(rootMap, &map);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Map.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Closing Map.");
 
     exit:
     return cborEncoderResult;
@@ -470,7 +485,7 @@ static CborError DeserializeEncodingFromCborInternal(CborValue *map, char *name,
             cborFindResult = CborErrorUnknownType;
             OIC_LOG(ERROR, TAG, "Unknown type for private data.");
         }
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PrivateData.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding PrivateData.");
     }
 
     // encoding -- Mandatory
@@ -478,7 +493,7 @@ static CborError DeserializeEncodingFromCborInternal(CborValue *map, char *name,
     {
         char* strEncoding = NULL;
         cborFindResult = cbor_value_dup_text_string(map, &strEncoding, &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding EncodingType");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding EncodingType");
 
         if(strcmp(strEncoding, OIC_SEC_ENCODING_RAW) == 0)
         {
@@ -522,19 +537,19 @@ CborError DeserializeEncodingFromCbor(CborValue *rootMap, OicSecKey_t *value)
         if (type == CborTextStringType && cbor_value_is_text_string(&map))
         {
             cborFindResult = cbor_value_dup_text_string(&map, &name, &len, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get text");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to get text");
             cborFindResult = cbor_value_advance(&map);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to advance value");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to advance value");
         }
         if (name)
         {
             cborFindResult = DeserializeEncodingFromCborInternal(&map, name, value);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to read OicSecKey_t value");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to read OicSecKey_t value");
         }
         if (cbor_value_is_valid(&map))
         {
             cborFindResult = cbor_value_advance(&map);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Map.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Advancing Map.");
         }
         //Because cbor using malloc directly, it is required to use free() instead of OICFree
         free(name);
@@ -557,9 +572,9 @@ CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value)
         if (type == CborTextStringType && cbor_value_is_text_string(&map))
         {
             cborFindResult = cbor_value_dup_text_string(&map, &name, &len, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get text");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to get text");
             cborFindResult = cbor_value_advance(&map);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to advance value");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to advance value");
         }
         if (name)
         {
@@ -567,11 +582,11 @@ CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value)
             if (strcmp(name, OIC_JSON_REVOCATION_STATUS_NAME) == 0)
             {
                 cborFindResult = cbor_value_get_boolean(&map, &value->revstat);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding revstat Value.")
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding revstat Value.")
             }
             OicSecKey_t out;
             cborFindResult = DeserializeEncodingFromCborInternal(&map, name, &out);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to read OicSecKey_t value");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to read OicSecKey_t value");
 
             value->data = out.data;
             value->encoding = out.encoding;
@@ -580,7 +595,7 @@ CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value)
         if (cbor_value_is_valid(&map))
         {
             cborFindResult = cbor_value_advance(&map);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Map.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Advancing Map.");
         }
         //Because cbor using malloc directly, it is required to use free() instead of OICFree
         free(name);
@@ -640,11 +655,11 @@ static void logCredMetadata()
 #endif
 }
 
-OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload,
+OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUuid_t *rownerId, uint8_t **cborPayload,
                                 size_t *cborSize, int secureFlag)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s:", __func__);
-    if (NULL == credS || NULL == cborPayload || NULL != *cborPayload || NULL == cborSize)
+    if (NULL == cborPayload || NULL != *cborPayload || NULL == cborSize)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -672,18 +687,20 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
 
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
+    size_t credRootMapSize = CRED_ROOT_MAP_SIZE;
+
     // Create CRED Root Map (creds, rownerid)
-    cborEncoderResult = cbor_encoder_create_map(&encoder, &credRootMap, CRED_ROOT_MAP_SIZE);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Root Map");
+    cborEncoderResult = cbor_encoder_create_map(&encoder, &credRootMap, credRootMapSize);
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Cred Root Map");
 
     // creds
     cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_CREDS_NAME,
         strlen(OIC_JSON_CREDS_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding creds Name Tag.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding creds Name Tag.");
 
     // creds array
     cborEncoderResult = cbor_encoder_create_array(&credRootMap, &credArray, OicSecCredCount(cred));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Array.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Cred Array.");
 
     while (cred)
     {
@@ -726,26 +743,26 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             mapSize++;
         }
         cborEncoderResult = cbor_encoder_create_map(&credArray, &credMap, mapSize);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Map");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Cred Map");
 
         //CredID -- Mandatory
         cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_CREDID_NAME,
             strlen(OIC_JSON_CREDID_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Id Tag. ");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Cred Id Tag. ");
         cborEncoderResult = cbor_encode_int(&credMap, cred->credId);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Id Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Cred Id Value.");
 
         //Subject -- Mandatory
         cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_SUBJECTID_NAME,
             strlen(OIC_JSON_SUBJECTID_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Subject Tag.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Subject Tag.");
         inLen = (memcmp(&(cred->subject), &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)) == 0) ?
             WILDCARD_SUBJECT_ID_LEN : sizeof(OicUuid_t);
         if(inLen == WILDCARD_SUBJECT_ID_LEN)
         {
             cborEncoderResult = cbor_encode_text_string(&credMap, WILDCARD_RESOURCE_URI,
                 strlen(WILDCARD_RESOURCE_URI));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Subject Id wildcard Value.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding Subject Id wildcard Value.");
         }
         else
         {
@@ -753,7 +770,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             ret = ConvertUuidToStr(&cred->subject, &subject);
             VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
             cborEncoderResult = cbor_encode_text_string(&credMap, subject, strlen(subject));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Subject Id Value.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding Subject Id Value.");
             OICFree(subject);
         }
 
@@ -762,38 +779,38 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         {
             cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_ROLEID_NAME,
                 strlen(OIC_JSON_ROLEID_NAME));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding role ID map tag");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding role ID map tag");
 
             bool includeAuthority = (0 != memcmp(&cred->roleId.authority, &EMPTY_ROLE.authority, sizeof(EMPTY_ROLE.authority)));
 
-            cborEncoderResult = cbor_encoder_create_map(&credMap, &roleIdMap, ROLEID_MAP_SIZE + includeAuthority ? 1 : 0);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding role ID map");
+            cborEncoderResult = cbor_encoder_create_map(&credMap, &roleIdMap, ROLEID_MAP_SIZE + (includeAuthority ? 1 : 0));
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding role ID map");
 
             cborEncoderResult = cbor_encode_text_string(&roleIdMap, OIC_JSON_ROLE_NAME, strlen(OIC_JSON_ROLE_NAME));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding role tag");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding role tag");
 
             cborEncoderResult = cbor_encode_text_string(&roleIdMap, cred->roleId.id, strlen(cred->roleId.id));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding role value");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding role value");
 
             if (includeAuthority)
             {
                 cborEncoderResult = cbor_encode_text_string(&roleIdMap, OIC_JSON_AUTHORITY_NAME, strlen(OIC_JSON_AUTHORITY_NAME));
-                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding authority tag");
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding authority tag");
 
                 cborEncoderResult = cbor_encode_text_string(&roleIdMap, cred->roleId.authority, strlen(cred->roleId.authority));
-                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding authority value");
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding authority value");
             }
 
             cborEncoderResult = cbor_encoder_close_container(&credMap, &roleIdMap);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed closing role ID map");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed closing role ID map");
         }
 
         //CredType -- Mandatory
         cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_CREDTYPE_NAME,
             strlen(OIC_JSON_CREDTYPE_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Tag.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Cred Type Tag.");
         cborEncoderResult = cbor_encode_int(&credMap, cred->credType);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Cred Type Value.");
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         //PublicData -- Not Mandatory
@@ -802,24 +819,24 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         {
             cborEncoderResult = SerializeEncodingToCbor(&credMap,
                                          OIC_JSON_PUBLICDATA_NAME, &cred->publicData);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PublicData Tag.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding PublicData Tag.");
         }
         //OptionalData -- Not Mandatory
         if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->optionalData.data)
         {
             cborEncoderResult = SerializeSecOptToCbor(&credMap,
                                          OIC_JSON_OPTDATA_NAME, &cred->optionalData);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding OptionalData Tag.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding OptionalData Tag.");
         }
         //CredUsage -- Not Mandatory
         if(cred->credUsage)
         {
             cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_CREDUSAGE_NAME,
                 strlen(OIC_JSON_CREDUSAGE_NAME));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Credusage Name Tag.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Credusage Name Tag.");
             cborEncoderResult = cbor_encode_text_string(&credMap, cred->credUsage,
                 strlen(cred->credUsage));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Credusage Name Value.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Credusage Name Value.");
         }
 #endif /* __WITH_DTLS__ ||  __WITH_TLS__*/
         //PrivateData -- Not Mandatory
@@ -827,7 +844,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         {
             cborEncoderResult = SerializeEncodingToCbor(&credMap,
                                          OIC_JSON_PRIVATEDATA_NAME, &cred->privateData);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PrivateData Tag.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding PrivateData Tag.");
         }
 
         //Period -- Not Mandatory
@@ -835,10 +852,10 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         {
             cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_PERIOD_NAME,
                 strlen(OIC_JSON_PERIOD_NAME));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Period Name Tag.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Period Name Tag.");
             cborEncoderResult = cbor_encode_text_string(&credMap, cred->period,
                 strlen(cred->period));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Period Name Value.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Period Name Value.");
         }
 
 #ifdef MULTIPLE_OWNER
@@ -848,22 +865,22 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             char *eowner = NULL;
             cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_EOWNERID_NAME,
                 strlen(OIC_JSON_EOWNERID_NAME));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding eownerId Name Tag.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding eownerId Name Tag.");
             ret = ConvertUuidToStr(cred->eownerID, &eowner);
             VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
             cborEncoderResult = cbor_encode_text_string(&credMap, eowner, strlen(eowner));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding eownerId Value.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding eownerId Value.");
             OICFree(eowner);
         }
 #endif //MULTIPLE_OWNER
 
         cborEncoderResult = cbor_encoder_close_container(&credArray, &credMap);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Cred Map.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Closing Cred Map.");
 
         cred = cred->next;
     }
     cborEncoderResult = cbor_encoder_close_container(&credRootMap, &credArray);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Cred Array.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Closing Cred Array.");
 
     cred = credS;
 
@@ -872,50 +889,51 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         char *rowner = NULL;
         cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_ROWNERID_NAME,
             strlen(OIC_JSON_ROWNERID_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding rownerid Name.");
-        ret = ConvertUuidToStr(&cred->rownerID, &rowner);
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding rownerid Name.");
+        ret = ConvertUuidToStr(rownerId, &rowner);
         VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
         cborEncoderResult = cbor_encode_text_string(&credRootMap, rowner, strlen(rowner));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding rownerid Value.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding rownerid Value.");
         OICFree(rowner);
     }
 
-    //RT -- Mandatory
-    CborEncoder rtArray;
-    cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_RT_NAME,
-            strlen(OIC_JSON_RT_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
-    cborEncoderResult = cbor_encoder_create_array(&credRootMap, &rtArray, 1);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding RT Value.");
-    for (size_t i = 0; i < 1; i++)
     {
-        cborEncoderResult = cbor_encode_text_string(&rtArray, OIC_RSRC_TYPE_SEC_CRED,
-                strlen(OIC_RSRC_TYPE_SEC_CRED));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding RT Value.");
-    }
-    cborEncoderResult = cbor_encoder_close_container(&credRootMap, &rtArray);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing RT.");
+        //RT -- Mandatory
+        CborEncoder rtArray;
+        cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_RT_NAME,
+                strlen(OIC_JSON_RT_NAME));
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
+        cborEncoderResult = cbor_encoder_create_array(&credRootMap, &rtArray, 1);
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding RT Value.");
+        for (size_t i = 0; i < 1; i++)
+        {
+            cborEncoderResult = cbor_encode_text_string(&rtArray, OIC_RSRC_TYPE_SEC_CRED,
+                    strlen(OIC_RSRC_TYPE_SEC_CRED));
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding RT Value.");
+        }
+        cborEncoderResult = cbor_encoder_close_container(&credRootMap, &rtArray);
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Closing RT.");
 
-    //IF-- Mandatory
-    CborEncoder ifArray;
-    cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_IF_NAME,
-             strlen(OIC_JSON_IF_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
-    cborEncoderResult = cbor_encoder_create_array(&credRootMap, &ifArray, 1);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding IF Value.");
-    for (size_t i = 0; i < 1; i++)
-    {
-        cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
-                strlen(OC_RSRVD_INTERFACE_DEFAULT));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding IF Value.");
+        //IF-- Mandatory
+        CborEncoder ifArray;
+        cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_IF_NAME,
+                 strlen(OIC_JSON_IF_NAME));
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+        cborEncoderResult = cbor_encoder_create_array(&credRootMap, &ifArray, 1);
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding IF Value.");
+        for (size_t i = 0; i < 1; i++)
+        {
+            cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
+                    strlen(OC_RSRVD_INTERFACE_DEFAULT));
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding IF Value.");
+        }
+        cborEncoderResult = cbor_encoder_close_container(&credRootMap, &ifArray);
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Closing IF.");
     }
-    cborEncoderResult = cbor_encoder_close_container(&credRootMap, &ifArray);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing IF.");
-
 
     // Close CRED Root Map
     cborEncoderResult = cbor_encoder_close_container(&encoder, &credRootMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing CRED Root Map.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Closing CRED Root Map.");
 
     if (CborNoError == cborEncoderResult)
     {
@@ -953,8 +971,15 @@ exit:
     return ret;
 }
 
+OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload,
+                                size_t *cborSize, int secureFlag)
+{
+    return CredToCBORPayloadWithRowner(credS, &gRownerId, cborPayload, cborSize, secureFlag);
+}
+
+
 OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
-                                OicSecCred_t **secCred)
+                                OicSecCred_t **secCred, OicUuid_t **rownerid)
 {
     if (NULL == cborPayload || NULL == secCred || NULL != *secCred || 0 == size)
     {
@@ -980,7 +1005,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
     // Enter CRED Root Map
     CborValue CredRootMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
     cborFindResult = cbor_value_enter_container(&credCbor, &CredRootMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering CRED Root Map.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering CRED Root Map.");
 
     headCred = (OicSecCred_t *) OICCalloc(1, sizeof(OicSecCred_t));
     VERIFY_NOT_NULL(TAG, headCred, ERROR);
@@ -992,9 +1017,9 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
         if (type == CborTextStringType && cbor_value_is_text_string(&CredRootMap))
         {
             cborFindResult = cbor_value_dup_text_string(&CredRootMap, &tagName, &len, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Name in CRED Root Map.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding Name in CRED Root Map.");
             cborFindResult = cbor_value_advance(&CredRootMap);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Value in CRED Root Map.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Advancing Value in CRED Root Map.");
         }
         if(tagName)
         {
@@ -1005,7 +1030,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                 int credCount = 0;
                 CborValue credArray = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
                 cborFindResult = cbor_value_enter_container(&CredRootMap, &credArray);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Cred Array.");
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding Cred Array.");
 
                 while (cbor_value_is_valid(&credArray))
                 {
@@ -1013,7 +1038,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                     //CredId -- Mandatory
                     CborValue credMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
                     cborFindResult = cbor_value_enter_container(&credArray, &credMap);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Cred Map.");
+                    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding Cred Map.");
                     OicSecCred_t *cred = NULL;
 
                     if(1 == credCount)
@@ -1038,9 +1063,9 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                         if (cmType == CborTextStringType)
                         {
                             cborFindResult = cbor_value_dup_text_string(&credMap, &name, &tempLen, NULL);
-                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Name in CRED Map.");
+                            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding Name in CRED Map.");
                             cborFindResult = cbor_value_advance(&credMap);
-                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Value in CRED Map.");
+                            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Advancing Value in CRED Map.");
                         }
                         if(name)
                         {
@@ -1049,7 +1074,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                             {
                                 uint64_t credId = 0;
                                 cborFindResult = cbor_value_get_uint64(&credMap, &credId);
-                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CredId.");
+                                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding CredId.");
                                 cred->credId = (uint16_t)credId;
                             }
                             // subjectid
@@ -1057,7 +1082,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                             {
                                 char *subjectid = NULL;
                                 cborFindResult = cbor_value_dup_text_string(&credMap, &subjectid, &tempLen, NULL);
-                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding subjectid Value.");
+                                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding subjectid Value.");
                                 if(strcmp(subjectid, WILDCARD_RESOURCE_URI) == 0)
                                 {
                                     cred->subject.id[0] = '*';
@@ -1080,14 +1105,14 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 memset(&roleIdMap, 0, sizeof(roleIdMap));
 
                                 cborFindResult = cbor_value_enter_container(&credMap, &roleIdMap);
-                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed entering role ID map");
+                                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed entering role ID map");
 
                                 while (cbor_value_is_valid(&roleIdMap) && cbor_value_is_text_string(&roleIdMap))
                                 {
                                     cborFindResult = cbor_value_dup_text_string(&roleIdMap, &roleIdTagName, &unusedLen, NULL);
-                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting role ID map tag name");
+                                    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed getting role ID map tag name");
                                     cborFindResult = cbor_value_advance(&roleIdMap);
-                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed advancing role ID map");
+                                    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed advancing role ID map");
 
                                     if (NULL != roleIdTagName)
                                     {
@@ -1095,12 +1120,12 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                         {
                                             char *roleId = NULL;
                                             cborFindResult = cbor_value_dup_text_string(&roleIdMap, &roleId, &unusedLen, NULL);
-                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting role id value");
+                                            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed getting role id value");
                                             if (strlen(roleId) >= sizeof(cred->roleId.id))
                                             {
                                                 cborFindResult = CborUnknownError;
                                                 free(roleId);
-                                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Role ID is too long");
+                                                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Role ID is too long");
                                             }
                                             OICStrcpy(cred->roleId.id, sizeof(cred->roleId.id), roleId);
                                             free(roleId);
@@ -1109,12 +1134,12 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                         {
                                             char *authorityName = NULL;
                                             cborFindResult = cbor_value_dup_text_string(&roleIdMap, &authorityName, &unusedLen, NULL);
-                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed getting role authority value");
+                                            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed getting role authority value");
                                             if (strlen(authorityName) >= sizeof(cred->roleId.authority))
                                             {
                                                 cborFindResult = CborUnknownError;
                                                 free(authorityName);
-                                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Authority name is too long");
+                                                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Authority name is too long");
                                             }
                                             OICStrcpy(cred->roleId.authority, sizeof(cred->roleId.authority), authorityName);
                                             free(authorityName);
@@ -1131,7 +1156,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                     if (cbor_value_is_valid(&roleIdMap))
                                     {
                                         cborFindResult = cbor_value_advance(&roleIdMap);
-                                        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed advancing role map");
+                                        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed advancing role map");
                                     }
                                 }
 
@@ -1139,7 +1164,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 if ('\0' == cred->roleId.id[0])
                                 {
                                     cborFindResult = CborUnknownError;
-                                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "ID for role was not present in role map");
+                                    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "ID for role was not present in role map");
                                 }
                             }
                             // credtype
@@ -1147,40 +1172,40 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                             {
                                 uint64_t credType = 0;
                                 cborFindResult = cbor_value_get_uint64(&credMap, &credType);
-                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CredType.");
+                                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding CredType.");
                                 cred->credType = (OicSecCredType_t)credType;
                             }
                             // privatedata
                             if (strcmp(name, OIC_JSON_PRIVATEDATA_NAME)  == 0)
                             {
                                 cborFindResult = DeserializeEncodingFromCbor(&credMap, &cred->privateData);
-                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to read privateData structure");
+                                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to read privateData structure");
                             }
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                             //PublicData -- Not Mandatory
                             if (strcmp(name, OIC_JSON_PUBLICDATA_NAME)  == 0)
                             {
                                 cborFindResult = DeserializeEncodingFromCbor(&credMap, &cred->publicData);
-                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to read publicData structure");
+                                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to read publicData structure");
                             }
                             //OptionalData -- Not Mandatory
                             if (strcmp(name, OIC_JSON_OPTDATA_NAME)  == 0)
                             {
                                 cborFindResult = DeserializeSecOptFromCbor(&credMap, &cred->optionalData);
-                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to read optionalData structure");
+                                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to read optionalData structure");
                             }
                             //Credusage -- Not Mandatory
                             if (0 == strcmp(OIC_JSON_CREDUSAGE_NAME, name))
                             {
                                 cborFindResult = cbor_value_dup_text_string(&credMap, &cred->credUsage, &tempLen, NULL);
-                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Period.");
+                                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding Period.");
                             }
 #endif  //__WITH_DTLS__ ||  __WITH_TLS__
 
                             if (0 == strcmp(OIC_JSON_PERIOD_NAME, name))
                             {
                                 cborFindResult = cbor_value_dup_text_string(&credMap, &cred->period, &tempLen, NULL);
-                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Period.");
+                                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding Period.");
                             }
 
 #ifdef MULTIPLE_OWNER
@@ -1189,7 +1214,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                             {
                                 char *eowner = NULL;
                                 cborFindResult = cbor_value_dup_text_string(&credMap, &eowner, &tempLen, NULL);
-                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding eownerId Value.");
+                                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding eownerId Value.");
                                 if(NULL == cred->eownerID)
                                 {
                                     cred->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
@@ -1206,7 +1231,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                             if (cbor_value_is_valid(&credMap))
                             {
                                 cborFindResult = cbor_value_advance(&credMap);
-                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing CRED Map.");
+                                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Advancing CRED Map.");
                             }
                             //Because cbor using malloc directly
                             //It is required to use free() instead of OICFree
@@ -1218,7 +1243,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                     if (cbor_value_is_valid(&credArray))
                     {
                         cborFindResult = cbor_value_advance(&credArray);
-                        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing CRED Array.");
+                        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Advancing CRED Array.");
                     }
                 }
             }
@@ -1228,17 +1253,14 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
             {
                 char *stRowner = NULL;
                 cborFindResult = cbor_value_dup_text_string(&CredRootMap, &stRowner, &len, NULL);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Rownerid Value.");
-
-                ret = ConvertStrToUuid(stRowner, &headCred->rownerID);
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding Rownerid Value.");
+                *rownerid = (OicUuid_t *) OICCalloc(1, sizeof(OicUuid_t));
+                VERIFY_NOT_NULL(TAG, *rownerid, ERROR);
+                ret = ConvertStrToUuid(stRowner, *rownerid);
                 //Because cbor using malloc directly
                 //It is required to use free() instead of OICFree
                 free(stRowner);
                 VERIFY_SUCCESS(TAG, (ret == OC_STACK_OK), ERROR);
-            }
-            else if (NULL != gCred)
-            {
-                memcpy(&(headCred->rownerID), &(gCred->rownerID), sizeof(OicUuid_t));
             }
             //Because cbor using malloc directly
             //It is required to use free() instead of OICFree
@@ -1248,7 +1270,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
         if (cbor_value_is_valid(&CredRootMap))
         {
             cborFindResult = cbor_value_advance(&CredRootMap);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing CRED Root Map.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Advancing CRED Root Map.");
         }
     }
 
@@ -1276,20 +1298,23 @@ bool IsValidCredentialAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cb
 {
     OicSecCred_t* cred = NULL;
     bool isValidCred = false;
+    OicUuid_t *rownerId = NULL;
 
     OIC_LOG_BUFFER(DEBUG, TAG, cborPayload, size);
 
     VERIFY_NOT_NULL(TAG, uuid, ERROR);
     VERIFY_NOT_NULL(TAG, cborPayload, ERROR);
     VERIFY_SUCCESS(TAG, 0 != size, ERROR);
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == CBORPayloadToCred(cborPayload, size, &cred), ERROR);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == CBORPayloadToCred(cborPayload, size, &cred, &rownerId), ERROR);
     VERIFY_NOT_NULL(TAG, cred, ERROR);
     VERIFY_NOT_NULL(TAG, cred->eownerID, ERROR);
+    VERIFY_NOT_NULL(TAG, rownerId, ERROR);
     VERIFY_SUCCESS(TAG, (memcmp(cred->eownerID->id, uuid->id, sizeof(uuid->id)) == 0), ERROR);
 
     isValidCred = true;
 
 exit:
+    OICFree(rownerId);
     DeleteCredList(cred);
 
     return isValidCred;
@@ -1299,7 +1324,7 @@ exit:
 
 OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t credType,
                                   const OicSecKey_t * publicData, const OicSecKey_t* privateData,
-                                  const OicUuid_t * rownerID, const OicUuid_t * eownerID)
+                                  const OicUuid_t * eownerID)
 {
     OIC_LOG(DEBUG, TAG, "IN GenerateCredential");
 
@@ -1308,6 +1333,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
 
     OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(*cred));
     VERIFY_NOT_NULL(TAG, cred, ERROR);
+    cred->next = NULL;
 
     //CredId is assigned before appending new cred to the existing
     //credential list and updating svr database in AddCredential().
@@ -1339,9 +1365,6 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
         cred->privateData.len = privateData->len;
         cred->privateData.encoding = privateData->encoding;
     }
-
-    VERIFY_NOT_NULL(TAG, rownerID, ERROR);
-    memcpy(&cred->rownerID, rownerID, sizeof(OicUuid_t));
 
 #ifdef MULTIPLE_OWNER
     if(eownerID)
@@ -1446,7 +1469,7 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
         OIC_LOG_V(DEBUG, TAG, "cred size: %zu", size);
 
         int secureFlag = 0;
-        OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
+        OCStackResult res = CredToCBORPayloadWithRowner(cred, &gRownerId, &payload, &size, secureFlag);
 #ifdef HAVE_WINDOWS_H
         /* On Windows, keep the credential resource encrypted on disk to protect symmetric and private keys. Only the
          * current user on this system will be able to decrypt it later, to help prevent credential theft.
@@ -1625,112 +1648,6 @@ exit:
     return false;
 }
 
-/**
- * Compares credential
- *
- * @return CRED_CMP_EQUAL if credentials are equal
- *         CRED_CMP_NOT_EQUAL if not equal
- *         otherwise error.
- */
-
-static CredCompareResult_t CompareCredential(const OicSecCred_t * l, const OicSecCred_t * r)
-{
-    CredCompareResult_t cmpResult = CRED_CMP_ERROR;
-    bool isCompared = false;
-    OIC_LOG(DEBUG, TAG, "IN CompareCredetial");
-
-    VERIFY_NOT_NULL(TAG, l, ERROR);
-    VERIFY_NOT_NULL(TAG, r, ERROR);
-
-    cmpResult = CRED_CMP_NOT_EQUAL;
-
-    VERIFY_SUCCESS(TAG, (l->credType == r->credType), INFO);
-    VERIFY_SUCCESS(TAG, (0 == memcmp(l->subject.id, r->subject.id, sizeof(l->subject.id))), INFO);
-    VERIFY_SUCCESS(TAG, (0 == memcmp(&l->roleId, &r->roleId, sizeof(l->roleId))), INFO);
-
-    switch(l->credType)
-    {
-        case SYMMETRIC_PAIR_WISE_KEY:
-        case SYMMETRIC_GROUP_KEY:
-        case PIN_PASSWORD:
-        {
-            if(l->privateData.data && r->privateData.data)
-            {
-                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->privateData, &r->privateData), INFO);
-                isCompared = true;
-            }
-            break;
-        }
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-        case ASYMMETRIC_KEY:
-        case SIGNED_ASYMMETRIC_KEY:
-        {
-            if(l->publicData.data && r->publicData.data)
-            {
-                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->publicData, &r->publicData), INFO);
-                isCompared = true;
-            }
-
-            if(l->optionalData.data && r->optionalData.data)
-            {
-                VERIFY_SUCCESS(TAG, IsSameSecOpt(&l->optionalData, &r->optionalData), INFO);
-                isCompared = true;
-            }
-
-            if(l->credUsage && r->credUsage)
-            {
-                VERIFY_SUCCESS(TAG, (strlen(l->credUsage) == strlen(r->credUsage)), INFO);
-                VERIFY_SUCCESS(TAG, (0 == strncmp(l->credUsage, r->credUsage, strlen(l->credUsage))), INFO);
-                isCompared = true;
-            }
-            break;
-        }
-        case ASYMMETRIC_ENCRYPTION_KEY:
-        {
-            if(l->privateData.data && r->privateData.data)
-            {
-                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->privateData, &r->privateData), INFO);
-                isCompared = true;
-            }
-
-            if(l->publicData.data && r->publicData.data)
-            {
-                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->publicData, &r->publicData), INFO);
-                isCompared = true;
-            }
-
-            if(l->optionalData.data && r->optionalData.data)
-            {
-                VERIFY_SUCCESS(TAG, IsSameSecOpt(&l->optionalData, &r->optionalData), INFO);
-                isCompared = true;
-            }
-
-            break;
-        }
-#endif //__WITH_DTLS__ or __WITH_TLS__
-        default:
-        {
-            cmpResult = CRED_CMP_ERROR;
-            break;
-        }
-    }
-
-    if(isCompared)
-    {
-        OIC_LOG(DEBUG, TAG, "Same Credentials");
-        cmpResult = CRED_CMP_EQUAL;
-    }
-    else
-    {
-        OIC_LOG(DEBUG, TAG, "Can not find the key data in credential");
-        cmpResult = CRED_CMP_ERROR;
-    }
-exit:
-    OIC_LOG(DEBUG, TAG, "OUT CompareCredetial");
-
-    return cmpResult;
-}
-
 #if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
 static bool IsNewPreconfigPinCredential(OicSecCred_t * oldCred, OicSecCred_t * newCred)
 {
@@ -1748,97 +1665,84 @@ static bool IsNewPreconfigPinCredential(OicSecCred_t * oldCred, OicSecCred_t * n
 
 OCStackResult AddCredential(OicSecCred_t * newCred)
 {
-    OCStackResult ret = OC_STACK_ERROR;
-    OicSecCred_t * temp = NULL;
-    bool validFlag = true;
-    OicUuid_t emptyOwner = { .id = {0} };
-#if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
-    uint16_t staleCredId = 0;
-#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER  
+    OCStackResult result = OC_STACK_ERROR;
 
-    OIC_LOG(DEBUG, TAG, "IN AddCredential");
+    OicSecCred_t* cred = NULL;
+    OicSecCred_t* tempCred = NULL;
 
-    VERIFY_SUCCESS(TAG, NULL != newCred, ERROR);
+    bool found = false;
 
-    // Assigning credId to the newCred
-    newCred->credId = GetCredId();
-    VERIFY_SUCCESS(TAG, true == IsValidCredential(newCred), ERROR);
+    OicSecDostype_t dos;
 
-    // The newCred is not valid if it is empty
-    if (memcmp(&(newCred->subject), &emptyOwner, sizeof(OicUuid_t)) == 0)
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
+    if ((DOS_RESET == dos.state) ||
+        (DOS_RFNOP == dos.state))
     {
-        validFlag = false;
+        OIC_LOG_V(WARNING, TAG, "%s /cred resource is read-only in RESET and RFNOP.", __func__);
+    }
+
+    //leave IOT-1936 fix for preconfig pin
+#if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
+    LL_FOREACH_SAFE(gCred, cred, tempCred)
+    {
+        if (IsNewPreconfigPinCredential(cred, newCred))
+        {
+            //devices can only have one Preconfigured Pin credential at any given time. Check
+            //if the new credential is an update to an existing Preconfigured Pin credential
+            //if so, just update existing one.
+
+            //save old credid so act like an update
+            newCred->credId = cred->credId;
+
+            LL_DELETE(gCred, cred);
+            LL_PREPEND(gCred, newCred);
+
+            FreeCred(cred);
+            found = true;
+            break;
+        }
+    }
+#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER
+
+    if (found)
+    {
+        goto saveToDB;
+    }
+
+    if (newCred->credId != 0)
+    {
+        //check if cred with such cred id exists
+        LL_FOREACH_SAFE(gCred, cred, tempCred)
+        {
+            if (cred->credId == newCred->credId)
+            {
+                //remove old cred with same cred id
+                LL_DELETE(gCred, cred);
+                FreeCred(cred);
+                break;
+            }
+        }
     }
     else
     {
-        LL_FOREACH(gCred, temp)
-        {
-            CredCompareResult_t cmpRes = CompareCredential(temp, newCred);
-            if(CRED_CMP_EQUAL == cmpRes)
-            {
-                OIC_LOG_V(WARNING, TAG, "Detected same credential ID(%d)" \
-                          "new credential's ID will be replaced.", temp->credId);
-                newCred->credId = temp->credId;
-                ret = OC_STACK_OK;
-                validFlag = false;
-                break;
-            }
-
-            if (CRED_CMP_ERROR == cmpRes)
-            {
-                OIC_LOG_V(WARNING, TAG, "Credential skipped : %d", cmpRes);
-                ret = OC_STACK_ERROR;
-                validFlag = false;
-                break;
-            }
-
-#if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
-            // Devices can only have one Preconfigured Pin credential at any given time. Check
-            // to see if the new credential is an update to an existing Preconfigured Pin
-            // credential so that we can remove it later.
-            if (IsNewPreconfigPinCredential(temp, newCred))
-            {
-                staleCredId = temp->credId;
-            }
-#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER
-        }
+        newCred->credId = GetCredId();
     }
 
-    // Append the new Cred to existing list if new Cred is valid
-    if (validFlag)
-    {
-#if ((defined(__WITH_DTLS__) || defined(__WITH_TLS__)) && defined(MULTIPLE_OWNER))
-        // Remove the existing Preconfigured Pin credential if it exists
-        if (0 != staleCredId)
-        {
-            ret = RemoveCredentialByCredId(staleCredId);
-            if (OC_STACK_RESOURCE_DELETED == ret)
-            {
-                // Use the old Preconfigured Pin cred id so that this acts as an update
-                newCred->credId = staleCredId;
-            }
-        }
-#endif //(__WITH_DTLS__ or __WITH_TLS__) and MULTIPLE_OWNER
+    OIC_LOG(DEBUG, TAG, "Adding New Cred");
+    LL_APPEND(gCred, newCred);
 
-        LL_APPEND(gCred, newCred);
-    }
-    if (memcmp(&(newCred->rownerID), &emptyOwner, sizeof(OicUuid_t)) != 0)
-    {
-        memcpy(&(gCred->rownerID), &(newCred->rownerID), sizeof(OicUuid_t));
-    }
+saveToDB:
     if (UpdatePersistentStorage(gCred))
     {
-        ret = OC_STACK_OK;
+        result = OC_STACK_OK;
     }
-
 exit:
-    OIC_LOG(DEBUG, TAG, "OUT AddCredential");
-    return ret;
+    return result;
 }
 
 OCStackResult RemoveCredential(const OicUuid_t *subject)
 {
-    OCStackResult ret = OC_STACK_RESOURCE_DELETED;
+    OCStackResult ret = OC_STACK_ERROR;
     OicSecCred_t *cred = NULL;
     OicSecCred_t *tempCred = NULL;
     bool deleteFlag = false;
@@ -1855,13 +1759,12 @@ OCStackResult RemoveCredential(const OicUuid_t *subject)
 
     if (deleteFlag)
     {
-        if (!UpdatePersistentStorage(gCred))
+        if (UpdatePersistentStorage(gCred))
         {
-            ret = OC_STACK_ERROR;
+            ret = OC_STACK_RESOURCE_DELETED;
         }
     }
     return ret;
-
 }
 
 OCStackResult RemoveCredentialByCredId(uint16_t credId)
@@ -1901,7 +1804,115 @@ OCStackResult RemoveCredentialByCredId(uint16_t credId)
     OIC_LOG(INFO, TAG, "OUT RemoveCredentialByCredId");
 
     return ret;
+}
 
+/**
+ * This method removes cred's corresponding to given list of credid's from the Cred
+ *
+ * @param credid's of the Cred
+ *
+ * @return
+ *     ::OC_STACK_RESOURCE_DELETED on success
+ *     ::OC_STACK_NO_RESOURCE on failure to find the appropriate Cred
+ *     ::OC_STACK_INVALID_PARAM on invalid parameter
+ */
+static OCStackResult RemoveCredentialByCredIds(CredIdList_t *credIdList)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    OicSecCred_t *cred = NULL;
+    OicSecCred_t *tempCred = NULL;
+    CredIdList_t *credIdElem = NULL;
+    bool deleteFlag = false;
+
+    OIC_LOG(INFO, TAG, "IN RemoveCredentialByCredIds");
+
+    LL_FOREACH(credIdList, credIdElem)
+    {
+        LL_FOREACH_SAFE(gCred, cred, tempCred)
+        {
+            if (cred->credId == credIdElem->credId)
+            {
+                OIC_LOG_V(DEBUG, TAG, "Credential(ID=%d) will be removed.", cred->credId);
+
+                LL_DELETE(gCred, cred);
+                FreeCred(cred);
+                deleteFlag = true;
+                //TODO: add break when cred's will have unique credid (during IOT-2464 fix)
+            }
+        }
+    }
+
+    if (deleteFlag)
+    {
+        if (UpdatePersistentStorage(gCred))
+        {
+            ret = OC_STACK_RESOURCE_DELETED;
+        }
+    }
+    OIC_LOG(INFO, TAG, "OUT RemoveCredentialByCredIds");
+
+    return ret;
+}
+
+/**
+ * This method parses the query string received for REST requests and
+ * retrieves the 'credid' field.
+ *
+ * @param query querystring passed in REST request
+ * @param credid cred id parsed from query string
+ *
+ * @return true if query parsed successfully and found 'credid', else false.
+ */
+static bool GetCredIdsFromQueryString(const char *query, CredIdList_t **credid)
+{
+    bool found = false;
+    OicParseQueryIter_t parseIter = { .attrPos = NULL };
+
+    ParseQueryIterInit((unsigned char *) query, &parseIter);
+
+    while (GetNextQuery (&parseIter))
+    {
+        if (strncasecmp((char *) parseIter.attrPos, OIC_JSON_CREDID_NAME, parseIter.attrLen) == 0)
+        {
+            VERIFY_SUCCESS(TAG, 0 != parseIter.valLen, ERROR);
+
+            //parse credid array value in format "1,2,3"
+            unsigned char *str = parseIter.valPos;
+
+            //remember last symbol (may be '\0' or '&')
+            unsigned char tmp = str[parseIter.valLen];
+            //set last symbol to '\0' to use strtok_r
+            str[parseIter.valLen] = '\0';
+
+            char *saveptr = NULL;
+
+            for (; ; str = NULL)
+            {
+                char *token = strtok_r((char *)str, ",", &saveptr);
+                if (NULL == token)
+                {
+                    break;
+                }
+
+                CredIdList_t *newCredIdElem = (CredIdList_t *) OICCalloc(1, sizeof(CredIdList_t));
+                if (NULL == newCredIdElem)
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to allocate CredIdList_t element");
+                    break;
+                }
+                newCredIdElem->credId = (uint16_t)atoi(token);
+
+                LL_PREPEND(*credid, newCredIdElem);
+                found = true;
+            }
+
+            //restore last symbol
+            parseIter.valPos[parseIter.valLen] = tmp;
+        }
+    }
+
+exit:
+    return found;
 }
 
 /**
@@ -1911,7 +1922,7 @@ OCStackResult RemoveCredentialByCredId(uint16_t credId)
  *     OC_STACK_OK              - no errors
  *     OC_STACK_ERROR           - stack process error
  */
-OCStackResult RemoveAllCredentials(void)
+static OCStackResult RemoveAllCredentials()
 {
     DeleteCredList(gCred);
     gCred = GetCredDefault();
@@ -1921,6 +1932,41 @@ OCStackResult RemoveAllCredentials(void)
         return OC_STACK_ERROR;
     }
     return OC_STACK_OK;
+}
+
+/**
+ * This method parses the query string received for REST requests and
+ * retrieves the 'subjectuuid' field.
+ *
+ * @param query querystring passed in REST request
+ * @param subject subject UUID parsed from query string
+ *
+ * @return true if query parsed successfully and found 'subject', else false.
+ */
+static bool GetSubjectFromQueryString(const char *query, OicUuid_t *subject)
+{
+    OicParseQueryIter_t parseIter = { .attrPos = NULL };
+
+    ParseQueryIterInit((unsigned char *) query, &parseIter);
+
+    while (GetNextQuery (&parseIter))
+    {
+        if (strncasecmp((char *) parseIter.attrPos, OIC_JSON_SUBJECTID_NAME, parseIter.attrLen) == 0)
+        {
+            VERIFY_SUCCESS(TAG, 0 != parseIter.valLen, ERROR);
+            //temporary set '\0' symbol instead of copy string
+            char tmp = parseIter.valPos[parseIter.valLen];
+            parseIter.valPos[parseIter.valLen] = '\0';
+
+            OCStackResult res = ConvertStrToUuid((const char*)parseIter.valPos, subject);
+            parseIter.valPos[parseIter.valLen] = tmp;
+            VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
+            return true;
+        }
+    }
+
+exit:
+    return false;
 }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
@@ -2081,21 +2127,224 @@ exit:
 #endif //MULTIPLE_OWNER
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
-static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehRequest)
+
+static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehRequest, OicSecCred_t *cred)
+{
+    OCEntityHandlerResult ret = OC_EH_INTERNAL_SERVER_ERROR;
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    OicUuid_t emptyUuid = {.id={0}};
+    const OicSecDoxm_t *doxm = GetDoxmResourceData();
+    if( NO_SECURITY_MODE != cred->credType
+        && doxm
+        && false == doxm->owned
+        && memcmp(&(doxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0
+        && memcmp(&(doxm->owner), &cred->subject, sizeof(OicUuid_t)) == 0 )
+    {
+        //in case of owner PSK
+        switch(cred->credType)
+        {
+            case SYMMETRIC_PAIR_WISE_KEY:
+            {
+                OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
+                if(FillPrivateDataOfOwnerPSK(cred, (CAEndpoint_t *)&request->devAddr, doxm))
+                {
+                    if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&cred->subject))
+                    {
+                        OIC_LOG(WARNING, TAG, "The credential with the same subject ID was detected!");
+                    }
+
+                    OIC_LOG(INFO, TAG, "OwnerPSK was generated successfully.");
+                    if(OC_STACK_OK == AddCredential(cred))
+                    {
+                        ret = OC_EH_CHANGED;
+                    }
+                    else
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to save the OwnerPSK as cred resource");
+                        ret = OC_EH_ERROR;
+                    }
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to verify receviced OwnerPSK.");
+                    ret = OC_EH_ERROR;
+                }
+
+                if(OC_EH_CHANGED == ret)
+                {
+                    /**
+                        * in case of random PIN based OxM,
+                        * revert get_psk_info callback of tinyDTLS to use owner credential.
+                        */
+                    if(OIC_RANDOM_DEVICE_PIN == doxm->oxmSel)
+                    {
+                        SetUuidForPinBasedOxm(&emptyUuid);
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+                        if(CA_STATUS_OK != CAregisterPskCredentialsHandler(GetDtlsPskCredentials))
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to revert TLS credential handler.");
+                            ret = OC_EH_ERROR;
+                            break;
+                        }
+#endif // __WITH_DTLS__ or __WITH_TLS__
+                    }
+
+                    //Select cipher suite to use owner PSK
+                    if(CA_STATUS_OK != CAEnableAnonECDHCipherSuite(false))
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to disable anonymous cipher suite");
+                        ret = OC_EH_ERROR;
+                    }
+                    else
+                    {
+                        OIC_LOG(INFO, TAG, "Anonymous cipher suite is DISABLED");
+                    }
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+                    if(CA_STATUS_OK != CASelectCipherSuite(
+                                MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, CA_ADAPTER_IP))
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to enable PSK cipher suite");
+                        ret = OC_EH_ERROR;
+                    }
+                    else
+                    {
+                        OIC_LOG(INFO, TAG, "PSK cipher suite is ENABLED");
+                    }
+#endif // __WITH_DTLS__ or __WITH_TLS__
+                }
+
+                break;
+            }
+            case SYMMETRIC_GROUP_KEY:
+            case ASYMMETRIC_KEY:
+            case SIGNED_ASYMMETRIC_KEY:
+            case PIN_PASSWORD:
+            case ASYMMETRIC_ENCRYPTION_KEY:
+            {
+                OIC_LOG(WARNING, TAG, "Unsupported credential type for owner credential.");
+                ret = OC_EH_ERROR;
+                break;
+            }
+            default:
+            {
+                OIC_LOG(WARNING, TAG, "Unknown credential type for owner credential.");
+                ret = OC_EH_ERROR;
+                break;
+            }
+        }
+    }
+#ifdef MULTIPLE_OWNER
+    // In case SubOwner Credential
+    else if(doxm && doxm->owned && doxm->mom &&
+            OIC_MULTIPLE_OWNER_DISABLE != doxm->mom->mode &&
+            0 == cred->privateData.len &&
+            0 == cred->optionalData.len &&
+            0 == cred->publicData.len )
+    {
+        switch(cred->credType)
+        {
+            case SYMMETRIC_PAIR_WISE_KEY:
+            {
+                OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
+                if(FillPrivateDataOfSubOwnerPSK(cred, (CAEndpoint_t *)&request->devAddr, doxm, &cred->subject))
+                {
+                    if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&cred->subject))
+                    {
+                        OIC_LOG(WARNING, TAG, "The credential with the same subject ID was detected!");
+                    }
+
+                    OIC_LOG(ERROR, TAG, "SubOwnerPSK was generated successfully.");
+                    if(OC_STACK_OK == AddCredential(cred))
+                    {
+                        ret = OC_EH_CHANGED;
+                    }
+                    else
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to save the SubOwnerPSK as cred resource");
+                        ret = OC_EH_ERROR;
+                    }
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to verify receviced SubOwner PSK.");
+                    ret = OC_EH_ERROR;
+                }
+            }
+            break;
+
+            case SYMMETRIC_GROUP_KEY:
+            case ASYMMETRIC_KEY:
+            case SIGNED_ASYMMETRIC_KEY:
+            case PIN_PASSWORD:
+            case ASYMMETRIC_ENCRYPTION_KEY:
+            {
+                OIC_LOG(WARNING, TAG, "Unsupported credential type for SubOwner credential.");
+                ret = OC_EH_ERROR;
+                break;
+            }
+            default:
+            {
+                OIC_LOG(WARNING, TAG, "Unknown credential type for SubOwner credential.");
+                ret = OC_EH_ERROR;
+                break;
+            }
+        }
+    }
+#endif //MULTIPLE_OWNER
+    else
+    {
+        if(IsEmptyCred(cred))
+        {
+                    if (UpdatePersistentStorage(gCred))
+                    {
+                        ret = OC_EH_CHANGED;
+                    }
+                    else
+                    {
+                        ret = OC_EH_ERROR;
+                    }
+        }
+        else
+        {
+            /*
+                * If the post request credential has credId, it will be
+                * discarded and the next available credId will be assigned
+                * to it before getting appended to the existing credential
+                * list and updating svr database.
+                */
+            ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_CHANGED : OC_EH_ERROR;
+        }
+    }
+#else //not __WITH_DTLS__ or __WITH_TLS__
+    /*
+        * If the post request credential has credId, it will be
+        * discarded and the next available credId will be assigned
+        * to it before getting appended to the existing credential
+        * list and updating svr database.
+        */
+    ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_CHANGED : OC_EH_ERROR;
+    OC_UNUSED(ehRequest);
+#endif//__WITH_DTLS__ or __WITH_TLS__
+
+    return ret;
+}
+
+static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest* ehRequest)
 {
     OCEntityHandlerResult ret = OC_EH_INTERNAL_SERVER_ERROR;
     OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest IN");
 
     OicSecDostype_t dos;
-    static uint16_t previousMsgId = 0;
-    //Get binary representation of cbor
-    OicSecCred_t *cred  = NULL;
+    // Get binary representation of cbor
+    OicSecCred_t *cred = NULL;
+    OicUuid_t     *rownerId = NULL;
     uint8_t *payload = (((OCSecurityPayload*)ehRequest->payload)->securityData);
     size_t size = (((OCSecurityPayload*)ehRequest->payload)->payloadSize);
 
-    OCStackResult res = OC_STACK_ERROR;
-
-    res = OC_STACK_OK;
+    OCStackResult res = OC_STACK_OK;
 
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
     if ((DOS_RESET == dos.state) ||
@@ -2106,258 +2355,55 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
         goto exit;
     }
 
-    res = CBORPayloadToCred(payload, size, &cred);
+    res = CBORPayloadToCred(payload, size, &cred, &rownerId);
 
-    if (res == OC_STACK_OK)
+    if (OC_STACK_OK == res)
     {
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-        OicUuid_t emptyUuid = {.id={0}};
-        const OicSecDoxm_t* doxm = GetDoxmResourceData();
-        if(doxm && false == doxm->owned && memcmp(&(doxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0)
+        OicSecCred_t *newCred = NULL;
+        OicSecCred_t *newCredTemp = NULL;
+
+        LL_FOREACH_SAFE(cred, newCred, newCredTemp)
         {
-            //in case of owner PSK
-            switch(cred->credType)
+            ret = HandleNewCredential(ehRequest, newCred);
+
+            if (OC_EH_CHANGED != ret)
             {
-                case SYMMETRIC_PAIR_WISE_KEY:
+                // Remove the credentials added so far.
+                OicSecCred_t *removedCred = NULL;
+                OicSecCred_t *removedCredTemp = NULL;
+                LL_FOREACH_SAFE(cred, removedCred, removedCredTemp)
                 {
-                    OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
-                    if(FillPrivateDataOfOwnerPSK(cred, (CAEndpoint_t *)&request->devAddr, doxm))
+                    if (removedCred == newCred)
                     {
-                        if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&cred->subject))
-                        {
-                            OIC_LOG(WARNING, TAG, "The credential with the same subject ID was detected!");
-                        }
-
-                        OIC_LOG(ERROR, TAG, "OwnerPSK was generated successfully.");
-                        if(OC_STACK_OK == AddCredential(cred))
-                        {
-                            ret = OC_EH_CHANGED;
-                        }
-                        else
-                        {
-                            OIC_LOG(ERROR, TAG, "Failed to save the OwnerPSK as cred resource");
-                            ret = OC_EH_ERROR;
-                        }
-                    }
-                    else
-                    {
-                        OIC_LOG(ERROR, TAG, "Failed to verify receviced OwnerPKS.");
-                        ret = OC_EH_ERROR;
+                        break;
                     }
 
-                    if(OC_EH_CHANGED == ret)
+                    if (RemoveCredential(&cred->subject) != OC_STACK_OK)
                     {
-                        /**
-                         * in case of random PIN based OxM,
-                         * revert get_psk_info callback of tinyDTLS to use owner credential.
-                         */
-                        if(OIC_RANDOM_DEVICE_PIN == doxm->oxmSel)
-                        {
-                            SetUuidForPinBasedOxm(&emptyUuid);
-
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-                            if(CA_STATUS_OK != CAregisterPskCredentialsHandler(GetDtlsPskCredentials))
-                            {
-                                OIC_LOG(ERROR, TAG, "Failed to revert TLS credential handler.");
-                                ret = OC_EH_ERROR;
-                                break;
-                            }
-#endif // __WITH_DTLS__ or __WITH_TLS__
-                        }
-
-                        //Select cipher suite to use owner PSK
-                        if(CA_STATUS_OK != CAEnableAnonECDHCipherSuite(false))
-                        {
-                            OIC_LOG(ERROR, TAG, "Failed to disable anonymous cipher suite");
-                            ret = OC_EH_ERROR;
-                        }
-                        else
-                        {
-                            OIC_LOG(INFO, TAG, "Anonymous cipher suite is DISABLED");
-                        }
-
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-                        if(CA_STATUS_OK != CASelectCipherSuite(
-                                    MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, CA_ADAPTER_IP))
-                        {
-                            OIC_LOG(ERROR, TAG, "Failed to enable PSK cipher suite");
-                            ret = OC_EH_ERROR;
-                        }
-                        else
-                        {
-                            OIC_LOG(INFO, TAG, "PSK cipher suite is ENABLED");
-                        }
-#endif // __WITH_DTLS__ or __WITH_TLS__
-                    }
-
-                    break;
-                }
-                case SYMMETRIC_GROUP_KEY:
-                case ASYMMETRIC_KEY:
-                case SIGNED_ASYMMETRIC_KEY:
-                case PIN_PASSWORD:
-                case ASYMMETRIC_ENCRYPTION_KEY:
-                {
-                    OIC_LOG(WARNING, TAG, "Unsupported credential type for owner credential.");
-                    ret = OC_EH_ERROR;
-                    break;
-                }
-                default:
-                {
-                    OIC_LOG(WARNING, TAG, "Unknown credential type for owner credential.");
-                    ret = OC_EH_ERROR;
-                    break;
-                }
-            }
-
-            if(OC_EH_CHANGED != ret)
-            {
-                /*
-                  * If some error is occured while ownership transfer,
-                  * ownership transfer related resource should be revert back to initial status.
-                  */
-                const OicSecDoxm_t* ownershipDoxm =  GetDoxmResourceData();
-                if(ownershipDoxm)
-                {
-                    if(!ownershipDoxm->owned)
-                    {
-                        OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
-
-                        if((OC_ADAPTER_IP == ehRequest->devAddr.adapter && previousMsgId != ehRequest->messageID)
-                           || OC_ADAPTER_TCP == ehRequest->devAddr.adapter)
-                        {
-                            RestoreDoxmToInitState();
-                            RestorePstatToInitState();
-                            OIC_LOG(WARNING, TAG, "DOXM will be reverted.");
-                        }
+                        OIC_LOG(WARNING, TAG, "Failed to remove credential");
                     }
                 }
-                else
-                {
-                    OIC_LOG(ERROR, TAG, "Invalid DOXM resource");
-                }
-            }
-        }
-#ifdef MULTIPLE_OWNER
-        // In case SubOwner Credential
-        else if(doxm && doxm->owned && doxm->mom &&
-                OIC_MULTIPLE_OWNER_DISABLE != doxm->mom->mode &&
-                0 == cred->privateData.len &&
-                0 == cred->optionalData.len &&
-                0 == cred->publicData.len )
-        {
-            switch(cred->credType)
-            {
-                case SYMMETRIC_PAIR_WISE_KEY:
-                {
-                    OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
-                    if(FillPrivateDataOfSubOwnerPSK(cred, (CAEndpoint_t *)&request->devAddr, doxm, &cred->subject))
-                    {
-                        if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&cred->subject))
-                        {
-                            OIC_LOG(WARNING, TAG, "The credential with the same subject ID was detected!");
-                        }
 
-                        OIC_LOG(ERROR, TAG, "SubOwnerPSK was generated successfully.");
-                        if(OC_STACK_OK == AddCredential(cred))
-                        {
-                            ret = OC_EH_CHANGED;
-                        }
-                        else
-                        {
-                            OIC_LOG(ERROR, TAG, "Failed to save the SubOwnerPSK as cred resource");
-                            ret = OC_EH_ERROR;
-                        }
-                    }
-                    else
-                    {
-                        OIC_LOG(ERROR, TAG, "Failed to verify receviced SubOwner PSK.");
-                        ret = OC_EH_ERROR;
-                    }
-                }
                 break;
-
-                case SYMMETRIC_GROUP_KEY:
-                case ASYMMETRIC_KEY:
-                case SIGNED_ASYMMETRIC_KEY:
-                case PIN_PASSWORD:
-                case ASYMMETRIC_ENCRYPTION_KEY:
-                {
-                    OIC_LOG(WARNING, TAG, "Unsupported credential type for SubOwner credential.");
-                    ret = OC_EH_ERROR;
-                    break;
-                }
-                default:
-                {
-                    OIC_LOG(WARNING, TAG, "Unknown credential type for SubOwner credential.");
-                    ret = OC_EH_ERROR;
-                    break;
-                }
             }
         }
-#endif //MULTIPLE_OWNER
-        else
+        if (OC_EH_CHANGED == ret && NULL != rownerId)
         {
-            if(IsEmptyCred(cred))
-            {
-                if(memcmp(cred->rownerID.id, emptyUuid.id, sizeof(emptyUuid.id)) != 0)
-                {
-                    OIC_LOG(INFO, TAG, "CRED's rowner will be updated.");
-                    memcpy(gCred->rownerID.id, cred->rownerID.id, sizeof(cred->rownerID.id));
-                    if (UpdatePersistentStorage(gCred))
-                    {
-                        ret = OC_EH_CHANGED;
-                    }
-                    else
-                    {
-                        ret = OC_EH_ERROR;
-                    }
-                }
-                else
-                {
-                    ret = OC_EH_ERROR;
-                }
-            }
-            else
-            {
-                /*
-                 * If the post request credential has credId, it will be
-                 * discarded and the next available credId will be assigned
-                 * to it before getting appended to the existing credential
-                 * list and updating svr database.
-                 */
-                ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_CHANGED : OC_EH_ERROR;
-            }
+            memcpy(&gRownerId, rownerId, sizeof(OicUuid_t));
         }
-#else //not __WITH_DTLS__
-        /*
-         * If the post request credential has credId, it will be
-         * discarded and the next available credId will be assigned
-         * to it before getting appended to the existing credential
-         * list and updating svr database.
-         */
-        ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_CHANGED : OC_EH_ERROR;
-        OC_UNUSED(previousMsgId);
-#endif//__WITH_DTLS__
     }
 
 exit:
-    if (OC_EH_CHANGED != ret && cred != NULL)
+    OICFree(rownerId);
+    if (OC_EH_CHANGED != ret)
     {
-        if(OC_STACK_OK != RemoveCredential(&cred->subject))
+        if (NULL != cred)
         {
-            OIC_LOG(WARNING, TAG, "Failed to remove the invalid credential");
-        }
-        FreeCred(cred);
-    }
-    else
-    {
-        if(OC_ADAPTER_IP == ehRequest->devAddr.adapter)
-        {
-            previousMsgId = ehRequest->messageID++;
+            DeleteCredList(cred);
         }
     }
-    //Send response to request originator
+
+    // Send response to request originator
     ret = ((SendSRMResponse(ehRequest, ret, NULL, 0)) == OC_STACK_OK) ?
                    OC_EH_OK : OC_EH_ERROR;
 
@@ -2382,11 +2428,10 @@ static OCEntityHandlerResult HandleGetRequest (const OCEntityHandlerRequest * eh
     // This added '256' is arbitrary value that is added to cover the name of the resource, map addition and ending
     size = GetCredKeyDataSize(cred);
     size += (256 * OicSecCredCount(cred));
-    OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
+    OCStackResult res = CredToCBORPayloadWithRowner(cred, &gRownerId, &payload, &size, secureFlag);
 
     // A device should always have a default cred. Therefore, payload should never be NULL.
     OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
-
 
     //Send payload to request originator
     ehRet = ((SendSRMResponse(ehRequest, ehRet, payload, size)) == OC_STACK_OK) ?
@@ -2401,35 +2446,40 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
     OIC_LOG(DEBUG, TAG, "Processing CredDeleteRequest");
 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
+    CredIdList_t *credIdList = NULL;
+    OicUuid_t subject = { .id= { 0 } };
 
     if (NULL == ehRequest->query)
     {
         return ehRet;
     }
 
-    OicParseQueryIter_t parseIter = { .attrPos=NULL };
-    OicUuid_t subject = {.id={0}};
-
-    //Parsing REST query to get the subject
-    ParseQueryIterInit((unsigned char *)ehRequest->query, &parseIter);
-    while (GetNextQuery(&parseIter))
+    if (GetCredIdsFromQueryString(ehRequest->query, &credIdList))
     {
-        if (strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECTID_NAME,
-                parseIter.attrLen) == 0)
+        if (OC_STACK_RESOURCE_DELETED == RemoveCredentialByCredIds(credIdList))
         {
-            OCStackResult ret = ConvertStrToUuid((const char*)parseIter.valPos, &subject);
-            VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+            ehRet = OC_EH_RESOURCE_DELETED;
+        }
+        DeleteCredIdList(&credIdList);
+    }
+    else if (GetSubjectFromQueryString(ehRequest->query, &subject))
+    {
+        if (OC_STACK_RESOURCE_DELETED == RemoveCredential(&subject))
+        {
+            ehRet = OC_EH_RESOURCE_DELETED;
+        }
+    }
+    else
+    {
+        if (OC_STACK_OK == RemoveAllCredentials())
+        {
+            ehRet = OC_EH_RESOURCE_DELETED;
         }
     }
 
-    if (OC_STACK_RESOURCE_DELETED == RemoveCredential(&subject))
-    {
-        ehRet = OC_EH_RESOURCE_DELETED;
-    }
     //Send response to request originator
     ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
                    OC_EH_OK : OC_EH_ERROR;
-exit:
     return ehRet;
 }
 
@@ -2451,7 +2501,7 @@ OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
         switch (ehRequest->method)
         {
             case OC_REST_GET:
-                ret = HandleGetRequest(ehRequest);;
+                ret = HandleGetRequest(ehRequest);
                 break;
             case OC_REST_PUT:
             case OC_REST_POST:
@@ -2492,6 +2542,7 @@ OCStackResult InitCredResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecCred_t* cred = NULL;
+    OicUuid_t   *rownerId = NULL;
 
     //Read Cred resource from PS
     uint8_t *data = NULL;
@@ -2506,7 +2557,7 @@ OCStackResult InitCredResource()
     if ((ret == OC_STACK_OK) && data)
     {
         // Read Cred resource from PS
-        ret = CBORPayloadToCred(data, size, &gCred);
+        ret = CBORPayloadToCred(data, size, &gCred, &rownerId);
 
 #ifdef HAVE_WINDOWS_H
         /* On Windows, if the credential payload isn't cleartext CBOR, it is encrypted. Decrypt and retry. */
@@ -2536,7 +2587,7 @@ OCStackResult InitCredResource()
                 CRYPTPROTECT_UI_FORBIDDEN,
                 &decryptedPayload))
             {
-                ret = CBORPayloadToCred(decryptedPayload.pbData, decryptedPayload.cbData, &gCred);
+                ret = CBORPayloadToCred(decryptedPayload.pbData, decryptedPayload.cbData, &gCred, &rownerId);
 
                 /* For the returned data from CryptUnprotectData, LocalFree must be used to free. Don't use OICFree. */
                 OICClearMemory(decryptedPayload.pbData, decryptedPayload.cbData);
@@ -2594,9 +2645,13 @@ OCStackResult InitCredResource()
             }
         }
 
-        if (0 == memcmp(&gCred->rownerID, &emptyUuid, sizeof(OicUuid_t)))
+        if (NULL == rownerId || 0 == memcmp(rownerId, &emptyUuid, sizeof(OicUuid_t)))
         {
-            memcpy(&gCred->rownerID, &deviceID, sizeof(OicUuid_t));
+            memcpy(&gRownerId, &deviceID, sizeof(OicUuid_t));
+        }
+        else
+        {
+            memcpy(&gRownerId, rownerId, sizeof(OicUuid_t));
         }
 
         if (!UpdatePersistentStorage(gCred))
@@ -2611,6 +2666,7 @@ exit:
     OIC_LOG(DEBUG, TAG, "OUT InitCredResource.");
     OICClearMemory(data, size);
     OICFree(data);
+    OICFree(rownerId);
     return ret;
 }
 
@@ -2668,7 +2724,6 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId)
             cred->credId = tmpCred->credId;
             cred->credType = tmpCred->credType;
             memcpy(cred->subject.id, tmpCred->subject.id , sizeof(cred->subject.id));
-            memcpy(cred->rownerID.id, tmpCred->rownerID.id , sizeof(cred->rownerID.id));
             if (tmpCred->period)
             {
                 cred->period = OICStrdup(tmpCred->period);
@@ -2720,16 +2775,45 @@ exit:
 }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+static bool ValueWithinBounds(uint64_t value, uint64_t maxValue)
+{
+    if (value > maxValue)
+    {
+        OIC_LOG_V(ERROR, TAG, "The value (%" PRId64 ") is greater than allowed maximum of %" PRId64 ".", value, maxValue);
+        return false;
+    }
+
+    return true;
+}
+
 int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
               const uint8_t *desc, size_t desc_len,
               uint8_t *result, size_t result_length)
 {
     int32_t ret = -1;
 
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+
     if (NULL == result)
     {
-        return ret;
+        OIC_LOG_V(DEBUG, TAG, "%s: NULL result param; exiting.", __func__);
+        goto exit;
     }
+
+#ifndef NDEBUG
+    char strUuidTmp[UUID_STRING_SIZE] = "UUID_ERROR";
+    if (desc_len == UUID_LENGTH)
+    {
+        if (OCConvertUuidToString(desc, strUuidTmp))
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: desc = %s", __func__, strUuidTmp);
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "failed to convert desc to UUID str.");
+        }
+    }
+#endif
 
     switch (type)
     {
@@ -2741,13 +2825,13 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                 if ( OC_STACK_OK != GetDoxmDeviceID(&deviceID) )
                 {
                     OIC_LOG (ERROR, TAG, "Unable to retrieve doxm Device ID");
-                    return ret;
+                    goto exit;
                 }
 
                 if (result_length < sizeof(deviceID.id))
                 {
                     OIC_LOG (ERROR, TAG, "Wrong value for result_length");
-                    return ret;
+                    goto exit;
                 }
                 memcpy(result, deviceID.id, sizeof(deviceID.id));
                 return (sizeof(deviceID.id));
@@ -2761,12 +2845,25 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                 {
                     if (cred->credType != SYMMETRIC_PAIR_WISE_KEY)
                     {
+                        OIC_LOG_V(DEBUG, TAG, "%s: credid %u not a SYMMETRIC_PAIR_WISE_KEY type... skipping",
+                            __func__, cred->credId);
                         continue;
                     }
 
                     if ((desc_len == sizeof(cred->subject.id)) &&
                         (memcmp(desc, cred->subject.id, sizeof(cred->subject.id)) == 0))
                     {
+#ifndef NDEBUG
+                        if (OCConvertUuidToString(cred->subject.id, strUuidTmp))
+                        {
+                            OIC_LOG_V(DEBUG, TAG, "%s: credid %u (subject = %s) matches desc; checking validity.",
+                                __func__, cred->credId, strUuidTmp);
+                        }
+                        else
+                        {
+                            OIC_LOG(ERROR, TAG, "failed to convert credid to str.");
+                        }
+#endif
                         /*
                          * If the credentials are valid for limited time,
                          * check their expiry.
@@ -2776,21 +2873,24 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                             if(IOTVTICAL_VALID_ACCESS != IsRequestWithinValidTime(cred->period, NULL))
                             {
                                 OIC_LOG (INFO, TAG, "Credentials are expired.");
-                                return ret;
+                                goto exit;
                             }
                         }
+
+                        OIC_LOG_V(DEBUG, TAG, "%s: cred->privateData.encoding = %u", __func__, cred->privateData.encoding);
 
                         // Copy PSK.
                         // TODO: Added as workaround. Will be replaced soon.
                         if(OIC_ENCODING_RAW == cred->privateData.encoding)
                         {
+                            OIC_LOG_V(DEBUG, TAG, "%s: OIC_ENCODING_RAW detected; copying PSK.", __func__);
                             if (ValueWithinBounds(cred->privateData.len, INT32_MAX))
                             {
                                 size_t len = cred->privateData.len;
                                 if (result_length < len)
                                 {
                                     OIC_LOG (ERROR, TAG, "Wrong value for result_length");
-                                    return ret;
+                                    goto exit;
                                 }
                                 memcpy(result, cred->privateData.data, len);
                                 ret = (int32_t)len;
@@ -2798,13 +2898,14 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                         }
                         else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
                         {
+                            OIC_LOG_V(DEBUG, TAG, "%s: OIC_ENCODING_BASE64 detected; copying PSK.", __func__);
                             size_t outBufSize = B64DECODE_OUT_SAFESIZE((cred->privateData.len + 1));
                             uint8_t* outKey = OICCalloc(1, outBufSize);
                             size_t outKeySize;
                             if(NULL == outKey)
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to allocate memory.");
-                                return ret;
+                                goto exit;
                             }
 
                             if(B64_OK == b64Decode((char*)cred->privateData.data, cred->privateData.len, outKey, outBufSize, &outKeySize))
@@ -2814,7 +2915,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                     if (result_length < outKeySize)
                                     {
                                         OIC_LOG (ERROR, TAG, "Wrong value for result_length");
-                                        return ret;
+                                        goto exit;
                                     }
                                     memcpy(result, outKey, outKeySize);
                                     ret = (int32_t)outKeySize;
@@ -2827,13 +2928,17 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
 
                             OICFree(outKey);
                         }
+                        else
+                        {
+                            OIC_LOG_V(WARNING, TAG, "%s: unsupported encoding type.", __func__);
+                        }
 
                         if (OC_STACK_OK != RegisterSymmetricCredentialRole(cred))
                         {
                             OIC_LOG(WARNING, TAG, "Couldn't RegisterRoleForSubject");
                         }
 
-                        return ret;
+                        goto exit;
                     }
                 }
                 OIC_LOG(DEBUG, TAG, "Can not find subject matched credential.");
@@ -2860,7 +2965,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                     if(NULL == pinBuffer)
                                     {
                                         OIC_LOG (ERROR, TAG, "Failed to allocate memory.");
-                                        return ret;
+                                        goto exit;
                                     }
                                     pinLength = wildCardCred->privateData.len;
                                     memcpy(pinBuffer, wildCardCred->privateData.data, pinLength);
@@ -2872,19 +2977,19 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                     if(NULL == pinBuffer)
                                     {
                                         OIC_LOG (ERROR, TAG, "Failed to allocate memory.");
-                                        return ret;
+                                        goto exit;
                                     }
 
                                     if(B64_OK != b64Decode((char*)wildCardCred->privateData.data, wildCardCred->privateData.len, (uint8_t*)pinBuffer, pinBufSize, &pinLength))
                                     {
                                         OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
-                                        return ret;
+                                        goto exit;
                                     }
                                 }
                                 else
                                 {
                                     OIC_LOG(ERROR, TAG, "Unknown encoding type of PIN/PW credential.");
-                                    return ret;
+                                    goto exit;
                                 }
 
                                 //Set the PIN/PW to derive PSK
@@ -2892,7 +2997,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                 {
                                     OICFree(pinBuffer);
                                     OIC_LOG(ERROR, TAG, "Failed to load PIN data.");
-                                    return ret;
+                                    goto exit;
                                 }
                                 OICFree(pinBuffer);
 
@@ -2900,7 +3005,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                 if(OC_STACK_OK != GetDoxmDeviceID(&myUuid))
                                 {
                                     OIC_LOG(ERROR, TAG, "Failed to read device ID");
-                                    return ret;
+                                    goto exit;
                                 }
                                 SetUuidForPinBasedOxm(&myUuid);
 
@@ -2938,6 +3043,8 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
             }
             break;
     }
+exit:
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT; returning %d.", __func__, ret);
 
     return ret;
 }
@@ -2980,7 +3087,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
     VERIFY_SUCCESS(TAG, (0 == dtlsRes) , ERROR);
 
     cred = GenerateCredential(tmpSubject, credType, NULL,
-                              &privKey, rownerID, NULL);
+                              &privKey, NULL);
     OICClearMemory(privData, sizeof(privData));
     if(NULL == cred)
     {
@@ -3013,15 +3120,11 @@ OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
     {
         ret = OC_STACK_INVALID_PARAM;
     }
-    if(NULL == gCred)
-    {
-        ret = OC_STACK_NO_RESOURCE;
-    }
 
-    if (newROwner && gCred)
+    if (newROwner)
     {
-        memcpy(prevId.id, gCred->rownerID.id, sizeof(prevId.id));
-        memcpy(gCred->rownerID.id, newROwner->id, sizeof(newROwner->id));
+        memcpy(prevId.id, gRownerId.id, sizeof(prevId.id));
+        memcpy(gRownerId.id, newROwner->id, sizeof(newROwner->id));
 
         VERIFY_SUCCESS(TAG, UpdatePersistentStorage(gCred), ERROR);
 
@@ -3031,15 +3134,15 @@ OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
     return ret;
 
 exit:
-    memcpy(gCred->rownerID.id, prevId.id, sizeof(prevId.id));
+    memcpy(gRownerId.id, prevId.id, sizeof(prevId.id));
     return ret;
 }
 
 OCStackResult GetCredRownerId(OicUuid_t *rowneruuid)
 {
-    if (gCred && rowneruuid)
+    if (rowneruuid)
     {
-        memcpy(&(rowneruuid->id), &(gCred->rownerID.id), sizeof(rowneruuid->id));
+        memcpy(&(rowneruuid->id), &(gRownerId.id), sizeof(rowneruuid->id));
         return OC_STACK_OK;
     }
     return OC_STACK_ERROR;
@@ -3161,9 +3264,9 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
             (0 == strcmp(temp->credUsage, usage)) && (false == temp->optionalData.revstat))
         {
 
-            if ((OIC_ENCODING_BASE64 != temp->optionalData.encoding) &&
-                (OIC_ENCODING_PEM != temp->optionalData.encoding) &&
-                (OIC_ENCODING_DER != temp->optionalData.encoding))
+            if ((OIC_ENCODING_BASE64 != temp->publicData.encoding) &&
+                (OIC_ENCODING_PEM != temp->publicData.encoding) &&
+                (OIC_ENCODING_DER != temp->publicData.encoding))
             {
                 OIC_LOG_V(WARNING, TAG, "%s: Unknown encoding type", __func__);
                 continue;
@@ -3171,12 +3274,12 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
 
             if (OIC_ENCODING_DER == desiredEncoding)
             {
-                if ((OIC_ENCODING_BASE64 == temp->optionalData.encoding) ||
-                    (OIC_ENCODING_PEM == temp->optionalData.encoding))
+                if ((OIC_ENCODING_BASE64 == temp->publicData.encoding) ||
+                    (OIC_ENCODING_PEM == temp->publicData.encoding))
                 {
                     uint8_t* buf = NULL;
                     size_t outSize = 0;
-                    int ret = ConvertPemCertToDer((const char*)temp->optionalData.data, temp->optionalData.len, &buf, &outSize);
+                    int ret = ConvertPemCertToDer((const char*)temp->publicData.data, temp->publicData.len, &buf, &outSize);
                     if (0 > ret)
                     {
                         OIC_LOG(ERROR, TAG, "Could not convert PEM cert to DER");
@@ -3199,15 +3302,15 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
                 else
                 {
                     uint8_t *savePtr = crt->data;
-                    crt->data = OICRealloc(crt->data, crt->len + temp->optionalData.len);
+                    crt->data = OICRealloc(crt->data, crt->len + temp->publicData.len);
                     if (NULL == crt->data)
                     {
                         OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
                         OICFree(savePtr);
                         return OC_STACK_NO_MEMORY;
                     }
-                    memcpy(crt->data + crt->len, temp->optionalData.data, temp->optionalData.len);
-                    crt->len += temp->optionalData.len;
+                    memcpy(crt->data + crt->len, temp->publicData.data, temp->publicData.len);
+                    crt->len += temp->publicData.len;
                 }
                 OIC_LOG_V(DEBUG, TAG, "%s found", usage);
             }
@@ -3216,15 +3319,15 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
                 /* PEM/Base64 */
                 uint8_t *pem = NULL;
                 size_t pemLen = 0;
-                if ((OIC_ENCODING_BASE64 == temp->optionalData.encoding) ||
-                    (OIC_ENCODING_PEM == temp->optionalData.encoding))
+                if ((OIC_ENCODING_BASE64 == temp->publicData.encoding) ||
+                    (OIC_ENCODING_PEM == temp->publicData.encoding))
                 {
-                    pem = temp->optionalData.data;
-                    pemLen = temp->optionalData.len;
+                    pem = temp->publicData.data;
+                    pemLen = temp->publicData.len;
                 }
                 else
                 {
-                    int ret = ConvertDerCertToPem(temp->optionalData.data, temp->optionalData.len, &pem);
+                    int ret = ConvertDerCertToPem(temp->publicData.data, temp->publicData.len, &pem);
                     if (0 > ret)
                     {
                         OIC_LOG_V(ERROR, TAG, "Failed converting DER cert to PEM: %d", ret);
@@ -3251,6 +3354,29 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
         OIC_LOG_V(WARNING, TAG, "%s not found", usage);
         return OC_STACK_NO_RESOURCE;
     }
+
+    if (OIC_ENCODING_PEM == desiredEncoding)
+    {
+        /* mbedtls_x509_crt_parse requires a null terminator to determine that the format is PEM */
+        size_t crtLength = crt->len;
+        bool addNull = (crt->data[crtLength - 1] != 0);
+
+        if (addNull)
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: adding null terminator at the end of the cert", __func__);
+            uint8_t *oldData = crt->data;
+            crt->data = OICRealloc(crt->data, crtLength + 1);
+            if (NULL == crt->data)
+            {
+                OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
+                OICFree(oldData);
+                return OC_STACK_NO_MEMORY;
+            }
+            crt->data[crtLength] = 0;
+            crt->len = crtLength + 1;
+        }
+    }
+
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return OC_STACK_OK;
 }
@@ -3288,36 +3414,6 @@ static int cloneSecKey(OicSecKey_t * dst, OicSecKey_t * src)
     return 0;
 }
 
-static int cloneSecOpt(OicSecOpt_t * dst, OicSecOpt_t * src)
-{
-    if ((src == NULL) || (dst == NULL))
-    {
-        return -1;
-    }
-
-    if (src->len > 0)
-    {
-        dst->data = OICCalloc(src->len, 1);
-        if (dst == NULL)
-        {
-            OIC_LOG_V(ERROR, TAG, "%s memory allocation failed", __func__);
-            OICFree(dst);
-            return -1;
-        }
-        memcpy(dst->data, src->data, src->len);
-    }
-    else
-    {
-        dst->data = NULL;
-    }
-
-    dst->len = src->len;
-    dst->encoding = src->encoding;
-    dst->revstat = src->revstat;
-
-    return 0;
-}
-
 /* Caller must call FreeRoleCertChainList on roleEntries when finished. */
 OCStackResult GetAllRoleCerts(RoleCertChain_t ** output)
 {
@@ -3349,12 +3445,6 @@ OCStackResult GetAllRoleCerts(RoleCertChain_t ** output)
             if (cloneSecKey(&add->certificate, &temp->publicData) != 0)
             {
                 OIC_LOG_V(ERROR, TAG, "%s failed to copy certificate data", __func__);
-                goto error;
-            }
-
-            if (cloneSecOpt(&add->optData, &temp->optionalData) != 0)
-            {
-                OIC_LOG_V(ERROR, TAG, "%s failed to copy optional data", __func__);
                 goto error;
             }
         }
@@ -3505,11 +3595,25 @@ void GetDerKey(ByteArray_t * key, const char * usage)
                 /* Convert PEM to DER */
                 const char* pemHeader = "-----BEGIN EC PRIVATE KEY-----"; /* no newlines allowed here */
                 const char* pemFooter = "-----END EC PRIVATE KEY-----";
+                uint8_t *data = temp->privateData.data;
+                size_t length = temp->privateData.len;
+                bool freeData = false;
 
-                if (temp->privateData.data[temp->privateData.len - 1] != 0)
+                if (data[length - 1] != 0)
                 {
-                    OIC_LOG(ERROR, TAG, "Bad PEM private key data (not null terminated)");
-                    return;
+                    /* Add a null terminator, because mbedtls_pem_read_buffer requires it */
+                    OIC_LOG_V(DEBUG, TAG, "%s: adding null terminator to privateData", __func__);
+
+                    data = OICMalloc(length + 1);
+                    if (NULL == data)
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                        return;
+                    }
+
+                    memcpy(data, temp->privateData.data, length);
+                    data[length] = 0;
+                    freeData = true;
                 }
 
                 mbedtls_pem_context ctx;
@@ -3517,7 +3621,13 @@ void GetDerKey(ByteArray_t * key, const char * usage)
                 size_t usedLen;
 
                 mbedtls_pem_init(&ctx);
-                ret = mbedtls_pem_read_buffer(&ctx, pemHeader, pemFooter, (const uint8_t*)temp->privateData.data, NULL, 0, &usedLen);
+                ret = mbedtls_pem_read_buffer(&ctx, pemHeader, pemFooter, data, NULL, 0, &usedLen);
+
+                if (freeData)
+                {
+                    OICFree(data);
+                }
+
                 if (ret != 0)
                 {
                     OIC_LOG_V(ERROR, TAG, "%s: failed reading PEM key", __func__);
@@ -3567,6 +3677,91 @@ void GetDerKey(ByteArray_t * key, const char * usage)
     {
         OIC_LOG_V(WARNING, TAG, "Key for %s not found", usage);
     }
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+}
+
+void GetPrimaryCertKey(ByteArray_t * key)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    VERIFY_NOT_NULL(TAG, key, ERROR);
+    
+    key->len = 0;
+    OicSecCred_t * temp = NULL;
+
+    LL_FOREACH(gCred, temp)
+    {
+        size_t length = temp->privateData.len;
+
+        if ((SIGNED_ASYMMETRIC_KEY == temp->credType || ASYMMETRIC_KEY == temp->credType) &&
+            (0 < length) &&
+            (NULL != temp->credUsage) &&
+            (0 == strcmp(temp->credUsage, PRIMARY_CERT)))
+        {
+            switch (temp->privateData.encoding)
+            {
+                case OIC_ENCODING_PEM:
+                case OIC_ENCODING_DER:
+                case OIC_ENCODING_RAW:
+                {
+                    bool addNull = false;
+                    uint8_t *data = temp->privateData.data;
+
+                    if ((OIC_ENCODING_PEM == temp->privateData.encoding) &&
+                        (0 != data[length - 1]))
+                    {
+                        /* mbedtls_pk_parse_key needs null terminator to determine the PEM key format */
+                        OIC_LOG_V(DEBUG, TAG, "%s: adding null terminator to key", __func__);
+                        addNull = true;
+                        data = OICCalloc(length + 1, sizeof(*data));
+                    }
+                    else
+                    {
+                        data = OICCalloc(length, sizeof(*data));
+                    }
+
+                    if (NULL == data)
+                    {
+                        key->data = NULL;
+                        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                        return;
+                    }
+
+                    memcpy(data, temp->privateData.data, length);
+
+                    if (addNull)
+                    {
+                        data[length] = 0;
+                        length++;
+                    }
+
+                    key->data = data;
+                    key->len = length;
+
+                    OIC_LOG(DEBUG, TAG, "Key for PRIMARY_CERT found");
+                    break;
+                }
+
+                default:
+                {
+                    OIC_LOG_V(WARNING, TAG, "Key for PRIMARY_CERT found, but it has an unknown encoding (%d)", temp->privateData.encoding);
+                    break;
+                }
+            }
+
+            if (0 != key->len)
+            {
+                break;
+            }
+        }
+    }
+
+    if(0 == key->len)
+    {
+        OIC_LOG(WARNING, TAG, "Key for PRIMARY_CERT not found");
+    }
+
+exit:
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 

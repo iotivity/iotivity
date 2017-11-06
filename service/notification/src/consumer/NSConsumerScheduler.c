@@ -123,10 +123,9 @@ void NSConsumerMessageHandlerExit()
     while (!NSIsQueueEmpty(g_queue))
     {
         NSConsumerQueueObject * obj = NSPopQueue(g_queue);
-        NS_LOG_V(DEBUG, "Execute remaining task type : %d", ((NSTask *)(obj->data))->taskType);
-
         if (obj)
         {
+            NS_LOG_V(DEBUG, "Execute remaining task type : %d", ((NSTask *)(obj->data))->taskType);
             NSConsumerTaskProcessing((NSTask *)(obj->data));
             NSOICFree(obj);
         }
@@ -207,12 +206,14 @@ void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
 
 void * NSConsumerMsgPushThreadFunc(void * data)
 {
+    pthread_mutex_lock(&g_start_mutex);
     NSConsumerQueueObject * obj = NULL;
 
     NS_LOG(DEBUG, "get queueThread handle");
     if (NULL == g_handle)
     {
         NSOICFree(data);
+        pthread_mutex_unlock(&g_start_mutex);
         return NULL;
     }
     NSThreadLock(g_handle);
@@ -222,6 +223,7 @@ void * NSConsumerMsgPushThreadFunc(void * data)
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(obj, NULL,
               {
                       NSThreadUnlock(g_handle);
+                      pthread_mutex_unlock(&g_start_mutex);
                       NSOICFree(data);
               });
 
@@ -241,6 +243,7 @@ void * NSConsumerMsgPushThreadFunc(void * data)
     }
 
     NSThreadUnlock(g_handle);
+    pthread_mutex_unlock(&g_start_mutex);
 
     return NULL;
 }

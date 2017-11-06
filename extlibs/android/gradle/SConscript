@@ -1,27 +1,24 @@
-import os, sys, platform, subprocess
+##
+# Make sure gradle exists
+# Note this script is only called if ANDROID_GRADLE was not set to begin with,
+# so we can safely set it here.
+
+import os
 
 Import('env')
 
-env = env.Clone()
-ndk_env = env.Clone()
+GRADLE_VER = '2.2.1'
 
-target_os = env.get('TARGET_OS')
-host_os = sys.platform
-print host_os
-######################################################################
-# Build flags
-######################################################################
-src_dir = env.get('SRC_DIR')
+gradle_dir = 'gradle-' + GRADLE_VER
+gradle_zip_file = 'gradle-' + GRADLE_VER + '-bin.zip'
+gradle_url = 'https://services.gradle.org/distributions/' + gradle_zip_file
 
-path = os.path.join(src_dir, 'extlibs', 'android', 'gradle', 'gradle-2.2.1')
+if not os.path.exists(gradle_dir):
+    if not os.path.exists(gradle_zip_file):
+        print "Retrieving Android Gradle bundle"
+        gradle_zip = env.Download(gradle_zip_file, gradle_url)
+    gradle_unpacked = env.UnpackAll(gradle_dir, gradle_zip)
 
-# check 'gradle' library, if it doesn't exits, ask user to download it
-if not os.path.exists(path):
-	gradle_zip = env.Download('gradle2.2.1.zip', 'https://services.gradle.org/distributions/gradle-2.2.1-all.zip')
-	gradle_dir = env.UnpackAll('gradle-2.2.1', gradle_zip)
-	print '''
-***********************************************************************
-* Downloading gradle:                    *
-*******************************************************************************
-'''
-
+# export the location of the gradle script
+android_gradle = os.path.join(Dir('.').abspath, gradle_dir, 'bin/gradle')
+env.Replace(ANDROID_GRADLE=android_gradle)

@@ -59,7 +59,7 @@ public class DeviceProp {
             mRep.setValue(ESConstants.OC_RSRVD_ES_AUTHTYPE, authtype.getValue());
             mRep.setValue(ESConstants.OC_RSRVD_ES_ENCTYPE, enctype.getValue());
         } catch (OcException e) {
-            Log.e(TAG, "setWiFiProp is failed.");
+            Log.e(TAG, "setWiFiProp is failed: " + e.toString());
         }
     }
 
@@ -82,7 +82,7 @@ public class DeviceProp {
             mRep.setValue(ESConstants.OC_RSRVD_ES_COUNTRY, country);
             mRep.setValue(ESConstants.OC_RSRVD_ES_LOCATION, location);
         } catch (OcException e) {
-            Log.e(TAG, "setDevConfProp is failed.");
+            Log.e(TAG, "setDevConfProp is failed: " + e.toString());
         }
     }
 
@@ -105,7 +105,7 @@ public class DeviceProp {
         }
         catch (OcException e)
         {
-            Log.e(TAG, "getSsid is failed.");
+            Log.e(TAG, "getSsid is failed: " + e.toString());
         }
         return null;
     }
@@ -129,7 +129,7 @@ public class DeviceProp {
         }
         catch (OcException e)
         {
-            Log.e(TAG, "getPassword is failed.");
+            Log.e(TAG, "getPassword is failed: " + e.toString());
         }
         return null;
     }
@@ -154,7 +154,7 @@ public class DeviceProp {
         }
         catch (OcException e)
         {
-            Log.e(TAG, "getAuthType is failed.");
+            Log.e(TAG, "getAuthType is failed: " + e.toString());
         }
         return WIFI_AUTHTYPE.NONE_AUTH;
     }
@@ -179,7 +179,7 @@ public class DeviceProp {
         }
         catch (OcException e)
         {
-            Log.e(TAG, "getEncType is failed.");
+            Log.e(TAG, "getEncType is failed: " + e.toString());
         }
         return WIFI_ENCTYPE.NONE_ENC;
     }
@@ -203,7 +203,7 @@ public class DeviceProp {
         }
         catch (OcException e)
         {
-            Log.e(TAG, "getLanguage is failed.");
+            Log.e(TAG, "getLanguage is failed: " + e.toString());
         }
         return null;
     }
@@ -227,7 +227,7 @@ public class DeviceProp {
         }
         catch (OcException e)
         {
-            Log.e(TAG, "getCountry is failed.");
+            Log.e(TAG, "getCountry is failed: " + e.toString());
         }
         return null;
     }
@@ -251,7 +251,7 @@ public class DeviceProp {
         }
         catch (OcException e)
         {
-            Log.e(TAG, "getLocation is failed.");
+            Log.e(TAG, "getLocation is failed: " + e.toString());
         }
         return null;
     }

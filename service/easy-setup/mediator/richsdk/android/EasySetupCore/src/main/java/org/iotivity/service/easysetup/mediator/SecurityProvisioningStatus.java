@@ -20,8 +20,6 @@
 
 package org.iotivity.service.easysetup.mediator;
 
-import android.util.Log;
-
 import org.iotivity.service.easysetup.mediator.enums.ESResult;
 
 /**

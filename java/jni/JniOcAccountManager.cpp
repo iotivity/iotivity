@@ -24,6 +24,8 @@
 #include "JniOcRepresentation.h"
 #include "JniUtils.h"
 
+using namespace OC;
+
 #define VERIFY_NON_NULL_THROW_EXCEPTION(arg, log_message, exc) \
     if (!(arg)) \
     { \

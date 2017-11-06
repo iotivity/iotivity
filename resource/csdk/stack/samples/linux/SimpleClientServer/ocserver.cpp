@@ -24,34 +24,36 @@
 #include <string.h>
 #include <string>
 #include <stdlib.h>
+#include <signal.h>
+#include "ocstack.h"
+#include "ocpayload.h"
+#include "pinoxmcommon.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #endif
-#include <signal.h>
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
 #endif
 #include <array>
 #include "oic_malloc.h"
 #include <getopt.h>
-#include "ocstack.h"
 #include "logger.h"
-#include "ocpayload.h"
 #include "ocserver.h"
 #include "common.h"
 #include "oic_string.h"
 
 #define VERIFY_SUCCESS(op)                          \
+do                                                  \
 {                                                   \
-    if (op !=  OC_STACK_OK)                         \
+    if (op != OC_STACK_OK)                          \
     {                                               \
         OIC_LOG_V(FATAL, TAG, "%s failed!!", #op);  \
         goto exit;                                  \
     }                                               \
-}
+} while(0)
 
 // string length of "/a/light/" + std::numeric_limits<int>::digits10 + '\0'"
 // 9 + 9 + 1 = 19
@@ -82,24 +84,22 @@ static bool observeThreadStarted = false;
 #endif
 
 char *gResourceUri = (char *)"/a/light";
-const char *dateOfManufacture = "2016-01-15";
-const char *deviceName = "myDeviceName";
-const char *deviceUUID = "51b55ddc-ccbb-4cb3-a57f-494eeca13a21";
-const char *firmwareVersion = "myFirmwareVersion";
-const char *manufacturerName = "myName";
-const char *operatingSystemVersion = "myOS";
-const char *hardwareVersion = "myHardwareVersion";
-const char *platformID = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
-const char *protocolIndependentID = "6ef9211d-2d5c-401e-8e5d-4b3af48a054f";
-const char *manufacturerLink = "https://www.iotivity.org";
-const char *modelNumber = "myModelNumber";
-const char *platformVersion = "myPlatformVersion";
-const char *supportLink = "https://www.iotivity.org";
-const char *version = "myVersion";
-const char *systemTime = "2015-05-15T11.04";
-const char *specVersion = "ocf.1.1.0";
-const char *dataModelVersions = "ocf.res.1.1.0,ocf.sh.1.1.0";
-const char *deviceType = "oic.d.tv";
+static const char *gDateOfManufacture = "2016-01-15";
+static const char *gDeviceName = "myDeviceName";
+static const char *gFirmwareVersion = "myFirmwareVersion";
+static const char *gManufacturerName = "myName";
+static const char *gOperatingSystemVersion = "myOS";
+static const char *gHardwareVersion = "myHardwareVersion";
+static const char *gPlatformID = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+static const char *gProtocolIndependentID = "6ef9211d-2d5c-401e-8e5d-4b3af48a054f";
+static const char *gManufacturerLink = "https://www.iotivity.org";
+static const char *gModelNumber = "myModelNumber";
+static const char *gPlatformVersion = "myPlatformVersion";
+static const char *gSupportLink = "https://www.iotivity.org";
+static const char *gSystemTime = "2015-05-15T11.04";
+static const char *gSpecVersion = "ocf.1.1.0";
+static const char *gDataModelVersions = "ocf.res.1.1.0,ocf.sh.1.1.0";
+static const char *gDeviceType = "oic.d.tv";
 
 OCPlatformInfo platformInfo;
 
@@ -124,6 +124,30 @@ static FILE* server_fopen(const char* path, const char* mode)
     OIC_LOG_V(DEBUG, TAG, "Got file open call for %s",path);
     return fopen(path, mode);
 }
+
+#ifdef SECURED
+void OC_CALL DisplayPinCB(char *pin, size_t pinSize, void *context)
+{
+    OC_UNUSED(context);
+
+    if ((nullptr == pin) || (0 == pinSize))
+    {
+        OIC_LOG(INFO, TAG, "Invalid PIN");
+        return;
+    }
+
+    OIC_LOG(INFO, TAG, "============================");
+    OIC_LOG_V(INFO, TAG, "    PIN CODE : %s", pin);
+    OIC_LOG(INFO, TAG, "============================");
+}
+
+void OC_CALL ClosePinDisplayCB(void)
+{
+    OIC_LOG(INFO, TAG, "============================");
+    OIC_LOG(INFO, TAG, "    PIN DISPLAY CLOSED.");
+    OIC_LOG(INFO, TAG, "============================");
+}
+#endif
 
 //This function takes the request as an input and returns the response
 OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest)
@@ -652,18 +676,21 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                 {
                     OIC_LOG_V(INFO, TAG, "accept version option exists");
                     OIC_LOG_BUFFER(INFO, TAG, vOptionData, MAX_HEADER_OPTION_DATA_LENGTH);
-                }
-                uint16_t acceptVersion = vOptionData[0]*256 + vOptionData[1];
-                if (OC_SPEC_VERSION_VALUE == acceptVersion)
-                {
-                    OIC_LOG_V(INFO, TAG, "accept version equals to default OC_SPEC_VERSION_VALUE.");
+                    uint16_t acceptVersion = vOptionData[0]*256 + vOptionData[1];
+                    if (OC_SPEC_VERSION_VALUE == acceptVersion)
+                    {
+                        OIC_LOG_V(INFO, TAG, "accept version equals to default OC_SPEC_VERSION_VALUE.");
+                    }
                 }
 
+                actualDataSize = 0;
                 OCHeaderOption* sendOptions = response.sendVendorSpecificHeaderOptions;
                 size_t numOptions = response.numSendVendorSpecificHeaderOptions;
                 // Check if the option header has already existed before adding it in.
                 uint8_t optionData[MAX_HEADER_OPTION_DATA_LENGTH];
                 size_t optionDataSize = sizeof(optionData);
+
+                actualDataSize = 0;
                 OCGetHeaderOption(response.sendVendorSpecificHeaderOptions,
                                   response.numSendVendorSpecificHeaderOptions,
                                   2248,
@@ -682,6 +709,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                                       optionDataSize2);
                 }
 
+                actualDataSize = 0;
                 OCGetHeaderOption(response.sendVendorSpecificHeaderOptions,
                                   response.numSendVendorSpecificHeaderOptions,
                                   2600,
@@ -699,7 +727,6 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                                       option3,
                                       optionDataSize3);
                 }
-                response.numSendVendorSpecificHeaderOptions = 2;
             }
 
             // Send the response
@@ -1031,13 +1058,13 @@ OCStackResult SetDeviceInfo()
         goto exit;
     }
 
-    VERIFY_SUCCESS(OCBindResourceTypeToResource(resourceHandle, deviceType));
-    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, deviceName));
-    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion));
+    VERIFY_SUCCESS(OCBindResourceTypeToResource(resourceHandle, gDeviceType));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, gDeviceName));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, gSpecVersion));
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
-                                      dataModelVersions));
+                                      gDataModelVersions));
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
-                                      protocolIndependentID));
+                                      gProtocolIndependentID));
 
     OIC_LOG(INFO, TAG, "Device information initialized successfully.");
     return OC_STACK_OK;
@@ -1173,6 +1200,24 @@ int main(int argc, char* argv[])
     }
 #endif
 
+#ifdef SECURED
+    // Set callbacks for handling pin display  
+    if (OC_STACK_OK != SetDisplayPinWithContextCB(DisplayPinCB, NULL))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to set display pin callback");
+        return 0;
+    }
+
+    SetClosePinDisplayCB(ClosePinDisplayCB);
+
+    // Specify the type and length of the pin that will be generated upon request
+    if (OC_STACK_OK != SetRandomPinPolicy(8, NUM_PIN))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to set PIN policy");
+        return 0;
+    }
+#endif
+
     if (DISPLAY_SUPPORTED_EPS_FLAG == gResourceCreateType)
     {
         char strBuff[SAMPLE_MAX_STR_BUFF_SIZE] = {0};
@@ -1209,9 +1254,9 @@ int main(int argc, char* argv[])
     OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb, NULL);
 
     OCStackResult registrationResult =
-        SetPlatformInfo(platformID, manufacturerName, manufacturerLink, modelNumber,
-                        dateOfManufacture, platformVersion,  operatingSystemVersion,
-                        hardwareVersion, firmwareVersion, supportLink, systemTime);
+        SetPlatformInfo(gPlatformID, gManufacturerName, gManufacturerLink, gModelNumber,
+                        gDateOfManufacture, gPlatformVersion, gOperatingSystemVersion,
+                        gHardwareVersion, gFirmwareVersion, gSupportLink, gSystemTime);
 
     if (registrationResult != OC_STACK_OK)
     {

@@ -37,6 +37,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "iotivity_debug.h"
 
 /**
  * Logging tag for module name.
@@ -331,6 +332,19 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     VERIFY_NON_NULL(handle, TAG, "thread pool handle");
 #endif
 
+#ifdef WSA_WAIT_EVENT_0
+    // Windows-specific initialization.
+    WORD wVersionRequested = MAKEWORD(2, 2);
+    WSADATA wsaData = {.wVersion = 0};
+    int err = WSAStartup(wVersionRequested, &wsaData);
+    if (0 != err)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: WSAStartup failed: %i", __func__, err);
+        return CA_STATUS_FAILED;
+    }
+    OIC_LOG(DEBUG, TAG, "WSAStartup Succeeded");
+#endif
+
     g_networkChangeCallback = netCallback;
     g_networkPacketCallback = networkPacketCallback;
     g_errorCallback = errorCallback;
@@ -348,7 +362,7 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     }
     else
     {
-        CAsetSslAdapterCallbacks(CAIPPacketReceivedCB, CAIPPacketSendCB, CA_ADAPTER_IP);
+        CAsetSslAdapterCallbacks(CAIPPacketReceivedCB, CAIPPacketSendCB, CAIPErrorHandler, CA_ADAPTER_IP);
     }
 #endif
 
@@ -374,6 +388,9 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
 
 CAResult_t CAStartIP()
 {
+    //Initializing the Globals
+    CAInitializeIPGlobals();
+
     // Specific the port number received from application.
     caglobals.ip.u6.port  = caglobals.ports.udp.u6;
     caglobals.ip.u6s.port = caglobals.ports.udp.u6s;
@@ -516,8 +533,6 @@ CAResult_t CAStopIP()
 
     CAIPStopNetworkMonitor(CA_ADAPTER_IP);
     CAIPStopServer();
-    //Re-initializing the Globals to start them again
-    CAInitializeIPGlobals();
 
     return CA_STATUS_OK;
 }
@@ -525,14 +540,18 @@ CAResult_t CAStopIP()
 void CATerminateIP()
 {
 #ifdef __WITH_DTLS__
-    CAsetSslAdapterCallbacks(NULL, NULL, CA_ADAPTER_IP);
+    CAsetSslAdapterCallbacks(NULL, NULL, NULL, CA_ADAPTER_IP);
 #endif
 
     CAIPSetPacketReceiveCallback(NULL);
 
 #ifndef SINGLE_THREAD
-    CADeInitializeIPGlobals();
     CAIPDeinitializeQueueHandles();
+#endif
+
+#ifdef WSA_WAIT_EVENT_0
+    // Windows-specific clean-up.
+    OC_VERIFY(0 == WSACleanup());
 #endif
 }
 

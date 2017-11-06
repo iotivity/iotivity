@@ -202,6 +202,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRDClient_publishResourceToRD0(
         jobject jListener,
         jint jQoS)
 {
+    OC_UNUSED(clazz);
     LOGD("OcRDClient_publishResourceToRD");
 #ifdef RD_CLIENT
     std::string host;
@@ -243,6 +244,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRDClient_publishResourceToRD0(
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
+    OC_UNUSED(env);
+    OC_UNUSED(clazz);
+    OC_UNUSED(jHost)
+    OC_UNUSED(jConnectivityType);
+    OC_UNUSED(jListener);
+    OC_UNUSED(jQoS);
     ThrowOcException(JNI_NO_SUPPORT, "Not supported");
     return;
 #endif
@@ -262,6 +269,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRDClient_publishResourceToRD1(
         jobject jListener,
         jint jQoS)
 {
+    OC_UNUSED(clazz);
     LOGD("OcRDClient_publishResourceToRD");
 #ifdef RD_CLIENT
     if (!env)
@@ -294,8 +302,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRDClient_publishResourceToRD1(
     };
 
     std::vector<OCResourceHandle> resourceHandleList;
-    size_t len = env->GetArrayLength(jResourceHandleArray);
-    for (size_t i = 0; i < len; ++i)
+    jsize len = env->GetArrayLength(jResourceHandleArray);
+    for (jsize i = 0; i < len; ++i)
     {
         jobject jResourceHandle = env->GetObjectArrayElement(jResourceHandleArray, i);
         if (!jResourceHandle)
@@ -335,6 +343,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRDClient_publishResourceToRD1(
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
+    OC_UNUSED(env);
+    OC_UNUSED(jHost);
+    OC_UNUSED(jConnectivityType);
+    OC_UNUSED(jResourceHandleArray);
+    OC_UNUSED(jListener);
+    OC_UNUSED(jQoS);
     ThrowOcException(JNI_NO_SUPPORT, "Not supported");
     return;
 #endif
@@ -353,6 +367,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRDClient_deleteResourceFromRD0(
         jobject jListener,
         jint jQoS)
 {
+    OC_UNUSED(clazz);
     LOGD("OcRDClient_deleteResourceFromRD");
 #ifdef RD_CLIENT
     std::string host;
@@ -391,6 +406,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRDClient_deleteResourceFromRD0(
          ThrowOcException(e.code(), e.reason().c_str());
      }
  #else
+     OC_UNUSED(env);
+     OC_UNUSED(clazz);
+     OC_UNUSED(jHost);
+     OC_UNUSED(jConnectivityType);
+     OC_UNUSED(jListener);
+     OC_UNUSED(jQoS);
      ThrowOcException(JNI_NO_SUPPORT, "Not supported");
      return;
  #endif
@@ -410,6 +431,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRDClient_deleteResourceFromRD0(
          jobject jListener,
          jint jQoS)
  {
+     OC_UNUSED(clazz);
      LOGD("OcRDClient_deleteResourceFromRD");
  #ifdef RD_CLIENT
      if (!env)
@@ -440,8 +462,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRDClient_deleteResourceFromRD0(
      };
 
      std::vector<OCResourceHandle> resourceHandleList;
-     size_t len = env->GetArrayLength(jResourceHandleArray);
-     for (size_t i = 0; i < len; ++i)
+     jsize len = env->GetArrayLength(jResourceHandleArray);
+     for (jsize i = 0; i < len; ++i)
      {
          jobject jResourceHandle = env->GetObjectArrayElement(jResourceHandleArray, i);
          if (!jResourceHandle)
@@ -482,6 +504,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRDClient_deleteResourceFromRD0(
          ThrowOcException(e.code(), e.reason().c_str());
      }
  #else
+     OC_UNUSED(env);
+     OC_UNUSED(jHos);
+     OC_UNUSED(jConnectivityType);
+     OC_UNUSED(jResourceHandleArray);
+     OC_UNUSED(jListener);
+     OC_UNUSED(jQoS);
      ThrowOcException(JNI_NO_SUPPORT, "Not supported");
      return;
  #endif

@@ -33,7 +33,7 @@ extern "C"
     #include "coap/pdu.h"
 }
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -98,7 +98,7 @@ static OCStackApplicationResult handleDeleteCB(__attribute__((unused))void *ctx,
 {
     OIC_LOG(DEBUG, TAG, "Successfully delete resources.");
 
-    EXPECT_EQ(OC_STACK_RESOURCE_CHANGED, clientResponse->result);
+    EXPECT_EQ(OC_STACK_RESOURCE_DELETED, clientResponse->result);
 
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -298,6 +298,35 @@ TEST_F(RDTests, RDDeleteSpecificResource)
     EXPECT_EQ(OC_STACK_OK, OCRDDelete(NULL, "127.0.0.1", CT_ADAPTER_IP, &handle,
                                       1, &cbData, OC_LOW_QOS));
 }
+
+#endif
+
+#ifdef RD_SERVER
+
+static OCStackApplicationResult UpdateSelValueVerify(__attribute__((unused))void *ctx,
+                                                     __attribute__((unused)) OCDoHandle handle,
+                                                     OCClientResponse *clientResponse)
+{
+    EXPECT_GT(clientResponse->result, OC_STACK_RESOURCE_CHANGED);
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+TEST_F(RDTests, UpdateSelValue)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCRDStart());
+
+    itst::Callback postCB(&UpdateSelValueVerify);
+    OCRepPayload *payload = OCRepPayloadCreate();
+    EXPECT_TRUE(payload != NULL);
+    EXPECT_TRUE(OCRepPayloadSetPropInt(payload, "sel", 90));
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_POST, "127.0.0.1/oic/rd?if=oic.if.baseline", NULL,
+            (OCPayload*) payload, CT_DEFAULT, OC_HIGH_QOS, postCB, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, postCB.Wait(100));
+
+    EXPECT_EQ(OC_STACK_OK, OCRDStop());
+}
+
 #endif
 
 #if (defined(RD_SERVER) && defined(RD_CLIENT))
@@ -556,7 +585,7 @@ TEST_P(RDDiscoverTests, ResourceQueryMatchesRemoteOnly)
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *)repPayload);
 
     itst::Callback publishCB(&handlePublishCB);
-    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_POST, "127.0.0.1/oic/rd?rt=oic.wk.rdpub", NULL,
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_POST, "127.0.0.1/oic/rd", NULL,
                     (OCPayload *)repPayload, CT_DEFAULT, OC_HIGH_QOS, publishCB, options, numOptions));
     EXPECT_EQ(OC_STACK_OK, publishCB.Wait(100));
 

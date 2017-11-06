@@ -24,7 +24,7 @@
 #include "pmtypes.h"
 #include "ocstack.h"
 #include "octypes.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -99,8 +99,12 @@ struct OTMContext{
     OCProvisionResult_t* ctxResultArray;      /**< Result array having result of all device. */
     size_t ctxResultArraySize;                /**< No of elements in result array. */
     bool ctxHasError;                         /**< Does OT process have any error. */
-    OCDoHandle ocDoHandle;                    /** <A handle for latest request message*/
-    OTMCallbackData_t otmCallback; /**< OTM callbacks to perform the OT/MOT. **/
+    OCDoHandle ocDoHandle;                    /**< A handle for latest request message. */
+    OTMCallbackData_t otmCallback;            /**< OTM callbacks to perform the OT/MOT. */
+#ifdef MULTIPLE_OWNER
+    OicSecDoxm_t* doxm;                       /**< Device Owner Transfer Method. */
+    OicSecCred_t* cred;                       /**< Credential data. */
+#endif // MULTIPLE_OWNER
     int attemptCnt;
 };
 

@@ -1,5 +1,7 @@
 package org.iotivity.service;
 
+import android.util.Log;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
@@ -21,6 +23,7 @@ import org.mockito.Mockito;
 
 public class ResourceObjectTest extends TestBase {
     private static final String NEW_KEY = "new" + KEY;
+    private final String TAG = ResourceObjectTest.class.getName();
 
     private OnRemoteAttributesReceivedListener mOnRemoteAttributesReceivedListener;
     private SetRequestHandler                  mSetRequestHandler;
@@ -211,6 +214,7 @@ public class ResourceObjectTest extends TestBase {
             mServer.removeAttribute("");
             fail("No exception thrown");
         } catch (RcsDestroyedObjectException e) {
+            Log.e(TAG, "caught exception: " + e.toString());
         }
 
     }

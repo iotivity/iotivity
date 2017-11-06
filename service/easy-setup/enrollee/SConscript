@@ -27,78 +27,89 @@ enrollee_env = env.Clone()
 target_os = enrollee_env.get('TARGET_OS')
 
 if enrollee_env.get('RELEASE'):
-    enrollee_env.AppendUnique(CCFLAGS = ['-Os'])
-    enrollee_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    enrollee_env.AppendUnique(CCFLAGS=['-Os'])
 else:
-    enrollee_env.AppendUnique(CCFLAGS = ['-g'])
-
-if enrollee_env.get('LOGGING'):
-    enrollee_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    enrollee_env.AppendUnique(CCFLAGS=['-g'])
 
 ######################################################################
 # Build flags
 ######################################################################
-enrollee_env.PrependUnique(CPPPATH = [
-        '#/resource/c_common/oic_malloc/include',
-        '#/resource/include',
-        '#/resource/csdk/logger/include',
-        '#/resource/oc_logger/include',
-        '#/resource/csdk/include',
-        '#/resource/csdk/stack/include',
-        '#/resource/csdk/logger/include',
-        '#/resource/csdk/security/include',
-        '#/resource/csdk/connectivity/api',
-        '#/extlibs/cjson',
-        '#/service/easy-setup/inc',
-        '#/service/easy-setup/enrollee/inc',
-        '#/service/easy-setup/enrollee/src'])
+enrollee_env.PrependUnique(CPPPATH=[
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/include',
+    '#/resource/csdk/logger/include',
+    '#/resource/oc_logger/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/csdk/logger/include',
+    '#/resource/csdk/security/include',
+    '#/resource/csdk/connectivity/api',
+    '#/extlibs/cjson',
+    '#/service/easy-setup/inc',
+    '#/service/easy-setup/enrollee/inc',
+    '#/service/easy-setup/enrollee/src'
+])
 
 if target_os not in ['linux', 'tizen']:
-    enrollee_env.PrependUnique(CPPPATH = [
-        '#extlibs/sqlite3'])
+    enrollee_env.PrependUnique(CPPPATH=['#extlibs/sqlite3'])
 
 if enrollee_env.get('SECURED') == '1':
-    enrollee_env.AppendUnique(CPPPATH = [
+    enrollee_env.AppendUnique(CPPPATH=[
         '#/resource/csdk/security/provisioning/include',
         '#/resource/csdk/security/provisioning/include/internal',
-        '#/resource/csdk/security/provisioning/include/oxm'])
-    enrollee_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+        '#/resource/csdk/security/provisioning/include/oxm'
+    ])
+    enrollee_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if target_os not in ['windows']:
-    enrollee_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
+    enrollee_env.AppendUnique(CXXFLAGS=['-Wall', '-std=c++0x'])
 
 if not env.get('RELEASE'):
-    enrollee_env.PrependUnique(LIBS = ['gcov'])
-    enrollee_env.AppendUnique(CCFLAGS = ['--coverage'])
+    enrollee_env.PrependUnique(LIBS=['gcov'])
+    enrollee_env.AppendUnique(CCFLAGS=['--coverage'])
 
 ######################################################################
 # Linux Enrollee
 ######################################################################
 if target_os in ['linux']:
-    enrollee_env.AppendUnique(LIBS = ['pthread', 'dl'])
-    enrollee_env.AppendUnique(LIBPATH = [enrollee_env.get('BUILD_DIR')])
-    enrollee_env.AppendUnique(RPATH = [enrollee_env.get('BUILD_DIR')])
-    enrollee_env.AppendUnique(CXXFLAGS = ['-pthread'])
-    enrollee_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
+    enrollee_env.AddPthreadIfNeeded()
+    enrollee_env.AppendUnique(LIBS=['dl'])
+    enrollee_env.PrependUnique(LIBS=[
+        'oc',
+        'octbstack',
+        'oc_logger',
+        'pthread',
+        'connectivity_abstraction',
+    ])
     if enrollee_env.get('SECURED') == '1':
-        enrollee_env.PrependUnique(LIBS = ['ocprovision', 'ocpmapi'])
+        enrollee_env.PrependUnique(LIBS=['ocprovision', 'ocpmapi'])
 
 ######################################################################
 # Tizen Enrollee
 ######################################################################
 if target_os == 'tizen':
-   enrollee_env.AppendUnique(LIBPATH = [enrollee_env.get('BUILD_DIR')])
-   enrollee_env.AppendUnique(RPATH = [enrollee_env.get('BUILD_DIR')])
-   enrollee_env.AppendUnique(CXXFLAGS = ['-pthread'])
-   enrollee_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
+    enrollee_env.AppendUnique(CXXFLAGS=['-pthread'])
+    enrollee_env.PrependUnique(LIBS=[
+        'oc',
+        'octbstack',
+        'oc_logger',
+        'pthread',
+        'connectivity_abstraction',
+    ])
 
 ######################################################################
 # Arduino Enrollee
 ######################################################################
 if target_os == 'arduino':
-    enrollee_env.AppendUnique(LIBPATH = [enrollee_env.get('BUILD_DIR')])
-    enrollee_env.AppendUnique(RPATH = [enrollee_env.get('BUILD_DIR')])
-    enrollee_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
+    enrollee_env.PrependUnique(LIBS=[
+        'oc',
+        'octbstack',
+        'oc_logger',
+        'pthread',
+        'connectivity_abstraction',
+    ])
 
 ######################################################################
 # Source files and Targets
@@ -106,17 +117,24 @@ if target_os == 'arduino':
 es_enrollee_src = None
 
 if target_os in ['linux', 'tizen']:
-    es_enrollee_common_src = ['./src/easysetup.c','./src/resourcehandler.c']
-    enrollee_sdk_shared = enrollee_env.SharedLibrary('ESEnrolleeSDK', es_enrollee_common_src)
-    enrollee_sdk_static = enrollee_env.StaticLibrary('ESEnrolleeSDK', es_enrollee_common_src)
-    enrollee_env.InstallTarget([enrollee_sdk_shared, enrollee_sdk_static], 'libESEnrollee')
-    enrollee_env.UserInstallTargetLib([enrollee_sdk_shared, enrollee_sdk_static], 'libESEnrollee')
-    enrollee_env.UserInstallTargetHeader('inc/ESEnrolleeCommon.h', 'service/easy-setup', 'ESEnrolleeCommon.h')
-    enrollee_env.UserInstallTargetHeader('inc/easysetup.h', 'service/easy-setup', 'easysetup.h')
+    es_enrollee_common_src = ['./src/easysetup.c', './src/resourcehandler.c', './src/es_util.c']
+    enrollee_sdk_shared = enrollee_env.SharedLibrary('ESEnrolleeSDK',
+                                                     es_enrollee_common_src)
+    enrollee_sdk_static = enrollee_env.StaticLibrary('ESEnrolleeSDK',
+                                                     es_enrollee_common_src)
+    enrollee_env.InstallTarget([enrollee_sdk_shared, enrollee_sdk_static],
+                               'libESEnrollee')
+    enrollee_env.UserInstallTargetLib(
+        [enrollee_sdk_shared, enrollee_sdk_static], 'libESEnrollee')
+    enrollee_env.UserInstallTargetHeader(
+        'inc/ESEnrolleeCommon.h', 'service/easy-setup', 'ESEnrolleeCommon.h')
+    enrollee_env.UserInstallTargetHeader('inc/easysetup.h',
+                                         'service/easy-setup', 'easysetup.h')
 
 if target_os == 'arduino':
-    es_enrollee_common_src = ['./src/easysetup.c','./src/resourcehandler.c']
-    enrollee_sdk_static = enrollee_env.StaticLibrary('ESEnrolleeSDK', es_enrollee_common_src)
+    es_enrollee_common_src = ['./src/easysetup.c', './src/resourcehandler.c', './src/es_util.c']
+    enrollee_sdk_static = enrollee_env.StaticLibrary('ESEnrolleeSDK',
+                                                     es_enrollee_common_src)
     enrollee_env.InstallTarget(enrollee_sdk_static, 'libESEnrolleeSDK')
     enrollee_env.UserInstallTargetLib(enrollee_sdk_static, 'libESEnrollee')
 
@@ -129,4 +147,3 @@ if target_os in ['linux']:
     #Build UnitTestcases for Enrollee
     if enrollee_env.get('SECURED') == '0':
         SConscript('../enrollee/unittests/SConscript')
-

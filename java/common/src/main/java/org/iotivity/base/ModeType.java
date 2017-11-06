@@ -41,7 +41,7 @@ public enum ModeType {
     /**
      * Client/Server mode along with Routing capabilities.
      */
-    GATEWAY(3),;
+    GATEWAY(3);
 
     private int value;
 

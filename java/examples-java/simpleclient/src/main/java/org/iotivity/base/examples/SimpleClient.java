@@ -35,6 +35,7 @@ import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
 
+import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -63,13 +64,22 @@ public class SimpleClient implements
      * A local method to configure and initialize platform, and then search for the light resources.
      */
     private static void startSimpleClient() {
+        String path = "";
+        // This assumes the oic_svr_db_server.dat file is in the same location as the SimpleServer.jar file
+        try {
+            path = SimpleClient.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+            path = path.substring(0, path.lastIndexOf('/'));
+        } catch (URISyntaxException e) {
+            msg(e.getMessage() + " unable to find local file path.");
+        }
 
         PlatformConfig platformConfig = new PlatformConfig(
                 ServiceType.IN_PROC,
                 ModeType.CLIENT_SERVER,
                 "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
                 0,         // Uses randomly available port
-                QualityOfService.LOW
+                QualityOfService.LOW,
+                path + "/oic_svr_db_client.dat"
         );
         msg("Configuring platform.");
         OcPlatform.Configure(platformConfig);
@@ -142,6 +152,45 @@ public class SimpleClient implements
         for (String resourceInterface : ocResource.getResourceInterfaces()) {
             msg("\t\t" + resourceInterface);
         }
+        // Get Resource current host
+        msg("\tHost of resource: ");
+        msg("\t\t" +  hostAddress);
+        // Get Resource Endpoint Infomation
+        msg("\tList of resource endpoints: ");
+        for(String resourceEndpoint : ocResource.getAllHosts())
+        {
+            msg("\t\t" + resourceEndpoint);
+        }
+
+        OcConnectivityType TRANSPORT_TYPE_TO_USE = OcConnectivityType.CT_ADAPTER_IP;
+
+        // If resource is found from ip based adapter.
+        if (hostAddress.contains("coap://") ||
+            hostAddress.contains("coaps://") ||
+            hostAddress.contains("coap+tcp://") ||
+            hostAddress.contains("coaps+tcp://"))
+        {
+            for(String resourceEndpoint : ocResource.getAllHosts())
+            {
+                if (!resourceEndpoint.equals(hostAddress) &&
+                    !resourceEndpoint.contains("coap+rfcomm"))
+                {
+                    String newHost = resourceEndpoint;
+                    if (newHost.contains("tcp"))
+                    {
+                        TRANSPORT_TYPE_TO_USE = OcConnectivityType.CT_ADAPTER_TCP;
+                    }
+                    else
+                    {
+                        TRANSPORT_TYPE_TO_USE = OcConnectivityType.CT_ADAPTER_IP;
+                    }
+                    // Change Resource host if another host exists
+                    msg("\tChange host of resource endpoints");
+                    msg("\t\t" + "Current host is " + ocResource.setHost(newHost));
+                    break;
+                }
+            }
+        }
         msg("\tList of resource connectivity types:");
         for (OcConnectivityType connectivityType : ocResource.getConnectivityTypeSet()) {
             msg("\t\t" + connectivityType);
@@ -175,6 +224,7 @@ public class SimpleClient implements
         try {
             // Invoke resource's "get" API with a OcResource.OnGetListener event
             // listener implementation
+            msg("calling get on server with ID: " + mFoundLightResource.getServerId());
             sleep(1);
             mFoundLightResource.get(queryParams, this);
         } catch (OcException e) {
@@ -466,10 +516,8 @@ public class SimpleClient implements
                                                 int sequenceNumber) {
         if (OcResource.OnObserveListener.REGISTER == sequenceNumber) {
             msg("Observe registration action is successful:");
-        } else if (OcResource.OnObserveListener.DEREGISTER == sequenceNumber) {
+        } else if (OcResource.OnObserveListener.MAX_SEQUENCE_NUMBER + 1 == sequenceNumber) {
             msg("Observe De-registration action is successful");
-        } else if (OcResource.OnObserveListener.NO_OPTION == sequenceNumber) {
-            msg("Observe registration or de-registration action is failed");
         }
 
         msg("OBSERVE Result:");

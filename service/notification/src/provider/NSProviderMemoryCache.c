@@ -26,9 +26,9 @@
         if (it) \
         { \
             NS_LOG(DEBUG, "already registered for topic name"); \
-            OICFree(topicData->topicName); \
-            OICFree(topicData); \
-            OICFree(newObj); \
+            NSOICFree(topicData->topicName); \
+            NSOICFree(topicData); \
+            NSOICFree(newObj); \
             pthread_mutex_unlock(&NSCacheMutex); \
             return NS_FAIL; \
         } \
@@ -183,8 +183,8 @@ NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj)
                 }
 
                 NS_LOG(DEBUG, "Update Data - OUT");
-                OICFree(subData);
-                OICFree(newObj);
+                NSOICFree(subData);
+                NSOICFree(newObj);
                 pthread_mutex_unlock(&NSCacheMutex);
                 return NS_OK;
             }
@@ -243,11 +243,11 @@ NSResult NSProviderStorageDestroy(NSCacheList * list)
     {
         next = (NSCacheElement *) iter->next;
         NSProviderDeleteCacheData(type, iter->data);
-        OICFree(iter);
+        NSOICFree(iter);
         iter = next;
     }
 
-    OICFree(list);
+    NSOICFree(list);
     return NS_OK;
 }
 
@@ -362,7 +362,7 @@ NSResult NSProviderDeleteCacheData(NSCacheType type, void * data)
         NSCacheSubData * subData = (NSCacheSubData *) data;
 
         (subData->id)[0] = '\0';
-        OICFree(subData);
+        NSOICFree(subData);
         return NS_OK;
     }
     else if (type == NS_PROVIDER_CACHE_REGISTER_TOPIC)
@@ -372,15 +372,15 @@ NSResult NSProviderDeleteCacheData(NSCacheType type, void * data)
         NS_LOG_V(DEBUG, "topicData->topicName = %s, topicData->state = %d", topicData->topicName,
                 (int)topicData->state);
 
-        OICFree(topicData->topicName);
-        OICFree(topicData);
+        NSOICFree(topicData->topicName);
+        NSOICFree(topicData);
     }
     else if (type == NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME ||
             type == NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID)
     {
         NSCacheTopicSubData * topicData = (NSCacheTopicSubData *) data;
-        OICFree(topicData->topicName);
-        OICFree(topicData);
+        NSOICFree(topicData->topicName);
+        NSOICFree(topicData);
     }
 
     return NS_OK;
@@ -412,7 +412,7 @@ NSResult NSProviderStorageDelete(NSCacheList * list, const char * delId)
 
             list->head = del->next;
             NSProviderDeleteCacheData(type, del->data);
-            OICFree(del);
+            NSOICFree(del);
             pthread_mutex_unlock(&NSCacheMutex);
             return NS_OK;
         }
@@ -431,7 +431,7 @@ NSResult NSProviderStorageDelete(NSCacheList * list, const char * delId)
 
             prev->next = del->next;
             NSProviderDeleteCacheData(type, del->data);
-            OICFree(del);
+            NSOICFree(del);
             pthread_mutex_unlock(&NSCacheMutex);
             return NS_OK;
         }
@@ -617,7 +617,7 @@ NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
 
             conTopicList->head = del->next;
             NSProviderDeleteCacheData(type, del->data);
-            OICFree(del);
+            NSOICFree(del);
             pthread_mutex_unlock(&NSCacheMutex);
             return NS_OK;
         }
@@ -639,7 +639,7 @@ NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
 
             prev->next = del->next;
             NSProviderDeleteCacheData(type, del->data);
-            OICFree(del);
+            NSOICFree(del);
             pthread_mutex_unlock(&NSCacheMutex);
             return NS_OK;
         }

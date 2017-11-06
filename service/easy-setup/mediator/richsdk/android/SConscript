@@ -26,14 +26,16 @@ android_home = env.get('ANDROID_HOME')
 
 ANDROID_TARGET_ARCH = env.get('TARGET_ARCH')
 if env.get('RELEASE'):
-	ANDROID_RELEASE="release"
+    ANDROID_RELEASE = "release"
 else:
-	ANDROID_RELEASE="debug"
+    ANDROID_RELEASE = "debug"
 
 os.environ['ANDROID_HOME'] = env.get('ANDROID_HOME')
 os.environ['ANDROID_NDK_HOME'] = env.get('ANDROID_NDK')
 
-if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exists(android_home + '/build-tools/20.0.0'):
+if not os.path.exists(android_home +
+                      '/platforms/android-21') or not os.path.exists(
+                          android_home + '/build-tools/20.0.0'):
     print '''
 ***************************************** Info ********************************
 *   Either 'Android API 21' is not installed or 'Android SDK Build Tools      *
@@ -64,20 +66,33 @@ if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exi
 
 #SConscript("../../../../../../android/android_api/SConscript")
 
+
 def ensure_libs(target, source, env):
-    return target, [source, env.get('BUILD_DIR') + 'liboc.so',
-                            env.get('BUILD_DIR') + 'liboc_logger.so',
-                            env.get('BUILD_DIR') + 'libESMediatorRich.so']
+    return target, [
+        source,
+        env.get('BUILD_DIR') + 'liboc.so',
+        env.get('BUILD_DIR') + 'liboc_logger.so',
+        env.get('BUILD_DIR') + 'libESMediatorRich.so'
+    ]
+
 
 jdk_env = Environment(ENV=os.environ)
-jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') +
-    ' build -bservice/easy-setup/mediator/richsdk/android/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE),
-    emitter = ensure_libs)
+jdk_env['BUILDERS']['Gradle'] = Builder(
+    action=env.get('ANDROID_GRADLE') +
+    ' build -bservice/easy-setup/mediator/richsdk/android/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace'
+    % (ANDROID_TARGET_ARCH, ANDROID_RELEASE),
+    emitter=ensure_libs)
 jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
-cmdBuildEasysetup=jdk_env.Gradle(target="EasySetupCore/objs",
-    source="EasySetupCore/src/main/java/org/iotivity/service/easysetup/mediator/EasySetup.java")
-jdk_env.Clean(cmdBuildEasysetup, Dir('#/service/easy-setup/mediator/richsdk/android/build/'))
-jdk_env.Clean(cmdBuildEasysetup, Dir('#/service/easy-setup/mediator/richsdk/android/EasySetupCore/build/'))
+cmdBuildEasysetup = jdk_env.Gradle(
+    target="EasySetupCore/objs",
+    source=
+    "EasySetupCore/src/main/java/org/iotivity/service/easysetup/mediator/EasySetup.java"
+)
+jdk_env.Clean(cmdBuildEasysetup,
+              Dir('#/service/easy-setup/mediator/richsdk/android/build/'))
+jdk_env.Clean(
+    cmdBuildEasysetup,
+    Dir('#/service/easy-setup/mediator/richsdk/android/EasySetupCore/build/'))
 Depends(cmdBuildEasysetup, env.get('baseAAR'))
 
-env.AppendUnique(easysetupAAR = cmdBuildEasysetup)
+env.AppendUnique(easysetupAAR=cmdBuildEasysetup)

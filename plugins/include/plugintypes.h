@@ -49,7 +49,7 @@ typedef enum
 /**
  * Handle to a plugin.
  */
-typedef struct PIPlugin {} PIPlugin;
+typedef struct PIPlugin *PIPluginPtr;
 
 #ifdef __cplusplus
 }

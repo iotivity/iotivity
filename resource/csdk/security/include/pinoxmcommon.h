@@ -21,7 +21,7 @@
 #ifndef PIN_CALLBACK_DEF_H_
 #define PIN_CALLBACK_DEF_H_
 
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "casecurityinterface.h"
 
 #ifdef __cplusplus
@@ -51,27 +51,27 @@ typedef enum OicSecPinType{
 /**
  * Function pointer to display pin code.
  */
-typedef void (*GeneratePinCallback)(char* pinData, size_t pinSize);
+typedef void (OC_CALL *GeneratePinCallback)(char* pinData, size_t pinSize);
 
 /**
  * Function pointer to display pin code, with context.
  */
-typedef void(*DisplayPinCallbackWithContext)(char* pinData, size_t pinSize, void* context);
+typedef void(OC_CALL *DisplayPinCallbackWithContext)(char* pinData, size_t pinSize, void* context);
 
 /**
  * Function pointer to close the displied PIN.
  */
-typedef void (*ClosePinDisplayCallback)(void);
+typedef void (OC_CALL *ClosePinDisplayCallback)(void);
 
 /**
  * Function pointer to input pin code.
  */
-typedef void (*InputPinCallback)(char* pinBuf, size_t bufSize);
+typedef void (OC_CALL *InputPinCallback)(char* pinBuf, size_t bufSize);
 
 /**
  * Function pointer to input pin code, with context and device information.
  */
-typedef void(*InputPinCallbackWithContext)(OicUuid_t deviceId, char* pinBuffer, size_t pinBufferSize, void* context);
+typedef void(OC_CALL *InputPinCallbackWithContext)(OicUuid_t deviceId, char* pinBuffer, size_t pinBufferSize, void* context);
 
 /**
  * Function to set the display PIN callback from the user.
@@ -80,7 +80,7 @@ typedef void(*InputPinCallbackWithContext)(OicUuid_t deviceId, char* pinBuffer, 
  *
  * @param pinCB implementation of generate PIN callback.
  */
-void SetGeneratePinCB(GeneratePinCallback pinCB);
+void OC_CALL SetGeneratePinCB(GeneratePinCallback pinCB);
 
 /**
  * Function to set the display PIN callback from the user with context.
@@ -92,7 +92,7 @@ void SetGeneratePinCB(GeneratePinCallback pinCB);
  *         OC_STACK_INVALID_PARAM if pinCB is invalid.
  *         OC_STACK_DUPLICATE_REQUEST if a display pin callback has already been set.
  */
-OCStackResult SetDisplayPinWithContextCB(DisplayPinCallbackWithContext displayPinCB, void* context);
+OCStackResult OC_CALL SetDisplayPinWithContextCB(DisplayPinCallbackWithContext displayPinCB, void* context);
 
 /**
  * Function to set the input PIN callback from the user.
@@ -101,7 +101,7 @@ OCStackResult SetDisplayPinWithContextCB(DisplayPinCallbackWithContext displayPi
  *
  * @param pinCB implementation of input PIN callback.
  */
-void SetInputPinCB(InputPinCallback pinCB);
+void OC_CALL SetInputPinCB(InputPinCallback pinCB);
 
 /**
  * Function to set the input PIN callback from the user with context.
@@ -113,7 +113,7 @@ void SetInputPinCB(InputPinCallback pinCB);
  *         OC_STACK_INVALID_PARAM if pinCB is invalid.
  *         OC_STACK_DUPLICATE_REQUEST if an input pin callback has already been set.
  */
-OCStackResult SetInputPinWithContextCB(InputPinCallbackWithContext inputPinCB, void* context);
+OCStackResult OC_CALL SetInputPinWithContextCB(InputPinCallbackWithContext inputPinCB, void* context);
 
 /**
  * Function to set the close PIN callback
@@ -121,7 +121,7 @@ OCStackResult SetInputPinWithContextCB(InputPinCallbackWithContext inputPinCB, v
  *
  * @param closeCB implementation of close PIN callback.
  */
-void SetClosePinDisplayCB(ClosePinDisplayCallback closeCB);
+void OC_CALL SetClosePinDisplayCB(ClosePinDisplayCallback closeCB);
 
 /**
  * Function to unset the input PIN callback.
@@ -130,13 +130,13 @@ void SetClosePinDisplayCB(ClosePinDisplayCallback closeCB);
  * @deprecated Use UnsetInputPinWithContextCB instead.
  *
  */
-void UnsetInputPinCB();
+void OC_CALL UnsetInputPinCB();
 
 /**
  * Function to unset the input PIN callback.
  * NOTE : Do not call this function while PIN based ownership transfer is in progress.
  */
-void UnsetInputPinWithContextCB();
+void OC_CALL UnsetInputPinWithContextCB();
 
 /**
  * Function to unset the PIN generation callback.
@@ -145,19 +145,19 @@ void UnsetInputPinWithContextCB();
  * @deprecated Use UnsetDisplayPinWithContextCB instead.
  *
  */
-void UnsetGeneratePinCB();
+void OC_CALL UnsetGeneratePinCB();
 
 /**
  * Function to unset the PIN display callback.
  * NOTE : Do not call this function while PIN based ownership transfer is in progress.
  */
-void UnsetDisplayPinWithContextCB();
+void OC_CALL UnsetDisplayPinWithContextCB();
 
 /**
  * Function to unset the PIN close callback.
  * NOTE : Do not call this function while PIN based ownership transfer is in progress.
  */
-void UnsetClosePinCB();
+void OC_CALL UnsetClosePinCB();
 
 /**
  * Function to generate a random PIN.
@@ -169,7 +169,7 @@ void UnsetClosePinCB();
  *
  * @return ::OC_STACK_OK in case of success or other value in case of error.
  */
-OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize);
+OCStackResult OC_CALL GeneratePin(char* pinBuffer, size_t bufferSize);
 
 /**
  * Function to get a pin for a device.
@@ -199,7 +199,7 @@ void ClosePinDisplay();
  *
  * @return ::OC_STACK_SUCCESS in case of success or other value in ccase of error.
  */
-OCStackResult SetPreconfigPin(const char *pinBuffer, size_t pinLength);
+OCStackResult OC_CALL SetPreconfigPin(const char *pinBuffer, size_t pinLength);
 #endif
 
 /**
@@ -210,7 +210,7 @@ OCStackResult SetPreconfigPin(const char *pinBuffer, size_t pinLength);
  *
  * @return ::OC_STACK_OK in case of success or other value in case of error.
  */
-OCStackResult SetRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType);
+OCStackResult OC_CALL SetRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType);
 
 #ifdef __WITH_DTLS__
 

@@ -19,7 +19,7 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 import os.path
-from tools.scons.RunTest import *
+from tools.scons.RunTest import run_test
 
 Import('test_env')
 
@@ -28,18 +28,22 @@ c_common_windows_test_env = test_env.Clone()
 ######################################################################
 # Build flags
 ######################################################################
-c_common_windows_test_env.PrependUnique(CPPPATH = ['../include'])
+c_common_windows_test_env.PrependUnique(CPPPATH=['../include'])
 
-c_common_windows_test_env.AppendUnique(LIBPATH = [os.path.join(c_common_windows_test_env.get('BUILD_DIR'), 'resource', 'c_common')])
-c_common_windows_test_env.PrependUnique(LIBS = ['win_helper'])
+c_common_windows_test_env.AppendUnique(LIBPATH=[
+    os.path.join(
+        c_common_windows_test_env.get('BUILD_DIR'), 'resource', 'c_common')
+])
+c_common_windows_test_env.PrependUnique(LIBS=['win_helper'])
 
 if c_common_windows_test_env.get('LOGGING'):
-    c_common_windows_test_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    c_common_windows_test_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-c_common_windows_tests = c_common_windows_test_env.Program('c_common_windows_tests', ['snprintf_test.cpp'])
+c_common_windows_tests = c_common_windows_test_env.Program(
+    'c_common_windows_tests', ['snprintf_test.cpp'])
 
 Alias("test", [c_common_windows_tests])
 

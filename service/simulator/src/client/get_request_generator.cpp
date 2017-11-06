@@ -79,6 +79,9 @@ void GETRequestGenerator::SendAllRequests()
 void GETRequestGenerator::onResponseReceived(SimulatorResult result,
         const SimulatorResourceModel &repModel, const RequestInfo &reqInfo)
 {
+    OC_UNUSED(result);
+    OC_UNUSED(repModel);
+    OC_UNUSED(reqInfo);
     OIC_LOG(DEBUG, TAG, "Response recieved");
     m_responseCnt++;
     completed();

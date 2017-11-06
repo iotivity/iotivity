@@ -115,6 +115,19 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
 OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm,
 	uint8_t **payload, size_t *size);
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+/**
+ * Enables Anon DH ciphersuite if device unowned and Just Works OTM is selected.
+ * Otherwise, does nothing.
+ *
+ * @param[out] enabled TRUE if Anon DH ciphersuite enabled, else FALSE
+ *
+ * @retval  ::OC_STACK_OK No errors.
+ * @retval  ::OC_STACK_ERROR An error occured.
+ */
+OCStackResult EnableAnonCipherSuiteIfUnOwnedAndJustWorksSelected(bool *enabled);
+#endif // __WITH_DTLS__ or __WITH_TLS__
+
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 /**
  * API to save the seed value to generate device UUID.
@@ -225,20 +238,14 @@ void DeleteDoxmBinData(OicSecDoxm_t* doxm);
  */
 bool AreDoxmBinPropertyValuesEqual(OicSecDoxm_t* doxm1, OicSecDoxm_t* doxm2);
 
-/**
- * Function to restore doxm resurce to initial status.
- * This function will use in case of error while ownership transfer
- */
-void RestoreDoxmToInitState();
-
 #if defined(__WITH_DTLS__) && defined(MULTIPLE_OWNER)
 /**
  * Callback function to handle MOT DTLS handshake result.
  * @param[out]   object           remote device information.
  * @param[out]   errorInfo        CA Error information.
  */
-void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
-                                const CAErrorInfo_t *errorInfo);
+CAResult_t MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
+                                        const CAErrorInfo_t *errorInfo);
 #endif //__WITH_DTLS__ && MULTIPLE_OWNER
 
 /**

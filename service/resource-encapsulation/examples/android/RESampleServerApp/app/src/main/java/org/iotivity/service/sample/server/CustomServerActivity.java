@@ -183,7 +183,7 @@ public class CustomServerActivity extends Activity
     private void initMenuList() {
         // the items that will be displayed on the UI.
         Item[] items = new Item[] { mSetTempItem, mGetRequestHandlerItem,
-                mSetRequestHandlerItem, mAttributeUpdatedListenerItem };
+            mSetRequestHandlerItem, mAttributeUpdatedListenerItem };
 
         mItemAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, items);

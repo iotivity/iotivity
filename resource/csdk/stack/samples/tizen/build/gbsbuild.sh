@@ -7,6 +7,8 @@ name=`echo $name|cut -d" " -f 1`
 version=`echo $version|cut -d" " -f 1`
 
 name=oicri
+# target arch is hardcoded
+gbsarch=${gbsarch:=armv7l}
 
 echo $1
 export TARGET_TRANSPORT=$1
@@ -34,9 +36,6 @@ export WITH_PROXY=$8
 
 echo $9
 export WITH_MQ=$9
-
-echo $10
-export TARGET_ARCH=$10
 
 echo $TARGET_TRANSPORT
 echo $BUILD_SAMPLE
@@ -105,7 +104,7 @@ if [ ! -d .git ]; then
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-RI-OIC --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6' --define 'WITH_TCP $7' --define 'WITH_PROXY $8' --define 'WITH_MQ $9' --define 'TARGET_ARCH $10'"
+gbscommand="gbs build -A "${gbsarch}" -B ~/GBS-ROOT-RI-OIC --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6' --define 'WITH_TCP $7' --define 'WITH_PROXY $8' --define 'WITH_MQ $9'"
 echo $gbscommand
 if eval $gbscommand; then
    echo "Core build is successful"
@@ -128,7 +127,7 @@ if echo $BUILD_SAMPLE|grep -qi '^ON$'; then
       git commit -m "Initial commit"
    fi
    echo "Calling sample gbs build command"
-   gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-RI-OIC --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6' --define 'WITH_TCP $7' --define 'WITH_PROXY $8' --define 'WITH_MQ $9' --define 'TARGET_ARCH $10'"
+   gbscommand="gbs build -A "${gbsarch}" -B ~/GBS-ROOT-RI-OIC --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6' --define 'WITH_TCP $7' --define 'WITH_PROXY $8' --define 'WITH_MQ $9'"
    echo $gbscommand
    if eval $gbscommand; then
       echo "Sample build is successful"

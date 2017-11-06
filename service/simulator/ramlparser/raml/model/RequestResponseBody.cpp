@@ -80,7 +80,9 @@ namespace RAML
                 }
             }
             else if (key == Keys::Example)
+            {
                 setExample(READ_NODE_AS_STRING(it->second));
+            }
             else if (key == Keys::FormParameters)
             {
                 YAML::Node paramNode = it->second;

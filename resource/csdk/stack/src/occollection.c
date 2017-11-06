@@ -28,15 +28,16 @@
 
 #include "occollection.h"
 #include "ocpayload.h"
+#include "ocendpoint.h"
 #include "ocstack.h"
 #include "ocstackinternal.h"
 #include "oicgroup.h"
 #include "oic_string.h"
 #include "payload_logging.h"
-
+#include "cainterface.h"
 #define TAG "OIC_RI_COLLECTION"
 
-static bool AddRTSBaslinePayload(OCRepPayload **linkArray, int size, OCRepPayload **colPayload)
+static bool AddRTSBaselinePayload(OCRepPayload **linkArray, int size, OCRepPayload **colPayload)
 {
     size_t arraySize = 0;
     for (int j = 0; j < size; j++)
@@ -133,49 +134,62 @@ static OCStackResult HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest
     uint8_t size = GetNumOfResourcesInCollection(collResource);
     OCRepPayload *colPayload = NULL;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
-    int i = 0;
-    OCStackResult ret = OC_STACK_OK;
+    OCStackResult ret = OC_STACK_ERROR;
     size_t dim[MAX_REP_ARRAY_DEPTH] = {size, 0, 0};
-    OCRepPayload **linkArr = (OCRepPayload **)OICCalloc(size, sizeof(OCRepPayload *));
-    VERIFY_PARAM_NON_NULL(TAG, linkArr, "Failed creating LinkArray");
+    OCRepPayload **linkArr = NULL;
 
-    for (OCChildResource *tempChildResource = collResource->rsrcChildResourcesHead;
-        tempChildResource && ret == OC_STACK_OK; tempChildResource = tempChildResource->next)
+    if (!(linkArr = OCLinksPayloadArrayCreate(collResource->uri, ehRequest, false, NULL)))
     {
-        OCResource* temp = tempChildResource->rsrcResource;
-        if (temp)
-        {
-            ret = BuildResponseRepresentation(temp, &linkArr[i++], &ehRequest->devAddr);
-        }
+        OIC_LOG_V(ERROR, TAG, "Failed getting LinksPayloadArray");
+        ret = OC_STACK_ERROR;
+        goto exit;
     }
 
-    if (ret == OC_STACK_OK)
+    if (size < 1)
+    {
+        ret = OC_STACK_NO_RESOURCE;
+        goto exit;
+    }
+
+    OCPayloadFormat contentFormat = OC_FORMAT_UNDEFINED;
+    OCGetRequestPayloadVersion(ehRequest, &contentFormat, NULL);
+    // from the OCF1.0 linklist specification, ll has array of links
+    if ((0 == strcmp(ifQueryParam, OC_RSRVD_INTERFACE_LL)) && (contentFormat == OC_FORMAT_VND_OCF_CBOR))
+    {
+        for (int n = 0; n < (int)size - 1; n++)
+        {
+            linkArr[n]->next = linkArr[n + 1];
+        }
+        colPayload = linkArr[0];
+        OICFree(linkArr);
+        ret = OC_STACK_OK;
+        goto exit;
+    }
+    else if ((contentFormat == OC_FORMAT_VND_OCF_CBOR || contentFormat == OC_FORMAT_CBOR))
     {
         colPayload = OCRepPayloadCreate();
-        if (colPayload)
+        VERIFY_PARAM_NON_NULL(TAG, linkArr, "Failed creating LinksPayloadArray");
+        if (0 == strcmp(OC_RSRVD_INTERFACE_DEFAULT, ifQueryParam))
         {
-            if (0 == strcmp(OC_RSRVD_INTERFACE_DEFAULT, ifQueryParam))
+            //TODO : Add resource type filtering once collections
+            // start supporting queries.
+            OCRepPayloadAddResourceType(colPayload, OC_RSRVD_RESOURCE_TYPE_COLLECTION);
+            for (OCResourceType *types = collResource->rsrcType; types; types = types->next)
             {
-                //TODO : Add resource type filtering once collections
-                // start supporting queries.
-                OCRepPayloadAddResourceType(colPayload, OC_RSRVD_RESOURCE_TYPE_COLLECTION);
-                for (OCResourceType *types = collResource->rsrcType; types; types = types->next)
+                if (0 != strcmp(OC_RSRVD_RESOURCE_TYPE_COLLECTION, types->resourcetypename))
                 {
-                    if (0 != strcmp(OC_RSRVD_RESOURCE_TYPE_COLLECTION, types->resourcetypename))
-                    {
-                        OCRepPayloadAddResourceType(colPayload, types->resourcetypename);
-                    }
+                    OCRepPayloadAddResourceType(colPayload, types->resourcetypename);
                 }
-                for (OCResourceInterface *itf = collResource->rsrcInterface; itf; itf = itf->next)
-                {
-                    OCRepPayloadAddInterface(colPayload, itf->name);
-                }
-                AddRTSBaslinePayload(linkArr, i, &colPayload);
             }
-            OCRepPayloadSetPropObjectArrayAsOwner(colPayload, OC_RSRVD_LINKS, linkArr, dim);
+            for (OCResourceInterface *itf = collResource->rsrcInterface; itf; itf = itf->next)
+            {
+                OCRepPayloadAddInterface(colPayload, itf->name);
+            }
+            AddRTSBaselinePayload(linkArr, size, &colPayload);
         }
+        OCRepPayloadSetPropObjectArrayAsOwner(colPayload, OC_RSRVD_LINKS, linkArr, dim);
+        ret = OC_STACK_OK;
     }
-
 exit:
     if (ret == OC_STACK_OK)
     {
@@ -186,8 +200,10 @@ exit:
         ehResult = (ret == OC_STACK_NO_RESOURCE) ? OC_EH_RESOURCE_NOT_FOUND : OC_EH_ERROR;
     }
     ret = SendResponse(colPayload, ehRequest, collResource, ehResult);
+    OIC_LOG_V(INFO, TAG, "Send Response result from HandleLinkedListInterface = %d", (int)ret);
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *)colPayload);
     OCRepPayloadDestroy(colPayload);
+
     return ret;
 }
 
@@ -316,118 +332,162 @@ exit:
     return result;
 }
 
-static OCRepPayload* addPolicyPayload(OCResourceHandle* resourceHandle, OCDevAddr* devAddr)
+static bool addPolicyPayload(OCResourceHandle* resourceHandle, OCDevAddr* devAddr,
+                             bool isOCFContentFormat, OCRepPayload** outPolicy)
 {
+    if (resourceHandle == NULL || devAddr == NULL || outPolicy == NULL)
+    {
+        return false;
+    }
+
     OCResourceProperty p = OCGetResourceProperties(resourceHandle);
     OCRepPayload* policy = OCRepPayloadCreate();
     if (policy)
     {
         OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP, ((p & OC_DISCOVERABLE) | (p & OC_OBSERVABLE)));
-        OCRepPayloadSetPropBool(policy, OC_RSRVD_SECURE, p & OC_SECURE);
-
-        if (p & OC_SECURE)
+        if (!isOCFContentFormat)
         {
-            uint16_t securePort = 0;
-            if (devAddr)
+            OCRepPayloadSetPropBool(policy, OC_RSRVD_SECURE, p & OC_SECURE);
+
+            if (p & OC_SECURE)
             {
-                if (devAddr->adapter == OC_ADAPTER_IP)
+                uint16_t securePort = 0;
+                if (devAddr)
                 {
-                    if (devAddr->flags & OC_IP_USE_V6)
+                    if (devAddr->adapter == OC_ADAPTER_IP)
                     {
-                        securePort = caglobals.ip.u6s.port;
-                    }
-                    else if (devAddr->flags & OC_IP_USE_V4)
-                    {
-                        securePort = caglobals.ip.u4s.port;
+                        if (devAddr->flags & OC_IP_USE_V6)
+                        {
+                            securePort = caglobals.ip.u6s.port;
+                        }
+                        else if (devAddr->flags & OC_IP_USE_V4)
+                        {
+                            securePort = caglobals.ip.u4s.port;
+                        }
                     }
                 }
-            }
-            OCRepPayloadSetPropInt(policy, OC_RSRVD_HOSTING_PORT, securePort);
+                OCRepPayloadSetPropInt(policy, OC_RSRVD_HOSTING_PORT, securePort);
 
-#ifdef TCP_ADAPTER
-#ifdef __WITH_TLS__
-            // tls
-            if (devAddr)
-            {
-                uint16_t tlsPort = 0;
-                GetTCPPortInfo(devAddr, &tlsPort, true);
-                OCRepPayloadSetPropInt(policy, OC_RSRVD_TLS_PORT, tlsPort);
+#if defined(TCP_ADAPTER) && defined(__WITH_TLS__)
+                // tls
+                if (devAddr)
+                {
+                    uint16_t tlsPort = 0;
+                    GetTCPPortInfo(devAddr, &tlsPort, true);
+                    OCRepPayloadSetPropInt(policy, OC_RSRVD_TLS_PORT, tlsPort);
+                }
+#endif
             }
-#else
-        }
-        // tcp
-        if (devAddr)
-        {
-            uint16_t tcpPort = 0;
-            GetTCPPortInfo(devAddr, &tcpPort, false);
-            OCRepPayloadSetPropInt(policy, OC_RSRVD_TCP_PORT, tcpPort);
+#ifdef TCP_ADAPTER
+#ifdef  __WITH_TLS__
+            if (!(p & OC_SECURE))
+            {
+#endif
+                // tcp
+                if (devAddr)
+                {
+                    uint16_t tcpPort = 0;
+                    GetTCPPortInfo(devAddr, &tcpPort, false);
+                    OCRepPayloadSetPropInt(policy, OC_RSRVD_TCP_PORT, tcpPort);
+                }
+#ifdef  __WITH_TLS__
+            }
 #endif
 #endif
         }
     }
-    return policy;
+    else
+    {
+        return false;
+    }
+
+    *outPolicy = policy;
+    return true;
 }
 
-OCStackResult BuildCollectionLinksPayloadValue(const char* resourceUri, OCRepPayloadValue** linksRepPayloadValue,
-    OCDevAddr* devAddr)
+static bool translateEndpointsPayload(OCEndpointPayload* epPayloadOrg,
+                                      size_t size, OCRepPayload*** outArrayPayload)
 {
-    OCStackResult result = OC_STACK_ERROR;
+    bool result = false;
+    OCRepPayload** arrayPayload = (OCRepPayload**)OICMalloc(sizeof(OCRepPayload*) * (size));
+    VERIFY_PARAM_NON_NULL(TAG, arrayPayload, "Failed creating arrayPayload");
+    VERIFY_PARAM_NON_NULL(TAG, epPayloadOrg, "Invalid Parameter epPayload");
+    VERIFY_PARAM_NON_NULL(TAG, outArrayPayload, "Invalid Parameter outArrayPayload");
+    OCEndpointPayload* epPayload = epPayloadOrg;
 
-    OCRepPayloadValue* createdPayloadValue = (OCRepPayloadValue*)OICCalloc(1, sizeof(OCRepPayloadValue));
-    if (!createdPayloadValue)
+    for (size_t i = 0; (i < size) && (epPayload != NULL) ; i++)
     {
-        return result;
+        arrayPayload[i] = OCRepPayloadCreate();
+        if (!arrayPayload[i])
+        {
+            for (size_t j = 0; j < i; j++)
+            {
+                OCRepPayloadDestroy(arrayPayload[j]);
+            }
+            result = false;
+            goto exit;
+        }
+        char* createdEPStr = OCCreateEndpointString(epPayload);
+        OIC_LOG_V(DEBUG, TAG, " OCCreateEndpointString() = %s", createdEPStr);
+        OCRepPayloadSetPropString(arrayPayload[i], OC_RSRVD_ENDPOINT, createdEPStr);
+
+        // in case of pri as 1, skip set property
+        if (epPayload->pri != 1 )
+            OCRepPayloadSetPropInt(arrayPayload[i], OC_RSRVD_PRIORITY, epPayload->pri);
+
+        epPayload = epPayload->next;
+        result = true;
     }
-    createdPayloadValue->name = OC_RSRVD_LINKS;
-    createdPayloadValue->type = OCREP_PROP_ARRAY;
+    *outArrayPayload = arrayPayload;
+exit:
+    OCEndpointPayloadDestroy(epPayloadOrg);
+    if (result == false)
+    {
+        OICFree(arrayPayload);
+    }
+    return result;
+}
+
+OCRepPayload** BuildCollectionLinksPayloadArray(const char* resourceUri,
+    bool isOCFContentFormat, OCDevAddr* devAddr, bool insertSelfLink, size_t* createdArraySize)
+{
+    bool result = false;
+    OCRepPayload** arrayPayload = NULL;
+    size_t childCount = 0;
 
     const OCResourceHandle colResourceHandle = OCGetResourceHandleAtUri(resourceUri);
-    if (!colResourceHandle)
-    {
-        //in case input resource is not registered resource.
-        OICFree(createdPayloadValue);
-        return result;
-    }
+    VERIFY_PARAM_NON_NULL(TAG, colResourceHandle, "Failed geting colResourceHandle");
 
     const OCChildResource* childResource = ((OCResource*)colResourceHandle)->rsrcChildResourcesHead;
-    if (!childResource)
-    {
-        //in case input resource is not collection resource.
-        OICFree(createdPayloadValue);
-        return result;
-    }
+    VERIFY_PARAM_NON_NULL(TAG, childResource, "Failed geting childResource");
 
     //children resources count calculation
-    size_t childCount = 0;
     const OCChildResource* childCountResource = childResource;
     do {
         childCount++;
         childCountResource = childCountResource->next;
     } while (childCountResource);
 
-    OCRepPayload** arrayPayload = (OCRepPayload** )OICMalloc(sizeof(OCRepPayload*) * (childCount + 1));
-    if (!arrayPayload)
+    if (insertSelfLink)
     {
-        OICFree(createdPayloadValue);
-        return result;
+        childCount++;
     }
 
-    OCResource* iterResource = (OCResource*) colResourceHandle;
-    for (size_t i = 0; i < childCount + 1; i++)
+    arrayPayload = (OCRepPayload**)OICMalloc(sizeof(OCRepPayload*) * (childCount));
+    VERIFY_PARAM_NON_NULL(TAG, arrayPayload, "Failed creating arrayPayload");
+
+    OCResource* iterResource = childResource->rsrcResource;
+    for (size_t i = 0; i < childCount; i++)
     {
         arrayPayload[i] = OCRepPayloadCreate();
         if (!arrayPayload[i])
         {
-            OICFree(createdPayloadValue);
-
             for (size_t j = 0; j < i; j++)
             {
                 OCRepPayloadDestroy(arrayPayload[j]);
             }
-
-            OICFree(arrayPayload);
-
-            return result;
+            result = false;
+            goto exit;
         }
 
         OCRepPayloadSetUri(arrayPayload[i], iterResource->uri);
@@ -444,47 +504,101 @@ OCStackResult BuildCollectionLinksPayloadValue(const char* resourceUri, OCRepPay
             OCRepPayloadAddInterface(arrayPayload[i], resInterface->name);
         }
 
-        //@todo selectively fill in the data between Policy Map for OIC and EP Array for OCF
-        if (!OCRepPayloadSetPropObjectAsOwner(arrayPayload[i], OC_RSRVD_POLICY,
-                             addPolicyPayload((OCResourceHandle*)iterResource, devAddr)))
+        OCRepPayload* outPolicy = NULL;
+        //Policy Map will have tls and tcp properties for legacy support,
+        // in case contents format is cbor instead of vnd.ocf/cbor
+        if (!addPolicyPayload((OCResourceHandle*)iterResource, devAddr, isOCFContentFormat,
+                               &outPolicy) ||
+            !OCRepPayloadSetPropObjectAsOwner(arrayPayload[i], OC_RSRVD_POLICY, outPolicy))
         {
-            OICFree(createdPayloadValue);
-
+            OCRepPayloadDestroy(outPolicy);
             for (size_t j = 0; j <= i; j++)
             {
                 OCRepPayloadDestroy(arrayPayload[j]);
             }
-
-            OICFree(arrayPayload);
-
-            return result;
+            result = false;
+            goto exit;
         }
 
-        if (i == 0)
+        //EP is added in case contents format is vnd.ocf/cbor
+        if (isOCFContentFormat)
         {
-            iterResource = childResource->rsrcResource;
+            CAEndpoint_t *info = NULL;
+            size_t networkSize = 0;
+            size_t epSize = 0;
+            CAGetNetworkInformation(&info, &networkSize);
+            OIC_LOG_V(DEBUG, TAG, "Network Information size = %d", (int) networkSize);
+
+            OCEndpointPayload *listHead = NULL;
+            CreateEndpointPayloadList(iterResource,
+                devAddr, info, networkSize, &listHead, &epSize, NULL);
+            OICFree(info);
+            OIC_LOG_V(DEBUG, TAG, "Result of CreateEndpointPayloadList() = %s",
+                                  listHead ? "true":"false");
+
+            OCRepPayload** epArrayPayload = NULL;
+            size_t epsDim[MAX_REP_ARRAY_DEPTH] = { epSize, 0, 0 };
+
+            if (!translateEndpointsPayload(listHead, epSize, &epArrayPayload) ||
+                !OCRepPayloadSetPropObjectArrayAsOwner(arrayPayload[i],
+                            OC_RSRVD_ENDPOINTS, epArrayPayload, epsDim))
+            {
+                if (epArrayPayload)
+                {
+                    for (size_t j = 0; j < epSize; j++)
+                    {
+                        OCRepPayloadDestroy(epArrayPayload[j]);
+                    }
+                    OICFree(epArrayPayload);
+                }
+
+                for (size_t j = 0; j <= i; j++)
+                {
+                    OCRepPayloadDestroy(arrayPayload[j]);
+                }
+                result = false;
+                goto exit;
+            }
         }
-        else
+
+        if (iterResource != colResourceHandle)
         {
             childResource = childResource->next;
             if (childResource)
             {
                 iterResource = childResource->rsrcResource;
             }
+            else if (insertSelfLink)
+            {
+                iterResource = colResourceHandle;
+            }
         }
+        else // handling selfLink case
+        {
+            OIC_LOG(INFO, TAG, "adding rel for self link");
+            const char* relArray[2] = { "self", "item" };
+            size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 2, 0, 0 };
+            if (!OCRepPayloadSetStringArray(arrayPayload[i], OC_RSRVD_REL, relArray, dimensions))
+            {
+                OIC_LOG(ERROR, TAG, "Failed setting rel property");
+                result = false;
+                goto exit;
+            } 
+        }
+        result = true;
     }
 
-    //create OCRepPayloadValue internal structure and pass
-    //createdPayloadValue:OCRepPayloadValue.createdPayloadValueArray:arr->arrayPayload:objArray
-    OCRepPayloadValueArray* createdPayloadValueArray = &createdPayloadValue->arr;
-    size_t linkDim[MAX_REP_ARRAY_DEPTH] = { childCount + 1, 0, 0 };
-    OC_STATIC_ASSERT(sizeof(createdPayloadValueArray->dimensions) == sizeof(linkDim), "Array size mismatch!");
-    memcpy(createdPayloadValueArray->dimensions, linkDim, sizeof(linkDim));
-    createdPayloadValueArray->type = OCREP_PROP_OBJECT;
-    createdPayloadValueArray->objArray = arrayPayload;
+exit:
+    if (!result && (arrayPayload != NULL))
+    {
+        OICFree(arrayPayload);
+        arrayPayload = NULL;
+    }
 
-    *linksRepPayloadValue = createdPayloadValue;
+    if (arrayPayload != NULL && createdArraySize != NULL)
+        *createdArraySize = childCount;
+    else if (createdArraySize != NULL)
+        *createdArraySize = 0;
 
-    result = OC_STACK_OK;
-    return result;
+    return arrayPayload;
 }

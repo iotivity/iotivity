@@ -26,7 +26,7 @@ Import('env')
 
 target_os = env.get('TARGET_OS')
 
-if target_os not in ['arduino','darwin', 'windows']:
+if target_os not in ['arduino', 'darwin', 'windows']:
     # Build resource-encapsulation project
     SConscript('resource-encapsulation/SConscript')
 
@@ -38,7 +38,7 @@ if target_os not in ['arduino','darwin', 'windows']:
         SConscript('scene-manager/SConscript')
 
     # Build notification-service project
-    if target_os in ['linux','android','tizen','ios']:
+    if target_os in ['linux', 'android', 'tizen', 'ios']:
         SConscript('notification/SConscript')
 
     # Build simulator module
@@ -50,5 +50,5 @@ if target_os not in ['arduino','darwin', 'windows']:
         SConscript('coap-http-proxy/SConscript')
 
 # Build EasySetup module
-if target_os in ['arduino', 'android', 'ios', 'linux','tizen']:
+if target_os in ['arduino', 'android', 'ios', 'linux', 'tizen']:
     SConscript('easy-setup/SConscript')

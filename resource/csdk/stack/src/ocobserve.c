@@ -472,18 +472,19 @@ ResourceObserver* GetObserverUsingId (const OCObservationId observeId)
 {
     ResourceObserver *out = NULL;
 
-    if (observeId)
+    LL_FOREACH (g_serverObsList, out)
     {
-        LL_FOREACH (g_serverObsList, out)
+        if (out->observeId == observeId)
         {
-            if (out->observeId == observeId)
-            {
-                return out;
-            }
-            CheckTimedOutObserver(out);
+            return out;
         }
+        CheckTimedOutObserver(out);
     }
-    OIC_LOG(INFO, TAG, "Observer node not found!!");
+
+    if (!out)
+    {
+        OIC_LOG(INFO, TAG, "Observer node not found!!");
+    }
     return NULL;
 }
 
@@ -673,14 +674,14 @@ HandleVirtualObserveRequest(OCServerRequest *request)
         // The request is to send an observe payload, not register/deregister an observer
         goto exit;
     }
-    OCVirtualResources virtualUriInRequest;
+    OCVirtualResources virtualUriInRequest = OC_UNKNOWN_URI;
     virtualUriInRequest = GetTypeOfVirtualURI(request->resourceUrl);
     if (virtualUriInRequest != OC_WELL_KNOWN_URI)
     {
         // OC_WELL_KNOWN_URI is currently the only virtual resource that may be observed
         goto exit;
     }
-    OCResource *resourcePtr;
+    OCResource *resourcePtr = NULL;
     resourcePtr = FindResourceByUri(OC_RSRVD_WELL_KNOWN_URI);
     if (NULL == resourcePtr)
     {

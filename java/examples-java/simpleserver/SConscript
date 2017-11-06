@@ -1,0 +1,37 @@
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Copyright 2017 Intel Corporation All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Import('jdk_env')
+
+# Build simplerserver sample
+simpleserver_classes = jdk_env.Java(target='classes',
+                                     source=['src/main/java'])
+# jdk_env.Jar(target='simpleserver.jar',
+#             source=[simpleserver_classes, 'MANIFEST.MF'])
+# SCons is incorrectly calculating the output classes for simpleserver sample.
+# The following is a work around for the build command above. The unfortunate
+# side effect of this work around results in a larger output.
+example_jar = jdk_env.Jar(target='simpleserver.jar',
+            source=['classes', 'MANIFEST.MF'],
+            JARCHDIR='$SOURCE')
+jdk_env.Install("../..", example_jar)
+if jdk_env.get('SECURED') == '1':
+    jdk_env.Install(target="../..", source=['src/main/assets/oic_svr_db_server.dat'])
+    jdk_env.Install(target="../..", source=['src/main/assets/light_introspection.dat'])

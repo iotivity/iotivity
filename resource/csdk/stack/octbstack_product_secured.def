@@ -6,7 +6,6 @@ OCConfigSelfOwnership
 OCConvertDerCSRToPem
 OCDeleteACLList
 OCDeleteDiscoveredDevices
-OCDeletePdAclList
 OCDeleteRoleCertificateByCredId
 OCDeleteUuidList
 OCDiscoverOwnedDevices
@@ -29,12 +28,12 @@ OCGetPublicKeyFromCSR
 OCGetRolesResource
 OCGetUuidFromCSR
 OCInitPM
+OCClosePM
 OCPDMCleanupForTimeout
 OCProvisionACL
 OCSaveACL
 OCProvisionCertificate
 OCProvisionCredentials
-OCProvisionDirectPairing
 OCProvisionPairwiseDevices
 OCProvisionSymmetricRoleCredentials
 OCProvisionTrustCertChain
@@ -52,6 +51,7 @@ OCSelectOwnershipTransferMethod
 OCSaveOwnRoleCert
 OCSetOwnerTransferCallbackData
 OCSetOxmAllowStatus
+OCSetPeerCNVerifyCallback
 OCUnlinkDevices
 OCVerifyCSRSignature
 

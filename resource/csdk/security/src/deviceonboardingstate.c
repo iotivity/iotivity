@@ -22,7 +22,6 @@
 #include "srmutility.h"
 #include "octypes.h"
 #include "logger.h"
-#include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "aclresource.h"
 #include "amaclresource.h"
@@ -32,6 +31,7 @@
 #endif /* (__WITH_DTLS__) || (__WITH_TLS__) */
 #include "doxmresource.h"
 #include "pstatresource.h"
+#include "resourcemanager.h"
 
 #define TAG "OIC_SRM_DOS"
 
@@ -78,6 +78,10 @@ static bool IsValidStateTransition(OicSecDeviceOnboardingState_t oldState,
         {
             ret = true;
         }
+        break;
+        case DOS_STATE_COUNT:
+        // The DOS_STATE_COUNT should never be passed into this function
+        assert(false);
         break;
     }
 
@@ -155,7 +159,7 @@ static bool IsReadyToEnterRFOTM()
 
     // Verify doxm.devowneruuid == nil UUID.
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmDevOwnerId(&tempUuid), ERROR);
-    VERIFY_TRUE_OR_EXIT(TAG, !IsNilUuid(&tempUuid), WARNING);
+    VERIFY_TRUE_OR_EXIT(TAG, IsNilUuid(&tempUuid), WARNING);
 
     // Check and log whether doxm.deviceuuid == nil UUID ("may" reqt not "shall")
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDoxmDeviceID(&tempUuid), ERROR);
@@ -381,12 +385,11 @@ static bool EnterRESET()
     bool ret = false;
 
     // Restore Mfr Defaults
-    // TODO [IOT-2023]: we need OSWG Security TG to decide on how "mfr defaults"
-    // should really work.  Hard coded SVRs?  Backup .dat file?  Hard coded
-    // policy without SVRs?  IMO this is *highly* platform and mfr process
-    // dependent and probably isn't worth investing the time to create an
-    // IoTivity "backup/restore" capability.  Instead the need to do so should
-    // be documented in the device vendor certification paperwork, per BZ 1383.
+    // "Mfr Defaults" is defined by manufacturer.  It could be "failsafe"
+    // SVRs (e.g. the hard-coded SVRs in IoTivity) or it could be a backup
+    // copy of the initally-provisioned SVRs (e.g. the ResetSecureResourceInPS
+    // function in IoTivity).
+    // TODO [IOT-2633]: VERIFY_SUCCESS(TAG, OC_STACK_OK == ResetSecureResources(), ERROR);
 
     // Set doxm.deviceuuid = Mfr Default (handled above)
     // Set doxm.sct = Mfr Default ("")
@@ -407,13 +410,30 @@ static bool EnterRESET()
     VERIFY_SUCCESS(TAG, OC_STACK_OK == SetDoxmRownerId(&THE_NIL_UUID), ERROR);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatRownerId(&THE_NIL_UUID), ERROR);
 
+    // clear all bits in cm and tm before setting the 2 lsbs
+    OicSecDpm_t dpmZero = 0;
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatCm(dpmZero), ERROR);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatTm(dpmZero), ERROR);
+
     // Set pstat.isop = FALSE
-    // Set pstat.cm RESET and unset TAKE_OWNER
-    // Unset pstat.tm and set TAKE_OWNER
+    // Set pstat.cm RESET, and unset TAKE_OWNER
+    // Unset pstat.tm RESET, and set TAKE_OWNER
     // Set pstat.dos.s to RESET
     VERIFY_SUCCESS(TAG,
-        EnterStateGeneric(false, true, false, false, false, DOS_RESET),
+        EnterStateGeneric(false, true, false, false, true, DOS_RESET),
         ERROR);
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    // Enable Anon DH cipher suite if appropriate
+    bool isAnonEnabled = false;
+    VERIFY_SUCCESS(TAG,
+        OC_STACK_OK == EnableAnonCipherSuiteIfUnOwnedAndJustWorksSelected(&isAnonEnabled),
+        ERROR);
+    OIC_LOG_V(INFO, TAG, "%s: Anon Ciphersuite %sENABLED.", __func__,
+        isAnonEnabled ? "" : "NOT ");
+#endif // __WITH_DTLS__ or __WITH_TLS__
+
+    ret = true;
 
 exit:
     OIC_LOG_V(DEBUG, TAG, "%s: returning %s.", __func__, ret?"true":"false");
@@ -428,10 +448,12 @@ static bool EnterSRESET()
     bool ret = false;
 
     // Set pstat.isop = FALSE
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatIsop(false), ERROR);
-
-    // Set pstat.dos to SRESET
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatDosS(DOS_SRESET), ERROR);
+    // Set pstat.cm RESET, and unset TAKE_OWNER
+    // Unset pstat.tm RESET, and unset TAKE_OWNER
+    // Set pstat.dos.s to RESET
+    VERIFY_SUCCESS(TAG,
+        EnterStateGeneric(false, true, false, false, false, DOS_SRESET),
+        ERROR);
 
     ret = true;
 
@@ -458,7 +480,22 @@ static OCStackResult DoStateChange(OicSecDeviceOnboardingState_t newState)
         // No preconditions other than setting dos.p = true, which is done above
         if (EnterRESET())
         {
-            ret = OC_STACK_OK;
+            // if RESET succeeds, immediately enter RFOTM
+            if (IsReadyToEnterRFOTM())
+            {
+                if (EnterRFOTM())
+                {
+                    ret = OC_STACK_OK;
+                }
+                else
+                {
+                    ret = OC_STACK_INTERNAL_SERVER_ERROR;
+                }
+            }
+            else
+            {
+                ret = OC_STACK_FORBIDDEN_REQ;
+            }
         }
         else
         {
@@ -537,6 +574,10 @@ static OCStackResult DoStateChange(OicSecDeviceOnboardingState_t newState)
             ret = OC_STACK_FORBIDDEN_REQ;
         }
         break;
+        case DOS_STATE_COUNT:
+        // The DOS_STATE_COUNT should never be passed into this function
+        assert(false);
+        break;
     }
 
     OIC_LOG_V(DEBUG, TAG, "%s: returning %d.", __func__, ret);
@@ -613,8 +654,6 @@ OCStackResult SetDosState(const OicSecDeviceOnboardingState_t desiredState)
             already pending.", __func__);
         ret = OC_STACK_FORBIDDEN_REQ;
     }
-
-    // TODO [IOT-2023] implement RESET->RFOTM change once supported by prov tool
 
     // TODO [IOT-2023] if OC_STACK_OK, update all SVRs in Persistent Storage?
 

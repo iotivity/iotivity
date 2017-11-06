@@ -128,7 +128,7 @@ extern "C"
 #define CA_OPTION_URI_QUERY 15
 #define CA_OPTION_ACCEPT 17
 #define CA_OPTION_LOCATION_QUERY 20
-        
+
 /**
  * @def UUID_PREFIX
  * @brief uuid prefix in certificate subject field
@@ -369,6 +369,8 @@ typedef enum
     CA_NOT_SUPPORTED,               /**< Not supported */
     CA_STATUS_NOT_INITIALIZED,      /**< Not Initialized*/
     CA_DTLS_AUTHENTICATION_FAILURE, /**< Decryption error in DTLS */
+    CA_CONTINUE_OPERATION,          /**< Error happens but current operation should continue */
+    CA_HANDLE_ERROR_OTHER_MODULE,   /**< Error happens but it should be handled in other module */
     CA_STATUS_FAILED =255           /**< Failure */
     /* Result code - END HERE */
 } CAResult_t;
@@ -397,6 +399,7 @@ typedef enum
     CA_REQUEST_ENTITY_TOO_LARGE = 413,      /**< Request Entity Too Large */
     CA_INTERNAL_SERVER_ERROR = 500,         /**< Internal Server Error */
     CA_BAD_GATEWAY = 502,
+    CA_SERVICE_UNAVAILABLE = 503,           /**< Server Unavailable */
     CA_RETRANSMIT_TIMEOUT = 504,            /**< Retransmit timeout */
     CA_PROXY_NOT_SUPPORTED = 505            /**< Proxy not enabled to service a request */
     /* Response status code - END HERE */
@@ -450,6 +453,15 @@ typedef enum
     CA_FORMAT_APPLICATION_VND_OCF_CBOR,
     CA_FORMAT_UNSUPPORTED
 } CAPayloadFormat_t;
+
+/**
+ * Option ID of header option. The values match CoAP option types in pdu.h.
+ */
+typedef enum
+{
+    CA_HEADER_OPTION_ID_LOCATION_PATH = 8,
+    CA_HEADER_OPTION_ID_LOCATION_QUERY = 20
+} CAHeaderOptionId_t;
 
 /**
  * Header options structure to be filled.
@@ -701,6 +713,14 @@ typedef void (*CAResponseCallback)(const CAEndpoint_t *object,
  */
 typedef void (*CAErrorCallback)(const CAEndpoint_t *object,
                                 const CAErrorInfo_t *errorInfo);
+
+/**
+ * Callback function type for error.
+ * @param[out]   object           remote device information.
+ * @param[out]   result           error information.
+ */
+typedef CAResult_t (*CAHandshakeErrorCallback)(const CAEndpoint_t *object,
+                                               const CAErrorInfo_t *errorInfo);
 
 /**
  * Callback function type for network status changes delivery from CA common logic.

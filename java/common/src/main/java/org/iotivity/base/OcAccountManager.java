@@ -451,10 +451,10 @@ public final class OcAccountManager {
      * Event listeners are notified asynchronously
      */
     public interface OnPostListener {
-            public void onPostCompleted(List<OcHeaderOption> headerOptionList,
-                                        OcRepresentation ocRepresentation);
+        public void onPostCompleted(List<OcHeaderOption> headerOptionList,
+                                    OcRepresentation ocRepresentation);
 
-            public void onPostFailed(Throwable ex);
+        public void onPostFailed(Throwable ex);
     }
 
     /**

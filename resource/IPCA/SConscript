@@ -27,9 +27,6 @@ Import('env')
 
 ipca_env = env.Clone()
 
-if ipca_env['CC'] == 'cl':
-    ipca_env.AppendUnique(CCFLAGS=['/W4'])
-
 # c_common calls into mbedcrypto and ipca calls into c_common
 ipca_env.AppendUnique(LIBS = ['mbedcrypto'])
 

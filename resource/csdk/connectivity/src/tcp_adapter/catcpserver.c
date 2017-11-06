@@ -66,6 +66,7 @@
 
 #include <coap/pdu.h>
 #include <coap/utlist.h>
+#include <inttypes.h>
 
 #ifdef __WITH_TLS__
 #include "ca_adapter_net_ssl.h"
@@ -172,7 +173,7 @@ static CAResult_t CATCPCreateMutex()
 {
     if (!g_mutexObjectList)
     {
-        g_mutexObjectList = oc_mutex_new();
+        g_mutexObjectList =  oc_mutex_new_recursive();
         if (!g_mutexObjectList)
         {
             OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -502,7 +503,6 @@ static void CAFindReadyMessage()
     if (caglobals.tcp.terminate)
     {
         caglobals.tcp.updateEvent = WSA_INVALID_EVENT;
-        WSACleanup();
     }
 }
 
@@ -648,7 +648,7 @@ CAResult_t CAConstructCoAP(CATCPSessionInfo_t *svritem, unsigned char **data,
 
     unsigned char *inBuffer = *data;
     size_t inLen = *dataLength;
-    OIC_LOG_V(DEBUG, TAG, "before-datalength : %u", *dataLength);
+    OIC_LOG_V(DEBUG, TAG, "before-datalength : %" PRIuPTR, *dataLength);
 
     if (NULL == svritem->data && inLen > 0)
     {
@@ -738,7 +738,7 @@ CAResult_t CAConstructCoAP(CATCPSessionInfo_t *svritem, unsigned char **data,
     *data = inBuffer;
     *dataLength = inLen;
 
-    OIC_LOG_V(DEBUG, TAG, "after-datalength : %u", *dataLength);
+    OIC_LOG_V(DEBUG, TAG, "after-datalength : %" PRIuPTR, *dataLength);
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return CA_STATUS_OK;
 }
@@ -767,10 +767,10 @@ static CAResult_t CAReceiveMessage(CATCPSessionInfo_t *svritem)
             //[3][4] bytes in tls header are tls payload length
             tlsLength = TLS_HEADER_SIZE +
                             (size_t)((svritem->tlsdata[3] << 8) | svritem->tlsdata[4]);
-            OIC_LOG_V(DEBUG, TAG, "toal tls length = %u", tlsLength);
+            OIC_LOG_V(DEBUG, TAG, "total tls length = %" PRIuPTR, tlsLength);
             if (tlsLength > sizeof(svritem->tlsdata))
             {
-                OIC_LOG_V(ERROR, TAG, "toal tls length is too big (buffer size : %u)",
+                OIC_LOG_V(ERROR, TAG, "total tls length is too big (buffer size : %" PRIuPTR ")",
                                     sizeof(svritem->tlsdata));
                 return CA_RECEIVE_FAILED;
             }
@@ -791,7 +791,7 @@ static CAResult_t CAReceiveMessage(CATCPSessionInfo_t *svritem)
         else
         {
             svritem->tlsLen += len;
-            OIC_LOG_V(DEBUG, TAG, "nb_read : %u bytes , recv() : %d bytes, svritem->tlsLen : %u bytes",
+            OIC_LOG_V(DEBUG, TAG, "nb_read : %" PRIuPTR " bytes , recv() : %d bytes, svritem->tlsLen : %" PRIuPTR " bytes",
                                 nbRead, len, svritem->tlsLen);
             if (tlsLength > 0 && tlsLength == svritem->tlsLen)
             {
@@ -1157,10 +1157,14 @@ void CATCPStopServer()
         caglobals.tcp.connectionFds[1] = OC_INVALID_SOCKET;
     }
 #else
-    // receive thread will stop immediately.
-    if (!WSASetEvent(caglobals.tcp.updateEvent))
+    // unit tests sometimes stop the TCP Server after starting just the UDP Server.
+    if (caglobals.tcp.updateEvent != NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "set shutdown event failed: %u", GetLastError());
+        // receive thread will stop immediately.
+        if (!WSASetEvent(caglobals.tcp.updateEvent))
+        {
+            OIC_LOG_V(DEBUG, TAG, "set shutdown event failed: %u", GetLastError());
+        }
     }
 #endif
 
@@ -1209,6 +1213,7 @@ size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen)
     if (!pdu)
     {
         OIC_LOG(ERROR, TAG, "outpdu is null");
+        OIC_LOG_V(DEBUG, TAG, "data length: %" PRIuPTR, dlen);
         return 0;
     }
 
@@ -1475,7 +1480,6 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *removedData)
     removedData->data = NULL;
 
     OICFree(removedData);
-    removedData = NULL;
 
     OIC_LOG(DEBUG, TAG, "data is removed from session list");
     return CA_STATUS_OK;

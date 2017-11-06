@@ -24,7 +24,7 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "ocrandom.h"
 #include "octypes.h"
 #include "oic_time.h"
@@ -238,6 +238,16 @@ void IPCAElevatorClient::CreateResourceRelativePath()
     ASSERT_EQ(IPCA_OK, IPCAPropertyBagCreate(&propertyBagHandle));
 
     CreateElevatorResource(ELEVATOR_RESOURCE_CREATE_RELATIVE_PATH, propertyBagHandle);
+
+    IPCAPropertyBagDestroy(propertyBagHandle);
+}
+
+void IPCAElevatorClient::CreateResourceLongRelativePath()
+{
+    IPCAPropertyBagHandle propertyBagHandle;
+    ASSERT_EQ(IPCA_OK, IPCAPropertyBagCreate(&propertyBagHandle));
+
+    CreateElevatorResource(ELEVATOR_RESOURCE_CREATE_RELATIVE_PATH_LONG, propertyBagHandle);
 
     IPCAPropertyBagDestroy(propertyBagHandle);
 }

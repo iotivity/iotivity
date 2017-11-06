@@ -38,7 +38,9 @@ OCInterfaceDetails *OCInterfaceDetails::getInstance()
 bool OCInterfaceDetails::isInterface(const std::string &interfaceType)
 {
     if (m_interfaces.end() != m_interfaces.find(interfaceType))
+    {
         return true;
+    }
     return false;
 }
 
@@ -49,7 +51,9 @@ bool OCInterfaceDetails::isRequestSupported(const std::string &interfaceType,
     {
         std::vector<std::string> requests = m_interfaces[interfaceType];
         if (requests.end() != std::find(requests.begin(), requests.end(), requestType))
+        {
             return true;
+        }
     }
 
     return false;

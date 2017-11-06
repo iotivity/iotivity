@@ -28,7 +28,9 @@ std::map<std::string, std::string> JniQueryParameter::toCpp(jobject jQueryParams
 {
     std::map<std::string, std::string> result;
     if (!jQueryParams)
+    {
         return result;
+    }
 
     static jmethodID entrySetMethodID = m_env->GetMethodID(gSimulatorClassRefs.mapCls, "entrySet",
                                         "()Ljava/util/Set;");
@@ -46,7 +48,9 @@ std::map<std::string, std::string> JniQueryParameter::toCpp(jobject jQueryParams
     jobject entrySet = m_env->CallObjectMethod(jQueryParams, entrySetMethodID);
     jobject iterator = m_env->CallObjectMethod(entrySet, iteratorMethodID);
     if (!entrySet || !iterator || m_env->ExceptionCheck())
+    {
         return result;
+    }
 
     while (m_env->CallBooleanMethod(iterator, hasNextMethodID))
     {

@@ -33,37 +33,37 @@ tw_path = os.path.join(src_dir, 'plugins')
 # Source files and Target(s)
 ######################################################################
 
-print"Reading Telegesis Wrapper (TW) script"
+print "Reading Telegesis Wrapper (TW) script"
 
-env.AppendUnique(CPPPATH = [ os.path.join(tw_path, 'include'),
-                             os.path.join(tw_path, 'include', 'internal'),
-                             os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
-                             os.path.join(src_dir, 'resource', 'csdk', 'include'),
-                             os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
-                             os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
-                             os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
-                             os.path.join(tw_path, 'zigbee_wrapper', 'telegesis_wrapper', 'include')
-                             ])
+env.AppendUnique(CPPPATH=[
+    os.path.join(tw_path, 'include'),
+    os.path.join(tw_path, 'include', 'internal'),
+    os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
+    os.path.join(src_dir, 'resource', 'csdk', 'include'),
+    os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
+    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
+    os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
+    os.path.join(tw_path, 'zigbee_wrapper', 'telegesis_wrapper', 'include')
+])
 
 if target_os not in ['arduino', 'windows']:
-	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
+    env.AppendUnique(CPPDEFINES=['WITH_POSIX'])
 
-if target_os in ['darwin','ios']:
-	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+if target_os in ['darwin', 'ios']:
+    env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
 
 tw_src = [
-         os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'src', 'oic_string.c'),
-         os.path.join(src_dir, 'resource', 'csdk', 'logger', 'src', 'logger.c'),
-         'twsocketlist.c',
-         'telegesis_socket.c',
-         'telegesis_wrapper.c'
-         ]
+    os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'src',
+                 'oic_string.c'),
+    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'src', 'logger.c'),
+    'twsocketlist.c', 'telegesis_socket.c', 'telegesis_wrapper.c'
+]
 
-env.AppendUnique(TW_SRC = tw_src)
+env.AppendUnique(TW_SRC=tw_src)
 
 if target_os in ['android', 'tizen']:
-	calib = env.SharedLibrary('telegesis_wrapper', env.get('TW_SRC'))
+    calib = env.SharedLibrary('telegesis_wrapper', env.get('TW_SRC'))
 else:
-	calib = env.StaticLibrary('telegesis_wrapper', env.get('TW_SRC'))
+    calib = env.StaticLibrary('telegesis_wrapper', env.get('TW_SRC'))
 env.InstallTarget(calib, 'libtelegesis_wrapper')
 env.UserInstallTargetLib(calib, 'libtelegesis_wrapper')

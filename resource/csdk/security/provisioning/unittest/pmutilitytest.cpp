@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  * *****************************************************************/
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "pmutility.h"
 #include "pmutilityinternal.h"
 #include "doxmresource.h"

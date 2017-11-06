@@ -281,7 +281,6 @@ See run.bat for more example usage parameters
  * BUILD_SAMPLE=ON or OFF (Build with sample)
  * ROUTING=GW or EP (Enable routing)
  * WITH_TCP=true or false (Enable CoAP over TCP Transport, arduino is not supported)
- * WITH_RA=true or false (Build with Remote Access module)
  * RD_MODE=CLIENT or SERVER (Build including Resource Directory)
  * SIMULATOR=true or false (Build with simulator module)
  * Possible values for <WITH_MQ> are: PUB,SUB,BROKER (Build including Message Queue)
@@ -293,6 +292,10 @@ See run.bat for more example usage parameters
         LOG_LEVEL=WARNING : The logs including WARNING, ERROR, FATAL level is printed.
         LOG_LEVEL=ERROR : The logs including ERROR, FATAL level is printed.
         LOG_LEVEL=FATAL : FATAL level is printed.
+   Log entries that have the OC_LOG_PRIVATE_DATA bit set, in addition to DEBUG, INFO, WARNING,
+   ERROR, or FATAL, contain confidential information and therefore are not printed by default.
+   The application has to call OCSetLogLevel() to enable printing of private information in the
+   log.
 
 Note:
 1) for convenience, a script (auto_build.sh) is provided to run possible build

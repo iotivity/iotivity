@@ -22,7 +22,7 @@
 #define IOTVT_SRM_CSRR_H
 
 #include "cainterface.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "octypes.h"
 
 #if defined(__WITH_TLS__) || defined(__WITH_DTLS__)

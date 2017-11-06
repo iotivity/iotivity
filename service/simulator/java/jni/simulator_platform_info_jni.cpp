@@ -27,7 +27,9 @@ extern SimulatorClassRefs gSimulatorClassRefs;
 jobject JniPlatformInfo::toJava(PlatformInfo &platformInfo)
 {
     if (!m_env)
+    {
         return nullptr;
+    }
 
     static jmethodID platformInfoCtor = m_env->GetMethodID(gSimulatorClassRefs.platformInfoCls,
                                         "<init>", "()V");
@@ -52,7 +54,9 @@ PlatformInfo JniPlatformInfo::toCpp(jobject jPlatformInfo)
 {
     PlatformInfo platformInfo;
     if (!m_env || !jPlatformInfo)
+    {
         return platformInfo;
+    }
 
     platformInfo.setPlatformID(getFieldValue(jPlatformInfo, "mPlatformId"));
     platformInfo.setManufacturerName(getFieldValue(jPlatformInfo, "mManufacturerName"));

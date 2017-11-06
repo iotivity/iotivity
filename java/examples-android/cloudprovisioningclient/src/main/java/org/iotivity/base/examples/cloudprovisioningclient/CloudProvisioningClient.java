@@ -326,140 +326,143 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
     private String filePath = "";
     private TextView mEventsTextView;
     @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setContentView(R.layout.main_activity);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main_activity);
 
-            signUp = (Button) findViewById(R.id.signup);
-            signIn = (Button) findViewById(R.id.signin);
-            signOut = (Button) findViewById(R.id.signout);
-            getAclId = (Button) findViewById(R.id.getAclId);
-            getAclInfo = (Button) findViewById(R.id.getAclInfo);
-            requestCert = (Button) findViewById(R.id.request);
-            postCrl = (Button) findViewById(R.id.postCRL);
-            getCrl = (Button) findViewById(R.id.getCRL);
+        signUp = (Button) findViewById(R.id.signup);
+        signIn = (Button) findViewById(R.id.signin);
+        signOut = (Button) findViewById(R.id.signout);
+        getAclId = (Button) findViewById(R.id.getAclId);
+        getAclInfo = (Button) findViewById(R.id.getAclInfo);
+        requestCert = (Button) findViewById(R.id.request);
+        postCrl = (Button) findViewById(R.id.postCRL);
+        getCrl = (Button) findViewById(R.id.getCRL);
 
-            updateAce = (Button) findViewById(R.id.updateAce);
-            lyt1 = (LinearLayout) findViewById(R.id.lyt1);
-            lyt2 = (LinearLayout) findViewById(R.id.lyt2);
-            signupLyt = (LinearLayout) findViewById(R.id.signupLyt);
-            signinLyt = (LinearLayout) findViewById(R.id.signinLyt);
-
-
-            userid = (TextView) findViewById(R.id.userid);
-
-            mEventsTextView = (TextView) findViewById(R.id.eventView);
-
-            filePath = getFilesDir().getPath() + "/"; //  data/data/<package>/files/
-            //copy CBOR file when application runs first time
-            settingPreference = PreferenceManager.getDefaultSharedPreferences(this);
-            boolean isFirstRun = settingPreference.getBoolean("FIRSTRUN", true);
-            if (isFirstRun) {
-                copyCborFromAsset();
-                SharedPreferences.Editor editor = settingPreference.edit();
-                editor.putBoolean("FIRSTRUN", false);
-                editor.putString("IP", StringConstants.DEFAULT_COAP_DERVER_IP);
-                editor.putString("PORT", StringConstants.DEFAULT_COAP_DERVER_PORT);
-                editor.putString("DEVICEID", StringConstants.DEFAULT_DEVICE_ID);
-                editor.putString("OWNERID", StringConstants.DEFAULT_OWNER_ID);
-                editor.putString("SERIALNUMBER", StringConstants.DEFAULT_SERIAL_NUMBER);
-                editor.commit();
-            }
-            if (settingPreference.getString("useruuid", "").equals("")) {
-
-                lyt1.setVisibility(View.GONE);
-                lyt2.setVisibility(View.GONE);
-                signupLyt.setVisibility(View.VISIBLE);
-                signinLyt.setVisibility(View.GONE);
+        updateAce = (Button) findViewById(R.id.updateAce);
+        lyt1 = (LinearLayout) findViewById(R.id.lyt1);
+        lyt2 = (LinearLayout) findViewById(R.id.lyt2);
+        signupLyt = (LinearLayout) findViewById(R.id.signupLyt);
+        signinLyt = (LinearLayout) findViewById(R.id.signinLyt);
 
 
-            } else {
-                userid.setText(settingPreference.getString("useruuid", ""));
-                lyt1.setVisibility(View.VISIBLE);
-                lyt2.setVisibility(View.VISIBLE);
-                signupLyt.setVisibility(View.GONE);
-                signinLyt.setVisibility(View.VISIBLE);
-            }
+        userid = (TextView) findViewById(R.id.userid);
 
-            initOICStack();
-            ocCloudProvisioning = new OcCloudProvisioning(settingPreference.getString("IP", ""),
-                    Integer.valueOf(settingPreference.getString("PORT", "")));
+        mEventsTextView = (TextView) findViewById(R.id.eventView);
 
-            signUp.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                    signUp();
-                    }
-                    });
-            signIn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                    signIn();
-                    }
-                    });
-            signOut.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                    signOut();
-                    }
-                    });
-            getAclId.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                    getAclId();
-                    }
-                    });
-            getAclInfo.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                    getAclInfo();
-                    }
-                    });
-            requestCert.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                    requestCert();
-                    }
-                    });
-            postCrl.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                    postCrl();
-                    }
-                    });
-            getCrl.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                    getCrl();
-                    }
-                    });
-            updateAce.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                    updateAces();
-                    }
-                    });
+        filePath = getFilesDir().getPath() + "/"; //  data/data/<package>/files/
+        //copy CBOR file when application runs first time
+        settingPreference = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isFirstRun = settingPreference.getBoolean("FIRSTRUN", true);
+        if (isFirstRun) {
+            copyCborFromAsset();
+            SharedPreferences.Editor editor = settingPreference.edit();
+            editor.putBoolean("FIRSTRUN", false);
+            editor.putString("IP", StringConstants.DEFAULT_COAP_DERVER_IP);
+            editor.putString("PORT", StringConstants.DEFAULT_COAP_DERVER_PORT);
+            editor.putString("DEVICEID", StringConstants.DEFAULT_DEVICE_ID);
+            editor.putString("OWNERID", StringConstants.DEFAULT_OWNER_ID);
+            editor.putString("SERIALNUMBER", StringConstants.DEFAULT_SERIAL_NUMBER);
+            editor.commit();
+        }
+        if (settingPreference.getString("useruuid", "").equals("")) {
+
+            lyt1.setVisibility(View.GONE);
+            lyt2.setVisibility(View.GONE);
+            signupLyt.setVisibility(View.VISIBLE);
+            signinLyt.setVisibility(View.GONE);
+
+
+        } else {
+            userid.setText(settingPreference.getString("useruuid", ""));
+            lyt1.setVisibility(View.VISIBLE);
+            lyt2.setVisibility(View.VISIBLE);
+            signupLyt.setVisibility(View.GONE);
+            signinLyt.setVisibility(View.VISIBLE);
         }
 
+        initOICStack();
+        ocCloudProvisioning = new OcCloudProvisioning(settingPreference.getString("IP", ""),
+                Integer.valueOf(settingPreference.getString("PORT", "")));
+
+        signUp.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                signUp();
+                }
+                });
+        signIn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                signIn();
+                }
+                });
+        signOut.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                signOut();
+                }
+                });
+        getAclId.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                getAclId();
+                }
+                });
+        getAclInfo.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                getAclInfo();
+                }
+                });
+        requestCert.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                requestCert();
+                }
+                });
+        postCrl.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                postCrl();
+                }
+                });
+        getCrl.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                getCrl();
+                }
+                });
+        updateAce.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                updateAces();
+                }
+                });
+    }
 
     @Override
-        public boolean onCreateOptionsMenu(Menu menu) {
-            // Inflate the menu; this adds items to the action bar if it is present.
-            getMenuInflater().inflate(R.menu.menu_cloud_provision, menu);
-            return true;
-        }
+    public void onDestroy() {
+        super.onDestroy();
+        closeIOCStack();
+    }
 
     @Override
-        public boolean onOptionsItemSelected(MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.action_settings:
-                    setDefualtSettings();
-                    return (true);
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_cloud_provision, menu);
+        return true;
+    }
 
-
-            }
-            return (super.onOptionsItemSelected(item));
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                setDefualtSettings();
+                return (true);
         }
+        return (super.onOptionsItemSelected(item));
+    }
 
     private void signIn() {
         try {
@@ -618,6 +621,18 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
             OcProvisioning.provisionInit(sqlDbPath + StringConstants.OIC_SQL_DB_FILE);
         } catch (OcException e) {
             logMessage(TAG + "provisionInit error: " + e.getMessage());
+            Log.e(TAG, e.getMessage());
+        }
+    }
+
+    private void closeIOCStack() {
+        try {
+            /*
+             * Close DataBase
+             */
+            OcProvisioning.provisionClose();
+        } catch (OcException e) {
+            logMessage(TAG + "provisionClose error: " + e.getMessage());
             Log.e(TAG, e.getMessage());
         }
     }

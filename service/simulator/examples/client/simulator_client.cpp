@@ -107,7 +107,7 @@ class ClientController
         SimulatorRemoteResourceSP selectResource()
         {
             std::lock_guard<std::recursive_mutex> lock(m_mutex);
-            if (0 == m_resList.size())
+            if (m_resList.empty())
             {
                 std::cout << "No resources!" << std::endl;
                 return nullptr;
@@ -149,10 +149,14 @@ class ClientController
                 // Add to local list
                 std::lock_guard<std::recursive_mutex> lock(m_mutex);
                 if (m_resList.end() == m_resList.find(resource->getID()))
+                {
                     m_resList[resource->getID()] = resource;
+                }
                 else
+                {
                     std::cout << "Resource with UID: " << resource->getID() << "already exist in the list!" <<
                               std::endl;
+                }
             };
 
             try
@@ -180,7 +184,10 @@ class ClientController
 
         void displayResource(SimulatorRemoteResourceSP resource)
         {
-            if (!resource) return;
+            if (!resource)
+            {
+                return;
+            }
 
             std::cout << "#############################" << std::endl;
             std::cout << "URI: " << resource->getURI().c_str() << std::endl;
@@ -200,7 +207,10 @@ class ClientController
         void observeResource()
         {
             SimulatorRemoteResourceSP resource = selectResource();
-            if (!resource) return;
+            if (!resource)
+            {
+                 return;
+            }
 
             // callback implementaion
             SimulatorRemoteResource::ObserveNotificationCallback callback =
@@ -251,7 +261,10 @@ class ClientController
         void sendGet()
         {
             SimulatorRemoteResourceSP resource = selectResource();
-            if (!resource) return;
+            if (!resource)
+            {
+                return;
+            }
 
             // callback implementaion
             SimulatorRemoteResource::ResponseCallback callback =
@@ -289,7 +302,10 @@ class ClientController
         void sendPut()
         {
             SimulatorRemoteResourceSP resource = selectResource();
-            if (!resource) return;
+            if (!resource)
+            {
+                return;
+            }
 
             // callback implementaion
             SimulatorRemoteResource::ResponseCallback callback =
@@ -331,7 +347,10 @@ class ClientController
         void sendPost()
         {
             SimulatorRemoteResourceSP resource = selectResource();
-            if (!resource) return;
+            if (!resource)
+            {
+                return;
+            }
 
             // callback implementaion
             SimulatorRemoteResource::ResponseCallback callback =
@@ -373,7 +392,10 @@ class ClientController
         void sendAllGETRequests()
         {
             SimulatorRemoteResourceSP resource = selectResource();
-            if (!resource) return;
+            if (!resource)
+            {
+                return;
+            }
 
             SimulatorRemoteResource::AutoRequestGenerationCallback callback =
                 [] (const std::string & uid, int sessionId, OperationState state)
@@ -443,7 +465,10 @@ class ClientController
         void sendAllPOSTRequests()
         {
             SimulatorRemoteResourceSP resource = selectResource();
-            if (!resource) return;
+            if (!resource)
+            {
+                return;
+            }
 
             SimulatorRemoteResource::AutoRequestGenerationCallback callback =
                 [] (const std::string & uid, int sessionId, OperationState state)
@@ -479,7 +504,9 @@ class ClientController
         {
             SimulatorRemoteResourceSP resource = selectResource();
             if (!resource)
+            {
                 return;
+            }
 
             try
             {
@@ -505,7 +532,9 @@ class ClientController
         {
             SimulatorRemoteResourceSP resource = selectResource();
             if (!resource)
+            {
                 return;
+            }
 
             try
             {
@@ -539,7 +568,9 @@ class ClientController
         {
             SimulatorRemoteResourceSP resource = selectResource();
             if (!resource)
+            {
                 return;
+            }
 
             try
             {
@@ -610,7 +641,9 @@ void setLogger()
         case 1:
             {
                 if (false == SimulatorManager::getInstance()->setConsoleLogger())
+                {
                     std::cout << "Failed to set the default console logger" << std::endl;
+                }
             }
             break;
 
@@ -620,7 +653,9 @@ void setLogger()
                 std::cout << "Enter the file path (without file name) : ";
                 std::cin >> filePath;
                 if (false == SimulatorManager::getInstance()->setFileLogger(filePath))
+                {
                     std::cout << "Failed to set default file logger" << std::endl;
+                }
             }
             break;
 

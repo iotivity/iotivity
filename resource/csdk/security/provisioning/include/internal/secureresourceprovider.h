@@ -22,9 +22,28 @@
 #define SRP_SECURERESOURCEPROVIDER_H
 
 #include "ocstack.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "pmtypes.h"
 #include "octypes.h"
+
+// Enum type index for data types.
+typedef enum
+{
+    CHAIN_TYPE = 0,                       /**< Certificate trust chain.**/
+    ACL_TYPE,                             /**< Access control list.**/
+    PSK_TYPE,                             /**< Pre-Shared Key.**/
+    CERT_TYPE,                            /**< X.509 certificate.**/
+    MOT_TYPE                              /**< Multiple Ownership Transfer.**/
+} DataType_t;
+
+/**
+ * Structure to carry general data to callback.
+ */
+typedef struct Data
+{
+    void *ctx;                                   /**< Pointer to user context.**/
+    DataType_t type;                             /**< Data type of the context.**/
+} Data_t;
 
 
 #ifdef __cplusplus
@@ -183,30 +202,6 @@ OCStackResult SRPRegisterTrustCertChainNotifier(void *ctx, TrustCertChainChangeC
 void SRPRemoveTrustCertChainNotifier(void);
 
 #endif // __WITH_DTLS__ || __WITH_TLS__
-/**
- * API to send Direct-Pairing Configuration to a device.
- *
- * @param[in] ctx Application context to be returned in result callback.
- * @param[in] selectedDeviceInfo Selected target device.
- * @param[in] pconf PCONF pointer.
- * @param[in] resultCallback callback provided by API user, callback will be called when
- *            provisioning request recieves a response from resource server.
- * @return OC_STACK_OK in case of success and other value otherwise.
- */
-OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
-                                        OicSecPconf_t *pconf, OCProvisionResultCB resultCallback);
-
-/**
- * API to send Direct-Pairing Configuration to a device.
- *
- * @param[in] selectedDeviceInfo Selected target device.
- * @param[in] pconf PCONF pointer.
- * @param[in] resultCallback callback provided by API user, callback will be called when
- *            provisioning request recieves a response from resource server.
- * @return OC_STACK_OK in case of success and other value otherwise.
- */
-OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
-                                        OicSecPconf_t *pconf, OCProvisionResultCB resultCallback);
 
 /**
  * API to provision credential to devices.
@@ -244,14 +239,22 @@ OCStackResult SRPProvisionCredentials(void *ctx,OicSecCredType_t type, size_t ke
  * @param[in] keySize size of key
  * @param[in] pDev1 Pointer to PMOwnedDeviceInfo_t instance, representing the resource to be provisioned.
  * @param[in] pDev2 Pointer to PMOwnedDeviceInfo_t instance, representing the resource to be provisioned.
+ * @param[in] role1 When provisioning a PSK (type is SYMMETRIC_PAIR_WISE_KEY), this is the role which
+ *                  the device indicated by pDev1 will also have when communicating with pDev2. Use NULL
+ *                  to associate no role with this credential.
+ * @param[in] role2 When provisioning a PSK (type is SYMMETRIC_PAIR_WISE_KEY), this is the role which
+ *                  the device indicated by pDev1 will also have when communicating with pDev2. Use NULL
+ *                  to associate no role with this credential.
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from first resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult SRPProvisionCredentialsDos(void *ctx,OicSecCredType_t type, size_t keySize,
-                                      const OCProvisionDev_t *pDev1,
-                                      const OCProvisionDev_t *pDev2,
-                                      OCProvisionResultCB resultCallback);
+                                         const OCProvisionDev_t *pDev1,
+                                         const OCProvisionDev_t *pDev2,
+                                         const OicSecRole_t *role1,
+                                         const OicSecRole_t *role2,
+                                         OCProvisionResultCB resultCallback);
 
 /**
  * Function to unlink devices.
@@ -348,6 +351,33 @@ OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
  */
 OCStackResult SRPReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
                                      size_t *chainSize);
+
+/**
+ * Function for certificate provisioning.
+ * @param[in] ctx Application context to be returned in result callback.
+ * @param[in] pDev Selected target device.
+ * @param[in] pemCert the certificate in PEM.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request receives a response from resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPProvisionCertificate(void *ctx, const OCProvisionDev_t *pDev,
+        const char* pemCert, OCProvisionResultCB resultCallback);
+
+/**
+ * Updates pstat resource of server.
+ *
+ * @param[in] data Structure for the application context
+ * @param[in] dos DOS mode
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from first resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t dos,
+                            OCClientResponseHandler resultCallback);
+
+void FreeData(Data_t *data);
+
 #ifdef __cplusplus
 }
 #endif

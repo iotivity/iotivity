@@ -49,17 +49,17 @@ int gObservation = 0;
 void * ChangeLightRepresentation (void *param);
 
 // Set of strings for each of platform Info fields
-std::string  platformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
-std::string  manufacturerName = "OCF";
-std::string  manufacturerLink = "https://www.iotivity.org";
-std::string  modelNumber = "myModelNumber";
-std::string  dateOfManufacture = "2016-01-15";
-std::string  platformVersion = "myPlatformVersion";
-std::string  operatingSystemVersion = "myOS";
-std::string  hardwareVersion = "myHardwareVersion";
-std::string  firmwareVersion = "1.0";
-std::string  supportLink = "https://www.iotivity.org";
-std::string  systemTime = "2016-01-15T11.01";
+std::string  gPlatformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+std::string  gManufacturerName = "OCF";
+std::string  gManufacturerLink = "https://www.iotivity.org";
+std::string  gModelNumber = "myModelNumber";
+std::string  gDateOfManufacture = "2016-01-15";
+std::string  gPlatformVersion = "myPlatformVersion";
+std::string  gOperatingSystemVersion = "myOS";
+std::string  gHardwareVersion = "myHardwareVersion";
+std::string  gFirmwareVersion = "1.0";
+std::string  gSupportLink = "https://www.iotivity.org";
+std::string  gSystemTime = "2016-01-15T11.01";
 
 // Set of strings for each of device info fields
 std::string  deviceName = "IoTivity Simple Server HQ";
@@ -554,9 +554,9 @@ int main(int argc, char* argv[])
     OCPlatform::Configure(cfg);
     std::cout << "Starting server & setting platform info\n";
 
-    OCStackResult result = SetPlatformInfo(platformId, manufacturerName, manufacturerLink,
-            modelNumber, dateOfManufacture, platformVersion, operatingSystemVersion,
-            hardwareVersion, firmwareVersion, supportLink, systemTime);
+    OCStackResult result = SetPlatformInfo(gPlatformId, gManufacturerName, gManufacturerLink,
+            gModelNumber, gDateOfManufacture, gPlatformVersion, gOperatingSystemVersion,
+            gHardwareVersion, gFirmwareVersion, gSupportLink, gSystemTime);
 
     result = OCPlatform::registerPlatformInfo(platformInfo);
 

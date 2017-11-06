@@ -66,6 +66,7 @@ namespace OC
 
         delete context;
     }
+
     OCStackResult OCSecure::provisionInit(const std::string& dbPath)
     {
         OCStackResult result;
@@ -75,6 +76,25 @@ namespace OC
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCInitPM(dbPath.c_str());
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
+    OCStackResult OCSecure::provisionClose()
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCClosePM();
         }
         else
         {
@@ -445,7 +465,7 @@ namespace OC
         return result;
     }
 
-    static void inputPinCallbackWrapper(OicUuid_t deviceId, char* pinBuffer, size_t pinBufferSize, void* context)
+    static void OC_CALL inputPinCallbackWrapper(OicUuid_t deviceId, char* pinBuffer, size_t pinBufferSize, void* context)
     {
         (static_cast<InputPinContext*>(context))->callback(deviceId, pinBuffer, pinBufferSize);
     }
@@ -647,7 +667,7 @@ namespace OC
         return result;
     }
 
-    static void displayPinCallbackWrapper(char* pinData, size_t pinDataSize, void* context)
+    static void OC_CALL displayPinCallbackWrapper(char* pinData, size_t pinDataSize, void* context)
     {
         (static_cast<DisplayPinContext*>(context))->callback(pinData, pinDataSize);
     }
@@ -795,7 +815,7 @@ namespace OC
         return result;
     }
 
-    OCStackResult OCSecure::displayNumCallbackWrapper(void* ctx,
+    OCStackResult OC_CALL OCSecure::displayNumCallbackWrapper(void* ctx,
             uint8_t verifNum[MUTUAL_VERIF_NUM_LEN])
     {
         uint8_t *number = NULL;
@@ -872,7 +892,7 @@ namespace OC
         return result;
     }
 
-    OCStackResult OCSecure::confirmUserCallbackWrapper(void* ctx)
+    OCStackResult OC_CALL OCSecure::confirmUserCallbackWrapper(void* ctx)
     {
         UserConfirmNumContext* context = static_cast<UserConfirmNumContext*>(ctx);
         if (!context)
@@ -1395,12 +1415,12 @@ namespace OC
     OCStackResult OCSecureResource::getLinkedDevices(UuidList_t &uuidList)
     {
         OCStackResult result;
-        size_t numOfDevices = -1;
         auto devUuid = devPtr->doxm->deviceID;
         auto cLock = m_csdkLock.lock();
 
         if (cLock)
         {
+            size_t numOfDevices;
             std::lock_guard<std::recursive_mutex> lock(*cLock);
 
             OCUuidList_t* linkedDevs = nullptr, *tmp = nullptr;
@@ -1413,40 +1433,6 @@ namespace OC
                 }
                 OCDeleteUuidList(linkedDevs);
             }
-        }
-        else
-        {
-            oclog() <<"Mutex not found";
-            result = OC_STACK_ERROR;
-        }
-        return result;
-    }
-
-    OCStackResult OCSecureResource::provisionDirectPairing( const OicSecPconf_t* pconf,
-            ResultCallBack resultCallback)
-    {
-        if (!pconf)
-        {
-            oclog() <<"PCONF can't be null";
-            return OC_STACK_INVALID_PARAM;
-        }
-        if (!resultCallback)
-        {
-            oclog() <<"result callback can not be null";
-            return OC_STACK_INVALID_CALLBACK;
-        }
-
-        OCStackResult result;
-        auto cLock = m_csdkLock.lock();
-
-        if (cLock)
-        {
-            ProvisionContext* context = new ProvisionContext(resultCallback);
-
-            std::lock_guard<std::recursive_mutex> lock(*cLock);
-            result = OCProvisionDirectPairing(static_cast<void*>(context),
-                    devPtr, const_cast<OicSecPconf_t*>(pconf),
-                    &OCSecureResource::callbackWrapper);
         }
         else
         {

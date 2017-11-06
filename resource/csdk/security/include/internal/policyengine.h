@@ -23,7 +23,7 @@
 
 #include "ocstack.h"
 #include "logger.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "secureresourcemanager.h"
 #include "cainterface.h"
 #include <stdlib.h>

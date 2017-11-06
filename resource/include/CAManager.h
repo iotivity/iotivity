@@ -148,7 +148,7 @@ namespace OC
          *        0: OC_USER_PREF_CLOUD (default)
          *        1: OC_USER_PREF_LOCAL_UDP
          *        2: OC_USER_PREF_LOCAL_TCP
-         * @return ::OC_STACK_OK if sucess.
+         * @return ::OC_STACK_OK if succes.
          */
         OCStackResult setConnectionManagerUserConfig(OCConnectUserPref_t connPriority);
 #endif

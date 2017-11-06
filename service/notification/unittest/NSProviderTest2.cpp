@@ -99,11 +99,10 @@ namespace
             request->obsInfo.action = action;
             request->obsInfo.obsId = id++;
 
-            std::string query = std::string(NS_QUERY_CONSUMER_ID)
+            const std::string query = std::string(NS_QUERY_CONSUMER_ID)
                     + "=" + testConsumerId;
-            request->query = (char *)malloc(query.size() + 1);
+            request->query = strdup(query.c_str());
             EXPECT_NE((void *)NULL, request->query);
-            strncpy(request->query, query.c_str(), query.size() + 1);
         }
         request->method = method;
         request->numRcvdVendorSpecificHeaderOptions = 0;
@@ -239,7 +238,7 @@ TEST(NotificationProviderTest, ExpectFailGetRequestForNotificationWithInvalidInt
 {
     OCEntityHandlerFlag flag = OC_REQUEST_FLAG;
     OCEntityHandlerRequest * getRequest = getEntityRequest(OC_REST_GET, OC_OBSERVE_NO_OPTION);
-    std::string query = std::string("if=") + "test.invalid";
+    const std::string query = std::string("if=") + "test.invalid";
     getRequest->query = strdup(query.c_str());
     auto ret = NSEntityHandlerNotificationCb(flag, getRequest, NULL);
 
@@ -253,7 +252,7 @@ TEST(NotificationProviderTest, ExpectFailGetRequestForMsgWithInvalidInterface)
 {
     OCEntityHandlerFlag flag = OC_REQUEST_FLAG;
     OCEntityHandlerRequest * getRequest = getEntityRequest(OC_REST_GET, OC_OBSERVE_NO_OPTION);
-    std::string query = std::string("if=") + "test.invalid";
+    const std::string query = std::string("if=") + "test.invalid";
     getRequest->query = strdup(query.c_str());
     auto ret = NSEntityHandlerMessageCb(flag, getRequest, NULL);
 
@@ -267,7 +266,7 @@ TEST(NotificationProviderTest, ExpectFailGetRequestForSyncWithInvalidInterface)
 {
     OCEntityHandlerFlag flag = OC_REQUEST_FLAG;
     OCEntityHandlerRequest * getRequest = getEntityRequest(OC_REST_GET, OC_OBSERVE_NO_OPTION);
-    std::string query = std::string("if=") + "test.invalid";
+    const std::string query = std::string("if=") + "test.invalid";
     getRequest->query = strdup(query.c_str());
     auto ret = NSEntityHandlerSyncCb(flag, getRequest, NULL);
 
@@ -281,7 +280,7 @@ TEST(NotificationProviderTest, ExpectFailGetRequestForTopicWithInvalidInterface)
 {
     OCEntityHandlerFlag flag = OC_REQUEST_FLAG;
     OCEntityHandlerRequest * getRequest = getEntityRequest(OC_REST_GET, OC_OBSERVE_NO_OPTION);
-    std::string query = std::string("if=") + "test.invalid";
+    const std::string query = std::string("if=") + "test.invalid";
     getRequest->query = strdup(query.c_str());
     auto ret = NSEntityHandlerTopicCb(flag, getRequest, NULL);
 
@@ -295,7 +294,7 @@ TEST(NotificationProviderTest, ExpectSuccessGetRequestForTopicWithInvalidInterfa
 {
     OCEntityHandlerFlag flag = OC_REQUEST_FLAG;
     OCEntityHandlerRequest * getRequest = getEntityRequest(OC_REST_GET, OC_OBSERVE_NO_OPTION);
-    std::string query = std::string("if=") + NS_INTERFACE_BASELINE;
+    const std::string query = std::string("if=") + NS_INTERFACE_BASELINE;
     getRequest->query = strdup(query.c_str());
     auto ret = NSEntityHandlerTopicCb(flag, getRequest, NULL);
 

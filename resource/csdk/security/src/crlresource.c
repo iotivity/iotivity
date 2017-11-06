@@ -49,7 +49,7 @@
 #define CRL_DEFAULT_THIS_UPDATE     "150101000000Z"
 #define CRL_DEFAULT_LAST_UPDATE     "20150701000000"
 #define CRL_DEFAULT_CRL_DATA        "-"
-#define CRL_MAP_SIZE                (3)
+#define CRL_MAP_SIZE                (5)
 
 static OCResourceHandle     gCrlHandle  = NULL;
 static OicSecCrl_t         *gCrl        = NULL;
@@ -92,7 +92,7 @@ static bool copyByteArray(const uint8_t *in, size_t in_len, uint8_t **out, size_
 
 static bool copyCrl(const OicSecCrl_t *in, OicSecCrl_t *out)
 {
-    bool result = false;
+    bool result = true;
 
     if (!in || !out)
     {
@@ -102,24 +102,23 @@ static bool copyCrl(const OicSecCrl_t *in, OicSecCrl_t *out)
 
     out->CrlId = in->CrlId;
 
-    result = copyByteArray(in->ThisUpdate.data, in->ThisUpdate.len, &out->ThisUpdate.data, &out->ThisUpdate.len);
-    if (!result)
+    if (NULL != in->ThisUpdate.data)
     {
-        OIC_LOG(ERROR, TAG, "Can't allocate memory for ThisUpdate");
-        return false;
+        result = copyByteArray(in->ThisUpdate.data, in->ThisUpdate.len, &out->ThisUpdate.data, &out->ThisUpdate.len);
+        VERIFY_SUCCESS(TAG, result, ERROR);
     }
 
-    result = copyByteArray(in->CrlData.data, in->CrlData.len, &out->CrlData.data, &out->CrlData.len);
-    if (!result)
+    if (NULL != in->CrlData.data)
     {
-        OIC_LOG(ERROR, TAG, "Can't allocate memory for CrlData");
-        return false;
+        result = copyByteArray(in->CrlData.data, in->CrlData.len, &out->CrlData.data, &out->CrlData.len);
+        VERIFY_SUCCESS(TAG, result, ERROR);
     }
 
+exit:
     return result;
 }
 
-static CborError setPubDataType(CborEncoder *out, const char *name, const OicSecKey_t *value)
+static CborError setCrlData(CborEncoder *out, const char *name, const OicSecKey_t *value)
 {
     if (!out || !name || !value)
     {
@@ -127,79 +126,30 @@ static CborError setPubDataType(CborEncoder *out, const char *name, const OicSec
         return CborErrorInternalError;
     }
 
-    CborEncoder map;
+    CborError result = CborErrorInternalError;
 
-    const char *encoding = NULL;
-    bool binary_field = false;
+    size_t len = 0;
+    size_t encodeBufferSize = B64ENCODE_OUT_SAFESIZE((value->len + 1));
+    char *encodeBuffer = OICCalloc(1, encodeBufferSize);
 
-    size_t mapSize = 0;
+    VERIFY_NOT_NULL(TAG, encodeBuffer, ERROR);
 
-    mapSize++;
-    switch(value->encoding)
-    {
-        case OIC_ENCODING_RAW:
-            binary_field = true;
-            encoding = OIC_SEC_ENCODING_RAW;
-            break;
-        case OIC_ENCODING_BASE64:
-            encoding = OIC_SEC_ENCODING_BASE64;
-            break;
-        case OIC_ENCODING_DER:
-            binary_field = true;
-            encoding = OIC_SEC_ENCODING_DER;
-            break;
-        case OIC_ENCODING_PEM:
-            encoding = OIC_SEC_ENCODING_PEM;
-            break;
-        default:
-            OIC_LOG(ERROR, TAG, "Received UNKNOWN encoding, exit!");
-            return CborErrorInternalError;
-    }
+    B64Result b64result = b64Encode(value->data, value->len, encodeBuffer, encodeBufferSize, &len);
+    VERIFY_SUCCESS(TAG, (B64_OK == b64result), ERROR);
 
-    if (value->data)
-    {
-        mapSize++;
-    }
-
-    CborError result = CborNoError;
     result = cbor_encode_text_string(out, name, strlen(name));
-    VERIFY_CBOR_SUCCESS(TAG, result, "Failed Adding name Tag.");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, result, "Failed Adding name Tag.");
 
-    result = cbor_encoder_create_map(out, &map, mapSize);
-    VERIFY_CBOR_SUCCESS(TAG, result, "Failed creating name map");
-
-    if (encoding)
-    {
-        result = cbor_encode_text_string(&map, OIC_JSON_ENCODING_NAME,
-                                         strlen(OIC_JSON_ENCODING_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, result, "Failed to add encoding tag.")
-        result = cbor_encode_text_string(&map, encoding, strlen(encoding));
-        VERIFY_CBOR_SUCCESS(TAG, result, "Failed to add encoding value.");
-    };
-
-    if (value->data)
-    {
-        result = cbor_encode_text_string(&map, OIC_JSON_DATA_NAME, strlen(OIC_JSON_DATA_NAME));
-        VERIFY_CBOR_SUCCESS(TAG, result, "Failed to add data tag.");
-        if (binary_field)
-        {
-            result = cbor_encode_byte_string(&map, value->data, value->len);
-        }
-        else
-        {
-            result = cbor_encode_text_string(&map, (const char *)value->data, value->len);
-        }
-        VERIFY_CBOR_SUCCESS(TAG, result, "Failed to add data value.");
-    }
-
-    result = cbor_encoder_close_container(out, &map);
-    VERIFY_CBOR_SUCCESS(TAG, result, "Failed Closing PrivateData Map.");
+    result = cbor_encode_text_string(out, (const char *)encodeBuffer, len);
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, result, "Failed Adding data Tag.");
 
 exit:
+    OICFree(encodeBuffer);
+
     return result;
 }
 
-static CborError getPubDataType(CborValue *in, const char *name, OicSecKey_t *value)
+static CborError getCrlData(CborValue *in, const char *name, OicSecKey_t *value)
 {
     if (!in || !name || !value)
     {
@@ -208,65 +158,32 @@ static CborError getPubDataType(CborValue *in, const char *name, OicSecKey_t *va
     }
 
     CborError result = CborNoError;
-    char *encoding = NULL;
-
     CborValue crlNode = { .parser = NULL };
+    char *decodeBuffer = NULL;
+    size_t decodeBufferSize;
+
     result = cbor_value_map_find_value(in, name, &crlNode);
-    if (CborNoError == result && cbor_value_is_map(&crlNode))
+    if (CborNoError == result && cbor_value_is_text_string(&crlNode))
     {
-        CborValue crlMap = { .parser = NULL };
-        result = cbor_value_enter_container(&crlNode, &crlMap);
+        result = cbor_value_dup_text_string(&crlNode,
+                (char **)&decodeBuffer, &decodeBufferSize, NULL);
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, result, "Failed Advancing Byte Array.");
 
-        while(cbor_value_is_valid(&crlMap) && cbor_value_is_text_string(&crlMap))
+        value->len = B64DECODE_OUT_SAFESIZE(decodeBufferSize + 1);
+        value->data = OICCalloc(1, value->len);
+        VERIFY_NOT_NULL(TAG, value->data, ERROR);
+
+        B64Result b64result = b64Decode(decodeBuffer, decodeBufferSize, value->data, value->len, &value->len);
+        if (B64_OK != b64result)
         {
-            char *property = NULL;
-            size_t length = 0;
-            result = cbor_value_dup_text_string(&crlMap, &property, &length, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, result, "Failed Get first crl ojbject tag.");
-            result = cbor_value_advance(&crlMap);
-            VERIFY_CBOR_SUCCESS(TAG, result, "Failed to advance crlMap");
-
-            if (0 == strcmp(OIC_JSON_DATA_NAME, property))
-            {
-                if (cbor_value_is_byte_string(&crlMap))
-                {
-                    result = cbor_value_dup_byte_string(&crlMap, &value->data, &value->len, NULL);
-                }
-                else if(cbor_value_is_text_string(&crlMap))
-                {
-                    char *buffer = NULL;
-                    result = cbor_value_dup_text_string(&crlMap, &buffer, &value->len, NULL);
-                    value->data = (uint8_t *)buffer;
-                }
-                else
-                {
-                    result = CborErrorUnknownType;
-                    OIC_LOG(ERROR, TAG, "Unknown type for crl->data.");
-                }
-                VERIFY_CBOR_SUCCESS(TAG, result, "Failed to read crl->data");
-            }
-            else if (0 == strcmp(OIC_JSON_ENCODING_NAME, property))
-            {
-                size_t encoding_len = 0;
-                result = cbor_value_dup_text_string(&crlMap, &encoding, &encoding_len, NULL);
-                VERIFY_CBOR_SUCCESS(TAG, result, "Failed to read crl->encdoing");
-            }
-            OICFree(property);
+            OIC_LOG_V(ERROR, TAG, "CRL b64Decode error");
+            result = CborErrorInternalError;
         }
-    }
-    VERIFY_CBOR_SUCCESS(TAG, result, "Failed to find root node");
 
-    if (encoding)
-    {
-        OicEncodingType_t type = OIC_ENCODING_UNKNOW;
-        if (0 == strcmp(encoding, OIC_SEC_ENCODING_BASE64)) type = OIC_ENCODING_BASE64;
-        else if (0 == strcmp(encoding, OIC_SEC_ENCODING_DER)) type = OIC_ENCODING_DER;
-        else if (0 == strcmp(encoding, OIC_SEC_ENCODING_PEM)) type = OIC_ENCODING_PEM;
-        else if (0 == strcmp(encoding, OIC_SEC_ENCODING_RAW)) type = OIC_ENCODING_RAW;
-
-        value->encoding = type;
     }
+
 exit:
+    OICFree(decodeBuffer);
     return result;
 }
 
@@ -307,39 +224,65 @@ OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     cborEncoderResult = cbor_encoder_create_map(&encoder, &crlMap, mapSize);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to create CRL Map");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed to create CRL Map");
 
     //CRLId -- Mandatory
     cborEncoderResult = cbor_encode_text_string(&crlMap, OC_RSRVD_CRL_ID,
         strlen(OC_RSRVD_CRL_ID));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add CRL ID");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed to add CRL ID");
     cborEncoderResult = cbor_encode_int(&crlMap, crl->CrlId);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add CRL Id value");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed to add CRL Id value");
 
     //ThisUpdate -- Mandatory
     cborEncoderResult = cbor_encode_text_string(&crlMap, OC_RSRVD_THIS_UPDATE,
         strlen(OC_RSRVD_THIS_UPDATE));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add Crl update");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed to add Crl update");
     cborEncoderResult = cbor_encode_text_string(&crlMap, (const char *)crl->ThisUpdate.data,
                                                 crl->ThisUpdate.len);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add Crl Update value");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed to add Crl Update value");
 
     //CRLData -- Mandatory
-    cborEncoderResult = setPubDataType(&crlMap, OC_RSRVD_CRL, &crl->CrlData);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add CRLData object");
+    cborEncoderResult = setCrlData(&crlMap, OC_RSRVD_CRL, &crl->CrlData);
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed to add CRLData object");
 
     //lastUpdate - internal field
     if (lastUpdate)
     {
         cborEncoderResult = cbor_encode_text_string(&crlMap, OC_RSRVD_LAST_UPDATE,
             strlen(OC_RSRVD_LAST_UPDATE));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add last Update tag");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed to add last Update tag");
         cborEncoderResult = cbor_encode_text_string(&crlMap, lastUpdate, strlen(lastUpdate));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add last Update value");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed to add last Update value");
     }
 
+    //RT -- Mandatory
+    CborEncoder rtArray;
+    cborEncoderResult = cbor_encode_text_string(&crlMap, OIC_JSON_RT_NAME,
+            strlen(OIC_JSON_RT_NAME));
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding RT Name Tag.");
+    cborEncoderResult = cbor_encoder_create_array(&crlMap, &rtArray, 1);
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding RT Value.");
+    cborEncoderResult = cbor_encode_text_string(&rtArray, OIC_RSRC_TYPE_SEC_CRL,
+            strlen(OIC_RSRC_TYPE_SEC_CRL));
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding RT Value.");
+    cborEncoderResult = cbor_encoder_close_container(&crlMap, &rtArray);
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Closing RT.");
+
+    //IF-- Mandatory
+    CborEncoder ifArray;
+    cborEncoderResult = cbor_encode_text_string(&crlMap, OIC_JSON_IF_NAME,
+       strlen(OIC_JSON_IF_NAME));
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding IF Name Tag.");
+    cborEncoderResult = cbor_encoder_create_array(&crlMap, &ifArray, 1);
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding IF Value.");
+    cborEncoderResult = cbor_encode_text_string(&ifArray, OC_RSRVD_INTERFACE_DEFAULT,
+            strlen(OC_RSRVD_INTERFACE_DEFAULT));
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding IF Value.");
+    cborEncoderResult = cbor_encoder_close_container(&crlMap, &ifArray);
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Closing IF.");
+
     cborEncoderResult = cbor_encoder_close_container(&encoder, &crlMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add close Crl map");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed to add close Crl map");
 
     *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
     *payload = outPayload;
@@ -393,7 +336,7 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
     cbor_parser_init(cborPayload, size, 0, &parser, &crlCbor);
     CborValue crlMap = { .parser = NULL};
     cborFindResult = cbor_value_enter_container(&crlCbor, &crlMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter Crl map");
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to enter Crl map");
 
     crl = (OicSecCrl_t *)OICCalloc(1, sizeof(OicSecCrl_t));
     VERIFY_NOT_NULL(TAG, crl, ERROR);
@@ -404,7 +347,7 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
         int CrlId;
 
         cborFindResult = cbor_value_get_int(&crlMap, &CrlId);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CrlId.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding CrlId.");
         crl->CrlId = (uint16_t)CrlId;
     }
 
@@ -413,11 +356,11 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
     {
         cborFindResult = cbor_value_dup_text_string(&crlMap,
                 (char **)&crl->ThisUpdate.data, &crl->ThisUpdate.len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Byte Array.");
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Advancing Byte Array.");
     }
 
-    cborFindResult = getPubDataType(&crlCbor, OC_RSRVD_CRL, &crl->CrlData);
-    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to read CRL.");
+    cborFindResult = getCrlData(&crlCbor, OC_RSRVD_CRL, &crl->CrlData);
+    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to read CRL.");
 
     OIC_LOG_CRL(INFO, crl);
 
@@ -470,7 +413,23 @@ OCStackResult UpdateCRLResource(OicSecCrl_t *crl)
     uint8_t *payload = NULL;
     size_t size = 0;
 
-    crl->CrlId = crlid++;
+    if ( NULL == gCrl )
+    {
+        OIC_LOG(ERROR, TAG, "Crl resourse isn't initialized");
+        return OC_STACK_ERROR;
+    }
+
+    if ( 0 == crl->CrlId)
+    {
+        crl->CrlId = ++crlid;
+    }
+    else
+    {
+        if (crl->CrlId > crlid)
+        {
+            crlid = crl->CrlId;
+        }
+    }
 
     if (!copyCrl(crl, gCrl))
     {
@@ -481,7 +440,7 @@ OCStackResult UpdateCRLResource(OicSecCrl_t *crl)
     char currentTime[32] = {0};
     getCurrentUTCTime(currentTime, sizeof(currentTime));
 
-    OCStackResult res = CrlToCBORPayload((const OicSecCrl_t *) crl, &payload, &size, currentTime);
+    OCStackResult res = CrlToCBORPayload((const OicSecCrl_t *) gCrl, &payload, &size, currentTime);
     if (OC_STACK_OK != res)
     {
         return res;
@@ -490,12 +449,85 @@ OCStackResult UpdateCRLResource(OicSecCrl_t *crl)
     return UpdateSecureResourceInPS(OIC_CBOR_CRL_NAME, payload, size);
 }
 
+static bool ValidateQuery(const char * query)
+{
+    OIC_LOG (DEBUG, TAG, "In ValidateQuery");
+
+    bool bInterfaceQry = false;      // does querystring contains 'if' query ?
+    bool bInterfaceMatch = false;    // does 'if' query matches with oic.if.baseline ?
+
+    OicParseQueryIter_t parseIter = {.attrPos = NULL};
+
+    ParseQueryIterInit((unsigned char*)query, &parseIter);
+
+    while (GetNextQuery(&parseIter))
+    {
+        if (strncasecmp((char *)parseIter.attrPos, OC_RSRVD_INTERFACE, parseIter.attrLen) == 0)
+        {
+            bInterfaceQry = true;
+            if ((strncasecmp((char *)parseIter.valPos, OC_RSRVD_INTERFACE_DEFAULT, parseIter.valLen) == 0))
+            {
+                bInterfaceMatch = true;
+            }
+            return (bInterfaceQry ? bInterfaceMatch: false);
+        }
+    }
+
+    return true;
+}
+
+static OCEntityHandlerResult HandleCRLGetRequest(const OCEntityHandlerRequest *ehRequest)
+{
+    OCEntityHandlerResult ehRet = OC_EH_OK;
+    uint8_t* payload = NULL;
+    size_t size = 0;
+
+    if (ehRequest->query)
+    {
+        OIC_LOG_V(DEBUG,TAG,"query:%s",ehRequest->query);
+        OIC_LOG(DEBUG, TAG, "HandleCRLGetRequest processing query");
+        if (!ValidateQuery(ehRequest->query))
+        {
+            ehRet = OC_EH_ERROR;
+        }
+    }
+
+    if ( NULL == gCrl )
+    {
+        OIC_LOG(ERROR, TAG, "Crl resourse isn't initialized");
+        ehRet = OC_EH_ERROR;
+    }
+
+    if (OC_EH_OK == ehRet && OC_STACK_OK != CrlToCBORPayload(gCrl, &payload, &size, NULL))
+    {
+        OIC_LOG(ERROR, TAG, " HandleCRLGetRequest error");
+        ehRet = OC_EH_ERROR;
+    }
+
+    ehRet = (payload ? OC_EH_OK : OC_EH_ERROR);
+    OIC_LOG(DEBUG, TAG, "CRL payload with GET response");
+    OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
+
+    // Send payload to request originator
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, payload, size))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleCRLGetRequest");
+    }
+
+    OICFree(payload);
+
+    OIC_LOG_V(INFO, TAG, "%s RetVal %d", __func__, ehRet);
+    return ehRet;
+}
+
 static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicSecCrl_t *crl = NULL;
     uint8_t *payload = ((OCSecurityPayload *)ehRequest->payload)->securityData;
     size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
+    bool create = (NULL == gCrl);
 
     if (payload)
     {
@@ -505,7 +537,7 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
 
         if (OC_STACK_OK == UpdateCRLResource(crl))
         {
-            ehRet = OC_EH_RESOURCE_CREATED;
+            ehRet = create ? OC_EH_RESOURCE_CREATED : OC_EH_CHANGED;
         }
 
         DeleteCrl(crl);
@@ -549,8 +581,7 @@ static OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
         switch (ehRequest->method)
         {
             case OC_REST_GET:
-                OIC_LOG (INFO, TAG, "Not implemented request method.");
-                //ehRet = HandleCRLGetRequest(ehRequest);
+                ehRet = HandleCRLGetRequest(ehRequest);
                 break;
 
             case OC_REST_POST:
@@ -577,7 +608,6 @@ static OCStackResult CreateCRLResource()
                                          OIC_RSRC_CRL_URI,
                                          CRLEntityHandler,
                                          NULL,
-                                         OC_OBSERVABLE |
                                          OC_SECURE |
                                          OC_DISCOVERABLE);
 
@@ -605,12 +635,12 @@ static OicSecCrl_t *GetCrlDefault()
     defaultCrl->CrlData.encoding = OIC_ENCODING_DER;
 
     bool result1 = copyByteArray((const uint8_t *)CRL_DEFAULT_CRL_DATA,
-                                 strlen(CRL_DEFAULT_CRL_DATA),
+                                 sizeof(CRL_DEFAULT_CRL_DATA),
                                  &defaultCrl->CrlData.data,
                                  &defaultCrl->CrlData.len);
 
     bool result2 = copyByteArray((const uint8_t *)CRL_DEFAULT_THIS_UPDATE,
-                                 strlen(CRL_DEFAULT_THIS_UPDATE),
+                                 sizeof(CRL_DEFAULT_THIS_UPDATE),
                                  &defaultCrl->ThisUpdate.data,
                                  &defaultCrl->ThisUpdate.len);
 
@@ -644,7 +674,7 @@ OCStackResult InitCRLResource()
     }
     if (data)
     {
-        // Read ACL resource from PS
+        // Read CRL resource from PS
         ret = CBORPayloadToCrl(data, size, &gCrl);
     }
 
@@ -664,7 +694,7 @@ OCStackResult InitCRLResource()
 }
 
 /**
- * Perform cleanup for ACL resources.
+ * Perform cleanup for CRL resources.
  */
 OCStackResult DeInitCRLResource()
 {

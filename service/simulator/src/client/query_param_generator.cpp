@@ -50,10 +50,14 @@ std::map<std::string, std::string> QPGenerator::next()
 {
     std::map<std::string, std::string> queryParams;
     if (!hasNext())
+    {
         return queryParams;
+    }
 
     for (auto ele : m_qpDetails)
+    {
         queryParams[ele.key] = ele.values[ele.index];
+    }
 
     for (int index = m_qpDetails.size() - 1; index >= 0; index--)
     {

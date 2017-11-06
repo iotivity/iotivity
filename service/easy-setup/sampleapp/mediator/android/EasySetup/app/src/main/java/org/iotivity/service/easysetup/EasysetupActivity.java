@@ -43,10 +43,10 @@ import android.widget.ToggleButton;
 
 import org.iotivity.base.ErrorCode;
 import org.iotivity.base.ModeType;
+import org.iotivity.base.OcAccountManager;
 import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
 import org.iotivity.base.OcHeaderOption;
-import org.iotivity.base.ObserveType;
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcPresenceStatus;
 import org.iotivity.base.OcProvisioning;
@@ -55,14 +55,13 @@ import org.iotivity.base.OcResource;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
-import org.iotivity.base.OcAccountManager;
-import org.iotivity.service.easysetup.mediator.ESConstants;
 import org.iotivity.service.easysetup.mediator.CloudProp;
 import org.iotivity.service.easysetup.mediator.CloudPropProvisioningCallback;
 import org.iotivity.service.easysetup.mediator.CloudPropProvisioningStatus;
 import org.iotivity.service.easysetup.mediator.DeviceProp;
 import org.iotivity.service.easysetup.mediator.DevicePropProvisioningCallback;
 import org.iotivity.service.easysetup.mediator.DevicePropProvisioningStatus;
+import org.iotivity.service.easysetup.mediator.ESConstants;
 import org.iotivity.service.easysetup.mediator.ESException;
 import org.iotivity.service.easysetup.mediator.EasySetup;
 import org.iotivity.service.easysetup.mediator.EnrolleeConf;
@@ -71,7 +70,6 @@ import org.iotivity.service.easysetup.mediator.GetConfigurationStatus;
 import org.iotivity.service.easysetup.mediator.RemoteEnrollee;
 import org.iotivity.service.easysetup.mediator.SecurityProvisioningCallback;
 import org.iotivity.service.easysetup.mediator.SecurityProvisioningStatus;
-import org.iotivity.service.easysetup.mediator.enums.ESCloudProvState;
 import org.iotivity.service.easysetup.mediator.enums.ESResult;
 import org.iotivity.service.easysetup.mediator.enums.WIFI_AUTHTYPE;
 import org.iotivity.service.easysetup.mediator.enums.WIFI_ENCTYPE;
@@ -95,13 +93,16 @@ public class EasysetupActivity extends Activity
                                 implements OcPlatform.OnPresenceListener,
                                            OcResource.OnObserveListener{
     private static final String TAG = "Easysetup Mediator: ";
+    private static final String SUCCESS = "Success";
+    private static final String FAILED = "Failed";
+    private static final String ACCESSTOKEN = "accesstoken";
+    private static final String REFRESHTOKEN = "refreshtoken";
+    private static final String COMMUNICATION_ERROR = "Communication Error";
+    private static final String deviceID = "9E09F4FE-978A-4BC3-B356-1F93BCA37829";
+    private static final String CIServer = "coap+tcp://13.124.29.169:5683";
     PlatformConfig cfg;
     OcAccountManager m_accountManager = null;
-    final String deviceID = "9E09F4FE-978A-4BC3-B356-1F93BCA37829";
-    final String CIServer = "coap+tcp://13.124.29.169:5683";
-
     private static final int BUFFER_SIZE = 1024;
-
     private String filePath = "";
     public static final String OIC_CLIENT_JSON_DB_FILE =  "oic_svr_db_client.dat";
     public static final String OIC_SQL_DB_FILE =  "PDM.db";
@@ -253,11 +254,15 @@ public class EasysetupActivity extends Activity
                         startActivityForResult(intent, 2);
                         mProvisionCloudPropInfo.setVisibility(View.VISIBLE);
                         break;
+
+                    default:
+                        break;
                 }
             }
         });
 
-        ArrayAdapter<CharSequence> adAuthType, adEnctype;
+        ArrayAdapter<CharSequence> adAuthType;
+        ArrayAdapter<CharSequence> adEnctype;
 
         adAuthType = ArrayAdapter.createFromResource(this, R.array.auth_type,
                 android.R.layout.simple_spinner_item);
@@ -301,8 +306,8 @@ public class EasysetupActivity extends Activity
         }
         SharedPreferences settings =
                                 getApplicationContext().getSharedPreferences("IoTivityCloud", 0);
-        mAccessToken = settings.getString("accesstoken", null);
-        mRefreshtoken = settings.getString("refreshtoken", null);
+        mAccessToken = settings.getString(ACCESSTOKEN, null);
+        mRefreshtoken = settings.getString(REFRESHTOKEN, null);
         mUserID = settings.getString("uid", null);
 
         if(mRefreshtoken == null)
@@ -365,12 +370,10 @@ public class EasysetupActivity extends Activity
             }
             Log.d(TAG, "Sql db directory exists at " + sqlDbPath);
 
-            //SQLiteDatabase.openOrCreateDatabase(sqlDbPath+ OIC_SQL_DB_FILE, null);
             OcProvisioning.provisionInit(sqlDbPath + OIC_SQL_DB_FILE);
             mSecurityMode.setChecked(true);
         } catch (OcException e) {
-            logMessage(TAG + "provisionInit error: " + e.getMessage());
-            Log.e(TAG, e.getMessage());
+            Log.e(TAG, "provisionInit error: " + e.getMessage());
             Toast.makeText(this,"provisionInit error: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
             mSecurityMode.setChecked(false);
@@ -386,6 +389,53 @@ public class EasysetupActivity extends Activity
                     Toast.LENGTH_LONG).show();
             return;
         }
+    }
+
+    private void closeIOCStack() {
+        try {
+            /*
+             * Close DataBase
+             */
+            OcProvisioning.provisionClose();
+        } catch (OcException e) {
+            Log.e(TAG, "provisionClose error: " + e.getMessage());
+        } catch (UnsatisfiedLinkError e) {
+            // Note : Easy setup is built with SECURED = 0, but user still selects Security feature
+            // while running the Mediator App it couldn't find "libocprovision.so".
+            // As per the programmer guide, security feature should be invoked only if build is done with SECURED = 1.
+            mSecurityMode.setChecked(false);
+            Log.e(TAG, "Easy setup is built with secured = 0, but executed with security feature");
+            return;
+        }
+    }
+
+    private String getSecureUDPEndpoint(OcResource ocResource) {
+        if(null == ocResource) {
+            return null;
+        }
+
+        String udpEndpoint = null;
+        List<String> endpoints = ocResource.getAllHosts();
+        if(null != endpoints && !endpoints.isEmpty())
+        {
+            Log.d(TAG, "Endpoints of the resource: " + endpoints);
+            Iterator<String> itr = endpoints.iterator();
+            while(itr.hasNext())
+            {
+                String endpoint = itr.next();
+                if(null != endpoint && endpoint.contains("coaps://"))
+                {
+                    udpEndpoint = endpoint;
+                    Log.d(TAG, "Found coaps endpoint: setHost() returned " + udpEndpoint);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            Log.d(TAG, "No endpoints found");
+        }
+        return udpEndpoint;
     }
 
     OcPlatform.OnResourceFoundListener listener =
@@ -424,26 +474,10 @@ public class EasysetupActivity extends Activity
 
                             if(mSecurityMode.isChecked())
                             {
-                                // Change the host of the resource to secure endpoint.
-                                List<String> endpoints = ocResource.getAllHosts();
-                                if(null != endpoints || 0 == endpoints.size())
-                                {
-                                    Log.d(TAG, "Endpoints of the resource: " + endpoints);
-                                    Iterator<String> itr = endpoints.iterator();
-                                    while(itr.hasNext())
-                                    {
-                                        String endpoint = itr.next();
-                                        if(null != endpoint && endpoint.contains("coaps://"))
-                                        {
-                                            String retval = ocResource.setHost(endpoint);
-                                            Log.d(TAG, "Found coaps endpoint: setHost() returned " + retval);
-                                            break;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    Log.d(TAG, "No endpoints found");
+                                String endpoint = getSecureUDPEndpoint(ocResource);
+                                if(null != endpoint && !endpoint.isEmpty()) {
+                                    // Change the host of the resource to secure endpoint.
+                                    ocResource.setHost(endpoint);
                                 }
                             }
 
@@ -544,7 +578,7 @@ public class EasysetupActivity extends Activity
                                         runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                mSecStateText.setText("Success");
+                                                mSecStateText.setText(SUCCESS);
                                                 mSecDevIDText.setText(securityProvisioningStatus.getDevUUID());
                                             }
                                         });
@@ -573,7 +607,7 @@ public class EasysetupActivity extends Activity
                                         runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                mSecStateText.setText("Failed");
+                                                mSecStateText.setText(FAILED);
                                                 mStartConfigureSec.setEnabled(true);
                                             }
                                         });
@@ -621,7 +655,7 @@ public class EasysetupActivity extends Activity
                                         runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                mGetconfigurationStateText.setText("Success");
+                                                mGetconfigurationStateText.setText(SUCCESS);
                                                 mDevNameText.setText(enrolleeConf.getDeviceName());
                                                 mModelNumberText.setText(enrolleeConf.getModelNumber());
                                                 setWifiModes(enrolleeConf.getWiFiModes());
@@ -641,7 +675,7 @@ public class EasysetupActivity extends Activity
                                         runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                mGetconfigurationStateText.setText("Communication Error");
+                                                mGetconfigurationStateText.setText(COMMUNICATION_ERROR);
                                                 mStartGetConfiguration.setEnabled(true);
                                             }
                                         });
@@ -650,7 +684,7 @@ public class EasysetupActivity extends Activity
                                         runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                mGetconfigurationStateText.setText("Failed");
+                                                mGetconfigurationStateText.setText(FAILED);
                                                 mStartGetConfiguration.setEnabled(true);
                                             }
                                         });
@@ -662,7 +696,7 @@ public class EasysetupActivity extends Activity
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    mGetconfigurationStateText.setText("Failed");
+                                    mGetconfigurationStateText.setText(FAILED);
                                     mStartGetConfiguration.setEnabled(true);
                                 }
                             });
@@ -713,13 +747,13 @@ public class EasysetupActivity extends Activity
                                         @Override
                                         public void run() {
                                             if(result.equals(ESResult.ES_OK)) {
-                                                mProvisionDevPropState.setText("Success");
+                                                mProvisionDevPropState.setText(SUCCESS);
                                             }
                                             else if(result.equals(ESResult.ES_ERROR)) {
-                                                mProvisionDevPropState.setText("Failed");
+                                                mProvisionDevPropState.setText(FAILED);
                                             }
                                             else if(result.equals(ESResult.ES_COMMUNICATION_ERROR)) {
-                                                mProvisionDevPropState.setText("Communication Error");
+                                                mProvisionDevPropState.setText(COMMUNICATION_ERROR);
                                             }
                                             mStartProvisionDevProp.setEnabled(true);
                                         }
@@ -731,7 +765,7 @@ public class EasysetupActivity extends Activity
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    mProvisionDevPropState.setText("Failed");
+                                    mProvisionDevPropState.setText(FAILED);
                                     mStartProvisionDevProp.setEnabled(true);
                                 }
                             });
@@ -789,7 +823,7 @@ public class EasysetupActivity extends Activity
                                                 mProvisionCloudPropState.setText("CERT-provisioning fails");
                                             }
                                             else if(result.equals(ESResult.ES_COMMUNICATION_ERROR)){
-                                                mProvisionCloudPropState.setText("Communication Error");
+                                                mProvisionCloudPropState.setText(COMMUNICATION_ERROR);
                                             }
                                             else {
                                                 mProvisionCloudPropState.setText("Cloud Provisioning fails");
@@ -803,7 +837,7 @@ public class EasysetupActivity extends Activity
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    mProvisionCloudPropState.setText("Failed");
+                                    mProvisionCloudPropState.setText(FAILED);
                                     mStartProvisionCloudProp.setEnabled(true);
                                 }
                             });
@@ -821,6 +855,7 @@ public class EasysetupActivity extends Activity
         OutputStream outputStream = null;
         int length;
         byte[] buffer = new byte[BUFFER_SIZE];
+        boolean retVal = true;
         try {
             inputStream = getAssets().open(OIC_CLIENT_JSON_DB_FILE);
             File file = new File(filePath);
@@ -833,24 +868,21 @@ public class EasysetupActivity extends Activity
                 outputStream.write(buffer, 0, length);
             }
         } catch (NullPointerException e) {
-            logMessage(TAG + "Null pointer exception " + e.getMessage());
-            Log.e(TAG, e.getMessage());
-            return false;
+            Log.e(TAG, "Null pointer exception: " + e.getMessage());
+            retVal = false;
         } catch (FileNotFoundException e) {
-            logMessage(TAG + "Json svr db file not found " + e.getMessage());
-            Log.e(TAG, e.getMessage());
-            return false;
+            Log.e(TAG, "Json svr db file not found: " + e.getMessage());
+            retVal = false;
         } catch (IOException e) {
-            logMessage(TAG + OIC_CLIENT_JSON_DB_FILE + " file copy failed");
-            Log.e(TAG, e.getMessage());
-            return false;
+            Log.e(TAG, OIC_CLIENT_JSON_DB_FILE + " file copy failed: " + e.getMessage());
+            retVal = false;
         } finally {
             if (inputStream != null) {
                 try {
                     inputStream.close();
                 } catch (IOException e) {
                     Log.e(TAG, e.getMessage());
-                    return false;
+                    retVal = false;
                 }
             }
             if (outputStream != null) {
@@ -858,15 +890,11 @@ public class EasysetupActivity extends Activity
                     outputStream.close();
                 } catch (IOException e) {
                     Log.e(TAG, e.getMessage());
-                    return false;
+                    retVal = false;
                 }
             }
         }
-        return true;
-    }
-
-    public void logMessage(String text) {
-
+        return retVal;
     }
 
     public void setWifiModes(ArrayList<WIFI_MODE> types) {
@@ -921,6 +949,7 @@ public class EasysetupActivity extends Activity
         Log.d(TAG, "Presence response: " + strStaus + " sequence: " + sequence + " host: " + host);
         runOnUiThread(new Runnable()
         {
+            @Override
             public void run() {
                 Toast.makeText(EasysetupActivity.this, "Easy-Setup completed", Toast.LENGTH_SHORT).show();
             }
@@ -955,8 +984,8 @@ public class EasysetupActivity extends Activity
         public void onPostCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
             Log.d(TAG, "onRefreshTokenPost..");
             try {
-                mAccessToken = ocRepresentation.getValue("accesstoken");
-                mRefreshtoken = ocRepresentation.getValue("refreshtoken");
+                mAccessToken = ocRepresentation.getValue(ACCESSTOKEN);
+                mRefreshtoken = ocRepresentation.getValue(REFRESHTOKEN);
 
                 saveCloudTokenAtSharedPreferences();
             }
@@ -983,6 +1012,7 @@ public class EasysetupActivity extends Activity
 
             runOnUiThread(new Runnable()
             {
+                @Override
                 public void run() {
                     Toast.makeText(EasysetupActivity.this, "RefreshToken in progress..", Toast.LENGTH_SHORT).show();
                 }
@@ -990,7 +1020,7 @@ public class EasysetupActivity extends Activity
 
             rep.setValue("di", deviceID);
             rep.setValue("granttype", "refresh_token");
-            rep.setValue("refreshtoken", mRefreshtoken);
+            rep.setValue(REFRESHTOKEN, mRefreshtoken);
             rep.setValue("uid", mUserID);
             authResource.post(rep, new HashMap<String, String>(), onRefreshTokenPost);
         }
@@ -1006,11 +1036,11 @@ public class EasysetupActivity extends Activity
         Log.d(TAG, "accesstoken: " + mAccessToken);
         SharedPreferences settings = getApplicationContext().getSharedPreferences("IoTivityCloud", 0);
         SharedPreferences.Editor editor = settings.edit();
-        editor.putString("accesstoken", mAccessToken);
-        editor.putString("refreshtoken", mRefreshtoken);
+        editor.putString(ACCESSTOKEN, mAccessToken);
+        editor.putString(REFRESHTOKEN, mRefreshtoken);
         editor.putString("uid", mUserID);
 
-        if(editor.commit() == true)
+        if(editor.commit())
             Log.d(TAG, "accesstoken saved");
         else
             Log.d(TAG, "accesstoken not saved");
@@ -1023,12 +1053,13 @@ public class EasysetupActivity extends Activity
             try {
                 runOnUiThread(new Runnable()
                 {
+                    @Override
                     public void run() {
                         Toast.makeText(EasysetupActivity.this, "Sign-up completed", Toast.LENGTH_SHORT).show();
                     }
                 });
 
-                mAccessToken = ocRepresentation.getValue("accesstoken");
+                mAccessToken = ocRepresentation.getValue(ACCESSTOKEN);
                 mUserID = ocRepresentation.getValue("uid");
 
                 if(mAccessToken != null)
@@ -1056,6 +1087,7 @@ public class EasysetupActivity extends Activity
 
             runOnUiThread(new Runnable()
             {
+                @Override
                 public void run() {
                     Toast.makeText(EasysetupActivity.this, "SignUpDevice in progress..", Toast.LENGTH_SHORT).show();
                 }
@@ -1080,6 +1112,7 @@ public class EasysetupActivity extends Activity
 
             runOnUiThread(new Runnable()
             {
+                @Override
                 public void run() {
                     Toast.makeText(EasysetupActivity.this, "Sign-in completed", Toast.LENGTH_SHORT).show();
                 }
@@ -1105,6 +1138,7 @@ public class EasysetupActivity extends Activity
 
             runOnUiThread(new Runnable()
             {
+                @Override
                 public void run() {
                     Toast.makeText(EasysetupActivity.this, "SignInDevice in progress..", Toast.LENGTH_SHORT).show();
                 }
@@ -1150,5 +1184,6 @@ public class EasysetupActivity extends Activity
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        closeIOCStack();
     }
 }

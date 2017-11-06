@@ -25,25 +25,23 @@
 #ifndef _Included_org_iotivity_base_OcResourceResponse
 #define _Included_org_iotivity_base_OcResourceResponse
 
-using namespace OC;
-
 class JniOcResourceResponse
 {
 public:
-    JniOcResourceResponse(std::shared_ptr<OCResourceResponse> resourceResponse);
+    JniOcResourceResponse(std::shared_ptr<OC::OCResourceResponse> resourceResponse);
     ~JniOcResourceResponse();
     std::string getNewResourceUri(void);
     void setNewResourceUri(const std::string newResourceUri);
-    void setHeaderOptions(const HeaderOptions& headerOptions);
+    void setHeaderOptions(const OC::HeaderOptions& headerOptions);
     void setRequestHandle(const OCRequestHandle& requestHandle);
     void setResourceHandle(const OCResourceHandle& resourceHandle);
     void setResponseResult(const OCEntityHandlerResult& responseResult);
-    void setResourceRepresentation(OCRepresentation& rep, std::string interfaceStr);
-    void setResourceRepresentation(OCRepresentation& rep);
-    std::shared_ptr<OCResourceResponse> getOCResourceResponse();
+    void setResourceRepresentation(OC::OCRepresentation& rep, std::string interfaceStr);
+    void setResourceRepresentation(OC::OCRepresentation& rep);
+    std::shared_ptr<OC::OCResourceResponse> getOCResourceResponse();
     static JniOcResourceResponse* getJniOcResourceResponsePtr(JNIEnv *env, jobject thiz);
 private:
-    std::shared_ptr<OCResourceResponse> m_response;
+    std::shared_ptr<OC::OCResourceResponse> m_response;
 };
 
 #ifdef __cplusplus

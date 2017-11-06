@@ -70,8 +70,7 @@ public class SimpleClient extends Activity implements
     private OcResource mFoundLightResource = null;
     //local representation of a server's light resource
     private Light mLight = new Light();
-    //variables related observer
-    private int maxSequenceNumber = 0xFFFFFF;
+
     private OcConnectivityType adapterFlag = OcConnectivityType.CT_ADAPTER_IP;
     //flags related TCP transport test
     private boolean isRequestFlag = false;
@@ -511,7 +510,7 @@ public class SimpleClient extends Activity implements
                                                 OcRepresentation ocRepresentation,
                                                 int sequenceNumber) {
 
-        if (sequenceNumber != maxSequenceNumber + 1)
+        if (sequenceNumber != OcResource.OnObserveListener.MAX_SEQUENCE_NUMBER + 1)
         {
             msg("OBSERVE Result:");
             msg("\tSequenceNumber:" + sequenceNumber);

@@ -41,8 +41,7 @@ public class RDServerTestUtils {
         Cbor<HashMap<Object, Object>> cbor = new Cbor<>();
         IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
                 Constants.RD_URI,
-                Constants.RESOURCE_TYPE + "="
-                        + Constants.RESOURCE_TYPE_RDPUBLISH,
+                null,
                 ContentFormat.APPLICATION_CBOR,
                 cbor.encodingPayloadToCbor(payload));
         return request;

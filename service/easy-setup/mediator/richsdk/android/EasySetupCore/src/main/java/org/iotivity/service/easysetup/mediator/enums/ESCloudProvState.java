@@ -57,7 +57,9 @@ public enum ESCloudProvState {
 
     public static ESCloudProvState fromInt(int i) {
         for (ESCloudProvState b : ESCloudProvState.values()) {
-            if (b.getValue() == i) { return b; }
+            if (b.getValue() == i) {
+                return b;
+            }
         }
         return null;
     }

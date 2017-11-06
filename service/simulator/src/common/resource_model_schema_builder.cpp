@@ -48,7 +48,9 @@ std::shared_ptr<SimulatorResourceModelSchema> ResourceModelSchemaBuilder::build(
         auto attributeProperty = buildAttribute(property);
 
         if (!attributeProperty)
+        {
             return nullptr;
+        }
 
         modelSchema->add(property->getName(), attributeProperty);
     }

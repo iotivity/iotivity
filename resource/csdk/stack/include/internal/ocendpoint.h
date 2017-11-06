@@ -97,7 +97,7 @@
  *
  * @return     char pointer on success, NULL on failure.
  */
- char* OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint);
+ char* OC_CALL OCCreateEndpointStringFromCA(const CAEndpoint_t* endpoint);
 
 /*
  * This function parse endpoint string from payload.

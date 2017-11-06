@@ -29,7 +29,7 @@
 
 
 #include "cacommon.h"
-#include "byte_array.h"
+#include "experimental/byte_array.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -111,6 +111,10 @@ typedef void (*CAgetCredentialTypesHandler)(bool * list, const char* deviceId);
 /**
  * Binary structure containing PKIX related info
  * own certificate chain, public key, CA's and CRL's
+ * The data member of each ByteArray_t must be allocated with OICMalloc or OICCalloc.
+ * The SSL adapter takes ownership of this memory and will free it internally after use.
+ * Callers should not reference this memory after it has been provided to the SSL adapter via the
+ * callback.
  */
 typedef struct
 {
@@ -119,6 +123,28 @@ typedef struct
     ByteArray_t ca;     /**< trusted CAs as a null-terminated PEM string of certificates */
     ByteArray_t crl;    /**< trusted CRLs as binary-encoded DER */
 } PkiInfo_t;
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+/**
+ * Callback is used by application layer to check peer's certificate CN field.
+ * If set, this callback will be invoked during handshake after certificate verification.
+ *
+ * @param[out] cn     peer's certificate Common Name field.
+ *                    If common name was not found, cn will be set to NULL.
+ * @param[out] cnLen  peer's certificate Common Name field length.
+ *                    If CN was not found, cnLen will be set to 0.
+ *
+ * @return  CA_STATUS_OK or CA_STATUS_FAIL. In case CA_STATUS_FAIL is returned,
+ *          handshake will be dropped.
+ */
+typedef CAResult_t (*PeerCNVerifyCallback)(const unsigned char *cn, size_t cnLen);
+
+/**
+ * API to set callback that checks peer's certificate Common Name field
+ * @param[in] cb callback to utilize certificate Common Name field
+ */
+void CAsetPeerCNVerifyCallback(PeerCNVerifyCallback cb);
+#endif
 
 /**
  * Register callback to get types of TLS suites.
@@ -132,7 +158,7 @@ CAResult_t CAregisterGetCredentialTypesHandler(CAgetCredentialTypesHandler getCr
  * @param[in] tlsHandshakeCallback callback for get tls handshake result
  * @return ::CA_STATUS_OK
  */
-CAResult_t CAregisterSslHandshakeCallback(CAErrorCallback tlsHandshakeCallback);
+CAResult_t CAregisterSslHandshakeCallback(CAHandshakeErrorCallback tlsHandshakeCallback);
 
 /**
  * Register callback to get TLS PSK credentials.

@@ -85,10 +85,10 @@ public class LogManager {
                 try {
                     pop.run();
                 } catch (Exception e) {
+                    e.printStackTrace();
                     if (e instanceof InterruptedException) {
                         return;
                     }
-                    e.printStackTrace();
                 }
             }
         }

@@ -112,7 +112,7 @@ namespace RAML
                    * @param type - type of request response body
                    *
                    */
-            RequestResponseBody(const std::string type) : m_type(type), m_schema(NULL),
+            RequestResponseBody(const std::string &type) : m_type(type), m_schema(NULL),
                 m_includeResolver(NULL) {}
 
             /**
@@ -123,10 +123,12 @@ namespace RAML
                    * @param includeResolver - Reference to IncludeResolver for reading external files
                    *
                    */
-            RequestResponseBody(const std::string type, const YAML::Node &yamlNode,
+            RequestResponseBody(const std::string &type, const YAML::Node &yamlNode,
                                 const IncludeResolverPtr &includeResolver): m_schema(NULL),
                 m_includeResolver(includeResolver)
-            { readRequestResponseBody(type, yamlNode); }
+            {
+                readRequestResponseBody(type, yamlNode);
+            }
 
         private:
             virtual void readRequestResponseBody(const std::string &type,

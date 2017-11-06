@@ -62,6 +62,7 @@
 #endif
 
 #include <coap/pdu.h>
+#include <inttypes.h>
 #include "caipinterface.h"
 #include "caipnwmonitor.h"
 #include "caadapterutils.h"
@@ -102,6 +103,11 @@ static struct in6_addr IPv6MulticastAddressSit;
 static struct in6_addr IPv6MulticastAddressOrg;
 #define IPv6_MULTICAST_GLB "ff0e::158"
 static struct in6_addr IPv6MulticastAddressGlb;
+
+/*
+ * Buffer size for the receive message buffer
+ */
+#define RECV_MSG_BUF_LEN 16384
 
 static char *ipv6mcnames[IPv6_DOMAINS] = {
     NULL,
@@ -151,6 +157,18 @@ static void CAEventReturned(CASocketFd_t socket);
 
 static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags);
 
+static void CACloseFDs()
+{
+#if !defined(WSA_WAIT_EVENT_0)
+    if (caglobals.ip.shutdownFds[0] != -1)
+    {
+        close(caglobals.ip.shutdownFds[0]);
+        caglobals.ip.shutdownFds[0] = -1;
+    }
+#endif
+    CADeInitializeIPGlobals();
+}
+
 static void CAReceiveHandler(void *data)
 {
     (void)data;
@@ -159,6 +177,7 @@ static void CAReceiveHandler(void *data)
     {
         CAFindReadyMessage();
     }
+    CACloseFDs();
 }
 
 #define CLOSE_SOCKET(TYPE) \
@@ -472,7 +491,6 @@ static void CAFindReadyMessage()
     if (caglobals.ip.terminate)
     {
         caglobals.ip.shutdownEvent = WSA_INVALID_EVENT;
-        WSACleanup();
     }
 }
 
@@ -536,7 +554,7 @@ void CADeInitializeIPGlobals()
 
 static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
 {
-    char recvBuffer[COAP_MAX_PDU_SIZE] = {0};
+    char recvBuffer[RECV_MSG_BUF_LEN] = {0};
     int level = 0;
     int type = 0;
     int namelen = 0;
@@ -920,17 +938,6 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
     {
         return res;
     }
-#if defined (_WIN32)
-    WORD wVersionRequested = MAKEWORD(2, 2);
-    WSADATA wsaData ={.wVersion = 0};
-    int err = WSAStartup(wVersionRequested, &wsaData);
-    if (err != 0)
-    {
-        OIC_LOG_V(ERROR, TAG, "WSAStartup failed: %i", err);
-        return CA_STATUS_FAILED;
-    }
-    OIC_LOG(DEBUG, TAG, "WSAStartup Succeeded");
-#endif
     if (!IPv4MulticastAddress.s_addr)
     {
         (void)inet_pton(AF_INET, IPv4_MULTICAST, &IPv4MulticastAddress);
@@ -980,7 +987,7 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
     caglobals.ip.wsaRecvMsg = NULL;
     GUID GuidWSARecvMsg = WSAID_WSARECVMSG;
     DWORD copied = 0;
-    err = WSAIoctl(caglobals.ip.u4.fd, SIO_GET_EXTENSION_FUNCTION_POINTER, &GuidWSARecvMsg, sizeof(GuidWSARecvMsg), &(caglobals.ip.wsaRecvMsg), sizeof(caglobals.ip.wsaRecvMsg), &copied, 0, 0);
+    int err = WSAIoctl(caglobals.ip.u4.fd, SIO_GET_EXTENSION_FUNCTION_POINTER, &GuidWSARecvMsg, sizeof(GuidWSARecvMsg), &(caglobals.ip.wsaRecvMsg), sizeof(caglobals.ip.wsaRecvMsg), &copied, 0, 0);
     if (0 != err)
     {
         OIC_LOG_V(ERROR, TAG, "WSAIoctl failed %i", WSAGetLastError());
@@ -1017,13 +1024,13 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
 
 void CAIPStopServer()
 {
-    caglobals.ip.started = false;
     caglobals.ip.terminate = true;
 
 #if !defined(WSA_WAIT_EVENT_0)
     if (caglobals.ip.shutdownFds[1] != -1)
     {
         close(caglobals.ip.shutdownFds[1]);
+        caglobals.ip.shutdownFds[1] = -1;
         // receive thread will stop immediately
     }
     else
@@ -1037,6 +1044,12 @@ void CAIPStopServer()
         OIC_LOG_V(DEBUG, TAG, "set shutdown event failed: %d", WSAGetLastError());
     }
 #endif
+
+    if (!caglobals.ip.started)
+    { // Close fd's since receive handler was not started
+        CACloseFDs();
+    }
+    caglobals.ip.started = false;
 }
 
 void CAWakeUpForChange()
@@ -1185,7 +1198,7 @@ CAResult_t CAIPStartListenServer()
     }
 
     size_t len = u_arraylist_length(iflist);
-    OIC_LOG_V(DEBUG, TAG, "IP network interfaces found: %d", len);
+    OIC_LOG_V(DEBUG, TAG, "IP network interfaces found: %" PRIuPTR, len);
 
     for (size_t i = 0; i < len; i++)
     {
@@ -1226,7 +1239,7 @@ CAResult_t CAIPStopListenServer()
     }
 
     size_t len = u_arraylist_length(iflist);
-    OIC_LOG_V(DEBUG, TAG, "IP network interfaces found: %d", len);
+    OIC_LOG_V(DEBUG, TAG, "IP network interfaces found: %" PRIuPTR, len);
 
     for (size_t i = 0; i < len; i++)
     {

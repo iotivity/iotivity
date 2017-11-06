@@ -34,54 +34,56 @@ mpmcommon_env = env.Clone()
 
 print "Reading MPM Common Plugin script"
 
+
 def maskFlags(flags):
-    flags = [flags.replace('-Wl,--no-undefined', '' ) for flags in flags]
+    flags = [flags.replace('-Wl,--no-undefined', '') for flags in flags]
     return flags
+
 
 ######################################################################
 # Build flags
 ######################################################################
-mpmcommon_env.PrependUnique(CPPPATH = [
-                              os.path.join(src_dir, 'resource', 'include'),
-                              ])
-mpmcommon_env.AppendUnique(CPPPATH = [ os.path.join(bridging_path, 'include'),
-                             ])
+
+mpmcommon_env.PrependUnique(CPPPATH=[
+                            os.path.join(src_dir, 'resource', 'include'),
+                            os.path.join(bridging_path, 'include'),
+                            os.path.join(src_dir, 'resource', 'c_common'),
+                            os.path.join(src_dir, 'resource', 'c_common', 'ocrandom', 'include'),
+                            os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
+                            os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include')
+])
 
 if target_os not in ['arduino', 'windows']:
-    mpmcommon_env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
-    mpmcommon_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-Wextra', '-Werror', '-fpic'])
+    mpmcommon_env.AppendUnique(
+        CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror', '-fpic'])
 
-if target_os in ['darwin','ios']:
-    mpmcommon_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+mpmcommon_env['LINKFLAGS'] = maskFlags(mpmcommon_env['LINKFLAGS'])
 
-mpmcommon_env.AppendUnique(RPATH = [mpmcommon_env.get('BUILD_DIR')])
-mpmcommon_env.AppendUnique(LIBPATH = [mpmcommon_env.get('BUILD_DIR')])
-mpmcommon_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
-
-if mpmcommon_env.get('LOGGING'):
-    mpmcommon_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
-mpmcommon_env.PrependUnique(LIBS = ['m',
-                               'octbstack',
-                               'ocsrm',
-                               'connectivity_abstraction',
-                               'coap',
-                               'curl' ])
+mpmcommon_env.PrependUnique(LIBS=[
+    'm',
+    'octbstack',
+    'ocsrm',
+    'connectivity_abstraction',
+    'coap',
+    'curl',
+])
 
 #####################################################################
 # Source files and Target(s)
 ######################################################################
-mpmcommon_src = [
-         os.path.join(bridging_path, 'common', 'pluginIf.cpp'),
-         os.path.join(bridging_path, 'common', 'pluginServer.cpp'),
-         os.path.join(bridging_path, 'common', 'pipeHandler.cpp'),
-         os.path.join(bridging_path, 'common', 'messageHandler.cpp'),
-         os.path.join(bridging_path, 'common', 'curlClient.cpp'),
-         os.path.join(bridging_path, 'common', 'pluginProcess.cpp'),
-         os.path.join(bridging_path, 'common', 'ConcurrentIotivityUtils.cpp')
-         ]
 
-mpmcommon_env.AppendUnique(MPMCOMMON_SRC = mpmcommon_src)
-mpmcommonlib = mpmcommon_env.StaticLibrary('mpmcommon', mpmcommon_env.get('MPMCOMMON_SRC'))
+mpmcommon_src = [
+    os.path.join(bridging_path, 'common', 'pluginIf.cpp'),
+    os.path.join(bridging_path, 'common', 'pluginServer.cpp'),
+    os.path.join(bridging_path, 'common', 'pipeHandler.cpp'),
+    os.path.join(bridging_path, 'common', 'messageHandler.cpp'),
+    os.path.join(bridging_path, 'common', 'curlClient.cpp'),
+    os.path.join(bridging_path, 'common', 'pluginProcess.cpp'),
+    os.path.join(bridging_path, 'common', 'ConcurrentIotivityUtils.cpp')
+]
+
+mpmcommon_env.AppendUnique(MPMCOMMON_SRC=mpmcommon_src)
+mpmcommonlib = mpmcommon_env.StaticLibrary('mpmcommon',
+                                           mpmcommon_env.get('MPMCOMMON_SRC'))
 mpmcommon_env.InstallTarget(mpmcommonlib, 'mpmcommon')
 mpmcommon_env.UserInstallTargetLib(mpmcommonlib, 'mpmcommon')

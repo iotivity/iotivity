@@ -34,7 +34,6 @@
 #include "credresource.h"
 #include "utlist.h"
 #include "aclresource.h" //Note: SRM internal header
-#include "pconfresource.h"
 #include "psinterface.h"
 
 #define TAG "OIC_OCPMAPI"
@@ -70,18 +69,30 @@ struct ProvPreconfPINCtx
  * The function is responsible for initializaton of the provisioning manager. It will load
  * provisioning database which have owned device's list and their linked status.
  * TODO: In addition, if there is a device(s) which has not up-to-date credentials, this function will
- * automatically try to update the deivce(s).
+ * automatically try to update the device(s).
  *
  * @param[in] dbPath file path of the sqlite3 db
  *
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCInitPM(const char* dbPath)
+OCStackResult OC_CALL OCInitPM(const char* dbPath)
 {
     return PDMInit(dbPath);
 }
 
-OCStackResult OCPDMCleanupForTimeout()
+/**
+ * This method is used by provisioning manager to close provisioning database.
+ *
+ * @see OCInitPM()
+ *
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OC_CALL OCClosePM()
+{
+    return PDMClose();
+}
+
+OCStackResult OC_CALL OCPDMCleanupForTimeout()
 {
     return PDMDeleteDeviceWithState(PDM_DEVICE_INIT);
 }
@@ -96,8 +107,8 @@ OCStackResult OCPDMCleanupForTimeout()
  * @param[out] ppFoundDevice     OCProvisionDev_t of found device
  * @return OTM_SUCCESS in case of success and other value otherwise.
  */
-OCStackResult OCDiscoverSingleDevice(unsigned short timeout, const OicUuid_t* deviceID,
-                             OCProvisionDev_t **ppFoundDevice)
+OCStackResult OC_CALL OCDiscoverSingleDevice(unsigned short timeout, const OicUuid_t* deviceID,
+                                             OCProvisionDev_t **ppFoundDevice)
 {
     if( NULL == ppFoundDevice || NULL != *ppFoundDevice || 0 == timeout || NULL == deviceID)
     {
@@ -119,7 +130,7 @@ OCStackResult OCDiscoverSingleDevice(unsigned short timeout, const OicUuid_t* de
  * @param[out] ppFoundDevice     OCProvisionDev_t of found device.
  * @return OTM_SUCCESS in case of success and other value otherwise.
  */
-OCStackResult OCDiscoverSingleDeviceInUnicast(unsigned short timeout, const OicUuid_t* deviceID,
+OCStackResult OC_CALL OCDiscoverSingleDeviceInUnicast(unsigned short timeout, const OicUuid_t* deviceID,
                              const char* hostAddress, OCConnectivityType connType,
                              OCProvisionDev_t **ppFoundDevice)
 {
@@ -144,7 +155,7 @@ OCStackResult OCDiscoverSingleDeviceInUnicast(unsigned short timeout, const OicU
  * @param[out] ppList List of candidate devices to be provisioned
  * @return OTM_SUCCESS in case of success and other value otherwise.
  */
-OCStackResult OCDiscoverUnownedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
+OCStackResult OC_CALL OCDiscoverUnownedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
 {
     if( ppList == NULL || *ppList != NULL || 0 == timeout)
     {
@@ -163,7 +174,7 @@ OCStackResult OCDiscoverUnownedDevices(unsigned short timeout, OCProvisionDev_t 
  * @param[out] ppList List of device owned by provisioning tool.
  * @return OTM_SUCCESS in case of success and other value otherwise.
  */
-OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
+OCStackResult OC_CALL OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
 {
     if( ppList == NULL || *ppList != NULL || 0 == timeout)
     {
@@ -186,9 +197,9 @@ OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **
  *                             OCDeleteDiscoveredDevices to delete the device.
  * @return OC_STACK_OK in case of success and other values otherwise.
  */
-OCStackResult OCDiscoverMultipleOwnerEnabledSingleDevice(unsigned short timeoutSeconds,
-                                                         const OicUuid_t* deviceID,
-                                                         OCProvisionDev_t **ppFoundDevice)
+OCStackResult OC_CALL OCDiscoverMultipleOwnerEnabledSingleDevice(unsigned short timeoutSeconds,
+                                                                 const OicUuid_t* deviceID,
+                                                                 OCProvisionDev_t **ppFoundDevice)
 {
     if ((NULL == ppFoundDevice) || (NULL != *ppFoundDevice) || (0 == timeoutSeconds) || (NULL == deviceID))
     {
@@ -206,7 +217,7 @@ OCStackResult OCDiscoverMultipleOwnerEnabledSingleDevice(unsigned short timeoutS
  * @param[out] ppList List of MOT enabled devices.
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCDiscoverMultipleOwnerEnabledDevices(unsigned short timeout, OCProvisionDev_t **ppList)
+OCStackResult OC_CALL OCDiscoverMultipleOwnerEnabledDevices(unsigned short timeout, OCProvisionDev_t **ppList)
 {
     if( ppList == NULL || *ppList != NULL || 0 == timeout)
     {
@@ -224,7 +235,7 @@ OCStackResult OCDiscoverMultipleOwnerEnabledDevices(unsigned short timeout, OCPr
  * @param[out] ppList List of Multiple Owned devices.
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCDiscoverMultipleOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
+OCStackResult OC_CALL OCDiscoverMultipleOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
 {
     if( ppList == NULL || *ppList != NULL || 0 == timeout)
     {
@@ -242,16 +253,16 @@ OCStackResult OCDiscoverMultipleOwnedDevices(unsigned short timeout, OCProvision
  * @param[in] preconfigPinLen Byte length of preconfigPin
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCAddPreconfigPin(const OCProvisionDev_t *targetDeviceInfo,
-                                const char *preconfigPin,
-                                size_t preconfigPinLen)
+OCStackResult OC_CALL OCAddPreconfigPin(const OCProvisionDev_t *targetDeviceInfo,
+                                        const char *preconfigPin,
+                                        size_t preconfigPinLen)
 {
     return MOTAddPreconfigPIN(targetDeviceInfo, preconfigPin, preconfigPinLen);
 }
 
-OCStackResult OCDoMultipleOwnershipTransfer(void* ctx,
-                                      OCProvisionDev_t *targetDevices,
-                                      OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCDoMultipleOwnershipTransfer(void* ctx,
+                                                    OCProvisionDev_t *targetDevices,
+                                                    OCProvisionResultCB resultCallback)
 {
     if( NULL == targetDevices )
     {
@@ -272,7 +283,7 @@ OCStackResult OCDoMultipleOwnershipTransfer(void* ctx,
  * @param[out] isSubowner  Bool indicating whether the caller is a subowner of device
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCIsSubownerOfDevice(OCProvisionDev_t *device, bool *isSubowner)
+OCStackResult OC_CALL OCIsSubownerOfDevice(OCProvisionDev_t *device, bool *isSubowner)
 {
     if ((NULL == device) || (NULL == isSubowner))
     {
@@ -290,7 +301,7 @@ OCStackResult OCIsSubownerOfDevice(OCProvisionDev_t *device, bool *isSubowner)
  * @param[in] Implementation of callback functions for owership transfer.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
+OCStackResult OC_CALL OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
 {
     if(NULL == callbackData)
     {
@@ -308,14 +319,14 @@ OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t*
  *
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus)
+OCStackResult OC_CALL OCSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus)
 {
     return OTMSetOxmAllowStatus(oxm, allowStatus);
 }
 
-OCStackResult OCDoOwnershipTransfer(void* ctx,
-                                      OCProvisionDev_t *targetDevices,
-                                      OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCDoOwnershipTransfer(void* ctx,
+                                            OCProvisionDev_t *targetDevices,
+                                            OCProvisionResultCB resultCallback)
 {
     if( NULL == targetDevices )
     {
@@ -334,7 +345,7 @@ OCStackResult OCDoOwnershipTransfer(void* ctx,
  *
  * @param[in] pList Pointer to OCProvisionDev_t which should be deleted.
  */
-void OCDeleteDiscoveredDevices(OCProvisionDev_t *pList)
+void OC_CALL OCDeleteDiscoveredDevices(OCProvisionDev_t *pList)
 {
     PMDeleteDeviceList(pList);
 }
@@ -349,10 +360,10 @@ void OCDeleteDiscoveredDevices(OCProvisionDev_t *pList)
  *            request receives a response from resource server.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCProvisionACL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
-                             OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCProvisionACL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
+                                     OCProvisionResultCB resultCallback)
 {
-    if (NULL == acl)
+    if (NULL == acl || NULL == selectedDeviceInfo)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -362,7 +373,7 @@ OCStackResult OCProvisionACL(void* ctx, const OCProvisionDev_t *selectedDeviceIn
      * since we may be provisioning an IoTivity 1.2 or earlier device.
      * TODO IOT-2219 - reintroduce OIC 1.1 /acl (v1) support
      */
-    OicSecAclVersion_t aclVersion = OIC_SEC_ACL_V2;
+    OicSecAclVersion_t aclVersion = GET_ACL_VER(selectedDeviceInfo->specVer);
     if (acl->aces != NULL)
     {
         /* If any of the aces have the role subject, the ACL is v2 */
@@ -373,6 +384,12 @@ OCStackResult OCProvisionACL(void* ctx, const OCProvisionDev_t *selectedDeviceIn
             {
                 aclVersion = OIC_SEC_ACL_V2;
                 break;
+            }
+            OicSecRsrc_t* rsrc = NULL;
+            LL_FOREACH(ace->resources, rsrc)
+            {
+                if(0 >= rsrc->interfaceLen)
+                    return OC_STACK_INVALID_PARAM;
             }
         }
     }
@@ -390,8 +407,8 @@ OCStackResult OCProvisionACL(void* ctx, const OCProvisionDev_t *selectedDeviceIn
  *            request recieves a response from resource server.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCProvisionACL2(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
-                              OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCProvisionACL2(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
+                                      OCProvisionResultCB resultCallback)
 {
     return SRPProvisionACL(ctx, selectedDeviceInfo, acl, OIC_SEC_ACL_V2, resultCallback);
 }
@@ -402,7 +419,7 @@ OCStackResult OCProvisionACL2(void* ctx, const OCProvisionDev_t *selectedDeviceI
  * @param acl ACL to be saved in Acl of SVR.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCSaveACL(const OicSecAcl_t* acl)
+OCStackResult OC_CALL OCSaveACL(const OicSecAcl_t* acl)
 {
     return SRPSaveACL(acl);
 }
@@ -416,8 +433,8 @@ OCStackResult OCSaveACL(const OicSecAcl_t* acl)
               request recieves a response from resource server.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCGetCredResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
-                             OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCGetCredResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                        OCProvisionResultCB resultCallback)
 {
     return SRPGetCredResource(ctx, selectedDeviceInfo, resultCallback);
 }
@@ -431,38 +448,38 @@ OCStackResult OCGetCredResource(void* ctx, const OCProvisionDev_t *selectedDevic
               request recieves a response from resource server.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCGetACLResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
-                             OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCGetACLResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                       OCProvisionResultCB resultCallback)
 {
     return SRPGetACLResource(ctx, selectedDeviceInfo, OIC_SEC_ACL_V1, resultCallback);
 }
 
-OCStackResult OCGetACL2Resource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
-                               OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCGetACL2Resource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                        OCProvisionResultCB resultCallback)
 {
     return SRPGetACLResource(ctx, selectedDeviceInfo, OIC_SEC_ACL_V2, resultCallback);
 }
 
-OCStackResult OCGetCSRResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
-                             OCGetCSRResultCB resultCallback)
+OCStackResult OC_CALL OCGetCSRResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                       OCGetCSRResultCB resultCallback)
 {
     return SRPGetCSRResource(ctx, selectedDeviceInfo, resultCallback);
 }
 
-OCStackResult OCGetRolesResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
-                              OCGetRolesResultCB resultCallback)
+OCStackResult OC_CALL OCGetRolesResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                         OCGetRolesResultCB resultCallback)
 {
     return SRPGetRolesResource(ctx, selectedDeviceInfo, resultCallback);
 }
 
-OCStackResult OCDeleteRoleCertificateByCredId(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
-                                              OCProvisionResultCB resultCallback, uint32_t credId)
+OCStackResult OC_CALL OCDeleteRoleCertificateByCredId(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                                      OCProvisionResultCB resultCallback, uint32_t credId)
 {
     return SRPDeleteRoleCertificateByCredId(ctx, selectedDeviceInfo, resultCallback, credId);
 }
 
-OCStackResult OCReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
-                                     size_t *chainSize)
+OCStackResult OC_CALL OCReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
+                                           size_t *chainSize)
 {
     return SRPReadTrustCertChain(credId, trustCertChain, chainSize);
 }
@@ -477,13 +494,12 @@ OCStackResult OCReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
  *            provisioning request recieves a response from first resource server.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t keySize,
-                                      const OCProvisionDev_t *pDev1,
-                                      const OCProvisionDev_t *pDev2,
-                                      OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t keySize,
+                                             const OCProvisionDev_t *pDev1,
+                                             const OCProvisionDev_t *pDev2,
+                                             OCProvisionResultCB resultCallback)
 {
-    return SRPProvisionCredentialsDos(ctx, type, keySize,
-                                      pDev1, pDev2, resultCallback);
+    return SRPProvisionCredentialsDos(ctx, type, keySize, pDev1, pDev2, NULL, NULL, resultCallback);
 }
 
 /**
@@ -503,14 +519,14 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
  *            provisioning request receives a response from first resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCProvisionSymmetricRoleCredentials(void *ctx, OicSecCredType_t type, size_t keySize,
-                                                  const OCProvisionDev_t *pDev1,
-                                                  const OCProvisionDev_t *pDev2,
-                                                  const OicSecRole_t *role1,
-                                                  const OicSecRole_t *role2,
-                                                  OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCProvisionSymmetricRoleCredentials(void *ctx, OicSecCredType_t type, size_t keySize,
+                                                          const OCProvisionDev_t *pDev1,
+                                                          const OCProvisionDev_t *pDev2,
+                                                          const OicSecRole_t *role1,
+                                                          const OicSecRole_t *role2,
+                                                          OCProvisionResultCB resultCallback)
 {
-    return SRPProvisionCredentials(ctx, type, keySize, pDev1, pDev2, NULL, role1, role2, resultCallback);
+    return SRPProvisionCredentialsDos(ctx, type, keySize, pDev1, pDev2, role1, role2, resultCallback);
 }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
@@ -524,31 +540,14 @@ OCStackResult OCProvisionSymmetricRoleCredentials(void *ctx, OicSecCredType_t ty
 *            provisioning request receives a response from first resource server.
 * @return OC_STACK_OK in case of success and other value otherwise.
 */
-OCStackResult OCProvisionCertificate(void *ctx,
+OCStackResult OC_CALL OCProvisionCertificate(void *ctx,
     const OCProvisionDev_t *pDev,
     const char* pemCert,
     OCProvisionResultCB resultCallback)
 {
-    return SRPProvisionCredentials(ctx, SIGNED_ASYMMETRIC_KEY, 0,
-        pDev, NULL, pemCert, NULL, NULL, resultCallback);
+    return SRPProvisionCertificate(ctx, pDev, pemCert, resultCallback);
 }
 #endif
-
-/**
- * this function sends Direct-Pairing Configuration to a device.
- *
- * @param[in] ctx Application context would be returned in result callback.
- * @param[in] selectedDeviceInfo Selected target device.
- * @param[in] pconf PCONF pointer.
- * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
-              request recieves a response from resource server.
- * @return  OC_STACK_OK in case of success and other value otherwise.
- */
-OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecPconf_t *pconf,
-                             OCProvisionResultCB resultCallback)
-{
-    return SRPProvisionDirectPairing(ctx, selectedDeviceInfo, pconf, resultCallback);
-}
 
 #ifdef MULTIPLE_OWNER
 static void AddPreconfPinOxMCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
@@ -567,11 +566,11 @@ static void AddPreconfPinOxMCB(void* ctx, size_t nOfRes, OCProvisionResult_t *ar
     }
 }
 
-OCStackResult OCProvisionPreconfigPin(void *ctx,
-                                      OCProvisionDev_t *targetDeviceInfo,
-                                      const char *preconfigPin,
-                                      size_t preconfigPinLen,
-                                      OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCProvisionPreconfigPin(void *ctx,
+                                              OCProvisionDev_t *targetDeviceInfo,
+                                              const char *preconfigPin,
+                                              size_t preconfigPinLen,
+                                              OCProvisionResultCB resultCallback)
 {
     if( NULL == targetDeviceInfo )
     {
@@ -615,10 +614,10 @@ OCStackResult OCProvisionPreconfigPin(void *ctx,
 *            device unlink is finished.
  * @return  OC_STACK_OK in case of success and other value otherwise.
 */
-OCStackResult OCUnlinkDevices(void* ctx,
-                              const OCProvisionDev_t* pTargetDev1,
-                              const OCProvisionDev_t* pTargetDev2,
-                              OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCUnlinkDevices(void* ctx,
+                                      const OCProvisionDev_t* pTargetDev1,
+                                      const OCProvisionDev_t* pTargetDev2,
+                                      OCProvisionResultCB resultCallback)
 {
     OIC_LOG(INFO, TAG, "IN OCUnlinkDevices");
     OCUuidList_t* idList = NULL;
@@ -733,9 +732,9 @@ error:
 *            credential revocation is finished.
  * @return  OC_STACK_OK in case of success and other value otherwise.
 */
-OCStackResult OCRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
-                            const OCProvisionDev_t* pTargetDev,
-                            OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
+                                     const OCProvisionDev_t* pTargetDev,
+                                     OCProvisionResultCB resultCallback)
 {
     OIC_LOG(INFO, TAG, "IN OCRemoveDevice");
     OCStackResult res = OC_STACK_ERROR;
@@ -803,7 +802,7 @@ error:
 *            credential revocation is finished.
  * @return  OC_STACK_OK in case of success and other value otherwise.
 */
-OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
+OCStackResult OC_CALL OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
                             const OicUuid_t* pTargetUuid,
                             OCProvisionResultCB resultCallback)
 {
@@ -963,9 +962,9 @@ error:
  *            credential revocation is finished.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCResetDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
-                            const OCProvisionDev_t* pTargetDev,
-                            OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCResetDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
+                                    const OCProvisionDev_t* pTargetDev,
+                                    OCProvisionResultCB resultCallback)
 {
     OIC_LOG(INFO, TAG, "IN OCResetDevice");
     OCStackResult res = OC_STACK_ERROR;
@@ -1005,7 +1004,7 @@ OCStackResult OCResetDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDisc
  *
  * @return OC_STACK_OK in case of successful reset and other value otherwise.
  */
-OCStackResult OCResetSVRDB(void)
+OCStackResult OC_CALL OCResetSVRDB(void)
 {
     return ResetSecureResourceInPS();
 }
@@ -1015,7 +1014,7 @@ OCStackResult OCResetSVRDB(void)
  *
  *@return OC_STACK_OK in case of successful configue and other value otherwise.
  */
-OCStackResult OCConfigSelfOwnership(void)
+OCStackResult OC_CALL OCConfigSelfOwnership(void)
 {
     return ConfigSelfOwnership();
 }
@@ -1105,7 +1104,7 @@ static void AclProv1CB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool 
     UpdateLinkResults(link, 1, arr[0].res);
     if (NULL != link->pDev2Acl)
     {
-        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, OIC_SEC_ACL_V2, &AclProv2CB);
+        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, GET_ACL_VER(link->pDev2->specVer), &AclProv2CB);
         if (OC_STACK_OK!=res)
         {
              UpdateLinkResults(link, 2, res);
@@ -1154,7 +1153,7 @@ static void ProvisionCredsCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr,
     }
     if (NULL != link->pDev1Acl)
     {
-        OCStackResult res =  SRPProvisionACL(ctx, link->pDev1, link->pDev1Acl, OIC_SEC_ACL_V2, &AclProv1CB);
+        OCStackResult res =  SRPProvisionACL(ctx, link->pDev1, link->pDev1Acl, GET_ACL_VER(link->pDev1->specVer), &AclProv1CB);
         if (OC_STACK_OK!=res)
         {
              OIC_LOG(ERROR, TAG, "Error while provisioning ACL for device 1");
@@ -1170,7 +1169,7 @@ static void ProvisionCredsCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr,
     {
         OIC_LOG(ERROR, TAG, "ACL for device 1 is NULL");
 
-        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, OIC_SEC_ACL_V2, &AclProv2CB);
+        OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, GET_ACL_VER(link->pDev2->specVer), &AclProv2CB);
         if (OC_STACK_OK!=res)
         {
              OIC_LOG(ERROR, TAG, "Error while provisioning ACL for device 2");
@@ -1206,7 +1205,7 @@ static void ProvisionCredsCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr,
  *            provisioning request recieves a response from first resource server.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_t keySize,
+OCStackResult OC_CALL OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_t keySize,
                                          const OCProvisionDev_t *pDev1, OicSecAcl_t *pDev1Acl,
                                          const OCProvisionDev_t *pDev2, OicSecAcl_t *pDev2Acl,
                                          OCProvisionResultCB resultCallback)
@@ -1275,8 +1274,7 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
     link->resultCallback = resultCallback;
     link->currentCountResults = 0;
     link->resArr = (OCProvisionResult_t*) OICMalloc(sizeof(OCProvisionResult_t)*noOfResults);
-    res = SRPProvisionCredentialsDos(link, type, keySize,
-                                     pDev1, pDev2, &ProvisionCredsCB);
+    res = SRPProvisionCredentialsDos(link, type, keySize, pDev1, pDev2, NULL, NULL, &ProvisionCredsCB);
     if (res != OC_STACK_OK)
     {
         OICFree(link->resArr);
@@ -1286,9 +1284,9 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
 
 }
 
-OCStackResult OCGetDevInfoFromNetwork(unsigned short waittime,
-                                       OCProvisionDev_t** pOwnedDevList,
-                                       OCProvisionDev_t** pUnownedDevList)
+OCStackResult OC_CALL OCGetDevInfoFromNetwork(unsigned short waittime,
+                                              OCProvisionDev_t** pOwnedDevList,
+                                              OCProvisionDev_t** pUnownedDevList)
 {
     //TODO will be replaced by more efficient logic
     if (pOwnedDevList == NULL || *pOwnedDevList != NULL || pUnownedDevList == NULL
@@ -1412,18 +1410,18 @@ OCStackResult OCGetDevInfoFromNetwork(unsigned short waittime,
     return OC_STACK_OK;
 }
 
-OCStackResult OCGetLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t** uuidList,
-                                 size_t* numOfDevices)
+OCStackResult OC_CALL OCGetLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t** uuidList,
+                                        size_t* numOfDevices)
 {
     return PDMGetLinkedDevices(uuidOfDevice, uuidList, numOfDevices);
 }
 
-OCStackResult OCRemoveCredential(const OicUuid_t* subjectUuid)
+OCStackResult OC_CALL OCRemoveCredential(const OicUuid_t* subjectUuid)
 {
     return RemoveCredential(subjectUuid);
 }
 
-void OCDeleteUuidList(OCUuidList_t* pList)
+void OC_CALL OCDeleteUuidList(OCUuidList_t* pList)
 {
     PDMDestoryOicUuidLinkList(pList);
 }
@@ -1433,19 +1431,9 @@ void OCDeleteUuidList(OCUuidList_t* pList)
  *
  * @param pAcl Pointer to OicSecAcl_t structure.
  */
-void OCDeleteACLList(OicSecAcl_t* pAcl)
+void OC_CALL OCDeleteACLList(OicSecAcl_t* pAcl)
 {
     DeleteACLList(pAcl);
-}
-
-/**
- * This function deletes PDACL data.
- *
- * @param pPdAcl Pointer to OicSecPdAcl_t structure.
- */
-void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl)
-{
-    FreePdAclList(pPdAcl);
 }
 
 #ifdef MULTIPLE_OWNER
@@ -1458,8 +1446,8 @@ void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl)
  *            POST 'mom' request recieves a response from resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
-                            const OicSecMomType_t momType, OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
+                                      const OicSecMomType_t momType, OCProvisionResultCB resultCallback)
 {
     return MOTChangeMode(ctx, targetDeviceInfo, momType, resultCallback);
 }
@@ -1473,8 +1461,8 @@ OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInf
  *            POST 'oxmsel' request recieves a response from resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
-                                 const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
+                                        const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback)
 {
     return MOTSelectMOTMethod(ctx, targetDeviceInfo, oxmSelValue, resultCallback);
 }
@@ -1489,7 +1477,7 @@ OCStackResult OCSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceI
  * @param[in] ownerType type of owner device (SUPER_OWNER or SUB_OWNER)
  * @return  OC_STACK_OK on success
  */
-OCStackResult OCSelectOwnershipTransferMethod(const OicSecOxm_t *supportedMethods,
+OCStackResult OC_CALL OCSelectOwnershipTransferMethod(const OicSecOxm_t *supportedMethods,
         size_t numberOfMethods, OicSecOxm_t *selectedMethod, OwnerType_t ownerType)
 {
     return OTMSelectOwnershipTransferMethod(supportedMethods, numberOfMethods,
@@ -1508,9 +1496,9 @@ OCStackResult OCSelectOwnershipTransferMethod(const OicSecOxm_t *supportedMethod
  *            provisioning request recieves a response from first resource server.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
-                                      const OCProvisionDev_t *selectedDeviceInfo,
-                                      OCProvisionResultCB resultCallback)
+OCStackResult OC_CALL OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
+                                                const OCProvisionDev_t *selectedDeviceInfo,
+                                                OCProvisionResultCB resultCallback)
 {
     return SRPProvisionTrustCertChain(ctx, type, credId,
                                       selectedDeviceInfo, resultCallback);
@@ -1525,8 +1513,8 @@ OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16
  * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCSaveTrustCertChain(const uint8_t *trustCertChain, size_t chainSize,
-                                    OicEncodingType_t encodingType, uint16_t *credId)
+OCStackResult OC_CALL OCSaveTrustCertChain(const uint8_t *trustCertChain, size_t chainSize,
+                                           OicEncodingType_t encodingType, uint16_t *credId)
 {
     return SRPSaveTrustCertChain(trustCertChain, chainSize, encodingType, credId);
 }
@@ -1539,7 +1527,7 @@ OCStackResult OCSaveTrustCertChain(const uint8_t *trustCertChain, size_t chainSi
  * @param[out] credId CredId of saved certificate chain in Cred of SVR.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCSaveOwnCertChain(const char* cert, const char* key, uint16_t *credId)
+OCStackResult OC_CALL OCSaveOwnCertChain(const char* cert, const char* key, uint16_t *credId)
 {
     OicSecKey_t ownCert = { 0 };
     ownCert.data = (uint8_t*) cert;
@@ -1564,7 +1552,7 @@ OCStackResult OCSaveOwnCertChain(const char* cert, const char* key, uint16_t *cr
  * @note The certificate public key must be the same as public key in the identity
  *       certificate (installed by OCSaveOwnCertChain).
  */
-OCStackResult OCSaveOwnRoleCert(const char* cert, uint16_t *credId)
+OCStackResult OC_CALL OCSaveOwnRoleCert(const char* cert, uint16_t *credId)
 {
     OicSecKey_t ownCert = { 0 };
     ownCert.data = (uint8_t*)cert;
@@ -1581,7 +1569,7 @@ OCStackResult OCSaveOwnRoleCert(const char* cert, uint16_t *credId)
  * @param[in] TrustCertChainChangeCB notification callback fucntion.
  * @return    OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCRegisterTrustCertChainNotifier(void *ctx, TrustCertChainChangeCB Callback)
+OCStackResult OC_CALL OCRegisterTrustCertChainNotifier(void *ctx, TrustCertChainChangeCB Callback)
 {
     return SRPRegisterTrustCertChainNotifier(ctx, Callback);
 }
@@ -1589,9 +1577,19 @@ OCStackResult OCRegisterTrustCertChainNotifier(void *ctx, TrustCertChainChangeCB
 /**
  * function to de-register notifier for Trustcertchain change.
  */
-void OCRemoveTrustCertChainNotifier()
+void OC_CALL OCRemoveTrustCertChainNotifier()
 {
     SRPRemoveTrustCertChainNotifier();
+}
+
+/**
+ * Function to set the callback to utilize peer certificate Common Name field
+ */
+void OC_CALL OCSetPeerCNVerifyCallback(PeerCNVerifyCallback cb)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+    CAsetPeerCNVerifyCallback(cb);
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 }
 #endif // __WITH_DTLS__ || __WITH_TLS__
 

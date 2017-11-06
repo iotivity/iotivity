@@ -33,9 +33,8 @@
 
 int g_CurSliderVal = 0;
 
-HWND hwnd, icon_button, hwndVolumeSlider, hwndVolumeExpectedLabel;
+HWND g_hwnd, g_icon_button, g_hwndVolumeSlider, g_hwndVolumeExpectedLabel;
 HWND hwndButtonPlayPause, hwndButtonFind, hwndButtonGet, hwndButtonPut, hwndButtonPost, hwndButtonBeginObserve, hwndButtonCancelObserve;
-HINSTANCE hInstance, g_hinstTrackBar, g_hinstVolumeSlider, g_hinstVolumeLabel;
 HANDLE Timer, Thread;
 HICON hIcon1;
 HBRUSH g_BkgndBrush;
@@ -60,8 +59,8 @@ FILE* client_open(const char* path, const char* mode)
     }
 }
 
-int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
-            LPSTR lpCmdLine, int nCmdShow )
+int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE /* hPrevInstance */,
+            LPSTR /* lpCmdLine */, int nCmdShow )
 {
     MSG msg;
     WNDCLASS wc = {sizeof(WNDCLASS)};
@@ -73,78 +72,78 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.hCursor = LoadCursor (NULL, IDC_ARROW);
 
     RegisterClass(&wc);
-    hwnd = CreateWindow( wc.lpszClassName, TEXT("IoTivity Media Client - Windows UI"),
+    g_hwnd = CreateWindow( wc.lpszClassName, TEXT("IoTivity Media Client - Windows UI"),
                    WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME,
                    100, 100, 275, 170, 0, 0, hInstance, 0);
 
     InitCommonControls(); // loads common control's DLL
 
-    hwndVolumeSlider =
-             CreateTrackbar(hwnd,
+    g_hwndVolumeSlider =
+             CreateTrackbar(g_hwnd,
                             10,10,
                             170,40,
                             0,100,
                             0,0);
-    hwndVolumeExpectedLabel =
-                CreateLabel(hwnd,
+    g_hwndVolumeExpectedLabel =
+                CreateLabel(g_hwnd,
                             "Expected Volume",
                             10,50,
                             240,30);
 
-    LabelPrintf(hwndVolumeExpectedLabel,
+    LabelPrintf(g_hwndVolumeExpectedLabel,
                 "Expected Volume: %i",
                 0);
 
     hwndButtonPlayPause =
-                CreateButton(hwnd,
+                CreateButton(g_hwnd,
                              ID_BUTTONPLAYPAUSE,
                              "PlayPause",
                              180,10,
                              80,35);
 
     hwndButtonFind =
-                CreateButton(hwnd,
+                CreateButton(g_hwnd,
                              ID_BUTTONFIND,
                              "Find",
                              10,75,
                              64,25);
 
     hwndButtonGet =
-                CreateButton(hwnd,
+                CreateButton(g_hwnd,
                              ID_BUTTONGET,
                              "Get",
                              10,105,
                              64,25);
 
     hwndButtonPut =
-                CreateButton(hwnd,
+                CreateButton(g_hwnd,
                              ID_BUTTONPUT,
                              "Put",
                              80,75,
                              64,25);
 
     hwndButtonPost =
-                CreateButton(hwnd,
+                CreateButton(g_hwnd,
                              ID_BUTTONPOST,
                              "Post",
                              80,105,
                              64,25);
     hwndButtonBeginObserve =
-                CreateButton(hwnd,
+                CreateButton(g_hwnd,
                              ID_BUTTONBEGINOBSERVE,
                              "Bgn Obs",
                              150,75,
                              64,25);
     hwndButtonCancelObserve =
-                CreateButton(hwnd,
+                CreateButton(g_hwnd,
                              ID_BUTTONCANCELOBSERVE,
                              "Cncl Obs",
                              150,105,
                              64,25);
 
 
-    ShowWindow(hwnd, nCmdShow);
-    UpdateWindow(hwnd);
+    ShowWindow(g_hwnd, nCmdShow);
+    UpdateWindow(g_hwnd);
 
     while (GetMessage(&msg, NULL, 0, 0))
     {
@@ -167,8 +166,8 @@ WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
       case WM_HSCROLL:
         switch (LOWORD(wParam)) {
             case TB_ENDTRACK:
-                g_CurSliderVal = (int)SendMessage(hwndVolumeSlider, TBM_GETPOS, 0, 0);
-                LabelPrintf(hwndVolumeExpectedLabel,"Volume: %i", g_CurSliderVal);
+                g_CurSliderVal = (int)SendMessage(g_hwndVolumeSlider, TBM_GETPOS, 0, 0);
+                LabelPrintf(g_hwndVolumeExpectedLabel,"Volume: %i", g_CurSliderVal);
 
                 myMedia = app->GetMedia();
                 myMedia.m_volume = g_CurSliderVal;
@@ -180,7 +179,7 @@ WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
       case WM_CREATE:
           {
               hIcon1 = LoadIcon (NULL, IDI_WARNING);
-              SendMessage(icon_button,BM_SETIMAGE,IMAGE_ICON,(LPARAM)hIcon1);
+              SendMessage(g_icon_button,BM_SETIMAGE,IMAGE_ICON,(LPARAM)hIcon1);
               GetClientRect(hwnd, &rect);
               g_BkgndBrush = GetSysColorBrush(COLOR_MENU);
 

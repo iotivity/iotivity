@@ -28,7 +28,7 @@
 #include "OCApi.h"
 #include "OCPlatform_impl.h"
 #include "oxmverifycommon.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 namespace OC
 {
@@ -164,7 +164,7 @@ namespace OC
              *
              * @return OC_STACK_OK in case of success and other value otherwise.
              */
-            static OCStackResult displayNumCallbackWrapper(void* ctx,
+            static OCStackResult OC_CALL displayNumCallbackWrapper(void* ctx,
                     uint8_t verifNum[MUTUAL_VERIF_NUM_LEN]);
 
             /**
@@ -172,7 +172,7 @@ namespace OC
              *
              * @return OC_STACK_OK in case of success and other value otherwise.
              */
-            static OCStackResult confirmUserCallbackWrapper(void* ctx);
+            static OCStackResult OC_CALL confirmUserCallbackWrapper(void* ctx);
 
             /**
              * Notifier wrapper for trustCertChain change.
@@ -190,11 +190,22 @@ namespace OC
              * The API is responsible for initialization of the provisioning manager. It will load
              * provisioning database which have owned device's list and their linked status.
              *
+             * @see OCSecure::provisionClose()
+             *
              * @param dbPath file path of the sqlite3 database.
              *
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult provisionInit(const std::string& dbPath);
+
+            /**
+             * This method is used by provisioning manager to close provisioning database.
+             *
+             * @see OCSecure::provisionInit()
+             *
+             * @return  OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult provisionClose();
 
             /**
              * API is responsible for discovery of devices in it's subnet. It will list
@@ -640,17 +651,6 @@ namespace OC
              * @return  ::OC_STACK_OK in case of success and other value otherwise.
              */
             OCStackResult removeDevice(unsigned short waitTimeForOwnedDeviceDiscovery,
-                    ResultCallBack resultCallback);
-
-            /**
-             * API to provision DirectPairing to devices.
-             *
-             * @param pconf pointer to PCONF (Pairing Configuration).
-             * @param resultCallback Callback will be called when provisioning request receives
-             *                           a response from first resource server.
-             * @return  ::OC_STACK_OK in case of success and other value otherwise.
-             */
-            OCStackResult provisionDirectPairing(const OicSecPconf_t *pconf,
                     ResultCallBack resultCallback);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)

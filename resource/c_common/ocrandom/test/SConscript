@@ -20,7 +20,7 @@
 
 import os
 import os.path
-from tools.scons.RunTest import *
+from tools.scons.RunTest import run_test
 
 Import('test_env')
 
@@ -32,20 +32,20 @@ target_os = randomtest_env.get('TARGET_OS')
 # Build flags
 ######################################################################
 
-randomtest_env.PrependUnique(CPPPATH = [
-        '../include',
-               '../../logger/include',
-               '../../../oc_logger/include',
-               ])
-randomtest_env.PrependUnique(LIBS = ['uuid'])
+randomtest_env.PrependUnique(CPPPATH=[
+    '../include',
+    '../../logger/include',
+    '../../../oc_logger/include',
+])
+randomtest_env.PrependUnique(LIBS=['uuid'])
 
-randomtest_env.PrependUnique(CPPPATH = ['../include'])
+randomtest_env.PrependUnique(CPPPATH=['../include'])
 
 if target_os in ['linux']:
-    randomtest_env.AppendUnique(LIBS = ['m'])
+    randomtest_env.AppendUnique(LIBS=['m'])
 
 if randomtest_env.get('LOGGING'):
-	randomtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    randomtest_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 ######################################################################
 # Source files and Targets
@@ -56,7 +56,6 @@ Alias("test", [randomtests])
 
 randomtest_env.AppendTarget('test')
 if randomtest_env.get('TEST') == '1':
-	if target_os in ['linux', 'windows']:
-                run_test(randomtest_env,
-                         'resource_csdk_random_test.memcheck',
-                         'resource/c_common/ocrandom/test/randomtests')
+    if target_os in ['linux', 'windows']:
+        run_test(randomtest_env, 'resource_csdk_random_test.memcheck',
+                 'resource/c_common/ocrandom/test/randomtests')

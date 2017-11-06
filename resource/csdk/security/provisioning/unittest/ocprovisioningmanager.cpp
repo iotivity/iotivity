@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  * *****************************************************************/
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "ocprovisioningmanager.h"
 
 static OicSecAcl_t acl1;
@@ -210,12 +210,6 @@ TEST(OCDeleteUuidListTest, NullUuidList)
 TEST(OCDeleteACLListTest, NullACLList)
 {
     OCDeleteACLList(NULL);
-    EXPECT_EQ(1, 1);
-}
-
-TEST(OCDeletePdAclListTest, NullPdACLList)
-{
-    OCDeletePdAclList(NULL);
     EXPECT_EQ(1, 1);
 }
 

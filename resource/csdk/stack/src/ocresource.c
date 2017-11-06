@@ -224,7 +224,7 @@ OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char 
         {
             *filterOne = value;     // if
         }
-        else if (strncasecmp(key, OC_RSRVD_RESOURCE_TYPE, sizeof(OC_RSRVD_INTERFACE) - 1) == 0)
+        else if (strncasecmp(key, OC_RSRVD_RESOURCE_TYPE, sizeof(OC_RSRVD_RESOURCE_TYPE) - 1) == 0)
         {
             *filterTwo = value;     // rt
         }
@@ -1098,7 +1098,7 @@ exit:
 }
 
 OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourcePtr,
-    OCRepPayload** payload, OCDevAddr *devAddr)
+    OCRepPayload** payload, OCDevAddr *devAddr, bool includeBaselineProps)
 {
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
     OCRepPayload *tempPayload = NULL;
@@ -1130,36 +1130,33 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
         goto exit;
     }
 
-    if (!OCRepPayloadSetUri(tempPayload, resourcePtr->uri))
+    if(includeBaselineProps)
     {
-        OIC_LOG(ERROR, TAG, "Failed to set payload URI");
-        ret = OC_STACK_ERROR;
-        goto exit;
+        resType = resourcePtr->rsrcType;
+        while (resType)
+        {
+            if (!OCRepPayloadAddResourceType(tempPayload, resType->resourcetypename))
+            {
+                OIC_LOG(ERROR, TAG, "Failed at add resource type");
+                ret = OC_STACK_ERROR;
+                goto exit;
+            }
+            resType = resType->next;
+        }
+
+        resInterface = resourcePtr->rsrcInterface;
+        while (resInterface)
+        {
+            if (!OCRepPayloadAddInterface(tempPayload, resInterface->name))
+            {
+                OIC_LOG(ERROR, TAG, "Failed to add interface");
+                ret = OC_STACK_ERROR;
+                goto exit;
+            }
+            resInterface = resInterface->next;
+        }
     }
 
-    resType = resourcePtr->rsrcType;
-    while (resType)
-    {
-        if (!OCRepPayloadAddResourceType(tempPayload, resType->resourcetypename))
-        {
-            OIC_LOG(ERROR, TAG, "Failed at add resource type");
-            ret = OC_STACK_ERROR;
-            goto exit;
-        }
-        resType = resType->next;
-    }
-
-    resInterface = resourcePtr->rsrcInterface;
-    while (resInterface)
-    {
-        if (!OCRepPayloadAddInterface(tempPayload, resInterface->name))
-        {
-            OIC_LOG(ERROR, TAG, "Failed to add interface");
-            ret = OC_STACK_ERROR;
-            goto exit;
-        }
-        resInterface = resInterface->next;
-    }
     if (!OCRepPayloadSetPropString(tempPayload, OC_RSRVD_INTROSPECTION_NAME, OC_RSRVD_INTROSPECTION_NAME_VALUE))
     {
         OIC_LOG(ERROR, TAG, "Failed to set Name property.");
@@ -1194,7 +1191,7 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
                 char *proto = NULL;
 
                 // consider IP or TCP adapter for payload that is visible to the client
-                if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter) && 
+                if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter) &&
                     (info->ifindex == devAddr->ifindex))
                 {
                     OCTpsSchemeFlags matchedTps = OC_NO_TPS;
@@ -1297,7 +1294,7 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
     return OC_STACK_OK;
 }
 
-OCResource *FindResourceByUri(const char* resourceUri)
+OCResource *OC_CALL FindResourceByUri(const char* resourceUri)
 {
     if(!resourceUri)
     {
@@ -1479,6 +1476,30 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
         case OC_EH_RESOURCE_NOT_FOUND:
             result = OC_STACK_NO_RESOURCE;
             break;
+        case OC_EH_BAD_REQ:
+            result = OC_STACK_INVALID_QUERY;
+            break;
+        case OC_EH_UNAUTHORIZED_REQ:
+            result = OC_STACK_UNAUTHORIZED_REQ;
+            break;
+        case OC_EH_BAD_OPT:
+            result = OC_STACK_INVALID_OPTION;
+            break;
+        case OC_EH_METHOD_NOT_ALLOWED:
+            result = OC_STACK_INVALID_METHOD;
+            break;
+        case OC_EH_NOT_ACCEPTABLE:
+            result = OC_STACK_NOT_ACCEPTABLE;
+            break;
+        case OC_EH_TOO_LARGE:
+            result = OC_STACK_TOO_LARGE_REQ;
+            break;
+        case OC_EH_SERVICE_UNAVAILABLE:
+            result = OC_STACK_SERVICE_UNAVAILABLE;
+            break;
+        case OC_EH_RETRANSMIT_TIMEOUT:
+            result = OC_STACK_COMM_ERROR;
+            break;
         default:
             result = OC_STACK_ERROR;
     }
@@ -1651,13 +1672,15 @@ static OCStackResult EHRequest(OCEntityHandlerRequest *ehRequest, OCPayloadType 
  * In case if RD server is not started, it returns ::OC_STACK_NO_RESOURCE.
  */
 static OCStackResult findResourcesAtRD(const char *interfaceQuery,
-                                       const char *resourceTypeQuery, OCDiscoveryPayload **discPayload)
+                                       const char *resourceTypeQuery,
+                                       OCDevAddr *endpoint,
+                                       OCDiscoveryPayload **discPayload)
 {
     OCStackResult result = OC_STACK_NO_RESOURCE;
     if (OCGetResourceHandleAtUri(OC_RSRVD_RD_URI) != NULL)
     {
-        result = OCRDDatabaseDiscoveryPayloadCreate(interfaceQuery, resourceTypeQuery,
-            (*discPayload) ? &(*discPayload)->next : discPayload);
+        result = OCRDDatabaseDiscoveryPayloadCreateWithEp(interfaceQuery, resourceTypeQuery,
+                endpoint, (*discPayload) ? &(*discPayload)->next : discPayload);
     }
     if ((*discPayload) && (*discPayload)->resources)
     {
@@ -1886,7 +1909,8 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             OICFree(networkInfo);
         }
 #ifdef RD_SERVER
-        discoveryResult = findResourcesAtRD(interfaceQuery, resourceTypeQuery, (OCDiscoveryPayload **)&payload);
+        discoveryResult = findResourcesAtRD(interfaceQuery, resourceTypeQuery, &request->devAddr,
+                (OCDiscoveryPayload **)&payload);
 #endif
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
@@ -1912,9 +1936,18 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     else if (OC_INTROSPECTION_URI == virtualUriInRequest)
     {
         // Received request for introspection
+        discoveryResult = getQueryParamsForFiltering(virtualUriInRequest, request->query,
+                                                     &interfaceQuery, &resourceTypeQuery);
+        VERIFY_SUCCESS(discoveryResult);
+
         OCResource *resourcePtr = FindResourceByUri(OC_RSRVD_INTROSPECTION_URI_PATH);
+        bool includeBaselineProps = interfaceQuery
+                                    && (0 == strcmp(interfaceQuery, OC_RSRVD_INTERFACE_DEFAULT));
         VERIFY_PARAM_NON_NULL(TAG, resourcePtr, "Introspection URI not found.");
-        discoveryResult = BuildIntrospectionResponseRepresentation(resourcePtr, (OCRepPayload **)&payload, &request->devAddr);
+        discoveryResult = BuildIntrospectionResponseRepresentation(resourcePtr,
+                                                                   (OCRepPayload **)&payload,
+                                                                   &request->devAddr,
+                                                                   includeBaselineProps);
         OIC_LOG(INFO, TAG, "Request is for Introspection");
     }
     else if (OC_INTROSPECTION_PAYLOAD_URI == virtualUriInRequest)
@@ -2251,7 +2284,7 @@ ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerReque
     return ret;
 }
 
-OCStackResult OCSetPlatformInfo(OCPlatformInfo info)
+OCStackResult OC_CALL OCSetPlatformInfo(OCPlatformInfo info)
 {
     OCResource *resource = NULL;
     if (!info.platformID || !info.manufacturerName)
@@ -2314,7 +2347,7 @@ exit:
     return OC_STACK_INVALID_PARAM;
 }
 
-OCStackResult OCSetDeviceInfo(OCDeviceInfo info)
+OCStackResult OC_CALL OCSetDeviceInfo(OCDeviceInfo info)
 {
     OCResource *resource = FindResourceByUri(OC_RSRVD_DEVICE_URI);
     if (!resource)
@@ -2365,7 +2398,7 @@ exit:
     return OC_STACK_ERROR;
 }
 
-OCStackResult OCGetAttribute(const OCResource *resource, const char *attribute, void **value)
+OCStackResult OC_CALL OCGetAttribute(const OCResource *resource, const char *attribute, void **value)
 {
     if (!resource || !attribute)
     {
@@ -2423,7 +2456,7 @@ OCStackResult OCGetAttribute(const OCResource *resource, const char *attribute, 
     return OC_STACK_NO_RESOURCE;
 }
 
-OCStackResult OCGetPropertyValue(OCPayloadType type, const char *prop, void **value)
+OCStackResult OC_CALL OCGetPropertyValue(OCPayloadType type, const char *prop, void **value)
 {
     if (!prop)
     {
@@ -2577,7 +2610,7 @@ static OCStackResult IsDatabaseUpdateNeeded(const char *attribute, const void *v
         }
         else
         {
-            OIC_LOG_V(ERROR, TAG, 
+            OIC_LOG_V(ERROR, TAG,
                 "Call to OCGetPropertyValue for the current PIID failed with error: %d", result);
         }
     }
@@ -2588,7 +2621,7 @@ static OCStackResult IsDatabaseUpdateNeeded(const char *attribute, const void *v
     return result;
 }
 
-OCStackResult OCSetAttribute(OCResource *resource, const char *attribute, const void *value)
+OCStackResult OC_CALL OCSetAttribute(OCResource *resource, const char *attribute, const void *value)
 {
     bool updateDatabase = false;
 
@@ -2597,7 +2630,7 @@ OCStackResult OCSetAttribute(OCResource *resource, const char *attribute, const 
     // write.
     if (OC_STACK_OK != IsDatabaseUpdateNeeded(attribute, value, &updateDatabase))
     {
-        OIC_LOG_V(WARNING, TAG, 
+        OIC_LOG_V(WARNING, TAG,
             "Could not determine if a database update was needed for %s. Proceeding without updating the database.",
             attribute);
         updateDatabase = false;
@@ -2606,7 +2639,7 @@ OCStackResult OCSetAttribute(OCResource *resource, const char *attribute, const 
     return SetAttributeInternal(resource, attribute, value, updateDatabase);
 }
 
-OCStackResult OCSetPropertyValue(OCPayloadType type, const char *prop, const void *value)
+OCStackResult OC_CALL OCSetPropertyValue(OCPayloadType type, const char *prop, const void *value)
 {
     if (!prop || !value)
     {

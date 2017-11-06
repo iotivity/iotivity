@@ -32,15 +32,21 @@
 #include "ocstack.h"
 #include "octypes.h"
 #ifdef __WITH_DTLS__
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "OCProvisioningManager.hpp"
 #include "ocrandom.h"
 #endif
 
 #include "escommon.h"
 
+#include "logger.h"
+
 using namespace OC;
 using namespace std;
+
+#define ES_RICH_COMMON_TAG "ES_MEDIATOR_COMMON"
+#define OCF_CONTENT_FORMAT_VERSION_OPTION_ID 2053
+#define OCF_CONTENT_FORMAT_VERSION_VALUE 2048
 
 #ifndef WITH_ARDUINO
 namespace OIC
@@ -312,6 +318,59 @@ namespace OIC
             {
                 return m_rep;
             }
+
+            /**
+             * Update Cloud property representation as per OCF Specification.
+             *
+             * Resource Schema for CloudConf resource is different in older Enrollee following
+             * OIC Spec compared to newer Enrollee following OCF Spec. This function updates
+             * the representation as per spec version.
+             */
+            void updateOCRepresentation(int specVersion)
+            {
+                if(0 == specVersion) // OIC Server does not contain CONTENT FORMAT VERSION
+                {
+                    // Representation is already stored as per older resource schemas.
+                    return;
+                }
+
+                // Representation should be updated as per OCF 1.3 Easy Setup resource schemas.
+                std::string authCode = m_rep.getValue<std::string>(OC_RSRVD_ES_AUTHCODE);
+                std::string authProvider = m_rep.getValue<std::string>(OC_RSRVD_ES_AUTHPROVIDER);
+                std::string ciServer = m_rep.getValue<std::string>(OC_RSRVD_ES_CISERVER);
+
+                std::string accessToken = m_rep.getValue<std::string>(OC_RSRVD_ES_ACCESSTOKEN);
+                OAUTH_TOKENTYPE accessTokenType = static_cast<OAUTH_TOKENTYPE>(
+                                m_rep.getValue<int>(OC_RSRVD_ES_ACCESSTOKEN_TYPE));
+
+                OCRepresentation rootRep;
+                rootRep.setUri(OC_RSRVD_ES_URI_EASYSETUP);
+
+                OCRepresentation cloudDataRep;
+
+                if(authCode.length() > 0)
+                {
+                    cloudDataRep.setValue(OC_RSRVD_ES_AUTHCODE, authCode);
+                }
+
+                if(accessToken.length() > 0)
+                {
+                    cloudDataRep.setValue(OC_RSRVD_ES_ACCESSTOKEN, accessToken);
+                    cloudDataRep.setValue(OC_RSRVD_ES_ACCESSTOKEN_TYPE, accessTokenType);
+                }
+
+                cloudDataRep.setValue(OC_RSRVD_ES_AUTHPROVIDER, authProvider);
+                cloudDataRep.setValue(OC_RSRVD_ES_CISERVER, ciServer);
+
+                OCRepresentation cloudconfRep;
+                cloudconfRep.setUri(OC_RSRVD_ES_URI_COAPCLOUDCONF);
+                cloudconfRep.setValue(OC_RSRVD_HREF, std::string(OC_RSRVD_ES_URI_COAPCLOUDCONF));
+                cloudconfRep.setValue(OC_RSRVD_REPRESENTATION, cloudDataRep);
+
+                rootRep.addChild(cloudconfRep);
+                m_rep = rootRep;
+            }
+
         protected:
             OCRepresentation m_rep;
             std::string m_cloudID;
@@ -355,8 +414,8 @@ namespace OIC
             /**
              * Set WiFiConf resource properties to be delivered to Enrollee
              *
-             * @param ssid Ssid of the Enroller
-             * @param pwd Pwd of the Enrolle
+             * @param ssid SSID of the Enroller
+             * @param pwd Password of the Enroller
              * @param authtype Auth type of the Enroller
              * @param enctype Encryption type of the Enroller
              *
@@ -408,6 +467,7 @@ namespace OIC
              */
             WIFI_AUTHTYPE getAuthType() const
             {
+                ///TODO: Recheck logic if this API is used.
                 if(m_rep.hasAttribute(OC_RSRVD_ES_AUTHTYPE))
                 {
                     return static_cast<WIFI_AUTHTYPE>(m_rep.getValue<int>(OC_RSRVD_ES_AUTHTYPE));
@@ -424,6 +484,7 @@ namespace OIC
              */
             WIFI_ENCTYPE getEncType() const
             {
+                ///TODO: Recheck logic if this API is used.
                 if(m_rep.hasAttribute(OC_RSRVD_ES_ENCTYPE))
                 {
                     return static_cast<WIFI_ENCTYPE>(m_rep.getValue<int>(OC_RSRVD_ES_ENCTYPE));
@@ -441,8 +502,84 @@ namespace OIC
                 return m_rep;
             }
 
+            /**
+             * Update Device and Wi-Fi representation as per OCF Specification.
+             *
+             * Resource Schema for WiFiConf resource is different in older Enrollee following
+             * OIC Spec compared to newer Enrollee following OCF Spec. This function updates
+             * the representation as per spec version.
+             */
+            void updateOCRepresentation(int specVersion)
+            {
+                if(0 == specVersion) // OIC Server does not contain CONTENT FORMAT VERSION
+                {
+                    // Representation is already stored as per older resource schemas.
+                    return;
+                }
+
+                // Representation should be updated as per OCF 1.3 Easy Setup resource schemas.
+                WIFI_AUTHTYPE authtype = static_cast<WIFI_AUTHTYPE> (m_rep.getValue<int>(OC_RSRVD_ES_AUTHTYPE));
+                WIFI_ENCTYPE enctype = static_cast<WIFI_ENCTYPE> (m_rep.getValue<int>(OC_RSRVD_ES_ENCTYPE));
+
+                OCRepresentation rootRep;
+                rootRep.setUri(OC_RSRVD_ES_URI_EASYSETUP);
+
+                OCRepresentation wifiDataRep;
+                wifiDataRep.setValue(OC_RSRVD_ES_SSID, m_rep.getValue<std::string>(OC_RSRVD_ES_SSID));
+                wifiDataRep.setValue(OC_RSRVD_ES_CRED, m_rep.getValue<std::string>(OC_RSRVD_ES_CRED));
+                wifiDataRep.setValue(OC_RSRVD_ES_AUTHTYPE, getAuthTypeAsString(authtype));
+                wifiDataRep.setValue(OC_RSRVD_ES_ENCTYPE, getEncTypeAsString(enctype));
+
+                OCRepresentation wificonfRep;
+                wificonfRep.setUri(OC_RSRVD_ES_URI_WIFICONF);
+                wificonfRep.setValue(OC_RSRVD_HREF, std::string(OC_RSRVD_ES_URI_WIFICONF));
+                wificonfRep.setValue(OC_RSRVD_REPRESENTATION, wifiDataRep);
+
+                rootRep.addChild(wificonfRep);
+                m_rep = rootRep;
+            }
+
         protected:
             OCRepresentation m_rep;
+
+        private:
+            std::string getAuthTypeAsString(WIFI_AUTHTYPE authType) const
+            {
+                switch(authType)
+                {
+                    case NONE_AUTH:
+                        return "None";
+                    case WEP:
+                        return "WEP";
+                    case WPA_PSK:
+                        return "WPA_PSK";
+                    case WPA2_PSK:
+                        return "WPA2_PSK";
+                    default:
+                        return "None";
+                }
+            }
+
+            std::string getEncTypeAsString(WIFI_ENCTYPE encType) const
+            {
+                switch(encType)
+                {
+                    case NONE_ENC:
+                        return "None";
+                    case WEP_64:
+                        return "WEP_64";
+                    case WEP_128:
+                        return "WEP_128";
+                    case TKIP:
+                        return "TKIP";
+                    case AES:
+                        return "AES";
+                    case TKIP_AES:
+                        return "TKIP_AES";
+                    default:
+                        return "None";
+                }
+            }
         };
 
         /**
@@ -557,18 +694,25 @@ namespace OIC
              * OCRepresentation object corresponding to WiFiConf, DevConf, and CoapCloudConf
              * resources' representations.
              */
+
             EnrolleeConf(const OCRepresentation& rep) :
-                m_EasySetupRep(rep)
+                m_EasySetupRep(rep), m_OCFServerVersion(0)
+            {
+            }
+
+            EnrolleeConf(const OCRepresentation& rep, const int OCFServerVersion) :
+                m_EasySetupRep(rep), m_OCFServerVersion(OCFServerVersion)
             {
             }
 
             EnrolleeConf(const EnrolleeConf& enrolleeConf) :
-                m_EasySetupRep(enrolleeConf.getEasySetupRep())
+                m_EasySetupRep(enrolleeConf.getEasySetupRep()), m_OCFServerVersion(enrolleeConf.getOCFSpecVersion())
             {
             }
 
             EnrolleeConf(const EnrolleeConf&& enrolleeConf) :
-                m_EasySetupRep(std::move(enrolleeConf.getEasySetupRep()))
+                m_EasySetupRep(std::move(enrolleeConf.getEasySetupRep())),
+                    m_OCFServerVersion(std::move(enrolleeConf.getOCFSpecVersion()))
             {
             }
 
@@ -633,10 +777,28 @@ namespace OIC
 
                         if(rep.hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
                         {
-                            for(auto it : rep.getValue
-                                        <std::vector<int>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
+                            // Response from OIC Server does not contain spec version in header, so assumed as 0.
+                            if(0 == m_OCFServerVersion)
                             {
-                                modes.push_back(static_cast<WIFI_MODE>(it));
+                                OIC_LOG(DEBUG, ES_RICH_COMMON_TAG, "getWiFiModes() with OIC Spec");
+
+                                // Considering Representation as per OIC Core Spec.
+                                for(auto it : rep.getValue
+                                        <std::vector<int>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
+                                {
+                                    modes.push_back(static_cast<WIFI_MODE>(it));
+                                }
+                            }
+                            else // m_OCFServerVersion > 0 for OCF Spec (2048 for OCF 1.0 Spec)
+                            {
+                                OIC_LOG(DEBUG, ES_RICH_COMMON_TAG, "getWiFiModes() with OCF Spec");
+
+                                // Considering Representation as per OCF 1.0 / 1.x Core Spec.
+                                for(auto it : rep.getValue
+                                        <std::vector<std::string>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
+                                {
+                                    modes.push_back(getWiFiModeAsEnum(it));
+                                }
                             }
                         }
                     }
@@ -670,12 +832,97 @@ namespace OIC
 
                         if(rep.hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
                         {
-                            return static_cast<WIFI_FREQ>(
-                                        rep.getValue<int>(OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
+                            // Response from OIC Server does not contain spec version in header, so assumed as 0.
+                            if(0 == m_OCFServerVersion)
+                            {
+                                OIC_LOG(DEBUG, ES_RICH_COMMON_TAG, "getWiFiFreq() with OIC Spec");
+
+                                // Considering Representation as per OIC Core Spec.
+                                return static_cast<WIFI_FREQ>(
+                                            rep.getValue<int>(OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
+                            }
+                            else // m_OCFServerVersion > 0 for OCF Spec (2048 for OCF 1.0 Spec)
+                            {
+                                OIC_LOG(DEBUG, ES_RICH_COMMON_TAG, "getWiFiFreq() with OCF Spec");
+
+                                // Considering Representation as per OCF 1.0 / 1.x Core Spec.
+                                return getWiFiFreqAsEnum(rep.getValue
+                                        <std::vector<std::string>>(OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
+                            }
                         }
                     }
                 }
                 return WIFI_FREQ_NONE;
+            }
+
+            /**
+             * Get supported WiFi authentication types by the Enrollee.
+             *
+             * @return a set of supported WiFi authentication types of Enrollee.
+             *
+             * @see WIFI_FREQ
+             */
+            vector<std::string> getSupportedWiFiAuthTypes() const
+            {
+                vector<std::string> swatVector;
+
+                std::vector<OCRepresentation> children = m_EasySetupRep.getChildren();
+                for(auto child = children.begin(); child != children.end(); ++child)
+                {
+                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFICONF) != std::string::npos)
+                    {
+                        OCRepresentation rep;
+                        if(child->hasAttribute(OC_RSRVD_REPRESENTATION))
+                        {
+                            rep = child->getValue<OCRepresentation>(OC_RSRVD_REPRESENTATION);
+                        }
+                        else
+                        {
+                            break;
+                        }
+
+                        if(rep.hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIAUTHTYPE))
+                        {
+                            /* This property is include only from OCF 1.3 Spec Onwards */
+                            swatVector = rep.getValue<std::vector<std::string>>(OC_RSRVD_ES_SUPPORTEDWIFIAUTHTYPE);
+                            break;
+                        }
+                    }
+                }
+                return swatVector;
+            }
+
+            /**
+             * Get supported WiFi encryption types by the Enrollee.
+             *
+             * @return a set of supported WiFi encryption types of Enrollee.
+             *
+             * @see WIFI_MODE
+             */
+            vector<std::string> getSupportedWiFiEncTypes() const
+            {
+                vector<std::string> swetVector;
+
+                std::vector<OCRepresentation> children = m_EasySetupRep.getChildren();
+                for(auto child = children.begin(); child != children.end(); ++child)
+                {
+                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFICONF) != std::string::npos)
+                    {
+                        OCRepresentation rep;
+                        if(child->hasAttribute(OC_RSRVD_REPRESENTATION))
+                        {
+                            rep = child->getValue<OCRepresentation>(OC_RSRVD_REPRESENTATION);
+                        }
+
+                        if(rep.hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIENCTYPE))
+                        {
+                            /* This property is include only from OCF 1.3 Spec Onwards */
+                            swetVector = rep.getValue<std::vector<std::string>>(OC_RSRVD_ES_SUPPORTEDWIFIENCTYPE);
+                            break;
+                        }
+                    }
+                }
+                return swetVector;
             }
 
             /**
@@ -772,8 +1019,81 @@ namespace OIC
                 return m_EasySetupRep;
             }
 
+            /**
+             * Get OCF Specification Version
+             *
+             * @return version value
+             */
+            int getOCFSpecVersion() const
+            {
+                return m_OCFServerVersion;
+            }
+
         protected:
             OCRepresentation m_EasySetupRep;
+            int m_OCFServerVersion;
+
+        private:
+
+            WIFI_MODE getWiFiModeAsEnum(std::string wifiMode) const
+            {
+                if(0 == wifiMode.compare("A"))
+                {
+                    return WIFI_11A;
+                }
+                else if(0 == wifiMode.compare("B"))
+                {
+                    return WIFI_11B;
+                }
+                else if(0 == wifiMode.compare("G"))
+                {
+                    return WIFI_11G;
+                }
+                else if(0 == wifiMode.compare("N"))
+                {
+                    return WIFI_11N;
+                }
+                else /* if(0 == wifiMode.compare("AC")) */
+                {
+                    return WIFI_11AC;
+                }
+                //return WiFi_EOF;
+            }
+
+            WIFI_FREQ getWiFiFreqAsEnum(std::vector<std::string> wifiFreqList) const
+            {
+                bool b_2_4G = false;
+                bool b_5G = false;
+
+                for (std::string& freq : wifiFreqList)
+                {
+                    if(0 == freq.compare("2.4G"))
+                    {
+                        b_2_4G = true;
+                    }
+                    else if(0 == freq.compare("5G"))
+                    {
+                        b_5G = true;
+                    }
+                }
+
+                if(b_2_4G && b_5G)
+                {
+                    return WIFI_BOTH;
+                }
+
+                if(b_2_4G)
+                {
+                    return WIFI_24G;
+                }
+
+                if(b_5G)
+                {
+                    return WIFI_5G;
+                }
+
+                return WIFI_FREQ_NONE;
+            }
         };
 
         /**

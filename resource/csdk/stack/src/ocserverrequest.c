@@ -457,9 +457,13 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMe
         case OC_EH_OK:
         case OC_EH_CHANGED: // 2.04
         case OC_EH_CONTENT: // 2.05
-            if (method == OC_REST_POST || method == OC_REST_PUT || method == OC_REST_DELETE)
+            if (method == OC_REST_POST || method == OC_REST_PUT)
             {
                 caResult = CA_CHANGED;
+            }
+            else if (method == OC_REST_DELETE)
+            {
+                caResult = CA_DELETED;
             }
             else if (method == OC_REST_GET)
             {
@@ -490,6 +494,9 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMe
             break;
         case OC_EH_INTERNAL_SERVER_ERROR: // 5.00
             caResult = CA_INTERNAL_SERVER_ERROR;
+            break;
+        case OC_EH_SERVICE_UNAVAILABLE: // 5.03
+            caResult = CA_SERVICE_UNAVAILABLE;
             break;
         case OC_EH_RETRANSMIT_TIMEOUT: // 5.04
             caResult = CA_RETRANSMIT_TIMEOUT;
@@ -579,7 +586,63 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions;
     }
 
-    if(responseInfo.info.numOptions > 0)
+    // Path of new resource is returned in options as location-path.
+    if (ehResponse->resourceUri[0] != '\0')
+    {
+        responseInfo.info.numOptions++;
+    }
+
+    // Check if version and format option exist.
+    uint16_t payloadVersion = OC_SPEC_VERSION_VALUE;
+    uint16_t payloadFormat = COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR;
+    bool IsPayloadVersionSet = false;
+    bool IsPayloadFormatSet = false;
+    if (ehResponse->payload)
+    {
+        for (uint8_t i = 0; i < responseInfo.info.numOptions; i++)
+        {
+            if (COAP_OPTION_CONTENT_VERSION == ehResponse->sendVendorSpecificHeaderOptions[i].optionID)
+            {
+                payloadVersion =
+                        (ehResponse->sendVendorSpecificHeaderOptions[i].optionData[1] << 8)
+                        + ehResponse->sendVendorSpecificHeaderOptions[i].optionData[0];
+                IsPayloadVersionSet = true;
+            }
+            else if (COAP_OPTION_CONTENT_TYPE == ehResponse->sendVendorSpecificHeaderOptions[i].optionID)
+            {
+                if (1 == ehResponse->sendVendorSpecificHeaderOptions[i].optionLength)
+                {
+                    payloadFormat = ehResponse->sendVendorSpecificHeaderOptions[i].optionData[0];
+                    IsPayloadFormatSet = true;
+                }
+                else if (2 == ehResponse->sendVendorSpecificHeaderOptions[i].optionLength)
+                {
+                    payloadFormat =
+                            (ehResponse->sendVendorSpecificHeaderOptions[i].optionData[1] << 8)
+                            + ehResponse->sendVendorSpecificHeaderOptions[i].optionData[0];
+
+                    IsPayloadFormatSet = true;
+                }
+                else
+                {
+                    payloadFormat = CA_FORMAT_UNSUPPORTED;
+                    IsPayloadFormatSet = false;
+                    OIC_LOG_V(DEBUG, TAG, "option has an unsupported format");
+                }
+            }
+        }
+        if (!IsPayloadVersionSet && !IsPayloadFormatSet)
+        {
+            responseInfo.info.numOptions = responseInfo.info.numOptions + 2;
+        }
+        else if ((IsPayloadFormatSet && CA_FORMAT_APPLICATION_VND_OCF_CBOR == payloadFormat
+                && !IsPayloadVersionSet) || (IsPayloadVersionSet && !IsPayloadFormatSet))
+        {
+            responseInfo.info.numOptions++;
+        }
+    }
+
+    if (responseInfo.info.numOptions > 0)
     {
         responseInfo.info.options = (CAHeaderOption_t *)
                                       OICCalloc(responseInfo.info.numOptions,
@@ -595,7 +658,10 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 
         // TODO: This exposes CoAP specific details.  At some point, this should be
         // re-factored and handled in the CA layer.
-        if(serverRequest->observeResult == OC_STACK_OK)
+        // Stack sets MAX_SEQUENCE_NUMBER+1 to sequence number on observe cancel request.
+        // And observe option should not be part of CoAP response for observe cancel request.
+        if(serverRequest->observeResult == OC_STACK_OK
+           && serverRequest->observationOption != MAX_SEQUENCE_NUMBER + 1)
         {
             responseInfo.info.options[0].protocolID = CA_COAP_ID;
             responseInfo.info.options[0].optionID = COAP_OPTION_OBSERVE;
@@ -618,6 +684,67 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             memcpy(optionsPointer, ehResponse->sendVendorSpecificHeaderOptions,
                             sizeof(OCHeaderOption) *
                             ehResponse->numSendVendorSpecificHeaderOptions);
+
+            // Advance the optionPointer by the number of vendor options.
+            optionsPointer += ehResponse->numSendVendorSpecificHeaderOptions;
+        }
+
+        // Return new resource as location-path option.
+        // https://tools.ietf.org/html/rfc7252#section-5.8.2.
+        if (ehResponse->resourceUri[0] != '\0')
+        {
+            if ((strlen(ehResponse->resourceUri) + 1) > CA_MAX_HEADER_OPTION_DATA_LENGTH)
+            {
+                OIC_LOG(ERROR, TAG,
+                    "New resource path must be less than CA_MAX_HEADER_OPTION_DATA_LENGTH");
+                OICFree(responseInfo.info.options);
+                return OC_STACK_INVALID_URI;
+            }
+
+            optionsPointer->protocolID = CA_COAP_ID;
+            optionsPointer->optionID = CA_HEADER_OPTION_ID_LOCATION_PATH;
+            OICStrcpy(
+                optionsPointer->optionData,
+                sizeof(optionsPointer->optionData),
+                ehResponse->resourceUri);
+            optionsPointer->optionLength = (uint16_t)strlen(optionsPointer->optionData) + 1;
+            optionsPointer += 1;
+        }
+
+        if (ehResponse->payload)
+        {
+            if (!IsPayloadVersionSet && !IsPayloadFormatSet)
+            {
+                optionsPointer->protocolID = CA_COAP_ID;
+                optionsPointer->optionID = CA_OPTION_CONTENT_VERSION;
+                memcpy(optionsPointer->optionData, &payloadVersion,
+                        sizeof(uint16_t));
+                optionsPointer->optionLength = sizeof(uint16_t);
+                optionsPointer += 1;
+
+                optionsPointer->protocolID = CA_COAP_ID;
+                optionsPointer->optionID = COAP_OPTION_CONTENT_FORMAT;
+                memcpy(optionsPointer->optionData, &payloadFormat,
+                        sizeof(uint16_t));
+                optionsPointer->optionLength = sizeof(uint16_t);
+            }
+            else if (IsPayloadFormatSet && CA_FORMAT_APPLICATION_VND_OCF_CBOR == payloadFormat
+                            && !IsPayloadVersionSet)
+            {
+                optionsPointer->protocolID = CA_COAP_ID;
+                optionsPointer->optionID = CA_OPTION_CONTENT_VERSION;
+                memcpy(optionsPointer->optionData, &payloadVersion,
+                        sizeof(uint16_t));
+                optionsPointer->optionLength = sizeof(uint16_t);
+            }
+            else if (IsPayloadVersionSet && OC_SPEC_VERSION_VALUE <= payloadVersion && !IsPayloadFormatSet)
+            {
+                optionsPointer->protocolID = CA_COAP_ID;
+                optionsPointer->optionID = COAP_OPTION_CONTENT_TYPE;
+                memcpy(optionsPointer->optionData, &payloadFormat,
+                        sizeof(uint16_t));
+                optionsPointer->optionLength = sizeof(uint16_t);
+            }
         }
     }
     else

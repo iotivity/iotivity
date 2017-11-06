@@ -21,7 +21,7 @@
 #include <memory.h>
 
 #include "ocstack.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "doxmresource.h"
 #include "credresource.h"
 #include "cacommon.h"
@@ -132,7 +132,7 @@ OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)
 
 OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t* otmCtx)
 {
-    OIC_LOG(INFO, TAG, "IN CreateSecureSessionRandomPinCallbak");
+    OIC_LOG(INFO, TAG, "IN CreateSecureSessionRandomPinCallback");
 
     if (!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -166,7 +166,7 @@ OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t* otmCtx)
 #ifdef WITH_TCP
     else if (CA_ADAPTER_TCP == endpoint.adapter)
     {
-        endpoint.port = selDevInfo->tcpPort;
+        endpoint.port = selDevInfo->tcpSecurePort;
     }
 #endif
 
@@ -177,7 +177,7 @@ OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t* otmCtx)
         return OC_STACK_ERROR;
     }
 
-    OIC_LOG(INFO, TAG, "OUT CreateSecureSessionRandomPinCallbak");
+    OIC_LOG(INFO, TAG, "OUT CreateSecureSessionRandomPinCallback");
 
     return OC_STACK_OK;
 }

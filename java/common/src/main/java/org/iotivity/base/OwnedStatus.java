@@ -39,16 +39,13 @@ public enum OwnedStatus {
 
     public static OwnedStatus convertOwnedStatus(int value) {
 
-        if (0 == value)
-        {
+        if (0 == value) {
             return OwnedStatus.UNOWNED;
         }
-        else if (1 == value)
-        {
+        else if (1 == value) {
             return OwnedStatus.OWNED;
         }
-        else
-        {
+        else {
             return OwnedStatus.INVALID;
         }
     }

@@ -27,6 +27,8 @@
 #include "srmutility.h"
 #include "base64.h"
 
+using namespace OC;
+
 jobject JniSecureUtils::convertProvisionresultVectorToJavaList(JNIEnv *env, const OC::PMResultList_t *result)
 {
     jobject jResultList = env->NewObject(g_cls_LinkedList, g_mid_LinkedList_ctor);
@@ -109,10 +111,9 @@ std::string JniSecureUtils::convertUUIDtoStr(OicUuid_t uuid)
     std::ostringstream deviceId("");
     char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {0,};
     size_t outLen = 0;
-    B64Result b64Ret = B64_OK;
 
-    b64Ret = b64Encode(uuid.id, sizeof(uuid.id), base64Buff,
-            sizeof(base64Buff), &outLen);
+    b64Encode(uuid.id, sizeof(uuid.id), base64Buff,
+              sizeof(base64Buff), &outLen);
 
     deviceId << base64Buff;
     return deviceId.str();
@@ -187,15 +188,15 @@ static OicSecValidity_t* getValiditiesList(JNIEnv *env, jobject validityObject)
             jvalue argv[1];
             tmp->recurrences = (char**)OICCalloc(jrecurrenceLen, sizeof(char*));
 
-            for (int i = 0 ; i < jrecurrenceLen; i++)
+            for (int j = 0 ; j < jrecurrenceLen; j++)
             {
-                argv[0].i = i;
+                argv[0].i = j;
                 jData = (jstring)env->CallObjectMethodA(element, g_mid_OcOicSecAcl_validity_get_recurrences, argv);
                 if (!jData || env->ExceptionCheck())
                 {
                     return nullptr;
                 }
-                tmp->recurrences[i] = (char*)env->GetStringUTFChars(jData, 0);
+                tmp->recurrences[j] = (char*)env->GetStringUTFChars(jData, 0);
             }
         }
         if (NULL == valHead)
@@ -256,15 +257,15 @@ static OicSecRsrc_t * getResourcesList(JNIEnv *env, jobject resourceObject)
             jvalue argv[1];
             tmp->types = (char**)OICCalloc(len, sizeof(char*));
 
-            for (int i = 0 ; i < len; i++)
+            for (int j = 0 ; j < len; j++)
             {
-                argv[0].i = i;
+                argv[0].i = j;
                 jData = (jstring)env->CallObjectMethodA(element, g_mid_OcOicSecAcl_resr_get_types, argv);
                 if (!jData || env->ExceptionCheck())
                 {
                     return nullptr;
                 }
-                tmp->types[i] = (char*)env->GetStringUTFChars(jData, 0);
+                tmp->types[j] = (char*)env->GetStringUTFChars(jData, 0);
             }
         }
 
@@ -275,15 +276,15 @@ static OicSecRsrc_t * getResourcesList(JNIEnv *env, jobject resourceObject)
             jvalue argv[1];
             tmp->interfaces = (char**)OICCalloc(len, sizeof(char*));
 
-            for (int i = 0 ; i < len; i++)
+            for (int j = 0 ; j < len; j++)
             {
-                argv[0].i = i;
+                argv[0].i = j;
                 jData = (jstring)env->CallObjectMethodA(element, g_mid_OcOicSecAcl_resr_get_interfaces, argv);
                 if (!jData || env->ExceptionCheck())
                 {
                     return nullptr;
                 }
-                tmp->interfaces[i] = (char*)env->GetStringUTFChars(jData, 0);
+                tmp->interfaces[j] = (char*)env->GetStringUTFChars(jData, 0);
             }
         }
 
@@ -426,7 +427,7 @@ OCStackResult JniSecureUtils::convertJavaPdACLToOCAcl(JNIEnv *env, jobject in, O
         return OC_STACK_ERROR;
     }
 
-    pdacl->permission = jCount;
+    pdacl->permission = static_cast<uint16_t>(jCount);
     jCount = (jint) env->CallIntMethod(in, g_mid_OcOicSecPdAcl_get_periods_cnt);
     if (env->ExceptionCheck())
     {

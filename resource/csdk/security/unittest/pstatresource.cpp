@@ -22,7 +22,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "ocpayload.h"
 #include "ocstack.h"
@@ -84,7 +84,8 @@ TEST(PstatResourceTest, PstatEntityHandlerWithPostRequest)
                                                       true,    // sm
                                                       true      // rowneruuid
                                                     };
-    EXPECT_EQ(OC_STACK_OK, PstatToCBORPayloadPartial(defaultPstat, &cbor, &size, propertiesToInclude));
+    EXPECT_EQ(OC_STACK_OK, PstatToCBORPayloadPartial(defaultPstat, &cbor, &size,
+        propertiesToInclude, false));
     DeletePstatBinData(defaultPstat);
     ASSERT_TRUE(cbor != NULL);
 

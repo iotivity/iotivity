@@ -542,8 +542,29 @@ namespace OIC
                                 res = ESResult::ES_AUTHENTICATION_FAILURE_WITH_WRONG_PIN;
                             }
                         }
+                        else if(OC_STACK_COMM_ERROR == result->at(i).res)
+                        {
+                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
+                                "OwnershipTransfer is failed with OC_STACK_COMM_ERROR");
+                            res = ESResult::ES_COMMUNICATION_ERROR;
+                        }
+                        else if(OC_STACK_TIMEOUT == result->at(i).res)
+                        {
+                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
+                                "OwnershipTransfer is failed with OC_STACK_TIMEOUT");
+                            res = ESResult::ES_COMMUNICATION_ERROR;
+                        }
+                        else if(OC_STACK_GATEWAY_TIMEOUT == result->at(i).res)
+                        {
+                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
+                                "OwnershipTransfer is failed with OC_STACK_GATEWAY_TIMEOUT");
+                            res = ESResult::ES_COMMUNICATION_ERROR;
+                        }
+
+                        break;
                     }
                 }
+
                 OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransfer is failed with ESResult(%d)", res);
 
                 otmResult = false;
@@ -570,6 +591,8 @@ namespace OIC
                             OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransfer is failed with code(%d)", hasError);
                             otmResult = false;
                         }
+
+                        break;
                     }
                 }
             }
@@ -1053,12 +1076,10 @@ namespace OIC
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "isOwnedDeviceRegisteredInDB IN");
 
-            OCStackResult res = OC_STACK_ERROR;
-
             OCUuidList_t *uuidList = NULL;
             size_t numOfDevices = 0;
 
-            res = PDMGetOwnedDevices(&uuidList, &numOfDevices);
+            OCStackResult res = PDMGetOwnedDevices(&uuidList, &numOfDevices);
             if (OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Error while getting info from DB");

@@ -178,15 +178,14 @@ public class OcSecureResource {
             boolean edp , ProvisionDirectPairingListener provisionDirectPairingListener)
         throws OcException {
 
-            int[] typeArray = new int[type.size()];
-            int i = 0;
-            for (OcPrmType ocPrmType:type) {
-                typeArray[i++] = ocPrmType.getValue();
-            }
-
-            this.provisionDirectPairing(pin, pdacls, typeArray, (edp?1:0),
-                    provisionDirectPairingListener);
+        int[] typeArray = new int[type.size()];
+        int i = 0;
+        for (OcPrmType ocPrmType:type) {
+            typeArray[i++] = ocPrmType.getValue();
         }
+
+        this.provisionDirectPairing(pin, pdacls, typeArray, (edp ? 1: 0), provisionDirectPairingListener);
+    }
 
     private native void provisionDirectPairing(String pin, OicSecPdAcl[] pdacls, int[] type,
             int edp , ProvisionDirectPairingListener provisionDirectPairingListener)
@@ -195,10 +194,10 @@ public class OcSecureResource {
     /**
      * API to select OTM method.
      *
-     * @param OxmType Method to be selected
-     * @param SelectOTMMethodListener Callback function, which will be called after completion
+     * @param oxmType Method to be selected
+     * @param selectOTMMethodListener Callback function, which will be called after completion
      *
-     * @throws OcException
+     * @throws OcException Indicate failure selecting OTM method
      */
     public void selectMOTMethod(OxmType oxmType,
             SelectOTMMethodListener selectOTMMethodListener) throws OcException {
@@ -211,10 +210,10 @@ public class OcSecureResource {
     /**
      * API to change Multiple Owner Transfer(MOT) mode.
      *
-     * @param MomType MOT mode to be selected.
-     * @param ChangeMOTModeListener Callback function, which will be called after completion
+     * @param momType MOT mode to be selected.
+     * @param changeMOTModeListener Callback function, which will be called after completion
      *
-     * @throws OcException
+     * @throws OcException Indicate failure changing the MOT mode
      */
     public void changeMOTMode(MomType momType,
             ChangeMOTModeListener changeMOTModeListener) throws OcException {
@@ -227,9 +226,9 @@ public class OcSecureResource {
     /**
      * API to Add preConfigured PIN to local SVR DB.
      *
-     * @param String pin string to be saved in svr db.
+     * @param pin string to be saved in svr db.
      *
-     * @throws OcException
+     * @throws OcException Indicate failure adding PIN
      */
     public void addPreConfigPIN(String pin) throws OcException {
         this.addPreConfigPIN0(pin, pin.length());
@@ -240,11 +239,11 @@ public class OcSecureResource {
     /**
      * API to provision preConfigured PIN.
      *
-     * @param String PIN to be used while authentication.
-     * @param ProvisionPreConfigPINListener Callback function, which will be called after
+     * @param pin to be used while authentication.
+     * @param provisionPreConfigPINListener Callback function, which will be called after
      *                                      completion
      *
-     * @throws OcException
+     * @throws OcException Indicate failure provisioning PIN
      */
     public void  provisionPreConfigPIN(String pin,
             ProvisionPreConfigPINListener provisionPreConfigPINListener) throws OcException {
@@ -257,10 +256,8 @@ public class OcSecureResource {
     /**
      * API to  do Multiple Ownership Transfer for MOT enabled devices.
      *
-     * @param MultipleOwnershipTransferListener Callback function, which will
+     * @param doMultipleOwnershipTransferListener Callback function, which will
      *                                          be called after completion.
-     *
-     * @throws OcException
      */
     public native void doMultipleOwnershipTransfer(
             DoMultipleOwnershipTransferListener doMultipleOwnershipTransferListener);
@@ -352,7 +349,7 @@ public class OcSecureResource {
                 int hasError);
     }
 
-	/**
+    /**
      * provisionTrustCertChainListener can be registered with ProvisionTrustCertChainListener
      * call.
      * Listener notified asynchronously.
@@ -385,8 +382,10 @@ public class OcSecureResource {
     /** Method to get List of device ID of devices linked with invoking device.
      *
      *  @return Sring List  List of device id's of linked devices.
+     *  @throws OcException Failed to get linked devices.
+     *                      Use OcException.GetErrorCode() for more details.
      */
-     public native List<String> getLinkedDevices();
+    public native List<String> getLinkedDevices() throws OcException;
 
      /**
       * Method to get IP address of sercure discovered device.

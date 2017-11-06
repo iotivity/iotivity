@@ -57,7 +57,6 @@ static const std::string BINARY_SWITCH_RELATIVE_URI = "/switch";
 static const std::string BRIGHTNESS_RELATIVE_URI = "/brightness";
 
 std::string accessToken;
-const static char CRED_FILE[] = "./oic_svr_db_lifx.dat";
 
 using namespace OC::Bridging;
 
@@ -80,9 +79,10 @@ OCEntityHandlerResult resourceEntityHandler(OCEntityHandlerFlag flag,
 
 static LifxLightSharedPtr getLifXLightFromOCFResourceUri(std::string resourceUri);
 
-FILE *lifxSecurityFile(const char *, const char *mode)
+FILE *lifxSecurityFile(const char *path, const char *mode)
 {
-    return fopen(CRED_FILE, mode);
+    std::string filename = std::string("lifx_") + path;
+    return fopen(filename.c_str(), mode);
 }
 
 MPMResult pluginCreate(MPMPluginCtx **pluginSpecificCtx)

@@ -52,17 +52,17 @@ void * ChangeLightRepresentation (void *param);
 void * handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequest);
 
 // Set of strings for each of platform Info fields
-std::string  platformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
-std::string  manufacturerName = "OCF";
-std::string  manufacturerLink = "https://www.iotivity.org";
-std::string  modelNumber = "myModelNumber";
-std::string  dateOfManufacture = "2016-01-15";
-std::string  platformVersion = "myPlatformVersion";
-std::string  operatingSystemVersion = "myOS";
-std::string  hardwareVersion = "myHardwareVersion";
-std::string  firmwareVersion = "1.0";
-std::string  supportLink = "https://www.iotivity.org";
-std::string  systemTime = "2016-01-15T11.01";
+std::string gPlatformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+std::string gManufacturerName = "OCF";
+std::string gManufacturerLink = "https://www.iotivity.org";
+std::string gModelNumber = "myModelNumber";
+std::string gDateOfManufacture = "2016-01-15";
+std::string gPlatformVersion = "myPlatformVersion";
+std::string gOperatingSystemVersion = "myOS";
+std::string gHardwareVersion = "myHardwareVersion";
+std::string gFirmwareVersion = "1.0";
+std::string gSupportLink = "https://www.iotivity.org";
+std::string gSystemTime = "2016-01-15T11.01";
 
 // Set of strings for each of device info fields
 std::string  deviceName = "IoTivity Simple Server";
@@ -619,14 +619,16 @@ void PrintUsage()
 
 static FILE* client_open(const char* path, const char* mode)
 {
-    if (strcmp(path, OC_INTROSPECTION_FILE_NAME) == 0)
+    char const * filename = path;
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
     {
-        return fopen("light_introspection.json", mode);
+        filename = SVR_DB_FILE_NAME;
     }
-    else
+    else if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME))
     {
-        return fopen(SVR_DB_FILE_NAME, mode);
+        filename = "light_introspection.json";
     }
+    return fopen(filename, mode);
 }
 
 int main(int argc, char* argv[])
@@ -683,9 +685,9 @@ int main(int argc, char* argv[])
     OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
     std::cout << "Starting server & setting platform info\n";
 
-    OCStackResult result = SetPlatformInfo(platformId, manufacturerName, manufacturerLink,
-            modelNumber, dateOfManufacture, platformVersion, operatingSystemVersion,
-            hardwareVersion, firmwareVersion, supportLink, systemTime);
+    OCStackResult result = SetPlatformInfo(gPlatformId, gManufacturerName, gManufacturerLink,
+            gModelNumber, gDateOfManufacture, gPlatformVersion, gOperatingSystemVersion,
+            gHardwareVersion, gFirmwareVersion, gSupportLink, gSystemTime);
 
     result = OCPlatform::registerPlatformInfo(platformInfo);
 

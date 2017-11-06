@@ -158,7 +158,8 @@ namespace OIC
             return (requesterList!=nullptr)?requesterList->empty():true;
         }
 
-        int ResourcePresence::requesterListSize() const {
+        int ResourcePresence::requesterListSize() const
+        {
             OIC_LOG_V(DEBUG,BROKER_TAG,"requesterListSize().\n");
             return (requesterList!=nullptr)?requesterList->size():0;
         }

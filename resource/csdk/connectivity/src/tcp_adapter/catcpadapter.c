@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -42,6 +43,7 @@
 #ifdef __WITH_TLS__
 #include "ca_adapter_net_ssl.h"
 #endif
+#include "iotivity_debug.h"
 
 /**
  * Logging tag for module name.
@@ -210,7 +212,7 @@ void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
         }
         else
         {
-            OIC_LOG_V(DEBUG, TAG, "%u bytes required for complete CoAP",
+            OIC_LOG_V(DEBUG, TAG, "%" PRIuPTR " bytes required for complete CoAP",
                                 svritem->totalLen - svritem->len);
         }
     }
@@ -227,14 +229,9 @@ static ssize_t CATCPPacketSendCB(CAEndpoint_t *endpoint, const void *data, size_
     OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", endpoint->addr, endpoint->port);
     OIC_LOG_BUFFER(DEBUG, TAG, data, dataLength);
 
-    ssize_t ret = 0;
-#ifndef SINGLE_THREAD
-    ret = CAQueueTCPData(false, endpoint, data, dataLength, true);
-#else
-    ret = (int32_t)CATCPSendData(endpoint, data, dataLength);
-#endif
+    ssize_t ret = CATCPSendData(endpoint, data, dataLength);
 
-    OIC_LOG_V(DEBUG, TAG, "Out %s : %d bytes sent", __func__, ret);
+    OIC_LOG_V(DEBUG, TAG, "Out %s : %" PRIdPTR " bytes sent", __func__, ret);
     return ret;
 }
 #endif
@@ -344,6 +341,19 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
     VERIFY_NON_NULL(handle, TAG, "thread pool handle");
 #endif
 
+#ifdef WSA_WAIT_EVENT_0
+    // Windows-specific initialization.
+    WORD wVersionRequested = MAKEWORD(2, 2);
+    WSADATA wsaData = {.wVersion = 0};
+    int err = WSAStartup(wVersionRequested, &wsaData);
+    if (0 != err)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: WSAStartup failed: %i", __func__, err);
+        return CA_STATUS_FAILED;
+    }
+    OIC_LOG(DEBUG, TAG, "WSAStartup Succeeded");
+#endif
+
     g_networkChangeCallback = netCallback;
     g_connectionChangeCallback = connCallback;
     g_networkPacketCallback = networkPacketCallback;
@@ -365,7 +375,7 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
     }
     else
     {
-        CAsetSslAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, CA_ADAPTER_TCP);
+        CAsetSslAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, CATCPErrorHandler, CA_ADAPTER_TCP);
     }
 #endif
 
@@ -548,8 +558,16 @@ CAResult_t CAStopTCP()
 
 void CATerminateTCP()
 {
+#ifdef __WITH_TLS__
+    CAsetSslAdapterCallbacks(NULL, NULL, NULL, CA_ADAPTER_TCP);
+#endif
     CAStopTCP();
     CATCPSetPacketReceiveCallback(NULL);
+
+#ifdef WSA_WAIT_EVENT_0
+    // Windows-specific clean-up.
+    OC_VERIFY(0 == WSACleanup());
+#endif
 }
 
 void CATCPSendDataThread(void *threadData)

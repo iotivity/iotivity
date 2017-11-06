@@ -24,8 +24,6 @@
 #include "JniOnResourcesFoundListener.h"
 #include "JniOnDeviceInfoListener.h"
 #include "JniOnPlatformInfoListener.h"
-#include "JniOnDPDevicesFoundListener.h"
-#include "JniOnDirectPairingListener.h"
 #include "JniOnPresenceListener.h"
 #include "JniOnObserveListener.h"
 
@@ -33,8 +31,6 @@
 
 #ifndef _Included_org_iotivity_base_OcPlatform
 #define _Included_org_iotivity_base_OcPlatform
-
-using namespace OC;
 
 JniOnResourceFoundListener* AddOnResourceFoundListener(JNIEnv* env, jobject jListener);
 void RemoveOnResourceFoundListener(JNIEnv* env, jobject jListener);
@@ -54,20 +50,12 @@ void RemoveOnPresenceListener(JNIEnv* env, jobject jListener);
 JniOnObserveListener* AddOnObserveListener(JNIEnv* env, jobject jListener);
 void RemoveOnObserveListener(JNIEnv* env, jobject jListener);
 
-JniOnDPDevicesFoundListener* AddOnDPDevicesFoundListener(JNIEnv* env, jobject jListener);
-void RemoveOnDPDevicesFoundListener(JNIEnv* env, jobject jListener);
-
-JniOnDirectPairingListener* AddOnDirectPairingListener(JNIEnv* env, jobject jListener);
-void RemoveOnDirectPairingListener(JNIEnv* env, jobject jListener);
-
 std::map<jobject, std::pair<JniOnResourceFoundListener*, int>> onResourceFoundListenerMap;
 std::map<jobject, std::pair<JniOnResourcesFoundListener*, int>> onResourcesFoundListenerMap;
 std::map<jobject, std::pair<JniOnDeviceInfoListener*, int>> onDeviceInfoListenerMap;
 std::map<jobject, std::pair<JniOnPlatformInfoListener*, int>> onPlatformInfoListenerMap;
 std::map<jobject, std::pair<JniOnPresenceListener*, int>> onPresenceListenerMap;
 std::map<jobject, std::pair<JniOnObserveListener*, int>> onObserveListenerMap;
-std::map<jobject, std::pair<JniOnDPDevicesFoundListener*, int>> onDPDevicesFoundListenerMap;
-std::map<jobject, std::pair<JniOnDirectPairingListener*, int>> directPairingListenerMap;
 
 std::mutex resourceFoundMapLock;
 std::mutex resourcesFoundMapLock;
@@ -75,8 +63,6 @@ std::mutex deviceInfoMapLock;
 std::mutex platformInfoMapLock;
 std::mutex presenceMapLock;
 std::mutex observeMapLock;
-std::mutex dpDevicesFoundListenerMapLock;
-std::mutex directPairingListenerMapLock;
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,10 +70,10 @@ extern "C" {
     /*
     * Class:     org_iotivity_base_OcPlatform
     * Method:    configure
-    * Signature: (IILjava/lang/String;IILjava/lang/String;I)V
+    * Signature: (IILjava/lang/String;IILjava/lang/String;Ljava/lang/String;I)V
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
-        (JNIEnv *, jclass, jint, jint, jstring, jint, jint, jstring, jint);
+        (JNIEnv *, jclass, jint, jint, jstring, jint, jint, jstring, jstring, jint);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
@@ -377,31 +363,6 @@ extern "C" {
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_sendResponse0
         (JNIEnv *, jclass, jobject);
-
-    /*
-     * Class:     org_iotivity_base_OcPlatform
-     * Method:    findDirectPairingDevices
-     * Signature: (ILorg/iotivity/base/OcPlatform/FindDirectPairingListener;)V
-     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findDirectPairingDevices
-        (JNIEnv *, jclass, jint, jobject);
-
-    /*
-     * Class:     org_iotivity_base_OcPlatform
-     * Method:    getDirectPairedDevices
-     * Signature: (Lorg/iotivity/base/OcDirectPairDevice/GetDirectPairedListener;)V
-     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDirectPairedDevices
-        (JNIEnv *, jclass, jobject);
-
-    /*
-     * Class:     org_iotivity_base_OcPlatform
-     * Method:    doDirectPairing
-     * Signature: (Lorg/iotivity/base/OcDirectPairDevice;Lorg/iotivity/base/OcPrmType;
-     *           Ljava/lang/String;Lorg/iotivity/base/OcDirectPairDevice/DirectPairingListener;)V
-     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_doDirectPairing0
-        (JNIEnv *, jclass, jobject, jint, jstring, jobject);
 
     /*
     * Class:     org_iotivity_base_OcPlatform

@@ -6,24 +6,27 @@ sim_env = lib_env.Clone()
 ######################################################################
 # Build flags
 ######################################################################
-sim_env.AppendUnique(CPPPATH = [
+sim_env.AppendUnique(CPPPATH=[
     '#/resource/c_common/octimer/include',
-    '../../inc',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/c_common/ocrandom/include',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
     '#/resource/include',
-    '#/resource/oc_logger/include'
+    '#/resource/oc_logger/include',
+    '#/service/simulator/inc'
 ])
-sim_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-sim_env.AppendUnique(CPPDEFINES = ['LINUX'])
-sim_env.AppendUnique(LIBS = ['SimulatorManager'])
+sim_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-pthread'])
+sim_env.AppendUnique(CPPDEFINES=['LINUX'])
+sim_env.AppendUnique(LIBS=['SimulatorManager'])
 
-sim_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-sim_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-sim_env.PrependUnique(LIBS = ['SimulatorManager'])
+sim_env.AppendUnique(RPATH=[env.get('BUILD_DIR')])
+sim_env.PrependUnique(LIBS=['SimulatorManager'])
 
 if sim_env.get('SECURED') == '1':
-    sim_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    sim_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Source files and Targets

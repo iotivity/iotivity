@@ -24,7 +24,7 @@
 #include "pmtypes.h"
 #include "ocstack.h"
 #include "octypes.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -114,6 +114,15 @@ OCStackResult MOTDoOwnershipTransfer(void* ctx,
  */
 OCStackResult MOTAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
                                  const char* preconfPIN, size_t preconfPINLen);
+
+/**
+ * The function checks is the device type MOT support.
+ *
+ * @param[in]  ptrDoxm     Doxm
+ *
+ * @return 0 in case of success and 1 otherwise.
+ */
+int MOTIsSupportedOnboardingType(OicSecDoxm_t *ptrDoxm);
 
 #ifdef __cplusplus
 }

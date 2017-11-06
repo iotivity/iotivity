@@ -50,6 +50,7 @@
 #define TAG "SAMPLE_MV_JUSTWORKS"
 
 int gQuitFlag = 0;
+const char * specVersion = "ocf.1.1.0";
 
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE{
@@ -397,7 +398,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     return ehResult;
 }
 
-OCStackResult displayNumCB(void *ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+OCStackResult OC_CALL displayNumCB(void *ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
 {
     OC_UNUSED(ctx);
 
@@ -409,7 +410,7 @@ OCStackResult displayNumCB(void *ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LE
     return OC_STACK_OK;
 }
 
-OCStackResult confirmNumCB(void *ctx)
+OCStackResult OC_CALL confirmNumCB(void *ctx)
 {
     OC_UNUSED(ctx);
 
@@ -484,6 +485,7 @@ int main()
         OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
+    OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, (void*) specVersion);
 
     /*
      * Declare and create the example resource: LED

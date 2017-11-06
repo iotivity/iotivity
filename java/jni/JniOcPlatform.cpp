@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <climits>
 #include "JniOcPlatform.h"
 #include "OCPlatform.h"
 #include "JniOcResource.h"
@@ -25,7 +26,6 @@
 #include "JniOcPresenceHandle.h"
 #include "JniOcResourceResponse.h"
 #include "JniOcSecurity.h"
-#include "JniOcDirectPairDevice.h"
 #include "JniUtils.h"
 #include "ocpayload.h"
 #include "RDClient.h"
@@ -35,6 +35,7 @@
 #endif
 
 using namespace OC;
+using namespace OC::OCPlatform;
 
 JniOnResourceFoundListener* AddOnResourceFoundListener(JNIEnv* env, jobject jListener)
 {
@@ -467,161 +468,21 @@ void RemoveOnObserveListener(JNIEnv* env, jobject jListener)
     observeMapLock.unlock();
 }
 
-JniOnDPDevicesFoundListener* AddOnDPDevicesFoundListener(JNIEnv* env, jobject jListener)
-{
-    JniOnDPDevicesFoundListener *onDPDeviceListener = nullptr;
-
-    dpDevicesFoundListenerMapLock.lock();
-
-    for (auto it = onDPDevicesFoundListenerMap.begin(); it !=
-            onDPDevicesFoundListenerMap.end(); ++it)
-    {
-        if (env->IsSameObject(jListener, it->first))
-        {
-            auto refPair = it->second;
-            onDPDeviceListener = refPair.first;
-            refPair.second++;
-            it->second = refPair;
-            onDPDevicesFoundListenerMap.insert(*it);
-            LOGD("onDPDeviceListener: ref. count incremented");
-            break;
-        }
-    }
-    if (!onDPDeviceListener)
-    {
-        onDPDeviceListener = new JniOnDPDevicesFoundListener(env, jListener,
-                RemoveOnDPDevicesFoundListener);
-        jobject jgListener = env->NewGlobalRef(jListener);
-        onDPDevicesFoundListenerMap.insert(
-                std::pair<jobject, std::pair<JniOnDPDevicesFoundListener*, int>>(
-                    jgListener,
-                    std::pair<JniOnDPDevicesFoundListener*, int>(onDPDeviceListener, 1)));
-        LOGI("onDPDeviceListener: new listener");
-    }
-    dpDevicesFoundListenerMapLock.unlock();
-    return onDPDeviceListener;
-}
-
-void RemoveOnDPDevicesFoundListener(JNIEnv* env, jobject jListener)
-{
-    dpDevicesFoundListenerMapLock.lock();
-    bool isFound = false;
-    for (auto it = onDPDevicesFoundListenerMap.begin(); it !=
-            onDPDevicesFoundListenerMap.end(); ++it)
-    {
-        if (env->IsSameObject(jListener, it->first))
-        {
-            auto refPair = it->second;
-            if (refPair.second > 1)
-            {
-                refPair.second--;
-                it->second = refPair;
-                onDPDevicesFoundListenerMap.insert(*it);
-                LOGI("onDPDeviceListener: ref. count decremented");
-            }
-            else
-            {
-                env->DeleteGlobalRef(it->first);
-                JniOnDPDevicesFoundListener* listener = refPair.first;
-                delete listener;
-                onDPDevicesFoundListenerMap.erase(it);
-                LOGI("onDPDeviceListener is removed");
-            }
-            isFound = true;
-            break;
-        }
-    }
-    if (!isFound)
-    {
-        ThrowOcException(JNI_EXCEPTION, "onDPDeviceListener not found");
-    }
-    dpDevicesFoundListenerMapLock.unlock();
-}
-
-JniOnDirectPairingListener* AddOnDirectPairingListener(JNIEnv* env, jobject jListener)
-{
-    JniOnDirectPairingListener *onDirectPairingListener = nullptr;
-
-    directPairingListenerMapLock.lock();
-
-    for (auto it = directPairingListenerMap.begin(); it !=
-            directPairingListenerMap.end(); ++it)
-    {
-        if (env->IsSameObject(jListener, it->first))
-        {
-            auto refPair = it->second;
-            onDirectPairingListener = refPair.first;
-            refPair.second++;
-            it->second = refPair;
-            directPairingListenerMap.insert(*it);
-            LOGD("onDirectPairingListener: ref. count incremented");
-            break;
-        }
-    }
-    if (!onDirectPairingListener)
-    {
-        onDirectPairingListener = new JniOnDirectPairingListener(env, jListener,
-                RemoveOnDirectPairingListener);
-        jobject jgListener = env->NewGlobalRef(jListener);
-        directPairingListenerMap.insert(
-                std::pair<jobject, std::pair<JniOnDirectPairingListener*, int>>(
-                    jgListener,
-                    std::pair<JniOnDirectPairingListener*, int>(onDirectPairingListener, 1)));
-        LOGI("onDirectPairingListener: new listener");
-    }
-    directPairingListenerMapLock.unlock();
-    return onDirectPairingListener;
-}
-
-void RemoveOnDirectPairingListener(JNIEnv* env, jobject jListener)
-{
-    directPairingListenerMapLock.lock();
-    bool isFound = false;
-    for (auto it = directPairingListenerMap.begin(); it !=
-            directPairingListenerMap.end(); ++it)
-    {
-        if (env->IsSameObject(jListener, it->first))
-        {
-            auto refPair = it->second;
-            if (refPair.second > 1)
-            {
-                refPair.second--;
-                it->second = refPair;
-                directPairingListenerMap.insert(*it);
-                LOGI("onDirectPairingListener: ref. count decremented");
-            }
-            else
-            {
-                env->DeleteGlobalRef(it->first);
-                JniOnDirectPairingListener* listener = refPair.first;
-                delete listener;
-                directPairingListenerMap.erase(it);
-                LOGI("onDirectPairingListener is removed");
-            }
-            isFound = true;
-            break;
-        }
-    }
-    if (!isFound)
-    {
-        ThrowOcException(JNI_EXCEPTION, "onDirectPairingListener not found");
-    }
-    directPairingListenerMapLock.unlock();
-}
-
 /*
 * Class:     org_iotivity_base_OcPlatform
 * Method:    configure
-* Signature: (IILjava/lang/String;IILjava/lang/String;I)V
+* Signature: (IILjava/lang/String;IILjava/lang/String;Ljava/lang/String;I)V
 */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
 (JNIEnv *env, jclass clazz, jint jServiceType, jint jModeType, jstring jIpAddress, jint jPort,
- jint jQOS, jstring jDbPath, jint jTransport)
+ jint jQOS, jstring jDbPath, jstring jIntrospectionPath, jint jTransport)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_configure");
 
     std::string ipAddress;
     std::string dbfile;
+    std::string introspectionfile;
     if (jIpAddress)
     {
         ipAddress = env->GetStringUTFChars(jIpAddress, nullptr);
@@ -630,6 +491,11 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
     {
         dbfile = env->GetStringUTFChars(jDbPath, nullptr);
         JniOcSecurity::StoreDbPath(dbfile);
+    }
+    if (jIntrospectionPath)
+    {
+        introspectionfile = env->GetStringUTFChars(jIntrospectionPath, nullptr);
+        JniOcSecurity::StoreIntrospection(introspectionfile);
     }
     uint16_t port = 0;
     if (jPort > 0)
@@ -657,6 +523,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_stop
 (JNIEnv *env, jclass clazz)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform.stop");
 
     try {
@@ -682,6 +549,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_stop
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_start
 (JNIEnv *env, jclass clazz)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform.start");
 
     try {
@@ -707,6 +575,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_start
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers0
 (JNIEnv *env, jclass clazz, jobject jResourceHandle)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_notifyAllObservers");
     if (!jResourceHandle)
     {
@@ -747,6 +616,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers0
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers1
 (JNIEnv *env, jclass clazz, jobject jResourceHandle, jint jQoS)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_notifyAllObservers1");
 
     if (!jResourceHandle)
@@ -792,6 +662,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyListOfObservers2(
     jbyteArray jObservationIdArr,
     jobject jResourceResponse)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_notifyListOfObservers2");
     if (!jResourceHandle)
     {
@@ -866,6 +737,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyListOfObservers3(
     jobject jResourceResponse,
     jint jQoS)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_notifyListOfObservers3");
     if (!jResourceHandle)
     {
@@ -941,6 +813,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource0(
     jint jConnectivityType,
     jobject jListener)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_findResource");
     std::string host;
     if (jHost)
@@ -960,7 +833,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource0(
 
     JniOnResourceFoundListener *onResFoundListener = AddOnResourceFoundListener(env, jListener);
 
-    FindCallback findCallback = [onResFoundListener](std::shared_ptr<OCResource> resource)
+    FindCallback findCallback = [onResFoundListener](std::shared_ptr<OC::OCResource> resource)
     {
         onResFoundListener->foundResourceCallback(resource);
     };
@@ -1006,6 +879,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1(
     jobject jListener,
     jint jQoS)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_findResource");
     std::string host;
     if (jHost)
@@ -1024,7 +898,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1(
     }
     JniOnResourceFoundListener *onResFoundListener = AddOnResourceFoundListener(env, jListener);
 
-    FindCallback findCallback = [onResFoundListener](std::shared_ptr<OCResource> resource)
+    FindCallback findCallback = [onResFoundListener](std::shared_ptr<OC::OCResource> resource)
     {
         onResFoundListener->foundResourceCallback(resource);
     };
@@ -1070,6 +944,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResources0(
     jint jConnectivityType,
     jobject jListener)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_findResources0");
     if (!jListener)
     {
@@ -1155,6 +1030,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResources1(
     jobject jListener,
     jint jQoS)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_findResources1");
     if (!jListener)
     {
@@ -1227,145 +1103,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResources1(
 }
 
 /*
- * Class:     org_iotivity_base_OcPlatform
- * Method:    findDirectPairingDevices
- * Signature: (ILorg/iotivity/base/OcPlatform/FindDirectPairingListener;)V
- */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findDirectPairingDevices
-  (JNIEnv * env, jclass clazz, jint jTimeout, jobject jListener)
-{
-    LOGD("OcPlatform_findDirectPairingDevices");
-
-    if (!jListener)
-    {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "onDPDevicesFoundListener cannot be null");
-        return;
-    }
-    JniOnDPDevicesFoundListener *onDPDevsFoundListener = AddOnDPDevicesFoundListener(env,
-            jListener);
-
-    GetDirectPairedCallback getDirectPairedCallback =
-        [onDPDevsFoundListener](PairedDevices pairingDevList)
-        {
-            onDPDevsFoundListener->directPairingDevicesCallback(pairingDevList,
-                    DPFunc::FIND_DIRECT_PAIRED_DEV_LIST);
-        };
-
-    try
-    {
-        OCStackResult result = OCPlatform::findDirectPairingDevices(jTimeout,
-                getDirectPairedCallback);
-        if (OC_STACK_OK != result)
-        {
-            ThrowOcException(result, "OCPlatform::findDirectPairingDevices has failed");
-            return;
-        }
-    }
-    catch (OCException& e)
-    {
-        LOGE("%s", e.reason().c_str());
-        ThrowOcException(e.code(), e.reason().c_str());
-    }
-}
-
-/*
- * Class:     org_iotivity_base_OcPlatform
- * Method:    getDirectPairedDevices
- * Signature: (Lorg/iotivity/base/OcDirectPairDevice/GetDirectPairedListener;)V
- */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDirectPairedDevices
-(JNIEnv *env, jclass jclazz, jobject jListener)
-{
-    LOGD("OcPlatform_getDirectPairedDevices");
-
-    if (!jListener)
-    {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "getPairedDevList Callback cannot be null");
-        return;
-    }
-    JniOnDPDevicesFoundListener *onGetPairedDevicesListener = AddOnDPDevicesFoundListener(env,
-            jListener);
-
-    GetDirectPairedCallback getDirectPairedCallback =
-        [onGetPairedDevicesListener](PairedDevices pairedDevList)
-        {
-            onGetPairedDevicesListener->directPairingDevicesCallback(pairedDevList,
-                    DPFunc::GET_PAIRED_DEV_LIST);
-        };
-
-    try
-    {
-        OCStackResult result = OCPlatform::getDirectPairedDevices(getDirectPairedCallback);
-        if (OC_STACK_OK != result)
-        {
-            ThrowOcException(result, "OcDirectPairDevice_getDirectPairedDevices");
-            return;
-        }
-    }
-    catch (OCException& e)
-    {
-        LOGE("%s", e.reason().c_str());
-        ThrowOcException(e.code(), e.reason().c_str());
-    }
-}
-
-/*
- * Class:     org_iotivity_base_OcPlatform
- * Method:    doDirectPairing
- * Signature: (Lorg/iotivity/base/OcDirectPairDevice;Lorg/iotivity/base/OcPrmType;
- *           Ljava/lang/String;Lorg/iotivity/base/OcDirectPairDevice/DirectPairingListener;)V
- */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_doDirectPairing0
-(JNIEnv *env, jclass clazz, jobject jpeer, jint jprmType, jstring jpin, jobject jListener)
-{
-    LOGD("OcPlatform_doDirectPairing");
-
-    if (!jListener)
-    {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "doDirectPairing Callback cannot be null");
-        return;
-    }
-    if (!jpeer)
-    {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "Peer cannot be null");
-        return;
-    }
-
-    JniOnDirectPairingListener *onDirectPairingListener = AddOnDirectPairingListener(env,
-            jListener);
-
-    DirectPairingCallback DirectPairingCB =
-        [onDirectPairingListener](std::shared_ptr<OCDirectPairing> dpDev, OCStackResult result)
-        {
-            onDirectPairingListener->doDirectPairingCB(dpDev, result);
-        };
-
-    JniOcDirectPairDevice *dev = JniOcDirectPairDevice::getJniOcDirectPairDevicePtr(env, jpeer);
-
-    if (!dev)
-    {
-        return ;
-    }
-    std::string pin = env->GetStringUTFChars(jpin, 0);
-
-    try
-    {
-        OCStackResult result = OCPlatform::doDirectPairing(dev->getPtr(), (OCPrm_t)jprmType,
-                pin, DirectPairingCB);
-        if (OC_STACK_OK != result)
-        {
-            ThrowOcException(result, "OcPlatform_oDirectPairing");
-            return;
-        }
-    }
-    catch (OCException& e)
-    {
-        LOGE("%s", e.reason().c_str());
-        ThrowOcException(e.code(), e.reason().c_str());
-    }
-}
-
-/*
 * Class:     org_iotivity_base_OcPlatform
 * Method:    getDeviceInfo0
 * Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnDeviceFoundListener;)V
@@ -1378,6 +1115,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo0(
     jint jConnectivityType,
     jobject jListener)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_getDeviceInfo0");
     std::string host;
     if (jHost)
@@ -1436,6 +1174,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo1(
     jobject jListener,
     jint jQoS)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_getDeviceInfo1");
     std::string host;
     if (jHost)
@@ -1494,6 +1233,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo0(
     jint jConnectivityType,
     jobject jListener)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_getPlatformInfo0");
     std::string host;
     if (jHost)
@@ -1552,6 +1292,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo1(
     jobject jListener,
     jint jQoS)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_getPlatformInfo1");
     std::string host;
     if (jHost)
@@ -1605,6 +1346,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo1(
 JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource0(
     JNIEnv *env, jclass clazz, jobject jResource)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_registerResource");
     if (!jResource)
     {
@@ -1661,6 +1403,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource1(
     jstring jResourceInterface,
 jobject jListener, jint jResourceProperty)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_registerResource1");
     std::string resourceUri;
     if (jResourceUri)
@@ -1698,7 +1441,9 @@ jobject jListener, jint jResourceProperty)
             resourceTypeName,
             resourceInterface,
             handleEntityCallback,
-            static_cast<int>(jResourceProperty));
+            // jResoruceProperty comes from an enum and should always fit in
+            // uint8_t see ResourceProperty.java
+            static_cast<uint8_t>(jResourceProperty));
 
         if (OC_STACK_OK != result)
         {
@@ -1739,6 +1484,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0(
     jstring jDeviceName,
     jobjectArray jDeviceTypes)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_registerDeviceInfo");
 
     if (!jDeviceName)
@@ -1782,6 +1528,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0(
     }
     catch (std::exception &e)
     {
+        OC_UNUSED(e);
+        LOGE("%s", e.what());
         ThrowOcException(JNI_EXCEPTION, "Failed to construct device info");
         return;
     }
@@ -1825,6 +1573,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerPlatformInfo0(
     jstring jSupportUrl,
     jstring jSystemTime)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_registerPlatformInfo");
 
 
@@ -1902,6 +1651,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerPlatformInfo0(
         }
         catch (std::exception &e)
         {
+            OC_UNUSED(e);
+            LOGE("%s", e.what());
             ThrowOcException(JNI_EXCEPTION, "Failed to construct platform info");
             return;
         }
@@ -1943,6 +1694,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerPlatformInfo0(
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setPropertyValue0
     (JNIEnv *env, jclass clazz, jint jType, jstring jPropName, jobjectArray jPropValue)
 {
+    OC_UNUSED(clazz);
     try
     {
         OCPayloadType type = (OCPayloadType)jType;
@@ -1979,6 +1731,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setPropertyValue0
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setPropertyValue1
     (JNIEnv *env, jclass clazz, jint jType, jstring jPropName, jstring jPropValue)
 {
+    OC_UNUSED(clazz);
     try
     {
         OCPayloadType type = (OCPayloadType)jType;
@@ -2014,6 +1767,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setPropertyValue1
 JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcPlatform_getPropertyValue0
     (JNIEnv *env, jclass clazz, jint jType, jstring jPropName)
 {
+    OC_UNUSED(clazz);
     try
     {
         OCPayloadType type = (OCPayloadType) jType;
@@ -2048,6 +1802,7 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcPlatform_getPropertyValue0
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unregisterResource0(
     JNIEnv *env, jclass clazz, jobject jResourceHandle)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_unregisterResource");
     if (!jResourceHandle)
     {
@@ -2085,6 +1840,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unregisterResource0(
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResource0
 (JNIEnv *env, jclass clazz, jobject jResourceCollectionHandle, jobject jResourceHandle)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_bindResource");
     if (!jResourceCollectionHandle)
     {
@@ -2140,6 +1896,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResources0(
     jobject jResourceCollectionHandle,
     jobjectArray jResourceHandleArray)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_bindResources");
 
     if (!jResourceCollectionHandle)
@@ -2212,6 +1969,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResource0(
     jobject jResourceCollectionHandle,
     jobject jResourceHandle)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_unbindResource");
     if (!jResourceCollectionHandle)
     {
@@ -2267,6 +2025,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResources0(
     jobject jResourceCollectionHandle,
     jobjectArray jResourceHandleArray)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_unbindResources");
     if (!jResourceCollectionHandle)
     {
@@ -2338,6 +2097,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindTypeToResource0(
     jobject jResourceHandle,
     jstring jResourceTypeName)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_bindTypeToResource");
     if (!jResourceHandle)
     {
@@ -2384,6 +2144,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindTypeToResource0(
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindInterfaceToResource0
 (JNIEnv *env, jclass clazz, jobject jResourceHandle, jstring jResourceInterfaceName)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_bindInterfaceToResource");
     if (!jResourceHandle)
     {
@@ -2430,6 +2191,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindInterfaceToResource
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_startPresence0(
     JNIEnv *env, jclass clazz, jint ttl)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_startPresence");
 
     try
@@ -2456,6 +2218,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_startPresence0(
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_stopPresence0(
     JNIEnv *env, jclass clazz)
 {
+    OC_UNUSED(clazz);
     LOGI("OcPlatform_stopPresence");
 
     try
@@ -2486,6 +2249,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence0(
     jint jConnectivityType,
     jobject jListener)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_subscribePresence");
     std::string host;
     if (jHost)
@@ -2556,6 +2320,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence1(
     jint jConnectivityType,
     jobject jListener)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_subscribePresence1");
     std::string host;
     if (jHost)
@@ -2624,6 +2389,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence1(
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unsubscribePresence0(
     JNIEnv *env, jclass clazz, jobject jPresenceHandle)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_unsubscribePresence");
     if (!jPresenceHandle)
     {
@@ -2680,6 +2446,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribeDevicePrese
     jint jConnectivityType,
     jobject jListener)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_subscribeDevicePresence0");
 #ifdef WITH_CLOUD
     std::string host;
@@ -2745,6 +2512,11 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribeDevicePrese
     }
     return jPresenceHandle;
 #else
+    OC_UNUSED(env);
+    OC_UNUSED(jHost);
+    OC_UNUSED(jDiArray);
+    OC_UNUSED(jConnectivityType);
+    OC_UNUSED(jListener);
     ThrowOcException(JNI_NO_SUPPORT, "Not supported");
     return nullptr;
 #endif
@@ -2766,6 +2538,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructResourceObj
     jobjectArray jResourceTypeArray,
     jobjectArray jInterfaceArray)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_constructResourceObject");
     std::string host;
     if (jHost)
@@ -2794,11 +2567,11 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructResourceObj
     std::vector<std::string> interfaces;
     JniUtils::convertJavaStrArrToStrVector(env, jInterfaceArray, interfaces);
 
-    std::shared_ptr<OCResource> resource = OCPlatform::constructResourceObject(
+    std::shared_ptr<OC::OCResource> resource = OCPlatform::constructResourceObject(
         host,
         uri,
         static_cast<OCConnectivityType>(jConnectivityType),
-        static_cast<bool>(jIsObservable),
+        (jIsObservable != 0),
         resourceTypes,
         interfaces);
 
@@ -2833,6 +2606,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructResourceObj
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_sendResponse0(
     JNIEnv *env, jclass clazz, jobject jResourceResponse)
 {
+    OC_UNUSED(clazz);
     LOGD("OcPlatform_sendResponse");
     if (!jResourceResponse)
     {
@@ -2875,7 +2649,11 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructAccountMana
     jstring jHost,
     jint jConnectivityType)
 {
+    OC_UNUSED(clazz);
 #ifndef WITH_CLOUD
+    OC_UNUSED(env);
+    OC_UNUSED(jHost);
+    OC_UNUSED(jConnectivityType);
     ThrowOcException(OC_STACK_ERROR,
                      "OCAccountManager is not supported. (Please build with WITH_CLOUD=1 option)");
     return nullptr;
@@ -2932,6 +2710,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructAccountMana
 JNIEXPORT jbyteArray JNICALL Java_org_iotivity_base_OcPlatform_getDeviceId
 (JNIEnv *env, jobject thiz)
 {
+    OC_UNUSED(thiz);
     LOGD("OcPlatform_getDeviceId");
     OCUUIdentity deviceId;
 
@@ -2974,6 +2753,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_iotivity_base_OcPlatform_getDeviceId
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setDeviceId(
     JNIEnv *env, jobject thiz, jbyteArray data)
 {
+    OC_UNUSED(thiz);
     LOGI("OcPlatform_setDeviceId");
     OCUUIdentity deviceId;
     try
@@ -3013,6 +2793,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setDeviceId(
 JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcPlatform_getIoTivityVersion(
     JNIEnv *env, jclass thiz)
 {
+    OC_UNUSED(thiz);
     LOGI("OcPlatform_getIoTivityVersion");
     return env->NewStringUTF(IOTIVITY_VERSION);
 }

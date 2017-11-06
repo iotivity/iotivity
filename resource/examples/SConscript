@@ -86,7 +86,6 @@ def make_single_file_cpp_program(program_name):
 example_names = [
     'simpleserver', 'simpleclient',
     'simpleclientserver',
-    'directpairingclient',
     'devicediscoveryserver', 'devicediscoveryclient',
     'simpleserverHQ', 'simpleclientHQ',
     ]
@@ -120,17 +119,14 @@ serverjson = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/exa
 light_introspection_json = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/examples/',
                 examples_env.get('SRC_DIR') + '/resource/examples/' + 'light_introspection.json')
 
-directpairingdat = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/examples/',
-                examples_env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client_directpairing.dat')
-
-examples += [clientjson, serverjson, directpairingdat]
+examples += [clientjson, serverjson]
 
 if target_os in ['msys_nt', 'windows']:
     winUIClient = examples_env.Program('winUIClient', ['winuiclientgui.cpp', 'winuiclient.cpp'])
     examples += [winUIClient]
     # mediaserver uses GetVersionEx which is a windows native/desktop only API.
     # Only build for Native/Win32
-    if env.get('UWP_APP') != '1':
+    if env.get('MSVC_UWP_APP') != '1':
         mediaserver = examples_env.Program('mediaserver', 'mediaserver.cpp')
         examples += [mediaserver]
 

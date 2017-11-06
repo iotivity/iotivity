@@ -35,7 +35,7 @@ extern "C" {
 *
 * @return ::OC_STACK_OK upon success, ::OC_STACK_ERROR in case of error.
 */
-OCStackResult OCRDStart();
+OCStackResult OC_CALL OCRDStart();
 
 /**
 * Stops resource directory.
@@ -45,7 +45,7 @@ OCStackResult OCRDStart();
 * @return ::OC_STACK_OK upon success, ::OC_STACK_ERROR is returned except
 * the case that OC_STACK_SUCCESS is returned.
 */
-OCStackResult OCRDStop();
+OCStackResult OC_CALL OCRDStop();
 
 /**
  * Checks based on the resource type if the entity exists in the resource directory.
@@ -57,7 +57,7 @@ OCStackResult OCRDStop();
  * @return ::OC_STACK_OK upon success, ::OC_STACK_ERROR is returned except
  * the case that OC_STACK_SUCCESS is returned.
  */
-OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *resourceType,
+OCStackResult OC_CALL OCRDCheckPublishedResource(const char *interfaceType, const char *resourceType,
         OCDiscoveryPayload **payload);
 
 #endif

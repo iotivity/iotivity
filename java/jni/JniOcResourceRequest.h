@@ -24,30 +24,28 @@
 #ifndef _Included_org_iotivity_base_OcResourceRequest
 #define _Included_org_iotivity_base_OcResourceRequest
 
-using namespace OC;
-
 class JniOcResourceRequest
 {
 public:
-    JniOcResourceRequest(const std::shared_ptr<OCResourceRequest> resourceRequest);
+    JniOcResourceRequest(const std::shared_ptr<OC::OCResourceRequest> resourceRequest);
 
     ~JniOcResourceRequest();
 
     std::string getRequestType();
 
-    const QueryParamsMap& getQueryParameters() const;
+    const OC::QueryParamsMap& getQueryParameters() const;
 
     int getRequestHandlerFlag() const;
 
-    const OCRepresentation& getResourceRepresentation() const;
+    const OC::OCRepresentation& getResourceRepresentation() const;
 
-    const ObservationInfo& getObservationInfo() const;
+    const OC::ObservationInfo& getObservationInfo() const;
 
     void setResourceUri(const std::string resourceUri);
 
     std::string getResourceUri(void);
 
-    const HeaderOptions& getHeaderOptions() const;
+    const OC::HeaderOptions& getHeaderOptions() const;
 
     const OCRequestHandle& getRequestHandle() const;
 
@@ -57,7 +55,7 @@ public:
         (JNIEnv *env, jobject thiz);
 
 private:
-    std::shared_ptr<OCResourceRequest> m_request;
+    std::shared_ptr<OC::OCResourceRequest> m_request;
 };
 
 #ifdef __cplusplus

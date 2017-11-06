@@ -1165,7 +1165,7 @@ CAResult_t CAInitializeMessageHandler(CATransportAdapter_t transportType)
 void CATerminateMessageHandler()
 {
 #ifndef SINGLE_THREAD
-    CATransportAdapter_t connType;
+    CATransportAdapter_t connType = CA_DEFAULT_ADAPTER;
     u_arraylist_t *list = CAGetSelectedNetworkList();
     size_t length = u_arraylist_length(list);
 
@@ -1295,6 +1295,40 @@ void CAErrorHandler(const CAEndpoint_t *endpoint,
         OIC_LOG(ERROR, TAG, "CAErrorHandler, CAGenerateHandlerData failed!");
         coap_delete_pdu(pdu);
         return;
+    }
+
+#ifdef WITH_TCP
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
+    {
+        OIC_LOG(INFO, TAG, "retransmission is not supported");
+    }
+    else
+#endif
+    {
+        //Fix up CoAP message to adjust it to current retransmission implementation
+        coap_hdr_t *hdr = (coap_hdr_t *)(pdu->transport_hdr);
+        hdr->type = CA_MSG_RESET;
+        hdr->code = CA_EMPTY;
+
+        // for retransmission
+        void *retransmissionPdu = NULL;
+        CARetransmissionReceivedData(&g_retransmissionContext, cadata->remoteEndpoint,
+                                     pdu->transport_hdr, pdu->length, &retransmissionPdu);
+
+        // get token from saved data in retransmission list
+        if (retransmissionPdu && cadata->errorInfo)
+        {
+            CAInfo_t *info = &cadata->errorInfo->info;
+            CAResult_t res = CAGetTokenFromPDU((const coap_hdr_transport_t *)retransmissionPdu,
+                                               info, endpoint);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "fail to get Token from retransmission list");
+                OICFree(info->token);
+                info->tokenLength = 0;
+            }
+        }
+        OICFree(retransmissionPdu);
     }
 
     cadata->errorInfo->result = result;
@@ -1435,7 +1469,7 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
 
     if (pdu->transport_hdr)
     {
-        OIC_LOG_V(DEBUG, ANALYZER_TAG, "Msg ID = [%u]", 
+        OIC_LOG_V(DEBUG, ANALYZER_TAG, "Msg ID = [%u]",
             (uint32_t)ntohs(pdu->transport_hdr->udp.id));
     }
 
@@ -1465,15 +1499,15 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
 #ifdef TB_LOG
     size_t payloadLen = (pdu->data) ? (unsigned char *)pdu->hdr + pdu->length - pdu->data : 0;
 #endif
-    OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Message Full Size = [%lu]", pdu->length);
+    OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Message Full Size = [%u]", pdu->length);
     OIC_LOG(DEBUG, ANALYZER_TAG, "CoAP Header (+ 0xFF)");
     OIC_LOG_BUFFER(DEBUG, ANALYZER_TAG,  (const uint8_t *) pdu->transport_hdr,
                    pdu->length - payloadLen);
-    OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Header size = [%lu]", pdu->length - payloadLen);
+    OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Header size = [%" PRIuPTR "]", (size_t) pdu->length - payloadLen);
 
     OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Payload");
     //OIC_LOG_BUFFER(DEBUG, ANALYZER_TAG, pdu->data, payloadLen);
-    OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Payload Size = [%lu]", payloadLen);
+    OIC_LOG_V(DEBUG, ANALYZER_TAG, "CoAP Payload Size = [%" PRIuPTR "]", payloadLen);
     OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
     OIC_TRACE_END();
 }

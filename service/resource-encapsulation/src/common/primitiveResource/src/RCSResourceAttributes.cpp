@@ -63,7 +63,10 @@ namespace
             m_stream << "[";
             for (auto it = v.begin(); it != v.end(); ++it)
             {
-                if (it != v.begin()) m_stream << ", ";
+                if (it != v.begin())
+                {
+                    m_stream << ", ";
+                }
                 (*this)(*it);
             }
             m_stream << "]";
@@ -97,13 +100,17 @@ namespace
             m_stream << "{";
             for (auto it = attrs.begin(); it != attrs.end(); ++it)
             {
-                if (it != attrs.begin()) m_stream << ", ";
+                if (it != attrs.begin())
+                {
+                    m_stream << ", ";
+                }
                 m_stream << "\"" << it->key() << "\" : " << it->value().toString();
             }
             m_stream << "}";
         }
 
-        std::string get() const {
+        std::string get() const
+        {
             return m_stream.str();
         }
 
@@ -456,6 +463,11 @@ namespace OIC
 
         auto RCSResourceAttributes::iterator::operator=(const iterator& rhs) -> iterator&
         {
+            // If it is same object skip assignment
+            if (this == &rhs)
+            {
+                return *this;
+            }
             m_cur = rhs.m_cur;
             return *this;
         }
@@ -524,6 +536,11 @@ namespace OIC
         auto RCSResourceAttributes::const_iterator::operator=(
                 const const_iterator& rhs) -> const_iterator&
         {
+            // If it is same object skip assignment
+            if (this == &rhs)
+            {
+                return *this;
+            }
             m_cur = rhs.m_cur;
             return *this;
         }

@@ -540,6 +540,8 @@ public class MainActivity extends Activity
             logMessage("signOut Successful");
         } catch (OcException e) {
             e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

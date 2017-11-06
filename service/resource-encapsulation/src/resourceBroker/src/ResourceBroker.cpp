@@ -64,7 +64,7 @@ namespace OIC
         BrokerID ResourceBroker::hostResource(PrimitiveResourcePtr pResource, BrokerCB cb)
         {
             OIC_LOG_V(DEBUG, BROKER_TAG, "hostResource().");
-            if(pResource == nullptr || cb == nullptr || cb == NULL)
+            if(pResource == nullptr || cb == nullptr)
             {
                 throw InvalidParameterException("[hostResource] input parameter(PrimitiveResource or BrokerCB) is Invalid");
             }
@@ -82,7 +82,8 @@ namespace OIC
                     OIC_LOG_V(DEBUG, BROKER_TAG, "create the ResourcePresence.");
                     presenceItem.reset(new ResourcePresence());
                     presenceItem->initializeResourcePresence(pResource);
-                }catch(RCSPlatformException &e)
+                }
+                catch(RCSPlatformException &e)
                 {
                     throw FailedSubscribePresenceException(e.getReasonCode());
                 }

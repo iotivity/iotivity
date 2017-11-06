@@ -1,7 +1,7 @@
 LOCAL_PATH := $(call my-dir)
-
 ROOT_PATH := ../../../../../../..
 OIC_SRC_DIR := ../../../../../..
+OIC_OUT_PATH := $(OIC_SRC_DIR)/out/android/$(TARGET_ARCH_ABI)/$(APP_OPTIM)
 
 include $(CLEAR_VARS)
 OIC_LIB_PATH := $(ROOT_PATH)/out/android/$(TARGET_ARCH_ABI)/$(APP_OPTIM)
@@ -56,6 +56,7 @@ LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/stack/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/logger/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/c_common
+LOCAL_C_INCLUDES += $(OIC_OUT_PATH)/resource/c_common
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/c_common/oic_string/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/oc_logger/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/extlibs/boost/boost_1_58_0
@@ -109,6 +110,7 @@ LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/stack/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/logger/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/c_common
+LOCAL_C_INCLUDES += $(OIC_OUT_PATH)/resource/c_common
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/c_common/oic_string/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/oc_logger/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/extlibs/boost/boost_1_58_0

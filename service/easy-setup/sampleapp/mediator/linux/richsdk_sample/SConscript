@@ -18,6 +18,8 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+import os
+
 Import('env')
 
 mediator_env = env.Clone()
@@ -27,57 +29,73 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-mediator_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 if env.get('RELEASE'):
-    mediator_env.AppendUnique(CCFLAGS = ['-Os'])
-    mediator_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    mediator_env.AppendUnique(CCFLAGS=['-Os'])
 else:
-    mediator_env.AppendUnique(CCFLAGS = ['-g'])
+    mediator_env.AppendUnique(CCFLAGS=['-g'])
 
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
-env.AppendUnique(CPPDEFINES = ['CPP_MEDIATOR'])
+mediator_env.AppendUnique(CPPDEFINES=['CPP_MEDIATOR'])
 
 if target_os not in ['windows']:
-    mediator_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
+    mediator_env.AppendUnique(CXXFLAGS=['-Wall', '-std=c++0x'])
 
-mediator_env.PrependUnique(CPPPATH = [
-            env.get('SRC_DIR') + '/resource/include',
-            env.get('SRC_DIR') + '/resource/oc_logger/include',
-			env.get('SRC_DIR') + '/resource/c_common/oic_malloc/include',
-			env.get('SRC_DIR') + '/resource/csdk/include',
-			env.get('SRC_DIR') + '/resource/csdk/stack/include',
-			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include',
-			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
-			env.get('SRC_DIR') + '/resource/csdk/logger/include',
-			env.get('SRC_DIR') + '/resource/csdk/security/include',
-			env.get('SRC_DIR') + '/resource/csdk/connectivity/api',
-			env.get('SRC_DIR') + '/extlibs/cjson',
-			env.get('SRC_DIR') + '/service/easy-setup/mediator/richsdk/inc',
-			env.get('SRC_DIR') + '/service/easy-setup/mediator/richsdk/src',
-			env.get('SRC_DIR') + '/service/easy-setup/inc'])
+mediator_env.PrependUnique(CPPPATH=[
+    '#/resource/include',
+    '#/resource/oc_logger/include',
+    '#/resource/c_common',
+    '#/resource/c_common/ocrandom/include',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/csdk/security/provisioning/include',
+    '#/resource/csdk/security/provisioning/include/internal',
+    '#/resource/csdk/logger/include',
+    '#/resource/csdk/security/include',
+    '#/resource/csdk/connectivity/api',
+    '#/extlibs/cjson',
+    '#/service/easy-setup/mediator/richsdk/inc',
+    '#/service/easy-setup/mediator/richsdk/src',
+    '#/service/easy-setup/inc',
+])
+
+mediator_env.PrependUnique(LIBS=['ESMediatorRich'])
 
 if env.get('SECURED') == '1':
-	mediator_env.PrependUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+    mediator_env.AppendUnique(LIBS=[
+        'ocpmapi',
+        'ocprovision',
+        'mbedtls',
+        'mbedx509',
+        'mbedcrypto',
+    ])
 
-mediator_env.PrependUnique(LIBS = ['ESMediatorRich', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction'])
-
-if env.get('SECURED') == '1':
-	mediator_env.PrependUnique(LIBS = ['ocpmapi', 'ocprovision'])
+mediator_env.AppendUnique(LIBS=['oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction',
+])
 
 mediator = mediator_env.Program('mediator', 'mediator.cpp')
 submediator = mediator_env.Program('submediator', 'submediator.cpp')
 
-i_mediator = mediator_env.Install(env.get('BUILD_DIR'), [mediator, submediator])
+i_mediator = mediator_env.Install(
+    env.get('BUILD_DIR'), [mediator, submediator])
 
-clientdat = mediator_env.Install(env.get('BUILD_DIR') + '/service/easy-setup/sampleapp/mediator/linux/richsdk_sample',
-                                    env.get('SRC_DIR') + '/service/easy-setup/sampleapp/mediator/linux/richsdk_sample/oic_svr_db_client.dat')
+clientdat = mediator_env.Install(
+    env.get('BUILD_DIR') +
+    '/service/easy-setup/sampleapp/mediator/linux/richsdk_sample',
+    env.get('SRC_DIR') +
+    '/service/easy-setup/sampleapp/mediator/linux/richsdk_sample/oic_svr_db_client.dat'
+)
 
-subclientdat = mediator_env.Install(env.get('BUILD_DIR') + '/service/easy-setup/sampleapp/mediator/linux/richsdk_sample',
-                                    env.get('SRC_DIR') + '/service/easy-setup/sampleapp/mediator/linux/richsdk_sample/oic_svr_db_subclient.dat')
-
+subclientdat = mediator_env.Install(
+    env.get('BUILD_DIR') +
+    '/service/easy-setup/sampleapp/mediator/linux/richsdk_sample',
+    env.get('SRC_DIR') +
+    '/service/easy-setup/sampleapp/mediator/linux/richsdk_sample/oic_svr_db_subclient.dat'
+)
 
 Alias('mediator_rich', [i_mediator, clientdat, subclientdat])
 env.AppendTarget('mediator_rich')

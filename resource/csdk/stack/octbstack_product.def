@@ -14,7 +14,6 @@ convertTriggerEnumToString
 FindResourceByUri
 OCBindResource
 OCBindResourceHandler
-OCBindResourceInsToResource
 OCBindResourceInterfaceToResource
 OCBindResourceTypeToResource
 OCByteStringCopy
@@ -29,7 +28,6 @@ OCCreateResourceWithEp
 OCDeleteResource
 OCDiagnosticPayloadCreate
 OCDiagnosticPayloadDestroy
-OCDiscoverDirectPairingDevices
 OCDiscoveryEndpointDestroy
 OCDiscoveryPayloadAddResource
 OCDiscoveryPayloadAddNewResource
@@ -38,7 +36,6 @@ OCDiscoveryPayloadDestroy
 OCDiscoveryPayloadGetResource
 OCDiscoveryPayloadGetResourceCount
 OCDiscoveryResourceDestroy
-OCDoDirectPairing
 OCDoResource
 OCDoResponse
 OCDoRequest
@@ -48,7 +45,6 @@ OCEndpointPayloadGetEndpointCount
 OCFreeOCStringLL
 OCGetDeviceId
 OCGetDeviceOwnedState
-OCGetDirectPairedDevices
 OCGetHeaderOption
 OCGetIpv6AddrScope
 OCGetNumberOfResources
@@ -65,13 +61,12 @@ OCGetResourceInterfaceName
 OCGetResourceProperties
 OCGetResourceTypeName
 OCGetResourceUri
-OCGetResourceIns
 OCGetServerInstanceIDString
 OCGetSupportedEndpointTpsFlags
 OCInit
 OCInit1
 OCInit2
-OCLinksPayloadValueCreate
+OCLinksPayloadArrayCreate
 OCNotifyAllObservers
 OCNotifyListOfObservers
 OCPayloadDestroy

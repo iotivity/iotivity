@@ -92,14 +92,20 @@ OCStackResult NSProviderPublishTopic(OCRepPayload * payload, OCClientResponseHan
 
     if (!serverInfo)
     {
-        NS_LOG(DEBUG, "serverInfo is not NULL");
-        NS_LOG_V(DEBUG, "serverInfo->serverUri = %s", serverInfo->serverUri);
+        NS_LOG(DEBUG, "serverInfo is NULL");
+        return OC_STACK_ERROR;
+    }
+    NS_LOG_V(DEBUG, "serverInfo->serverUri = %s", serverInfo->serverUri);
+    OCStackResult res = OCDoResource(NULL, OC_REST_POST, serverInfo->serverUri, serverInfo->devAddr,
+            (OCPayload *)payload, CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+    if (OC_STACK_OK != res)
+    {
+        NS_LOG_V(ERROR, "Failed to send publish request! (err=%d)",  res);
+        return res;
     }
 
     NS_LOG(DEBUG, "NSProviderPublishTopic - OUT");
-
-    return OCDoResource(NULL, OC_REST_POST, serverInfo->serverUri, serverInfo->devAddr,
-            (OCPayload *)payload, CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+    return res;
 }
 #endif
 
@@ -333,7 +339,7 @@ void * NSNotificationSchedule(void *ptr)
                     break;
 
             }
-            OICFree(node);
+            NSOICFree(node);
         }
 
         pthread_mutex_unlock(&NSMutex[NOTIFICATION_SCHEDULER]);

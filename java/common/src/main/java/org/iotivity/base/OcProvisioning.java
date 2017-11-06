@@ -45,6 +45,14 @@ public class OcProvisioning {
     public static native void provisionInit(String dbPath) throws OcException;
 
     /**
+     * Method is used by provisioning manager to close provisioning database.
+     *
+     * @throws OcException Indicate failure.
+     *                     Use OcException.GetErrorCode() for more details.
+     */
+    public static native void provisionClose() throws OcException;
+
+    /**
      * Method to Discover un-owned devices in its subnet.Un-owned devices need
      * to be owned by calling ownershipTransferCBdata.
      *
@@ -83,16 +91,29 @@ public class OcProvisioning {
      *
      * @param type     OxmType ownership transfer type.
      * @param pinCallbackListener Pin callback Listener.
-     *
+     * @deprecated use {@link #setOwnershipTransferCBdata} instead.
      * @throws OcException Indicate failure registering ownership transfer.
      *                     Use OcException.GetErrorCode() for more details.
      */
     public static void SetownershipTransferCBdata(OxmType type,
-            PinCallbackListener pinCallbackListener) throws OcException
-    {
+            PinCallbackListener pinCallbackListener) throws OcException {
         OcProvisioning.ownershipTransferCBdata(type.getValue(), pinCallbackListener);
     }
 
+    /**
+     *  API for registering Ownership transfer methods for a particular
+     *  transfer Type
+     *
+     * @param type     OxmType ownership transfer type.
+     * @param pinCallbackListener Pin callback Listener.
+     *
+     * @throws OcException Indicate failure registering ownership transfer.
+     *                     Use OcException.GetErrorCode() for more details.
+     */
+    public static void setOwnershipTransferCBdata(OxmType type,
+            PinCallbackListener pinCallbackListener) throws OcException {
+        OcProvisioning.ownershipTransferCBdata(type.getValue(), pinCallbackListener);
+    }
     private  static native void ownershipTransferCBdata(int oxmType,  PinCallbackListener pinCallbackListener);
 
     public static interface PinCallbackListener {
@@ -107,12 +128,12 @@ public class OcProvisioning {
      * @param timeout     Timeout in sec.Time to listen for responses before
      *                    returining the Array.
      * @return            Array of OcSecureResource class objects.
-     * @throws OcException
+     * @throws OcException Indicate failure discovering devices which are MOT enabled
      */
     public static List<OcSecureResource> discoverMOTEnabledDevices(int timeout)
         throws OcException {
-            return Arrays.asList(OcProvisioning.discoverMOTEnabledDevices1(timeout));
-        }
+        return Arrays.asList(OcProvisioning.discoverMOTEnabledDevices1(timeout));
+    }
     private static native OcSecureResource[] discoverMOTEnabledDevices1(int timeout)
         throws OcException;
 
@@ -122,12 +143,12 @@ public class OcProvisioning {
      * @param timeout     Timeout in sec.Time to listen for responses before
      *                    returining the Array.
      * @return            Array of OcSecureResource class objects.
-     * @throws OcException
+     * @throws OcException Indicate failure discovering MOT enabled owned devices
      */
     public static List<OcSecureResource> discoverMOTEnabledOwnedDevices(int timeout)
         throws OcException {
-            return Arrays.asList(OcProvisioning.discoverMOTEnabledOwnedDevices1(timeout));
-        }
+        return Arrays.asList(OcProvisioning.discoverMOTEnabledOwnedDevices1(timeout));
+    }
     private static native OcSecureResource[] discoverMOTEnabledOwnedDevices1(int timeout)
         throws OcException;
 
@@ -249,7 +270,7 @@ public class OcProvisioning {
      *                     Use OcException.GetErrorCode() for more details.
      */
     public static int saveTrustCertChain(byte[] trustCertChain, EncodingType encodingType) throws OcException {
-        return saveTrustCertChain1(trustCertChain,encodingType.getValue());
+        return saveTrustCertChain1(trustCertChain, encodingType.getValue());
     }
     private static native int saveTrustCertChain1(byte[] trustCertChain, int encodingType)
         throws OcException;
@@ -259,9 +280,9 @@ public class OcProvisioning {
      *
      *  @param pinSize Byte Len of Random pin.
      *  @param pinType Enumset of pin, see PinType for enums
-     *  @throws OcException
+     *  @throws OcException Indicate failure saving pin type
      */
-    public static int setPinType(int pinSize, EnumSet<PinType>  pinType) throws OcException {
+    public static void setPinType(int pinSize, EnumSet<PinType>  pinType) throws OcException {
 
         int pinTypeInt = 0;
 
@@ -269,22 +290,22 @@ public class OcProvisioning {
             if (pinType.contains(ops))
                 pinTypeInt |= ops.getValue();
         }
-        return setPinType0(pinSize, pinTypeInt);
+        setPinType0(pinSize, pinTypeInt);
     }
-    private static native int setPinType0(int pinSize, int pinType) throws OcException;
+    private static native void setPinType0(int pinSize, int pinType) throws OcException;
 
     /**
      * API to save ACL, having multiple ACE's
      *
      *@param acl object
-     *@throws OcException
+     *@throws OcException Indicate failure saving the ACL
      */
     public static native void saveACL(Object acl) throws OcException;
 
     /**
      * API to do self ownership transfer.
      *
-     *@throws OcException
+     *@throws OcException Indicate failure doing the self ownership transfer
      */
     public static native void doSelfOwnershiptransfer() throws OcException;
     
@@ -292,7 +313,8 @@ public class OcProvisioning {
      *  Method to save the seed value to generate device UUID
      *
      *  @param seed   buffer of seed value
-     *  @throws OcException
+     *  @throws OcException Indicate falure setting the device UUID seed
+     *  @return -1 if TLS not enabled return 0 otherwise
      */
     public static int setDeviceIdSeed(byte[] seed) throws OcException {
         return setDeviceIdSeed1(seed);

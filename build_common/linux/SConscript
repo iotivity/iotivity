@@ -4,63 +4,74 @@
 #
 ##
 import os
+import subprocess
+from distutils.version import LooseVersion
+
 Import('env')
-
-print "Reading linux configuration script"
-
-help_vars = Variables()
-if env.get('BUILD_JAVA') == True:
-    if not env.get('ANDROID_GRADLE'):
-        SConscript('../../extlibs/android/gradle/SConscript')
-        help_vars.Add(PathVariable('ANDROID_GRADLE', 'Android Gradle directory', os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'gradle', 'gradle-2.2.1/bin/gradle')))
-
-    if env.get('ANDROID_GRADLE'):
-        android_gradle = env.get('ANDROID_GRADLE')
-    else:
-        print '''
-*************************************** Info **********************************
-*    Android Gradle path isn't set, the default will be used. You can set     *
-* environment variable ANDROID_GRADLE or add it in command line as:           *
-*      # scons ANDROID_GRADLE=<path to android GRADLE> ...                    *
-*******************************************************************************
-'''
-        android_gradle = os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'gradle', 'gradle-2.2.1', 'bin', 'gradle')
-
-help_vars.Update(env)
-Help(help_vars.GenerateHelpText(env))
 
 # Add the default lib directory
 build_dir = env.get('BUILD_DIR')
-env.AppendUnique(LIBPATH = [build_dir])
+env.AppendUnique(LIBPATH=[build_dir])
 env.AppendENVPath('LD_LIBRARY_PATH', [build_dir])
 
 # Set release/debug flags
 if env.get('RELEASE'):
-	env.AppendUnique(CCFLAGS = ['-Os'])
-	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    env.AppendUnique(CCFLAGS=['-Os'])
 else:
-	env.AppendUnique(CCFLAGS = ['-g'])
+    env.AppendUnique(CCFLAGS=['-g'])
 
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+# Test Coverage Flags and Library (if RELEASE=0)
+if not env.get('RELEASE'):
+    env.AppendUnique(CCFLAGS=['--coverage', '-fPIC', '-O0'])
+    env.AppendUnique(LINKFLAGS=['--coverage'])
 
-env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__'])
-env.AppendUnique(CFLAGS = ['-std=gnu99'])
-env.AppendUnique(CCFLAGS = ['-Wall', '-Wextra', '-fPIC'])
-env.AppendUnique(LIBS = ['dl', 'pthread', 'uuid'])
+env.AppendUnique(CPPDEFINES=['WITH_POSIX', '__linux__'])
+env.AppendUnique(CFLAGS=['-std=gnu99'])
+env.AppendUnique(CCFLAGS=['-Wall', '-Wextra', '-fPIC'])
+env.AppendUnique(LIBS=['dl', 'pthread', 'uuid'])
+
+# The -Wno-error=missing-field-initializers is used due to a bug in versions
+# of gcc older than 5.0 see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=36750
+# this bug causes structs initialized with {0} to generate a
+# missing-field-initializers warning. This is a valid way to initialize
+# a struct and was fixed in later versions.
+# since gcc versions older than 5.0 are still used to build the code we do not
+# want to consider the missing-field-initializer warning.
+# The -Wno-missing-braces is also due to a bug using bracket initializers
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=25137
+# it was also fixed in later versions of gcc.
+#
+# Note: starting with gcc7, -dumpversion returns a non-dotted version (just
+# the major), and this is invalid for distutils.version.StrictVersion. Use
+# LooseVersion for the check instead as it accepts a version like '7'
+# (bug IOT-2862).
+# Additionally, for Python 3, check_output() returns a binary string
+# which is a pain. To avoid decoding, use the new getoutput() method if
+# available. Since this does not exist in Py 2.X, use a try block.
+
+try:
+    gcc_ver = subprocess.getoutput('gcc -dumpversion').rstrip()
+except AttributeError:
+    gcc_ver = subprocess.check_output(['gcc', '-dumpversion'], stderr=subprocess.STDOUT).rstrip()
+if LooseVersion(gcc_ver) < LooseVersion('5.0'):
+    env.AppendUnique(CFLAGS=['-Wno-missing-field-initializers'])
+    env.AppendUnique(CCFLAGS=['-Wno-missing-braces'])
+
+if env.get('ERROR_ON_WARN'):
+    env.AppendUnique(CFLAGS=['-Werror'])
 
 # Set arch flags that match best TARGET_ARCH variable
 if not env.get('WITH_ENV'):
     target_arch = env.get('TARGET_ARCH')
     if target_arch in ['x86']:
-        env.AppendUnique(CCFLAGS = ['-m32'])
-        env.AppendUnique(LINKFLAGS = ['-m32'])
+        env.AppendUnique(CCFLAGS=['-m32'])
+        env.AppendUnique(LINKFLAGS=['-m32'])
     elif target_arch in ['x86_64']:
-        env.AppendUnique(CCFLAGS = ['-m64'])
-        env.AppendUnique(LINKFLAGS = ['-m64'])
+        env.AppendUnique(CCFLAGS=['-m64'])
+        env.AppendUnique(LINKFLAGS=['-m64'])
     elif target_arch in ['arm']:
-        env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
+        env.AppendUnique(CPPFLAGS=['-march=armv5te'])
     elif target_arch in ['arm-v7a', 'armeabi-v7a']:
-        env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+        env.AppendUnique(CPPFLAGS=['-march=armv7-a'])
     elif target_arch.find('arm64') > 0:
-        env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
+        env.AppendUnique(CPPFLAGS=['-march=armv8-a'])

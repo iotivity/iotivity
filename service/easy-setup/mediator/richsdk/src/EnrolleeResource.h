@@ -95,6 +95,9 @@ namespace OIC
             void onConnectRequestResponse(const HeaderOptions& headerOptions,
                                                     const OCRepresentation& rep,
                                                     const int eCode);
+
+            // Determine Specification Version Enrollee follows using header options from discovered resource
+            int GetOCFServerVersion();
         };
     }
 }

@@ -21,7 +21,6 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "base64.h"
-#include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "cainterface.h"
 #include "oxmverifycommon.h"
@@ -33,7 +32,7 @@ static VerifyOptionBitmask_t gVerifyOption = (DISPLAY_NUM | USER_CONFIRM);
 static DisplayNumContext_t gDisplayNumContext = { .callback = NULL, .context = NULL };
 static UserConfirmContext_t gUserConfirmContext = { .callback = NULL, .context = NULL };
 
-void SetDisplayNumCB(void * ptr, DisplayNumCallback displayNumCB)
+void OC_CALL SetDisplayNumCB(void * ptr, DisplayNumCallback displayNumCB)
 {
     OIC_LOG(DEBUG, TAG, "IN SetDisplayNumCB");
     if (NULL == displayNumCB)
@@ -46,7 +45,7 @@ void SetDisplayNumCB(void * ptr, DisplayNumCallback displayNumCB)
     OIC_LOG(DEBUG, TAG, "OUT SetDisplayNumCB");
 }
 
-void* UnsetDisplayNumCB()
+void* OC_CALL UnsetDisplayNumCB()
 {
     OIC_LOG(DEBUG, TAG, "IN UnsetDisplayNumCB");
     void *prevctx = gDisplayNumContext.context;
@@ -56,7 +55,7 @@ void* UnsetDisplayNumCB()
     return prevctx;
 }
 
-void SetUserConfirmCB(void * ptr, UserConfirmCallback userConfirmCB)
+void OC_CALL SetUserConfirmCB(void * ptr, UserConfirmCallback userConfirmCB)
 {
     OIC_LOG(DEBUG, TAG, "IN SetUserConfirmCB");
     if (NULL == userConfirmCB)
@@ -69,7 +68,7 @@ void SetUserConfirmCB(void * ptr, UserConfirmCallback userConfirmCB)
     OIC_LOG(DEBUG, TAG, "OUT SetUserConfirmCB");
 }
 
-void* UnsetUserConfirmCB()
+void* OC_CALL UnsetUserConfirmCB()
 {
     OIC_LOG(DEBUG, TAG, "IN UnsetUserConfirmCB");
     void *prevctx = gUserConfirmContext.context;
@@ -79,7 +78,7 @@ void* UnsetUserConfirmCB()
     return prevctx;
 }
 
-void SetVerifyOption(VerifyOptionBitmask_t verifyOption)
+void OC_CALL SetVerifyOption(VerifyOptionBitmask_t verifyOption)
 {
     OIC_LOG(DEBUG, TAG, "IN SetVerifyOption");
     gVerifyOption = verifyOption;
@@ -87,7 +86,7 @@ void SetVerifyOption(VerifyOptionBitmask_t verifyOption)
     OIC_LOG(DEBUG, TAG, "OUT SetVerifyOption");
 }
 
-OCStackResult VerifyOwnershipTransfer(uint8_t mutualVerifNum [MUTUAL_VERIF_NUM_LEN],
+OCStackResult OC_CALL VerifyOwnershipTransfer(uint8_t mutualVerifNum [MUTUAL_VERIF_NUM_LEN],
                                     VerifyOptionBitmask_t verifyOption)
 {
     OIC_LOG(DEBUG, TAG, "IN VerifyOwnershipTransfer");

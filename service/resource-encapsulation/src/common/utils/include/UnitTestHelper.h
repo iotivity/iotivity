@@ -32,7 +32,8 @@ public:
 protected:
     virtual ~TestWithMock() noexcept(noexcept(std::declval<Test>().~Test())) {}
 
-    virtual void TearDown() {
+    virtual void TearDown()
+    {
         try
         {
             mocks.VerifyAll();

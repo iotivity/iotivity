@@ -24,8 +24,6 @@
 #ifndef _Included_org_iotivity_base_OcResource_OnPutListener
 #define _Included_org_iotivity_base_OcResource_OnPutListener
 
-using namespace OC;
-
 class JniOcResource;
 
 class JniOnPutListener
@@ -34,7 +32,7 @@ public:
     JniOnPutListener(JNIEnv *env, jobject jListener, JniOcResource* resource);
     ~JniOnPutListener();
 
-    void onPutCallback(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode);
+    void onPutCallback(const OC::HeaderOptions& headerOptions, const OC::OCRepresentation& rep, const int eCode);
 
 private:
     jweak m_jwListener;

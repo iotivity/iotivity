@@ -142,6 +142,32 @@ namespace OC
         return root;
     }
 
+    void parseServerHeaderOptions(OCClientResponse* clientResponse,
+                    HeaderOptions& serverHeaderOptions)
+    {
+        if (clientResponse)
+        {
+            // Parse header options from server
+            uint16_t optionID;
+            std::string optionData;
+
+            for(size_t i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
+            {
+                optionID = clientResponse->rcvdVendorSpecificHeaderOptions[i].optionID;
+                optionData = reinterpret_cast<const char*>
+                                (clientResponse->rcvdVendorSpecificHeaderOptions[i].optionData);
+                HeaderOption::OCHeaderOption headerOption(optionID, optionData);
+                serverHeaderOptions.push_back(headerOption);
+            }
+        }
+        else
+        {
+            // clientResponse is invalid
+            // TODO check proper logging
+            std::cout << " Invalid response " << std::endl;
+        }
+    }
+
     OCStackApplicationResult listenCallback(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
     {
@@ -180,7 +206,10 @@ namespace OC
 
         try
         {
+            HeaderOptions serverHeaderOptions;
+            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
+                                    serverHeaderOptions,
                                     reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
             // loop to ensure valid construction of all resources
 
@@ -230,8 +259,11 @@ namespace OC
                 return OC_STACK_KEEP_TRANSACTION;
             }
 
+            HeaderOptions serverHeaderOptions;
+            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
-                                        reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
+                    serverHeaderOptions,
+                    reinterpret_cast< OCDiscoveryPayload* >(clientResponse->payload));
             // loop to ensure valid construction of all resources
             for (auto resource : container.Resources())
             {
@@ -376,8 +408,11 @@ namespace OC
 
         try
         {
+            HeaderOptions serverHeaderOptions;
+            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
-                                    reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
+                    serverHeaderOptions,
+                    reinterpret_cast< OCDiscoveryPayload* >(clientResponse->payload));
 
             OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
             std::thread exec(context->callback, container.Resources());
@@ -475,8 +510,11 @@ namespace OC
 
         try
         {
+            HeaderOptions serverHeaderOptions;
+            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
-                            reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
+                    serverHeaderOptions,
+                    reinterpret_cast< OCDiscoveryPayload* >(clientResponse->payload));
 
             OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
             std::thread exec(context->callback, container.Resources());
@@ -706,32 +744,6 @@ namespace OC
             result = OC_STACK_ERROR;
         }
         return result;
-    }
-
-    void parseServerHeaderOptions(OCClientResponse* clientResponse,
-                    HeaderOptions& serverHeaderOptions)
-    {
-        if (clientResponse)
-        {
-            // Parse header options from server
-            uint16_t optionID;
-            std::string optionData;
-
-            for(size_t i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
-            {
-                optionID = clientResponse->rcvdVendorSpecificHeaderOptions[i].optionID;
-                optionData = reinterpret_cast<const char*>
-                                (clientResponse->rcvdVendorSpecificHeaderOptions[i].optionData);
-                HeaderOption::OCHeaderOption headerOption(optionID, optionData);
-                serverHeaderOptions.push_back(headerOption);
-            }
-        }
-        else
-        {
-            // clientResponse is invalid
-            // TODO check proper logging
-            std::cout << " Invalid response " << std::endl;
-        }
     }
 
 #ifdef WITH_MQ
@@ -1273,10 +1285,6 @@ namespace OC
         {
             method = OC_REST_OBSERVE;
         }
-        else if (observeType == ObserveType::ObserveAll)
-        {
-            method = OC_REST_OBSERVE_ALL;
-        }
         else
         {
             method = OC_REST_OBSERVE_ALL;
@@ -1510,146 +1518,4 @@ namespace OC
         return options;
     }
 
-    std::shared_ptr<OCDirectPairing> cloneDevice(const OCDPDev_t* dev)
-    {
-        if (!dev)
-        {
-            return nullptr;
-        }
-
-        OCDPDev_t* result = new OCDPDev_t(*dev);
-        result->prm = new OCPrm_t[dev->prmLen];
-        memcpy(result->prm, dev->prm, sizeof(OCPrm_t)*dev->prmLen);
-        return std::shared_ptr<OCDirectPairing>(new OCDirectPairing(result));
-    }
-
-    void InProcClientWrapper::convert(const OCDPDev_t *list, PairedDevices& dpList)
-    {
-        while(list)
-        {
-            dpList.push_back(cloneDevice(list));
-            list = list->next;
-        }
-    }
-
-    OCStackResult InProcClientWrapper::FindDirectPairingDevices(unsigned short waittime,
-            GetDirectPairedCallback& callback)
-    {
-        if (!callback || 0 == waittime)
-        {
-            return OC_STACK_INVALID_PARAM;
-        }
-
-        OCStackResult result = OC_STACK_ERROR;
-        const OCDPDev_t *list = nullptr;
-        PairedDevices dpDeviceList;
-
-        auto cLock = m_csdkLock.lock();
-
-        if (cLock)
-        {
-            std::lock_guard<std::recursive_mutex> lock(*cLock);
-
-            list = OCDiscoverDirectPairingDevices(waittime);
-            if (NULL == list)
-            {
-                result = OC_STACK_NO_RESOURCE;
-                oclog() << "findDirectPairingDevices(): No device found for direct pairing"
-                    << std::flush;
-            }
-            else {
-                OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
-                convert(list, dpDeviceList);
-                std::thread exec(callback, dpDeviceList);
-                exec.detach();
-                result = OC_STACK_OK;
-            }
-        }
-        else
-        {
-            result = OC_STACK_ERROR;
-        }
-
-        return result;
-    }
-
-    OCStackResult InProcClientWrapper::GetDirectPairedDevices(GetDirectPairedCallback& callback)
-    {
-        if (!callback)
-        {
-            return OC_STACK_INVALID_PARAM;
-        }
-
-        OCStackResult result = OC_STACK_ERROR;
-        const OCDPDev_t *list = nullptr;
-        PairedDevices dpDeviceList;
-
-        auto cLock = m_csdkLock.lock();
-
-        if (cLock)
-        {
-            std::lock_guard<std::recursive_mutex> lock(*cLock);
-
-            list = OCGetDirectPairedDevices();
-            if (NULL == list)
-            {
-                result = OC_STACK_NO_RESOURCE;
-                OIC_LOG_V(DEBUG, TAG, "%s: No device found for direct pairing", __func__);
-            }
-            else {
-                OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
-                convert(list, dpDeviceList);
-                std::thread exec(callback, dpDeviceList);
-                exec.detach();
-                result = OC_STACK_OK;
-            }
-        }
-        else
-        {
-            result = OC_STACK_ERROR;
-        }
-
-        return result;
-    }
-
-    void directPairingCallback(void *ctx, OCDPDev_t *peer,
-            OCStackResult result)
-    {
-
-        ClientCallbackContext::DirectPairingContext* context =
-            static_cast<ClientCallbackContext::DirectPairingContext*>(ctx);
-
-        OIC_LOG_V(DEBUG, TAG, "%s: call response callback", __func__);
-        std::thread exec(context->callback, cloneDevice(peer), result);
-        exec.detach();
-    }
-
-    OCStackResult InProcClientWrapper::DoDirectPairing(std::shared_ptr<OCDirectPairing> peer,
-            const OCPrm_t& pmSel, const std::string& pinNumber, DirectPairingCallback& callback)
-    {
-        if (!peer || !callback)
-        {
-            oclog() << "Invalid parameters" << std::flush;
-            return OC_STACK_INVALID_PARAM;
-        }
-
-        OCStackResult result = OC_STACK_ERROR;
-        ClientCallbackContext::DirectPairingContext* context =
-            new ClientCallbackContext::DirectPairingContext(callback);
-
-        auto cLock = m_csdkLock.lock();
-        if (cLock)
-        {
-            std::lock_guard<std::recursive_mutex> lock(*cLock);
-            result = OCDoDirectPairing(static_cast<void*>(context), peer->getDev(),
-                    pmSel, const_cast<char*>(pinNumber.c_str()), directPairingCallback);
-            delete context;
-        }
-        else
-        {
-            delete context;
-            result = OC_STACK_ERROR;
-        }
-        return result;
-    }
 }

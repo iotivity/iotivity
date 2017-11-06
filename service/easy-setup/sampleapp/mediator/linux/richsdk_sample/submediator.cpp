@@ -24,7 +24,7 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "OCProvisioningManager.hpp"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #include "EasySetup.hpp"
 #include "ESRichCommon.h"
@@ -148,7 +148,7 @@ void provisionSecurity()
     {
         remoteEnrollee->provisionSecurity((SecurityProvStatusCbWithOption)provisionSecurityStatusCallback);
     }
-    catch (OCException &e)
+    catch (const OCException &e)
     {
         std::cout << "Exception during provisionSecurity call" << e.reason();
         return;
@@ -182,7 +182,7 @@ void getStatus()
     {
         remoteEnrollee->getStatus(getStatusCallback);
     }
-    catch (OCException &e)
+    catch (const OCException &e)
     {
         std::cout << "Exception during getConfiguration call" << e.reason();
         return;
@@ -215,7 +215,7 @@ void getConfiguration()
     {
         remoteEnrollee->getConfiguration(getConfigurationCallback);
     }
-    catch (OCException &e)
+    catch (const OCException &e)
     {
         std::cout << "Exception during getConfiguration call" << e.reason();
         return;
@@ -250,7 +250,7 @@ void provisionDeviceProperty()
     {
         remoteEnrollee->provisionDeviceProperties(devProp, deviceProvisioningStatusCallback);
     }
-    catch (OCException &e)
+    catch (const OCException &e)
     {
         std::cout << "Exception during provisionDeviceProperties call" << e.reason();
         return;
@@ -285,7 +285,7 @@ void requestToConnect()
         types.push_back(ES_CONNECT_COAPCLOUD);
         remoteEnrollee->requestToConnect(types, connectRequestStatusCallback);
     }
-    catch (OCException &e)
+    catch (const OCException &e)
     {
         std::cout << "Exception during provisionDeviceProperties call" << e.reason();
         return;
@@ -330,7 +330,7 @@ void provisionCloudProperty()
     {
         remoteEnrollee->provisionCloudProperties(cloudProp, cloudProvisioningStatusCallback);
     }
-    catch (OCException &e)
+    catch (const OCException &e)
     {
         std::cout << "Exception during provisionCloudProperties call" << e.reason();
         return;
@@ -387,7 +387,7 @@ void foundUnsecuredResource(std::shared_ptr<OC::OCResource> resource)
             }
         }
     }
-    catch (std::exception &e)
+    catch (const std::exception &e)
     {
         std::cerr << "Exception in foundResource: " << e.what() << std::endl;
     }
@@ -466,7 +466,7 @@ void foundSecuredResource(std::shared_ptr<OC::OCResource> resource)
             }
         }
     }
-    catch (std::exception &e)
+    catch (const std::exception &e)
     {
         std::cerr << "Exception in foundResource: " << e.what() << std::endl;
     }
@@ -484,7 +484,7 @@ void discoveryEnrolleeResource(void (*f)(std::shared_ptr<OC::OCResource> resourc
         std::unique_lock<std::mutex> lck(g_discoverymtx);
         g_cond.wait_for(lck, std::chrono::seconds(5));
     }
-    catch (OCException &e)
+    catch (const OCException &e)
     {
         std::cout << "Exception in discoveryEnrolleeResource: " << e.what();
     }
@@ -597,6 +597,10 @@ int main()
         }
     }
 
+#ifdef __WITH_DTLS__
+    // close provisioning db
+    OCSecure::provisionClose();
+#endif
     std::cout << "Stopping the client" << std::endl;
 
     return 0;

@@ -593,6 +593,7 @@ public final class RcsValue {
         try {
             return (T) mObject;
         } catch (final ClassCastException e) {
+            e.printStackTrace();
             return null;
         }
     }
@@ -630,6 +631,7 @@ public final class RcsValue {
         try {
             return get();
         } catch (final ClassCastException e) {
+            e.printStackTrace();
             return defaultValue;
         }
     }
@@ -657,6 +659,7 @@ public final class RcsValue {
         try {
             return get();
         } catch (final ClassCastException e) {
+            e.printStackTrace();
             return defaultValue;
         }
     }
@@ -684,6 +687,7 @@ public final class RcsValue {
         try {
             return get();
         } catch (final ClassCastException e) {
+            e.printStackTrace();
             return defaultValue;
         }
     }
@@ -711,6 +715,7 @@ public final class RcsValue {
         try {
             return get();
         } catch (final ClassCastException e) {
+            e.printStackTrace();
             return defaultValue;
         }
     }

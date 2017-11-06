@@ -288,7 +288,7 @@ namespace OIC
                     }
                 }
             }
-            catch(std::exception& e)
+            catch(const std::exception& e)
             {
                 OIC_LOG_V(INFO, ES_REMOTE_ENROLLEE_TAG,
                         "Exception in foundResource: %s", e.what());
@@ -504,10 +504,7 @@ namespace OIC
         {
             OIC_LOG(INFO, ES_REMOTE_ENROLLEE_TAG, "initCloudResource IN");
 
-            ESResult result = ES_ERROR;
-
-            result = discoverResource();
-
+            ESResult result = discoverResource();
             if (result == ES_ERROR)
             {
                 OIC_LOG(ERROR, ES_REMOTE_ENROLLEE_TAG,
@@ -621,7 +618,6 @@ namespace OIC
                 {
                     m_cloudEnrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource);
                 }
-
 
                 res = m_cloudEnrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
                                                                           cloudProp.getCredID());

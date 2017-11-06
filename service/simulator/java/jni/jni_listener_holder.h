@@ -28,7 +28,9 @@ class JniListenerHolder
         {
             JNIEnv *env = GetEnv();
             if (!env)
+            {
                 return;
+            }
             env->DeleteGlobalRef(m_listener);
             ReleaseEnv();
         }

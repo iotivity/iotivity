@@ -25,7 +25,7 @@
 
 #include <stdio.h>
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "oic_malloc.h"
 #include "caprotocolmessage.h"
@@ -208,7 +208,7 @@ TEST(CAProtocolMessage, CAGetTokenFromPDU)
     memset(&inData, 0, sizeof(CAInfo_t));
     inData.token = (CAToken_t)"token";
     tokenLength = strlen(inData.token);
-    ASSERT_LE(tokenLength, UINT8_MAX);
+    ASSERT_LE(tokenLength, static_cast<size_t>(UINT8_MAX));
     inData.tokenLength = (uint8_t)tokenLength;
     inData.type = CA_MSG_NONCONFIRM;
 

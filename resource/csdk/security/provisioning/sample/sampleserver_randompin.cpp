@@ -48,6 +48,7 @@
 #define TAG "SAMPLE_RANDOMPIN"
 
 int gQuitFlag = 0;
+const char * specVersion = "ocf.1.1.0";
 
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE{
@@ -454,7 +455,7 @@ FILE* server_fopen(const char *path, const char *mode)
     }
 }
 
-void DisplayPinCB(char *pin, size_t pinSize, void *context)
+void OC_CALL DisplayPinCB(char *pin, size_t pinSize, void *context)
 {
     OC_UNUSED(context);
 
@@ -469,7 +470,7 @@ void DisplayPinCB(char *pin, size_t pinSize, void *context)
     OIC_LOG(INFO, TAG, "============================");
 }
 
-void ClosePinDisplayCB(void)
+void OC_CALL ClosePinDisplayCB(void)
 {
     OIC_LOG(INFO, TAG, "============================");
     OIC_LOG(INFO, TAG, "    PIN DISPLAY CLOSED.");
@@ -513,6 +514,7 @@ int main()
         OIC_LOG(ERROR, TAG, "Failed to setting PIN policy");
         return 0;
     }
+    OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, (void*) specVersion);
 
     /*
      * Declare and create the example resource: LED

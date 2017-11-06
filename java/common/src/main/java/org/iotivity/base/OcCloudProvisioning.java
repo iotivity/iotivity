@@ -70,7 +70,7 @@ public class  OcCloudProvisioning {
         public void getAclIdByDeviceListener(int result, String aclId);
     }
 
-     public interface CreateAclIdListener {
+    public interface CreateAclIdListener {
         public void createAclIdListener(int result, String aclId);
     }
 
@@ -111,7 +111,7 @@ public class  OcCloudProvisioning {
 
    /**
     * Method to create ACL ID
-    * @param ownerid owner ID for which the Acl ID is created
+    * @param ownerId owner ID for which the Acl ID is created
     * @param deviceId device ID for which the Acl ID is requested
     * @param cloudcreateAclId function called by the stack on completion of request.
     * @throws OcException Indicates failure getting ACL ID for the device.
@@ -130,7 +130,7 @@ public class  OcCloudProvisioning {
     public native void getIndividualAclInfo(String aclId,
             GetIndividualAclInfoListener cloudAclIndividualGetInfoHandler) throws OcException;
 
-	 /**
+    /**
     * Method to update Individual ACL info
     * @param aclId ACL ID
     * @param cloudAces List of cloud Aces for updation.

@@ -38,7 +38,8 @@ public:
     void GetTargetFloor(int* targetFloor, bool* result);
     void SetTargetFloor(int targetFloor, bool* result);
     void CreateResourceRelativePath();
-    const char* GetNewResourceURI() { return m_newResourcePath.c_str(); }
+    void CreateResourceLongRelativePath();
+    const char* GetNewResourcePath() { return m_newResourcePath.c_str(); }
     void CreateResouceExplicitPath();
     void DeleteResource();
 

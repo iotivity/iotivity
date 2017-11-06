@@ -23,7 +23,7 @@
 
 #include <stdlib.h>
 #include "ocstack.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,6 +42,15 @@ OCStackResult InitSecureResources();
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult DestroySecureResources();
+
+/**
+ * Reset SVRs to backup values kept in persistent storage.  These backup values
+ * were created at first device boot, and should be a copy of the values
+ * configured by the mfr in the initial persistent storage data file.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult ResetSecureResources();
 
 /**
  * This method is used by all secure resource modules to send responses to REST queries.

@@ -64,11 +64,17 @@ namespace RAML
             std::string extension = value.substr(found + 1);
             if (std::find(Keys::AllowedRamlYamlTypes.begin(), Keys::AllowedRamlYamlTypes.end(),
                           extension) != Keys::AllowedRamlYamlTypes.end())
+            {
                 fileType = IncludeResolver::FileType::NODE;
+            }
             else if (extension == Keys::Json)
+            {
                 fileType = IncludeResolver::FileType::JSON;
+            }
             else
+            {
                 fileType = IncludeResolver::FileType::FILE;
+            }
         }
         return fileType;
     }
@@ -83,7 +89,9 @@ namespace RAML
         std::string val = file.as<std::string>();
         std::ifstream fin((m_path + val).c_str());
         if (!fin)
+        {
             throw RamlParserException("Error Include File not present " + m_path + val);
+        }
         std::stringstream buffer;
         buffer << fin.rdbuf();
         return buffer.str();
@@ -92,7 +100,9 @@ namespace RAML
     {
         std::ifstream fin((m_path + jsonFileName).c_str());
         if (!fin)
+        {
             throw JsonException("Error Json Referenced File not present " + m_path + jsonFileName);
+        }
         std::stringstream buffer;
         buffer << fin.rdbuf();
         std::string str = buffer.str();

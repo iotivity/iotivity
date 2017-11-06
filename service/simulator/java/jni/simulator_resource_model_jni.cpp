@@ -106,7 +106,9 @@ class ValueConverterJava : public boost::static_visitor<jobject>
         {
             jobjectArray jArray = m_env->NewObjectArray(values.size(), getClass(values), nullptr);
             if (!jArray)
+            {
                 return nullptr;
+            }
 
             for (size_t index = 0; index < values.size(); index++)
             {
@@ -122,7 +124,9 @@ class ValueConverterJava : public boost::static_visitor<jobject>
         {
             jobjectArray jArray = m_env->NewObjectArray(values.size(), getClass(values), nullptr);
             if (!jArray)
+            {
                 return nullptr;
+            }
 
             for (size_t index = 0; index < values.size(); index++)
             {
@@ -138,7 +142,9 @@ class ValueConverterJava : public boost::static_visitor<jobject>
         {
             jobjectArray jArray = m_env->NewObjectArray(values.size(), getClass(values), nullptr);
             if (!jArray)
+            {
                 return nullptr;
+            }
 
             for (size_t index = 0; index < values.size(); index++)
             {
@@ -306,7 +312,7 @@ class ValueConverterCpp
             {
                 jobject jElement = m_env->GetObjectArrayElement(array, i);
 
-                int element;
+                int element = 0;
                 getValue(jElement, element);
                 value.push_back(element);
             }
@@ -356,7 +362,7 @@ class ValueConverterCpp
             {
                 jobject jElement = m_env->GetObjectArrayElement(array, i);
 
-                double element;
+                double element = 0;
                 getValue(jElement, element);
                 value.push_back(element);
             }
@@ -406,7 +412,7 @@ class ValueConverterCpp
             {
                 jobject jElement = m_env->GetObjectArrayElement(array, i);
 
-                bool element;
+                bool element = false;
                 getValue(jElement, element);
                 value.push_back(element);
             }
@@ -608,7 +614,9 @@ jobject SimulatorResourceModelToJava(JNIEnv *env, const SimulatorResourceModel &
 bool SimulatorResourceModelToCpp(JNIEnv *env, jobject jResModel, SimulatorResourceModel &resModel)
 {
     if (!jResModel)
+    {
         return false;
+    }
 
     static jfieldID valuesFID = env->GetFieldID(gSimulatorClassRefs.simulatorResourceModelCls,
                                 "mValues", "Ljava/util/Map;");
@@ -659,7 +667,9 @@ bool AttributeValueToCpp(JNIEnv *env, jobject jAttributeValue,
                          AttributeValueVariant &jValue)
 {
     if (!jAttributeValue)
+    {
         return false;
+    }
 
     jValue = JniAttributeValue::toCpp(env, jAttributeValue);
     return true;

@@ -153,10 +153,16 @@ namespace OIC
                 const std::string& defaultInterfaceName)
         {
             auto it = g_defaultHandlers.find(interfaceName);
-            if (it != g_defaultHandlers.end()) return it->second;
+            if (it != g_defaultHandlers.end())
+            {
+                return it->second;
+            }
 
             it = g_defaultHandlers.find(defaultInterfaceName);
-            if (it != g_defaultHandlers.end()) return it->second;
+            if (it != g_defaultHandlers.end())
+            {
+                return it->second;
+            }
 
             return g_defaultHandlers.find(OIC::Service::BASELINE_INTERFACE)->second;
         }

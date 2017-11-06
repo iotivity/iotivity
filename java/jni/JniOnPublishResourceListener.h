@@ -22,15 +22,13 @@
 #ifndef _Included_org_iotivity_base_OcPlatform_OnPublishResourceListener
 #define _Included_org_iotivity_base_OcPlatform_OnPublishResourceListener
 
-using namespace OC;
-
 class JniOnPublishResourceListener
 {
 public:
     JniOnPublishResourceListener(JNIEnv *env, jobject listener,
                                  RemoveListenerCallback removeListenerCallback);
     ~JniOnPublishResourceListener();
-    void onPublishResourceCallback(const OCRepresentation& rep, const int eCode);
+    void onPublishResourceCallback(const OC::OCRepresentation& rep, const int eCode);
 private:
     RemoveListenerCallback m_removeListenerCallback;
     jweak m_jwListener;

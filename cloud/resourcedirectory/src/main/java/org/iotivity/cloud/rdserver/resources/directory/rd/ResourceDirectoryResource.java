@@ -101,17 +101,6 @@ public class ResourceDirectoryResource extends Resource {
     private IResponse handlePostRequest(IRequest request)
             throws ServerException {
 
-        HashMap<String, List<String>> queryMap = request.getUriQueryMap();
-
-        checkQueryException(Arrays.asList(Constants.RESOURCE_TYPE), queryMap);
-
-        List<String> listRT = queryMap.get(Constants.RESOURCE_TYPE);
-
-        // check query "rt=oic.rd.pub"
-        if (!listRT.get(0).equals(Constants.RESOURCE_TYPE_RDPUBLISH)) {
-            throw new PreconditionFailedException("rt property is not correct");
-        }
-
         HashMap<String, Object> payload = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 

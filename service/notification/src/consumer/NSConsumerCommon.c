@@ -339,7 +339,7 @@ static OCRepPayload * NSGetExtraInfo(OCRepPayload * payload)
 NSMessage * NSGetMessage(OCRepPayload * payload)
 {
     NS_LOG(DEBUG, "get msg id");
-    uint64_t id = NULL;
+    uint64_t id = 0;
     bool getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, (int64_t *)&id);
     NS_VERIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
@@ -901,7 +901,7 @@ void NSCopyPayloadValueArray(OCRepPayloadValue* dest, OCRepPayloadValue* source)
             }
             break;
         case OCREP_PROP_BYTE_STRING:
-            dest->arr.ocByteStrArray = (OCByteString*)OICMalloc(dimTotal * sizeof(OCByteString));
+            dest->arr.ocByteStrArray = (OCByteString*)OICCalloc(dimTotal, sizeof(OCByteString));
             NS_VERIFY_NOT_NULL_V(dest->arr.ocByteStrArray);
             for (size_t i = 0; i < dimTotal; ++i)
             {

@@ -23,6 +23,8 @@
 #include "JniOcSecureResource.h"
 #include "JniSecureUtils.h"
 
+using namespace OC;
+
 JniProvisionResultListner::JniProvisionResultListner(JNIEnv *env, jobject jListener,
     RemoveCallback removeProvisionResultListener)
 {

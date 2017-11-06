@@ -28,11 +28,11 @@ public class OicSecAcl {
     private String rownerID;
     private List<OicSecAce> oicSecAces;
 
-   public OicSecAcl (String rownerID, List<OicSecAce> oicSecAces) {
-       super();
-       this.rownerID = rownerID;
-       this.oicSecAces = oicSecAces;
-   }
+    public OicSecAcl (String rownerID, List<OicSecAce> oicSecAces) {
+        super();
+        this.rownerID = rownerID;
+        this.oicSecAces = oicSecAces;
+    }
     public String getRownerID() {
         return rownerID;
     }

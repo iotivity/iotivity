@@ -26,7 +26,9 @@
 #include <stdio.h>
 #include <string>
 #include "octypes.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 namespace OC
 {
@@ -36,7 +38,9 @@ namespace OC
             static FILE* client_open(const char*, const char*);
         public:
             static std::string& store_path(void);
+            static std::string& store_introspection();
             static void StoreDbPath(const std::string&);
+            static void StoreIntrospection(const std::string&);
             static OCPersistentStorage* getOCPersistentStorage(void);
     };
 }

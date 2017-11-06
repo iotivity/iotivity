@@ -95,7 +95,9 @@ JNIEnv *GetEnv()
 {
     std::unique_lock<std::mutex> lock(gJvmMutex);
     if (!gJavaVM)
+    {
         return nullptr;
+    }
 
     JNIEnv *env = nullptr;
     jint ret = gJavaVM->GetEnv((void **)&env, JNI_VERSION_1_6);
@@ -105,7 +107,9 @@ JNIEnv *GetEnv()
             return env;
         case JNI_EDETACHED:
             if (!gJavaVM->AttachCurrentThread((void **)&env, NULL))
+            {
                 return env;
+            }
     }
 
     return nullptr;
@@ -115,7 +119,9 @@ void ReleaseEnv()
 {
     std::unique_lock<std::mutex> lock(gJvmMutex);
     if (!gJavaVM)
+    {
         return;
+    }
     gJavaVM->DetachCurrentThread();
 }
 
@@ -136,11 +142,15 @@ extern "C" {
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void * /*reserved*/)
 {
     if (!vm)
+    {
         return JNI_ERR;
+    }
 
     JNIEnv *env = nullptr;
     if (JNI_OK != vm->GetEnv((void **) &env, JNI_VERSION_1_6))
+    {
         return JNI_ERR;
+    }
 
     // Get the class references
     getClassRef(env, OBJECT_CLS, gSimulatorClassRefs.objectCls);
@@ -222,11 +232,15 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void * /*reserved*/)
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void * /*reserved*/)
 {
     if (!vm)
+    {
         return;
+    }
 
     JNIEnv *env = nullptr;
     if (JNI_OK != vm->GetEnv((void **) &env, JNI_VERSION_1_6))
+    {
         return;
+    }
 
     // Release the class global references
     env->DeleteGlobalRef(gSimulatorClassRefs.objectCls);

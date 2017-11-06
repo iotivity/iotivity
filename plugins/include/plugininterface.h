@@ -42,7 +42,7 @@ extern "C" {
  * @param[out] plugin The plugin handle that will be started.
  *
  */
-OCStackResult PIStartPlugin(const char * comPort, PIPluginType pluginType, PIPlugin ** plugin);
+OCStackResult PIStartPlugin(const char * comPort, PIPluginType pluginType, PIPluginPtr* plugin);
 
 /**
  *
@@ -51,7 +51,7 @@ OCStackResult PIStartPlugin(const char * comPort, PIPluginType pluginType, PIPlu
  * @param[in] plugin The plugin to be stopped.
  *
  */
-OCStackResult PIStopPlugin(PIPlugin * plugin);
+OCStackResult PIStopPlugin(PIPluginPtr plugin);
 
 /**
  *
@@ -68,7 +68,7 @@ OCStackResult PIStopAll();
  * @param[in] plugin The plugin to initiate it's discovery operation on.
  *
  */
-OCStackResult PISetup(PIPlugin * plugin);
+OCStackResult PISetup(PIPluginPtr plugin);
 
 /**
  *
@@ -78,7 +78,7 @@ OCStackResult PISetup(PIPlugin * plugin);
  * @param[in] plugin The plugin to get cycles from this function's invocation.
  *
  */
-OCStackResult PIProcess(PIPlugin * plugin);
+OCStackResult PIProcess(PIPluginPtr plugin);
 
 #ifdef __cplusplus
 }

@@ -562,11 +562,12 @@ public class OcResource {
 
     /**
      * Function to change host of this reource
+     * @param host host address to change to
      * @return New host Address.
      *         Not observable.
      */
-     public native String setHost(String host);
-     
+    public native String setHost(String host);
+
     /**
      * Method to get the list of resource types
      *
@@ -659,6 +660,13 @@ public class OcResource {
          * Others.
          */
         public static final int NO_OPTION = 2;
+
+        /**
+         * Maximum sequence number.
+         * A successful deregister will have a sequence number
+         * of MAX_SEQUENCE_NUMBER + 1.
+         */
+        public static final int MAX_SEQUENCE_NUMBER = 0xffffff;
 
         public void onObserveCompleted(List<OcHeaderOption> headerOptionList,
                                        OcRepresentation ocRepresentation,

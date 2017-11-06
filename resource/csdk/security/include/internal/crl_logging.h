@@ -22,7 +22,7 @@
 #define CRL_LOGGING_H_
 
 #include "logger.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -45,7 +45,7 @@ INLINE_API void printCRL(LogLevel level, const OicSecCrl_t *crl)
 
     OIC_LOG(level, CRL_TAG, "CRL object contains:");
     OIC_LOG_V(level, CRL_TAG, "id = %d", crl->CrlId);
-    OIC_LOG_V(level, CRL_TAG, "this update = %s", crl->ThisUpdate.data);
+    OIC_LOG_BUFFER(level, CRL_TAG, crl->ThisUpdate.data, crl->ThisUpdate.len);
 
     OIC_LOG(level, CRL_TAG, "crl:");
     OIC_LOG_V(level, CRL_TAG, "encoding = %d", crl->CrlData.encoding);

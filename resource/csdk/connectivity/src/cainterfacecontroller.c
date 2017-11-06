@@ -300,7 +300,7 @@ void CAInitializeAdapters(ca_thread_pool_t handle, CATransportAdapter_t transpor
     // Initialize adapters and register callback.
 #ifdef IP_ADAPTER
     if ((transportType & CA_ADAPTER_IP) || (CA_DEFAULT_ADAPTER == transportType)
-        || (transportType & CA_ALL_ADAPTERS))
+        || (transportType == CA_ALL_ADAPTERS))
     {
         CAInitializeIP(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
                        CAAdapterErrorHandleCallback, handle);
@@ -471,7 +471,7 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, size_t *size)
 
             OIC_LOG_V(DEBUG,
                       TAG,
-                      "%" PRIu32 " adapter network info size is %" PRIu32 " res:%d",
+                      "%" PRIuPTR " adapter network info size is %" PRIuPTR " res:%u",
                       index,
                       tempSize[index],
                       res);
@@ -864,4 +864,3 @@ CAResult_t CAReadData()
     return CA_STATUS_OK;
 }
 #endif
-

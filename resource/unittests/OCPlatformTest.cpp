@@ -33,7 +33,7 @@ namespace OCPlatformTest
     const std::string gResourceTypeName = "core.res";
     const std::string gResourceInterface = DEFAULT_INTERFACE;
     const uint8_t gResourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
-    OCResourceHandle resourceHandle;
+    OCResourceHandle gResourceHandle;
 
     //OCPersistent Storage Handlers
     static FILE* client_open(const char *path, const char *mode)
@@ -75,14 +75,6 @@ namespace OCPlatformTest
     {
     }
 #endif
-
-    void directPairHandler(std::shared_ptr<OCDirectPairing> /*dev*/, OCStackResult /*res*/)
-    {
-    }
-
-    void pairedHandler(const PairedDevices& /*list*/)
-    {
-    }
 
     //Helper methods
     void DeleteStringLL(OCStringLL* ll)
@@ -175,34 +167,34 @@ namespace OCPlatformTest
     OCResourceHandle RegisterResource(std::string uri, std::string type, std::string iface)
     {
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
-                                        resourceHandle, uri, type,
+                                        gResourceHandle, uri, type,
                                         iface, entityHandler, gResourceProperty));
-        return resourceHandle;
+        return gResourceHandle;
     }
 
     OCResourceHandle RegisterResource(std::string uri, std::string type)
     {
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
-                                        resourceHandle, uri, type,
+                                        gResourceHandle, uri, type,
                                         gResourceInterface, entityHandler, gResourceProperty));
-        return resourceHandle;
+        return gResourceHandle;
     }
 
     OCResourceHandle RegisterResource(std::string uri)
     {
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
-                                        resourceHandle, uri, gResourceTypeName,
+                                        gResourceHandle, uri, gResourceTypeName,
                                         gResourceInterface, entityHandler, gResourceProperty));
-        return resourceHandle;
+        return gResourceHandle;
     }
 
     OCResourceHandle RegisterResource(std::string uri, OCTpsSchemeFlags resourceTpsTypes)
     {
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
-                                        resourceHandle, uri, gResourceTypeName,
+                                        gResourceHandle, uri, gResourceTypeName,
                                         gResourceInterface, entityHandler, gResourceProperty,
                                         resourceTpsTypes));
-        return resourceHandle;
+        return gResourceHandle;
     }
 
     TEST(ConfigureTest, ConfigureInvalidModeType)
@@ -238,10 +230,10 @@ namespace OCPlatformTest
 
         std::string uri = "/a/light69";
         std::string type = "core.light";
-        uint8_t gResourceProperty = 0;
+        uint8_t resourceProperty = 0;
         EXPECT_NO_THROW(OCPlatform::registerResource(
-                 resourceHandle, uri, type,
-                 gResourceInterface, entityHandler, gResourceProperty));
+                 gResourceHandle, uri, type,
+                 gResourceInterface, entityHandler, resourceProperty));
     }
 
     TEST(ConfigureTest, ConfigureClient)
@@ -313,7 +305,7 @@ namespace OCPlatformTest
 
         // We should not allow empty URI.
         std::string emptyStr = "";
-        EXPECT_ANY_THROW(OCPlatform::registerResource(resourceHandle, emptyStr, emptyStr,
+        EXPECT_ANY_THROW(OCPlatform::registerResource(gResourceHandle, emptyStr, emptyStr,
                                         emptyStr, entityHandler, gResourceProperty));
     }
 
@@ -324,10 +316,10 @@ namespace OCPlatformTest
 
         std::string uri = "/a/light6";
         std::string type = "core.light";
-        uint8_t gResourceProperty = 0;
+        uint8_t resourceProperty = 0;
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
-                resourceHandle, uri, type,
-                gResourceInterface, entityHandler, gResourceProperty));
+                gResourceHandle, uri, type,
+                gResourceInterface, entityHandler, resourceProperty));
     }
 
     TEST(RegisterResourceTest, RegisterWithTpsType)
@@ -337,10 +329,10 @@ namespace OCPlatformTest
 
         std::string uri = "/a/light7";
         std::string type = "core.light";
-        uint8_t gResourceProperty = 0;
+        uint8_t resourceProperty = 0;
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
-                resourceHandle, uri, type,
-                gResourceInterface, entityHandler, gResourceProperty , OC_COAP));
+                gResourceHandle, uri, type,
+                gResourceInterface, entityHandler, resourceProperty, OC_COAP));
     }
 
     TEST(RegisterResourceTest, RegisterWithTpsTypeAll)
@@ -350,10 +342,10 @@ namespace OCPlatformTest
 
         std::string uri = "/a/light8";
         std::string type = "core.light";
-        uint8_t gResourceProperty = 0;
+        uint8_t resourceProperty = 0;
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
-                resourceHandle, uri, type,
-                gResourceInterface, entityHandler, gResourceProperty, OC_ALL));
+                gResourceHandle, uri, type,
+                gResourceInterface, entityHandler, resourceProperty, OC_ALL));
     }
 #ifdef TCP_ADAPTER
     TEST(RegisterResourceTest, RegisterWithTpsTypeBitComb)
@@ -363,10 +355,10 @@ namespace OCPlatformTest
 
         std::string uri = "/a/light9";
         std::string type = "core.light";
-        uint8_t gResourceProperty = 0;
+        uint8_t resourceProperty = 0;
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
-                resourceHandle, uri, type,
-                gResourceInterface, entityHandler, gResourceProperty, (OCTpsSchemeFlags)(OC_COAP || OC_COAP_TCP)));
+                gResourceHandle, uri, type,
+                gResourceInterface, entityHandler, resourceProperty, (OCTpsSchemeFlags)(OC_COAP || OC_COAP_TCP)));
     }
 #endif
 
@@ -1111,61 +1103,4 @@ namespace OCPlatformTest
         EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
     }
 #endif
-
-    TEST(FindDirectPairingTest, FindDirectPairingNullCallback)
-    {
-        Framework framework;
-        ASSERT_TRUE(OC_STACK_OK == framework.start());
-        EXPECT_ANY_THROW(OCPlatform::findDirectPairingDevices(1, nullptr));
-    }
-
-    TEST(FindDirectPairingTest, FindDirectPairingZeroTimeout)
-    {
-        Framework framework;
-        ASSERT_TRUE(OC_STACK_OK == framework.start());
-        EXPECT_ANY_THROW(OCPlatform::findDirectPairingDevices(0, &pairedHandler));
-    }
-
-    TEST(GetDirectPairedTest, GetDirectPairedNullCallback)
-    {
-        Framework framework;
-        ASSERT_TRUE(OC_STACK_OK == framework.start());
-        EXPECT_ANY_THROW(OCPlatform::getDirectPairedDevices(nullptr));
-    }
-
-    TEST(DoDirectPairingTest, DoDirectPairingNullCallback)
-    {
-        Framework framework;
-        ASSERT_TRUE(OC_STACK_OK == framework.start());
-
-        OCDPDev_t peer;
-        OCPrm_t pmSel = DP_PRE_CONFIGURED;
-        std::string pin("");
-        std::shared_ptr<OCDirectPairing> s_dp(new OCDirectPairing(&peer));
-        EXPECT_ANY_THROW(OCPlatform::doDirectPairing(s_dp, pmSel, pin, nullptr));
-    }
-
-    TEST(DoDirectPairingTest, DoDirectPairingNullPeer)
-    {
-        Framework framework;
-        ASSERT_TRUE(OC_STACK_OK == framework.start());
-
-        OCDPDev_t peer;
-        OCPrm_t pmSel = DP_PRE_CONFIGURED;
-        std::string pin("");
-        std::shared_ptr<OCDirectPairing> s_dp(new OCDirectPairing(&peer));
-        EXPECT_ANY_THROW(OCPlatform::doDirectPairing(nullptr, pmSel, pin, &directPairHandler));
-    }
-
-    TEST(DoDirectPairingTest, DoDirectPairingNullPeerNullCallback)
-    {
-        Framework framework;
-        ASSERT_TRUE(OC_STACK_OK == framework.start());
-
-        OCDPDev_t peer;
-        OCPrm_t pmSel = DP_PRE_CONFIGURED;
-        std::string pin("");
-        std::shared_ptr<OCDirectPairing> s_dp(new OCDirectPairing(&peer));
-        EXPECT_ANY_THROW(OCPlatform::doDirectPairing(nullptr, pmSel, pin, nullptr));
-    }
 }

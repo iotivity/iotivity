@@ -24,7 +24,7 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "ocrandom.h"
 #include "ipca.h"
 #include "testelevatorserver.h"
@@ -109,11 +109,7 @@ TEST(IoTivityDirect, IsIoTivityWorking)
     // elevator server.
     loopCount = 0;
     const int TARGET_FLOOR = 3;
-    elevatorClient.SetTargetFloor(TARGET_FLOOR);
-    while ((loopCount++ < 20) && (g_testElevator1.GetCurrentFloor() != TARGET_FLOOR))
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+    elevatorClient.SetTargetFloor(TARGET_FLOOR);    // SetTargetFloor() is synchronous.
     EXPECT_EQ(TARGET_FLOOR, g_testElevator1.GetCurrentFloor());
 
     // Confirm able to get current floor using IoTivity client API. The current floor should be
@@ -428,9 +424,22 @@ class IPCAMiscTest : public testing::Test
         IPCAAppHandle m_anotherIPCAAppHandle;
         IPCAAppInfo m_ipcaAppInfo;
 
-        IPCAStatus DoAnotherIPCAOpen()
+        IPCAStatus DoAnotherIPCAOpenWithSameAppId()
         {
             return IPCAOpen(&m_ipcaAppInfo, IPCA_VERSION_1, &m_anotherIPCAAppHandle);
+        }
+
+        IPCAStatus DoAnotherIPCAOpenWithDifferentAppId()
+        {
+            IPCAAppInfo ipcaAppInfoExtra;
+            IPCAAppHandle ipcaAppHandleExtra;
+            IPCAUuid extraTestAppUuid = {
+                                            {0x63, 0x72, 0xc0, 0xea, 0x1f, 0x12, 0x11, 0xe7,
+                                             0x93, 0xae, 0x92, 0x36, 0x1f, 0x00, 0x26, 0x71}
+                                        };
+
+            ipcaAppInfoExtra = { extraTestAppUuid, IPCATestAppName, "1.0.0", "Microsoft" };
+            return IPCAOpen(&ipcaAppInfoExtra, IPCA_VERSION_1, &ipcaAppHandleExtra);
         }
 
     protected:
@@ -456,9 +465,10 @@ class IPCAMiscTest : public testing::Test
         }
 };
 
-TEST_F(IPCAMiscTest, ShouldNotAllowMultipleCallsToIPCOpen)
+TEST_F(IPCAMiscTest, MultipleIPCAOpen)
 {
-    EXPECT_EQ(IPCA_ALREADY_OPENED, DoAnotherIPCAOpen());
+    EXPECT_EQ(IPCA_OK, DoAnotherIPCAOpenWithSameAppId());
+    EXPECT_EQ(IPCA_ALREADY_OPENED, DoAnotherIPCAOpenWithDifferentAppId());
 }
 
 TEST_F(IPCAMiscTest, IPCAOpenShouldBeAllowedAfterIPCAClose)
@@ -466,7 +476,7 @@ TEST_F(IPCAMiscTest, IPCAOpenShouldBeAllowedAfterIPCAClose)
     IPCAClose(m_ipcaAppHandle);
     m_ipcaAppHandle = NULL;
 
-    ASSERT_EQ(IPCA_OK, DoAnotherIPCAOpen());
+    ASSERT_EQ(IPCA_OK, DoAnotherIPCAOpenWithSameAppId());
 }
 
 /*
@@ -560,9 +570,14 @@ TEST_F(IPCAElevatorClient, SuccessfullyCreateAndDeleteResources)
         CreateResourceRelativePath();
         afterCreateCount = g_testElevator1.GetRelativePathResourceCreateCount();
         ASSERT_EQ(beforeCreateCount + 1, afterCreateCount);
-        // @todo: when IOT-1819 is resolved.
-        // EXPECT_STREQ(ELEVATOR_RESOURCE_NEW_RESOURCE_PATH, GetNewResourceURI());
+        EXPECT_STREQ(ELEVATOR_RESOURCE_NEW_RESOURCE_PATH, GetNewResourcePath());
     }
+
+    // Create new resource that results in resource with long resource path.
+    beforeCreateCount = g_testElevator1.GetRelativePathResourceCreateCount();
+    CreateResourceLongRelativePath();
+    afterCreateCount = g_testElevator1.GetRelativePathResourceCreateCount();
+    ASSERT_EQ(beforeCreateCount, afterCreateCount); // resource should not be created.
 
     // Delete resource
     size_t beforeDeleteCount, afterDeleteCount;
@@ -590,10 +605,11 @@ TEST_F(IPCAElevatorClient, SuccessfullyReceiveResourceChangeNotifications)
     ASSERT_EQ(true, result);
 
     // Wait until observed current floor is set to targeted floor.
+    // Outstanding requests should time out in 247 seconds (EXCHANGE_LIFETIME) per rfc 7252.
     std::unique_lock<std::mutex> lock(m_resourceChangeCbMutex);
     m_resourceChangeCbCV.wait_for(
             lock,
-            std::chrono::seconds(10),
+            std::chrono::seconds(247),
             [this] { return GetObservedCurrentFloor() == 10; });
 
     EXPECT_EQ(10, GetObservedCurrentFloor());   // check it is at floor 10.

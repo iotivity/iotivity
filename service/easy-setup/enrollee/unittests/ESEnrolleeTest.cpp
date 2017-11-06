@@ -158,9 +158,16 @@ public:
 
     ESResult setDeviceProperty()
     {
-        ESDeviceProperty deviceProperty = {
-            {{WIFI_11G, WiFi_EOF}, WIFI_5G}, {"Test Device"}
-        };
+        ESDeviceProperty deviceProperty =
+            {
+                {
+                    { WIFI_11G, WIFI_11N, WIFI_11AC }, 3,
+                    { WIFI_24G, WIFI_5G }, 2,
+                    { WPA_PSK, WPA2_PSK }, 2,
+                    { AES, TKIP_AES }, 2
+                },
+                { "Test Device"}
+            };
 
         return ESSetDeviceProperty(&deviceProperty);
     }
@@ -287,6 +294,8 @@ TEST_F(EasysetupEnrolleeTest, FindProvisioningResourceAtEnrolleeWithSuccess)
 TEST_F(EasysetupEnrolleeTest, SetDevicePropertyWithSuccess)
 {
     ESResult ret = startEnrollee();
+    ASSERT_EQ(ES_OK, ret);
+
     ret = setDeviceProperty();
     EXPECT_EQ(ret, ES_OK);
     ESTerminateEnrollee();
@@ -295,6 +304,8 @@ TEST_F(EasysetupEnrolleeTest, SetDevicePropertyWithSuccess)
 TEST_F(EasysetupEnrolleeTest, SetProvStatusWithSuccess)
 {
     ESResult ret = startEnrollee();
+    ASSERT_EQ(ES_OK, ret);
+
     ret = ESSetState(ES_STATE_CONNECTED_TO_ENROLLER);
     EXPECT_EQ(ret, ES_OK);
     ESTerminateEnrollee();
@@ -303,6 +314,8 @@ TEST_F(EasysetupEnrolleeTest, SetProvStatusWithSuccess)
 TEST_F(EasysetupEnrolleeTest, SetErrorCodeWithSuccess)
 {
     ESResult ret = startEnrollee();
+    ASSERT_EQ(ES_OK, ret);
+
     ret = ESSetErrorCode(ES_ERRCODE_PW_WRONG);
     EXPECT_EQ(ret, ES_OK);
     ESTerminateEnrollee();
@@ -317,23 +330,26 @@ TEST_F(EasysetupEnrolleeTest, DevicePropertyIsWellConstructedInResponsePayload)
             if(status->getESResult() == ES_OK)
             {
                 EnrolleeConf conf = status->getEnrolleeConf();
-                if(conf.getWiFiModes().at(0) == WIFI_11G &&
-                    conf.getWiFiFreq() == WIFI_5G &&
-                    !strcmp(conf.getDeviceName().c_str(), "Test Device"))
+                if(conf.getWiFiModes().size() > 0 && conf.getWiFiModes().at(0) == WIFI_11G &&
+                    conf.getWiFiFreq() == WIFI_BOTH && conf.getDeviceName() ==  "Test Device")
                 {
                     isWellConstructed = true;
                 }
             }
         });
+
     ESResult ret = startEnrollee();
+    ASSERT_EQ(ES_OK, ret);
+
     ret = setDeviceProperty();
+    EXPECT_EQ(ES_OK, ret);
 
     g_mediatorSimul.getConfiguration(onGetConfiguration);
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(ret, ES_OK);
+    EXPECT_TRUE(isWellConstructed);
 
     ESTerminateEnrollee();
 }
@@ -356,17 +372,25 @@ TEST_F(EasysetupEnrolleeTest, ProvisioningPropertiesIsWellConstructedInResponseP
                 }
             }
         });
+
     ESResult ret = startEnrollee();
+    ASSERT_EQ(ES_OK, ret);
+
     ret = setDeviceProperty();
+    EXPECT_EQ(ES_OK, ret);
+
     ret = ESSetState(ES_STATE_CONNECTED_TO_ENROLLER);
+    EXPECT_EQ(ES_OK, ret);
+
     ret = ESSetErrorCode(ES_ERRCODE_NO_INTERNETCONNECTION);
+    EXPECT_EQ(ES_OK, ret);
 
     g_mediatorSimul.getStatus(onGetStatus);
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(ret, ES_OK);
+    EXPECT_TRUE(isWellConstructed);
 
     ESTerminateEnrollee();
 }
@@ -394,7 +418,9 @@ TEST_F(EasysetupEnrolleeTest, WiFiAndDevConfProperiesProvisionedWithSuccess)
             }
         });
 
-    startEnrollee();
+
+    ESResult ret = startEnrollee();
+    ASSERT_EQ(ES_OK, ret);
 
     g_mediatorSimul.provisionDeviceProperties(deviceProvisioningStatusCallback);
 
@@ -430,7 +456,8 @@ TEST_F(EasysetupEnrolleeTest, CloudServerProperiesProvisionedWithSuccess)
             }
         });
 
-    startEnrollee();
+    ESResult ret = startEnrollee();
+    ASSERT_EQ(ES_OK, ret);
 
     g_mediatorSimul.provisionCloudProperties(cloudProvisioningStatusCallback);
 
@@ -448,17 +475,18 @@ TEST_F(EasysetupEnrolleeTest, GetWifiRsrcTest)
     mocks.ExpectCallFunc(onGetWifiRsrc).Do(
         [& isRepFlag](const OCRepresentation& /*rep*/)
         {
-
             isRepFlag = true;
         });
 
     ESResult ret = startEnrollee();
+    ASSERT_EQ(ES_OK, ret);
+
     g_mediatorSimul.getWifiRsrc(onGetWifiRsrc);
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(ret, ES_OK);
+    EXPECT_TRUE(isRepFlag);
 
     ESTerminateEnrollee();
 }
@@ -473,12 +501,14 @@ TEST_F(EasysetupEnrolleeTest, GetCloudRsrcTest)
         });
 
     ESResult ret = startEnrollee();
+    ASSERT_EQ(ES_OK, ret);
+
     g_mediatorSimul.getCloudRsrc(onGetCloudRsrc);
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(ret, ES_OK);
+    EXPECT_TRUE(isRepFlag);
 
     ESTerminateEnrollee();
 }
@@ -493,14 +523,17 @@ TEST_F(EasysetupEnrolleeTest, GetDevConfTest)
         });
 
     ESResult ret = startEnrollee();
+    ASSERT_EQ(ES_OK, ret);
+
     ret = setDeviceProperty();
+    EXPECT_EQ(ES_OK, ret);
 
     g_mediatorSimul.getDevConfiguration(onGetDeviceConf);
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(ret, ES_OK);
+    EXPECT_TRUE(isRepFlag);
 
     ESTerminateEnrollee();
 }
@@ -515,13 +548,14 @@ TEST_F(EasysetupEnrolleeTest, PutRequestTest)
         });
 
     ESResult ret = startEnrollee();
+    ASSERT_EQ(ES_OK, ret);
 
     g_mediatorSimul.putProvRsrc(onPutRequest);
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(ret, ES_OK);
+    EXPECT_TRUE(isRepFlag);
 
     ESTerminateEnrollee();
 }

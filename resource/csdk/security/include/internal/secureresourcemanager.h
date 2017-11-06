@@ -21,7 +21,7 @@
 #ifndef SECURITYRESOURCEMANAGER_H_
 #define SECURITYRESOURCEMANAGER_H_
 
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "cainterface.h"
 
 #ifdef __cplusplus
@@ -114,13 +114,6 @@ void SRMDeInitSecureResources();
  */
 typedef bool (*SPResponseCallback) (const CAEndpoint_t *object,
                                     const CAResponseInfo_t *responseInfo);
-
-/**
- * Function to register provisoning API's response callback.
- *
- * @param respHandler response handler callback.
- */
-void SRMRegisterProvisioningResponseHandler(SPResponseCallback respHandler);
 
 /**
  * Check the security resource URI.

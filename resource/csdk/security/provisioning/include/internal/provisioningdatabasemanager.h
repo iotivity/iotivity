@@ -20,7 +20,7 @@
 
 #ifndef PROVISIONING_DATABASE_MANAGER_H
 #define PROVISIONING_DATABASE_MANAGER_H
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "ocstack.h"
 #include "pmtypes.h"
 
@@ -37,6 +37,8 @@ typedef enum PdmDeviceState {
 
 /**
  * This method is used by provisioning manager to open provisioning database.
+ *
+ * @see PDMClose()
  *
  * @param[in] dbPath file path of the sqlite3 db
  *
@@ -168,6 +170,8 @@ OCStackResult PDMGetToBeUnlinkedDevices(OCPairList_t** staleDevList, size_t* num
 
 /**
  * This method is used by provisioning manager to close provisioning database.
+ *
+ * @see PDMInit()
  *
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */

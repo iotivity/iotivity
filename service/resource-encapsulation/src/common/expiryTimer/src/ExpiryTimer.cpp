@@ -46,7 +46,10 @@ namespace OIC
             auto task = ExpiryTimerImpl::getInstance()->post(milliSec, std::move(cb));
             m_tasks[task->getId()] = task;
 
-            if (m_tasks.size() == m_nextSweep) sweep();
+            if (m_tasks.size() == m_nextSweep)
+            {
+                sweep();
+            }
 
             return task->getId();
         }
@@ -55,12 +58,18 @@ namespace OIC
         {
             auto it = m_tasks.find(id);
 
-            if (it == m_tasks.end()) return false;
+            if (it == m_tasks.end())
+            {
+                return false;
+            }
 
             auto task = it->second;
             m_tasks.erase(it);
 
-            if (task->isExecuted()) return false;
+            if (task->isExecuted())
+            {
+                return false;
+            }
 
             return ExpiryTimerImpl::getInstance()->cancel(id);
         }

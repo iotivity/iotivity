@@ -21,7 +21,7 @@
 Import('env')
 
 lib_env = env.Clone()
-SConscript(lib_env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
+SConscript('#resource/third_party_libs.scons', 'lib_env')
 
 ocprovision_env = lib_env.Clone()
 
@@ -30,60 +30,75 @@ ocprovision_env = lib_env.Clone()
 ######################################################################
 with_upstream_libcoap = ocprovision_env.get('WITH_UPSTREAM_LIBCOAP')
 if with_upstream_libcoap == '1':
-	ocprovision_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+    ocprovision_env.AppendUnique(CPPPATH=['#extlibs/libcoap/libcoap/include'])
 else:
-	ocprovision_env.AppendUnique(CPPPATH = ['../csdk/connectivity/lib/libcoap-4.1.1/include'])
+    ocprovision_env.AppendUnique(
+        CPPPATH=['../csdk/connectivity/lib/libcoap-4.1.1/include'])
 
-ocprovision_env.AppendUnique(CPPPATH = [
-		'../include/',
-		'../csdk/include',
-		'../csdk/stack/include',
-		'../csdk/logger/include',
-		'../oc_logger/include',
-		'../csdk/connectivity/api',
-		'../csdk/security/include',
-		'../csdk/connectivity/inc/pkix',
-		'../csdk/security/provisioning/include',
-		'../csdk/security/provisioning/include/oxm',
-		'../csdk/security/provisioning/include/internal',
-		'../csdk/security/provisioning/include/cloud',
-		'../csdk/connectivity/lib/libcoap-4.1.1/',
-		])
+ocprovision_env.AppendUnique(CPPPATH=[
+    '../include/',
+    '../csdk/include',
+    '../csdk/stack/include',
+    '../csdk/logger/include',
+    '../oc_logger/include',
+    '../csdk/connectivity/api',
+    '../csdk/security/include',
+    '../csdk/connectivity/inc/pkix',
+    '../csdk/security/provisioning/include',
+    '../csdk/security/provisioning/include/oxm',
+    '../csdk/security/provisioning/include/internal',
+    '../csdk/security/provisioning/include/cloud',
+    '../csdk/connectivity/lib/libcoap-4.1.1/',
+])
 
 target_os = ocprovision_env.get('TARGET_OS')
 if target_os not in ['windows']:
-	ocprovision_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-fPIC'])
+    ocprovision_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-fPIC'])
 
 if target_os == 'android':
-	ocprovision_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	ocprovision_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libocprovision.so'])
-	ocprovision_env.AppendUnique(LIBS = ['oc', 'octbstack', 'ocpmapi', 'oc_logger', 'boost_thread', 'gnustl_shared', 'log'])
+    ocprovision_env.AppendUnique(CXXFLAGS=['-frtti', '-fexceptions'])
+    ocprovision_env.AppendUnique(LINKFLAGS=['-Wl,-soname,libocprovision.so'])
+    ocprovision_env.AppendUnique(LIBS=[
+        'oc',
+        'octbstack',
+        'ocpmapi',
+        'oc_logger',
+        'boost_thread',
+        'gnustl_shared',
+        'log'
+    ])
 
 if target_os in ['linux', 'tizen']:
-        ocprovision_env.AppendUnique(LIBS = ['oc', 'octbstack', 'ocpmapi', 'oc_logger', 'boost_thread'])
+    ocprovision_env.AppendUnique(LIBS=[
+        'oc',
+        'octbstack',
+        'ocpmapi',
+        'oc_logger',
+        'boost_thread'
+    ])
 
 if target_os in ['darwin', 'ios']:
-	ocprovision_env.AppendUnique(LIBS = ['octbstack', 'oc_logger'])
+    ocprovision_env.AppendUnique(LIBS=[
+        'octbstack',
+        'oc_logger'
+    ])
 
 if target_os in ['windows']:
-	ocprovision_env.PrependUnique(LIBS = [
+    ocprovision_env.PrependUnique(LIBS=[
         'oc',
         'octbstack',
         'oc_logger',
-        ])
+    ])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-ocprovision_src = [
-		'src/OCProvisioningManager.cpp'
-	]
+ocprovision_src = ['src/OCProvisioningManager.cpp']
 
-if ocprovision_env.get('WITH_TCP') == True:
-	ocprovision_src = ocprovision_src + [
-	'src/OCCloudProvisioning.cpp'
-	]
-        ocprovision_env.UserInstallTargetHeader('../include/OCCloudProvisioning.hpp', 'resource', 'OCCloudProvisioning.hpp')
+if ocprovision_env.get('WITH_TCP') == True and ocprovision_env.get('WITH_CLOUD') == True:
+    ocprovision_src = ocprovision_src + ['src/OCCloudProvisioning.cpp']
+    ocprovision_env.UserInstallTargetHeader(
+        '../include/OCCloudProvisioning.hpp', 'resource', 'OCCloudProvisioning.hpp')
 
 if target_os not in ['ios', 'windows']:
     ocprovision = ocprovision_env.SharedLibrary('ocprovision', ocprovision_src)
@@ -91,7 +106,8 @@ else:
     ocprovision = ocprovision_env.StaticLibrary('ocprovision', ocprovision_src)
 ocprovision_env.InstallTarget(ocprovision, 'libocprovision')
 ocprovision_env.UserInstallTargetLib(ocprovision, 'libocprovision')
-ocprovision_env.UserInstallTargetHeader('../include/OCProvisioningManager.hpp', 'resource', 'OCProvisioningManager.hpp')
+ocprovision_env.UserInstallTargetHeader(
+    '../include/OCProvisioningManager.hpp', 'resource', 'OCProvisioningManager.hpp')
 
 if target_os in ['linux', 'tizen']:
     SConscript('examples/SConscript')

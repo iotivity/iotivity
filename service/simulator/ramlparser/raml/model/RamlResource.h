@@ -221,14 +221,14 @@ namespace RAML
                    * @param parentUri - Uri of the Parent to form the Absolute Uri
                    *
                    */
-            RamlResource(const std::string resourceKey, const YAML::Node &yamlNode ,
+            RamlResource(const std::string &resourceKey, const YAML::Node &yamlNode ,
                          const IncludeResolverPtr &includeResolver,
                          const std::string &parentUri) : m_includeResolver(includeResolver)
             {
                 readResource(resourceKey, yamlNode, parentUri);
             }
         private:
-            void readResource(const std::string resourceKey, const YAML::Node &yamlNode,
+            void readResource(const std::string &resourceKey, const YAML::Node &yamlNode,
                               const std::string &parentUri);
         private:
             std::string m_displayName;

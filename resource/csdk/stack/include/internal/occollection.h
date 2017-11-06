@@ -29,7 +29,22 @@ uint8_t GetNumOfResourcesInCollection(const OCResource *resource);
 OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                                               OCEntityHandlerRequest *entityHandlerRequest);
 
-OCStackResult BuildCollectionLinksPayloadValue(const char* resourceUri,
-                           OCRepPayloadValue** linksRepPayloadValue, OCDevAddr* devAddr);
+/**
+ * This function creates the RepPayloadArray for links parameter of collection resource.
+ * @param[in] resourceUri Resource uri (this should be a collection resource)
+ * @param[in] devAddr Structure pointing to the address. (from OCEntityHandlerRequest)
+ * @param[in] isOCFVer true if AcceptedVersion is OCF1.0 or higher
+ *            otherwise false in case OIC1.1 (from OCEntityHandlerRequest)
+ * @param[in] insertSelfLink true if links array must contain a self link
+ * @param[out] createdArraySize return value array size, Null is allowed if no need to know size
+ * @note: The destroy of OCRepPayloadValue is not supported. Instead, use
+ *        OCRepPayloadDestroy(...) to destroy RepPayload of the collection Resource
+ *
+ * @return linksRepPayloadArray The *RepPayload Array pointer for links parameter of collection
+ * @see OCLinksPayloadArrayCreate API doxygen for API usage
+ */
+OCRepPayload** BuildCollectionLinksPayloadArray(const char* resourceUri,
+                    bool isOCFContentFormat, OCDevAddr* devAddr, bool insertSelfLink,
+                    size_t* createdArraySize);
 
 #endif //OC_COLLECTION_H

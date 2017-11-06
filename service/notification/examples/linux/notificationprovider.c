@@ -207,11 +207,10 @@ int main()
 
         printf("input : ");
 
-        if(scanf("%d", &num) > 0)
+        if(scanf("%2d", &num) > 0)
         {
             if(scanf("%c", &dummy) > 0)
             {
-                fflush(stdin);
                 printf("\n");
             }
         }

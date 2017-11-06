@@ -24,6 +24,8 @@
 #include "JniOcRepresentation.h"
 #include "JniOcResource.h"
 
+using namespace OC;
+
 jobject JniUtils::convertStrVectorToJavaStrList(JNIEnv *env, std::vector<std::string> &vector)
 {
     jobject jList = env->NewObject(g_cls_LinkedList, g_mid_LinkedList_ctor);
@@ -91,7 +93,9 @@ void JniUtils::convertJavaHeaderOptionsArrToVector(JNIEnv *env, jobjectArray jHe
         jint jId = env->CallIntMethod(header, g_mid_OcHeaderOption_get_id);
         jstring jData = (jstring)env->CallObjectMethod(header, g_mid_OcHeaderOption_get_data);
         OC::HeaderOption::OCHeaderOption hopt(
-            static_cast<int>(jId),
+            // jId comes from an enumerated list and should always fit in the
+            // down case uint16_t see getOptionId method
+            static_cast<uint16_t>(jId),
             env->GetStringUTFChars(jData, nullptr));
 
         headerOptions.push_back(hopt);

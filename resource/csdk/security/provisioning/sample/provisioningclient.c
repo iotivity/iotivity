@@ -33,7 +33,6 @@
 #include "ocprovisioningmanager.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
-#include "securevirtualresourcetypes.h"
 #include "srmutility.h"
 #include "pmtypes.h"
 #include "oxmverifycommon.h"
@@ -67,10 +66,9 @@ extern "C"
 #define _30_PROVIS_PAIR_DEVS_       30
 #define _31_PROVIS_CRED_            31
 #define _32_PROVIS_ACL_             32
-#define _33_PROVIS_DP_              33
-#define _34_CHECK_LINK_STATUS_      34
-#define _35_SAVE_ACL_               35
-#define _36_PROVIS_CERT_            36
+#define _33_CHECK_LINK_STATUS_      33
+#define _34_SAVE_ACL_               34
+#define _35_PROVIS_CERT_            35
 #define _40_UNLINK_PAIR_DEVS_       40
 #define _50_REMOVE_SELEC_DEV_       50
 #define _51_REMOVE_DEV_WITH_UUID_   51
@@ -100,10 +98,6 @@ static const char* ACL_PEMISN[5] = {"CREATE", "READ", "WRITE", "DELETE", "NOTIFY
 static const char* SVR_DB_FILE_NAME = "oic_svr_db_client.dat";
         // '_' for separaing from the same constant variable in |srmresourcestrings.c|
 static const char* PRVN_DB_FILE_NAME = "oic_prvn_mng.db";
-static const OicSecPrm_t  SUPPORTED_PRMS[1] =
-{
-    PRM_PRE_CONFIGURED,
-};
 
 static char* TEST_CERT_NOT_BEFORE = "20170101000000"; // Not before field for certificates, in format YYYYMMDDhhmmss
 static char* TEST_CERT_NOT_AFTER = "20270101000000";  // + ten years
@@ -136,7 +130,6 @@ static void setDevProtocol(OCProvisionDev_t* dev_lst);
 // function declaration(s) for calling them before implementing
 static OicSecAcl_t* createAcl(const int);
 static OicSecAcl_t* createSimpleAcl(const OicUuid_t uuid);
-static OicSecPdAcl_t* createPdAcl(const int);
 static OCProvisionDev_t* getDevInst(const OCProvisionDev_t*, const int);
 static int printDevList(const OCProvisionDev_t*);
 static size_t printUuidList(const OCUuidList_t*);
@@ -387,20 +380,6 @@ exit:
     g_doneCB = true;
 }
 
-static void provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
-{
-    if(!hasError)
-    {
-        OIC_LOG_V(INFO, TAG, "Provision Direct-Pairing SUCCEEDED - ctx: %s", (char*) ctx);
-    }
-    else
-    {
-        OIC_LOG_V(ERROR, TAG, "Provision Direct-Pairing FAILED - ctx: %s", (char*) ctx);
-        printResultList((const OCProvisionResult_t*) arr, nOfRes);
-    }
-    g_doneCB = true;
-}
-
 static void unlinkDevicesCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
@@ -459,7 +438,7 @@ static void updateDoxmForMOTCB(void* ctx, size_t nOfRes, OCProvisionResult_t* ar
 }
 #endif //MULTIPLE_OWNER
 
-static void inputPinCB(OicUuid_t deviceId, char *pin, size_t len, void *context)
+static void OC_CALL inputPinCB(OicUuid_t deviceId, char *pin, size_t len, void *context)
 {
     OC_UNUSED(deviceId);
     OC_UNUSED(context);
@@ -1086,20 +1065,27 @@ static int provisionCert(void)
 
     // select device for provisioning certificate
     int dev_num = 0;
-    for (; ; )
+    if (g_own_cnt == 1)
     {
-        printf("   > Enter Device Number, for certificate provisioning: ");
-        for (int ret = 0; 1 != ret; )
+        dev_num = 1;
+    }
+    else
+    {
+        for (; ; )
         {
-            ret = scanf("%d", &dev_num);
-            for (; 0x20 <= getchar(); );  // for removing overflow garbages
+            printf("   > Enter Device Number, for certificate provisioning: ");
+            for (int ret = 0; 1 != ret; )
+            {
+                ret = scanf("%d", &dev_num);
+                for (; 0x20 <= getchar(); );  // for removing overflow garbages
                                           // '0x20<=code' is character region
+            }
+            if (0<dev_num && g_own_cnt >= dev_num)
+            {
+                break;
+            }
+            printf("     Entered Wrong Number. Please Enter Again\n");
         }
-        if (0<dev_num && g_own_cnt >= dev_num)
-        {
-            break;
-        }
-        printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
     OCProvisionDev_t* targetDevice = getDevInst((const OCProvisionDev_t*)g_own_list, dev_num);
@@ -1272,104 +1258,6 @@ static int provisionAcl(void)
 
 PVACL_ERROR:
     OCDeleteACLList(acl);  // after here |acl| points nothing
-    return -1;
-}
-
-static int provisionDirectPairing(void)
-{
-    // check |own_list| for provisioning direct-pairing
-    if(!g_own_list || 1>g_own_cnt)
-    {
-        printf("   > Owned Device List, to Provision ACL, is Empty\n");
-        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
-        return 0;  // normal case
-    }
-
-    // select device for provisioning direct-pairing
-    int dev_num = 0;
-    for( ; ; )
-    {
-        printf("   > Enter Device Number, for Provisioning Direct-Pairing: ");
-        for(int ret=0; 1!=ret; )
-        {
-            ret = scanf("%d", &dev_num);
-            for( ; 0x20<=getchar(); );  // for removing overflow garbages
-                                        // '0x20<=code' is character region
-        }
-        if(0<dev_num && g_own_cnt>=dev_num)
-        {
-            break;
-        }
-        printf("     Entered Wrong Number. Please Enter Again\n");
-    }
-
-    // create Direct-Pairing Configuration(PIN, PDACL) for selected device
-    // TODO: default acl -> input from user !
-    OicSecPconf_t pconf;
-    memset(&pconf, 0, sizeof(OicSecPconf_t));
-
-    // set enable dp
-    pconf.edp = true;
-
-    // set default supported PRM types
-    pconf.prmLen = sizeof(SUPPORTED_PRMS)/sizeof(OicSecPrm_t);
-    pconf.prm = (OicSecPrm_t *)OICCalloc(pconf.prmLen, sizeof(OicSecPrm_t));
-    if(pconf.prm)
-    {
-        for (size_t i=0; i<pconf.prmLen; i++)
-        {
-            pconf.prm[i] = SUPPORTED_PRMS[i];
-        }
-    }
-    else
-    {
-        OIC_LOG(ERROR, TAG, "create prm error return");
-        goto PVDP_ERROR;
-    }
-
-    // set default pin
-    const char DP_DEFAULT_PIN[] = "00000000";
-    memcpy(pconf.pin.val, DP_DEFAULT_PIN, DP_PIN_LENGTH);
-
-    // set default pdacl
-    pconf.pdacls = createPdAcl(dev_num);
-    if(!pconf.pdacls)
-    {
-        OIC_LOG(ERROR, TAG, "createPdAcl error return");
-        goto PVDP_ERROR;
-    }
-
-    // call |OCProvisionDirectPairing| API
-    // calling this API with callback actually acts like blocking
-    // for error checking, the return value saved and printed
-    g_doneCB = false;
-    printf("   Atempt Direct-Pairing Provisioning (PIN : [%s])..\n", (char*)pconf.pin.val);
-    OCStackResult rst = OCProvisionDirectPairing((void*) g_ctx,
-                                       getDevInst((const OCProvisionDev_t*) g_own_list, dev_num),
-                                       &pconf, (OCProvisionResultCB)provisionDPCB);
-    if(OC_STACK_OK != rst)
-    {
-        OIC_LOG_V(ERROR, TAG, "OCProvisionDirectPairing API error: %d", rst);
-        if (OC_STACK_UNAUTHORIZED_REQ == rst)
-        {
-            OIC_LOG(ERROR, TAG, "Target Server NOT Support Direct-Pairing !!! (DPC == false)");
-        }
-        goto PVDP_ERROR;
-    }
-    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
-    {
-        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
-        goto PVDP_ERROR;
-    }
-    OCDeletePdAclList(pconf.pdacls);
-
-    // display the PCONF-provisioned result
-    printf("   > SUCCESS to provision Direct-Pairing !!\n");
-
-    return 0;
-
-PVDP_ERROR:
-    OCDeletePdAclList(pconf.pdacls);  // after here |acl| points nothing
     return -1;
 }
 
@@ -1834,7 +1722,7 @@ static int removeDeviceWithUuid(void)
     return 0;
 }
 
-OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+OCStackResult OC_CALL displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
 {
     OC_UNUSED(ctx);
 
@@ -1853,7 +1741,7 @@ OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_L
     return OC_STACK_OK;
 }
 
-OCStackResult confirmNumCB(void * ctx)
+OCStackResult OC_CALL confirmNumCB(void * ctx)
 {
     OC_UNUSED(ctx);
 
@@ -2438,59 +2326,6 @@ static OicSecAcl_t* createSimpleAcl(const OicUuid_t uuid)
     return acl;
 }
 
-static OicSecPdAcl_t* createPdAcl(const int dev_num)
-{
-    if(0>=dev_num || g_own_cnt<dev_num)
-    {
-        OIC_LOG(ERROR, TAG, "createAcl invalid parameters");
-        return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
-    }
-
-    // allocate memory for |pdacl| struct
-    printf("   **** Create PDACL for the Selected Device[%d]\n", dev_num);
-    OicSecPdAcl_t* pdAcl = (OicSecPdAcl_t*) OICCalloc(1, sizeof(OicSecPdAcl_t));
-    if(!pdAcl)
-    {
-        OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
-        return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
-    }
-
-
-    // number of resources
-    char rsrc_in[][ACL_RESRC_MAX_LEN+1] = {"*", "/rsrc/*"};
-    pdAcl->resourcesLen = 1;
-
-    // resource
-    size_t num = pdAcl->resourcesLen;
-    pdAcl->resources = (char**) OICCalloc(num, sizeof(char*));
-    if(!pdAcl->resources)
-    {
-        OIC_LOG(ERROR, TAG, "createPdAcl: OICCalloc error return");
-        goto CRPDACL_ERROR;
-    }
-    for (size_t i = 0; num > i; ++i)
-    {
-        size_t len = strlen(rsrc_in[i]) + 1;  // '1' for null termination
-        char* rsrc = (char*) OICCalloc(len, sizeof(char));
-        if(!rsrc)
-        {
-            OIC_LOG(ERROR, TAG, "createPdAcl: OICCalloc error return");
-            goto CRPDACL_ERROR;
-        }
-        OICStrcpy(rsrc, len, rsrc_in[i]);
-        pdAcl->resources[i] = rsrc;  // after here, |rsrc| points nothing
-    }
-
-    // permission
-    pdAcl->permission = PERMISSION_FULL_CONTROL;
-
-    return pdAcl;
-
-CRPDACL_ERROR:
-    OCDeletePdAclList(pdAcl);
-    return NULL;
-}
-
 static OCProvisionDev_t* getDevInst(const OCProvisionDev_t* dev_lst, const int dev_num)
 {
     if(!dev_lst || 0>=dev_num)
@@ -2526,6 +2361,7 @@ static int printDevList(const OCProvisionDev_t* dev_lst)
     {
         printf("     [%d] ", ++lst_cnt);
         printUuid((const OicUuid_t*) &lst->doxm->deviceID);
+        printf("    %s", lst->specVer);
         printf("\n");
         lst = lst->next;
     }
@@ -2673,21 +2509,36 @@ static FILE* fopen_prvnMng(const char* path, const char* mode)
     }
 }
 
+static CAResult_t peerCNVerifyCallback(const unsigned char *cn, size_t cnLen)
+{
+    if (NULL != cn && 0 != cnLen)
+    {
+        OIC_LOG(INFO, TAG, "peer certificate CN: ");
+        OIC_LOG_BUFFER(INFO, TAG, cn, cnLen);
+        return CA_STATUS_OK;
+    }
+    else
+    {
+        return CA_STATUS_FAILED;
+    }
+}
+
 static int waitCallbackRet(void)
 {
-    for(int i=0; !g_doneCB && CALLBACK_TIMEOUT>i; ++i)
+    for (int i = 0; !g_doneCB && (CALLBACK_TIMEOUT > i); ++i)
     {
-        sleep(1);
-        if(OC_STACK_OK != OCProcess())
+        if (OC_STACK_OK != OCProcess())
         {
             OIC_LOG(ERROR, TAG, "OCStack process error");
             return -1;
         }
+        sleep(1);
     }
 
-    if(!g_doneCB)
+    if (!g_doneCB)
     {
         OCPDMCleanupForTimeout();
+        return -1;
     }
 
     return 0;
@@ -2747,7 +2598,7 @@ static void setDevProtocol(OCProvisionDev_t* lst)
             lst->connType |= CT_ADAPTER_TCP; //set TCP flag
             lst->endpoint.adapter = OC_ADAPTER_TCP;
             lst->endpoint.port = lst->tcpPort;
-            lst->securePort = lst->tcpPort;
+            lst->securePort = lst->tcpSecurePort;
         }
         lst = lst->next;
     }
@@ -2824,10 +2675,9 @@ static void printMenu(void)
     printf("** 30. Provision/Link Pairwise Things\n");
     printf("** 31. Provision Credentials for Pairwise Things\n");
     printf("** 32. Provision the Selected Access Control List(ACL)\n");
-    printf("** 33. Provision Direct-Pairing Configuration\n");
-    printf("** 34. Check Linked Status of the Selected Device on PRVN DB\n");
-    printf("** 35. Save the Selected Access Control List(ACL) into local SVR DB\n");
-    printf("** 36. Provision certificate credential\n\n");
+    printf("** 33. Check Linked Status of the Selected Device on PRVN DB\n");
+    printf("** 34. Save the Selected Access Control List(ACL) into local SVR DB\n");
+    printf("** 35. Provision certificate credential\n\n");
 
 
     printf("** [D] UNLINK PAIRWISE THINGS\n");
@@ -2906,6 +2756,9 @@ int main()
     SetDisplayNumCB(NULL, displayNumCB);
     SetUserConfirmCB(NULL, confirmNumCB);
 
+    // set callback for checking peer certificate information
+    OCSetPeerCNVerifyCallback(peerCNVerifyCallback);
+
 #ifdef MULTIPLE_OWNER
     SetPreconfigPin("12341234", 8);
 #endif //MULTIPLE_OWNER
@@ -2982,25 +2835,19 @@ int main()
                 OIC_LOG(ERROR, TAG, "_32_PROVIS_ACL_: error");
             }
             break;
-        case _33_PROVIS_DP_:
-            if(provisionDirectPairing())
-            {
-                OIC_LOG(ERROR, TAG, "_33_PROVIS_DP_: error");
-            }
-            break;
-        case _34_CHECK_LINK_STATUS_:
+        case _33_CHECK_LINK_STATUS_:
             if(checkLinkedStatus())
             {
                 OIC_LOG(ERROR, TAG, "_34_CHECK_LINK_STATUS_: error");
             }
             break;
-        case _35_SAVE_ACL_:
+        case _34_SAVE_ACL_:
             if(saveAcl())
             {
                 OIC_LOG(ERROR, TAG, "_35_SAVE_ACL_: error");
             }
             break;
-        case _36_PROVIS_CERT_:
+        case _35_PROVIS_CERT_:
             if (provisionCert())
             {
                 OIC_LOG(ERROR, TAG, "_36_PROVIS_CERT_: error");

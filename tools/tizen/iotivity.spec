@@ -1,5 +1,5 @@
 Name: iotivity
-Version: 1.3.0
+Version: 1.3.1
 Release: 0
 Summary: IoT Connectivity sponsored by the OCF
 Group: Network & Connectivity / IoT Connectivity
@@ -89,6 +89,7 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?MULTIPLE_OWNER: %define MULTIPLE_OWNER 0}
 %{!?OIC_SUPPORT_TIZEN_TRACE: %define OIC_SUPPORT_TIZEN_TRACE False}
 
+BuildRequires:  chrpath
 BuildRequires:  expat-devel
 BuildRequires:  python, libcurl-devel
 BuildRequires:  scons
@@ -108,8 +109,10 @@ BuildRequires:  pkgconfig(ttrace)
 %endif
 BuildRequires:  pkgconfig(capi-network-connection)
 BuildRequires:  pkgconfig(capi-network-bluetooth) >= 0.1.52
-%if 3 <= 0%{?tizen_version_major}
+%if 0%{?profile:1} && 3 <= 0%{?tizen_version_major}
 BuildRequires:  bluetooth-tools-profile_%{profile}
+%else
+BuildRequires:  bluetooth-tools
 %endif
 %else
 %if 0%{?fedora:1}
@@ -265,6 +268,7 @@ mkdir -p %{ex_install_dir}/provision-sample
 
 
 cp ./resource/csdk/security/include/*.h %{buildroot}%{_includedir}
+cp ./resource/csdk/security/include/*/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/connectivity/api/*.h %{buildroot}%{_includedir}/
 cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
@@ -281,6 +285,9 @@ cp resource/c_common/*.h %{buildroot}%{_includedir}
 cp resource/csdk/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
+
+find "%{buildroot}" -type f -perm /u+x -exec chrpath -d "{}" \;
+find "%{buildroot}" -type f -iname "lib*.so" -exec chrpath -d "{}" \;
 
 install -d %{buildroot}%{_includedir}/iotivity
 ln -fs ../resource %{buildroot}%{_includedir}/iotivity/

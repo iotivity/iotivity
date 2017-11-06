@@ -73,7 +73,10 @@ namespace OIC
                 throw RCSBadRequestException{ "ResourceObject is unspecified(or destroyed)!" };
             }
 
-            if (m_done) throw RCSBadRequestException{ "The response is already set!" };
+            if (m_done)
+            {
+                throw RCSBadRequestException{ "The response is already set!" };
+            }
 
             auto ocRequest = m_request.getOCRequest();
             auto response = std::make_shared< OC::OCResourceResponse >();

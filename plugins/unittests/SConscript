@@ -20,6 +20,7 @@
 
 import os
 import os.path
+from tools.scons.RunTest import run_test
 
 # SConscript file for Local PKI google tests
 gtest_env = SConscript('#extlibs/gtest/SConscript')
@@ -32,22 +33,22 @@ target_os = unittests_env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-unittests_env.PrependUnique(CPPPATH = [
-                os.path.join(pi_dir, 'include'),
-		])
+unittests_env.PrependUnique(CPPPATH=[
+    os.path.join(pi_dir, 'include'),
+])
 
-unittests_env.AppendUnique(LIBPATH = [unittests_env.get('BUILD_DIR')])
-unittests_env.PrependUnique(LIBS = [
-		'plugin_interface',
-		'oc',
-		'octbstack',
-		'oc_logger',
-		'connectivity_abstraction',
-		'coap'
-		])
+unittests_env.AppendUnique(LIBPATH=[unittests_env.get('BUILD_DIR')])
+unittests_env.PrependUnique(LIBS=[
+    'plugin_interface',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction',
+    'coap',
+])
 
 if unittests_env.get('LOGGING'):
-	unittests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    unittests_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
 ######################################################################
 # Source files and Targets
@@ -58,10 +59,6 @@ Alias("piunittests", [piunittests])
 
 unittests_env.AppendTarget('piunittests')
 if unittests_env.get('TEST') == '1':
-	if target_os in ['linux']:
-                from tools.scons.RunTest import *
-                run_test(unittests_env,
-                         'plugins_unittests.memcheck',
-                         'plugins/unittests/piunittests',
-                         piunittests)
-
+    if target_os in ['linux']:
+        run_test(unittests_env, 'plugins_unittests.memcheck',
+                 'plugins/unittests/piunittests', piunittests)

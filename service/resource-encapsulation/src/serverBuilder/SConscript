@@ -22,12 +22,13 @@
 # rcs_server (Server Builder) project build script
 ##
 # SConscript file for Local PKI google tests
+
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
 rd_mode = lib_env.get('RD_MODE')
 
 # Add third party libraries
-SConscript('#service/third_party_libs.scons', exports = 'lib_env')
+SConscript('#service/third_party_libs.scons', exports='lib_env')
 server_builder_env = lib_env.Clone()
 release = server_builder_env.get('RELEASE')
 src_dir = server_builder_env.get('SRC_DIR')
@@ -37,86 +38,107 @@ target_os = server_builder_env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-server_builder_env.AppendUnique(CPPPATH = [
+server_builder_env.AppendUnique(CPPPATH=[
     '../common/primitiveResource/include',
     '../common/utils/include',
     '../../include',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/include',
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
     '#/resource/oc_logger/include',
-    ])
+])
 
-server_builder_env.AppendUnique(CPPPATH = [server_builder_env.get('SRC_DIR')+'/extlibs', 'include'])
-server_builder_env.AppendUnique(LIBPATH = [server_builder_env.get('BUILD_DIR')])
-server_builder_env.AppendUnique(LIBS = ['oc', 'rcs_common'])
-
-
-
-if server_builder_env.get('LOGGING'):
-    server_builder_env.AppendUnique(LIBS = ['octbstack'])
+server_builder_env.AppendUnique(
+    CPPPATH=[server_builder_env.get('SRC_DIR') + '/extlibs', 'include'])
+server_builder_env.AppendUnique(LIBS=['oc', 'rcs_common', 'logger'])
 
 if not release:
-    server_builder_env.AppendUnique(CXXFLAGS = ['--coverage'])
-    server_builder_env.PrependUnique(LIBS = ['gcov'])
+    server_builder_env.AppendUnique(CXXFLAGS=['--coverage'])
+    server_builder_env.PrependUnique(LIBS=['gcov'])
 if target_os not in ['windows']:
-    server_builder_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
+    server_builder_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall'])
 
 if target_os not in ['darwin', 'ios', 'windows']:
-    server_builder_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+    server_builder_env.AppendUnique(LINKFLAGS=['-Wl,--no-undefined'])
 
 if target_os in ['android']:
-    server_builder_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-    server_builder_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
-    server_builder_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,librcs_server.so'])
+    server_builder_env.AppendUnique(CXXFLAGS=['-frtti', '-fexceptions'])
+    server_builder_env.PrependUnique(LIBS=['gnustl_shared', 'log'])
+    server_builder_env.AppendUnique(LINKFLAGS=['-Wl,-soname,librcs_server.so'])
 
 if server_builder_env.get('SECURED') == '1':
-	if server_builder_env.get('WITH_TCP') == True:
-		server_builder_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    if server_builder_env.get('WITH_TCP') == True:
+        server_builder_env.AppendUnique(
+            LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
+if target_os in ['linux', 'tizen']:
+    server_builder_env.AppendUnique(LIBS=['rt'])
 ######################################################################
 # Source files and Targets
 ######################################################################
 server_builder_src = server_builder_env.Glob('src/*.cpp')
 
-server_builder_static = server_builder_env.StaticLibrary('rcs_server', server_builder_src)
+server_builder_static = server_builder_env.StaticLibrary(
+    'rcs_server', server_builder_src)
 if target_os not in ['ios']:
-    server_builder_shared = server_builder_env.SharedLibrary('rcs_server', server_builder_src)
-    server_builder_env.InstallTarget([server_builder_static, server_builder_shared], 'rcs_server')
-    server_builder_env.UserInstallTargetLib([server_builder_static, server_builder_shared], 'rcs_server')
+    server_builder_shared = server_builder_env.SharedLibrary(
+        'rcs_server', server_builder_src)
+    server_builder_env.InstallTarget(
+        [server_builder_static, server_builder_shared], 'rcs_server')
+    server_builder_env.UserInstallTargetLib(
+        [server_builder_static, server_builder_shared], 'rcs_server')
 else:
     server_builder_env.InstallTarget([server_builder_static], 'rcs_server')
-    server_builder_env.UserInstallTargetLib([server_builder_static], 'rcs_server')
+    server_builder_env.UserInstallTargetLib([server_builder_static],
+                                            'rcs_server')
 
 ######################################################################
 # Build Test
 ######################################################################
 if target_os in ['linux']:
-	server_builder_test_env = server_builder_env.Clone();
+    server_builder_test_env = server_builder_env.Clone()
 
-	server_builder_test_env.AppendUnique(CPPPATH = [
-		'#/extlibs/hippomocks/hippomocks',
-		'../common/utils/include'
-		])
+    server_builder_test_env.AppendUnique(CPPPATH=[
+            '#/extlibs/hippomocks/hippomocks',
+            '../common/utils/include',
+        ])
 
-	server_builder_test_env.PrependUnique(LIBS = [
-		'rcs_server',
-		'octbstack',
-		'oc_logger',
-		'connectivity_abstraction',
-		'coap'])
+    if server_builder_test_env.get('SECURED') == '1':
+        server_builder_test_env.AppendUnique(
+            CPPPATH=['#/resource/csdk/security/include'])
 
-	server_builder_test_src = server_builder_test_env.Glob('unittests/*.cpp')
+    server_builder_test_env.PrependUnique(LIBS=[
+        'rcs_server',
+        'octbstack',
+        'oc_logger',
+        'connectivity_abstraction',
+        'coap',
+    ])
 
-	server_builder_test = server_builder_test_env.Program('rcs_server_test', server_builder_test_src)
-	Alias("rcs_server_test", server_builder_test)
-	server_builder_test_env.AppendTarget('rcs_server_test')
+    unitTestHelperWithFakeOCPlatform_obj = server_builder_test_env.SharedObject(
+        server_builder_test_env.Glob(
+            '../common/utils/include/UnitTestHelperWithFakeOCPlatform.cpp'))
+    server_builder_test_src = [
+        server_builder_test_env.Glob('unittests/*.cpp'),
+        unitTestHelperWithFakeOCPlatform_obj
+    ]
 
-	if server_builder_test_env.get('TEST') == '1':
-		from tools.scons.RunTest import *
-		run_test(server_builder_test_env,
-# TODO: fix this test on linux and remove commented lines
-			'',
-#			'service_resource-encapsulation_src_serverBuilder_rcs_server_test.memcheck',
-			'service/resource-encapsulation/src/serverBuilder/rcs_server_test',
-			server_builder_test)
+    server_builder_test_env.AddPthreadIfNeeded()
+
+    server_builder_test = server_builder_test_env.Program(
+        'rcs_server_test', server_builder_test_src)
+    Alias("rcs_server_test", server_builder_test)
+    server_builder_test_env.AppendTarget('rcs_server_test')
+
+    if server_builder_test_env.get('TEST') == '1':
+        server_builder_test_env.AppendUnique(CPPDEFINES=['HIPPOMOCKS_ISSUE'])
+        # this import needs to remain here so it is protected by target check
+        from tools.scons.RunTest import run_test
+        run_test(
+            server_builder_test_env,
+            'service_resource-encapsulation_src_serverBuilder_rcs_server_test.memcheck',
+            'service/resource-encapsulation/src/serverBuilder/rcs_server_test',
+            server_builder_test)

@@ -28,7 +28,9 @@ namespace OIC
     {
         SceneCollection::SceneCollection(
                 const SceneCollectionResource::Ptr& sceneCollectionResource) :
-                m_sceneCollectionResource(sceneCollectionResource) {}
+                m_sceneCollectionResource(sceneCollectionResource)
+        {
+        }
 
         Scene::Ptr SceneCollection::addNewScene(const std::string& sceneName)
         {

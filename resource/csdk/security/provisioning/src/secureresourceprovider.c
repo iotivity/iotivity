@@ -37,7 +37,6 @@
 #include "csrresource.h"
 #include "rolesresource.h"
 #include "doxmresource.h"
-#include "pconfresource.h"
 #include "credentialgenerator.h"
 #include "cainterface.h"
 #include "oic_string.h"
@@ -55,27 +54,11 @@
 #include "crlresource.h"
 #endif
 
+#define DEFAULT_URI_LENGTH (MAX_URI_LENGTH + MAX_QUERY_LENGTH)
+
 #define TAG "OIC_SRPAPI"
 
 trustCertChainContext_t g_trustCertChainNotifier;
-
-// Enum type index for data types.
-typedef enum
-{
-    CHAIN_TYPE = 0,                       /**< Certificate trust chain.**/
-    ACL_TYPE,                             /**< Access control list.**/
-    PSK_TYPE,                             /**< Pre-Shared Key.**/
-    CERT_TYPE                             /**< X.509 certificate.**/
-} DataType_t;
-
-/**
- * Structure to carry general data to callback.
- */
-typedef struct Data
-{
-    void *ctx;                                   /**< Pointer to user context.**/
-    DataType_t type;                             /**< Data type of the context.**/
-} Data_t;
 
 /**
  * Structure to carry credential data to callback.
@@ -123,6 +106,19 @@ typedef struct TrustChainData
     int numOfResults;                           /**< Number of results in result array.**/
 } TrustChainData_t;
 
+/**
+ * Structure to carry Certificate provision API data to callback.
+ */
+typedef struct CertData
+{
+    void *ctx;                                  /**< Pointer to user context.**/
+    const OCProvisionDev_t *targetDev;          /**< Pointer to OCProvisionDev_t.**/
+    OicSecCred_t *credInfo;                     /**< Array of pointers to OicSecCred_t.**/
+    OCProvisionResultCB resultCallback;         /**< Pointer to result callback.**/
+    OCProvisionResult_t *resArr;                /**< Result array.**/
+    int numOfResults;                           /**< Number of results in result array.**/
+    const char* cert;                           /**< The certificate.**/
+} CertData_t;
 
 // Structure to carry get security resource APIs data to callback.
 typedef struct GetSecData GetSecData_t;
@@ -150,19 +146,6 @@ struct GetRolesData {
     OCGetRolesResultCB resultCallback;          /**< Pointer to result callback.**/
     OCPMGetRolesResult_t *resArr;               /**< Result array.**/
     size_t numOfResults;                        /**< Number of results in result array.**/
-};
-
-/**
- * Structure to carry PCONF provision API data to callback.
- */
-typedef struct PconfData PconfData_t;
-struct PconfData
-{
-    void *ctx;                                  /**< Pointer to user context.**/
-    const OCProvisionDev_t *deviceInfo;         /**< Pointer to PMDevInfo_t.**/
-    OCProvisionResultCB resultCallback;         /**< Pointer to result callback.**/
-    OCProvisionResult_t *resArr;                /**< Result array.**/
-    int numOfResults;                           /**< Number of results in result array.**/
 };
 
 // Enum type index for unlink callback.
@@ -209,8 +192,7 @@ static OCStackResult provisionCredentials(OicSecCred_t *cred,
         OCClientResponseHandler responseHandler);
 static OCStackApplicationResult  ProvisionPskCB(void *ctx, OCDoHandle UNUSED,
         OCClientResponse *clientResponse);
-static OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t dos,
-                            OCClientResponseHandler resultCallback);
+static OCStackResult ProvisionLocalCredential(void *ctx, OicSecCred_t *cred);
 
 typedef enum {
     DEVICE_1_FINISHED,
@@ -223,8 +205,19 @@ typedef enum {
  *
  * @param[in] data    Pointer to block of memory previously allocated for Data_t.
  */
-static void FreeData(Data_t *data)
+void FreeData(Data_t *data)
 {
+    if(NULL == data)
+    {
+        return;
+    }
+
+    if (NULL == data->ctx)
+    {
+        OICFree(data);
+        return;
+    }
+
     switch (data->type)
     {
         case CHAIN_TYPE:
@@ -246,6 +239,24 @@ static void FreeData(Data_t *data)
                 CredentialData_t *pskData = (CredentialData_t *) data->ctx;
                 OICFree(pskData->resArr);
                 OICFree(pskData);
+                break;
+            }
+        case CERT_TYPE:
+            {
+                CertData_t *certData = (CertData_t *) data->ctx;
+                if (NULL != certData->resArr)
+                {
+                     OICFreeAndSetToNull((void**)&certData->resArr);
+                }
+                FreeCred(certData->credInfo);
+                OICFreeAndSetToNull((void**)&certData);
+                break;
+            }
+        case MOT_TYPE:
+            {
+                OTMContext_t *motData = (OTMContext_t *) data->ctx;
+                OICFree(motData->ctxResultArray);
+                OICFree(motData);
                 break;
             }
         default:
@@ -479,7 +490,10 @@ static OCStackApplicationResult ProvisionCredentialDosCB1(void *ctx, OCDoHandle 
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     (void) UNUSED;
+    OCStackResult res = OC_STACK_OK;
     CredentialData_t *credData = (CredentialData_t *) ((Data_t *) ctx)->ctx;
+    const OCProvisionDev_t *deviceInfo = credData->deviceInfo[1];
+    OicSecCred_t *credInfo = credData->credInfo[1];
     const OCProvisionResultCB resultCallback = credData->resultCallback;
     if (clientResponse)
     {
@@ -487,10 +501,25 @@ static OCStackApplicationResult ProvisionCredentialDosCB1(void *ctx, OCDoHandle 
         {
             // send credentials to second device
             registerResultForCredProvisioning(credData, OC_STACK_RESOURCE_CHANGED, DEVICE_1_FINISHED);
-            OCStackResult res = SetDOS((Data_t *) ctx, DOS_RFPRO, ProvisionPskCB);
+
             // If deviceInfo is NULL, this device is the second device. Don't delete the cred
             // because provisionCredentials added it to the local cred store and it now owns
             // the memory.
+            if (NULL != deviceInfo)
+            {
+                // A second device was specifed. Set the device into RFPRO and send it the cred.
+                res = SetDOS((Data_t *)ctx, DOS_RFPRO, ProvisionPskCB);
+            }
+            else
+            {
+                // A second device was not specified. Add the cred to the local cred store.
+                res = ProvisionLocalCredential(ctx, credInfo);
+            }
+
+            if ((NULL != deviceInfo) || (OC_STACK_OK != res))
+            {
+                DeleteCredList(credInfo);
+            }
             if (OC_STACK_OK != res)
             {
                 registerResultForCredProvisioning(credData, res, 2);
@@ -610,7 +639,6 @@ static OCStackResult ProvisionCredentialsDos(void *ctx, OicSecCred_t *cred,
         const OCProvisionDev_t *deviceInfo, OCClientResponseHandler responseHandler)
 {
     OCStackResult res = OC_STACK_OK;
-    CredentialData_t *credData = (CredentialData_t *) ((Data_t *) ctx)->ctx;
 
     if (NULL != deviceInfo)
     {
@@ -664,15 +692,27 @@ static OCStackResult ProvisionCredentialsDos(void *ctx, OicSecCred_t *cred,
     }
     else
     {
-        /* Provision this credential to the local cred store. On success, the cred resource takes
-         * ownership of the memory. On failure, ProvisionCredentialDosCB1 will delete the cred object.
-         */
-        res = AddCredential(cred);
-        /* Call the result callback directly. */
-        registerResultForCredProvisioning(credData, OC_STACK_RESOURCE_CHANGED, DEVICE_LOCAL_FINISHED);
-        (credData->resultCallback)(credData->ctx, credData->numOfResults, credData->resArr, false);
-        return res;
+        /* Provision this credential to the local cred store. */
+        return ProvisionLocalCredential(ctx, cred);
     }
+}
+
+/**
+ * Internal function for adding credentials to the local cred store
+ *
+ * @param[in] cred Instance of cred resource.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+static OCStackResult ProvisionLocalCredential(void *ctx, OicSecCred_t *cred)
+{
+    CredentialData_t *credData = (CredentialData_t *)((Data_t *)ctx)->ctx;
+
+    OCStackResult res = AddCredential(cred);
+
+    /* Call the result callback directly. */
+    registerResultForCredProvisioning(credData, OC_STACK_RESOURCE_CHANGED, DEVICE_LOCAL_FINISHED);
+    (credData->resultCallback)(credData->ctx, credData->numOfResults, credData->resArr, false);
+    return res;
 }
 
 /**
@@ -737,9 +777,18 @@ static OCStackApplicationResult SetReadyForNormalOperationCB(void *ctx, OCDoHand
         }
         case CERT_TYPE:
         {
-            OIC_LOG_V(ERROR, TAG, "Not implemented type %d", dataType);
-            OIC_LOG_V(ERROR, TAG, "OUT %s", __func__);
-            return OC_STACK_DELETE_TRANSACTION;
+            CertData_t *certData = (CertData_t *) ((Data_t *) ctx)->ctx;
+            if (NULL == certData)
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: certData is NULL", __func__);
+                break;
+            }
+            resultCallback = certData->resultCallback;
+            targetDev = certData->targetDev;
+            resArr = certData->resArr;
+            numOfResults = &(certData->numOfResults);
+            dataCtx = certData->ctx;
+            break;
         }
         default:
         {
@@ -773,10 +822,7 @@ static OCStackApplicationResult SetReadyForNormalOperationCB(void *ctx, OCDoHand
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-/**
- * Updates pstat resource of server.
- */
-static OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t dos,
+OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t dos,
                             OCClientResponseHandler resultCallback)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
@@ -786,7 +832,6 @@ static OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t do
         OIC_LOG_V(ERROR, TAG, "OUT %s", __func__);
         return OC_STACK_INVALID_PARAM;
     }
-
 
     const OCProvisionDev_t *pTargetDev = NULL;
 
@@ -810,15 +855,26 @@ static OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t do
         }
         case CERT_TYPE:
         {
-            // TODO check cert provision flow
-            OIC_LOG_V(ERROR, TAG, "Not implemented type: %d", data->type);
-            return OC_STACK_INVALID_PARAM;
+            pTargetDev = ((CertData_t *)data->ctx)->targetDev;
+            break;
+        }
+        case MOT_TYPE:
+        {
+            pTargetDev = ((OTMContext_t *)data->ctx)->selectedDeviceInfo;
+            break;
         }
         default:
         {
             OIC_LOG_V(ERROR, TAG, "Unknown type: %d", data->type);
             return OC_STACK_INVALID_PARAM;
         }
+    }
+    // Skip posting new DOS state in case of OIC server
+    if (IS_OIC(pTargetDev->specVer))
+    {
+        OCClientResponse clientResponse = {.result = OC_STACK_RESOURCE_CHANGED};
+        resultCallback((void*) data, NULL, &clientResponse);
+        return OC_STACK_OK;
     }
 
     OCStackResult res = OC_STACK_ERROR;
@@ -848,7 +904,7 @@ static OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t do
     propertiesToInclude[PSTAT_DOS] = true;
 
     if (OC_STACK_OK != PstatToCBORPayloadPartial(pstat, &(secPayload->securityData),
-            &(secPayload->payloadSize), propertiesToInclude))
+            &(secPayload->payloadSize), propertiesToInclude, false))
     {
         OCPayloadDestroy((OCPayload *) secPayload);
         OIC_LOG(ERROR, TAG, "Failed to PstatToCBORPayload");
@@ -906,12 +962,12 @@ error:
 /**
  * Restores pstat after provisioning.
  */
-static OCStackApplicationResult ProvisionCB(void *ctx, OCDoHandle UNUSED,
+static OCStackApplicationResult ProvisionCB(void *ctx, OCDoHandle handle,
         OCClientResponse *clientResponse)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
-    (void) UNUSED;
+    OC_UNUSED(handle);
     if (clientResponse && OC_STACK_RESOURCE_CHANGED != clientResponse->result)
     {
         OIC_LOG_V(ERROR, TAG, "Responce result: %d", clientResponse->result);
@@ -976,20 +1032,6 @@ static OCStackApplicationResult  ProvisionPskCB(void *ctx, OCDoHandle UNUSED,
 
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-/**
- * Structure to carry certificate data to callback.
- */
-typedef struct CertificateData CertData_t;
-struct CertificateData
-{
-    void *ctx;                                  /**< Pointer to user context.**/
-    const OCProvisionDev_t *deviceInfo;        /**< Pointer to OCProvisionDev_t.**/
-    OicSecCred_t *credInfo;                     /**< Pointer to OicSecCred_t.**/
-    OCProvisionResultCB resultCallback;         /**< Pointer to result callback.**/
-    OCProvisionResult_t *resArr;                /**< Result array.**/
-    int numOfResults;                           /**< Number of results in result array.**/
-};
-
 OCStackResult SRPRegisterTrustCertChainNotifier(void *ctx, TrustCertChainChangeCB callback)
 {
     if (g_trustCertChainNotifier.callback)
@@ -1329,6 +1371,150 @@ OCStackResult SRPSaveOwnRoleCert(OicSecKey_t * cert, uint16_t *credId)
 {
     return saveCertChain(cert, NULL, credId, ROLE_CERT);
 }
+/**
+ * Callback for Certificate provisioning.
+ */
+static OCStackApplicationResult ProvisionCertificateCB(void *ctx, OCDoHandle handle,
+        OCClientResponse *clientResponse)
+{
+    OIC_LOG_V(INFO, TAG, "IN %s", __func__);
+
+    OC_UNUSED(handle);
+    OCStackResult ret = OC_STACK_ERROR;
+    char *query = NULL;
+    const OCProvisionDev_t *pDev = NULL;
+    OicSecCred_t *cred = NULL;
+    OCSecurityPayload *secPayload = NULL;
+
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, clientResponse, ERROR,  OC_STACK_INVALID_PARAM);
+
+    VERIFY_SUCCESS_RETURN(TAG, (OC_STACK_RESOURCE_CHANGED == clientResponse->result), ERROR,
+        OC_STACK_INVALID_PARAM);
+
+    Data_t *data = (Data_t *) ctx;
+    VERIFY_SUCCESS_RETURN(TAG, (CERT_TYPE == data->type), ERROR, OC_STACK_INVALID_PARAM);
+
+    CertData_t *certData = (CertData_t *) (data->ctx);
+    VERIFY_NOT_NULL(TAG, certData, ERROR);
+    pDev = certData->targetDev;
+    VERIFY_NOT_NULL(TAG, pDev, ERROR);
+    cred = certData->credInfo;
+    VERIFY_NOT_NULL(TAG, cred, ERROR);
+
+    secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
+    VERIFY_NOT_NULL(TAG, secPayload, ERROR);
+    secPayload->base.type = PAYLOAD_TYPE_SECURITY;
+
+    int secureFlag = 0;//don't send private data(key)
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == CredToCBORPayload(cred, &secPayload->securityData,
+                                             &secPayload->payloadSize, secureFlag), ERROR);
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
+
+    query = OICCalloc(1, DEFAULT_URI_LENGTH);
+    VERIFY_NOT_NULL(TAG, query, ERROR);
+    VERIFY_SUCCESS(TAG, PMGenerateQuery(true,
+                             pDev->endpoint.addr,
+                             pDev->securePort,
+                             pDev->connType,
+                             query, DEFAULT_URI_LENGTH, OIC_RSRC_CRED_URI), ERROR);
+
+    OCCallbackData cbData =  {.context = ctx, .cb = ProvisionCB, .cd = NULL};
+    OCDoHandle lHandle = NULL;
+
+    ret = OCDoResource(&lHandle, OC_REST_POST, query,
+                                &pDev->endpoint, (OCPayload *)secPayload,
+                                pDev->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    OIC_LOG_V(DEBUG, TAG, "POST:%s ret:%d", query, ret);
+exit:
+    OICFree(query);
+    if (OC_STACK_OK != ret)
+    {
+        if(NULL != secPayload)
+        {
+            OCPayloadDestroy((OCPayload *)secPayload);
+        }
+        if(NULL != cred)
+        {
+            FreeCred(cred);
+        }
+    }
+
+    OIC_LOG_V(INFO, TAG, "OUT %s", __func__);
+
+    return ret;
+}
+
+OCStackResult SRPProvisionCertificate(void *ctx,
+    const OCProvisionDev_t *pDev,
+    const char* pemCert,
+    OCProvisionResultCB resultCallback)
+{
+    OIC_LOG_V(INFO, TAG, "IN %s", __func__);
+
+    VERIFY_NOT_NULL_RETURN(TAG, pDev, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+    VERIFY_NOT_NULL_RETURN(TAG, pemCert, ERROR,  OC_STACK_INVALID_CALLBACK);
+
+    OCStackResult ret = OC_STACK_ERROR;
+    Data_t *data = NULL;
+
+    OicUuid_t provTooldeviceID =   {{0,}};
+    if (OC_STACK_OK != GetDoxmDeviceID(&provTooldeviceID))
+    {
+        OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
+        return OC_STACK_ERROR;
+    }
+
+    data = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    VERIFY_NOT_NULL(TAG, data, ERROR);
+    data->type = CERT_TYPE;
+
+    CertData_t *certData = (CertData_t *)OICCalloc(1, sizeof(CertData_t));
+    VERIFY_NOT_NULL(TAG, certData, ERROR);
+    data->ctx = certData;
+    certData->ctx = ctx;
+    certData->targetDev = pDev;
+    certData->resultCallback = resultCallback;
+    certData->numOfResults = 0;
+    certData->credInfo = NULL;
+
+    certData->resArr = (OCProvisionResult_t *)OICCalloc(1, sizeof(OCProvisionResult_t));
+    VERIFY_NOT_NULL(TAG, certData->resArr, ERROR);
+
+    OicSecKey_t deviceCert = { 0 };
+    deviceCert.data = (uint8_t*) pemCert;
+    deviceCert.len = strlen(pemCert) + 1;
+    deviceCert.encoding = OIC_ENCODING_PEM;
+
+    OicSecCred_t *cred = GenerateCredential(&pDev->doxm->deviceID, SIGNED_ASYMMETRIC_KEY,
+        &deviceCert, NULL, NULL);
+    VERIFY_NOT_NULL(TAG, cred, ERROR);
+    certData->credInfo = cred;
+
+    cred->publicData.encoding = OIC_ENCODING_PEM;
+
+    if (OC_STACK_OK == OCInternalIsValidRoleCertificate(deviceCert.data, deviceCert.len, NULL, NULL))
+    {
+        cred->credUsage = OICStrdup(ROLE_CERT);
+    }
+    else
+    {
+        cred->credUsage = OICStrdup(PRIMARY_CERT);
+    }
+
+    ret = SetDOS(data, DOS_RFPRO, ProvisionCertificateCB);
+exit:
+    if (OC_STACK_OK != ret)
+    {
+         FreeData(data);
+    }
+
+    OIC_LOG_V(INFO, TAG, "OUT %s", __func__);
+
+    return ret;
+}
+
 
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
@@ -1396,7 +1582,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
 
             OicSecCred_t *firstCred = NULL;
             OicSecCred_t *secondCred = NULL;
-            OCStackResult res = PMGeneratePairWiseCredentials(type, keySize, &provTooldeviceID,
+            OCStackResult res = PMGeneratePairWiseCredentials(type, keySize,
                     &firstDevice->doxm->deviceID, (NULL != secondDevice) ? &secondDevice->doxm->deviceID : &provTooldeviceID,
                     role1, role2,
                     &firstCred, &secondCred);
@@ -1459,7 +1645,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             /* Create a credential object */
             OicSecCred_t* cred =  GenerateCredential(&pDev1->doxm->deviceID, SIGNED_ASYMMETRIC_KEY,
                     &deviceCert, NULL, // oic.sec.cred.publicdata = deviceCert, .privatedata = NULL
-                    &provTooldeviceID, NULL); // rowner is the provisioning tool and no eowner
+                    NULL); // no eowner
             VERIFY_NOT_NULL_RETURN(TAG, cred, ERROR, OC_STACK_ERROR);
 
             cred->publicData.encoding = OIC_ENCODING_PEM;
@@ -1509,9 +1695,11 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
 }
 
 OCStackResult SRPProvisionCredentialsDos(void *ctx, OicSecCredType_t type, size_t keySize,
-                                      const OCProvisionDev_t *pDev1,
-                                      const OCProvisionDev_t *pDev2,
-                                      OCProvisionResultCB resultCallback)
+                                         const OCProvisionDev_t *pDev1,
+                                         const OCProvisionDev_t *pDev2,
+                                         const OicSecRole_t *role1,
+                                         const OicSecRole_t *role2,
+                                         OCProvisionResultCB resultCallback)
 {
     VERIFY_NOT_NULL_RETURN(TAG, pDev1, ERROR,  OC_STACK_INVALID_PARAM);
     if (!resultCallback)
@@ -1524,11 +1712,6 @@ OCStackResult SRPProvisionCredentialsDos(void *ctx, OicSecCredType_t type, size_
         (0 == memcmp(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID, sizeof(OicUuid_t))))
     {
         OIC_LOG(INFO, TAG, "SRPProvisionCredentialsDos : Same device ID");
-        return OC_STACK_INVALID_PARAM;
-    }
-    if (SYMMETRIC_PAIR_WISE_KEY == type && NULL == pDev2)
-    {
-        OIC_LOG(INFO, TAG, "SRPProvisionCredentialsDos : NULL device");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -1586,12 +1769,12 @@ OCStackResult SRPProvisionCredentialsDos(void *ctx, OicSecCredType_t type, size_
             data->type = PSK_TYPE;
             OicSecCred_t *firstCred = NULL;
             OicSecCred_t *secondCred = NULL;
-            OCStackResult res = PMGeneratePairWiseCredentials(type, keySize, &provTooldeviceID,
+            OCStackResult res = PMGeneratePairWiseCredentials(type, keySize,
                                 &pDev1->doxm->deviceID, (NULL != pDev2) ? &pDev2->doxm->deviceID :
                                 &provTooldeviceID,
-                                NULL, NULL,
+                                role1, role2,
                                 &firstCred, &secondCred);
-            VERIFY_SUCCESS_RETURN(TAG, (res == OC_STACK_OK), ERROR, OC_STACK_ERROR);
+            VERIFY_SUCCESS_RETURN(TAG, (OC_STACK_OK == res), ERROR, OC_STACK_ERROR);
             OIC_LOG(INFO, TAG, "Credentials generated successfully");
 
             credData->deviceInfo[0] = pDev1;
@@ -1617,7 +1800,6 @@ OCStackResult SRPProvisionCredentialsDos(void *ctx, OicSecCredType_t type, size_
             }
 
             res = SetDOS(data, DOS_RFPRO, ProvisionPskCB);
-
             if (OC_STACK_OK != res)
             {
                 DeleteCredList(firstCred);
@@ -1706,153 +1888,6 @@ OCStackResult SRPSaveACL(const OicSecAcl_t *acl)
 
     OIC_LOG(DEBUG, TAG, "OUT SRPSaveACL");
     return res;
-}
-
-/**
- * Internal Function to store results in result array during Direct-Pairing provisioning.
- */
-static void registerResultForDirectPairingProvisioning(PconfData_t *pconfData,
-                                             OCStackResult stackresult)
-{
-   OIC_LOG_V(INFO, TAG, "Inside registerResultForDirectPairingProvisioning "
-           "pconfData->numOfResults is %d", pconfData->numOfResults);
-   memcpy(pconfData->resArr[(pconfData->numOfResults)].deviceId.id,
-          pconfData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
-   pconfData->resArr[(pconfData->numOfResults)].res = stackresult;
-   ++(pconfData->numOfResults);
-}
-
-/**
- * Callback handler of SRPProvisionDirectPairing.
- *
- * @param[in] ctx             ctx value passed to callback from calling function.
- * @param[in] UNUSED          handle to an invocation
- * @param[in] clientResponse  Response from queries to remote servers.
- * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
- *          and  OC_STACK_KEEP_TRANSACTION to keep it.
- */
-static OCStackApplicationResult SRPProvisionDirectPairingCB(void *ctx, OCDoHandle UNUSED,
-                                                  OCClientResponse *clientResponse)
-{
-    OIC_LOG_V(INFO, TAG, "Inside SRPProvisionDirectPairingCB.");
-    (void)UNUSED;
-    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
-    PconfData_t *pconfData = (PconfData_t*)ctx;
-    OCProvisionResultCB resultCallback = pconfData->resultCallback;
-
-    if (clientResponse)
-    {
-        if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
-        {
-            registerResultForDirectPairingProvisioning(pconfData, OC_STACK_OK);
-            ((OCProvisionResultCB)(resultCallback))(pconfData->ctx, pconfData->numOfResults,
-                                                    pconfData->resArr,
-                                                    false);
-             OICFree(pconfData->resArr);
-             OICFree(pconfData);
-             return OC_STACK_DELETE_TRANSACTION;
-        }
-    }
-    registerResultForDirectPairingProvisioning(pconfData, OC_STACK_ERROR);
-    ((OCProvisionResultCB)(resultCallback))(pconfData->ctx, pconfData->numOfResults,
-                                            pconfData->resArr,
-                                            true);
-    OIC_LOG_V(ERROR, TAG, "SRPProvisionDirectPairingCB received Null clientResponse");
-    OICFree(pconfData->resArr);
-    OICFree(pconfData);
-    return OC_STACK_DELETE_TRANSACTION;
-}
-
-OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
-        OicSecPconf_t *pconf, OCProvisionResultCB resultCallback)
-{
-    VERIFY_NOT_NULL_RETURN(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NOT_NULL_RETURN(TAG, pconf, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
-
-    // check direct-pairing capability
-    if (true != selectedDeviceInfo->doxm->dpc)
-    {
-        OIC_LOG(ERROR, TAG, "Resouce server does not have Direct-Pairing Capability ");
-        return OC_STACK_UNAUTHORIZED_REQ;
-    }
-
-    OicUuid_t provTooldeviceID =   {.id={0}};
-    if (OC_STACK_OK != GetDoxmDeviceID(&provTooldeviceID))
-    {
-        OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
-        return OC_STACK_ERROR;
-    }
-    memcpy(&pconf->rownerID, &provTooldeviceID, sizeof(OicUuid_t));
-
-    OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if(!secPayload)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-        return OC_STACK_NO_MEMORY;
-    }
-    secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-
-    if (OC_STACK_OK != PconfToCBORPayload(pconf, &(secPayload->securityData),
-                &(secPayload->payloadSize)))
-    {
-        OCPayloadDestroy((OCPayload*)secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to PconfToCborPayload");
-        return OC_STACK_NO_MEMORY;
-    }
-    OIC_LOG(DEBUG, TAG, "Created payload for pconf set");
-    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
-
-    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
-    if(!PMGenerateQuery(true,
-                selectedDeviceInfo->endpoint.addr,
-                selectedDeviceInfo->securePort,
-                selectedDeviceInfo->connType,
-                query, sizeof(query), OIC_RSRC_PCONF_URI))
-    {
-        OIC_LOG(ERROR, TAG, "SRPProvisionDirectPairing : Failed to generate query");
-        return OC_STACK_ERROR;
-    }
-    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
-
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
-    cbData.cb = &SRPProvisionDirectPairingCB;
-    PconfData_t *pconfData = (PconfData_t *) OICCalloc(1, sizeof(PconfData_t));
-    if (NULL == pconfData)
-    {
-        OCPayloadDestroy((OCPayload*)secPayload);
-        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
-        return OC_STACK_NO_MEMORY;
-    }
-    pconfData->deviceInfo = selectedDeviceInfo;
-    pconfData->resultCallback = resultCallback;
-    pconfData->numOfResults=0;
-    pconfData->ctx = ctx;
-    // call to provision PCONF to device1.
-    int noOfRiCalls = 1;
-    pconfData->resArr = (OCProvisionResult_t*)OICCalloc(noOfRiCalls, sizeof(OCProvisionResult_t));
-    if (NULL == pconfData->resArr)
-    {
-        OICFree(pconfData);
-        OCPayloadDestroy((OCPayload*)secPayload);
-        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
-        return OC_STACK_NO_MEMORY;
-    }
-    cbData.context = (void *)pconfData;
-    cbData.cd = NULL;
-    OCMethod method = OC_REST_POST;
-    OCDoHandle handle = NULL;
-    OIC_LOG(DEBUG, TAG, "Sending PCONF info to resource server");
-    OCStackResult ret = OCDoResource(&handle, method, query,
-            &selectedDeviceInfo->endpoint, (OCPayload*)secPayload,
-            selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
-    if (OC_STACK_OK != ret)
-    {
-        OICFree(pconfData->resArr);
-        OICFree(pconfData);
-    }
-    VERIFY_SUCCESS_RETURN(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
-    return OC_STACK_OK;
 }
 
 static void DeleteUnlinkData_t(UnlinkData_t *unlinkData)
@@ -3149,7 +3184,7 @@ OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
     propertiesToInclude[PSTAT_DOS] = true;
 
     if (OC_STACK_OK != PstatToCBORPayloadPartial(pstat, &(secPayload->securityData),
-                &(secPayload->payloadSize), propertiesToInclude))
+                &(secPayload->payloadSize), propertiesToInclude, false))
     {
         OCPayloadDestroy((OCPayload *) secPayload);
         OIC_LOG(ERROR, TAG, "Failed to PstatToCBORPayload");
@@ -3656,14 +3691,11 @@ static void registerResultForGetRolesResourceCB(GetRolesData_t *getRolesData,
                 for (i = 0, curr = chains; NULL != curr; curr = curr->next, i++)
                 {
                     currentEntry->chains[i].credId = curr->credId;
-                    /* Take ownership of the buffers from certificate and optData, rather than copy. */
+                    /* Take ownership of the buffers from certificate rather than copy. */
                     currentEntry->chains[i].certificate = curr->certificate;
-                    currentEntry->chains[i].optData = curr->optData;
 
                     curr->certificate.data = NULL;
                     curr->certificate.len = 0;
-                    curr->optData.data = NULL;
-                    curr->optData.len = 0;
                 }
             }
             FreeRoleCertChainList(chains);
@@ -3714,14 +3746,13 @@ static OCStackApplicationResult SRPGetRolesResourceCB(void *ctx, OCDoHandle hand
                    false);
     for (size_t i = 0; i < getRolesData->numOfResults; i++)
     {
-        /* We took ownership of certificate.data and optData.data, so we must free them.
+        /* We took ownership of certificate.data so we must free it.
          * These are allocated internally by tinycbor, which uses malloc and free, so we call
          * free directly for those.
          */
         for (size_t j = 0; j < getRolesData->resArr[i].chainsLength; j++)
         {
             free(getRolesData->resArr[i].chains[j].certificate.data);
-            free(getRolesData->resArr[i].chains[j].optData.data);
         }
         OICFree(getRolesData->resArr[i].chains);
     }

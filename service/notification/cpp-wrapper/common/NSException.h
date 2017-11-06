@@ -45,19 +45,23 @@ namespace OIC
                       *
                       * @param message - String describing the error messsage.
                       */
-                NSException(const std::string &message) : m_message(message) {}
+                NSException(const std::string &message) : m_message(message)
+                {
+                }
 
                 /**
                       * API to get error message describing exception reason.
                       *
                       * @return Null terminated string.
                       */
-                virtual const char *what() const noexcept                
+                virtual const char *what() const noexcept
                 {
                     return m_message.c_str();
                 }
 
-                virtual ~NSException() throw() {}
+                virtual ~NSException() throw()
+                {
+                }
 
             private:
                 std::string m_message;

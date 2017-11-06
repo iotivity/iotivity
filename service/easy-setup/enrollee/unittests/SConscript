@@ -22,28 +22,24 @@
 # Notification Unit Test build script
 ##
 
-from tools.scons.RunTest import run_test;
+from tools.scons.RunTest import run_test
 Import('env')
 
-if env.get('RELEASE'):
-	env.AppendUnique(CCFLAGS = ['-Os'])
-	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
-else:
-	env.AppendUnique(CCFLAGS = ['-g'])
-
-if env.get('LOGGING'):
-	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
-lib_env = SConscript('#extlibs/gtest/SConscript')
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+lib_env = gtest_env.Clone()
 rd_mode = env.get('RD_MODE')
 
 SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+
+if lib_env.get('RELEASE'):
+    lib_env.AppendUnique(CCFLAGS = ['-Os'])
+else:
+    lib_env.AppendUnique(CCFLAGS = ['-g'])
 
 ######################################################################
 #unit test setting
 ######################################################################
 src_dir = lib_env.get('SRC_DIR')
-gtest_dir = src_dir + '/extlibs/gtest/googletest-release-1.7.0'
 
 easysetup_test_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
@@ -51,24 +47,25 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-GTest = File(gtest_dir + '/lib/.libs/libgtest.a')
-GTest_Main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
-
-easysetup_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
-easysetup_test_env.PrependUnique(LIBS = [
-    'connectivity_abstraction', 'oc', 'octbstack', 'oc_logger', 'coap',
-    GTest_Main, GTest])
+easysetup_test_env.PrependUnique(LIBS=[
+    'connectivity_abstraction',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'coap',
+])
 
 if target_os not in ['windows', 'winrt']:
-    easysetup_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+    easysetup_test_env.AppendUnique(
+        CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
-easysetup_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
-easysetup_test_env.AppendUnique(LIBS = ['pthread'])
-
-easysetup_test_env.PrependUnique(CPPPATH = [
+easysetup_test_env.AddPthreadIfNeeded()
+easysetup_test_env.PrependUnique(CPPPATH=[
     '#/extlibs/hippomocks/hippomocks',
-    gtest_dir + '/include',
     '#/resource/include',
+    '#/resource/c_common',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
     '#/resource/csdk/connectivity/api',
     '#/resource/csdk/stack/include',
     '#/resource/csdk/include',
@@ -79,26 +76,28 @@ easysetup_test_env.PrependUnique(CPPPATH = [
 ])
 
 if easysetup_test_env.get('SECURED') == '1':
-    easysetup_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    easysetup_test_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Build Test
 ######################################################################
 
 easysetup_enrollee_test_env = easysetup_test_env.Clone()
-easysetup_enrollee_test_env.AppendUnique(LIBS = ['ESEnrolleeSDK', 'ESMediatorRich'])
+easysetup_enrollee_test_env.AppendUnique(
+    LIBS=['ESEnrolleeSDK', 'ESMediatorRich'])
 
 easysetup_enrollee_test_src = env.Glob('./ESEnrolleeTest.cpp')
-easysetup_enrollee_test = easysetup_enrollee_test_env.Program('easysetup_enrollee_test', easysetup_enrollee_test_src)
+
+easysetup_enrollee_test = easysetup_enrollee_test_env.Program(
+    'easysetup_enrollee_test', easysetup_enrollee_test_src)
 Alias("easysetup_enrollee_test", easysetup_enrollee_test)
-env.AppendTarget('easysetup_enrollee_test')
+easysetup_enrollee_test_env.AppendTarget('easysetup_enrollee_test')
 
 if env.get('TEST') == '1':
     if target_os in ['linux'] and env.get('SECURED') != '1':
-        from tools.scons.RunTest import run_test
-        run_test(easysetup_enrollee_test_env,
-#      temporary blocking until valigrind error resolved in /resource layer
-#                'service_easy-setup_enrollee_unittests_easysetup_enrollee_test.memcheck',
-                 '',
-                 'service/easy-setup/enrollee/unittests/easysetup_enrollee_test',
-                 easysetup_enrollee_test)
+        run_test(
+            easysetup_enrollee_test_env,
+            # 'service_easy-setup_enrollee_unittests_easysetup_enrollee_test.memcheck',
+            '',  # TODO enable previous line when valigrind error resolved in resource layer
+            'service/easy-setup/enrollee/unittests/easysetup_enrollee_test',
+            easysetup_enrollee_test)

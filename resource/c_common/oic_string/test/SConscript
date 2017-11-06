@@ -20,7 +20,7 @@
 
 import os
 import os.path
-from tools.scons.RunTest import *
+from tools.scons.RunTest import run_test
 
 Import('test_env')
 
@@ -31,24 +31,26 @@ target_os = stringtest_env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-stringtest_env.PrependUnique(CPPPATH = ['../include'])
+stringtest_env.PrependUnique(CPPPATH=['../include'])
 
-stringtest_env.AppendUnique(LIBPATH = [os.path.join(stringtest_env.get('BUILD_DIR'), 'resource', 'c_common')])
-stringtest_env.PrependUnique(LIBS = ['c_common'])
+stringtest_env.AppendUnique(LIBPATH=[
+    os.path.join(stringtest_env.get('BUILD_DIR'), 'resource', 'c_common')
+])
+stringtest_env.PrependUnique(LIBS=['c_common'])
 
 if stringtest_env.get('LOGGING'):
-    stringtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    stringtest_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 #
 ######################################################################
 # Source files and Targets
 ######################################################################
-stringtests = stringtest_env.Program('stringtests', ['linux/oic_string_tests.cpp'])
+stringtests = stringtest_env.Program('stringtests',
+                                     ['linux/oic_string_tests.cpp'])
 
 Alias("test", [stringtests])
 
 stringtest_env.AppendTarget('test')
 if stringtest_env.get('TEST') == '1':
     if target_os in ['linux', 'windows']:
-                run_test(stringtest_env,
-                         'resource_ccommon_string_test.memcheck',
-                         'resource/c_common/oic_string/test/stringtests')
+        run_test(stringtest_env, 'resource_ccommon_string_test.memcheck',
+                 'resource/c_common/oic_string/test/stringtests')

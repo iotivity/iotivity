@@ -83,7 +83,7 @@ namespace OIC
             }
 
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                    "onProvisioningResponse : Provisioning is success. ");
+                    "onProvisioningResponse : Provisioning is success.");
 
             std::shared_ptr< DevicePropProvisioningStatus > provStatus = std::make_shared<
                     DevicePropProvisioningStatus >(ESResult::ES_OK);
@@ -132,6 +132,8 @@ namespace OIC
             OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetConfigurationResponse : eCode = %d",
                         eCode);
 
+            int version = GetOCFServerVersion();
+
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
                 ESResult result = ESResult::ES_ERROR;
@@ -146,15 +148,14 @@ namespace OIC
                     result = ESResult::ES_COMMUNICATION_ERROR;
                 }
 
-                EnrolleeConf enrolleeConf(rep);
+                EnrolleeConf enrolleeConf(rep, version);
                 std::shared_ptr< GetConfigurationStatus > getConfigurationStatus = std::make_shared<
                         GetConfigurationStatus >(result, enrolleeConf);
                 m_getConfigurationStatusCb(getConfigurationStatus);
             }
             else
             {
-                EnrolleeConf enrolleeConf(rep);
-
+                EnrolleeConf enrolleeConf(rep, version);
                 std::shared_ptr< GetConfigurationStatus > getConfigurationStatus = std::make_shared<
                         GetConfigurationStatus >(ESResult::ES_OK, enrolleeConf);
                 m_getConfigurationStatusCb(getConfigurationStatus);
@@ -195,6 +196,49 @@ namespace OIC
             m_connectRequestStatusCb(connectRequestStatus);
         }
 
+        int EnrolleeResource::GetOCFServerVersion()
+        {
+            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "GetOCFServerVersion IN");
+
+            HeaderOptions headerOptions = m_ocResource->getServerHeaderOptions();
+            if (headerOptions.size() == 0)
+            {
+                OIC_LOG (ERROR, ES_REMOTE_ENROLLEE_RES_TAG, "No header option exists");
+            }
+            else
+            {
+                for (auto it = headerOptions.begin(); it != headerOptions.end(); ++it)
+                {
+                   if (it->getOptionID() == OCF_CONTENT_FORMAT_VERSION_OPTION_ID) // OPTION_CONTENT_VERSION
+                   {
+                        size_t dataLength = it->getOptionData().length();
+                        if (dataLength == 0)
+                        {
+                            OIC_LOG (ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
+                                "GetOCFServerVersion: version value not found!");
+
+                            // Content Format Version Header Option ID exist but not value.
+                            // As OIC server don't use this header option ID, assuming as OCF Server.
+                            return 1;
+                        }
+
+                        int version = (it->getOptionData().c_str()[0]) * 256;
+                        OIC_LOG_V (INFO, ES_REMOTE_ENROLLEE_RES_TAG, "GetOCFServerVersion: Version [%d]", version);
+
+                        if(OCF_CONTENT_FORMAT_VERSION_VALUE == version)
+                        {
+                            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                                "GetOCFServerVersion: Version matches OCF 1.0");
+                        }
+
+                        return version;
+                   }
+                }
+            }
+
+            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "GetOCFServerVersion OUT version option not found");
+            return 0;
+        }
 
         void EnrolleeResource::registerGetStatusCallback(
             const GetStatusCb callback)
@@ -270,7 +314,6 @@ namespace OIC
             }
 
             OC::QueryParamsMap query;
-            OC::OCRepresentation rep;
 
             std::function< OCStackResult(void) > getConfigurationStatus = [&]
             {
@@ -289,6 +332,7 @@ namespace OIC
 
             if (result != OCStackResult::OC_STACK_OK)
             {
+                OC::OCRepresentation rep;
                 EnrolleeConf enrolleeConf(rep);
                 std::shared_ptr< GetConfigurationStatus > getConfigurationStatus = std::make_shared<
                         GetConfigurationStatus >(ESResult::ES_ERROR, enrolleeConf);
@@ -307,8 +351,11 @@ namespace OIC
                 throw ESBadRequestException("Resource is not initialized");
             }
 
-            OC::QueryParamsMap query;
-            OC::OCRepresentation provisioningRepresentation = deviceProp.toOCRepresentation();
+            int version = GetOCFServerVersion();
+
+            DeviceProp devicePropCopy(deviceProp);
+            devicePropCopy.updateOCRepresentation(version);
+            OC::OCRepresentation provisioningRepresentation = devicePropCopy.toOCRepresentation();
 
             ESEnrolleeResourceCb cb = std::bind(&EnrolleeResource::onEnrolleeResourceSafetyCB,
                             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
@@ -331,7 +378,6 @@ namespace OIC
                 throw ESBadRequestException("Resource is not initialized");
             }
 
-            OC::QueryParamsMap query;
             OC::OCRepresentation requestRepresentation;
             std::vector<int> connectTypes_int;
             connectTypes_int.clear();

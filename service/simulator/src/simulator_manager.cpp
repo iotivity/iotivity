@@ -53,7 +53,9 @@ std::shared_ptr<SimulatorResource> SimulatorManager::createResource(
     {
         resource = SimulatorResourceFactory::getInstance()->createResource(configPath);
         if (!resource)
+        {
             throw SimulatorException(SIMULATOR_ERROR, "Failed to create resource!");
+        }
     }
     catch (RAML::RamlException &e)
     {
@@ -74,7 +76,9 @@ std::vector<std::shared_ptr<SimulatorResource>> SimulatorManager::createResource
     {
         resources = SimulatorResourceFactory::getInstance()->createResource(configPath, count);
         if (!resources.size())
+        {
             throw SimulatorException(SIMULATOR_ERROR, "Failed to create resource!");
+        }
     }
     catch (RAML::RamlException &e)
     {
@@ -112,7 +116,9 @@ void SimulatorManager::findResource(ResourceFindCallback callback)
                                         [](std::shared_ptr<OC::OCResource> ocResource, ResourceFindCallback callback)
     {
         if (!ocResource)
+        {
             return;
+        }
 
         callback(std::make_shared<SimulatorRemoteResourceImpl>(ocResource));
     }, std::placeholders::_1, callback);
@@ -134,7 +140,9 @@ void SimulatorManager::findResource(const std::string &resourceType,
                                         [](std::shared_ptr<OC::OCResource> ocResource, ResourceFindCallback callback)
     {
         if (!ocResource)
+        {
             return;
+        }
 
         callback(std::make_shared<SimulatorRemoteResourceImpl>(ocResource));
     }, std::placeholders::_1, callback);
@@ -178,7 +186,7 @@ void SimulatorManager::setDeviceInfo(const std::string &deviceName)
 
     typedef OCStackResult (*RegisterDeviceInfo)(const OCDeviceInfo);
 
-    OCDeviceInfo ocDeviceInfo {nullptr, nullptr};
+    OCDeviceInfo ocDeviceInfo {nullptr, nullptr, nullptr, nullptr};
     ocDeviceInfo.deviceName = const_cast<char *>(deviceName.c_str());
     invokeocplatform(static_cast<RegisterDeviceInfo>(OC::OCPlatform::registerDeviceInfo),
                      ocDeviceInfo);

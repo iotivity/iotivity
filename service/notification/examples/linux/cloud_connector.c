@@ -134,32 +134,32 @@ void printRepresentation(OCRepPayloadValue *value)
                 printf("Key: %s / ", value->name);
                 switch (value->type)
                 {
-                case OCREP_PROP_NULL:
-                        printf("Value: None\n");
-                        break;
-                case OCREP_PROP_INT:
-                        printf("Value: %ld\n", value->i);
-                        break;
-                case OCREP_PROP_DOUBLE:
-                        printf("Value: %f\n", value->d);
-                        break;
-                case OCREP_PROP_BOOL:
-                        printf("Value: %d\n", value->b);
-                        break;
-                case OCREP_PROP_STRING:
-                        printf("Value: %s\n", value->str);
-                        break;
-                case OCREP_PROP_BYTE_STRING:
-                        printf("Value: Byte String\n");
-                        break;
-                case OCREP_PROP_OBJECT:
-                        printf("Value: Object\n");
-                        break;
-                case OCREP_PROP_ARRAY:
-                        printf("Value: Array\n");
-                        break;
-                default:
-                        break;
+                    case OCREP_PROP_NULL:
+                            printf("Value: None\n");
+                            break;
+                    case OCREP_PROP_INT:
+                            printf("Value: %ld\n", value->i);
+                            break;
+                    case OCREP_PROP_DOUBLE:
+                            printf("Value: %f\n", value->d);
+                            break;
+                    case OCREP_PROP_BOOL:
+                            printf("Value: %d\n", value->b);
+                            break;
+                    case OCREP_PROP_STRING:
+                            printf("Value: %s\n", value->str);
+                            break;
+                    case OCREP_PROP_BYTE_STRING:
+                            printf("Value: Byte String\n");
+                            break;
+                    case OCREP_PROP_OBJECT:
+                            printf("Value: Object\n");
+                            break;
+                    case OCREP_PROP_ARRAY:
+                            printf("Value: Array\n");
+                            break;
+                    default:
+                            break;
                 }
                 value = value->next;
         }

@@ -134,12 +134,9 @@ namespace OIC
                         while (iter)
                         {
                             following = iter->next;
-                            if (iter)
-                            {
-                                NSOICFree(iter->topicName);
-                                iter->next = NULL;
-                                NSOICFree(iter);
-                            }
+                            NSOICFree(iter->topicName);
+                            iter->next = NULL;
+                            NSOICFree(iter);
                             iter = following;
                         }
                     }

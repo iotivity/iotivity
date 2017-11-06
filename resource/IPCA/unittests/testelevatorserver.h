@@ -68,8 +68,9 @@ private:
     OCResourceHandle m_elevatorResourceHandle;            // The elevator resource.
     OCResourceHandle m_elevatorCOResourceHandle;          // CO resource.
     OCResourceHandle m_elevatorMaintenanceHandle;
-    OCResourceHandle m_elevatorCreateRelativeResource;    // Resource that handles pretent create.
-    OCResourceHandle m_elevatorDeleteResource;            // Resource that handles pretend delete.
+    OCResourceHandle m_elevatorCreateRelativeResource;     // Resource that handles pretend create.
+    OCResourceHandle m_elevatorCreateRelativeResourceLong; // Resource that handles pretend create.
+    OCResourceHandle m_elevatorDeleteResource;             // Resource that handles pretend delete.
 
     int m_targetFloor;    // where elevator needs to be.
     int m_currentFloor;   // where elevator is.

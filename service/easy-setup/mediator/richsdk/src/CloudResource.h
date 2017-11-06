@@ -63,6 +63,9 @@ namespace OIC
                                                 const OCRepresentation& rep,
                                                 const int eCode);
 
+            // Determine Specification Version Enrollee follows using header options from discovered resource
+            int GetOCFServerVersion();
+
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;
             CloudPropProvStatusCb m_cloudPropProvStatusCb;

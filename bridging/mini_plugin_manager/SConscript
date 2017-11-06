@@ -29,47 +29,43 @@ target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 bridging_path = os.path.join(src_dir, 'bridging')
 
+manager_env = env.Clone()
+
 print "Reading MPM script"
 
 ######################################################################
 # Build flags
 ######################################################################
-env.PrependUnique(CPPPATH = [ os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
-                              os.path.join(src_dir, 'extlibs', 'rapidjson', 'include', 'rapidjson')
-                            ])
-env.AppendUnique(CPPPATH = [ os.path.join(bridging_path, 'include')
-                           ])
+manager_env.PrependUnique(CPPPATH=[
+                            os.path.join(src_dir, 'resource', 'c_common'),
+                            os.path.join(src_dir, 'resource', 'c_common', 'ocrandom', 'include'),
+                            os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
+                            os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
+                            os.path.join(src_dir, 'extlibs', 'rapidjson', 'include', 'rapidjson'),
+                            os.path.join(bridging_path, 'include')
+])
 
 if target_os not in ['arduino', 'windows']:
-        env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
-        env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
+        manager_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
-if target_os in ['darwin','ios']:
-        env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+manager_env.PrependUnique(LIBS=['mpmcommon'])
 
-env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-
-if env.get('LOGGING'):
-        env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
-
-env.PrependUnique(LIBS = ['mpmcommon'])
 #####################################################################
 # Source files and Target(s)
 ######################################################################
 minipluginmanager_src = [
-         os.path.join(bridging_path, 'mini_plugin_manager', 'miniPluginManager.cpp'),
-        ]
+    os.path.join(bridging_path, 'mini_plugin_manager',
+                 'miniPluginManager.cpp'),
+]
 
-env.AppendUnique(MINIPLUGINMANAGER_SRC =minipluginmanager_src)
+manager_env.AppendUnique(MINIPLUGINMANAGER_SRC=minipluginmanager_src)
 
-print "Include path is %s" % env.get('CPPPATH')
-print "Files path is %s" % env.get('MINIPLUGINMANAGER_SRC')
 if target_os in ['android', 'tizen']:
-        mpmlib = env.SharedLibrary('minipluginmanager', env.get('MINIPLUGINMANAGER_SRC'))
+        mpmlib = manager_env.SharedLibrary('minipluginmanager',
+                                           manager_env.get('MINIPLUGINMANAGER_SRC'))
 else:
-        mpmlib = env.StaticLibrary('minipluginmanager', env.get('MINIPLUGINMANAGER_SRC'))
-env.InstallTarget(mpmlib, 'minipluginmanager')
-env.UserInstallTargetLib(mpmlib, 'minipluginmanager')
+        mpmlib = manager_env.StaticLibrary('minipluginmanager',
+                                           manager_env.get('MINIPLUGINMANAGER_SRC'))
+manager_env.InstallTarget(mpmlib, 'minipluginmanager')
+manager_env.UserInstallTargetLib(mpmlib, 'minipluginmanager')
 

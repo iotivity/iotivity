@@ -30,55 +30,45 @@ pi_dir = os.path.join(src_dir, 'plugins')
 ######################################################################
 # Build flags
 ######################################################################
-samples_env.PrependUnique(CPPPATH = [
-		os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
-		os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
-		os.path.join(src_dir, 'resource', 'csdk', 'include'),
-		os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
-                os.path.join(pi_dir, 'include')
-                ])
+samples_env.PrependUnique(CPPPATH=[
+    os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
+    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
+    os.path.join(src_dir, 'resource', 'csdk', 'include'),
+    os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
+    os.path.join(pi_dir, 'include')
+])
 
-samples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
-samples_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+samples_env.AppendUnique(
+    CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
 if target_os in ['darwin', 'ios']:
-	samples_env.PrependUnique(LIBS = ['m',
-                                          'octbstack',
-                                          'ocsrm',
-                                          'connectivity_abstraction',
-                                          'coap' ])
+    samples_env.PrependUnique(
+        LIBS=['m', 'octbstack', 'ocsrm', 'connectivity_abstraction', 'coap'])
 elif target_os not in ['arduino']:
-	samples_env.PrependUnique(LIBS = ['m',
-                                          'octbstack',
-                                          'ocsrm',
-                                          'connectivity_abstraction',
-                                          'coap',
-                                          'plugin_interface'])
-	samples_env.AppendUnique(LIBS = ['rt'])
-	if target_arch in ['x86_64', 'arm64']:
-		samples_env.AppendUnique(CPPFLAGS = ['-Llib64'])
-	else:
-		samples_env.AppendUnique(CPPFLAGS = ['-Llib'])
-	samples_env.AppendUnique(LIBS = ['pthread'])
+    samples_env.PrependUnique(LIBS=[
+        'm', 'octbstack', 'ocsrm', 'connectivity_abstraction', 'coap',
+        'plugin_interface'
+    ])
+    samples_env.AppendUnique(LIBS=['rt'])
+    if target_arch in ['x86_64', 'arm64']:
+        samples_env.AppendUnique(CPPFLAGS=['-Llib64'])
+    else:
+        samples_env.AppendUnique(CPPFLAGS=['-Llib'])
+    samples_env.AppendUnique(LIBS=['pthread'])
 
 if env.get('SECURED') == '1':
-    samples_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
-
-samples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    samples_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
 iotivityandzigbeeserver = samples_env.Program('iotivityandzigbeeserver',
-        ['IotivityandZigbeeServer.c'])
+                                              ['IotivityandZigbeeServer.c'])
 iotivityandzigbeeclient = samples_env.Program('iotivityandzigbeeclient',
-        ['IotivityandZigbeeClient.c'])
+                                              ['IotivityandZigbeeClient.c'])
 
 list_of_samples = [iotivityandzigbeeserver, iotivityandzigbeeclient]
 
 Alias("samples", list_of_samples)
 
 env.AppendTarget('samples')
-
-
