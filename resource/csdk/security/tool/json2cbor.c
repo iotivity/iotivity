@@ -23,7 +23,6 @@
 #include <inttypes.h>
 #include "utlist.h"
 #include "cJSON.h"
-#include "base64.h"
 #include "cainterface.h"
 #include "ocstack.h"
 #include "oic_malloc.h"

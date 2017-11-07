@@ -27,11 +27,11 @@
 #include <mbedtls/x509_crt.h>
 #include <mbedtls/pkcs12.h>
 #include <mbedtls/ssl_internal.h>
+#include <mbedtls/base64.h>
 #include <string.h>
 #include <stdbool.h>
 
 #include "utlist.h"
-#include "base64.h"
 #include "octypes.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -271,16 +271,21 @@ static void ParseDerCaCert(ByteArray_t *crt, const char *usage, uint16_t credId)
         {
             if (OIC_ENCODING_BASE64 == temp->optionalData.encoding)
             {
-                size_t bufSize = B64DECODE_OUT_SAFESIZE((temp->optionalData.len + 1));
+                size_t outSize;
+                int decodeResult = mbedtls_base64_decode(NULL, 0, &outSize, temp->optionalData.data, temp->optionalData.len);
+                if ( MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL != decodeResult)
+                {
+                    PRINT_ERR("ParseDerCaCert : Failed to decode base64 data");
+                    return;
+                }
+                size_t bufSize = outSize;
                 uint8_t *buf = OICCalloc(1, bufSize);
                 if (NULL == buf)
                 {
                     PRINT_ERR("ParseDerCaCert : Failed to allocate memory");
                     return;
                 }
-                size_t outSize;
-                if (B64_OK != b64Decode((char *)(temp->optionalData.data), temp->optionalData.len, buf, bufSize,
-                                        &outSize))
+                if (0 != mbedtls_base64_decode(buf, bufSize, &outSize, temp->optionalData.data, temp->optionalData.len))
                 {
                     OICFree(buf);
                     PRINT_ERR("ParseDerCaCert : Failed to decode base64 data");
@@ -873,13 +878,13 @@ static int InputCredEncodingType(const char *dataType, OicEncodingType_t *encodi
 
 static int InputPSK(OicSecKey_t *secKey)
 {
-    char *data = NULL;
+    unsigned char *data = NULL;
     size_t psklen = 0;
     size_t bufSize = 0;
     uint8_t *buf = NULL;
     size_t outSize = 0;
 
-    data = InputString("\tInput encoded base64 psk (decoded psk 128 or 256 bits,\n"
+    data = (unsigned char *)InputString("\tInput encoded base64 psk (decoded psk 128 or 256 bits,\n"
                        "\te.g. BxjJidB+u21QlEwMCYBoKA== ) : ");
     if (NULL == data)
     {
@@ -887,8 +892,14 @@ static int InputPSK(OicSecKey_t *secKey)
         return -1;
     }
 
-    psklen = strlen(data);
-    bufSize = B64DECODE_OUT_SAFESIZE(psklen + 1);
+    int decodeResult = mbedtls_base64_decode(NULL, 0, &outSize, data, psklen);
+    if (MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL != decodeResult)
+    {
+        OIC_LOG(ERROR, TAG, "Failed base64 decoding for preconfig PIN");
+        return -1;
+    }
+    psklen = strlen((char*)data);
+    bufSize = outSize;
     buf = OICCalloc(1, bufSize);
     if (NULL == buf)
     {
@@ -897,7 +908,7 @@ static int InputPSK(OicSecKey_t *secKey)
         return -1;
     }
     //validate base64 psk
-    if (B64_OK != b64Decode(data, psklen, buf, bufSize, &outSize))
+    if (0 !=  mbedtls_base64_decode(buf, bufSize, &outSize, data, psklen))
     {
         PRINT_ERR("Failed to decode base64 data. Invalid base64 input");
         OICFree(data);

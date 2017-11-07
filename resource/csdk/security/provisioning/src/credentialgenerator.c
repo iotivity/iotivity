@@ -19,7 +19,6 @@
  * *****************************************************************/
 #include <string.h>
 #include "credentialgenerator.h"
-#include "base64.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocpayload.h"

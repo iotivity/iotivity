@@ -24,7 +24,6 @@
 #include "srmresourcestrings.h"
 #include "experimental/logger.h"
 #include "oic_malloc.h"
-#include "base64.h"
 #include "experimental/ocrandom.h"
 #include "experimental/doxmresource.h"
 

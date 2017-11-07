@@ -21,7 +21,6 @@
 
 #include "ocstack.h"
 #include "srmutility.h"
-#include "base64.h"
 
 #include <thread>
 

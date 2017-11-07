@@ -20,7 +20,6 @@
 
 #include "ocstack.h"
 #include "experimental/logger.h"
-#include "base64.h"
 #include "srmresourcestrings.h"
 #include "cainterface.h"
 #include "oxmverifycommon.h"

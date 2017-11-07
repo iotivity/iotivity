@@ -25,7 +25,6 @@
 #include "oic_malloc.h"
 
 #include "ocstack.h"
-#include "base64.h"
 
 #include "pinoxmcommon.h"
 

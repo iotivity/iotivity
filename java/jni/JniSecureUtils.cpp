@@ -25,7 +25,7 @@
 #include "JniOcSecureResource.h"
 #include "oic_malloc.h"
 #include "srmutility.h"
-#include "base64.h"
+#include "mbedtls/base64.h"
 
 using namespace OC;
 
@@ -104,19 +104,6 @@ jobjectArray JniSecureUtils::convertDeviceVectorToJavaArray(JNIEnv *env,
         env->DeleteLocalRef(jDevice);
     }
     return devArr;
-}
-
-std::string JniSecureUtils::convertUUIDtoStr(OicUuid_t uuid)
-{
-    std::ostringstream deviceId("");
-    char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {0,};
-    size_t outLen = 0;
-
-    b64Encode(uuid.id, sizeof(uuid.id), base64Buff,
-              sizeof(base64Buff), &outLen);
-
-    deviceId << base64Buff;
-    return deviceId.str();
 }
 
 jobject JniSecureUtils::convertUUIDVectorToJavaStrList(JNIEnv *env, UuidList_t &vector)

@@ -30,7 +30,6 @@
 #include "oic_malloc.h"
 #include "experimental/logger.h"
 #include "pbkdf2.h"
-#include "base64.h"
 #include "oxmrandompin.h"
 #include "ownershiptransfermanager.h"
 #include "pinoxmcommon.h"

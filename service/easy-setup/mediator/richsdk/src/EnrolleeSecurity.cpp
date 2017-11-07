@@ -18,8 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "base64.h"
-
 #include "EnrolleeSecurity.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"

@@ -23,6 +23,7 @@
 #include "oic_malloc.h"
 #include <stdlib.h>
 #include <stdint.h>
+#include "mbedtls/base64.h"
 
 // Tests for base64 encode function
 TEST(B64Test, ValidInputForEncoding)
@@ -491,6 +492,83 @@ TEST(B64Test, EncodeThenDecode)
     ASSERT_NE(nullptr, outBuf) << "memory allocation error.";
     EXPECT_EQ(B64_OK, b64Decode(b64Buf, b64Size, outBuf, outBufSize, &outSize));
     EXPECT_STREQ(input, (char *)outBuf);
+    OICFree(b64Buf);
+    OICFree(outBuf);
+}
+
+// IOT-1375 Test done to see if we can safely replace our custom Base64 implementation
+// with the impementation done in the mbedtls library.
+TEST(B64Test, EncodeThenDecodeUsingMbedtls)
+{
+
+    const unsigned char input[] = "This is a string that will be passed into  the Base64 "
+                         "encoder.  After it is encoded the encoded result will "
+                         "be passed into the Base64 decoded and the result will "
+                         "be checked with the original input to make sure the "
+                         "round trip results are as expected.";
+
+    size_t b64Size = 0;
+    // encode the null character at the end of the string.
+    size_t b64BufSize = B64ENCODE_OUT_SAFESIZE(sizeof(input));
+    char *b64Buf = (char *)OICCalloc(1, b64BufSize);
+    ASSERT_NE(nullptr, b64Buf) << "memory allocation error.";
+    EXPECT_EQ(B64_OK, b64Encode((const uint8_t *)input, sizeof(input), b64Buf, b64BufSize, &b64Size));
+    EXPECT_EQ(0u, b64Size % 4) <<
+                              "The return size for all b64Encode operations should be a multiple of 4.";
+
+    size_t outSize= 0;
+    size_t outBufSize = 0;
+    int decodeResult = mbedtls_base64_decode(nullptr, 0, &outSize, (unsigned char*)b64Buf, b64Size);
+    EXPECT_EQ(MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL, decodeResult);
+    EXPECT_LT(0u, outSize);
+    outBufSize = outSize;
+    unsigned char* outBuf = (unsigned char*)OICCalloc(1, outBufSize);
+    if (nullptr == outBuf)
+    {
+        OICFree(b64Buf);
+    }
+    ASSERT_NE(nullptr, outBuf) << "memory allocation error.";
+    EXPECT_EQ(0, mbedtls_base64_decode(outBuf, outBufSize, &outSize, (unsigned char*)b64Buf, b64Size));
+    EXPECT_STREQ((char*)input, (char*)outBuf);
+    OICFree(b64Buf);
+    OICFree(outBuf);
+}
+
+// IOT-1375 Test done to see if we can safely replace our custom Base64 implementation
+// with the impementation done in the mbedtls library.
+TEST(B64Test, EncodeUsingMbedtlsThenDecode)
+{
+
+    const unsigned char input[] = "This is a string that will be passed into  the Base64 "
+                         "encoder.  After it is encoded the encoded result will "
+                         "be passed into the Base64 decoded and the result will "
+                         "be checked with the original input to make sure the "
+                         "round trip results are as expected.";
+
+    size_t b64Size = 0;
+    // encode the null character at the end of the string.
+    size_t b64BufSize = 0;
+    EXPECT_EQ(MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL, mbedtls_base64_encode(nullptr, 0, &b64Size, input, sizeof(input)));
+    EXPECT_LT(0u, b64Size);
+    b64BufSize = b64Size;
+//    size_t b64BufSize = B64ENCODE_OUT_SAFESIZE(sizeof(input));
+    unsigned char *b64Buf = (unsigned char *)OICCalloc(1, b64BufSize);
+    ASSERT_NE(nullptr, b64Buf) << "memory allocation error.";
+    EXPECT_EQ(0, mbedtls_base64_encode(b64Buf, b64BufSize, &b64Size, input, sizeof(input)));
+//    EXPECT_EQ(B64_OK, b64Encode((const uint8_t *)input, sizeof(input), b64Buf, b64BufSize, &b64Size));
+    EXPECT_EQ(0u, b64Size % 4) <<
+                              "The return size for all b64Encode operations should be a multiple of 4.";
+
+    size_t outSize;
+    size_t outBufSize = B64DECODE_OUT_SAFESIZE(b64Size);
+    uint8_t *outBuf = (uint8_t *)OICCalloc(1, outBufSize);
+    if (nullptr == outBuf)
+    {
+        OICFree(b64Buf);
+    }
+    ASSERT_NE(nullptr, outBuf) << "memory allocation error.";
+    EXPECT_EQ(B64_OK, b64Decode((char*)b64Buf, b64Size, outBuf, outBufSize, &outSize));
+    EXPECT_STREQ((char*)input, (char *)outBuf);
     OICFree(b64Buf);
     OICFree(outBuf);
 }

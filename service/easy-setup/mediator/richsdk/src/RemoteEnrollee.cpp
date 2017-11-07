@@ -27,7 +27,6 @@
 #include "OCResource.h"
 #ifdef __WITH_DTLS__
 #include "EnrolleeSecurity.h"
-#include "base64.h"
 #include "oic_malloc.h"
 #endif //__WITH_DTLS
 

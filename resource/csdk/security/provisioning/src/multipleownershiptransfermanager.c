@@ -36,7 +36,6 @@
 #include "oic_string.h"
 #include "cacommon.h"
 #include "cainterface.h"
-#include "base64.h"
 #include "srmresourcestrings.h"
 #include "experimental/doxmresource.h"
 #include "pstatresource.h"
@@ -58,6 +57,7 @@
 #include "otmcontextlist.h"
 #include "ocstackinternal.h"
 #include "mbedtls/ssl_ciphersuites.h"
+#include "mbedtls/base64.h"
 #include "experimental/ocrandom.h"
 #include "secureresourceprovider.h"
 
@@ -881,16 +881,30 @@ static OCStackResult SaveSubOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
         VERIFY_NOT_NULL(TAG, cred, ERROR);
 
         size_t outSize = 0;
-        size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
-        char *b64Buf = (char *)OICCalloc(1, b64BufSize);
+        int encodeResult = mbedtls_base64_encode(NULL, 0, &outSize, cred->privateData.data, cred->privateData.len);
+        if (MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL != encodeResult)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Error base64 encoding PSK private data", __func__);
+            res = OC_STACK_ERROR;
+            goto exit;
+        }
+        size_t b64BufSize = outSize;
+        unsigned char *b64Buf = (unsigned char *)OICCalloc(1, b64BufSize);
         VERIFY_NOT_NULL(TAG, b64Buf, ERROR);
-        b64Encode(cred->privateData.data, cred->privateData.len, b64Buf, b64BufSize, &outSize);
+        encodeResult = mbedtls_base64_encode(b64Buf, b64BufSize, &outSize, cred->privateData.data, cred->privateData.len);
+        if (0 != encodeResult)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Error base64 encoding PSK private data", __func__);
+            OICFree(b64Buf);
+            res = OC_STACK_ERROR;
+            goto exit;
+        }
 
         OICFree(cred->privateData.data);
         cred->privateData.data = (uint8_t *)OICCalloc(1, outSize + 1);
         VERIFY_NOT_NULL(TAG, cred->privateData.data, ERROR);
 
-        strncpy((char *)(cred->privateData.data), b64Buf, outSize);
+        strncpy((char *)(cred->privateData.data), (char *)b64Buf, outSize);
         cred->privateData.data[outSize] = '\0';
         cred->privateData.encoding = OIC_ENCODING_BASE64;
         cred->privateData.len = outSize;

@@ -26,7 +26,6 @@
 class JniSecureUtils
 {
     private:
-        static std::string convertUUIDtoStr(OicUuid_t uuid);
         static void convertStrToUUID(char *str, OicUuid_t &uuid);
     public:
         static jobject convertProvisionresultVectorToJavaList(JNIEnv *,
