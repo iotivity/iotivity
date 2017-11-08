@@ -31,7 +31,7 @@
 #include "pmutility.h"
 #include "oic_string.h"
 #include "utlist.h"
-
+#include "srmutility.h"
 
 #define DB_FILE "PDM.db"
 
@@ -43,6 +43,8 @@
 #define PDM_BIND_INDEX_FIRST 1
 #define PDM_BIND_INDEX_SECOND 2
 #define PDM_BIND_INDEX_THIRD 3
+
+#define HEX_UUID_STR_LENGTH (UUID_LENGTH*2 + 4)
 
 #define PDM_CREATE_T_DEVICE_LIST "create table T_DEVICE_LIST(ID INTEGER PRIMARY KEY AUTOINCREMENT,\
                                   UUID BLOB NOT NULL UNIQUE, STATE INT NOT NULL);"
@@ -79,7 +81,7 @@ PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_GET_STALE_INFO);
 #define PDM_SQLITE_INSERT_T_DEVICE_LIST_SIZE (int)sizeof(PDM_SQLITE_INSERT_T_DEVICE_LIST)
 PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_INSERT_T_DEVICE_LIST);
 
-#define PDM_SQLITE_GET_ID "SELECT ID FROM T_DEVICE_LIST WHERE UUID like ?"
+#define PDM_SQLITE_GET_ID "SELECT ID FROM T_DEVICE_LIST WHERE UUID = "
 #define PDM_SQLITE_GET_ID_SIZE (int)sizeof(PDM_SQLITE_GET_ID)
 PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_GET_ID);
 
@@ -117,11 +119,11 @@ PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_GET_LINKED_DEVICES);
 #define PDM_SQLITE_GET_DEVICE_LINKS_SIZE (int)sizeof(PDM_SQLITE_GET_DEVICE_LINKS)
 PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_GET_DEVICE_LINKS);
 
-#define PDM_SQLITE_UPDATE_DEVICE "UPDATE T_DEVICE_LIST SET STATE = ?  WHERE UUID like ?"
+#define PDM_SQLITE_UPDATE_DEVICE "UPDATE T_DEVICE_LIST SET STATE = ? WHERE UUID = "
 #define PDM_SQLITE_UPDATE_DEVICE_SIZE (int)sizeof(PDM_SQLITE_UPDATE_DEVICE)
 PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_UPDATE_DEVICE);
 
-#define PDM_SQLITE_GET_DEVICE_STATUS "SELECT STATE FROM T_DEVICE_LIST WHERE UUID like ?"
+#define PDM_SQLITE_GET_DEVICE_STATUS "SELECT STATE FROM T_DEVICE_LIST WHERE UUID = "
 #define PDM_SQLITE_GET_DEVICE_STATUS_SIZE (int)sizeof(PDM_SQLITE_GET_DEVICE_STATUS)
 PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_GET_DEVICE_STATUS);
 
@@ -202,6 +204,42 @@ static OCStackResult rollback()
 }
 
 /**
+ * Function to convert UUID into hex representation
+ */
+static bool convertUuidToHexString(const OicUuid_t* uuidOfDevice, char* uuidHexString)
+{
+    if(NULL == uuidOfDevice || NULL == uuidHexString)
+    {
+        OIC_LOG(ERROR, TAG, "convertUuidToHexString : Invalid param");
+        return false;
+    }
+
+    char *strUUID = NULL;
+    OCStackResult ret = ConvertUuidToStr(uuidOfDevice, &strUUID);
+    if(OC_STACK_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "SendDeleteCredentialRequest : Failed to canonical UUID encoding");
+        return OC_STACK_ERROR;
+
+    }
+    char* headPtr = strUUID;
+    strncat(uuidHexString, "x'",2);
+    while(('\0' != *headPtr))
+    {
+        char tmp = *headPtr;
+        if('-' != tmp)
+        {
+            strncat(uuidHexString, &tmp,1);
+        }
+        headPtr++;
+    }
+    strncat(uuidHexString, "'",1);
+
+    OICFree(strUUID);
+    return true;
+}
+
+/**
  * Error log callback called by SQLite stack in case of error
  */
 void errLogCallback(void *pArg, int iErrCode, const char *zMsg)
@@ -271,7 +309,6 @@ OCStackResult PDMAddDevice(const OicUuid_t *UUID)
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_INSERT_T_DEVICE_LIST,
                               PDM_SQLITE_INSERT_T_DEVICE_LIST_SIZE, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
-
     res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_SECOND, UUID, UUID_LENGTH, SQLITE_STATIC);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
@@ -307,15 +344,23 @@ static OCStackResult getIdForUUID(const OicUuid_t *UUID , int *id)
 
     sqlite3_stmt *stmt = 0;
     int res = 0;
-    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_ID, PDM_SQLITE_GET_ID_SIZE,
-                             &stmt, NULL);
+
+    char sqlStat[PDM_SQLITE_GET_ID_SIZE - 1 + HEX_UUID_STR_LENGTH];
+    memset(sqlStat, 0, sizeof(sqlStat));
+    strncpy(sqlStat, PDM_SQLITE_GET_ID, PDM_SQLITE_GET_ID_SIZE - 1);
+    char hexUUID[HEX_UUID_STR_LENGTH];
+    memset(hexUUID, 0, sizeof(hexUUID));
+
+    if (!convertUuidToHexString(UUID, hexUUID))
+    {
+        return OC_STACK_ERROR;
+    }
+
+    strncpy(sqlStat + PDM_SQLITE_GET_ID_SIZE - 1, hexUUID, HEX_UUID_STR_LENGTH);
+    res = sqlite3_prepare_v2(g_db, sqlStat, (int)sizeof(sqlStat), &stmt, 0);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, UUID, UUID_LENGTH, SQLITE_STATIC);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
-
-    OIC_LOG(DEBUG, TAG, "Binding Done");
-    while (SQLITE_ROW == sqlite3_step(stmt))
+    while(SQLITE_ROW == sqlite3_step(stmt))
     {
         int tempId = sqlite3_column_int(stmt, PDM_FIRST_INDEX);
         OIC_LOG_V(DEBUG, TAG, "ID is %d", tempId);
@@ -324,7 +369,10 @@ static OCStackResult getIdForUUID(const OicUuid_t *UUID , int *id)
         OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
         return OC_STACK_OK;
     }
+
     sqlite3_finalize(stmt);
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+
     return OC_STACK_INVALID_PARAM;
 }
 
@@ -343,14 +391,22 @@ OCStackResult PDMIsDuplicateDevice(const OicUuid_t* UUID, bool *result)
     }
     sqlite3_stmt *stmt = 0;
     int res = 0;
-    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_ID, PDM_SQLITE_GET_ID_SIZE,
-                             &stmt, NULL);
+
+    char sqlStat[PDM_SQLITE_GET_ID_SIZE - 1 + HEX_UUID_STR_LENGTH];
+    memset(sqlStat, 0, sizeof(sqlStat));
+    strncpy(sqlStat, PDM_SQLITE_GET_ID, PDM_SQLITE_GET_ID_SIZE - 1);
+    char hexUUID[HEX_UUID_STR_LENGTH];
+    memset(hexUUID, 0, sizeof(hexUUID));
+
+    if (!convertUuidToHexString(UUID, hexUUID))
+    {
+        return OC_STACK_ERROR;
+    }
+
+    strncpy(sqlStat + PDM_SQLITE_GET_ID_SIZE - 1, hexUUID, HEX_UUID_STR_LENGTH);
+    res = sqlite3_prepare_v2(g_db, sqlStat, (int)sizeof(sqlStat), &stmt, 0);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, UUID, UUID_LENGTH, SQLITE_STATIC);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
-
-    OIC_LOG(DEBUG, TAG, "Binding Done");
     bool retValue = false;
     while(SQLITE_ROW == sqlite3_step(stmt))
     {
@@ -954,17 +1010,26 @@ OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
 static OCStackResult updateDeviceState(const OicUuid_t *uuid, PdmDeviceState_t state)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
-
+    OIC_LOG_V(WARNING, TAG, "UUID is: %s", (char*) uuid);
     sqlite3_stmt *stmt = 0;
     int res = 0 ;
-    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_UPDATE_DEVICE,
-                              PDM_SQLITE_UPDATE_DEVICE_SIZE, &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
+    char sqlStat[PDM_SQLITE_UPDATE_DEVICE_SIZE - 1 + HEX_UUID_STR_LENGTH];
+    memset(sqlStat, 0, sizeof(sqlStat));
+    strncpy(sqlStat, PDM_SQLITE_UPDATE_DEVICE, PDM_SQLITE_UPDATE_DEVICE_SIZE - 1);
+    char hexUUID[HEX_UUID_STR_LENGTH];
+    memset(hexUUID, 0, sizeof(hexUUID));
+
+    if (!convertUuidToHexString(uuid, hexUUID))
+    {
+        return OC_STACK_ERROR;
+    }
+
+    strncpy(sqlStat + PDM_SQLITE_UPDATE_DEVICE_SIZE - 1, hexUUID, HEX_UUID_STR_LENGTH);
+    res = sqlite3_prepare_v2(g_db, sqlStat,
+                              (int)sizeof(sqlStat), &stmt, NULL);
+    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, state);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
-
-    res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_SECOND, uuid, UUID_LENGTH, SQLITE_STATIC);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     if (SQLITE_DONE != sqlite3_step(stmt))
@@ -1063,11 +1128,20 @@ OCStackResult PDMGetDeviceState(const OicUuid_t *uuid, PdmDeviceState_t* result)
 
     sqlite3_stmt *stmt = 0;
     int res = 0;
-    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_DEVICE_STATUS, PDM_SQLITE_GET_DEVICE_STATUS_SIZE,
-                              &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, uuid, UUID_LENGTH, SQLITE_STATIC);
+    char sqlStat[PDM_SQLITE_GET_DEVICE_STATUS_SIZE - 1 + HEX_UUID_STR_LENGTH];
+    memset(sqlStat, 0, sizeof(sqlStat));
+    strncpy(sqlStat, PDM_SQLITE_GET_DEVICE_STATUS, PDM_SQLITE_GET_DEVICE_STATUS_SIZE - 1);
+    char hexUUID[HEX_UUID_STR_LENGTH];
+    memset(hexUUID, 0, sizeof(hexUUID));
+
+    if (!convertUuidToHexString(uuid, hexUUID))
+    {
+        return OC_STACK_ERROR;
+    }
+
+    strncpy(sqlStat + PDM_SQLITE_GET_DEVICE_STATUS_SIZE - 1, hexUUID, HEX_UUID_STR_LENGTH);
+    res = sqlite3_prepare_v2(g_db, sqlStat, (int)sizeof(sqlStat), &stmt, 0);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     *result = PDM_DEVICE_UNKNOWN;
@@ -1077,8 +1151,10 @@ OCStackResult PDMGetDeviceState(const OicUuid_t *uuid, PdmDeviceState_t* result)
         OIC_LOG_V(DEBUG, TAG, "Device state is %d", tempStaleStateFromDb);
         *result = (PdmDeviceState_t)tempStaleStateFromDb;
     }
+
     sqlite3_finalize(stmt);
     OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+
     return OC_STACK_OK;
 }
 
@@ -1112,3 +1188,4 @@ OCStackResult PDMDeleteDeviceWithState(const PdmDeviceState_t state)
     OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
     return OC_STACK_OK;
 }
+
