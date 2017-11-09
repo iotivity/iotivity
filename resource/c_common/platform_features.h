@@ -146,4 +146,54 @@
 #  define OC_CALL
 #endif
 
+#if defined(__GNUC__)
+#  if (__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1))
+/** mark a function as deprecated, with date of applying this macro (date format: YYYY.MM). */
+#    define OC_DEPRECATED(func, date)  func __attribute__((deprecated))
+/** mark a class as deprecated, with date of applying this macro (date format: YYYY.MM). */
+#    define OC_DEPRECATED_CLASS(date) __attribute__((deprecated))
+
+#    if (__GNUC__ >= 5) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 5))
+/** same as OC_DEPRECATED, but with user-defined text message to be displayed. */
+#      define OC_DEPRECATED_MSG(func, msg, date) func __attribute__((deprecated(msg)))
+/** same as OC_DEPRECATED_CLASS, but with user-defined text message to be displayed. */
+#      define OC_DEPRECATED_CLASS_MSG(msg, date) __attribute__((deprecated(msg)))
+#    else
+       /* gcc versions older than 4.5 do not support the text message. */
+/** same as OC_DEPRECATED, but with user-defined text message to be displayed. */
+#      define OC_DEPRECATED_MSG(func, msg, date) OC_DEPRECATED(func, date)
+/** same as OC_DEPRECATED_CLASS, but with user-defined text message to be displayed. */
+#      define OC_DEPRECATED_CLASS_MSG(msg, date) OC_DEPRECATED_CLASS(date)
+#    endif // GCC version >= 4.5
+#  else
+     /* not all gcc versions support the depricated attribute. */
+/** mark a function as deprecated, with date of applying this macro (date format: YYYY.MM). */
+#    define OC_DEPRECATED(func, date) func
+/** mark a class as deprecated, with date of applying this macro (date format: YYYY.MM). */
+#    define OC_DEPRECATED_CLASS(date)
+/** same as OC_DEPRECATED, but with user-defined text message to be displayed. */
+#    define OC_DEPRECATED_MSG(func, msg, date) func
+/** same as OC_DEPRECATED_CLASS, but with user-defined text message to be displayed. */
+#    define OC_DEPRECATED_CLASS_MSG(msg, date)
+#  endif // GCC version >= 3.1
+#elif defined(_MSC_VER)
+/** mark a function as deprecated with date of applying this macro (date format: YYYY.MM). */
+#  define OC_DEPRECATED(func, date) __declspec(deprecated) func
+/** mark a class as deprecated  with date of applying this macro (date format: YYYY.MM). */
+#  define OC_DEPRECATED_CLASS(date) __declspec(deprecated)
+/** same as OC_DEPRECATED, but with user-defined text message to be displayed. */
+#  define OC_DEPRECATED_MSG(func, msg, date) __declspec(deprecated(msg)) func
+/** same as OC_DEPRECATED_CLASS, but with user-defined text message to be displayed. */
+#  define OC_DEPRECATED_CLASS_MSG(msg, date) __declspec(deprecated(msg))
+#else /* Some unknown compiler */
+/** mark a function as deprecated with date of applying this macro (date format: YYYY.MM). */
+#  define OC_DEPRECATED(func, date) func
+/** mark a class as deprecated  with date of applying this macro (date format: YYYY.MM). */
+#  define OC_DEPRECATED_CLASS(date)
+/** same as OC_DEPRECATED, but with user-defined text message to be displayed. */
+#  define OC_DEPRECATED_MSG(func, msg, date) func
+/** same as OC_DEPRECATED_CLASS, but with user-defined text message to be displayed. */
+#  define OC_DEPRECATED_CLASS_MSG(msg, date)
+#endif /* Compiler type */
+
 #endif

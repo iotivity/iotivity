@@ -74,10 +74,13 @@ if srmtest_env.get('MULTIPLE_OWNER') == '1':
 
 if target_os == 'windows':
     srmtest_env.AppendUnique(LIBS=['sqlite3'])
+    #Disable deprecated code warning we are still testing deprecated functions till they are removed.
+    srmtest_env.AppendUnique(CCFLAGS=['/wd4996'])
 else:
     # TODO: Implement feature check.
     srmtest_env.AppendUnique(CPPDEFINES=['HAVE_LOCALTIME_R'])
-
+    #Disable deprecated code warning we are still testing deprecated functions till they are removed.
+    srmtest_env.AppendUnique(CFLAGS=['-Wno-attributes'])
     if target_os in ['linux', 'tizen']:
         srmtest_env.ParseConfig('pkg-config --cflags --libs sqlite3')
         srmtest_env.ParseConfig('pkg-config --cflags --libs gobject-2.0 gio-2.0 glib-2.0')
