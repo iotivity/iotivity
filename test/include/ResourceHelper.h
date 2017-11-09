@@ -46,6 +46,7 @@
 #include <stdexcept>
 
 #include "OCPlatform.h"
+#include "rd_client.h"
 
 using namespace OC;
 using namespace std;
