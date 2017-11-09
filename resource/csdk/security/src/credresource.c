@@ -125,17 +125,6 @@ static void DeleteCredIdList(CredIdList_t** list)
     }
 }
 
-static bool ValueWithinBounds(uint64_t value, uint64_t maxValue)
-{
-    if (value > maxValue)
-    {
-        OIC_LOG_V(ERROR, TAG, "The value (%" PRId64 ") is greater than allowed maximum of %" PRId64 ".", value, maxValue);
-        return false;
-    }
-
-    return true;
-}
-
 /**
  * Internal function to check a subject of SIGNED_ASYMMETRIC_KEY(Certificate).
  * If that subject is NULL or wildcard, set it to own deviceID.
@@ -256,6 +245,7 @@ exit:
     return false;
 }
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 static bool IsEmptyCred(const OicSecCred_t* cred)
 {
     OicUuid_t emptyUuid = {.id={0}};
@@ -264,16 +254,15 @@ static bool IsEmptyCred(const OicSecCred_t* cred)
     VERIFY_SUCCESS(TAG, !IsNonEmptyRole(&cred->roleId), ERROR);
     VERIFY_SUCCESS(TAG, (0 == cred->credId), ERROR);
     VERIFY_SUCCESS(TAG, (0 == cred->credType), ERROR);
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     VERIFY_SUCCESS(TAG, (NULL == cred->privateData.data), ERROR);
     VERIFY_SUCCESS(TAG, (NULL == cred->publicData.data), ERROR);
     VERIFY_SUCCESS(TAG, (NULL == cred->optionalData.data), ERROR);
     VERIFY_SUCCESS(TAG, (NULL == cred->credUsage), ERROR);
-#endif
     return true;
 exit:
     return false;
 }
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
 /**
  * This function frees OicSecCred_t object's fields and object itself.
@@ -1330,7 +1319,7 @@ exit:
 
 OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t credType,
                                   const OicSecKey_t * publicData, const OicSecKey_t* privateData,
-                                  const OicUuid_t * rownerID, const OicUuid_t * eownerID)
+                                  const OicUuid_t * eownerID)
 {
     OIC_LOG(DEBUG, TAG, "IN GenerateCredential");
 
@@ -1371,9 +1360,6 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
         cred->privateData.len = privateData->len;
         cred->privateData.encoding = privateData->encoding;
     }
-
-    VERIFY_NOT_NULL(TAG, rownerID, ERROR);
-    memcpy(&cred->rownerID, rownerID, sizeof(OicUuid_t));
 
 #ifdef MULTIPLE_OWNER
     if(eownerID)
@@ -1740,15 +1726,7 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
     OIC_LOG(DEBUG, TAG, "Adding New Cred");
     LL_APPEND(gCred, newCred);
 
-
-    OicUuid_t emptyOwner = { .id = {0} };
-    if (memcmp(&(newCred->rownerID), &emptyOwner, sizeof(OicUuid_t)) != 0)
-    {
-        memcpy(&(gRownerId), &(newCred->rownerID), sizeof(OicUuid_t));
-    }
-
 saveToDB:
-
     if (UpdatePersistentStorage(gCred))
     {
         result = OC_STACK_OK;
@@ -2152,7 +2130,7 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     OicUuid_t emptyUuid = {.id={0}};
     const OicSecDoxm_t *doxm = GetDoxmResourceData();
-    if( NO_SECURITY_MODE != cred->credType 
+    if( NO_SECURITY_MODE != cred->credType
         && doxm
         && false == doxm->owned
         && memcmp(&(doxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0
@@ -2171,7 +2149,7 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
                         OIC_LOG(WARNING, TAG, "The credential with the same subject ID was detected!");
                     }
 
-                    OIC_LOG(ERROR, TAG, "OwnerPSK was generated successfully.");
+                    OIC_LOG(INFO, TAG, "OwnerPSK was generated successfully.");
                     if(OC_STACK_OK == AddCredential(cred))
                     {
                         ret = OC_EH_CHANGED;
@@ -2184,7 +2162,7 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
                 }
                 else
                 {
-                    OIC_LOG(ERROR, TAG, "Failed to verify receviced OwnerPKS.");
+                    OIC_LOG(ERROR, TAG, "Failed to verify receviced OwnerPSK.");
                     ret = OC_EH_ERROR;
                 }
 
@@ -2363,7 +2341,7 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
             ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_CHANGED : OC_EH_ERROR;
         }
     }
-#else //not __WITH_DTLS__
+#else //not __WITH_DTLS__ or __WITH_TLS__
     /*
         * If the post request credential has credId, it will be
         * discarded and the next available credId will be assigned
@@ -2373,7 +2351,7 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
     ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_CHANGED : OC_EH_ERROR;
     OC_UNUSED(previousMsgId);
     OC_UNUSED(ehRequest);
-#endif//__WITH_DTLS__
+#endif//__WITH_DTLS__ or __WITH_TLS__
 
     return ret;
 }
@@ -2829,16 +2807,45 @@ exit:
 }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+static bool ValueWithinBounds(uint64_t value, uint64_t maxValue)
+{
+    if (value > maxValue)
+    {
+        OIC_LOG_V(ERROR, TAG, "The value (%" PRId64 ") is greater than allowed maximum of %" PRId64 ".", value, maxValue);
+        return false;
+    }
+
+    return true;
+}
+
 int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
               const uint8_t *desc, size_t desc_len,
               uint8_t *result, size_t result_length)
 {
     int32_t ret = -1;
 
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+
     if (NULL == result)
     {
-        return ret;
+        OIC_LOG_V(DEBUG, TAG, "%s: NULL result param; exiting.", __func__);
+        goto exit;
     }
+
+#ifndef NDEBUG
+    char strUuidTmp[UUID_STRING_SIZE] = "UUID_ERROR";
+    if (desc_len == UUID_LENGTH)
+    {
+        if (OCConvertUuidToString(desc, strUuidTmp))
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: desc = %s", __func__, strUuidTmp);
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "failed to convert desc to UUID str.");
+        }
+    }
+#endif
 
     switch (type)
     {
@@ -2850,13 +2857,13 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                 if ( OC_STACK_OK != GetDoxmDeviceID(&deviceID) )
                 {
                     OIC_LOG (ERROR, TAG, "Unable to retrieve doxm Device ID");
-                    return ret;
+                    goto exit;
                 }
 
                 if (result_length < sizeof(deviceID.id))
                 {
                     OIC_LOG (ERROR, TAG, "Wrong value for result_length");
-                    return ret;
+                    goto exit;
                 }
                 memcpy(result, deviceID.id, sizeof(deviceID.id));
                 return (sizeof(deviceID.id));
@@ -2870,12 +2877,25 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                 {
                     if (cred->credType != SYMMETRIC_PAIR_WISE_KEY)
                     {
+                        OIC_LOG_V(DEBUG, TAG, "%s: credid %u not a SYMMETRIC_PAIR_WISE_KEY type... skipping",
+                            __func__, cred->credId);
                         continue;
                     }
 
                     if ((desc_len == sizeof(cred->subject.id)) &&
                         (memcmp(desc, cred->subject.id, sizeof(cred->subject.id)) == 0))
                     {
+#ifndef NDEBUG
+                        if (OCConvertUuidToString(cred->subject.id, strUuidTmp))
+                        {
+                            OIC_LOG_V(DEBUG, TAG, "%s: credid %u (subject = %s) matches desc; checking validity.",
+                                __func__, cred->credId, strUuidTmp);
+                        }
+                        else
+                        {
+                            OIC_LOG(ERROR, TAG, "failed to convert credid to str.");
+                        }
+#endif
                         /*
                          * If the credentials are valid for limited time,
                          * check their expiry.
@@ -2885,21 +2905,24 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                             if(IOTVTICAL_VALID_ACCESS != IsRequestWithinValidTime(cred->period, NULL))
                             {
                                 OIC_LOG (INFO, TAG, "Credentials are expired.");
-                                return ret;
+                                goto exit;
                             }
                         }
+
+                        OIC_LOG_V(DEBUG, TAG, "%s: cred->privateData.encoding = %u", __func__, cred->privateData.encoding);
 
                         // Copy PSK.
                         // TODO: Added as workaround. Will be replaced soon.
                         if(OIC_ENCODING_RAW == cred->privateData.encoding)
                         {
+                            OIC_LOG_V(DEBUG, TAG, "%s: OIC_ENCODING_RAW detected; copying PSK.", __func__);
                             if (ValueWithinBounds(cred->privateData.len, INT32_MAX))
                             {
                                 size_t len = cred->privateData.len;
                                 if (result_length < len)
                                 {
                                     OIC_LOG (ERROR, TAG, "Wrong value for result_length");
-                                    return ret;
+                                    goto exit;
                                 }
                                 memcpy(result, cred->privateData.data, len);
                                 ret = (int32_t)len;
@@ -2907,13 +2930,14 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                         }
                         else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
                         {
+                            OIC_LOG_V(DEBUG, TAG, "%s: OIC_ENCODING_BASE64 detected; copying PSK.", __func__);
                             size_t outBufSize = B64DECODE_OUT_SAFESIZE((cred->privateData.len + 1));
                             uint8_t* outKey = OICCalloc(1, outBufSize);
                             size_t outKeySize;
                             if(NULL == outKey)
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to allocate memory.");
-                                return ret;
+                                goto exit;
                             }
 
                             if(B64_OK == b64Decode((char*)cred->privateData.data, cred->privateData.len, outKey, outBufSize, &outKeySize))
@@ -2923,7 +2947,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                     if (result_length < outKeySize)
                                     {
                                         OIC_LOG (ERROR, TAG, "Wrong value for result_length");
-                                        return ret;
+                                        goto exit;
                                     }
                                     memcpy(result, outKey, outKeySize);
                                     ret = (int32_t)outKeySize;
@@ -2936,13 +2960,17 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
 
                             OICFree(outKey);
                         }
+                        else
+                        {
+                            OIC_LOG_V(WARNING, TAG, "%s: unsupported encoding type.", __func__);
+                        }
 
                         if (OC_STACK_OK != RegisterSymmetricCredentialRole(cred))
                         {
                             OIC_LOG(WARNING, TAG, "Couldn't RegisterRoleForSubject");
                         }
 
-                        return ret;
+                        goto exit;
                     }
                 }
                 OIC_LOG(DEBUG, TAG, "Can not find subject matched credential.");
@@ -2969,7 +2997,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                     if(NULL == pinBuffer)
                                     {
                                         OIC_LOG (ERROR, TAG, "Failed to allocate memory.");
-                                        return ret;
+                                        goto exit;
                                     }
                                     pinLength = wildCardCred->privateData.len;
                                     memcpy(pinBuffer, wildCardCred->privateData.data, pinLength);
@@ -2981,19 +3009,19 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                     if(NULL == pinBuffer)
                                     {
                                         OIC_LOG (ERROR, TAG, "Failed to allocate memory.");
-                                        return ret;
+                                        goto exit;
                                     }
 
                                     if(B64_OK != b64Decode((char*)wildCardCred->privateData.data, wildCardCred->privateData.len, (uint8_t*)pinBuffer, pinBufSize, &pinLength))
                                     {
                                         OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
-                                        return ret;
+                                        goto exit;
                                     }
                                 }
                                 else
                                 {
                                     OIC_LOG(ERROR, TAG, "Unknown encoding type of PIN/PW credential.");
-                                    return ret;
+                                    goto exit;
                                 }
 
                                 //Set the PIN/PW to derive PSK
@@ -3001,7 +3029,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                 {
                                     OICFree(pinBuffer);
                                     OIC_LOG(ERROR, TAG, "Failed to load PIN data.");
-                                    return ret;
+                                    goto exit;
                                 }
                                 OICFree(pinBuffer);
 
@@ -3009,7 +3037,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                 if(OC_STACK_OK != GetDoxmDeviceID(&myUuid))
                                 {
                                     OIC_LOG(ERROR, TAG, "Failed to read device ID");
-                                    return ret;
+                                    goto exit;
                                 }
                                 SetUuidForPinBasedOxm(&myUuid);
 
@@ -3047,6 +3075,8 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
             }
             break;
     }
+exit:
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT; returning %d.", __func__, ret);
 
     return ret;
 }
@@ -3089,7 +3119,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
     VERIFY_SUCCESS(TAG, (0 == dtlsRes) , ERROR);
 
     cred = GenerateCredential(tmpSubject, credType, NULL,
-                              &privKey, rownerID, NULL);
+                              &privKey, NULL);
     OICClearMemory(privData, sizeof(privData));
     if(NULL == cred)
     {

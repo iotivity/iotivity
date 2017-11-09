@@ -139,6 +139,7 @@ void SimulatorRemoteResourceImpl::observe(ObserveType type,
             [](const OC::HeaderOptions & headerOptions, const OC::OCRepresentation & ocRep,
                const int errorCode, const int sqNum, std::string id, ObserveNotificationCallback callback)
     {
+        OC_UNUSED(headerOptions);
         SIM_LOG(ILogger::INFO, "Response received for OBSERVE request."
                 << "\n" << getPayloadString(ocRep))
 
@@ -149,13 +150,17 @@ void SimulatorRemoteResourceImpl::observe(ObserveType type,
 
     OC::ObserveType observeType = OC::ObserveType::Observe;
     if (type == ObserveType::OBSERVE_ALL)
+    {
         observeType = OC::ObserveType::ObserveAll;
+    }
 
     try
     {
         OCStackResult ocResult = m_ocResource->observe(observeType, queryParams, observeCallback);
         if (OC_STACK_OK != ocResult)
+        {
             throw SimulatorException(static_cast<SimulatorResult>(ocResult), OC::OCException::reason(ocResult));
+        }
 
         SIM_LOG(ILogger::INFO, "[URI: " << getURI() << "] Sent OBSERVE request.")
     }
@@ -458,6 +463,7 @@ void SimulatorRemoteResourceImpl::onResponseReceived(SimulatorResult result,
         const SimulatorResourceModel &resourceModel, const RequestInfo &reqInfo,
         ResponseCallback callback)
 {
+    OC_UNUSED(reqInfo);
     callback(m_id, result, resourceModel);
 }
 

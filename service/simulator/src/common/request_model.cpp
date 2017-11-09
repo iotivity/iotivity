@@ -52,7 +52,9 @@ std::shared_ptr<SimulatorResourceModelSchema> RequestModel::getRequestRepSchema(
 ResponseModelSP RequestModel::getResponseModel(int code)
 {
     if (m_responseList.end() != m_responseList.find(code))
+    {
         return m_responseList[code];
+    }
 
     return nullptr;
 }
@@ -66,7 +68,9 @@ void RequestModel::setQueryParams(const std::string &key,
                                   const std::vector<std::string> &values)
 {
     if (0 != values.size())
+    {
         m_queryParams[key] = values;
+    }
 }
 
 void RequestModel::addQueryParam(const std::string &key, const std::string &value)
@@ -77,7 +81,9 @@ void RequestModel::addQueryParam(const std::string &key, const std::string &valu
 void RequestModel::setResponseModel(int code, ResponseModelSP &responseModel)
 {
     if (responseModel)
+    {
         m_responseList[code] = responseModel;
+    }
 }
 
 void RequestModel::setRequestBodyModel(const std::shared_ptr<SimulatorResourceModelSchema>

@@ -63,7 +63,9 @@ namespace RAML
             std::string key = READ_NODE_AS_STRING(it->first);
 
             if (key == Keys::Description)
+            {
                 setDescription(READ_NODE_AS_STRING(it->second));
+            }
             else if (key == Keys::Body)
             {
                 YAML::Node responseBody = it->second;

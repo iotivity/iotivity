@@ -380,6 +380,11 @@ public class AttributeEditingSupport {
                 try {
                     ((AttributeElement) parent).deepSetChildValue(att);
                 } catch (InvalidArgsException e) {
+                    Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(), new Date(),
+                                Utility.getSimulatorErrorString(e, null));
                     e.printStackTrace();
                 }
             }

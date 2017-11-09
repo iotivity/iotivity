@@ -37,7 +37,9 @@ static SimulatorSingleResourceSP simulatorSingleResourceToCpp(JNIEnv *env, jobje
     JniSharedObjectHolder<SimulatorSingleResource> *jniResource =
         getHandle<JniSharedObjectHolder<SimulatorSingleResource>>(env, object);
     if (jniResource)
+    {
         return jniResource->get();
+    }
     return nullptr;
 }
 
@@ -54,7 +56,9 @@ static void onAutoUpdationComplete(jobject listener, const std::string &uri, con
 {
     JNIEnv *env = GetEnv();
     if (!env)
+    {
         return;
+    }
 
     jclass listenerCls = env->GetObjectClass(listener);
     jmethodID listenerMethod = env->GetMethodID(listenerCls, "onUpdateComplete",
@@ -81,7 +85,9 @@ Java_org_oic_simulator_server_SimulatorSingleResource_nativeGetAttribute
     JniString jniAttrName(env, jAttrName);
     SimulatorResourceAttribute attribute;
     if (singleResource->getAttribute(jniAttrName.get(), attribute))
+    {
         return SimulatorResourceAttributeToJava(env, attribute);
+    }
     return nullptr;
 }
 

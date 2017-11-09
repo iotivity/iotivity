@@ -516,7 +516,7 @@ static OCStackApplicationResult ProvisionCredentialDosCB1(void *ctx, OCDoHandle 
                 // A second device was not specified. Add the cred to the local cred store.
                 res = ProvisionLocalCredential(ctx, credInfo);
             }
-            
+
             if ((NULL != deviceInfo) || (OC_STACK_OK != res))
             {
                 DeleteCredList(credInfo);
@@ -709,7 +709,7 @@ static OCStackResult ProvisionLocalCredential(void *ctx, OicSecCred_t *cred)
     CredentialData_t *credData = (CredentialData_t *)((Data_t *)ctx)->ctx;
 
     OCStackResult res = AddCredential(cred);
-    
+
     /* Call the result callback directly. */
     registerResultForCredProvisioning(credData, OC_STACK_RESOURCE_CHANGED, DEVICE_LOCAL_FINISHED);
     (credData->resultCallback)(credData->ctx, credData->numOfResults, credData->resArr, false);
@@ -905,7 +905,7 @@ OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t dos,
     propertiesToInclude[PSTAT_DOS] = true;
 
     if (OC_STACK_OK != PstatToCBORPayloadPartial(pstat, &(secPayload->securityData),
-            &(secPayload->payloadSize), propertiesToInclude))
+            &(secPayload->payloadSize), propertiesToInclude, false))
     {
         OCPayloadDestroy((OCPayload *) secPayload);
         OIC_LOG(ERROR, TAG, "Failed to PstatToCBORPayload");
@@ -1423,7 +1423,7 @@ static OCStackApplicationResult ProvisionCertificateCB(void *ctx, OCDoHandle han
     OCCallbackData cbData =  {.context = ctx, .cb = ProvisionCB, .cd = NULL};
     OCDoHandle lHandle = NULL;
 
-    ret = OCDoResource(&lHandle, OC_REST_POST, query, 
+    ret = OCDoResource(&lHandle, OC_REST_POST, query,
                                 &pDev->endpoint, (OCPayload *)secPayload,
                                 pDev->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     OIC_LOG_V(DEBUG, TAG, "POST:%s ret:%d", query, ret);
@@ -1489,7 +1489,7 @@ OCStackResult SRPProvisionCertificate(void *ctx,
     deviceCert.encoding = OIC_ENCODING_PEM;
 
     OicSecCred_t *cred = GenerateCredential(&pDev->doxm->deviceID, SIGNED_ASYMMETRIC_KEY,
-        &deviceCert, NULL, &provTooldeviceID, NULL);
+        &deviceCert, NULL, NULL);
     VERIFY_NOT_NULL(TAG, cred, ERROR);
     certData->credInfo = cred;
 
@@ -1583,7 +1583,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
 
             OicSecCred_t *firstCred = NULL;
             OicSecCred_t *secondCred = NULL;
-            OCStackResult res = PMGeneratePairWiseCredentials(type, keySize, &provTooldeviceID,
+            OCStackResult res = PMGeneratePairWiseCredentials(type, keySize,
                     &firstDevice->doxm->deviceID, (NULL != secondDevice) ? &secondDevice->doxm->deviceID : &provTooldeviceID,
                     role1, role2,
                     &firstCred, &secondCred);
@@ -1646,7 +1646,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             /* Create a credential object */
             OicSecCred_t* cred =  GenerateCredential(&pDev1->doxm->deviceID, SIGNED_ASYMMETRIC_KEY,
                     &deviceCert, NULL, // oic.sec.cred.publicdata = deviceCert, .privatedata = NULL
-                    &provTooldeviceID, NULL); // rowner is the provisioning tool and no eowner
+                    NULL); // no eowner
             VERIFY_NOT_NULL_RETURN(TAG, cred, ERROR, OC_STACK_ERROR);
 
             cred->publicData.encoding = OIC_ENCODING_PEM;
@@ -1770,7 +1770,7 @@ OCStackResult SRPProvisionCredentialsDos(void *ctx, OicSecCredType_t type, size_
             data->type = PSK_TYPE;
             OicSecCred_t *firstCred = NULL;
             OicSecCred_t *secondCred = NULL;
-            OCStackResult res = PMGeneratePairWiseCredentials(type, keySize, &provTooldeviceID,
+            OCStackResult res = PMGeneratePairWiseCredentials(type, keySize,
                                 &pDev1->doxm->deviceID, (NULL != pDev2) ? &pDev2->doxm->deviceID :
                                 &provTooldeviceID,
                                 role1, role2,
@@ -3186,7 +3186,7 @@ OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
     propertiesToInclude[PSTAT_DOS] = true;
 
     if (OC_STACK_OK != PstatToCBORPayloadPartial(pstat, &(secPayload->securityData),
-                &(secPayload->payloadSize), propertiesToInclude))
+                &(secPayload->payloadSize), propertiesToInclude, false))
     {
         OCPayloadDestroy((OCPayload *) secPayload);
         OIC_LOG(ERROR, TAG, "Failed to PstatToCBORPayload");

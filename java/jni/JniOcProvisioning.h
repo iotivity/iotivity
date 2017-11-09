@@ -159,7 +159,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_saveTrustCertChain1
  * Method:    setPinType0
  * Signature: (II)I
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setPinType0
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setPinType0
   (JNIEnv *, jclass, jint, jint);
 
 

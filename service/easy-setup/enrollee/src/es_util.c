@@ -116,25 +116,11 @@ const char* WiFiModeEnumToString(WIFI_MODE val)
     return ret;
 }
 
-bool WiFiModeStringToEnum(const char *valIn, WIFI_MODE *valOut)
-{
-    bool result = false;
-    LookupStrToEnum(valIn, wifiModeConvertLookup, (*valOut), result);
-    return result;
-}
-
 const char* WiFiFreqEnumToString(WIFI_FREQ val)
 {
     char *ret = NULL;
     LookupEnumToStr(val, wifiFreqConvertLookup, ret);
     return ret;
-}
-
-bool WiFiFreqStringToEnum(const char *val, WIFI_FREQ *valOut)
-{
-    bool result = false;
-    LookupStrToEnum(val, wifiFreqConvertLookup, (*valOut), result);
-    return result;
 }
 
 const char* WiFiAuthTypeEnumToString(WIFI_AUTHTYPE val)

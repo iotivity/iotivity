@@ -93,7 +93,9 @@ void SimulatorSingleResourceImpl::setInterface(const std::string &interfaceType)
     }
 
     if (interfaceType != OC::DEFAULT_INTERFACE)
+    {
         m_interfaces = {OC::DEFAULT_INTERFACE, interfaceType};
+    }
 }
 
 void SimulatorSingleResourceImpl::setInterface(const std::vector<std::string> &interfaceTypes)
@@ -111,7 +113,9 @@ void SimulatorSingleResourceImpl::setInterface(const std::vector<std::string> &i
     for (auto &interfaceType : interfaceTypes)
     {
         if (false == OCInterfaceDetails::getInstance()->isInterface(interfaceType))
+        {
             continue;
+        }
 
         if (m_interfaces.end() ==
             std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType))
@@ -162,9 +166,13 @@ void SimulatorSingleResourceImpl::setObservable(bool state)
     }
 
     if (state)
+    {
         m_property = static_cast<OCResourceProperty>(m_property | OC_OBSERVABLE);
+    }
     else
+    {
         m_property = static_cast<OCResourceProperty>(m_property ^ OC_OBSERVABLE);
+    }
 }
 
 void SimulatorSingleResourceImpl::setDiscoverable(bool state)
@@ -177,9 +185,13 @@ void SimulatorSingleResourceImpl::setDiscoverable(bool state)
     }
 
     if (state)
+    {
         m_property = static_cast<OCResourceProperty>(m_property | OC_DISCOVERABLE);
+    }
     else
+    {
         m_property = static_cast<OCResourceProperty>(m_property ^ OC_DISCOVERABLE);
+    }
 }
 
 void SimulatorSingleResourceImpl::setObserverCallback(ObserverCallback callback)
@@ -552,7 +564,9 @@ bool SimulatorSingleResourceImpl::updateResourceModel(const SimulatorResourceMod
         if (!reqResModel.contains(attributeName))
         {
             if (overwrite)
+            {
                 return false;
+            }
             continue;
         }
 
@@ -602,7 +616,9 @@ void SimulatorSingleResourceImpl::notify(int observerID, const SimulatorResource
 {
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     if (!m_resourceHandle)
+    {
         return;
+    }
 
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse);
     response->setResponseResult(OC_EH_OK);
@@ -622,10 +638,14 @@ void SimulatorSingleResourceImpl::notifyAll(const SimulatorResourceModel &resMod
 {
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     if (!m_resourceHandle)
+    {
         return;
+    }
 
     if (!m_observersList.size())
+    {
         return;
+    }
 
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse);
     response->setResponseResult(OC_EH_OK);
@@ -719,7 +739,9 @@ void SimulatorSingleResourceImpl::addObserver(const OC::ObservationInfo &ocObser
     m_observersList.push_back(info);
 
     if (m_observeCallback)
+    {
         m_observeCallback(m_uri, ObservationStatus::REGISTER, info);
+    }
 }
 
 void SimulatorSingleResourceImpl::removeObserver(const OC::ObservationInfo &ocObserverInfo)
@@ -738,7 +760,9 @@ void SimulatorSingleResourceImpl::removeObserver(const OC::ObservationInfo &ocOb
     }
 
     if (found && m_observeCallback)
+    {
         m_observeCallback(m_uri, ObservationStatus::UNREGISTER, info);
+    }
 }
 
 void SimulatorSingleResourceImpl::removeAllObservers()
@@ -748,7 +772,9 @@ void SimulatorSingleResourceImpl::removeAllObservers()
     for (size_t index = 0; index < observerList.size(); index++)
     {
         if (m_observeCallback)
+        {
             m_observeCallback(m_uri, ObservationStatus::UNREGISTER, observerList[index]);
+        }
     }
 }
 
@@ -928,6 +954,7 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::sendResponse(
     const std::shared_ptr<OC::OCResourceRequest> &request, const int errorCode,
     OCEntityHandlerResult responseResult)
 {
+    OC_UNUSED(errorCode);
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse());
     response->setRequestHandle(request->getRequestHandle());
     response->setResourceHandle(request->getResourceHandle());
@@ -950,6 +977,7 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::sendResponse(
     OCEntityHandlerResult responseResult, OC::OCRepresentation &payload,
     const std::string &interfaceType)
 {
+    OC_UNUSED(errorCode);
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse());
     response->setRequestHandle(request->getRequestHandle());
     response->setResourceHandle(request->getResourceHandle());

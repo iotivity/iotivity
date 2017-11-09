@@ -59,7 +59,9 @@ namespace RAML
         for (; it != m_required.end(); ++it)
         {
             if (*it == reqValue)
+            {
                 break;
+            }
         }
         if (m_required.end() == it)
         {

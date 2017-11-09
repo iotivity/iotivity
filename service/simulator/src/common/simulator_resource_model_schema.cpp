@@ -64,7 +64,9 @@ struct UniquenessChecker<T, typename std::enable_if<
         std::vector<T> valueCopy = value;
         std::sort(valueCopy.begin(), valueCopy.end());
         if(valueCopy.end() != std::unique(valueCopy.begin(), valueCopy.end()))
+        {
             return false;
+        }
         return true;
     }
 };
@@ -168,7 +170,9 @@ class ArrayValidator : public boost::static_visitor<bool>
                 {
                     AttributeValueVariant element = value[index];
                     if (!elementProperty->validate(element))
+                    {
                         return false;
+                    }
                 }
             }
 
@@ -273,7 +277,9 @@ int IntegerProperty::getDefaultValue() const
 bool IntegerProperty::getRange(int &min, int &max) const
 {
     if (!m_hasRange)
+    {
         return false;
+    }
 
     min = m_min;
     max = m_max;
@@ -283,7 +289,9 @@ bool IntegerProperty::getRange(int &min, int &max) const
 bool IntegerProperty::getValues(std::vector<int> &values) const
 {
     if (!m_values.size())
+    {
         return false;
+    }
 
     values  = m_values;
     return true;
@@ -301,7 +309,9 @@ void IntegerProperty::setDefaultValue(int value)
         m_defaultValue = m_values[0];
     }
     else
+    {
         m_defaultValue = value;
+    }
 }
 
 void IntegerProperty::setRange(int min, int max)
@@ -333,7 +343,9 @@ bool IntegerProperty::validate(const int &value)
     else if (m_values.size() > 0)
     {
         if (m_values.end() == std::find(m_values.begin(), m_values.end(), value))
+        {
             return false;
+        }
     }
 
     return true;
@@ -384,7 +396,9 @@ double DoubleProperty::getDefaultValue() const
 bool DoubleProperty::getRange(double &min, double &max) const
 {
     if (!m_hasRange)
+    {
         return false;
+    }
 
     min = m_min;
     max = m_max;
@@ -394,7 +408,9 @@ bool DoubleProperty::getRange(double &min, double &max) const
 bool DoubleProperty::getValues(std::vector<double> &values) const
 {
     if (!m_values.size())
+    {
         return false;
+    }
 
     values  = m_values;
     return true;
@@ -412,7 +428,9 @@ void DoubleProperty::setDefaultValue(double value)
         m_defaultValue = m_values[0];
     }
     else
+    {
         m_defaultValue = value;
+    }
 }
 
 void DoubleProperty::setRange(double min, double max)
@@ -444,7 +462,9 @@ bool DoubleProperty::validate(const double &value)
     else if (m_values.size() > 0)
     {
         if (m_values.end() == std::find(m_values.begin(), m_values.end(), value))
+        {
             return false;
+        }
     }
 
     return true;
@@ -534,7 +554,9 @@ std::string StringProperty::getDefaultValue() const
 bool StringProperty::getRange(size_t &min, size_t &max) const
 {
     if (!m_hasRange)
+    {
         return false;
+    }
 
     min = m_min;
     max = m_max;
@@ -544,7 +566,9 @@ bool StringProperty::getRange(size_t &min, size_t &max) const
 bool StringProperty::getValues(std::vector<std::string> &values) const
 {
     if (!m_values.size())
+    {
         return false;
+    }
 
     values  = m_values;
     return true;
@@ -560,12 +584,18 @@ void StringProperty::setDefaultValue(const std::string &value)
     else if(m_hasRange)
     {
         if(value.length() >= m_min && value.length() <= m_max)
+        {
             m_defaultValue = value;
+        }
         else
+        {
             m_defaultValue.clear();
+        }
     }
     else
+    {
         m_defaultValue = value;
+    }
 }
 
 void StringProperty::setRange(size_t min, size_t max)
@@ -654,7 +684,9 @@ void ArrayProperty::setUnique(bool state)
 bool ArrayProperty::setElementProperty(const std::shared_ptr<AttributeProperty> &property)
 {
     if (!property)
+    {
         return false;
+    }
 
     m_elementProperty = property;
     return true;
@@ -772,7 +804,9 @@ bool ModelProperty::add(const std::string &name,
                         const std::shared_ptr<AttributeProperty> &property, bool required)
 {
     if (name.empty() || !property)
+    {
         return false;
+    }
 
     m_childProperties[name] = property;
     m_requiredAttributes[name] = required;
@@ -783,7 +817,9 @@ std::shared_ptr<AttributeProperty> ModelProperty::get(
     const std::string &name)
 {
     if (m_childProperties.end() != m_childProperties.find(name))
+    {
         return m_childProperties[name];
+    }
     return nullptr;
 }
 
@@ -796,7 +832,9 @@ ModelProperty::getChildProperties()
 bool ModelProperty::isRequired(const std::string &name)
 {
     if (m_requiredAttributes.end() == m_requiredAttributes.find(name))
+    {
         return false;
+    }
 
     return m_requiredAttributes[name];
 }
@@ -804,22 +842,30 @@ bool ModelProperty::isRequired(const std::string &name)
 void ModelProperty::remove(const std::string &name)
 {
     if (m_requiredAttributes.end() != m_requiredAttributes.find(name))
+    {
         m_requiredAttributes.erase(m_requiredAttributes.find(name));
+    }
 
     if (m_childProperties.end() != m_childProperties.find(name))
+    {
         m_childProperties.erase(m_childProperties.find(name));
+    }
 }
 
 void ModelProperty::setRequired(const std::string &name)
 {
     if (m_requiredAttributes.end() != m_requiredAttributes.find(name))
+    {
         m_requiredAttributes[name] = true;
+    }
 }
 
 void ModelProperty::unsetRequired(const std::string &name)
 {
     if (m_requiredAttributes.end() != m_requiredAttributes.find(name))
+    {
         m_requiredAttributes[name] = false;
+    }
 }
 
 bool ModelProperty::validate(const AttributeValueVariant &value)
@@ -836,7 +882,9 @@ bool ModelProperty::validate(const SimulatorResourceModel &model)
         if (childProperty)
         {
             if (!childProperty->validate(attributeEntry.second))
+            {
                 return false;
+            }
         }
     }
 

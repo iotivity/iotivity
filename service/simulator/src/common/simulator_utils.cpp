@@ -25,7 +25,9 @@ std::string getPayloadString(const OC::OCRepresentation &rep)
 {
     OCRepPayload *payload = rep.getPayload();
     if (!payload)
+    {
         return "Empty payload";
+    }
 
     std::ostringstream payLoadString;
     while (payload)
@@ -37,7 +39,9 @@ std::string getPayloadString(const OC::OCRepresentation &rep)
 
         // URI
         if (NULL != payload->uri && strlen(payload->uri) > 0)
+        {
             payLoadString << "URI: " << payload->uri << std::endl;
+        }
 
         // Types
         std::ostringstream typeString;
@@ -48,7 +52,9 @@ std::string getPayloadString(const OC::OCRepresentation &rep)
             {
                 typeString << ocTypes->value;
                 if (ocTypes->next)
+                {
                     typeString << ", ";
+                }
             }
 
             ocTypes = ocTypes->next;
@@ -68,7 +74,9 @@ std::string getPayloadString(const OC::OCRepresentation &rep)
             {
                 interfaceString << ocInterfaces->value;
                 if (ocInterfaces->next)
+                {
                     interfaceString << ", ";
+                }
             }
 
             ocInterfaces = ocInterfaces->next;
@@ -97,7 +105,9 @@ std::string getPayloadString(const OC::OCRepresentation &rep)
 
         payload = payload->next;
         if (payload)
+        {
             payLoadString << "----------------" << std::endl;
+        }
     }
 
     return payLoadString.str();
@@ -114,6 +124,12 @@ std::string getPayloadTypeString(OCPayloadType type)
         case PAYLOAD_TYPE_DISCOVERY:
             typeStr = "PAYLOAD_TYPE_DISCOVERY";
             break;
+        case PAYLOAD_TYPE_DEVICE:
+            typeStr = "PAYLOAD_TYPE_DEVICE";
+            break;
+        case PAYLOAD_TYPE_PLATFORM:
+            typeStr = "PAYLOAD_TYPE_PLATFORM";
+            break;
         case PAYLOAD_TYPE_REPRESENTATION:
             typeStr = "PAYLOAD_TYPE_REPRESENTATION";
             break;
@@ -122,6 +138,12 @@ std::string getPayloadTypeString(OCPayloadType type)
             break;
         case PAYLOAD_TYPE_PRESENCE:
             typeStr = "PAYLOAD_TYPE_PRESENCE";
+            break;
+        case PAYLOAD_TYPE_DIAGNOSTIC:
+            typeStr = "PAYLOAD_TYPE_DIAGNOSTIC";
+            break;
+        case PAYLOAD_TYPE_INTROSPECTION:
+            typeStr = "PAYLOAD_TYPE_INTROSPECTION";
             break;
     }
     return typeStr;

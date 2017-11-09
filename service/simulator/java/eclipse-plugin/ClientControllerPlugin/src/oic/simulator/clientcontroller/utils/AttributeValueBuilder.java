@@ -16,9 +16,13 @@
 
 package oic.simulator.clientcontroller.utils;
 
+import java.util.Date;
 import java.util.Vector;
 
 import org.oic.simulator.AttributeValue;
+import org.oic.simulator.ILogger.Level;
+
+import oic.simulator.clientcontroller.Activator;
 
 public class AttributeValueBuilder {
     public static AttributeValue build(String valueString,
@@ -85,6 +89,11 @@ public class AttributeValueBuilder {
             } else if (valueType == AttributeValue.ValueType.STRING)
                 return new AttributeValue(valueString);
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             return null;
         }
         return null;

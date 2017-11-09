@@ -192,7 +192,9 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
         {
             interfaceTypes = resourceModel.get<std::vector<std::string>>(OC_RSRVD_INTERFACE);
             if (interfaceTypes.size() > 1)
+            {
                 interfaceTypes.erase(interfaceTypes.begin()+1, interfaceTypes.end());
+            }
         }
 
         resourceModel.remove(OC_RSRVD_INTERFACE);
@@ -221,9 +223,13 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
 
         collectionRes->setName(resourceName);
         if(!resourceType.empty())
+        {
             collectionRes->setResourceType(resourceType);
+        }
         if (interfaceTypes.size() > 0)
+        {
             collectionRes->setInterface(interfaceTypes);
+        }
         collectionRes->setURI(ResourceURIFactory::getInstance()->makeUniqueURI(resourceURI));
 
         // Set the resource model and its schema to simulated resource
@@ -240,9 +246,13 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
 
         singleRes->setName(resourceName);
         if(!resourceType.empty())
+        {
             singleRes->setResourceType(resourceType);
+        }
         if (interfaceTypes.size() > 0)
+        {
             singleRes->setInterface(interfaceTypes);
+        }
         singleRes->setURI(ResourceURIFactory::getInstance()->makeUniqueURI(resourceURI));
 
         // Set the resource model and its schema to simulated resource
@@ -289,7 +299,9 @@ std::string ResourceURIFactory::makeUniqueURI(const std::string &uri)
     std::ostringstream os;
     os << uri;
     if (!uri.empty() && '/' != uri[uri.length() - 1])
+    {
         os << '/';
+    }
     os << m_id++;
     updateUri(os.str());
     return os.str();
@@ -303,8 +315,12 @@ void ResourceURIFactory::updateUri(const std::string &uri)
 bool ResourceURIFactory::isUnique(const std::string &uri)
 {
     if (m_uriList.end() == m_uriList.find(uri))
+    {
         return true;
+    }
     else
+    {
         return false;
+    }
 }
 

@@ -93,8 +93,10 @@ public class SimulatorManagerTest extends TestCase {
             String configPath = "";
             SimulatorManager.createResource(configPath);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -107,8 +109,10 @@ public class SimulatorManagerTest extends TestCase {
         try {
             SimulatorManager.createResource(null);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -158,8 +162,10 @@ public class SimulatorManagerTest extends TestCase {
             String configPath = "";
             SimulatorManager.createResource(configPath, 1);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -172,8 +178,10 @@ public class SimulatorManagerTest extends TestCase {
         try {
             SimulatorManager.createResource(null, 1);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -186,8 +194,10 @@ public class SimulatorManagerTest extends TestCase {
         try {
             SimulatorManager.createResource(SINGLE_RES_RAML, 0);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -200,8 +210,10 @@ public class SimulatorManagerTest extends TestCase {
         try {
             SimulatorManager.createResource(SINGLE_RES_RAML, -1);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -263,8 +275,10 @@ public class SimulatorManagerTest extends TestCase {
             SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
                     name, uri, resourceType);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -282,8 +296,10 @@ public class SimulatorManagerTest extends TestCase {
             SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
                     name, uri, resourceType);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -301,8 +317,10 @@ public class SimulatorManagerTest extends TestCase {
             SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
                     name, uri, resourceType);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -320,8 +338,10 @@ public class SimulatorManagerTest extends TestCase {
             SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
                     name, uri, resourceType);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -339,8 +359,10 @@ public class SimulatorManagerTest extends TestCase {
             SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
                     name, uri, resourceType);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -358,8 +380,10 @@ public class SimulatorManagerTest extends TestCase {
             SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
                     name, uri, resourceType);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -397,6 +421,7 @@ public class SimulatorManagerTest extends TestCase {
         try {
             lockObject.await(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         testResource.stop();
@@ -410,8 +435,10 @@ public class SimulatorManagerTest extends TestCase {
             String resourceType = "test.singleresource";
             SimulatorManager.findResource(resourceType, null);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -431,8 +458,10 @@ public class SimulatorManagerTest extends TestCase {
                         }
                     });
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -452,8 +481,10 @@ public class SimulatorManagerTest extends TestCase {
                         }
                     });
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -490,6 +521,7 @@ public class SimulatorManagerTest extends TestCase {
         try {
             lockObject.await(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         testResource.stop();
@@ -502,8 +534,10 @@ public class SimulatorManagerTest extends TestCase {
         try {
             SimulatorManager.findResource(null);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -533,8 +567,10 @@ public class SimulatorManagerTest extends TestCase {
             String deviceName = "";
             SimulatorManager.setDeviceInfo(deviceName);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -548,8 +584,10 @@ public class SimulatorManagerTest extends TestCase {
             String deviceName = null;
             SimulatorManager.setDeviceInfo(deviceName);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -581,8 +619,10 @@ public class SimulatorManagerTest extends TestCase {
             PlatformInfo platformInfo = null;
             SimulatorManager.setPlatformInfo(platformInfo);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -612,6 +652,7 @@ public class SimulatorManagerTest extends TestCase {
         try {
             lockObject.await(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         assertNotNull(infoHolder.get());
@@ -623,8 +664,10 @@ public class SimulatorManagerTest extends TestCase {
         try {
             SimulatorManager.findDevices(null, null);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 
@@ -653,6 +696,7 @@ public class SimulatorManagerTest extends TestCase {
         try {
             lockObject.await(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         assertNotNull(infoHolder.get());
@@ -664,8 +708,10 @@ public class SimulatorManagerTest extends TestCase {
         try {
             SimulatorManager.getPlatformInformation(null, null);
         } catch (InvalidArgsException e) {
+            e.printStackTrace();
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
+            e.printStackTrace();
             exType = ExceptionType.SIMULATOR;
         }
 

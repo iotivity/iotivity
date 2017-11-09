@@ -330,10 +330,15 @@ public class ResourceManager {
                 try {
                     thread.run();
                 } catch (Exception e) {
+                    e.printStackTrace();
+                    Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(), new Date(),
+                                Utility.getSimulatorErrorString(e, null));
                     if (e instanceof InterruptedException) {
                         return;
                     }
-                    e.printStackTrace();
                 }
             }
         }
@@ -1107,6 +1112,11 @@ public class ResourceManager {
                 return false;
             }
         } catch (SimulatorException e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             setResourceType(resource, curResourceType);
         }
 

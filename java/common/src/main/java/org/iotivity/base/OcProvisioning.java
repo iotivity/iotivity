@@ -128,7 +128,7 @@ public class OcProvisioning {
      * @param timeout     Timeout in sec.Time to listen for responses before
      *                    returining the Array.
      * @return            Array of OcSecureResource class objects.
-     * @throws OcException
+     * @throws OcException Indicate failure discovering devices which are MOT enabled
      */
     public static List<OcSecureResource> discoverMOTEnabledDevices(int timeout)
         throws OcException {
@@ -143,7 +143,7 @@ public class OcProvisioning {
      * @param timeout     Timeout in sec.Time to listen for responses before
      *                    returining the Array.
      * @return            Array of OcSecureResource class objects.
-     * @throws OcException
+     * @throws OcException Indicate failure discovering MOT enabled owned devices
      */
     public static List<OcSecureResource> discoverMOTEnabledOwnedDevices(int timeout)
         throws OcException {
@@ -280,9 +280,9 @@ public class OcProvisioning {
      *
      *  @param pinSize Byte Len of Random pin.
      *  @param pinType Enumset of pin, see PinType for enums
-     *  @throws OcException
+     *  @throws OcException Indicate failure saving pin type
      */
-    public static int setPinType(int pinSize, EnumSet<PinType>  pinType) throws OcException {
+    public static void setPinType(int pinSize, EnumSet<PinType>  pinType) throws OcException {
 
         int pinTypeInt = 0;
 
@@ -290,22 +290,22 @@ public class OcProvisioning {
             if (pinType.contains(ops))
                 pinTypeInt |= ops.getValue();
         }
-        return setPinType0(pinSize, pinTypeInt);
+        setPinType0(pinSize, pinTypeInt);
     }
-    private static native int setPinType0(int pinSize, int pinType) throws OcException;
+    private static native void setPinType0(int pinSize, int pinType) throws OcException;
 
     /**
      * API to save ACL, having multiple ACE's
      *
      *@param acl object
-     *@throws OcException
+     *@throws OcException Indicate failure saving the ACL
      */
     public static native void saveACL(Object acl) throws OcException;
 
     /**
      * API to do self ownership transfer.
      *
-     *@throws OcException
+     *@throws OcException Indicate failure doing the self ownership transfer
      */
     public static native void doSelfOwnershiptransfer() throws OcException;
     
@@ -313,7 +313,8 @@ public class OcProvisioning {
      *  Method to save the seed value to generate device UUID
      *
      *  @param seed   buffer of seed value
-     *  @throws OcException
+     *  @throws OcException Indicate falure setting the device UUID seed
+     *  @return -1 if TLS not enabled return 0 otherwise
      */
     public static int setDeviceIdSeed(byte[] seed) throws OcException {
         return setDeviceIdSeed1(seed);

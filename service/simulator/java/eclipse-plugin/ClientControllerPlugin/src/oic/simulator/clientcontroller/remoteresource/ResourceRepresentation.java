@@ -16,6 +16,7 @@
 
 package oic.simulator.clientcontroller.remoteresource;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,7 +25,11 @@ import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.ModelProperty;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.SimulatorResourceModel;
+import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.client.SimulatorRequestModel;
+
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.utils.Utility;
 
 public class ResourceRepresentation {
     private Map<String, AttributeElement> mAttributes = new HashMap<String, AttributeElement>();
@@ -119,6 +124,12 @@ public class ResourceRepresentation {
                     model.set(entry.getKey(), attributeElement
                             .getSimulatorResourceAttribute().value());
                 } catch (InvalidArgsException e) {
+                    Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(), new Date(),
+                                Utility.getSimulatorErrorString(e, null));
+
                     e.printStackTrace();
                 }
             }
@@ -138,6 +149,12 @@ public class ResourceRepresentation {
                     model.set(entry.getKey(), attributeElement
                             .getSimulatorResourceAttribute().value());
                 } catch (InvalidArgsException e) {
+                    Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(), new Date(),
+                                Utility.getSimulatorErrorString(e, null));
+
                     e.printStackTrace();
                 }
             }

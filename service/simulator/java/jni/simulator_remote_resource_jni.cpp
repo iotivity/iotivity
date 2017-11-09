@@ -40,7 +40,9 @@ static SimulatorRemoteResourceSP simulatorRemoteResourceToCpp(
     JniSharedObjectHolder<SimulatorRemoteResource> *jniResource =
         getHandle<JniSharedObjectHolder<SimulatorRemoteResource>>(env, object);
     if (jniResource)
+    {
         return jniResource->get();
+    }
     return nullptr;
 }
 
@@ -49,7 +51,9 @@ static void onObserveCallback(jobject listener, const std::string &uid, Simulato
 {
     JNIEnv *env = GetEnv();
     if (!env)
+    {
         return;
+    }
 
     jclass listenerCls = env->GetObjectClass(listener);
     jmethodID listenerMethodId = env->GetMethodID(listenerCls, "onObserveNotification",
@@ -66,7 +70,9 @@ static void onGetCallback(jobject listener, const std::string &uid, SimulatorRes
 {
     JNIEnv *env = GetEnv();
     if (!env)
+    {
         return;
+    }
 
     jclass listenerCls = env->GetObjectClass(listener);
     jmethodID listenerMethodId = env->GetMethodID(listenerCls, "onGetResponse",
@@ -85,7 +91,9 @@ static void onPutCallback(jobject listener, const std::string &uid, SimulatorRes
 {
     JNIEnv *env = GetEnv();
     if (!env)
+    {
         return;
+    }
 
     jclass listenerCls = env->GetObjectClass(listener);
     jmethodID listenerMethodId = env->GetMethodID(listenerCls, "onPutResponse",
@@ -104,7 +112,9 @@ static void onPostCallback(jobject listener, const std::string &uid, SimulatorRe
 {
     JNIEnv *env = GetEnv();
     if (!env)
+    {
         return;
+    }
 
     jclass listenerCls = env->GetObjectClass(listener);
     jmethodID listenerMethodId = env->GetMethodID(listenerCls, "onPostResponse",
@@ -123,7 +133,9 @@ static void onVerificationCallback(jobject listener, const std::string &uid, int
 {
     JNIEnv *env = GetEnv();
     if (!env)
+    {
         return;
+    }
 
     jclass listenerCls = env->GetObjectClass(listener);
     jmethodID listenerMethodId = nullptr;
@@ -149,7 +161,9 @@ static void onVerificationCallback(jobject listener, const std::string &uid, int
     }
 
     if (OP_COMPLETE == opState || OP_ABORT == opState)
+    {
         env->DeleteGlobalRef(listener);
+    }
     ReleaseEnv();
 }
 

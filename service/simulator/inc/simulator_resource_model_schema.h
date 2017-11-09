@@ -46,21 +46,68 @@ class AttributeProperty
         };
 
         explicit AttributeProperty(Type type);
-        virtual ~AttributeProperty() {};
+        virtual ~AttributeProperty() {}
 
         Type getType() const;
-        virtual bool isInteger() const { return false; }
-        virtual bool isDouble() const { return false; }
-        virtual bool isBoolean() const { return false; }
-        virtual bool isString() const { return false; }
-        virtual bool isArray() const { return false; }
-        virtual bool isModel() const { return false; }
-        virtual std::shared_ptr<IntegerProperty> asInteger() { return nullptr; }
-        virtual std::shared_ptr<DoubleProperty> asDouble() { return nullptr; }
-        virtual std::shared_ptr<BooleanProperty> asBoolean() { return nullptr; }
-        virtual std::shared_ptr<StringProperty> asString() { return nullptr; }
-        virtual std::shared_ptr<ArrayProperty> asArray() { return nullptr; }
-        virtual std::shared_ptr<ModelProperty> asModel() { return nullptr; }
+        virtual bool isInteger() const
+        {
+            return false;
+        }
+
+        virtual bool isDouble() const
+        {
+            return false;
+        }
+
+        virtual bool isBoolean() const
+        {
+            return false;
+        }
+
+        virtual bool isString() const
+        {
+            return false;
+        }
+
+        virtual bool isArray() const
+        {
+            return false;
+        }
+
+        virtual bool isModel() const
+        {
+            return false;
+        }
+
+        virtual std::shared_ptr<IntegerProperty> asInteger()
+        {
+            return nullptr;
+        }
+
+        virtual std::shared_ptr<DoubleProperty> asDouble()
+        {
+            return nullptr;
+        }
+
+        virtual std::shared_ptr<BooleanProperty> asBoolean()
+        {
+            return nullptr;
+        }
+
+        virtual std::shared_ptr<StringProperty> asString()
+        {
+            return nullptr;
+        }
+
+        virtual std::shared_ptr<ArrayProperty> asArray()
+        {
+            return nullptr;
+        }
+
+        virtual std::shared_ptr<ModelProperty> asModel()
+        {
+            return nullptr;
+        }
 
         virtual bool validate(const AttributeValueVariant &value) = 0;
         virtual AttributeValueVariant buildValue() = 0;

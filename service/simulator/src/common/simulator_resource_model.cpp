@@ -349,7 +349,9 @@ class SimulatorResourceModelBuilder
                 {
                     std::vector<SimulatorResourceModel> innerArray1(ocSubRepArray[i].size());
                     for  (size_t j = 0; j < ocSubRepArray[i].size(); j++)
+                    {
                         handleRepresentationType(innerArray1[j], ocSubRepArray[i][j]);
+                    }
                     subResModelArray[i] = innerArray1;
                 }
 
@@ -533,7 +535,9 @@ bool SimulatorResourceModel::TypeInfo::operator==(
 {
     if (m_type == rhs.m_type && m_baseType == rhs.m_baseType
         && m_depth == rhs.m_depth)
+    {
         return true;
+    }
     return false;
 }
 

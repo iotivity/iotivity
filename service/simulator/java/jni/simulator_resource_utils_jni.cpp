@@ -26,11 +26,15 @@
 jobject CreateSingleResource(JNIEnv *env, SimulatorResourceSP singleResource)
 {
     if (!singleResource)
+    {
         return nullptr;
+    }
 
     auto *objectHolder = JniSharedObjectHolder<SimulatorResource>::create(singleResource);
     if (!objectHolder)
+    {
         return nullptr;
+    }
 
     static jmethodID simulatorSingleResourceCtor = env->GetMethodID(
                 gSimulatorClassRefs.simulatorSingleResourceCls, "<init>", "(J)V");
@@ -49,11 +53,15 @@ jobject CreateSingleResource(JNIEnv *env, SimulatorResourceSP singleResource)
 jobject CreateCollectionResource(JNIEnv *env, SimulatorResourceSP collectionResource)
 {
     if (!collectionResource)
+    {
         return nullptr;
+    }
 
     auto *objectHolder = JniSharedObjectHolder<SimulatorResource>::create(collectionResource);
     if (!objectHolder)
+    {
         return nullptr;
+    }
 
     static jmethodID simulatorCollectionResourceCtor = env->GetMethodID(
                 gSimulatorClassRefs.simulatorCollectionResourceCls, "<init>", "(J)V");
@@ -71,21 +79,29 @@ jobject CreateCollectionResource(JNIEnv *env, SimulatorResourceSP collectionReso
 jobject CreateSimulatorResource(JNIEnv *env, SimulatorResourceSP resource)
 {
     if (!resource)
+    {
         return nullptr;
+    }
 
     if (SimulatorResource::Type::COLLECTION_RESOURCE == resource->getType())
+    {
         return CreateCollectionResource(env, resource);
+    }
     return CreateSingleResource(env, resource);
 }
 
 jobject CreateSimulatorResourceVector(JNIEnv *env, std::vector<SimulatorResourceSP> &resources)
 {
     if (!resources.size())
+    {
         return nullptr;
+    }
 
     jobject vectorObject = JniVector(env).toJava();
     if (!vectorObject)
+    {
         return nullptr;
+    }
 
     static jmethodID addMethod = env->GetMethodID(gSimulatorClassRefs.vectorCls,
                                  "add", "(Ljava/lang/Object;)Z");
@@ -99,11 +115,15 @@ jobject CreateSimulatorResourceVector(JNIEnv *env, std::vector<SimulatorResource
 jobject CreateSimulatorRemoteResource(JNIEnv *env, SimulatorRemoteResourceSP &remoteResource)
 {
     if (!remoteResource)
+    {
         return nullptr;
+    }
 
     auto *objectHolder = JniSharedObjectHolder<SimulatorRemoteResource>::create(remoteResource);
     if (!objectHolder)
+    {
         return nullptr;
+    }
 
     static jmethodID simulatorRemoteResourceCtor = env->GetMethodID(
                 gSimulatorClassRefs.simulatorRemoteResourceCls, "<init>", "(J)V");

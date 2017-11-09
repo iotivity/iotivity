@@ -253,12 +253,12 @@ WiFiConnErrCode TizenWiFiConn(char *ssid, char* passwd)
     memset(targetInfo.wifiPasswd, 0, OIC_STRING_MAX_VALUE);
     if(ssid != NULL)
     {
-        strncpy(targetInfo.wifiName, ssid, strlen(ssid));
+        strncpy(targetInfo.wifiName, ssid, OIC_STRING_MAX_VALUE);
     }
 
     if(passwd != NULL)
     {
-        strncpy(targetInfo.wifiPasswd, passwd, strlen(passwd));
+        strncpy(targetInfo.wifiPasswd, passwd, OIC_STRING_MAX_VALUE);
     }
 
     int ret = wifi_foreach_found_aps(WiFiFoundCallback, &targetInfo);

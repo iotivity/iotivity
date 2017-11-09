@@ -240,6 +240,15 @@ else:
                      default='1',
                      allowed_values=('0', '1')))
 
+if target_os in ['linux']:
+    # This build option is provided for temporary use when upgrading to newer
+    # compilers or to temporarily bypass build warnings. It should default to True
+    # for all code submitted to upstream.
+    help_vars.Add(
+        BoolVariable('ERROR_ON_WARN',
+                     'Make all compiler warnings into errors.',
+                      default=True))
+
 if target_os == 'windows':
     # Builds differ based on Visual Studio version
     #   For VS2013, MSVC_VERSION is '12.0'.

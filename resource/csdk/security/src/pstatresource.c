@@ -172,7 +172,8 @@ static bool UpdatePersistentStorage(OicSecPstat_t *pstat)
 OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
                                         uint8_t **payload,
                                         size_t *size,
-                                        const bool *propertiesToInclude)
+                                        const bool *propertiesToInclude,
+                                        const bool includeDosP)
 {
     if (NULL == pstat || NULL == payload || NULL != *payload || NULL == size)
     {
@@ -237,15 +238,18 @@ OCStackResult PstatToCBORPayloadPartial(const OicSecPstat_t *pstat,
         cborEncoderResult = cbor_encode_int(&dosMap, pstat->dos.state);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding pstat.dos.s value.");
 
-        cborEncoderResult = cbor_encode_text_string(&dosMap, OIC_JSON_P_NAME,
-            strlen(OIC_JSON_P_NAME));
-        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding pstat.dos.p tag.");
+        if (includeDosP)
+        {
+            cborEncoderResult = cbor_encode_text_string(&dosMap, OIC_JSON_P_NAME,
+                strlen(OIC_JSON_P_NAME));
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding pstat.dos.p tag.");
 
-        cborEncoderResult = cbor_encode_boolean(&dosMap, pstat->dos.pending);
-        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding pstat.dos.p value.");
+            cborEncoderResult = cbor_encode_boolean(&dosMap, pstat->dos.pending);
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding pstat.dos.p value.");
+        }
 
         cborEncoderResult = cbor_encoder_close_container(&pstatMap, &dosMap);
-        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed closing pstat.dos map");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed closing pstat.dos map");
     }
 
     // isop Property
@@ -369,7 +373,7 @@ exit:
         // Since the allocated initial memory failed, double the memory.
         cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
-        ret = PstatToCBORPayloadPartial(pstat, payload, &cborLen, propertiesToInclude);
+        ret = PstatToCBORPayloadPartial(pstat, payload, &cborLen, propertiesToInclude, includeDosP);
         if (OC_STACK_OK == ret)
         {
             *size = cborLen;
@@ -398,7 +402,7 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat,
         allProps[i] = true;
     }
 
-    return PstatToCBORPayloadPartial(pstat, payload, size, allProps);
+    return PstatToCBORPayloadPartial(pstat, payload, size, allProps, true);
 }
 
 OCStackResult CBORPayloadToPstat(const uint8_t *cborPayload, const size_t size,
@@ -493,6 +497,10 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
                 }
                 else if (strcmp(dosTagName, OIC_JSON_P_NAME) == 0)
                 {
+                    if (roParsed)
+                    {
+                        *roParsed = true;
+                    }
                     OIC_LOG(DEBUG, TAG, "Found pstat.dos.p tag; getting boolean value.");
                     bool p = false;
                     cborFindResult = cbor_value_get_boolean(&dosMap, &p);
@@ -580,6 +588,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
 
         cborFindResult = cbor_value_get_int(&pstatMap, &tm);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding TM.");
+        OIC_LOG_V(INFO, TAG, "%s parsed pstat->tm = %u", __func__, (OicSecDpm_t)tm);
         pstat->tm = (OicSecDpm_t)tm;
 
         if (roParsed)
@@ -593,6 +602,8 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
     }
     else
     {
+        OIC_LOG_V(INFO, TAG, "%s no pstat->tm found in payload, using existing value of %u",
+            __func__, gPstat->tm);
         pstat->tm = gPstat->tm;
         cborFindResult = CborNoError;
     }
@@ -818,7 +829,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
             {
                 if(gPstat->sm[i] == pstat->om)
                 {
-                    OIC_LOG_V(ERROR, TAG, "%s: %d is a supported Operation Mode",
+                    OIC_LOG_V(DEBUG, TAG, "%s: %d is a supported Operation Mode",
                         __func__, (int) pstat->om);
                     supportedOm = true;
                 }
@@ -843,6 +854,19 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                 pstat->cm &= ~UPDATE_SOFTWARE; // Unset the cm bit, per spec
             }
 
+            // update om
+            gPstat->om = pstat->om;
+
+            // update tm
+            OIC_LOG_V(INFO, TAG, "%s setting gPstat->tm = %u", __func__, pstat->tm);
+            gPstat->tm = pstat->tm;
+
+            // update rownerID
+            gPstat->rownerID = pstat->rownerID;
+
+            // update dos LAST of all Properties, as changing dos can also
+            // change other Properties and we want the dos-asserted values
+            // to "stick" rather than being over-written by prior values.
             if (pstat->dos.state != gPstat->dos.state)
             {
                 OCStackResult stateChangeResult = OC_STACK_ERROR;
@@ -872,15 +896,6 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
                     break;
                 }
             }
-
-            // update om
-            gPstat->om = pstat->om;
-
-            // update tm
-            gPstat->tm = pstat->tm;
-
-            // update rownerID
-            gPstat->rownerID = pstat->rownerID;
 
             // Convert pstat data into CBOR for update to persistent storage
             if (UpdatePersistentStorage(gPstat))
@@ -1064,6 +1079,8 @@ void RestorePstatToInitState()
         gPstat->dos.state = DOS_RFOTM;
         gPstat->dos.pending = false;
         gPstat->cm = (OicSecDpm_t)(gPstat->cm | TAKE_OWNER);
+        OIC_LOG_V(INFO, TAG, "%s setting gPstat->tm = %u",
+            __func__, (OicSecDpm_t)(gPstat->tm & (~TAKE_OWNER)));
         gPstat->tm = (OicSecDpm_t)(gPstat->tm & (~TAKE_OWNER));
         gPstat->om = SINGLE_SERVICE_CLIENT_DRIVEN;
         if(gPstat->sm && 0 < gPstat->smLen)
@@ -1090,39 +1107,21 @@ OCStackResult GetPstatRownerId(OicUuid_t *rowneruuid)
 
 OCStackResult SetPstatRownerId(const OicUuid_t *rowneruuid)
 {
-    OCStackResult ret = OC_STACK_ERROR;
-    uint8_t *cborPayload = NULL;
-    size_t size = 0;
+    OCStackResult ret = OC_STACK_OK;
     OicUuid_t prevId = {.id={0}};
 
-    if(NULL == rowneruuid)
+    VERIFY_NOT_NULL_RETURN(TAG, rowneruuid, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, gPstat, ERROR, OC_STACK_NO_RESOURCE);
+
+    memcpy(&prevId, &gPstat->rownerID, sizeof(OicUuid_t));
+    memcpy(&gPstat->rownerID, rowneruuid, sizeof(OicUuid_t));
+
+    if (!UpdatePersistentStorage(gPstat))
     {
-        ret = OC_STACK_INVALID_PARAM;
-    }
-    if(NULL == gPstat)
-    {
-        ret = OC_STACK_NO_RESOURCE;
-    }
-
-    if(rowneruuid && gPstat)
-    {
-        memcpy(prevId.id, gPstat->rownerID.id, sizeof(prevId.id));
-        memcpy(gPstat->rownerID.id, rowneruuid->id, sizeof(gPstat->rownerID.id));
-
-        ret = PstatToCBORPayload(gPstat, &cborPayload, &size);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-
-        ret = UpdateSecureResourceInPS(OIC_JSON_PSTAT_NAME, cborPayload, size);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-
-        OICFree(cborPayload);
+        memcpy(&gPstat->rownerID, &prevId, sizeof(OicUuid_t));
+        ret = OC_STACK_ERROR;
     }
 
-    return ret;
-
-exit:
-    OICFree(cborPayload);
-    memcpy(gPstat->rownerID.id, prevId.id, sizeof(gPstat->rownerID.id));
     return ret;
 }
 
@@ -1220,6 +1219,7 @@ OCStackResult SetPstatTm(const OicSecDpm_t tm)
 {
     if (gPstat)
     {
+        OIC_LOG_V(INFO, TAG, "%s setting gPstat->tm = %u", __func__, tm);
         gPstat->tm = tm;
         return OC_STACK_OK;
     }

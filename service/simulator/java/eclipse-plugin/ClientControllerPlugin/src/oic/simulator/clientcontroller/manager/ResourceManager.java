@@ -591,28 +591,28 @@ public class ResourceManager {
         try {
             // Compare URI.
             if (!existingNativeResourceRef.getURI().equals(
-                    existingNativeResourceRef.getURI())) {
+                    newNativeResourceRef.getURI())) {
                 change = true;
             }
 
             // Compare ID.
             if (!change
                     && !existingNativeResourceRef.getId().equals(
-                            existingNativeResourceRef.getId())) {
+                            newNativeResourceRef.getId())) {
                 change = true;
             }
 
             // Compare Host.
             if (!change
                     && !existingNativeResourceRef.getHost().equals(
-                            existingNativeResourceRef.getHost())) {
+                            newNativeResourceRef.getHost())) {
                 change = true;
             }
 
             // Compare Observable flag.
             if (!change
-                    && existingNativeResourceRef.isObservable() != existingNativeResourceRef
-                            .isObservable()) {
+                    && existingNativeResourceRef.isObservable() !=
+                            newNativeResourceRef.isObservable()) {
                 change = true;
             }
 
@@ -658,6 +658,11 @@ public class ResourceManager {
                 }
             }
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             change = true;
         }
 
@@ -730,10 +735,15 @@ public class ResourceManager {
                 try {
                     thread.run();
                 } catch (Exception e) {
+                    e.printStackTrace();
+                    Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(), new Date(),
+                                Utility.getSimulatorErrorString(e, null));
                     if (e instanceof InterruptedException) {
                         return;
                     }
-                    e.printStackTrace();
                 }
             }
         }

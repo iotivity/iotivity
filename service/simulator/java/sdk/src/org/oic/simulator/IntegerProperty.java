@@ -72,7 +72,7 @@ public class IntegerProperty extends AttributeProperty {
     }
 
     public boolean hasValues() {
-        return (null != mValues && (mValues.length > 0));
+        return (null != mValues && mValues.length > 0);
     }
 
     public int[] getValues() {

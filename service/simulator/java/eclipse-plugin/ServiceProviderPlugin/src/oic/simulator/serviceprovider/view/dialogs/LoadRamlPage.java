@@ -218,6 +218,11 @@ public class LoadRamlPage extends WizardPage {
         try {
             resourceCount = Integer.parseInt(noOfInstancesText.getText());
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             resourceCount = -1;
         }
         if (null != configFilePath && configFilePath.trim().length() > 0) {
@@ -233,6 +238,11 @@ public class LoadRamlPage extends WizardPage {
         try {
             resourceCount = Integer.parseInt(noOfInstancesText.getText());
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             resourceCount = -1;
         }
         if (null != configFilePath && configFilePath.trim().length() > 0) {
@@ -257,6 +267,11 @@ public class LoadRamlPage extends WizardPage {
         try {
             fileStream = new FileInputStream(configFilePath);
         } catch (FileNotFoundException e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             MessageDialog
                     .openError(getShell(), "Invalid File",
                             "File doesn't exist. Either the file path or file name is invalid.");

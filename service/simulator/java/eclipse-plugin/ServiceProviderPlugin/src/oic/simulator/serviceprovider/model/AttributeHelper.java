@@ -16,6 +16,7 @@
 
 package oic.simulator.serviceprovider.model;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -23,12 +24,14 @@ import java.util.Set;
 import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.BooleanProperty;
 import org.oic.simulator.DoubleProperty;
 import org.oic.simulator.IntegerProperty;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.StringProperty;
 
+import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.utils.Constants;
 import oic.simulator.serviceprovider.utils.Utility;
 
@@ -178,6 +181,11 @@ public class AttributeHelper {
         try {
             Integer.parseInt(value);
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             isInt = false;
         }
         return isInt;
@@ -188,6 +196,11 @@ public class AttributeHelper {
         try {
             Double.parseDouble(value);
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             isDouble = false;
         }
         return isDouble;
@@ -207,6 +220,11 @@ public class AttributeHelper {
                     result = false;
                 }
             } catch (Exception e) {
+                Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
                 result = false;
             }
         } else if (type.equals(Constants.DOUBLE)) {
@@ -253,6 +271,11 @@ public class AttributeHelper {
                             result = false;
                         }
                     } catch (Exception e) {
+                        Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(), new Date(),
+                                    Utility.getSimulatorErrorString(e, null));
                         result = false;
                     }
                 } else if (attributeType.equals(Constants.DOUBLE)) {
@@ -272,6 +295,11 @@ public class AttributeHelper {
                             result = false;
                         }
                     } catch (Exception e) {
+                        Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(), new Date(),
+                                    Utility.getSimulatorErrorString(e, null));
                         result = false;
                     }
                 }

@@ -135,6 +135,11 @@ public class LoadRAMLDialog extends TitleAreaDialog {
         try {
             fileStream = new FileInputStream(configFilePath);
         } catch (Exception e) {
+            Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(),
+                        Utility.getSimulatorErrorString(e, null));
             MessageDialog
                     .openError(getShell(), "Invalid File",
                             "File doesn't exist. Either the file path or file name is invalid.");

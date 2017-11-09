@@ -36,7 +36,9 @@ SimulatorResourceSP SimulatorResourceToCpp(JNIEnv *env, jobject object)
     JniSharedObjectHolder<SimulatorResource> *jniResource =
         getHandle<JniSharedObjectHolder<SimulatorResource>>(env, object);
     if (jniResource)
+    {
         return jniResource->get();
+    }
     return nullptr;
 }
 
@@ -58,7 +60,9 @@ static jobject createObserverInfoVector(JNIEnv *env,
 {
     jobject vectorObject = JniVector(env).toJava();
     if (!vectorObject)
+    {
         return nullptr;
+    }
 
     static jmethodID addMethod = env->GetMethodID(gSimulatorClassRefs.vectorCls,
                                  "add", "(Ljava/lang/Object;)Z");
@@ -74,7 +78,9 @@ static void onObserverChange(jobject listener, const std::string &uri,
 {
     JNIEnv *env = GetEnv();
     if (!env)
+    {
         return;
+    }
 
     jclass listenerCls = env->GetObjectClass(listener);
     jmethodID listenerMethod = nullptr;
@@ -101,7 +107,9 @@ static void onResourceModelChange(jobject listener, const std::string &uri,
 {
     JNIEnv *env = GetEnv();
     if (!env)
+    {
         return;
+    }
 
     jclass listenerCls = env->GetObjectClass(listener);
     jmethodID listenerMethod = env->GetMethodID(listenerCls, "onResourceModelChanged",

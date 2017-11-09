@@ -26,7 +26,9 @@ extern SimulatorClassRefs gSimulatorClassRefs;
 jobject JniDeviceInfo::toJava(DeviceInfo &deviceInfo)
 {
     if (!m_env)
+    {
         return nullptr;
+    }
 
     static jmethodID deviceInfoCtor = m_env->GetMethodID(gSimulatorClassRefs.deviceInfoCls, "<init>",
                                       "()V");

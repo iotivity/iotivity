@@ -126,7 +126,9 @@ namespace RAML
             RequestResponseBody(const std::string &type, const YAML::Node &yamlNode,
                                 const IncludeResolverPtr &includeResolver): m_schema(NULL),
                 m_includeResolver(includeResolver)
-            { readRequestResponseBody(type, yamlNode); }
+            {
+                readRequestResponseBody(type, yamlNode);
+            }
 
         private:
             virtual void readRequestResponseBody(const std::string &type,

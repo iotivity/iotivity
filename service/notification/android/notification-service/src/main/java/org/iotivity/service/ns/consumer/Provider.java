@@ -72,8 +72,6 @@ public class Provider {
     protected void finalize() throws Throwable {
         try {
             nativeDispose();
-        } catch (Throwable t) {
-            throw t;
         } finally {
             super.finalize();
         }

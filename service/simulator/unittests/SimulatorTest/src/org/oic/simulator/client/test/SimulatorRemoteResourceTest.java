@@ -55,7 +55,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
         }
 
         // Find the created resource for first time
-        if (null != singleResource && null == remoteResource) {
+        if (null == remoteResource) {
             CountDownLatch lockObject = new CountDownLatch(1);
             ObjectHolder<SimulatorRemoteResource> resourceHolder = new ObjectHolder<>();
             FindResourceCallbackListener listener = new FindResourceCallbackListener(
@@ -68,6 +68,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
                 try {
                     lockObject.await(10, TimeUnit.SECONDS);
                 } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
 
             } catch (InvalidArgsException e) {
@@ -142,6 +143,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -170,6 +172,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -198,6 +201,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -227,6 +231,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -306,6 +311,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -336,6 +342,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -366,6 +373,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -397,6 +405,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -426,6 +435,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -509,6 +519,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -539,6 +550,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -569,6 +581,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -600,6 +613,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -629,6 +643,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -715,6 +730,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             remoteResource.stopObserve();
@@ -747,6 +763,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             remoteResource.stopObserve();
@@ -793,6 +810,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             response.set(null);
@@ -804,6 +822,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -874,6 +893,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -903,6 +923,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;
@@ -932,6 +953,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             syncResult = true;

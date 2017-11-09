@@ -104,7 +104,7 @@ public class Utility {
         return detail;
     }
 
-    public static Comparator<AttributeElement> attributeComparator = new Comparator<AttributeElement>() {
+    public static final Comparator<AttributeElement> attributeComparator = new Comparator<AttributeElement>() {
                                                                        public int compare(
                                                                                AttributeElement att1,
                                                                                AttributeElement att2) {
