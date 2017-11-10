@@ -1,6 +1,6 @@
 Name: org.tizen.gtest
-Version: 0.0.1
-Release: 1
+Version: 1.7.0
+Release: 0
 License: To be filled
 Summary: gtest
 Packager: Jisan Mahmud <jisan.m>
