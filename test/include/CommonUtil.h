@@ -58,7 +58,7 @@
 //#include "gtest/gtest.h"
 
 #define APP_START_STOP_TIMEOUT 2
-
+#define WAIT_TIME_MIN 1
 using namespace std;
 static const string KILL_ALL_COMMAND = "kill -9 ";
 static const string PID_FIND_COMMAND = "/usr/bin/lsof -t -i:";

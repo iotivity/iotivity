@@ -20,6 +20,7 @@
  ******************************************************************/
 
 #include "NSUtility.h"
+#include "CommonUtil.h"
 
 void* OCProcessThread(void * ptr)
 {
