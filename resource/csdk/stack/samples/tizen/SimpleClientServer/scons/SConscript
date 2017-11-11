@@ -35,9 +35,9 @@ print("MQ flag is %s" % with_mq)
 env.AppendUnique(CPPFLAGS=[
     '-std=c++0x', '-fPIC', '-D__TIZEN__', '-DWITH_POSIX', '-Wall',
     '-DSLP_SDK_LOG', '-g', '-D_GNU_SOURCE', '-DTIZEN_DEBUG_ENABLE', '-DTB_LOG',
-    '`pkg-config', '--cflags', '--libs', 'dlog', 'com.oic.ri',
-    'capi-network-connection', 'gobject-2.0', 'glib-2.0`'
 ])
+env.ParseConfig("pkg-config --cflags --libs dlog com.oic.ri capi-network-connection")
+env.ParseConfig("pkg-config --cflags --libs gobject-2.0 glib-2.0")
 
 if routing == 'GW':
     env.AppendUnique(CPPDEFINES=['ROUTING_GATEWAY'])

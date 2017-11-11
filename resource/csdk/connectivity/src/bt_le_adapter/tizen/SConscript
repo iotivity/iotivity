@@ -7,8 +7,7 @@ Import('connectivity_env')
 
 connectivity_env.PrependUnique(CPPPATH=[Dir('.')])
 
-connectivity_env.ParseConfig(
-    "pkg-config --cflags --libs capi-network-bluetooth")
+connectivity_env.ParseConfig("pkg-config --cflags --libs capi-network-bluetooth")
 
 src_files = [File(src) for src in (
     'caleclient.c',
