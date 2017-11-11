@@ -62,12 +62,7 @@ scene_test_env.AppendUnique(LIBS=[
 ])
 
 if target_os not in ['windows']:
-    scene_test_env.AppendUnique(
-        CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0'])
-
-if not scene_test_env.get('RELEASE'):
-    scene_test_env.PrependUnique(LIBS=['gcov'])
-    scene_test_env.AppendUnique(CXXFLAGS=['--coverage'])
+    scene_test_env.AppendUnique(CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0'])
 
 scene_test_env.PrependUnique(CPPPATH=[
     '#/extlibs/hippomocks/hippomocks',

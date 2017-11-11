@@ -40,11 +40,6 @@ if target_os not in ['windows', 'msys_nt']:
 if 'g++' in ipcaapp_env.get('CXX'):
     ipcaapp_env.AppendUnique(CXXFLAGS=['-Wall', '-std=c++0x'])
 
-if target_os in ['linux']:
-    if not ipcaapp_env.get('RELEASE'):
-        ipcaapp_env.PrependUnique(LIBS=['gcov'])
-        ipcaapp_env.AppendUnique(CXXFLAGS=['--coverage'])
-
 ######################################################################
 # Source files and Targets
 ######################################################################

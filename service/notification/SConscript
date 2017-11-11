@@ -72,10 +72,6 @@ if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
 
 notification_env.AddPthreadIfNeeded()
 
-if (target_os == 'linux') and (not env.get('RELEASE')):
-    notification_env.PrependUnique(LIBS=['gcov'])
-    notification_env.AppendUnique(CCFLAGS=['--coverage'])
-
 if target_os == 'android':
     notification_env.AppendUnique(CCFLAGS=['-frtti', '-fexceptions'])
     notification_env.AppendUnique(LIBS=['gnustl_shared', 'log'])

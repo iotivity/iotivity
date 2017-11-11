@@ -80,10 +80,6 @@ if target_os == 'android':
     notification_env.AppendUnique(
         LINKFLAGS=['-Wl,-soname,libnotification_consumer_wrapper.so'])
 
-if not env.get('RELEASE') and target_os not in ['ios']:
-    notification_env.PrependUnique(LIBS=['gcov'])
-    notification_env.AppendUnique(CCFLAGS=['--coverage'])
-
 if target_os in ['linux', 'tizen']:
     notification_env.AppendUnique(LIBS=['rt'])
 

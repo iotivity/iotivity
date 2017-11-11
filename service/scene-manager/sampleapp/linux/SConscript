@@ -46,10 +46,6 @@ if env.get('SECURED') == '1':
     scenemanager_sample_env.AppendUnique(
         LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
-if not env.get('RELEASE'):
-    scenemanager_sample_env.PrependUnique(LIBS=['gcov'])
-    scenemanager_sample_env.AppendUnique(CXXFLAGS=['--coverage'])
-
 if 'gcc' == lib_env.get('CC') and target_os not in ['android']:
     scenemanager_sample_env.AppendUnique(CFLAGS=['-pthread'])
     scenemanager_sample_env.AppendUnique(LIBS=['pthread'])

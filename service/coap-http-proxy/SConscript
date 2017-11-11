@@ -79,14 +79,6 @@ if target_os == 'android':
 ######################################################################
 # Source files and Targets
 ######################################################################
-
-# Link with gcov if building in debug mode
-if target_os in ['linux']:
-    if not env.get('RELEASE'):
-        local_env.PrependUnique(LIBS=['gcov'])
-        local_env.AppendUnique(CXXFLAGS=['--coverage'])
-        local_env.AppendUnique(CFLAGS=['--coverage'])
-
 proxy_src = [
     './src/CoapHttpHandler.c',
     './src/CoapHttpMap.c',

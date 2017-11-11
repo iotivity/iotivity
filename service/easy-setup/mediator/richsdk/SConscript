@@ -138,10 +138,6 @@ if target_os in ['android', 'ios', 'linux', 'tizen']:
         ])
         easy_setup_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
-if not env.get('RELEASE') and target_os not in ['ios']:
-    easy_setup_env.PrependUnique(LIBS=['gcov'])
-    easy_setup_env.AppendUnique(CCFLAGS=['--coverage'])
-
 ######################################################################
 # Source files and Targets
 ######################################################################

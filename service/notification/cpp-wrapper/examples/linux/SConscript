@@ -72,12 +72,6 @@ if target_os == 'android':
     notification_sample_env.AppendUnique(CXXFLAGS=['-frtti', '-fexceptions'])
     notification_sample_env.AppendUnique(LIBS=['gnustl_shared', 'log'])
 
-if not env.get('RELEASE'):
-    notification_sample_env.PrependUnique(LIBS=['gcov'])
-    notification_sample_env.AppendUnique(CCFLAGS=['--coverage'])
-
-
-
 if env.get('SECURED') == '1':
     notification_sample_env.AppendUnique(
         LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])

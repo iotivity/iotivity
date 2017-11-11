@@ -21,7 +21,7 @@ else:
     env.AppendUnique(CCFLAGS=['-g'])
 
 # Test Coverage Flags and Library (if RELEASE=0)
-if not env.get('RELEASE'):
+if not env.get('RELEASE') and env.get('COVERAGE_CHECKS'):
     env.AppendUnique(CCFLAGS=['--coverage', '-fPIC', '-O0'])
     env.AppendUnique(LINKFLAGS=['--coverage'])
 

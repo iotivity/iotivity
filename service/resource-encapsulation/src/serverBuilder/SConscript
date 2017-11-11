@@ -30,7 +30,6 @@ rd_mode = lib_env.get('RD_MODE')
 # Add third party libraries
 SConscript('#service/third_party_libs.scons', exports='lib_env')
 server_builder_env = lib_env.Clone()
-release = server_builder_env.get('RELEASE')
 src_dir = server_builder_env.get('SRC_DIR')
 target_os = server_builder_env.get('TARGET_OS')
 
@@ -39,6 +38,7 @@ target_os = server_builder_env.get('TARGET_OS')
 # Build flags
 ######################################################################
 server_builder_env.AppendUnique(CPPPATH=[
+    './include',
     '../common/primitiveResource/include',
     '../common/utils/include',
     '../../include',
@@ -51,13 +51,8 @@ server_builder_env.AppendUnique(CPPPATH=[
     '#/resource/oc_logger/include',
 ])
 
-server_builder_env.AppendUnique(
-    CPPPATH=[server_builder_env.get('SRC_DIR') + '/extlibs', 'include'])
 server_builder_env.AppendUnique(LIBS=['oc', 'rcs_common', 'logger'])
 
-if not release:
-    server_builder_env.AppendUnique(CXXFLAGS=['--coverage'])
-    server_builder_env.PrependUnique(LIBS=['gcov'])
 if target_os not in ['windows']:
     server_builder_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall'])
 

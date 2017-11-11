@@ -78,11 +78,6 @@ if target_os not in ['windows', 'msys_nt']:
 if 'g++' in elevator_server_env.get('CXX'):
     elevator_server_env.AppendUnique(CXXFLAGS=['-Wall', '-std=c++0x'])
 
-if target_os in ['linux']:
-    if not elevator_server_env.get('RELEASE'):
-        elevator_server_env.PrependUnique(LIBS=['gcov'])
-        elevator_server_env.AppendUnique(CXXFLAGS=['--coverage'])
-
 ######################################################################
 # Source files and Targets
 ######################################################################

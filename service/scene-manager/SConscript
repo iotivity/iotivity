@@ -78,10 +78,6 @@ if target_os == 'android':
     scenemanager_env.AppendUnique(CXXFLAGS=['-frtti', '-fexceptions'])
     scenemanager_env.AppendUnique(LIBS=['gnustl_shared', 'log'])
 
-if not env.get('RELEASE') and target_os not in ['ios']:
-    scenemanager_env.PrependUnique(LIBS=['gcov'])
-    scenemanager_env.AppendUnique(CXXFLAGS=['--coverage'])
-
 ######################################################################
 # Source files and Targets
 ######################################################################

@@ -66,10 +66,6 @@ if enrollee_env.get('SECURED') == '1':
 if target_os not in ['windows']:
     enrollee_env.AppendUnique(CXXFLAGS=['-Wall', '-std=c++0x'])
 
-if not env.get('RELEASE'):
-    enrollee_env.PrependUnique(LIBS=['gcov'])
-    enrollee_env.AppendUnique(CCFLAGS=['--coverage'])
-
 ######################################################################
 # Linux Enrollee
 ######################################################################

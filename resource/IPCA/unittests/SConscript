@@ -124,11 +124,6 @@ if target_os not in ['windows', 'msys_nt']:
 if 'g++' in ipcatest_env.get('CXX'):
     ipcatest_env.AppendUnique(LIBS=['pthread'])
 
-if target_os in ['linux']:
-    if not ipcatest_env.get('RELEASE'):
-        ipcatest_env.PrependUnique(LIBS=['gcov'])
-        ipcatest_env.AppendUnique(CXXFLAGS=['--coverage'])
-
 ipcatests = ipcatest_env.Program('ipcatests', unittests_src)
 ipcatest_env.ScanJSON('resource/IPCA/unittests')
 
