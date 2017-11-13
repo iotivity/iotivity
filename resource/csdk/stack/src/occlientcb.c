@@ -334,7 +334,7 @@ void DeleteClientCB(ClientCB * cbNode)
     }
 }
 
-void DeleteClientCBList()
+void DeleteClientCBList(void)
 {
     ClientCB* out = NULL;
     ClientCB* tmp = NULL;

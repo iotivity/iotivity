@@ -62,7 +62,7 @@ OCStackApplicationResult applicationDiscoverCB(
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-int main() {
+int main(void) {
     OIC_LOG_V(INFO, TAG, "Starting occlient");
 
     /* Initialize OCStack*/

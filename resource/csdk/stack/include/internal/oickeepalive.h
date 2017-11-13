@@ -69,7 +69,7 @@ OCStackResult TerminateKeepAlive(OCMode mode);
 /**
  * Process the KeepAlive timer to send ping message to OIC Server.
  */
-void ProcessKeepAlive();
+void ProcessKeepAlive(void);
 
 /**
  * This API will be called from RI layer whenever there is a request for KeepAlive.

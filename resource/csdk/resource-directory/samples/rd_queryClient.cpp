@@ -63,7 +63,7 @@ OCStackResult findResource(std::string str, OCClientResponseHandler cb)
              &cbData, nullptr, 0);
 }
 
-int main()
+int main(void)
 {
     bool sendRequest = true;
     std::cout << "Initializing IoTivity Platform" << std::endl;

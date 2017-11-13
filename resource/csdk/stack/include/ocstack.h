@@ -100,7 +100,7 @@ OCStackResult OC_CALL OCSetRAInfo(const OCRAInfo_t *raInfo);
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OC_CALL OCStop();
+OCStackResult OC_CALL OCStop(void);
 
 /**
  * This function starts responding to multicast /oic/res requests.  This can be
@@ -109,7 +109,7 @@ OCStackResult OC_CALL OCStop();
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OC_CALL OCStartMulticastServer();
+OCStackResult OC_CALL OCStartMulticastServer(void);
 
 /**
  * This function stops responding to multicast /oic/res requests.  This is to be
@@ -120,7 +120,7 @@ OCStackResult OC_CALL OCStartMulticastServer();
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OC_CALL OCStopMulticastServer();
+OCStackResult OC_CALL OCStopMulticastServer(void);
 
 /**
  * This function is Called in main loop of OC client or server.
@@ -128,7 +128,7 @@ OCStackResult OC_CALL OCStopMulticastServer();
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OC_CALL OCProcess();
+OCStackResult OC_CALL OCProcess(void);
 
 /**
  * This function discovers or Perform requests on a specified resource
@@ -279,7 +279,7 @@ OCStackResult OC_CALL OCStartPresence(const uint32_t ttl);
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 
-OCStackResult OC_CALL OCStopPresence();
+OCStackResult OC_CALL OCStopPresence(void);
 #endif
 
 
@@ -394,7 +394,7 @@ OCStackResult OC_CALL OCCreateResourceWithEp(OCResourceHandle *handle,
  *
  * @return Bit combinations of supported OCTpsSchemeFlags.
  */
-OCTpsSchemeFlags OC_CALL OCGetSupportedEndpointTpsFlags();
+OCTpsSchemeFlags OC_CALL OCGetSupportedEndpointTpsFlags(void);
 
 /**
  * This function adds a resource to a collection resource.
@@ -860,7 +860,7 @@ OCStackResult OC_CALL OCGetPropertyValue(OCPayloadType type, const char *propNam
 *
 * @return pointer to OCPersistentStorage structure on success and NULL otherwise.
 */
-OCPersistentStorage *OC_CALL OCGetPersistentStorageHandler();
+OCPersistentStorage *OC_CALL OCGetPersistentStorageHandler(void);
 
 /**
 * This function return link local zone id related from ifindex.

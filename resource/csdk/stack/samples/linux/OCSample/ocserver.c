@@ -38,7 +38,7 @@
 #define TAG ("ocserver")
 
 int gQuitFlag = 0;
-OCStackResult createLightResource();
+OCStackResult createLightResource(void);
 
 typedef struct LIGHTRESOURCE{
     OCResourceHandle handle;
@@ -54,7 +54,7 @@ void handleSigInt(int signum) {
     }
 }
 
-int main() {
+int main(void) {
     OIC_LOG_V(INFO, TAG, "Starting ocserver");
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK) {
         OIC_LOG(ERROR, TAG, "OCStack init error");
@@ -91,7 +91,7 @@ int main() {
     return 0;
 }
 
-OCStackResult createLightResource() {
+OCStackResult createLightResource(void) {
     Light.power = false;
     OCStackResult res = OCCreateResource(&Light.handle,
                     "core.light",

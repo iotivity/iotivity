@@ -40,13 +40,13 @@ extern "C"
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
 // TODO: Future addition pertaining to security, RM should be given ACL callback from RI.
-OCStackResult RMInitialize();
+OCStackResult RMInitialize(void);
 
 /**
  * Terminates the Routing Manager.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-OCStackResult RMTerminate();
+OCStackResult RMTerminate(void);
 
 /**
  * This API will be called from RI layer whenever there is a request for the GATEWAY
@@ -69,7 +69,7 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
 /**
  * Process the routing manager timer to send notification to all the observers.
  */
-void RMProcess();
+void RMProcess(void);
 
 /**
  * API to form the payload with gateway ID.
@@ -82,13 +82,13 @@ OCStackResult RMGetGatewayPayload(OCRepPayload **payload);
  * API to get the gateway UUID of its own.
  * @return  Gateway UUID.
  */
-uint32_t RMGetGatewayId();
+uint32_t RMGetGatewayId(void);
 
 /**
  * API to get the multicast sequence number.
  * @return  Multicast sequence number.
  */
-uint16_t RMGetMcastSeqNumber();
+uint16_t RMGetMcastSeqNumber(void);
 
 /**
  * On reception of request from CA, RI sends to this function.

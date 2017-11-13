@@ -192,7 +192,7 @@ void DeleteClientCB(ClientCB *cbNode);
 /**
  * This method is used to clear the cbList.
  */
-void DeleteClientCBList();
+void DeleteClientCBList(void);
 
 /**
  * This method is used to search and retrieve a cb node in cbList using token.

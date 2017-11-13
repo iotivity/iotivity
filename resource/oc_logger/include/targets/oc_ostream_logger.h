@@ -28,7 +28,7 @@
  extern "C" {
 #endif
 
-oc_log_ctx_t *OC_CALL oc_make_ostream_logger();
+oc_log_ctx_t *OC_CALL oc_make_ostream_logger(void);
 
 int  oc_ostream_log_init(oc_log_ctx_t *ctx, void *world);
 void oc_ostream_log_destroy(oc_log_ctx_t *ctx);

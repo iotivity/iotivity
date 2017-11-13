@@ -150,7 +150,7 @@ OCStackResult SetDeviceInfo()
     return OC_STACK_OK;
 }
 
-int main()
+int main(void)
 {
     // Create PlatformConfig object
     PlatformConfig cfg {

@@ -891,7 +891,7 @@ static OCStackResult UpdateDevicePropertiesDatabase(const OCDeviceProperties *de
     return result;
 }
 
-OCStackResult InitializeDeviceProperties()
+OCStackResult InitializeDeviceProperties(void)
 {
     OIC_LOG(DEBUG, TAG, "InitializeDeviceProperties IN");
 

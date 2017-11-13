@@ -202,7 +202,7 @@ OCStackResult SendPresenceNotification(OCResourceType *resourceType,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult SendStopNotification();
+OCStackResult SendStopNotification(void);
 #endif // WITH_PRESENCE
 
 /**

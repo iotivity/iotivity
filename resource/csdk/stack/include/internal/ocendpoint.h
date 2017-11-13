@@ -124,6 +124,6 @@
   *
   * @return Bit combinations of supported OCTpsSchemeFlags.
   */
- OCTpsSchemeFlags OCGetSupportedTpsFlags();
+ OCTpsSchemeFlags OCGetSupportedTpsFlags(void);
 
  #endif //OC_ENDPOINT_H

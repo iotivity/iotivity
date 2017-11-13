@@ -130,14 +130,14 @@ void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t buffe
     /**
      * Initialize the logger.  Optional on Android and Linux.
      */
-    void OCLogInit();
+    void OCLogInit(void);
 
     /**
      * Called to Free dyamically allocated resources used with custom logging.
      * Not necessary if default logging is used
      *
      */
-    void OCLogShutdown();
+    void OCLogShutdown(void);
 
     /**
      * Output a variable argument list log string with the specified priority level.

@@ -201,14 +201,14 @@ bool g_multicastServerStopped = false;
  *
  * @return Generated OCDoResource handle.
  */
-static OCDoHandle GenerateInvocationHandle();
+static OCDoHandle GenerateInvocationHandle(void);
 
 /**
  * Initialize resource data structures, variables, etc.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-static OCStackResult initResources();
+static OCStackResult initResources(void);
 
 /**
  * Add a resource to the end of the linked list of resources.
@@ -307,7 +307,7 @@ static OCStackResult deleteResource(OCResource *resource);
 /**
  * Delete all of the resources in the resource list.
  */
-static void deleteAllResources();
+static void deleteAllResources(void);
 
 /**
  * Increment resource sequence number.  Handles rollover.
@@ -479,7 +479,7 @@ static OCStackResult OCInitializeInternal(OCMode mode, OCTransportFlags serverFl
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-static OCStackResult OCDeInitializeInternal();
+static OCStackResult OCDeInitializeInternal(void);
 
 //-----------------------------------------------------------------------------
 // Internal functions
@@ -499,7 +499,7 @@ static OCPayloadFormat CAToOCPayloadFormat(CAPayloadFormat_t caFormat)
     }
 }
 
-static void OCEnterInitializer()
+static void OCEnterInitializer(void)
 {
     for (;;)
     {
@@ -515,7 +515,7 @@ static void OCEnterInitializer()
     }
 }
 
-static void OCLeaveInitializer()
+static void OCLeaveInitializer(void)
 {
     OC_VERIFY(oc_atomic_decrement(&g_ocStackStartStopThreadCount) >= 0);
 }
@@ -2835,7 +2835,7 @@ exit:
     return result;
 }
 
-OCStackResult OC_CALL OCStop()
+OCStackResult OC_CALL OCStop(void)
 {
     OIC_LOG(INFO, TAG, "Entering OCStop");
 
@@ -2865,7 +2865,7 @@ OCStackResult OC_CALL OCStop()
     return result;
 }
 
-OCStackResult OCDeInitializeInternal()
+OCStackResult OCDeInitializeInternal(void)
 {
     assert(stackState == OC_STACK_INITIALIZED);
 
@@ -2916,7 +2916,7 @@ OCStackResult OCDeInitializeInternal()
     return OC_STACK_OK;
 }
 
-OCStackResult OC_CALL OCStartMulticastServer()
+OCStackResult OC_CALL OCStartMulticastServer(void)
 {
     if(stackState != OC_STACK_INITIALIZED)
     {
@@ -2927,7 +2927,7 @@ OCStackResult OC_CALL OCStartMulticastServer()
     return OC_STACK_OK;
 }
 
-OCStackResult OC_CALL OCStopMulticastServer()
+OCStackResult OC_CALL OCStopMulticastServer(void)
 {
     g_multicastServerStopped = true;
     return OC_STACK_OK;
@@ -3837,14 +3837,14 @@ OCStackResult OC_CALL OCRegisterPersistentStorageHandler(OCPersistentStorage* pe
     return OC_STACK_OK;
 }
 
-OCPersistentStorage *OC_CALL OCGetPersistentStorageHandler()
+OCPersistentStorage *OC_CALL OCGetPersistentStorageHandler(void)
 {
     return g_PersistentStorageHandler;
 }
 
 #ifdef WITH_PRESENCE
 
-OCStackResult OCProcessPresence()
+OCStackResult OCProcessPresence(void)
 {
     OCStackResult result = OC_STACK_OK;
 
@@ -3940,7 +3940,7 @@ exit:
 }
 #endif // WITH_PRESENCE
 
-OCStackResult OC_CALL OCProcess()
+OCStackResult OC_CALL OCProcess(void)
 {
     if (stackState == OC_STACK_UNINITIALIZED)
     {
@@ -4022,7 +4022,7 @@ OCStackResult OC_CALL OCStartPresence(const uint32_t ttl)
             OC_PRESENCE_TRIGGER_CREATE);
 }
 
-OCStackResult OC_CALL OCStopPresence()
+OCStackResult OC_CALL OCStopPresence(void)
 {
     OIC_LOG(INFO, TAG, "Entering OCStopPresence");
     OCStackResult result = OC_STACK_ERROR;
@@ -4057,7 +4057,7 @@ OCStackResult OC_CALL OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler enti
     return OC_STACK_OK;
 }
 
-OCTpsSchemeFlags OC_CALL OCGetSupportedEndpointTpsFlags()
+OCTpsSchemeFlags OC_CALL OCGetSupportedEndpointTpsFlags(void)
 {
     return OCGetSupportedTpsFlags();
 }
@@ -4935,7 +4935,7 @@ OCStackResult SendPresenceNotification(OCResourceType *resourceType,
     return result;
 }
 
-OCStackResult SendStopNotification()
+OCStackResult SendStopNotification(void)
 {
     OIC_LOG(INFO, TAG, "SendStopNotification");
     OCResource *resPtr = NULL;
@@ -5051,7 +5051,7 @@ OCStackResult OC_CALL OCDoResponse(OCEntityHandlerResponse *ehResponse)
 //-----------------------------------------------------------------------------
 // Private internal function definitions
 //-----------------------------------------------------------------------------
-static OCDoHandle GenerateInvocationHandle()
+static OCDoHandle GenerateInvocationHandle(void)
 {
     OCDoHandle handle = NULL;
     // Generate token here, it will be deleted when the transaction is deleted
@@ -5094,7 +5094,7 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
 }
 #endif
 
-OCStackResult initResources()
+OCStackResult initResources(void)
 {
     OCStackResult result = OC_STACK_OK;
 
@@ -5270,7 +5270,7 @@ OCResource *findResource(OCResource *resource)
     return NULL;
 }
 
-void deleteAllResources()
+void deleteAllResources(void)
 {
     OCResource *pointer = headResource;
     OCResource *temp = NULL;

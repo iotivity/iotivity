@@ -206,12 +206,12 @@ OCStackResult SaveDeviceInfo(OCDeviceInfo info);
 /**
  * Internal API used to clear the platform information.
  */
-void DeletePlatformInfo();
+void DeletePlatformInfo(void);
 
 /**
  * Internal API used to clear the device information.
  */
-void DeleteDeviceInfo();
+void DeleteDeviceInfo(void);
 
 /*
  * Prepare payload for resource representation.
@@ -238,7 +238,7 @@ typedef struct _OCDeviceProperties
  * Internal API used to initialize device properties.
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult InitializeDeviceProperties();
+OCStackResult InitializeDeviceProperties(void);
 
 /**
  * Internal API used to clean up device properties.

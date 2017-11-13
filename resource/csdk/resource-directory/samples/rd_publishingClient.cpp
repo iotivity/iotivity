@@ -100,7 +100,7 @@ static OCStackApplicationResult handlePublishCB(__attribute__((unused))void *ctx
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-int main()
+int main(void)
 {
     std::cout << "Initializing IoTivity Platform" << std::endl;
     OCStackResult result = OCInit(NULL, 0, OC_CLIENT_SERVER);

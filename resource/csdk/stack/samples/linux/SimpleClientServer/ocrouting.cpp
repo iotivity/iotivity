@@ -44,7 +44,7 @@ void handleSigInt(int signum)
     }
 }
 
-int main()
+int main(void)
 {
     OIC_LOG(DEBUG, TAG, "OCRouting sample is starting...");
 

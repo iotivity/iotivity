@@ -1382,7 +1382,7 @@ exit:
     return stackRet;
 }
 
-OCStackResult InitializeScheduleResourceList()
+OCStackResult InitializeScheduleResourceList(void)
 {
     assert(g_scheduledResourceLock == NULL);
 
@@ -1396,7 +1396,7 @@ OCStackResult InitializeScheduleResourceList()
     return OC_STACK_OK;
 }
 
-void TerminateScheduleResourceList()
+void TerminateScheduleResourceList(void)
 {
     assert(g_scheduleResourceList == NULL);
 

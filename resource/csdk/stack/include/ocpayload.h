@@ -84,7 +84,7 @@ typedef struct OCResource OCResource;
 void OC_CALL OCPayloadDestroy(OCPayload* payload);
 
 // Representation Payload
-OCRepPayload* OC_CALL OCRepPayloadCreate();
+OCRepPayload* OC_CALL OCRepPayloadCreate(void);
 
 size_t OC_CALL calcDimTotal(const size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
@@ -245,7 +245,7 @@ bool OC_CALL OCRepPayloadGetPropObjectArray(const OCRepPayload* payload, const c
 void OC_CALL OCRepPayloadDestroy(OCRepPayload* payload);
 
 // Discovery Payload
-OCDiscoveryPayload* OC_CALL OCDiscoveryPayloadCreate();
+OCDiscoveryPayload* OC_CALL OCDiscoveryPayloadCreate(void);
 
 OCSecurityPayload* OC_CALL OCSecurityPayloadCreate(const uint8_t* securityData, size_t size);
 void OC_CALL OCSecurityPayloadDestroy(OCSecurityPayload* payload);

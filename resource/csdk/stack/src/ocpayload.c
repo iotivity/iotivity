@@ -76,7 +76,7 @@ void OC_CALL OCPayloadDestroy(OCPayload* payload)
     }
 }
 
-OCRepPayload* OC_CALL OCRepPayloadCreate()
+OCRepPayload* OC_CALL OCRepPayloadCreate(void)
 {
     OCRepPayload* payload = (OCRepPayload*)OICCalloc(1, sizeof(OCRepPayload));
 
@@ -1644,7 +1644,7 @@ void OC_CALL OCRepPayloadDestroy(OCRepPayload* payload)
     OICFree(payload);
 }
 
-OCDiscoveryPayload* OC_CALL OCDiscoveryPayloadCreate()
+OCDiscoveryPayload* OC_CALL OCDiscoveryPayloadCreate(void)
 {
     OCDiscoveryPayload* payload = (OCDiscoveryPayload*)OICCalloc(1, sizeof(OCDiscoveryPayload));
 

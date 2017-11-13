@@ -513,7 +513,7 @@ exit:
     return OC_STACK_ERROR;
 }
 
-OCTpsSchemeFlags OCGetSupportedTpsFlags()
+OCTpsSchemeFlags OCGetSupportedTpsFlags(void)
 {
     OCTpsSchemeFlags ret = OC_NO_TPS;
     CATransportAdapter_t SelectedNetwork = CAGetSelectedNetwork();

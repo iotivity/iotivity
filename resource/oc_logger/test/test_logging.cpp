@@ -35,7 +35,7 @@
 #include <boost/iostreams/categories.hpp>
 #include <boost/iostreams/detail/ios.hpp>
 
-int main()
+int main(void)
 {
  using OC::oc_log_stream;
 
