@@ -31,7 +31,7 @@ class DefaultConfiguration(Configuration):
 #include <stdbool.h>
 #include <stdint.h>
 
-int main()
+int main(void)
 {
     struct foo
     {
@@ -63,7 +63,7 @@ int main()
     # ------------------------------------------------------------
     def _cxx11_test_program(self):
         return """
-int main()
+int main(void)
 {
     int x = 3210;
     auto f = [x](){

@@ -82,7 +82,7 @@ class GccConfiguration(Configuration):
 #define _POSIX_C_SOURCE 200112L
 #include <stdio.h>
 
-int main()
+int main(void)
 {
     int x = 3210;
     auto f = [x](){
