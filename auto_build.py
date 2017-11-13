@@ -139,6 +139,7 @@ def build_linux_secured(flag, extra_option_str):
 def build_linux_full(flag, extra_option_str):
     print ("*********** Build for linux with Security *************")
     build_options = {
+                        'BUILD_JAVA':1,
                         'MULTIPLE_OWNER':1,
                         'RELEASE':flag,
                         'SECURED':1,
