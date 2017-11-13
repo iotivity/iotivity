@@ -47,7 +47,7 @@ OCStackApplicationResult CloudLoginoutCallback(void *ctx,
 OCStackApplicationResult CloudSignupCallback(void *ctx,
         OCDoHandle handle, OCClientResponse *clientResponse);
 
-bool IsCloudLoggedin();
+bool IsCloudLoggedin(void);
 
 #ifdef __cplusplus
 }

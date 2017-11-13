@@ -55,7 +55,7 @@ void fillCallbackData(OCCallbackData *cbData, void *ctx, OCCloudResponseCB cb,
  *
  * @return  device id
  */
-char *getDeviceId();
+char *getDeviceId(void);
 
 /**
  * Clear previously filled array of strings

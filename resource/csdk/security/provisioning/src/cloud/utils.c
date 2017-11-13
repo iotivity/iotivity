@@ -125,7 +125,7 @@ void fillCallbackData(OCCallbackData *cbData, void *ctx, OCCloudResponseCB cb,
     cbData->context = info;
 }
 
-char * getDeviceId()
+char * getDeviceId(void)
 {
     char *deviceId = NULL;
     OicUuid_t uuid;

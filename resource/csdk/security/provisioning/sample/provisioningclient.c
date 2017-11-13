@@ -2604,7 +2604,7 @@ static void setDevProtocol(OCProvisionDev_t* lst)
     }
 }
 
-static void selectSecureProtocol()
+static void selectSecureProtocol(void)
 {
     printf("   Select protocol\n");
     printf("   1 - DTLS(Default)\n");

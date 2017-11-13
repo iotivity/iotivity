@@ -53,7 +53,7 @@
 /**
  * Skip special characters from stdin
  * */
-static void skipSpecialCharacters()
+static void skipSpecialCharacters(void)
 {
     for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                 // '0x20<=code' is character region

@@ -407,7 +407,7 @@ static OCStackResult configSelfOwnership(void)
     return res;
 }
 
-static void wrongRequest()
+static void wrongRequest(void)
 {
     printf(">> Entered Wrong Menu Number. Please Enter Again\n\n");
 }
@@ -685,7 +685,7 @@ bool parseCommandLineArguments(int argc, char *argv[])
     return result;
 }
 
-OCStackResult initPersistentStorage()
+OCStackResult initPersistentStorage(void)
 {
     //Initialize Persistent Storage for SVR database
     static OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
@@ -711,7 +711,7 @@ OCStackResult initProcess(OCMode mode)
     return OCInit(NULL, 0, mode);
 }
 
-void startProcess()
+void startProcess(void)
 {
     while(false == fExit)
     {
@@ -728,7 +728,7 @@ void startProcess()
     }
 }
 
-void freeThreadResources()
+void freeThreadResources(void)
 {
     if (g_requestsThread)
     {

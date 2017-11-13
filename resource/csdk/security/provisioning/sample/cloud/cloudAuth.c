@@ -62,7 +62,7 @@ static sessionObject_t sessionObject = {NULL, NULL, NULL, 0, NULL, NULL, NULL, N
  *
  * @return  OCStackResult application result
  */
-static void SessionFree()
+static void SessionFree(void)
 {
     OICFree(sessionObject.accesstoken);
     OICFree(sessionObject.refreshtoken);
