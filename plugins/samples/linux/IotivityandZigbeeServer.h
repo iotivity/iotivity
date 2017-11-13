@@ -22,7 +22,7 @@
 #include <octypes.h>
 #include <stdbool.h>
 
-OCStackResult SetPlatformInfo();
-OCStackResult SetDeviceInfo();
+OCStackResult SetPlatformInfo(void);
+OCStackResult SetDeviceInfo(void);
 bool processSignal(bool set);
 void processCancel(int signal);

@@ -37,7 +37,7 @@ OCStackResult AddPlugin(PIPluginBase * plugin);
 
 OCStackResult DeletePlugin(PIPluginBase * plugin);
 
-OCStackResult DeletePluginList();
+OCStackResult DeletePluginList(void);
 
 OCStackResult GetResourceFromHandle(PIPluginBase * plugin, PIResourceBase ** piResourceBase,
                                     OCResourceHandle * resourceHandle);

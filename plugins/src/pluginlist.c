@@ -62,7 +62,7 @@ OCStackResult DeletePlugin(PIPluginBase * plugin)
 }
 
 
-OCStackResult DeletePluginList()
+OCStackResult DeletePluginList(void)
 {
     OCStackResult result = OC_STACK_OK;
     PIPluginBase * out = NULL;

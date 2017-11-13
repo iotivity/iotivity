@@ -174,7 +174,7 @@ TWResultCode TWDeleteTWSock(TWSock * sock)
     return result;
 }
 
-TWResultCode TWDeleteAllTWSock()
+TWResultCode TWDeleteAllTWSock(void)
 {
     TWSock * out = NULL;
     TWSock * tmp = NULL;

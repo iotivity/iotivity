@@ -58,7 +58,7 @@ OCStackResult PIStopPlugin(PIPluginPtr plugin);
  * Makes any required calls to stop all plugins.
  *
  */
-OCStackResult PIStopAll();
+OCStackResult PIStopAll(void);
 
 /**
  *

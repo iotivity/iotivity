@@ -192,7 +192,7 @@ OCStackResult PIStopPlugin(PIPluginPtr plugin)
     return DeletePlugin((PIPluginBase *) plugin);
 }
 
-OCStackResult PIStopAll()
+OCStackResult PIStopAll(void)
 {
     return DeletePluginList();
 }

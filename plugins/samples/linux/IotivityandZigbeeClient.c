@@ -63,7 +63,7 @@ typedef struct
 
 static DiscoveredResourceInfo g_discoveredResources[MAX_RESOURCES_REMEMBERED];
 
-static void PrintTestCases()
+static void PrintTestCases(void)
 {
     printf("\nTest Cases:\n");
     printf("\n\t%d : Quit    %d: GET    %d: Build PUT payload %d: Build POST payload %d: OBSERVE\n\n",
@@ -75,7 +75,7 @@ static void PrintTestCases()
     printf("\n\t%d : Check for observation updates.\n", TEST_CYCLE);
 }
 
-static void PrintResources()
+static void PrintResources(void)
 {
     printf("\nResources: \n");
     for(uint32_t i = 0; i < countDiscoveredResources; ++i)
@@ -251,7 +251,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-OCPayload* getCustomPutPayload()
+OCPayload* getCustomPutPayload(void)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
@@ -441,7 +441,7 @@ void processUserInput(int resourceNo, int testCase)
     }
 }
 
-void getTestCaseFromUser()
+void getTestCaseFromUser(void)
 {
     PrintResources();
     PrintTestCases();
@@ -470,7 +470,7 @@ void getTestCaseFromUser()
     processUserInput(resourceNo, testCase);
 }
 
-OCStackResult DiscoverResources()
+OCStackResult DiscoverResources(void)
 {
     OCCallbackData cbData = {
                                 .context = (void*)DEFAULT_CONTEXT_VALUE,

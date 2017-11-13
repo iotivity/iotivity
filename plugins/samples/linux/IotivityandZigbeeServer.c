@@ -37,7 +37,7 @@
     }                                               \
 }
 
-int main()
+int main(void)
 {
     OIC_LOG(INFO, TAG, "Initializing IoTivity...");
     OCStackResult result = OCInit(NULL, 0, OC_SERVER);
@@ -133,7 +133,7 @@ IotivityStop:
     return 0;
 }
 
-OCStackResult SetPlatformInfo()
+OCStackResult SetPlatformInfo(void)
 {
     static const OCPlatformInfo platformInfo =
         {
@@ -153,7 +153,7 @@ OCStackResult SetPlatformInfo()
     return OCSetPlatformInfo(platformInfo);
 }
 
-OCStackResult SetDeviceInfo()
+OCStackResult SetDeviceInfo(void)
 {
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
                                       "IoTivity/Zigbee Server Sample"));
