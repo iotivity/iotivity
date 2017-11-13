@@ -27,7 +27,7 @@
  extern "C" {
 #endif
 
-oc_log_ctx_t *OC_CALL oc_make_console_logger();
+oc_log_ctx_t *OC_CALL oc_make_console_logger(void);
 
 int oc_console_logger_init(oc_log_ctx_t *ctx, void *world);
 void oc_console_logger_destroy(oc_log_ctx_t *ctx);
