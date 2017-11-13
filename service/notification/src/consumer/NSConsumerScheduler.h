@@ -33,9 +33,9 @@ extern "C" {
 #include "NSStructs.h"
 #include "NSConsumerCommon.h"
 
-NSResult NSConsumerMessageHandlerInit();
+NSResult NSConsumerMessageHandlerInit(void);
 
-void NSConsumerMessageHandlerExit();
+void NSConsumerMessageHandlerExit(void);
 
 extern NSResult NSConsumerPushEvent(NSTask *);
 

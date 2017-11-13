@@ -40,7 +40,7 @@ typedef struct
     NSConsumerQueueObject * tail;
 } NSConsumerQueue;
 
-NSConsumerQueue * NSCreateQueue();
+NSConsumerQueue * NSCreateQueue(void);
 
 void NSDestroyQueue(NSConsumerQueue *);
 

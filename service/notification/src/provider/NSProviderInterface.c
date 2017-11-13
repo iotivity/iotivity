@@ -39,13 +39,13 @@ bool initProvider = false;
 pthread_mutex_t nsInitMutex;
 pthread_cond_t nstopicCond;
 
-void initializeMutex()
+void initializeMutex(void)
 {
     static pthread_mutex_t initMutex = PTHREAD_MUTEX_INITIALIZER;
     nsInitMutex = initMutex;
 }
 
-void NSInitialize()
+void NSInitialize(void)
 {
     NS_LOG(DEBUG, "NSSetList - IN");
 
@@ -59,7 +59,7 @@ void NSInitialize()
     NS_LOG(DEBUG, "NSSetList - OUT");
 }
 
-void NSDeinitailize()
+void NSDeinitailize(void)
 {
     NSProviderStorageDestroy(consumerSubList);
     NSProviderStorageDestroy(consumerTopicList);

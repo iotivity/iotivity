@@ -20,7 +20,7 @@
 
 #include "NSProviderDiscovery.h"
 
-NSResult NSStartPresence()
+NSResult NSStartPresence(void)
 {
     NS_LOG(DEBUG, "NSStartPresence()");
 
@@ -34,7 +34,7 @@ NSResult NSStartPresence()
     return NS_OK;
 }
 
-NSResult NSStopPresence()
+NSResult NSStopPresence(void)
 {
     NS_LOG(DEBUG, "NSStopPresence()");
 

@@ -24,7 +24,7 @@
 #include "oic_malloc.h"
 #include "NSConsumerCommon.h"
 
-NSConsumerQueue * NSCreateQueue()
+NSConsumerQueue * NSCreateQueue(void)
 {
     NSConsumerQueue * newQueue = (NSConsumerQueue *)OICMalloc(sizeof(NSConsumerQueue));
     NS_VERIFY_NOT_NULL(newQueue, NULL);

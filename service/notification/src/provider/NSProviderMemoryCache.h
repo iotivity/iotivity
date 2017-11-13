@@ -31,7 +31,7 @@
 #include "oic_string.h"
 #include "NSUtil.h"
 
-NSCacheList * NSProviderStorageCreate();
+NSCacheList * NSProviderStorageCreate(void);
 NSCacheElement * NSProviderStorageRead(NSCacheList * list, const char * findId);
 NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj);
 NSResult NSProviderStorageDelete(NSCacheList * list, const char * delId);

@@ -38,7 +38,7 @@
 OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *);
 NSResult NSFreeOCEntityHandlerRequest(OCEntityHandlerRequest *);
 
-NSMessage * NSInitializeMessage();
+NSMessage * NSInitializeMessage(void);
 NSResult NSFreeMessage(NSMessage *);
 NSMessage * NSDuplicateMessage(NSMessage *);
 
@@ -49,7 +49,7 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload);
 NSResult NSFreeConsumer(NSConsumer *);
 NSConsumer * NSDuplicateConsumer(NSConsumer *);
 
-NSTopicList * NSInitializeTopicList();
+NSTopicList * NSInitializeTopicList(void);
 
 void NSDuplicateSetPropertyString(OCRepPayload **, const char *, const char *);
 void NSDuplicateSetPropertyInt(OCRepPayload ** msgPayload, const char * name, int64_t value);

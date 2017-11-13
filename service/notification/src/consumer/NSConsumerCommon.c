@@ -31,7 +31,7 @@ static bool NSIsExtraValue(const char * name);
 static void NSCopyPayloadValueArray(OCRepPayloadValue* dest, OCRepPayloadValue* source);
 static OCRepPayloadValue * NSCopyPayloadValue(OCRepPayloadValue * value);
 
-pthread_mutex_t ** NSGetStackMutex()
+pthread_mutex_t ** NSGetStackMutex(void)
 {
     static pthread_mutex_t * g_stackMutext = NULL;
     if (g_stackMutext == NULL)
@@ -44,7 +44,7 @@ pthread_mutex_t ** NSGetStackMutex()
     return & g_stackMutext;
 }
 
-char ** NSGetConsumerId()
+char ** NSGetConsumerId(void)
 {
     static char * g_consumerId = NULL;
     return & g_consumerId;
@@ -91,7 +91,7 @@ char * NSMakeRequestUriWithConsumerId(const char * uri)
     return retQuery;
 }
 
-bool * NSGetBoneIsStartedConsumer()
+bool * NSGetBoneIsStartedConsumer(void)
 {
     static bool g_isStartedConsumer = false;
 
@@ -112,12 +112,12 @@ void NSSetIsStartedConsumer(bool setValue)
     }
 }
 
-bool NSIsStartedConsumer()
+bool NSIsStartedConsumer(void)
 {
     return * NSGetBoneIsStartedConsumer();
 }
 
-NSProviderStateCallback * NSGetProviderChangedCb()
+NSProviderStateCallback * NSGetProviderChangedCb(void)
 {
     static NSProviderStateCallback g_changedCb = NULL;
 
@@ -175,7 +175,7 @@ void NSProviderChanged(NSProvider * provider, NSProviderState response)
     NSOICFree(thread);
 }
 
-NSSyncInfoReceivedCallback * NSGetBoneNotificationSyncCb()
+NSSyncInfoReceivedCallback * NSGetBoneNotificationSyncCb(void)
 {
     static NSSyncInfoReceivedCallback g_syncCb = NULL;
 
@@ -215,7 +215,7 @@ void NSNotificationSync(NSSyncInfo * sync)
     NSOICFree(thread);
 }
 
-NSMessageReceivedCallback  * NSGetBoneMessagePostedCb()
+NSMessageReceivedCallback  * NSGetBoneMessagePostedCb(void)
 {
     static NSMessageReceivedCallback  g_postCb = NULL;
 
@@ -227,7 +227,7 @@ void NSSetMessagePostedCb(NSMessageReceivedCallback  cb)
     * NSGetBoneMessagePostedCb() = cb;
 }
 
-NSMessageReceivedCallback  NSGetMessagePostedCb()
+NSMessageReceivedCallback  NSGetMessagePostedCb(void)
 {
     return * NSGetBoneMessagePostedCb();
 }

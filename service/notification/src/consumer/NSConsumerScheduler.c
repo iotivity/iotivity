@@ -57,7 +57,7 @@ static pthread_mutex_t g_start_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static NSConsumerQueue * g_queue = NULL;
 
-NSResult NSConsumerMessageHandlerInit()
+NSResult NSConsumerMessageHandlerInit(void)
 {
     pthread_mutex_lock(&g_start_mutex);
 
@@ -111,7 +111,7 @@ NSResult NSConsumerPushEvent(NSTask * task)
     return NS_OK;
 }
 
-void NSConsumerMessageHandlerExit()
+void NSConsumerMessageHandlerExit(void)
 {
     pthread_mutex_lock(&g_start_mutex);
 

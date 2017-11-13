@@ -45,7 +45,7 @@ typedef struct {
 NSCacheList * consumerTopicList;
 NSCacheList * registeredTopicList;
 
-NSResult NSInitTopicList();
+NSResult NSInitTopicList(void);
 NSTopicList * NSGetTopics(char *consumerId);
 
 bool NSIsTopicSubscribed(char *consumerId, char *topic);

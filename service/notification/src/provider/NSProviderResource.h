@@ -53,9 +53,9 @@ NSResult NSCreateResource(char *uri);
 
 NSResult NSPublishResourceToCloud(char *host);
 
-NSResult NSRegisterResource();
+NSResult NSRegisterResource(void);
 
-NSResult NSUnRegisterResource();
+NSResult NSUnRegisterResource(void);
 
 NSResult NSPutNotificationResource(bool policy, OCResourceHandle * handle);
 

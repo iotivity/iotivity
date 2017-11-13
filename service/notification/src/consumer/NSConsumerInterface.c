@@ -53,7 +53,7 @@ NSResult NSStartConsumer(NSConsumerConfig config)
     return NS_OK;
 }
 
-NSResult NSStopConsumer()
+NSResult NSStopConsumer(void)
 {
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
@@ -169,7 +169,7 @@ NSResult NSConsumerSendSyncInfo(const char * providerId, uint64_t messageId, NSS
     return NSConsumerPushEvent(syncTask);
 }
 
-NSResult NSRescanProvider()
+NSResult NSRescanProvider(void)
 {
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);

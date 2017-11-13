@@ -31,9 +31,9 @@ extern "C" {
 #include "NSCommon.h"
 #include "ocstack.h"
 
-NSResult NSConsumerListenerInit();
+NSResult NSConsumerListenerInit(void);
 
-void NSConsumerListenerTermiate();
+void NSConsumerListenerTermiate(void);
 
 #ifdef __cplusplus
 }

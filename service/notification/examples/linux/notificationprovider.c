@@ -160,7 +160,7 @@ void input(char * buffer)
     buffer[i] = '\0';
 }
 
-int main()
+int main(void)
 {
     int num = 0;
     pthread_t processThread = 0;

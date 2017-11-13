@@ -115,7 +115,7 @@ void NSDestroyThreadHandle(NSConsumerThread * handle)
     pthread_mutex_unlock(&g_create_mutex);
 }
 
-void NSThreadDetach()
+void NSThreadDetach(void)
 {
     pthread_detach(pthread_self());
 }

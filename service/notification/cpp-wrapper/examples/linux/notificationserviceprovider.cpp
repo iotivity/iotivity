@@ -113,7 +113,7 @@ std::shared_ptr<OIC::Service::NSConsumer> printAvailableConsumers()
     return consumer;
 }
 
-int main()
+int main(void)
 {
     int num = 0;
     pthread_t processThread = 0;

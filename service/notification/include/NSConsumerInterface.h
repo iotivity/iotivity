@@ -75,7 +75,7 @@ NSResult NSStartConsumer(NSConsumerConfig config);
  * Terminate notification service for consumer
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSStopConsumer();
+NSResult NSStopConsumer(void);
 
 /**
  * Request to discover to remote address as parameter.
@@ -98,7 +98,7 @@ NSResult NSConsumerSubscribeMQService(const char * serverAddress, const char * t
  * Request discovery manually
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSRescanProvider();
+NSResult NSRescanProvider(void);
 
 /**
  * Request to subscribe notification message resource of provider

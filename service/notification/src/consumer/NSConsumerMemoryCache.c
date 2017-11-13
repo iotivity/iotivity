@@ -22,7 +22,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
-pthread_mutex_t * NSGetCacheMutex()
+pthread_mutex_t * NSGetCacheMutex(void)
 {
     static pthread_mutex_t * g_NSCacheMutex = NULL;
     if (g_NSCacheMutex == NULL)
@@ -35,7 +35,7 @@ pthread_mutex_t * NSGetCacheMutex()
     return g_NSCacheMutex;
 }
 
-NSCacheList * NSConsumerStorageCreate()
+NSCacheList * NSConsumerStorageCreate(void)
 {
     pthread_mutex_t * mutex = NSGetCacheMutex();
     pthread_mutex_lock(mutex);

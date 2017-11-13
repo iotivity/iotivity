@@ -32,6 +32,6 @@
 #include "oic_malloc.h"
 #include "NSUtil.h"
 
-NSResult NSRegisterResource();
+NSResult NSRegisterResource(void);
 
 #endif /* _NS_PROVIDER_NOTIFICATION_H_ */

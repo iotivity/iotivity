@@ -23,9 +23,9 @@
 #include "oic_malloc.h"
 #include <pthread.h>
 
-NSResult NSSendTopicUpdation();
+NSResult NSSendTopicUpdation(void);
 
-NSResult NSInitTopicList()
+NSResult NSInitTopicList(void)
 {
     NS_LOG(DEBUG, "NSInitTopicList - IN");
 
@@ -117,7 +117,7 @@ NSResult NSUnregisterTopic(const char * topicName)
     return result;
 }
 
-NSResult NSSendTopicUpdation()
+NSResult NSSendTopicUpdation(void)
 {
     NS_LOG(DEBUG, "NSSendTopicUpdation - IN");
 

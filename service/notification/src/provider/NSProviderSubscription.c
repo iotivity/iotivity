@@ -21,7 +21,7 @@
 #include "NSProviderSubscription.h"
 #include "NSProviderListener.h"
 
-NSResult NSInitSubscriptionList()
+NSResult NSInitSubscriptionList(void)
 {
     NS_LOG(DEBUG, "NSInitSubscriptionList - IN");
 

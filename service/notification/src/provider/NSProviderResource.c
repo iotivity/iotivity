@@ -234,7 +234,7 @@ NSResult NSCreateResource(char *uri)
     return NS_OK;
 }
 
-NSResult NSRegisterResource()
+NSResult NSRegisterResource(void)
 {
     NS_LOG(DEBUG, "NSRegisterResource - IN");
 
@@ -251,7 +251,7 @@ NSResult NSRegisterResource()
     return NS_OK;
 }
 
-NSResult NSUnRegisterResource()
+NSResult NSUnRegisterResource(void)
 {
     NS_LOG(DEBUG, "NSUnRegisterResource - IN");
 
