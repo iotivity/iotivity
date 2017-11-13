@@ -88,7 +88,7 @@ static bool OCCMHasDeviceId(const char *uri);
  *
  * @return ::OC_STACK_OK or ERROR CODES (::OCStackResult_t error codes in octypes.h).
  */
-static OCStackResult OCCMFindResource();
+static OCStackResult OCCMFindResource(void);
 
 /**
  * Callback function for OCCMFindResource.
@@ -278,7 +278,7 @@ static void OCConnectionStateChangedHandler(const CAEndpoint_t *info, bool isCon
     }
 }
 
-static OCStackResult OCCMFindResource()
+static OCStackResult OCCMFindResource(void)
 {
     OIC_LOG_V(INFO, TAG, "%s", __func__);
 

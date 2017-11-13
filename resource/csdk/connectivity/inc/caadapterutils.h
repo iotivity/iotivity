@@ -234,7 +234,7 @@ void CANativeJNISetJavaVM(JavaVM *jvm);
  * Called from adapters to get JavaVM object.
  * @return  JVM object.
  */
-JavaVM *CANativeJNIGetJavaVM();
+JavaVM *CANativeJNIGetJavaVM(void);
 
 /**
  * get method ID for method Name and class
@@ -259,7 +259,7 @@ bool CACheckJNIException(JNIEnv *env);
  * To Delete other Global References
  * Called during CATerminate to remove global references
  */
-void CADeleteGlobalReferences();
+void CADeleteGlobalReferences(JNIEnv *env);
 
 #ifdef __ANDROID__
 /**

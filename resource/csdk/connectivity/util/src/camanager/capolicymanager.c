@@ -93,7 +93,7 @@ CAResult_t CAPolicyMgrGetConfigure(CAConnectUserPref_t *connPrefer)
     return CA_STATUS_OK;
 }
 
-void CAPolicyMgrTerminate()
+void CAPolicyMgrTerminate(void)
 {
     if (g_userConfigureMutex)
     {

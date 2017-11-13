@@ -142,13 +142,13 @@ static OCStackApplicationResult PingRequestCallback(void* ctx, OCDoHandle handle
  * This function creates KeepAlive resource.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-static OCStackResult CreateKeepAliveResource();
+static OCStackResult CreateKeepAliveResource(void);
 
 /**
  * This function deletes KeepAlive resource.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-static OCStackResult DeleteKeepAliveResource();
+static OCStackResult DeleteKeepAliveResource(void);
 
 /**
  * API to handle the GET request received for a KeepAlive resource.
@@ -306,7 +306,7 @@ OCStackResult TerminateKeepAlive(OCMode mode)
     return OC_STACK_OK;
 }
 
-OCStackResult CreateKeepAliveResource()
+OCStackResult CreateKeepAliveResource(void)
 {
     OIC_LOG(DEBUG, TAG, "InitKeepAliveResource IN");
 
@@ -333,7 +333,7 @@ OCStackResult CreateKeepAliveResource()
     return result;
 }
 
-OCStackResult DeleteKeepAliveResource()
+OCStackResult DeleteKeepAliveResource(void)
 {
     OIC_LOG(DEBUG, TAG, "DeleteKeepAliveResource IN");
 

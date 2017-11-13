@@ -118,10 +118,10 @@ static CATCPConnectionHandleCallback g_connectionCallback = NULL;
  */
 static CATCPSessionInfo_t *g_sessionList = NULL;
 
-static CAResult_t CATCPCreateMutex();
-static void CATCPDestroyMutex();
-static CAResult_t CATCPCreateCond();
-static void CATCPDestroyCond();
+static CAResult_t CATCPCreateMutex(void);
+static void CATCPDestroyMutex(void);
+static CAResult_t CATCPCreateCond(void);
+static void CATCPDestroyCond(void);
 static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock);
 static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock);
 static void CAFindReadyMessage();
@@ -160,7 +160,7 @@ do \
         FD_SET(caglobals.tcp.TYPE.fd, FDS); \
     }
 
-static void CATCPDestroyMutex()
+static void CATCPDestroyMutex(void)
 {
     if (g_mutexObjectList)
     {
@@ -169,7 +169,7 @@ static void CATCPDestroyMutex()
     }
 }
 
-static CAResult_t CATCPCreateMutex()
+static CAResult_t CATCPCreateMutex(void)
 {
     if (!g_mutexObjectList)
     {
@@ -184,7 +184,7 @@ static CAResult_t CATCPCreateMutex()
     return CA_STATUS_OK;
 }
 
-static void CATCPDestroyCond()
+static void CATCPDestroyCond(void)
 {
     if (g_condObjectList)
     {
@@ -193,7 +193,7 @@ static void CATCPDestroyCond()
     }
 }
 
-static CAResult_t CATCPCreateCond()
+static CAResult_t CATCPCreateCond(void)
 {
     if (!g_condObjectList)
     {
@@ -1135,7 +1135,7 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
     return CA_STATUS_OK;
 }
 
-void CATCPStopServer()
+void CATCPStopServer(void)
 {
     if (caglobals.tcp.terminate)
     {
@@ -1495,7 +1495,7 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *removedData)
     return CA_STATUS_OK;
 }
 
-void CATCPDisconnectAll()
+void CATCPDisconnectAll(void)
 {
     oc_mutex_lock(g_mutexObjectList);
     CATCPSessionInfo_t *session = NULL;

@@ -56,21 +56,21 @@ static oc_mutex g_remoteDeviceInfoListMutex = NULL;
  * Initializes all required mutex variable for messge arbiter.
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-static CAResult_t CAMsgArbiterInitMutexVariables();
+static CAResult_t CAMsgArbiterInitMutexVariables(void);
 
 /**
  * Terminates all required mutex variable for messge arbiter.
  */
-static void CAMsgArbiterTerminateMutexVariables();
+static void CAMsgArbiterTerminateMutexVariables(void);
 
-CAResult_t CAMsgArbiterInitialize()
+CAResult_t CAMsgArbiterInitialize(void)
 {
     OIC_LOG(DEBUG, TAG, "CAMsgArbiterInitialize");
 
     return CAMsgArbiterInitMutexVariables();
 }
 
-CAResult_t CAMsgArbiterTerminate()
+CAResult_t CAMsgArbiterTerminate(void)
 {
     OIC_LOG(DEBUG, TAG, "CAMsgArbiterTerminate");
 
@@ -86,7 +86,7 @@ CAResult_t CAMsgArbiterTerminate()
     return CA_STATUS_OK;
 }
 
-static CAResult_t CAMsgArbiterInitMutexVariables()
+static CAResult_t CAMsgArbiterInitMutexVariables(void)
 {
     if (NULL == g_remoteDeviceInfoListMutex)
     {
@@ -100,7 +100,7 @@ static CAResult_t CAMsgArbiterInitMutexVariables()
     return CA_STATUS_OK;
 }
 
-static void CAMsgArbiterTerminateMutexVariables()
+static void CAMsgArbiterTerminateMutexVariables(void)
 {
     if (g_remoteDeviceInfoListMutex)
     {
@@ -259,7 +259,7 @@ CAResult_t CAMsgArbiterUpdateDeviceInfo(const CAEndpoint_t *endpoint, bool isClo
     return ret;
 }
 
-CAResult_t CAMsgArbiterResetDeviceInfo()
+CAResult_t CAMsgArbiterResetDeviceInfo(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 

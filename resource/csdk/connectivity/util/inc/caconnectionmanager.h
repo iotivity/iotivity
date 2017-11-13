@@ -47,13 +47,13 @@ extern "C"
  * Initializes the connection manager context.
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CACMInitialize();
+CAResult_t CACMInitialize(void);
 
 /**
  * Terminate the connection manager context.
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CACMTerminate();
+CAResult_t CACMTerminate(void);
 
 /**
  * Get request/response message to send.
@@ -88,7 +88,7 @@ CAResult_t CACMUpdateRemoteDeviceInfo(const CAEndpoint_t *endpoint, bool isCloud
  * Reset Remote Device Info.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CACMResetRemoteDeviceInfo();
+CAResult_t CACMResetRemoteDeviceInfo(void);
 
 /**
  * Set callback to handle connection status

@@ -133,7 +133,7 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool);
 /**
  * Stop TCP server.
  */
-void CATCPStopServer();
+void CATCPStopServer(void);
 
 /**
  * Set this callback for receiving data packets from peer devices.
@@ -185,7 +185,7 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *removedData);
 /**
  * Disconnect all connection from TCP Server.
  */
-void CATCPDisconnectAll();
+void CATCPDisconnectAll(void);
 
 /**
  * Get TCP connection information from list.

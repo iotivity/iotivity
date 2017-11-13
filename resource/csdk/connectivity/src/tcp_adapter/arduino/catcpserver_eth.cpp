@@ -134,7 +134,7 @@ CAResult_t CATCPStartServer()
     return CA_STATUS_OK;
 }
 
-void CATCPStopServer()
+void CATCPStopServer(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     caglobals.tcp.terminate = true;

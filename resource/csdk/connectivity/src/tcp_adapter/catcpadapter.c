@@ -102,9 +102,9 @@ static void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep,
 static void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
                               size_t dataLength, CAResult_t result);
 
-static CAResult_t CATCPInitializeQueueHandles();
+static CAResult_t CATCPInitializeQueueHandles(void);
 
-static void CATCPDeinitializeQueueHandles();
+static void CATCPDeinitializeQueueHandles(void);
 
 static void CATCPSendDataThread(void *threadData);
 
@@ -118,7 +118,7 @@ static void CADataDestroyer(void *data, uint32_t size);
 static int32_t CAQueueTCPData(bool isMulticast, const CAEndpoint_t *endpoint,
                              const void *data, size_t dataLength, bool encryptedData);
 
-CAResult_t CATCPInitializeQueueHandles()
+CAResult_t CATCPInitializeQueueHandles(void)
 {
     // Check if the message queue is already initialized
     if (g_sendQueueHandle)
@@ -148,7 +148,7 @@ CAResult_t CATCPInitializeQueueHandles()
     return CA_STATUS_OK;
 }
 
-void CATCPDeinitializeQueueHandles()
+void CATCPDeinitializeQueueHandles(void)
 {
     CAQueueingThreadDestroy(g_sendQueueHandle);
     OICFree(g_sendQueueHandle);
@@ -297,7 +297,7 @@ void CATCPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
     }
 }
 
-static void CAInitializeTCPGlobals()
+static void CAInitializeTCPGlobals(void)
 {
     caglobals.tcp.ipv4.fd = OC_INVALID_SOCKET;
     caglobals.tcp.ipv4s.fd = OC_INVALID_SOCKET;

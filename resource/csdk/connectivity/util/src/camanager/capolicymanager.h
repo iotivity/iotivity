@@ -58,7 +58,7 @@ CAResult_t CAPolicyMgrGetConfigure(CAConnectUserPref_t *connPrefer);
 /**
  * terminate mutex
  */
-void CAPolicyMgrTerminate();
+void CAPolicyMgrTerminate(void);
 
 #ifdef __cplusplus
 } /* extern "C" */
