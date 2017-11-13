@@ -268,7 +268,7 @@ ESResult ESSetErrorCode(ESErrorCode esErrCode)
 #pragma GCC diagnostic pop
 #endif
 
-ESResult ESTerminateEnrollee()
+ESResult ESTerminateEnrollee(void)
 {
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESTerminateEnrollee IN");
 

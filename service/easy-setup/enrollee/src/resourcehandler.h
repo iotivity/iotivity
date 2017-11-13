@@ -96,7 +96,7 @@ extern CoapCloudConfResource g_ESCoapCloudConfResource;
 extern DevConfResource g_ESDevConfResource;
 
 OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMask);
-OCStackResult DeleteEasySetupResources();
+OCStackResult DeleteEasySetupResources(void);
 
 OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty);
 OCStackResult SetEnrolleeState(ESEnrolleeState esState);

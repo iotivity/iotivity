@@ -1526,7 +1526,7 @@ OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMa
     return res;
 }
 
-OCStackResult DeleteEasySetupResources()
+OCStackResult DeleteEasySetupResources(void)
 {
     OCStackResult res = OC_STACK_ERROR;
     if (g_ESWiFiConfResource.handle != NULL)

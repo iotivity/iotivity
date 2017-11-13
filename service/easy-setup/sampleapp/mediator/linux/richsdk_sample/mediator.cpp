@@ -559,7 +559,7 @@ static FILE *client_open(const char *path, const char *mode)
     }
 }
 
-int main()
+int main(void)
 {
     OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
 
