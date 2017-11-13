@@ -49,7 +49,7 @@ typedef struct oc_event_t
     bool signaled;
 } oc_event_t;
 
-oc_event oc_event_new()
+oc_event oc_event_new(void)
 {
     oc_event event = (oc_event)OICCalloc(1, sizeof(oc_event_t));
     if (!event)

@@ -73,14 +73,14 @@ time_t timespec_diff(const time_t after, const time_t before);
  */
 void timespec_add(time_t *to, const time_t seconds);
 
-void checkTimeout();
+void checkTimeout(void);
 
 #ifndef WITH_ARDUINO
 long int getSeconds(struct tm *tp);
 time_t getRelativeIntervalOfWeek(struct tm *tp);
 time_t getSecondsFromAbsTime(struct tm *tp);
 
-int initThread();
+int initThread(void);
 void *loop(void *threadid);
 time_t OC_CALL registerTimer(const time_t seconds, int *id, TimerCallback cb, void *ctx);
 void OC_CALL unregisterTimer(int id);

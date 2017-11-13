@@ -50,7 +50,7 @@ extern "C" {
  * Generate a uniformly distributed 32-bit random number.
  * @retval On success, it returns the random value.
  */
-uint32_t OCGetRandom();
+uint32_t OCGetRandom(void);
 
 /**
  * Generate an array of uniformly distributed random bytes.

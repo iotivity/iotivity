@@ -41,7 +41,7 @@ typedef struct oc_event_t *oc_event;
  *
  * @return  Reference to newly created event, NULL on allocation failure.
  */
-oc_event oc_event_new();
+oc_event oc_event_new(void);
 
 /**
  * Frees the oc_event.
