@@ -17,8 +17,12 @@
 *
 ******************************************************************/
 
+#include "iotivity_config.h"
+
 #include <stddef.h>
+#ifdef HAVE_MEMORY_H
 #include <memory.h>
+#endif
 
 void *memmem(const void *haystack, size_t haystackLen, const void *needle, size_t needleLen)
 {

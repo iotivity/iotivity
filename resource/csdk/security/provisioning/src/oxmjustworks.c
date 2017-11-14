@@ -18,7 +18,12 @@
  *
  * *****************************************************************/
 
+#include "iotivity_config.h"
+
+#ifdef HAVE_MEMORY_H
 #include <memory.h>
+#endif
+
 #include "ocstack.h"
 #include "experimental/securevirtualresourcetypes.h"
 #include "experimental/doxmresource.h"

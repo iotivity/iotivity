@@ -17,10 +17,14 @@
 *
 ******************************************************************/
 
+#include "iotivity_config.h"
+
 #include <stdio.h>
 #include <ctype.h>
 #include <time.h>
+#ifdef HAVE_MEMORY_H
 #include <memory.h>
+#endif
 #include <stdbool.h>
 
 #define TM_BASE_YEAR   1900

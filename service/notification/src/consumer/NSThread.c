@@ -18,12 +18,15 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
+
 #include "NSThread.h"
 
 #include "NSConstants.h"
 #include "NSConsumerCommon.h"
-
+#ifdef HAVE_MEMORY_H
 #include <memory.h>
+#endif
 #include "oic_malloc.h"
 
 static pthread_mutex_t g_create_mutex;

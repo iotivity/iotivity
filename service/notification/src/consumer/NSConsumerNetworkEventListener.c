@@ -18,7 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
+
+#ifdef HAVE_MEMORY_H
 #include <memory.h>
+#endif
 #include <string.h>
 
 #include "NSConstants.h"

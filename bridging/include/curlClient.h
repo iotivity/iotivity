@@ -24,7 +24,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+// Make sure to include "iotivity_config.h" at begining of c/cpp files
+#ifdef HAVE_MEMORY_H
 #include <memory.h>
+#endif
 #include <string>
 #include <vector>
 #include <map>

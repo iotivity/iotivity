@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
+#include "iotivity_config.h"
 
 #include "curlClient.h"
 #include <iostream>
