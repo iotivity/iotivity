@@ -340,14 +340,14 @@ OCStackResult initDevConfResource(bool isSecured)
         res = OCCreateResource(&g_ESDevConfResource.handle, OC_RSRVD_ES_RES_TYPE_DEVCONF,
         OC_RSRVD_INTERFACE_DEFAULT,
         OC_RSRVD_ES_URI_DEVCONF, OCEntityHandlerCb,
-        NULL, OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
+        NULL, OC_DISCOVERABLE | OC_SECURE);
     }
     else
     {
         res = OCCreateResource(&g_ESDevConfResource.handle, OC_RSRVD_ES_RES_TYPE_DEVCONF,
         OC_RSRVD_INTERFACE_DEFAULT,
         OC_RSRVD_ES_URI_DEVCONF, OCEntityHandlerCb,
-        NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
+        NULL, OC_DISCOVERABLE);
     }
 
     if (res != OC_STACK_OK)
