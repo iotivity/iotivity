@@ -39,9 +39,9 @@ static char g_svrDbPath[SVR_DB_PATH_LENGTH];
 typedef enum OperationType
 {
     SVR_PRINT_ALL = 1,
-    SVR_EDIT_CRED = 2,
-    SVR_EDIT_ACL = 3,
-    SVR_EDIT_DOXM = 4,
+    SVR_EDIT_CRED,
+    SVR_EDIT_ACL,
+    SVR_EDIT_DOXM,
     SVR_EDIT_PSTAT = 5,
     EXIT = 99
 } OperationType_t;
