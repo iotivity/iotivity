@@ -64,7 +64,7 @@ OCStackResult CHPHandleOCFRequest(const OCEntityHandlerRequest* requestInfo,
 OCEntityHandlerResult CHPEntityHandler(OCEntityHandlerFlag flag,
                                        OCEntityHandlerRequest* entityHandlerRequest,
                                        void* callbackParam);
-bool CHPIsInitialized()
+bool CHPIsInitialized(void)
 {
     return g_isCHProxyInitialized;
 }
@@ -118,7 +118,7 @@ OCStackResult CHPInitialize(bool secure)
     return OC_STACK_OK;
 }
 
-OCStackResult CHPTerminate()
+OCStackResult CHPTerminate(void)
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
 
@@ -184,7 +184,7 @@ static void CHPGetProxyURI(OCHeaderOption* options, uint8_t *numOptions, char* u
 }
 
 // TODO: Will be moved to OCProxyPayload
-static OCRepPayload* CHPGetDiscoveryPayload()
+static OCRepPayload* CHPGetDiscoveryPayload(void)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)

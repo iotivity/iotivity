@@ -69,7 +69,7 @@ void handleSigInt(int signum)
     }
 }
 
-OCPayload* putPayload()
+OCPayload* putPayload(void)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
@@ -86,7 +86,7 @@ OCPayload* putPayload()
     return (OCPayload*)payload;
 }
 
-static void PrintUsage()
+static void PrintUsage(void)
 {
     OIC_LOG(INFO, TAG, "Usage : proxy_client -t <1..5>");
     OIC_LOG(INFO, TAG, "-t 1  :  Discover Proxy");
@@ -187,7 +187,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-int InitProxyRequest()
+int InitProxyRequest(void)
 {
     OIC_LOG(INFO, TAG, "InitProxyRequest");
     OCHeaderOption option;
@@ -322,7 +322,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-int InitDiscovery()
+int InitDiscovery(void)
 {
     OCStackResult ret;
     OCCallbackData cbData;

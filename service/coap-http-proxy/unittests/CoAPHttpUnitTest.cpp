@@ -49,13 +49,13 @@ static OCConnectivityType connType;
 class CoApHttpTest: public TestWithMock
 {
 protected:
-    void SetUp()
+    void SetUp(void)
     {
         TestWithMock::SetUp();
         OCInit(NULL, 0, OC_CLIENT_SERVER);
     }
 
-    void TearDown()
+    void TearDown(void)
     {
         OCStop();
     }

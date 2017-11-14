@@ -44,13 +44,13 @@ OCStackResult CHPInitialize(bool secure);
  * Terminate the CoAP HTTP Proxy.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-OCStackResult CHPTerminate();
+OCStackResult CHPTerminate(void);
 
 /**
  * API to check if CoAP-HTTP Proxy is initialized.
  * @return  true if initialized else false.
  */
-bool CHPIsInitialized();
+bool CHPIsInitialized(void);
 
 #ifdef __cplusplus
 }

@@ -97,8 +97,8 @@ static int g_refreshFds[2];
  */
 static pthread_t g_multiHandleThread;
 
-static void CHPParserLockMutex();
-static void CHPParserUnlockMutex();
+static void CHPParserLockMutex(void);
+static void CHPParserUnlockMutex(void);
 
 static void CHPParserResetHeaderOptions(u_arraylist_t** headerOptions)
 {
@@ -350,7 +350,7 @@ OCStackResult CHPParserInitializePipe(int fds[2])
     return OC_STACK_OK;
 }
 
-static OCStackResult CHPParserInitializeMutex()
+static OCStackResult CHPParserInitializeMutex(void)
 {
     // create the mutex with the attributes set
     int ret = pthread_mutex_init(&g_multiHandleMutex, PTHREAD_MUTEX_DEFAULT);
@@ -362,7 +362,7 @@ static OCStackResult CHPParserInitializeMutex()
     return OC_STACK_OK;
 }
 
-static OCStackResult CHPParserTerminateMutex()
+static OCStackResult CHPParserTerminateMutex(void)
 {
     int ret = pthread_mutex_destroy(&g_multiHandleMutex);
     if (0 != ret)
@@ -373,7 +373,7 @@ static OCStackResult CHPParserTerminateMutex()
     return OC_STACK_OK;
 }
 
-static void CHPParserLockMutex()
+static void CHPParserLockMutex(void)
 {
     int ret = pthread_mutex_lock(&g_multiHandleMutex);
     if(ret != 0)
@@ -382,7 +382,7 @@ static void CHPParserLockMutex()
     }
 }
 
-static void CHPParserUnlockMutex()
+static void CHPParserUnlockMutex(void)
 {
     int ret = pthread_mutex_unlock(&g_multiHandleMutex);
     if(ret != 0)
@@ -391,7 +391,7 @@ static void CHPParserUnlockMutex()
     }
 }
 
-static OCStackResult CHPParserInitializeMultiHandle()
+static OCStackResult CHPParserInitializeMultiHandle(void)
 {
     CHPParserLockMutex();
     if(g_multiHandle)
@@ -413,7 +413,7 @@ static OCStackResult CHPParserInitializeMultiHandle()
     return OC_STACK_OK;
 }
 
-static OCStackResult CHPParserTerminateMultiHandle()
+static OCStackResult CHPParserTerminateMultiHandle(void)
 {
     CHPParserLockMutex();
     if(!g_multiHandle)
@@ -429,7 +429,7 @@ static OCStackResult CHPParserTerminateMultiHandle()
     return OC_STACK_OK;
 }
 
-OCStackResult CHPParserInitialize()
+OCStackResult CHPParserInitialize(void)
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
 
@@ -480,7 +480,7 @@ OCStackResult CHPParserInitialize()
     return OC_STACK_OK;
 }
 
-OCStackResult CHPParserTerminate()
+OCStackResult CHPParserTerminate(void)
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
     g_terminateParser = true;

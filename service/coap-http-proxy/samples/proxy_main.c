@@ -34,7 +34,7 @@ static char CRED_FILE[] = "oic_svr_db_server.dat";
 
 void handleSigInt(int signum);
 
-static void PrintUsage()
+static void PrintUsage(void)
 {
     printf("Usage : proxy_main -s <0|1>\n");
     printf("-s 0 : Launch proxy in unsecure mode.\n");
