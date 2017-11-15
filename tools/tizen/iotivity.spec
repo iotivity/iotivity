@@ -84,7 +84,7 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?VERBOSE: %define VERBOSE 1}
 %{!?WITH_CLOUD: %define WITH_CLOUD 0}
 %{!?WITH_MQ: %define WITH_MQ OFF}
-%{!?WITH_PROXY: %define WITH_PROXY 0}
+%{!?WITH_PROXY: %define WITH_PROXY 1}
 %{!?WITH_TCP: %define WITH_TCP 0}
 %{!?MULTIPLE_OWNER: %define MULTIPLE_OWNER 0}
 %{!?OIC_SUPPORT_TIZEN_TRACE: %define OIC_SUPPORT_TIZEN_TRACE False}
