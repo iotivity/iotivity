@@ -162,7 +162,7 @@ OCStackResult JniOcSecureResource::getLinkedDevices(JNIEnv *env, UuidList_t &uui
 
 OCStackResult JniOcSecureResource::removeDevice(JNIEnv* env, jint timeout, jobject jListener)
 {
-    if (timeout > USHRT_MAX)
+    if (timeout > static_cast<jint>(USHRT_MAX))
     {
         return OC_STACK_INVALID_PARAM;
     }
