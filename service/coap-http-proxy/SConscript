@@ -93,7 +93,7 @@ proxy_src = [
     './src/CoapHttpParser.c',
 ]
 
-if target_os in ['tizen']:
+if target_os in ['tizen', 'linux']:
     proxysdk = local_env.SharedLibrary('coap_http_proxy', proxy_src)
 else:
     proxysdk = local_env.StaticLibrary('coap_http_proxy', proxy_src)
