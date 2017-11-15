@@ -1,6 +1,6 @@
 Name: iotivity
-Version: 1.3.1
-Release: 0
+Version: %{!?version:1.3.1}%{?version}
+Release: %{!?release:0}%{?release}
 Summary: IoT Connectivity sponsored by the OCF
 Group: Network & Connectivity / IoT Connectivity
 License: Apache-2.0 and BSD-2-Clause and (MIT or BSL-1.0) and MIT
