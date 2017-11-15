@@ -42,10 +42,11 @@ resource/csdk/connectivity/build/out/
 #resource/c_common/iotivity_config.h
 resource/csdk/connectivity/src/bt_le_adapter/linux/org.iotivity.gatt.service.conf
 
-service/notification/android/.gradle/
-service/notification/android/build/
-service/notification/android/notification-service/build/
-service/notification/android/notification-service/src/main/obj/
+# Ignore android building folder
+**/*android/.gradle/
+**/*android/**/build/
+**/*android/**/obj/
+
 
 # Ignore any object files
 *.o
