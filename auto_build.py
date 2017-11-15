@@ -196,6 +196,58 @@ def build_android(flag, extra_option_str):
                     }
     call_scons(build_options, extra_option_str)
 
+def build_android_universal(flag, extra_option_str):
+    print('''
+*******************************************************************************
+    Starting Android Universal build
+    This Will take a very long time to complete. It will build the android
+    build for the following architectures.
+       - armeabi
+       - armeabi-v7a
+       - arm64-v8a
+       - x86
+       - x86_64
+    If you do not need to build a universal APK or you can target a specific
+    architecture we recommend you build android for that specific target. 
+*******************************************************************************
+''')
+    print ("*********** Build for android armeabi *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'armeabi',
+                        'RELEASE':flag,
+                    }
+    call_scons(build_options, extra_option_str)
+    print ("*********** Build for android x86 *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'x86',
+                        'RELEASE':flag,
+                    }
+    call_scons(build_options, extra_option_str)
+    print ("*********** Build for android armeabi-v7a *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'armeabi-v7a',
+                        'RELEASE':flag,
+                    }
+    call_scons(build_options, extra_option_str)
+    print ("*********** Build for android x86_64 *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'x86_64',
+                        'RELEASE':flag,
+                    }
+    call_scons(build_options, extra_option_str)
+    print ("*********** Build for android arm64-v8a *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'arm64-v8a',
+                        'RELEASE':flag,
+                    }
+    call_scons(build_options, extra_option_str)
+    print ("*********** Finishing Android universal build *************")
+
 def build_android_secured(flag, extra_option_str):
     build_android(flag, extra_option_str + " SECURED=1")
 
@@ -604,6 +656,14 @@ elif arg_num == 2:
     elif str(sys.argv[1]) == "android":
         build_android("true", "")
         build_android("false", "")
+
+    elif str(sys.argv[1]) == "android_universal":
+        # only build the release version due to long amount of time to build.
+        build_android_universal("true", "")
+
+    elif str(sys.argv[1]) == "android_universal_unsecured":
+        # only build the release version due to long amount of time to build.
+        build_android_universal("true", "SECURED=0")
 
     elif str(sys.argv[1]) == "android_unsecured":
         build_android_unsecured("true", "")
