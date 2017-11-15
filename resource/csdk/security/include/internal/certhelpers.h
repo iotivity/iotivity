@@ -23,9 +23,8 @@
 
 #if defined(__WITH_TLS__) || defined(__WITH_DTLS__)
 
-#include <mbedtls/pk.h>
+#include "mbedtls/pk.h"
 #include <time.h>
-#include "casecurityinterface.h"
 
 /**
  * Internal certificate request function; used by CSR resource handler
@@ -41,7 +40,7 @@
  *
  * @return 0 on success, <0 on failure
  */
-int OCInternalCSRRequest(const char *subject, mbedtls_pk_context *keyPair,
+int OCInternalCSRRequest(const char *subject, mbedtls_pk_context *keyPair, 
                          OicEncodingType_t encoding, OCByteString *csr);
 
 /**
@@ -66,7 +65,7 @@ int OCInternalGenerateKeyPair(mbedtls_pk_context *keyPair);
  * 3. It contains at least one Subject Alternative Name extension that validly encodes a role.
  *
  * It does NOT validate the cryptographic signature nor check its time validity.
- * These checks should be done when the certificate is being used as part of an access control check,
+ * These checks should be done when the certificate is being used as part of an access control check, 
  * as that is when the time validity check should be made, and when trusted CAs are known.
  *
  * @param[in] buf           Buffer containing certificate as a PEM string
@@ -87,7 +86,7 @@ OCStackResult OCInternalIsValidRoleCertificate(const uint8_t *buf, size_t bufLen
 /**
  * Determine if a buffer contains a valid chain of certificates. This is intended to verify
  * one or more intermediate CA certificates are valid.
- *
+ * 
  * This only checks that they are valid X.509 structures; no verification of the cryptographic
  * signature of time-validity is performed. These should be done at point of use.
  *
@@ -111,7 +110,8 @@ OCStackResult OCInternalIsValidCertChain(const uint8_t *buf, size_t bufLen);
  * parameters.
  *
  * @param[in] certificateChain      OicSecKey_t containing one or more certificates
- * @param[in] trustedCaCerts        Trusted CAs certificates chain container
+ * @param[in] trustedCaCerts        PEM string containing the trusted CAs certificates
+ * @param[in] trustedCaCertsLength  Length of trustedCaCerts (including terminating NULL)
  * @param[out] roles                Pointer to receive array of OicSecRole_t objects listing roles
  *                                  Caller must call OICFree to release this memory when finished
  * @param[out] rolesLength          Length of returned roles array
@@ -121,8 +121,7 @@ OCStackResult OCInternalIsValidCertChain(const uint8_t *buf, size_t bufLen);
  *         OC_STACK_INVALID_PARAM if the certificate is not valid.
  *         OC_STACK_NO_MEMORY or OC_STACK_ERROR if some other error arose during validation.
  */
-OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificateChain,
-                                              const ByteArrayLL_t *trustedCaCerts,
-                                              OicSecRole_t **roles, size_t *rolesLength,
-                                              struct tm *notValidAfter);
+OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificateChain, const uint8_t *trustedCaCerts,
+                                              size_t trustedCaCertsLength, OicSecRole_t **roles,
+                                              size_t *rolesLength, struct tm *notValidAfter);
 #endif

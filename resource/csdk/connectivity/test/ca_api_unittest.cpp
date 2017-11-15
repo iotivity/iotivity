@@ -81,7 +81,7 @@ void adapter_handler(CATransportAdapter_t /*adapter*/,
 {
 }
 
-void connection_handler(const CAEndpoint_t * /*endpoint*/,
+void connection_handler(const CAEndpoint_t * /*endpoint*/, 
                         bool /*connected*/)
 {
 }
@@ -199,14 +199,12 @@ void provide_x509_cert_and_key(PkiInfo_t* inf)
 {
     /* PEM data must end in newline and be null terminated for IoTivity */
 
-    inf->crt.cert->data = (uint8_t*) our_cert;
-    inf->crt.cert->len = strlen(our_cert) + 1;
-    inf->crt.next = NULL;
+    inf->crt.data = (uint8_t*) our_cert;
+    inf->crt.len = strlen(our_cert) + 1;
     inf->key.data = (uint8_t*) our_key;
     inf->key.len = strlen(our_key) + 1;
-    inf->ca.cert->data = (uint8_t*) our_ca;
-    inf->ca.cert->len = strlen(our_ca) + 1;
-    inf->ca.next = NULL;
+    inf->ca.data = (uint8_t*) our_ca;
+    inf->ca.len = strlen(our_ca) + 1;
 
     // CRL not provided
     inf->crl.data = NULL;
@@ -224,11 +222,11 @@ void provide_supported_credential_types(bool* list, const char* /*deviceId*/)
 {
     list[1] = true;
     /*
-     * Note: there is a default implementation of this in credresource.c, exposed by
-     * pkix_interface.h, called InitManufacturerCipherSuiteList.  If the cred resource
-     * has a credential of the required type, it updates list accordingly.
+     * Note: there is a default implementation of this in credresource.c, exposed by 
+     * pkix_interface.h, called InitManufacturerCipherSuiteList.  If the cred resource 
+     * has a credential of the required type, it updates list accordingly. 
      *
-     * In a separate test, we could use the cred resource and APIs (credresource.h).
+     * In a separate test, we could use the cred resource and APIs (credresource.h). 
      */
     return;
 }
@@ -367,9 +365,9 @@ TEST_F(CATests, DISABLED_PkiTest)
 {
     // @todo: this test is disabled for now, it crashes with an invalid write. Cert data
     // provided by the provide_x509_cert_and_key is stored as const char, but ParseChain()
-    // (in ca_adapter_net_ssl.c) writes to it while reading.  We could change the test to
+    // (in ca_adapter_net_ssl.c) writes to it while reading.  We could change the test to 
     // provide data on the heap, but the CA stack should not be changing data provided to it
-    // by callbacks.
+    // by callbacks. 
 
     const char* local_addr = "127.0.0.1";
     uint16_t local_port = 5503;
@@ -393,7 +391,7 @@ TEST_F(CATests, DISABLED_PkiTest)
 
     // Register a working callback to provide the keys, expect success.
     EXPECT_EQ(CA_STATUS_OK, CAregisterPkixInfoHandler(provide_x509_cert_and_key));
-    EXPECT_EQ(CA_STATUS_OK, CAInitiateHandshake(serverAddr));
+    EXPECT_EQ(CA_STATUS_OK, CAInitiateHandshake(serverAddr)); 
 
     CADestroyEndpoint(serverAddr);
 }

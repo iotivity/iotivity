@@ -237,7 +237,7 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid);
  * @param[out] crt certificates to be filled.
  * @param[in] usage credential usage string.
  */
-void GetCaCert(ByteArrayLL_t * crt, const char * usage);
+OCStackResult GetPemCaCert(ByteArray_t * crt, const char * usage);
 
 /**
  * Get a list of all role certificates. Used when asserting roles.
@@ -256,7 +256,7 @@ OCStackResult GetAllRoleCerts(RoleCertChain_t** roleCerts);
  * @param[out] crt certificate chain to be filled.
  * @param[in] usage credential usage string.
  */
-void GetOwnCert(ByteArrayLL_t * crt, const char * usage);
+void GetPemOwnCert(ByteArray_t * crt, const char * usage);
 /**
  * Used by mbedTLS to retrieve own private key
  *

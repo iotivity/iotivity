@@ -27,9 +27,6 @@ ca_common_src = [
         os.path.join(ca_common_src_path, 'caremotehandler.c')
     ]
 
-if connectivity_env.get('SECURED') == '1':
-    ca_common_src.append(os.path.join(ca_common_src_path, 'parsechain.c'))
-
 if connectivity_env['POSIX_SUPPORTED'] or target_os in ['windows']:
     ca_common_src.append(os.path.join(ca_common_src_path, 'cathreadpool_pthreads.c'))
 

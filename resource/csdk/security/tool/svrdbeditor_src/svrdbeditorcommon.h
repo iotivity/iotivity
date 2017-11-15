@@ -61,14 +61,6 @@ typedef enum SubOperationType
     BACK = 99
 } SubOperationType_t;
 
-typedef struct
-{
-    ByteArray_t crt;    /**< own certificate chain as a null-terminated PEM string of certificates */
-    ByteArray_t key;    /**< own private key as binary-encoded DER */
-    ByteArray_t ca;     /**< trusted CAs as a null-terminated PEM string of certificates */
-    ByteArray_t crl;    /**< trusted CRLs as binary-encoded DER */
-} PkiInfoCrt_t;
-
 void PrintUuid(const OicUuid_t *uuid);
 void PrintIntArray(const int *array, size_t length);
 void PrintStringArray(const char **array, size_t length);

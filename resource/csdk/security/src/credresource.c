@@ -3160,14 +3160,112 @@ bool IsCredRowneruuidTheNilUuid()
 }
 
 #if defined (__WITH_TLS__) || defined(__WITH_DTLS__)
-void GetCaCert(ByteArrayLL_t * chain, const char * usage)
+/* Caller must call OICFree on *der when finished. */
+static int ConvertPemCertToDer(const char *pem, size_t pemLen, uint8_t** der, size_t* derLen)
+{
+    const char* pemHeader = "-----BEGIN CERTIFICATE-----"; /* no newlines allowed here */
+    const char* pemFooter = "-----END CERTIFICATE-----";
+
+    mbedtls_pem_context ctx;
+    int ret;
+
+    OC_UNUSED(pemLen);
+
+    mbedtls_pem_init(&ctx);
+    size_t usedLen;
+    ret = mbedtls_pem_read_buffer(&ctx, pemHeader, pemFooter, (const uint8_t*) pem, NULL, 0, &usedLen);
+    if (ret != 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: failed reading PEM cert", __func__);
+        goto exit;
+    }
+
+    uint8_t *buf = OICCalloc(1, ctx.buflen);
+    if (NULL == buf)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+        ret = -1;
+        goto exit;
+    }
+
+    memcpy(buf, ctx.buf, ctx.buflen);
+
+    *der = buf;
+    *derLen = ctx.buflen;
+
+exit:
+    mbedtls_pem_free(&ctx);
+
+    return ret;
+}
+
+/* Caller must call OICFree on *pem when finished. */
+static int ConvertDerCertToPem(const uint8_t* der, size_t derLen, uint8_t** pem)
+{
+    const char* pemHeader = "-----BEGIN CERTIFICATE-----\n";
+    const char* pemFooter = "-----END CERTIFICATE-----\n";
+
+    /* Get the length required for output */
+    size_t pemLen;
+    int ret = mbedtls_pem_write_buffer(pemHeader,
+        pemFooter,
+        der,
+        derLen,
+        NULL,
+        0,
+        &pemLen);
+    if (ret != MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL)
+    {
+        OIC_LOG_V(ERROR, TAG, "Couldn't convert cert into PEM, failed getting required length: %d", ret);
+        return ret;
+    }
+
+    *pem = OICCalloc(1, pemLen + 1);
+    if (*pem == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory for PEM cert");
+        return ret;
+    }
+
+    /* Try the conversion */
+    ret = mbedtls_pem_write_buffer(pemHeader,
+        pemFooter,
+        der,
+        derLen,
+        *pem,
+        pemLen,
+        &pemLen);
+    if (ret < 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "Couldn't convert cert into PEM, failed writing PEM: %d", ret);
+        OICFreeAndSetToNull((void **) pem);
+        return ret;
+    }
+
+    return 0;
+}
+
+static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodingType_t desiredEncoding)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    if (NULL == chain || NULL == usage)
+    if (NULL == crt || NULL == usage)
     {
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return;
+        return OC_STACK_INVALID_PARAM;
     }
+
+    switch (desiredEncoding)
+    {
+    case OIC_ENCODING_PEM:
+    case OIC_ENCODING_DER:
+    case OIC_ENCODING_BASE64:
+        break;
+    default:
+        OIC_LOG_V(ERROR, TAG, "%s: Unsupported encoding %d", __func__, desiredEncoding);
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    crt->len = 0;
     OicSecCred_t* temp = NULL;
 
     LL_FOREACH(gCred, temp)
@@ -3176,6 +3274,7 @@ void GetCaCert(ByteArrayLL_t * chain, const char * usage)
             (temp->credUsage != NULL) &&
             (0 == strcmp(temp->credUsage, usage)) && (false == temp->optionalData.revstat))
         {
+
             if ((OIC_ENCODING_BASE64 != temp->publicData.encoding) &&
                 (OIC_ENCODING_PEM != temp->publicData.encoding) &&
                 (OIC_ENCODING_DER != temp->publicData.encoding))
@@ -3184,114 +3283,118 @@ void GetCaCert(ByteArrayLL_t * chain, const char * usage)
                 continue;
             }
 
-            if ((OIC_ENCODING_BASE64 == temp->publicData.encoding) ||
-                (OIC_ENCODING_PEM == temp->publicData.encoding))
+            if (OIC_ENCODING_DER == desiredEncoding)
             {
-                size_t bufSize = B64DECODE_OUT_SAFESIZE((temp->publicData.len + 1));
-                uint8_t * buf = OICCalloc(1, bufSize);
-                if(NULL == buf)
+                if ((OIC_ENCODING_BASE64 == temp->publicData.encoding) ||
+                    (OIC_ENCODING_PEM == temp->publicData.encoding))
                 {
-                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-                    return;
-                }
-                size_t outSize;
-                if(B64_OK != b64Decode((char*)(temp->publicData.data),
-                                       temp->publicData.len, buf, bufSize, &outSize))
-                {
-                    OICFree(buf);
-                    OIC_LOG(ERROR, TAG, "Failed to decode base64 data");
-                    return;
-                }
-
-                // mbedtls_x509_crt_parse requires a null terminator in case of PEM certificate
-                if (buf[outSize - 1] != 0x0)
-                {
-                    OIC_LOG_V(DEBUG, TAG, "%s: adding null terminator at the end of the cert", __func__);
-                    uint8_t * oldBuf = buf;
-                    buf = OICRealloc(buf, outSize + 1);
-                    if (NULL == buf)
+                    uint8_t* buf = NULL;
+                    size_t outSize = 0;
+                    int ret = ConvertPemCertToDer((const char*)temp->publicData.data, temp->publicData.len, &buf, &outSize);
+                    if (0 > ret)
                     {
-                        OIC_LOG(ERROR, TAG, "No memory reallocating buf");
-                        OICFree(oldBuf);
-                        return;
+                        OIC_LOG(ERROR, TAG, "Could not convert PEM cert to DER");
+                        return OC_STACK_ERROR;
                     }
-                    buf[outSize] = 0x0;
-                    outSize += 1;
-                }
-                ByteArray_t * item = (ByteArray_t *) OICMalloc (sizeof(ByteArray_t));
-                if(NULL == item)
-                {
-                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-                    OICFree(buf);
-                    return;
-                }
-                item->data = buf;
-                item->len = outSize;
 
-                if (chain->cert == NULL)
-                {
-                    chain->cert = item;
+                    uint8_t *savePtr = crt->data;
+                    crt->data = OICRealloc(crt->data, crt->len + outSize);
+                    if (NULL == crt->data)
+                    {
+                        OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
+                        OICFree(savePtr);
+                        OICFree(buf);
+                        return OC_STACK_NO_MEMORY;
+                    }
+                    memcpy(crt->data + crt->len, buf, outSize);
+                    crt->len += outSize;
+                    OICFree(buf);
                 }
                 else
                 {
-                    ByteArrayLL_t * tmp = (ByteArrayLL_t *) OICMalloc (sizeof(ByteArrayLL_t));
-                    if(NULL == tmp)
+                    uint8_t *savePtr = crt->data;
+                    crt->data = OICRealloc(crt->data, crt->len + temp->publicData.len);
+                    if (NULL == crt->data)
                     {
-                        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-                        OICFree(buf);
-                        OICFree(item);
-                        return;
+                        OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
+                        OICFree(savePtr);
+                        return OC_STACK_NO_MEMORY;
                     }
-                    tmp->cert = item;
-                    LL_APPEND(chain, tmp);
+                    memcpy(crt->data + crt->len, temp->publicData.data, temp->publicData.len);
+                    crt->len += temp->publicData.len;
                 }
+                OIC_LOG_V(DEBUG, TAG, "%s found", usage);
             }
             else
             {
-                ByteArray_t * item = (ByteArray_t *) OICMalloc (sizeof(ByteArray_t));
-                if(NULL == item)
+                /* PEM/Base64 */
+                uint8_t *pem = NULL;
+                size_t pemLen = 0;
+                if ((OIC_ENCODING_BASE64 == temp->publicData.encoding) ||
+                    (OIC_ENCODING_PEM == temp->publicData.encoding))
                 {
-                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-                    return;
-                }
-                item->data = (uint8_t *) OICMalloc (temp->publicData.len);
-                if(NULL == item->data)
-                {
-                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-                    OICFree(item);
-                    return;
-                }
-                memcpy(item->data, temp->publicData.data, temp->publicData.len);
-                item->len = temp->publicData.len;
-
-                if (chain->cert == NULL)
-                {
-                    chain->cert = item;
+                    pem = temp->publicData.data;
+                    pemLen = temp->publicData.len;
                 }
                 else
                 {
-                    ByteArrayLL_t * tmp = (ByteArrayLL_t *) OICMalloc (sizeof(ByteArrayLL_t));
-                    if(NULL == tmp)
+                    int ret = ConvertDerCertToPem(temp->publicData.data, temp->publicData.len, &pem);
+                    if (0 > ret)
                     {
-                        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-                        OICFree(item->data);
-                        OICFree(item);
-                        return;
+                        OIC_LOG_V(ERROR, TAG, "Failed converting DER cert to PEM: %d", ret);
+                        return OC_STACK_ERROR;
                     }
-                    tmp->cert = item;
-                    LL_APPEND(chain, tmp);
+                    pemLen = strlen((char *)pem) + 1;
                 }
+
+                uint8_t *oldData = crt->data;
+                crt->data = OICRealloc(crt->data, crt->len + pemLen);
+                if (NULL == crt->data)
+                {
+                    OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
+                    OICFree(oldData);
+                    return OC_STACK_NO_MEMORY;
+                }
+                memcpy(crt->data + crt->len, pem, pemLen);
+                crt->len += pemLen;
             }
-            OIC_LOG_V(DEBUG, TAG, "%s found", usage);
         }
     }
-    if(NULL == chain->cert)
+    if(0 == crt->len)
     {
         OIC_LOG_V(WARNING, TAG, "%s not found", usage);
+        return OC_STACK_NO_RESOURCE;
+    }
+
+    if (OIC_ENCODING_PEM == desiredEncoding)
+    {
+        /* mbedtls_x509_crt_parse requires a null terminator to determine that the format is PEM */
+        size_t crtLength = crt->len;
+        bool addNull = (crt->data[crtLength - 1] != 0);
+
+        if (addNull)
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: adding null terminator at the end of the cert", __func__);
+            uint8_t *oldData = crt->data;
+            crt->data = OICRealloc(crt->data, crtLength + 1);
+            if (NULL == crt->data)
+            {
+                OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
+                OICFree(oldData);
+                return OC_STACK_NO_MEMORY;
+            }
+            crt->data[crtLength] = 0;
+            crt->len = crtLength + 1;
+        }
     }
 
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-    return;
+    return OC_STACK_OK;
+}
+
+OCStackResult GetPemCaCert(ByteArray_t * crt, const char * usage)
+{
+    return GetCaCert(crt, usage, OIC_ENCODING_PEM);
 }
 
 static int cloneSecKey(OicSecKey_t * dst, OicSecKey_t * src)
@@ -3368,58 +3471,110 @@ error:
     return OC_STACK_ERROR;
 }
 
-void GetOwnCert(ByteArrayLL_t * chain, const char * usage)
+void GetPemOwnCert(ByteArray_t * crt, const char * usage)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    if (NULL == chain || NULL == usage)
+    if (NULL == crt || NULL == usage)
     {
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
+    crt->len = 0;
     OicSecCred_t * temp = NULL;
     LL_FOREACH(gCred, temp)
     {
         if (SIGNED_ASYMMETRIC_KEY == temp->credType &&
+            temp->credUsage != NULL &&
             0 == strcmp(temp->credUsage, usage))
         {
-            ByteArray_t * item = (ByteArray_t *) OICMalloc (sizeof(ByteArray_t));
-            if(NULL == item)
-            {
-                OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-                return;
-            }
-            item->data = (uint8_t *) OICMalloc (temp->publicData.len);
-            if(NULL == item->data)
-            {
-                OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-                OICFree(item);
-                return;
-            }
-            memcpy(item->data, temp->publicData.data, temp->publicData.len);
-            item->len = temp->publicData.len;
+            uint8_t *p = NULL;
+            int mbedRet = 0;
+            uint8_t *pem = NULL;
+            size_t pemLen = 0;
+            bool mustFreePem = false;
+            bool mustAddNull = true;
 
-            if (chain->cert == NULL)
+            switch (temp->publicData.encoding)
             {
-                chain->cert = item;
+            case OIC_ENCODING_DER:
+            case OIC_ENCODING_RAW:
+                mbedRet = ConvertDerCertToPem(temp->publicData.data, temp->publicData.len, &pem);
+                if (0 > mbedRet)
+                {
+                    OIC_LOG_V(ERROR, TAG, "Failed to ConvertDerCertToPem: %d", mbedRet);
+                    return;
+                }
+                mustFreePem = true;
+                mustAddNull = false; /* mbedTLS always NULL-terminates. */
+                pemLen = strlen((char *)pem) + 1;
+                break;
+
+            case OIC_ENCODING_PEM:
+            case OIC_ENCODING_BASE64:
+                pem = temp->publicData.data;
+                pemLen = temp->publicData.len;
+
+                /* Make sure the buffer has a terminating NULL. If not, make sure we add one later. */
+                for (size_t i = pemLen - 1; i > 0; i--)
+                {
+                    if ('\0' == (char)pem[i])
+                    {
+                        mustAddNull = false;
+                        break;
+                    }
+                }
+                break;
+
+            default:
+                OIC_LOG_V(ERROR, TAG, "Unsupported encoding %d", temp->publicData.encoding);
+                return;
+            }
+
+            p = crt->data;
+            crt->data = OICRealloc(crt->data, crt->len + pemLen + (mustAddNull ? 1 : 0));
+            if (NULL == crt->data)
+            {
+                OIC_LOG(ERROR, TAG, "No memory reallocating crt->data");
+                OICFree(p);
+                if (mustFreePem)
+                {
+                    OICFree(pem);
+                }
+                return;
+            }
+
+            /* If we're appending, subtract one from crt->len below so we overwrite the current terminating
+             * NULL with the beginning of the new data.
+             */
+            if (0 < crt->len)
+            {
+                assert(crt->data[crt->len - 1] == '\0');
+                memcpy(crt->data + crt->len - 1, pem, pemLen);
+                crt->len += pemLen - 1;
             }
             else
             {
-                ByteArrayLL_t * tmp = (ByteArrayLL_t *) OICMalloc (sizeof(ByteArrayLL_t));
-                if(NULL == tmp)
-                {
-                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-                    OICFree(item->data);
-                    OICFree(item);
-                    return;
-                }
-                tmp->cert = item;
-                LL_APPEND(chain, tmp);
+                memcpy(crt->data, pem, pemLen);
+                crt->len = pemLen;
+            }
+
+            /* If pem doesn't contain a terminating NULL, add one. */
+            if (mustAddNull)
+            {
+                assert(crt->data[crt->len - 1] != '\0');
+                crt->data[crt->len] = '\0';
+                crt->len += 1;
+            }
+
+            if (mustFreePem)
+            {
+                OICFree(pem);
             }
 
             OIC_LOG_V(DEBUG, TAG, "%s found", usage);
         }
     }
-    if(NULL == chain->cert)
+    if(0 == crt->len)
     {
         OIC_LOG_V(WARNING, TAG, "%s not found", usage);
     }

@@ -45,13 +45,6 @@ typedef struct ByteArray
     size_t len;      /**< Data size */
 } ByteArray_t;
 
-typedef struct ByteArrayLL ByteArrayLL_t;
-
-struct ByteArrayLL
-{
-    ByteArray_t *cert;
-    ByteArrayLL_t *next;
-};
 
 /**@def BYTE_ARRAY_INITIALIZER
  *
@@ -59,13 +52,6 @@ struct ByteArrayLL
  */
 #undef BYTE_ARRAY_INITIALIZER
 #define BYTE_ARRAY_INITIALIZER {NULL, 0}
-
-/**@def CERT_CHAIN_INITIALIZER
- *
- * Initializes of existing certificate chain pointer to \a NULL.
- */
-#undef CERT_CHAIN_INITIALIZER
-#define CERT_CHAIN_INITIALIZER {NULL, NULL}
 
 /**@def INIT_BYTE_ARRAY(array)
  *
