@@ -336,7 +336,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/libcoap_http_proxy.so
 %endif
 %if "%{TARGET_OS}" == "linux"
-%{_libdir}/libnotification*.so
+%{_libdir}/lib*plugin.so
 %endif
 
 %files test
