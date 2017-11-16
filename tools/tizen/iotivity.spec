@@ -72,7 +72,7 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %endif
 
 # Default values to be eventually overiden BEFORE or as gbs params:
-%{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
+%{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE %{TARGET_OS}}
 %{!?LOGGING: %define LOGGING 1}
 %{!?RD_MODE: %define RD_MODE CLIENT}
 %{!?RELEASE: %define RELEASE 1}
