@@ -27,7 +27,7 @@ SampleCollection::SampleCollection(void)
     //child constructor
     m_isCancelCalled = false;
     m_isObserveRegistered = false;
-    m_isSecured = false;
+    m_isSecured = true;
     m_ipVer = CT_IP_USE_V4;
     m_collectionName = "";
     m_listOfObservers.clear();
@@ -238,7 +238,7 @@ void SampleCollection::handlePostRequest(QueryParamsMap &queryParamsMap,
     {
         cout << "sending forbidden POST response" << endl;
         response->setResourceRepresentation(OCRepresentation(), responseInterface);
-        response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+        response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
     }
     else
     {
@@ -331,13 +331,7 @@ void SampleCollection::handleGetRequest(QueryParamsMap &queryParamsMap,
             if (key.compare(INTERFACE_KEY) == 0)
             {
                 responseInterface = key;
-                vector< string > interfaceList;
-                vector< string > resourceTypeList;
-                interfaceList.push_back(LINK_INTERFACE);
-                interfaceList.push_back(BATCH_INTERFACE);
-                interfaceList.push_back(DEFAULT_INTERFACE);
 
-                resourceTypeList.push_back(GROUP_TYPE_DEFAULT);
                 if (queryValue.compare(DEFAULT_INTERFACE) == 0 || queryValue.compare(READ_ONLY_INTERFACE) == 0)
                 {
                     cout << "Found baseline/readonly query, adding rt & if into response payload" << endl;
@@ -428,7 +422,7 @@ void SampleCollection::handleGetRequest(QueryParamsMap &queryParamsMap,
     {
         cout << "sending forbidden GET response" << endl;
         response->setResourceRepresentation(OCRepresentation(), responseInterface);
-        response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+        response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
     }
     else
     {
@@ -610,7 +604,7 @@ bool SampleCollection::updateRepresentation(string key, OCRepresentation incomin
     else
     {
         result = false;
-        response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+        response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
     }
 
     return result;

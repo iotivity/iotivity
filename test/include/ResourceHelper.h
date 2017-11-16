@@ -280,6 +280,10 @@ const int SUCCESS_RESPONSE = 0;
 #define DEVICE_NAME "IotivitySmartRoom"
 #define DEFAULT_DEVIE_TYPE "oic.wk.d"
 
+#define TCP_ENDPOINT_KEY "tcp"
+#define SECURED_ENDPOINT_KEY "coaps"
+
+//  for OCF1.0 device
 #define CORE_SPEC_VERSION "ocf.1.0.0"
 #define RESOURCE_TYPE_SPEC_VERSION "ocf.res.1.0.0"
 #define SMART_HOME_SPEC_VERSION "ocf.sh.1.0.0"
@@ -401,10 +405,41 @@ public:
      */
     static void duplicateString(char ** targetString, string sourceString);
 
+    /**
+     * API to check whether a vector contains a specific string element
+     *
+     * @param [out] bool - true if the vector contains the string, false otherwise
+     * @param [in] list - vec to search in
+     * @param [in] targett - string to match
+     *
+     */
     bool containsElement(vector< string > list, string target);
 
+    /**
+     * API to get only the TCP endpoint from all available endpoints
+     *
+     * @param [out] string - target TCP endpoint
+     * @param [in] allHosts - list of all resource endpoints
+     *
+     */
     string getOnlyTCPHost(vector<string> allHosts);
 
+    /**
+     * API to get only the Secured CoAP endpoint from all available endpoints
+     *
+     * @param [out] string - target Secured CoAP endpoint
+     * @param [in] allHosts - list of all resource endpoints
+     *
+     */
+    string getOnlySecuredHost(vector<string> allHosts);
+
+    /**
+     * API to execute specific linux command line instruction
+     *
+     * @param [out] string - result of execution
+     * @param [in] cmd - instruction to execute
+     *
+     */
     string executeCommand(string cmd);
 };
 

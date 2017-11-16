@@ -122,6 +122,7 @@ SampleResource *g_extraCollectionResource;
 SampleResource *g_extraSwitchResource;
 SampleResource *g_extraBrightnessResource;
 SampleCollection *g_extraLightCollection;
+SampleCollection *g_vendorCollectionResource;
 
 #define MAXLEN_STRING 100
 #define USERPROPERTY_KEY_INT "x.user.property.int"
@@ -198,6 +199,7 @@ void createTvDevice(bool isSecured = false);
 void createAirConDevice(bool isSecured = false);
 void createExtraDevice(bool isSecured = false);
 void createSingleAirConResource(bool isSecured = false);
+void createResourceForIntrospection(bool isSecured = false);
 void createVendorDefinedDevice(bool isSecured = false);
 void createResource(void);
 void createSecuredResource(void);
@@ -205,6 +207,7 @@ void createInvisibleResource(void);
 void createResourceWithUrl(void);
 void createManyLightResources(void);
 void publishResourcesToRD(void);
+void updateResourcesToRD(void);
 void deleteResourcesFromRD(void);
 void deleteResource(void);
 void findCollection(string);
@@ -1782,7 +1785,7 @@ void createSingleAirConResource(bool isSecured)
     if (g_isAirConDeviceCreated == false)
     {
         vector<string> acDeviceTypes;
-        acDeviceTypes.push_back(Device_TYPE_AC);
+        acDeviceTypes.push_back(Device_TYPE_LIGHT);
         acDeviceTypes.push_back(Device_TYPE_VENDOR);
         SampleResource::setDeviceInfo(ENGLISH_NAME_VALUE, acDeviceTypes);
 
@@ -2578,6 +2581,27 @@ void publishResourcesToRD()
     }
 }
 
+void updateResourcesToRD()
+{
+    ResourceHandles handlesToPublish;
+    g_createdResourceList.at(0)->addResourceType("x.org.vendor.type.random");
+    handlesToPublish.push_back(g_createdResourceList.at(0)->getResourceHandle());
+
+    if (g_rdServerHosts.size() > 0)
+    {
+        for ( string rdHost : g_rdServerHosts)
+        {
+            cout << "Publishingg all resources to RD Host: " << rdHost << endl;
+            RDClient::Instance().publishResourceToRD( rdHost, g_ipVer, handlesToPublish,
+                    &onResourcePublished);
+        }
+    }
+    else
+    {
+        cout << "No RD server available" << endl;
+    }
+}
+
 void deleteResourcesFromRD()
 {
     ResourceHandles handlesToDelete;
@@ -2671,7 +2695,7 @@ void createGroup(string groupType)
 {
     if (g_isGroupCreated)
     {
-        cout << "Group[ already created!!" << endl;
+        cout << "Group already created!!" << endl;
     }
     else
     {
@@ -2680,23 +2704,40 @@ void createGroup(string groupType)
             string resourceURI = COLLECTION_RESOURCE_URI;
             string resourceInterface = BATCH_INTERFACE;
             uint8_t collectionProperty = OC_ACTIVE | OC_DISCOVERABLE;
+            OCStackResult result = OC_STACK_ERROR;
+            OCRepresentation collectionRep;
             if (g_isSecuredServer)
             {
                 collectionProperty = collectionProperty | OC_SECURE;
             }
 
-            OCPlatform::registerResource(g_collectionHandle, resourceURI, groupType, LINK_INTERFACE,
-                    NULL, collectionProperty);
+            g_vendorCollectionResource = new SampleCollection();
+            g_vendorCollectionResource->setResourceProperties(resourceURI, groupType,
+                    LINK_INTERFACE);
 
-            cout << "Create Group is called for IoTivity Handler" << endl;
+            g_vendorCollectionResource->setDI(g_di);
+            g_vendorCollectionResource->setIPVer(g_ipVer);
+            g_vendorCollectionResource->setSecured(true);
+            g_vendorCollectionResource->setName(ENGLISH_NAME_VALUE);
 
-            OCPlatform::bindTypeToResource(g_collectionHandle, GROUP_TYPE_AIRCON);
-            OCPlatform::bindInterfaceToResource(g_collectionHandle, BATCH_INTERFACE);
-            OCPlatform::bindInterfaceToResource(g_collectionHandle, DEFAULT_INTERFACE);
+            g_vendorCollectionResource->setResourceRepresentation(collectionRep);
 
+            result = g_vendorCollectionResource->startResource(collectionProperty);
 
-            g_isGroupCreated = true;
-            cout << "Successfully Created Group!!" << endl;
+            g_vendorCollectionResource->addResourceType(GROUP_TYPE_AIRCON_VENDOR);
+            g_vendorCollectionResource->addResourceInterface(BATCH_INTERFACE);
+            g_vendorCollectionResource->addResourceInterface(DEFAULT_INTERFACE);
+
+            if (result == OC_STACK_OK)
+            {
+                cout << "Successfully Created Group!!" << endl;
+                g_isGroupCreated = true;
+            }
+            else
+            {
+                cout << "Unable to create Extra Collection" << endl;
+            }
+
             if (g_createdResourceList.size() > 0)
             {
                 for (SampleResource* resource : g_createdResourceList)
@@ -2704,8 +2745,8 @@ void createGroup(string groupType)
                     if (resource->getUri().find("Children") != string::npos)
                     {
                         cout << "Joining resource " << resource->getUri()
-                                << " to iotivity handled group" << endl;
-                        joinGroup(g_collectionHandle, resource->getResourceHandle());
+                                << " to vendor handled group" << endl;
+                        g_vendorCollectionResource->addChild(resource);
                     }
                     else if (resource->getUri().find("Child") != string::npos)
                     {
@@ -3096,13 +3137,18 @@ void sendGetRequest()
     {
         QueryParamsMap qpMap;
         shared_ptr< OCResource > targetResource = g_foundResourceList.at(selection);
+        vector< std::string > allEndPoints = targetResource->getAllHosts();
+        if (g_isSecuredClient && allEndPoints.size() > 0)
+        {
+            targetResource->setHost(g_resourceHelper->getOnlySecuredHost(allEndPoints));
+        }
         cout << "Sending Get Request to the resource with: " << targetResource->host()
                 << targetResource->uri() << endl;
+
         if (targetResource->getResourceTypes().front().compare(OC_RSRVD_RESOURCE_TYPE_INTROSPECTION) == 0)
         {
             g_introspectionResource->setHost(targetResource->host());
         }
-
         targetResource->get(qpMap, onGet, g_qos);
         cout << "GET request sent!!" << endl;
     }
@@ -3537,7 +3583,7 @@ void updateLocalResourceAutomatically()
             key = string(ON_OFF_KEY);
             value = binaryValue = !binaryValue;
         }
-        else if (!uri.compare(AC_TEMPERATURE_URI) || !uri.compare(AC_TEMPERATURE_URI_CHILD))
+        else if (!uri.compare(AC_TEMPERATURE_URI) || !uri.compare(AC_TEMPERATURE_URI_CHILD)  || !uri.compare(AC_SENSOR_URI))
         {
             key = string(TEMPERATURE_KEY);
             value = temperatureValue =
@@ -3589,7 +3635,15 @@ void sendPostRequestUpdateUserInput()
         OCRepresentation rep;
         string key = "";
         AttributeValue value;
+        shared_ptr< OCResource > targetResource = g_foundResourceList.at(selection);
 
+        vector< std::string > allEndPoints = targetResource->getAllHosts();
+        if (g_isSecuredClient && allEndPoints.size() > 0)
+        {
+            targetResource->setHost(g_resourceHelper->getOnlySecuredHost(allEndPoints));
+        }
+
+        g_hasCallbackArrived = false;
         cout << "Please input Attribute Key: ";
         cin >> key;
         value = getAttributeValueFromUser();
@@ -3599,7 +3653,7 @@ void sendPostRequestUpdateUserInput()
         cout << "Sending Partial Update Message(POST)..." << endl;
         QueryParamsMap query;
         query[INTERFACE_KEY] = DEFAULT_INTERFACE;
-        g_foundResourceList.at(selection)->post(rep, query, &onPost, g_qos);
+        targetResource->post(rep, query, &onPost, g_qos);
         cout << "POST request sent!!" << endl;
         waitForCallback();
 
@@ -3747,15 +3801,20 @@ void observeResource()
     if (selection != -1)
     {
         OCRepresentation rep;
-
         cout << "Observing resource..." << endl;
 
-        shared_ptr< OCResource > resource = g_foundResourceList.at(selection);
-        resource->observe(ObserveType::Observe, QueryParamsMap(), &onObserve, g_qos);
+        shared_ptr< OCResource > targetResource = g_foundResourceList.at(selection);
+        vector< std::string > allEndPoints = targetResource->getAllHosts();
+        if (g_isSecuredClient && allEndPoints.size() > 0)
+        {
+            targetResource->setHost(g_resourceHelper->getOnlySecuredHost(allEndPoints));
+        }
+        cout << "Sending Get Request to the resource with: " << targetResource->host()
+                << targetResource->uri() << endl;
+        targetResource->observe(ObserveType::Observe, QueryParamsMap(), &onObserve, g_qos);
         cout << "Observe request sent!!" << endl;
         g_isObservingResource = true;
         waitForCallback();
-
     }
     else
     {
@@ -3774,10 +3833,20 @@ void cancelObserveResource()
 
             cout << "Canceling Observe resource..." << endl;
 
-            shared_ptr< OCResource > resource = g_foundResourceList.at(selection);
-            resource->cancelObserve(g_qos);
+            shared_ptr< OCResource > targetResource = g_foundResourceList.at(selection);
+
+            vector< std::string > allEndPoints = targetResource->getAllHosts();
+            if (g_isSecuredClient && allEndPoints.size() > 0)
+            {
+                targetResource->setHost(g_resourceHelper->getOnlySecuredHost(allEndPoints));
+            }
+            cout << "Sending Get Request to the resource with: " << targetResource->host()
+                    << targetResource->uri() << endl;
+
+            targetResource->cancelObserve(g_qos);
             cout << "Cancel Observe request sent!!" << endl;
             g_isObservingResource = false;
+            g_resourceHelper->waitInSecond(CALLBACK_WAIT_DEFAULT);
         }
         else
         {
@@ -4347,7 +4416,7 @@ void selectMenu(int choice)
             break;
 
         case 111:
-            publishResourcesToRD();
+            updateResourcesToRD();
             break;
 
         case 112:

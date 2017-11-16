@@ -373,6 +373,22 @@ string ResourceHelper::getOnlyTCPHost(vector< string > allHosts)
     return tcpHost;
 }
 
+string ResourceHelper::getOnlySecuredHost(vector< string > allHosts)
+{
+    string securedHost = "";
+    for (string host : allHosts)
+    {
+        cout << "Found a host: " << host << endl;
+        if (host.find(SECURED_ENDPOINT_KEY) != string::npos)
+        {
+            securedHost = host;
+            break;
+        }
+    }
+
+    return securedHost;
+}
+
 string ResourceHelper::executeCommand(string cmd) {
     array<char, 128> buffer;
     string result;

@@ -431,7 +431,7 @@ void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
                     cout << "Incoming Representation not supported by this resource!!" << endl;
                 }
 
-                response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+                response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
             }
 
         }
@@ -533,7 +533,7 @@ void SampleResource::handleGetRequest(QueryParamsMap &queryParamsMap,
     if (shouldReturnError)
     {
         cout << "sending forbidden GET response" << endl;
-        response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+        response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
     }
     else
     {
@@ -596,7 +596,7 @@ void SampleResource::handlePutRequest(QueryParamsMap &queryParamsMap,
 
     if (shouldChange)
     {
-        response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+        response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
     }
 
     try
@@ -753,7 +753,7 @@ bool SampleResource::updateRepresentation(string key, OCRepresentation incomingR
     else
     {
         result = false;
-        response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+        response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
     }
 
     return result;
@@ -816,7 +816,7 @@ void SampleResource::createResource(string initialUri, OCRepresentation incoming
         if (resourceType.compare("") == 0)
         {
             cerr << "No resource type received!! Unable to create resource." << endl;
-            response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+            response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
             response->setResourceRepresentation(blankRep, DEFAULT_INTERFACE);
         }
         else
@@ -885,7 +885,7 @@ void SampleResource::createResource(string initialUri, OCRepresentation incoming
             {
                 cout << "unable to start resource!!" << endl;
                 cerr << e.what() << endl;
-                response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+                response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
                 response->setResourceRepresentation(blankRep, DEFAULT_INTERFACE);
             }
 
