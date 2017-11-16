@@ -232,7 +232,7 @@ scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
     #eol
 
 
-find "%{buildroot}" -type f -perm /u+x -exec chrpath -d "{}" \;
+find "%{buildroot}" -type f -perm u+x -exec chrpath -d "{}" \;
 find "%{buildroot}" -type f -iname "lib*.so" -exec chrpath -d "{}" \;
 
 install -d %{buildroot}%{_includedir}/iotivity
