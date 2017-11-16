@@ -337,6 +337,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %endif
 %if "%{TARGET_OS}" == "linux"
 %{_libdir}/lib*plugin.so
+%{_libdir}/lib*ipca.so
 %endif
 
 %files test
