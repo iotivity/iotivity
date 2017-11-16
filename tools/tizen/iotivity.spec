@@ -67,7 +67,8 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %define TARGET_ARCH "x86"
 %endif
 
-%define ex_install_dir %{buildroot}%{_bindir}
+%{!?exlibdir: %define exlibdir %{_libdir}/%{name}}
+%{!?ex_install_dir: %define ex_install_dir %{buildroot}/%{exlibdir}/examples}
 
 %if ! 0%{?license:0}
 %define license %doc
@@ -270,13 +271,13 @@ install service/coap-http-proxy/samples/proxy_client %{ex_install_dir}/proxy-sam
 install -d %{ex_install_dir}/provisioning
 install -d %{ex_install_dir}/provision-sample
 
-install resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{buildroot}%{_libdir}/oic_svr_db_server.dat
+install resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{ex_install_dir}/oic_svr_db_server.dat
 install resource/csdk/security/provisioning/sample/sampleserver_justworks %{ex_install_dir}/provision-sample/
 install resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{ex_install_dir}/provision-sample/
 install resource/csdk/security/provisioning/sample/sampleserver_randompin %{ex_install_dir}/provision-sample/
 install resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat %{ex_install_dir}/provision-sample/
-install resource/examples/oic_svr_db_server.dat %{ex_install_dir}
-install resource/examples/oic_svr_db_client.dat %{ex_install_dir}
+install resource/examples/*.dat %{ex_install_dir}
+install resource/examples/*.json %{ex_install_dir}
 
 %endif
 
@@ -310,7 +311,6 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %if 0%{?SECURED} == 1
 %{_libdir}/libocpmapi.so
 %{_libdir}/libocprovision.so
-%{_libdir}/oic_svr_db_server.dat
 %endif
 
 %files service
@@ -343,7 +343,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %endif
 %defattr(-,root,root,-)
 %license LICENSE
-%{_bindir}/*
+%{exlibdir}/*
 
 %files devel
 %defattr(-,root,root,-)
