@@ -276,7 +276,7 @@ install resource/examples/oic_svr_db_client.dat %{ex_install_dir}
 
 %endif
 
-find "%{buildroot}" -type f -perm /u+x -exec chrpath -d "{}" \;
+find "%{buildroot}" -type f -perm u+x -exec chrpath -d "{}" \;
 find "%{buildroot}" -type f -iname "lib*.so" -exec chrpath -d "{}" \;
 
 # Support legacy path (transitional, use pkg-config)
