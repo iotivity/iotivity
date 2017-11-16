@@ -61,7 +61,8 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %define TARGET_ARCH "x86"
 %endif
 
-%define ex_install_dir %{buildroot}%{_bindir}
+%{!?exlibdir: %define exlibdir %{_libdir}/%{name}}
+%{!?ex_install_dir: %define ex_install_dir %{buildroot}/%{exlibdir}/examples}
 
 %if ! 0%{?license:0}
 %define license %doc
@@ -263,6 +264,7 @@ cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/service/coap-http-proxy/samples
 cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/service/coap-http-proxy/samples/proxy_client %{ex_install_dir}/proxy-sample/
 %endif
 %if 0%{?SECURED} == 1
+
 mkdir -p %{ex_install_dir}/provisioning
 mkdir -p %{ex_install_dir}/provision-sample
 
@@ -273,7 +275,7 @@ cp ./resource/csdk/connectivity/api/*.h %{buildroot}%{_includedir}/
 cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/*.h %{buildroot}%{_includedir}
-cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{buildroot}%{_libdir}/oic_svr_db_server.dat
+cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{ex_install_dir}/oic_svr_db_server.dat
 cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_justworks %{ex_install_dir}/provision-sample/
 cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{ex_install_dir}/provision-sample/
 cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_randompin %{ex_install_dir}/provision-sample/
@@ -314,7 +316,6 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %if 0%{?SECURED} == 1
 %{_libdir}/libocpmapi.so
 %{_libdir}/libocprovision.so
-%{_libdir}/oic_svr_db_server.dat
 %endif
 
 %files service
@@ -342,7 +343,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %manifest %{name}-test.manifest
 %defattr(-,root,root,-)
 %license LICENSE
-%{_bindir}/*
+%{exlibdir}/*
 
 %files devel
 %defattr(-,root,root,-)
