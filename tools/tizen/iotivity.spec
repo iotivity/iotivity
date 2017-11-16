@@ -14,6 +14,9 @@ Source1002: %{name}-test.manifest
 
 %if 0%{?tizen:1}
 %define TARGET_OS tizen
+#TODO: align to default
+%define WITH_CLOUD 1
+%define LOGGING 1
 %else
 %define TARGET_OS linux
 %endif
@@ -72,16 +75,16 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 
 # Default values to be eventually overiden BEFORE or as gbs params:
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE %{TARGET_OS}}
-%{!?LOGGING: %define LOGGING 1}
+%{!?LOGGING: %define LOGGING 0}
 %{!?RD_MODE: %define RD_MODE CLIENT}
 %{!?RELEASE: %define RELEASE 1}
 %{!?ROUTING: %define ROUTING EP}
 %{!?SECURED: %define SECURED 1}
 %{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
-%{!?TARGET_OS: %define TARGET_OS tizen}
+%{!?TARGET_OS: %define TARGET_OS linux}
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
 %{!?VERBOSE: %define VERBOSE 1}
-%{!?WITH_CLOUD: %define WITH_CLOUD 1}
+%{!?WITH_CLOUD: %define WITH_CLOUD 0}
 %{!?WITH_MQ: %define WITH_MQ OFF}
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_TCP: %define WITH_TCP 0}
