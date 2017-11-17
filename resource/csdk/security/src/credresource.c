@@ -657,7 +657,7 @@ static void logCredMetadata()
 #endif
 }
 
-OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload,
+OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUuid_t *rownerId, uint8_t **cborPayload,
                                 size_t *cborSize, int secureFlag)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s:", __func__);
@@ -892,7 +892,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_ROWNERID_NAME,
             strlen(OIC_JSON_ROWNERID_NAME));
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding rownerid Name.");
-        ret = ConvertUuidToStr(&gRownerId, &rowner);
+        ret = ConvertUuidToStr(rownerId, &rowner);
         VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
         cborEncoderResult = cbor_encode_text_string(&credRootMap, rowner, strlen(rowner));
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Addding rownerid Value.");
@@ -972,6 +972,13 @@ exit:
 
     return ret;
 }
+
+OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload,
+                                size_t *cborSize, int secureFlag)
+{
+    return CredToCBORPayloadWithRowner(credS, &gRownerId, cborPayload, cborSize, secureFlag);
+}
+
 
 OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 OicSecCred_t **secCred, OicUuid_t **rownerid)
@@ -1464,7 +1471,7 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
         OIC_LOG_V(DEBUG, TAG, "cred size: %zu", size);
 
         int secureFlag = 0;
-        OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
+        OCStackResult res = CredToCBORPayloadWithRowner(cred, &gRownerId, &payload, &size, secureFlag);
 #ifdef HAVE_WINDOWS_H
         /* On Windows, keep the credential resource encrypted on disk to protect symmetric and private keys. Only the
          * current user on this system will be able to decrypt it later, to help prevent credential theft.
@@ -2123,7 +2130,7 @@ exit:
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
 
-static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehRequest, OicSecCred_t *cred, uint16_t previousMsgId)
+static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehRequest, OicSecCred_t *cred)
 {
     OCEntityHandlerResult ret = OC_EH_INTERNAL_SERVER_ERROR;
 
@@ -2230,34 +2237,6 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
                 break;
             }
         }
-
-        if(OC_EH_CHANGED != ret)
-        {
-            /*
-                * If some error is occured while ownership transfer,
-                * ownership transfer related resource should be revert back to initial status.
-                */
-            const OicSecDoxm_t *ownershipDoxm =  GetDoxmResourceData();
-            if(ownershipDoxm)
-            {
-                if(!ownershipDoxm->owned)
-                {
-                    OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
-
-                    if((OC_ADAPTER_IP == ehRequest->devAddr.adapter && previousMsgId != ehRequest->messageID)
-                        || OC_ADAPTER_TCP == ehRequest->devAddr.adapter)
-                    {
-                        RestoreDoxmToInitState();
-                        RestorePstatToInitState();
-                        OIC_LOG(WARNING, TAG, "DOXM will be reverted.");
-                    }
-                }
-            }
-            else
-            {
-                OIC_LOG(ERROR, TAG, "Invalid DOXM resource");
-            }
-        }
     }
 #ifdef MULTIPLE_OWNER
     // In case SubOwner Credential
@@ -2349,7 +2328,6 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
         * list and updating svr database.
         */
     ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_CHANGED : OC_EH_ERROR;
-    OC_UNUSED(previousMsgId);
     OC_UNUSED(ehRequest);
 #endif//__WITH_DTLS__ or __WITH_TLS__
 
@@ -2362,7 +2340,6 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest* ehRequest
     OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest IN");
 
     OicSecDostype_t dos;
-    static uint16_t previousMsgId = 0;
     // Get binary representation of cbor
     OicSecCred_t *cred = NULL;
     OicUuid_t     *rownerId = NULL;
@@ -2389,7 +2366,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest* ehRequest
 
         LL_FOREACH_SAFE(cred, newCred, newCredTemp)
         {
-            ret = HandleNewCredential(ehRequest, newCred, previousMsgId);
+            ret = HandleNewCredential(ehRequest, newCred);
 
             if (OC_EH_CHANGED != ret)
             {
@@ -2427,13 +2404,6 @@ exit:
             DeleteCredList(cred);
         }
     }
-    else
-    {
-        if (OC_ADAPTER_IP == ehRequest->devAddr.adapter)
-        {
-            previousMsgId = ehRequest->messageID++;
-        }
-    }
 
     // Send response to request originator
     ret = ((SendSRMResponse(ehRequest, ret, NULL, 0)) == OC_STACK_OK) ?
@@ -2460,7 +2430,7 @@ static OCEntityHandlerResult HandleGetRequest (const OCEntityHandlerRequest * eh
     // This added '256' is arbitrary value that is added to cover the name of the resource, map addition and ending
     size = GetCredKeyDataSize(cred);
     size += (256 * OicSecCredCount(cred));
-    OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
+    OCStackResult res = CredToCBORPayloadWithRowner(cred, &gRownerId, &payload, &size, secureFlag);
 
     // A device should always have a default cred. Therefore, payload should never be NULL.
     OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
@@ -3711,6 +3681,91 @@ void GetDerKey(ByteArray_t * key, const char * usage)
     {
         OIC_LOG_V(WARNING, TAG, "Key for %s not found", usage);
     }
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+}
+
+void GetPrimaryCertKey(ByteArray_t * key)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    VERIFY_NOT_NULL(TAG, key, ERROR);
+    
+    key->len = 0;
+    OicSecCred_t * temp = NULL;
+
+    LL_FOREACH(gCred, temp)
+    {
+        size_t length = temp->privateData.len;
+
+        if ((SIGNED_ASYMMETRIC_KEY == temp->credType || ASYMMETRIC_KEY == temp->credType) &&
+            (0 < length) &&
+            (NULL != temp->credUsage) &&
+            (0 == strcmp(temp->credUsage, PRIMARY_CERT)))
+        {
+            switch (temp->privateData.encoding)
+            {
+                case OIC_ENCODING_PEM:
+                case OIC_ENCODING_DER:
+                case OIC_ENCODING_RAW:
+                {
+                    bool addNull = false;
+                    uint8_t *data = temp->privateData.data;
+
+                    if ((OIC_ENCODING_PEM == temp->privateData.encoding) &&
+                        (0 != data[length - 1]))
+                    {
+                        /* mbedtls_pk_parse_key needs null terminator to determine the PEM key format */
+                        OIC_LOG_V(DEBUG, TAG, "%s: adding null terminator to key", __func__);
+                        addNull = true;
+                        data = OICCalloc(length + 1, sizeof(*data));
+                    }
+                    else
+                    {
+                        data = OICCalloc(length, sizeof(*data));
+                    }
+
+                    if (NULL == data)
+                    {
+                        key->data = NULL;
+                        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                        return;
+                    }
+
+                    memcpy(data, temp->privateData.data, length);
+
+                    if (addNull)
+                    {
+                        data[length] = 0;
+                        length++;
+                    }
+
+                    key->data = data;
+                    key->len = length;
+
+                    OIC_LOG(DEBUG, TAG, "Key for PRIMARY_CERT found");
+                    break;
+                }
+
+                default:
+                {
+                    OIC_LOG_V(WARNING, TAG, "Key for PRIMARY_CERT found, but it has an unknown encoding (%d)", temp->privateData.encoding);
+                    break;
+                }
+            }
+
+            if (0 != key->len)
+            {
+                break;
+            }
+        }
+    }
+
+    if(0 == key->len)
+    {
+        OIC_LOG(WARNING, TAG, "Key for PRIMARY_CERT not found");
+    }
+
+exit:
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 

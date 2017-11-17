@@ -331,7 +331,6 @@ void NSProviderMQSubscription(NSMQTopicAddress * topicAddr)
     OCCallbackData cbdata = { NULL, NULL, NULL };
     cbdata.cb = NSProviderGetMQResponseCB;
     cbdata.context = OICStrdup(topicName);
-
     char requestUri[100] = "coap+tcp://";
 
     NS_LOG_V(DEBUG, "requestUri1 = %s", requestUri);

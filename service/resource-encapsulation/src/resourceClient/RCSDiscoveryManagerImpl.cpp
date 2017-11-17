@@ -35,9 +35,12 @@ namespace
         return resource->getSid() + resource->getUri();
     }
 
-    void validateTypes(const std::vector< std::string >& resourceTypes) {
-        if (resourceTypes.size() == 1) return;
-
+    void validateTypes(const std::vector< std::string >& resourceTypes)
+    {
+        if (resourceTypes.size() == 1)
+        {
+            return;
+        }
         for (const auto& type : resourceTypes)
         {
             if (type == OIC::Service::RCSDiscoveryManagerImpl::ALL_RESOURCE_TYPE)
@@ -79,9 +82,14 @@ namespace OIC
                 std::lock_guard < std::mutex > lock(m_mutex);
                 auto it = m_discoveryMap.find(discoveryId);
 
-                if (it == m_discoveryMap.end()) return;
-                if (it->second.isKnownResource(resource)) return;
-
+                if (it == m_discoveryMap.end())
+                {
+                    return;
+                }
+                if (it->second.isKnownResource(resource))
+                {
+                    return;
+                }
                 it->second.addKnownResource(resource);
             }
 
@@ -149,7 +157,10 @@ namespace OIC
         void RCSDiscoveryManagerImpl::onPresence(OCStackResult result, const unsigned int /*seq*/,
                 const std::string& address)
         {
-            if (result != OC_STACK_OK && result != OC_STACK_RESOURCE_CREATED) return;
+            if (result != OC_STACK_OK && result != OC_STACK_RESOURCE_CREATED)
+            {
+                return;
+            }
 
             std::lock_guard < std::mutex > lock(m_mutex);
             for (const auto& it : m_discoveryMap)

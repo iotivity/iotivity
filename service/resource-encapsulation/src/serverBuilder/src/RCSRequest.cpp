@@ -67,8 +67,10 @@ namespace OIC
 
             auto it = params.find(OC::Key::INTERFACESKEY);
 
-            if (it == params.end()) return "";
-
+            if (it == params.end())
+            {
+                return "";
+            }
             return it->second;
         }
 

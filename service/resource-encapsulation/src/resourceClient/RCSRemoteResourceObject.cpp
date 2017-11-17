@@ -179,12 +179,13 @@ namespace OIC
         RCSRemoteResourceObject::~RCSRemoteResourceObject()
         {
             SCOPE_LOG_F(DEBUG, TAG);
-
-            try{
+            try
+            {
                 stopCaching();
                 stopMonitoring();
             }
-            catch(std::exception &e){
+            catch(std::exception &e)
+            {
                 OIC_LOG_V(ERROR, TAG, "%s", e.what());
             }
         }

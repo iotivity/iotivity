@@ -386,38 +386,33 @@ OCEntityHandlerResult updateEasySetupResource(OCEntityHandlerRequest* ehRequest,
             while(children)
             {
                 char* uri = children->uri;
-                if(NULL == uri)
+                if (NULL == uri)
                 {
-                    OIC_LOG(DEBUG, ES_RH_TAG,
-                        "No URI found in request, applying same request to all links in collection");
-
-                    ///TODO: Need to check if "input" should be passed, or the value of property OC_RSRVD_REPRESENTATION.
-                    updateEasySetupConnectProperty(input);
-                    updateWiFiConfResource(input);
-                    updateCoapCloudConfResource(input);
-                    updateDevConfResource(input);
-
-                    // As the request is applied to children already, no need to check next child.
-                    break;
+                    OIC_LOG(DEBUG, ES_RH_TAG, "No URI found in request");
                 }
-
-                OIC_LOG_V(DEBUG, ES_RH_TAG, "uri [%s]", uri);
+                else
+                {
+                    OIC_LOG_V(DEBUG, ES_RH_TAG, "Request URI [%s]", uri);
+                }
 
                 OCRepPayload *repPayload = NULL;
                 OCRepPayloadGetPropObject(children, OC_RSRVD_REPRESENTATION, &repPayload);
-
-                if(NULL == repPayload)
+                if (NULL == repPayload)
                 {
                     OIC_LOG(ERROR, ES_RH_TAG, "repPayload is null!");
                     children = children->next;
                     continue;
                 }
 
-                if (0 == strcmp(uri, OC_RSRVD_ES_URI_EASYSETUP))
+                // If uri is NULL, rep is applied to all resources in collection;
+                // otherwise its applied to specific target resources.
+                if (NULL == uri || 0 == strlen(uri) || 0 == strcmp(uri, OC_RSRVD_ES_URI_EASYSETUP))
                 {
                     updateEasySetupConnectProperty(repPayload);
                 }
-                else if (0 == strcmp(uri, OC_RSRVD_ES_URI_WIFICONF))
+
+                if (NULL == uri || 0 == strlen(uri)
+                    || 0 == strcmp(uri, OC_RSRVD_ES_URI_WIFICONF))
                 {
                     if (updateWiFiConfResource(repPayload) != OC_EH_OK)
                     {
@@ -427,11 +422,15 @@ OCEntityHandlerResult updateEasySetupResource(OCEntityHandlerRequest* ehRequest,
                         hasError = true;
                     }
                 }
-                else if (0 == strcmp(uri, OC_RSRVD_ES_URI_COAPCLOUDCONF))
+
+                if (NULL == uri ||  0 == strlen(uri)
+                    || 0 == strcmp(uri, OC_RSRVD_ES_URI_COAPCLOUDCONF))
                 {
                     updateCoapCloudConfResource(repPayload);
                 }
-                else if (0 == strcmp(uri, OC_RSRVD_ES_URI_DEVCONF))
+
+                if (NULL == uri ||  0 == strlen(uri)
+                    || 0 == strcmp(uri, OC_RSRVD_ES_URI_DEVCONF))
                 {
                     updateDevConfResource(repPayload);
                 }

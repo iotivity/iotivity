@@ -123,7 +123,10 @@ namespace
 
     void insertValue(std::vector<std::string>& container, std::string value)
     {
-        if (value.empty()) return;
+            if (value.empty())
+            {
+                return;
+            }
 
         if (std::find(container.begin(), container.end(), value) == container.end())
         {
@@ -233,12 +236,14 @@ namespace OIC
                     handle, m_uri, m_types[0], m_interfaces[0], entityHandler, m_properties);
 
             std::for_each(m_interfaces.begin() + 1, m_interfaces.end(),
-                    [&handle](const std::string& interfaceName){
+                    [&handle](const std::string& interfaceName)
+            {
                 invokeOCFunc(OC::OCPlatform::bindInterfaceToResource, handle, interfaceName);
             });
 
             std::for_each(m_types.begin() + 1, m_types.end(),
-                    [&handle](const std::string& typeName){
+                    [&handle](const std::string& typeName)
+            {
                 invokeOCFunc(OC::OCPlatform::bindTypeToResource, handle, typeName);
             });
 
@@ -319,7 +324,10 @@ namespace OIC
                 m_resourceAttributes[std::forward< K >(key)] = std::forward< V >(value);
             }
 
-            if (needToNotify) autoNotify(valueUpdated);
+            if (needToNotify)
+            {
+                autoNotify(valueUpdated);
+            }
         }
         void RCSResourceObject::setAttribute(const std::string& key,
                 const RCSResourceAttributes::Value& value)
@@ -366,7 +374,10 @@ namespace OIC
                 }
             }
 
-            if (needToNotify) autoNotify(true);
+            if (needToNotify)
+            {
+                autoNotify(true);
+            }
 
             return erased;
         }
@@ -573,9 +584,16 @@ namespace OIC
         void RCSResourceObject::autoNotify(
                         bool isAttributesChanged, AutoNotifyPolicy autoNotifyPolicy) const
         {
-            if(autoNotifyPolicy == AutoNotifyPolicy::NEVER) return;
+            if(autoNotifyPolicy == AutoNotifyPolicy::NEVER)
+            {
+                return;
+            }
+
             if(autoNotifyPolicy == AutoNotifyPolicy::UPDATED &&
-                    isAttributesChanged == false) return;
+                    isAttributesChanged == false)
+            {
+                return;
+            }
 
             notify();
         }
@@ -586,7 +604,10 @@ namespace OIC
         {
             auto resource = weakRes.lock();
 
-            if (!resource) return OC_EH_ERROR;
+            if (!resource)
+            {
+                return OC_EH_ERROR;
+            }
 
             OIC_LOG(WARNING, LOG_TAG_RE, "entityHandler");
             if (!request)
@@ -655,7 +676,10 @@ namespace OIC
 
             auto response = invokeHandler(attrs, request, m_getRequestHandler);
 
-            if (response.isSeparate()) return OC_EH_SLOW;
+            if (response.isSeparate())
+            {
+                return OC_EH_SLOW;
+            }
 
             return sendResponse(request, response,
                          findInterfaceHandler(request.getInterface()).getGetResponseBuilder());
@@ -707,7 +731,10 @@ namespace OIC
 
             auto response = invokeHandler(attrs, request, m_setRequestHandler);
 
-            if (response.isSeparate()) return OC_EH_SLOW;
+            if (response.isSeparate())
+            {
+                return OC_EH_SLOW;
+            }
 
             autoNotify(applyAcceptanceMethod(response, attrs), m_autoNotifyPolicy);
 
@@ -730,7 +757,10 @@ namespace OIC
         {
             auto it = m_interfaceHandlers.find(interfaceName);
 
-            if (it != m_interfaceHandlers.end()) return it->second;
+            if (it != m_interfaceHandlers.end())
+            {
+                return it->second;
+            }
 
             assert(m_interfaceHandlers.find(m_defaultInterface) != m_interfaceHandlers.end());
 
@@ -798,7 +828,10 @@ namespace OIC
 
         RCSResourceObject::LockGuard::~LockGuard() noexcept(false)
         {
-            if (!std::uncaught_exception() && m_autoNotifyFunc) m_autoNotifyFunc();
+            if (!std::uncaught_exception() && m_autoNotifyFunc)
+            {
+                m_autoNotifyFunc();
+            }
 
             if (m_isOwningLock)
             {
