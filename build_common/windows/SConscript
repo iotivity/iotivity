@@ -5,8 +5,21 @@ Import('env')
 import os
 import winreg
 import platform
+import sys
+from SCons.Tool.MSCommon.vc import find_vc_pdir
 
 build_dir = env.get('BUILD_DIR')
+
+_SUPPORTED_UWP_MSVC_VERS = [
+    '14.1', # VS2017
+    '14.0'  # VS2015
+]
+# Note: Not a complete list, just the ones that IoTivity supports
+_VCVER_TO_VSVER = {
+    '14.1' : '15.0', # VS2017
+    '14.0' : '14.0', # VS2015
+    '12.0' : '12.0'  # VS2013
+}
 
 def OpenRegKey(env, key, sub_key, reg_view_64bit=False):
     # Default access
@@ -52,17 +65,32 @@ def ReadRegistryStringValue(env, key, sub_key, value_name, reg_view_64bit=False)
     return value
 
 def SetupMSBuildEnv(env):
-    # Add MSBuild path to path
-    msbuild_reg_path = 'SOFTWARE\\Microsoft\\MSBuild\\ToolsVersions\\' + env.get('MSVC_VERSION')
-    # MSBuild executable arch needs to be the same as the python/SCons environment Arch.
-    # Open the Registry key with the same registry view as the environment (handled by the
-    # winreg.OpenKey function)
-    msbuild_path = env.ReadRegistryStringValue(winreg.HKEY_LOCAL_MACHINE,
-                                               msbuild_reg_path,
-                                               'MSBuildToolsPath')
+    msbuild_path = None
+    msvc_version = env.get('MSVC_VERSION')
+    if msvc_version == '14.1':
+        # VS2017
+        vs_ver = _VCVER_TO_VSVER[msvc_version]
+        vc_dir = find_vc_pdir(msvc_version)
+        msbuild_path = os.path.join(vc_dir, '..', 'MSBuild', vs_ver, 'Bin')
+        # Find python's arch
+        (bits, linkage) = platform.architecture()
+        if '64' in bits:
+            # Running in 64bit python. That means we can run the 64bit msbuild.exe
+            msbuild_path = os.path.join(msbuild_path, 'amd64')
+    else:
+        # VS2015 and below
+        msbuild_reg_path = 'SOFTWARE\\Microsoft\\MSBuild\\ToolsVersions\\' + msvc_version
+        # MSBuild executable arch needs to be the same as the python/SCons environment Arch.
+        # Open the Registry key with the same registry view as the environment (handled by the
+        # winreg.OpenKey function)
+        msbuild_path = env.ReadRegistryStringValue(winreg.HKEY_LOCAL_MACHINE,
+                                                   msbuild_reg_path,
+                                                   'MSBuildToolsPath')
+
     if not msbuild_path:
         Exit('Error: Could not Find the MSBuild Registry Key/Value')
 
+    # Add MSBuild path to path
     env.AppendUnique(PATH = [msbuild_path])
     # Need to update the 'ENV' dictionary PATH as that's what is used when executing
     # commands
@@ -89,17 +117,22 @@ def GetMSBuildArgs(env):
 def MSBuildGenerator(source, target, env, for_signature):
     env.SetupMSBuildEnv()
     (configuration, platform, outdir) = env.GetMSBuildArgs()
+    vs_ver = _VCVER_TO_VSVER[env.get('MSVC_VERSION')]
 
     msbuild_cmd = 'msbuild.exe %s /p:Configuration=%s /p:Platform=%s /p:OutDir="%s"' \
                   % (source[0], configuration, platform, outdir)
+    msbuild_cmd += ' /p:VisualStudioVersion=%s /fileLogger /fileloggerparameters:LogFile="%s"' \
+                   % (vs_ver, os.path.join(outdir, source[0].name + '.log'))
     return msbuild_cmd
 
 def MSBuildClean(env, target, solutionfile):
     env.SetupMSBuildEnv()
     (configuration, platform, outdir) = env.GetMSBuildArgs()
+    vs_ver = _VCVER_TO_VSVER[env.get('MSVC_VERSION')]
 
-    msbuild_cmd = 'msbuild.exe %s /p:Configuration=%s /p:Platform=%s /p:OutDir="%s" /t:Clean' \
+    msbuild_cmd = 'msbuild.exe %s /p:Configuration=%s /p:Platform=%s /p:OutDir="%s"' \
                   % (solutionfile, configuration, platform, outdir)
+    msbuild_cmd += ' /p:VisualStudioVersion=%s /t:Clean' % (vs_ver)
     env.Execute(msbuild_cmd)
 
 if env.get('MSVC_UWP_APP') == '1':
@@ -121,11 +154,8 @@ if env.get('MSVC_UWP_APP') == '1':
 # Set common flags
 if env['CC'] == 'cl':
     if env.get('MSVC_UWP_APP') == '1':
-        # Currently only supports VS2015 (14.0)
-        # TODO add VS2017 (15.0)
-        supported_uwp_msvc_versions = ['14.0']
         # If MSVC_VERSION is not supported for UWP, exit on error
-        if env.get('MSVC_VERSION') not in supported_uwp_msvc_versions:
+        if env.get('MSVC_VERSION') not in _SUPPORTED_UWP_MSVC_VERS:
             msg = '\nError: Trying to Build UWP binaries with unsupported Visual Studio version\n'
             Exit(msg)
 

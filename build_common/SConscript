@@ -251,14 +251,13 @@ if target_os == 'windows':
     # Builds differ based on Visual Studio version
     #   For VS2013, MSVC_VERSION is '12.0'.
     #   For VS2015, MSVC_VERSION is '14.0'.
-    #   For VS2017, MSVC_VERSION is '15.0'.
+    #   For VS2017, MSVC_VERSION is '14.1'.
     # Default value is None, which means SCons will pick
     help_vars.Add(
         EnumVariable('MSVC_VERSION',
                      'MSVC compiler version - Windows',
                      default=None,
-                     allowed_values=('12.0', '14.0')))
-                     #TODO allowed_values=('12.0', '14.0', '15.0')))
+                     allowed_values=('12.0', '14.0', '14.1')))
     help_vars.Add(
         EnumVariable('MSVC_UWP_APP',
                      'Build a Universal Windows Platform (UWP) Application',
