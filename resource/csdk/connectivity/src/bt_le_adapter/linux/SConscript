@@ -130,8 +130,8 @@ for file, prefix in list(dbus_introspection_xml.items()):
         '&& cd -' % (this_build_dir, glue, prefix, glue_header_gen,
                      glue_header_copy))
 
-    # install the header files in the updated folder.
-    updated_files.append(connectivity_env.Install(this_build_dir + '/updated/', glue_header_gen))
+    # Share header files in the updated folder
+    updated_files.append(Command("updated/" +  glue_header , glue_header_gen , Copy("$TARGET", "$SOURCE")))
     connectivity_env.Clean(gen, glue_header_copy)
 
     # Force a dependency on copied glue header to make sure it exists
