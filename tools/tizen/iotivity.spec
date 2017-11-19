@@ -6,8 +6,11 @@ Group: Network & Connectivity / IoT Connectivity
 License: Apache-2.0 and BSD-2-Clause and (MIT or BSL-1.0) and MIT
 URL: https://www.iotivity.org/
 Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
+
+%if 0%{?manifest:1}
 Source1001: %{name}.manifest
 Source1002: %{name}-test.manifest
+%endif
 
 %if 0%{?tizen:1}
 %define TARGET_OS tizen
@@ -66,10 +69,6 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 
 %if ! 0%{?license:0}
 %define license %doc
-%endif
-
-%if ! 0%{?manifest:0}
-%define manifest %doc
 %endif
 
 # Default values to be eventually overiden BEFORE or as gbs params:
@@ -180,11 +179,13 @@ find . \
 
 cat LICENSE
 
+%if 0%{?manifest:1}
 cp %{SOURCE1001} .
 %if 0%{?tizen_version_major} < 3
 cp %{SOURCE1002} .
 %else
 cp %{SOURCE1001} ./%{name}-test.manifest
+%endif
 %endif
 
 %build
@@ -305,7 +306,9 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %postun -p /sbin/ldconfig
 
 %files
+%if 0%{?manifest:1}
 %manifest %{name}.manifest
+%endif
 %defattr(-,root,root,-)
 %license LICENSE
 %{_libdir}/liboc.so
@@ -320,7 +323,9 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %endif
 
 %files service
+%if 0%{?manifest:1}
 %manifest %{name}.manifest
+%endif
 %defattr(-,root,root,-)
 %license LICENSE
 %{_libdir}/libBMISensorBundle.so
@@ -342,7 +347,9 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %endif
 
 %files test
+%if 0%{?manifest:1}
 %manifest %{name}-test.manifest
+%endif
 %defattr(-,root,root,-)
 %license LICENSE
 %{exlibdir}/*
