@@ -86,9 +86,12 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?MULTIPLE_OWNER: %define MULTIPLE_OWNER 0}
 %{!?OIC_SUPPORT_TIZEN_TRACE: %define OIC_SUPPORT_TIZEN_TRACE False}
 
+BuildRequires:  autoconf
+BuildRequires:  automake
+BuildRequires:  libtool
 BuildRequires:  chrpath
 BuildRequires:  expat-devel
-BuildRequires:  python, libcurl-devel
+BuildRequires:  python
 BuildRequires:  scons
 BuildRequires:  openssl-devel
 BuildRequires:  boost-devel
@@ -97,6 +100,7 @@ BuildRequires:  boost-system
 BuildRequires:  boost-filesystem
 BuildRequires:  pkgconfig(uuid)
 BuildRequires:  pkgconfig(glib-2.0)
+BuildRequires:  pkgconfig(libcurl)
 BuildRequires:  pkgconfig(sqlite3)
 %if "%{TARGET_OS}" == "tizen"
 BuildRequires:  gettext-tools
@@ -110,11 +114,6 @@ BuildRequires:  pkgconfig(capi-network-bluetooth) >= 0.1.52
 BuildRequires:  bluetooth-tools-profile_%{profile}
 %else
 BuildRequires:  bluetooth-tools
-%endif
-%else
-%if 0%{?fedora:1}
-BuildRequires:  sqlite-devel
-BuildRequires:  gettext-devel
 %endif
 %endif
 Requires(postun): /sbin/ldconfig
