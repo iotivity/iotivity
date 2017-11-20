@@ -141,6 +141,7 @@ bool g_isExtraDeviceCreated = false;
 bool g_isSecuredClient = false;
 bool g_isSecuredServer = false;
 bool g_quitFlag = false;
+bool g_retainOldDB = false;
 
 pthread_t g_processThread;
 
@@ -482,15 +483,29 @@ int main(int argc, char* argv[])
 
             if (optionSelected / 10 == 1)
             {
-                cout << "Using secured client...." << endl;
+                cout << "Using fresh secured client...." << endl;
                 g_isSecuredClient = true;
                 g_modeType = CLIENT_MODE;
             }
             else if (optionSelected / 10 == 2)
             {
-                cout << "Using secured server...." << endl;
+                cout << "Using fresh secured server...." << endl;
                 g_isSecuredServer = true;
                 g_modeType = SERVER_MODE;
+            }
+            else if (optionSelected / 10 == 3)
+            {
+                cout << "Retaining old secured client...." << endl;
+                g_isSecuredClient = true;
+                g_modeType = CLIENT_MODE;
+                g_retainOldDB = true;
+            }
+            else if (optionSelected / 10 == 4)
+            {
+                cout << "Retaining old secured server...." << endl;
+                g_isSecuredServer = true;
+                g_modeType = SERVER_MODE;
+                g_retainOldDB = true;
             }
             else
             {
@@ -524,7 +539,10 @@ int main(int argc, char* argv[])
                     g_securityType = 1;
                 }
 
-                replaceDatFile(g_modeType, g_securityType);
+                if (!g_retainOldDB)
+                {
+                    replaceDatFile(g_modeType, g_securityType);
+                }
             }
         }
         catch (std::exception&)
