@@ -642,7 +642,12 @@ OCEntityHandlerResult updateWiFiConfResource(OCRepPayload* input)
 
     if (OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESWiFiConfResource.handle, OC_HIGH_QOS))
     {
-        OIC_LOG(DEBUG, ES_RH_TAG, "Enrollee doesn't have any observer.");
+        OIC_LOG(DEBUG, ES_RH_TAG, "WiFiConf resource doesn't have any observer.");
+    }
+
+    if (OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESEasySetupResource.handle, OC_HIGH_QOS))
+    {
+        OIC_LOG(DEBUG, ES_RH_TAG, "EasySetup resource doesn't have any observer.");
     }
 
     ehResult = OC_EH_OK;
@@ -736,6 +741,11 @@ void updateCoapCloudConfResource(OCRepPayload* input)
     if (OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESCoapCloudConfResource.handle, OC_HIGH_QOS))
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "CoapCloudConf resource doesn't have any observer.");
+    }
+
+    if (OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESEasySetupResource.handle, OC_HIGH_QOS))
+    {
+        OIC_LOG(DEBUG, ES_RH_TAG, "EasySetup resource doesn't have any observer.");
     }
 
     OICFree(cloudData);
