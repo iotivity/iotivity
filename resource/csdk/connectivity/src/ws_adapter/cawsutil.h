@@ -38,45 +38,45 @@ extern "C"
 #endif
 
 /**
- * Structure to hold the data to be sent over websocket connection
+ * Structure to hold the data to be sent over websocket connection.
  */
 typedef struct
 {
-    void        *data;
-    uint32_t    dataLength;
+    void        *data;          /**< Buffer that holds the data. */
+    uint32_t    dataLength;     /**< Length of the data buffer. */
 } WSData;
 
 /**
- * Linked list of pending data to be sent to websocket endpoint
+ * Linked list of pending data to be sent to websocket endpoint.
  */
 typedef struct _WSDataList
 {
-    WSData              *data;
-    struct _WSDataList  *next;
+    WSData              *data;  /**< Data to be send to peer. */
+    struct _WSDataList  *next;  /**< Pointer to the next node in the list. */
 } WSDataList;
 
 /**
- * Indicates connection status of a websocket connection
+ * Enum to represent different state of connection.
  */
 typedef enum
 {
-    WS_CONN_STATUS_DISCONNECTED         = 0,
-    WS_CONN_STATUS_PENDING              = 1,
-    WS_CONN_STATUS_CONNECTED            = 2
+    WS_CONN_STATUS_DISCONNECTED         = 0,    /**< Disconnected state. */
+    WS_CONN_STATUS_PENDING              = 1,    /**< Connection initiated but pending. */
+    WS_CONN_STATUS_CONNECTED            = 2     /**< Connected state. */
 } WSConnStatus;
 
 /**
- * Holds information related to a websocket connection
+ * Structure to hold information related to a websocket connection
  */
 typedef struct
 {
-    CASecureEndpoint_t  secureEndpoint;
-    struct lws          *wsi;
-    WSDataList          *pendingDataList;
-    WSData              *recvData;
-    WSConnStatus        status;
+    CASecureEndpoint_t  secureEndpoint;         /**< Endpoint info of the websocket peer. */
+    struct lws          *wsi;                   /**< lws struct that represents the connection. */
+    WSDataList          *pendingDataList;       /**< List holding the data that needs to be sent. */
+    WSData              *recvData;              /**< Data received on this connection. */
+    WSConnStatus        status;                 /**< Status of the connection. */
 #ifdef __WITH_TLS__
-    int secured;
+    int secured;                                /**< True if it is a secure connection, false otherwise. */
 #endif
 } WSConnInfo;
 
@@ -85,62 +85,107 @@ typedef struct
  */
 typedef struct _WSConnInfoList
 {
-    WSConnInfo              *connInfo;
-    struct _WSConnInfoList  *next;
+    WSConnInfo              *connInfo;          /**< WebSocket connection information. */
+    struct _WSConnInfoList  *next;              /**< Pointer to the next node in the list */
 } WSConnInfoList;
 
 /**
- * Prepares the data to be sent in a WSData structure
+ * Prepare the data to be sent in a WSData structure
+ *
+ * @param[in] data          Buffer holding the data.
+ * @param[in] dataLength    The length of the data buffer.
+ *
+ * @return A WSData which holds the data.
  */
 WSData *CAWSPrepareWSData(const void *data, uint32_t dataLength);
 
 /**
- * Destroy the data in the WSData structure
+ * Destroy the data in WSData structure.
+ *
+ * @param[in] data      WSData to be destroyed.
  */
 void CAWSDestroyWSData(WSData *data);
 
 /**
- * Adds the WS data to the list
+ * Add the WS data to data list.
+ *
+ * @param[in] dataList  Data list to add the data.
+ * @param[in] data      WSData to add to the list.
+ *
+ * @return ::CA_STATUS_OK or appropriate error code.
  */
 CAResult_t CAWSAddWSDataToList(WSDataList **dataList, WSData *data);
 
 /**
- * Removes the WS data from the list
+ * Remove the WS data from list.
+ *
+ * @param[in] dataList  Data list to remove data from.
+ *
+ * @return WSData that was removed from the list.
  */
 WSData *CAWSRemoveWSDataFromList(WSDataList **dataList);
 
 /**
- * Destroys the WS data list
+ * Destroy the WS data list.
+ *
+ * @param[in] dataList  Data list to be destroyed.
  */
 void CAWSDestroyWSDataList(WSDataList *dataList);
 
 /**
- * Destroys the information associated with a connection
+ * Destroy the information associated with a connection.
+ *
+ * @param[in] connInfo  Connection information to be freed.
  */
 void CAWSDestroyWSConnInfo(WSConnInfo *connInfo);
 
 /**
- * Adds connection information to the connection list
+ * Add connection information to the connection list.
+ *
+ * @param[in] connInfoList  Connection info list.
+ * @param[in] connInfo      Connection info to be added to the list.
+ *
+ * @return ::CA_STATUS_OK or appropriate error code.
  */
 CAResult_t CAWSAddWSConnInfoToList(WSConnInfoList **connInfoList, WSConnInfo *connInfo);
 
 /**
- * Removes the connection information from the list
+ * Remove connection information from the list.
+ *
+ * @param[in] connInfoList  Connection info list.
+ * @param[in] connInfo      Connection info to be removed from the list.
+ *
+ * @return true if removed else false.
  */
 bool CAWSRemoveWSConnInfoFromList(WSConnInfoList **connInfoList, WSConnInfo *connInfo);
 
 /**
- * Given the endpoint finds the connection information
- * associated with this connection in the connection
- * information list
+ * Find connection from connection info list based on given endpoint information.
+ *
+ * @param[in] connInfoList  Connection info list.
+ * @param[in] endpoint      Endpoint to search for.
+ *
+ * @return Connection info associated with this endpoint if found, otherwise NULL.
  */
 WSConnInfo *CAWSFindWSConnInfoFromList(WSConnInfoList *connInfoList, const CAEndpoint_t *endpoint);
 
 /**
- * Destroys the connection information list
+ * Destroy the connection information list.
+ *
+ * @param[in] connInfoList  Connection info list.
  */
 void CAWSDestroyWSConnInfoList(WSConnInfoList *connInfoList);
 
+/**
+ * Get the peer address of a websocket connection.
+ *
+ * @param[in]   sockfd   Socket descriptor id.
+ * @param[out]  host     Peer address.
+ * @param[out]  port     Port used at peer for connection.
+ * @param[out]  flag     Transport flags.
+ *
+ * @return ::CA_STATUS_OK or appropriate error code.
+ */
 CAResult_t CAWSGetPeerAddress(int sockfd, char *host, uint16_t *port, CATransportFlags_t *flag);
 
 #ifdef __cplusplus

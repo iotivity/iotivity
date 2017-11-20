@@ -33,25 +33,60 @@
 #define UUID_LENGTH (128/8)
 #define PSK_LENGTH (256/8)
 
+/**
+ * callback to get X.509-based Public Key Infrastructure.
+ */
 static CAgetPkixInfoHandler g_getPkixInfoCallback = NULL;
+
+/**
+ * callback to get different credential types from SRM.
+ */
 static CAgetCredentialTypesHandler g_getCredentialTypesCallback = NULL;
+
+/**
+ * callback to get TLS credentials (same as for DTLS).
+ */
 static CAgetPskCredentialsHandler g_getCredentialsCallback = NULL;
 
+/**
+ * This is for storing own certificate chain, public key, trusted CA and CRL.
+ */
 static PkiInfo_t g_pkiInfo = {{NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}};
+
+/**
+ * This is for storing cipher type set in security layer.
+ */
 bool g_cipherFlag[2];
 
+/**
+ * Mutex to synchronize SSL ctx access.
+ */
 static oc_mutex g_sslCtxMutex;
+
+/**
+ * SSL ctx for client.
+ */
 static SSL_CTX *g_clientSslCtx = NULL;
+
+/**
+ * SSL ctx for server.
+ */
 static SSL_CTX *g_serverSslCtx = NULL;
 
-// Map from mbedTLS cipher to OpenSSL ciphers
+/**
+ * Structure to maintain map between mbedTLS cipher
+ * and OpenSSL cipher.
+ */
 typedef struct
 {
-    int mbedTLSCipher;
-    char *cipher;
-    int cipherLen;
+    int mbedTLSCipher;     /**< mbedTLS cipher code. */
+    char *cipher;          /**< Equivalent cipher string for OpenSSL. */
+    int cipherLen;         /**< Length of cipher string. */
 } CiphersMapItem;
 
+/**
+ * Map between mbedTLS ciphers and OpenSSL ciphers.
+ */
 static CiphersMapItem g_cipherSuites[] =
 {
     {0x3D, "AES256-SHA256", 13},
@@ -67,19 +102,35 @@ static CiphersMapItem g_cipherSuites[] =
     {0xC027, "ECDHE-RSA-AES128-SHA256", 23}
 };
 
+/**
+ * Size of supported cipher suites.
+ */
 static int g_cipherSuitesSize = sizeof(g_cipherSuites) / sizeof(CiphersMapItem);
+
+/**
+ * Index of selected cipher for communication.
+ */
 static int g_selectedCipherIndex = sizeof(g_cipherSuites) / sizeof(CiphersMapItem);
 
+/**
+ * Structure to store information about SSL connection.
+ */
 typedef struct
 {
-    SSL *ssl;
-    uint16_t port;
-    char addr[MAX_ADDR_STR_SIZE_CA];
-    CARemoteId_t identity;
+    SSL *ssl;                           /**< SSL handle for connection. */
+    uint16_t port;                      /**< Peer port of SSL connection. */
+    char addr[MAX_ADDR_STR_SIZE_CA];    /**< Peer address of SSL connection. */
+    CARemoteId_t identity;              /**< Peer identity of SSL connection. */
 } SSLSession_t;
 
+/**
+ * List to maintain SSL connections.
+ */
 static u_arraylist_t *g_sessionList;
 
+/**
+ * Get SSL session info based on peer address and port.
+ */
 static SSLSession_t *getSession(char *addr, int port)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
@@ -103,6 +154,9 @@ static SSLSession_t *getSession(char *addr, int port)
     return NULL;
 }
 
+/**
+ * Delete all SSL sessions from list.
+ */
 static void deleteAllSessions()
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
@@ -121,7 +175,9 @@ static void deleteAllSessions()
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 
-/* Create cipher string for the given ciphers list */
+/**
+ * Create cipher string for the given ciphers list.
+ */
 static char *formCipherString(int *selectCiphers, int size)
 {
     char *ciphersStr = NULL;
@@ -164,7 +220,9 @@ static char *formCipherString(int *selectCiphers, int size)
     return ciphersStr;
 }
 
-/* Returns ordinal of given cipher in preferred ciphers list */
+/**
+ * Returns ordinal of given cipher in preferred ciphers list.
+ */
 static int getCipherIndex(int cipher)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
@@ -182,7 +240,9 @@ static int getCipherIndex(int cipher)
     return i;
 }
 
-/* Convert PEM formatted binary data to X509 structure */
+/**
+ * Convert PEM formatted binary data to X509 structure.
+ */
 static X509 *pemToX509(uint8_t *buf, size_t bufLen)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
@@ -207,7 +267,9 @@ exit:
     return x;
 }
 
-/* Convert DER formatted binary data to X509 structure */
+/**
+ * Convert DER formatted binary data to X509 structure.
+ */
 static X509 *derToX509(uint8_t *buf, size_t bufLen)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
@@ -232,7 +294,9 @@ exit:
     return x;
 }
 
-/* Get PEM/DER certificate length */
+/**
+ * Get PEM/DER certificate length.
+ */
 static size_t asn1GetLength(uint8_t *start, uint8_t *end)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
@@ -265,10 +329,10 @@ exit:
     return len;
 }
 
-/*
-* Parse CA cert chain from buffer.
-* NOTE: buf might contain certificates in PEM as well as DER format.
-*/
+/**
+ * Parse CA cert chain from buffer.
+ * NOTE: buf might contain certificates in PEM as well as DER format.
+ */
 static size_t parseCertChain(X509_STORE *certStore, uint8_t *buf, size_t bufLen, int *errNum)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
@@ -429,10 +493,10 @@ exit:
     return count;
 }
 
-/*
-* Parse CRL from buffer.
-* NOTE: CRL content will be given in DER format only.
-*/
+/**
+ * Parse CRL from buffer.
+ * NOTE: CRL content will be given in DER format only.
+ */
 static size_t parseCRL(X509_STORE *certStore, uint8_t *buf, size_t bufLen, int *errNum)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
@@ -475,10 +539,10 @@ static size_t parseCRL(X509_STORE *certStore, uint8_t *buf, size_t bufLen, int *
     return count;
 }
 
-/*
-* Parse private key from buffer.
-* NOTE: Private key data might be in PEM or DER format.
-*/
+/**
+ * Parse private key from buffer.
+ * NOTE: Private key data might be in PEM or DER format.
+ */
 static int parsePrivateKey(SSL_CTX *ctx, uint8_t *buf, size_t bufLen)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
@@ -523,7 +587,9 @@ static int parsePrivateKey(SSL_CTX *ctx, uint8_t *buf, size_t bufLen)
     return 1;
 }
 
-/* set Cert, Private key, CA chain and CRL to ssl context. */
+/**
+ * set Cert, Private key, CA chain and CRL to ssl context.
+ */
 static CAResult_t setCertificates(SSL_CTX *ctx)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
@@ -588,7 +654,9 @@ required:
     return CA_STATUS_OK;
 }
 
-/* Sets pre-shared key for the SSL connection based on hint. */
+/**
+ * Sets pre-shared key for the SSL connection based on hint.
+ */
 static unsigned int pskClientCallback(SSL *ssl, const char *hint,
                                       char *identity,
                                       unsigned int maxIdentityLen,
@@ -656,7 +724,9 @@ static int initPskIdentity(SSL_CTX *ctx)
     return 0;
 }
 
-/* Sets device UUID as server's hint for PSK cipher */
+/**
+ * Sets device UUID as server's hint for PSK cipher.
+ */
 static void setServerPSKHint()
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
@@ -674,7 +744,9 @@ static void setServerPSKHint()
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 
-/* Sets pre-shared key for the incoming SSL connection based on its identity. */
+/**
+ * Sets pre-shared key for the incoming SSL connection based on its identity.
+ */
 static unsigned int pskServerCallback(SSL *ssl, const char *identity,
                                       unsigned char *psk,
                                       unsigned int maxPskLen)

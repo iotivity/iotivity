@@ -40,20 +40,44 @@
 
 #define TAG "OIC_CA_WS_LWS_IMPL"
 
+/**
+ * Flag to check if websocket service needs to continue
+ */
 static bool g_continueLWSService = false;
 
+/**
+ * Mutex to synchronize access to g_continueLWSService
+ */
 static oc_mutex g_continueLWSServiceMutex = NULL;
 
+/**
+ * Condition to stop the websocket service
+ */
 static oc_cond g_LWSServiceStoppedCond = NULL;
 
+/**
+ * List to hold the websocket connection information
+ */
 static WSConnInfoList *g_connInfoList = NULL;
 
+/**
+ * Mutex to synchronize access to g_connInfoList
+ */
 static oc_mutex g_connInfoListMutex = NULL;
 
+/**
+ * Callback to notify when a packet is received
+ */
 static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
 
+/**
+ * Callback to notify websocket connection state changes
+ */
 static CAConnectionChangeCallback g_connectionChangeCallback = NULL;
 
+/**
+ * Callback to notify when an error occurs in sending data
+ */
 static CAErrorHandleCallback g_errorHandleCallback = NULL;
 
 void CAWSSetPacketReceivedCallback(CANetworkPacketReceivedCallback networkPacketCallback)
@@ -71,15 +95,26 @@ void CAWSSetErrorHandleCallback(CAErrorHandleCallback errorCallback)
     g_errorHandleCallback = errorCallback;
 }
 
+/**
+ * Handles the events from the libwebsocket event loop
+ */
 static int CALWSCallback(struct lws *wsi, enum lws_callback_reasons reason,
                          void *user, void *in, size_t len);
 
+/**
+ * Protocol list to be set to lws service
+ */
 static struct lws_protocols protocols[] =
 {
     { "coap", CALWSCallback, 0 },
     { NULL, NULL, 0 }
 };
 
+/**
+ * The websocket context. Single context is sufficient since
+ * this implementation works either as a client or a server
+ * but never both
+ */
 static struct lws_context *g_context;
 
 static int CALWSCallback(struct lws *wsi, enum lws_callback_reasons reason,
@@ -334,6 +369,9 @@ static int CALWSCallback(struct lws *wsi, enum lws_callback_reasons reason,
     }
 }
 
+/**
+ * Initialize the mutex variables
+ */
 static CAResult_t CAInitMutexVariables()
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
@@ -371,6 +409,9 @@ static CAResult_t CAInitMutexVariables()
     return CA_STATUS_OK;
 }
 
+/**
+ * Frees the mutex variables that are used
+ */
 static void CATerminateMutexVariables()
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
@@ -394,6 +435,9 @@ static void CATerminateMutexVariables()
     }
 }
 
+/**
+ * Initialize the adapter as a websocket client
+ */
 static CAResult_t CALWSInitClient()
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
@@ -417,6 +461,9 @@ static CAResult_t CALWSInitClient()
     return CA_STATUS_OK;
 }
 
+/**
+ * Initialize the adapter as a websocket server
+ */
 static CAResult_t CALWSInitServer()
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
@@ -472,6 +519,9 @@ static CAResult_t CALWSInitServer()
     return CA_STATUS_OK;
 }
 
+/**
+ * Connect to a given websocket endpoint
+ */
 static void CALWSConnect(WSConnInfo *connInfo)
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
@@ -500,6 +550,9 @@ static void CALWSConnect(WSConnInfo *connInfo)
     lws_client_connect_via_info(&lwsConnInfo);
 }
 
+/**
+ * The websocket service loop to process the events on the socket
+ */
 static void CALWSService(void* data)
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
