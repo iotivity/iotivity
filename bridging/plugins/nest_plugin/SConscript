@@ -75,11 +75,13 @@ if 'g++' in nest_env.get('CXX'):
 if nest_env.get('LOGGING'):
     nest_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
+libmpm = nest_env.get('BUILD_DIR') + 'libmpmcommon.a'
 nest_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
 nest_env.AppendUnique(LINKFLAGS=['-Wl,--allow-shlib-undefined'])
 nest_env.AppendUnique(LINKFLAGS=[
-    '-Wl,--whole-archive',
-    nest_env.get('BUILD_DIR') + 'libmpmcommon.a', '-Wl,-no-whole-archive'
+    '-Wl,--allow-shlib-undefined',
+    '-Wl,--whole-archive', libmpm,
+    '-Wl,-no-whole-archive',
 ])
 
 nest_env.PrependUnique(LIBS=[
@@ -103,5 +105,6 @@ nest_src = [
 
 nest_env.AppendUnique(NEST_SRC=nest_src)
 nestlib = nest_env.SharedLibrary('nestplugin', nest_env.get('NEST_SRC'))
+nest_env.Depends(nestlib, libmpm)
 nest_env.InstallTarget(nestlib, 'nestplugin')
 nest_env.UserInstallTargetLib(nestlib, 'nestplugin')

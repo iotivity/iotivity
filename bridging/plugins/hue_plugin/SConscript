@@ -73,11 +73,13 @@ hue_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 if hue_env.get('LOGGING'):
     hue_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
+libmpm = hue_env.get('BUILD_DIR') + 'libmpmcommon.a'
 hue_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
 hue_env.AppendUnique(LINKFLAGS=['-Wl,--allow-shlib-undefined'])
 hue_env.AppendUnique(LINKFLAGS=[
-    '-Wl,--whole-archive',
-    hue_env.get('BUILD_DIR') + 'libmpmcommon.a', '-Wl,-no-whole-archive'
+    '-Wl,--allow-shlib-undefined',
+    '-Wl,--whole-archive', libmpm,
+    '-Wl,-no-whole-archive',
 ])
 
 hue_env.AppendUnique(LIBS=[
@@ -101,5 +103,6 @@ hue_src = [
 
 hue_env.AppendUnique(HUE_SRC=hue_src)
 huelib = hue_env.SharedLibrary('hueplugin', hue_env.get('HUE_SRC'))
+hue_env.Depends(huelib, libmpm)
 hue_env.InstallTarget(huelib, 'hueplugin')
 hue_env.UserInstallTargetLib(huelib, 'hueplugin')

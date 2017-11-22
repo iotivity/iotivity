@@ -65,11 +65,13 @@ if 'g++' in lifx_env.get('CXX'):
     lifx_env.AppendUnique(
         CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
+libmpm = lifx_env.get('BUILD_DIR') + 'libmpmcommon.a'
 lifx_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
 lifx_env.AppendUnique(LINKFLAGS=['-Wl,--allow-shlib-undefined'])
 lifx_env.AppendUnique(LINKFLAGS=[
-    '-Wl,--whole-archive',
-    lifx_env.get('BUILD_DIR') + 'libmpmcommon.a', '-Wl,-no-whole-archive'
+    '-Wl,--allow-shlib-undefined',
+    '-Wl,--whole-archive', libmpm,
+    '-Wl,-no-whole-archive',
 ])
 
 lifx_env.AppendUnique(LIBS=[
@@ -87,5 +89,6 @@ lifx_src = [
 
 lifx_env.AppendUnique(LIFX_SRC=lifx_src)
 lifxlib = lifx_env.SharedLibrary('lifxplugin', lifx_env.get('LIFX_SRC'))
+lifx_env.Depends(lifxlib, libmpm)
 lifx_env.InstallTarget(lifxlib, 'lifxplugin')
 lifx_env.UserInstallTargetLib(lifxlib, 'lifxplugin')
