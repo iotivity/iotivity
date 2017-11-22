@@ -52,19 +52,19 @@ Source1002: %{name}-test.manifest
 %if 3 <= 0%{?tizen_version_major}
 BuildRequires: python-accel-armv7l-cross-arm
 %endif
-%define TARGET_ARCH "armeabi-v7a"
+%define TARGET_ARCH armeabi-v7a
 %endif
 %ifarch aarch64
 %if 3 <= 0%{?tizen_version_major}
 BuildRequires: python-accel-aarch64-cross-aarch64
 %endif
-%define TARGET_ARCH "arm64"
+%define TARGET_ARCH arm64
 %endif
 %ifarch x86_64
-%define TARGET_ARCH "x86_64"
+%define TARGET_ARCH x86_64
 %endif
 %ifarch %{ix86}
-%define TARGET_ARCH "x86"
+%define TARGET_ARCH x86
 %endif
 
 %if ! 0%{?license:0}
@@ -89,6 +89,29 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?MULTIPLE_OWNER: %define MULTIPLE_OWNER 0}
 %{!?OIC_SUPPORT_TIZEN_TRACE: %define OIC_SUPPORT_TIZEN_TRACE False}
 %define BUILD_DIR out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/
+
+%define SCONSFLAGS \\\
+--prefix=%{_prefix} \\\
+%{?_smp_mflags} \\\
+\\\
+ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \\\
+LIB_INSTALL_DIR=%{_libdir} \\\
+LOGGING=%{LOGGING} \\\
+RD_MODE=%{RD_MODE} \\\
+RELEASE=%{RELEASE} \\\
+ROUTING=%{ROUTING} \\\
+SECURED=%{SECURED} \\\
+TARGET_ARCH=%{TARGET_ARCH} \\\
+TARGET_OS=%{TARGET_OS} \\\
+TARGET_TRANSPORT=%{TARGET_TRANSPORT} \\\
+VERBOSE=%{VERBOSE} \\\
+WITH_CLOUD=%{WITH_CLOUD} \\\
+WITH_MQ=%{WITH_MQ} \\\
+WITH_PROXY=%{WITH_PROXY} \\\
+WITH_TCP=%{WITH_TCP} \\\
+MULTIPLE_OWNER=%{MULTIPLE_OWNER} \\\
+OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \\\
+%{?EXTRA_RPM_SCONSFLAGS}
 
 BuildRequires:  autoconf
 BuildRequires:  automake
@@ -180,6 +203,12 @@ find . \
 
 cat LICENSE
 
+[ -r 'config.md' ] || cat<<EOF | sed -e 's|%{buildroot}|(...BUILDROOT...)|g' | tee config.md
+# Build configuration info #
+SCONSFLAGS: %{SCONSFLAGS}
+$(scons --version)
+EOF
+
 %if 0%{?manifest:1}
 cp %{SOURCE1001} .
 %if 0%{?tizen_version_major} < 3
@@ -190,50 +219,14 @@ cp %{SOURCE1001} ./%{name}-test.manifest
 %endif
 
 %build
-scons %{?_smp_mflags} --prefix=%{_prefix} \
-    ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
-    LIB_INSTALL_DIR=%{_libdir} \
-    LOGGING=%{LOGGING} \
-    RD_MODE=%{RD_MODE} \
-    RELEASE=%{RELEASE} \
-    ROUTING=%{ROUTING} \
-    SECURED=%{SECURED} \
-    TARGET_ARCH=%{TARGET_ARCH} \
-    TARGET_OS=%{TARGET_OS} \
-    TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
-    VERBOSE=%{VERBOSE} \
-    WITH_CLOUD=%{WITH_CLOUD} \
-    WITH_MQ=%{WITH_MQ} \
-    WITH_PROXY=%{WITH_PROXY} \
-    WITH_TCP=%{WITH_TCP} \
-    MULTIPLE_OWNER=%{MULTIPLE_OWNER} \
-    OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
-    #eol
-
-
+SCONSFLAGS="%{SCONSFLAGS}" ; export SCONSFLAGS;
+scons
 
 %install
 rm -rf %{buildroot}
 CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
-scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
-    ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
-    LIB_INSTALL_DIR=%{_libdir} \
-    LOGGING=%{LOGGING} \
-    RD_MODE=%{RD_MODE} \
-    RELEASE=%{RELEASE} \
-    ROUTING=%{ROUTING} \
-    SECURED=%{SECURED} \
-    TARGET_ARCH=%{TARGET_ARCH} \
-    TARGET_OS=%{TARGET_OS} \
-    TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
-    VERBOSE=%{VERBOSE} \
-    WITH_CLOUD=%{WITH_CLOUD} \
-    WITH_MQ=%{WITH_MQ} \
-    WITH_PROXY=%{WITH_PROXY} \
-    WITH_TCP=%{WITH_TCP} \
-    MULTIPLE_OWNER=%{MULTIPLE_OWNER} \
-    OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
-    #eol
+SCONSFLAGS="%{SCONSFLAGS}" ; export SCONSFLAGS;
+scons --install-sandbox=%{buildroot} install
 
 
 find "%{buildroot}" -type f -perm u+x -exec chrpath -d "{}" \;
@@ -303,6 +296,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %files devel
 %defattr(-,root,root,-)
 %license LICENSE
+%doc *.md
 %{_libdir}/lib*.a
 %{_libdir}/pkgconfig/%{name}.pc
 %{_includedir}/*
