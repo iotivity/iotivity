@@ -341,4 +341,4 @@ else:
 
 Clean(libcoap, config_h_file_path)
 libcoap_env.InstallTarget([libcoap], 'coap')
-
+libcoap_env.UserInstallTargetLib(libcoap)

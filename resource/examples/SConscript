@@ -137,6 +137,7 @@ examples = list(map(make_single_file_cpp_program, example_names))
 cbor = examples_env.ScanJSON()
 examples_env.Alias("install", cbor)
 examples += cbor
+examples_env.UserInstallTargetExtra(examples)
 
 if target_os in ['msys_nt', 'windows']:
     winUIClient = examples_env.Program(

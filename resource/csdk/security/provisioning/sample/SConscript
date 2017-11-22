@@ -154,3 +154,4 @@ if target_os not in ['msys_nt', 'windows']:
 
 Alias("samples", sampleapps)
 provisioning_sample_env.AppendTarget('samples')
+provisioning_sample_env.UserInstallTargetExtra(sampleapps)
