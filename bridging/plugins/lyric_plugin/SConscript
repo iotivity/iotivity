@@ -67,11 +67,11 @@ if 'g++' in lyric_env.get('CXX'):
     lyric_env.AppendUnique(
         CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
+libmpm = lyric_env.get('BUILD_DIR') + 'libmpmcommon.a',
 lyric_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
 lyric_env.AppendUnique(LINKFLAGS=[
     '-Wl,--allow-shlib-undefined',
-    '-Wl,--whole-archive',
-    lyric_env.get('BUILD_DIR') + 'libmpmcommon.a',
+    '-Wl,--whole-archive', libmpm,
     '-Wl,-no-whole-archive'
 ])
 
@@ -98,5 +98,6 @@ lyric_src = [
 
 lyric_env.AppendUnique(LYRIC_SRC=lyric_src)
 lyriclib = lyric_env.SharedLibrary('lyricplugin', lyric_env.get('LYRIC_SRC'))
+lyric_env.Depends(lyriclib, libmpm)
 lyric_env.InstallTarget(lyriclib, 'lyricplugin')
 lyric_env.UserInstallTargetLib(lyriclib, 'lyricplugin')
