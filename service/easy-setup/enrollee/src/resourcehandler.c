@@ -854,12 +854,13 @@ OCRepPayload* constructResponseOfWiFiConf(char *interface, ES_BATCH_UPDATE_RESPO
     }
 
     OIC_LOG(DEBUG, ES_RH_TAG, "constructResponse WiFiConf res");
-    OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_WIFICONF);
 
     OCRepPayload* repPayload = NULL;
     OCRepPayload* tempPayload = NULL;
     if (!strcmp(interface, OC_RSRVD_INTERFACE_BATCH))
     {
+        OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_WIFICONF);
+
         repPayload = OCRepPayloadCreate();
         if (!repPayload)
         {
@@ -991,12 +992,13 @@ OCRepPayload* constructResponseOfCoapCloudConf(char *interface, ES_BATCH_UPDATE_
     }
 
     OIC_LOG(DEBUG, ES_RH_TAG, "constructResponse CoapCloudConf res");
-    OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_COAPCLOUDCONF);
 
     OCRepPayload* repPayload = NULL;
     OCRepPayload* tempPayload = NULL;
     if (!strcmp(interface, OC_RSRVD_INTERFACE_BATCH))
     {
+        OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_COAPCLOUDCONF);
+
         repPayload = OCRepPayloadCreate();
         if (!repPayload)
         {
@@ -1087,12 +1089,13 @@ OCRepPayload* constructResponseOfDevConf(char *interface, ES_BATCH_UPDATE_RESPON
     }
 
     OIC_LOG(DEBUG, ES_RH_TAG, "constructResponse DevConf res");
-    OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_DEVCONF);
 
     OCRepPayload* repPayload = NULL;
     OCRepPayload* tempPayload = NULL;
     if (!strcmp(interface, OC_RSRVD_INTERFACE_BATCH))
     {
+        OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_DEVCONF);
+
         repPayload = OCRepPayloadCreate();
         if (!repPayload)
         {
