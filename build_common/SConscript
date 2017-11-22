@@ -445,42 +445,65 @@ def __set_dir(env, dir):
 
 
 def __src_to_obj(env, src, home=''):
-    #
-    # make sure builds happen in BUILD_DIR (by default they
-    # would happen in the directory of the source file)
-    # Note this does not seem to be used, VariantDir is used instead
-    #
+    '''
+    Make sure builds happen in BUILD_DIR (by default they
+    would happen in the directory of the source file)
+    Note this does not seem to be used, VariantDir is used instead
+    '''
     obj = env.get('BUILD_DIR') + src.replace(home, '')
     if env.get('OBJSUFFIX'):
         obj += env.get('OBJSUFFIX')
     return env.Object(obj, src)
 
 
-def __install(ienv, targets, name):
-    i_n = ienv.Install(env.get('BUILD_DIR'), targets)
-    Alias(name, i_n)
-    env.AppendUnique(TS=[name])
+def __install(ienv, targets, name=''):
+    '''
+    Copy files to internal place (not for install to system)
+    only use UserInstall() for copying files to system using "scons install"
+    '''
+    for filename in ienv.GetBuildPath(targets):
+        basename = os.path.basename(filename)
+        dst = env.get('BUILD_DIR') + basename
+        i_n = Command(dst, filename, Copy("$TARGET", "$SOURCE"))
+        if '' == name:
+            name = basename
+        ienv.Alias(name, i_n)
+        env.AppendUnique(TS=[name])
 
 
-def __installlib(ienv, targets, name):
+def __installlib(ienv, targets, name=''):
+    '''
+    Install files to system, using "scons install" and remove rpath info if present
+    If prefix or lib install dir is not specified, for developer convenience
+    files are copied in relative "deploy" folder along executables (rpath is kept)
+    to avoid overlap with "internal place" above
+    '''
     user_prefix = env.get('PREFIX')
     if user_prefix:
         user_lib = env.get('LIB_INSTALL_DIR')
         if user_lib:
-            i_n = ienv.Install(user_lib, targets)
+            dst_dir  = user_lib
         else:
-            i_n = ienv.Install(user_prefix + '/lib', targets)
-        ienv.Alias("install", i_n)
+            dst_dir  = user_prefix + '/lib'
     else:
-        i_n = ienv.Install(env.get('BUILD_DIR'), targets)
-    ienv.Alias("install", i_n)
+        dst_dir  = env.get('BUILD_DIR') + '/deploy'
+    action = ienv.Install(dst_dir, targets)
+    ienv.Alias("install", action)
 
 
-def __installbin(ienv, targets, name):
+
+def __installbin(ienv, targets, name=''):
+    '''
+    ' Install files to system, using "scons install"
+    ' If prefix is not specified, for developer convenience
+    ' files are copied in relative "deploy" folder along libraries
+    '''
     user_prefix = env.get('PREFIX')
     if user_prefix:
-        i_n = ienv.Install(user_prefix + '/bin', targets)
-        ienv.Alias("install", i_n)
+        dst_dir  = user_prefix + '/bin'
+    else:
+        dst_dir  = env.get('BUILD_DIR') + '/deploy'
+    ienv.Alias("install", ienv.Install(dst_dir , targets))
 
 
 def __installheader(ienv, targets, dir, name):
@@ -488,8 +511,7 @@ def __installheader(ienv, targets, dir, name):
     if user_prefix:
         i_n = ienv.Install(user_prefix + '/include/' + dir, targets)
     else:
-        i_n = ienv.Install(
-            os.path.join(env.get('BUILD_DIR'), 'include', dir), targets)
+        i_n = ienv.Install(env.get('BUILD_DIR') + 'deploy/include/' + dir, targets)
     ienv.Alias("install", i_n)
 
 
@@ -502,7 +524,7 @@ def __installpcfile(ienv, targets, name):
         else:
             i_n = ienv.Install(user_prefix + '/lib/pkgconfig', targets)
     else:
-        i_n = ienv.Install(env.get('BUILD_DIR') + 'lib/pkgconfig', targets)
+        i_n = ienv.Install(env.get('BUILD_DIR') + 'deploy/pkgconfig', targets)
     ienv.Alias("install", i_n)
 
 
@@ -603,6 +625,9 @@ rd_mode = env.get('RD_MODE')
 with_ra_ibb = env.get('WITH_RA_IBB')
 
 env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+
+if not env.get('PREFIX') and not env.get('LIB_INSTALL_DIR'):
+   env.AppendUnique(LIBPATH = [env.get('BUILD_DIR') + '/deploy'])
 
 if (env.get('WITH_UPSTREAM_LIBCOAP') == '1'):
     env.AppendUnique(CPPDEFINES=['WITH_UPSTREAM_LIBCOAP'])

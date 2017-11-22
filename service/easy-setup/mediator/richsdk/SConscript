@@ -171,6 +171,7 @@ if target_os in ['android', 'ios', 'linux', 'tizen']:
     if target_os not in ['ios']:
         es_sdk_shared = easy_setup_env.SharedLibrary('ESMediatorRich',
                                                      easy_setup_env.get('es_src'))
+        easy_setup_env.InstallTarget(es_sdk_shared, 'libESMediatorRich')
         easy_setup_env.UserInstallTargetLib(es_sdk_shared, 'libESMediatorRich')
         easy_setup_env.AppendUnique(
             LINKFLAGS=['-Wl,-soname,libESMediatorRich.so'])
