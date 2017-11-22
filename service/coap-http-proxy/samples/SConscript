@@ -66,8 +66,9 @@ if env.get('SECURED') == '1':
 ######################################################################
 proxy_server = proxy_sample_app_env.Program('proxy_main', 'proxy_main.c')
 proxy_client = proxy_sample_app_env.Program('proxy_client', 'proxy_client.c')
-Alias("coap_http_proxy", [proxy_server])
-
+actions = [proxy_server, proxy_client]
+proxy_sample_app_env.UserInstallTargetExtra(actions)
+Alias("coap_http_proxy", actions)
 env.AppendTarget('coap_http_proxy')
 
 if env.get('SECURED') == '1':

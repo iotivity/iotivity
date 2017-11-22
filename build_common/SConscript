@@ -528,6 +528,28 @@ def __installpcfile(ienv, targets, name):
     ienv.Alias("install", i_n)
 
 
+def __installextra(ienv, targets, subdir="."):
+    '''
+    Install extra files, by default use file relative location as subdir
+    or use any other prefix of your choice, or in explicit "deploy" folder
+    '''
+    user_lib = env.get('LIB_INSTALL_DIR')
+    user_prefix = env.get('PREFIX')
+    for target in targets:
+        if "." == subdir:
+            dst = Dir('.').srcnode().path
+        else:
+            dst = subdir
+        if user_lib:
+            dst = user_lib + '/iotivity/' + dst
+        elif user_prefix:
+            dst = user_prefix + '/lib/iotivity/' + dst
+        else:
+            dst = env.get('BUILD_DIR') + '/deploy/extra/' + dst
+        i_n = ienv.Install(dst, target)
+        ienv.Alias('install', i_n)
+
+
 def __append_target(ienv, name, targets=None):
     if targets:
         env.Alias(name, targets)
@@ -563,6 +585,7 @@ env.AddMethod(__installlib, 'UserInstallTargetLib')
 env.AddMethod(__installbin, 'UserInstallTargetBin')
 env.AddMethod(__installheader, 'UserInstallTargetHeader')
 env.AddMethod(__installpcfile, 'UserInstallTargetPCFile')
+env.AddMethod(__installextra, 'UserInstallTargetExtra')
 env.SetDir(env.GetLaunchDir())
 env['ROOT_DIR'] = env.GetLaunchDir() + '/..'
 

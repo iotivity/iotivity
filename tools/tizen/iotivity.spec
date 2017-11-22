@@ -64,9 +64,6 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %define TARGET_ARCH "x86"
 %endif
 
-%{!?exlibdir: %define exlibdir %{_libdir}/%{name}}
-%{!?ex_install_dir: %define ex_install_dir %{buildroot}/%{exlibdir}/examples}
-
 %if ! 0%{?license:0}
 %define license %doc
 %endif
@@ -234,61 +231,6 @@ scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
     OIC_SUPPORT_TIZEN_TRACE=%{OIC_SUPPORT_TIZEN_TRACE} \
     #eol
 
-mkdir -p %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/examples/OICMiddle/OICMiddle %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/devicediscoveryclient %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/devicediscoveryserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/fridgeclient %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/fridgeserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/garageclient %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/garageserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/groupclient %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/groupserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/lightserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/presenceclient %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/presenceserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/roomclient %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/roomserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleclient %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleclientHQ %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleclientserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleserver %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleserverHQ %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/threadingsample %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/oic_svr_db_server.dat %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/oic_svr_db_client.dat %{ex_install_dir}
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/lib*.a %{buildroot}%{_libdir}
-
-%if 0%{?WITH_PROXY} == 1
-mkdir -p %{ex_install_dir}/proxy-sample
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/service/coap-http-proxy/samples/proxy_main %{ex_install_dir}/proxy-sample/
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/service/coap-http-proxy/samples/proxy_client %{ex_install_dir}/proxy-sample/
-%endif
-%if 0%{?SECURED} == 1
-
-mkdir -p %{ex_install_dir}/provisioning
-mkdir -p %{ex_install_dir}/provision-sample
-
-
-cp ./resource/csdk/security/include/*.h %{buildroot}%{_includedir}
-cp ./resource/csdk/security/include/*/*.h %{buildroot}%{_includedir}
-cp ./resource/csdk/connectivity/api/*.h %{buildroot}%{_includedir}/
-cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
-cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
-cp ./resource/csdk/security/provisioning/include/*.h %{buildroot}%{_includedir}
-cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{ex_install_dir}/oic_svr_db_server.dat
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_justworks %{ex_install_dir}/provision-sample/
-cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{ex_install_dir}/provision-sample/
-cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_randompin %{ex_install_dir}/provision-sample/
-cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat %{ex_install_dir}/provision-sample/
-
-%endif
-
-cp resource/c_common/*.h %{buildroot}%{_includedir}
-cp resource/csdk/include/*.h %{buildroot}%{_includedir}
-cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
-install -d %{buildroot}%{_includedir}/experimental/
-cp resource/csdk/logger/include/experimental/*.h %{buildroot}%{_includedir}/experimental/
 
 find "%{buildroot}" -type f -perm /u+x -exec chrpath -d "{}" \;
 find "%{buildroot}" -type f -iname "lib*.so" -exec chrpath -d "{}" \;
@@ -352,7 +294,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %endif
 %defattr(-,root,root,-)
 %license LICENSE
-%{exlibdir}/*
+%{_libdir}/%{name}/*
 
 %files devel
 %defattr(-,root,root,-)

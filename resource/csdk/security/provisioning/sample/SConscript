@@ -190,3 +190,4 @@ if provisioning_sample_env.get('MULTIPLE_OWNER') == '1':
     ])
 Alias('samples', sampleapps)
 provisioning_sample_env.AppendTarget('samples')
+provisioning_sample_env.UserInstallTargetExtra(sampleapps)

@@ -90,3 +90,4 @@ OICMiddle = examples_env.Program('OICMiddle', [
 
 Alias("examples", [OICMiddle])
 env.AppendTarget('examples')
+env.UserInstallTargetExtra(OICMiddle)

@@ -120,7 +120,7 @@ light_introspection_json = examples_env.Install(examples_env.get('BUILD_DIR') + 
                 examples_env.get('SRC_DIR') + '/resource/examples/' + 'light_introspection.json')
 
 examples += [clientjson, serverjson]
-examples_env.Alias("install", examples)
+examples_env.UserInstallTargetExtra(examples)
 
 if target_os in ['msys_nt', 'windows']:
     winUIClient = examples_env.Program('winUIClient', ['winuiclientgui.cpp', 'winuiclient.cpp'])
