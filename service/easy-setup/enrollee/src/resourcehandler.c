@@ -391,127 +391,139 @@ OCEntityHandlerResult updateEasySetupResource(OCEntityHandlerRequest* ehRequest,
 {
     OIC_LOG_V(DEBUG, ES_RH_TAG, "g_ESEasySetupResource.status %d", g_ESEasySetupResource.status);
 
-    OCEntityHandlerResult ehResult = OC_EH_OK;
-    if (ehRequest->query)
+    char *iface_name = NULL;
+    GetInterfaceNameFromQuery(ehRequest->query, &iface_name);
+    if (!iface_name)
     {
-        if (CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
+        iface_name = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
+        if(NULL == iface_name)
         {
-            batch_update_rsrc_arr[EASY_SETUP_RES] = RES_EXCLUDE;
-            batch_update_rsrc_arr[WIFI_CONF_RES] = RES_EXCLUDE;
-            batch_update_rsrc_arr[CLOUD_CONF_RES] = RES_EXCLUDE;
-            batch_update_rsrc_arr[DEV_CONF_RES] = RES_EXCLUDE;
-
-            bool hasError = false;
-            // When Provisioning resource has a POST with BatchInterface
-            // Parsing POST request on Batch Interface cosidering same format as GET using batch.
-            OCRepPayload *children = input;
-            while(children)
-            {
-                char* uri = children->uri;
-                if (NULL == uri)
-                {
-                    OIC_LOG(DEBUG, ES_RH_TAG, "No URI found in request");
-                }
-                else
-                {
-                    OIC_LOG_V(DEBUG, ES_RH_TAG, "Request URI [%s]", uri);
-                }
-
-                OCRepPayload *repPayload = NULL;
-                OCRepPayloadGetPropObject(children, OC_RSRVD_REPRESENTATION, &repPayload);
-                if (NULL == repPayload)
-                {
-                    OIC_LOG(ERROR, ES_RH_TAG, "repPayload is null!");
-                    children = children->next;
-                    continue;
-                }
-
-                // If uri is NULL, rep is applied to all resources in collection;
-                // otherwise its applied to specific target resources.
-                if (NULL == uri || 0 == strlen(uri) || 0 == strcmp(uri, OC_RSRVD_ES_URI_EASYSETUP))
-                {
-                    // If payload has read-only properties, then the request is considered as a bad request.
-                    if (!OCRepPayloadIsNull(children, OC_RSRVD_ES_PROVSTATUS) ||
-                        !OCRepPayloadIsNull(children, OC_RSRVD_ES_LAST_ERRORCODE))
-                    {
-                        OIC_LOG(ERROR, ES_RH_TAG, "Read-only property cannot be updated.");
-                        // "rep" field of EasySetup resource in the response will be empty.
-                        batch_update_rsrc_arr[EASY_SETUP_RES] = RES_INCLUDE_EMPTY_REP;
-                        hasError = true;
-                    }
-                    else
-                    {
-                        updateEasySetupConnectProperty(repPayload);
-                        batch_update_rsrc_arr[EASY_SETUP_RES] = RES_INCLUDE;
-                    }
-                }
-
-                if (NULL == uri || 0 == strlen(uri)
-                    || 0 == strcmp(uri, OC_RSRVD_ES_URI_WIFICONF))
-                {
-                    if (updateWiFiConfResource(repPayload) != OC_EH_OK)
-                    {
-                        OIC_LOG(ERROR, ES_RH_TAG, "Failed to update WiFiConf resource.");
-                        hasError = true;
-                        // As there is a problem in updating the WiFiConf resource,
-                        // corresponding "rep" field in the response will be empty.
-                        batch_update_rsrc_arr[WIFI_CONF_RES] = RES_INCLUDE_EMPTY_REP;
-                    }
-                    else
-                    {
-                        batch_update_rsrc_arr[WIFI_CONF_RES] = RES_INCLUDE;
-                    }
-                }
-
-                if (NULL == uri ||  0 == strlen(uri)
-                    || 0 == strcmp(uri, OC_RSRVD_ES_URI_COAPCLOUDCONF))
-                {
-                    updateCoapCloudConfResource(repPayload);
-                    batch_update_rsrc_arr[CLOUD_CONF_RES] = RES_INCLUDE;
-                }
-
-                if (NULL == uri ||  0 == strlen(uri)
-                    || 0 == strcmp(uri, OC_RSRVD_ES_URI_DEVCONF))
-                {
-                    if (updateDevConfResource(repPayload) != OC_EH_OK)
-                    {
-                        OIC_LOG(ERROR, ES_RH_TAG, "Failed to update DevConf resource.");
-                        hasError = true;
-                        // As there is a problem in updating the DevConf resource,
-                        // corresponding "rep" field in the response will be empty.
-                        batch_update_rsrc_arr[DEV_CONF_RES] = RES_INCLUDE_EMPTY_REP;
-                    }
-                    else
-                    {
-                        batch_update_rsrc_arr[DEV_CONF_RES] = RES_INCLUDE;
-                    }
-                }
-
-                children = children->next;
-                OCRepPayloadDestroy(repPayload);
-            }
-
-            if (hasError)
-            {
-               ehResult = OC_EH_BAD_REQ;
-            }
+            OIC_LOG_V(ERROR, ES_RH_TAG, "Failed to duplicate string.");
+            return OC_EH_INTERNAL_SERVER_ERROR;
         }
-        else if (CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT))
+    }
+
+    OCEntityHandlerResult ehResult = OC_EH_OK;
+
+    if (!strcmp(iface_name, OC_RSRVD_INTERFACE_BATCH))
+    {
+        batch_update_rsrc_arr[EASY_SETUP_RES] = RES_EXCLUDE;
+        batch_update_rsrc_arr[WIFI_CONF_RES] = RES_EXCLUDE;
+        batch_update_rsrc_arr[CLOUD_CONF_RES] = RES_EXCLUDE;
+        batch_update_rsrc_arr[DEV_CONF_RES] = RES_EXCLUDE;
+
+        bool hasError = false;
+        // When Provisioning resource has a POST with BatchInterface
+        // Parsing POST request on Batch Interface cosidering same format as GET using batch.
+        OCRepPayload *children = input;
+        while(children)
         {
-            OIC_LOG(DEBUG, ES_RH_TAG, "Handling POST request on default interface");
-            // If payload has read-only properties, then the request is considered as a bad request.
-            if (!OCRepPayloadIsNull(input, OC_RSRVD_ES_PROVSTATUS) ||
-                !OCRepPayloadIsNull(input, OC_RSRVD_ES_LAST_ERRORCODE))
+            char* uri = children->uri;
+            if (NULL == uri)
             {
-                OIC_LOG(ERROR, ES_RH_TAG, "Read-only property cannot be updated.");
-                ehResult = OC_EH_BAD_REQ;
+                OIC_LOG(DEBUG, ES_RH_TAG, "No URI found in request");
             }
             else
             {
-                updateEasySetupConnectProperty(input);
+                OIC_LOG_V(DEBUG, ES_RH_TAG, "Request URI [%s]", uri);
             }
+
+            OCRepPayload *repPayload = NULL;
+            OCRepPayloadGetPropObject(children, OC_RSRVD_REPRESENTATION, &repPayload);
+            if (NULL == repPayload)
+            {
+                OIC_LOG(ERROR, ES_RH_TAG, "repPayload is null!");
+                children = children->next;
+                continue;
+            }
+
+            // If uri is NULL, rep is applied to all resources in collection;
+            // otherwise its applied to specific target resources.
+            if (NULL == uri || 0 == strlen(uri) || 0 == strcmp(uri, OC_RSRVD_ES_URI_EASYSETUP))
+            {
+                // If payload has read-only properties, then the request is considered as a bad request.
+                if (!OCRepPayloadIsNull(children, OC_RSRVD_ES_PROVSTATUS) ||
+                    !OCRepPayloadIsNull(children, OC_RSRVD_ES_LAST_ERRORCODE))
+                {
+                    OIC_LOG(ERROR, ES_RH_TAG, "Read-only property cannot be updated.");
+                    // "rep" field of EasySetup resource in the response will be empty.
+                    batch_update_rsrc_arr[EASY_SETUP_RES] = RES_INCLUDE_EMPTY_REP;
+                    hasError = true;
+                }
+                else
+                {
+                    updateEasySetupConnectProperty(repPayload);
+                    batch_update_rsrc_arr[EASY_SETUP_RES] = RES_INCLUDE;
+                }
+            }
+
+            if (NULL == uri || 0 == strlen(uri)
+                || 0 == strcmp(uri, OC_RSRVD_ES_URI_WIFICONF))
+            {
+                if (updateWiFiConfResource(repPayload) != OC_EH_OK)
+                {
+                    OIC_LOG(ERROR, ES_RH_TAG, "Failed to update WiFiConf resource.");
+                    hasError = true;
+                    // As there is a problem in updating the WiFiConf resource,
+                    // corresponding "rep" field in the response will be empty.
+                    batch_update_rsrc_arr[WIFI_CONF_RES] = RES_INCLUDE_EMPTY_REP;
+                }
+                else
+                {
+                    batch_update_rsrc_arr[WIFI_CONF_RES] = RES_INCLUDE;
+                }
+            }
+
+            if (NULL == uri ||  0 == strlen(uri)
+                || 0 == strcmp(uri, OC_RSRVD_ES_URI_COAPCLOUDCONF))
+            {
+                updateCoapCloudConfResource(repPayload);
+                batch_update_rsrc_arr[CLOUD_CONF_RES] = RES_INCLUDE;
+            }
+
+            if (NULL == uri ||  0 == strlen(uri)
+                || 0 == strcmp(uri, OC_RSRVD_ES_URI_DEVCONF))
+            {
+                if (updateDevConfResource(repPayload) != OC_EH_OK)
+                {
+                    OIC_LOG(ERROR, ES_RH_TAG, "Failed to update DevConf resource.");
+                    hasError = true;
+                    // As there is a problem in updating the DevConf resource,
+                    // corresponding "rep" field in the response will be empty.
+                    batch_update_rsrc_arr[DEV_CONF_RES] = RES_INCLUDE_EMPTY_REP;
+                }
+                else
+                {
+                    batch_update_rsrc_arr[DEV_CONF_RES] = RES_INCLUDE;
+                }
+            }
+
+            children = children->next;
+            OCRepPayloadDestroy(repPayload);
+        }
+
+        if (hasError)
+        {
+           ehResult = OC_EH_BAD_REQ;
         }
     }
+    else if (!strcmp(iface_name, OC_RSRVD_INTERFACE_DEFAULT))
+    {
+        OIC_LOG(DEBUG, ES_RH_TAG, "Handling POST request on default interface");
+        // If payload has read-only properties, then the request is considered as a bad request.
+        if (!OCRepPayloadIsNull(input, OC_RSRVD_ES_PROVSTATUS) ||
+            !OCRepPayloadIsNull(input, OC_RSRVD_ES_LAST_ERRORCODE))
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Read-only property cannot be updated.");
+            ehResult = OC_EH_BAD_REQ;
+        }
+        else
+        {
+            updateEasySetupConnectProperty(input);
+        }
+    }
+
+    OICFree(iface_name);
 
     OIC_LOG(DEBUG, ES_RH_TAG, "updateEasySetupResource exit");
     return ehResult;
@@ -927,27 +939,27 @@ OCRepPayload* constructResponseOfWiFiConf(char *interface, ES_BATCH_UPDATE_RESPO
                 freq[i] = WiFiFreqEnumToString(g_ESWiFiConfResource.supportedFreq[i]);
             }
             OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIFREQ, freq, dimensionsFreq);
-        }
 
-        size_t dimensionsAuthType[MAX_REP_ARRAY_DEPTH] = { g_ESWiFiConfResource.numSupportedAuthType, 0,
-                0 };
-        const char *authType[NUM_WIFIAUTHTYPE] = { 0, };
-        for (int i = 0; i < g_ESWiFiConfResource.numSupportedAuthType; ++i)
-        {
-            authType[i] = WiFiAuthTypeEnumToString(g_ESWiFiConfResource.supportedAuthType[i]);
-        }
-        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIAUTHTYPE, authType,
-                dimensionsAuthType);
+            size_t dimensionsAuthType[MAX_REP_ARRAY_DEPTH] = { g_ESWiFiConfResource.numSupportedAuthType, 0,
+                    0 };
+            const char *authType[NUM_WIFIAUTHTYPE] = { 0, };
+            for (int i = 0; i < g_ESWiFiConfResource.numSupportedAuthType; ++i)
+            {
+                authType[i] = WiFiAuthTypeEnumToString(g_ESWiFiConfResource.supportedAuthType[i]);
+            }
+            OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIAUTHTYPE, authType,
+                    dimensionsAuthType);
 
-        size_t dimensionsEncType[MAX_REP_ARRAY_DEPTH] =
-                { g_ESWiFiConfResource.numSupportedEncType, 0, 0 };
-        const char *encType[NUM_WIFIENCTYPE] = { 0, };
-        for (int i = 0; i < g_ESWiFiConfResource.numSupportedEncType; ++i)
-        {
-            encType[i] = WiFiEncTypeEnumToString(g_ESWiFiConfResource.supportedEncType[i]);
+            size_t dimensionsEncType[MAX_REP_ARRAY_DEPTH] =
+                    { g_ESWiFiConfResource.numSupportedEncType, 0, 0 };
+            const char *encType[NUM_WIFIENCTYPE] = { 0, };
+            for (int i = 0; i < g_ESWiFiConfResource.numSupportedEncType; ++i)
+            {
+                encType[i] = WiFiEncTypeEnumToString(g_ESWiFiConfResource.supportedEncType[i]);
+            }
+            OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIENCTYPE, encType,
+                    dimensionsEncType);
         }
-        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIENCTYPE, encType,
-                dimensionsEncType);
 
         OCRepPayloadSetPropString(payload, OC_RSRVD_ES_SSID, g_ESWiFiConfResource.ssid);
         OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CRED, g_ESWiFiConfResource.cred);
@@ -1212,7 +1224,6 @@ OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest,
                                     OC_RSRVD_INTERFACE_DEFAULT)))
             {
                 OIC_LOG(DEBUG, ES_RH_TAG, "constructResponse EasySetup res (Default interface)");
-                OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_EASYSETUP);
                 OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
                 OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_LL);
                 OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_BATCH);
