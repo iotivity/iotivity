@@ -466,6 +466,14 @@ def __install(ienv, targets, name=''):
         env.AppendUnique(TS=[name])
 
 
+def __chrpath(target, source, env):
+    '''
+    Remove RPATH (if installed elsewhere)
+    '''
+    if target_os in ['linux', 'tizen']:
+        env.Command(None, target, 'chrpath -d $SOURCE')
+
+
 def __installlib(ienv, targets, name=''):
     '''
     Install files to system, using "scons install" and remove rpath info if present
@@ -483,6 +491,8 @@ def __installlib(ienv, targets, name=''):
     else:
         dst_dir  = env.get('BUILD_DIR') + '/deploy'
     action = ienv.Install(dst_dir, targets)
+    if not user_prefix and str(targets[0]).endswith(env['SHLIBSUFFIX']):
+        ienv.AddPostAction(action, __chrpath)
     ienv.Alias("install", action)
 
 
