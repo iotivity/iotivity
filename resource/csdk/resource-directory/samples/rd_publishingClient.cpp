@@ -22,20 +22,20 @@
 #include <iostream>
 #include <sstream>
 #include <limits>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 
 #include "oic_string.h"
 #include "rd_client.h"
 
-/// This example is using experimental API, so there is no guarantee of support for future release,
-/// nor any there any guarantee that breaking changes will not occur across releases.
-/// logging part is not critical but convenient for developer
-#include "experimental/payload_logging.h"
-
-#define TAG ("RD_PublishClient")
 #define DEFAULT_CONTEXT_VALUE 0x99
 
 OCResourceHandle handles[2];
-std::ostringstream rdAddress;
+std::string rdAddress;
+std::mutex mutex;
+std::condition_variable cond;
+int in = 0;
 
 OCStackResult registerLocalResources()
 {
@@ -74,11 +74,11 @@ void printHelp()
 {
     std::cout << std::endl;
     std::cout << "********************************************" << std::endl;
-    std::cout << "*  method Type : 1 - Discover RD           *" << std::endl;
-    std::cout << "*  method Type : 2 - Publish               *" << std::endl;
-    std::cout << "*  method Type : 3 - Update                *" << std::endl;
-    std::cout << "*  method Type : 4 - Delete                *" << std::endl;
-    std::cout << "*  method Type : 5 - Status                *" << std::endl;
+    std::cout << "*  method Type :  1 - Discover RD          *" << std::endl;
+    std::cout << "*  method Type :  2 - Publish              *" << std::endl;
+    std::cout << "*  method Type :  3 - Update               *" << std::endl;
+    std::cout << "*  method Type :  4 - Delete               *" << std::endl;
+    std::cout << "*  method Type : 99 - Exit                 *" << std::endl;
     std::cout << "********************************************" << std::endl;
     std::cout << std::endl;
 }
@@ -88,9 +88,11 @@ static OCStackApplicationResult handleDiscoveryCB(__attribute__((unused))void *c
                                                   __attribute__((unused))
                                                   OCClientResponse *clientResponse)
 {
-    OIC_LOG(DEBUG, TAG, "Successfully found RD.");
-    rdAddress << clientResponse->devAddr.addr << ":" << clientResponse->devAddr.port;
-    std::cout << "RD Address is : " <<  rdAddress.str() << std::endl;
+    std::cout << "Successfully found RD." << std::endl;
+    std::ostringstream oss;
+    oss << clientResponse->devAddr.addr << ":" << clientResponse->devAddr.port;
+    rdAddress = oss.str();
+    std::cout << "RD Address is : " <<  rdAddress << std::endl;
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -99,17 +101,128 @@ static OCStackApplicationResult handlePublishCB(__attribute__((unused))void *ctx
                                                   __attribute__((unused))
                                                   OCClientResponse *clientResponse)
 {
-    OIC_LOG(DEBUG, TAG, "Successfully published resources.");
+    std::cout << "Successfully published resources." << std::endl;
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-int main(void)
+static OCStackApplicationResult handleUpdateCB(__attribute__((unused))void *ctx,
+                                                  __attribute__((unused)) OCDoHandle handle,
+                                                  __attribute__((unused))
+                                                  OCClientResponse *clientResponse)
+{
+    std::cout << "Successfully updated resources." << std::endl;
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+static OCStackApplicationResult handleDeleteCB(__attribute__((unused))void *ctx,
+                                                  __attribute__((unused)) OCDoHandle handle,
+                                                  __attribute__((unused))
+                                                  OCClientResponse *clientResponse)
+{
+    std::cout << "Successfully deleted resources." << std::endl;
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+static void ocThread()
+{
+    OCStackResult result;
+    bool run = true;
+    while (run)
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        if (cond.wait_for(lock, std::chrono::milliseconds(100)) == std::cv_status::no_timeout)
+        {
+            switch (in)
+            {
+                case 1:
+                {
+                    OCCallbackData cbData;
+                    cbData.cb = &handleDiscoveryCB;
+                    cbData.cd = NULL;
+                    cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
+                    result = OCRDDiscover(nullptr, CT_ADAPTER_IP, &cbData, OC_LOW_QOS);
+                    if (OC_STACK_OK != result)
+                    {
+                        std::cout << "OCRDDiscover Failed " << result << std::endl;
+                    }
+                    break;
+                }
+                case 2:
+                {
+                    OCCallbackData cbData;
+                    cbData.cb = &handlePublishCB;
+                    cbData.cd = NULL;
+                    cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
+                    result = OCRDPublish(nullptr, rdAddress.c_str(), CT_ADAPTER_IP, handles,
+                                2, OIC_RD_PUBLISH_TTL, &cbData, OC_LOW_QOS);
+                    if (OC_STACK_OK != result)
+                    {
+                        std::cout << "OCRDPublish Failed " << result << std::endl;
+                    }
+                    break;
+                }
+                case 3:
+                {
+                    /* Update the TTL */
+                    OCCallbackData cbData;
+                    cbData.cb = &handleUpdateCB;
+                    cbData.cd = NULL;
+                    cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
+                    result = OCRDPublish(nullptr, rdAddress.c_str(), CT_ADAPTER_IP, handles,
+                                2, OIC_RD_PUBLISH_TTL, &cbData, OC_LOW_QOS);
+                    if (OC_STACK_OK != result)
+                    {
+                        std::cout << "OCRDPublish Failed " << result << std::endl;
+                    }
+                    break;
+                }
+                case 4:
+                {
+                    /* Delete all resources */
+                    OCCallbackData cbData;
+                    cbData.cb = &handleDeleteCB;
+                    cbData.cd = NULL;
+                    cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
+                    result = OCRDDelete(nullptr, rdAddress.c_str(), CT_ADAPTER_IP, NULL,
+                                0, &cbData, OC_LOW_QOS);
+                    if (OC_STACK_OK != result)
+                    {
+                        std::cout << "OCRDDelete Failed " << result << std::endl;
+                    }
+                    break;
+                }
+                case 99:
+                    run = false;
+                    break;
+                default:
+                    std::cout << "Invalid input, please try again" << std::endl;
+                    break;
+            }
+            printHelp();
+        }
+
+        result = OCProcess();
+        if (OC_STACK_OK != result)
+        {
+            std::cout << "OCProcess Failed " << result << std::endl;
+            break;
+        }
+    }
+}
+
+int main()
 {
     std::cout << "Initializing IoTivity Platform" << std::endl;
     OCStackResult result = OCInit(NULL, 0, OC_CLIENT_SERVER);
     if (OC_STACK_OK != result)
     {
-        std::cout << "OCInit Failed" << result << std::endl;
+        std::cout << "OCInit Failed " << result << std::endl;
+        return -1;
+    }
+    result = OCStopMulticastServer();
+    if (OC_STACK_OK != result)
+    {
+        std::cout << "OCStopMulticastServer Failed " << result << std::endl;
         return -1;
     }
 
@@ -121,15 +234,11 @@ int main(void)
         return -1;
     }
 
+    printHelp();
+    std::thread t(ocThread);
+
     while (1)
     {
-        if (handles[0] == NULL || handles[1] == NULL)
-        {
-            continue;
-        }
-        printHelp();
-
-        int in = 0;
         std::cin >> in;
 
         if (std::cin.fail())
@@ -140,34 +249,14 @@ int main(void)
             continue;
         }
 
-        switch ((int)in)
+        cond.notify_one();
+
+        if (in == 99)
         {
-            case 1:
-            {
-                OCCallbackData cbData;
-                cbData.cb = &handleDiscoveryCB;;
-                cbData.cd = NULL;
-                cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
-                OCRDDiscover(nullptr, CT_ADAPTER_IP, &cbData, OC_LOW_QOS);
-                break;
-            }
-            case 2:
-            {
-                OCCallbackData cbData;
-                cbData.cb = &handlePublishCB;
-                cbData.cd = NULL;
-                cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
-                std::string address = rdAddress.str();
-                OCRDPublish(nullptr, address.c_str(), CT_ADAPTER_IP, handles,
-                            2, OIC_RD_PUBLISH_TTL, &cbData, OC_LOW_QOS);
-                break;
-            }
-            case 3:
-                break;
-            default:
-                std::cout << "Invalid input, please try again" << std::endl;
-                break;
+            break;
         }
     }
+
+    t.join();
     return 0;
 }
