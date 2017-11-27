@@ -138,7 +138,7 @@ void printRepresentation(OCRepPayloadValue *value)
                             printf("Value: None\n");
                             break;
                     case OCREP_PROP_INT:
-                            printf("Value: %ld\n", value->i);
+                            printf("Value: %"PRId64"\n", value->i);
                             break;
                     case OCREP_PROP_DOUBLE:
                             printf("Value: %f\n", value->d);
