@@ -66,7 +66,8 @@ public:
     FakeOCResource* fakeResource;
 
 protected:
-    void SetUp() {
+    void SetUp()
+    {
         TestWithMock::SetUp();
 
         fakeResource = mocks.Mock< FakeOCResource >();

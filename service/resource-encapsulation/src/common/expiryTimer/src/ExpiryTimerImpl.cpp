@@ -78,7 +78,10 @@ namespace OIC
 
         bool ExpiryTimerImpl::cancel(Id id)
         {
-            if (id == INVALID_ID) return false;
+            if (id == INVALID_ID)
+            {
+                return false;
+            }
 
             std::lock_guard< std::mutex > lock{ m_mutex };
 
@@ -136,7 +139,10 @@ namespace OIC
         {
             for (const auto& info : m_tasks)
             {
-                if (info.second->getId() == id) return true;
+                if (info.second->getId() == id)
+                {
+                    return true;
+                }
             }
             return false;
         }
@@ -156,7 +162,10 @@ namespace OIC
 
         void ExpiryTimerImpl::executeExpired()
         {
-            if (m_tasks.empty()) return;
+            if (m_tasks.empty())
+            {
+                return;
+            }
 
             auto now = std::chrono::system_clock::now().time_since_epoch();
 
@@ -179,7 +188,10 @@ namespace OIC
 
         void ExpiryTimerImpl::run()
         {
-            auto hasTaskOrStop = [this](){ return !m_tasks.empty() || m_stop; };
+            auto hasTaskOrStop = [this]()
+            {
+                return !m_tasks.empty() || m_stop;
+            };
 
             std::unique_lock< std::mutex > lock{ m_mutex };
 
@@ -187,7 +199,10 @@ namespace OIC
             {
                 m_cond.wait(lock, hasTaskOrStop);
 
-                if (m_stop) break;
+                if (m_stop)
+                {
+                    break;
+                }
 
                 m_cond.wait_for(lock, remainingTimeForNext());
 
@@ -204,7 +219,10 @@ namespace OIC
 
         void TimerTask::execute()
         {
-            if (isExecuted()) return;
+            if (isExecuted())
+            {
+                return;
+            }
 
             ExpiryTimerImpl::Id id { m_id };
             m_id = INVALID_ID;

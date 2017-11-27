@@ -312,8 +312,14 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
             topics = next;
         }
 
-        OCRepPayloadSetPropObjectArrayAsOwner(payload, NS_ATTRIBUTE_TOPIC_LIST,
-                    payloadTopicArray, dimensions);
+        OCRepPayloadSetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST,
+                (const OCRepPayload**) (payloadTopicArray), dimensions);
+        for (int i = 0; i < (int) dimensionSize; ++i)
+        {
+            OCRepPayloadDestroy(payloadTopicArray[i]);
+        }
+        NSOICFree(payloadTopicArray);
+
     }
     else
     {

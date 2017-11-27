@@ -72,7 +72,8 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId);
 
 /**
  * This function converts credential data into CBOR format.
- * Caller needs to invoke 'free' when done using returned string.
+ * Caller needs to invoke 'OICFree' when done using returned string.
+ * Wrapper over the CredToCBORPayloadWithRowner.
  *
  * @param cred is the pointer to instance of OicSecCred_t structure.
  * @param cborPayload is the CBOR converted value.
@@ -82,6 +83,22 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId);
  * @return ::OC_STACK_OK if conversion is successful, else ::OC_STACK_ERROR if unsuccessful.
  */
 OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
+                                size_t *cborSize, int secureFlag);
+
+/**
+ * This function converts credential data into CBOR format.
+ * Caller needs to invoke 'OICFree' when done using returned string.
+ *
+ * @param cred is the pointer to instance of OicSecCred_t structure.
+ * @param rownerId resource owner's UUID
+ * @param cborPayload is the CBOR converted value.
+ * @param cborSize is the size of the CBOR.
+ * @param secureFlag shows fill or not private key.
+ *
+ * @return ::OC_STACK_OK if conversion is successful, else ::OC_STACK_ERROR if unsuccessful.
+ */
+
+OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUuid_t *rownerId, uint8_t **cborPayload,
                                 size_t *cborSize, int secureFlag);
 
 #ifdef MULTIPLE_OWNER
@@ -241,12 +258,18 @@ OCStackResult GetAllRoleCerts(RoleCertChain_t** roleCerts);
  */
 void GetPemOwnCert(ByteArray_t * crt, const char * usage);
 /**
- * Used by mbedTLS to retrieve owm private key
+ * Used by mbedTLS to retrieve own private key
  *
  * @param[out] key key to be filled.
  * @param[in] usage credential usage string.
  */
 void GetDerKey(ByteArray_t * key, const char * usage);
+/**
+ * Used by mbedTLS to retrieve own primary cert private key
+ *
+ * @param[out] key key to be filled.
+ */
+void GetPrimaryCertKey(ByteArray_t * key);
 /**
  * Used by CA to retrieve credential types
  *

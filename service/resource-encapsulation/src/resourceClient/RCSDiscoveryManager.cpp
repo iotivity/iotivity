@@ -38,7 +38,9 @@ namespace OIC
         void RCSDiscoveryManager::DiscoveryTask::cancel()
         {
             if (isCanceled())
+            {
                 return;
+            }
 
             RCSDiscoveryManagerImpl::getInstance()->cancel(m_id);
             m_id = RCSDiscoveryManagerImpl::INVALID_ID;

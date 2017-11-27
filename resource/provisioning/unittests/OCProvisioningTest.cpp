@@ -30,6 +30,7 @@
 #include "provisioningdatabasemanager.h"
 
 #define TIMEOUT 5
+#define DB_FILE "./dbPath.tmp"
 
 namespace OCProvisioningTest
 {
@@ -50,7 +51,7 @@ namespace OCProvisioningTest
 
     TEST(ProvisionInitTest, TestValidPath)
     {
-        std::string dbPath("./dbPath.tmp");
+        std::string dbPath(DB_FILE);
         EXPECT_EQ(OC_STACK_OK, OCSecure::provisionInit(dbPath));
         EXPECT_EQ(OC_STACK_OK, OCSecure::provisionClose());
     }
@@ -185,7 +186,7 @@ namespace OCProvisioningTest
 
     TEST(DeviceInfoTest, DevInfoFromNetwork)
     {
-        std::string dbPath("./dbPath");
+        std::string dbPath(DB_FILE);
         EXPECT_EQ(OC_STACK_OK, OCSecure::provisionInit(dbPath));
         DeviceList_t owned, unowned;
         EXPECT_EQ(OC_STACK_OK, OCSecure::getDevInfoFromNetwork(TIMEOUT,
