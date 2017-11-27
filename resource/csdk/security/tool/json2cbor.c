@@ -109,11 +109,6 @@ static OCStackResult ReadBufferFromFile(const char *fileName, uint8_t **buffer, 
             ret = OC_STACK_OK;
             *bufferSize = bytesRead + 1;
         }
-        if (0 != fclose(fp))
-        {
-            OIC_LOG_V(ERROR, TAG, "Failed to close file \"%s\"", fileName);
-            ret = OC_STACK_ERROR;
-        }
     }
     else
     {
@@ -125,6 +120,13 @@ exit:
         OIC_LOG_V(ERROR, TAG, "%s: exiting (%d)", __func__, ret);
         *bufferSize = 0;
         OICFreeAndSetToNull((void**)buffer);
+    }
+    if(fp)
+    {
+        if (0 != fclose(fp))
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to close file \"%s\"", fileName);
+        }
     }
     return ret;
 }
@@ -594,8 +596,8 @@ OicSecAcl_t *JSONToAclBin(OicSecAclVersion_t *aclVersion, const char *jsonStr)
     if (cJSON_Array == jsonAclArray->type)
     {
 
-        int numAcl = cJSON_GetArraySize(jsonAclArray);
-        int idx = 0;
+        size_t numAcl = cJSON_GetArraySize(jsonAclArray);
+        size_t idx = 0;
 
         VERIFY_SUCCESS(TAG, numAcl > 0, INFO);
         do
@@ -916,15 +918,13 @@ OicSecDoxm_t *JSONToDoxmBin(const char *jsonStr)
     OicSecDoxm_t *doxm =  NULL;
     cJSON *jsonDoxm = NULL;
     cJSON *jsonObj = NULL;
-
-    cJSON *jsonRoot = cJSON_Parse(jsonStr);
-    VERIFY_NOT_NULL(TAG, jsonRoot, ERROR);
-
-    jsonDoxm = cJSON_GetObjectItem(jsonRoot, OIC_JSON_DOXM_NAME);
-    VERIFY_NOT_NULL(TAG, jsonDoxm, ERROR);
+    cJSON *jsonRoot = NULL;
 
     doxm = (OicSecDoxm_t *)OICCalloc(1, sizeof(OicSecDoxm_t));
     VERIFY_NOT_NULL(TAG, doxm, ERROR);
+
+    jsonRoot = cJSON_Parse(jsonStr);
+    VERIFY_NOT_NULL(TAG, jsonRoot, ERROR);
 
     //Oxm -- not Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXMS_NAME);
@@ -1039,7 +1039,10 @@ OicSecDoxm_t *JSONToDoxmBin(const char *jsonStr)
     ret = OC_STACK_OK;
 
 exit:
-    cJSON_Delete(jsonRoot);
+    if (NULL != jsonRoot)
+    {
+        cJSON_Delete(jsonRoot);
+    }
     if (OC_STACK_OK != ret)
     {
         DeleteDoxmBinData(doxm);
@@ -1192,9 +1195,9 @@ static OicSecCred_t *JSONToCredBinWithRowner(const char *jsonStr,OicUuid_t *rown
 
     if (cJSON_Array == jsonCredArray->type)
     {
-        int numCred = cJSON_GetArraySize(jsonCredArray);
+        size_t numCred = cJSON_GetArraySize(jsonCredArray);
         VERIFY_SUCCESS(TAG, numCred > 0, ERROR);
-        int idx = 0;
+        size_t idx = 0;
         do
         {
             cJSON *jsonCred = cJSON_GetArrayItem(jsonCredArray, idx);
@@ -1208,6 +1211,7 @@ static OicSecCred_t *JSONToCredBinWithRowner(const char *jsonStr,OicUuid_t *rown
             else
             {
                 cred = (OicSecCred_t *)OICCalloc(1, sizeof(OicSecCred_t));
+                VERIFY_NOT_NULL(TAG, cred, ERROR);
                 OicSecCred_t *temp = headCred;
                 while (temp->next)
                 {
@@ -1261,9 +1265,10 @@ static OicSecCred_t *JSONToCredBinWithRowner(const char *jsonStr,OicUuid_t *rown
 
                 char tmp[3];
                 char *buf = (char *)OICCalloc(1, jsonObjLen/2);
+                VERIFY_NOT_NULL(TAG, buf, ERROR);
                 for(size_t i = 0, p = 0 ; i < jsonObjLen; i+=2, ++p)
                 {
-                    sprintf(tmp, "%c%c", jsonPriv->valuestring[i], jsonPriv->valuestring[i+1]);
+                    snprintf(tmp, 2, "%c%c", jsonPriv->valuestring[i], jsonPriv->valuestring[i+1]);
                     buf[p] = (char)strtol(tmp, NULL, 16);
                 }
                 cred->privateData.len = jsonObjLen/2;
@@ -1289,9 +1294,10 @@ static OicSecCred_t *JSONToCredBinWithRowner(const char *jsonStr,OicUuid_t *rown
 
                 char tmp[3];
                 char *buf = (char *)OICCalloc(1, jsonObjLen/2);
+                VERIFY_NOT_NULL(TAG, buf, ERROR);
                 for(size_t i = 0, p = 0 ; i < jsonObjLen; i+=2, ++p)
                 {
-                    sprintf(tmp, "%c%c", jsonPub->valuestring[i], jsonPub->valuestring[i+1]);
+                    snprintf(tmp, 2, "%c%c", jsonPub->valuestring[i], jsonPub->valuestring[i+1]);
                     buf[p] = (char)strtol(tmp, NULL, 16);
                 }
                 cred->publicData.len = jsonObjLen/2;
@@ -1317,9 +1323,10 @@ static OicSecCred_t *JSONToCredBinWithRowner(const char *jsonStr,OicUuid_t *rown
                 ret = (jsonObjLen % 2 == 0) ? ret : OC_STACK_ERROR;
                 char tmp[3];
                 char *buf = (char *)OICCalloc(1, jsonObjLen/2);
+                VERIFY_NOT_NULL(TAG, buf, ERROR);
                 for(size_t i = 0, p = 0; i < jsonObjLen; i+=2, ++p)
                 {
-                    sprintf(tmp, "%c%c", jsonOpt->valuestring[i], jsonOpt->valuestring[i+1]);
+                    snprintf(tmp, 2, "%c%c", jsonOpt->valuestring[i], jsonOpt->valuestring[i+1]);
                     buf[p] = (char)strtol(tmp, NULL, 16);
                 }
                 cred->optionalData.len = jsonObjLen/2;
