@@ -130,6 +130,22 @@ void readInteger(int* item, const char* description, const char* example)
         getchar();
     }
 }
+/**
+ * Read user input (expect integer value)
+ *
+ * @param[out] item           size_t item to fill
+ * @param[in] description     item description
+ * @param[in] example         item example
+ */
+void readSize(size_t* item, const char* description, const char* example)
+{
+    printf("Enter %s (f.e. %s):\n", description, example);
+    if (scanf("%zd", item))
+    {
+        getchar();
+    }
+}
+
 
 /**
  * Read user input (expect array of strings)
@@ -141,16 +157,16 @@ void readInteger(int* item, const char* description, const char* example)
  */
 static void readStringArray(stringArray_t *list, int length, const char* description, const char* example)
 {
-    int i = 0;
-    int count = 0;
+    size_t i = 0;
+    size_t count = 0;
     char hint[MAX_STRING_LENGTH] = { 0 };
 
     snprintf(hint, sizeof(hint), "%s items count", description);
-    readInteger(&count, hint, "2");
+    readSize(&count, hint, "2");
 
     char **item = NULL;
 
-    if (0 >= count)
+    if (0 == count || 10 * 1024 < count)
     {
         return;
     }
@@ -171,16 +187,16 @@ static void readStringArray(stringArray_t *list, int length, const char* descrip
             goto no_memory;
         }
 
-        snprintf(hint, sizeof(hint), "%s %d item", description, i + 1);
+        snprintf(hint, sizeof(hint), "%s %zd item", description, i + 1);
         readString(item[i], length, hint, example);
     }
     list->array  = item;
-    list->length = (size_t)count;
+    list->length = count;
     return;
 
 no_memory:
     //free already allocated memory here
-    for (int k = 0; k < i; k++)
+    for (size_t k = 0; k < i; k++)
     {
         OICFree(item[k]);
     }
@@ -371,7 +387,7 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
 
     int acllist_count = 0;
     readInteger(&acllist_count, "acl list count", "1");
-    if (0 >= acllist_count)
+    if (0 >= acllist_count || 1024 < acllist_count)
     {
         OIC_LOG(ERROR, TAG, "Wrong number of aclList");
         goto exit;

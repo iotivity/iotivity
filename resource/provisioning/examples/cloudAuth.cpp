@@ -166,17 +166,10 @@ OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
     OC_UNUSED(ctx);
     OC_UNUSED(handle);
 
-    if (!response)
-    {
-        OIC_LOG(ERROR, TAG, "Received NULL response!");
-        goto exit;
-    }
+    VERIFY_NOT_NULL_RETURN(TAG, response, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL(TAG, response->payload, ERROR);
 
-    if (response->payload)
-    {
-        OIC_LOG(ERROR, TAG, "Payload received");
-        OIC_LOG_PAYLOAD(DEBUG, response->payload);
-    }
+    OIC_LOG_PAYLOAD(DEBUG, response->payload);
 
     if (response->result != LOGIN_OK)
     {
@@ -264,19 +257,12 @@ OCStackApplicationResult handleCloudSignInResponse(void *ctx,
     OC_UNUSED(ctx);
     OC_UNUSED(handle);
 
-    if (!response)
-    {
-        OIC_LOG(ERROR, TAG, "Received NULL response!");
-        goto exit;
-    }
+    VERIFY_NOT_NULL_RETURN(TAG, response, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL(TAG, response->payload, ERROR);
 
-    if (response->payload)
-    {
-        OIC_LOG(ERROR, TAG, "Payload received");
-        OIC_LOG_PAYLOAD(DEBUG, response->payload);
-    }
+    OIC_LOG_PAYLOAD(DEBUG, response->payload);
 
-    if (response->result < 4 && response->payload)
+    if (response->result < 4)
     {
         OIC_LOG_V(ERROR, TAG, "Sign In error: result: %d, payload exist: %s",
                   response->result, response->payload ? "yes" : "no");
@@ -381,19 +367,12 @@ OCStackApplicationResult handleCloudSignOutResponse(void *ctx,
     OC_UNUSED(ctx);
     OC_UNUSED(handle);
 
-    if (!response)
-    {
-        OIC_LOG(ERROR, TAG, "Received NULL response!");
-        goto exit;
-    }
+    VERIFY_NOT_NULL_RETURN(TAG, response, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL(TAG, response->payload, ERROR);
 
-    if (response->payload)
-    {
-        OIC_LOG(ERROR, TAG, "Payload received");
-        OIC_LOG_PAYLOAD(DEBUG, response->payload);
-    }
+    OIC_LOG_PAYLOAD(DEBUG, response->payload);
 
-    if (response->result < 4 && response->payload)
+    if (response->result < 4)
     {
         OIC_LOG_V(ERROR, TAG, "Sign Out error");
         return OC_STACK_DELETE_TRANSACTION;
