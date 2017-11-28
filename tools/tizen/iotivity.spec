@@ -45,23 +45,13 @@ Source1002: %{name}-test.manifest
 %define build_mode debug
 %endif
 
-%ifarch armv7l armv7hl armv7nhl armv7tnhl armv7thl
 %if 3 <= 0%{?tizen_version_major}
+%ifarch armv7l armv7hl armv7nhl armv7tnhl armv7thl
 BuildRequires: python-accel-armv7l-cross-arm
 %endif
-%define TARGET_ARCH armeabi-v7a
-%endif
 %ifarch aarch64
-%if 3 <= 0%{?tizen_version_major}
 BuildRequires: python-accel-aarch64-cross-aarch64
 %endif
-%define TARGET_ARCH arm64
-%endif
-%ifarch x86_64
-%define TARGET_ARCH x86_64
-%endif
-%ifarch %{ix86}
-%define TARGET_ARCH x86
 %endif
 
 %if ! 0%{?license:0}
@@ -75,7 +65,6 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?RELEASE: %define RELEASE 1}
 %{!?ROUTING: %define ROUTING EP}
 %{!?SECURED: %define SECURED 1}
-%{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
 %{!?TARGET_OS: %define TARGET_OS linux}
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT ALL}
 %{!?VERBOSE: %define VERBOSE 1}
@@ -98,7 +87,6 @@ RD_MODE=%{RD_MODE} \\\
 RELEASE=%{RELEASE} \\\
 ROUTING=%{ROUTING} \\\
 SECURED=%{SECURED} \\\
-TARGET_ARCH=%{TARGET_ARCH} \\\
 TARGET_OS=%{TARGET_OS} \\\
 TARGET_TRANSPORT=%{TARGET_TRANSPORT} \\\
 VERBOSE=%{VERBOSE} \\\
@@ -297,3 +285,4 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/lib*.a
 %{_libdir}/pkgconfig/%{name}.pc
 %{_includedir}/*
+
