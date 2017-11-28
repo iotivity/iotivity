@@ -147,6 +147,7 @@ Summary: Development files for %{name}
 Group: Network & Connectivity/Development
 Requires: %{name} = %{version}-%{release}
 Requires: pkgconfig
+Requires: boost-devel
 
 %description devel
 The %{name}-devel package contains libraries and header files for
