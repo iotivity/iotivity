@@ -1269,6 +1269,7 @@ static OicSecCred_t *JSONToCredBinWithRowner(const char *jsonStr,OicUuid_t *rown
                 cred->privateData.data = (uint8_t *)OICCalloc(1, cred->privateData.len);
                 VERIFY_NOT_NULL(TAG, (cred->privateData.data), ERROR);
                 memcpy(cred->privateData.data, buf, cred->privateData.len);
+                OICFree(buf);
 
                 cJSON *jsonEncoding = cJSON_GetObjectItem(jsonObj, OIC_JSON_ENCODING_NAME);
                 VERIFY_NOT_NULL(TAG, jsonEncoding, ERROR);
@@ -1296,6 +1297,7 @@ static OicSecCred_t *JSONToCredBinWithRowner(const char *jsonStr,OicUuid_t *rown
                 cred->publicData.data = (uint8_t *)OICCalloc(1, cred->publicData.len);
                 VERIFY_NOT_NULL(TAG, (cred->publicData.data), ERROR);
                 memcpy(cred->publicData.data, buf, cred->publicData.len);
+                OICFree(buf);
 
                 cJSON *jsonEncoding = cJSON_GetObjectItem(jsonObj, OIC_JSON_ENCODING_NAME);
 
@@ -1324,6 +1326,7 @@ static OicSecCred_t *JSONToCredBinWithRowner(const char *jsonStr,OicUuid_t *rown
                 cred->optionalData.data =  (uint8_t *)OICCalloc(1, cred->optionalData.len);
                 VERIFY_NOT_NULL(TAG, (cred->optionalData.data), ERROR);
                 memcpy(cred->optionalData.data, buf, cred->optionalData.len);
+                OICFree(buf);
 
                 cJSON *jsonEncoding = cJSON_GetObjectItem(jsonObj, OIC_JSON_ENCODING_NAME);
                 VERIFY_NOT_NULL(TAG, jsonEncoding, ERROR);

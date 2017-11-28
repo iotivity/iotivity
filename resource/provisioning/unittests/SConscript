@@ -64,10 +64,10 @@ if target_os in ['windows']:
 
     provisiontests_env.AppendUnique(LIBS=['sqlite3', 'win_helper'])
 elif target_os in ['tizen', 'linux']:
-    provisiontests_env.ParseConfig('pkg-config --cflags --libs sqlite3')
-    provisiontests_env.ParseConfig('pkg-config --cflags --libs gobject-2.0 gio-2.0 glib-2.0')
+    provisiontests_env.ParseConfig('pkg-config --cflags --libs sqlite3 gobject-2.0 gio-2.0 glib-2.0')
 
-if target_os in ['msys_nt', 'windows']:
+# build fix: don't use _internal unless have to
+if target_os in ('msys_nt', 'windows'):
     calib = 'connectivity_abstraction_internal'
 else:
     calib = 'connectivity_abstraction'
@@ -109,10 +109,12 @@ if provisiontests_env.get('SECURED') == '1':
 ######################################################################
 # Source files and Targets
 ######################################################################
-ocprovisiontest_src = ['OCProvisioningTest.cpp']
+ocprovisiontest_src = [
+    'OCProvisioningTest.cpp'
+]
 
 if provisiontests_env.get('WITH_TCP') == True and provisiontests_env.get('WITH_CLOUD') == True:
-    ocprovisiontest_src = ocprovisiontest_src + ['OCCloudProvisioningTest.cpp']
+    ocprovisiontest_src.append('OCCloudProvisioningTest.cpp')
 
 unittests = provisiontests_env.Program('provisiontests', ocprovisiontest_src)
 
@@ -130,9 +132,9 @@ if provisiontests_env.get('TEST') == '1':
         provisiontests_env.AppendENVPath('GTEST_OUTPUT', ['xml:' + result_dir])
         provisiontests_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
         run_test(provisiontests_env,
-                   'resource_provisioning_unittests_provisiontests.memcheck',
-                   'resource/provisioning/unittests/provisiontests',
-                    unittests)
+                 'resource_provisioning_unittests_provisiontests.memcheck',
+                 'resource/provisioning/unittests/provisiontests',
+                  unittests)
 
 src = File('#/resource/provisioning/examples/oic_svr_db_client.json')
 dst = provisiontests_env.get('BUILD_DIR') + Dir('.').srcnode().path + "/" + src.name
