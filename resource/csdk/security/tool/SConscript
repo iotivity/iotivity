@@ -98,5 +98,7 @@ svrdbeditor_src = [
     SVRDBEDITOR_DIR + 'svrdbeditor.c'
 ]
 svrdbeditor = tools_env.Program("svrdbeditor", svrdbeditor_src)
-Alias("securitytool", [json2cbor, svrdbeditor])
-tools_env.AppendTarget('securitytool')
+securitytools = [json2cbor, svrdbeditor]
+Alias("securitytools", securitytools)
+tools_env.AppendTarget('securitytools')
+tools_env.UserInstallTargetExtra(securitytools)
