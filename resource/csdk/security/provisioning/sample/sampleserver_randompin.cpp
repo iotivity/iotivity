@@ -150,7 +150,7 @@ const char *getResult(OCStackResult result) {
 #include <chrono>
 
 static bool volatile g_LoopFlag;
-static std::thread* oc_process_thread;
+static std::thread* oc_process_thread = nullptr;
 
 static void oc_process_loop()
 {
@@ -170,6 +170,11 @@ static void StartOCProcessThread()
 {
     g_LoopFlag = true;
     oc_process_thread = new std::thread(oc_process_loop);
+    if(nullptr == oc_process_thread)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s start thread mail loop returns null, exit.", __func__);
+        ::exit(1);
+    }
 }
 
 static void StopOCProcessThread()
