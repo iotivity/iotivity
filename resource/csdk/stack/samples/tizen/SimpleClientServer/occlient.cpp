@@ -29,9 +29,12 @@
 #include <iostream>
 #include <sstream>
 #include "ocstack.h"
-#include "experimental/logger.h"
 #include "occlient.h"
 #include "ocpayload.h"
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/logger.h"
 #include "experimental/payload_logging.h"
 
 using namespace std;

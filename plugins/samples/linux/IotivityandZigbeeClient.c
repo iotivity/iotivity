@@ -34,10 +34,13 @@
 #include <unistd.h>
 #include <errno.h>
 #include "ocstack.h"
-#include "experimental/logger.h"
 #include "ocpayload.h"
-#include "experimental/payload_logging.h"
 #include "oic_string.h"
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/logger.h"
+#include "experimental/payload_logging.h"
 
 #define DEFAULT_CONTEXT_VALUE       (0x99)
 #define MAX_QUERY_SIZE              (1024)

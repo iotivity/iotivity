@@ -21,7 +21,6 @@
 // Do not remove the include below
 #include "Arduino.h"
 
-#include "experimental/logger.h"
 #include "ocstack.h"
 #include "ocpayload.h"
 #include <string.h>
@@ -41,6 +40,9 @@
 #include <EthernetUdp.h>
 #include <Dhcp.h>
 #endif
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/logger.h"
 
 const char *getResult(OCStackResult result);
 

@@ -28,7 +28,6 @@
 
 #include "platform_features.h"
 #include "utlist.h"
-#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocprovisioningmanager.h"
@@ -44,6 +43,10 @@
 #define F_OK 0
 #define access _access_s
 #endif
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/logger.h"
 
 #ifdef __cplusplus
 extern "C"

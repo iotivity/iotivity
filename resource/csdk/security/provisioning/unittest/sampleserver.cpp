@@ -27,16 +27,19 @@
 #include <time.h>
 
 #include "ocstack.h"
-#include "experimental/logger.h"
 #include "ocpayload.h"
 #include "oic_string.h"
 #include "srmutility.h"
 #include "doxmresource.h"
-#include "experimental/ocrandom.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/logger.h"
+#include "experimental/ocrandom.h"
 
 #define TAG "JW_UNITTEST"
 

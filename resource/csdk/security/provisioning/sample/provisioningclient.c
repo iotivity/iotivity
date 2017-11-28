@@ -25,9 +25,8 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "experimental/payload_logging.h"
+
 #include "utlist.h"
-#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocprovisioningmanager.h"
@@ -43,10 +42,14 @@
 
 #ifdef _MSC_VER
 #include <io.h>
-
 #define F_OK 0
 #define access _access_s
 #endif
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/payload_logging.h"
+#include "experimental/logger.h"
 
 #ifdef __cplusplus
 extern "C"

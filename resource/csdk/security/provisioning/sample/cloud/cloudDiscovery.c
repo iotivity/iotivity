@@ -18,15 +18,18 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "ocstack.h"
-#include "experimental/logger.h"
 #include "ocpayload.h"
-#include "experimental/payload_logging.h"
 #include "oic_string.h"
 #include "srmresourcestrings.h"
 #include "pmutility.h"
 
 #include "cloudCommon.h"
 #include "cloudWrapper.h"
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/logger.h"
+#include "experimental/payload_logging.h"
 
 #define TAG "cloudDiscovery"
 

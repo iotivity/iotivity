@@ -17,15 +17,17 @@
  * limitations under the License.
  *
  * *****************************************************************/
-#include "experimental/logger.h"
 #include "occloudprovisioning.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "srmutility.h"
 #include "aclresource.h"
 #include "utlist.h"
-
 #include "utils.h"
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/logger.h"
 
 #define TAG "CLOUD-WRAPPER"
 
