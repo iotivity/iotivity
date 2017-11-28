@@ -70,6 +70,7 @@ iotivity_include_paths = [
     iotivity_root + '/service/resource-encapsulation/include',
     iotivity_root + '/service/resource-encapsulation/src/common/primitiveResource/include',
     iotivity_root + '/service/resource-encapsulation/src/common/utils/include',
+    iotivity_lib_path + '/resource/c_common'
 ]
 
 tc_include_paths = [

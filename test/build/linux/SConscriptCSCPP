@@ -89,7 +89,8 @@ IOTIVITY_INCLUDE_PATH = [
     IOTIVITY_ROOT + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include/',
     IOTIVITY_ROOT + '/resource/csdk/connectivity/inc/pkix',
     IOTIVITY_ROOT + '/resource/csdk/resource-directory/include',
-    IOTIVITY_ROOT + '/extlibs/mbedtls/mbedtls/include/mbedtls'
+    IOTIVITY_ROOT + '/extlibs/mbedtls/mbedtls/include/mbedtls',
+    iotivity_lib_path + '/resource/c_common'
 ]
 
 TC_INCLUDE_PATH = [

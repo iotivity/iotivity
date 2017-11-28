@@ -56,7 +56,8 @@ iotivity_include_paths = [
     iotivity_root + '/resource/oc_logger/include',
     iotivity_root + '/extlibs/cereal/include/',
     iotivity_root + '/extlibs/timer/',
-    iotivity_root + '/extlibs/tinycbor/tinycbor/src/'
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src/',
+    iotivity_lib_path + '/resource/c_common'
 ]
 
 testapp_include_paths = [ iotivity_test_root + '/include' ]

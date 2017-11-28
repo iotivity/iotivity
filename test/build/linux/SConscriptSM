@@ -59,7 +59,8 @@ iotivity_include_paths = [
     iotivity_root + '/resource/csdk/logger/include',
     iotivity_root + '/extlibs/tinycbor/tinycbor/src',
     iotivity_root + '/resource/csdk/security/include',
-    iotivity_root + '/service/resource-encapsulation/include/'
+    iotivity_root + '/service/resource-encapsulation/include/',
+    iotivity_lib_path + '/resource/c_common'
 ]
 
 tc_include_paths = [
