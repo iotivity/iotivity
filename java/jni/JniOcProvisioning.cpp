@@ -335,7 +335,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayNumListen
 
     try
     {
-        OCStackResult result = OCSecure::registerDisplayNumCallback(displayMutualVerifNumCB);
+        OC::DisplayNumContext *displayNumContext = new OC::DisplayNumContext(displayMutualVerifNumCB);
+        OCStackResult result = OCSecure::registerDisplayNumCallback(displayNumContext);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Failed to set Listner");
@@ -420,7 +421,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setConfirmNumListen
 
     try
     {
-        OCStackResult result = OCSecure::registerUserConfirmCallback(confirmMutualVerifNumCB);
+        OC::UserConfirmNumContext* userConfirmNumContext = new OC::UserConfirmNumContext(confirmMutualVerifNumCB);
+        OCStackResult result = OCSecure::registerUserConfirmCallback(userConfirmNumContext);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Failed to set Listner");

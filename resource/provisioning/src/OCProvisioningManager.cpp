@@ -837,11 +837,11 @@ namespace OC
         return res;
     }
 
-    OCStackResult OCSecure::registerDisplayNumCallback(DisplayNumCB displayNumCB)
+    OCStackResult OCSecure::registerDisplayNumCallback(void *ctx)
     {
-        if(!displayNumCB)
+        if(!ctx)
         {
-            oclog() << "Failed to register callback for display.";
+            oclog() << "Failed set context";
             return OC_STACK_INVALID_CALLBACK;
         }
 
@@ -855,9 +855,8 @@ namespace OC
         auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
         if (cLock)
         {
-            DisplayNumContext* context = new DisplayNumContext(displayNumCB);
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            SetDisplayNumCB(static_cast<void*>(context), &OCSecure::displayNumCallbackWrapper);
+            SetDisplayNumCB(ctx, &OCSecure::displayNumCallbackWrapper);
             result = OC_STACK_OK;
         }
         else
@@ -906,11 +905,11 @@ namespace OC
         return res;
     }
 
-    OCStackResult OCSecure::registerUserConfirmCallback(UserConfirmNumCB userConfirmCB)
+    OCStackResult OCSecure::registerUserConfirmCallback(void* ctx)
     {
-        if(!userConfirmCB)
+        if(!ctx)
         {
-            oclog() << "Failed to set callback for confirming verifying callback.";
+            oclog() << "Failed to set context";
             return OC_STACK_INVALID_CALLBACK;
         }
 
@@ -924,9 +923,8 @@ namespace OC
         auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
         if (cLock)
         {
-            UserConfirmNumContext* context = new UserConfirmNumContext(userConfirmCB);
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            SetUserConfirmCB(static_cast<void*>(context), &OCSecure::confirmUserCallbackWrapper);
+            SetUserConfirmCB(ctx, &OCSecure::confirmUserCallbackWrapper);
             result = OC_STACK_OK;
         }
         else

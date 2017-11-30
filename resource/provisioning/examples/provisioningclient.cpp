@@ -769,13 +769,15 @@ int main(void)
             std::cout << "!!Error - registerInputPinCallback failed." << std::endl;
         }
 
-        result = OCSecure::registerDisplayNumCallback(displayMutualVerifNumCB);
+        OC::DisplayNumContext *displayNumContext = new OC::DisplayNumContext(displayMutualVerifNumCB);
+        result = OCSecure::registerDisplayNumCallback(displayNumContext);
         if (result != OC_STACK_OK)
         {
             std::cout<< "!!Error - setDisplayVerifNumCB failed."<<std::endl;
         }
 
-        result = OCSecure::registerUserConfirmCallback(confirmMutualVerifNumCB);
+        OC::UserConfirmNumContext* userConfirmNumContext = new OC::UserConfirmNumContext(confirmMutualVerifNumCB);
+        result = OCSecure::registerUserConfirmCallback(userConfirmNumContext);
         if (result != OC_STACK_OK)
         {
             std::cout<< "!!Error - setConfirmVerifNumCB failed."<<std::endl;
