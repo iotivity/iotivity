@@ -33,6 +33,7 @@
 #endif
 #include "experimental/logger.h"
 
+#define DEFAULT_CONTEXT_VALUE 0x99
 #define TAG ("occlient")
 
 int gQuitFlag = 0;
@@ -46,8 +47,12 @@ void handleSigInt(int signum) {
 
 // This is a function called back when a device is discovered
 OCStackApplicationResult applicationDiscoverCB(
+        void *context, OCDoHandle handle,
         OCClientResponse * clientResponse) {
+    (void)context;
+    (void)handle;
     (void)clientResponse;
+
     OIC_LOG(INFO, TAG, "Entering applicationDiscoverCB (Application Layer CB)");
     OIC_LOG_V(INFO, TAG, "Device =============> Discovered %s @ %s:%d",
                                     clientResponse->resourceUri,
@@ -67,10 +72,15 @@ int main() {
     }
 
     /* Start a discovery query*/
+    OCCallbackData cbData;
+    cbData.cb = applicationDiscoverCB;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
+    cbData.cd = NULL;
+
     char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
     strcpy(szQueryUri, OC_MULTICAST_DISCOVERY_URI);
-    if (OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, 
-            CT_DEFAULT, OC_LOW_QOS, 0, 0, 0) != OC_STACK_OK) {
+    if (OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, 0, 0,
+            CT_DEFAULT, OC_LOW_QOS, &cbData, NULL, 0) != OC_STACK_OK) {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
         return 0;
     }
