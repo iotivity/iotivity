@@ -2356,6 +2356,12 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest* ehRequest
     }
 
     res = CBORPayloadToCred(payload, size, &cred, &rownerId);
+#ifdef MULTIPLE_OWNER
+    if (IsSubOwner(cred->eownerID) && !IsNilUuid(cred->eownerID))
+    {
+        memcpy(rownerId, cred->eownerID, sizeof(OicUuid_t));
+    }
+#endif // MULTIPLE_OWNER
 
     if (OC_STACK_OK == res)
     {
