@@ -40,8 +40,10 @@ catest_env.PrependUnique(CPPPATH = [
 catest_env.AppendUnique(LIBPATH = [catest_env.get('BUILD_DIR')])
 catest_env.PrependUnique(LIBS = ['gtest', 'gtest_main'])
 catest_env.PrependUnique(LIBS = ['octbstack',
-                                    'connectivity_abstraction',
-                                    'coap'])
+                                 'ocsrm',
+                                 'routingmanager',
+                                 'connectivity_abstraction',
+                                 'coap'])
 
 if target_os not in ['arduino', 'darwin', 'ios', 'msys_nt', 'windows']:
 	catest_env.AppendUnique(LIBS=['rt'])
