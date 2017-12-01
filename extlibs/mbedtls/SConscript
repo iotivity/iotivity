@@ -65,12 +65,26 @@ if target_os != 'tizen':
         Exit(1)
 
 
-# Apply ocf patch on git revision
-if os.path.exists('.git/HEAD'):
-    cmd = 'git checkout development && git reset --hard ' + mbedtls_revision + ' && git apply --whitespace=fix ../ocf.patch'
-    os.system(cmd)
-else:
-    print 'mbedtls: Assume ocf.patch (TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256) was applied in %s' % mbedtls_dir
+
+pattern = 'TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256'
+found = False
+import re
+import sys
+mbedtls_header = os.path.join('include', 'mbedtls', 'compat-1.3.h')
+with open(mbedtls_header, 'r') as stream:
+    for line in stream:
+        if pattern in line:
+            found = True
+            break
+if not found:
+    if os.path.exists('.git/HEAD'):
+        # Apply ocf patch on git revision
+        cmd = 'git checkout development && git reset --hard ' + mbedtls_revision + ' && git clean -f && git apply --whitespace=fix ../ocf.patch'
+        os.system(cmd)
+    else:
+        print "mbedtls: error: missing %s" % pattern
+        Exit(1)
+
 os.chdir(start_dir)
 
 # Copy IoTivity's version of the mbedtls build configuration file
