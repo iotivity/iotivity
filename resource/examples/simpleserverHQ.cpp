@@ -45,6 +45,7 @@ using namespace OC;
 using namespace std;
 namespace PH = std::placeholders;
 
+static const char* SVR_DB_FILE_NAME = "./oic_svr_db_server.dat";
 int gObservation = 0;
 void * ChangeLightRepresentation (void *param);
 
@@ -520,10 +521,20 @@ void PrintUsage()
     std::cout << "   ObserveType : 1 - Observe List of observers\n\n";
 }
 
+static FILE* override_fopen(const char* path, const char* mode)
+{
+    char const * filename = path;
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        filename = SVR_DB_FILE_NAME;
+    }
+    return fopen(filename, mode);
+}
 
 int main(int argc, char* argv[])
 {
     PrintUsage();
+    OCPersistentStorage ps {override_fopen, fread, fwrite, fclose, unlink };
 
     if (argc == 1)
     {
@@ -548,7 +559,8 @@ int main(int argc, char* argv[])
         OC::ModeType::Server,
         "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
         0,         // Uses randomly available port
-        OC::QualityOfService::LowQos
+        OC::QualityOfService::LowQos,
+        &ps
     };
 
     OCPlatform::Configure(cfg);
