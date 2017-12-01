@@ -1763,6 +1763,7 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                                                 }
 
                                                 free(subjectTag);       // we are done with this instance
+                                                subjectTag = NULL;
                                             }
 
                                             // advance to next elt in subject map
