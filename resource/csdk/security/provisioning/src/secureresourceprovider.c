@@ -718,7 +718,7 @@ static OCStackResult ProvisionLocalCredential(void *ctx, OicSecCred_t *cred)
 /**
  * Updates result in result array of the target device.
  */
-static void RegisterProvResult(const OCProvisionDev_t *targetDev, OCProvisionResult_t *resArr,
+static OCStackResult RegisterProvResult(const OCProvisionDev_t *targetDev, OCProvisionResult_t *resArr,
                                int *numOfResults, OCStackResult stackResult);
 /**
  * Callback handler for handling callback of posting DOS_RFNOP.
@@ -800,9 +800,18 @@ static OCStackApplicationResult SetReadyForNormalOperationCB(void *ctx, OCDoHand
 
     if (dataType != PSK_TYPE)
     {
-        RegisterProvResult(targetDev, resArr, numOfResults, clientResponse->result);
-        resultCallback(dataCtx, *numOfResults, resArr, clientResponse->result != OC_STACK_RESOURCE_CHANGED);
-        FreeData(ctx);
+        if (NULL != resultCallback)
+        {
+            RegisterProvResult(targetDev, resArr, numOfResults, clientResponse->result);
+            resultCallback(dataCtx, *numOfResults, resArr, clientResponse->result != OC_STACK_RESOURCE_CHANGED);
+            FreeData(ctx);
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, "resultCallback is NULL");
+            OIC_LOG_V(ERROR, TAG, "OUT %s", __func__);
+            return OC_STACK_DELETE_TRANSACTION;
+        }
     }
     else
     {
@@ -1205,6 +1214,7 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
     }
 
     Data_t *data = (Data_t *) OICCalloc(1, sizeof(Data_t));
+    VERIFY_NOT_NULL_RETURN(TAG, data, ERROR, OC_STACK_NO_MEMORY);
     data->type = CHAIN_TYPE;
     data->ctx = chainData;
 
@@ -3944,14 +3954,19 @@ OCStackResult SRPReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
 /**
  * Updates provisioning result.
  */
-static void RegisterProvResult(const OCProvisionDev_t *targetDev, OCProvisionResult_t *resArr,
+static OCStackResult RegisterProvResult(const OCProvisionDev_t *targetDev, OCProvisionResult_t *resArr,
                                int *numOfResults, OCStackResult stackResult)
 {
+    VERIFY_NOT_NULL_RETURN(TAG, targetDev, ERROR, OC_STACK_ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, resArr, ERROR, OC_STACK_ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, numOfResults, ERROR, OC_STACK_ERROR);
 
     OIC_LOG_V(INFO, TAG, "value of  numOfResults is %d", *numOfResults);
     memcpy(resArr[*numOfResults].deviceId.id, targetDev->doxm->deviceID.id, UUID_LENGTH);
     resArr[*numOfResults].res = stackResult;
     (*numOfResults)++;
+
+    return OC_STACK_OK;
 }
 
 static OCStackApplicationResult ProvisionAclCB(void *ctx, OCDoHandle UNUSED,
