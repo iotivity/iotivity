@@ -525,9 +525,7 @@ void PrintCredList(const OicSecCred_t *creds)
                     PRINT_PROG("%15s : ", OIC_JSON_PUBLICDATA_NAME);
                     PRINT_DATA("%-17s : ", OIC_JSON_ENCODING_NAME);
                     PrintCredEncodingType(cred->publicData.encoding);
-
                     PrintBuffer(cred->publicData.data, cred->publicData.len);
-
                     if (cred->credUsage &&
                         (0 == strcmp(cred->credUsage, PRIMARY_CERT) ||
                          0 == strcmp(cred->credUsage, MF_PRIMARY_CERT)))

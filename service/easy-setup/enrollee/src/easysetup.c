@@ -281,7 +281,7 @@ ESResult ESTerminateEnrollee()
         return ES_ERROR;
     }
 
-    OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESTerminateEnrollee success");
+    OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESTerminateEnrollee success");
     return ES_OK;
 }
 

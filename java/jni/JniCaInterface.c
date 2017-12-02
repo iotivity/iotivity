@@ -99,7 +99,11 @@ void CAManagerConnectionStateChangedCB(const CAEndpoint_t *info,
     if (JNI_OK != res)
     {
         LOGI("AttachCurrentThread will be called for JNIEnv pointer");
+#ifdef __ANDROID__
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+#else
         res = (*g_jvm)->AttachCurrentThread(g_jvm, (void**) &env, NULL);
+#endif
 
         if (JNI_OK != res)
         {
@@ -168,7 +172,11 @@ void CAManagerAdapterStateChangedCB(CATransportAdapter_t adapter, bool enabled)
     if (JNI_OK != res)
     {
         LOGI("AttachCurrentThread will be called for JNIEnv pointer");
+#ifdef __ANDROID__
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+#else
         res = (*g_jvm)->AttachCurrentThread(g_jvm, (void**) &env, NULL);
+#endif
 
         if (JNI_OK != res)
         {
