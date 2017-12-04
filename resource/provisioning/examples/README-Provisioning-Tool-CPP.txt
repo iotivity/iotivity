@@ -40,8 +40,8 @@ To execute Provisioning Tool sample:
     created credentials, replace the server and client sample DAT files
     with oic_svr_db_client.dat and oic_svr_db_server.dat files from the
     ownership transfer as follows:
-    $ cp ./oic_svr_db_client.dat <iotivity-base>/out/<...>/release/resource/csdk/stack/samples/linux/secure/oic_svr_db.client.dat
-    $ cp <iotivity-base>/out/release/resource/csdk/security/provisioning/samples/oic_svr_db_server_<...>.dat <iotivity-base>/out/<...>/release/resource/csdk/stack/samples/linux/secure/oic_svr_db.server.dat
+    $ cp ./oic_svr_db_client.dat <iotivity-base>/out/<...>/release/resource/csdk/stack/samples/linux/secure/oic_svr_db_client.dat
+    $ cp <iotivity-base>/out/release/resource/csdk/security/provisioning/samples/oic_svr_db_server_<...>.dat <iotivity-base>/out/<...>/release/resource/csdk/stack/samples/linux/secure/oic_svr_db_server.dat
 
     Then move to the sample app directory
     and execute the server and client apps:
