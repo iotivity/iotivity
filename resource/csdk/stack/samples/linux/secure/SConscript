@@ -81,3 +81,4 @@ ocsamples += samples_env.ScanJSON('resource/csdk/stack/samples/linux/secure')
 
 Alias("samples", ocsamples)
 samples_env.AppendTarget('samples')
+samples_env.UserInstallTargetExtra(ocsamples)
