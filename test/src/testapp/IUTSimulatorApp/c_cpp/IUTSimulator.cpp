@@ -22,6 +22,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
+#include <fstream>
 
 #ifdef __LINUX__
 #include <execinfo.h>
@@ -145,6 +146,9 @@ bool g_retainOldDB = false;
 
 pthread_t g_processThread;
 
+std::ofstream g_RDPPINLogFileStream;
+int g_RDPPINSeqNumber = 0;
+
 QualityOfService g_qos = QualityOfService::LowQos;
 ResourceHelper *g_resourceHelper;
 ESProvisioningCallbacks g_esCallbacks;
@@ -252,6 +256,48 @@ string getHost();
 FILE* server_fopen(const char*, const char*);
 FILE* client_fopen(const char*, const char*);
 void updateLec(void);
+void openRDPLogFile(void);
+void closeRDPLogFile(void);
+
+
+void openRDPLogFile()
+{
+    time_t t = time(0);
+    struct tm *now = localtime(&t);
+
+    char time_str [150];
+    strftime(time_str, 150, "%Y-%m-%d-%H-%M-%S.log", now);
+
+    std::string file_name = "iut_RDP_PIN_tracker_log_";
+    file_name = file_name + time_str;
+
+    g_RDPPINLogFileStream.open(file_name.c_str());
+
+    if(g_RDPPINLogFileStream.is_open())
+    {
+         std::cout << "Success to create g_RDPPINLogFileStream" << std::endl;
+    }
+
+    g_RDPPINLogFileStream << "Start Time:" << time_str << std::endl;
+    g_RDPPINLogFileStream << "===================================" << std::endl;
+}
+
+void closeRDPLogFile()
+{
+    g_RDPPINLogFileStream.close();
+}
+
+std::string getTimeNow()
+{
+    time_t t = time(0);
+    struct tm *now = localtime(&t);
+
+    char time_str [150];
+    strftime(time_str, 150, "[%Y-%m-%d-%H-%M-%S]", now);
+
+    std::string currTimeStr(time_str);
+    return currTimeStr;
+}
 
 void handler(int sig)
 {
@@ -387,16 +433,27 @@ void replaceDatFile(int modeType, int securityType)
 
 void generatePinCB(char* pin, size_t pinSize)
 {
+    cout << "generatePinCB [IN]" << endl;
     if (NULL == pin || pinSize <= 0)
     {
         cout << "Invalid PIN" << endl;
     }
     else
     {
+        g_RDPPINSeqNumber++;
+
         cout << "============================" << endl;
+        cout << "PIN CODE Sequence Number: " << g_RDPPINSeqNumber << " Time: " << getTimeNow() << endl;
         cout << "    PIN CODE : " << string(pin) << endl;
         cout << "============================" << endl;
+
+        g_RDPPINLogFileStream << "============================" << endl;
+        g_RDPPINLogFileStream << "PIN CODE Sequence Number: " << g_RDPPINSeqNumber << " Time: " << getTimeNow() << endl;
+        g_RDPPINLogFileStream << "    PIN CODE : " << string(pin) << endl;
+        g_RDPPINLogFileStream << "============================" << endl;
+        g_RDPPINLogFileStream.flush();
     }
+    cout << "generatePinCB [OUT]" << endl;
 }
 
 int main(int argc, char* argv[])
@@ -526,6 +583,8 @@ int main(int argc, char* argv[])
 #endif
                     cout << "Supported Security Mode: randompin" << endl;
                     g_di = RANDOM_PIN_DI;
+
+                    openRDPLogFile();
                 }
                 else if (g_securityType == 3 )
                 {
@@ -3945,7 +4004,7 @@ void setDeviceWESInfo()
         { "Test Device"}
     };
 
-	// Set user properties if needed
+    // Set user properties if needed
     char userValue_str[] = "user_str";
     g_userProperties.userValue_int = 0;
 
@@ -4468,6 +4527,8 @@ void selectMenu(int choice)
             }
             g_createdResourceList.clear();
             g_foundResourceList.clear();
+
+            closeRDPLogFile();
             exit(0);
 
         default:
