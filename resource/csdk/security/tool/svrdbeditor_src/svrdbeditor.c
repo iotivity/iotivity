@@ -31,6 +31,7 @@
 #include "svrdbeditorcred.h"
 #include "svrdbeditordoxm.h"
 #include "svrdbeditorpstat.h"
+#include "pstatresource.h"
 
 static bool g_allowedEditMenu[SVR_EDIT_IDX_SIZE] = {false/*unused*/, false, false, false, false};
 static char g_svrDbPath[SVR_DB_PATH_LENGTH];
@@ -98,6 +99,9 @@ static int MainOperation(const char *svrpath)
         PRINT_ERR("OCRegisterPersistentStorageHandler : %d", ocResult);
         return -1;
     }
+
+    InitPstatResourceToDefault();
+
     RefreshACL();
     RefreshCred();
     RefreshDoxm();

@@ -137,7 +137,7 @@ def build_linux_secured(flag, extra_option_str):
     call_scons(build_options, extra_option_str)
 
 def build_linux_full(flag, extra_option_str):
-    print ("*********** Build for linux with Security *************")
+    print ("*********** Build for linux with full features *************")
     build_options = {
                         'BUILD_JAVA':1,
                         'MULTIPLE_OWNER':1,
