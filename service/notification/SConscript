@@ -56,11 +56,10 @@ notification_env.AppendUnique(CPPPATH=[
 ])
 
 notification_env.PrependUnique(LIBS=[
+    'resource_directory',
     'octbstack',
     'oc_logger',
     'connectivity_abstraction',
-    'libcoap',
-    'resource_directory',
 ])
 
 if target_os not in ['windows', 'winrt']:

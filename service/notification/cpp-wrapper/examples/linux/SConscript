@@ -54,7 +54,6 @@ notification_sample_env.PrependUnique(LIBS=[
     'liboctbstack',
     'oc_logger',
     'connectivity_abstraction',
-    'libcoap',
 ])
 
 notification_sample_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-frtti'])
