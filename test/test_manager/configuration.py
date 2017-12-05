@@ -29,7 +29,7 @@ TEST_RESULT_RUN_DIR = TEST_RESULT_DIR + ""+os.sep+"__run__"
 TEST_SPEC_DIR = TEST_REPORT_DIR + ""+os.sep+"Spec"
 TEST_DEFECT_DIR = TEST_REPORT_DIR + ""+os.sep+"Defect"
 
-MEMCHECK_REPORT_DIR = ".."+os.sep+"MemCheckRerport"
+MEMCHECK_REPORT_DIR = ".."+os.sep+"MemCheckReport"
 MEMCHECK_RESULT_DIR = MEMCHECK_REPORT_DIR + os.sep + "Result"
 MEMCHECK_RESULT_RUN_DIR = MEMCHECK_RESULT_DIR + ""+os.sep+"__run__"
 
