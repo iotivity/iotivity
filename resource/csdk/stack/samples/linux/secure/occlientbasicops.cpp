@@ -68,11 +68,13 @@ static char CRED_FILE_NONDEVOWNER[] = "oic_svr_db_client_nondevowner.dat";
 const char * OIC_STD_URI_PREFIX = "/oic/";
 
 const char * COAPS_STR = "coaps";
+
 #ifdef __WITH_TLS__
 const char * COAPS_TCP_STR = "coaps+tcp";
 #endif
 
 int gQuitFlag = 0;
+static const char *gResourceUri = "/a/led";
 
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
 void handleSigInt(int signum)
@@ -206,18 +208,32 @@ OCStackApplicationResult discoveryReqCB(void *, OCDoHandle,
 
             if (parseClientResponse(clientResponse) != -1)
             {
-                switch (TestCase)
+                OCDiscoveryPayload *payload = (OCDiscoveryPayload *) clientResponse->payload;
+                OCResourcePayload *resource = (OCResourcePayload *) payload->resources;
+                for (;resource; resource = resource->next)
                 {
-                    case TEST_NON_CON_OP:
-                        InitGetRequest(&clientResponse->devAddr, OC_LOW_QOS);
-                        InitPutRequest(&clientResponse->devAddr, OC_LOW_QOS);
-                        InitPostRequest(&clientResponse->devAddr, OC_LOW_QOS);
+                    if ((0 == strcmp(gResourceUri, resource->uri))
+                         && (0 == strcmp(COAPS_STR, resource->eps->tps)))
+                    {
+                        OCDevAddr* endpoint = &clientResponse->devAddr;
+                        strcpy(endpoint->addr, resource->eps->addr);
+                        endpoint->port = resource->eps->port;
+                        endpoint->flags = resource->eps->family;
+
+                        switch (TestCase)
+                        {
+                        case TEST_NON_CON_OP:
+                            InitGetRequest(endpoint, OC_LOW_QOS);
+                            InitPutRequest(endpoint, OC_LOW_QOS);
+                            InitPostRequest(endpoint, OC_LOW_QOS);
+                            break;
+                        case TEST_CON_OP:
+                            InitGetRequest(endpoint, OC_HIGH_QOS);
+                            InitPutRequest(endpoint, OC_HIGH_QOS);
+                            InitPostRequest(endpoint, OC_HIGH_QOS);
                         break;
-                    case TEST_CON_OP:
-                        InitGetRequest(&clientResponse->devAddr, OC_HIGH_QOS);
-                        InitPutRequest(&clientResponse->devAddr, OC_HIGH_QOS);
-                        InitPostRequest(&clientResponse->devAddr, OC_HIGH_QOS);
-                        break;
+                        }
+                    }
                 }
             }
         }
