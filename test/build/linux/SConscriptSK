@@ -53,6 +53,7 @@ include_paths = [
     iotivity_test_root + '/include',
     iotivity_root + '/resource/include', 
     iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/csdk/resource-directory/include',
     iotivity_root + '/resource/csdk/connectivity/api', 
     iotivity_root + '/resource/csdk/stack/include', 
     iotivity_root + '/resource/csdk/security/include',
