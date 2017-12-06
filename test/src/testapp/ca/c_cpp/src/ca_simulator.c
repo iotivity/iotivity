@@ -871,11 +871,7 @@ void errorHandler(const CAEndpoint_t *endpoint, const CAErrorInfo_t *errorInfo)
 
     output("result: %d\n", errorInfo->result);
 
-    if (info->token)
-    {
-        //output("token: %s\n", info->token);
-    }
-    else
+    if (!info->token)
     {
         output("token is NULL\n");
     }

@@ -369,7 +369,7 @@ int main()
     CAEndpoint_t* endpoint;
     char resourceUri[1024] = "SendReqAck";
     char payload[1024] = "aaaaaaaaaaa";
-    char command[100];
+    char command[2];
 
 #ifdef TIZEN
     g_mainloop = g_main_loop_new(NULL, FALSE);

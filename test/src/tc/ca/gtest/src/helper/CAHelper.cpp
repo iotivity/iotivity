@@ -820,7 +820,6 @@ bool CAHelper::parseAddress(const CAEndpoint_t* endpoint, const CAInfo_t info)
 
     setIp.insert(endpoint->addr);
     strcpy(s_simulatorIp, endpoint->addr);
-    //printf ("payload %s\n", info.payload);
 
     for(i = lastPosition = PAYLOAD_SIZE_NORMAL; i <= (int)info.payloadSize; i++)
     {
@@ -1051,7 +1050,6 @@ bool CAHelper::sendRequest(char* uri, char* hidden_payload, CAMethod_t method, C
 
         totalMessage = 1;
         IOTIVITYTEST_LOG(DEBUG, "payload type configure");
-        //IOTIVITYTEST_LOG(DEBUG, "payload: %s", payload);
     }
     else
     {
@@ -1149,10 +1147,6 @@ bool CAHelper::sendConfigurationRequest(SimulatorTask taskType, MessageCommandTy
 
         case UNSELECT_NETWORK:
             payload += "2";
-            break;
-
-        default:
-            break;
     }
 
     switch (msgType)
@@ -1163,10 +1157,6 @@ bool CAHelper::sendConfigurationRequest(SimulatorTask taskType, MessageCommandTy
 
         case MESSAGE_REQUEST:
             payload += "1";
-            break;
-
-        default:
-            break;
     }
 
 #if defined(__LINUX__) || defined(__ANDROID_NATIVE__)
@@ -1181,7 +1171,6 @@ bool CAHelper::sendConfigurationRequest(SimulatorTask taskType, MessageCommandTy
     payload += buffer;
 
     payload += s_tcInfo.identifier;
-    //IOTIVITYTEST_LOG(DEBUG, "Random String in structure: %s", s_tcInfo.identifier);
 
     IOTIVITYTEST_LOG(DEBUG, "[sendConfigurationRequest] OUT");
 #endif
@@ -1200,7 +1189,6 @@ bool CAHelper::sendConfigurationRequest(SimulatorTask taskType, MessageCommandTy
     free(buffer);
 
     payload.append(s_tcInfo.identifier);
-    //IOTIVITYTEST_LOG(DEBUG, "Random String in structure: %s", s_tcInfo.identifier);
 #endif
 
     return sendRequest((char*) SIM_REQ_CONFIG, (char*) payload.c_str(), method,
@@ -1265,16 +1253,11 @@ bool CAHelper::sendResponse(char* uri, char* hidden_payload, CAResponseResult_t 
     }
     else
     {
-        if (strlen(hidden_payload) < MAX_BUF_LEN)
-        {
-            strcpy((char*)payload, hidden_payload);
-        }
+        strncpy((char*)payload, hidden_payload, strlen(hidden_payload));
 
         payloadSize = strlen((const char*)payload);
-        if (payloadSize < MAX_BUF_LEN)
-        {
-            strcpy(s_tcInfo.identifier, (const char*)payload);
-        }
+
+        strncpy(s_tcInfo.identifier, (const char*)payload, payloadSize);
 
         responseData.payload = (CAPayload_t) malloc(payloadSize);
         responseData.payloadSize = payloadSize;
@@ -1749,11 +1732,9 @@ void CAHelper::errorHandler(const CAEndpoint_t *rep, const CAErrorInfo_t* errorI
         const CAInfo_t *info = &errorInfo->info;
         IOTIVITYTEST_LOG(DEBUG, "Error Handler, ErrorInfo :\n");
         IOTIVITYTEST_LOG(DEBUG, "Error Handler result    : %d\n", errorInfo->result);
-        //IOTIVITYTEST_LOG(DEBUG, "Error Handler token     : %s\n", info->token);
         IOTIVITYTEST_LOG(DEBUG, "Error Handler messageId : %d\n", (uint16_t) info->messageId);
         IOTIVITYTEST_LOG(DEBUG, "Error Handler type      : %d\n", info->type);
         IOTIVITYTEST_LOG(DEBUG, "Error Handler resourceUri : %s\n", info->resourceUri);
-        //IOTIVITYTEST_LOG(DEBUG, "Error Handler payload   : %s\n", info->payload);
 
         if (CA_ADAPTER_NOT_ENABLED == errorInfo->result)
         {
@@ -1851,8 +1832,6 @@ bool CAHelper::checkHeader(CAHeaderOption_t *options, uint32_t len)
         {
             IOTIVITYTEST_LOG(DEBUG, "Option %d\n", i + 1);
             IOTIVITYTEST_LOG(DEBUG, "ID : %d\n", options[i].optionID);
-            //IOTIVITYTEST_LOG(DEBUG, "Data[%d]: %s\n", options[i].optionLength,
-            //        options[i].optionData);
         }
 
         IOTIVITYTEST_LOG(DEBUG, "[checkHeader] vaue %d", len);
