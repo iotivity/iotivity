@@ -283,10 +283,10 @@ const int SUCCESS_RESPONSE = 0;
 #define TCP_ENDPOINT_KEY "tcp"
 #define SECURED_ENDPOINT_KEY "coaps"
 
-//  for OCF1.0 device
+//  for OCF1.3 device
 #define CORE_SPEC_VERSION "ocf.1.0.0"
-#define RESOURCE_TYPE_SPEC_VERSION "ocf.res.1.0.0"
-#define SMART_HOME_SPEC_VERSION "ocf.sh.1.0.0"
+#define RESOURCE_TYPE_SPEC_VERSION "ocf.res.1.3.0"
+#define SMART_HOME_SPEC_VERSION "ocf.sh.1.3.0"
 
 #define COAP_RESPONSE_CODE_SUCCESS 205
 #define COAP_RESPONSE_CODE_CREATED 201
