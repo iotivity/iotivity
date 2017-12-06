@@ -815,8 +815,8 @@ bool CAHelper::parseAddress(const CAEndpoint_t* endpoint, const CAInfo_t info)
     int i;
     int j;
     int lastPosition;
-    char key[20];
-    char value[20];
+    char key[20] = {0};
+    char value[20] = {0};
 
     setIp.insert(endpoint->addr);
     strcpy(s_simulatorIp, endpoint->addr);
@@ -1036,11 +1036,19 @@ bool CAHelper::sendRequest(char* uri, char* hidden_payload, CAMethod_t method, C
 
     char resourceUri[RESOURCE_URI_LENGTH + 1];
     char payload[MAX_BUF_LEN];
-    strcpy(resourceUri, uri);
+
+    if (strlen(uri) <= RESOURCE_URI_LENGTH)
+    {
+        strcpy(resourceUri, uri);
+    }
 
     if (strstr(uri, SIM_REQ_CONFIG) != NULL)
     {
-        strcpy(payload, hidden_payload);
+        if (strlen(hidden_payload) < MAX_BUF_LEN)
+        {
+            strcpy(payload, hidden_payload);
+        }
+
         totalMessage = 1;
         IOTIVITYTEST_LOG(DEBUG, "payload type configure");
         //IOTIVITYTEST_LOG(DEBUG, "payload: %s", payload);
@@ -1228,7 +1236,12 @@ bool CAHelper::sendResponse(char* uri, char* hidden_payload, CAResponseResult_t 
     }
 
     char resourceUri[RESOURCE_URI_LENGTH + 1];
-    strcpy(resourceUri, uri);
+
+    if (strlen(uri) <= RESOURCE_URI_LENGTH)
+    {
+        strcpy(resourceUri, uri);
+    }
+
     IOTIVITYTEST_LOG(DEBUG, "resourceURI : %s\n", resourceUri);
 
     CAInfo_t responseData;
@@ -1252,10 +1265,17 @@ bool CAHelper::sendResponse(char* uri, char* hidden_payload, CAResponseResult_t 
     }
     else
     {
-        strcpy((char*)payload, hidden_payload);
-        strcpy(s_tcInfo.identifier, (const char*)payload);
-        //IOTIVITYTEST_LOG(DEBUG, "payload %s", payload);
+        if (strlen(hidden_payload) < MAX_BUF_LEN)
+        {
+            strcpy((char*)payload, hidden_payload);
+        }
+
         payloadSize = strlen((const char*)payload);
+        if (payloadSize < MAX_BUF_LEN)
+        {
+            strcpy(s_tcInfo.identifier, (const char*)payload);
+        }
+
         responseData.payload = (CAPayload_t) malloc(payloadSize);
         responseData.payloadSize = payloadSize;
         memcpy(responseData.payload, payload, payloadSize);

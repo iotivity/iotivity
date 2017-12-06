@@ -73,17 +73,17 @@ CAResult_t dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *in
 {
     if (NULL == endpoint)
     {
-      output("endpoint is null");
+      printf("endpoint is null");
       return CA_STATUS_FAILED;
     }
 
     if (NULL == info)
     {
-        output("ErrorInfo: %d", info->result);
+        printf("ErrorInfo: %d", info->result);
         return CA_STATUS_FAILED;
     }
-    output("Remote device Address %s:%d:", endpoint->addr, endpoint->port);
-    output("ErrorInfo is null");
+    printf("Remote device Address %s:%d:", endpoint->addr, endpoint->port);
+    printf("ErrorInfo is null");
     return CA_STATUS_OK;
 }
 
