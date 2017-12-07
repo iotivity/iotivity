@@ -67,14 +67,16 @@ if rd_sample_app_env.get('RD_MODE'):
 ######################################################################
 rd_queryClient = rd_sample_app_env.Program('rd_queryClient',
                                            'rd_queryClient.cpp')
-
+examples = []
 if 'SERVER' in rd_sample_app_env.get('RD_MODE'):
     rd_server = rd_sample_app_env.Program('rd_server', 'rd_main.c')
-    Alias("resource_directory", [rd_server, rd_queryClient])
+    examples += [rd_queryClient, rd_server]
 
 if 'CLIENT' in rd_sample_app_env.get('RD_MODE'):
     rd_publishingClient = rd_sample_app_env.Program('rd_publishingClient',
                                                     'rd_publishingClient.cpp')
-    Alias("resource_directory", [rd_publishingClient, rd_queryClient])
+    examples += [rd_queryClient, rd_publishingClient]
 
+Alias("resource_directory", examples)
 env.AppendTarget('resource_directory')
+rd_sample_app_env.UserInstallTargetExtra(examples)

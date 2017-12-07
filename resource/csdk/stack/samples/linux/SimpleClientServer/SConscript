@@ -112,3 +112,4 @@ list_of_samples += samples_env.ScanJSON('resource/csdk/stack/samples/linux/Simpl
 Alias("samples", list_of_samples)
 
 samples_env.AppendTarget('samples')
+samples_env.UserInstallTargetExtra(list_of_samples)
