@@ -54,6 +54,7 @@ if 'rt' in sample_env.get('LIBS'):
     sample_env.Append(LIBS=['rt'])
 
 sample_env.AddPthreadIfNeeded()
+examples = []
 
 ######################################################################
 # ##### Client #####
@@ -65,6 +66,7 @@ sampleResourceClient = client_env.Program('sampleResourceClient',
                                           'SampleResourceClient.cpp')
 nestedAttributesClient = client_env.Program('nestedAttributesClient',
                                             'NestedAttributesClient.cpp')
+examples += [sampleResourceClient, nestedAttributesClient]
 
 ######################################################################
 # ##### Server #####
@@ -78,3 +80,5 @@ separateResponseServer = server_env.Program('separateResponseServer',
                                             'SeparateResponseServer.cpp')
 nestedAttributesServer = server_env.Program('nestedAttributesServer',
                                             'NestedAttributesServer.cpp')
+examples += [sampleResourceServer, separateResponseServer, nestedAttributesServer]
+server_env.UserInstallTargetExtra(examples)
