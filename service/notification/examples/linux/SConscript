@@ -83,12 +83,14 @@ if env.get('SECURED') == '1':
 ####################################################################
 # Source files and Targets
 ######################################################################
+examples = []
 notification_sample_provider_env = notification_sample_env.Clone()
 notification_sample_provider_env.AppendUnique(LIBS='libnotification_provider')
 notificationprovider = notification_sample_provider_env.Program(
     'notificationprovider', notification_sample_provider_src)
 i_notificationprovider = notification_sample_provider_env.Install(
     env.get('BUILD_DIR'), notificationprovider)
+examples += notificationprovider
 
 notification_sample_consumer_env = notification_sample_env.Clone()
 notification_sample_consumer_env.AppendUnique(LIBS='libnotification_consumer')
@@ -96,7 +98,10 @@ notificationconsumer = notification_sample_consumer_env.Program(
     'notificationconsumer', notification_sample_consumer_src)
 i_notificationprovider = notification_sample_consumer_env.Install(
     env.get('BUILD_DIR'), notificationconsumer)
+examples += notificationconsumer
 
 if env.get('WITH_CLOUD') == True:
     Export('providerCloudConnectorObj')
     Export('consumerCloudConnectorObj')
+
+notification_sample_consumer_env.UserInstallTargetExtra(examples)
