@@ -38,3 +38,4 @@ heightsensorapp = linux_sample_env.Program('HeightSensorApp',
                                            'src/HeightSensorApp.cpp')
 Alias("heightsensorapp_sample", heightsensorapp)
 env.AppendTarget('heightsensorapp')
+linux_sample_env.UserInstallTargetExtra(heightsensorapp)
