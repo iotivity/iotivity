@@ -46,8 +46,6 @@ if os.environ.get('TERM') is not None:
 SConscript('extra_options.scons')
 
 target_os = env.get('TARGET_OS')
-if target_os == 'arduino':
-    SConscript('arduino.scons')
 
 # By default, src_dir is the current dir, build_dir is:
 #     ./out/<target_os>/<target_arch>/<release or debug>/
@@ -65,7 +63,7 @@ build_dir = env.get('BUILD_DIR')
 # Build 'resource' sub-project
 SConscript(build_dir + 'resource/SConscript')
 
-if target_os not in ['arduino','darwin','ios', 'android', 'msys_nt', 'windows']:
+if target_os not in ['darwin','ios', 'android', 'msys_nt', 'windows']:
     SConscript(build_dir + 'examples/OICMiddle/SConscript')
 
 java_build = None
@@ -94,10 +92,6 @@ SConscript(dirs=[
 # This is not really needed unless requesting help, consider adding check:
 #if env.GetOption('help'):
 env.PrintTargets()
-
-# Print bin upload command line (arduino only)
-if target_os == 'arduino':
-    env.UploadHelp()
 
 # to install the generated pc file into custom prefix location
 env.UserInstallTargetPCFile('iotivity.pc', 'iotivity.pc')

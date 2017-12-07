@@ -12,9 +12,9 @@ project_version = '1.3.1'
 
 # Map of build host to possible target os
 host_target_map = {
-    'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
-    'windows': ['windows', 'android', 'arduino'],
-    'darwin': ['darwin', 'ios', 'android', 'arduino'],
+    'linux': ['linux', 'android', 'yocto', 'tizen'],
+    'windows': ['windows', 'android'],
+    'darwin': ['darwin', 'ios', 'android'],
     'msys_nt': ['msys_nt'],
 }
 
@@ -34,7 +34,6 @@ os_arch_map = {
     'msys_nt': ['x86', 'x86_64'],
     'darwin': ['i386', 'x86_64'],
     'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
-    'arduino': ['avr', 'arm'],
     'yocto': [
         'i586', 'i686', 'x86_64', 'arm', 'aarch64', 'powerpc', 'powerpc64',
         'mips', 'mipsel'
@@ -76,13 +75,6 @@ else:
 
 target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch)  # target arch
 
-# True if binary needs to be installed on board. (Might need root permissions)
-# set to 'no', 'false' or 0 for only compilation
-require_upload = ARGUMENTS.get('UPLOAD', False)
-
-# Get the device name. This name can be used as network display name wherever possible
-device_name = ARGUMENTS.get('DEVICE_NAME', "OIC-DEVICE")
-
 default_with_upstream_libcoap = 0
 
 if ARGUMENTS.get('TEST'):
@@ -94,15 +86,6 @@ else:
     ]:
         release_mode = True
     logging_default = (release_mode is False)
-
-# targets that do not support the DTLS build (SECURED=1 build option)
-targets_without_dtls_support = ['arduino']
-if ARGUMENTS.get('SECURED') == '1' and target_os in targets_without_dtls_support:
-    msg = "\nError: DTLS not supported on target '%s', MUST build with SECURED=0\n" % (target_os)
-    Exit(msg)
-
-# targets that do not support multiple values for TARGET_TRANSPORT
-targets_disallow_multitransport = ['arduino']
 
 # generate a list of unique targets: convert to set() for uniqueness,
 # then convert back to a list
@@ -127,6 +110,14 @@ help_vars.AddVariables(
                  'Target platform',
                  default=host,
                  allowed_values=targetlist),
+    EnumVariable('SECURED',
+                 'Build with DTLS',
+                 default='1',
+                 allowed_values=('0', '1')),
+    ListVariable('TARGET_TRANSPORT',
+                 'Target transport',
+                 default='ALL',
+                 names=('ALL', 'BT', 'BLE', 'IP', 'NFC')),
     BoolVariable('WITH_TCP',
                  'Build with TCP adapter',
                  default=False),
@@ -170,9 +161,6 @@ help_vars.AddVariables(
                  'Enable stack logging level',
                  default='DEBUG',
                  allowed_values=('DEBUG', 'INFO', 'ERROR', 'WARNING', 'FATAL')),
-    BoolVariable('UPLOAD',
-                 'Upload binary? (For Arduino)',
-                 default=require_upload),
     EnumVariable('ROUTING',
                  'Enable routing',
                  default='EP',
@@ -185,9 +173,6 @@ help_vars.AddVariables(
                  'Build with sample',
                  default='ON',
                  allowed_values=('ON', 'OFF')),
-    ('DEVICE_NAME',
-                 'Network display name for device (For Arduino)',
-                 device_name),
 #    ANDROID_NDK set at end after default computed
 #    ANDROID_HOME set at end after default computed
 #    ANDROID_GRADLE set at end after default computed
@@ -213,33 +198,6 @@ help_vars.AddVariables(
 ######################################################################
 # Platform (build target) specific options
 ######################################################################
-if target_os in targets_disallow_multitransport:
-    help_vars.Add(
-        EnumVariable('TARGET_TRANSPORT',
-                     'Target transport',
-                     default='IP',
-                     allowed_values=('BT', 'BLE', 'IP', 'NFC')))
-else:
-    help_vars.Add(
-        ListVariable('TARGET_TRANSPORT',
-                     'Target transport',
-                     default='ALL',
-                     names=('ALL', 'BT', 'BLE', 'IP', 'NFC')))
-
-if target_os in targets_without_dtls_support:
-    help_vars.Add(
-        # cannot be a bool since True not allowed
-        EnumVariable('SECURED',
-                     'Build with DTLS',
-                     default='0',
-                     allowed_values=('0',)))
-else:
-    help_vars.Add(
-        EnumVariable('SECURED',
-                     'Build with DTLS',
-                     default='1',
-                     allowed_values=('0', '1')))
-
 if target_os in ['linux']:
     # Build option to enable failing build if warnings encountered.
     # May need to be off for developing with newer compilers which
@@ -301,7 +259,7 @@ AddOption(
 ######################################################################
 # Platform (build target) specific options: SDK/NDK & toolchain
 ######################################################################
-targets_support_cc = ['linux', 'arduino', 'tizen']
+targets_support_cc = ['linux', 'tizen']
 
 if target_os in targets_support_cc:
     # Set cross compile toolchain
@@ -317,8 +275,8 @@ if target_os in targets_support_cc:
 ######################################################################
 # this is where the setup of the construction envionment begins
 ######################################################################
-if target_os in ['android', 'arduino']:
-    # Android/Arduino always uses GNU compiler regardless of the host
+if target_os in ['android']:
+    # Android always uses GNU compiler regardless of the host
     env = Environment(
         variables=help_vars,
         tools=['gnulink', 'gcc', 'g++', 'ar', 'as', 'textfile'])
@@ -683,7 +641,7 @@ if not env.get('PREFIX') and not env.get('LIB_INSTALL_DIR'):
 if (env.get('WITH_UPSTREAM_LIBCOAP') == '1'):
     env.AppendUnique(CPPDEFINES=['WITH_UPSTREAM_LIBCOAP'])
 
-if (target_os not in ['arduino', 'windows']):
+if (target_os not in ['windows']):
     env.AppendUnique(CPPDEFINES=['WITH_POSIX'])
 
 if (target_os in ['darwin', 'ios']):
@@ -704,16 +662,13 @@ if (env.get('ROUTING') == 'GW'):
 elif (env.get('ROUTING') == 'EP'):
     env.AppendUnique(CPPDEFINES=['ROUTING_EP'])
 
-if (target_os == 'arduino'):
-    env.AppendUnique(CPPDEFINES=['SINGLE_THREAD'])
-    env.AppendUnique(CPPDEFINES=['WITH_ARDUINO'])
-elif (('IP' in target_transport) or ('ALL' in target_transport)):
+if (('IP' in target_transport) or ('ALL' in target_transport)):
     env.AppendUnique(CPPDEFINES=['WITH_BWT'])
 
 if (target_os in ['linux', 'tizen', 'android'] and with_tcp):
     env.AppendUnique(CPPDEFINES=['WITH_TCP'])
 
-if (target_os in ['linux', 'tizen', 'android', 'arduino', 'ios']):
+if (target_os in ['linux', 'tizen', 'android', 'ios']):
     if (('BLE' in target_transport) or ('BT' in target_transport) or
         ('ALL' in target_transport)):
         env.AppendUnique(CPPDEFINES=['WITH_TCP'])
@@ -758,7 +713,7 @@ else:
 
     if with_tcp:
         if (target_os in [
-                'linux', 'tizen', 'android', 'arduino', 'ios', 'windows'
+                'linux', 'tizen', 'android', 'ios', 'windows'
         ]):
             env.AppendUnique(CPPDEFINES=['TCP_ADAPTER', 'WITH_TCP'])
         else:
