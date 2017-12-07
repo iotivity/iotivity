@@ -56,3 +56,6 @@ sceneserver = scenemanager_sample_env.Program('sceneserver', 'sceneserver.cpp')
 sceneclient = scenemanager_sample_env.Program('sceneclient', 'sceneclient.cpp')
 fanserver = scenemanager_sample_env.Program('fanserver', 'fanserver.cpp')
 lightserver = scenemanager_sample_env.Program('lightserver', 'lightserver.cpp')
+
+examples = [ sceneserver, sceneclient, fanserver, lightserver ]
+scenemanager_sample_env.UserInstallTargetExtra(examples)
