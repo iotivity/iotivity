@@ -76,3 +76,4 @@ enrollee += enrollee_env.ScanJSON('service/easy-setup/sampleapp/enrollee/linux')
 
 Alias('enrollee', enrollee)
 env.AppendTarget('enrollee')
+enrollee_env.UserInstallTargetExtra(enrollee)

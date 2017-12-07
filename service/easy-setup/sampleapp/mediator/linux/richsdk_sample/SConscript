@@ -84,3 +84,5 @@ submediator += mediator_env.ScanJSON('service/easy-setup/sampleapp/mediator/linu
 
 Alias('mediator_rich', submediator)
 env.AppendTarget('mediator_rich')
+examples = [mediator, submediator]
+mediator_env.UserInstallTargetExtra(examples)
