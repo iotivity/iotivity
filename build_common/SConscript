@@ -875,9 +875,9 @@ builder = Builder(generator = generate_actions,
 env.Append(BUILDERS = {'Cbor' : builder})
 
 
-def ScanJSON(env, directory='.'):
+def ScanJSON(env, directory=None):
     targets = []
-    if '.' == directory:
+    if not directory:
         directory = Dir('.').srcnode().path
     if env.GetOption('clean') or env.get('SECURED') != '1':
         return targets
@@ -888,16 +888,20 @@ def ScanJSON(env, directory='.'):
         src = src_dir + filename
         dst = dst_dir + filename
         targets += Command(dst, src, Copy("$TARGET", "$SOURCE"))
-        if env.get('CROSS_COMPILE') != None:
-            cbor_file = src_dir + re.sub('\.json$', '.dat', str(json_file))
-            targets += Install(dst_dir, cbor_file)
-        else:
+        if env.get('CROSS_COMPILE') == None:
+            # Copy back compiled files to sources (to be used when compilation is not possible)
             cbor_file = env.Cbor(json_file)
             targets.append(cbor_file)
             cbor_file = Flatten(cbor_file)[0].name
             src = dst_dir + cbor_file
             dst = src_dir + cbor_file
             Command(dst, src, Copy("$TARGET", "$SOURCE"))
+        else:
+            # Can compile files at build time, so rely on previous generated files
+            cbor_file = re.sub('\.json$', '.dat', filename)
+            src = src_dir + cbor_file
+            dst = dst_dir + cbor_file
+            targets += Command(dst, src, Copy("$TARGET", "$SOURCE"))
     return targets
 
 AddMethod(env, ScanJSON)
