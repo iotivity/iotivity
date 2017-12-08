@@ -141,7 +141,7 @@ notification_consumer_env.UserInstallTargetHeader(
     'include/NSCommon.h', 'service/notification', 'NSCommon.h')
 
 # Go to build Unit test
-if target_os in ['linux']:
+if notification_env.get('WITH_TEST') and target_os in ('linux'):
     SConscript('unittest/SConscript')
 
 # Go to build c++ wrapper

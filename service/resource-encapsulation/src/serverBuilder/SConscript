@@ -93,7 +93,7 @@ else:
 ######################################################################
 # Build Test
 ######################################################################
-if target_os in ['linux']:
+if server_builder_env.get('WITH_TEST') and target_os in ('linux'):
     server_builder_test_env = server_builder_env.Clone()
 
     server_builder_test_env.AppendUnique(CPPPATH=[
@@ -122,7 +122,6 @@ if target_os in ['linux']:
     ]
 
     server_builder_test_env.AddPthreadIfNeeded()
-
     server_builder_test = server_builder_test_env.Program(
         'rcs_server_test', server_builder_test_src)
     Alias("rcs_server_test", server_builder_test)

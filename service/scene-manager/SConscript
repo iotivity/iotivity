@@ -113,7 +113,7 @@ scenemanager_env.UserInstallTargetHeader('include/RemoteSceneAction.h',
                                          'RemoteSceneAction.h')
 
 # Go to build Unit test
-if target_os in ['linux']:
+if scenemanager_env.get('WITH_TEST') and target_os in ('linux'):
     SConscript('unittests/SConscript')
 
 # Go to build sample apps

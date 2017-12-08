@@ -60,4 +60,5 @@ if target_os in ['linux', 'windows', 'darwin', 'msys_nt']:
                     '#/tools/darwin/mkfwk_osx.sh')
 
     # Build C/C++ unit tests
-    SConscript('unit_tests.scons')
+    if env.get('WITH_TEST'):
+        SConscript('unit_tests.scons')

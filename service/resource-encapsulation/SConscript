@@ -147,7 +147,7 @@ SConscript('examples/SConscript')
 # Build UnitTests Resource Client , resourceCache and resourceBroker and
 # DiscoveryManager
 ################################################ ######################
-if target_os in ['linux']:
+if resourceClient_env.get('WITH_TEST') and target_os in ('linux'):
     SConscript('unittests/SConscript')
     SConscript('src/resourceCache/unittests/SConscript')
     SConscript('src/resourceBroker/unittest/SConscript')

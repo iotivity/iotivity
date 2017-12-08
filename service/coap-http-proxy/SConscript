@@ -101,5 +101,5 @@ local_env.UserInstallTargetHeader(
 if target_os in ['linux', 'tizen']:
     SConscript('samples/SConscript')
 
-if target_os in ['linux']:
+if local_env.get('WITH_TEST') and target_os in ('linux'):
     SConscript('unittests/SConscript')

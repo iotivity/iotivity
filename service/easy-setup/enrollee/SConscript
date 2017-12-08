@@ -115,7 +115,7 @@ if target_os in ['linux', 'tizen']:
     enrollee_env.UserInstallTargetHeader('inc/easysetup.h',
                                          'service/easy-setup', 'easysetup.h')
 
-if target_os in ['linux']:
+if enrollee_env.get('WITH_TEST') and target_os in ('linux'):
     SConscript('../sampleapp/enrollee/linux/SConscript')
     #Build UnitTestcases for Enrollee
     if enrollee_env.get('SECURED') == '0':
