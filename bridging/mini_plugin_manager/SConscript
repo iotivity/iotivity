@@ -42,7 +42,7 @@ manager_env.PrependUnique(CPPPATH=[
     '#/extlibs/rapidjson/include/rapidjson',
 ])
 
-if target_os not in ['arduino', 'windows']:
+if target_os not in ['windows']:
     manager_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
 manager_env.PrependUnique(LIBS=['mpmcommon'])

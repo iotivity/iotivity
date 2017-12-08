@@ -71,7 +71,7 @@ catest_env.PrependUnique(LIBS=[
     'routingmanager',
 ])
 
-if target_os not in ['arduino', 'darwin', 'ios', 'msys_nt', 'windows']:
+if target_os not in ['darwin', 'ios', 'msys_nt', 'windows']:
     catest_env.AppendUnique(LIBS=['rt'])
 
 if catest_env.get('SECURED') == '1':
@@ -80,9 +80,7 @@ if catest_env.get('SECURED') == '1':
 # c_common calls into mbedcrypto.
 catest_env.AppendUnique(LIBS=['mbedcrypto'])
 
-if 'CLIENT' in rd_mode and target_os not in (
-    'arduino', 'darwin', 'ios', 'windows', 'winrt'
-):
+if 'CLIENT' in rd_mode and target_os not in ('darwin', 'ios', 'windows', 'winrt'):
     catest_env.PrependUnique(LIBS=['oc', 'oc_logger'])
 if 'SERVER' in rd_mode:
     if target_os in ('linux', 'tizen'):
@@ -107,8 +105,7 @@ tests_src = [
 ]
 
 if 'IP' in target_transport or 'ALL' in target_transport:
-    if target_os != 'arduino':
-        tests_src.append('cablocktransfertest.cpp')
+    tests_src.append('cablocktransfertest.cpp')
 
 if catest_env.get('SECURED') == '1' and catest_env.get('WITH_TCP') == True:
     tests_src.append('ssladapter_test.cpp')

@@ -80,58 +80,5 @@ function android_setup {
     fi
 }
 
-#######################################
-# Arduino Dependencies (optional)
-#######################################
-function arduino_setup {
-    # Arduino Mega
-    echo "Set up Arduino Mega"
-    export ARDUINO_MEGA_DIR=${PWD}/arduino-1.0.5
-    if [ ! -d ${ARDUINO_MEGA_DIR} ]
-    then
-        wget_if_not_exists "arduino-1.0.5-linux64.tgz" http://arduino.googlecode.com/files/arduino-1.0.5-linux64.tgz
-        tar -xzf arduino-1.0.5-linux64.tgz
-        wget_if_not_exists "Time-1.0.5.zip" http://playground.arduino.cc/uploads/Code/Time.zip
-        mv Time.zip Time-1.0.5.zip
-        mkdir -p ${ARDUINO_MEGA_DIR}/libraries/Time
-        pushd ${ARDUINO_MEGA_DIR}/libraries/Time
-        unzip ../../../Time-1.0.5.zip
-        cd ../..
-        patch -p5 < ../iotivity/tools/arduino/patches/arduino-1.0.5_linux.patch
-        popd
-    fi
-
-    # Arduino Due
-    echo "Set up Arduino Due"
-    ARDUINO_DUE_DIR=${PWD}/arduino-1.5.7
-    if [ ! -d ${ARDUINO_DUE_DIR} ]
-    then
-        wget_if_not_exists "download.php?f=%2Farduino-1.5.7-linux64.tgz" http://arduino.cc/download.php?f=/arduino-1.5.7-linux64.tgz
-        tar -xzf "download.php?f=%2Farduino-1.5.7-linux64.tgz"
-        wget_if_not_exists "Time-1.5.7.zip" http://www.pjrc.com/teensy/arduino_libraries/Time.zip
-        mv Time.zip Time-1.5.7.zip
-        mkdir -p ${ARDUINO_DUE_DIR}/libraries/Time
-        pushd ${ARDUINO_DUE_DIR}/libraries/Time
-        unzip ../../../Time-1.5.7.zip
-        cd ../..
-        patch -p5 < ../iotivity/tools/arduino/patches/arduino-1.5.7_linux.patch
-        popd
-    fi
-
-    # local.properties
-    cat > iotivity/resource/csdk/local.properties <<-EOF
-    ifeq (\$(PLATFORM), arduinomega)
-        #Location of arduino sdk for Arduino Mega
-        ARDUINO_DIR := ${ARDUINO_MEGA_DIR}
-        ARDUINO_TOOLS_DIR := \$(ARDUINO_DIR)/hardware/tools/avr/bin
-    else
-        #Location of arduino sdk for Arduino Due
-        ARDUINO_DIR := ${ARDUINO_DUE_DIR}
-        ARDUINO_TOOLS_DIR := \$(ARDUINO_DIR)/hardware/tools/gcc-arm-none-eabi-4.8.3-2014q1/bin
-    endif
-EOF
-}
-
-# TODO: switch these off cmdline args
+# TODO: switch off cmdline args
 #android_setup
-#arduino_setup

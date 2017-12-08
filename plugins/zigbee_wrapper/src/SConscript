@@ -47,7 +47,7 @@ env.AppendUnique(CPPPATH=[
     '#/plugins/zigbee_wrapper/include'
 ])
 
-if target_os not in ['arduino', 'windows']:
+if target_os not in ['windows']:
     env.AppendUnique(CPPDEFINES=['WITH_POSIX'])
 
 if target_os in ['darwin', 'ios']:

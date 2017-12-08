@@ -7,9 +7,9 @@ import platform
 
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
-    'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
-    'windows': ['windows', 'android', 'arduino'],
-    'darwin': ['darwin', 'ios', 'android', 'arduino'],
+    'linux': ['linux', 'android', 'yocto', 'tizen'],
+    'windows': ['windows', 'android'],
+    'darwin': ['darwin', 'ios', 'android'],
 }
 
 # Map of os and allowed archs (os: allowed archs)
@@ -26,7 +26,6 @@ os_arch_map = {
     'windows': ['x86', 'amd64', 'arm'],
     'darwin': ['i386', 'x86_64'],
     'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
-    'arduino': ['avr', 'arm'],
     'yocto': [
         'i586', 'i686', 'x86_64', 'arm', 'aarch64', 'powerpc', 'powerpc64',
         'mips', 'mipsel'
@@ -93,10 +92,6 @@ help_vars.Add(
                  default='1',
                  allowed_values=('0', '1')))
 help_vars.Add(
-    BoolVariable('UPLOAD',
-                 'Upload binary ? (For Arduino)',
-                 default=require_upload))
-help_vars.Add(
     EnumVariable('ROUTING',
                  'Enable routing',
                  default='EP',
@@ -135,7 +130,7 @@ AddOption(
 ######################################################################
 # Platform(build target) specific options: SDK/NDK & toolchain
 ######################################################################
-targets_support_cc = ['linux', 'arduino', 'tizen']
+targets_support_cc = ['linux', 'tizen']
 
 if target_os in targets_support_cc:
     # Set cross compile toolchain
@@ -147,9 +142,8 @@ if target_os in targets_support_cc:
                      'Toolchain path (Generally only required for cross-compiling)',
                      default=os.environ.get('TC_PATH')))
 
-if target_os in [
-        'android', 'arduino'
-]:  # Android/Arduino always uses GNU compiler regardless of the host
+if target_os in ['android']:
+    # Android always uses GNU compiler regardless of the host
     env = Environment(
         variables=help_vars, tools=['gnulink', 'gcc', 'g++', 'ar', 'as'])
 else:

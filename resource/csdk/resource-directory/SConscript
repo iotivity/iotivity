@@ -98,12 +98,12 @@ if 'CLIENT' in rd_mode:
 
 rd_src_all = rd_src_c
 
-if target_os not in ['arduino', 'darwin', 'ios']:
+if target_os not in ['darwin', 'ios']:
     rd_src_cpp += [RD_SRC_DIR + 'RDClient.cpp']
     if 'CLIENT' in rd_mode:
         rd_src_all += rd_src_cpp
 
-if target_os not in ['arduino', 'darwin', 'ios', 'msys_nt', 'windows']:
+if target_os not in ['darwin', 'ios', 'msys_nt', 'windows']:
     rdsdk_shared = rd_env.SharedLibrary('resource_directory', rd_src_all)
     rdsdk_static = rd_env.StaticLibrary('resource_directory', rd_src_all)
     rdsdk = Flatten([rdsdk_static, rdsdk_shared])

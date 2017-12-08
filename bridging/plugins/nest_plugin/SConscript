@@ -62,7 +62,7 @@ nest_env.AppendUnique(CPPPATH=[
     '#/bridging/plugins/nest_plugin/nest_objects',
 ])
 
-if target_os not in ['arduino', 'windows']:
+if target_os not in ['windows']:
     nest_env.AppendUnique(CPPDEFINES=['WITH_POSIX'])
 
 if target_os in ['darwin', 'ios']:

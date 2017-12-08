@@ -63,7 +63,7 @@ hue_env.AppendUnique(CPPPATH=[
     '#/bridging/plugins/hue_plugin/hue_objects',
 ])
 
-if target_os not in ['arduino', 'windows']:
+if target_os not in ['windows']:
     hue_env.AppendUnique(CPPDEFINES=['WITH_POSIX'])
 
 if target_os in ['darwin', 'ios']:

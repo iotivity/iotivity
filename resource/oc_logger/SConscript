@@ -39,7 +39,7 @@ if target_os == 'android':
     liboc_logger_env.AppendUnique(LIBS=['gnustl_shared', 'log'])
     liboc_logger_env.AppendUnique(LINKFLAGS=['-Wl,-soname,liboc_logger.so'])
 
-if target_os not in ['arduino', 'windows']:
+if target_os not in ['windows']:
     liboc_logger_env.AppendUnique(CFLAGS=['-Wall', '-std=c99', '-fPIC'])
     liboc_logger_env.AppendUnique(CXXFLAGS=['-Wall', '-std=c++0x', '-fPIC'])
 

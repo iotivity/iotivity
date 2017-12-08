@@ -40,11 +40,6 @@ with_ra_ibb = env.get('WITH_RA_IBB')
 with_tcp = env.get('WITH_TCP')
 with_cloud = env.get('WITH_CLOUD')
 with_mq = env.get('WITH_MQ')
-# As in the source code, it includes arduino Time library (C++)
-# It requires compile the .c with g++
-if target_os == 'arduino':
-    liboctbstack_env.Replace(CC=env.get('CXX'))
-    liboctbstack_env.Replace(CFLAGS=env.get('CXXFLAGS'))
 
 ######################################################################
 # Build flags
@@ -81,7 +76,7 @@ if 'PUB' in with_mq:
 if 'BROKER' in with_mq:
     liboctbstack_env.AppendUnique(CPPDEFINES=['MQ_BROKER', 'WITH_MQ'])
 
-if target_os not in ['arduino', 'windows']:
+if target_os not in ['windows']:
     liboctbstack_env.AppendUnique(CPPDEFINES=['WITH_POSIX', '_GNU_SOURCE'])
     liboctbstack_env.AppendUnique(CFLAGS=['-std=c99'])
 
@@ -194,14 +189,12 @@ if target_os in ['tizen', 'linux']:
     liboctbstack_env.ParseConfig("pkg-config --cflags --libs uuid")
     liboctbstack_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 
-if target_os == 'arduino':
-    liboctbstack_env.AppendUnique(CPPDEFINES=['NDEBUG', 'WITH_ARDUINO'])
-elif target_os not in ['darwin', 'ios', 'msys_nt', 'windows']:
+if target_os not in ['darwin', 'ios', 'msys_nt', 'windows']:
     liboctbstack_env.AppendUnique(CFLAGS=['-fPIC'])
 if target_os in ['darwin', 'ios']:
     env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
     liboctbstack_env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
-if target_os not in ['arduino', 'windows']:
+if target_os not in ['windows']:
     liboctbstack_env.AppendUnique(LINKFLAGS=['-Wl,--no-undefined'])
 if target_os == 'android':
     liboctbstack_env.AppendUnique(LINKFLAGS=['-Wl,-soname,liboctbstack.so'])
@@ -262,7 +255,7 @@ internal_liboctbstack = liboctbstack_env.StaticLibrary(
     'octbstack_internal', liboctbstack_src)
 octbstack_libs = Flatten(internal_liboctbstack)
 
-if target_os not in ['arduino', 'darwin', 'ios']:
+if target_os not in ['darwin', 'ios']:
     shared_liboctbstack = liboctbstack_env.SharedLibrary(
         'octbstack', liboctbstack_src)
     octbstack_libs += Flatten(shared_liboctbstack)

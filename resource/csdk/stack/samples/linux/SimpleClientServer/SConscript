@@ -59,7 +59,7 @@ samples_env.PrependUnique(LIBS=['octbstack', 'ocsrm'])
 if target_os in ['darwin']:
     samples_env.AppendUnique(LIBS=['routingmanager'])
 
-if target_os not in ['arduino', 'windows', 'darwin', 'ios', 'msys_nt']:
+if target_os not in ['windows', 'darwin', 'ios', 'msys_nt']:
     samples_env.AppendUnique(LIBS=['rt'])
 
 if target_os not in ['windows']:

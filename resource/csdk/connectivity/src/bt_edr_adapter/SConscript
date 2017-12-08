@@ -7,9 +7,7 @@ Import('connectivity_env')
 
 target_os = connectivity_env.get('TARGET_OS')
 
-# Target-specific sources
-if target_os not in ['arduino']:
-    connectivity_env.AppendUnique(CA_SRC=File('caedradapter.c'))
+connectivity_env.AppendUnique(CA_SRC=File('caedradapter.c'))
 
 # Check for the existence of the platform-specific SConscript file
 # before calling it - some target platforms do not provide one.

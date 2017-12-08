@@ -53,7 +53,7 @@ mpmcommon_env.PrependUnique(CPPPATH=[
     '#/resource/c_common/oic_string/include',
 ])
 
-if target_os not in ['arduino', 'windows']:
+if target_os not in ['windows']:
     mpmcommon_env.AppendUnique(
         CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror', '-fpic'])
 

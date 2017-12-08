@@ -8,16 +8,13 @@ Import('connectivity_env')
 target_os = connectivity_env.get('TARGET_OS')
 
 # Source files common to all platforms
-common_files = [File('caipadapter.c')]
+common_files = [File('caipadapter.c'), File('caipserver.c')]
 
 # Target-specific sources
-if target_os != 'arduino':
-    common_files.append(File('caipserver.c'))
-    # Source files to build for Linux-like platforms
-    if target_os in ['linux', 'darwin', 'ios']:
-        common_files.append(File('linux/caipnwmonitor.c'))
-    elif target_os in ['msys_nt', 'windows']:
-        common_files.append(File('windows/caipnwmonitor.c'))
+if target_os in ['linux', 'darwin', 'ios']:
+    common_files.append(File('linux/caipnwmonitor.c'))
+elif target_os in ['msys_nt', 'windows']:
+    common_files.append(File('windows/caipnwmonitor.c'))
 
 connectivity_env.AppendUnique(CA_SRC=common_files)
 

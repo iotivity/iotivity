@@ -8,9 +8,9 @@ import platform
 print("Inside the Config SConscript")
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
-    'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
-    'windows': ['windows', 'android', 'arduino', 'tizen'],
-    'darwin': ['darwin', 'ios', 'android', 'arduino'],
+    'linux': ['linux', 'android', 'yocto', 'tizen'],
+    'windows': ['windows', 'android', 'tizen'],
+    'darwin': ['darwin', 'ios', 'android'],
 }
 
 # Map of os and allowed archs (os: allowed archs)
@@ -23,7 +23,6 @@ os_arch_map = {
     'windows': ['x86', 'amd64', 'arm'],
     'darwin': ['i386', 'x86_64'],
     'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
-    'arduino': ['avr', 'arm'],
     'yocto': ['x86', 'x86_64'],
     'tizen': ['armv7'],
 }
@@ -96,7 +95,7 @@ help_vars.Add(
 ######################################################################
 # Platform(build target) specific options: SDK/NDK & toolchain
 ######################################################################
-targets_support_cc = ['linux', 'arduino', 'tizen']
+targets_support_cc = ['linux', 'tizen']
 
 if target_os in targets_support_cc:
     # Set cross compile toolchain
@@ -110,9 +109,8 @@ if target_os in targets_support_cc:
         'Toolchain path (Generally only required for cross-compiling)',
         os.environ.get('TC_PATH')))
 
-if target_os in [
-        'android', 'arduino'
-]:  # Android/Arduino always uses GNU compiler regardless of the host
+if target_os in ['android']:
+    # Android always uses GNU compiler regardless of the host
     env = Environment(
         variables=help_vars, tools=['gnulink', 'gcc', 'g++', 'ar', 'as'])
 else:

@@ -81,27 +81,18 @@ if connectivity_env.get('SECURED') == '1':
 if with_ra_ibb:
     connectivity_env.SConscript('#/extlibs/wksxmppxep/SConscript')
 
-if ca_os == 'arduino':
-    src_files.extend([File(src) for src in (
-        'caconnectivitymanager.c',
-        'cainterfacecontroller.c',
-        'camessagehandler.c',
-        'canetworkconfigurator.c',
-        'caprotocolmessage.c',
-        'caretransmission.c',
-    )])
-else:
-    src_files.extend([File(src) for src in (
-        'caconnectivitymanager.c',
-        'cainterfacecontroller.c',
-        'camessagehandler.c',
-        'canetworkconfigurator.c',
-        'caprotocolmessage.c',
-        'caqueueingthread.c',
-        'caretransmission.c',
-    )])
-    if (('IP' in ca_transport) or ('ALL' in ca_transport)):
-        src_files.append(File('cablockwisetransfer.c'))
+src_files.extend([File(src) for src in (
+    'caconnectivitymanager.c',
+    'cainterfacecontroller.c',
+    'camessagehandler.c',
+    'canetworkconfigurator.c',
+    'caprotocolmessage.c',
+    'caqueueingthread.c',
+    'caretransmission.c',
+)])
+
+if (('IP' in ca_transport) or ('ALL' in ca_transport)):
+    src_files.append(File('cablockwisetransfer.c'))
 
 connectivity_env.AppendUnique(CA_SRC=src_files)
 
@@ -131,8 +122,6 @@ if 'ALL' in ca_transport:
 
 if 'IP' in ca_transport:
     transports.add('ip_adapter')
-    if ca_os == 'arduino' and with_tcp:
-        transports.add('tcp_adapter')
 
 if 'BT' in ca_transport:
     transports.add('bt_edr_adapter')

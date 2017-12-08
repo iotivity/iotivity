@@ -96,10 +96,6 @@ if not os.path.isfile(config_h_file_path) and env.GetOption not in ('clean', 'he
 
     cxx_functions = ['strptime']
 
-    if target_os == 'arduino':
-        # Detection of headers on the Arduino platform is currently broken.
-        cxx_headers = []
-
     if target_os == 'msys_nt':
         # WinPThread provides a pthread.h, but we want to use native threads.
         cxx_headers.remove('pthread.h')
@@ -118,9 +114,6 @@ if not os.path.isfile(config_h_file_path) and env.GetOption not in ('clean', 'he
             config_h_body += "#define %s 1\n\n" % get_define_from_string(
                 function_name)
     conf.Finish()
-    # Autoconf feature doesn't work with Jenkins' arduino toolchain, so hardcode it here.
-    if target_os == 'arduino':
-        config_h_body += "#define HAVE_ARDUINO_TIME_H\n\n"
 
     # Generate the file
     if not os.path.exists(cur_dir):
@@ -195,8 +188,6 @@ else:
 
 if target_os in ['windows', 'msys_nt']:
     common_src.append('ocatomic/src/windows/ocatomic.c')
-elif target_os in ['arduino']:
-    common_src.append('ocatomic/src/arduino/ocatomic.c')
 else:
     common_src.append('ocatomic/src/others/ocatomic.c')
 
@@ -207,15 +198,7 @@ else:
     common_src.append('ocevent/src/others/ocevent.c')
     common_src.append('oic_platform/src/others/oic_otherplatforms.c')
 
-# C++ Arduino's <Timer.h> is included so use C++ compiler/flags
-if target_os in ['arduino']:
-    octimer_env = common_env.Clone()
-    octimer_env.Replace(CC=env.get('CXX'))
-    octimer_env.Replace(CFLAGS=env.get('CXXFLAGS'))
-    octimer = octimer_env.Object('octimer/src/octimer.c')
-    common_src.append(octimer)
-else:
-    common_src.append('octimer/src/octimer.c')
+common_src.append('octimer/src/octimer.c')
 
 common_env.AppendUnique(LIBS=['logger'])
 common_env.AppendUnique(CPPPATH=['#resource/csdk/logger/include'])

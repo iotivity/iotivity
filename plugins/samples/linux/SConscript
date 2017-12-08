@@ -47,7 +47,7 @@ if target_os in ['darwin', 'ios']:
         'connectivity_abstraction',
         'coap',
     ])
-elif target_os not in ['arduino']:
+else:
     samples_env.PrependUnique(LIBS=[
         'm',
         'octbstack',

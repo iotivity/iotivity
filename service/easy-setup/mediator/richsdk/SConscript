@@ -37,17 +37,7 @@ if easy_setup_env.get('RELEASE'):
 else:
     easy_setup_env.AppendUnique(CCFLAGS=['-g'])
 
-# Easysetup provides reference implemenation of Arduino Enrollee.
-# Mediator applications developed on different platforms will be default defining the
-# flag 'REMOTE_ARDUINO_ENROLEE'. If the target Enrollee is not Arduino, the below commented
-# modifications must be enabled instead (and the existing define must be commented).
-#
-##### The following lines must be uncommented, if target Enrollee is not Arduino
 target_enrollee = env.get('ES_TARGET_ENROLLEE')
-if target_enrollee == 'arduino':
-    print("REMOTE_ARDUINO_ENROLEE flag is defined.")
-    print("The Mediator application will be working only with Arduino Enrollee.")
-    easy_setup_env.AppendUnique(CPPDEFINES=['REMOTE_ARDUINO_ENROLEE'])
 target_os = env.get('TARGET_OS')
 
 ######################################################################

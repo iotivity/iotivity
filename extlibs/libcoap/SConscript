@@ -103,24 +103,8 @@ else:
 ######################################################################
 # Build libCoAP
 ######################################################################
-# As in the source code(C) includes arduino Time library head file(C++)
-# It requires compile the .c with g++
-if target_os == 'arduino':
-    libcoap_env.Replace(CFLAGS=libcoap_env.get('CXXFLAGS'))
-    libcoap_env.PrependUnique(CPPPATH=[
-        './',
-        env.get('ARDUINO_HOME') + '/',
-        env.get('ARDUINO_HOME') + '/hardware/arduino/avr/cores/arduino',
-        env.get('ARDUINO_HOME') + '/hardware/tools/avr/avr/include/',
-        env.get('ARDUINO_HOME') + '/hardware/arduino/avr/variants/mega',
-        env.get('ARDUINO_HOME') + '/libraries/Time/Time',
-        env.get('ARDUINO_HOME') + '/libraries/TimedAction',
-        env.get('ARDUINO_HOME') + '/hardware/arduino/avr/libraries/SPI',
-        env.get('ARDUINO_HOME') + '/libraries/Ethernet/src/utility',
-    ])
-
 # Build flags
-if target_os not in ['arduino', 'windows', 'winrt', 'msys_nt']:
+if target_os not in ['windows', 'winrt', 'msys_nt']:
     # libcoap uses ipv6 features from <netinet/in.h> which only
     # turn on if __GNU_SOURCE is defined
     libcoap_env.AppendUnique(CPPDEFINES=['WITH_POSIX', '_GNU_SOURCE'])
@@ -134,17 +118,14 @@ if target_os == 'msys_nt':
     libcoap_env.AppendUnique(CPPDEFINES=['_DEFAULT_SOURCE'])
     libcoap_env.AppendUnique(CFLAGS=['-std=c99'])
 
-if target_os in ['linux', 'tizen', 'android', 'ios', 'arduino', 'windows']:
+if target_os in ['linux', 'tizen', 'android', 'ios', 'windows']:
     if with_tcp == True:
         libcoap_env.AppendUnique(CPPDEFINES=['WITH_TCP'])
 
-if target_os in ['linux', 'tizen', 'android', 'arduino']:
+if target_os in ['linux', 'tizen', 'android']:
     libcoap_env.AppendUnique(LIBS=['log'])
     if 'BLE' in ca_transport or 'BT' in ca_transport or 'ALL' in ca_transport:
         libcoap_env.AppendUnique(CPPDEFINES=['WITH_TCP'])
-
-if target_os == 'arduino':
-    libcoap_env.AppendUnique(CPPDEFINES=['NDEBUG', 'WITH_ARDUINO'])
 
 # Remove -Werror build flag when building the 'coap' library  it
 # is external code. see IOT-2539
@@ -270,10 +251,6 @@ if with_upstream_libcoap == '1':
                 'flsll',
             ]
 
-            if target_os == 'arduino':
-                # Detection of headers on the Arduino platform is currently broken.
-                cxx_headers = []
-
             def get_define_from_string(string):
                 string_converted = string.replace("/", "_").replace(".", "_").upper()
                 return "HAVE_" + string_converted
@@ -293,11 +270,6 @@ if with_upstream_libcoap == '1':
                 config_h_body += "#define in_port_t uint16_t\n\n"
 
             conf.Finish()
-
-            # Autoconf feature doesn't work with Jenkins' arduino toolchain,
-            # so hardcode it here.
-            if target_os == 'arduino':
-                config_h_body += "#define HAVE_ARDUINO_TIME_H\n\n"
 
         # Generate the file
         if os.path.exists(config_h_file_path):
