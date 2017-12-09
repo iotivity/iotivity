@@ -15,7 +15,6 @@ Source1002: %{name}-test.manifest
 %if 0%{?tizen:1}
 %define TARGET_OS tizen
 #TODO: align to default
-%define WITH_CLOUD 1
 %define LOGGING 1
 %else
 %define TARGET_OS linux
@@ -82,7 +81,7 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?TARGET_OS: %define TARGET_OS linux}
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
 %{!?VERBOSE: %define VERBOSE 1}
-%{!?WITH_CLOUD: %define WITH_CLOUD 0}
+%{!?WITH_CLOUD: %define WITH_CLOUD False}
 %{!?WITH_MQ: %define WITH_MQ OFF}
 %{!?WITH_PROXY: %define WITH_PROXY 1}
 %{!?WITH_TCP: %define WITH_TCP 0}
