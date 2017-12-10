@@ -74,88 +74,6 @@
 */
 #define OCRANDOM_TAG "OIC_OCRANDOM"
 
-#ifdef ARDUINO
-#include "Arduino.h"
-
-/*
- * ARM GCC compiler doesnt define random/srandom functions, fallback to
- * rand/srand.
- */
-#if !defined(ARDUINO_ARCH_SAM)
-#define OC_arduino_srandom_function srandom
-#define OC_arduino_random_function random
-#else
-#define OC_arduino_srandom_function srand
-#define OC_arduino_random_function rand
-#endif
-
-uint8_t GetRandomBitRaw()
-{
-    return analogRead((uint8_t)ANALOG_IN) & 0x1;
-}
-
-uint8_t GetRandomBitRaw2()
-{
-    int a = 0;
-    for (;;)
-    {
-        a = GetRandomBitRaw() | (GetRandomBitRaw()<<1);
-        if (a==1)
-        {
-            return 0; // 1 to 0 transition: log a zero bit
-        }
-        if (a==2)
-        {
-            return 1;// 0 to 1 transition: log a one bit
-        }
-        // For other cases, try again.
-    }
-}
-
-uint8_t GetRandomBit()
-{
-    int a = 0;
-    for (;;)
-    {
-        a = GetRandomBitRaw2() | (GetRandomBitRaw2()<<1);
-        if (a==1)
-        {
-            return 0; // 1 to 0 transition: log a zero bit
-        }
-        if (a==2)
-        {
-            return 1;// 0 to 1 transition: log a one bit
-        }
-        // For other cases, try again.
-    }
-}
-
-/*
- * Currently, only the Arduino platform requires seeding. It's done
- * automatically on the first call to OCGetRandomBytes.
- */
-uint8_t g_isSeeded = 0;
-static void OCSeedRandom()
-{
-    if (g_isSeeded)
-    {
-        return;
-    }
-
-    uint32_t result =0;
-    uint8_t i;
-    for (i=32; i--;)
-    {
-        result += result + GetRandomBit();
-    }
-    OC_arduino_srandom_function(result);
-
-    g_isSeeded = 1;
-    return;
-}
-
-#endif /* ARDUINO */
-
 bool OCGetRandomBytes(uint8_t * output, size_t len)
 {
     if ( (output == NULL) || (len == 0) )
@@ -200,18 +118,6 @@ bool OCGetRandomBytes(uint8_t * output, size_t len)
         OIC_LOG_V(FATAL, OCRANDOM_TAG, "BCryptGenRandom failed (%X)!", status);
         assert(false);
         return false;
-    }
-
-#elif defined(ARDUINO)
-    if (!g_isSeeded)
-    {
-        OCSeedRandom();
-    }
-
-    size_t i;
-    for (i = 0; i < len; i++)
-    {
-        output[i] = OC_arduino_random_function() & 0x00ff;
     }
 
 #else

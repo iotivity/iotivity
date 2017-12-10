@@ -551,8 +551,6 @@ INLINE_API bool IsWildCardSubject(OicUuid_t *subject)
  */
 static bool IsAccessWithinValidTime(const OicSecAce_t *ace)
 {
-#ifndef WITH_ARDUINO //Period & Recurrence not supported on Arduino due
-    //lack of absolute time
     if (NULL== ace || NULL == ace->validities)
     {
         return true;
@@ -579,10 +577,6 @@ static bool IsAccessWithinValidTime(const OicSecAce_t *ace)
     }
     OIC_LOG(ERROR, TAG, "Access request is in invalid time period");
     return false;
-
-#else
-    return true;
-#endif
 }
 
 /**

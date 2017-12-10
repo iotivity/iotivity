@@ -117,20 +117,6 @@
 #  define SIZE_MAX ((size_t)-1)
 #endif
 
-#ifdef WITH_ARDUINO
-/**
- * UINT16_MAX does not appear to be defined on Arduino so we define it here.
- */
-#  define UINT16_MAX 65535
-
-/**
- * Handle case that PRId64 is not defined in Arduino's inttypes.h
- */
-#  if !defined(PRId64)
-#    define PRId64 "lld"
-#  endif
-#endif
-
 /**
  * Calling convention.
  */

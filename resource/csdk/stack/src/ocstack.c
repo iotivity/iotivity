@@ -91,9 +91,6 @@
 #include "oickeepalive.h"
 #endif
 
-#ifdef HAVE_ARDUINO_TIME_H
-#include "Time.h"
-#endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -191,10 +188,6 @@ bool g_multicastServerStopped = false;
 
 #define MILLISECONDS_PER_SECOND   (1000)
 
-// handle case that SCNd64 is not defined in arduino's inttypes.h
-#if defined(WITH_ARDUINO) && !defined(SCNd64)
-#define SCNd64 "lld"
-#endif
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
 //-----------------------------------------------------------------------------
@@ -459,7 +452,7 @@ static void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, boo
  * @param payload Discovery payload which has Endpoint information.
  * @param ifindex index which indicate network interface.
  */
-#if defined (IP_ADAPTER) && !defined (WITH_ARDUINO)
+#if defined (IP_ADAPTER)
 static OCStackResult OCMapZoneIdToLinkLocalEndpoint(OCDiscoveryPayload *payload, uint32_t ifindex);
 #endif
 
@@ -513,13 +506,8 @@ static void OCEnterInitializer()
             break;
         }
         OC_VERIFY(oc_atomic_decrement(&g_ocStackStartStopThreadCount) >= 0);
-#if !defined(ARDUINO)
         // Yield execution to the thread that is holding the lock.
         sleep(0);
-#else // ARDUINO
-        assert(!"Not expecting initCount to go above 1 on Arduino");
-        break;
-#endif // ARDUINO
     }
 }
 
@@ -1426,7 +1414,7 @@ OCStackResult HandleBatchResponse(char *requestUri, OCRepPayload **payload)
     return OC_STACK_INVALID_PARAM;
 }
 
-#if defined (IP_ADAPTER) && !defined (WITH_ARDUINO)
+#if defined (IP_ADAPTER)
 OCStackResult OCMapZoneIdToLinkLocalEndpoint(OCDiscoveryPayload *payload, uint32_t ifindex)
 {
     if (!payload)
@@ -1845,7 +1833,7 @@ void OC_CALL OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo
 
                     // Check endpoints has link-local ipv6 address.
                     // if there is, map zone-id which parsed from ifindex
-#if defined (IP_ADAPTER) && !defined (WITH_ARDUINO)
+#if defined (IP_ADAPTER)
                     if (PAYLOAD_TYPE_DISCOVERY == response->payload->type)
                     {
                         OCDiscoveryPayload *disPayload = (OCDiscoveryPayload*)(response->payload);
@@ -5124,12 +5112,11 @@ OCStackResult initResources()
             &(((OCResource *) presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 0);
 #endif
-#ifndef WITH_ARDUINO
+
     if (result == OC_STACK_OK)
     {
         result = SRMInitSecureResources();
     }
-#endif
 
     if(result == OC_STACK_OK)
     {

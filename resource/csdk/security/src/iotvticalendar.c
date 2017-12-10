@@ -18,9 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-//Not supported on Arduino due lack of absolute time need to implement iCalendar
-#if !defined(WITH_ARDUINO)
-
 #define _XOPEN_SOURCE  //Needed by strptime
 #include "iotivity_config.h"
 #include <string.h>
@@ -450,4 +447,3 @@ IotvtICalResult_t IsRequestWithinValidTime(const char *periodStr, const char *re
     }
     return ret;
 }
-#endif

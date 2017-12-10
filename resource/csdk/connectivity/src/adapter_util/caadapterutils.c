@@ -72,72 +72,6 @@ static jobject g_Activity = NULL;
 
 #define CA_ADAPTER_UTILS_TAG "OIC_CA_ADAP_UTILS"
 
-#ifdef WITH_ARDUINO
-CAResult_t CAParseIPv4AddressInternal(const char *ipAddrStr, uint8_t *ipAddr,
-                                   size_t ipAddrLen, uint16_t *port)
-{
-    if (!ipAddr || !isdigit(ipAddrStr[0]) || !port)
-    {
-        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "invalid param");
-        return CA_STATUS_INVALID_PARAM;
-    }
-
-    size_t index = 0;
-    uint8_t dotCount = 0;
-
-    ipAddr[index] = 0;
-    *port = 0;
-    while (*ipAddrStr)
-    {
-        if (isdigit(*ipAddrStr))
-        {
-            if(index >= ipAddrLen)
-            {
-                OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "invalid param");
-                return CA_STATUS_INVALID_PARAM;
-            }
-            ipAddr[index] *= 10;
-            ipAddr[index] += *ipAddrStr - '0';
-        }
-        else if (*ipAddrStr == '.')
-        {
-            index++;
-            dotCount++;
-            ipAddr[index] = 0;
-        }
-        else
-        {
-            break;
-        }
-        ipAddrStr++;
-    }
-
-    if (*ipAddrStr == ':')
-    {
-        ipAddrStr++;
-        while (*ipAddrStr)
-        {
-            if (isdigit(*ipAddrStr))
-            {
-                *port *= 10;
-                *port += *ipAddrStr - '0';
-            }
-            else
-            {
-                break;
-            }
-            ipAddrStr++;
-        }
-    }
-
-    if (dotCount == 3)
-    {
-        return CA_STATUS_OK;
-    }
-    return CA_STATUS_FAILED;
-}
-
-#else // not with_arduino
 CAResult_t CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sockAddrLen,
                                char *host, uint16_t *port)
 {
@@ -229,7 +163,6 @@ CAResult_t CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_
     freeaddrinfo(addrs);
     return CA_STATUS_OK;
 }
-#endif // WITH_ARDUINO
 
 #ifdef __JAVA__
 void CANativeJNISetJavaVM(JavaVM *jvm)
@@ -355,7 +288,6 @@ jobject *CANativeGetActivity()
 #endif //__ANDROID__
 #endif //JAVA__
 
-#ifndef WITH_ARDUINO
 void CALogAdapterStateInfo(CATransportAdapter_t adapter, CANetworkStatus_t state)
 {
     OIC_LOG(DEBUG, CA_ADAPTER_UTILS_TAG, "CALogAdapterStateInfo");
@@ -466,4 +398,3 @@ CAResult_t CAGetIpv6AddrScopeInternal(const char *addr, CATransportFlags_t *scop
         return CA_STATUS_FAILED;
     }
 }
-#endif

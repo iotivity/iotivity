@@ -1,6 +1,5 @@
 ##
 # override with `make BUILD=debug`
-# override with `make PLATFORM=arduinomega` or `make PLATFORM=arduinodue`
 # default to release build
 # default to build for linux
 BUILD	 := debug

@@ -23,10 +23,8 @@
 
 #include <iostream>
 #include <string>
-#ifndef WITH_ARDUINO
 #include <memory>
 #include <vector>
-#endif
 
 #include "OCPlatform.h"
 #include "ocstack.h"
@@ -48,7 +46,6 @@ using namespace std;
 #define OCF_CONTENT_FORMAT_VERSION_OPTION_ID 2053
 #define OCF_CONTENT_FORMAT_VERSION_VALUE 2048
 
-#ifndef WITH_ARDUINO
 namespace OIC
 {
     namespace Service
@@ -1420,6 +1417,5 @@ namespace OIC
 
     }
 }
-#endif //WITH_ARDUINO
 
 #endif //ES_COMMON_RICH_H_

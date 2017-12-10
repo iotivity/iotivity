@@ -983,15 +983,6 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
         return CA_STATUS_FAILED;
     }
 
-#ifdef ARDUINO
-    // If max retransmission queue is reached, then don't handle new request
-    if (CA_MAX_RT_ARRAY_SIZE == u_arraylist_length(g_retransmissionContext.dataList))
-    {
-        OIC_LOG(ERROR, TAG, "max RT queue size reached!");
-        return CA_SEND_FAILED;
-    }
-#endif // ARDUINO
-
     CAData_t *data = CAPrepareSendData(endpoint, sendMsg, dataType);
     if(!data)
     {
@@ -1383,7 +1374,6 @@ static void CASendErrorInfo(const CAEndpoint_t *endpoint, const CAInfo_t *info, 
     OIC_LOG(DEBUG, TAG, "CASendErrorInfo OUT");
 }
 
-#ifndef ARDUINO
 static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
 {
     OIC_LOG(DEBUG, TAG, "CALogPDUInfo");
@@ -1503,17 +1493,3 @@ static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
     OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
     OIC_TRACE_END();
 }
-#else
-static void CALogPDUInfo(const CAData_t *data, const coap_pdu_t *pdu)
-{
-    VERIFY_NON_NULL_VOID(pdu, TAG, "pdu");
-    (void)data;
-
-    OIC_LOG_V(DEBUG, TAG, "PDU Maker - payload : %s", pdu->data);
-    OIC_LOG_V(DEBUG, TAG, "PDU Maker - type : %d", pdu->transport_hdr->udp.type);
-    OIC_LOG_V(DEBUG, TAG, "PDU Maker - code : %d", pdu->transport_hdr->udp.code);
-    OIC_LOG(DEBUG, TAG, "PDU Maker - token :");
-    OIC_LOG_BUFFER(DEBUG, TAG, pdu->transport_hdr->udp.token,
-                   pdu->transport_hdr->udp.token_length);
-}
-#endif

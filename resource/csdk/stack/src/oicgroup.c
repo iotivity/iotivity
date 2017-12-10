@@ -126,12 +126,7 @@ ScheduledResourceInfo* GetScheduledResource(ScheduledResourceInfo *head)
 
     ScheduledResourceInfo *tmp = NULL;
     tmp = head;
-
-#if !defined(WITH_ARDUINO)
     time(&t_now);
-#else
-    t_now = now();
-#endif
 
     if (tmp)
     {
@@ -636,13 +631,11 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
     // yyyy-mm-dd hh:mm:ss d
     iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterTokenPtr);
     VARIFY_PARAM_NULL(iterToken, result, exit)
-#if !defined(WITH_ARDUINO)
     if( 2 != sscanf(iterToken, "%ld %u", &(*set)->timesteps, &(*set)->type) )
     {
         // If the return value should be 2, the number of items in the argument. Otherwise, it fails.
         goto exit;
     }
-#endif
 
     OIC_LOG_V(INFO, TAG, "ActionSet Name : %s", (*set)->actionsetName);
 

@@ -214,9 +214,5 @@ void oic_trace_end()
         OIC_LOG_V(INFO, TAG, "oic_trace_end: invalid fd: %d", g_trace_marker_hd);
     }
 }
-
-#elif defined ARDUINO
-/* TODO: Trace api for ARDUINO and others will be implemented */
-#endif //ARDUINO
-
+#endif // #ifdef __ANDROID__
 #endif // #ifndef __TIZEN__

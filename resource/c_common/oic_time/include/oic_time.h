@@ -66,21 +66,11 @@ typedef enum
  * the time returned will be `precision` time units since the epoch,
  * without adjustment for any external changes to the clock.
  *
- * For Arduino, returns the time since the Arduino board begin
- * running this program.
- *
  * @param     precision   based on this parameter, current time is
  * returned in milliseconds or microseconds
  *
  * @warning   This function may be sensitive to system time changes on
  * platforms which do not support a monotonic clock.
- *
- * @note
- * On the Arduino platform,
- * if the time precision is in milliseconds then the function will
- * overflow (go back to 0) after approximately 50 days.
- * If the time precision is in microseconds then the function will
- * overflow (go back to 0) after approximately 70 minutes.
  *
  * @return
  *         Returns current time in milliseconds or microseconds.

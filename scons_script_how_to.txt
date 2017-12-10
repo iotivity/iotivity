@@ -1,4 +1,6 @@
-== How to write IoTivity build script ==
+TODO: WARNING: this file is out of date
+
+== How to write IoTivity build scripts ==
 
 IoTivity projects are built with Scons. Scons is a cross-platform build tool,
 it's quite similar to 'make'. 'SConstruct' is the entrance of scons build, it's
@@ -81,7 +83,7 @@ cc -o H hello.o
 In above example, 'target_os' is used. How to get it?
 
 User can build IoTivity project on Linux / Windows / MAC OSX for various
-targets(Linux, Tizen, Android, Arduino, Windows, MAC OSX, IOS ...). Most
+targets (Linux, Tizen, Android, Windows, MAC OSX, iOS ...). Most
 platform specific configurations have been done in the common scripts which are in
 build_common. The common scripts prepare an environment named 'env' with
 target platform specific configuration.
@@ -112,10 +114,10 @@ RELEASE: build type, boolean. True - release build, False - debug build
 TARGET_OS: the name of the target OS. The possible value depends on the host
 	platform. Bellow is the list of host and possible target OS. (darwin means
 	MAC OSX)
-		linux: linux / android / arduino / tizen (means on Linux, you can build the
-			project for Linux/Android/Arduino/Tizen)
-		windows: windows / winrt / android / arduino
-		darwin: darwin / ios / android / arduino
+		linux: linux / android / tizen (means on Linux, you can build the
+			project for Linux/Android/Tizen)
+		windows: windows / winrt / android
+		darwin: darwin / ios / android
 
 TARGET_ARCH: the target CPU arch. Its possible value depends on the target OS.
 	Bellow list the target OS and allowed CPU architecture.
@@ -126,11 +128,10 @@ TARGET_ARCH: the target CPU arch. Its possible value depends on the target OS.
 		winrt: arm
 		darwin: i386 / x86_64
 		ios: i386 / x86_64 / armv7 / armv7s / arm64,
-		arduino: avr / arm
 
 === Extra functions ===
 
-For convenience, in the common scripts, some extra functions are added.
+For convenience, in the common scripts, some extra functions are added:
 
 PrintTargets(): print all target names in the help information.
 AppendTarget(name, target = None): add a target name into targets list, when use
@@ -141,22 +142,8 @@ AppendTarget(name, target = None): add a target name into targets list, when use
 InstallTarget(files, name): it takes the same action as AppendTarget, besides,
 	it installs the 'files' to BUILD_DIR.
 
-Following functions are only for Arduino:
-ImportLib(lib): Arduino IDE includes many libraries. By default, no library is
-compiled. If your project use some libraries, you can import the library by
-this function. 'lib' is the name of the library to import. The 'include' path
-will be auto added to the environment and the library will be built and linked
-into the final binary.
-
-CreateBin(bin, src): For Arduino, after build the program, it's required to
-be converted into specific format (e.g .hex). This function will generate the
-required .hex (and .eep if target arch is avr) file from 'bin'.
-
-UploadHelp(): For different board, the upload command line is different, this
-function print the recommended upload command line. You can see the recommended
-upload command line in the help information(the output of command "scons
-[options] -h")
 Functions for external library management:
+
 PrepareLib(libname, lib = None, path = None, script = None): Check whether a
 library exists, if not, notify user to install it or try to download the source
 code and build it

@@ -31,8 +31,6 @@
 #include <time.h>
 #elif defined(HAVE_SYS_TIME_H)
 #include <sys/time.h>
-#elif defined(HAVE_ARDUINO_TIME_H)
-#include <Time.h>
 #endif
 
 #ifdef __cplusplus
@@ -42,7 +40,6 @@ extern "C"
 
 #include <math.h>
 
-#ifndef WITH_ARDUINO
 #define SECS_PER_MIN  (60L)
 #define SECS_PER_HOUR (SECS_PER_MIN * 60L)
 #define SECS_PER_DAY  (SECS_PER_HOUR * 24L)
@@ -50,7 +47,6 @@ extern "C"
 #define SECS_PER_WEEK (SECS_PER_DAY * DAYS_PER_WEEK)
 #define SECS_PER_YEAR (SECS_PER_WEEK * 52L)
 #define SECS_YR_2000  (946684800L)
-#endif
 
 typedef void(*TimerCallback)(void *ctx);
 
@@ -75,7 +71,6 @@ void timespec_add(time_t *to, const time_t seconds);
 
 void checkTimeout(void);
 
-#ifndef WITH_ARDUINO
 long int getSeconds(struct tm *tp);
 time_t getRelativeIntervalOfWeek(struct tm *tp);
 time_t getSecondsFromAbsTime(struct tm *tp);
@@ -85,13 +80,6 @@ void *loop(void *threadid);
 time_t OC_CALL registerTimer(const time_t seconds, int *id, TimerCallback cb, void *ctx);
 void OC_CALL unregisterTimer(int id);
 
-#else
-
-time_t timeToSecondsFromNow(tmElements_t *t);
-time_t OC_CALL registerTimer(const time_t seconds, int *id, TimerCallback cb, void *ctx);
-void OC_CALL unregisterTimer(int id);
-
-#endif
 
 #ifdef __cplusplus
 }

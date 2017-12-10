@@ -30,11 +30,6 @@
 extern "C" {
 #endif
 
-#ifdef ARDUINO
-// MEGA has 16 input pins whereas Due has only 12 input pins
-#define ANALOG_IN (10)
-#endif
-
  /* Number of bytes in a UUID. */
 #define UUID_SIZE (16)
 

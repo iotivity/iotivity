@@ -31,33 +31,17 @@
 #include <android/log.h>
 #elif defined(__TIZEN__)
 #include <dlog.h>
-#elif defined(ARDUINO)
-#include <inttypes.h>
-#include "Arduino.h"
-#include "avr/pgmspace.h"
 #endif
 
 #ifdef __cplusplus
-#ifndef ARDUINO
 #include <cinttypes>
-#endif
 extern "C"
 {
 #else
 #include <inttypes.h>
 #endif
 
-// Use the PCF macro to wrap strings stored in FLASH on the Arduino
-// Example:  OIC_LOG(INFO, TAG, PCF("Entering function"));
-#ifdef ARDUINO
-#ifdef __cplusplus
-#define PCF(str)  ((PROGMEM const char *)(F(str)))
-#else
-#define PCF(str)  ((PROGMEM const char *)(PSTR(str)))
-#endif //__cplusplus
-#else
-    #define PCF(str) str
-#endif
+#define PCF(str) str
 
 // Max buffer size used in variable argument log function
 #define MAX_LOG_V_BUFFER_SIZE (256)
@@ -135,7 +119,7 @@ void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t buffe
 
 #define OCLog(level,tag,mes) LOG_(LOG_ID_MAIN, ((level) & (~OC_LOG_PRIVATE_DATA)), (tag), mes)
 #define OCLogv(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, ((level) & (~OC_LOG_PRIVATE_DATA)),tag,fmt,##args)
-#elif !defined(ARDUINO)
+#else
     /**
      * Configure logger to use a context that defines a custom logger function
      *
@@ -144,7 +128,7 @@ void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t buffe
     void OCLogConfig(oc_log_ctx_t *ctx);
 
     /**
-     * Initialize the logger.  Optional on Android and Linux.  Configures serial port on Arduino
+     * Initialize the logger.  Optional on Android and Linux.
      */
     void OCLogInit();
 
@@ -188,49 +172,6 @@ void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t buffe
      * @param bufferSize - max number of byte in buffer
      */
     void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t bufferSize);
-#else  // For arduino platforms
-    /**
-     * Initialize the serial logger for Arduino
-     * Only defined for Arduino
-     */
-    void OCLogInit();
-
-    /**
-     * Output a log string with the specified priority level.
-     * Only defined for Arduino.  Uses PROGMEM strings
-     *
-     * @param level  - DEBUG, INFO, WARNING, ERROR, FATAL
-     * @param tag    - Module name
-     * @param lineNum- line Number
-     * @param logStr - log string
-     */
-    void OCLog(int level, PROGMEM const char *tag, const int lineNum,
-               PROGMEM const char *logStr);
-
-    /**
-     * Output the contents of the specified buffer (in hex) with the specified priority level.
-     *
-     * @param level      - DEBUG, INFO, WARNING, ERROR, FATAL
-     * @param tag        - Module name
-     * @param buffer     - pointer to buffer of bytes
-     * @param bufferSize - max number of byte in buffer
-     */
-    void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t bufferSize);
-
-    /**
-     * Output a variable argument list log string with the specified priority level.
-     *
-     * @param level  - DEBUG, INFO, WARNING, ERROR, FATAL
-     * @param tag    - Module name
-     * @param lineNum- line Number
-     * @param format - variadic log string
-     */
-    void OCLogv(int level, PROGMEM const char *tag, const int lineNum,
-                PROGMEM const char *format, ...)
-#if defined(__GNUC__)
-    __attribute__ ((format(printf, 4, 5)))
-#endif
-;
 #endif
 
 #ifdef TB_LOG
@@ -260,34 +201,9 @@ void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t buffe
             OCPrintCALogBuffer((level), (tag), (buffer), (bufferSize), (isHeader)); \
     } while(0)
 
-#else // NO __TIZEN__ - These macros are defined for Linux, Android, Win32, and Arduino
+#else // NO __TIZEN__ - These macros are defined for Linux, Android and Win32.
 #define OIC_LOG_INIT()    OCLogInit()
 
-#ifdef ARDUINO
-#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize) \
-    do { \
-        IF_OC_PRINT_LOG_LEVEL((level)) \
-            OCLogBuffer((level), PCF(tag), (buffer), (bufferSize)); \
-    } while(0)
-
-// Don't define variable argument log function for Arduino
-#define OIC_LOG_V(level, tag, format, ...) \
-    do { \
-        IF_OC_PRINT_LOG_LEVEL((level)) \
-            OCLogv((level), PCF(tag), __LINE__, PCF(format),__VA_ARGS__); \
-    } while(0)
-
-#define OIC_LOG_CONFIG(ctx)
-#define OIC_LOG_SHUTDOWN()
-#define OIC_LOG(level, tag, logStr) \
-    do { \
-        IF_OC_PRINT_LOG_LEVEL((level)) \
-            OCLog((level), PCF(tag), __LINE__, PCF(logStr)); \
-    } while(0)
-
-#define OIC_LOG_V(level, tag, ...)
-
-#else // NO ARDUINO
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize) \
     do { \
         IF_OC_PRINT_LOG_LEVEL((level)) \
@@ -315,7 +231,6 @@ void OCLogBuffer(int level, const char* tag, const uint8_t* buffer, size_t buffe
             OCLogv((level), (tag), __VA_ARGS__); \
     } while(0)
 
-#endif // ARDUINO
 #endif // __TIZEN__
 
 #else // TB_LOG

@@ -40,8 +40,8 @@ follow the instructions found in:
 IoTivity includes a series of projects. You can find all these projects here:
     https://gerrit.iotivity.org/gerrit/#/admin/projects/
 
-You can build IoTivity project on Linux / Windows / MAC OSX for various OS(
-Linux, Tizen, Android, Arduino, Windows, MAC OSX, IOS ...).
+You can build IoTivity project on Linux / Windows / MAC OSX for various targets
+(Linux, Tizen, Android, Windows, MAC OSX, iOS ...).
 The output of the build is in:
   <top directory of the project>/out/<target_os>/<target_arch>/<build_type>/
 e.g.
@@ -84,7 +84,7 @@ Please refer to the following page to install scons:
 (Note: on Windows, install Python 2.x before installing scons)
 
 * 2. IDE/SDK Prerequites
-To build for some OS (Android / Arduino / IOS ...), an IDE/SDK may be required,
+To build for some OS (Android / iOS ...), an IDE/SDK may be required,
 please go to the relative page to download and install the required IDE/SDK.
 
 Android:
@@ -93,20 +93,6 @@ To build for Android, Andorid NDK and SDK are required.
   Android SDK: http://developer.android.com/sdk/index.html
 (Note: as in some IoTivity projects, C++11 features are used, recommend Android
  NDK >= r10)
-
-Arduino:
-To build for Arduino, Arduino IDE is required.
-  Arduino IDE: http://arduino.cc/en/Main/Software
-  (Note: recommend install Arduino IDE >=1.5.8)
-
-Arduino builds are dependent on latest Time library. Download it from here:
-    http://www.pjrc.com/teensy/td_libs_Time.html
-and extract to <arduino_ide_root>/libraries/
-
-(Note: If you are using Arduino IDE 1.5.8 BETA on Windows, it may pop up some
-dll isn't found. please copy relative dll from the IDE directory to
-C:\Windows\SysWOW64. IDE 1.5.7 doesn't have this issue. Other version IDE isn't
-tested.)
 
 Apple:
 To build for Mac OSX or IOS, Xcode is required.
@@ -210,29 +196,6 @@ gbs is default build tool for Tizen platform, we can refer the following
 wiki to setup Tizen development environment:
 https://source.tizen.org/documentation/developer-guide/getting-started-guide)
 
-Arduino:
- * Possible values for <TARGET_TRANSPORT> are: IP, BLE
- * Possible values for <TARGET_ARCH> are: arv, arm
-    (arv: arduino due, arm: arduino mega)
- * Possible values for <BOARD> are: arduino_due_x_dbg, arduino_due_x, mega
- * Possible values for <SHIELD> are: ETH, WIFI
-    (It is required in the case of the arduino due.)
-
- 1. Go to root directory
-    $ cd <top directory of the project>
-    $ sudo apt-get install dos2unix
-
- 2. Execute following command(s) to start build based on transport selection required
-
-    -> Building for a specific transport :
-    $ scons TARGET_OS=arduino TARGET_ARCH=xxx BOARD=yyy SHIELD=zzz
-
-(To get allowed values run: scons TARGET_OS=arduino TARGET_ARCH=xxx SHIELD=zzz -h.
-You may see a option 'CPU' in the output of above command line, that's due to
-some boards have different processors, to specify the processor, add 'CPU=zzz'
-in the command line. If no 'CPU' option exists, that means the board only
-support one kind of processor, it's unnecessary to specify it)
-
 Mac OSX:
  * Possible values for <SYS_VERSION> are: OSX version, e.g. 10.9
 
@@ -280,7 +243,7 @@ See run.bat for more example usage parameters
  * TEST=1 or 0 (Run unit tests)
  * BUILD_SAMPLE=ON or OFF (Build with sample)
  * ROUTING=GW or EP (Enable routing)
- * WITH_TCP=true or false (Enable CoAP over TCP Transport, arduino is not supported)
+ * WITH_TCP=true or false (Enable CoAP over TCP Transport)
  * RD_MODE=CLIENT or SERVER (Build including Resource Directory)
  * SIMULATOR=true or false (Build with simulator module)
  * Possible values for <WITH_MQ> are: PUB,SUB,BROKER (Build including Message Queue)

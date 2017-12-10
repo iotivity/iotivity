@@ -120,16 +120,6 @@ CAResult_t CAIPStopListenServer();
  */
 void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback);
 
-#ifdef WITH_ARDUINO
-/**
- * Set socket description for sending unicast UDP data.
- * Once the Unicast server is started,
- * the same socket descriptor is used for sending the Unicast UDP data.
- *
- * @param[in]  socketFD   Socket descriptor used for sending UDP data.
- */
-void CAIPSetUnicastSocket(int socketFD);
-#endif
 
 /**
  * Set the port number for sending unicast UDP data.

@@ -1101,8 +1101,6 @@ uint64_t RTMGetCurrentTime()
     clock_gettime(CLOCK_MONOTONIC, &getTs);
 
     currentTime = getTs.tv_sec;
-#elif defined __ARDUINO__
-    currentTime = millis() / 1000;
 #else
 #if _POSIX_TIMERS > 0
     struct timespec ts;

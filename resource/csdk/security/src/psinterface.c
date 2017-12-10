@@ -18,10 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifdef WITH_ARDUINO
-#define __STDC_LIMIT_MACROS
-#endif
-
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>

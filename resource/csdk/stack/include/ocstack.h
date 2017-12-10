@@ -621,8 +621,7 @@ OCStackResult OC_CALL OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfS
  * @param qos                       Desired quality of service of the observation notifications.
  *
  * @note: The memory for obsIdList and payload is managed by the entity invoking the API.
- * The maximum size of the notification is 1015 bytes for non-Arduino platforms. For Arduino
- * the maximum size is 247 bytes.
+ * The maximum size of the notification is 1015 bytes.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */

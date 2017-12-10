@@ -199,7 +199,6 @@ void CAClearNetInterfaceInfoList(u_arraylist_t *infoList);
  */
 void CAClearServerInfoList(u_arraylist_t *serverInfoList);
 
-#ifndef WITH_ARDUINO
 /**
  * Convert address from binary to string.
  * @param[in]    sockAddr     IP address info.
@@ -219,7 +218,6 @@ CAResult_t CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_
  * @return CA_STATUS_OK on success, or an appropriate error code on failure.
  */
 CAResult_t CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storage *sockaddr);
-#endif /* WITH_ARDUINO */
 
 #ifdef __JAVA__
 /**
@@ -294,7 +292,6 @@ jobject *CANativeGetActivity();
 #endif
 #endif
 
-#ifndef WITH_ARDUINO
 /**
  * print send state in the adapter.
  * @param[in]   adapter          transport adapter type.
@@ -328,10 +325,8 @@ void CALogAdapterTypeInfo(CATransportAdapter_t adapter);
  * @return      ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAGetIpv6AddrScopeInternal(const char *addr, CATransportFlags_t *scopeLevel);
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 #endif  /* CA_ADAPTER_UTILS_H_ */
-

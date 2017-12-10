@@ -18,10 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifdef ARDUINO
-#define __STDC_LIMIT_MACROS
-#endif
-
 #include "ocpayloadcbor.h"
 #include "platform_features.h"
 #include <stdlib.h>

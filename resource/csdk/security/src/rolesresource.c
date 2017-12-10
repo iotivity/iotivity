@@ -1229,7 +1229,6 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
     /* Is the cache still valid? */
     struct tm now;
     memset(&now, 0, sizeof(now));
-#ifndef WITH_ARDUINO /* No reliable time on Arduino, so assume the cache is valid if present. */
     time_t nowTimeT = 0;
     nowTimeT = time(NULL);
     /* If we failed to get the current time, assume the cache is valid if present. */
@@ -1252,7 +1251,6 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
         }
 #endif
     }
-#endif /* WITH_ARDUINO */
 
     if (IsBefore(&now, &targetEntry->cacheValidUntil))
     {

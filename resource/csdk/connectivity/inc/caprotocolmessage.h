@@ -41,14 +41,7 @@ typedef uint32_t code_t;
 #define CA_RESPONSE_CLASS(C) (((C) >> 5)*100)
 #define CA_RESPONSE_CODE(C) (CA_RESPONSE_CLASS(C) + (C - COAP_RESPONSE_CODE(CA_RESPONSE_CLASS(C))))
 
-
-// Include files from the arduino platform do not provide these conversions:
-#ifdef ARDUINO
-#define htons(x) ( ((x)<< 8 & 0xFF00) | ((x)>> 8 & 0x00FF) )
-#define ntohs(x) htons(x)
-#else
 #define HAVE_TIME_H 1
-#endif
 
 #ifdef WITH_TCP
 static const uint8_t PAYLOAD_MARKER = 1;

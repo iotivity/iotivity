@@ -20,9 +20,9 @@ On the newly provisioned VM, the IoTivity git repo will be checked out
 in the `iotivity` directory in the vagrant user's home directory.
 
 Optional (currently disabled) features are provisioning for Android
-and Arduino building. Android will now correctly provision on first
-scons run where those build options are selected. Arduino building is
-no longer really supported on iotivity (use iotivity-constrained instead).
+building. Android will now correctly provision on first scons run where
+those build options are selected. Arduino building is no longer supported
+on iotivity (use iotivity-constrained instead).
 
 Also optional, it should be able to configure for Ubuntu 17.04
 and 17.10, by changing which of the the stanzas in Vagrantfile is

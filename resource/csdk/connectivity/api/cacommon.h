@@ -70,11 +70,7 @@ extern "C"
 /**
  * Max header options data length.
  */
-#ifdef ARDUINO
-#define CA_MAX_HEADER_OPTION_DATA_LENGTH 20
-#else
 #define CA_MAX_HEADER_OPTION_DATA_LENGTH 1024
-#endif
 
 /**
 * Max token length.
@@ -84,20 +80,12 @@ extern "C"
 /**
  * Max URI length.
  */
-#ifdef ARDUINO
-#define CA_MAX_URI_LENGTH 128  /* maximum size of URI for embedded platforms*/
-#else
-#define CA_MAX_URI_LENGTH 512 /* maximum size of URI for other platforms*/
-#endif
+#define CA_MAX_URI_LENGTH 512 /* maximum size of URI */
 
 /**
  * Max PDU length supported.
  */
-#ifdef ARDUINO
-#define COAP_MAX_PDU_SIZE           320  /* maximum size of a CoAP PDU for embedded platforms*/
-#else
-#define COAP_MAX_PDU_SIZE           1400 /* maximum size of a CoAP PDU for big platforms*/
-#endif
+#define COAP_MAX_PDU_SIZE           1400 /* maximum size of a CoAP PDU */
 
 #ifdef WITH_BWT
 #define CA_DEFAULT_BLOCK_SIZE       CA_BLOCK_SIZE_1024_BYTE
