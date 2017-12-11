@@ -1475,6 +1475,41 @@ jobject jListener, jint jResourceProperty)
 
 /*
 * Class:     org_iotivity_base_OcPlatform
+* Method:    getResourceHandleAtUri0
+* Signature: (Ljava/lang/String;)Lorg/iotivity/base/OcResourceHandle;
+*/
+JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_getResourceHandleAtUri0(
+        JNIEnv *env,
+        jclass clazz,
+        jstring jResourceUri)
+{
+    OC_UNUSED(clazz);
+    LOGI("OcPlatform_registerResource1");
+    std::string resourceUri;
+    if (jResourceUri)
+    {
+        resourceUri = env->GetStringUTFChars(jResourceUri, nullptr);
+    }
+
+    OCResourceHandle resourceHandle;
+
+    resourceHandle = OCGetResourceHandleAtUri(resourceUri.c_str());
+
+    JniOcResourceHandle* jniHandle = new JniOcResourceHandle(resourceHandle);
+    jlong handle = reinterpret_cast<jlong>(jniHandle);
+    jobject jResourceHandle;
+    jResourceHandle = env->NewObject(g_cls_OcResourceHandle, g_mid_OcResourceHandle_N_ctor, handle);
+    if (!jResourceHandle)
+    {
+        LOGE("Failed to create OcResourceHandle");
+        delete jniHandle;
+    }
+
+    return jResourceHandle;
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
 * Method:    registerDeviceInfo0
 * Signature: (Ljava/lang/String;[Ljava/lang/String;)V
 */

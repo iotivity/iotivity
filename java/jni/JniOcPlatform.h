@@ -221,6 +221,14 @@ extern "C" {
 
     /*
     * Class:     org_iotivity_base_OcPlatform
+    * Method:    getResourceHandleAtUri0
+    * Signature: (Ljava/lang/String;)Lorg/iotivity/base/OcResourceHandle;
+    */
+    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_getResourceHandleAtUri0
+        (JNIEnv *, jclass, jstring);
+
+    /*
+    * Class:     org_iotivity_base_OcPlatform
     * Method:    setPropertyValue0
     * Signature: (ILjava/lang/String;[Ljava/lang/String;)V
     */
