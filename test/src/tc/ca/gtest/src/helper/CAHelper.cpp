@@ -1552,23 +1552,24 @@ const char* CAHelper::getReceiveFailureMessage(int index)
 {
     IOTIVITYTEST_LOG(DEBUG, "getReceiveFailureMessage in");
 
-    std::ostringstream stream;
-    stream << "Return Value";
-    stream << ": ";
-    stream << getNumber(m_result);
-    stream << "   ";
-    stream << ",   ";
-    stream << "Total Receive Message";
-    stream << ": ";
-    stream << getNumber(s_mapReceiveCount[s_simulatorIp][s_simulatorPort][index]);
+    m_failure_message_stream.clear();
 
-    p_failure_out = (char*) stream.str().c_str();
+    m_failure_message_stream << "Return Value";
+    m_failure_message_stream << ": ";
+    m_failure_message_stream << getNumber(m_result);
+    m_failure_message_stream << "   ";
+    m_failure_message_stream << ",   ";
+    m_failure_message_stream << "Total Receive Message";
+    m_failure_message_stream << ": ";
+    m_failure_message_stream << getNumber(s_mapReceiveCount[s_simulatorIp][s_simulatorPort][index]);
 
-    IOTIVITYTEST_LOG(DEBUG, p_failure_out);
+    const char* out = m_failure_message_stream.str().c_str();
+
+    IOTIVITYTEST_LOG(DEBUG, out);
 
     IOTIVITYTEST_LOG(DEBUG, "getReceiveFailureMessage out");
 
-    return p_failure_out;
+    return out;
 }
 
 const char* CAHelper::getFailureMessage()
@@ -1589,27 +1590,27 @@ const char* CAHelper::getFailureMessage(const char* apiName, CAResult_t expected
 const char* CAHelper::getFailureMessage(const char* apiName, CAResult_t returnedResult,
         CAResult_t expectedResult)
 {
-    std::ostringstream stream;
+    m_failure_message_stream.clear();
 
-    stream << apiName;
-    stream << " Returned";
-    stream << ": ";
-    stream << getResultName(returnedResult);
-    stream << "; ";
-    stream << "   Expected: ";
+    m_failure_message_stream << apiName;
+    m_failure_message_stream << " Returned";
+    m_failure_message_stream << ": ";
+    m_failure_message_stream << getResultName(returnedResult);
+    m_failure_message_stream << "; ";
+    m_failure_message_stream << "   Expected: ";
 
     if (returnedResult == expectedResult)
     {
-        stream << "Not ";
+        m_failure_message_stream << "Not ";
     }
 
-    stream << getResultName(expectedResult);
+    m_failure_message_stream << getResultName(expectedResult);
 
-    std::string str = stream.str();
+    std::string str = m_failure_message_stream.str();
 
     m_failureMessage += str;
 
-    const char *out = str.c_str();
+    const char *out = m_failure_message_stream.str().c_str();
 
     IOTIVITYTEST_LOG(DEBUG, out);
 
