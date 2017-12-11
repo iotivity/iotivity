@@ -67,6 +67,7 @@ include_paths = [
     iotivity_root + '/extlibs/tinycbor/tinycbor/src/',
     iotivity_root + '/extlibs/mbedtls/mbedtls/include',
     iotivity_root + '/extlibs/timer/' ,
+    iotivity_root + '/resource/csdk/resource-directory/include/',
     iotivity_lib_path + '/resource/c_common'
 ]
 

@@ -32,7 +32,8 @@ import os
 env_linux['CC'] = 'g++'
 
 iotivity_root = env_linux.get('IOTIVITY_ROOT')
-iotivity_lib_path = [env_linux.get('IOTIVITY_LIB_PATH'), '.', '/usr/local/lib']
+iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
+iotivity_lib_paths = [iotivity_lib_path, '.', '/usr/local/lib']
 iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
 variant_dir = env_linux.get('VARIANT_DIR')
 install_dir = env_linux.get('INSTALL_DIR')
@@ -109,8 +110,8 @@ if 'tc' in test:
                     target = 'iotivity_ri_csdk_test',
                     CPPPATH = iotivity_include_paths + csdk_include_paths,
                     LIBS = csdk_shared_libs + ['common_util', 'tc_util', 'dl'],
-                    LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux'],
-                    RPATH = [iotivity_lib_path],
+                    LIBPATH = [iotivity_lib_paths, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux'],
+                    RPATH = [iotivity_lib_paths],
                     CPPFLAGS = common_flags + common_linux_cppflags,
                     CPPDEFINES = common_defines)
         install_targets += [csdk_tc]
@@ -121,8 +122,8 @@ if 'tc' in test:
                     target = 'iotivity_ri_cpp_test',
                     CPPPATH = iotivity_include_paths + cpp_include_paths,
                     LIBS = cpp_shared_libs + ['common_util', 'tc_util', 'dl'],
-                    LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux'], 
-                    RPATH = [iotivity_lib_path],
+                    LIBPATH = [iotivity_lib_paths, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux'], 
+                    RPATH = [iotivity_lib_paths],
                     CPPFLAGS = common_flags + common_linux_cppflags,
                     CPPDEFINES = common_defines)
         install_targets += [cpp_tc]
@@ -133,8 +134,8 @@ if 'app' in test:
                         target = 'InterOpAppRI',
                         CPPPATH = iotivity_include_paths + testapp_include_paths,
                         LIBS = testapp_shared_libs,
-                        LIBPATH = iotivity_lib_path,
-                        RPATH = iotivity_lib_path,
+                        LIBPATH = iotivity_lib_paths,
+                        RPATH = iotivity_lib_paths,
                         CPPFLAGS = common_flags + common_linux_cppflags,
                         CPPDEFINES = common_defines)
     install_targets += [ri_interop_app]
