@@ -167,6 +167,7 @@ protected:
     int m_clientAckCount;
     bool m_clientPreConditionPass;
     bool m_multicastRequest;
+    char *p_failure_out;
 
 private:
     static bool checkRequestResponseHandler(const CAEndpoint_t* endpoint,

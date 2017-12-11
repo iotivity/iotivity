@@ -1036,6 +1036,8 @@ bool CAHelper::sendRequest(char* uri, char* hidden_payload, CAMethod_t method, C
     char resourceUri[RESOURCE_URI_LENGTH + 1];
     char payload[MAX_BUF_LEN];
 
+    memset(payload, 0, sizeof(payload));
+
     if (strlen(uri) <= RESOURCE_URI_LENGTH)
     {
         strcpy(resourceUri, uri);
@@ -1560,13 +1562,13 @@ const char* CAHelper::getReceiveFailureMessage(int index)
     stream << ": ";
     stream << getNumber(s_mapReceiveCount[s_simulatorIp][s_simulatorPort][index]);
 
-    const char *out = stream.str().c_str();
+    p_failure_out = (char*) stream.str().c_str();
 
-    IOTIVITYTEST_LOG(DEBUG, out);
+    IOTIVITYTEST_LOG(DEBUG, p_failure_out);
 
     IOTIVITYTEST_LOG(DEBUG, "getReceiveFailureMessage out");
 
-    return out;
+    return p_failure_out;
 }
 
 const char* CAHelper::getFailureMessage()

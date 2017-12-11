@@ -216,11 +216,12 @@ CAResult_t dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *in
 
     if (NULL == info)
     {
-        output("ErrorInfo: %d", info->result);
+        output("ErrorInfo is null");
         return CA_STATUS_FAILED;
     }
+
     output("Remote device Address %s:%d:", endpoint->addr, endpoint->port);
-    output("ErrorInfo is null");
+    output("ErrorInfo: %d", info->result);
     return CA_STATUS_OK;
 }
 
@@ -861,15 +862,9 @@ void errorHandler(const CAEndpoint_t *endpoint, const CAErrorInfo_t *errorInfo)
 
     output("IP %s, Port %d\n", endpoint->addr, endpoint->port);
 
-    const CAInfo_t *info = &errorInfo->info;
-
-    if (!info)
-    {
-        output("CAInfo is NULL\n");
-        return;
-    }
-
     output("result: %d\n", errorInfo->result);
+
+    const CAInfo_t *info = &errorInfo->info;
 
     if (!info->token)
     {
