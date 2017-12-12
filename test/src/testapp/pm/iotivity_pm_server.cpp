@@ -205,7 +205,6 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
                 gLedInstance[gCurrLedInstance].power = 0;
                 gCurrLedInstance++;
                 strncpy((char *) response->resourceUri, newLedUri, MAX_URI_LENGTH);
-                ehResult = OC_EH_RESOURCE_CREATED;
             }
         }
         else
@@ -333,6 +332,11 @@ void create_file(char* pin)
 {
     FILE *fp;
     fp = fopen("server_pincode.txt", "w+");
+
+    if (NULL == fp) {
+        IOTIVITYTEST_LOG(INFO, "Error Opening server_pincode.txt");
+    }
+
     fprintf(fp, "%s", pin);
     fclose(fp);
 }
@@ -394,7 +398,7 @@ int main(int argc, char **argv)
 {
     struct timespec timeout;
 
-    strcpy(fileName, argv[1]);
+    strncpy (fileName, argv[1], strlen(argv[1]));
 
     if (!strcmp(argv[2], "4"))
     {

@@ -670,8 +670,12 @@ ByteArray_t PMCsdkCertHelper::getTrustCertChainArray()
             if (NULL != trustCertChainArray.data)
             {
                 rewind(fp);
-                fsize = fread(trustCertChainArray.data, 1, fsize, fp);
-                OC_UNUSED(fsize);
+
+                if (fsize != fread(trustCertChainArray.data, 1, fsize, fp))
+                {
+                    IOTIVITYTEST_LOG(ERROR, "Certiface not read completely");
+                }
+
                 fclose(fp);
                 return trustCertChainArray;
             }

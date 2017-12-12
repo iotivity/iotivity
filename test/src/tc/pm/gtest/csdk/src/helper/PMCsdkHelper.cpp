@@ -249,15 +249,12 @@ OCStackResult PMCsdkHelper::confirmMutualVerifNumCB(void * ctx)
         CommonUtil::waitInSecond(DELAY_SHORT);
         userConfirm = 1;
 
-        if (1 == userConfirm)
+        if (1 != userConfirm)
         {
-            break;
-        }
-        else if (0 == userConfirm)
-        {
+            printf("Entered Wrong Number. Please Enter Again\n");
             return OC_STACK_USER_DENIED_REQ;
         }
-        printf("   Entered Wrong Number. Please Enter Again\n");
+        
     }
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] confirmMutualVerifNumCB OUT");
     return OC_STACK_OK;
@@ -1375,8 +1372,10 @@ ByteArray_t PMCsdkHelper::getTrustCertChainArray()
             if (NULL != trustCertChainArray.data)
             {
                 rewind(fp);
-                fsize = fread(trustCertChainArray.data, 1, fsize, fp);
-                OC_UNUSED(fsize);
+                if (fsize != fread(trustCertChainArray.data, 1, fsize, fp))
+                {
+                    IOTIVITYTEST_LOG(ERROR, "Certiface not read completely");
+                }
                 fclose(fp);
                 return trustCertChainArray;
             }

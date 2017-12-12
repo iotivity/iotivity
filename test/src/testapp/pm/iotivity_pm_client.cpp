@@ -90,7 +90,7 @@ int main(int argc, char **argv)
     CommonUtil::copyFile("./" + UNOWNED_DIR + "/" + JUST_WORK_SERVER_02, JUST_WORK_SERVER_02);
     CommonUtil::waitInSecond(DELAY_MEDIUM);
     // Intilize Provisioning Manager
-    isSuccessful = m_SecurityCommonUtil.initProvisionClient();
+    m_SecurityCommonUtil.initProvisionClient();
 
     //Getting Info if there is any unwanted device
     IOTIVITYTEST_LOG(INFO, "Getting Existing Devices of the Current Network");
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
     IOTIVITYTEST_LOG(INFO, "================================================");
     IOTIVITYTEST_LOG(INFO, "================================================");
 
-    isSuccessful = m_SecurityCommonUtil.discoverAllDevices(DISCOVERY_TIMEOUT, &m_UnownList,
+    m_SecurityCommonUtil.discoverAllDevices(DISCOVERY_TIMEOUT, &m_UnownList,
             &m_OwnList, OC_STACK_OK);
 
     while (m_UnownList)
