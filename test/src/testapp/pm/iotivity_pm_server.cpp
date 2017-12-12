@@ -335,6 +335,7 @@ void create_file(char* pin)
 
     if (NULL == fp) {
         IOTIVITYTEST_LOG(INFO, "Error Opening server_pincode.txt");
+        return;
     }
 
     fprintf(fp, "%s", pin);

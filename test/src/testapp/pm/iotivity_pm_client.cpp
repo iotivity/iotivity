@@ -98,8 +98,8 @@ int main(int argc, char **argv)
     IOTIVITYTEST_LOG(INFO, "================================================");
     IOTIVITYTEST_LOG(INFO, "================================================");
 
-    m_SecurityCommonUtil.discoverAllDevices(DISCOVERY_TIMEOUT, &m_UnownList,
-            &m_OwnList, OC_STACK_OK);
+    m_SecurityCommonUtil.discoverAllDevices(DISCOVERY_TIMEOUT, &m_OwnList,
+            &m_UnownList, OC_STACK_OK);
 
     while (m_UnownList)
     {

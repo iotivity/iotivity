@@ -242,21 +242,7 @@ OCStackResult PMCsdkHelper::displayMutualVerifNumCB(void * ctx,
 
 OCStackResult PMCsdkHelper::confirmMutualVerifNumCB(void * ctx)
 {
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] confirmMutualVerifNumCB IN");
-    for (;;)
-    {
-        int userConfirm;
-        CommonUtil::waitInSecond(DELAY_SHORT);
-        userConfirm = 1;
-
-        if (1 != userConfirm)
-        {
-            printf("Entered Wrong Number. Please Enter Again\n");
-            return OC_STACK_USER_DENIED_REQ;
-        }
-        
-    }
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] confirmMutualVerifNumCB OUT");
+    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] confirmMutualVerifNumCB IN & OUT");
     return OC_STACK_OK;
 }
 
@@ -1432,15 +1418,15 @@ OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_o
 
     OCProvisionDev_t* dev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) *m_own_list, num);
 
-    PMCsdkUtilityHelper::printDevList(dev);
-
-    memcpy(&ace->subjectuuid, &dev->doxm->deviceID, UUID_LENGTH);
-
     if (!dev || !dev->doxm)
     {
         IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAcl: device instance empty");
         return NULL;
     }
+
+    PMCsdkUtilityHelper::printDevList(dev);
+
+    memcpy(&ace->subjectuuid, &dev->doxm->deviceID, UUID_LENGTH);
 
     num = 1;
     for (int i = 0; num > i; ++i)
