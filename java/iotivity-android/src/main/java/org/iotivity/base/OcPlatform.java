@@ -690,6 +690,21 @@ public final class OcPlatform {
     ) throws OcException;
 
     /**
+    * This function gets a resource handle by resource uri.
+    *
+    * @param  resourceUri   Uri of Resource to get Resource handle.
+    *
+    * @return Found  resource handle or NULL if not found.
+    * @throws OcException if failure
+    */
+    public static OcResourceHandle getResourceHandleAtUri(String resourceUri) throws OcException {
+        OcPlatform.initCheck();
+        return getResourceHandleAtUri0(resourceUri);
+    }
+
+    private static native OcResourceHandle getResourceHandleAtUri0(String resourceUri);
+
+    /**
      * Set Property Value (to a single value)
      *
      * @param path value from PayloadType
