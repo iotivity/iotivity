@@ -22,7 +22,9 @@ Import('jdk_env')
 
 # Build simpleclient sample
 simpleclient_classes = jdk_env.Java(target='classes', source=['src/main/java'])
-example_jar = jdk_env.Jar(target='simpleclient.jar', source=[simpleclient_classes, 'MANIFEST.MF'])
+example_jar = jdk_env.Jar(target='simpleclient.jar',
+                          source=Flatten([simpleclient_classes, 
+                                          File('MANIFEST.MF')]))
 jdk_env.Install("../..", example_jar)
 if jdk_env.get('SECURED') == '1':
     jdk_env.Install(target="../..", source=['src/main/assets/oic_svr_db_client.dat'])

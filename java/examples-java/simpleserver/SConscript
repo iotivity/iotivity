@@ -29,7 +29,7 @@ simpleserver_classes = jdk_env.Java(target='classes',
 # The following is a work around for the build command above. The unfortunate
 # side effect of this work around results in a larger output.
 example_jar = jdk_env.Jar(target='simpleserver.jar',
-            source=['classes', 'MANIFEST.MF'],
+            source=['classes', File('MANIFEST.MF')],
             JARCHDIR='$SOURCE')
 jdk_env.Install("../..", example_jar)
 if jdk_env.get('SECURED') == '1':
