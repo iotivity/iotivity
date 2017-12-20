@@ -105,6 +105,7 @@ SampleResource *g_tvSwitchResource;
 SampleResource *g_tvAudioResource;
 SampleResource *g_tvMediaSourceListResource;
 SampleResource *g_acSwitchResource;
+SampleResource *g_apSwitchResource;
 SampleResource *g_acAirFlowResource;
 SampleResource *g_acTemperatureResource;
 SampleResource *g_acTemperatureSensor;
@@ -138,6 +139,7 @@ bool g_isManyLightCreated = false;
 bool g_isInvisibleResourceCreated = false;
 bool g_isTvDeviceCreated = false;
 bool g_isAirConDeviceCreated = false;
+bool g_isAirPurifierDeviceCreated = false;
 bool g_isExtraDeviceCreated = false;
 bool g_isSecuredClient = false;
 bool g_isSecuredServer = false;
@@ -204,6 +206,7 @@ void createTvDevice(bool isSecured = false);
 void createAirConDevice(bool isSecured = false);
 void createExtraDevice(bool isSecured = false);
 void createSingleAirConResource(bool isSecured = false);
+void createAirPurifierResource(bool isSecured = false);
 void createResourceForIntrospection(bool isSecured = false);
 void createVendorDefinedDevice(bool isSecured = false);
 void createResource(void);
@@ -1850,6 +1853,48 @@ void createTvDevice(bool isSecured)
     }
 }
 
+void createAirPurifierDevice(bool isSecured)
+{
+    OCStackResult result = OC_STACK_ERROR;
+    cout << "Creating AirPurifier Device Resources!!" << endl;
+    uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE;
+    if (isSecured)
+    {
+        resourceProperty = resourceProperty | OC_SECURE;
+    }
+    if (g_isAirPurifierDeviceCreated == false)
+    {
+        vector<string> apDeviceTypes;
+        apDeviceTypes.push_back(Device_TYPE_AP);
+        apDeviceTypes.push_back(Device_TYPE_VENDOR);
+        SampleResource::setDeviceInfo(AP_ENGLISH_NAME_VALUE, apDeviceTypes);
+
+        g_apSwitchResource = new SampleResource();
+        g_apSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,
+                SWITCH_RESOURCE_INTERFACE);
+        OCRepresentation switchRep;
+        switchRep.setValue(ON_OFF_KEY, true);
+        g_apSwitchResource->setResourceRepresentation(switchRep);
+
+        result = g_apSwitchResource->startResource(resourceProperty);
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "Air Purifier Binary Switch Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_apSwitchResource);
+            g_isAirPurifierDeviceCreated = true;
+        }
+        else
+        {
+            cout << "Unable to create AirPurifier Binary Switch resource" << endl;
+        }
+    }
+    else
+    {
+        cout << "Already Smart Home AirPurifier Device Resources are  created!!" << endl;
+    }
+}
+
 void createSingleAirConResource(bool isSecured)
 {
     OCStackResult result = OC_STACK_ERROR;
@@ -1877,18 +1922,18 @@ void createSingleAirConResource(bool isSecured)
 
         if (result == OC_STACK_OK)
         {
-            cout << "AirConditioner Binary Switch Resource created successfully" << endl;
+            cout << "AirCon Binary Switch Resource created successfully" << endl;
             g_createdResourceList.push_back(g_acSwitchResource);
             g_isAirConDeviceCreated = true;
         }
         else
         {
-            cout << "Unable to create AirConditioner Binary Switch resource" << endl;
+            cout << "Unable to create AirCon Binary Switch resource" << endl;
         }
     }
     else
     {
-        cout << "Already Smart Home AirCon Device Resources are  created!!" << endl;
+        cout << "Already Smart Home Air Conditioner Device Resources are  created!!" << endl;
     }
 }
 
@@ -4185,6 +4230,7 @@ void showMenu(int argc, char* argv[])
     cout << "\t\t " << setw(3) << "113" << ". Create Extra Device" << endl;
     cout << "\t\t " << setw(3) << "114" << ". Update Last Error Code" << endl;
     cout << "\t\t " << setw(3) << "115" << ". Create Complex Device For Introspection" << endl;
+    cout << "\t\t " << setw(3) << "116" << ". Create Air Purifier Device" << endl;
 
     g_hasCallbackArrived = false;
     handleMenu(argc, argv);
@@ -4510,6 +4556,10 @@ void selectMenu(int choice)
 
         case 115:
             createResourceForIntrospection(g_isSecuredServer);
+            break;
+
+        case 116:
+            createAirPurifierDevice(g_isSecuredServer);
             break;
 
         case 0:

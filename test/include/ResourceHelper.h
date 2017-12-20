@@ -85,6 +85,7 @@ namespace PH = std::placeholders;
 #define Device_TYPE_TV "oic.d.tv"
 #define Device_TYPE_LIGHT "oic.d.light"
 #define Device_TYPE_AC "oic.d.airconditioner"
+#define Device_TYPE_AP "oic.d.airpurifier"
 #define Device_TYPE_VENDOR "x.com.vendor.device.eco.power"
 #define SWITCH_RESOURCE_TYPE "oic.r.switch.binary"
 #define AUDIO_RESOURCE_TYPE "oic.r.audio"
@@ -179,6 +180,7 @@ const int SUCCESS_RESPONSE = 0;
 #define ENGLISH_VALUE "en"
 #define BANGLA_NAME_VALUE "বুদ্ধিমান এয়ার কন্ডিশনার"
 #define ENGLISH_NAME_VALUE "Vendor Smart Home AirCon Device"
+#define AP_ENGLISH_NAME_VALUE "Vendor Smart Home Air Purifier Device"
 #define LANGUAGE_VALUE "language"
 
 #define REPRESENTATION_KEY "rep"
