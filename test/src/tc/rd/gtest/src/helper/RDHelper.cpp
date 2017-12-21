@@ -30,6 +30,8 @@ int g_quitFlag=0;
 uint16_t g_rdPort=0;
 bool g_foundRDResource = false;
 
+#define TTL_TIMEOUT 30
+#define NUM_HANDLES 10
 using namespace OC;
 
 RDHelper::RDHelper()
@@ -225,7 +227,7 @@ OCStackResult RDHelper::rdPublish()
 
         OCStackResult actualResult =  OC_STACK_ERROR;
         OCDoHandle *handle = (OCDoHandle *) NULL;
-        actualResult = OCRDPublish(handle,g_rdAddress,(OCConnectivityType)2, &g_curResource_t, 10,(OCCallbackData*)&g_curResource_l,(OCQualityOfService)OC::QualityOfService::LowQos);
+        actualResult = OCRDPublish(handle,g_rdAddress,(OCConnectivityType)2, &g_curResource_t, NUM_HANDLES, TTL_TIMEOUT, (OCCallbackData*)&g_curResource_l,(OCQualityOfService)OC::QualityOfService::LowQos);
         IOTIVITYTEST_LOG(INFO, "RdPublished called..\n");
         return actualResult;
     }
@@ -252,7 +254,7 @@ OCStackResult RDHelper::rdPublish(char *addr,uint16_t port,int num)
             port=g_rdPort;
         }
 
-        actualResult = OCRDPublish(handle,addr,(OCConnectivityType)2, &g_curResource_t, num,(OCCallbackData*)&g_curResource_l,(OCQualityOfService)OC::QualityOfService::LowQos);
+        actualResult = OCRDPublish(handle,addr,(OCConnectivityType)2, &g_curResource_t, num, TTL_TIMEOUT, (OCCallbackData*)&g_curResource_l,(OCQualityOfService)OC::QualityOfService::LowQos);
 
         return actualResult;
     }
