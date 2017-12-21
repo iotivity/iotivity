@@ -25,7 +25,7 @@ import os.path
 
 Import('env')
 
-print "Reading top Telegesis Wrapper."
+print("Reading top Telegesis Wrapper.")
 
 env.SConscript(os.path.join('src', 'SConscript'))
 

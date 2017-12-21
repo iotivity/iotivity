@@ -667,8 +667,7 @@ public final class OcPlatform {
      * @throws OcException if failure
      */
     @Deprecated
-    public static void registerDeviceInfo(
-            OcDeviceInfo ocDeviceInfo) throws OcException {
+    public static void registerDeviceInfo(OcDeviceInfo ocDeviceInfo) throws OcException {
         OcPlatform.initCheck();
         OcPlatform.registerDeviceInfo0(
                 ocDeviceInfo.getDeviceName(),
@@ -683,6 +682,21 @@ public final class OcPlatform {
             String[] deviceTypes
     ) throws OcException;
 
+    /**
+    * This function gets a resource handle by resource uri.
+    *
+    * @param  resourceUri   Uri of Resource to get Resource handle.
+    *
+    * @return Found  resource handle or NULL if not found.
+    * @throws OcException if failure
+    */
+    public static OcResourceHandle getResourceHandleAtUri(String resourceUri) throws OcException {
+        OcPlatform.initCheck();
+        return getResourceHandleAtUri0(resourceUri);
+    }
+
+    private static native OcResourceHandle getResourceHandleAtUri0(String resourceUri);
+    
     /**
      * Set Property Value (to a single value)
      *

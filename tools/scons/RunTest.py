@@ -106,7 +106,7 @@ def run_uwp_wack_test(env, cert_file, appx_file, report_output_path):
     command += ' && certutil %s | for /f "delims=: tokens=1*" %%i in (\'findstr "Serial Number:"\') do (certutil -delstore root %%j)' % (cert_file)
     command += ' && findstr OVERALL_RESULT=.PASS %s' % (report_output_file)
 
-    print 'Running WACK Test'
+    print('Running WACK Test')
     wack_test = env.Command(report_output_file, appx_file, command)
     env.AlwaysBuild(wack_test)
 

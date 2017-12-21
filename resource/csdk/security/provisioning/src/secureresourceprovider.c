@@ -516,7 +516,7 @@ static OCStackApplicationResult ProvisionCredentialDosCB1(void *ctx, OCDoHandle 
                 res = ProvisionLocalCredential(ctx, credInfo);
             }
 
-            if ((NULL != deviceInfo) || (OC_STACK_OK != res))
+            if (OC_STACK_OK != res)
             {
                 DeleteCredList(credInfo);
             }
@@ -2090,6 +2090,7 @@ static OCStackApplicationResult SRPUnlinkDevice2CB(void *unlinkCtx, OCDoHandle h
     if (clientResponse)
     {
         OIC_LOG(DEBUG, TAG, "Valid client response for device 2");
+        clientResponse->result = OC_STACK_RESOURCE_DELETED;
         registerResultForUnlinkDevices(unlinkData, clientResponse->result, IDX_SECOND_DEVICE_RES);
 
         if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
@@ -2154,6 +2155,7 @@ static OCStackApplicationResult SRPUnlinkDevice1CB(void *unlinkCtx, OCDoHandle h
     if (clientResponse)
     {
         OIC_LOG(DEBUG, TAG, "Valid client response for device 1");
+        clientResponse->result = OC_STACK_RESOURCE_DELETED;
         registerResultForUnlinkDevices(unlinkData, clientResponse->result, IDX_FIRST_DEVICE_RES);
 
         if (OC_STACK_RESOURCE_DELETED == clientResponse->result)

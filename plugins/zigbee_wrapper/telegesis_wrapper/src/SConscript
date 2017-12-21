@@ -33,7 +33,7 @@ tw_path = os.path.join(src_dir, 'plugins')
 # Source files and Target(s)
 ######################################################################
 
-print "Reading Telegesis Wrapper (TW) script"
+print("Reading Telegesis Wrapper (TW) script")
 
 env.AppendUnique(CPPPATH=[
     os.path.join(tw_path, 'include'),

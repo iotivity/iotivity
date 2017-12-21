@@ -35,7 +35,7 @@ import SCons.Builder, SCons.Node, SCons.Errors
 # @param source source name
 # @param env environment object
 def __message( s, target, source, env ) :
-    print "building boost from [%s] for ..." % (source[0])
+    print("building boost from [%s] for ..." % (source[0]))
 
 
 # Create the builder action which constructs a user-config.jam based
@@ -136,7 +136,7 @@ def __action( target, source, env ) :
     devnull = open(os.devnull, "wb")
     handle  = subprocess.Popen( cmd, env=penv, cwd=cwd ) #, stdout=devnull )
 
-    if handle.wait() <> 0 :
+    if handle.wait() != 0 :
         raise SCons.Errors.BuildError( "Building boost [%s] on the source [%s]" % (cmd, source[0])  )
 
 # Define the emitter of the builder

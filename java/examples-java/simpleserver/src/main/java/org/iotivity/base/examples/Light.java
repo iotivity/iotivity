@@ -71,6 +71,13 @@ public class Light implements OcPlatform.EntityHandler {
     }
 
     public synchronized void registerResource() throws OcException {
+
+        OcResourceHandle deviceResourceHandle = OcPlatform.getResourceHandleAtUri(OcPlatform.WELL_KNOWN_DEVICE_QUERY);
+        if (deviceResourceHandle != null)
+        {
+            OcPlatform.bindTypeToResource(deviceResourceHandle, "oic.d.simpleServer");
+        }
+        
         if (null == mResourceHandle) {
             mResourceHandle = OcPlatform.registerResource(
                     mResourceUri,

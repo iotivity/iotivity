@@ -62,7 +62,7 @@
 
 # the URLDownload-Builder can be download any data from an URL into a target file
 # and can replace the target file name with the URL filename (the setting variable
-# within the environment object is a boolean type with the name "URLDOWNLOAD_USEURLFILENAM", 
+# within the environment object is a boolean type with the name "URLDOWNLOAD_USEURLFILENAME",
 # default setting replaces the target name with the URL filename)
 
 
@@ -77,26 +77,26 @@ class URLNode(SCons.Node.Python.Value) :
 
     # overload the get_csig (copy the source from the
     # Python.Value node and append the data of the URL header
-    def get_csig(self, calc=None): 
-        try: 
-            return self.ninfo.csig 
-        except AttributeError: 
-            pass 
-        
+    def get_csig(self, calc=None):
+        try:
+            return self.ninfo.csig
+        except AttributeError:
+            pass
+
         try :
             response = urllib2.urlopen( str(self.value) ).info()
         except Exception, e :
             raise SCons.Errors.StopError( "%s [%s]" % (e, self.value) )
-            
+
         contents = ""
         if "Last-Modified" in response :
             contents = contents + response["Last-Modified"]
         if "Content-Length" in response :
             contents = contents + response["Content-Length"]
         if not contents :
-            contents = self.get_contents() 
-        self.get_ninfo().csig = contents 
-        return contents 
+            contents = self.get_contents()
+        self.get_ninfo().csig = contents
+        return contents
 
 
 
@@ -105,8 +105,8 @@ class URLNode(SCons.Node.Python.Value) :
 # @param target target name
 # @param source source name
 # @param env environment object
-def __message( s, target, source, env ) : 
-    print "downloading [%s] to [%s] ..." % (source[0], target[0])
+def __message( s, target, source, env ):
+    print("downloading [%s] to [%s] ..." % (source[0], target[0]))
 
 
 # the download function, which reads the data from the URL
@@ -116,12 +116,12 @@ def __message( s, target, source, env ) :
 # @@param env environment object
 def __action( target, source, env ) :
     try :
-        stream = urllib2.urlopen( str(source[0]) )
+        stream = urllib2.urlopen(str(source[0]))
         file   = open( str(target[0]), "wb" )
         file.write(stream.read())
         file.close()
         stream.close()
-    except Exception, e :
+    except Exception as e:
         raise SCons.Errors.StopError( "%s [%s]" % (e, source[0]) )
 
 
@@ -138,8 +138,8 @@ def __emitter( target, source, env ) :
         return target, source
 
     try :
-        url = urlparse.urlparse( urllib2.urlopen( str(source[0]) ).geturl() )
-    except Exception, e :
+        url = urlparse.urlparse(urllib2.urlopen(str(source[0])).geturl())
+    except Exception as e:
         raise SCons.Errors.StopError( "%s [%s]" % (e, source[0]) )
 
     return url.path.split("/")[-1], source
@@ -148,7 +148,7 @@ def __emitter( target, source, env ) :
 
 
 # generate function, that adds the builder to the environment,
-# the value "DOWNLOAD_USEFILENAME" replaces the target name with
+# the value "DOWNLOAD_USEUSRFILENAME" replaces the target name with
 # the filename of the URL
 # @param env environment object
 def generate( env ) :

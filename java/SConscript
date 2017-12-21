@@ -71,7 +71,7 @@ if 'ALL' in TARGET_TRANSPORT:
     TRANSPORT_EDR = 1
     TRANSPORT_BLE = 1
     TRANSPORT_NFC = 1
-    print "Android Transport is ALL"
+    print("Android Transport is ALL")
 else:
     if 'BT' in TARGET_TRANSPORT:
         TRANSPORT_EDR = 1
