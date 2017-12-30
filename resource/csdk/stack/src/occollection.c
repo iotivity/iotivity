@@ -429,6 +429,7 @@ static bool translateEndpointsPayload(OCEndpointPayload* epPayloadOrg,
         char* createdEPStr = OCCreateEndpointString(epPayload);
         OIC_LOG_V(DEBUG, TAG, " OCCreateEndpointString() = %s", createdEPStr);
         OCRepPayloadSetPropString(arrayPayload[i], OC_RSRVD_ENDPOINT, createdEPStr);
+        OICFree(createdEPStr);
 
         // in case of pri as 1, skip set property
         if (epPayload->pri != 1 )
