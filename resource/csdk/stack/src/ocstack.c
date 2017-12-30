@@ -5437,7 +5437,9 @@ void OCDeleteResourceAttributes(OCAttribute *rsrcAttributes)
     for (OCAttribute *pointer = rsrcAttributes; pointer; pointer = next)
     {
         next = pointer->next;
-        if (pointer->attrName && 0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, pointer->attrName))
+        if (pointer->attrName && (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, pointer->attrName) ||
+                                  0 == strcmp(OC_RSRVD_DEVICE_DESCRIPTION, pointer->attrName) ||
+                                  0 == strcmp(OC_RSRVD_DEVICE_MFG_NAME, pointer->attrName)))
         {
             OCFreeOCStringLL((OCStringLL *)pointer->attrValue);
         }
