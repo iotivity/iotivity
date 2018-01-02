@@ -171,7 +171,7 @@ void RegisterConnectRequestEventCallBack(ESConnectRequestCB cb)
     gConnectRequestEvtCb = cb;
 }
 
-void UnRegisterResourceEventCallBack()
+void UnRegisterResourceEventCallBack(void)
 {
     if (gWifiConfRsrcEvtCb)
     {
