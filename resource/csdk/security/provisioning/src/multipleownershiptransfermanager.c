@@ -775,12 +775,13 @@ exit:
 OCStackResult MOTAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
                                  const char *preconfPIN, size_t preconfPINLen)
 {
-    OCStackResult addCredRes = OC_STACK_INVALID_PARAM;
+    OCStackResult addCredRes = OC_STACK_ERROR;
     OicSecCred_t *pinCred = NULL;
 
     OIC_LOG(DEBUG, TAG, "IN MOTAddPreconfigPIN");
 
     VERIFY_NOT_NULL(TAG, targetDeviceInfo, ERROR);
+    VERIFY_NOT_NULL(TAG, targetDeviceInfo->doxm, ERROR);
     VERIFY_NOT_NULL(TAG, preconfPIN, ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen), ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen && OXM_PRECONFIG_PIN_MAX_SIZE >= preconfPINLen), ERROR);
@@ -792,7 +793,6 @@ OCStackResult MOTAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
         return OC_STACK_OK;
     }
 
-    addCredRes = OC_STACK_NO_MEMORY;
     //Generate PIN based credential
     pinCred = (OicSecCred_t *)OICCalloc(1, sizeof(OicSecCred_t));
     VERIFY_NOT_NULL(TAG, pinCred, ERROR);
@@ -808,10 +808,8 @@ OCStackResult MOTAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
     memcpy(pinCred->subject.id, targetDeviceInfo->doxm->deviceID.id, sizeof(pinCred->subject.id));
 
     addCredRes = AddCredential(pinCred);
-    VERIFY_SUCCESS(TAG, (OC_STACK_OK == addCredRes), ERROR);
-
 exit:
-    if (OC_STACK_OK != addCredRes)
+    if (OC_STACK_OK != addCredRes && NULL != pinCred)
     {
         OICFree(pinCred->privateData.data);
         OICFree(pinCred);
