@@ -468,7 +468,7 @@ namespace OC
              * @param displayNumCB Callback which is to be registered.
              * @return  OC_STACK_OK in case of success and other value otherwise.
              */
-            static OCStackResult registerDisplayNumCallback(DisplayNumCB displayNumCB);
+            static OCStackResult registerDisplayNumCallback(void *ctx);
 
              /**
              * API to De-register Callback for displaying verifNum in verification Just-Works
@@ -482,7 +482,7 @@ namespace OC
              *@param userConfirmCB Callback which is to be registered.
              * @return  OC_STACK_OK in case of success and other value otherwise.
              */
-            static OCStackResult registerUserConfirmCallback(UserConfirmNumCB userConfirmCB);
+            static OCStackResult registerUserConfirmCallback(void* ctx);
 
              /**
              * API to De-register Callback for getting user confirmation in verification Just-Works

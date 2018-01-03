@@ -24,6 +24,26 @@ android {
         exclude 'lib/armeabi-v7a/librcs_server.so'
     }*/
 
+    project.ext.versionCodes = ['armeabi':1, 'armeabi-v7a':2, 'arm64-v8a':3, 'x86':4, 'x86_64':5]
+
+    applicationVariants.all { variant ->
+        // assign different version code for each output
+        variant.outputs.each { output ->
+            output.versionCodeOverride =
+                    project.ext.versionCodes.get(output.getFilter(com.android.build.OutputFile.ABI),
+                            0) * 1000000 + defaultConfig.versionCode
+        }
+    }
+
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'armeabi', 'x86', 'armeabi-v7a', 'x86_64', 'arm64-v8a'
+            universalApk true
+        }
+    }
+
 }
 
 dependencies {
