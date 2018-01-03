@@ -44,7 +44,6 @@
  */
 #define TAG "OIC_CA_IP_ADAP"
 
-#ifndef SINGLE_THREAD
 /**
  * Holds inter thread ip data information.
  */
@@ -60,7 +59,6 @@ typedef struct
  * Queue handle for Send Data.
  */
 static CAQueueingThread_t *g_sendQueueHandle = NULL;
-#endif
 
 /**
  * List of the endpoint that has a stack-owned IP address.
@@ -91,7 +89,6 @@ static ssize_t CAIPPacketSendCB(CAEndpoint_t *endpoint,
 
 static void CAUpdateStoredIPAddressInfo(CANetworkStatus_t status);
 
-#ifndef SINGLE_THREAD
 
 static CAResult_t CAIPInitializeQueueHandles();
 
@@ -162,7 +159,6 @@ void CAIPDeinitializeQueueHandles()
     g_ownIpEndpointList = NULL;
 }
 
-#endif // SINGLE_THREAD
 
 void CAIPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
 {
@@ -328,9 +324,7 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     VERIFY_NON_NULL(registerCallback, TAG, "registerCallback");
     VERIFY_NON_NULL(networkPacketCallback, TAG, "networkPacketCallback");
     VERIFY_NON_NULL(netCallback, TAG, "netCallback");
-#ifndef SINGLE_THREAD
     VERIFY_NON_NULL(handle, TAG, "thread pool handle");
-#endif
 
 #ifdef WSA_WAIT_EVENT_0
     // Windows-specific initialization.
@@ -398,16 +392,6 @@ CAResult_t CAStartIP()
     caglobals.ip.u4s.port = caglobals.ports.udp.u4s;
 
     CAIPStartNetworkMonitor(CAIPAdapterHandler, CA_ADAPTER_IP);
-#ifdef SINGLE_THREAD
-    uint16_t unicastPort = 55555;
-    // Address is hardcoded as we are using Single Interface
-    CAResult_t ret = CAIPStartServer();
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG_V(DEBUG, TAG, "CAIPStartServer failed[%d]", ret);
-        return ret;
-    }
-#else
     if (CA_STATUS_OK != CAIPInitializeQueueHandles())
     {
         OIC_LOG(ERROR, TAG, "Failed to Initialize Queue Handle");
@@ -429,7 +413,6 @@ CAResult_t CAStartIP()
         return ret;
     }
 
-#endif
 
     return CA_STATUS_OK;
 }
@@ -474,12 +457,6 @@ static int32_t CAQueueIPData(bool isMulticast, const CAEndpoint_t *endpoint,
         return -1;
     }
 
-#ifdef SINGLE_THREAD
-
-    CAIPSendData(endpoint, data, dataLength, isMulticast);
-    return dataLength;
-
-#else
 
     VERIFY_NON_NULL_RET(g_sendQueueHandle, TAG, "sendQueueHandle", -1);
     // Create IPData to add to queue
@@ -492,7 +469,6 @@ static int32_t CAQueueIPData(bool isMulticast, const CAEndpoint_t *endpoint,
     // Add message to send queue
     CAQueueingThreadAddData(g_sendQueueHandle, ipData, sizeof(CAIPData_t));
 
-#endif // SINGLE_THREAD
 
     return dataLength;
 }
@@ -524,12 +500,10 @@ CAResult_t CAStopIP()
     CAdeinitSslAdapter();
 #endif
 
-#ifndef SINGLE_THREAD
     if (g_sendQueueHandle && g_sendQueueHandle->threadMutex)
     {
         CAQueueingThreadStop(g_sendQueueHandle);
     }
-#endif
 
     CAIPStopNetworkMonitor(CA_ADAPTER_IP);
     CAIPStopServer();
@@ -545,9 +519,7 @@ void CATerminateIP()
 
     CAIPSetPacketReceiveCallback(NULL);
 
-#ifndef SINGLE_THREAD
     CAIPDeinitializeQueueHandles();
-#endif
 
 #ifdef WSA_WAIT_EVENT_0
     // Windows-specific clean-up.
@@ -555,7 +527,6 @@ void CATerminateIP()
 #endif
 }
 
-#ifndef SINGLE_THREAD
 
 void CAIPSendDataThread(void *threadData)
 {
@@ -597,9 +568,7 @@ void CAIPSendDataThread(void *threadData)
     }
 }
 
-#endif
 
-#ifndef SINGLE_THREAD
 CAIPData_t *CACreateIPData(const CAEndpoint_t *remoteEndpoint, const void *data,
                            uint32_t dataLength, bool isMulticast)
 {
@@ -650,4 +619,3 @@ void CADataDestroyer(void *data, uint32_t size)
     CAFreeIPData(etdata);
 }
 
-#endif // SINGLE_THREAD

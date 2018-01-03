@@ -67,17 +67,6 @@ extern "C"
  */
 #define IPV4_ADDR_ONE_OCTECT_LEN 4
 
-#ifdef SINGLE_THREAD
-/**
- * Network Interface Information. Only needed for Arduino.
- */
-typedef struct
-{
-    char ipAddress[CA_IPADDR_SIZE];             /**< Address of the interface. **/
-    char subnetMask[CA_IPADDR_SIZE];            /**< Maintains interface subnetmask. **/
-    char interfaceName[CA_INTERFACE_NAME_SIZE]; /**< Interface name. **/
-} CANetInfo_t;
-#endif
 
 /**
  * unicast and multicast server information.

@@ -38,10 +38,8 @@
 #include "cainterface.h"
 #include <coap/utlist.h>
 
-#ifndef SINGLE_THREAD
 #include <assert.h>
 #include "caqueueingthread.h"
-#endif
 
 #ifdef RA_ADAPTER
 #include "caraadapter.h"
@@ -70,9 +68,7 @@ static CAErrorHandleCallback g_errorHandleCallback = NULL;
 
 static struct CANetworkCallback_t *g_networkChangeCallbackList = NULL;
 
-#ifndef SINGLE_THREAD
 static CAQueueingThread_t g_networkChangeCallbackThread;
-#endif
 
 /**
  * network callback structure is handling
@@ -92,7 +88,6 @@ typedef struct CANetworkCallback_t
 
 } CANetworkCallback_t;
 
-#ifndef SINGLE_THREAD
 /**
  * struct to wrap the network change callback info.
  */
@@ -142,7 +137,6 @@ static void CADestroyNetworkChangeCallbackData(void *data, uint32_t size)
     OICFree(info);
     info = NULL;
 }
-#endif // SINGLE_THREAD
 
 static CAResult_t CAGetAdapterIndex(CATransportAdapter_t cType, size_t *adapterIndex)
 {
@@ -319,7 +313,6 @@ static void CAAdapterChangedCallback(CATransportAdapter_t adapter, CANetworkStat
     {
         if (callback && callback->adapter)
         {
-#ifndef SINGLE_THREAD
             CANetworkCallbackThreadInfo_t *info = (CANetworkCallbackThreadInfo_t *)
                                         OICCalloc(1, sizeof(CANetworkCallbackThreadInfo_t));
             if (!info)
@@ -334,16 +327,6 @@ static void CAAdapterChangedCallback(CATransportAdapter_t adapter, CANetworkStat
 
             CAQueueingThreadAddData(&g_networkChangeCallbackThread, info,
                                     sizeof(CANetworkCallbackThreadInfo_t));
-#else
-            if (CA_INTERFACE_UP == status)
-            {
-                callback->adapter(adapter, true);
-            }
-            else if (CA_INTERFACE_DOWN == status)
-            {
-                callback->adapter(adapter, false);
-            }
-#endif //SINGLE_THREAD
         }
     }
 }
@@ -359,7 +342,6 @@ static void CAConnectionChangedCallback(const CAEndpoint_t *endpoint, bool isCon
     {
         if (callback && callback->conn)
         {
-#ifndef SINGLE_THREAD
             CANetworkCallbackThreadInfo_t *info = (CANetworkCallbackThreadInfo_t *)
                                         OICCalloc(1, sizeof(CANetworkCallbackThreadInfo_t));
             if (!info)
@@ -382,9 +364,6 @@ static void CAConnectionChangedCallback(const CAEndpoint_t *endpoint, bool isCon
 
             CAQueueingThreadAddData(&g_networkChangeCallbackThread, info,
                                     sizeof(CANetworkCallbackThreadInfo_t));
-#else
-            callback->conn(endpoint, isConnected);
-#endif //SINGLE_THREAD
         }
     }
 }
@@ -457,7 +436,6 @@ CAResult_t CAInitializeAdapters(ca_thread_pool_t handle, CATransportAdapter_t tr
     }
 #endif /* NFC_ADAPTER */
 
-#ifndef SINGLE_THREAD
     CAResult_t res = CA_STATUS_OK;
 
     // Initialize & Start network-change-callback-thread.
@@ -476,7 +454,6 @@ CAResult_t CAInitializeAdapters(ca_thread_pool_t handle, CATransportAdapter_t tr
         OIC_LOG(ERROR, TAG, "thread start error(callback thread).");
         return res;
     }
-#endif //SINGLE_THREAD
 
     return CA_STATUS_OK;
 }
@@ -562,7 +539,6 @@ void CAStopAdapter(CATransportAdapter_t transportType)
     }
 }
 
-#ifndef SINGLE_THREAD
 void CAStopAdapters()
 {
     CATransportAdapter_t connType;
@@ -584,7 +560,6 @@ void CAStopAdapters()
 
     CAQueueingThreadStop(&g_networkChangeCallbackThread);
 }
-#endif //SINGLE_THREAD
 
 CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, size_t *size)
 {
@@ -735,10 +710,6 @@ CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uin
         if ((0 > sentDataLen) || ((uint32_t)sentDataLen != length))
         {
             OIC_LOG(ERROR, TAG, "Error sending data. The error will be reported in adapter.");
-#ifdef SINGLE_THREAD
-            //in case of single thread, no error handler. Report error immediately
-            return CA_SEND_FAILED;
-#endif
         }
 
     }
@@ -803,10 +774,6 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
         if (sentDataLen != length)
         {
             OIC_LOG(ERROR, TAG, "sendDataToAll failed! Error will be reported from adapter");
-#ifdef SINGLE_THREAD
-            //in case of single thread, no error handler. Report error immediately
-            return CA_SEND_FAILED;
-#endif
         }
     }
 
@@ -973,50 +940,8 @@ void CATerminateAdapters()
     g_adapterHandler = NULL;
     g_numberOfAdapters = 0;
 
-#ifndef SINGLE_THREAD
     CAQueueingThreadDestroy(&g_networkChangeCallbackThread);
-#endif //SINGLE_THREAD
 
     RemoveAllNetworkStateChangedCallback();
 }
 
-#ifdef SINGLE_THREAD
-CAResult_t CAReadData()
-{
-    size_t index = 0;
-    CAResult_t res = CA_STATUS_FAILED;
-    u_arraylist_t *list = CAGetSelectedNetworkList();
-
-    if (!list)
-    {
-        return CA_STATUS_FAILED;
-    }
-
-    size_t i = 0;
-    for (i = 0; i < u_arraylist_length(list); i++)
-    {
-        void *ptrType = u_arraylist_get(list, i);
-        if (NULL == ptrType)
-        {
-            OIC_LOG(ERROR, TAG, "get list fail");
-            return CA_STATUS_FAILED;
-        }
-
-        CATransportAdapter_t connType = *(CATransportAdapter_t *) ptrType;
-
-        res = CAGetAdapterIndex(connType, &index);
-        if (CA_STATUS_OK != res)
-        {
-            OIC_LOG(DEBUG, TAG, "unknown connectivity type!");
-            continue;
-        }
-
-        if (g_adapterHandler[index].readData != NULL)
-        {
-            g_adapterHandler[index].readData();
-        }
-    }
-
-    return CA_STATUS_OK;
-}
-#endif

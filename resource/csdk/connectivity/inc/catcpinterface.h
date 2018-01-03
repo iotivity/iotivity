@@ -81,34 +81,6 @@ typedef void (*CATCPConnectionHandleCallback)(const CAEndpoint_t *endpoint, bool
  */
 void CATCPSetErrorHandler(CATCPErrorHandleCallback errorHandleCallback);
 
-#ifdef SINGLE_THREAD
-
-CAResult_t CATCPStartServer();
-
-/**
- * Pull the Received Data.
- */
-void CATCPPullData();
-
-/**
- * Get TCP Header Details.
- * @param[in]    recvBuffer   index of array list.
- * @param[out]   transport    TCP Server address.
- * @param[out]   headerlen    TCP Server port.
- */
-void CAGetTCPHeaderDetails(unsigned char *recvBuffer, coap_transport_t *transport,
-                           size_t *headerlen);
-
-/**
- * Get total length from CoAP over TCP header.
- *
- * @param[in]   recvBuffer    received header data.
- * @param[in]   size          length of buffer.
- * @return  total data length
- */
-size_t CAGetTotalLengthFromPacketHeader(const unsigned char *recvBuffer, size_t size);
-
-#else
 /**
  * set keepalive callback to notify connection information in TCP adapter.
  *
@@ -128,7 +100,6 @@ void CATCPSetKeepAliveCallback(CAKeepAliveConnectionCallback keepaliveHandler);
  */
 CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool);
 
-#endif
 
 /**
  * Stop TCP server.

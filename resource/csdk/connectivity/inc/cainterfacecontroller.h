@@ -31,23 +31,13 @@
 #include "cainterface.h"
 #include "cautilinterface.h"
 
-#ifndef SINGLE_THREAD
 #include "cathreadpool.h" /* for thread pool */
-#endif
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#ifdef SINGLE_THREAD
-/**
- * Initializes different adapters based on the compilation flags.
- *
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CAInitializeAdapters();
-#else
 /**
  * Initializes different adapters based on the compilation flags.
  * @param[in]   handle           thread pool handle created by message handler
@@ -58,7 +48,6 @@ CAResult_t CAInitializeAdapters();
  */
 
 CAResult_t CAInitializeAdapters(ca_thread_pool_t handle, CATransportAdapter_t transportType);
-#endif
 
 /**
  * Set the received packets callback for message handler.
@@ -106,12 +95,10 @@ CAResult_t CAStartAdapter(CATransportAdapter_t transportType);
  */
 void CAStopAdapter(CATransportAdapter_t transportType);
 
-#ifndef SINGLE_THREAD
 /**
  * Stop connectivity adapters all.
  */
 void CAStopAdapters();
-#endif //SINGLE_THREAD
 
 #ifdef RA_ADAPTER
 /**
@@ -184,13 +171,6 @@ bool CAIsLocalEndpoint(const CAEndpoint_t *ep);
  */
 void CATerminateAdapters();
 
-#ifdef SINGLE_THREAD
-/**
- * Checks for available data and reads it.
- * @return   ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CAReadData();
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

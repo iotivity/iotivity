@@ -25,11 +25,9 @@
 #ifndef ROUTING_TABLE_MANAGER_H_
 #define ROUTING_TABLE_MANAGER_H_
 
-#ifndef SINGLE_THREAD
 #include <unistd.h>
 #include <time.h>
 #include <sys/time.h>
-#endif
 
 #if defined(__ANDROID__)
 #include <linux/time.h>

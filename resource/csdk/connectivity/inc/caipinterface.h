@@ -80,11 +80,7 @@ typedef void (*CAIPErrorHandleCallback)(const CAEndpoint_t *endpoint, const void
  * @retval ::CA_STATUS_INVALID_PARAM Invalid input data.
  * @retval ::CA_STATUS_FAILED Initialization failed.
  */
-#ifdef SINGLE_THREAD
-CAResult_t CAIPStartServer();
-#else
 CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool);
-#endif
 
 /**
  * Close IP socket.

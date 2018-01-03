@@ -46,7 +46,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef SINGLE_THREAD
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -58,7 +57,6 @@
 #endif
 #ifdef HAVE_TIME_H
 #include <time.h>
-#endif
 #endif
 
 #if defined(__ANDROID__)
@@ -78,9 +76,7 @@
 typedef struct
 {
     uint64_t timeStamp;                 /**< last sent time. microseconds */
-#ifndef SINGLE_THREAD
     uint64_t timeout;                   /**< timeout value. microseconds */
-#endif
     uint8_t triedCount;                 /**< retransmission count */
     uint16_t messageId;                 /**< coap PDU message id */
     CADataType_t dataType;              /**< data Type (Request/Response) */
@@ -93,7 +89,6 @@ static const uint64_t USECS_PER_SEC = 1000000;
 static const uint64_t USECS_PER_MSEC = 1000;
 static const uint64_t MSECS_PER_SEC = 1000;
 
-#ifndef SINGLE_THREAD
 /**
  * @brief   timeout value is
  *          between DEFAULT_ACK_TIMEOUT_SEC and
@@ -138,7 +133,6 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context)
 
     return res;
 }
-#endif
 
 /**
  * @brief   check timeout routine
@@ -148,7 +142,6 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context)
  */
 static bool CACheckTimeout(uint64_t currentTime, CARetransmissionData_t *retData)
 {
-#ifndef SINGLE_THREAD
     // #1. calculate timeout
     uint64_t milliTimeoutValue = retData->timeout / USECS_PER_MSEC;
     uint64_t timeout = (milliTimeoutValue << retData->triedCount) * USECS_PER_MSEC;
@@ -159,17 +152,6 @@ static bool CACheckTimeout(uint64_t currentTime, CARetransmissionData_t *retData
                   timeout, retData->triedCount);
         return true;
     }
-#else
-    // #1. calculate timeout
-    uint64_t timeOut = (2 << retData->triedCount) * (uint64_t) USECS_PER_SEC;
-
-    if (currentTime >= retData->timeStamp + timeOut)
-    {
-        OIC_LOG_V(DEBUG, TAG, "timeout=%d, tried cnt=%d",
-                  (2 << retData->triedCount), retData->triedCount);
-        return true;
-    }
-#endif
     return false;
 }
 
@@ -262,14 +244,6 @@ void CARetransmissionBaseRoutine(void *threadValue)
         return;
     }
 
-#ifdef SINGLE_THREAD
-    if (true == context->isStop)
-    {
-        OIC_LOG(DEBUG, TAG, "thread stopped");
-        return;
-    }
-    CACheckRetransmissionList(context);
-#else
 
     while (!context->isStop)
     {
@@ -317,7 +291,6 @@ void CARetransmissionBaseRoutine(void *threadValue)
     oc_cond_signal(context->threadCond);
     oc_mutex_unlock(context->threadMutex);
 
-#endif
     OIC_LOG(DEBUG, TAG, "retransmission main thread end");
 
 }
@@ -333,13 +306,11 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
         OIC_LOG(ERROR, TAG, "thread instance is empty");
         return CA_STATUS_INVALID_PARAM;
     }
-#ifndef SINGLE_THREAD
     if (NULL == handle)
     {
         OIC_LOG(ERROR, TAG, "thread pool handle is empty");
         return CA_STATUS_INVALID_PARAM;
     }
-#endif
     OIC_LOG(DEBUG, TAG, "thread initialize");
 
     memset(context, 0, sizeof(CARetransmission_t));
@@ -427,16 +398,13 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 
     // #2. add additional information. (time stamp, retransmission count...)
     retData->timeStamp = OICGetCurrentTime(TIME_IN_US);
-#ifndef SINGLE_THREAD
     retData->timeout = CAGetTimeoutValue();
-#endif
     retData->triedCount = 0;
     retData->messageId = messageId;
     retData->endpoint = remoteEndpoint;
     retData->pdu = pduData;
     retData->size = size;
     retData->dataType = dataType;
-#ifndef SINGLE_THREAD
     // mutex lock
     oc_mutex_lock(context->threadMutex);
 
@@ -476,11 +444,6 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     // mutex unlock
     oc_mutex_unlock(context->threadMutex);
 
-#else
-    u_arraylist_add(context->dataList, (void *) retData);
-
-    CACheckRetransmissionList(context);
-#endif
     return CA_STATUS_OK;
 }
 
