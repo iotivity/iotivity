@@ -1,7 +1,7 @@
 '''
 ******************************************************************
 *
-* Copyright 2016 Samsung Electronics All Rights Reserved.
+* Copyright 2017 Granite River Labs All Rights Reserved.
 *
 *
 *
@@ -29,134 +29,84 @@ print '\n---------------Started Building TAF Agent for Linux---------------\n'
 Import('env_linux')
 import os
 
-lib_env = env_linux.Clone()
-
-# Initializing Home Dir
-######################################################################
-
-TARGET = env_linux['VARIANT_DIR']
-ENV_HOME = '../../..'
-PROJECT_HOME = '../../'
-EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
-ORG_SRC = ''
-
-SECURED = env_linux.get('SECURED')
-
-if env_linux.get('RELEASE'):
-    target_release = 'release'
-else:
-    target_release = 'debug'
-
-print "target build is --------------------------------" + target_release
-
-ORG_SRC = env_linux['ORG_SRC']
-ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
-
-target_arch = env_linux.get('TARGET_ARCH')
-ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release
-COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-
-conf2 = Configure(lib_env)
-if not conf2.CheckLib('xml2'):
-    print '''X
-*********************************** Error *************************************
-* Cannot build. Please install libxml2.
-* Example (Ubuntu):
-*   sudo apt-get install libxml2 libxml2-dev
-*   sudo ldconfig
-* Hint: check with pkg-config --libs libxml2 libxml2-dev and clear scons cache.
-*******************************************************************************
-    '''
-lib_env = conf2.Finish()
-
-TAF_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-TAF_RESOURCE_CBOR = ORG_SRC_HOME + '/extlibs/tinycbor/tinycbor/src/'
-
-RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-
-TAF_SOURCE_DIR = PROJECT_HOME +  TARGET + 'automation/ctt/src'
-TAF_LIB_DIR = PROJECT_HOME +  '/extlibs/taf/lib/unix/'
-
 env_linux['CC'] = 'g++'
 
-COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -Wall -DLINUX -D__LINUX__ -DWITH_TCP -fpermissive -finstrument-functions -ftest-coverage -fprofile-arcs')
+iotivity_root = env_linux.get('IOTIVITY_ROOT')
+iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
+iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_linux.get('VARIANT_DIR')
+install_dir = env_linux.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
+secured = env_linux.get('SECURED')
+common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
+if env_linux.get('RELEASE'):
+   release_dir = 'release'
+else:
+   release_dir = 'debug'
 
-TAF_CFLAGS = [COMMON_FLAGS]
+target_arch = env_linux.get('TARGET_ARCH')
 
-TAF_CINCLUDE = [
+install_targets = []
+default_targets = []
+
+cppflags = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissive -DWITH_TCP')
+
+if secured == '1':
+    cppflags.append('-D__SECURED__')
+    cppflags.append('-D__WITH_DTLS__')
+
+include_paths = [
                             '/usr/include',
-			    '/usr/include/libxml2',
-                            PROJECT_HOME + '/include',
-                            PROJECT_HOME + '/src/automation/ctt/include',
-                            PROJECT_HOME + '/extlibs/taf/include',
-                            PROJECT_HOME + '/../resource/include',
-                            PROJECT_HOME + '/../resource/csdk/connectivity/api',
-                            PROJECT_HOME + '/../resource/csdk/stack/include',
-                            PROJECT_HOME + '/../resource/csdk/include',
-                            PROJECT_HOME + '/../resource/csdk/security/include',
-                            PROJECT_HOME + '/../resource/csdk/ocsocket/include',
-                            PROJECT_HOME + '/../resource/csdk/ocrandom/include',
-                            PROJECT_HOME + '/../resource/csdk/logger/include',
-                            PROJECT_HOME + '/../resource/c_common/',
-                            PROJECT_HOME + '/../resource/oc_logger/include',
-                            PROJECT_HOME + '/../extlibs/cereal/include/',
-                            PROJECT_HOME + '/../extlibs/timer/',
-                            PROJECT_HOME + '/../extlibs/tinycbor/tinycbor/src/',
-                            PROJECT_HOME + '/../extlibs/timer/'
+            			    '/usr/include/libxml2',
+                            iotivity_root + '/include',
+                            iotivity_test_root + '/src/automation/ctt/include',
+                            iotivity_test_root + '/extlibs/taf/include',
+                            iotivity_root + '/resource/include',
+                            iotivity_root + '/resource/csdk/connectivity/api',
+                            iotivity_root + '/resource/csdk/stack/include',
+                            iotivity_root + '/resource/csdk/include',
+                            iotivity_root + '/resource/csdk/security/include',
+                            iotivity_root + '/resource/csdk/ocsocket/include',
+                            iotivity_root + '/resource/csdk/ocrandom/include',
+                            iotivity_root + '/resource/csdk/logger/include',
+                            iotivity_root + '/resource/c_common/',
+                            iotivity_root + '/out/linux/' + target_arch + '/' + release_dir +'/resource/c_common/',
+                            iotivity_root + '/resource/oc_logger/include',
+                            iotivity_root + '/extlibs/cereal/include/',
+                            iotivity_root + '/extlibs/timer/',
+                            iotivity_root + '/extlibs/tinycbor/tinycbor/src/',
+                            iotivity_root + '/extlibs/timer/'
               ]
 
-COMMON_LIB_LOCATION = [RESOURCE_LIB_DIR, TAF_LIB_DIR]
-TAF_LIB_LOCATION = [COMMON_LIB_LOCATION, TAF_RESOURCE_LIB]
-
-COMMON_STATIC_LIBS = []
-COMMON_SHARED_LIBS = Split('uv util xml2 libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap pthread libglib-2.0 gcov')
+libs = Split('uv util xml2 libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap pthread libglib-2.0 gcov')
 
 
-TAF_STATIC_RESOURCE_LIBS = []
-TAF_LIBS = COMMON_SHARED_LIBS
+src = [
+    test_src_root + '/automation/ctt/src/dutcontroller.c',
+    test_src_root + '/automation/ctt/src/mini_http_server.c',
+    test_src_root + '/automation/ctt/src/resource_map.c',
+    test_src_root + '/automation/ctt/src/taf_agent.c',
+]
 
-TAF_APP_BIN = 'TAFAgent'
+taf_app = env_linux.Program(source = src, target = 'TAFAgent', CPPPATH = include_paths,
+                LIBS = libs, LIBPATH = iotivity_lib_path, RPATH = iotivity_lib_path, CPPFLAGS = cppflags + common_linux_cppflags)
+install_targets += [taf_app]
 
-DUT_CONTROLLER_C = TAF_SOURCE_DIR + '/dutcontroller.c'
-MINI_HTTP_SERVER_C = TAF_SOURCE_DIR + '/mini_http_server.c'
-RESOURCE_MAP_C = TAF_SOURCE_DIR + '/resource_map.c'
-SOURCE_C = TAF_SOURCE_DIR + '/taf_agent.c'
-TAF_APP_SRC = [MINI_HTTP_SERVER_C, RESOURCE_MAP_C, DUT_CONTROLLER_C, SOURCE_C]
+default_targets += env_linux.Command('copy_justworks_dat_file', [], Copy('.', iotivity_root + '/resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat'))
+default_targets += env_linux.Command('copy_randompin_dat_file', [], Copy('.', iotivity_root + '/resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat'))
+default_targets += env_linux.Command('copy_mfg_dat_file', [], Copy('.', iotivity_root + '/resource/csdk/security/provisioning/sample/oic_svr_db_server_mfg.dat'))
+default_targets += env_linux.Command('copy_swagger_file', [], Copy(iotivity_test_root + '/' + install_dir, iotivity_test_root + '/res/descriptor/airconditioner-swagger.json'))
 
-######################################################################
-# Initializing Build
-######################################################################
-
-create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
-
-TAF_APP = env_linux.Program(source = TAF_APP_SRC, target = TAF_APP_BIN, CPPPATH = TAF_CINCLUDE, LIBS = TAF_LIBS, LIBPATH = TAF_LIB_LOCATION, RPATH = TAF_RESOURCE_LIB, CPPFLAGS = TAF_CFLAGS)
-
-copy_justworks_dat_file = env_linux.Command('copy_justworks_dat_file', [], Copy('.', '../resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat'))
-copy_randompin_dat_file = env_linux.Command('copy_randompin_dat_file', [], Copy('.', '../resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat'))
-
-pre_job = [create_target_dir]
-
-######################################################################
-# Define Build Targets
-######################################################################
-
-default_targets = [pre_job]
-install_targets = []
-
-
-#TAF_APP
-install_targets += [TAF_APP]
-
-install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
 
 delete_bin = []
 i = 0
 for delete_target in install_targets:
-    delete_bin += '0'
-    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
     i = i + 1
 
-default_targets += install_targets + install + delete_bin + [copy_justworks_dat_file, copy_randompin_dat_file]
+default_targets = install_bin + delete_bin + default_targets
 
 env_linux.Default(default_targets)
 
+print '\n---------------TAF Agent for Linux Build Finished---------------\n'

@@ -91,7 +91,7 @@ if target_os == 'all' and target_arch != 'all':
     print error_msg
     exit(1)
 
-all_modules=['ca', 'ri', 'iut', 'pm', 'cs', 'ic', 'rd',  're', 'rc', 'es', 'sm', 'ns', 'chp']
+all_modules=['ca', 'ri', 'iut', 'pm', 'cs', 'ic', 'rd',  're', 'rc', 'es', 'sm', 'ns', 'chp', 'taf']
 all_transports = ['BT', 'BLE', 'IP', 'ETH', 'WIFI', 'TCP']
 all_sdk = ['csdk', 'cpp', 'java']
 all_test_option = ['tc', 'btc', 'stc', 'simulator', 'app']
