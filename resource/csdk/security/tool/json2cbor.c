@@ -925,6 +925,9 @@ OicSecDoxm_t *JSONToDoxmBin(const char *jsonStr)
     jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NOT_NULL(TAG, jsonRoot, ERROR);
 
+    jsonDoxm = cJSON_GetObjectItem(jsonRoot, OIC_JSON_DOXM_NAME);
+    VERIFY_NOT_NULL(TAG, jsonDoxm, ERROR);
+
     //Oxm -- not Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXMS_NAME);
     if (jsonObj && cJSON_Array == jsonObj->type)
