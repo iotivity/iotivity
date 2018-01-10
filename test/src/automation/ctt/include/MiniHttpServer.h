@@ -25,10 +25,14 @@
 extern "C"{
 #endif
 
-typedef char* (*HttpRequestCb)(const char* method, const char* url, const char* body);
-typedef void (*AfterHttpRequestCb)(char* rsp_body);
-void StartMiniHttpServer(const char* addr, int port, HttpRequestCb on_http_request, AfterHttpRequestCb on_after_http_request);
-void StopMiniHttpServer();
+typedef char* (*httpRequestCB)(const char* method, const char* url, const char* body);
+typedef void (*afterHttpRequestCB)(char* rspBody);
+void startMiniHttpServerBasic(const char* addr, int port, httpRequestCB onHttpRequest, afterHttpRequestCB onAfterHttpRequest);
+void startMiniHttpServerSetup(const char* addr, int port, httpRequestCB onHttpRequest, afterHttpRequestCB onAfterHttpRequest);
+void startMiniHttpServerExtended(const char* addr, int port, httpRequestCB onHttpRequest, afterHttpRequestCB onAfterHttpRequest);
+void stopMiniHttpServerBasic();
+void stopMiniHttpServerSetup();
+void stopMiniHttpServerExtended();
 
 #ifdef __cplusplus
 }

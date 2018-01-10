@@ -18,29 +18,29 @@
  *
  ******************************************************************/
 
-#ifndef __DUTLIBC_H__
-#define __DUTLIBC_H__
+#ifndef __RESOURCE_MAP_H__
+#define __RESOURCE_MAP_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <libxml/parser.h>
-#include <libxml/tree.h>
-#include <resource_map.h>
-
 #ifdef __cplusplus
 extern "C"{
 #endif
+typedef xmlDocPtr (*resourceCB)(xmlDocPtr);
+typedef void (*afterResourceCB)(xmlDocPtr);
 
-void InitDutController();
-void AddRoute(const char* method, const char* path, resource_cb on_resource, after_resource_cb on_after_resource);
-void StartDutController(const char* ip, int port);
-void StopDutController();
-void DisposeDutController();
-xmlDocPtr StringToDoc(const char* str);
-char* DocToString(xmlDocPtr doc);
+struct ResourceMap;
 
+struct ResourceCBS
+{
+    resourceCB onResource;
+    afterResourceCB onAfterResource;
+};
+
+ResourceMap* createResourceMap();
+void addResourceCBS(ResourceMap* self, const char* method, const char* path, resourceCB onResource, afterResourceCB onAfterResource);
+ResourceCBS getResourceCBS(ResourceMap* self, const char* method, const char* path);
+void deleteResourceMap(ResourceMap* self);
 #ifdef __cplusplus
 }
 #endif
-#endif //__DUTLIBC_H__
+#endif //__RESOURCE_MAP_H__

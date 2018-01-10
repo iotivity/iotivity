@@ -34,10 +34,10 @@
 #include "platform_features.h"
 #include "logger.h"
 #include <time.h>
-#include <dutcontroller.h>
+#include <DUTController.h>
 
 //#defines
-#define TAG                  "GRL_TAF_AGENT"
+#define TAG                  "OCF_TAF_AGENT"
 #define DEFAULT_CONTEXT_VALUE 0x99
 #define SLEEP_TIME            2
 #define JUSTWORKS_CLIENT      11
@@ -49,8 +49,9 @@
 
 //macros
 #define FREE(x)           if(x){free(x);x=NULL;}
+
 //Globals
-char IUTSIMULATOR[24] = "IUTSimulator";
+char gIUTSimulator[24] = "IUTSimulator";
 int gIPDiscovered = 0;
 pid_t gPid;
 int gQuitFlag = 0;
@@ -66,27 +67,30 @@ int gFd;
 char gPinValue[9];
 static char s_DISCOVERY_QUERY[] = "%s/oic/res";
 char gCommandsArray[10][255];
+
+//Function declaration
 void SendDiscovery();
 
-char *ReplaceString(const char *str, const char *from, const char *to)
+/*Replace String*/
+char *replaceString(const char *str, const char *from, const char *to)
 {
 
     /* Adjust each of the below values to suit your needs. */
 
     /* Increment positions cache size initially by this number. */
-    size_t cache_sz_inc = 16;
+    size_t cacheSizeInc = 16;
     /* Thereafter, each time capacity needs to be increased,
      * multiply the increment by this factor. */
-    const size_t cache_sz_inc_factor = 3;
+    const size_t cacheSizeIncFactor = 3;
     /* But never increment capacity by more than this number. */
-    const size_t cache_sz_inc_max = 1048576;
+    const size_t cacheSizeIncMax = 1048576;
 
     char *pret, *ret = NULL;
     const char *pstr2, *pstr = str;
     size_t i, count = 0;
-    ptrdiff_t *pos_cache = NULL;
-    size_t cache_sz = 0;
-    size_t cpylen, orglen, retlen, tolen, fromlen = strlen(from);
+    ptrdiff_t *posCache = NULL;
+    size_t cacheSize = 0;
+    size_t cpyLen, orgLen, retLen, toLen, fromLen = strlen(from);
 
     /* Find all matches and cache their positions. */
     while ((pstr2 = strstr(pstr, from)) != NULL)
@@ -94,35 +98,35 @@ char *ReplaceString(const char *str, const char *from, const char *to)
         count++;
 
         /* Increase the cache size when necessary. */
-        if (cache_sz < count)
+        if (cacheSize < count)
         {
-            cache_sz += cache_sz_inc;
-            pos_cache = realloc(pos_cache, sizeof(*pos_cache) * cache_sz);
-            if (pos_cache == NULL)
+            cacheSize += cacheSizeInc;
+            posCache = realloc(posCache, sizeof(*posCache) * cacheSize);
+            if (posCache == NULL)
             {
                 goto end_repl_str;
             }
-            cache_sz_inc *= cache_sz_inc_factor;
-            if (cache_sz_inc > cache_sz_inc_max)
+            cacheSizeInc *= cacheSizeIncFactor;
+            if (cacheSizeInc > cacheSizeIncMax)
             {
-                cache_sz_inc = cache_sz_inc_max;
+                cacheSizeInc = cacheSizeIncMax;
             }
         }
 
-        pos_cache[count - 1] = pstr2 - str;
-        pstr = pstr2 + fromlen;
+        posCache[count - 1] = pstr2 - str;
+        pstr = pstr2 + fromLen;
     }
 
-    orglen = pstr - str + strlen(pstr);
+    orgLen = pstr - str + strlen(pstr);
 
     /* Allocate memory for the post-replacement string. */
     if (count > 0)
     {
-        tolen = strlen(to);
-        retlen = orglen + (tolen - fromlen) * count;
+        toLen = strlen(to);
+        retLen = orgLen + (toLen - fromLen) * count;
     }
-    else    retlen = orglen;
-    ret = malloc(retlen + 1);
+    else    retLen = orgLen;
+    ret = malloc(retLen + 1);
     if (ret == NULL)
     {
         goto end_repl_str;
@@ -138,30 +142,29 @@ char *ReplaceString(const char *str, const char *from, const char *to)
         /* Otherwise, duplicate the string whilst performing
          * the replacements using the position cache. */
         pret = ret;
-        memcpy(pret, str, pos_cache[0]);
-        pret += pos_cache[0];
+        memcpy(pret, str, posCache[0]);
+        pret += posCache[0];
         for (i = 0; i < count; i++)
         {
-            memcpy(pret, to, tolen);
-            pret += tolen;
-            pstr = str + pos_cache[i] + fromlen;
-            cpylen = (i == count - 1 ? orglen : pos_cache[i + 1]) - pos_cache[i] - fromlen;
-            memcpy(pret, pstr, cpylen);
-            pret += cpylen;
+            memcpy(pret, to, toLen);
+            pret += toLen;
+            pstr = str + posCache[i] + fromLen;
+            cpyLen = (i == count - 1 ? orgLen : posCache[i + 1]) - posCache[i] - fromLen;
+            memcpy(pret, pstr, cpyLen);
+            pret += cpyLen;
         }
-        ret[retlen] = '\0';
+        ret[retLen] = '\0';
     }
 
 end_repl_str:
     /* Free the cache and return the post-replacement string,
      * which will be NULL in the event of an error. */
-    //free(pos_cache);
-    FREE(pos_cache);
+    FREE(posCache);
     return ret;
 }
 
 
-//Function to get the ip address of the machine where TAF is running
+/*Function to get the ip address of the machine where TAF is running*/
 void GetIP()
 {
     //Works only on ubuntu
@@ -171,27 +174,26 @@ void GetIP()
     OIC_LOG_V(INFO, TAG, "Local IP address: %s", gLocalIp);
 
 }
-/* Send command to the IUT simulator*/
+
+/*Send command to the IUT simulator*/
 void SendCommand(char *cmd)
 {
 
     if (cmd != NULL)
     {
-        char search_cmd[256] = "xdotool search --name \"";
-        strcat(search_cmd, IUTSIMULATOR);
-        strcat(search_cmd, "\" windowactivate");
+        char searchCmd[256] = "xdotool search --name \"";
+        strcat(searchCmd, gIUTSimulator);
+        strcat(searchCmd, "\" windowactivate");
         char command[128] = "xdotool type --delay 1 --clearmodifiers ";
         strcat(command, cmd);
-        //Search Command : "xdotool search \"IUTSimulator\" windowactivate");
-        system(search_cmd);
-        //Command : "xdotool type --delay 1 --clearmodifiers 34");
+        system(searchCmd);
         system(command);
         system("xdotool key --clearmodifiers Return");
-        OIC_LOG_V(INFO, TAG, "Command %s", search_cmd);
+        OIC_LOG_V(INFO, TAG, "Command %s", searchCmd);
     }
 }
 
-//Find the value of the string in the log file
+/*Find the value of the string in the log file*/
 void FindValue(char *searchString, char *value)
 {
     FILE *fp1 = fopen("IUTSimulator.log", "r");
@@ -199,13 +201,13 @@ void FindValue(char *searchString, char *value)
     int i, j;
     size_t len = 0;
     ssize_t read;
-    int lineno = 0;
+    int lineNo = 0;
     if (fp1)
     {
-        //OIC_LOG(DEBUG,TAG, "Inside File");
+        OIC_LOG(DEBUG,TAG, "Inside File");
         while ((read = getline(&line, &len, fp1)) != -1)
         {
-            ++lineno;
+            ++lineNo;
             if ( (strstr(line, searchString) != NULL) &&
                  (strstr(line , ":") != NULL)
                )
@@ -218,7 +220,7 @@ void FindValue(char *searchString, char *value)
                     data = *(pos + i);
                     if (!isspace(data))
                     {
-                        //OIC_LOG_V(INFO, TAG, "data=%c",data);
+                        OIC_LOG_V(INFO, TAG, "data=%c",data);
                         *(value + j) = data;
                         j++;
                     }
@@ -234,6 +236,7 @@ void FindValue(char *searchString, char *value)
     }
 }
 
+/*Find the key in the string*/
 void FindKey(char *searchString, char *key)
 {
     FILE *fp1 = fopen("IUTSimulator.log", "r");
@@ -241,13 +244,13 @@ void FindKey(char *searchString, char *key)
     int i, j;
     size_t len = 0;
     ssize_t read;
-    int lineno = 0;
+    int lineNo = 0;
     if (fp1)
     {
-        //OIC_LOG(DEBUG,TAG, "Inside File");
+        OIC_LOG(DEBUG,TAG, "Inside File");
         while ((read = getline(&line, &len, fp1)) != -1)
         {
-            ++lineno;
+            ++lineNo;
             if ( (strstr(line, ". ") != NULL) &&
                  (strstr(line , "-") != NULL) &&
                  (strstr(line , searchString) != NULL))
@@ -260,7 +263,7 @@ void FindKey(char *searchString, char *key)
                     data = *(line + i);
                     if (!isspace(data))
                     {
-                        //OIC_LOG_V(INFO, TAG, "data=%c",data);
+                        OIC_LOG_V(INFO, TAG, "data=%c",data);
                         *(key + j) = data;
                         j++;
                     }
@@ -269,7 +272,7 @@ void FindKey(char *searchString, char *key)
 
                 OIC_LOG_V(INFO, TAG, "value=%s", key);
             }
-            //OIC_LOG_V(DEBUG, TAG, "line=%d",lineno);
+            OIC_LOG_V(DEBUG, TAG, "line=%d",lineNo);
 
         }
         fclose(fp1);
@@ -278,41 +281,41 @@ void FindKey(char *searchString, char *key)
 }
 
 
-/* Send command to the IUT Simulator in bulk */
-void SendCommands(int command_length)
+/*Send command to the IUT Simulator in bulk*/
+void SendCommands(int commandLength)
 {
     OIC_LOG_V(DEBUG, TAG, "Inside SendCommand");
     sleep(5 * SLEEP_TIME);
-    for (int i = 0; i < command_length; i++)
+    for (int i = 0; i < commandLength; i++)
     {
         SendCommand(gCommandsArray[i]);
         sleep(SLEEP_TIME);
     }
 }
 
-/* XML Doc Ptr Clean */
+/*XML Doc Ptr Clean*/
 void CleanXmlDocPtr(xmlDocPtr doc)
 {
     if(doc)
         xmlFreeDoc(doc);
 }
 
-/* XML action handler */
+/*XML action handler*/
 xmlDocPtr ActionHandler(xmlDocPtr doc)
 {
 
     char *result = (char *)"";
     char val[8], value[128];
-    char string_to_change[6] = "value";
+    char stringToChange[6] = "value";
 
-    const char *message_xml = DocToString(doc);
-    if (strstr(message_xml, "<message>Waiting for CoAP response... ") != NULL)
+    const char *messageXml = docToString(doc);
+    if (strstr(messageXml, "<message>Waiting for CoAP response... ") != NULL)
     {
         //SKIP
     }
-    else if ( strstr(message_xml , "<message>Please enter PIN:") != NULL)
+    else if ( strstr(messageXml , "<message>Please enter PIN:") != NULL)
     {
-        /* Get PIN generated by the IUTSimulator */
+        // Get PIN generated by the IUTSimulator
         OIC_LOG(INFO, TAG, "Please enter PIN:");
         FindValue("PIN CODE : ", gPinValue);
         OIC_LOG_V(INFO, TAG, "PIN=%s", gPinValue);
@@ -322,27 +325,27 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
                  gPinValue);
         OIC_LOG_V(DEBUG, TAG, "TAF==Send response %s", result);
     }
-    else if ( strstr(message_xml,
+    else if ( strstr(messageXml,
                      "<message>Please initiate device to revert to \"ready for OTM\" state") != NULL ||
-              strstr(message_xml, "<message>Please reset DUT's ACL in order to have empty list.") != NULL)
+              strstr(messageXml, "<message>Please reset DUT's ACL in order to have empty list.") != NULL)
     {
-        /* Reset the IUTSimulator */
+        // Reset the IUTSimulator
         gRestartFlag = 1;
         asprintf(&result,
                  "<actionResult><userDialogResponse><answer>OK</answer></userDialogResponse></actionResult>");
     }
-    else if ( strstr(message_xml, "<message>Please cycle power on the IUT") != NULL)
+    else if ( strstr(messageXml, "<message>Please cycle power on the IUT") != NULL)
     {
-        /* Reset the IUTSimulator */
+        // Reset the IUTSimulator
         gRestartFlag = 1;
         asprintf(&result,
                  "<actionResult><userDialogResponse><answer>OK</answer></userDialogResponse></actionResult>");
     }
-    else if (strstr(message_xml, "<message>Please change some value in /BinarySwitchResURI resource") !=
+    else if (strstr(messageXml, "<message>Please change some value in /BinarySwitchResURI resource") !=
              NULL)
     {
         //asprintf(&result, "<actionResult><userDialogResponse><answer>Skip</answer></userDialogResponse></actionResult>");
-        if (strstr(message_xml, "and press OK") != NULL)
+        if (strstr(messageXml, "and press OK") != NULL)
         {
             sleep(10);
             asprintf(&result,
@@ -359,23 +362,23 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
             SendCommands(5);
         }
     }
-    else if (strstr(message_xml, "<message>Did IUT receive response:") != NULL)
+    else if (strstr(messageXml, "<message>Did IUT receive response:") != NULL)
     {
 
         asprintf(&result,
                  "<actionResult><userDialogResponse><answer>Yes</answer></userDialogResponse></actionResult>");
     }
-    else if (strstr(message_xml, "<message>Did IUT received NOTIFY:") != NULL)
+    else if (strstr(messageXml, "<message>Did IUT received NOTIFY:") != NULL)
     {
         asprintf(&result,
                  "<actionResult><userDialogResponse><answer>Yes</answer></userDialogResponse></actionResult>");
 
     }
-    else if (strstr(message_xml, "<message>Please change some value in /AirFlowResURI resource") !=
+    else if (strstr(messageXml, "<message>Please change some value in /AirFlowResURI resource") !=
              NULL)
     {
         //asprintf(&result, "<actionResult><userDialogResponse><answer>Skip</answer></userDialogResponse></actionResult>");
-        if (strstr(message_xml, "and press OK") != NULL)
+        if (strstr(messageXml, "and press OK") != NULL)
         {
             sleep(10);
             asprintf(&result,
@@ -393,11 +396,11 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
         }
     }
 
-    else if (strstr(message_xml, "<message>Please change some value in /TemperatureResURI resource") !=
+    else if (strstr(messageXml, "<message>Please change some value in /TemperatureResURI resource") !=
              NULL)
     {
         //asprintf(&result, "<actionResult><userDialogResponse><answer>Skip</answer></userDialogResponse></actionResult>");
-        if (strstr(message_xml, "and press OK") != NULL)
+        if (strstr(messageXml, "and press OK") != NULL)
         {
             OIC_LOG(INFO, TAG, "Temperature URI Ok");
             sleep(10);
@@ -415,15 +418,15 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
             SendCommands(5);
         }
     }
-    else if (strstr(message_xml,
+    else if (strstr(messageXml,
                     "<message>Please send a multicast discovery request message (i.e. CoAP GET) to") != NULL)
     {
         SendCommand("12");
         sleep(SLEEP_TIME);
     }
-    else if (strstr(message_xml, " send a unicast RETRIEVE request (i.e. CoAP GET) to ") != NULL)
+    else if (strstr(messageXml, " send a unicast RETRIEVE request (i.e. CoAP GET) to ") != NULL)
     {
-        if (strstr(message_xml, "/BinarySwitchResURI") != NULL)
+        if (strstr(messageXml, "/BinarySwitchResURI") != NULL)
         {
             OIC_LOG(INFO, TAG, "Inside /BinarySwitchResURI");
             SendCommand("12");
@@ -433,7 +436,7 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
             SendCommand(val);
             sleep(SLEEP_TIME);
         }
-        else if (strstr(message_xml, "/TemperatureResURI") != NULL)
+        else if (strstr(messageXml, "/TemperatureResURI") != NULL)
         {
             OIC_LOG(INFO, TAG, "Inside /TemperatureResURI");
             SendCommand("12");
@@ -449,10 +452,10 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
                      "<actionResult><userDialogResponse><answer>CANCEL</answer></userDialogResponse></actionResult>");
         }
     }
-    else if (strstr(message_xml, "send a unicast partial UPDATE request") != NULL)
+    else if (strstr(messageXml, "send a unicast partial UPDATE request") != NULL)
     {
         sleep(2 * SLEEP_TIME);
-        if (strstr(message_xml, "/BinarySwitchResURI") != NULL)
+        if (strstr(messageXml, "/BinarySwitchResURI") != NULL)
         {
             OIC_LOG(INFO, TAG, "Inside Switch");
             SendCommand("12");
@@ -461,12 +464,12 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
             FindKey("/BinarySwitchResURI", val);
             SendCommand(val);
             sleep(SLEEP_TIME);
-            FindValue(string_to_change, value);
+            FindValue(stringToChange, value);
             SendCommand("22");
             FindKey("/BinarySwitchResURI", val);
             SendCommand(val);
             sleep(SLEEP_TIME);
-            SendCommand(string_to_change);
+            SendCommand(stringToChange);
             sleep(SLEEP_TIME);
             SendCommand("4");
             sleep(SLEEP_TIME);
@@ -481,7 +484,7 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
             }
             sleep(SLEEP_TIME);
         }
-        else if (strstr(message_xml, "/TemperatureResURI") != NULL)
+        else if (strstr(messageXml, "/TemperatureResURI") != NULL)
         {
             OIC_LOG(INFO, TAG, "Inside Switch");
             SendCommand("12");
@@ -504,19 +507,19 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
                      "<actionResult><userDialogResponse><answer>CANCEL</answer></userDialogResponse></actionResult>");
         }
     }
-    else if (strstr(message_xml, " send a unicast request message (") != NULL)
+    else if (strstr(messageXml, " send a unicast request message (") != NULL)
     {
         OIC_LOG(INFO, TAG, "Inside unicast request");
-        if (strstr(message_xml, "/BinarySwitchResURI") != NULL)
+        if (strstr(messageXml, "/BinarySwitchResURI") != NULL)
         {
             sleep(SLEEP_TIME);
             SendCommand("12");
             sleep(2 * SLEEP_TIME);
-            if (strstr(message_xml, "with observe option = 0") != NULL)
+            if (strstr(messageXml, "with observe option = 0") != NULL)
             {
                 SendCommand("25");
             }
-            else if (strstr(message_xml, "with observe option = 1") != NULL)
+            else if (strstr(messageXml, "with observe option = 1") != NULL)
             {
                 SendCommand("25");
                 FindKey("/BinarySwitchResURI", val);
@@ -528,15 +531,15 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
             SendCommand(val);
             sleep(SLEEP_TIME);
         }
-        else if (strstr(message_xml, "/TemperatureResURI") != NULL)
+        else if (strstr(messageXml, "/TemperatureResURI") != NULL)
         {
             SendCommand("12");
             sleep(2 * SLEEP_TIME);
-            if (strstr(message_xml, "with observe option = 0") != NULL)
+            if (strstr(messageXml, "with observe option = 0") != NULL)
             {
                 SendCommand("25");
             }
-            else if (strstr(message_xml, "with observe option = 1") != NULL)
+            else if (strstr(messageXml, "with observe option = 1") != NULL)
             {
                 SendCommand("26");
             }
@@ -545,42 +548,44 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
             sleep(SLEEP_TIME);
         }
     }
-    else if (strstr(message_xml,
+    else if (strstr(messageXml,
                     "<message>Does IUT have the possibility to display received properties values?") != NULL)
     {
-        //asprintf(&result, "<actionResult><userDialogResponse><answer>No</answer></userDialogResponse></actionResult>");
+#if 0
+        asprintf(&result, "<actionResult><userDialogResponse><answer>No</answer></userDialogResponse></actionResult>");
+#endif
         asprintf(&result,
                  "<actionResult><userDialogResponse><answer>Yes</answer></userDialogResponse></actionResult>");
     }
-    else if (strstr(message_xml,
+    else if (strstr(messageXml,
                     "<message>Does IUT has discovered a device (i.e. the CTT) with the expected Resource Types?") !=
              NULL)
     {
         asprintf(&result,
                  "<actionResult><userDialogResponse><answer>Yes</answer></userDialogResponse></actionResult>");
     }
-    else if (strstr(message_xml, "<message>Does IUT presents following properties values?") != NULL)
+    else if (strstr(messageXml, "<message>Does IUT presents following properties values?") != NULL)
     {
         asprintf(&result,
                  "<actionResult><userDialogResponse><answer>Yes</answer></userDialogResponse></actionResult>");
     }
     else
     {
-        OIC_LOG_V(DEBUG, TAG, "TAF==Received not handled POST /actions: %s", message_xml);
+        OIC_LOG_V(DEBUG, TAG, "TAF==Received not handled POST /actions: %s", messageXml);
     }
-    return StringToDoc(result);
+    return stringToDoc(result);
 
 }
 
-/* Abort Signal Handler */
+/*Abort Signal Handler*/
 xmlDocPtr AbortSignalHandler(xmlDocPtr doc)
 {
-    //OIC_LOG(DEBUG, TAG, "TAF==Received GET /abortSignal:");
-    return StringToDoc("<abortSignal><abortTestcase>false</abortTestcase><abortTestRun>false</abortTestRun></abortSignal>");
+    OIC_LOG_V(DEBUG, TAG, "TAF==Received GET /abortSignal:");
+    return stringToDoc("<abortSignal><abortTestcase>false</abortTestcase><abortTestRun>false</abortTestRun></abortSignal>");
 
 }
 
-/* Configuration handler */
+/*Configuration handler*/
 xmlDocPtr ConfigurationHandler(xmlDocPtr doc)
 {
     OIC_LOG(INFO , TAG, "Inside Configuration Handler");
@@ -605,37 +610,39 @@ xmlDocPtr ConfigurationHandler(xmlDocPtr doc)
         else
         {
             OIC_LOG_V(ERROR, TAG, "Could not open file %s", gConfigFileContent);
-            return StringToDoc("");
+            return stringToDoc("");
         }
     }
     uint32_t tempSize = 0;
     char *result = gConfigFileContent;
-    char *tmp = ReplaceString(gConfigFileContent, "%IP%", gIp);
-    result = ReplaceString(tmp, "%PORT%", gPort);
-    return StringToDoc(result);
+    char *tmp = replaceString(gConfigFileContent, "%IP%", gIp);
+    result = replaceString(tmp, "%PORT%", gPort);
+    return stringToDoc(result);
 }
 
-/* Init TAF Agent */
+/*Init TAF Agent*/
 void  InitTAF()
 {
 
     OIC_LOG(INFO, TAG, "TAF Init Start");
 
-    InitDutController();
-    AddRoute("POST", "/actions", ActionHandler, CleanXmlDocPtr);
-    AddRoute("GET", "/abortSignal", AbortSignalHandler, CleanXmlDocPtr);
+    initDutControllers();
+    addRouteBasic("POST", "/actions", ActionHandler, CleanXmlDocPtr);
+    addRouteBasic("GET", "/abortSignal", AbortSignalHandler, CleanXmlDocPtr);
     if (gConfigPath != NULL)
     {
-        AddRoute("GET", "/processes/ctt/configuration", ConfigurationHandler, CleanXmlDocPtr);
+        addRouteSetup("GET", "/processes/ctt/configuration", ConfigurationHandler, CleanXmlDocPtr);
     }
-    StartDutController("0.0.0.0", 32000);
+    startDutControllerBasic("0.0.0.0", 32000);
+    startDutControllerExtended("0.0.0.0", 32001);
+    startDutControllerSetup("0.0.0.0", 32002);
 
     OIC_LOG(INFO, TAG, "TAF Init Done");
 }
 
 
-/* Init the IUT Simulator */
-void InitIUT(int option)
+/*Init the IUT Simulator*/
+void initIUT(int option)
 {
 
     char app[255] = "IUTSimulator 1 4";
@@ -672,17 +679,11 @@ void InitIUT(int option)
             break;
 
     }
-    //char parameters[255]="gnome-terminal --title \"IUTSimulator\" -x bash -c \"export LD_LIBRARY_PATH=";
     char parameters[255] = "result=1\nwhile [ $result -ne 0 ]; do \nxterm -title \"";
-    strcat(parameters, IUTSIMULATOR);
-    strcat(parameters, "\"  -e /bin/bash -l -c \"export LD_LIBRARY_PATH=");
-    strcat(parameters, getenv("LD_LIBRARY_PATH"));
-    strcat(parameters, ";");
-    strcat(parameters, getenv("IUT_DIR"));
-    //strcat(parameters,"IUTSimulator 1 4 2 | tee IUTSimulator.log\"\n result=$?\ndone");
+    strcat(parameters, gIUTSimulator);
+    strcat(parameters, " ./");
     strcat(parameters, app);
     strcat(parameters, " | tee IUTSimulator.log\"\n result=$?\ndone");
-    //strcat(parameters,"IUTSimulator 0 4 1 | tee IUTSimulator.log\"\n result=$?\ndone");
     OIC_LOG_V(DEBUG, TAG, "Command Executed:%s", parameters);
     if ((gPid = fork()) < 0)
     {
@@ -708,7 +709,7 @@ void InitIUT(int option)
 
 }
 
-/* Callback function on discovery */
+/*Callback function on discovery*/
 OCStackApplicationResult HandleDiscover(void *ctx,
                                         OCDoHandle handle,
                                         OCClientResponse *clientResponse)
@@ -748,7 +749,7 @@ OCStackApplicationResult HandleDiscover(void *ctx,
 
 }
 
-/* Send Discovery */
+/*Send Discovery to discover the OCF Devices*/
 void SendDiscovery()
 {
     OCCallbackData cbData = {NULL, NULL, NULL};
@@ -777,16 +778,16 @@ void SendDiscovery()
 }
 
 
-/* Stop the IUTSimulator */
-void StopIUT()
+/*Stop the IUTSimulator*/
+void stopIUT()
 {
     char value[255] = "0";
     printf("Sending %s to IUTSimulator\n", value);
     SendCommand(value);
 }
 
-/* Discovery the IUT Simulator port */
-void DiscoverIUT()
+/*Discovery the IUT Simulator port*/
+void discoverIUT()
 {
     if (OCInit1(OC_CLIENT, OC_IP_USE_V4, OC_IP_USE_V4) != OC_STACK_OK)
     {
@@ -807,24 +808,25 @@ void DiscoverIUT()
     while (!gIPDiscovered);
 }
 
-/* SIGINT handler: set gQuitFlag to 1 for graceful termination */
+/*SIGINT handler: set gQuitFlag to 1 for graceful termination*/
 void HandleSigInt(int signum)
 {
     if ((signum == SIGINT) || (signum == SIGTERM) || (signum == SIGTSTP))
     {
         gQuitFlag = 1;
         gRestartFlag = 1;
-        StopIUT();
+        stopIUT();
     }
 
 }
 
+/*Main Entry point of the code*/
 int main(int argc, char **argv)
 {
     int option = 25;
     GetIP();
 
-    /* get the configuration file path */
+    // get the configuration file path
     if (argc >= 3)
     {
         if (strcmp("--conf-path", argv[1]) == 0)
@@ -842,7 +844,7 @@ int main(int argc, char **argv)
         }
     }
 
-    /* get the option to start IUT Simulator */
+    // get the option to start IUT Simulator
     if (argc >= 4)
     {
         option = atoi(argv[3]);
@@ -853,8 +855,8 @@ int main(int argc, char **argv)
 
     while (!gQuitFlag)
     {
-        InitIUT(option);
-        DiscoverIUT();
+        initIUT(option);
+        discoverIUT();
 
         OIC_LOG(INFO, TAG, "Entering TAF Agent main loop...");
         while (!gRestartFlag)
@@ -863,9 +865,9 @@ int main(int argc, char **argv)
         }
         OIC_LOG(INFO, TAG, "Exiting TAF Agent main loop...");
 
-        StopIUT();
-        StopDutController();
-        DisposeDutController();
+        stopIUT();
+        stopDutControllers();
+        disposeDutControllers();
         FREE(gConfigFileContent);
         gIPDiscovered = 0;
         gRestartFlag = 0;

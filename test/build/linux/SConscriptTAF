@@ -82,10 +82,10 @@ libs = Split('uv util xml2 libdl libexpat liboc liboctbstack liboc_logger libcon
 
 
 src = [
-    test_src_root + '/automation/ctt/src/dutcontroller.c',
-    test_src_root + '/automation/ctt/src/mini_http_server.c',
-    test_src_root + '/automation/ctt/src/resource_map.c',
-    test_src_root + '/automation/ctt/src/taf_agent.c',
+    test_src_root + '/automation/ctt/src/DUTController.c',
+    test_src_root + '/automation/ctt/src/MiniHttpServer.c',
+    test_src_root + '/automation/ctt/src/ResourceMap.c',
+    test_src_root + '/automation/ctt/src/TAFAgent.c',
 ]
 
 taf_app = env_linux.Program(source = src, target = 'TAFAgent', CPPPATH = include_paths,

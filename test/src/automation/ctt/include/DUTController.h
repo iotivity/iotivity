@@ -18,32 +18,33 @@
  *
  ******************************************************************/
 
-#ifndef __RESOURCE_MAP_H__
-#define __RESOURCE_MAP_H__
+#ifndef __DUTLIBC_H__
+#define __DUTLIBC_H__
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <libxml/parser.h>
+#include <libxml/tree.h>
+#include <ResourceMap.h>
+
 #ifdef __cplusplus
 extern "C"{
 #endif
-typedef xmlDocPtr (*resource_cb)(xmlDocPtr);
-typedef void (*after_resource_cb)(xmlDocPtr);
 
-struct resource_map_s;
+void initDutControllers();
+void addRouteBasic(const char* method, const char* path, resourceCB onResource, afterResourceCB onAfterResource);
+void addRouteSetup(const char* method, const char* path, resourceCB onResource, afterResourceCB onAfterResource);
+void addRouteExtended(const char* method, const char* path, resourceCB onResource, afterResourceCB onAfterResource);
+void startDutControllerBasic(const char* ip, int port);
+void startDutControllerSetup(const char* ip, int port);
+void startDutControllerExtended(const char* ip, int port);
+void stopDutControllers();
+void disposeDutControllers();
+xmlDocPtr stringToDoc(const char* str);
+char* docToString(xmlDocPtr doc);
 
-struct resource_cbs_s
-{
-    resource_cb on_resource;
-    after_resource_cb on_after_resource;
-};
-
-typedef struct resource_map_s resource_map_t;
-typedef struct resource_cbs_s resource_cbs_t;
-
-resource_map_t* CreateResourceMap();
-void AddResourceCbs(resource_map_t* self, const char* method, const char* path, resource_cb on_resource, after_resource_cb on_after_resource);
-resource_cbs_t GetResourceCbs(resource_map_t* self, const char* method, const char* path);
-void DeleteResourceMap(resource_map_t* self);
 #ifdef __cplusplus
 }
 #endif
-#endif //__RESOURCE_MAP_H__
+#endif //__DUTLIBC_H__
