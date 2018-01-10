@@ -23,8 +23,9 @@ package org.iotivity.cloud.base.device;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.iotivity.cloud.base.connector.CoapClient;
 import org.iotivity.cloud.base.connector.ConnectorPool;
@@ -49,7 +50,7 @@ public class CoapDevice extends Device {
     private Date                       mIssuedTime         = null;
     private int                        mExpiredPolicy      = 0;
     private ArrayList<IRequestChannel> mObserveChannelList = new ArrayList<>();
-    private HashMap<Long, IRequest>    mObserveRequestList = new HashMap<>();
+    private ConcurrentMap<Long, IRequest>    mObserveRequestList = new ConcurrentHashMap<>();
 
     private static final int           INFINITE_TIME       = -1;
 
