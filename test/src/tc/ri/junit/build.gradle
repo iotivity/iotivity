@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -18,12 +18,8 @@
  *
  ******************************************************************/
 
-apply from: "../../../../build/android/build.gradle"
-
-project.buildDir = "${binDirectory}/ri"
-
 buildscript {
-    repositories { 
+    repositories {
         jcenter()
     }
     dependencies {
@@ -31,50 +27,109 @@ buildscript {
     }
 }
 
-repositories {
+task ribuild (dependsOn:['assemble']){
+
+    project.buildDir =  binDir
+
+    repositories {
+        mavenCentral()
+
         flatDir{
-                dirs "${baseAARFileDirFromModules}"
-        }
-}
-
-apply plugin: 'com.android.application'
-
-android {
-    compileSdkVersion  21
-    buildToolsVersion "21.1.2"
-     
-    sourceSets {
-      
-        main {
-              manifest.srcFile 'AndroidManifest.xml'
-              java.srcDirs 'src'
-              java.srcDirs "${testCommonUtilSrcDirectory}/resource"
-              jni.srcDirs = [] //disable automatic ndk-build 
+            if("${src_type}" == "java") {
+                dirs "${iotivity_root}/out/${os}/${architecture}/${logLevel}/java"
+            } else {
+                dirs "${iotivity_root}/java/iotivity-android/build/outputs/aar"
+            }
         }
     }
 
-    lintOptions {
-          abortOnError false
-     }
+    def javaType = 'generic'
 
-    defaultConfig {
-      applicationId "org.iotivity.test.ri.tc"
-      minSdkVersion 21
-      targetSdkVersion 21
+    if(src_type == 'android') {
+        javaType = 'android'
     }
-    println ("\nConfigured $commonText android properties")
-}
 
-dependencies {
-    compile fileTree(dir: "${androidLibFileDirFromModules}", include: ['*.jar'])
-    compile(name:"${baseAARFile}", ext:'aar')    
-    println ("\n$commonText Library Dependency Resolved")     
-}
+    def commonSrcDir = ['./src/org/iotivity/test/' + module_name + '/tc/helper',
+                        './src/org/iotivity/test/' + module_name + '/tc/stc',
+                        './src/org/iotivity/test/' + module_name + '/tc/btc/java-common',
+                        './src/org/iotivity/test/' + module_name + '/tc/java-' + javaType,
+                        '../../../../src/common/commonutil/java/java-' + javaType + '/iotivityhelpers/ri',
+                        '../../../../src/common/commonutil/java/java-' + javaType + '/logger',
+                        '../../../../src/common/commonutil/java/java-' + javaType + '/testcase',
+                        '../../../../src/common/commonuti/java/common/resource'
+    ]
 
-task ribuild (dependsOn:['deleteBuildDirectory', 'installDebug']) << {
-   println ("\n############# Finished $commonText #############\n")
-}
+    def printSrcDir = { listParam ->
+         println '------------------\nSource Directories\n------------------'
+         listParam.eachWithIndex { item, index ->
+             println "    " + item
+         }
+    }
 
-task deleteBuildDirectory(type: Delete) {
-    delete project.buildDir
+    def buildFatJar = { isJava ->
+
+        if(isJava == "java") {
+            apply plugin: 'java'
+            sourceSets {
+                main {
+                    java {
+                        srcDirs += commonSrcDir
+                        srcDirs '../../../../src/common/testcase/junit/'
+                        printSrcDir(srcDirs)
+                    }
+                }
+            }
+
+            dependencies {
+                compile fileTree(dir: "${iotivityRoot}/out/${os}/${architecture}/${logLevel}/java", include: ['*.jar'])
+                compile group: 'commons-collections', name: 'commons-collections', version: '3.2'
+                compile group: 'junit', name: 'junit', version: '4.12'
+            }
+
+            jar {
+                archiveName module_name + '_test.jar'
+                from {
+                (configurations.runtime).collect { it.isDirectory() ? it : zipTree(it)}
+                }
+
+                manifest {
+                    attributes('Main-Class': 'org.iotivity.test.IotivityJunitRunner')
+                }
+            }
+        } else {
+            apply plugin: 'com.android.application'
+            android {
+                compileSdkVersion  21
+                buildToolsVersion "21.1.2"
+
+                sourceSets {
+                    main {
+                        java {
+                            manifest.srcFile 'AndroidManifest.xml'
+                            srcDirs += commonSrcDir
+                            srcDirs '../../../../src/common/commonutil/java/java-android/broadcast/'
+                            printSrcDir(srcDirs)
+                       }
+                    }
+                }
+
+                lintOptions {
+                    abortOnError false
+                }
+
+                defaultConfig {
+                    applicationId 'org.iotivity.test.' + module_name + '.tc'
+                    minSdkVersion 21
+                    targetSdkVersion 21
+                }
+            }
+
+            dependencies {
+                compile fileTree(dir: "${javaExtLibDir}", include: ['*.jar'])
+                compile(name:"${iotivityBaseAARFile}", ext:'aar')
+            }
+        }
+    }
+
+    buildFatJar(src_type)
 }

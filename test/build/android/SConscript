@@ -1,7 +1,7 @@
 '''
 /******************************************************************
 *
-* Copyright 2016 Samsung Electronics All Rights Reserved.
+* Copyright 2018 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -75,6 +75,7 @@ kafka_root = env_android.get('KAFKA_ROOT')
 print sdk_dir
 print ndk_dir
 print gradle_bin
+print push
 
 if not os.path.exists(sdk_dir):
     print 'No valid ANDROID_HOME found'
@@ -103,22 +104,27 @@ for temp in list(set(all_modules) - set(['iut', 'ca'])):
     if temp in module:
 
         jdk_env = Environment(ENV=os.environ)
-        build_command = gradle_bin + ' ' + temp + ' -b' + iotivity_test_root + '/build/android/build.gradle -Parch=%s -Pm=%s -Piotivity_root=%s  -Pp=%s' %(target_arch, release_dir, iotivity_root, iotivity_test_root + '/build/android/')
+        build_command = gradle_bin + ' ' + 'install' + ' -b ' + iotivity_test_root + '/build/android/build.gradle -Pmodule_name=%s \
+        -Parch=%s -Prelease=%s -Piotivity_root=%s  -Pp=%s -Ptest_root=%s -Psrc_type=%s -Ptest=%s' \
+        %(temp, target_arch, release_dir, iotivity_root, iotivity_test_root + '/build/android/', iotivity_test_root, "android", test)
+
+        print "Build Command:\n"
+        print build_command
 
         if 'tc' in test:
-
-            if temp == 'pm':
-
-                jdk_env['BUILDERS']['Gradle'] = Builder(action = gradle_bin + ' install -b' + iotivity_test_root + '/src/common/commonutil/java/TCPTestServer/build.gradle -PIOTIVITY_TEST_ROOT=' + iotivity_test_root)
+            if temp == 'es' or temp == 're' or temp == 'pm':
+                print "TCP Server"
+                jdk_env['BUILDERS']['Gradle'] = Builder(action = gradle_bin + ' install -b' + iotivity_test_root + '/src/common/app/java/java-generic/TCPTestServer/build.gradle -PIOTIVITY_TEST_ROOT=' + iotivity_test_root)
                 source_list = Glob(iotivity_test_root + '/src/common/commonutil/java/TCPTestServer/*.java')
                 tcp_server = jdk_env.Gradle(target='tcp_server', source=source_list)
                 default_targets += tcp_server
 
-                jdk_env['BUILDERS']['Gradle'] = Builder(action = gradle_bin + ' installDebug -b' + iotivity_test_root + '/src/common/commonutil/java/TCPAndroidClient/build.gradle -PIOTIVITY_TEST_ROOT=' + iotivity_test_root)
+                print "TCP Client"
+                jdk_env['BUILDERS']['Gradle'] = Builder(action = gradle_bin + ' installDebug -b' + iotivity_test_root + '/src/common/app/java/java-android/TCPAndroidClient/build.gradle -PIOTIVITY_TEST_ROOT=' + iotivity_test_root)
                 source_list = Glob(iotivity_test_root + '/src/common/commonutil/java/TCPAndroidClient/*.java')
                 tcp_client = jdk_env.Gradle(target='tcp_client', source=source_list)
                 default_targets += tcp_client
-            
+
             jdk_env['BUILDERS']['Gradle'] = Builder(action = build_command)
             source_list = Glob(iotivity_test_root + '/src/tc/' + temp + '/junit/*.java')
             junit_tc = jdk_env.Gradle(target='junit_tc', source=source_list)
@@ -130,9 +136,7 @@ for temp in list(set(all_modules) - set(['iut', 'ca'])):
             interop_app = jdk_env.Gradle(target='junit_tc', source=source_list)
             default_targets += interop_app
 
-
 if 'iut' in module:
-    
     security_mode = env_android.get('SECURITY_MODE')
     native_script = "bash build/android/iut/native_build.sh stand_alone=false ndk_path=%s push=%s security_mode=%s" % (ndk_dir, push, security_mode)
     default_targets += [native_script]
@@ -140,7 +144,6 @@ if 'iut' in module:
     env_android.Default(native_build)
 
 if 'ca' in module:
-
     os.environ['ANDROID_HOME'] = sdk_dir
     jdk_env = Environment(ENV=os.environ)
 
@@ -148,18 +151,26 @@ if 'ca' in module:
 
     if 'gtest' in framework:
 
-        cagtest_build_script = "bash build/android/ca/gtest/native_build.sh clean=0 push=%s android_home=%s android_ndk=%s release_dir=%s target_arch=%s iotivity_root=%s iotivity_test_root=%s" % (push, sdk_dir, ndk_dir, release_dir, target_arch, iotivity_root, iotivity_test_root)
+        param = "clean=0"
+        if push:
+            param += " push=" + push
+        param += " android_home=%s android_ndk=%s release_dir=%s target_arch=%s iotivity_root=%s iotivity_test_root=%s" % (sdk_dir, ndk_dir, release_dir, target_arch, iotivity_root, iotivity_test_root)
+        cagtest_build_script = "bash build/android/ca/gtest/native_build.sh " + param
         cagtest_native_build = env_android.Command('cagtest_native_build', None, cagtest_build_script)
         default_targets += cagtest_native_build
 
     if 'junit' in framework:
-
         if 'tc' in test:
-            build_command = "bash build/android/ca/junit/native_build.sh test=tc stand_alone=0 android_ndk=%s release=%s target_arch=%s iotivity_root=%s iotivity_test_root=%s" % (ndk_dir, release_dir, target_arch, iotivity_root, iotivity_test_root)
+            build_command = "bash build/android/ca/junit/native_build.sh \
+            test=tc stand_alone=0 android_ndk=%s release=%s target_arch=%s iotivity_root=%s test_root=%s"\
+             % (ndk_dir, release_dir, target_arch, iotivity_root, iotivity_test_root)
+
             ca_tc_native_build = env_android.Command('ca_tc_native_build', None, build_command)
             default_targets += ca_tc_native_build
 
-            build_command = gradle_bin + ' ca -b' + iotivity_test_root + '/build/android/build.gradle -Parch=%s -Pm=%s -Piotivity_root=%s  -Pp=%s' %(target_arch, release_dir, iotivity_root, iotivity_test_root + '/build/android/')
+            build_command = gradle_bin + ' ca -b' + iotivity_test_root + '/build/android/build.gradle -Pmodule_name=%s \
+            -Parch=%s -Prelease=%s -Piotivity_root=%s  -Pp=%s -Ptest_root=%s -Psrc_type=%s -Ptest=%s' \
+            %('ca', target_arch, release_dir, iotivity_root, iotivity_test_root + '/build/android/', iotivity_test_root, "android", test)
 
             jdk_env['BUILDERS']['Gradle'] = Builder(action = build_command)
             source_list = Glob(iotivity_test_root + '/src/tc/ca/junit/*.java')

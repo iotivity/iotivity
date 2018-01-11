@@ -1,7 +1,7 @@
 '''
 /******************************************************************
 *
-* Copyright 2016 Samsung Electronics All Rights Reserved.
+* Copyright 2018 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -29,6 +29,7 @@ Import('env')
 
 env.Replace(LINUX_TARGET = 'bin/linux/')
 env.Replace(TIZEN_TARGET = 'bin/tizen/')
+env.Replace(JAVA_LINUX_TARGET = 'bin/java/')
 env.Replace(ANDROID_TARGET = 'bin/android/')
 env.Replace(ARDUINO_TARGET = 'bin/arduino/')
 env.Replace(WINDOWS_TARGET = 'bin/windows/')

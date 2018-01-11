@@ -1,7 +1,7 @@
 '''
 /******************************************************************
 *
-* Copyright 2016 Samsung Electronics All Rights Reserved.
+* Copyright 2018 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -56,10 +56,9 @@ print '---------------Host OS : ' + host + '---------------'
 if not host_target_map.has_key(host):
     print "\nError: Current system (%s) isn't supported\n" % host
     Exit(1)
-    
 
 ######################################################################
-# Get build options (the optins from command line)
+# Get build options (the options from command line)
 ######################################################################
 target_os = ARGUMENTS.get('TARGET_OS', host).lower() # target os
 
@@ -94,7 +93,7 @@ if target_os == 'all' and target_arch != 'all':
 
 all_modules=['ca', 'ri', 'iut', 'pm', 'cs', 'ic', 'rd',  're', 'rc', 'es', 'sm', 'ns', 'chp']
 all_transports = ['BT', 'BLE', 'IP', 'ETH', 'WIFI', 'TCP']
-all_sdk = ['csdk', 'cpp']
+all_sdk = ['csdk', 'cpp', 'java']
 all_test_option = ['tc', 'btc', 'stc', 'simulator', 'app']
 all_push_options = ['exe', 'lib']
 all_frameworks = ['gtest', 'junit', 'arduinojunit']
@@ -114,7 +113,7 @@ help_vars.Add(BoolVariable('CLOUD_SERVICE', 'Build Cloud Service Dev Source', Fa
 help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_HOME', 'Android SDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
-help_vars.Add('PROJECT_VERSION', 'Set the version needed for RPMS', '1.3.0-0')
+help_vars.Add('PROJECT_VERSION', 'Set the version needed for RPMS', '')
 help_vars.Add(PathVariable('TIZEN_HOME', 'Root path of tizen SDK', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('GBS_ROOT', 'GBS Root Path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('KAFKA_ROOT', 'KAFKA Root Path', None, PathVariable.PathAccept))
@@ -200,8 +199,7 @@ if 'all' in str(push):
     push = all_push_options
 
 if 'all' in str(sdk):
-    env.Replace(SDK = all_sdk)
-    sdk = all_sdk
+    env.Replace(SDK = ['csdk', 'cpp'])
 
 print target_os
 print module

@@ -1,7 +1,7 @@
 '''
 /******************************************************************
 *
-* Copyright 2016 Samsung Electronics All Rights Reserved.
+* Copyright 2018 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -39,6 +39,7 @@ target_os = env.get('TARGET_OS')
 target_arch = env.get('TARGET_ARCH')
 module = env.get('MODULE')
 test = env.get('TEST')
+sdk = env.get('SDK')
 target_transport = ARGUMENTS.get('TARGET_TRANSPORT')
 shield = ARGUMENTS.get('SHIELD')
 verbose = ARGUMENTS.get('VERBOSE')
@@ -47,6 +48,7 @@ print 'TARGET OS : ' + str(target_os)
 print 'TARGET ARCH : ' + str(target_arch)
 print 'MODULE : ' + str(module)
 print 'TEST : ' + str(test)
+print 'SDK : ' + str(sdk)
 
 if not verbose:
     env['CCCOMSTR'] = "Compiling $TARGET"
@@ -61,6 +63,7 @@ if not verbose:
 env_linux = env.Clone()
 env_tizen = env.Clone()
 env_android = env.Clone()
+env_java = env.Clone()
 env_windows = env.Clone()
 
 
@@ -102,6 +105,9 @@ def build_windows():
 def build_android():
     SConscript('build/android/SConscript', exports = 'env_android')
 
+def build_java():
+    SConscript('build/java/SConscript', exports = 'env_java')
+
 def build_arduino():
     build_dir = 'bin/arduino/'
     env.Append(VARIANT_DIR = build_dir)
@@ -111,16 +117,16 @@ def build_arduino():
     if target_os == 'all':
         env.Replace(TARGET_ARCH = 'avr')
         env.Replace(TARGET_OS = 'arduino')
-    
+
     if 'IP' in target_transport:
-        
+
         env.Replace(TARGET_TRANSPORT = 'IP')
-        
+
         if 'ETH' in shield:
             env.Replace(SHIELD = 'ETH')
             SConscript('build/src_build.scons')
             SConscript('build/arduino/SConscript')
-            
+
         if 'WIFI' in shield:
             env.Replace(SHIELD = 'WIFI')
             SConscript('build/src_build.scons')
@@ -140,9 +146,14 @@ def build_module(self, module_name):
         'tizen' : build_tizen,
         'arduino' : build_arduino,
         'android' : build_android,
+        'java' : build_java,
         'windows' : build_windows
     }
-    modules.get(module_name,"")()
+
+    if 'java' in sdk:
+       modules.get('java',"")()
+    else:
+        modules.get(module_name,"")()
 
 
 env.AddMethod(build_module, 'BuildModule')
