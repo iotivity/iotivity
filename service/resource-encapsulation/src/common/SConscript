@@ -23,9 +23,13 @@
 ##
 
 import os
-Import('env')
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+lib_env = gtest_env.Clone()
 
-rcs_common_env = env.Clone()
+# Add third party libraries
+SConscript('#service/third_party_libs.scons', exports = 'lib_env')
+rcs_common_env = lib_env.Clone()
 target_os = rcs_common_env.get('TARGET_OS')
 release = rcs_common_env.get('RELEASE')
 src_dir = rcs_common_env.get('SRC_DIR')
