@@ -1,0 +1,45 @@
+{
+  "name": "com.example.app.iotivity",
+  "version": "1.0.0",
+  "description": "iotivity sample app with enact framework",
+  "author": "jy.jeong@lge.com",
+  "main": "src/index.js",
+  "scripts": {
+    "serve": "enact serve",
+    "pack": "enact pack",
+    "pack-p": "enact pack -p",
+    "watch": "enact pack --watch",
+    "clean": "enact clean",
+    "lint": "enact lint .",
+    "license": "enact license",
+    "test": "enact test start --single-run --browsers PhantomJS",
+    "test-json": "enact test start --single-run --browsers PhantomJS --reporters json",
+    "test-watch": "enact test start --browsers PhantomJS"
+  },
+  "license": "LGE",
+  "private": true,
+  "repository": "",
+  "enact": {
+    "isomorphic": true,
+    "ri": {
+      "baseSize": 24
+    }
+  },
+  "eslintConfig": {
+    "extends": "enact"
+  },
+  "dependencies": {
+    "@enact/core": "^1.8.0",
+    "@enact/i18n": "^1.8.0",
+    "@enact/moonstone": "^1.8.0",
+    "@enact/spotlight": "^1.8.0",
+    "@enact/ui": "^1.8.0",
+    "@enact/webos": "^1.8.0",
+    "prop-types": "^15.5.10",
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1",
+    "react-redux": "^5.0.7",
+    "redux": "^3.7.2",
+    "redux-thunk": "^2.2.0"
+  }
+}

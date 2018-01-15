@@ -1,0 +1,12 @@
+{
+    "public": [
+        "com.example.service.iotivity.server/startServer",
+        "com.example.service.iotivity.server/createResource",
+        "com.example.service.iotivity.server/deleteResource",
+    ],
+    "private": [
+        "com.example.service.iotivity.server/startServer",
+        "com.example.service.iotivity.server/createResource",
+        "com.example.service.iotivity.server/deleteResource",
+    ]
+}

@@ -68,7 +68,7 @@ if target_os == 'android':
         'log'
     ])
 
-if target_os in ['linux', 'tizen']:
+if target_os in ['linux', 'tizen', 'webos']:
     ocprovision_env.AppendUnique(LIBS=[
         'oc',
         'octbstack',
@@ -109,5 +109,5 @@ ocprovision_env.UserInstallTargetLib(ocprovision, 'libocprovision')
 ocprovision_env.UserInstallTargetHeader(
     '../include/OCProvisioningManager.hpp', 'resource', 'OCProvisioningManager.hpp')
 
-if target_os in ['linux', 'tizen']:
+if target_os in ['linux', 'tizen', 'webos']:
     SConscript('examples/SConscript')

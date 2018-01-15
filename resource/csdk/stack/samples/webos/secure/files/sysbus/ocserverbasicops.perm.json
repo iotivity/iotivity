@@ -1,0 +1,5 @@
+{
+    "org.ocf.webossample.ocserverbasicops*": [
+        "networking.internal"
+    ]
+}

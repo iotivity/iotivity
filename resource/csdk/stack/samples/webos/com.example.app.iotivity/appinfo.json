@@ -1,0 +1,11 @@
+{
+    "id": "com.example.app.iotivity",
+    "version": "1.0.0",
+    "vendor": "LGE",
+    "type": "web",
+    "main": "index.html",
+    "title": "IOTIVITY SAMPLER",
+    "icon": "icon.png",
+    "uiRevision": 2,
+    "requiredPermissions": ["all"]
+}

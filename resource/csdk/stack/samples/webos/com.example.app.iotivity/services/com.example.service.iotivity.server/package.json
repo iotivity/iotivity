@@ -1,0 +1,4 @@
+{
+   "name" : "com.example.service.iotivity.server",
+   "main" : "main.js"
+}

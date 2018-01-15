@@ -339,6 +339,10 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     OIC_LOG(DEBUG, TAG, "WSAStartup Succeeded");
 #endif
 
+#ifdef __webos__
+    CAIPSetMonitorThreadPoolHandle(handle);
+#endif // __webos__
+
     g_networkChangeCallback = netCallback;
     g_networkPacketCallback = networkPacketCallback;
     g_errorCallback = errorCallback;

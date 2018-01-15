@@ -62,10 +62,10 @@ if target_os in ['windows', 'msys_nt']:
     libocsrm_env.AppendUnique(CCFLAGS=['/W4'])
 
 if libocsrm_env.get('SECURED') == '1':
-    if target_os in ['linux', 'android', 'tizen', 'msys_nt', 'windows', 'ios']:
+    if target_os in ['linux', 'android', 'tizen', 'msys_nt', 'windows', 'ios', 'webos']:
         SConscript('provisioning/SConscript', 'libocsrm_env')
 
-    if target_os in ['linux', 'tizen', 'windows', 'darwin']:
+    if target_os in ['linux', 'tizen', 'windows', 'darwin', 'webos']:
         SConscript('tool/SConscript', 'libocsrm_env')
 
 if target_os not in ['windows']:
@@ -86,6 +86,11 @@ if env.get('LOGGING'):
 
 if env.get('MULTIPLE_OWNER') == '1':
     libocsrm_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
+
+if target_os in ['webos']:
+    libocsrm_env.ParseConfig("pkg-config --cflags --libs glib-2.0")
+    libocsrm_env.ParseConfig("pkg-config --cflags --libs luna-service2")
+    libocsrm_env.ParseConfig("pkg-config --cflags --libs pbnjson_c")
 
 ######################################################################
 # Source files and Targets

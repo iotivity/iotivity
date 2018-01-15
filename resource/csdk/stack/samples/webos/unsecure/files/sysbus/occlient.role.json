@@ -1,0 +1,11 @@
+{
+    "exeName":"/usr/palm/services/org.ocf.webossample.occlient/occlient",
+    "type":"regular",
+    "allowedNames":["org.ocf.webossample.occlient*"],
+    "permissions": [
+        {
+            "service":"org.ocf.webossample.occlient*",
+            "outbound":["com.webos.service.connectionmanager"]
+        }
+    ]
+}

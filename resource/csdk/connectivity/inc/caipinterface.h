@@ -171,6 +171,16 @@ void CAWakeUpForChange(void);
  */
 void CAIPSetErrorHandler(CAIPErrorHandleCallback errorHandleCallback);
 
+#ifdef __webos__
+/**
+ * Set the thread pool handle for IP monitoring thread.
+ *
+ * @param[in] handle Thread pool handle which is given by above layer
+ *                   for using thread creation task.
+ */
+void CAIPSetMonitorThreadPoolHandle(ca_thread_pool_t handle);
+#endif // __webos__
+
 #ifdef __cplusplus
 }
 #endif

@@ -235,6 +235,14 @@ to run many build combinations with TARGET_OS to 'windows'.
       $ run build -arch x86 -release
 See run.bat for more example usage parameters
 
+webOS:
+ * Possible values for <TARGET_TRANSPORT> are: ALL, IP
+
+IoTivity build for webOS requires webOS build based on the open-embedded build
+framework. So to speak, scons build is not directly triggered by user but by
+the build recipe combinated with build environment. You can check the whole
+procedure for building IoTivity over webOS at https://wiki.iotivity.org/webos.
+
 * Additional options
  * VERBOSE=true or false (Show compilation)
  * RELEASE=true or false (Build for release?)

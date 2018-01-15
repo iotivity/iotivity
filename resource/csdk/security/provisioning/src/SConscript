@@ -85,7 +85,7 @@ if provisioning_lib_env.get('WITH_TCP') == True and provisioning_lib_env.get('WI
         'cloud/config.c'
     ]
 
-if target_os in ['linux', 'tizen']:
+if target_os in ['linux', 'tizen', 'webos']:
     provisioning_lib_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 else:
     provisioning_lib_env.AppendUnique(CPPPATH=['#/extlibs/sqlite3'])
