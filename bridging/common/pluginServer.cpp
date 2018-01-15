@@ -224,13 +224,13 @@ HandleError :
 
 static MPMResult setPlatformInfoParams(OCPlatformInfo &platform_info)
 {
-    if ((strlen(g_manufacturer_name) > MAX_MANUFACTURER_NAME_LENGTH))
+    if ((strlen(g_manufacturer_name) > MAX_PLATFORM_NAME_LENGTH))
     {
         OIC_LOG(ERROR, TAG, "Manufacture name string length exceeded max length");
         return MPM_RESULT_INTERNAL_ERROR;
     }
 
-    if (g_manufacturer_url != NULL && (strlen(g_manufacturer_url) > MAX_MANUFACTURER_URL_LENGTH))
+    if (g_manufacturer_url != NULL && (strlen(g_manufacturer_url) > MAX_PLATFORM_URL_LENGTH))
     {
         OIC_LOG(ERROR, TAG, "Url string length exceeded max length");
         return MPM_RESULT_INTERNAL_ERROR;
