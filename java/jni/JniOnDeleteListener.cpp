@@ -163,13 +163,13 @@ void JniOnDeleteListener::checkExAndRemoveListener(JNIEnv* env)
 #ifndef WITH_CLOUD
         m_ownerResource->removeOnDeleteListener(env, m_jwListener);
 #else
-        if (nullptr != m_ownerResource)
-        {
-            m_ownerResource->removeOnDeleteListener(env, m_jwListener);
-        }
         if (nullptr != m_ownerAccountManager)
         {
             m_ownerAccountManager->removeOnDeleteListener(env, m_jwListener);
+        }
+        if (nullptr != m_ownerResource)
+        {
+            m_ownerResource->removeOnDeleteListener(env, m_jwListener);
         }
 #endif
         env->Throw((jthrowable)ex);
@@ -179,13 +179,13 @@ void JniOnDeleteListener::checkExAndRemoveListener(JNIEnv* env)
 #ifndef WITH_CLOUD
         m_ownerResource->removeOnDeleteListener(env, m_jwListener);
 #else
-        if (nullptr != m_ownerResource)
-        {
-            m_ownerResource->removeOnDeleteListener(env, m_jwListener);
-        }
         if (nullptr != m_ownerAccountManager)
         {
             m_ownerAccountManager->removeOnDeleteListener(env, m_jwListener);
+        }
+        if (nullptr != m_ownerResource)
+        {
+            m_ownerResource->removeOnDeleteListener(env, m_jwListener);
         }
 #endif
     }
