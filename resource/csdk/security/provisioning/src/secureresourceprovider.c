@@ -1257,15 +1257,15 @@ OCStackResult SRPSaveTrustCertChain(const uint8_t *trustCertChain, size_t chainS
 
     if (encodingType == OIC_ENCODING_PEM)
     {
-        cred->optionalData.data = (uint8_t *)OICCalloc(1, chainSize + 1);
-        VERIFY_NOT_NULL_RETURN(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
-        cred->optionalData.len = chainSize + 1;
+        cred->publicData.data = (uint8_t *)OICCalloc(1, chainSize + 1);
+        VERIFY_NOT_NULL_RETURN(TAG, cred->publicData.data, ERROR, OC_STACK_NO_MEMORY);
+        cred->publicData.len = chainSize + 1;
     }
     else if (encodingType == OIC_ENCODING_DER)
     {
-        cred->optionalData.data = (uint8_t *)OICCalloc(1, chainSize);
-        VERIFY_NOT_NULL_RETURN(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
-        cred->optionalData.len = chainSize;
+        cred->publicData.data = (uint8_t *)OICCalloc(1, chainSize);
+        VERIFY_NOT_NULL_RETURN(TAG, cred->publicData.data, ERROR, OC_STACK_NO_MEMORY);
+        cred->publicData.len = chainSize;
     }
     else
     {
@@ -1273,9 +1273,8 @@ OCStackResult SRPSaveTrustCertChain(const uint8_t *trustCertChain, size_t chainS
         DeleteCredList(cred);
         return OC_STACK_INVALID_PARAM;
     }
-    memcpy(cred->optionalData.data, trustCertChain, chainSize);
-    cred->optionalData.encoding = encodingType;
-    cred->optionalData.revstat = false;
+    memcpy(cred->publicData.data, trustCertChain, chainSize);
+    cred->publicData.encoding = encodingType;
 
     res = AddCredential(cred);
     if(res != OC_STACK_OK)
