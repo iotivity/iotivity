@@ -74,6 +74,11 @@ if target_os == 'arduino':
     libocsrm_env.Replace(CC=libocsrm_env.get('CXX'))
     libocsrm_env.Replace(CFLAGS=libocsrm_env.get('CXXFLAGS'))
 
+if target_os in ['linux']:
+    if env.get('ERROR_ON_WARN'):
+        # Ignore warnings from external tinycbor project
+        libocsrm_env.AppendUnique(CFLAGS=['-Wno-error=pragmas', '-Wno-error=attributes'])
+
 if target_os not in ['arduino', 'windows']:
     libocsrm_env.AppendUnique(CPPDEFINES=['WITH_POSIX', '_GNU_SOURCE'])
     libocsrm_env.AppendUnique(CFLAGS=['-std=c99', '-Wall'])

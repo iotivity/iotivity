@@ -1268,7 +1268,7 @@ static OicSecCred_t *JSONToCredBinWithRowner(const char *jsonStr,OicUuid_t *rown
                 VERIFY_NOT_NULL(TAG, buf, ERROR);
                 for(size_t i = 0, p = 0 ; i < jsonObjLen; i+=2, ++p)
                 {
-                    snprintf(tmp, 2, "%c%c", jsonPriv->valuestring[i], jsonPriv->valuestring[i+1]);
+                    snprintf(tmp, sizeof(tmp), "%c%c", jsonPriv->valuestring[i], jsonPriv->valuestring[i+1]);
                     buf[p] = (char)strtol(tmp, NULL, 16);
                 }
                 cred->privateData.len = jsonObjLen/2;
@@ -1297,7 +1297,7 @@ static OicSecCred_t *JSONToCredBinWithRowner(const char *jsonStr,OicUuid_t *rown
                 VERIFY_NOT_NULL(TAG, buf, ERROR);
                 for(size_t i = 0, p = 0 ; i < jsonObjLen; i+=2, ++p)
                 {
-                    snprintf(tmp, 2, "%c%c", jsonPub->valuestring[i], jsonPub->valuestring[i+1]);
+                    snprintf(tmp, sizeof(tmp), "%c%c", jsonPub->valuestring[i], jsonPub->valuestring[i+1]);
                     buf[p] = (char)strtol(tmp, NULL, 16);
                 }
                 cred->publicData.len = jsonObjLen/2;
@@ -1326,7 +1326,7 @@ static OicSecCred_t *JSONToCredBinWithRowner(const char *jsonStr,OicUuid_t *rown
                 VERIFY_NOT_NULL(TAG, buf, ERROR);
                 for(size_t i = 0, p = 0; i < jsonObjLen; i+=2, ++p)
                 {
-                    snprintf(tmp, 2, "%c%c", jsonOpt->valuestring[i], jsonOpt->valuestring[i+1]);
+                    snprintf(tmp, sizeof(tmp), "%c%c", jsonOpt->valuestring[i], jsonOpt->valuestring[i+1]);
                     buf[p] = (char)strtol(tmp, NULL, 16);
                 }
                 cred->optionalData.len = jsonObjLen/2;
