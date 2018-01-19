@@ -245,7 +245,7 @@ if target_os in ['linux']:
     help_vars.Add(
         BoolVariable('ERROR_ON_WARN',
                      'Make all compiler warnings into errors.',
-                      default=True))
+                      default=False))
 
 if target_os == 'windows':
     # Builds differ based on Visual Studio version
