@@ -86,7 +86,7 @@ for temp in list(set(all_modules) - set(['iut', 'ca'])):
             junit_tc = jdk_env.Gradle(target='junit_tc', source=source_list)
             default_targets += junit_tc
 
-unsupported_modules = ['ca', 're', 'rc', 'cs', 'es', 'ns', 'chp', 'rd', 'sm']
+unsupported_modules = ['ca', 're', 'rc', 'es', 'ns', 'chp', 'rd', 'sm']
 for target_module in module:
     if target_module in unsupported_modules:
         print target_module + ' Module not supported in Java'

@@ -1,5 +1,5 @@
 /******************************************************************
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -26,7 +26,7 @@ public class CSConstants {
     public static final int NUMBER_ZERO = 0;
     public static final int BUFFER_SIZE = 1024;
 
-    public static final int DELAY_SHORT = 1000;                                  // millisecond
+    public static final int DELAY_SHORT = 1000;                                 // millisecond
     public static final int DISCOVERY_TIMEOUT_05 = 5;
     public static final int DISCOVERY_TIMEOUT_ZERO = 0;
     public static final int DISCOVERY_TIMEOUT_ONE = 1;
@@ -36,12 +36,11 @@ public class CSConstants {
     // Callback Related Resources
     public static final int SUCCES_CODE = 0;
     public static final int ERROR_CODE = 1;
-    public static final int CALLBACK_TIMEOUT = 60;                                    // 60
-    // seconds
+    public static final int CALLBACK_TIMEOUT = 60;                                 // 60 seconds
     public static final boolean CALLBACK_INVOKED = true;
     public static final boolean CALLBACK_NOT_INVOKED = false;
     public static final int CALLBACK_INVOKED_BUT_FAILED = 0;
-    public static final String CallBackNotInvoked = "CallBack Not Invoked";
+    public static final String CALLBACK_NOT_INVOKED_MSG = "CallBack Not Invoked";
     public static final String InputPinCBCallbackInvoked = "InputPinCBCallbackInvoked";
 
     // PM Initialization Resources

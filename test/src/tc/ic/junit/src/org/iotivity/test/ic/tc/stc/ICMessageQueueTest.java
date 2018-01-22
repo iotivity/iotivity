@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -22,11 +22,6 @@ package org.iotivity.test.ic.tc.stc;
 
 import java.util.EnumSet;
 import java.util.List;
-
-import android.test.InstrumentationTestCase;
-import android.content.Context;
-import android.test.AndroidTestCase;
-import android.util.Log;
 
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcConnectivityType;
@@ -50,14 +45,15 @@ import org.iotivity.test.ic.tc.helper.OcAccountManagerAdapter;
 import org.iotivity.test.ic.tc.helper.*;
 
 import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.*;
+import org.iotivity.testcase.IoTivityLog;
+import org.iotivity.testcase.IoTivityTc;
 
-public class ICMessageQueueTest extends InstrumentationTestCase
+public class ICMessageQueueTest extends IoTivityTc
         implements IConfiguration {
 
     private static final String    ALL_INTERFACE_TYPE = "0.0.0.0";
     private ICMessageAdapter       mIcMessageAdapter;
     QualityOfService               mQualityOfService;
-    private Context                mContext;
     OcRepresentation               mRep               = new OcRepresentation();
     ICMessageQueue                 mMessageQueueHelper;
     private OcAccountManagerHelper mCloudHelper;
@@ -66,41 +62,29 @@ public class ICMessageQueueTest extends InstrumentationTestCase
 
     protected void setUp() throws Exception {
         super.setUp();
-        mICHelper = new ICHelper();
-        mMessageQueueHelper = new ICMessageQueue();
+        mICHelper = new ICHelper(this);
+        mMessageQueueHelper = new ICMessageQueue(this);
         mQualityOfService = QualityOfService.LOW;
         mIcMessageAdapter = new ICMessageAdapter();
 
-        mContext = getInstrumentation().getContext();
         mCloudHelper = new OcAccountManagerHelper();
 
-        mICHelper.copyCborFromAsset(getInstrumentation().getContext(),
-                "cloud.dat");
+        mICHelper.copyCborFromAsset("cloud.dat");
+        mICHelper.configClientServerPlatform("cloud.dat");
 
-        ICHelper.filePath = getInstrumentation().getContext()
-                .getFilesDir().getPath()
-                + "/"; // data/data/<package>/files/
-
-        PlatformConfig cfg = new PlatformConfig(
-                getInstrumentation().getTargetContext(), ServiceType.IN_PROC,
-                ModeType.CLIENT_SERVER, ALL_INTERFACE_TYPE, // bind to all available
-                // interfaces
-                0, QualityOfService.LOW, ICHelper.filePath + "cloud.dat");
-        OcPlatform.Configure(cfg);
-
+        OcAccountManagerHelper.init(mICHelper.s_filePath);
         mAccountManager = OcAccountManagerHelper
                 .getAccountMangerInstance(TLS.DISABLED);
-        OcAccountManagerHelper.init(mContext);
 
         MY_MAP.put("rt", "light");
 
         // signUp and SignIn for all TC
         assertTrue(mCloudHelper.singUp(mAccountManager, DEFAULT_AUTH_PROVIDER,
-                OcAccountManagerHelper.authCode, mCloudHelper));
+                OcAccountManagerHelper.s_mAuthCode, mCloudHelper));
 
         assertTrue(mCloudHelper.singIn(mAccountManager,
-                OcAccountManagerHelper.s_CloudUid,
-                OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
+                OcAccountManagerHelper.s_mCloudUid,
+                OcAccountManagerHelper.s_mCloudAccessToken, mCloudHelper));
 
         mMessageQueueHelper.getMQBroker();
         Thread.sleep(3000);

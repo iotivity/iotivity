@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -25,11 +25,6 @@ import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.*;
 import java.util.EnumSet;
 import java.util.List;
 
-import android.test.InstrumentationTestCase;
-import android.content.Context;
-import android.test.AndroidTestCase;
-import android.util.Log;
-
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
@@ -51,50 +46,39 @@ import org.iotivity.test.ic.tc.helper.ICHelper;
 import org.iotivity.test.ic.tc.helper.ICResourceDirectoryCommonAdapter;
 import org.iotivity.test.ic.tc.helper.OcAccountManagerAdapter;
 import org.iotivity.test.ic.tc.helper.*;
+import org.iotivity.testcase.IoTivityLog;
+import org.iotivity.testcase.IoTivityTc;
 
-public class ICResourceDirectoryTest extends InstrumentationTestCase
+public class ICResourceDirectoryTest extends IoTivityTc
         implements IConfiguration {
 
-    private Context                          m_Context;
     private ICResourceDirectoryCommonAdapter m_ICResourceDirectoryAdapter;
     private OcPresenceHandle                 m_OcPresenceHandle;
     private OcAccountManagerHelper           mCloudHelper;
     private OcAccountManager                 mAccountManager;
-    private ICHelper                   mICHelper;
+    private ICHelper                         mICHelper;
 
     protected void setUp() throws Exception {
         super.setUp();
-        mICHelper = new ICHelper();
-        m_Context = getInstrumentation().getTargetContext();
-        mICHelper.copyCborFromAsset(getInstrumentation().getContext(),
-                "cloud.dat");
+        mICHelper = new ICHelper(this);
+        mICHelper.copyCborFromAsset("cloud.dat");
+        mICHelper.configClientServerPlatform("cloud.dat");
 
-        ICHelper.filePath = getInstrumentation().getContext()
-                .getFilesDir().getPath()
-                + "/"; // data/data/<package>/files/
-
-        PlatformConfig cfg = new PlatformConfig(
-                getInstrumentation().getTargetContext(), ServiceType.IN_PROC,
-                ModeType.CLIENT_SERVER, "0.0.0.0", // bind to all available
-                // interfaces
-                0, QualityOfService.LOW, ICHelper.filePath + "cloud.dat");
-        OcPlatform.Configure(cfg);
+        OcAccountManagerHelper.init(mICHelper.s_filePath);
         mAccountManager = OcAccountManagerHelper
                 .getAccountMangerInstance(TLS.DISABLED);
-        OcAccountManagerHelper.init(m_Context);
+
         m_ICResourceDirectoryAdapter = new ICResourceDirectoryCommonAdapter();
         mCloudHelper = new OcAccountManagerHelper();
-        mAccountManager = OcAccountManagerHelper
-                .getAccountMangerInstance(TLS.DISABLED);
         ICResourceDirectoryCommonAdapter.sIsOnPublishResourceCompleted = false;
         ICResourceDirectoryCommonAdapter.sOnDeleteResourceCompleted = false;
         // signUp and SignIn for all TC
         assertTrue(mCloudHelper.singUp(mAccountManager, DEFAULT_AUTH_PROVIDER,
-                OcAccountManagerHelper.authCode, mCloudHelper));
+                OcAccountManagerHelper.s_mAuthCode, mCloudHelper));
 
         assertTrue(mCloudHelper.singIn(mAccountManager,
-                OcAccountManagerHelper.s_CloudUid,
-                OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
+                OcAccountManagerHelper.s_mCloudUid,
+                OcAccountManagerHelper.s_mCloudAccessToken, mCloudHelper));
     }
 
     protected void tearDown() throws Exception {

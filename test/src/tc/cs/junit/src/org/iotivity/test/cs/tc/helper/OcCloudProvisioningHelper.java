@@ -1,5 +1,5 @@
 /******************************************************************
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -7,7 +7,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,9 +27,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
-import android.content.Context;
-import android.util.Log;
-
 import org.iotivity.base.OcCloudProvisioning;
 import org.iotivity.base.ErrorCode;
 import org.iotivity.base.OcAccountManager;
@@ -46,8 +43,11 @@ import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcProvisioning;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.test.cs.tc.helper.CSConstants;
+import org.iotivity.testcase.IoTivityLog;
+import org.iotivity.testcase.IoTivityTc;
+import org.iotivity.test.ri.common.RIHelperCommon;
 
-public class OcCloudProvisioningHelper
+public class OcCloudProvisioningHelper extends RIHelperCommon
         implements OcCloudProvisioning.GetAclIdByDeviceListener,
         OcCloudProvisioning.GetIndividualAclInfoListener,
         OcCloudProvisioning.PostCRLListener,
@@ -68,59 +68,16 @@ public class OcCloudProvisioningHelper
     public static final String thisUpdate        = "11111111-1111-1111-11111111";
     public static final String nextUpdate        = "11111111-1111-1111-11110000";
 
-    private static void showLog(int logType, String message) {
-
-        // showOutPut(message);
-        if (logType == 1) {
-            Log.i(CSConstants.TAG, message);
-        } else {
-            Log.e(CSConstants.TAG, message);
-        }
+    public OcCloudProvisioningHelper(IoTivityTc iotivityTcObj) {
+        super(iotivityTcObj);
     }
 
-    /**
-     * Copy client db Cbor file from assets folder to app data files dir
-     */
-    public void copyCborFromAsset(Context context, String oicClientCborDbFile) {
-        InputStream inputStream = null;
-        OutputStream outputStream = null;
-        int length;
-        byte[] buffer = new byte[CSConstants.BUFFER_SIZE];
-        String filePath = context.getFilesDir().getPath() + "/"; // data/data/<package>/files/
+    private static void showIoTivityLog(int IoTivityLogType, String message) {
 
-        try {
-            inputStream = context.getAssets().open(oicClientCborDbFile);
-            File file = new File(filePath);
-            // check files directory exists
-            if (!(file.exists() && file.isDirectory())) {
-                file.mkdirs();
-            }
-            outputStream = new FileOutputStream(filePath + oicClientCborDbFile);
-            while ((length = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, length);
-            }
-        } catch (NullPointerException e) {
-            Log.e(CSConstants.TAG, "Null pointer exception " + e.getMessage());
-        } catch (FileNotFoundException e) {
-            Log.e(CSConstants.TAG,
-                    "Cbor svr db file not found " + e.getMessage());
-        } catch (IOException e) {
-            Log.e(CSConstants.TAG, oicClientCborDbFile + " file copy failed");
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    Log.e(CSConstants.TAG, e.getMessage());
-                }
-            }
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    Log.e(CSConstants.TAG, e.getMessage());
-                }
-            }
+        if (IoTivityLogType == 1) {
+            IoTivityLog.i(CSConstants.TAG, message);
+        } else {
+            IoTivityLog.e(CSConstants.TAG, message);
         }
     }
 
@@ -130,16 +87,16 @@ public class OcCloudProvisioningHelper
             // check files directory exists
             if (!(file.exists())) {
                 file.mkdirs();
-                Log.i(CSConstants.TAG, "Sql db directory created at " + dbPath);
+                IoTivityLog.i(CSConstants.TAG, "Sql db directory created at " + dbPath);
             } else {
-                Log.i(CSConstants.TAG, "Sql db directory exists at " + dbPath);
+                IoTivityLog.i(CSConstants.TAG, "Sql db directory exists at " + dbPath);
             }
 
-            Log.i(CSConstants.TAG, " INIT ");
+            IoTivityLog.i(CSConstants.TAG, " INIT ");
             OcProvisioning.provisionInit(dbPath + fileName);
-            showLog(Info, " Initialization succesful");
+            showIoTivityLog(Info, " Initialization succesful");
         } catch (Exception e) {
-            showLog(Error, "Initialization Error : " + e.getLocalizedMessage());
+            showIoTivityLog(Error, "Initialization Error : " + e.getLocalizedMessage());
         }
     }
 
@@ -156,29 +113,29 @@ public class OcCloudProvisioningHelper
                         .getValue("refreshtoken");
                 String tokenType = ocRepresentation.getValue("tokentype");
 
-                showLog(Info, "\tuserID: " + mUserUuid);
-                showLog(Info, "\taccessToken: " + mAccesstoken);
-                showLog(Info, "\trefreshToken: " + mRefreshtoken);
-                showLog(Info, "\ttokenType: " + tokenType);
+                showIoTivityLog(Info, "\tuserID: " + mUserUuid);
+                showIoTivityLog(Info, "\taccessToken: " + mAccesstoken);
+                showIoTivityLog(Info, "\trefreshToken: " + mRefreshtoken);
+                showIoTivityLog(Info, "\ttokenType: " + tokenType);
 
                 if (ocRepresentation.hasAttribute("expiresin")) {
                     int expiresIn = ocRepresentation.getValue("expiresin");
-                    showLog(Info, "\texpiresIn: " + expiresIn);
+                    showIoTivityLog(Info, "\texpiresIn: " + expiresIn);
                 }
 
             } catch (OcException e) {
-                showLog(Error, e.toString());
+                showIoTivityLog(Error, e.toString());
             }
         }
 
         @Override
         public synchronized void onPostFailed(Throwable throwable) {
-            showLog(Error, "Failed to signUp");
+            showIoTivityLog(Error, "Failed to signUp");
             if (throwable instanceof OcException) {
                 OcException ocEx = (OcException) throwable;
-                showLog(Error, ocEx.toString());
+                showIoTivityLog(Error, ocEx.toString());
                 ErrorCode errCode = ocEx.getErrorCode();
-                showLog(Error, "Error code: " + errCode);
+                showIoTivityLog(Error, "Error code: " + errCode);
             }
         }
     };
@@ -186,7 +143,7 @@ public class OcCloudProvisioningHelper
     public boolean signUp(String authProvider, String authCode,
             OnPostListener onPostListener) {
         try {
-            showLog(Info, "requestCertificate IN");
+            showIoTivityLog(Info, "requestCertificate IN");
             mIsCbInvoked = CSConstants.CALLBACK_NOT_INVOKED;
             OcAccountManager mAccountManager = OcPlatform
                     .constructAccountManagerObject(
@@ -196,14 +153,14 @@ public class OcCloudProvisioningHelper
             mAccountManager.signUp(authProvider, authCode, onPostListener);
 
             if (CSConstants.CALLBACK_NOT_INVOKED == waitTillCBInvoke()) {
-                Log.e(CSConstants.TAG, CSConstants.CallBackNotInvoked);
-                CSConstants.mErrorMessage = CSConstants.CallBackNotInvoked;
+                IoTivityLog.e(CSConstants.TAG, CSConstants.CALLBACK_NOT_INVOKED_MSG);
+                CSConstants.mErrorMessage = CSConstants.CALLBACK_NOT_INVOKED_MSG;
                 return false;
             }
 
             return true;
         } catch (OcException e) {
-            showLog(Error, e.getErrorCode().name());
+            showIoTivityLog(Error, e.getErrorCode().name());
             CSConstants.mErrorMessage = e.getErrorCode().name();
             return false;
         }
@@ -212,19 +169,19 @@ public class OcCloudProvisioningHelper
     public boolean requestCertificate(OcCloudProvisioning cloudObj,
             RequestCertificateListener certificateIssueRequestListener) {
         try {
-            showLog(Info, "requestCertificate IN");
+            showIoTivityLog(Info, "requestCertificate IN");
             mIsCbInvoked = CSConstants.CALLBACK_NOT_INVOKED;
             cloudObj.requestCertificate(certificateIssueRequestListener);
 
             if (CSConstants.CALLBACK_NOT_INVOKED == waitTillCBInvoke()) {
-                Log.e(CSConstants.TAG, CSConstants.CallBackNotInvoked);
-                CSConstants.mErrorMessage = CSConstants.CallBackNotInvoked;
+                IoTivityLog.e(CSConstants.TAG, CSConstants.CALLBACK_NOT_INVOKED_MSG);
+                CSConstants.mErrorMessage = CSConstants.CALLBACK_NOT_INVOKED_MSG;
                 return false;
             }
 
             return true;
         } catch (OcException e) {
-            showLog(Error, e.getErrorCode().name());
+            showIoTivityLog(Error, e.getErrorCode().name());
             CSConstants.mErrorMessage = e.getErrorCode().name();
             return false;
         }
@@ -234,19 +191,19 @@ public class OcCloudProvisioningHelper
             String deviceId,
             GetAclIdByDeviceListener cloudAclIdGetByDeviceHandler) {
         try {
-            showLog(Info, "getAclIdByDevice IN");
+            showIoTivityLog(Info, "getAclIdByDevice IN");
             mIsCbInvoked = CSConstants.CALLBACK_NOT_INVOKED;
             cloudObj.getAclIdByDevice(deviceId, cloudAclIdGetByDeviceHandler);
 
             if (CSConstants.CALLBACK_NOT_INVOKED == waitTillCBInvoke()) {
-                Log.e(CSConstants.TAG, CSConstants.CallBackNotInvoked);
-                CSConstants.mErrorMessage = CSConstants.CallBackNotInvoked;
+                IoTivityLog.e(CSConstants.TAG, CSConstants.CALLBACK_NOT_INVOKED_MSG);
+                CSConstants.mErrorMessage = CSConstants.CALLBACK_NOT_INVOKED_MSG;
                 return false;
             }
 
             return true;
         } catch (OcException e) {
-            showLog(Error, e.getErrorCode().name());
+            showIoTivityLog(Error, e.getErrorCode().name());
             CSConstants.mErrorMessage = e.getErrorCode().name();
             return false;
         }
@@ -256,20 +213,20 @@ public class OcCloudProvisioningHelper
             String aclId,
             GetIndividualAclInfoListener cloudAclIndividualGetInfoHandler) {
         try {
-            showLog(Info, "getIndividualAclInfo IN");
+            showIoTivityLog(Info, "getIndividualAclInfo IN");
             mIsCbInvoked = CSConstants.CALLBACK_NOT_INVOKED;
             cloudObj.getIndividualAclInfo(aclId,
                     cloudAclIndividualGetInfoHandler);
 
             if (CSConstants.CALLBACK_NOT_INVOKED == waitTillCBInvoke()) {
-                Log.e(CSConstants.TAG, CSConstants.CallBackNotInvoked);
-                CSConstants.mErrorMessage = CSConstants.CallBackNotInvoked;
+                IoTivityLog.e(CSConstants.TAG, CSConstants.CALLBACK_NOT_INVOKED_MSG);
+                CSConstants.mErrorMessage = CSConstants.CALLBACK_NOT_INVOKED_MSG;
                 return false;
             }
 
             return true;
         } catch (OcException e) {
-            showLog(Error, e.getErrorCode().name());
+            showIoTivityLog(Error, e.getErrorCode().name());
             CSConstants.mErrorMessage = e.getErrorCode().name();
             return false;
         }
@@ -278,19 +235,19 @@ public class OcCloudProvisioningHelper
     public boolean getCRL(OcCloudProvisioning cloudObj,
             GetCRLListener cloudGetCRLHandler) {
         try {
-            showLog(Info, "getCRL IN");
+            showIoTivityLog(Info, "getCRL IN");
             mIsCbInvoked = CSConstants.CALLBACK_NOT_INVOKED;
             cloudObj.getCRL(cloudGetCRLHandler);
 
             if (CSConstants.CALLBACK_NOT_INVOKED == waitTillCBInvoke()) {
-                Log.e(CSConstants.TAG, CSConstants.CallBackNotInvoked);
-                CSConstants.mErrorMessage = CSConstants.CallBackNotInvoked;
+                IoTivityLog.e(CSConstants.TAG, CSConstants.CALLBACK_NOT_INVOKED_MSG);
+                CSConstants.mErrorMessage = CSConstants.CALLBACK_NOT_INVOKED_MSG;
                 return false;
             }
 
             return true;
         } catch (OcException e) {
-            showLog(Error, e.getErrorCode().name());
+            showIoTivityLog(Error, e.getErrorCode().name());
             CSConstants.mErrorMessage = e.getErrorCode().name();
             return false;
         }
@@ -300,20 +257,20 @@ public class OcCloudProvisioningHelper
             String nextUpdate, String crl, ArrayList<String> serialNumbers,
             PostCRLListener cloudPostCRLHandler) {
         try {
-            showLog(Info, "postCRL IN");
+            showIoTivityLog(Info, "postCRL IN");
             mIsCbInvoked = CSConstants.CALLBACK_NOT_INVOKED;
             cloudObj.postCRL(thisUpdate, nextUpdate, crl, serialNumbers,
                     cloudPostCRLHandler);
 
             if (CSConstants.CALLBACK_NOT_INVOKED == waitTillCBInvoke()) {
-                Log.e(CSConstants.TAG, CSConstants.CallBackNotInvoked);
-                CSConstants.mErrorMessage = CSConstants.CallBackNotInvoked;
+                IoTivityLog.e(CSConstants.TAG, CSConstants.CALLBACK_NOT_INVOKED_MSG);
+                CSConstants.mErrorMessage = CSConstants.CALLBACK_NOT_INVOKED_MSG;
                 return false;
             }
 
             return true;
         } catch (OcException e) {
-            showLog(Error, e.getErrorCode().name());
+            showIoTivityLog(Error, e.getErrorCode().name());
             CSConstants.mErrorMessage = e.getErrorCode().name();
             return false;
         }
@@ -321,41 +278,41 @@ public class OcCloudProvisioningHelper
 
     @Override
     public void getAclIdByDeviceListener(int i, String aclId) {
-        showLog(Info, "getAclIdByDeviceListener IN");
-        showLog(Info, "ACL ID = " + aclId);
+        showIoTivityLog(Info, "getAclIdByDeviceListener IN");
+        showIoTivityLog(Info, "ACL ID = " + aclId);
         mIsCbInvoked = CSConstants.CALLBACK_INVOKED;
     }
 
     @Override
     public void getCRLListener(int i) {
-        showLog(Info, "getCRLListener IN");
-        showLog(Info, "getCRLListener Callback result = " + i);
+        showIoTivityLog(Info, "getCRLListener IN");
+        showIoTivityLog(Info, "getCRLListener Callback result = " + i);
         mIsCbInvoked = CSConstants.CALLBACK_INVOKED;
     }
 
     @Override
     public void getIndividualAclInfoListener(int i) {
-        showLog(Info, "getIndividualAclInfoListener IN");
-        showLog(Info, "getIndividualAclInfoListener Callback result = " + i);
+        showIoTivityLog(Info, "getIndividualAclInfoListener IN");
+        showIoTivityLog(Info, "getIndividualAclInfoListener Callback result = " + i);
         mIsCbInvoked = CSConstants.CALLBACK_INVOKED;
     }
 
     @Override
     public void postCRLListener(int i) {
-        showLog(Info, "postCRLListener IN");
-        showLog(Info, "postCRLListener Callback result = " + i);
+        showIoTivityLog(Info, "postCRLListener IN");
+        showIoTivityLog(Info, "postCRLListener Callback result = " + i);
         mIsCbInvoked = CSConstants.CALLBACK_INVOKED;
     }
 
     @Override
     public void requestCertificateListener(int i) {
-        showLog(Info, "requestCertificateListener IN");
-        showLog(Info, "requestCertificateListener Callback result = " + i);
+        showIoTivityLog(Info, "requestCertificateListener IN");
+        showIoTivityLog(Info, "requestCertificateListener Callback result = " + i);
         mIsCbInvoked = CSConstants.CALLBACK_INVOKED;
     }
 
     private boolean waitTillCBInvoke() {
-        showLog(Info, "Checking if Callback is Invoked or Not");
+        showIoTivityLog(Info, "Checking if Callback is Invoked or Not");
         int count = 0;
 
         while (!mIsCbInvoked) {
@@ -367,7 +324,7 @@ public class OcCloudProvisioningHelper
             }
 
             count++;
-            Log.i(CSConstants.TAG, "Waiting for = " + count + " second/s");
+            IoTivityLog.i(CSConstants.TAG, "Waiting for = " + count + " second/s");
 
             if (count > CSConstants.CALLBACK_TIMEOUT) {
                 return CSConstants.CALLBACK_NOT_INVOKED;
@@ -379,14 +336,12 @@ public class OcCloudProvisioningHelper
 
     @Override
     public void onPostCompleted(List<OcHeaderOption> arg0, OcRepresentation arg1) {
-        // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void onPostFailed(Throwable arg0) {
-        // TODO Auto-generated method stub
-        
+
     }
 
 }

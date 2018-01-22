@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -24,11 +24,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.ArrayList;
 
-import android.test.InstrumentationTestCase;
-import android.content.Context;
-import android.test.AndroidTestCase;
-import android.util.Log;
-
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
@@ -51,48 +46,39 @@ import org.iotivity.configuration.*;
 
 import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.*;
 import static org.iotivity.test.ic.tc.helper.ICResourceDirectoryCommonAdapter.*;
+import org.iotivity.testcase.IoTivityLog;
+import org.iotivity.testcase.IoTivityTc;
 
-public class ICPlatformTest extends InstrumentationTestCase
-        implements IConfiguration {
+public class ICPlatformTest extends IoTivityTc implements IConfiguration {
     private static final String              ALL_INTERFACE_TYPE = "0.0.0.0";
     public OcAccountManager                  mAccountManager;
     private ICResourceDirectoryCommonAdapter mICResourceDirectoryCommonAdapter;
     private ICHelper                         mICHelper;
-    private Context                          mContext;
     private OcPresenceHandle                 mOcPresenceHandle;
     private List<String>                     mDi;
     private OcAccountManagerHelper           mCloudHelper;
 
     protected void setUp() throws Exception {
         super.setUp();
-        mICHelper = new ICHelper();
+        mICHelper = new ICHelper(this);
+        mICHelper.copyCborFromAsset("cloud.dat");
+        mICHelper.configClientServerPlatform("cloud.dat");
+
         mICResourceDirectoryCommonAdapter = new ICResourceDirectoryCommonAdapter();
-        ICHelper.icConfigurePlatform(mContext);
+
         mOcPresenceHandle = null;
         mDi = new ArrayList<>();
         mCloudHelper = new OcAccountManagerHelper();
-        mICHelper.copyCborFromAsset(getInstrumentation().getContext(),
-                "cloud.dat");
 
-        ICHelper.filePath = getInstrumentation().getContext()
-                .getFilesDir().getPath()
-                + "/"; // data/data/<package>/files/
-
-        PlatformConfig cfg = new PlatformConfig(
-                getInstrumentation().getTargetContext(), ServiceType.IN_PROC,
-                ModeType.CLIENT_SERVER, ALL_INTERFACE_TYPE, // bind to all available
-                // interfaces
-                0, QualityOfService.LOW, ICHelper.filePath + "cloud.dat");
-        OcPlatform.Configure(cfg);
+        OcAccountManagerHelper.init(mICHelper.s_filePath);
         mAccountManager = OcAccountManagerHelper
                 .getAccountMangerInstance(TLS.DISABLED);
-        OcAccountManagerHelper.init(mContext);
         // signUp and SignIn for all TC
         assertTrue(mCloudHelper.singUp(mAccountManager, DEFAULT_AUTH_PROVIDER,
-                OcAccountManagerHelper.authCode, mCloudHelper));
+                OcAccountManagerHelper.s_mAuthCode, mCloudHelper));
         assertTrue(mCloudHelper.singIn(mAccountManager,
-                OcAccountManagerHelper.s_CloudUid,
-                OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper));
+                OcAccountManagerHelper.s_mCloudUid,
+                OcAccountManagerHelper.s_mCloudAccessToken, mCloudHelper));
     }
 
     protected void tearDown() throws Exception {
@@ -109,9 +95,10 @@ public class ICPlatformTest extends InstrumentationTestCase
      *      onPostListener)
      * @objective Test 'subscribeDevicePresence' API With valid scenario
      * @target "OCStackResult subscribeDevicePresence(OCPresenceHandle&
-     *         presenceHandle, const std::string& host, const std::vector<std::string>& di,                            
-     *                          OCConnectivityType connectivityType,            
-     *                                          ObserveCallback callback);"
+     *         presenceHandle, const std::string& host, const
+     *         std::vector<std::string>& di,
+     *         OCConnectivityType connectivityType,
+     *         ObserveCallback callback);"
      * @test_data host, presenceHandle, di, connectivityType
      * @pre_condition constructAccountManagerObject(host, connectivity_type),
      *                SignUp(), SignIn() API

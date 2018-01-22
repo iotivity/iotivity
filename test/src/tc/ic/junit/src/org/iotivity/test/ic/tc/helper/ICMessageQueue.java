@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* Copyright 2017 Samsung Electronics All Rights Reserved.
+* Copyright 2018 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -25,9 +25,6 @@ import java.util.EnumSet;
 import java.lang.*;
 import java.util.ArrayList;
 
-import android.util.Log;
-import android.content.Context;
-
 import org.iotivity.base.OcAccountManager.OnDeleteListener;
 import org.iotivity.base.OcAccountManager.OnGetListener;
 import org.iotivity.base.OcConnectivityType;
@@ -51,9 +48,12 @@ import org.iotivity.base.OcRepresentation;
 
 import org.iotivity.cloud.*;
 import org.iotivity.configuration.IConfiguration;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.*;
+import org.iotivity.test.ic.tc.helper.ICHelperStaticUtil;
+import org.iotivity.test.ri.common.RIHelperCommon;
+import org.iotivity.testcase.IoTivityLog;
+import org.iotivity.testcase.IoTivityTc;
 
-public class ICMessageQueue implements  IConfiguration{
+public class ICMessageQueue extends RIHelperCommon implements  IConfiguration{
     private static final String OIC_IF_BASELINE = "oic.if.baseline";
     private static final String A_LIGHT = "/a/light";
     private static final String CORE_LIGHT = "core.light";
@@ -67,10 +67,12 @@ public class ICMessageQueue implements  IConfiguration{
     public OcRepresentation        mMsg             = new OcRepresentation();
     private boolean                mSwitchingFlag   = true;
 
-    public void createResource(Context context) {
-        PlatformConfig cfg = new PlatformConfig(context, ServiceType.IN_PROC,
-                ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW);
-        OcPlatform.Configure(cfg);
+    public ICMessageQueue(IoTivityTc iotivityTcObj) {
+        super(iotivityTcObj);
+    }
+
+    public void createResource() {
+        configClientServerPlatform();
         OcPlatform.EntityHandler entityHandler = new OcPlatform.EntityHandler() {
             @Override
             public EntityHandlerResult handleEntity(
@@ -99,26 +101,26 @@ public class ICMessageQueue implements  IConfiguration{
             if (ocResource == null) {
             } else {
                 mResource = ocResource;
-                Log.d("Resource found", ocResource.getUri());
+                IoTivityLog.d("Resource found", ocResource.getUri());
             }
             mIsResourceFound = true;
         }
 
     };
 
-    public OcResource findClintResource(Context context) {
+    public OcResource findClintResource() {
         String requestUri = OcPlatform.WELL_KNOWN_QUERY + RT + CORE_LIGHT;
-        createResource(context);
+        createResource();
         try {
             OcPlatform.findResource("", requestUri,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), listener);
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException ex) {
-                Log.d("Wait not work", ex.getMessage());
+                IoTivityLog.d("Wait not work", ex.getMessage());
             }
         } catch (OcException ex) {
-            Log.d("Resource found", ex.getMessage());
+            IoTivityLog.d("Resource found", ex.getMessage());
         }
         return mResource;
     }
@@ -137,26 +139,26 @@ public class ICMessageQueue implements  IConfiguration{
             sRep.setValue("message", mMsg);
             return sRep;
         } catch (Exception ex) {
-            Log.d("generateRep got crashed", ex.getMessage());
+            IoTivityLog.d("generateRep got crashed", ex.getMessage());
         }
         return null;
     }
 
     public void getMQBroker() {
-        
+
         List<String> resourceTypeList = new ArrayList<>();
         List<String> resourceInterfaceList = new ArrayList<>();
         resourceInterfaceList.add(RESOURCE_INTERFACE);
         resourceTypeList.add("ocf.wk.ps");
         try {
-            sMQbrokerResource = OcPlatform.constructResourceObject(
-                    sMQHostAddress, MQ_BROKER_URI,
+            ICHelperStaticUtil.sMQbrokerResource = OcPlatform.constructResourceObject(
+                    sMQHostAddress, ICHelperStaticUtil.MQ_BROKER_URI,
                     EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP,
                             OcConnectivityType.CT_IP_USE_V4),
                     false, resourceTypeList, resourceInterfaceList);
 
             System.out
-                    .println("found MQ broker : " + sMQbrokerResource.getHost());
+                    .println("found MQ broker : " + ICHelperStaticUtil.sMQbrokerResource.getHost());
         } catch (OcException e) {
             e.printStackTrace();
         }

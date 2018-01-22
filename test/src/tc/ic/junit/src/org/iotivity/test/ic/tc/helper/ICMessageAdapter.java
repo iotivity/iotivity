@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* Copyright 2017 Samsung Electronics All Rights Reserved.
+* Copyright 2018 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -39,8 +39,8 @@ import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.ServiceType;
 
 import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.*;
-import static org.iotivity.test.ic.tc.helper.ICMessageQueue.*;
-import org.iotivity.test.ic.tc.helper.ICMessageQueue;
+import org.iotivity.testcase.IoTivityLog;
+import org.iotivity.testcase.IoTivityTc;
 
 public class ICMessageAdapter implements OnMQTopicCreatedListener,
         OnMQTopicFoundListener, OnPostListener, OnObserveListener {

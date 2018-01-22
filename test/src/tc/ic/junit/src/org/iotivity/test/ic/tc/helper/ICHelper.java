@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* Copyright 2017 Samsung Electronics All Rights Reserved.
+* Copyright 2018 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -22,23 +22,18 @@ package org.iotivity.test.ic.tc.helper;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.List;
-import java.util.EnumSet;
-import java.util.LinkedList;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.ArrayList;
 
-import android.R.bool;
-import android.R.string;
-import android.content.Context;
-import android.util.Log;
+import java.util.List;
+import java.util.EnumSet;
+import java.util.LinkedList;
+import java.util.ArrayList;
 
 import org.iotivity.base.ModeType;
 import org.iotivity.base.OcPlatform;
@@ -53,10 +48,14 @@ import org.iotivity.base.ErrorCode;
 import org.iotivity.base.OcResourceHandle;
 import org.iotivity.base.ResourceProperty;
 import org.iotivity.base.OcConnectivityType;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.*;
-import org.iotivity.test.ic.tc.helper.OcAccountManagerAdapter;
 
-public class ICHelper {
+import org.iotivity.test.ic.tc.helper.ICHelperStaticUtil;
+import org.iotivity.test.ic.tc.helper.OcAccountManagerAdapter;
+import org.iotivity.test.ri.common.RIHelperCommon;
+import org.iotivity.testcase.IoTivityLog;
+import org.iotivity.testcase.IoTivityTc;
+
+public class ICHelper extends RIHelperCommon {
 
     /**************************
      * Declare class variables
@@ -94,34 +93,12 @@ public class ICHelper {
 
     private static OcAccountManagerAdapter mOcAccountManagerAdapter = new OcAccountManagerAdapter();
 
-    public ICHelper() {
-
-    }
-
-    public static void icConfigurePlatform(Context appContext) {
-        OcPlatform.Configure(new PlatformConfig(appContext, ServiceType.IN_PROC,
-                ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW));
-        Log.i(TAG, "Configuration done successfully");
-    }
-
-    public static String read(String filename, Context c) throws IOException {
-
-        StringBuffer buffer = new StringBuffer();
-
-        String Read = "";
-        FileInputStream fis = c.openFileInput(filename);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
-        if (fis != null) {
-            while ((Read = reader.readLine()) != null) {
-                buffer.append(Read + "\n");
-            }
-        }
-        fis.close();
-        return buffer.toString();
+    public ICHelper(IoTivityTc iotivityTcObj) {
+        super(iotivityTcObj);
     }
 
     private boolean waitTillCBInvoke() {
-        Log.i("LogLevel.DEBUG", "Checking if Callback is Invoked or Not");
+        IoTivityLog.i(TAG, "Checking if Callback is Invoked or Not");
         int count = 0;
 
         while (!mIsCbInvoked) {
@@ -133,7 +110,7 @@ public class ICHelper {
             }
 
             count++;
-            Log.i("LogLevel.DEBUG", "Waiting for = " + count + " second/s");
+            IoTivityLog.i(TAG, "Waiting for = " + count + " second/s");
 
             if (count > CALLBACK_TIMEOUT) {
                 return CALLBACK_NOT_INVOKED;
@@ -147,66 +124,20 @@ public class ICHelper {
         if (slocalLightResourceHandle == null) {
             try {
                 slocalLightResourceHandle = OcPlatform.registerResource(
-                        Resource_URI, // resource
+                        ICHelperStaticUtil.Resource_URI, // resource
                                       // URI
-                        RESOURCE_TYPE, // resource type name
-                        RESOURCE_INTERFACE, // using default interface
+                        ICHelperStaticUtil.RESOURCE_TYPE, // resource type name
+                        ICHelperStaticUtil.RESOURCE_INTERFACE, // using default interface
                         null, // use default entity handler
                         EnumSet.of(ResourceProperty.DISCOVERABLE,
                                 ResourceProperty.OBSERVABLE));
-                sResourceHandleList.add(slocalLightResourceHandle);
-                System.out.println("Create Local Resource is success.");
+                ICHelperStaticUtil.sResourceHandleList.add(slocalLightResourceHandle);
+                IoTivityLog.i(TAG, "Create Local Resource is success.");
                 return true;
             } catch (OcException e) {
-                Log.e(TAG, e.toString());
+                IoTivityLog.e(TAG, e.toString());
             }
         }
         return false;
     }
-
-    /**
-     * Copy client db Cbor file from assets folder to app data files dir
-     */
-    public void copyCborFromAsset(Context context, String oicClientCborDbFile) {
-        InputStream inputStream = null;
-        OutputStream outputStream = null;
-        int length;
-        byte[] buffer = new byte[BUFFER_SIZE];
-        filePath = context.getFilesDir().getPath() + "/"; // data/data/<package>/files/
-
-        try {
-            inputStream = context.getAssets().open(oicClientCborDbFile);
-            File file = new File(filePath);
-            // check files directory exists
-            if (!(file.exists() && file.isDirectory())) {
-                file.mkdirs();
-            }
-            outputStream = new FileOutputStream(filePath + oicClientCborDbFile);
-            while ((length = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, length);
-            }
-        } catch (NullPointerException e) {
-            Log.e(TAG, "Null pointer exception " + e.getMessage());
-        } catch (FileNotFoundException e) {
-            Log.e(TAG, "Cbor svr db file not found " + e.getMessage());
-        } catch (IOException e) {
-            Log.e(TAG, oicClientCborDbFile + " file copy failed");
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    Log.e(TAG, e.getMessage());
-                }
-            }
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    Log.e(TAG, e.getMessage());
-                }
-            }
-        }
-    }
-
 }

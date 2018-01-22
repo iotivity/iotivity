@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -24,10 +24,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
-import android.content.Context;
-import android.test.InstrumentationTestCase;
-import android.util.Log;
-
 import org.iotivity.base.OcAccountManager;
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcConnectivityType;
@@ -36,46 +32,29 @@ import org.iotivity.base.ErrorCode;
 import org.iotivity.base.OcResource.*;
 import org.iotivity.base.OcRepresentation;
 
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.ACCESS_TOKEN;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.AUTH_CODE;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.AUTH_PROVIDER;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.DEVICE_ID;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.EMPTY_MY_MAP;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.EMPTY_VALUE;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.GROUP_ID;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.IC_HOST_ADDRESS;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.IC_OcAccountManager_OnDeleteListener_NULL;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.IC_OcAccountManager_OnGetListener_NULL;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.IC_OcAccountManager_OnObserveListener_NULL;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.IC_OcAccountManager_OnPostListener_NULL;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.INVALID_PARAMETER;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.MY_MAP;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.NULL_VAL;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.REFRESH_TOKEN;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.USER_ID;
-import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.USER_UUID;
-import org.iotivity.test.ic.tc.helper.ICHelper;
 import org.iotivity.test.ic.tc.helper.ICHelperStaticUtil;
+import org.iotivity.test.ic.tc.helper.ICHelper;
 import org.iotivity.test.ic.tc.helper.OcAccountManagerAdapter;
+import org.iotivity.testcase.IoTivityLog;
+import org.iotivity.testcase.IoTivityTc;
 
-public class ICOcAccountManagerTest extends InstrumentationTestCase {
+public class ICOcAccountManagerTest extends IoTivityTc {
 
     public OcAccountManager         m_accountManager;
 
     private OcAccountManagerAdapter m_OcAccountManagerAdapter;
-    private Context                 m_Context;
+    private ICHelper m_ICHelper;
     private OcRepresentation        m_propertyValue;
 
     protected void setUp() throws Exception {
         super.setUp();
-        m_Context = getInstrumentation().getTargetContext();
-
-        ICHelper.icConfigurePlatform(m_Context);
+        m_ICHelper = new ICHelper(this);
+        m_ICHelper.configClientServerPlatform();
 
         m_OcAccountManagerAdapter = new OcAccountManagerAdapter();
 
         m_accountManager = OcPlatform.constructAccountManagerObject(
-                IC_HOST_ADDRESS, EnumSet.of(OcConnectivityType.CT_DEFAULT));
+                ICHelperStaticUtil.IC_HOST_ADDRESS, EnumSet.of(OcConnectivityType.CT_DEFAULT));
         m_propertyValue = new OcRepresentation();
         m_propertyValue.setValue("property", "values");
     }
@@ -100,7 +79,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignUp_SRC_P() {
         try {
-            m_accountManager.signUp(AUTH_PROVIDER, AUTH_CODE,
+            m_accountManager.signUp(ICHelperStaticUtil.AUTH_PROVIDER, ICHelperStaticUtil.AUTH_CODE,
                     m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -124,7 +103,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignUp_ESV_N() {
         try {
-            m_accountManager.signUp(EMPTY_VALUE, EMPTY_VALUE,
+            m_accountManager.signUp(ICHelperStaticUtil.EMPTY_VALUE, ICHelperStaticUtil.EMPTY_VALUE,
                     m_OcAccountManagerAdapter);
             fail("SignUp API does not throw exception occurred");
         } catch (OcException ex) {
@@ -149,7 +128,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignUp_USV_N() {
         try {
-            m_accountManager.signUp(INVALID_PARAMETER, INVALID_PARAMETER,
+            m_accountManager.signUp(ICHelperStaticUtil.INVALID_PARAMETER, ICHelperStaticUtil.INVALID_PARAMETER,
                     m_OcAccountManagerAdapter);
             fail("SignUp API does not throw exception occurred");
         } catch (OcException ex) {
@@ -174,7 +153,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignUp_NV_N() {
         try {
-            m_accountManager.signUp(NULL_VAL, NULL_VAL,
+            m_accountManager.signUp(ICHelperStaticUtil.NULL_VAL, ICHelperStaticUtil.NULL_VAL,
                     m_OcAccountManagerAdapter);
             fail("SignUp API does not throw exception occurred");
         } catch (OcException ex) {
@@ -199,8 +178,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignUpNULLCallback_NV_N() {
         try {
-            m_accountManager.signUp(AUTH_PROVIDER, AUTH_CODE,
-                    IC_OcAccountManager_OnPostListener_NULL);
+            m_accountManager.signUp(ICHelperStaticUtil.AUTH_PROVIDER, ICHelperStaticUtil.AUTH_CODE,
+                    ICHelperStaticUtil.IC_OcAccountManager_OnPostListener_NULL);
             fail("SignUp API does not throw exception occurred");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -224,7 +203,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignUpWithMap_SRC_P() {
         try {
-            m_accountManager.signUp(AUTH_PROVIDER, AUTH_CODE, MY_MAP,
+            m_accountManager.signUp(ICHelperStaticUtil.AUTH_PROVIDER, ICHelperStaticUtil.AUTH_CODE, ICHelperStaticUtil.MY_MAP,
                     m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -248,7 +227,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignUpWithMap_ESV_N() {
         try {
-            m_accountManager.signUp(EMPTY_VALUE, EMPTY_VALUE, EMPTY_MY_MAP,
+            m_accountManager.signUp(ICHelperStaticUtil.EMPTY_VALUE, ICHelperStaticUtil.EMPTY_VALUE, ICHelperStaticUtil.EMPTY_MY_MAP,
                     m_OcAccountManagerAdapter);
             fail("SignUp API does not throw exception occurred");
         } catch (OcException ex) {
@@ -273,8 +252,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignUpWithMap_USV_N() {
         try {
-            m_accountManager.signUp(INVALID_PARAMETER, INVALID_PARAMETER,
-                    MY_MAP, m_OcAccountManagerAdapter);
+            m_accountManager.signUp(ICHelperStaticUtil.INVALID_PARAMETER, ICHelperStaticUtil.INVALID_PARAMETER,
+                    ICHelperStaticUtil.MY_MAP, m_OcAccountManagerAdapter);
             fail("SignUp API does not throw exception occurred");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -298,7 +277,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignUpWithMap_NV_N() {
         try {
-            m_accountManager.signUp(INVALID_PARAMETER, INVALID_PARAMETER, EMPTY_MY_MAP,
+            m_accountManager.signUp(ICHelperStaticUtil.INVALID_PARAMETER, ICHelperStaticUtil.INVALID_PARAMETER, ICHelperStaticUtil.EMPTY_MY_MAP,
                     m_OcAccountManagerAdapter);
             fail("SignUp API does not throw exception occurred");
         } catch (OcException ex) {
@@ -323,8 +302,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignUpWithMapNULLCallback_NV_N() {
         try {
-            m_accountManager.signUp(AUTH_PROVIDER, AUTH_CODE, MY_MAP,
-                    IC_OcAccountManager_OnPostListener_NULL);
+            m_accountManager.signUp(ICHelperStaticUtil.AUTH_PROVIDER, ICHelperStaticUtil.AUTH_CODE, ICHelperStaticUtil.MY_MAP,
+                    ICHelperStaticUtil.IC_OcAccountManager_OnPostListener_NULL);
             fail("SignUp API does not throw exception occurred");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -348,7 +327,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignIn_SRC_P() {
         try {
-            m_accountManager.signIn(USER_ID, ACCESS_TOKEN,
+            m_accountManager.signIn(ICHelperStaticUtil.USER_ID, ICHelperStaticUtil.ACCESS_TOKEN,
                     m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -372,7 +351,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignIn_USV_N() {
         try {
-            m_accountManager.signIn(INVALID_PARAMETER, INVALID_PARAMETER,
+            m_accountManager.signIn(ICHelperStaticUtil.INVALID_PARAMETER, ICHelperStaticUtil.INVALID_PARAMETER,
                     m_OcAccountManagerAdapter);
             fail("SignIn does not throw exception!");
         } catch (OcException ex) {
@@ -397,7 +376,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignIn_ESV_N() {
         try {
-            m_accountManager.signIn(EMPTY_VALUE, EMPTY_VALUE,
+            m_accountManager.signIn(ICHelperStaticUtil.EMPTY_VALUE, ICHelperStaticUtil.EMPTY_VALUE,
                     m_OcAccountManagerAdapter);
             fail("SignIn does not throw exception!");
         } catch (OcException ex) {
@@ -422,7 +401,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignIn_NV_N() {
         try {
-            m_accountManager.signIn(NULL_VAL, NULL_VAL,
+            m_accountManager.signIn(ICHelperStaticUtil.NULL_VAL, ICHelperStaticUtil.NULL_VAL,
                     m_OcAccountManagerAdapter);
             fail("SignIn does not throw exception!");
         } catch (OcException ex) {
@@ -447,8 +426,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSignInNULLCallback_NV_N() {
         try {
-            m_accountManager.signIn(USER_ID, ACCESS_TOKEN,
-                    IC_OcAccountManager_OnPostListener_NULL);
+            m_accountManager.signIn(ICHelperStaticUtil.USER_ID, ICHelperStaticUtil.ACCESS_TOKEN,
+                    ICHelperStaticUtil.IC_OcAccountManager_OnPostListener_NULL);
             fail("SignIn does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -471,7 +450,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testsignOut_SRC_P() {
         try {
-            m_accountManager.signOut(ACCESS_TOKEN, m_OcAccountManagerAdapter);
+            m_accountManager.signOut(ICHelperStaticUtil.ACCESS_TOKEN, m_OcAccountManagerAdapter);
             fail("SignUp API should throw an Exception");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -494,7 +473,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testsignOut_USV_N() {
         try {
-            m_accountManager.signOut(INVALID_PARAMETER,
+            m_accountManager.signOut(ICHelperStaticUtil.INVALID_PARAMETER,
                     m_OcAccountManagerAdapter);
             fail("signOut does not throw exception!");
         } catch (OcException ex) {
@@ -518,7 +497,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testsignOut_ESV_N() {
         try {
-            m_accountManager.signOut(EMPTY_VALUE, m_OcAccountManagerAdapter);
+            m_accountManager.signOut(ICHelperStaticUtil.EMPTY_VALUE, m_OcAccountManagerAdapter);
             fail("signOut does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -541,7 +520,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testsignOut_NV_N() {
         try {
-            m_accountManager.signOut(NULL_VAL, m_OcAccountManagerAdapter);
+            m_accountManager.signOut(ICHelperStaticUtil.NULL_VAL, m_OcAccountManagerAdapter);
             fail("signOut does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -564,8 +543,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testsignOutNULLCallback_NV_N() {
         try {
-            m_accountManager.signOut(ACCESS_TOKEN,
-                    IC_OcAccountManager_OnPostListener_NULL);
+            m_accountManager.signOut(ICHelperStaticUtil.ACCESS_TOKEN,
+                    ICHelperStaticUtil.IC_OcAccountManager_OnPostListener_NULL);
             fail("signOut does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -588,7 +567,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testRefreshAccessToken_SRC_P() {
         try {
-            m_accountManager.refreshAccessToken(USER_ID, REFRESH_TOKEN,
+            m_accountManager.refreshAccessToken(ICHelperStaticUtil.USER_ID, ICHelperStaticUtil.REFRESH_TOKEN,
                     m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -612,8 +591,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testRefreshAccessToken_USV_N() {
         try {
-            m_accountManager.refreshAccessToken(INVALID_PARAMETER,
-                    INVALID_PARAMETER, m_OcAccountManagerAdapter);
+            m_accountManager.refreshAccessToken(ICHelperStaticUtil.INVALID_PARAMETER,
+                    ICHelperStaticUtil.INVALID_PARAMETER, m_OcAccountManagerAdapter);
             fail("refreshAccessToken does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -636,7 +615,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testRefreshAccessToken_ESV_N() {
         try {
-            m_accountManager.refreshAccessToken(EMPTY_VALUE, EMPTY_VALUE,
+            m_accountManager.refreshAccessToken(ICHelperStaticUtil.EMPTY_VALUE, ICHelperStaticUtil.EMPTY_VALUE,
                     m_OcAccountManagerAdapter);
             fail("refreshAccessToken does not throw exception!");
         } catch (OcException ex) {
@@ -660,7 +639,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testRefreshAccessToken_NV_N() {
         try {
-            m_accountManager.refreshAccessToken(NULL_VAL, NULL_VAL,
+            m_accountManager.refreshAccessToken(ICHelperStaticUtil.NULL_VAL, ICHelperStaticUtil.NULL_VAL,
                     m_OcAccountManagerAdapter);
             fail("refreshAccessToken does not throw exception!");
         } catch (OcException ex) {
@@ -684,8 +663,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testRefreshAccessTokenNULLCallback_NV_N() {
         try {
-            m_accountManager.refreshAccessToken(USER_ID, REFRESH_TOKEN,
-                    IC_OcAccountManager_OnPostListener_NULL);
+            m_accountManager.refreshAccessToken(ICHelperStaticUtil.USER_ID, ICHelperStaticUtil.REFRESH_TOKEN,
+                    ICHelperStaticUtil.IC_OcAccountManager_OnPostListener_NULL);
             fail("refreshAccessToken does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -708,7 +687,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSearchUserWithQueryMap_SRC_P() {
         try {
-            m_accountManager.searchUser(MY_MAP, m_OcAccountManagerAdapter);
+            m_accountManager.searchUser(ICHelperStaticUtil.MY_MAP, m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
             fail("SearchUser API Exception occurred: "
@@ -731,7 +710,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSearchUserWithQueryMap_ESV_N() {
         try {
-            m_accountManager.searchUser(EMPTY_MY_MAP,
+            m_accountManager.searchUser(ICHelperStaticUtil.EMPTY_MY_MAP,
                     m_OcAccountManagerAdapter);
             fail("searchUser does not throw exception!");
         } catch (OcException ex) {
@@ -755,8 +734,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSearchUserWithQueryMap_NV_N() {
         try {
-            m_accountManager.searchUser(MY_MAP,
-                    IC_OcAccountManager_OnGetListener_NULL);
+            m_accountManager.searchUser(ICHelperStaticUtil.MY_MAP,
+                    ICHelperStaticUtil.IC_OcAccountManager_OnGetListener_NULL);
             fail("searchUser does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -780,7 +759,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testDeleteDevice_SRC_P() {
         try {
-            m_accountManager.deleteDevice(ACCESS_TOKEN, DEVICE_ID,
+            m_accountManager.deleteDevice(ICHelperStaticUtil.ACCESS_TOKEN, ICHelperStaticUtil.DEVICE_ID,
                     m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -805,7 +784,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testDeleteDevice_USV_N() {
         try {
-            m_accountManager.deleteDevice(INVALID_PARAMETER, INVALID_PARAMETER,
+            m_accountManager.deleteDevice(ICHelperStaticUtil.INVALID_PARAMETER, ICHelperStaticUtil.INVALID_PARAMETER,
                     m_OcAccountManagerAdapter);
             fail("deleteDevice does not throw exception!");
         } catch (OcException ex) {
@@ -830,7 +809,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testDeleteDevice_ESV_N() {
         try {
-            m_accountManager.deleteDevice(EMPTY_VALUE, EMPTY_VALUE,
+            m_accountManager.deleteDevice(ICHelperStaticUtil.EMPTY_VALUE, ICHelperStaticUtil.EMPTY_VALUE,
                     m_OcAccountManagerAdapter);
             fail("deleteDevice does not throw exception!");
         } catch (OcException ex) {
@@ -855,7 +834,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testDeleteDevice_NV_N() {
         try {
-            m_accountManager.deleteDevice(NULL_VAL, NULL_VAL,
+            m_accountManager.deleteDevice(ICHelperStaticUtil.NULL_VAL, ICHelperStaticUtil.NULL_VAL,
                     m_OcAccountManagerAdapter);
             fail("deleteDevice does not throw exception!");
         } catch (OcException ex) {
@@ -880,8 +859,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testDeleteDeviceNULLCallback_NV_N() {
         try {
-            m_accountManager.deleteDevice(ACCESS_TOKEN, DEVICE_ID,
-                    IC_OcAccountManager_OnDeleteListener_NULL);
+            m_accountManager.deleteDevice(ICHelperStaticUtil.ACCESS_TOKEN, ICHelperStaticUtil.DEVICE_ID,
+                    ICHelperStaticUtil.IC_OcAccountManager_OnDeleteListener_NULL);
             fail("deleteDevice does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -927,7 +906,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
     public void testCreateGroup_NV_N() {
         try {
             m_accountManager
-                    .createGroup(IC_OcAccountManager_OnPostListener_NULL);
+                    .createGroup(ICHelperStaticUtil.IC_OcAccountManager_OnPostListener_NULL);
             fail("createGroup does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -951,7 +930,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testCreateGroupWithQueryMap_SRC_P() {
         try {
-            m_accountManager.createGroup(MY_MAP, m_OcAccountManagerAdapter);
+            m_accountManager.createGroup(ICHelperStaticUtil.MY_MAP, m_OcAccountManagerAdapter);
             fail("deleteDevice API Exception not occurred: ");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -975,8 +954,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testCreateGroupWithQueryMap_NV_N() {
         try {
-            m_accountManager.createGroup(EMPTY_MY_MAP,
-                    IC_OcAccountManager_OnPostListener_NULL);
+            m_accountManager.createGroup(ICHelperStaticUtil.EMPTY_MY_MAP,
+                    ICHelperStaticUtil.IC_OcAccountManager_OnPostListener_NULL);
             fail("createGroup does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1000,7 +979,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testDeleteGroup_SRC_P() {
         try {
-            m_accountManager.deleteGroup(GROUP_ID, m_OcAccountManagerAdapter);
+            m_accountManager.deleteGroup(ICHelperStaticUtil.GROUP_ID, m_OcAccountManagerAdapter);
             fail("getGroupList API Exception not occurred:");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1024,7 +1003,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testDeleteGroup_USV_N() {
         try {
-            m_accountManager.deleteGroup(INVALID_PARAMETER,
+            m_accountManager.deleteGroup(ICHelperStaticUtil.INVALID_PARAMETER,
                     m_OcAccountManagerAdapter);
             fail("deleteGroup does not throw exception!");
         } catch (OcException ex) {
@@ -1049,7 +1028,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testDeleteGroup_ESV_N() {
         try {
-            m_accountManager.deleteGroup(EMPTY_VALUE,
+            m_accountManager.deleteGroup(ICHelperStaticUtil.EMPTY_VALUE,
                     m_OcAccountManagerAdapter);
             fail("deleteGroup does not throw exception!");
         } catch (OcException ex) {
@@ -1074,7 +1053,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testDeleteGroup_NV_N() {
         try {
-            m_accountManager.deleteGroup(NULL_VAL, m_OcAccountManagerAdapter);
+            m_accountManager.deleteGroup(ICHelperStaticUtil.NULL_VAL, m_OcAccountManagerAdapter);
             fail("deleteGroup does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1098,8 +1077,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testDeleteGroupNULLCallback_NV_N() {
         try {
-            m_accountManager.deleteGroup(GROUP_ID,
-                    IC_OcAccountManager_OnDeleteListener_NULL);
+            m_accountManager.deleteGroup(ICHelperStaticUtil.GROUP_ID,
+                    ICHelperStaticUtil.IC_OcAccountManager_OnDeleteListener_NULL);
             fail("deleteGroup does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1121,7 +1100,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testGetGroupInfo_SRC_P() {
         try {
-            m_accountManager.getGroupInfo(GROUP_ID, m_OcAccountManagerAdapter);
+            m_accountManager.getGroupInfo(ICHelperStaticUtil.GROUP_ID, m_OcAccountManagerAdapter);
             fail("getGroupInfo API should throw an Exception ");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1145,7 +1124,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testGetGroupInfo_USV_N() {
         try {
-            m_accountManager.getGroupInfo(INVALID_PARAMETER,
+            m_accountManager.getGroupInfo(ICHelperStaticUtil.INVALID_PARAMETER,
                     m_OcAccountManagerAdapter);
             fail("getGroupInfo does not throw exception!");
         } catch (OcException ex) {
@@ -1169,7 +1148,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testGetGroupInfo_ESV_N() {
         try {
-            m_accountManager.getGroupInfo(EMPTY_VALUE,
+            m_accountManager.getGroupInfo(ICHelperStaticUtil.EMPTY_VALUE,
                     m_OcAccountManagerAdapter);
             fail("getGroupInfo does not throw exception!");
         } catch (OcException ex) {
@@ -1193,7 +1172,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testGetGroupInfo_NV_N() {
         try {
-            m_accountManager.getGroupInfo(NULL_VAL, m_OcAccountManagerAdapter);
+            m_accountManager.getGroupInfo(ICHelperStaticUtil.NULL_VAL, m_OcAccountManagerAdapter);
             fail("getGroupInfo does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1216,8 +1195,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testGetGroupInfoNULLCallback_NV_N() {
         try {
-            m_accountManager.getGroupInfo(GROUP_ID,
-                    IC_OcAccountManager_OnGetListener_NULL);
+            m_accountManager.getGroupInfo(ICHelperStaticUtil.GROUP_ID,
+                    ICHelperStaticUtil.IC_OcAccountManager_OnGetListener_NULL);
             fail("getGroupInfo does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1443,8 +1422,6 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testCancelObserveInvitation_SRC_P() {
         try {
-            // m_accountManager.sendInvitation(GROUP_ID, USER_UUID,
-            // m_OcAccountManagerAdapter);
             m_accountManager.observeInvitation(m_OcAccountManagerAdapter);
             m_accountManager.cancelObserveInvitation();
         } catch (OcException ex) {
@@ -1470,7 +1447,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSendInvitation_SRC_P() {
         try {
-            m_accountManager.sendInvitation(GROUP_ID, USER_UUID,
+            m_accountManager.sendInvitation(ICHelperStaticUtil.GROUP_ID, ICHelperStaticUtil.USER_UUID,
                     m_OcAccountManagerAdapter);
             fail("SignUp API should throw an Exception");
         } catch (OcException ex) {
@@ -1495,8 +1472,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSendInvitation_USV_N() {
         try {
-            m_accountManager.sendInvitation(INVALID_PARAMETER,
-                    INVALID_PARAMETER, m_OcAccountManagerAdapter);
+            m_accountManager.sendInvitation(ICHelperStaticUtil.INVALID_PARAMETER,
+                    ICHelperStaticUtil.INVALID_PARAMETER, m_OcAccountManagerAdapter);
             fail("observeInvitation does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1524,7 +1501,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSendInvitation_ESV_N() {
         try {
-            m_accountManager.sendInvitation(EMPTY_VALUE, EMPTY_VALUE,
+            m_accountManager.sendInvitation(ICHelperStaticUtil.EMPTY_VALUE, ICHelperStaticUtil.EMPTY_VALUE,
                     m_OcAccountManagerAdapter);
             fail("observeInvitation does not throw exception!");
         } catch (OcException ex) {
@@ -1553,7 +1530,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSendInvitation_NV_N() {
         try {
-            m_accountManager.sendInvitation(NULL_VAL, NULL_VAL,
+            m_accountManager.sendInvitation(ICHelperStaticUtil.NULL_VAL, ICHelperStaticUtil.NULL_VAL,
                     m_OcAccountManagerAdapter);
             fail("observeInvitation does not throw exception!");
         } catch (OcException ex) {
@@ -1578,8 +1555,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testSendInvitationNULLCallback_NV_N() {
         try {
-            m_accountManager.sendInvitation(GROUP_ID, USER_UUID,
-                    IC_OcAccountManager_OnPostListener_NULL);
+            m_accountManager.sendInvitation(ICHelperStaticUtil.GROUP_ID, ICHelperStaticUtil.USER_UUID,
+                    ICHelperStaticUtil.IC_OcAccountManager_OnPostListener_NULL);
             fail("observeInvitation does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1604,7 +1581,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testCancelInvitation_SRC_P() {
         try {
-            m_accountManager.cancelInvitation(GROUP_ID, USER_UUID,
+            m_accountManager.cancelInvitation(ICHelperStaticUtil.GROUP_ID, ICHelperStaticUtil.USER_UUID,
                     m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1629,8 +1606,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testCancelInvitation_USV_N() {
         try {
-            m_accountManager.cancelInvitation(INVALID_PARAMETER,
-                    INVALID_PARAMETER, m_OcAccountManagerAdapter);
+            m_accountManager.cancelInvitation(ICHelperStaticUtil.INVALID_PARAMETER,
+                    ICHelperStaticUtil.INVALID_PARAMETER, m_OcAccountManagerAdapter);
             fail("cancelInvitation does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1658,7 +1635,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testCancelInvitation_ESV_N() {
         try {
-            m_accountManager.cancelInvitation(EMPTY_VALUE, EMPTY_VALUE,
+            m_accountManager.cancelInvitation(ICHelperStaticUtil.EMPTY_VALUE, ICHelperStaticUtil.EMPTY_VALUE,
                     m_OcAccountManagerAdapter);
             fail("cancelInvitation does not throw exception!");
         } catch (OcException ex) {
@@ -1687,7 +1664,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testCancelInvitation_NV_N() {
         try {
-            m_accountManager.cancelInvitation(NULL_VAL, NULL_VAL,
+            m_accountManager.cancelInvitation(ICHelperStaticUtil.NULL_VAL, ICHelperStaticUtil.NULL_VAL,
                     m_OcAccountManagerAdapter);
             fail("cancelInvitation does not throw exception!");
         } catch (OcException ex) {
@@ -1712,7 +1689,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testCancelInvitationNULLCallback_NV_N() {
         try {
-            m_accountManager.cancelInvitation(GROUP_ID, USER_UUID,
+            m_accountManager.cancelInvitation(ICHelperStaticUtil.GROUP_ID, ICHelperStaticUtil.USER_UUID,
                     null);
             fail("cancelInvitation does not throw exception!");
         } catch (OcException ex) {
@@ -1738,7 +1715,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testaddPropertyValueToGroup_SRC_P() {
         try {
-            m_accountManager.addPropertyValueToGroup(GROUP_ID, m_propertyValue,
+            m_accountManager.addPropertyValueToGroup(ICHelperStaticUtil.GROUP_ID, m_propertyValue,
                     m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1763,7 +1740,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testaddPropertyValueToGroup_USV_N() {
         try {
-            m_accountManager.addPropertyValueToGroup(INVALID_PARAMETER,
+            m_accountManager.addPropertyValueToGroup(ICHelperStaticUtil.INVALID_PARAMETER,
                     m_propertyValue, m_OcAccountManagerAdapter);
             fail("addPropertyValueToGroup does not throw exception!");
         } catch (OcException ex) {
@@ -1789,7 +1766,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testaddPropertyValueToGroup_ESV_N() {
         try {
-            m_accountManager.addPropertyValueToGroup(EMPTY_VALUE, m_propertyValue,
+            m_accountManager.addPropertyValueToGroup(ICHelperStaticUtil.EMPTY_VALUE, m_propertyValue,
                     m_OcAccountManagerAdapter);
             fail("addPropertyValueToGroup does not throw exception!");
         } catch (OcException ex) {
@@ -1815,7 +1792,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testaddPropertyValueToGroup_NV_N() {
         try {
-            m_accountManager.addPropertyValueToGroup(NULL_VAL, m_propertyValue,
+            m_accountManager.addPropertyValueToGroup(ICHelperStaticUtil.NULL_VAL, m_propertyValue,
                     m_OcAccountManagerAdapter);
             fail("addPropertyValueToGroup does not throw exception!");
         } catch (OcException ex) {
@@ -1841,8 +1818,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testaddPropertyValueToGroupNULLCallback_NV_N() {
         try {
-            m_accountManager.addPropertyValueToGroup(GROUP_ID, m_propertyValue,
-                    IC_OcAccountManager_OnPostListener_NULL);
+            m_accountManager.addPropertyValueToGroup(ICHelperStaticUtil.GROUP_ID, m_propertyValue,
+                    ICHelperStaticUtil.IC_OcAccountManager_OnPostListener_NULL);
             fail("addPropertyValueToGroup does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1867,7 +1844,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testdeletePropertyValueFromGroup_SRC_P() {
         try {
-            m_accountManager.deletePropertyValueFromGroup(GROUP_ID,
+            m_accountManager.deletePropertyValueFromGroup(ICHelperStaticUtil.GROUP_ID,
                     m_propertyValue, m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1892,7 +1869,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testdeletePropertyValueFromGroup_USV_N() {
         try {
-            m_accountManager.deletePropertyValueFromGroup(INVALID_PARAMETER,
+            m_accountManager.deletePropertyValueFromGroup(ICHelperStaticUtil.INVALID_PARAMETER,
                     m_propertyValue, m_OcAccountManagerAdapter);
             fail("deletePropertyValueFromGroup does not throw exception!");
         } catch (OcException ex) {
@@ -1918,7 +1895,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testdeletePropertyValueFromGroup_ESV_N() {
         try {
-            m_accountManager.deletePropertyValueFromGroup(NULL_VAL,
+            m_accountManager.deletePropertyValueFromGroup(ICHelperStaticUtil.NULL_VAL,
                     m_propertyValue, m_OcAccountManagerAdapter);
             fail("deletePropertyValueFromGroup does not throw exception!");
         } catch (OcException ex) {
@@ -1943,7 +1920,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testdeletePropertyValueFromGroup_NV_N() {
         try {
-            m_accountManager.deletePropertyValueFromGroup(NULL_VAL,
+            m_accountManager.deletePropertyValueFromGroup(ICHelperStaticUtil.NULL_VAL,
                     m_propertyValue, m_OcAccountManagerAdapter);
             fail("deletePropertyValueFromGroup does not throw exception!");
         } catch (OcException ex) {
@@ -1969,8 +1946,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testdeletePropertyValueFromGroupNULLCallback_NV_N() {
         try {
-            m_accountManager.deletePropertyValueFromGroup(GROUP_ID,
-                    m_propertyValue, IC_OcAccountManager_OnPostListener_NULL);
+            m_accountManager.deletePropertyValueFromGroup(ICHelperStaticUtil.GROUP_ID,
+                    m_propertyValue, ICHelperStaticUtil.IC_OcAccountManager_OnPostListener_NULL);
             fail("deletePropertyValueFromGroup does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1995,7 +1972,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testupdatePropertyValueOnGroup_SRC_P() {
         try {
-            m_accountManager.updatePropertyValueOnGroup(GROUP_ID, m_propertyValue,
+            m_accountManager.updatePropertyValueOnGroup(ICHelperStaticUtil.GROUP_ID, m_propertyValue,
                     m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -2020,7 +1997,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testupdatePropertyValueOnGroup_USV_N() {
         try {
-            m_accountManager.updatePropertyValueOnGroup(INVALID_PARAMETER,
+            m_accountManager.updatePropertyValueOnGroup(ICHelperStaticUtil.INVALID_PARAMETER,
                     m_propertyValue, m_OcAccountManagerAdapter);
             fail("updatePropertyValueOnGroup does not throw exception!");
         } catch (OcException ex) {
@@ -2046,7 +2023,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testupdatePropertyValueOnGroup_ESV_N() {
         try {
-            m_accountManager.updatePropertyValueOnGroup(EMPTY_VALUE,
+            m_accountManager.updatePropertyValueOnGroup(ICHelperStaticUtil.EMPTY_VALUE,
                     m_propertyValue, m_OcAccountManagerAdapter);
             fail("updatePropertyValueOnGroup does not throw exception!");
         } catch (OcException ex) {
@@ -2071,7 +2048,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testupdatePropertyValueOnGroup_NV_N() {
         try {
-            m_accountManager.updatePropertyValueOnGroup(NULL_VAL, m_propertyValue,
+            m_accountManager.updatePropertyValueOnGroup(ICHelperStaticUtil.NULL_VAL, m_propertyValue,
                     m_OcAccountManagerAdapter);
             fail("updatePropertyValueOnGroup does not throw exception!");
         } catch (OcException ex) {
@@ -2097,8 +2074,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testupdatePropertyValueOnGroupNULLCallback_NV_N() {
         try {
-            m_accountManager.updatePropertyValueOnGroup(GROUP_ID, m_propertyValue,
-                    IC_OcAccountManager_OnPostListener_NULL);
+            m_accountManager.updatePropertyValueOnGroup(ICHelperStaticUtil.GROUP_ID, m_propertyValue,
+                    ICHelperStaticUtil.IC_OcAccountManager_OnPostListener_NULL);
             fail("updatePropertyValueOnGroup does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -2122,9 +2099,9 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testreplyToInvitation_SRC_P() {
         try {
-            m_accountManager.replyToInvitation(GROUP_ID, true,
+            m_accountManager.replyToInvitation(ICHelperStaticUtil.GROUP_ID, true,
                     m_OcAccountManagerAdapter);
-            m_accountManager.replyToInvitation(GROUP_ID, false,
+            m_accountManager.replyToInvitation(ICHelperStaticUtil.GROUP_ID, false,
                     m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -2148,7 +2125,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testreplyToInvitation_USV_N() {
         try {
-            m_accountManager.replyToInvitation(INVALID_PARAMETER, true,
+            m_accountManager.replyToInvitation(ICHelperStaticUtil.INVALID_PARAMETER, true,
                     m_OcAccountManagerAdapter);
             fail("replyToInvitation does not throw exception!");
         } catch (OcException ex) {
@@ -2173,7 +2150,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testreplyToInvitation_ESV_N() {
         try {
-            m_accountManager.replyToInvitation(EMPTY_VALUE, true,
+            m_accountManager.replyToInvitation(ICHelperStaticUtil.EMPTY_VALUE, true,
                     m_OcAccountManagerAdapter);
             fail("replyToInvitation does not throw exception!");
         } catch (OcException ex) {
@@ -2198,7 +2175,7 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testreplyToInvitation_NV_N() {
         try {
-            m_accountManager.replyToInvitation(NULL_VAL, true,
+            m_accountManager.replyToInvitation(ICHelperStaticUtil.NULL_VAL, true,
                     m_OcAccountManagerAdapter);
             fail("replyToInvitation does not throw exception!");
         } catch (OcException ex) {
@@ -2223,8 +2200,8 @@ public class ICOcAccountManagerTest extends InstrumentationTestCase {
      */
     public void testreplyToInvitationNULLCallback_NV_N() {
         try {
-            m_accountManager.replyToInvitation(GROUP_ID, true,
-                    IC_OcAccountManager_OnDeleteListener_NULL);
+            m_accountManager.replyToInvitation(ICHelperStaticUtil.GROUP_ID, true,
+                    ICHelperStaticUtil.IC_OcAccountManager_OnDeleteListener_NULL);
             fail("replyToInvitation does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();

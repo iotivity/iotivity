@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -23,9 +23,6 @@ package org.iotivity.test.ic.tc.btc;
 import java.util.EnumSet;
 import java.util.*;
 
-import android.content.Context;
-import android.test.AndroidTestCase;
-
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcAccountManager;
 import org.iotivity.base.OcResource;
@@ -45,7 +42,10 @@ import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.*;
 import static org.iotivity.test.ic.tc.helper.ICMessageQueue.*;
 import org.iotivity.test.ic.tc.helper.ICMessageQueue;
 
-public class ICMessageQueueTest extends AndroidTestCase {
+import org.iotivity.testcase.IoTivityLog;
+import org.iotivity.testcase.IoTivityTc;
+
+public class ICMessageQueueTest extends IoTivityTc {
     QualityOfService            m_qualityOfService;
     OcResource                  m_ocResource;
     OcRepresentation            m_rep                    = new OcRepresentation();
@@ -94,9 +94,9 @@ public class ICMessageQueueTest extends AndroidTestCase {
     protected void setUp() throws Exception {
         super.setUp();
 
-        ICMessageQueue messageQueueHelper = new ICMessageQueue();
+        ICMessageQueue messageQueueHelper = new ICMessageQueue(this);
         m_qualityOfService = QualityOfService.LOW;
-        m_ocResource = messageQueueHelper.findClintResource(getContext());
+        m_ocResource = messageQueueHelper.findClintResource();
     }
 
     protected void tearDown() throws Exception {

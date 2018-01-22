@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* Copyright 2017 Samsung Electronics All Rights Reserved.
+* Copyright 2018 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -21,7 +21,6 @@
 package org.iotivity.test.ic.tc.helper;
 
 import java.util.List;
-import android.util.Log;
 
 import org.iotivity.base.OcAccountManager.OnDeleteListener;
 import org.iotivity.base.OcAccountManager.OnGetListener;
@@ -45,6 +44,8 @@ import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.ErrorCode;
 
 import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.*;
+import org.iotivity.testcase.IoTivityLog;
+import org.iotivity.testcase.IoTivityTc;
 
 public class OconGetGroupInfoAllAdapter implements OnGetListener {
     public static String  sGroupId                  = null;
@@ -110,7 +111,7 @@ public class OconGetGroupInfoAllAdapter implements OnGetListener {
         System.out.println("Failed to getGroupInfoAll");
         if (throwable instanceof OcException) {
             OcException ocEx = (OcException) throwable;
-            Log.e(TAG, ocEx.toString());
+            IoTivityLog.e(TAG, ocEx.toString());
             ErrorCode errCode = ocEx.getErrorCode();
             System.out.println("Error code: " + errCode);
         }

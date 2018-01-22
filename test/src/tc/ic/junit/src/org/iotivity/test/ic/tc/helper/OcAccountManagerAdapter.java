@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* Copyright 2017 Samsung Electronics All Rights Reserved.
+* Copyright 2018 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -21,7 +21,6 @@
 package org.iotivity.test.ic.tc.helper;
 
 import java.util.List;
-import android.util.Log;
 
 import org.iotivity.base.OcAccountManager.OnDeleteListener;
 import org.iotivity.base.OcAccountManager.OnGetListener;
@@ -44,6 +43,8 @@ import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.ErrorCode;
 
+import org.iotivity.testcase.IoTivityLog;
+import org.iotivity.testcase.IoTivityTc;
 import static org.iotivity.test.ic.tc.helper.ICHelperStaticUtil.*;
 
 public class OcAccountManagerAdapter implements OnPostListener, OnGetListener,
@@ -59,38 +60,38 @@ public class OcAccountManagerAdapter implements OnPostListener, OnGetListener,
     @Override
     public void onPostCompleted(List<OcHeaderOption> list,
             OcRepresentation ocRepresentation) {
-        Log.i(TAG,
+        IoTivityLog.i(TAG,
                 "createGroup or sendInviation or adProertyvalue were successful");
         sIssendInvitationCBInvoked = true;
         try {
             sGroupId = ocRepresentation.getValue("gid");
-            Log.d("\tgroupId: ", sGroupId);
+            IoTivityLog.d("\tgroupId: ", sGroupId);
         } catch (OcException e) {
-            Log.e(TAG, e.toString());
+            IoTivityLog.e(TAG, e.toString());
         }
     }
 
     @Override
     public void onPostFailed(Throwable throwable) {
-        Log.e(TAG,
+        IoTivityLog.e(TAG,
                 "Failed to createGroup/sendInovation/add/delete/updatepropertyGroup");
         sIssendInvitationCBInvoked = false;
         if (throwable instanceof OcException) {
             OcException ocEx = (OcException) throwable;
-            Log.e(TAG, ocEx.toString());
+            IoTivityLog.e(TAG, ocEx.toString());
             ErrorCode errCode = ocEx.getErrorCode();
         }
     }
 
     @Override
     public void onDeleteCompleted(List<OcHeaderOption> arg0) {
-        Log.i(TAG, "successed to delete operation");
+        IoTivityLog.i(TAG, "successed to delete operation");
         sIsonDeleteCompletedCBInvoked = true;
     }
 
     @Override
     public void onDeleteFailed(Throwable arg0) {
-        Log.e(TAG, "failed to delete operation");
+        IoTivityLog.e(TAG, "failed to delete operation");
         sIsonDeleteCompletedCBInvoked = false;
     }
 
@@ -142,7 +143,7 @@ public class OcAccountManagerAdapter implements OnPostListener, OnGetListener,
         sIsObserveCompleted = false;
         if (throwable instanceof OcException) {
             OcException ocEx = (OcException) throwable;
-            Log.e(TAG, ocEx.toString());
+            IoTivityLog.e(TAG, ocEx.toString());
             ErrorCode errCode = ocEx.getErrorCode();
             System.out.println("Error code: " + errCode);
         }
@@ -152,19 +153,9 @@ public class OcAccountManagerAdapter implements OnPostListener, OnGetListener,
     public synchronized void onGetCompleted(List<OcHeaderOption> list,
             OcRepresentation ocRepresentation) {
         System.out.println("searchUser was successful");
-        // try {
-        // OcRepresentation[] userList = ocRepresentation.getValue("ulist");
-        // for (OcRepresentation user : userList) {
-        // sInviteeUuid = user.getValue("uid");
-        // OcRepresentation userInfo = user.getValue("uinfo");
-        // String inviteeUserId = userInfo.getValue("userid");
-        // Log.d(TAG, "inviteeUserId : " + inviteeUserId);
         onGetCompletedOk = true;
-        Log.i(TAG, "onGetCompletedOk value is " + onGetCompletedOk);
+        IoTivityLog.i(TAG, "onGetCompletedOk value is " + onGetCompletedOk);
 
-        // } catch (OcException e) {
-        // e.printStackTrace();
-        // }
     }
 
     @Override
@@ -172,7 +163,7 @@ public class OcAccountManagerAdapter implements OnPostListener, OnGetListener,
         System.out.println("Failed to searchUser");
         if (throwable instanceof OcException) {
             OcException ocEx = (OcException) throwable;
-            Log.e(TAG, ocEx.toString());
+            IoTivityLog.e(TAG, ocEx.toString());
             ErrorCode errCode = ocEx.getErrorCode();
             System.out.println("Error code: " + errCode);
         }

@@ -1,5 +1,5 @@
 /******************************************************************
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -7,7 +7,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,8 +20,6 @@ package org.iotivity.test.cs.tc.btc;
 
 import java.util.ArrayList;
 
-import android.test.InstrumentationTestCase;
-
 import org.iotivity.base.ModeType;
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.PlatformConfig;
@@ -33,33 +31,26 @@ import org.iotivity.base.OcCloudProvisioning;
 import org.iotivity.base.OcConnectivityType;
 import org.iotivity.test.cs.tc.helper.CSConstants;
 import org.iotivity.test.cs.tc.helper.OcCloudProvisioningHelper;
+import org.iotivity.testcase.IoTivityLog;
+import org.iotivity.testcase.IoTivityTc;
 
-public class CSOcCloudProvisioningTest extends InstrumentationTestCase {
+public class CSOcCloudProvisioningTest extends IoTivityTc {
 
-    public OcCloudProvisioningHelper mOcCloudProvisioningHelper = new OcCloudProvisioningHelper();
-    public OcCloudProvisioning mOcCloudProvisioning = new OcCloudProvisioning(
-            OcCloudProvisioningHelper.DEFAULT_HOST_IP,
-            OcCloudProvisioningHelper.DEFAULT_PORT);
+    private OcCloudProvisioningHelper mOcCloudProvisioningHelper;
+    public OcCloudProvisioning        mOcCloudProvisioning;
 
     protected void setUp() throws Exception {
         super.setUp();
-
         CSConstants.mErrorMessage = CSConstants.EMPTY_STRING;
-
+        mOcCloudProvisioningHelper = new OcCloudProvisioningHelper(this);
+        mOcCloudProvisioning = new OcCloudProvisioning(
+                OcCloudProvisioningHelper.DEFAULT_HOST_IP,
+                OcCloudProvisioningHelper.DEFAULT_PORT);
         // create platform config
-        mOcCloudProvisioningHelper.copyCborFromAsset(
-                getInstrumentation().getContext(),
-                CSConstants.OIC_CLOUD_CLIENT);
-        OcCloudProvisioningHelper.mFilePath = getInstrumentation().getContext()
-                .getFilesDir().getPath() + "/"; // data/data/<package>/files/
-        PlatformConfig cfg = new PlatformConfig(
-                getInstrumentation().getTargetContext(), ServiceType.IN_PROC,
-                ModeType.CLIENT_SERVER, "0.0.0.0", // bind to all available
-                // interfaces
-                0, QualityOfService.LOW, OcCloudProvisioningHelper.mFilePath
-                + CSConstants.OIC_CLOUD_CLIENT);
+        mOcCloudProvisioningHelper
+                .copyCborFromAsset(CSConstants.OIC_CLOUD_CLIENT);
+        mOcCloudProvisioningHelper.configClientServerPlatform(CSConstants.OIC_CLOUD_CLIENT);
 
-        OcPlatform.Configure(cfg);
     }
 
     protected void tearDown() throws Exception {
@@ -82,8 +73,8 @@ public class CSOcCloudProvisioningTest extends InstrumentationTestCase {
     public void testRequestCertificateCb_NV_N() {
         assertFalse(CSConstants.mErrorMessage, mOcCloudProvisioningHelper
                 .requestCertificate(mOcCloudProvisioning, null));
-        assertEquals(CSConstants.WRONG_ERROR_CODE, CSConstants.ERROR_INVALID_CALLBACK,
-                CSConstants.mErrorMessage);
+        assertEquals(CSConstants.WRONG_ERROR_CODE,
+                CSConstants.ERROR_INVALID_CALLBACK, CSConstants.mErrorMessage);
     }
 
     /**
@@ -105,8 +96,8 @@ public class CSOcCloudProvisioningTest extends InstrumentationTestCase {
                 mOcCloudProvisioningHelper.getIndividualAclInfo(
                         mOcCloudProvisioning,
                         OcCloudProvisioningHelper.DEFAULT_ACL_ID, null));
-        assertEquals(CSConstants.WRONG_ERROR_CODE, CSConstants.ERROR_INVALID_CALLBACK,
-                CSConstants.mErrorMessage);
+        assertEquals(CSConstants.WRONG_ERROR_CODE,
+                CSConstants.ERROR_INVALID_CALLBACK, CSConstants.mErrorMessage);
     }
 
     /**
@@ -127,8 +118,8 @@ public class CSOcCloudProvisioningTest extends InstrumentationTestCase {
                 mOcCloudProvisioningHelper.getIndividualAclInfo(
                         mOcCloudProvisioning, null,
                         mOcCloudProvisioningHelper));
-        assertEquals(CSConstants.WRONG_ERROR_CODE, CSConstants.ERROR_INVALID_PARAM,
-                CSConstants.mErrorMessage);
+        assertEquals(CSConstants.WRONG_ERROR_CODE,
+                CSConstants.ERROR_INVALID_PARAM, CSConstants.mErrorMessage);
     }
 
     /**
@@ -150,8 +141,8 @@ public class CSOcCloudProvisioningTest extends InstrumentationTestCase {
                 mOcCloudProvisioningHelper.getAclIdByDevice(
                         mOcCloudProvisioning,
                         OcCloudProvisioningHelper.DEFAULT_DEVICE_ID, null));
-        assertEquals(CSConstants.WRONG_ERROR_CODE, CSConstants.ERROR_INVALID_CALLBACK,
-                CSConstants.mErrorMessage);
+        assertEquals(CSConstants.WRONG_ERROR_CODE,
+                CSConstants.ERROR_INVALID_CALLBACK, CSConstants.mErrorMessage);
     }
 
     /**
@@ -172,8 +163,8 @@ public class CSOcCloudProvisioningTest extends InstrumentationTestCase {
                 mOcCloudProvisioningHelper.getAclIdByDevice(
                         mOcCloudProvisioning, null,
                         mOcCloudProvisioningHelper));
-        assertEquals(CSConstants.WRONG_ERROR_CODE, CSConstants.ERROR_INVALID_PARAM,
-                CSConstants.mErrorMessage);
+        assertEquals(CSConstants.WRONG_ERROR_CODE,
+                CSConstants.ERROR_INVALID_PARAM, CSConstants.mErrorMessage);
     }
 
     /**
@@ -191,8 +182,8 @@ public class CSOcCloudProvisioningTest extends InstrumentationTestCase {
     public void testGetCrlCb_NV_N() {
         assertFalse(CSConstants.mErrorMessage,
                 mOcCloudProvisioningHelper.getCRL(mOcCloudProvisioning, null));
-        assertEquals(CSConstants.WRONG_ERROR_CODE, CSConstants.ERROR_INVALID_CALLBACK,
-                CSConstants.mErrorMessage);
+        assertEquals(CSConstants.WRONG_ERROR_CODE,
+                CSConstants.ERROR_INVALID_CALLBACK, CSConstants.mErrorMessage);
     }
 
     /**
@@ -216,8 +207,8 @@ public class CSOcCloudProvisioningTest extends InstrumentationTestCase {
                         OcCloudProvisioningHelper.thisUpdate,
                         OcCloudProvisioningHelper.nextUpdate,
                         CSConstants.DEFAULT_CRL, serialNumbers, null));
-        assertEquals(CSConstants.WRONG_ERROR_CODE, CSConstants.ERROR_INVALID_CALLBACK,
-                CSConstants.mErrorMessage);
+        assertEquals(CSConstants.WRONG_ERROR_CODE,
+                CSConstants.ERROR_INVALID_CALLBACK, CSConstants.mErrorMessage);
     }
 
     /**
@@ -241,8 +232,8 @@ public class CSOcCloudProvisioningTest extends InstrumentationTestCase {
                         OcCloudProvisioningHelper.nextUpdate,
                         CSConstants.DEFAULT_CRL, serialNumbers,
                         mOcCloudProvisioningHelper));
-        assertEquals(CSConstants.WRONG_ERROR_CODE, CSConstants.ERROR_INVALID_PARAM,
-                CSConstants.mErrorMessage);
+        assertEquals(CSConstants.WRONG_ERROR_CODE,
+                CSConstants.ERROR_INVALID_PARAM, CSConstants.mErrorMessage);
     }
 
     /**
@@ -266,8 +257,8 @@ public class CSOcCloudProvisioningTest extends InstrumentationTestCase {
                         OcCloudProvisioningHelper.thisUpdate, null,
                         CSConstants.DEFAULT_CRL, serialNumbers,
                         mOcCloudProvisioningHelper));
-        assertEquals(CSConstants.WRONG_ERROR_CODE, CSConstants.ERROR_INVALID_PARAM,
-                CSConstants.mErrorMessage);
+        assertEquals(CSConstants.WRONG_ERROR_CODE,
+                CSConstants.ERROR_INVALID_PARAM, CSConstants.mErrorMessage);
     }
 
 }
