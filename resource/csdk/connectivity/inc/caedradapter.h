@@ -64,7 +64,7 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
  * As its peer to peer it does not require to start any servers.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAStartEDR();
+CAResult_t CAStartEDR(void);
 
 /**
  * Starts listening server for receiving multicast search requests.
@@ -72,7 +72,7 @@ CAResult_t CAStartEDR();
  *
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAStartEDRListeningServer();
+CAResult_t CAStartEDRListeningServer(void);
 
 /**
  * Stop listening server for receiving multicast search requests.
@@ -80,7 +80,7 @@ CAResult_t CAStartEDRListeningServer();
  *
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAStopEDRListeningServer();
+CAResult_t CAStopEDRListeningServer(void);
 
 /**
  * Starting discovery server for receiving multicast advertisements.
@@ -88,7 +88,7 @@ CAResult_t CAStopEDRListeningServer();
  *
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAStartEDRDiscoveryServer();
+CAResult_t CAStartEDRDiscoveryServer(void);
 
 /**
  * Sends data to the peer bluetooth OIC device using the adapter connectivity.
@@ -128,26 +128,26 @@ CAResult_t CAGetEDRInterfaceInformation(CAEndpoint_t **info, size_t *size);
  * Read Synchronous API callback.
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAReadEDRData();
+CAResult_t CAReadEDRData(void);
 
 /**
  * EDR Stops all RFCOMM servers and close sockets.
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAStopEDR();
+CAResult_t CAStopEDR(void);
 
 /**
  * Terminate the EDR connectivity adapter.
  * Configuration information will be deleted from further use.
  */
-void CATerminateEDR();
+void CATerminateEDR(void);
 
 /**
  * Initializes the adapter queues.
  * This will initiates both server and receiver adapter queues.
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAAdapterStartQueue();
+CAResult_t CAAdapterStartQueue(void);
 
 #ifdef __cplusplus
 } /* extern "C" */

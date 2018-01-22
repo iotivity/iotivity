@@ -273,12 +273,12 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
     return CA_STATUS_FAILED;
 }
 
-u_arraylist_t *CAGetSelectedNetworkList()
+u_arraylist_t *CAGetSelectedNetworkList(void)
 {
     return g_selectedNetworkList;
 }
 
-CATransportAdapter_t CAGetSelectedNetwork()
+CATransportAdapter_t CAGetSelectedNetwork(void)
 {
     return CASelectedNetwork;
 }
@@ -297,7 +297,7 @@ CAResult_t CAGetNetworkInformationInternal(CAEndpoint_t **info, size_t *size)
     return CAGetNetworkInfo(info, size);
 }
 
-CAResult_t CATerminateNetworkType()
+CAResult_t CATerminateNetworkType(void)
 {
     OIC_LOG(DEBUG, TAG, "CATerminateNetworkType()");
     if (NULL != g_selectedNetworkList)

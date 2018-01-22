@@ -184,7 +184,7 @@ CAResult_t CAIPUnSetNetworkMonitorCallback(CATransportAdapter_t adapter)
     return CA_STATUS_OK;
 }
 
-u_arraylist_t *CAFindInterfaceChange()
+u_arraylist_t *CAFindInterfaceChange(void)
 {
     char buf[NETLINK_MESSAGE_LENGTH] = { 0 };
     struct sockaddr_nl sa = { 0 };

@@ -65,7 +65,7 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
  * @retval #CA_ADAPTER_NOT_ENABLED Bluetooth adapter is not enabled
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAStartEDR();
+CAResult_t CAStartEDR(void);
 
 /**
  * @brief  Starts listening server for receiving multicast search requests.
@@ -76,14 +76,14 @@ CAResult_t CAStartEDR();
  *                                     service UUID
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAStartEDRListeningServer();
+CAResult_t CAStartEDRListeningServer(void);
 
 /**
  * @brief  Stops listening server for receiving multicast search requests.
  *
  * @return #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAStopEDRListeningServer();
+CAResult_t CAStopEDRListeningServer(void);
 
 /**
  * @brief  Starts discovery server for receiving multicast advertisements.
@@ -94,7 +94,7 @@ CAResult_t CAStopEDRListeningServer();
  *                                    service UUID
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAStartEDRDiscoveryServer();
+CAResult_t CAStartEDRDiscoveryServer(void);
 
 /**
  * @brief  Sends data to the peer bluetooth OIC device using the adapter connectivity.
@@ -137,20 +137,20 @@ CAResult_t CAGetEDRInterfaceInformation(CAEndpoint_t **info, size_t *size);
  * @retval #CA_STATUS_OK  Successful
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAReadEDRData();
+CAResult_t CAReadEDRData(void);
 
 /**
  * @brief  EDR Stops all RFCOMM servers and close sockets.
  * @return #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAStopEDR();
+CAResult_t CAStopEDR(void);
 
 /**
  * @brief  Terminate the EDR connectivity adapter.
  * Configuration information will be deleted from further use.
  * @return NONE
  */
-void CATerminateEDR();
+void CATerminateEDR(void);
 
 #ifdef __cplusplus
 } /* extern "C" */

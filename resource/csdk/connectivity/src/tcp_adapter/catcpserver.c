@@ -124,7 +124,7 @@ static CAResult_t CATCPCreateCond(void);
 static void CATCPDestroyCond(void);
 static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock);
 static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock);
-static void CAFindReadyMessage();
+static void CAFindReadyMessage(void);
 #if !defined(WSA_WAIT_EVENT_0)
 static void CASelectReturned(fd_set *readFds);
 #else
@@ -232,7 +232,7 @@ static void CAReceiveHandler(void *data)
 
 #if !defined(WSA_WAIT_EVENT_0)
 
-static void CAFindReadyMessage()
+static void CAFindReadyMessage(void)
 {
     fd_set readFds;
     struct timeval timeout = { .tv_sec = caglobals.tcp.selectTimeout };
@@ -430,7 +430,7 @@ static bool CAPushSocket(CASocketFd_t s, CASocketFd_t* socketArray,
 /**
  * Process any message that is ready
  */
-static void CAFindReadyMessage()
+static void CAFindReadyMessage(void)
 {
     CASocketFd_t socketArray[EVENT_ARRAY_SIZE] = {0};
     HANDLE eventArray[_countof(socketArray)];

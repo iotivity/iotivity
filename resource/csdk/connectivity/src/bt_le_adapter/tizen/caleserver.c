@@ -174,7 +174,7 @@ void CALEServerNotificationSentCB(int result, const char *remote_address, bt_gat
     OIC_LOG_V(DEBUG, TAG, "Notification to the device[%s] result[%d]", remote_address, result);
 }
 
-CAResult_t CAStartLEGattServer()
+CAResult_t CAStartLEGattServer(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -355,7 +355,7 @@ CAResult_t CALEStopAdvertise()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStopLEGattServer()
+CAResult_t CAStopLEGattServer(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -413,7 +413,7 @@ CAResult_t CAStopLEGattServer()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAInitializeLEGattServer()
+CAResult_t CAInitializeLEGattServer(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -428,7 +428,7 @@ CAResult_t CAInitializeLEGattServer()
     return ret;
 }
 
-void CATerminateLEGattServer()
+void CATerminateLEGattServer(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 

@@ -130,7 +130,7 @@ typedef CAResult_t (*CABLEDataReceivedCallback)(const char *remoteAddress,
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
  * @retval ::CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitializeLEAdapter();
+CAResult_t CAInitializeLEAdapter(void);
 
 /**
  * Start the LE adapter layer.
@@ -143,7 +143,7 @@ CAResult_t CAInitializeLEAdapter();
  *
  * @return ::CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAStartLEAdapter();
+CAResult_t CAStartLEAdapter(void);
 
 /**
  * Stop the LE adapter layer.
@@ -156,7 +156,7 @@ CAResult_t CAStartLEAdapter();
  *
  * @return ::CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAStopLEAdapter();
+CAResult_t CAStopLEAdapter(void);
 
 /**
  * Used to get the current state of the LE adapter.
@@ -166,7 +166,7 @@ CAResult_t CAStopLEAdapter();
  * @retval ::CA_ADAPTER_NOT_ENABLED  adapter not enabled
  * @retval ::CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAGetLEAdapterState();
+CAResult_t CAGetLEAdapterState(void);
 
 /**
  * Initialize the network monitor layer of the LE adapter.  Mutex
@@ -178,14 +178,14 @@ CAResult_t CAGetLEAdapterState();
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
  * @retval ::CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitializeLENetworkMonitor();
+CAResult_t CAInitializeLENetworkMonitor(void);
 
 /**
  * Terminate the network monitor layer of the LE adapter. The
  * variables initialized in @c CAInitializeLENetworkMonitor() must be
  * cleared in this function.
  */
-void CATerminateLENetworkMonitor();
+void CATerminateLENetworkMonitor(void);
 
 /**
  * Set the callback for the device state changes in the adapter.
@@ -235,7 +235,7 @@ CAResult_t CAGetLEAddress(char **local_address);
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
  * @retval ::CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAStartLEGattServer();
+CAResult_t CAStartLEGattServer(void);
 
 /**
  * Stop BLE Gatt Service.
@@ -245,7 +245,7 @@ CAResult_t CAStartLEGattServer();
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
  * @retval ::CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAStopLEGattServer();
+CAResult_t CAStopLEGattServer(void);
 
 /**
  * initialize gatt server
@@ -254,13 +254,13 @@ CAResult_t CAStopLEGattServer();
  * @retval ::CA_STATUS_OK  Successful
  * @retval ::CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitializeLEGattServer();
+CAResult_t CAInitializeLEGattServer(void);
 
 /**
  * Stop Gatt Server thread and remove service registration, stop
  * advertising.
  */
-void CATerminateLEGattServer();
+void CATerminateLEGattServer(void);
 
 /**
  * Used to store upper layer callback locally which will be used to
@@ -310,7 +310,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const uint8_t *value,
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
  * @retval ::CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAStartLEGattClient();
+CAResult_t CAStartLEGattClient(void);
 
 /**
  * Stop Gatt client gracefully.  In turn it will call the
@@ -321,7 +321,7 @@ CAResult_t CAStartLEGattClient();
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
  * @retval ::CA_STATUS_FAILED Operation failed
  */
-void CAStopLEGattClient();
+void CAStopLEGattClient(void);
 
 /**
  * initialize Client
@@ -330,17 +330,17 @@ void CAStopLEGattClient();
  * @retval ::CA_STATUS_OK  Successful
  * @retval ::CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitializeLEGattClient();
+CAResult_t CAInitializeLEGattClient(void);
 
 /**
  * Unset all the callbacks and stop service discovery
  */
-void CATerminateLEGattClient();
+void CATerminateLEGattClient(void);
 
 /**
  * Read the data from characteristics and invoke notify callback.
  */
-void CACheckLEData();
+void CACheckLEData(void);
 
 /**
  * Set the value of characteristic and update the value to
@@ -418,7 +418,7 @@ void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle);
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
-CAResult_t CAUnSetLEAdapterStateChangedCb();
+CAResult_t CAUnSetLEAdapterStateChangedCb(void);
 
 /**
  * Unset the callback of adapter connection state change.
@@ -428,7 +428,7 @@ CAResult_t CAUnSetLEAdapterStateChangedCb();
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
-CAResult_t CAUnSetLENWConnectionStateChangedCb();
+CAResult_t CAUnSetLENWConnectionStateChangedCb(void);
 
 /**
  * This will be used to notify errors in BLE adapter.

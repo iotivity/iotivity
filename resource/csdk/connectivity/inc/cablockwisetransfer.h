@@ -145,18 +145,18 @@ CAResult_t CAInitializeBlockWiseTransfer(CASendThreadFunc blockSendMethod,
  * Terminate the block-wise transfer context.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CATerminateBlockWiseTransfer();
+CAResult_t CATerminateBlockWiseTransfer(void);
 
 /**
  * initialize mutex.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAInitBlockWiseMutexVariables();
+CAResult_t CAInitBlockWiseMutexVariables(void);
 
 /**
  * terminate mutex.
  */
-void CATerminateBlockWiseMutexVariables();
+void CATerminateBlockWiseMutexVariables(void);
 
 /**
  * Pass the bulk data. if block-wise transfer process need,
@@ -580,7 +580,7 @@ CAResult_t CARemoveBlockDataFromList(const CABlockDataID_t *blockID);
  * Remove all block data in block-wise transfer list.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CARemoveAllBlockDataFromList();
+CAResult_t CARemoveAllBlockDataFromList(void);
 
 /**
  * Find the block data with seed info and remove it from block-wise transfer list.
@@ -614,7 +614,7 @@ CABlockMulticastData_t *CAGetBlockMulticastDataFromListWithSeed(const CAToken_t 
  * Remove all block multicast data in list.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CARemoveAllBlockMulticastDataFromList();
+CAResult_t CARemoveAllBlockMulticastDataFromList(void);
 
 /**
  * Find the block data with seed info and remove it.

@@ -31,7 +31,7 @@
  */
 #define U_ARRAYLIST_DEFAULT_CAPACITY 1
 
-u_arraylist_t *u_arraylist_create()
+u_arraylist_t *u_arraylist_create(void)
 {
     u_arraylist_t *list = (u_arraylist_t *) OICCalloc(1, sizeof(u_arraylist_t));
     if (!list)

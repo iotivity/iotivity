@@ -37,7 +37,7 @@
  */
 #define TAG "OIC_UQUEUE"
 
-u_queue_t *u_queue_create()
+u_queue_t *u_queue_create(void)
 {
     u_queue_t *queuePtr = (u_queue_t *) OICMalloc(sizeof(u_queue_t));
     if (NULL == queuePtr)

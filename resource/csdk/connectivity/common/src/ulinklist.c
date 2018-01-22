@@ -29,7 +29,7 @@
  */
 #define TAG "OIC_ULINKLIST"
 
-u_linklist_t *u_linklist_create()
+u_linklist_t *u_linklist_create(void)
 {
     u_linklist_t *header = (u_linklist_t *)OICMalloc(sizeof(u_linklist_t));
     if (!header)

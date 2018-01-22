@@ -56,25 +56,25 @@ CAResult_t CAInitializeNFC(CARegisterConnectivityCallback registerCallback,
  * Start NFC Interface adapter.
  * @return  ::CA_STATUS_OK, if success or Appropriate error code
  */
-CAResult_t CAStartNFC();
+CAResult_t CAStartNFC(void);
 
 /**
  * Start listening server for receiving multicast search requests.
  * @return  ::CA_STATUS_OK, if success or Appropriate error code
  */
-CAResult_t CAStartNFCListeningServer();
+CAResult_t CAStartNFCListeningServer(void);
 
 /**
  * Start listening server for receiving multicast search requests.
  * @return  ::CA_STATUS_OK, if success or Appropriate error code
  */
-CAResult_t CAStopNFCListeningServer();
+CAResult_t CAStopNFCListeningServer(void);
 
 /**
  * Start discovery servers for receiving multicast advertisements.
  * @return  ::CA_STATUS_OK, if success or Appropriate error code.
  */
-CAResult_t CAStartNFCDiscoveryServer();
+CAResult_t CAStartNFCDiscoveryServer(void);
 
 /**
  * Sends data to the endpoint using the adapter connectivity.
@@ -113,19 +113,19 @@ CAResult_t CAGetNFCInterfaceInformation(CAEndpoint_t **info, size_t *size);
  * Read Synchronous API callback.
  * @return  ::CA_STATUS_OK, if success or Appropriate error code.
  */
-CAResult_t CAReadNFCData();
+CAResult_t CAReadNFCData(void);
 
 /**
  * Stops stop servers and close the sockets.
  * @return  ::CA_STATUS_OK, if success or Appropriate error code.
  */
-CAResult_t CAStopNFC();
+CAResult_t CAStopNFC(void);
 
 /**
  * Terminate the NFC connectivity adapter.
  * Configuration information will be deleted from further use
  */
-void CATerminateNFC();
+void CATerminateNFC(void);
 
 #ifdef __cplusplus
 } /* extern "C" */

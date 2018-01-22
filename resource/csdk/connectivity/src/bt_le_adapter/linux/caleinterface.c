@@ -53,7 +53,7 @@ static CALEContext g_context = {
 // -----------------------------------------------------------------------
 static bool CALESetUpBlueZObjects(CALEContext * context);
 
-static bool CALECheckStarted()
+static bool CALECheckStarted(void)
 {
     oc_mutex_lock(g_context.lock);
 
@@ -772,7 +772,7 @@ static bool CALEWaitForNonEmptyList(GList * const * list,
 
 // -----------------------------------------------------------------------
 
-CAResult_t CAInitializeLEAdapter()
+CAResult_t CAInitializeLEAdapter(void)
 {
 #if !GLIB_CHECK_VERSION(2,36,0)
     /*
@@ -787,7 +787,7 @@ CAResult_t CAInitializeLEAdapter()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStartLEAdapter()
+CAResult_t CAStartLEAdapter(void)
 {
     /*
       This function is called by the connectivity abstraction when
@@ -857,7 +857,7 @@ CAResult_t CAStartLEAdapter()
     return result;
 }
 
-CAResult_t CAStopLEAdapter()
+CAResult_t CAStopLEAdapter(void)
 {
     /*
       This function is called by the connectivity abstraction when
@@ -878,7 +878,7 @@ CAResult_t CAStopLEAdapter()
 }
 
 
-CAResult_t CAGetLEAdapterState()
+CAResult_t CAGetLEAdapterState(void)
 {
     CAResult_t result = CA_ADAPTER_NOT_ENABLED;
 
@@ -917,7 +917,7 @@ CAResult_t CAGetLEAdapterState()
     return result;
 }
 
-CAResult_t CAInitializeLENetworkMonitor()
+CAResult_t CAInitializeLENetworkMonitor(void)
 {
     /**
      * @note "Network monitor" operations are started in the
@@ -948,7 +948,7 @@ CAResult_t CAInitializeLENetworkMonitor()
     return CA_STATUS_OK;
 }
 
-void CATerminateLENetworkMonitor()
+void CATerminateLENetworkMonitor(void)
 {
     /**
      * @note "Network monitor" operations are stopped in @c CALEStop()
@@ -1103,22 +1103,22 @@ CAResult_t CAGetLEAddress(char **local_address)
     return *local_address != NULL ? CA_STATUS_OK : CA_STATUS_FAILED;
 }
 
-CAResult_t CAStartLEGattServer()
+CAResult_t CAStartLEGattServer(void)
 {
     return CAPeripheralStart(&g_context);
 }
 
-CAResult_t CAStopLEGattServer()
+CAResult_t CAStopLEGattServer(void)
 {
     return CAPeripheralStop();
 }
 
-CAResult_t CAInitializeLEGattServer()
+CAResult_t CAInitializeLEGattServer(void)
 {
     return CA_STATUS_OK;
 }
 
-void CATerminateLEGattServer()
+void CATerminateLEGattServer(void)
 {
     /*
       See CATerminateLENetworkMonitor() to understand why the LE
@@ -1148,7 +1148,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(uint8_t const * value,
     return CAGattServerSendResponseNotificationToAll(value, valueLen);
 }
 
-CAResult_t CAStartLEGattClient()
+CAResult_t CAStartLEGattClient(void)
 {
     CAResult_t result = CACentralStart(&g_context);
 
@@ -1207,18 +1207,18 @@ CAResult_t CAStartLEGattClient()
     return CAGattClientInitialize(&g_context);
 }
 
-void CAStopLEGattClient()
+void CAStopLEGattClient(void)
 {
     CAGattClientDestroy();
     (void) CACentralStop(&g_context);
 }
 
-CAResult_t CAInitializeLEGattClient()
+CAResult_t CAInitializeLEGattClient(void)
 {
     return CA_STATUS_OK;
 }
 
-void CATerminateLEGattClient()
+void CATerminateLEGattClient(void)
 {
 }
 
@@ -1284,7 +1284,7 @@ void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle)
     oc_mutex_unlock(g_context.lock);
 }
 
-CAResult_t CAUnSetLEAdapterStateChangedCb()
+CAResult_t CAUnSetLEAdapterStateChangedCb(void)
 {
     oc_mutex_lock(g_context.lock);
     g_context.on_device_state_changed = NULL;

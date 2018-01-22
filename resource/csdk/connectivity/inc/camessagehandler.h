@@ -85,12 +85,12 @@ CAResult_t CAInitializeMessageHandler(CATransportAdapter_t transportType);
 /**
  * Terminate the message handler by stopping  the thread pool and destroying the queues.
  */
-void CATerminateMessageHandler();
+void CATerminateMessageHandler(void);
 
 /**
  * Handler for receiving request and response callback in single thread model.
  */
-void CAHandleRequestResponseCallbacks();
+void CAHandleRequestResponseCallbacks(void);
 
 /**
  * Setting the Callback funtion for network state change callback.

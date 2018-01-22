@@ -153,7 +153,7 @@ static CAIPErrorHandleCallback g_ipErrorHandler = NULL;
 
 static CAIPPacketReceivedCallback g_packetReceivedCallback = NULL;
 
-static void CAFindReadyMessage();
+static void CAFindReadyMessage(void);
 #if !defined(WSA_WAIT_EVENT_0)
 static void CASelectReturned(fd_set *readFds, int ret);
 #else
@@ -162,7 +162,7 @@ static void CAEventReturned(CASocketFd_t socket);
 
 static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags);
 
-static void CACloseFDs()
+static void CACloseFDs(void)
 {
 #if !defined(WSA_WAIT_EVENT_0)
     if (caglobals.ip.shutdownFds[0] != -1)
@@ -208,7 +208,7 @@ static void CAReceiveHandler(void *data)
     }
 
 
-static void CAFindReadyMessage()
+static void CAFindReadyMessage(void)
 {
     fd_set readFds;
     struct timeval timeout;
@@ -379,7 +379,7 @@ static void CASelectReturned(fd_set *readFds, int ret)
 
 #define EVENT_ARRAY_SIZE  10
 
-static void CAFindReadyMessage()
+static void CAFindReadyMessage(void)
 {
     CASocketFd_t socketArray[EVENT_ARRAY_SIZE];
     HANDLE eventArray[EVENT_ARRAY_SIZE];
@@ -528,7 +528,7 @@ static void CAEventReturned(CASocketFd_t socket)
 
 #endif
 
-void CAUnregisterForAddressChanges()
+void CAUnregisterForAddressChanges(void)
 {
 #ifdef _WIN32
     if (caglobals.ip.addressChangeEvent != WSA_INVALID_EVENT)
@@ -545,7 +545,7 @@ void CAUnregisterForAddressChanges()
 #endif
 }
 
-void CADeInitializeIPGlobals()
+void CADeInitializeIPGlobals(void)
 {
     CLOSE_SOCKET(u6);
     CLOSE_SOCKET(u6s);
@@ -724,7 +724,7 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
     return CA_STATUS_OK;
 }
 
-void CAIPPullData()
+void CAIPPullData(void)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
@@ -846,7 +846,7 @@ do \
     CHECKFD(caglobals.ip.NAME.fd); \
 } while(0)
 
-static void CARegisterForAddressChanges()
+static void CARegisterForAddressChanges(void)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 #ifdef _WIN32
@@ -886,7 +886,7 @@ static void CARegisterForAddressChanges()
     OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 }
 
-static void CAInitializeFastShutdownMechanism()
+static void CAInitializeFastShutdownMechanism(void)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     caglobals.ip.selectTimeout = -1; // don't poll for shutdown
@@ -1029,7 +1029,7 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
     return CA_STATUS_OK;
 }
 
-void CAIPStopServer()
+void CAIPStopServer(void)
 {
     caglobals.ip.terminate = true;
 
@@ -1059,7 +1059,7 @@ void CAIPStopServer()
     caglobals.ip.started = false;
 }
 
-void CAWakeUpForChange()
+void CAWakeUpForChange(void)
 {
 #if !defined(WSA_WAIT_EVENT_0)
     if (caglobals.ip.shutdownFds[1] != -1)
@@ -1188,7 +1188,7 @@ static void applyMulticastToInterface6(uint32_t ifindex)
     //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressGlb, ifindex);
 }
 
-CAResult_t CAIPStartListenServer()
+CAResult_t CAIPStartListenServer(void)
 {
     if (caglobals.ip.started)
     {
@@ -1240,7 +1240,7 @@ CAResult_t CAIPStartListenServer()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAIPStopListenServer()
+CAResult_t CAIPStopListenServer(void)
 {
     u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
     if (!iflist)

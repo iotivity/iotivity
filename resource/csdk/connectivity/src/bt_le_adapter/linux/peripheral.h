@@ -97,12 +97,12 @@ typedef struct _CAPeripheralContext
 /**
  * Initialize global state.
  */
-void CAPeripheralInitialize();
+void CAPeripheralInitialize(void);
 
 /**
  * Finalize global state.
  */
-void CAPeripheralFinalize();
+void CAPeripheralFinalize(void);
 
 /**
  * Initialize and start a Linux BLE "peripheral".
@@ -122,7 +122,7 @@ CAResult_t CAPeripheralStart(CALEContext * context);
  *
  * @return @c CA_STATUS_OK on success.
  */
-CAResult_t CAPeripheralStop();
+CAResult_t CAPeripheralStop(void);
 
 /**
  * Invoke function @a func for each registered GATT service.

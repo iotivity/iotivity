@@ -60,7 +60,7 @@ struct linked_list_data
  * API to create link list and initializes the elements.
  * @return  u_linklist_t if Success, NULL otherwise.
  */
-u_linklist_t *u_linklist_create();
+u_linklist_t *u_linklist_create(void);
 
 /**
  * Resets and deletes the link list

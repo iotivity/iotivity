@@ -99,7 +99,7 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex);
  *
  * @return  List of CAInterface_t items.
  */
-u_arraylist_t *CAFindInterfaceChange();
+u_arraylist_t *CAFindInterfaceChange(void);
 
 /**
  * Start network monitor.

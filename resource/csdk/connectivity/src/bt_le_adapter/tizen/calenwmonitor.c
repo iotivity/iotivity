@@ -90,7 +90,7 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
 void CALENWConnectionStateChangedCb(int result, bool connected,
                                     const char *remoteAddress, void *userData);
 
-CAResult_t CAInitializeLENetworkMonitor()
+CAResult_t CAInitializeLENetworkMonitor(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -120,7 +120,7 @@ CAResult_t CAInitializeLENetworkMonitor()
     return CA_STATUS_OK;
 }
 
-void CATerminateLENetworkMonitor()
+void CATerminateLENetworkMonitor(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -133,14 +133,14 @@ void CATerminateLENetworkMonitor()
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-CAResult_t CAInitializeLEAdapter()
+CAResult_t CAInitializeLEAdapter(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStartLEAdapter()
+CAResult_t CAStartLEAdapter(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -170,7 +170,7 @@ CAResult_t CAStartLEAdapter()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStopLEAdapter()
+CAResult_t CAStopLEAdapter(void)
 {
 
     int ret = bt_adapter_unset_state_changed_cb();
@@ -190,7 +190,7 @@ CAResult_t CAStopLEAdapter()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAGetLEAdapterState()
+CAResult_t CAGetLEAdapterState(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -250,7 +250,7 @@ CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAUnSetLEAdapterStateChangedCb()
+CAResult_t CAUnSetLEAdapterStateChangedCb(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     oc_mutex_lock(g_bleDeviceStateChangedCbMutex);

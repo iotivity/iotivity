@@ -57,7 +57,7 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
  * Start IP Interface adapter.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAStartIP();
+CAResult_t CAStartIP(void);
 
 /**
  * Start listening server for receiving multicast search requests.
@@ -66,7 +66,7 @@ CAResult_t CAStartIP();
  * number and as per OIC Specification.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAStartIPListeningServer();
+CAResult_t CAStartIPListeningServer(void);
 
 /**
  * Stop listening server from receiving multicast search requests.
@@ -74,7 +74,7 @@ CAResult_t CAStartIPListeningServer();
  * IP closes open multicast socket for a particular interface.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAStopIPListeningServer();
+CAResult_t CAStopIPListeningServer(void);
 
 /**
  * Start discovery servers for receiving multicast advertisements.
@@ -83,7 +83,7 @@ CAResult_t CAStopIPListeningServer();
  * number as per OIC Specification.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAStartIPDiscoveryServer();
+CAResult_t CAStartIPDiscoveryServer(void);
 
 /**
  * Sends data to the endpoint using the adapter connectivity.
@@ -125,13 +125,13 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, size_t *size);
  * Read Synchronous API callback.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAReadIPData();
+CAResult_t CAReadIPData(void);
 
 /**
  * Stops Unicast, Multicast servers and close the sockets.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAStopIP();
+CAResult_t CAStopIP(void);
 
 /**
  * Check whether the endpoint is my own or not.
@@ -143,7 +143,7 @@ bool CAIPIsLocalEndpoint(const CAEndpoint_t *ep);
  * Terminate the IP connectivity adapter.
  * Configuration information will be deleted from further use.
  */
-void CATerminateIP();
+void CATerminateIP(void);
 
 #ifdef __cplusplus
 } /* extern "C" */

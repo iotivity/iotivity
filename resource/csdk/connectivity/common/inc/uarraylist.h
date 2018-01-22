@@ -47,7 +47,7 @@ typedef struct u_arraylist_t
  * API to creates array list and initializes the elements.
  * @return  u_arraylist_t if Success, NULL otherwise.
  */
-u_arraylist_t *u_arraylist_create();
+u_arraylist_t *u_arraylist_create(void);
 
 /**
  * Resets and deletes the array list.

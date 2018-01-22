@@ -110,25 +110,25 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
  * @brief   Start listening servers to receive search requests from clients
  * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAStartListeningServerAdapters();
+CAResult_t CAStartListeningServerAdapters(void);
 
 /**
  * @brief   Stops listening servers to receive search requests from clients
  * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAStopListeningServerAdapters();
+CAResult_t CAStopListeningServerAdapters(void);
 
 /**
  * @brief   Start discovery servers to receive advertisements from server
  * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAStartDiscoveryServerAdapters();
+CAResult_t CAStartDiscoveryServerAdapters(void);
 
 /**
  * @brief   Terminates  the adapters which are initialized during the initialization
  * @return  none
  */
-void CATerminateAdapters();
+void CATerminateAdapters(void);
 
 /**
  * @brief   Checks for available data and reads it

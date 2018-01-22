@@ -87,9 +87,9 @@ static CAInterface_t *AllocateCAInterface(int index, const char *name, uint16_t 
 
 static u_arraylist_t *GetInterfaceInformation(int desiredIndex);
 
-static void CAIPDestroyNetworkMonitorList();
+static void CAIPDestroyNetworkMonitorList(void);
 
-static CAResult_t CAIPInitializeNetworkMonitorList()
+static CAResult_t CAIPInitializeNetworkMonitorList(void)
 {
     assert(!g_CAIPNetworkMonitorMutex);
     assert(!g_CAIPNetworkMonitorAddressList);
@@ -115,7 +115,7 @@ static CAResult_t CAIPInitializeNetworkMonitorList()
 /**
  * Destroy the network monitoring list.
  */
-static void CAIPDestroyNetworkMonitorList()
+static void CAIPDestroyNetworkMonitorList(void)
 {
     // Free any new addresses waiting to be indicated up.
     while (g_CAIPNetworkMonitorNewAddressQueue)

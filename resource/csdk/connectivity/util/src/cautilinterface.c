@@ -378,7 +378,7 @@ CAResult_t CAUtilStopLEScan()
 }
 #endif // __JAVA__
 
-CAResult_t CAUtilStartLEAdvertising()
+CAResult_t CAUtilStartLEAdvertising(void)
 {
     OIC_LOG(DEBUG, TAG, "CAUtilStartLEAdvertising");
 #if (defined(__ANDROID__) || defined(__TIZEN__)) && defined(LE_ADAPTER)
@@ -389,7 +389,7 @@ CAResult_t CAUtilStartLEAdvertising()
 #endif
 }
 
-CAResult_t CAUtilStopLEAdvertising()
+CAResult_t CAUtilStopLEAdvertising(void)
 {
     OIC_LOG(DEBUG, TAG, "CAUtilStopLEAdvertising");
 #if (defined(__ANDROID__) || defined(__TIZEN__)) && defined(LE_ADAPTER)

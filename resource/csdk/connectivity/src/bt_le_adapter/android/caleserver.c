@@ -2673,7 +2673,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerMtuChangedCallback(JNIEnv
  * adapter common
  */
 
-CAResult_t CAStartLEGattServer()
+CAResult_t CAStartLEGattServer(void)
 {
     // start gatt service
     CALEServerStartMulticastServer();
@@ -2681,7 +2681,7 @@ CAResult_t CAStartLEGattServer()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStopLEGattServer()
+CAResult_t CAStopLEGattServer(void)
 {
     OIC_LOG(DEBUG, TAG, "CAStopLEGattServer");
 
@@ -2770,13 +2770,13 @@ CAResult_t CAStopLEGattServer()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAInitializeLEGattServer()
+CAResult_t CAInitializeLEGattServer(void)
 {
     OIC_LOG(DEBUG, TAG, "Initialize Gatt Server");
     return CALEServerInitialize();
 }
 
-void CATerminateLEGattServer()
+void CATerminateLEGattServer(void)
 {
     OIC_LOG(DEBUG, TAG, "Terminate Gatt Server");
     CALEServerTerminate();

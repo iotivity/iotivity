@@ -4531,7 +4531,7 @@ void CALEClientSetSendFinishFlag(bool flag)
  * adapter common
  */
 
-CAResult_t CAStartLEGattClient()
+CAResult_t CAStartLEGattClient(void)
 {
     // init mutex for send logic
     if (!g_deviceDescCond)
@@ -4565,7 +4565,7 @@ CAResult_t CAStartLEGattClient()
     return CA_STATUS_OK;
 }
 
-void CAStopLEGattClient()
+void CAStopLEGattClient(void)
 {
     OIC_LOG(DEBUG, TAG, "CAStopBLEGattClient");
 
@@ -4643,14 +4643,14 @@ void CAStopLEGattClient()
 
 }
 
-CAResult_t CAInitializeLEGattClient()
+CAResult_t CAInitializeLEGattClient(void)
 {
     OIC_LOG(DEBUG, TAG, "Initialize GATT Client");
     CALEClientInitialize();
     return CA_STATUS_OK;
 }
 
-void CATerminateLEGattClient()
+void CATerminateLEGattClient(void)
 {
     OIC_LOG(INFO, TAG, "IN - Terminate GATT Client");
     CAStopLEGattClient();

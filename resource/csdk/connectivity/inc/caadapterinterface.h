@@ -44,7 +44,7 @@ extern "C"
  * @return ::CA_STATUS_OK or ::CA_STATUS_FAILED
  *  ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-typedef CAResult_t (*CAAdapterStart)();
+typedef CAResult_t (*CAAdapterStart)(void);
 
 /**
  * Starting listening server for receiving multicast search requests
@@ -56,7 +56,7 @@ typedef CAResult_t (*CAAdapterStart)();
  * @return ::CA_STATUS_OK or ::CA_STATUS_FAILED
  * ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-typedef CAResult_t (*CAAdapterStartListeningServer)();
+typedef CAResult_t (*CAAdapterStartListeningServer)(void);
 
 /**
  * Stopping listening server to not receive multicast search requests
@@ -67,7 +67,7 @@ typedef CAResult_t (*CAAdapterStartListeningServer)();
  * @return ::CA_STATUS_OK or ::CA_STATUS_FAILED
  * ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-typedef CAResult_t (*CAAdapterStopListeningServer)();
+typedef CAResult_t (*CAAdapterStopListeningServer)(void);
 
 /**
  * for starting discovery servers for receiving multicast advertisements
@@ -79,7 +79,7 @@ typedef CAResult_t (*CAAdapterStopListeningServer)();
  * @return ::CA_STATUS_OK or ::CA_STATUS_FAILED
  * ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-typedef CAResult_t (*CAAdapterStartDiscoveryServer)();
+typedef CAResult_t (*CAAdapterStartDiscoveryServer)(void);
 
 /**
  * Sends data to the endpoint using the adapter connectivity.
@@ -120,7 +120,7 @@ typedef CAResult_t (*CAAdapterGetNetworkInfo)(CAEndpoint_t **info, size_t *size)
  * Read Synchronous API callback.
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h)
  */
-typedef CAResult_t (*CAAdapterReadData)();
+typedef CAResult_t (*CAAdapterReadData)(void);
 
 /**
  * Stopping the adapters and close socket connections.
@@ -130,13 +130,13 @@ typedef CAResult_t (*CAAdapterReadData)();
  * LE Stops all GATT servers and close sockets.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-typedef CAResult_t (*CAAdapterStop)();
+typedef CAResult_t (*CAAdapterStop)(void);
 
 /**
  * Terminate the connectivity adapter.Configuration information will be deleted from
  * further use. Freeing Memory of threadpool and mutexs and cleanup will be done.
  */
-typedef void (*CAAdapterTerminate)();
+typedef void (*CAAdapterTerminate)(void);
 
 /**
  * Connectivity handler information for adapter.
