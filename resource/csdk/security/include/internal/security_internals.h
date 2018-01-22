@@ -72,7 +72,7 @@ OCStackResult CreatePstatResource(void);
 /**
  * Create SP resource after default SP initialization is done.
  */
-OCStackResult CreateSpResource();
+OCStackResult CreateSpResource(void);
 
 /**
  * This internal method is the entity handler for sp resources
