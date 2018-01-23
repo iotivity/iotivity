@@ -209,7 +209,7 @@ if target_os in ['linux']:
     help_vars.Add(
         BoolVariable('ERROR_ON_WARN',
                      'Make all compiler warnings into errors.',
-                      default=True))
+                      default=False))
 
 targets_support_valgrind = ['linux', 'darwin']
 if target_os in targets_support_valgrind:
