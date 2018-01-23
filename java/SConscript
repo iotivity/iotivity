@@ -148,9 +148,13 @@ def find_scons_java_version(env):
     # Support for Java 1.9 not yet added. At this time JDK1.9 has not be released
     # Until support for Java 1.9 is officially added to SCons this script will
     # use the the 1.8 for the JAVAVERSION.
-    javac_cmd = os.path.join(env['JAVA_HOME'], 'bin', 'javac')
-    java_ver = subprocess.check_output([javac_cmd, '-version'], stderr=subprocess.STDOUT)
     print('Trying to discover the version of Java used for compilation')
+    javac_cmd = os.path.join(env['JAVA_HOME'], 'bin', 'javac')
+    try:
+        java_ver = subprocess.check_output([javac_cmd, '-version'], stderr=subprocess.STDOUT)
+    except OSError:
+        msg = "Error: could not find Java compiler at %s, unable to proceed" % javac_cmd
+        Exit(msg)
     scons_version =  SCons.__version__
     if StrictVersion(scons_version) < StrictVersion('2.1.0'):
         print('\t***** Version of SCons older than 2.0.0 detected.                     *****')
