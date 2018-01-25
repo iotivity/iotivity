@@ -25,6 +25,18 @@
 #include <stdint.h>
 #include "mbedtls/base64.h"
 
+/*
+ * Tests for base64 interfaces
+ * These interfaces are deprecated in favor of the implementation
+ * in mbedtls, and should not be used.
+ * However, while the interfaces are still available, they should continue
+ * to be tested, so we disable the warning here for using a deprecated func
+ * Once the functions are droped these tests should also be dropped.
+ */
+#if __GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 // Tests for base64 encode function
 TEST(B64Test, ValidInputForEncoding)
 {
