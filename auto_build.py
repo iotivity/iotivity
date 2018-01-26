@@ -78,6 +78,7 @@ def build_linux_unsecured(flag, extra_option_str):
     build_options = {
                         'RELEASE':flag,
                         'SECURED':0,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -87,6 +88,7 @@ def build_linux_secured_with_tcp(flag, extra_option_str):
                         'RELEASE':flag,
                         'WITH_TCP': 1,
                         'WITH_CLOUD':1,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -96,6 +98,7 @@ def build_linux_unsecured_with_java(flag, extra_option_str):
                         'RELEASE':flag,
                         'BUILD_JAVA': 1,
                         'TARGET_TRANSPORT': 'IP',
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -106,6 +109,7 @@ def build_linux_secured_with_java(flag, extra_option_str):
                         'BUILD_JAVA': 1,
                         'TARGET_TRANSPORT': 'IP',
                         'SECURED': 1,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -116,6 +120,7 @@ def build_linux_unsecured_with_tcp(flag, extra_option_str):
                         'WITH_TCP': 1,
                         'TARGET_TRANSPORT': 'IP',
                         'SECURED':0,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -125,6 +130,7 @@ def build_linux_unsecured_with_rm(flag, extra_option_str):
                         'ROUTING':'GW',
                         'RELEASE':flag,
                         'SECURED':0,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -132,6 +138,7 @@ def build_linux_secured(flag, extra_option_str):
     print ("*********** Build for linux with Security *************")
     build_options = {
                         'RELEASE':flag,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -146,6 +153,7 @@ def build_linux_full(flag, extra_option_str):
                         'WITH_RA':1,
                         'WITH_RA_IBB':1,
                         'WITH_TCP':1,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -155,6 +163,7 @@ def build_linux_unsecured_with_rd(flag, extra_option_str):
                         'RELEASE':flag,
                         'RD_MODE':'all',
                         'SECURED':0,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -163,6 +172,7 @@ def build_linux_secured_with_rd(flag, extra_option_str):
     build_options = {
                         'RELEASE':flag,
                         'RD_MODE':'all',
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -172,6 +182,7 @@ def build_linux_unsecured_with_mq(flag, extra_option_str):
                         'RELEASE':flag,
                         'WITH_MQ':'PUB,SUB,BROKER',
                         'SECURED':0,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -181,6 +192,7 @@ def build_linux_unsecured_with_tcp(flag, extra_option_str):
                         'RELEASE':flag,
                         'WITH_TCP':'1',
                         'SECURED':0,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 

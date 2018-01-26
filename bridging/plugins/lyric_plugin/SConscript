@@ -67,7 +67,7 @@ if 'g++' in lyric_env.get('CXX'):
     lyric_env.AppendUnique(
         CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
-libmpm = lyric_env.get('BUILD_DIR') + 'libmpmcommon.a',
+libmpm = lyric_env.get('BUILD_DIR') + 'libmpmcommon.a'
 lyric_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
 lyric_env.AppendUnique(LINKFLAGS=[
     '-Wl,--allow-shlib-undefined',

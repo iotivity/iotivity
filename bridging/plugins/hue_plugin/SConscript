@@ -74,7 +74,8 @@ hue_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 if hue_env.get('LOGGING'):
     hue_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
-libmpm = hue_env.get('BUILD_DIR') + 'libmpmcommon.a',
+
+libmpm = hue_env.get('BUILD_DIR') + 'libmpmcommon.a'
 hue_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
 hue_env.AppendUnique(LINKFLAGS=[
     '-Wl,--allow-shlib-undefined',
