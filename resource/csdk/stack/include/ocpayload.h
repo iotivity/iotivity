@@ -46,7 +46,7 @@ extern "C"
  * Macro to verify the validity of cbor operation.
  */
 #define VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(log_tag, err, log_message) \
-    if ((CborNoError != (err)) && (CborErrorOutOfMemory != (err))) \
+    if ((CborNoError != (err)) && !(CborErrorOutOfMemory & (err))) \
     { \
         if ((log_tag) && (log_message)) \
         { \
@@ -64,7 +64,7 @@ extern "C"
     } \
 
 #define VERIFY_CBOR_NOT_OUTOFMEMORY(log_tag, err, log_message) \
-    if (CborErrorOutOfMemory == (err)) \
+    if (CborErrorOutOfMemory & (err)) \
     { \
         if ((log_tag) && (log_message)) \
         { \
