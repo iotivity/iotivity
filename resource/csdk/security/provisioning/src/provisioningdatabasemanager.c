@@ -52,9 +52,10 @@
  * Macro to verify sqlite success.
  * eg: VERIFY_NON_NULL(TAG, ptrData, ERROR,OC_STACK_ERROR);
  */
-#define PDM_VERIFY_SQLITE_OK(tag, arg, logLevel, retValue) do{ if (SQLITE_OK != (arg)) \
+#define PDM_VERIFY_SQLITE_OK(tag, arg, stmt, logLevel, retValue) do{ if (SQLITE_OK != (arg)) \
             { OIC_LOG_V((logLevel), tag, "Error in " #arg ", Error Message: %s", \
-               sqlite3_errmsg(g_db)); return retValue; }}while(0)
+               sqlite3_errmsg(g_db)); if(NULL != stmt) sqlite3_finalize(stmt); return retValue; }}while(0)
+
 
 #define PDM_SQLITE_TRANSACTION_BEGIN "BEGIN TRANSACTION;"
 #define PDM_SQLITE_TRANSACTION_COMMIT "COMMIT;"
@@ -148,7 +149,7 @@ static OCStackResult begin(void)
     CHECK_PDM_INIT();
     int res = 0;
     res = sqlite3_exec(g_db, PDM_SQLITE_TRANSACTION_BEGIN, NULL, NULL, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, NULL, ERROR, OC_STACK_ERROR);
     return OC_STACK_OK;
 }
 
@@ -160,7 +161,7 @@ static OCStackResult commit(void)
     CHECK_PDM_INIT();
     int res = 0;
     res = sqlite3_exec(g_db, PDM_SQLITE_TRANSACTION_COMMIT, NULL, NULL, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, NULL, ERROR, OC_STACK_ERROR);
     return OC_STACK_OK;
 }
 
@@ -172,7 +173,7 @@ static OCStackResult rollback(void)
     CHECK_PDM_INIT();
     int res = 0;
     res = sqlite3_exec(g_db, PDM_SQLITE_TRANSACTION_ROLLBACK, NULL, NULL, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, NULL, ERROR, OC_STACK_ERROR);
     return OC_STACK_OK;
 }
 
@@ -260,13 +261,13 @@ OCStackResult PDMAddDevice(const OicUuid_t *UUID)
     int res =0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_INSERT_T_DEVICE_LIST,
                               PDM_SQLITE_INSERT_T_DEVICE_LIST_SIZE, &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_SECOND, UUID, UUID_LENGTH, SQLITE_STATIC);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_THIRD, PDM_DEVICE_INIT);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_step(stmt);
     if (SQLITE_DONE != res)
@@ -307,10 +308,10 @@ static OCStackResult getIdForUUID(const OicUuid_t *UUID , int *id)
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_ID, PDM_SQLITE_GET_ID_SIZE,
                              &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, UUID, UUID_LENGTH, SQLITE_STATIC);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     OIC_LOG(DEBUG, TAG, "Binding Done");
     if (SQLITE_ROW == sqlite3_step(stmt))
@@ -343,10 +344,10 @@ OCStackResult PDMIsDuplicateDevice(const OicUuid_t* UUID, bool *result)
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_ID, PDM_SQLITE_GET_ID_SIZE,
                              &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, UUID, UUID_LENGTH, SQLITE_STATIC);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     OIC_LOG(DEBUG, TAG, "Binding Done");
     bool retValue = false;
@@ -376,16 +377,16 @@ static OCStackResult addlink(int id1, int id2)
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_INSERT_LINK_DATA,
                               PDM_SQLITE_INSERT_LINK_DATA_SIZE, &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id1);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_SECOND, id2);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_THIRD, PDM_DEVICE_ACTIVE);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
@@ -464,13 +465,13 @@ static OCStackResult removeLink(int id1, int id2)
     sqlite3_stmt *stmt = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_DELETE_LINK,
                              PDM_SQLITE_DELETE_LINK_SIZE, &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id1);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_SECOND, id2);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     if (SQLITE_DONE != sqlite3_step(stmt))
     {
@@ -522,10 +523,10 @@ static OCStackResult removeFromDeviceList(int id)
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_DELETE_DEVICE,
                               PDM_SQLITE_DELETE_DEVICE_SIZE, &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
@@ -576,16 +577,16 @@ static OCStackResult updateLinkState(int id1, int id2, int state)
     int res = 0 ;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_UPDATE_LINK,
                               PDM_SQLITE_UPDATE_LINK_SIZE, &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, state);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_SECOND, id1);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_THIRD, id2);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     if (SQLITE_DONE != sqlite3_step(stmt))
     {
@@ -641,7 +642,7 @@ OCStackResult PDMGetOwnedDevices(OCUuidList_t **uuidList, size_t *numOfDevices)
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_LIST_ALL_UUID,
                               PDM_SQLITE_LIST_ALL_UUID_SIZE, &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     size_t counter  = 0;
     while (SQLITE_ROW == sqlite3_step(stmt))
@@ -681,10 +682,10 @@ static OCStackResult getUUIDforId(int id, OicUuid_t *uid, bool *result)
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_UUID,
                               PDM_SQLITE_GET_UUID_SIZE, &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     if (SQLITE_ROW == sqlite3_step(stmt))
     {
@@ -752,13 +753,13 @@ OCStackResult PDMGetLinkedDevices(const OicUuid_t *UUID, OCUuidList_t **UUIDLIST
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_LINKED_DEVICES,
                               PDM_SQLITE_GET_LINKED_DEVICES_SIZE, &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_SECOND, id);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     size_t counter  = 0;
     while (SQLITE_ROW == sqlite3_step(stmt))
@@ -808,10 +809,10 @@ OCStackResult PDMGetToBeUnlinkedDevices(OCPairList_t **staleDevList, size_t *num
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_STALE_INFO,
                               PDM_SQLITE_GET_STALE_INFO_SIZE, &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, PDM_DEVICE_STALE);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     size_t counter  = 0;
     while (SQLITE_ROW == sqlite3_step(stmt))
@@ -851,8 +852,8 @@ OCStackResult PDMClose(void)
     {
         int res = 0;
         res = sqlite3_close(g_db);
+        PDM_VERIFY_SQLITE_OK(TAG, res, NULL, ERROR, OC_STACK_ERROR);
         g_db = NULL;
-        PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
     }
 
     OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
@@ -947,13 +948,13 @@ OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_DEVICE_LINKS,
                               PDM_SQLITE_GET_DEVICE_LINKS_SIZE, &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id1);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_SECOND, id2);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     bool ret = false;
     while(SQLITE_ROW == sqlite3_step(stmt))
@@ -977,13 +978,13 @@ static OCStackResult updateDeviceState(const OicUuid_t *uuid, PdmDeviceState_t s
     int res = 0 ;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_UPDATE_DEVICE,
                               PDM_SQLITE_UPDATE_DEVICE_SIZE, &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, state);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_SECOND, uuid, UUID_LENGTH, SQLITE_STATIC);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     if (SQLITE_DONE != sqlite3_step(stmt))
     {
@@ -1015,13 +1016,13 @@ static OCStackResult updateLinkForStaleDevice(const OicUuid_t *devUuid)
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_UPDATE_LINK_STALE_FOR_STALE_DEVICE,
                               PDM_SQLITE_UPDATE_LINK_STALE_FOR_STALE_DEVICE_SIZE,
                                &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_SECOND, id);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     if (SQLITE_DONE != sqlite3_step(stmt))
     {
@@ -1086,10 +1087,10 @@ OCStackResult PDMGetDeviceState(const OicUuid_t *uuid, PdmDeviceState_t* result)
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_DEVICE_STATUS, PDM_SQLITE_GET_DEVICE_STATUS_SIZE,
                               &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, uuid, UUID_LENGTH, SQLITE_STATIC);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     *result = PDM_DEVICE_UNKNOWN;
     while(SQLITE_ROW == sqlite3_step(stmt))
@@ -1118,10 +1119,10 @@ OCStackResult PDMDeleteDeviceWithState(const PdmDeviceState_t state)
     int res =0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_DELETE_DEVICE_WITH_STATE,
                               (int)strlen(PDM_SQLITE_DELETE_DEVICE_WITH_STATE) + 1, &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, state);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+    PDM_VERIFY_SQLITE_OK(TAG, res, stmt, ERROR, OC_STACK_ERROR);
 
     if (SQLITE_DONE != sqlite3_step(stmt))
     {
