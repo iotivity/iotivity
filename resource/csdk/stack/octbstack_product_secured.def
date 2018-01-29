@@ -76,3 +76,4 @@ SetUserConfirmCB
 UnsetUserConfirmCB
 SetVerifyOption
 VerifyOwnershipTransfer
+LogCurrrentCredResource

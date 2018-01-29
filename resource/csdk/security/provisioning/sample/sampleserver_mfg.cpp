@@ -47,7 +47,7 @@
 #endif //HAVE_WINDOWS_H
 #include "platform_features.h"
 #include "experimental/logger.h"
-
+#include "credresource.h"
 
 #define TAG "SAMPLE_MANUFACTURER_CERT"
 
@@ -467,6 +467,10 @@ int main()
 
     timeout.tv_sec  = 0;
     timeout.tv_nsec = 100000000L;
+
+    // Log server credentials at startup
+    LogCurrrentCredResource();
+
 
     // Break from loop with Ctrl-C
     OIC_LOG(INFO, TAG, "Entering ocserver main loop...");

@@ -43,6 +43,7 @@
 #include "pmutility.h"
 #include "occloudprovisioning.h"
 #include "auth.h"
+#include "credresource.h"
 
 #ifdef _MSC_VER
 #include <io.h>
@@ -3026,6 +3027,9 @@ int main()
 #ifdef MULTIPLE_OWNER
     SetPreconfigPin("12341234", 8);
 #endif //MULTIPLE_OWNER
+
+    // Log the client cred at startup
+    LogCurrrentCredResource();
 
     // main loop for provisioning manager
     int mn_num = 0;

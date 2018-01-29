@@ -49,6 +49,11 @@ OCStackResult InitCredResource();
 OCStackResult DeInitCredResource();
 
 /**
+ * Log current server cred resource
+ */
+void LogCurrrentCredResource(void);
+
+/**
  * This method is used by tinydtls/SRM to retrieve credential for given subject.
  *
  * @param subjectId for which credential is required.

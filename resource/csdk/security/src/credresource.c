@@ -69,10 +69,12 @@
 #include <mbedtls/ssl_ciphersuites.h>
 #include <mbedtls/pk.h>
 #include <mbedtls/base64.h>
+#include <mbedtls/x509_crt.h>
 #include <mbedtls/pem.h>
 #endif
 
 #define TAG  "OIC_SRM_CREDL"
+#define TAG_LOG  "OIC_SRM_CREDL:LOG"
 
 #ifdef HAVE_WINDOWS_H
 #include <wincrypt.h>
@@ -3275,6 +3277,187 @@ static int ConvertDerCertToPem(const uint8_t* der, size_t derLen, uint8_t** pem)
     return 0;
 }
 
+#ifndef NDEBUG
+
+void LogCert(uint8_t *data, size_t len, OicEncodingType_t encoding, const char* tag)
+{
+#if defined (__WITH_TLS__) || defined(__WITH_DTLS__)
+
+#define CERT_INFO_BUF_LEN 4000
+
+    char infoBuf[CERT_INFO_BUF_LEN];
+    int mbedRet = 0;
+    OCStackResult ret = OC_STACK_OK;
+    int pemLen = 0;
+    uint8_t *pem = NULL;
+    mbedtls_x509_crt mbedCert;
+    bool needTofreePem = false;
+
+    if ((0 < len) && (NULL != data))
+    {
+        // extract PEM data
+        if (OIC_ENCODING_PEM == encoding)
+        {
+            pem = data;
+            pemLen = len;
+        }
+        else if (OIC_ENCODING_DER == encoding)
+        {
+            ret = ConvertDerCertToPem(data, len, &pem);
+            if (OC_STACK_OK == ret )
+            {
+                pemLen = strlen((char*)pem) + 1;
+                needTofreePem = true;
+            }
+            else
+            {
+                pemLen = 0;
+            }
+        }
+
+        if ((NULL != pem) && (0 < pemLen))
+        {
+            // cert dump
+            mbedtls_x509_crt_init(&mbedCert);
+            mbedRet = mbedtls_x509_crt_parse(&mbedCert, pem, pemLen);
+            if ( 0 <= mbedRet )
+            {
+                mbedRet = mbedtls_x509_crt_info(infoBuf, CERT_INFO_BUF_LEN, tag, &mbedCert);
+                if (0 < mbedRet)
+                {
+                    OIC_LOG_V(DEBUG, tag, "%s", infoBuf);
+                }
+            }
+            mbedtls_x509_crt_free(&mbedCert);
+
+            // raw pem dump
+            OIC_LOG_V(DEBUG, tag, "%s", pem);
+        }
+        if ( true == needTofreePem )
+        {
+            OICFree(pem);
+            needTofreePem = false;
+        }
+    }
+
+#else
+    OC_UNUSED(data);
+    OC_UNUSED(len);
+    OC_UNUSED(encoding);
+    OC_UNUSED(tag);
+#endif // defined(__WITH_TLS__) || defined(__WITH_DTLS__)
+}
+
+void LogCred(OicSecCred_t *cred, const char* tag)
+{
+    OCStackResult ret = OC_STACK_OK;
+    char uuidString[UUID_STRING_SIZE];
+    char* uuid = NULL;
+    OicUuid_t ownUuid;
+
+    OIC_LOG_V(DEBUG, tag, "credId: %hu", cred->credId);
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    OIC_LOG_V(DEBUG, tag, "credusage: %s", cred->credUsage);
+#endif
+    OIC_LOG_V(DEBUG, tag, "credtype: %u", cred->credType);
+
+
+    uuid = NULL;
+    ret = GetDoxmDeviceID(&ownUuid);
+    if ( OC_STACK_OK == ret )
+    {
+        if (OCConvertUuidToString(ownUuid.id, uuidString))
+        {
+            uuid = uuidString;
+        }
+    }
+    OIC_LOG_V(DEBUG, tag, "own uuid:  %s", (NULL != uuid) ? uuid : "None or Error");
+
+    uuid = NULL;
+    if (OCConvertUuidToString(cred->subject.id, uuidString))
+    {
+        uuid = uuidString;
+    }
+    OIC_LOG_V(DEBUG, tag, "subj uuid: %s", (NULL != uuid) ? uuid : "None or Error");
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+
+    const char * encodingType[] = {
+        "Unknown",
+        "Raw",
+        "Base 64",
+        "PEM",
+        "DER"
+    };
+
+    OIC_LOG(DEBUG, tag, "...............................................");
+    if ( (SIGNED_ASYMMETRIC_KEY == cred->credType) && (0 < cred->publicData.len) && (NULL != cred->publicData.data) )
+    {
+        OIC_LOG_V(DEBUG, tag, "publicData (encoding = %s)", encodingType[cred->publicData.encoding]);
+        LogCert (cred->publicData.data, cred->publicData.len, cred->publicData.encoding, tag );
+    }
+    else
+    {
+        OIC_LOG(DEBUG, tag, "publicData: none");
+    }
+
+    OIC_LOG(DEBUG, tag, "...............................................");
+    if ( (0 < cred->optionalData.len) && (NULL != cred->optionalData.data) )
+    {
+        OIC_LOG_V(DEBUG, tag, "optionalData (encoding = %s)", encodingType[cred->optionalData.encoding]);
+        OIC_LOG_BUFFER(DEBUG, tag,  (const unsigned char*)&(cred->optionalData.data), cred->optionalData.len);
+    }
+    else
+    {
+        OIC_LOG(DEBUG, tag, "optionalData: none");
+    }
+
+#endif // defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+
+}
+
+void LogCredResource(OicSecCred_t *cred, const char* tag, const char* label)
+{
+    OicSecCred_t *curCred = NULL;
+    int curCredIdx = 0;
+    char uuidString[UUID_STRING_SIZE];
+    char* uuid = NULL;
+
+    OIC_LOG_V(DEBUG, tag, "=== %s ========================", (NULL != label) ? label : "cred" );
+    VERIFY_NOT_NULL(tag, cred, ERROR);
+
+    OIC_LOG(DEBUG, tag, "\n");
+
+    uuid = NULL;
+    if (OCConvertUuidToString(gRownerId.id, uuidString))
+    {
+        uuid = uuidString;
+    }
+    OIC_LOG_V(DEBUG, tag, "rowner uuid:  %s", (NULL != uuid) ? uuid : "None or Error");
+    OIC_LOG(DEBUG, tag, "\n");
+
+    LL_FOREACH(cred, curCred)
+    {
+        OIC_LOG_V(DEBUG, tag, "#### CRED ENTRY %d:", curCredIdx);
+        LogCred(curCred, tag);
+        curCredIdx++;
+    }
+
+    exit:
+        OIC_LOG(DEBUG, tag, "\n");
+        OIC_LOG(DEBUG, tag, "============================================================");
+
+    return;
+}
+
+#endif // NDEBUG
+
+void LogCurrrentCredResource(void) {
+#ifndef NDEBUG
+    LogCredResource(gCred, TAG_LOG, "Server cred Resource");
+#endif
+}
+
 static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodingType_t desiredEncoding)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
@@ -3418,6 +3601,11 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
         }
     }
 
+#ifndef NDEBUG
+    OIC_LOG(DEBUG, TAG_LOG, "==== Cert being returned ===================================");
+    LogCert ( crt->data, crt->len, desiredEncoding, TAG_LOG );
+    OIC_LOG(DEBUG, TAG_LOG, "============================================================");
+#endif
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return OC_STACK_OK;
 }
@@ -3608,6 +3796,14 @@ void GetPemOwnCert(ByteArray_t * crt, const char * usage)
     {
         OIC_LOG_V(WARNING, TAG, "%s not found", usage);
     }
+#ifndef NDEBUG
+    if(0 < crt->len)
+    {
+        OIC_LOG(DEBUG, TAG_LOG, "==== Cert being returned ===================================");
+        LogCert ( crt->data, crt->len, OIC_ENCODING_PEM, TAG_LOG );
+        OIC_LOG(DEBUG, TAG_LOG, "============================================================");
+    }
+#endif
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return;
 }
@@ -3867,3 +4063,4 @@ void InitCipherSuiteListInternal(bool * list, const char * usage, const char *de
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 #endif
+
