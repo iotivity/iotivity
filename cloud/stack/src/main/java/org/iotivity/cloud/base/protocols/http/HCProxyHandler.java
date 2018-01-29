@@ -23,9 +23,10 @@ package org.iotivity.cloud.base.protocols.http;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.Message;
-import org.iotivity.cloud.util.Log;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
@@ -45,7 +46,7 @@ import io.netty.util.CharsetUtil;
  * and translate them into CoAP request and HTTP response accordingly.
  */
 public class HCProxyHandler extends ChannelDuplexHandler {
-
+    private final static Logger Log = LoggerFactory.getLogger(HCProxyHandler.class);
     private static ConcurrentHashMap<String, HCProxyProcessor> hcProxyProcessorMap
     = new ConcurrentHashMap<String, HCProxyProcessor>();
 
@@ -106,7 +107,7 @@ public class HCProxyHandler extends ChannelDuplexHandler {
 
                 if (errorStatusCode != null) {
 
-                    Log.v("HTTP Error: " + errorStatusCode);
+                    Log.trace("HTTP Error: " + errorStatusCode);
 
                     HttpResponse httpResponse = hcProxyProcessor
                             .getErrorResponse(errorStatusCode);
@@ -127,7 +128,7 @@ public class HCProxyHandler extends ChannelDuplexHandler {
                     errorStatusCode = "500 Internal Server Error: "
                             + "HTTP-Method does not recognized.";
 
-                    Log.v("HTTP Error: " + errorStatusCode);
+                    Log.trace("HTTP Error: " + errorStatusCode);
 
                     HttpResponse httpResponse = hcProxyProcessor
                             .getErrorResponse(errorStatusCode);
@@ -165,7 +166,7 @@ public class HCProxyHandler extends ChannelDuplexHandler {
                 String errorStatusCode = "500 Internal Server Error: "
                         + "HTTP response could not be generated.";
 
-                Log.v("HTTP Error: " + errorStatusCode);
+                Log.trace("HTTP Error: " + errorStatusCode);
 
                 httpResponse = hcProxyProcessor
                         .getErrorResponse(errorStatusCode);
@@ -186,9 +187,9 @@ public class HCProxyHandler extends ChannelDuplexHandler {
                 if (future.isSuccess()) {
                     future.channel().close();
                 } else {
-                    Log.v(ctx.channel().id().asLongText().substring(26)
-                            + " HTTP Disconnected (Unexpectedly), Address: "
-                            + ctx.channel().remoteAddress().toString());
+                    Log.warn("[{}] HTTP Disconnected (Unexpectedly), Address: {}",
+                            ctx.channel().id().asLongText().substring(26),
+                            ctx.channel().remoteAddress().toString());
                 }
             }
         });

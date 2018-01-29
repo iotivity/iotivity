@@ -25,11 +25,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.rdserver.Constants;
 import org.iotivity.cloud.rdserver.db.DBManager;
 import org.iotivity.cloud.rdserver.resources.directory.rd.InsManager;
-import org.iotivity.cloud.util.Log;
 
 /**
  * 
@@ -37,7 +38,7 @@ import org.iotivity.cloud.util.Log;
  *
  */
 public class RDManager {
-
+    private final static Logger                Log               = LoggerFactory.getLogger(RDManager.class);
     private InsManager                         mInsManager       = new InsManager();
     private PayloadManager                     mPayloadManager   = new PayloadManager();
 
@@ -232,7 +233,7 @@ public class RDManager {
             }
         }
 
-        Log.d("discovery payload : " + response);
+        Log.debug("discovery payload : " + response);
 
         return response;
     }

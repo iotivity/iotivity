@@ -24,34 +24,29 @@ package org.iotivity.cloud.mqserver;
 import java.net.InetSocketAddress;
 import java.util.Scanner;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.resource.CloudPingResource;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.mqserver.resources.MQBrokerResource;
-import org.iotivity.cloud.util.Log;
 
 public class MessageQueueServer {
-
-    private static int     coapServerPort;
-    private static boolean tlsMode;
-    private static String  zookeeperHost;
-    private static String  kafkaHost;
-    private static String  webLogHost;
+    private final static Logger     Log                 = LoggerFactory.getLogger(MessageQueueServer.class);
+    private static int              coapServerPort;
+    private static boolean          tlsMode;
+    private static String           zookeeperHost;
+    private static String           kafkaHost;
 
     public static void main(String[] args) throws Exception {
-        System.out.println("-----MQ SERVER-----");
-        Log.Init();
+        Log.info("Starting Message Queue Server");
 
         if (!parseConfiguration(args)) {
-            Log.e("\nCoAP-server <Port> Zookeeper <Address> <Port> Kafka <Address> <Port> TLS-mode <0|1> are required. "
-                    + "WebSocketLog-Server <Addres> <Port> is optional.\n"
+            Log.error("\nCoAP-server <Port> Zookeeper <Address> <Port> Kafka <Address> <Port> TLS-mode <0|1> are required.\n"
                     + "ex) " + Constants.DEFAULT_COAP_PORT
                     + " 127.0.0.1 2181 127.0.0.1 9092 0\n");
             return;
         }
-        if (webLogHost != null)
-            Log.InitWebLog(webLogHost,
-                    MessageQueueServer.class.getSimpleName().toString());
 
         ServerSystem serverSystem = new ServerSystem();
 
@@ -83,13 +78,11 @@ public class MessageQueueServer {
 
     private static boolean parseConfiguration(String[] args) {
         // configuration provided by arguments
-        if (args.length == 6 || args.length == 8) {
+        if (args.length == 6) {
             coapServerPort = Integer.parseInt(args[0]);
             zookeeperHost = args[1] + ":" + args[2];
             kafkaHost = args[3] + ":" + args[4];
             tlsMode = Integer.parseInt(args[5]) == 1;
-            if (args.length == 8)
-                webLogHost = args[6] + ":" + args[7];
             return true;
         }
         // configuration provided by docker env

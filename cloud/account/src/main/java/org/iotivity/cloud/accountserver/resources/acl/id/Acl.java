@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.AclTable;
@@ -41,10 +43,9 @@ import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
 public class Acl {
-
+    private final static Logger           Log      = LoggerFactory.getLogger(Acl.class);
     private Cbor<HashMap<String, Object>> mCbor    = new Cbor<>();
     private String                        mAclid   = null;
     private String                        mOid     = null;
@@ -149,7 +150,7 @@ public class Acl {
 
     public List<HashMap<String, Object>> addACE(
             List<HashMap<String, Object>> aclist) {
-        Log.v("IN addACE");
+        Log.trace("IN addACE");
         HashMap<String, Object> hashmap = AccountDBManager.getInstance()
                 .selectRecord(Constants.ACL_TABLE, getCondition()).get(0);
         if (hashmap == null) {
@@ -180,7 +181,7 @@ public class Acl {
         AccountDBManager.getInstance().updateRecord(Constants.ACL_TABLE,
                 hashmap);
         notifyToSubscriber(getResponsePayload(true));
-        Log.v("OUT addACE");
+        Log.trace("OUT addACE");
         return aclist;
     }
 
@@ -226,7 +227,7 @@ public class Acl {
     }
 
     public void updateACE(String aceid, HashMap<String, Object> ace) {
-        Log.v("IN updateACE");
+        Log.trace("IN updateACE");
 
         HashMap<String, Object> hashmap = AccountDBManager.getInstance()
                 .selectRecord(Constants.ACL_TABLE, getCondition()).get(0);
@@ -251,7 +252,7 @@ public class Acl {
         AccountDBManager.getInstance().updateRecord(Constants.ACL_TABLE,
                 hashmap);
         notifyToSubscriber(getResponsePayload(true));
-        Log.v("OUT updateACE");
+        Log.trace("OUT updateACE");
 
     }
 

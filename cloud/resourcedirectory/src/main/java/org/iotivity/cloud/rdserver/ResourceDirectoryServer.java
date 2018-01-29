@@ -24,6 +24,8 @@ package org.iotivity.cloud.rdserver;
 import java.net.InetSocketAddress;
 import java.util.Scanner;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.resource.CloudPingResource;
 import org.iotivity.cloud.base.server.CoapServer;
@@ -32,7 +34,6 @@ import org.iotivity.cloud.rdserver.resources.directory.rd.ResourceDirectoryResou
 import org.iotivity.cloud.rdserver.resources.directory.res.DiscoveryResource;
 import org.iotivity.cloud.rdserver.resources.presence.device.DevicePresenceResource;
 import org.iotivity.cloud.rdserver.resources.presence.resource.ResPresenceResource;
-import org.iotivity.cloud.util.Log;
 
 /**
  *
@@ -40,25 +41,20 @@ import org.iotivity.cloud.util.Log;
  *
  */
 public class ResourceDirectoryServer {
-
-    private static int     coapServerPort;
-    private static boolean tlsMode;
-    private static String  databaseHost;
-    private static String  webLogHost;
+    private final static Logger     Log             = LoggerFactory.getLogger(ResourceDirectoryServer.class);
+    private static int              coapServerPort;
+    private static boolean          tlsMode;
+    private static String           databaseHost;
 
     public static void main(String[] args) throws Exception {
-        System.out.println("-----RD SERVER-----");
-        Log.Init();
+        Log.info("Starting Resource Directory Server");
 
         if (!parseConfiguration(args)) {
-            Log.e("\nCoAP-server <Port> Database <Address> <Port> TLS-mode <0|1> are required. WebSocketLog-Server <Addres> <Port> is optional.\n"
+            Log.error("\nCoAP-server <Port> Database <Address> <Port> TLS-mode <0|1> are required.\n"
                     + "ex) " + Constants.DEFAULT_COAP_PORT
                     + " 127.0.0.1 27017 0\n");
             return;
         }
-        if (webLogHost != null)
-            Log.InitWebLog(webLogHost,
-                    ResourceDirectoryServer.class.getSimpleName().toString());
 
         DBManager.createInstance(databaseHost);
 
@@ -92,12 +88,10 @@ public class ResourceDirectoryServer {
 
     private static boolean parseConfiguration(String[] args) {
         // configuration provided by arguments
-        if (args.length == 4 || args.length == 6) {
+        if (args.length == 4) {
             coapServerPort = Integer.parseInt(args[0]);
             databaseHost = args[1] + ":" + args[2];
             tlsMode = Integer.parseInt(args[3]) == 1;
-            if (args.length == 6)
-                webLogHost = args[4] + ":" + args[5];
             return true;
         }
         // configuration provided by docker env

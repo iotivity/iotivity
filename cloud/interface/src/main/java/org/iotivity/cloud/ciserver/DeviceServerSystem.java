@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.connector.ConnectorPool;
@@ -51,7 +53,6 @@ import org.iotivity.cloud.base.server.Server;
 import org.iotivity.cloud.base.server.WebSocketServer;
 import org.iotivity.cloud.util.Bytes;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -66,7 +67,7 @@ import io.netty.channel.ChannelPromise;
  */
 
 public class DeviceServerSystem extends ServerSystem {
-
+    private final static Logger                           Log     = LoggerFactory.getLogger(DeviceServerSystem.class);
     private Cbor<HashMap<String, Object>>                 mCbor   = new Cbor<HashMap<String, Object>>();
     private HashMap<ChannelHandlerContext, CoapSignaling> mCsmMap = new HashMap<>();
 
@@ -194,7 +195,7 @@ public class DeviceServerSystem extends ServerSystem {
                         }
                     }
                 } catch (Throwable t) {
-                    Log.f(ctx.channel(), t);
+                    Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), t);
                     ResponseStatus responseStatus = t instanceof ServerException
                             ? ((ServerException) t).getErrorResponse()
                             : ResponseStatus.INTERNAL_SERVER_ERROR;
@@ -373,7 +374,7 @@ public class DeviceServerSystem extends ServerSystem {
                 ctx.writeAndFlush(msg);
 
             } catch (Throwable t) {
-                Log.f(ctx.channel(), t);
+                Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), t);
                 ctx.writeAndFlush(msg);
                 ctx.close();
             }
@@ -452,7 +453,7 @@ public class DeviceServerSystem extends ServerSystem {
                         : ResponseStatus.UNAUTHORIZED;
                 ctx.writeAndFlush(MessageBuilder
                         .createResponse((CoapRequest) msg, responseStatus));
-                Log.f(ctx.channel(), t);
+                Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), t);
             }
         }
     }
@@ -552,7 +553,7 @@ public class DeviceServerSystem extends ServerSystem {
                     ctx.writeAndFlush(MessageBuilder.createSignalingResponse(
                             (CoapSignaling) msg, responseStatus));
                 }
-                Log.f(ctx.channel(), t);
+                Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), t);
             }
         }
 

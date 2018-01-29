@@ -25,6 +25,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.resources.account.AccountManager.SearchOperation;
 import org.iotivity.cloud.base.device.Device;
@@ -38,7 +40,6 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
 /**
  *
@@ -47,6 +48,7 @@ import org.iotivity.cloud.util.Log;
  *
  */
 public class AccountResource extends Resource {
+    private final static Logger           Log        = LoggerFactory.getLogger(AccountResource.class);
 
     private Cbor<HashMap<String, Object>> mCbor      = new Cbor<>();
 
@@ -110,7 +112,7 @@ public class AccountResource extends Resource {
             String authProvider = payloadData.get(Constants.REQ_AUTH_PROVIDER)
                     .toString();
 
-            Log.d("authCode: " + authCode);
+            Log.debug("authCode: " + authCode);
 
             Object options = payloadData.get(Constants.REQ_AUTH_OPTIONS);
 
@@ -145,7 +147,7 @@ public class AccountResource extends Resource {
                     SearchOperation.OR));
         }
 
-        Log.d("Search criteria query : " + queryData);
+        Log.debug("Search criteria query : " + queryData);
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
                 ContentFormat.APPLICATION_CBOR,

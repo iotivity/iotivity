@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
@@ -40,7 +42,6 @@ import org.iotivity.cloud.rdserver.Constants;
 import org.iotivity.cloud.rdserver.resources.directory.RDManager;
 import org.iotivity.cloud.rdserver.resources.presence.PresenceManager;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
 /**
  * 
@@ -48,7 +49,7 @@ import org.iotivity.cloud.util.Log;
  *
  */
 public class ResourceDirectoryResource extends Resource {
-
+    private final static Logger Log                  = LoggerFactory.getLogger(ResourceDirectoryResource.class);
     private Cbor<HashMap<String, Object>> mCbor      = new Cbor<>();
     private RDManager                     mRdManager = new RDManager();
 
@@ -104,7 +105,7 @@ public class ResourceDirectoryResource extends Resource {
         HashMap<String, Object> payload = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
-        Log.d("publish payload : " + payload);
+        Log.debug("publish payload : " + payload);
 
         checkPayloadException(
                 Arrays.asList(Constants.DEVICE_ID, Constants.LINKS), payload);
@@ -114,7 +115,7 @@ public class ResourceDirectoryResource extends Resource {
 
         HashMap<String, Object> response = mRdManager.publishResource(payload);
 
-        Log.d("publish response : " + response);
+        Log.debug("publish response : " + response);
 
         return MessageBuilder.createResponse(request, ResponseStatus.CHANGED,
                 ContentFormat.APPLICATION_CBOR,

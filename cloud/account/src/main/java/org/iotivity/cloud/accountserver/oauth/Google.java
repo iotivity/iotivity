@@ -23,6 +23,8 @@ package org.iotivity.cloud.accountserver.oauth;
 
 import java.util.HashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.oltu.oauth2.client.OAuthClient;
 import org.apache.oltu.oauth2.client.URLConnectionClient;
 import org.apache.oltu.oauth2.client.request.OAuthBearerClientRequest;
@@ -39,7 +41,6 @@ import org.iotivity.cloud.accountserver.db.TokenTable;
 import org.iotivity.cloud.accountserver.db.UserTable;
 import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.util.JSONUtil;
-import org.iotivity.cloud.util.Log;;
 
 /**
  *
@@ -49,6 +50,7 @@ import org.iotivity.cloud.util.Log;;
  */
 public class Google implements OAuthProvider {
 
+    private final static Logger Log          = LoggerFactory.getLogger(Google.class);
     // do not use 'client_id' and 'secret' variables.
     // should use values that are obtained from github.
     final static private String client_id    = "447649044559-f9r5sl6op3kkk0312u384o4g6hhucje1.apps.googleusercontent.com";
@@ -63,7 +65,7 @@ public class Google implements OAuthProvider {
 
         if (authCode == null) {
 
-            Log.w("authCode is null!");
+            Log.warn("authCode is null!");
             return tokenInfo;
         }
 
@@ -84,7 +86,7 @@ public class Google implements OAuthProvider {
 
             oauthResponse = oauthClient.accessToken(request, cl);
 
-            Log.d("OAuth response: " + oauthResponse.getBody());
+            Log.debug("OAuth response: " + oauthResponse.getBody());
 
             tokenInfo.setAccesstoken(oauthResponse.getAccessToken());
             tokenInfo.setRefreshtoken(oauthResponse.getRefreshToken());
@@ -107,7 +109,7 @@ public class Google implements OAuthProvider {
 
         if (refreshToken == null) {
 
-            Log.w("refreshToken is null!");
+            Log.warn("refreshToken is null!");
             return tokenInfo;
         }
 
@@ -127,7 +129,7 @@ public class Google implements OAuthProvider {
 
             oauthResponse = oauthClient.accessToken(request, cl);
 
-            Log.d("OAuth response: " + oauthResponse.getBody());
+            Log.debug("OAuth response: " + oauthResponse.getBody());
 
             tokenInfo.setAccesstoken(oauthResponse.getAccessToken());
             // Google provides refreshToken in one time.
@@ -150,7 +152,7 @@ public class Google implements OAuthProvider {
         UserTable userInfo = new UserTable();
 
         if (accessToken == null) {
-            Log.w("accessToken is null!");
+            Log.warn("accessToken is null!");
             return userInfo;
         }
 
@@ -168,7 +170,7 @@ public class Google implements OAuthProvider {
                     request, OAuth.HttpMethod.GET, OAuthResourceResponse.class);
 
             response = resourceResponse.getBody();
-            Log.d("response: " + response);
+            Log.debug("response: " + response);
 
         } catch (OAuthSystemException | OAuthProblemException e) {
             e.printStackTrace();
@@ -183,7 +185,7 @@ public class Google implements OAuthProvider {
                 HashMap.class);
 
         if (parsedData == null) {
-            Log.d("parsedData is null!");
+            Log.debug("parsedData is null!");
             return userInfo;
         }
 

@@ -35,8 +35,6 @@ import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.protocols.IRequest;
 
-import org.iotivity.cloud.util.Log;
-
 public class AclManager {
     public HashMap<String, Acl>          mAcls    = new HashMap<>();
     private TypeCastingManager<AclTable> mTypeAcl = new TypeCastingManager<AclTable>();

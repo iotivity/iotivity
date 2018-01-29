@@ -29,8 +29,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.bson.Document;
-import org.iotivity.cloud.util.Log;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -45,9 +46,9 @@ import com.mongodb.client.result.DeleteResult;
  *
  */
 public class MongoDB {
-
-    private MongoClient   mongoClient = null;
-    private MongoDatabase db          = null;
+    private final static Logger     Log             = LoggerFactory.getLogger(MongoDB.class);
+    private MongoClient             mongoClient     = null;
+    private MongoDatabase           db              = null;
 
     /**
      * API creating MongoClient and initializing MongoDatabase
@@ -142,7 +143,7 @@ public class MongoDB {
 
             } else {
 
-                Log.w("DB insert failed due to duplecated one.");
+                Log.warn("DB insert failed due to duplecated one.");
                 return false;
             }
 
@@ -218,7 +219,7 @@ public class MongoDB {
 
         if (collection.findOneAndReplace(filter, record) == null) {
 
-            Log.w("DB updateX509CRL failed due to no matched record!");
+            Log.warn("DB updateX509CRL failed due to no matched record!");
             return false;
         }
 
@@ -249,7 +250,7 @@ public class MongoDB {
             DeleteResult result = collection.deleteMany(record);
 
             if (result.getDeletedCount() == 0) {
-                Log.w("DB delete failed due to no mached record!");
+                Log.warn("DB delete failed due to no mached record!");
                 return false;
             }
 
@@ -342,7 +343,7 @@ public class MongoDB {
         MongoCollection<Document> collection = db.getCollection(tableName);
         MongoCursor<Document> cursor = collection.find().iterator();
 
-        Log.i("<" + tableName + ">");
+        Log.info("<" + tableName + ">");
 
         HashMap<String, Object> records = null;
         int index = 0;
@@ -351,7 +352,7 @@ public class MongoDB {
             Document doc = cursor.next();
             records = convertDocumentToHashMap(doc);
 
-            Log.i("[" + index + "] " + records.toString());
+            Log.info("[" + index + "] " + records.toString());
             index++;
         }
 

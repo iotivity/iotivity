@@ -33,10 +33,11 @@ import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.protocols.coap.*;
 import org.iotivity.cloud.base.protocols.coap.PingMessage;
-import org.iotivity.cloud.util.Log;
 
 import javax.net.ssl.SSLException;
 import java.io.File;
@@ -44,7 +45,7 @@ import java.net.InetSocketAddress;
 import java.util.*;
 
 public class CoapConnector {
-
+    private final static Logger Log             = LoggerFactory.getLogger(CoapConnector.class);
     public CoapConnector() {
 
         mBootstrap.group(mConnectorGroup);
@@ -75,7 +76,7 @@ public class CoapConnector {
                     ctx.writeAndFlush(PingMessage.build());
                 }
                 if (event.state() == IdleState.READER_IDLE) {
-                    Log.d("Connection with" +  ctx.channel().remoteAddress().toString() + "is idle. Closing connection.");
+                    Log.debug("Connection with" +  ctx.channel().remoteAddress().toString() + "is idle. Closing connection.");
                     ctx.close();
                 }
             }
@@ -177,7 +178,7 @@ public class CoapConnector {
         mBootstrap.connect(inetSocketAddress).addListener(new ChannelFutureListener() {
                 @Override public void operationComplete(ChannelFuture future) throws Exception {
                     if(!future.isSuccess()) {
-                        Log.d("Connection to " + inetSocketAddress.getHostString() + " was not successful. Retrying...");
+                        Log.debug("Connection to " + inetSocketAddress.getHostString() + " was not successful. Retrying...");
                         future.channel().close();
                         scheduleConnect(connectionName, inetSocketAddress, tlsMode, 5000);
                     } else {
@@ -188,7 +189,7 @@ public class CoapConnector {
 
             private void addCloseDetectListener(Channel channel) {
                 channel.closeFuture().addListener((ChannelFutureListener) future -> {
-                    Log.d("Connection to " + inetSocketAddress.getHostString() + " was lost. Retrying...");
+                    Log.debug("Connection to " + inetSocketAddress.getHostString() + " was lost. Retrying...");
                     scheduleConnect(connectionName, inetSocketAddress, tlsMode, 5);
                 });
             }

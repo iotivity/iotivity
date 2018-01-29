@@ -21,13 +21,14 @@
  */
 package org.iotivity.cloud.accountserver.resources.credprov.cert;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.iotivity.cloud.accountserver.x509.cert.CertificateBuilder;
 import org.iotivity.cloud.accountserver.x509.cert.CertificateExtension;
-import org.iotivity.cloud.util.Log;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -46,6 +47,7 @@ import static org.iotivity.cloud.accountserver.resources.credprov.cert.Certifica
  * Also it generates CA certificate and puts it to keystore.
  */
 public final class CertificateStorage {
+    private final static Logger Log     = LoggerFactory.getLogger(CertificateStorage.class);
 
     /**
      * This attribute is used to get password to kestore, that stores CA certificate info.
@@ -97,7 +99,7 @@ public final class CertificateStorage {
         try (InputStream inputStream = new FileInputStream(KEYSTORE_FILE)) {
             keyStore.load(inputStream, PASSWORD.toCharArray());
         } catch (IOException ioException) {
-            Log.e(ioException.getMessage());
+            Log.error(ioException.getMessage());
         }
         ROOT_PRIVATE_KEY = (PrivateKey) keyStore.getKey(CA_ALIAS, PASSWORD.toCharArray());
         ROOT_CERTIFICATE = (X509Certificate) keyStore.getCertificate(CA_ALIAS);
@@ -132,7 +134,7 @@ public final class CertificateStorage {
         try (FileOutputStream out = new FileOutputStream(KEYSTORE_FILE)) {
             keyStore.store(out, PASSWORD.toCharArray());
         } catch (IOException ioException) {
-            Log.e(ioException.getMessage());
+            Log.error(ioException.getMessage());
         }
     }
 }

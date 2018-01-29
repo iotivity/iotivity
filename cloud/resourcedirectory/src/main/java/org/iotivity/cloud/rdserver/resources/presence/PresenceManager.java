@@ -27,6 +27,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.base.protocols.IRequest;
@@ -36,7 +38,6 @@ import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.rdserver.Constants;
 import org.iotivity.cloud.rdserver.db.DBManager;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -49,6 +50,7 @@ import com.fasterxml.jackson.dataformat.cbor.CBORGenerator;
  *
  */
 public class PresenceManager {
+    private final static Logger           Log              = LoggerFactory.getLogger(PresenceManager.class);
     private static PresenceManager        mPresenceManager = new PresenceManager();
 
     private Cbor<HashMap<String, Object>> mCbor            = new Cbor<>();
@@ -209,7 +211,7 @@ public class PresenceManager {
             prsList.add(payloadSegment);
         }
         getPayload.put(Constants.PRESENCE_LIST, prsList);
-        Log.i("Device presence observe response : " + getPayload.toString());
+        Log.info("Device presence observe response : " + getPayload.toString());
 
         return mCbor.encodingPayloadToCbor(getPayload);
 

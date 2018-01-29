@@ -14,7 +14,6 @@ import org.iotivity.cloud.accountserver.db.GroupTable;
 import org.iotivity.cloud.accountserver.db.MongoDB;
 import org.iotivity.cloud.accountserver.resources.acl.id.AclResource;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
-import org.iotivity.cloud.util.Log;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -94,7 +93,7 @@ public class GroupAclManagerTest {
 
     @Test
     public void testAddAceByResourcesOnlyOwner() {
-        Log.v("--------------testAddAceByResourcesOnlyOwner------------");
+        System.out.println("--------------testAddAceByResourcesOnlyOwner------------");
 
         // initialize group info --
         ArrayList<String> members = new ArrayList<>();
@@ -120,7 +119,7 @@ public class GroupAclManagerTest {
 
     @Test
     public void testAddAceByResources() {
-        Log.v("--------------testAddAceByResoruces------------");
+        System.out.println("--------------testAddAceByResoruces------------");
 
         // initialize group info --
         ArrayList<String> members = new ArrayList<>();
@@ -172,7 +171,7 @@ public class GroupAclManagerTest {
 
     @Test
     public void testAddAceByResourcesNoMembers() {
-        Log.v("--------------testAddAceByResorucesNoMembers------------");
+        System.out.println("--------------testAddAceByResorucesNoMembers------------");
         setGroupInfo(mGid1, new HashMap<>());
 
         ArrayList<HashMap<String, Object>> resources = new ArrayList<>();
@@ -190,7 +189,7 @@ public class GroupAclManagerTest {
 
     @Test
     public void testAddAceByDevices() {
-        Log.v("--------------testAddAceByDevices------------");
+        System.out.println("--------------testAddAceByDevices------------");
 
         // initialize group info --
         ArrayList<String> members = new ArrayList<>();
@@ -227,7 +226,7 @@ public class GroupAclManagerTest {
 
     @Test
     public void testAddAceByDevicesOnlyOwner() {
-        Log.v("--------------testAddAceByDevicesOnlyOwner------------");
+        System.out.println("--------------testAddAceByDevicesOnlyOwner------------");
 
         // initialize group info --
         ArrayList<String> members = new ArrayList<>();
@@ -253,7 +252,7 @@ public class GroupAclManagerTest {
 
     @Test
     public void testAddAceByDevicesNoMembers() {
-        Log.v("--------------testAddAceByDevicesNoMembers------------");
+        System.out.println("--------------testAddAceByDevicesNoMembers------------");
         setGroupInfo(mGid1, new HashMap<>());
 
         ArrayList<String> devices = new ArrayList<>();
@@ -270,7 +269,7 @@ public class GroupAclManagerTest {
 
     @Test
     public void testAddAceByMembersWithDevice() {
-        Log.v("--------------testAddAceByMembersWithDevice------------");
+        System.out.println("--------------testAddAceByMembersWithDevice------------");
 
         // initialize group info --
         ArrayList<String> devices = new ArrayList<>();
@@ -314,7 +313,7 @@ public class GroupAclManagerTest {
 
     @Test
     public void testAddAceByMembersWithDeviceAndResource() {
-        Log.v("--------------testAddAceByMembersWithDeviceAndResource------------");
+        System.out.println("--------------testAddAceByMembersWithDeviceAndResource------------");
 
         // initialize group info --
         ArrayList<String> devices = new ArrayList<>();
@@ -401,7 +400,7 @@ public class GroupAclManagerTest {
 
     @Test
     public void testAddAceByMembersNoDevice() {
-        Log.v("--------------testAddAceByMembersNoDevice------------");
+        System.out.println("--------------testAddAceByMembersNoDevice------------");
         setGroupInfo(mGid1, new HashMap<>());
 
         ArrayList<String> members = new ArrayList<>();
@@ -418,7 +417,7 @@ public class GroupAclManagerTest {
 
     @Test
     public void testAddAceByMembersOwnerDevice() {
-        Log.v("--------------testAddAceByMembersOwnerDevice------------");
+        System.out.println("--------------testAddAceByMembersOwnerDevice------------");
 
         // initialize group info --
         ArrayList<String> devices = new ArrayList<>();
@@ -444,7 +443,7 @@ public class GroupAclManagerTest {
 
     @Test
     public void testRemoveAceByGroup() {
-        Log.v("--------------testRemoveAceByGroup------------");
+        System.out.println("--------------testRemoveAceByGroup------------");
 
         // initialize group info --
         ArrayList<String> members = new ArrayList<>();
@@ -513,7 +512,7 @@ public class GroupAclManagerTest {
 
     @Test
     public void testRemoveAceByMembers() {
-        Log.v("--------------testRemoveAceByMembers------------");
+        System.out.println("--------------testRemoveAceByMembers------------");
 
         // initialize group info --
         ArrayList<String> devices = new ArrayList<>();
@@ -573,7 +572,7 @@ public class GroupAclManagerTest {
 
     @Test
     public void testRemoveAceByDevices() {
-        Log.v("--------------testRemoveAceByDevices------------");
+        System.out.println("--------------testRemoveAceByDevices------------");
 
         // initialize group info --
         ArrayList<String> devices = new ArrayList<>();
@@ -653,7 +652,7 @@ public class GroupAclManagerTest {
 
     @Test
     public void testRemoveAceByResourcesDeleteAce() {
-        Log.v("--------------testRemoveAceByResourcesDeleteAce------------");
+        System.out.println("--------------testRemoveAceByResourcesDeleteAce------------");
 
         // initialize group info --
         ArrayList<String> devices = new ArrayList<>();
@@ -774,11 +773,11 @@ public class GroupAclManagerTest {
 
     private boolean checkAclTable(String di, String aceid, String subjectUuid,
             List<HashMap<String, Object>> resource) {
-        Log.v("--------------checkAclTable : " + di + " ------------");
+        System.out.println("--------------checkAclTable : " + di + " ------------");
         HashMap<String, Object> getAclist = AclResource.getInstance()
                 .getAclACE((String) AclResource.getInstance().getAclid(di)
                         .get(Constants.KEYFIELD_ACLID), aceid);
-        Log.v("check result : " + getAclist);
+        System.out.println("check result : " + getAclist);
         if (getAclist.isEmpty()) {
             return false;
         }
@@ -812,10 +811,10 @@ public class GroupAclManagerTest {
 
     private boolean checkAceTable(HashMap<String, Object> condition,
             HashMap<String, Object> key) {
-        Log.v("--------------checkAceTable : " + condition.toString()
+        System.out.println("--------------checkAceTable : " + condition.toString()
                 + " ------------");
         HashMap<String, Object> getAce = getAceTable(condition).get(0);
-        Log.v("check result : " + getAce);
+        System.out.println("check result : " + getAce);
         if (getAce.isEmpty()) {
             return false;
         }

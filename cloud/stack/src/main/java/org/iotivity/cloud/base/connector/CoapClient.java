@@ -23,6 +23,8 @@ package org.iotivity.cloud.base.connector;
 
 import java.util.HashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.device.IResponseEventHandler;
@@ -34,7 +36,6 @@ import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.enums.Observe;
 import org.iotivity.cloud.util.Bytes;
-import org.iotivity.cloud.util.Log;
 
 import io.netty.channel.Channel;
 
@@ -55,6 +56,9 @@ public class CoapClient implements IRequestChannel, IResponseEventHandler {
         }
     }
 
+
+
+    private final static Logger Log                    = LoggerFactory.getLogger(CoapClient.class);
     private HashMap<Long, RequestInfo> mTokenExchanger = new HashMap<>();
     private Long                       mToken          = 0L;
     private Channel                    mChannel        = null;
@@ -111,7 +115,7 @@ public class CoapClient implements IRequestChannel, IResponseEventHandler {
             mChannel.writeAndFlush(request);
 
         } catch (Exception e) {
-            Log.f(mChannel, e);
+            Log.error("Problem occured on channel " + mChannel.id().asLongText().substring(26), e);
         }
     }
 

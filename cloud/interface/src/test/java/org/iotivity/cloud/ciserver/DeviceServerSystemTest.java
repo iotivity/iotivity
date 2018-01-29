@@ -56,7 +56,6 @@ import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceDirectory;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceFind;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourcePresence;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -108,7 +107,6 @@ public class DeviceServerSystemTest {
 
     @Before
     public void setUp() throws Exception {
-        Log.createfile();
         MockitoAnnotations.initMocks(this);
         mRes = null;
         mReq = null;

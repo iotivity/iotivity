@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.base.protocols.coap.CoapDecoder;
@@ -33,7 +35,6 @@ import org.iotivity.cloud.base.protocols.coap.CoapMessage;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.JSONUtil;
-import org.iotivity.cloud.util.Log;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -49,21 +50,20 @@ import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 
 public class WebSocketFrameHandler extends ChannelDuplexHandler {
+    private final static Logger Log = LoggerFactory.getLogger(WebSocketFrameHandler.class);
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        Log.v(ctx.channel().id().asLongText().substring(26)
-                + " WebSocket Connected, Address: "
-                + ctx.channel().remoteAddress().toString());
+        Log.trace("[{}] WebSocket Connected, Address: {}", ctx.channel().id().asLongText().substring(26),
+                ctx.channel().remoteAddress().toString());
 
         ctx.fireChannelActive();
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        Log.v(ctx.channel().id().asLongText().substring(26)
-                + " WebSocket Disconnected, Address: "
-                + ctx.channel().remoteAddress().toString());
+        Log.trace("[{}] WebSocket Disconnected, Address: {}", ctx.channel().id().asLongText().substring(26),
+                ctx.channel().remoteAddress().toString());
 
         ctx.fireChannelInactive();
     }
@@ -114,9 +114,8 @@ public class WebSocketFrameHandler extends ChannelDuplexHandler {
                 @Override
                 public void operationComplete(ChannelFuture future)
                         throws Exception {
-                    Log.v(future.channel().id().asLongText().substring(26)
-                            + " WebSocket Handshake done, Address: "
-                            + future.channel().remoteAddress().toString());
+                    Log.trace("[{}] WebSocket Handshake done, Address: {}", future.channel().id().asLongText().substring(26),
+                            future.channel().remoteAddress().toString());
 
                     // remove http encoder/decoder after handshake done.
                     future.channel().pipeline().remove(HttpServerCodec.class);

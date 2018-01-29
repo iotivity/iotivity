@@ -27,6 +27,8 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.connector.CoapClient;
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.exception.ClientException;
@@ -38,11 +40,11 @@ import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.enums.Observe;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.util.Bytes;
-import org.iotivity.cloud.util.Log;
 
 import io.netty.channel.ChannelHandlerContext;
 
 public class CoapDevice extends Device {
+    private final static Logger        Log                 = LoggerFactory.getLogger(CoapDevice.class);
     private CoapClient                 mCoapClient         = null;
     private String                     mUserId             = null;
     private String                     mDeviceId           = null;
@@ -174,7 +176,7 @@ public class CoapDevice extends Device {
 
         if (remainTime < 0) {
 
-            Log.w("accessToken is expired..");
+            Log.warn("accessToken is expired..");
             return true;
         }
 

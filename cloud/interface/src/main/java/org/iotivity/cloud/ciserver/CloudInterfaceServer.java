@@ -24,6 +24,8 @@ package org.iotivity.cloud.ciserver;
 import java.net.InetSocketAddress;
 import java.util.Scanner;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.base.server.HttpServer;
@@ -43,34 +45,30 @@ import org.iotivity.cloud.ciserver.resources.proxy.rd.DevicePresence;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceDirectory;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceFind;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourcePresence;
-import org.iotivity.cloud.util.Log;
 
 public class CloudInterfaceServer {
-
-    private static int[]   deviceKeepAliveMinutes = new int[] { 1, 2, 4, 8 };
-    private static int     coapServerPort;
-    private static boolean tlsMode;
-    private static boolean keepAlive = false;
-    private static boolean hcProxyMode;
-    private static int     hcProxyPort;
-    private static boolean websocketMode;
-    private static int     websocketPort;
-    private static String  resourceDirectoryAddress;
-    private static int     resourceDirectoryPort;
-    private static String  accountServerAddress;
-    private static int     accountServerPort;
-    private static String  messageQueueAddress;
-    private static int     messageQueuePort;
-    private static String  webLogHost;
+    private final static Logger Log = LoggerFactory.getLogger(CloudInterfaceServer.class);
+    private static int[]        deviceKeepAliveMinutes = new int[] { 1, 2, 4, 8 };
+    private static int          coapServerPort;
+    private static boolean      tlsMode;
+    private static boolean      keepAlive = false;
+    private static boolean      hcProxyMode;
+    private static int          hcProxyPort;
+    private static boolean      websocketMode;
+    private static int          websocketPort;
+    private static String       resourceDirectoryAddress;
+    private static int          resourceDirectoryPort;
+    private static String       accountServerAddress;
+    private static int          accountServerPort;
+    private static String       messageQueueAddress;
+    private static int          messageQueuePort;
 
     public static void main(String[] args) throws Exception {
-        System.out.println("-----CI SERVER-------");
-        Log.Init();
+        Log.info("Starting Cloud Interface Server");
 
         if (!parseConfiguration(args)) {
-            Log.e("\nCoAP-server <Port> RD-server <Address> <Port> Account-server <Address> <Port> MQ-broker <Address> <Port> HC-proxy [HTTP-port] "
-                    + "Websocket-server <Port> and TLS-mode <0|1> are required. WebSocketLog-Server <Addres> <Port> "
-                    + "and KeepAlive for cloud components <0|1> are optional.\n"
+            Log.error("\nCoAP-server <Port> RD-server <Address> <Port> Account-server <Address> <Port> MQ-broker <Address> <Port> HC-proxy [HTTP-port] "
+                    + "Websocket-server <Port> and TLS-mode <0|1> are required.\n"
                     + "ex) " + Constants.DEFAULT_COAP_PORT
                     + " 127.0.0.1 " + Constants.DEFAULT_RESOURCE_DIRECTORY_PORT
                     + " 127.0.0.1 " + Constants.DEFAULT_ACCOUNT_SERVER_PORT
@@ -79,9 +77,6 @@ public class CloudInterfaceServer {
                     + " " + Constants.DEFAULT_WEBSOCKET_PORT + " 0\n");
             return;
         }
-        if (webLogHost != null)
-            Log.InitWebLog(webLogHost,
-                    CloudInterfaceServer.class.getSimpleName().toString());
 
         ConnectorPool.requestConnection("rd",
                 new InetSocketAddress(resourceDirectoryAddress, resourceDirectoryPort),
@@ -173,7 +168,7 @@ public class CloudInterfaceServer {
 
     private static boolean parseConfiguration(String[] args) {
         // configuration provided by arguments
-        if (args.length == 10 || args.length == 13) {
+        if (args.length == 10) {
             coapServerPort = Integer.parseInt(args[0]);
             resourceDirectoryAddress = args[1];
             resourceDirectoryPort = Integer.parseInt(args[2]);
@@ -186,10 +181,6 @@ public class CloudInterfaceServer {
             websocketPort = Integer.parseInt(args[8]);
             websocketMode = websocketPort != 0;
             tlsMode = Integer.parseInt(args[9]) == 1;
-            if (args.length == 13) {
-                webLogHost = args[10] + ":" + args[11];
-                keepAlive = Integer.parseInt(args[12]) == 1;
-            }
 
             return true;
         }

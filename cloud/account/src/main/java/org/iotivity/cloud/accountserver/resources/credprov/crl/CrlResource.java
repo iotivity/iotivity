@@ -34,6 +34,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.DecoderException;
@@ -47,17 +49,17 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
 /**
  * Class is used working with POST and GET requests and handles CRL requests.
  */
 public class CrlResource extends Resource {
+    private final static Logger                     Log         = LoggerFactory.getLogger(CrlResource.class);
 
     /**
      * CBOR container with help of map presentation.
      */
-    private static final Cbor<Map<String, Object>> MAP_CBOR = new Cbor<>();
+    private static final Cbor<Map<String, Object>>  MAP_CBOR    = new Cbor<>();
 
     /**
      * Creates resource for handling CRL requests(GET and POST)
@@ -113,7 +115,7 @@ public class CrlResource extends Resource {
                                 MAP_CBOR.encodingPayloadToCbor(payload));
                     }
                 } catch (CRLException e) {
-                    Log.e(e.getMessage());
+                    Log.error(e.getMessage());
                 }
             }
         }
@@ -172,13 +174,13 @@ public class CrlResource extends Resource {
                                     response = MessageBuilder.createResponse(
                                             request, ResponseStatus.CHANGED);
                                 } catch (DecoderException e) {
-                                    Log.e(e.getMessage() + e.getClass());
+                                    Log.error(e.getMessage() + e.getClass());
                                 }
                             }
                         }
                     } catch (CRLException | IOException
                             | OperatorCreationException | ParseException e) {
-                        Log.e(e.getMessage() + e.getClass());
+                        Log.error(e.getMessage() + e.getClass());
                     }
                 }
             }

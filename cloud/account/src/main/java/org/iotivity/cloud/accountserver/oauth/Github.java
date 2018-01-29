@@ -23,6 +23,8 @@ package org.iotivity.cloud.accountserver.oauth;
 
 import java.util.HashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.oltu.oauth2.client.OAuthClient;
 import org.apache.oltu.oauth2.client.URLConnectionClient;
 import org.apache.oltu.oauth2.client.request.OAuthBearerClientRequest;
@@ -38,7 +40,6 @@ import org.iotivity.cloud.accountserver.db.TokenTable;
 import org.iotivity.cloud.accountserver.db.UserTable;
 import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.util.JSONUtil;
-import org.iotivity.cloud.util.Log;;
 
 /**
  *
@@ -48,6 +49,7 @@ import org.iotivity.cloud.util.Log;;
  */
 public class Github implements OAuthProvider {
 
+    private final static Logger Log          = LoggerFactory.getLogger(Github.class);
     // do not use 'client_id' and 'secret' variables.
     // should use values that are obtained from github.
     final static private String client_id    = "ea9c18f540323b0213d0";
@@ -102,7 +104,7 @@ public class Github implements OAuthProvider {
         UserTable userInfo = new UserTable();
 
         if (accessToken == null) {
-            Log.w("accessToken is null!");
+            Log.warn("accessToken is null!");
             return null;
         }
 
@@ -118,7 +120,7 @@ public class Github implements OAuthProvider {
                     request, OAuth.HttpMethod.GET, OAuthResourceResponse.class);
 
             response = resourceResponse.getBody();
-            Log.d("response: " + response);
+            Log.debug("response: " + response);
 
         } catch (OAuthSystemException | OAuthProblemException e) {
             e.printStackTrace();
@@ -132,7 +134,7 @@ public class Github implements OAuthProvider {
                 HashMap.class);
 
         if (parsedData == null) {
-            Log.d("parsedData is null!");
+            Log.debug("parsedData is null!");
             return null;
         }
 

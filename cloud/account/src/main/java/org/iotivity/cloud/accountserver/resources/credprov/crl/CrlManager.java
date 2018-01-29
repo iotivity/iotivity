@@ -40,24 +40,26 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bson.types.Binary;
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.CRLTable;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.exception.ServerException;
-import org.iotivity.cloud.util.Log;
 
 /**
  * Class is used to manage CRLs. It helps to create, update CRLS, revoke
  * certificates.
  */
 public final class CrlManager {
+    private final static Logger                 Log             = LoggerFactory.getLogger(CrlManager.class);
 
     /**
      * Casting manager for working with CRLTable in mongo db
      */
-    private static TypeCastingManager<CRLTable> castingManager = new TypeCastingManager<>();
+    private static TypeCastingManager<CRLTable> castingManager  = new TypeCastingManager<>();
 
     /**
      * X509 CRL presentation.
@@ -85,7 +87,7 @@ public final class CrlManager {
                             new CRLTable(thisUpdate, new Binary(data))));
             setX509CRL(data);
         } catch (CRLException | IOException | OperatorCreationException e) {
-            Log.e(e.getMessage());
+            Log.error(e.getMessage());
         }
     }
 
@@ -141,7 +143,7 @@ public final class CrlManager {
                         .parse(lastUpdate).before(x509CRL.getThisUpdate());
             }
         } catch (ParseException e) {
-            Log.e(e.getMessage());
+            Log.error(e.getMessage());
         }
         return checkCondition;
     }

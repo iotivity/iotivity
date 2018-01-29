@@ -23,8 +23,9 @@ package org.iotivity.cloud.mqserver;
 
 import java.util.HashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
 /**
  * 
@@ -32,6 +33,7 @@ import org.iotivity.cloud.util.Log;
  *
  */
 public class MessageQueueUtils {
+    private final static Logger Log             = LoggerFactory.getLogger(MessageQueueUtils.class);
 
     /**
      * API to get data in the payload with specific property key
@@ -46,7 +48,7 @@ public class MessageQueueUtils {
     public static <T> T extractDataFromPayload(byte[] payload, String key) {
 
         if (payload == null || key.isEmpty()) {
-            Log.e("payload or key is empty");
+            Log.error("payload or key is empty");
             return null;
         }
 
@@ -56,7 +58,7 @@ public class MessageQueueUtils {
         parsedData = cbor.parsePayloadFromCbor(payload, HashMap.class);
 
         if (parsedData == null || parsedData.containsKey(key) == false) {
-            Log.e("payload doesn't contain " + key + " information");
+            Log.error("payload doesn't contain " + key + " information");
             return null;
         }
 

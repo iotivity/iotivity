@@ -24,6 +24,8 @@ package org.iotivity.cloud.accountserver;
 import java.net.InetSocketAddress;
 import java.util.Scanner;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.resources.account.AccountResource;
 import org.iotivity.cloud.accountserver.resources.account.session.SessionResource;
@@ -37,7 +39,6 @@ import org.iotivity.cloud.accountserver.resources.credprov.crl.CrlResource;
 import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.resource.CloudPingResource;
 import org.iotivity.cloud.base.server.CoapServer;
-import org.iotivity.cloud.util.Log;
 
 /**
  *
@@ -45,25 +46,21 @@ import org.iotivity.cloud.util.Log;
  *
  */
 public class AccountServer {
-
-    private static int     coapServerPort;
-    private static boolean tlsMode;
-    private static String  databaseHost;
-    private static String  webLogHost;
+    private final static Logger     Log                 = LoggerFactory.getLogger(AccountServer.class);
+    private static int              coapServerPort;
+    private static boolean          tlsMode;
+    private static String           databaseHost;
+    private static String           webLogHost;
 
     public static void main(String[] args) throws Exception {
-        System.out.println("-----Account SERVER-----");
-        Log.Init();
+        Log.info("Starting Account Server");
 
         if (!parseConfiguration(args)) {
-            Log.e("\nCoAP-server <Port> Database <Address> <Port> TLS-mode <0|1> are required. WebSocketLog-Server <Addres> <Port> is optional.\n"
+            Log.error("\nCoAP-server <Port> Database <Address> <Port> TLS-mode <0|1> are required.\n"
                     + "ex) " + Constants.DEFAULT_COAP_PORT
                     + " 127.0.0.1 27017 0\n");
             return;
         }
-        if (webLogHost != null)
-            Log.InitWebLog(webLogHost,
-                    AccountServer.class.getSimpleName().toString());
 
         AccountDBManager.createInstance(databaseHost);
 
@@ -103,18 +100,15 @@ public class AccountServer {
 
     private static boolean parseConfiguration(String[] args) {
         // configuration provided by arguments
-        if (args.length == 4 || args.length == 6) {
+        if (args.length == 4) {
             coapServerPort = Integer.parseInt(args[0]);
             databaseHost = args[1] + ":" + args[2];
             tlsMode = Integer.parseInt(args[3]) == 1;
-            if (args.length == 6)
-                webLogHost = args[4] + ":" + args[5];
             return true;
         }
         // configuration provided by docker env
         String tlsModeEnv = System.getenv("TLS_MODE");
         if (tlsModeEnv != null) {
-
             coapServerPort = Integer.parseInt(System.getenv("COAP_PORT"));
             databaseHost = System.getenv("MONGODB_ADDRESS") + ":"
                     + System.getenv("MONGODB_PORT");

@@ -23,10 +23,11 @@ package org.iotivity.cloud.base.protocols.coap;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
-import org.iotivity.cloud.util.Log;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -38,6 +39,7 @@ public class CoapDecoder extends ByteToMessageDecoder {
         SHIM_HEADER, OPTION_PAYLOAD_LENGTH, CODE_TOKEN_OPTION, PAYLOAD, FINISH
     }
 
+    private final static Logger Log          = LoggerFactory.getLogger(CoapDecoder.class);
     private ParsingState nextState           = ParsingState.SHIM_HEADER;
     private int          bufferToRead        = 1;
     private int          tokenLength         = 0;
@@ -166,7 +168,7 @@ public class CoapDecoder extends ByteToMessageDecoder {
             ResponseStatus responseStatus = t instanceof ServerException
                     ? ((ServerException) t).getErrorResponse()
                     : ResponseStatus.INTERNAL_SERVER_ERROR;
-            Log.f(ctx.channel(), t);
+            Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), t);
             ctx.writeAndFlush(
                     MessageBuilder.createResponse(partialMsg, responseStatus));
             ctx.close();

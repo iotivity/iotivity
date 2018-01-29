@@ -29,8 +29,9 @@ import kafka.utils.ZkUtils;
 
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.ZkConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.mqserver.Constants;
-import org.iotivity.cloud.util.Log;
 
 /**
  *
@@ -38,9 +39,9 @@ import org.iotivity.cloud.util.Log;
  *
  */
 public class KafkaCommonWrapper {
-
-    private ZkClient mZkClient = null;
-    private ZkUtils  mZkUtils  = null;
+    private final static Logger     Log             = LoggerFactory.getLogger(KafkaCommonWrapper.class);
+    private ZkClient                mZkClient       = null;
+    private ZkUtils                 mZkUtils        = null;
 
     public KafkaCommonWrapper(String zookeeperAddress, String brokerAddress) {
 
@@ -63,7 +64,7 @@ public class KafkaCommonWrapper {
      */
     public boolean createTopic(String topic) {
 
-        Log.d("kafka createTopic - " + topic);
+        Log.debug("kafka createTopic - " + topic);
 
         topic = topic.replace('/', '.');
 
@@ -89,7 +90,7 @@ public class KafkaCommonWrapper {
      */
     public boolean deleteTopic(String topic) {
 
-        Log.d("kafka deleteTopic - " + topic);
+        Log.debug("kafka deleteTopic - " + topic);
 
         topic = topic.replace('/', '.');
 
