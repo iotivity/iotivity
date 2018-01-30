@@ -141,7 +141,7 @@ public class CoapClient implements IRequestChannel, IResponseEventHandler {
         // Subscription response should stored
         if (reqInfo.observe != Observe.SUBSCRIBE) {
             mTokenExchanger.remove(Bytes.bytesToLong(coapResponse.getToken()));
-            if (mSubscription
+            if (reqInfo.originToken != null && mSubscription
                     .containsKey(Bytes.bytesToLong(reqInfo.originToken))) {
                 mSubscription.remove(Bytes.bytesToLong(reqInfo.originToken));
             }

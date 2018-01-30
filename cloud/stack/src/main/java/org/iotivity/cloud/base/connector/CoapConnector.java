@@ -73,7 +73,7 @@ public class CoapConnector {
             if (evt instanceof IdleStateEvent) {
                 IdleStateEvent event = (IdleStateEvent) evt;
                 if (event.state() == IdleState.WRITER_IDLE) {
-                    ctx.writeAndFlush(PingMessage.build());
+                    mChannelMap.get(ctx.channel()).sendRequest(PingMessage.build(),null);
                 }
                 if (event.state() == IdleState.READER_IDLE) {
                     Log.debug("Connection with" +  ctx.channel().remoteAddress().toString() + "is idle. Closing connection.");
@@ -152,7 +152,7 @@ public class CoapConnector {
         }
     }
 
-    HashMap<Channel, CoapClient> mChannelMap     = new HashMap<>();
+    private static Map<Channel, CoapClient> mChannelMap     = new HashMap<>();
     Bootstrap                    mBootstrap      = new Bootstrap();
     EventLoopGroup               mConnectorGroup = new NioEventLoopGroup();
     Timer                        mTimer          = new Timer();
