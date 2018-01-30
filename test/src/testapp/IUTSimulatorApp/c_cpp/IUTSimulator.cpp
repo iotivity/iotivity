@@ -400,7 +400,7 @@ void replaceDatFile(int modeType, int securityType)
         cout << "Successfully open " << sourceFileNames[securityType] << endl;
     }
 
-    FILE *destFile;
+    FILE *destFile = NULL;
     if (modeType == CLIENT_MODE)
     {
         destFile = fopen(CRED_FILE_CLIENT, "wb");
@@ -416,7 +416,7 @@ void replaceDatFile(int modeType, int securityType)
         cout << "No mode found" << endl;
     }
 
-    if (destFile == NULL)
+    if (NULL == destFile)
     {
         fclose(source);
         cout << "Unable to write dat file" << endl;
@@ -665,10 +665,10 @@ int main(int argc, char* argv[])
     {
         cout << "Failed to start RD Server..." << endl;
     }
-
-
 #endif
-    cout << "Conformance Simulator started successfully" << endl << endl;
+
+    cout << "Conformance Simulator started successfully" << endl;
+    cout << endl
 
     for (int i = 4; i < argc; i++)
     {
@@ -683,8 +683,6 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
-
 
 void onConnectRequestReceived(ESConnectRequest *connectRequest)
 {
