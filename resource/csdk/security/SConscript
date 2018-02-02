@@ -62,7 +62,7 @@ if target_os in ['windows', 'msys_nt']:
     libocsrm_env.AppendUnique(CCFLAGS=['/W4'])
 
 if libocsrm_env.get('SECURED') == '1':
-    if target_os in ['linux', 'android', 'tizen', 'msys_nt', 'windows']:
+    if target_os in ['linux', 'android', 'tizen', 'msys_nt', 'windows', 'ios']:
         SConscript('provisioning/SConscript', 'libocsrm_env')
 
     if target_os in ['linux', 'tizen', 'windows', 'darwin']:
