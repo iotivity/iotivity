@@ -963,7 +963,7 @@ static int setupCA()
     }
 
     /* Create a CA certificate */
-    res = OCGenerateCACertificate(
+    res = OCGenerateRootCACertificate(
         "C=US, O=Open Connectivity Foundation, CN=IoTivity test code CA",  // subject
         publicKey,
         NULL,               // Issuer private key is null
@@ -975,7 +975,7 @@ static int setupCA()
         &caCertLen);
     if (res != OC_STACK_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "OCGenerateCACertificate failed, error: %d", res);
+        OIC_LOG_V(ERROR, TAG, "OCGenerateRootCACertificate failed, error: %d", res);
         goto exit;
     }
 

@@ -89,6 +89,31 @@ extern "C"
         return; \
     } \
 
+/**
+ * Macro to verify an expression, goto exit: if not satisfied
+ *
+ * @param  log_tag    log tag
+ * @param  expr       Expression to verify.
+ * @param  msg        Message to log prior to exiting
+ * @param  log_level  logging level
+ *
+ * @note Invoking function must define "exit:" label for goto functionality to work correctly.
+ */
+#define VERIFY_SUCCESS_OR_EXIT(log_tag, expr, msg, log_level) do{ if (!(expr)) \
+    {OIC_LOG((log_level), (log_tag), (msg)); goto exit; } }while(0)
+
+
+/**
+ * Macro to verify an expression, or return
+ *
+ * @param  log_tag    log tag
+ * @param  expr       Expression to verify.
+ * @param  msg        Message to log prior to exiting
+ * @param  log_level  logging level
+ */
+#define VERIFY_SUCCESS_OR_RETURN(log_tag, expr, msg, log_level) do{ if (!(expr)) \
+    {OIC_LOG((log_level), (log_tag), (msg)); return; } }while(0)
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */

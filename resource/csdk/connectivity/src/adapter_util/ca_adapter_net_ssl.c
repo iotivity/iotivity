@@ -32,6 +32,7 @@
 #include "ca_adapter_net_ssl.h"
 #include "cacommon.h"
 #include "caipinterface.h"
+#include "cacertprofile.h"
 #include "oic_malloc.h"
 #include "experimental/ocrandom.h"
 #include "experimental/byte_array.h"
@@ -758,6 +759,19 @@ static int InitPKIX(CATransportAdapter_t adapter)
         OIC_LOG_V(WARNING, NET_SSL_TAG, "Own certificate chain parsing error: %d certs failed to parse", errNum);
         goto required;
     }
+
+    ret = ValidateAuthCertChainProfiles(&g_caSslContext->crt);
+    if (CP_INVALID_CERT_CHAIN == ret)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "Invalid own cert chain");
+        goto required;
+    }
+    else if (0 != ret)
+    {
+        OIC_LOG_V(ERROR, NET_SSL_TAG, "%d certificate(s) in own cert chain do not satisfy OCF profile requirements", ret);
+        goto required;
+    }
+
     ret =  mbedtls_pk_parse_key(&g_caSslContext->pkey, pkiInfo.key.data, pkiInfo.key.len,
                                                                                NULL, 0);
     if (0 != ret)
@@ -807,6 +821,24 @@ static int InitPKIX(CATransportAdapter_t adapter)
     if(0 != errNum)
     {
         OIC_LOG_V(WARNING, NET_SSL_TAG, "CA chain parsing warning: %d certs failed to parse", errNum);
+    }
+    else
+    {
+        ret = ValidateRootCACertListProfiles(&g_caSslContext->ca);
+        if (CP_INVALID_CERT_LIST == ret)
+        {
+            OIC_LOG(ERROR, NET_SSL_TAG, "Invalid own CA cert chain");
+            OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+            DeInitPkixInfo(&pkiInfo);
+            return -1;
+        }
+        else if (0 < ret )
+        {
+            OIC_LOG_V(ERROR, NET_SSL_TAG, "%d certificate(s) in own CA cert chain violate OCF Root CA cert profile requirements", ret);
+            OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+            DeInitPkixInfo(&pkiInfo);
+            return -1;
+        }
     }
 
     ret = mbedtls_x509_crl_parse_der(&g_caSslContext->crl, pkiInfo.crl.data, pkiInfo.crl.len);
@@ -2204,6 +2236,22 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
             mbedtls_x509_crt *peerCert = peer->ssl.session_negotiate->peer_cert;
             if (NULL != peerCert)
             {
+                ret = ValidateAuthCertChainProfiles(peerCert);
+                if (CP_INVALID_CERT_CHAIN == ret)
+                {
+                    oc_mutex_unlock(g_sslContextMutex);
+                    OIC_LOG(ERROR, NET_SSL_TAG, "Invalid peer cert chain");
+                    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+                    return CA_STATUS_FAILED;
+                }
+                else if (0 != ret)
+                {
+                    oc_mutex_unlock(g_sslContextMutex);
+                    OIC_LOG_V(ERROR, NET_SSL_TAG, "%d certificate(s) in peer cert chain do not satisfy OCF profile requirements", ret);
+                    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+                    return CA_STATUS_FAILED;
+                }
+
                 ret = PeerCertExtractCN(peerCert);
                 if (CA_STATUS_OK != ret)
                 {

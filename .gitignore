@@ -67,6 +67,9 @@ proguard-project.txt
 *.iml
 .idea
 
+# Ignore Project files for VS Code
+.vscode/
+
 # Ignore CTags default data
 tags
 

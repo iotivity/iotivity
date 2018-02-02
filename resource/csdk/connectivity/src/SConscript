@@ -49,7 +49,10 @@ connectivity_env.SConscript(root_dir + '/common/SConscript',
 connectivity_env.SConscript(root_dir + '/util/SConscript',
                             exports='connectivity_env')
 
-src_files = [File('adapter_util/caadapterutils.c'),]
+src_files = [File(src) for src in (
+    'adapter_util/caadapterutils.c',
+    'adapter_util/cacertprofile.c'
+)]
 
 if (('BLE' in ca_transport) or ('ALL' in ca_transport)):
     src_files.append(File('adapter_util/cafragmentation.c'))

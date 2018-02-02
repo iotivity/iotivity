@@ -53,6 +53,8 @@ catest_env.PrependUnique(CPPPATH=[
     '#/resource/csdk/include',
     '#/resource/csdk/stack/include',
     '#/resource/oc_logger/include',
+    '#/resource/csdk/security/include',
+    '#/resource/c_common/ocrandom/include/experimental',
 ])
 
 catest_env.PrependUnique(LIBS=['coap'])
@@ -109,6 +111,9 @@ if 'IP' in target_transport or 'ALL' in target_transport:
 
 if catest_env.get('SECURED') == '1' and catest_env.get('WITH_TCP') == True:
     tests_src.append('ssladapter_test.cpp')
+
+if catest_env.get('SECURED') == '1':
+    tests_src.append('cacertprofiletest.cpp')
 
 catests = catest_env.Program('catests', tests_src)
 

@@ -63,6 +63,14 @@ struct OicParseQueryIter
             {OIC_LOG((logLevel), tag, #op " failed!!"); goto exit; } }while(0)
 
 /**
+ * Macro to verify a conditional, if fails, log supplied message and goto exit
+ * eg: VERIFY_SUCCESS_OR_LOG_AND_EXIT(TAG, OC_STACK_OK == foo(), ERROR);
+ * @note Invoking function must define "exit:" label for goto functionality to work correctly.
+ */
+#define VERIFY_OR_LOG_AND_EXIT(tag, op, msg, logLevel) do{ if (!(op)) \
+            {OIC_LOG((logLevel), tag, msg); goto exit; } }while(0)
+
+/**
  * Macro to verify expression evaluates to bool true.
  * eg: VERIFY_TRUE_OR_EXIT(TAG, OC_STACK_OK == foo(), ERROR);
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
@@ -92,6 +100,15 @@ struct OicParseQueryIter
  */
 #define VERIFY_NOT_NULL_RETURN(tag, arg, logLevel, retValue) do { if (NULL == (arg)) \
             { OIC_LOG((logLevel), tag, #arg " is NULL"); return retValue; } } while(0)
+
+/**
+ * Macro to log an mbedtls error
+ * For mbedtls functions that return 0 as non-error
+ * @note Invoker must provide message buffer, and must include "mbedtls/error.h"
+ */
+#define LOG_MBED_ERROR(tag, ret, buf, bufSize, logLevel) do{ if (0!=(ret)) { \
+    mbedtls_strerror((ret), (buf), (bufSize));                               \
+    OIC_LOG_V((logLevel), (tag), "mbedtls error:  %s", (buf)); } }while(0)
 
 /**
  * This method initializes the @ref OicParseQueryIter_t struct.
