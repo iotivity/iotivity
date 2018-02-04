@@ -56,7 +56,6 @@ os.chdir(mbedtls_dir)
 if os.path.exists('.git/HEAD'):
     out = subprocess.check_output('git tag -l ' + mbedtls_revision, shell=True).rstrip()
     if mbedtls_revision not in SCons.Util.to_String(out):
-        print(out)
         msg = '''
 *********************************** Error: ************************************
 * Your mbedTLS repo is not up to date with the version required by iotivity.
@@ -95,14 +94,16 @@ if not found:
         # Apply ocf patch on git revision
         print("Syncing/patching mbedtls external project...")
         cmd = 'git checkout -f development && git reset --hard ' + mbedtls_revision + ' && git clean -f && git apply --whitespace=fix ../ocf.patch'
-        res = os.system(cmd)
     else:
         # Fallback to regular patch command
         cmd = 'patch -p1 -l -f < ../ocf.patch'
-        res = os.system(cmd)
-    if 0 != res:
-        raise SCons.Errors.StopError(
-            'mbedtls: issue on applying patch: %d' % res)
+
+    try:
+        retcode = subprocess.call(cmd, shell=True)
+        if retcode:
+            Exit("mbedtls: sync failed: " + str(retcode))
+    except OSError as e:
+        Exit("mbedtls: execution failed: " + e)
 
 os.chdir(start_dir)
 
