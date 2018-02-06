@@ -573,6 +573,7 @@ bool OC_CALL PMGenerateQuery(bool isSecure,
     {
         case CT_ADAPTER_TCP:
             prefix = (isSecure == true) ? COAPS_TCP_PREFIX : COAP_TCP_PREFIX;
+            /* fall through */
         case CT_ADAPTER_IP:
             switch(connType & CT_MASK_FLAGS & ~CT_FLAG_SECURE)
             {

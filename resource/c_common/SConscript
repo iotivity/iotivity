@@ -211,7 +211,7 @@ common_env.UserInstallTargetHeader(
 common_env.UserInstallTargetHeader(
     'iotivity_debug.h', 'c_common', 'iotivity_debug.h')
 common_env.UserInstallTargetHeader(
-    'ocrandom/include/experimental/ocrandom.h', 
+    'ocrandom/include/experimental/ocrandom.h',
     'c_common/experimental', 'ocrandom.h')
 common_env.UserInstallTargetHeader(
     'platform_features.h', 'c_common', 'platform_features.h')
