@@ -273,7 +273,7 @@ static void *CHPParserExecuteMultiHandle(void* data)
                     char *contentType = NULL;
                     long responseCode;
 
-                    curl_easy_getinfo(easyHandle, CURLINFO_PRIVATE, &ptr);
+                    curl_easy_getinfo(easyHandle, CURLINFO_PRIVATE, (char**)&ptr);
                     curl_easy_getinfo(easyHandle, CURLINFO_EFFECTIVE_URL, &uri);
                     curl_easy_getinfo(easyHandle, CURLINFO_RESPONSE_CODE, &responseCode);
                     curl_easy_getinfo(easyHandle, CURLINFO_CONTENT_TYPE, &contentType);

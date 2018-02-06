@@ -129,7 +129,7 @@ if target_os in ['linux', 'tizen', 'android']:
 
 # Remove -Werror build flag when building the 'coap' library  it
 # is external code. see IOT-2539
-while '-Werror' in libcoap_env['CFLAGS']: libcoap_env['CFLAGS'].remove('-Werror')
+while '-Werror' in libcoap_env['CCFLAGS']: libcoap_env['CCFLAGS'].remove('-Werror')
 
 ######################################################################
 # Source files and Target(s)

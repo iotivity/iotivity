@@ -59,7 +59,7 @@ if LooseVersion(gcc_ver) < LooseVersion('5.0'):
     env.AppendUnique(CCFLAGS=['-Wno-missing-braces'])
 
 if env.get('ERROR_ON_WARN'):
-    env.AppendUnique(CFLAGS=['-Werror'])
+    env.AppendUnique(CCFLAGS=['-Werror'])
 
 # Set arch flags that match best TARGET_ARCH variable
 if not env.get('WITH_ENV'):

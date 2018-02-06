@@ -379,6 +379,7 @@ void processUserInput(int resourceNo, int testCase)
                 OIC_LOG(ERROR, TAG, "Error creating payload. Not sending POST request");
                 promptUser = true;
             }
+            break;
         }
 
         case TEST_OBSERVE:
