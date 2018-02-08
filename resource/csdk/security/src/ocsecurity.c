@@ -73,7 +73,11 @@ static bool GenerateQuery(bool isSecure,
     {
     case CT_ADAPTER_TCP:
         prefix = (isSecure == true) ? COAPS_TCP_PREFIX : COAP_TCP_PREFIX;
-        /* Fall-through to the IP adapter case instead of break here */
+        /*
+         * Fall-through to the IP adapter case instead of break here next
+         * words placed on its own line to satisfy gcc implicit-fallthrough warning
+         */
+        /* fall through */
     case CT_ADAPTER_IP:
         switch (connType & CT_MASK_FLAGS & ~CT_FLAG_SECURE)
         {

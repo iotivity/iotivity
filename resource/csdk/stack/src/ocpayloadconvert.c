@@ -110,7 +110,7 @@ OCStackResult OCConvertPayload(OCPayload* payload, OCPayloadFormat format,
         VERIFY_PARAM_NON_NULL(TAG, out, "Failed to allocate payload");
         err = OCConvertPayloadHelper(payload, format, out, &curSize);
 
-        if (CborErrorOutOfMemory != err)
+        if ((CborErrorOutOfMemory & err) == 0)
         {
             break;
         }
@@ -171,7 +171,7 @@ static int64_t OCConvertPayloadHelper(OCPayload* payload, OCPayloadFormat format
 
 static int64_t checkError(int64_t err, CborEncoder* encoder, uint8_t* outPayload, size_t* size)
 {
-    if (err == CborErrorOutOfMemory)
+    if (err & CborErrorOutOfMemory)
     {
         *size += cbor_encoder_get_extra_bytes_needed(encoder);
         return err;
@@ -1049,7 +1049,7 @@ static int64_t AddTextStringToMap(CborEncoder* map, const char* key, size_t keyl
         return CborErrorInvalidUtf8TextString;
     }
     int64_t err = cbor_encode_text_string(map, key, keylen);
-    if (CborNoError != err)
+    if (CborNoError != err && CborErrorOutOfMemory != err)
     {
         return err;
     }
