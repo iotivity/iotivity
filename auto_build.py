@@ -534,6 +534,11 @@ def build_simulator(flag, extra_option_str):
     call_scons(build_options, extra_option_str)
 
 def unit_tests():
+    ''' build unsecured and secured, running unit tests for both.
+    This option is used by the CI system, which is a virtual machine -
+    thus it should be built with only the IP transport to avoid timeouts
+    setting up infrastructure that is not present (i.e. BT and NFC)
+    '''
     print ("*********** Unit test Start *************")
     build_options = {
                         'RELEASE':'false',
@@ -545,14 +550,16 @@ def unit_tests():
                         'TEST':1,
                         'RELEASE':'false',
                         'SECURED':0,
+                        'TARGET_TRANSPORT':'IP',
                     }
     extra_option_str = ""
     call_scons(build_options, extra_option_str)
 
     build_options = {
                         'TEST':1,
-                        'SECURED':1,
                         'RELEASE':'false',
+                        'SECURED':1,
+                        'TARGET_TRANSPORT':'IP',
                     }
     call_scons(build_options, extra_option_str)
 
