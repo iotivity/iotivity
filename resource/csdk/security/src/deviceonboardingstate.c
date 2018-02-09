@@ -92,7 +92,7 @@ static bool IsValidStateTransition(OicSecDeviceOnboardingState_t oldState,
 /**
  * @return true if Device meets requirements to enter RFNOP DOS.
  */
-static bool IsReadyToEnterRFNOP()
+static bool IsReadyToEnterRFNOP(void)
 {
     bool ret = false;
     bool tempBool = false;
@@ -137,7 +137,7 @@ exit:
 /**
  * @return true if Device meets requirements to enter RFOTM DOS.
  */
-static bool IsReadyToEnterRFOTM()
+static bool IsReadyToEnterRFOTM(void)
 {
     bool ret = false;
 
@@ -165,7 +165,7 @@ exit:
 /**
  * @return true if Device meets requirements to enter RFPRO DOS.
  */
-static bool IsReadyToEnterRFPRO()
+static bool IsReadyToEnterRFPRO(void)
 {
     bool ret = false;
 
@@ -204,7 +204,7 @@ exit:
 /**
  * @return true if Device meets requirements to set pstat.dos.s = SRESET.
  */
-static bool IsReadyToEnterSRESET()
+static bool IsReadyToEnterSRESET(void)
 {
     bool ret = false;
 
@@ -301,7 +301,7 @@ exit:
 /**
  * Enter RFNOP state and set all Server-controlled SVR Property values.
  */
-static bool EnterRFNOP()
+static bool EnterRFNOP(void)
 {
     bool ret = false;
 
@@ -318,7 +318,7 @@ static bool EnterRFNOP()
 /**
  * Enter RFOTM state and set all Server-controlled SVR Property values.
  */
-static bool EnterRFOTM()
+static bool EnterRFOTM(void)
 {
     bool ret = false;
 
@@ -335,7 +335,7 @@ static bool EnterRFOTM()
 /**
  * Enter RFPRO state and set all Server-controlled SVR Property values.
  */
-static bool EnterRFPRO()
+static bool EnterRFPRO(void)
 {
     bool ret = false;
 
@@ -352,7 +352,7 @@ static bool EnterRFPRO()
 /**
  * Enter RESET state and set all Server-controlled SVR Property values.
  */
-static bool EnterRESET()
+static bool EnterRESET(void)
 {
     bool ret = false;
 
@@ -415,7 +415,7 @@ exit:
 /**
  * Enter SRESET state and set all Server-controlled SVR Property values.
  */
-static bool EnterSRESET()
+static bool EnterSRESET(void)
 {
     bool ret = false;
 

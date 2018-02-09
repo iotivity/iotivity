@@ -504,7 +504,7 @@ static OCStackResult GenerateDefaultDbPath(const char *cwd, char *path, size_t p
     return OC_STACK_OK;
 }
 
-int main()
+int main(void)
 {
     struct timespec timeout;
 

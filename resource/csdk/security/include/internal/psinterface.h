@@ -58,7 +58,7 @@ OCStackResult UpdateResourceInPS(const char *databaseName, const char *resourceN
  *
  * @return char * reference to memory buffer containing SVR database.
  */
-char * GetSVRDatabase();
+char * GetSVRDatabase(void);
 
 /**
  * Reads the Secure Virtual Database from PS

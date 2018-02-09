@@ -88,12 +88,12 @@ OCStackResult OC_CALL OCInitPM(const char* dbPath)
  *
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OC_CALL OCClosePM()
+OCStackResult OC_CALL OCClosePM(void)
 {
     return PDMClose();
 }
 
-OCStackResult OC_CALL OCPDMCleanupForTimeout()
+OCStackResult OC_CALL OCPDMCleanupForTimeout(void)
 {
     return PDMDeleteDeviceWithState(PDM_DEVICE_INIT);
 }

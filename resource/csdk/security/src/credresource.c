@@ -608,7 +608,7 @@ CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value)
 }
 
 /* Produce debugging output for all credentials, output metadata. */
-static void logCredMetadata()
+static void logCredMetadata(void)
 {
 #if defined(TB_LOG)
     OicSecCred_t * temp = NULL;
@@ -1581,7 +1581,7 @@ static int CmpCredId(const OicSecCred_t * first, const OicSecCred_t *second)
  *
  * @return next available credId if successful, else 0 for error.
  */
-static uint16_t GetCredId()
+static uint16_t GetCredId(void)
 {
     //Sorts credential list in incremental order of credId
     /** @todo: Remove pragma for VS2013 warning; Investigate fixing LL_SORT macro */
@@ -1619,7 +1619,7 @@ exit:
  *
  * @return  NULL for now.
  */
-static OicSecCred_t* GetCredDefault()
+static OicSecCred_t* GetCredDefault(void)
 {
     // TODO:Update it when we finalize the default info.
     return NULL;
@@ -1925,7 +1925,7 @@ exit:
  *     OC_STACK_OK              - no errors
  *     OC_STACK_ERROR           - stack process error
  */
-static OCStackResult RemoveAllCredentials()
+static OCStackResult RemoveAllCredentials(void)
 {
     DeleteCredList(gCred);
     gCred = GetCredDefault();
@@ -2538,7 +2538,7 @@ OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
     return ret;
 }
 
-OCStackResult CreateCredResource()
+OCStackResult CreateCredResource(void)
 {
     OCStackResult ret = OCCreateResource(&gCredHandle,
                                          OIC_RSRC_TYPE_SEC_CRED,
@@ -2557,7 +2557,7 @@ OCStackResult CreateCredResource()
     return ret;
 }
 
-OCStackResult InitCredResource()
+OCStackResult InitCredResource(void)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecCred_t* cred = NULL;
@@ -2689,7 +2689,7 @@ exit:
     return ret;
 }
 
-OCStackResult DeInitCredResource()
+OCStackResult DeInitCredResource(void)
 {
     OCStackResult result = OCDeleteResource(gCredHandle);
     DeleteCredList(gCred);
@@ -2716,7 +2716,7 @@ OicSecCred_t* GetCredResourceData(const OicUuid_t* subject)
     return NULL;
 }
 
-const OicSecCred_t* GetCredList()
+const OicSecCred_t* GetCredList(void)
 {
     return gCred;
 }

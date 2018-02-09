@@ -54,7 +54,7 @@ typedef enum CredModifyType
     CRED_EDIT_ROWNERUUID = 3,
 } CredModifyType_t;
 
-void RefreshCred()
+void RefreshCred(void)
 {
     uint8_t *secPayload = NULL;
     size_t payloadSize = 0;

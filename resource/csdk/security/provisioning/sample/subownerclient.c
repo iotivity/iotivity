@@ -266,7 +266,7 @@ static int discoverMotSupportedDevices(void)
     return 0;
 }
 
-static int discoverSubOwnerDevices()
+static int discoverSubOwnerDevices(void)
 {
     // delete un/owned device lists before updating them
     if(g_mowned_list)
@@ -349,7 +349,7 @@ static int multipleOwnershipTransfer(void)
     return 0;
 }
 
-static int sendGetLed()
+static int sendGetLed(void)
 {
     int selDevNum;
     char query[256] = {0};
@@ -408,7 +408,7 @@ static int sendGetLed()
     return 0;
 }
 
-static int sendPutLed()
+static int sendPutLed(void)
 {
     int selDevNum;
     char query[256] = {0};
@@ -560,7 +560,7 @@ CRACL_ERROR:
     return NULL;
 }
 
-static int provisionAclForLed()
+static int provisionAclForLed(void)
 {
     OicSecAcl_t* acl = NULL;
 
@@ -866,7 +866,7 @@ static void printMenu(void)
 }
 
 // main function for provisioning client using C-level provisioning API
-int main()
+int main(void)
 {
     // initialize provisioning client
     if(initProvisionClient())

@@ -130,13 +130,13 @@ void OC_CALL SetClosePinDisplayCB(ClosePinDisplayCallback closeCB);
  * @deprecated Use UnsetInputPinWithContextCB instead.
  *
  */
-void OC_CALL UnsetInputPinCB();
+void OC_CALL UnsetInputPinCB(void);
 
 /**
  * Function to unset the input PIN callback.
  * NOTE : Do not call this function while PIN based ownership transfer is in progress.
  */
-void OC_CALL UnsetInputPinWithContextCB();
+void OC_CALL UnsetInputPinWithContextCB(void);
 
 /**
  * Function to unset the PIN generation callback.
@@ -145,19 +145,19 @@ void OC_CALL UnsetInputPinWithContextCB();
  * @deprecated Use UnsetDisplayPinWithContextCB instead.
  *
  */
-void OC_CALL UnsetGeneratePinCB();
+void OC_CALL UnsetGeneratePinCB(void);
 
 /**
  * Function to unset the PIN display callback.
  * NOTE : Do not call this function while PIN based ownership transfer is in progress.
  */
-void OC_CALL UnsetDisplayPinWithContextCB();
+void OC_CALL UnsetDisplayPinWithContextCB(void);
 
 /**
  * Function to unset the PIN close callback.
  * NOTE : Do not call this function while PIN based ownership transfer is in progress.
  */
-void OC_CALL UnsetClosePinCB();
+void OC_CALL UnsetClosePinCB(void);
 
 /**
  * Function to generate a random PIN.
@@ -187,7 +187,7 @@ OCStackResult InputPin(OicUuid_t deviceId, char* pinBuffer, size_t bufferSize);
 /**
  * Function to invoke the callback for close a PIN display.
  */
-void ClosePinDisplay();
+void ClosePinDisplay(void);
 
 
 #ifdef MULTIPLE_OWNER

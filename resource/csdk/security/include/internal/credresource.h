@@ -37,7 +37,7 @@ extern "C" {
  * @return ::OC_STACK_OK, if initialization is successful, else ::OC_STACK_ERROR if
  * initialization fails.
  */
-OCStackResult InitCredResource();
+OCStackResult InitCredResource(void);
 
 /**
  * Perform cleanup for credential resources.
@@ -46,7 +46,7 @@ OCStackResult InitCredResource();
  * ::OC_STACK_NO_RESOURCE, if resource not found.
  * ::OC_STACK_INVALID_PARAM, if invalid param.
  */
-OCStackResult DeInitCredResource();
+OCStackResult DeInitCredResource(void);
 
 /**
  * Log current server cred resource
@@ -208,7 +208,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
  *
  * @return instance of @ref OicSecCred_t
  */
-const OicSecCred_t* GetCredList();
+const OicSecCred_t* GetCredList(void);
 
 /**
  * Function to deallocate allocated memory to OicSecCred_t.

@@ -485,7 +485,7 @@ exit:
     }
 }
 
-int main()
+int main(void)
 {
     for (;;)
     {

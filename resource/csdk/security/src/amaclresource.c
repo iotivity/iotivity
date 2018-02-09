@@ -461,7 +461,7 @@ static OCEntityHandlerResult AmaclEntityHandler (OCEntityHandlerFlag flag,
 /**
  * This internal method is used to create '/oic/sec/amacl' resource.
  */
-static OCStackResult CreateAmaclResource()
+static OCStackResult CreateAmaclResource(void)
 {
     OCStackResult ret = OCCreateResource(&gAmaclHandle,
                                          OIC_RSRC_TYPE_SEC_AMACL,
@@ -481,7 +481,7 @@ static OCStackResult CreateAmaclResource()
     return ret;
 }
 
-OCStackResult InitAmaclResource()
+OCStackResult InitAmaclResource(void)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
@@ -515,7 +515,7 @@ OCStackResult InitAmaclResource()
     return ret;
 }
 
-void DeInitAmaclResource()
+void DeInitAmaclResource(void)
 {
     OCDeleteResource(gAmaclHandle);
     gAmaclHandle = NULL;

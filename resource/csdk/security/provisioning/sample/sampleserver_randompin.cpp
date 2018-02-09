@@ -484,7 +484,7 @@ void OC_CALL ClosePinDisplayCB(void)
     OIC_LOG(INFO, TAG, "============================");
 }
 
-int main()
+int main(void)
 {
     OIC_LOG(DEBUG, TAG, "OCServer is starting...");
 

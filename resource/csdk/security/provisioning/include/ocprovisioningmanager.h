@@ -54,7 +54,7 @@ OCStackResult OC_CALL OCInitPM(const char* dbPath);
  *
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OC_CALL OCClosePM();
+OCStackResult OC_CALL OCClosePM(void);
 
 /**
  * API to cleanup PDM in case of timeout.
@@ -62,7 +62,7 @@ OCStackResult OC_CALL OCClosePM();
  *
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OC_CALL OCPDMCleanupForTimeout();
+OCStackResult OC_CALL OCPDMCleanupForTimeout(void);
 
 /**
  * The function is responsible for discovery of owned/unowned device is specified endpoint/deviceID.

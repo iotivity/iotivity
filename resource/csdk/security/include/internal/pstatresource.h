@@ -41,7 +41,7 @@ typedef enum {
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult InitPstatResource();
+OCStackResult InitPstatResource(void);
 
 /**
  * Load just the default pstat into gPstat, so that other functions
@@ -51,14 +51,14 @@ OCStackResult InitPstatResource();
  *
  * @return ::OC_STACK_OK for Success, otherwise ::OC_STACK_ERROR.
  */
-OCStackResult InitPstatResourceToDefault();
+OCStackResult InitPstatResourceToDefault(void);
 
 /**
  * Perform cleanup for Pstat resources.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult DeInitPstatResource();
+OCStackResult DeInitPstatResource(void);
 
 /**
  * Converts PSTAT into the cbor payload, including only the

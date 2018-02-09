@@ -202,36 +202,36 @@ void OC_CALL SetClosePinDisplayCB(ClosePinDisplayCallback closeCB)
     g_displayPinCallbacks.closePinDisplayCallback = closeCB;
 }
 
-void OC_CALL UnsetInputPinCB()
+void OC_CALL UnsetInputPinCB(void)
 {
     UnsetInputPinWithContextCB();
 }
 
-void OC_CALL UnsetInputPinWithContextCB()
+void OC_CALL UnsetInputPinWithContextCB(void)
 {
     g_inputPinCallbacks.callback = NULL;
     g_inputPinCallbacks.contextCallback = NULL;
     g_inputPinCallbacks.context = NULL;
 }
 
-void OC_CALL UnsetGeneratePinCB()
+void OC_CALL UnsetGeneratePinCB(void)
 {
     UnsetDisplayPinWithContextCB();
 }
 
-void OC_CALL UnsetDisplayPinWithContextCB()
+void OC_CALL UnsetDisplayPinWithContextCB(void)
 {
     g_displayPinCallbacks.callback = NULL;
     g_displayPinCallbacks.contextCallback = NULL;
     g_displayPinCallbacks.context = NULL;
 }
 
-void OC_CALL UnsetClosePinDisplayCB()
+void OC_CALL UnsetClosePinDisplayCB(void)
 {
     g_displayPinCallbacks.closePinDisplayCallback = NULL;
 }
 
-void ClosePinDisplay()
+void ClosePinDisplay(void)
 {
     if (g_displayPinCallbacks.closePinDisplayCallback)
     {

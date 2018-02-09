@@ -473,7 +473,7 @@ static OCEntityHandlerResult CredCsrEntityHandler(OCEntityHandlerFlag flag,
     return ret;
 }
 
-OCStackResult InitCSRResource()
+OCStackResult InitCSRResource(void)
 {
     OCStackResult ret = OCCreateResource(&gCsrHandle,
         OIC_RSRC_TYPE_SEC_CSR,
@@ -492,7 +492,7 @@ OCStackResult InitCSRResource()
     return ret;
 }
 
-OCStackResult DeInitCSRResource()
+OCStackResult DeInitCSRResource(void)
 {
     OCStackResult res = OCDeleteResource(gCsrHandle);
 

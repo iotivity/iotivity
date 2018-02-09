@@ -986,7 +986,7 @@ static int provisionCred(void)
  *
  *   The CA's key and cert are written to g_caKeyPem and g_caCertPem (resp.).
  */
-static int setupCA()
+static int setupCA(void)
 {
     char* publicKey = NULL;
     size_t publicKeyLen = 0;
@@ -2361,7 +2361,7 @@ static int selectMultipleOwnershipTrnasferMethod(void)
     return 0;
 }
 
-static int provisionPreconfigPIN()
+static int provisionPreconfigPIN(void)
 {
     // check |own_list| for removing device
     if(!g_mot_enable_list || 1>g_mot_enable_cnt)
@@ -3078,7 +3078,7 @@ static void selectSecureProtocol(void)
 }
 #endif
 
-static void selectVerifMethod()
+static void selectVerifMethod(void)
 {
     int option;
     printf("   Select verification method for ownership transfer\n");
@@ -3192,7 +3192,7 @@ static void printUsage(void)
 #endif
 
 // main function for provisioning client using C-level provisioning API
-int main()
+int main(void)
 {
     // initialize provisioning client
     if(initProvisionClient())

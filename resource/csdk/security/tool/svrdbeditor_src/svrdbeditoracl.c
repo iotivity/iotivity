@@ -560,7 +560,7 @@ static uint16_t InputAccessPermission(void)
     return pmsn;
 }
 
-static uint16_t generateAceid()
+static uint16_t generateAceid(void)
 {
     bool usedId[ACE_MAX_ENTITY + 1] = {false/*unused*/, false};
     uint16_t cand = ACE_MAX_ENTITY + 1;

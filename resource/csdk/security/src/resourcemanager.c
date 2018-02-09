@@ -146,7 +146,7 @@ OCStackResult DestroySecureResources( )
     return OC_STACK_OK;
 }
 
-OCStackResult ResetSecureResources()
+OCStackResult ResetSecureResources(void)
 {
     OCStackResult ret = OC_STACK_ERROR;
 

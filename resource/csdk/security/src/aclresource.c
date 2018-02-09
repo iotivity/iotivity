@@ -3258,7 +3258,7 @@ OCEntityHandlerResult ACL2EntityHandler(OCEntityHandlerFlag flag, OCEntityHandle
 /**
  * This internal method is used to create the '/oic/sec/acl' and '/oic/sec/acl2' resources.
  */
-static OCStackResult CreateACLResource()
+static OCStackResult CreateACLResource(void)
 {
     OCStackResult ret;
 
@@ -3466,7 +3466,7 @@ exit:
     return ret;
 }
 
-OCStackResult InitACLResource()
+OCStackResult InitACLResource(void)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
@@ -3516,7 +3516,7 @@ exit:
     return ret;
 }
 
-OCStackResult DeInitACLResource()
+OCStackResult DeInitACLResource(void)
 {
     OCStackResult ret =  OCDeleteResource(gAclHandle);
     gAclHandle = NULL;
@@ -3834,7 +3834,7 @@ OCStackResult InstallACL(const OicSecAcl_t* acl)
  *
  * @return Default ACE for security resource.
  */
-static OicSecAce_t* GetSecDefaultACE()
+static OicSecAce_t* GetSecDefaultACE(void)
 {
     const int NUM_OF_DOXM_RT = 1;
     const int NUM_OF_DOXM_IF  = 1;
@@ -3935,7 +3935,7 @@ exit:
 
 }
 
-OCStackResult UpdateDefaultSecProvACE()
+OCStackResult UpdateDefaultSecProvACE(void)
 {
     OCStackResult ret = OC_STACK_OK;
     OicSecAce_t *ace = NULL;

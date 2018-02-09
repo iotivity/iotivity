@@ -43,7 +43,7 @@ OCStackResult UpdateCRLResource(OicSecCrl_t *crl);
  *
  * @return NULL if error occured (e.g. CRL did not set).
  */
-uint8_t* GetCrl();
+uint8_t* GetCrl(void);
 
 /**
  * This function get encoded with DER CRL from SRM.
@@ -87,21 +87,21 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult InitCRLResource();
+OCStackResult InitCRLResource(void);
 
 /**
  * Perform cleanup for CRL resources.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult DeInitCRLResource();
+OCStackResult DeInitCRLResource(void);
 
 /**
  * Get an instance of CRL resource.
  *
  * @return reference to the OicSecCrl_t, holding reference to CRL resource.
  */
-OicSecCrl_t *GetCRLResource();
+OicSecCrl_t *GetCRLResource(void);
 
 /**
  * This function frees resources inside given OicSecCrl_t object

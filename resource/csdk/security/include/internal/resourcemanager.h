@@ -34,14 +34,14 @@ extern "C" {
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult InitSecureResources();
+OCStackResult InitSecureResources(void);
 
 /**
  * Perform cleanup for secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult DestroySecureResources();
+OCStackResult DestroySecureResources(void);
 
 /**
  * Reset SVRs to backup values kept in persistent storage.  These backup values
@@ -50,7 +50,7 @@ OCStackResult DestroySecureResources();
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult ResetSecureResources();
+OCStackResult ResetSecureResources(void);
 
 /**
  * This method is used by all secure resource modules to send responses to REST queries.

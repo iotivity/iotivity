@@ -1685,7 +1685,7 @@ OCEntityHandlerResult DoxmEntityHandler(OCEntityHandlerFlag flag,
     return ehRet;
 }
 
-OCStackResult CreateDoxmResource()
+OCStackResult CreateDoxmResource(void)
 {
     OCStackResult ret = OCCreateResource(&gDoxmHandle,
                                          OIC_RSRC_TYPE_SEC_DOXM,
@@ -1709,7 +1709,7 @@ OCStackResult CreateDoxmResource()
  * If DeviceID is NULL then generates the new DeviceID.
  * Once DeviceID is assigned to the device it does not change for the lifetime of the device.
  */
-static OCStackResult CheckDeviceID()
+static OCStackResult CheckDeviceID(void)
 {
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
@@ -1810,13 +1810,13 @@ static OCStackResult CheckDeviceID()
  *
  * @return the default value of doxm, @ref OicSecDoxm_t.
  */
-static OicSecDoxm_t* GetDoxmDefault()
+static OicSecDoxm_t* GetDoxmDefault(void)
 {
     OIC_LOG(DEBUG, TAG, "GetDoxmToDefault");
     return &gDefaultDoxm;
 }
 
-const OicSecDoxm_t* GetDoxmResourceData()
+const OicSecDoxm_t* GetDoxmResourceData(void)
 {
     return gDoxm;
 }
@@ -1870,7 +1870,7 @@ exit:
 }
 #endif //defined(__WITH_DTLS__) && defined(MULTIPLE_OWNER)
 
-OCStackResult InitDoxmResource()
+OCStackResult InitDoxmResource(void)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
@@ -1939,7 +1939,7 @@ OCStackResult InitDoxmResource()
     return ret;
 }
 
-OCStackResult DeInitDoxmResource()
+OCStackResult DeInitDoxmResource(void)
 {
     OCStackResult ret = OCDeleteResource(gDoxmHandle);
     if (gDoxm  != &gDefaultDoxm)

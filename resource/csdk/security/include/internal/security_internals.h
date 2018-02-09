@@ -67,7 +67,7 @@ void DeleteSVCList(OicSecSvc_t* svc);
 /**
  * Create PSTAT resource after default PSTAT initialization is done.
  */
-OCStackResult CreatePstatResource();
+OCStackResult CreatePstatResource(void);
 
 /**
  * Create SP resource after default SP initialization is done.
@@ -113,7 +113,7 @@ OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
 /**
  * This internal method is used to create '/oic/sec/Cred' resource.
  */
-OCStackResult CreateCredResource();
+OCStackResult CreateCredResource(void);
 
 /**
  * This function converts from CBOR format into credential structure .
@@ -132,7 +132,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
 /**
  * This internal method is used to create '/oic/sec/doxm' resource.
  */
-OCStackResult CreateDoxmResource();
+OCStackResult CreateDoxmResource(void);
 
 /**
  * This internal method is the entity handler for DOXM resources.

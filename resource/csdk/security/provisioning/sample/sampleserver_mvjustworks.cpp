@@ -464,7 +464,7 @@ FILE* server_fopen(const char *path, const char *mode)
     }
 }
 
-int main()
+int main(void)
 {
     struct timespec timeout;
 
