@@ -146,10 +146,18 @@ find $OUTDIR/objs -name "*.o" | xargs rm
 
 echo "Framework: Copying includes..."
 cp -r  resource/include/*.h  $FRAMEWORK_BUNDLE/Headers
+cp -r  resource/include/*.hpp  $FRAMEWORK_BUNDLE/Headers
 cp -r  resource/oc_logger/include/*.h  $FRAMEWORK_BUNDLE/Headers
 cp -r  resource/oc_logger/include/*.hpp  $FRAMEWORK_BUNDLE/Headers
 cp -r  resource/csdk/stack/include/*.h  $FRAMEWORK_BUNDLE/Headers
 cp -r  resource/csdk/include/*.h  $FRAMEWORK_BUNDLE/Headers
+cp -r  resource/csdk/connectivity/api/*.h  $FRAMEWORK_BUNDLE/Headers
+cp -r  resource/csdk/security/include/*.h  $FRAMEWORK_BUNDLE/Headers
+cp -r  resource/csdk/security/include/experimental/*.h  $FRAMEWORK_BUNDLE/Headers
+cp -r  resource/csdk/security/include/internal/*.h  $FRAMEWORK_BUNDLE/Headers
+cp -r  resource/csdk/security/provisioning/include/*.h  $FRAMEWORK_BUNDLE/Headers
+cp -r  resource/csdk/security/provisioning/include/internal/*.h  $FRAMEWORK_BUNDLE/Headers
+cp -r  resource/c_common/experimental/*.h  $FRAMEWORK_BUNDLE/Headers
 cp -r  resource/c_common/*.h  $FRAMEWORK_BUNDLE/Headers
 cp -r  resource/csdk/resource-directory/include/*.h  $FRAMEWORK_BUNDLE/Headers
 cp -r  resource/oc_logger/include/targets/oc_ostream_logger.h  $FRAMEWORK_BUNDLE/Headers
