@@ -60,6 +60,7 @@ public class CloudInterfaceServer {
     private static int          resourceDirectoryPort;
     private static String       accountServerAddress;
     private static int          accountServerPort;
+    private static boolean      messageQueueEnabled;
     private static String       messageQueueAddress;
     private static int          messageQueuePort;
 
@@ -84,9 +85,12 @@ public class CloudInterfaceServer {
         ConnectorPool.requestConnection("account",
                 new InetSocketAddress(accountServerAddress, accountServerPort),
                 tlsMode, keepAlive);
-        ConnectorPool.requestConnection("mq",
-                new InetSocketAddress(messageQueueAddress, messageQueuePort),
-                tlsMode, keepAlive);
+
+        if(messageQueueEnabled) {
+            ConnectorPool.requestConnection("mq",
+                    new InetSocketAddress(messageQueueAddress, messageQueuePort),
+                    tlsMode, keepAlive);
+        }
 
         DeviceServerSystem deviceServer = new DeviceServerSystem();
 
@@ -193,8 +197,6 @@ public class CloudInterfaceServer {
             resourceDirectoryPort = Integer.parseInt(System.getenv("RESOURCE_DIRECTORY_PORT"));
             accountServerAddress = System.getenv("ACCOUNT_SERVER_ADDRESS");
             accountServerPort = Integer.parseInt(System.getenv("ACCOUNT_SERVER_PORT"));
-            messageQueueAddress = System.getenv("MESSAGE_QUEUE_ADDRESS");
-            messageQueuePort = Integer.parseInt(System.getenv("MESSAGE_QUEUE_PORT"));
             hcProxyMode = Integer.parseInt(System.getenv("HC_PROXY_MODE")) == 1;
             hcProxyPort = Constants.DEFAULT_HC_PROXY_PORT;
             websocketMode = Integer.parseInt(System.getenv("WEBSOCKET_MODE")) == 1;
@@ -204,6 +206,14 @@ public class CloudInterfaceServer {
             String keepAliveEnv = System.getenv("DEVICE_KEEPALIVE_MINUTES");
             if (keepAliveEnv != null && !keepAliveEnv.isEmpty())
                 deviceKeepAliveMinutes = new int[] { Integer.parseInt(keepAliveEnv) };
+
+            String messageQueueEnv = System.getenv("MESSAGE_QUEUE_ADDRESS");
+            if(messageQueueEnv != null)
+            {
+                messageQueueAddress = System.getenv("MESSAGE_QUEUE_ADDRESS");
+                messageQueuePort = Integer.parseInt(System.getenv("MESSAGE_QUEUE_PORT"));
+                messageQueueEnabled = true;
+            }
             return true;
         }
         return false;
