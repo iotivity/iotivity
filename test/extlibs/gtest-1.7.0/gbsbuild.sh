@@ -50,7 +50,7 @@ else
 fi
 
 echo "Extracting RPM"
-rpm_name="org.tizen.gtest-0.0.1-1.armv7l.rpm"
+rpm_name="org.tizen.gtest-1.7.0-0.armv7l.rpm"
 extract_command="rpm2cpio "${rpm_path}/${rpm_name}" | cpio -idmv"
 echo ${extract_command}
 
