@@ -30,6 +30,7 @@
 #include <unistd.h>
 #endif
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "pluginIf.h"
 #include "pluginServer.h"
 #include "cbor.h"
@@ -315,7 +316,7 @@ void MPMParseMetaData(const uint8_t *buff, size_t size, MPMResourceList **list, 
 
                 err = cbor_value_dup_text_string(&curVal, &input, &len, NULL);
                 VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Copying Text string");
-                strncpy(tempPtr->href, input, MPM_MAX_LENGTH_64);
+                OICStrcpy(tempPtr->href, MPM_MAX_URI_LEN, input);
                 OIC_LOG_V(DEBUG, TAG, "\"ref\":%s\n", input);
                 free(input);
                 input = NULL;
@@ -324,7 +325,7 @@ void MPMParseMetaData(const uint8_t *buff, size_t size, MPMResourceList **list, 
                 VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Finding Rt in link map ");
                 err = cbor_value_dup_text_string(&curVal, &input, &len, NULL);
                 VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Copying Text string");
-                strncpy(tempPtr->rt, input, MPM_MAX_LENGTH_64);
+                OICStrcpy(tempPtr->rt, MPM_MAX_LENGTH_64, input);
                 OIC_LOG_V(DEBUG, TAG, "\"rt\":%s\n", input);
                 free(input);
                 input = NULL;
@@ -333,7 +334,7 @@ void MPMParseMetaData(const uint8_t *buff, size_t size, MPMResourceList **list, 
                 VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Finding If's in link map ");
                 err = cbor_value_dup_text_string(&curVal, &input, &len, NULL);
                 VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, " Copying Text string");
-                strncpy(tempPtr->interfaces, input, MPM_MAX_LENGTH_64);
+                OICStrcpy(tempPtr->interfaces, MPM_MAX_LENGTH_64, input);
                 OIC_LOG_V(DEBUG, TAG, "\"if\":%s\n", input);
                 free(input);
                 input = NULL;

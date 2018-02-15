@@ -139,7 +139,7 @@ static void DoGenCertificate(CertType certType)
     }
     else
     {
-        strncpy(issKeyPairName, subjKeyPairName, sizeof(subjKeyPairName));
+        strncpy(issKeyPairName, subjKeyPairName, sizeof(subjKeyPairName) - 1);
     }
 
     // -- Load public key --

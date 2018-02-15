@@ -194,7 +194,8 @@ int InitProxyRequest(void)
     memset(&option, 0, sizeof(option));
     option.protocolID = OC_COAP_ID;
     option.optionID = OC_RSRVD_PROXY_OPTION_ID;
-    strncpy((char*)option.optionData, httpResource, sizeof(option.optionData));
+    strncpy((char*)option.optionData, httpResource, sizeof(option.optionData) - 1);
+
     size_t opLen = strlen(httpResource);
     option.optionLength = opLen < sizeof(option.optionData) ? opLen : sizeof(option.optionData);
 
@@ -291,7 +292,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             {
                 if (0 == strcmp(eps->tps, "coaps"))
                 {
-                    strncpy(serverAddr.addr, eps->addr, sizeof(serverAddr.addr));
+                    strncpy(serverAddr.addr, eps->addr, sizeof(serverAddr.addr) - 1);
                     serverAddr.port = eps->port;
                     serverAddr.flags = (OCTransportFlags)(eps->family | OC_SECURE);
                     serverAddr.adapter = OC_ADAPTER_IP;

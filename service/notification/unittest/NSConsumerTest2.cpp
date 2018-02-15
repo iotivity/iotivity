@@ -28,6 +28,7 @@
 #include "OCPlatform.h"
 #include "octypes.h"
 #include "ocstack.h"
+#include "oic_string.h"
 #include "ocpayload.h"
 #include "cainterface.h"
 
@@ -155,11 +156,11 @@ namespace
         }
         addr->adapter = (ninfo[0].adapter == CA_ALL_ADAPTERS) ? OC_ADAPTER_IP :
                 (OCTransportAdapter) ninfo[0].adapter;
-        strncpy(addr->addr, ninfo[0].addr, sizeof(ninfo[0].addr));
+        OICStrcpy(addr->addr, sizeof(ninfo[0].addr), ninfo[0].addr);
         addr->flags = (OCTransportFlags)ninfo[0].flags;
         addr->ifindex = ninfo[0].ifindex;
         addr->port = ninfo[0].port;
-        strncpy(addr->remoteId, ninfo[0].remoteId, 37);
+        OICStrcpy(addr->remoteId, NS_UUID_STRING_SIZE, ninfo[0].remoteId);
 
         free(ninfo);
         ninfo = NULL;
@@ -261,11 +262,11 @@ namespace
         testResponse->addr = testAddr;
         testResponse->devAddr = *testAddr;
         testResponse->connType = CT_ADAPTER_IP;
-        testResponse->identity.id_length = 37;
-        strncpy((char *)(testResponse->identity.id), testProviderID.c_str(), 37);
+        testResponse->identity.id_length = NS_UUID_STRING_SIZE;
+        OICStrcpy((char *)(testResponse->identity.id), NS_UUID_STRING_SIZE, testProviderID.c_str());
         testResponse->numRcvdVendorSpecificHeaderOptions = 0;
         testResponse->resourceUri = (char*)malloc(sizeof(char)*notiUri.size() + 1);
-        strncpy((char*)testResponse->resourceUri, notiUri.c_str(), notiUri.size()+1);
+        OICStrcpy((char*)testResponse->resourceUri, notiUri.size()+1, notiUri.c_str());
         testResponse->result = OC_STACK_OK;
         testResponse->sequenceNumber = 1;
         testResponse->payload = NULL;
@@ -304,7 +305,7 @@ namespace
         }
         provider->accessPolicy = NSSelector::NS_SELECTION_CONSUMER;
         provider->state = NS_DISCOVERED;
-        strncpy(provider->providerId, testProviderID.c_str(), NS_UUID_STRING_SIZE);
+        OICStrcpy(provider->providerId, NS_UUID_STRING_SIZE, testProviderID.c_str());
         provider->messageUri = strdup("/notificationTest/message");
         provider->syncUri = strdup("/notificationTest/sync");
         provider->topicUri = strdup("/notificationTest/topic");

@@ -260,7 +260,7 @@ NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, 
 
     retSync->messageId = msgId;
     retSync->state = state;
-    OICStrcpy(retSync->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, providerId);
+    OICStrcpy(retSync->providerId, NS_DEVICE_ID_LENGTH, providerId);
 
     return retSync;
 }
