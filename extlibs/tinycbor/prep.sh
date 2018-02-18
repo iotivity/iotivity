@@ -27,7 +27,7 @@ topdir="${PWD}"
 # comment out the second clause 
 # if packageRevision becomes a branch or a specific commit.
 package="tinycbor"
-packageUrl="https://github.com/01org/tinycbor"
+packageUrl="https://github.com/intel/tinycbor"
 packageDir="./extlibs/tinycbor/tinycbor"
 packageRevision="v0.5.0"
 
