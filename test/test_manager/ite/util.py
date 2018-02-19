@@ -9,6 +9,9 @@
  ***************************************************************************************************/
 '''
 
+import os
+import sys
+
 def open_read_file(path):
     try :
         file = open(path, encoding='utf-8', errors='ignore')
@@ -49,3 +52,27 @@ def open_append_file(path):
     except IOError:
         print("Can not open file: " + path)
         return False
+
+class Colors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
+class Multi_Logger(object):
+
+    def __init__(self, module, platform_type, verdict_path):
+        tokens = verdict_path.split(os.sep)
+        log_file = 'test_manager_{}_{}.log'.format(module, platform_type)
+        if len(tokens) > 1:
+            log_file = os.sep.join(tokens[0:-1]) + os.sep + log_file
+        self.log = open(log_file, 'a')
+
+    def output(self, message):
+        print(message)
+        self.log.write(message)  

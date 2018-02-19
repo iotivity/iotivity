@@ -1,0 +1,63 @@
+Parameter:
+
+start 
+    Allowed and default values are start, client.
+    If no value is given for "start" param than both server client will run in same terminal window.
+
+type
+    Allowed and default values are api, interop_app, sample_app, bat.
+
+module
+    When type is api or interop_app or sample_app modules are ri, re, rc, sm, ns, rd, ic, ca, es, cs, pm, chp
+    When type is bat modules are build, unittest, coverage
+
+os
+    Allowed and default values are linux, tizen, android.
+
+os2
+    Allowed and default values are linux, tizen, android. Applicable only for interop_app.
+
+tc
+    To run specific testcase. Use "" when space exist in testcase name.
+
+tag
+    To run group of testcases under a category.
+
+
+All the parameters value can be used together using ','. For example, run re, rc and ri module, use parameter module=re,rc,ri
+
+To run tizen testcases atleast one tizen device needed to be connected with robot server's device. For ca module API testcase or interop tizen app atleast two tizen device needed.
+
+
+Example 1 (API):
+
+To run re and rc module's API testcases in linux & tizen, following commands can be used.
+
+./robot_automation.sh start=server
+./robot_automation.sh start=client type=api module=re,rc os=linux,tizen
+
+
+
+Example 2 (Sample App):
+
+To run re and rc module's sample app testcases in linux & tizen, following commands can be used.
+
+./robot_automation.sh start=server
+./robot_automation.sh start=client type=sample_app module=re,rc os=linux,tizen
+
+
+Example 3 (Interop App):
+
+To run ri interop app testcases between linux (server) and tizen, following commands can be used.
+
+./robot_automation.sh start=server
+./robot_automation.sh start=client type=interop_app module=ri os=linux os2=tizen
+
+
+Example 4 (Interop App):
+
+To run build and coverage part of BAT test for linux platform.
+
+./robot_automation.sh start=server
+./robot_automation.sh start=client type=bat module=build,coverage os=linux
+

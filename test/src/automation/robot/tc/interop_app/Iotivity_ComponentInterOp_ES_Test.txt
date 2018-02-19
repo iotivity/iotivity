@@ -1,0 +1,82 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Settings ***
+Documentation     Test ES Interoperability for all supported platform
+Variables         ../../helper/variable.py
+Library           Remote    ${REMOTE_IP}:${REMOTE_PORT}    WITH NAME    Local
+Resource    ../../helper/Iotivity_Interop_Test_Helper.txt
+Resource    ../../helper/Iotivity_Test_Helper.txt
+Suite Setup    Do Suite Setup
+Suite Teardown    Do Suite Teardown
+Test Setup       Do Test Setup
+Test Teardown    Do Test Teardown
+
+*** Test Cases ***
+test1
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Discover Enrollee |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | [Server & Client] Start Enrollee app(For linux) Start both Enrollee and Mediator(For android) |
+    ...    |procedure | 1. [Enrollee] Press I to Init & start Easysetup |
+    ...    |procedure | 2. [Server] Discover will be start due to start Mediator app(For linux) Press Discover button (For android app) |
+    ...    |post_condition | [Enrollee & Mediator] Stop both Enrolle and Mediator app |
+    ...    |expected | Initiated Enrollee server will be found by Mediator |
+    [Tags]    all
+    Provide Input To First App    i
+    BuiltIn.Sleep     5s
+    ${log}    Get Output From First App
+    BuiltIn.Log    ${log}
+    Provide Input To First App    s
+    BuiltIn.Sleep     15s
+    ${log}    Get Output From Second App
+    BuiltIn.Log    ${log}
+    ${status}    Check Keyword    All resources found successfully    ${log}
+    Should Be True    ${status}    Resource not found
+
+*** Keywords ***
+Do Suite Setup
+    [Arguments]    
+    ${iotivity_build_parmeters}    Set Variable   SECURED=${secured} WITH_CLOUD=1 WITH_TCP=1
+    ${tc_build_parmeters}    Set Variable   SECURED=${secured}
+    BuiltIn.Log    ${OS}->${OS2}
+    Load Default Settings    ${iotivity_build_parmeters}    ${tc_build_parmeters}
+    Get Test Environment Details
+    Build Iotivity and Test App
+
+Do Suite Teardown
+    [Arguments]    
+    Remove All Devices
+
+Do Test Setup
+    [Arguments]    
+    Execute Interop Apps
+
+Do Test Teardown
+    [Arguments]    
+    ${log}    Get Output From First App
+    BuiltIn.Log    ${log}
+    ${log}    Get Output From Second App
+    BuiltIn.Log    ${log} 
+    Terminate Interop Apps

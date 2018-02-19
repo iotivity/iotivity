@@ -18,14 +18,13 @@ from ite.config import *
 from ite.util import *
 
 class TCAnalyzer:
-
-
     GTC_PATTERN = re.compile(r'(TEST_F|TEST)\s*\(\s*(?P<testcasename>\w+)\s*,\s*(?P<testname>\w+)\s*\)', re.DOTALL)
 
     JUNIT_TS_PATTERN = re.compile(r'class\s*(?P<testsuite>\w+)\s*', re.DOTALL)
     #JUNIT_TC_PATTERN = re.compile(r'\@Test\s*\w+\s+\w+\s+(?P<testcase>\w+)\(\s*\)\s*\{', re.DOTALL)
     JUNIT_TC_PATTERN = re.compile(r'public\s+void\s+(?P<testcase>(Test|test)\w+)\s*\(\s*\)\s*\{', re.DOTALL)
     TRANSPORT_PATTERN = re.compile(r'@transport\s+(?P<transport>[\w+[\s,]*]*)', re.DOTALL)
+    BUILD_TYPE_PATTERN = re.compile(r'@build_type\s+(?P<build_type>[\w+[ \t,-]*]*)', re.DOTALL)
 
     ARDUINOUNIT_TS_PATTERN = re.compile(r'(?P<testsuite>\w+\.\w+)', re.DOTALL)
     ARDUINOUNIT_TC_PATTERN = re.compile(r'test\((?P<testcase>\w+)\)\s*\{', re.DOTALL)
@@ -61,7 +60,20 @@ class TCAnalyzer:
 
         return line
 
-    def get_arduinounit_tc_info(self, path):
+    def get_build_types(self, comments, module):
+
+        build_types = []
+        for build_type_match in self.BUILD_TYPE_PATTERN.finditer(comments):
+            for build_type in re.split(', ', build_type_match.group('build_type').strip()):
+                build_types.append(build_type.upper())
+
+        if not build_types:
+            for build_type in MODULES_BUILD_TYPES[module.upper()]:
+                build_types.append(build_type)
+
+        return build_types
+
+    def get_arduinounit_tc_info(self, path, module):
         source = read_file(path)
         if source == '':
             return
@@ -78,18 +90,23 @@ class TCAnalyzer:
             line = self.get_line_number(path, pos)
             testcase = match.group('testcase')
 
-            platforms = dict()
-            platforms[TEST_PLATFORM.ARDUINO] = 1
-
             comments = ''
             for match in self.COMMENT_PATTERN.finditer(source[prev_pos:pos]):
                 comments += match.group('comments')
+
+            build_types = self.get_build_types(comments, module)
+
+            platforms = dict()
+            platforms[TEST_PLATFORM.ARDUINO] = dict()
+
+            for build_type in build_types:
+                platforms[TEST_PLATFORM.ARDUINO][build_type] = 1
 
             yield line, testsuite, testcase, comments, platforms
 
             prev_pos = pos
 
-    def get_junit_tc_info(self, path):
+    def get_junit_tc_info(self, path, module):
         print("###### Junit Path: " + path + " ######")
         source = read_file(path)
         if source == '':
@@ -116,6 +133,8 @@ class TCAnalyzer:
                 comment = match.group('comments')
                 transport_value = 0
 
+                build_types = self.get_build_types(comment, module)
+
                 for transport_match in self.TRANSPORT_PATTERN.finditer(comment):
                     for transport_name in re.split(', ', transport_match.group('transport').strip()):
                         transport_name = transport_name.upper()
@@ -127,7 +146,11 @@ class TCAnalyzer:
                 if transport_value == 0:
                     transport_value = 1
 
-                platforms[TEST_PLATFORM.ANDROID] = transport_value
+                if TEST_PLATFORM.ANDROID not in platforms:
+                    platforms[TEST_PLATFORM.ANDROID] = dict()
+
+                for build_type in build_types:
+                    platforms[TEST_PLATFORM.ANDROID][build_type] = transport_value
 
                 comments += comment
 
@@ -135,9 +158,13 @@ class TCAnalyzer:
 
             prev_pos = pos
 
-    def get_gtest_tc_info(self, path):
+    def get_gtest_tc_info(self, path, module):
         source = read_file(path)
         if source == '':
+            return
+
+        if not '::testing::Test' in source:
+            print ('Not GTest TC file: ' + path)
             return
 
         prev_pos = 0
@@ -148,6 +175,12 @@ class TCAnalyzer:
             testcase = match.group('testname')
             platforms = dict()
             platform_found = False
+
+            comments = ''
+            for match in self.COMMENT_PATTERN.finditer(source[prev_pos:pos]):
+                comments += match.group('comments')
+
+            build_types = self.get_build_types(comments, module)
 
             platforms_or_transports_matches = self.PLATFORM_OR_TRANSPORT_DEFINE_PATTERN.finditer(source[prev_pos:pos])
 
@@ -166,6 +199,7 @@ class TCAnalyzer:
                 tc_guard_text = tc_guard_text.replace('defined', '')
                 tc_guard_text = tc_guard_text.replace('||', '+')
                 tc_guard_text = tc_guard_text.replace('&&', '*')
+                tc_guard_text = tc_guard_text.replace('WINDOWS', '0')
 
                 for platform in TEST_PLATFORM:
                     platform_transport_value = tc_guard_text
@@ -182,32 +216,37 @@ class TCAnalyzer:
                     try:
                         platform_transport_value = eval(platform_transport_value)
                     except:
-                        print ('something wrong with defined tag')
+                        if 'CA' in path:
+                            print ('something wrong with defined tag')
+                            print (path)
 
                     if platform_transport_value != 0:
-                        platforms[platform] = platform_transport_value
+                        if platform not in platforms:
+                            platforms[platform] = dict()
+                        for build_type in build_types:
+                            platforms[platform][build_type] = platform_transport_value
             else:
-                platforms[TEST_PLATFORM.LINUX] = 1
-
-
-            comments = ''
-            for match in self.COMMENT_PATTERN.finditer(source[prev_pos:pos]):
-                comments += match.group('comments')
+                if TEST_PLATFORM.LINUX not in platforms:
+                    platforms[TEST_PLATFORM.LINUX] = dict()
+                for build_type in build_types:
+                    platforms[TEST_PLATFORM.LINUX][build_type] = 1
 
             yield line, testsuite, testcase, comments, platforms
 
             prev_pos = pos
 
-    def analyze_tc_file(self, path):
+    def analyze_tc_file(self, path, module):
         if (os.path.isfile(path) == False):
             return
 
         print("### Start to analyze test case file: " + path)
-
         test_spec = dict()
         invalid_tc = list()
-        for line, suite, name, comments, platforms in self.analyzer(path):
+
+        for line, suite, name, comments, platforms in self.analyzer(path, module):
+            #print (line, suite, name, comments, platforms)
             spec = TestSpec(line, suite, name)
+            #print (spec.suite, spec.name)
             success, message = spec.check_tc_naming_rule()
             if (success == False):
                 invalid_tc.append((line, suite, name, message))
@@ -221,44 +260,53 @@ class TCAnalyzer:
             if (success == False):
                 invalid_tc.append((line, suite, name, message))
                 continue
-
             for platform in platforms:
                 if not platform in TEST_PLATFORM:
                     invalid_tc.append((line, suite, name, 'Invalid Platform Definition: ' + platform))
                     continue
-
+                #print ('start%s' % test_spec)
                 if not platform in test_spec:
                     test_spec[platform] = dict()
+                #print ('end%s' % test_spec)
+                for build_type in platforms[platform]:
 
-                transport_value = platforms[platform]
+                    if build_type not in test_spec[platform]:
+                        test_spec[platform][build_type] = dict()
 
-                if transport_value == 1:
-                    if not NO_TRANSPORT in test_spec[platform]:
-                        test_spec[platform][NO_TRANSPORT] = dict()
-                        if not NO_NETWORK in test_spec[platform][NO_TRANSPORT]:
-                            test_spec[platform][NO_TRANSPORT][NO_NETWORK] = list()
-                    test_spec[platform][NO_TRANSPORT][NO_NETWORK].append(spec)
+                    transport_value = platforms[platform][build_type]
 
-                for t_name in TRANSPORT_VALUES:
-                    t_value = TRANSPORT_VALUES[t_name]
-                    if type(transport_value) is int:
-                        if (transport_value & t_value) == t_value:
-                            if not t_name in test_spec[platform]:
-                                test_spec[platform][t_name] = dict()
-                            if t_name == TEST_TRANSPORT.IP or t_name == TEST_TRANSPORT.TCP:
-                                if not TEST_NETWORK.WIFI in test_spec[platform][t_name]:
-                                    test_spec[platform][t_name][TEST_NETWORK.WIFI] = list()
-                                test_spec[platform][t_name][TEST_NETWORK.WIFI].append(spec)
-                                if platform == TEST_PLATFORM.LINUX:
-                                    if not TEST_NETWORK.ETH in test_spec[platform][t_name]:
-                                        test_spec[platform][t_name][TEST_NETWORK.ETH] = list()
-                                    test_spec[platform][t_name][TEST_NETWORK.ETH].append(spec)
-                            else:
-                                if not NO_NETWORK in test_spec[platform][t_name]:
-                                    test_spec[platform][t_name][NO_NETWORK] = list()
-                                test_spec[platform][t_name][NO_NETWORK].append(spec)
-                    else:
+                    if transport_value == 1:
+                        if not NO_TRANSPORT in test_spec[platform][build_type]:
+                            test_spec[platform][build_type][NO_TRANSPORT] = dict()
+                            if not NO_NETWORK in test_spec[platform][build_type][NO_TRANSPORT]:
+                                test_spec[platform][build_type][NO_TRANSPORT][NO_NETWORK] = list()
+                        test_spec[platform][build_type][NO_TRANSPORT][NO_NETWORK].append(spec)
+                   
+                    valid_transport_value = True
+                    for t_name in TRANSPORT_VALUES:
+                        t_value = TRANSPORT_VALUES[t_name]
+                        if type(transport_value) is int:
+                            if (transport_value & t_value) == t_value:
+                                if not t_name in test_spec[platform][build_type]:
+                                    test_spec[platform][build_type][t_name] = dict()
+                                if t_name == TEST_TRANSPORT.IP or t_name == TEST_TRANSPORT.TCP:
+                                    if not TEST_NETWORK.WIFI in test_spec[platform][build_type][t_name]:
+                                        test_spec[platform][build_type][t_name][TEST_NETWORK.WIFI] = list()
+                                    test_spec[platform][build_type][t_name][TEST_NETWORK.WIFI].append(spec)
+                                    if platform == TEST_PLATFORM.LINUX:
+                                        if not TEST_NETWORK.ETH in test_spec[platform][build_type][t_name]:
+                                            test_spec[platform][build_type][t_name][TEST_NETWORK.ETH] = list()
+                                        test_spec[platform][build_type][t_name][TEST_NETWORK.ETH].append(spec)
+                                else:
+                                    if not NO_NETWORK in test_spec[platform][build_type][t_name]:
+                                        test_spec[platform][build_type][t_name][NO_NETWORK] = list()
+                                    test_spec[platform][build_type][t_name][NO_NETWORK].append(spec)
+                        else:
+                            valid_transport_value = False
+
+                    if not valid_transport_value:
                         print ('check transport_value: ' + str(transport_value))
+                        print (path)
 
         return test_spec, invalid_tc
 

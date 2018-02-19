@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.4
 '''
 /***************************************************************************************************
  * Copyright (c) 2010 Samsung Electronics Co., Ltd. All right reserved.
@@ -16,12 +16,13 @@ import time
 import fnmatch
 import optparse
 import subprocess
+import traceback
 from time import sleep
 from os import listdir
 from time import strftime
 from datetime import datetime
 from os.path import isfile, join
-
+import configuration
 from configuration import *
 from ite.tc.container import TestSpecContainer
 from ite.reporter.tc_reporter import TestSpecReporter
@@ -33,7 +34,7 @@ from ite.tc.analyzer import TestSpec
 from ite.constants import *
 from ite.config import *
 
-TEST_ROOT = '../'
+TEST_ROOT = '..'
 timeout_seconds = 300
 
 oparser = optparse.OptionParser()
@@ -88,6 +89,35 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+class Testcase:
+
+    max_total_count = 3
+    min_pass_count = 1
+    
+
+    def __init__(self, name):
+        self.name = name
+        self.total_count = 0
+        self.pass_count = 0
+        self.fail_count = 0
+
+    def increase_total_count(self):
+        self.total_count += 1
+
+    def increase_pass_count(self):
+        self.pass_count += 1
+
+    def increase_fail_count(self):
+        self.fail_count += 1
+
+    def is_execution_complete(self):
+
+        if self.pass_count > 0 or self.total_count > self.max_total_count:
+            return True
+
+        return False
+
+
 if not testresult:
     testresult = TEST_RESULT_RUN_DIR
 
@@ -125,7 +155,7 @@ if app_path.endswith(os.sep):
 if device_name:
     device_name = '-s ' + device_name
 
-if transport.upper() == TEST_TRANSPORT.IP:
+if transport.upper() == TEST_TRANSPORT.IP or transport.upper() == TEST_TRANSPORT.TCP:
     network = TEST_NETWORK.WIFI.lower()
 
 testspec_path = os.path.join(testresult, TEST_SPEC_XML_FOR_RESULT)
@@ -136,6 +166,8 @@ if not os.path.exists(testspec_path) and os.path.exists(API_TC_SRC_DIR):
     reporter = TestSpecReporter()
     reporter.generate_testspec_report(container.data)
     reporter.report('XML', testspec_path)
+
+configuration.EXECUTION_LOG_FP  = open(testresult + os.sep + EXECUTION_LOG_FILE, "w")
 
 def remove_invalid_character_from_log(log) :
     if "\"" in log :
@@ -151,62 +183,83 @@ def remove_invalid_character_from_log(log) :
 
 def run_standalone_tc(suite_name, tc_name, command, pass_msg, platform, target, transport, network, file_suffix):
 
-    xml_output = '<testsuites>\n'    
-    xml_output = xml_output + '\t<testsuite name="' + suite_name + '">\n'
-    xml_output = xml_output + '\t\t<testcase name="' + tc_name + '" status="run" time="0"'
-    
-    status = 'failed'
-
-    os.system('adb ' + device_name + ' logcat -c')
+    result = False
 
     try:
-
-        rc = subprocess.check_output(command, shell=True, timeout=timeout_seconds)
-        log = re.sub(r'(b\'|\')', '', str(rc))  
-        log = log.strip()
-        log = log.replace('\\x', '')
-        log = log.replace('\\r\\n', '\n')
-        log = log.replace('\'', '')
-        log = log.replace('\"', '')
-        log = log.replace('\\t', '    ')
-        log = log.replace('1b[0m', '')
-        print ('\n' + log)
-
-        if log.find(pass_msg) == -1:
-            xml_output = xml_output + '>\n\t\t\t<failure message="'+ 'failed' +'"> </failure>\n</testcase>\n'
-            print (bcolors.FAIL + suite_name + '.' + tc_name + ': failed' + bcolors.ENDC)
-        else:
-            xml_output = xml_output + '/>\n'
-            status = 'passed'
-            print (bcolors.OKGREEN + suite_name + '.' + tc_name + ': ' + 'passed' + bcolors.ENDC)
-
-    except subprocess.TimeoutExpired:
-            xml_output = xml_output + '>\n\t\t\t<failure message="'+ ' Timeout occur' +'"> </failure>\n</testcase>\n'
-            print (bcolors.FAIL + suite_name + '.' + tc_name + ': timeout' + bcolors.ENDC)
-
-    xml_output = xml_output + '</testsuite>\n'
-    xml_output = xml_output + '</testsuites>\n'
-    
-    timestring = datetime.now().strftime("%Y%m%d_%H%M%S.%f")
+        xml_output = '<testsuites>\n'    
+        xml_output = xml_output + '\t<testsuite name="' + suite_name + '">\n'
+        xml_output = xml_output + '\t\t<testcase name="' + tc_name + '" status="run" time="0"'
         
-    file_name = "%s_%s_%s_%s_%s_%s" %(platform, target, transport, network, timestring, file_suffix)
+        status = 'failed'
 
-    if os.path.isfile(testresult + os.sep + file_name + '.log') or os.path.isfile(testresult + os.sep + file_name + '.xml'):
-            print (bcolors.FAIL + 'File name exist !!!\nRunner Internal Error' + bcolors.ENDC)
-            exit(0)
+        os.system('adb ' + device_name + ' logcat -c')
 
-    os.system('adb ' + device_name + ' logcat -d > ' + testresult + os.sep + file_name + '.log')
+        log = ''
 
-    log_file = open(testresult + os.sep + file_name + '.log', 'a')
-    log_file.write('\n' + log)
+        try:
+            print (command)
+            configuration.EXECUTION_LOG_FP.write (str(command) + '\n')
+            configuration.EXECUTION_LOG_FP.flush()
+            rc = subprocess.check_output(('timeout {} {}').format(timeout_seconds, command), shell=True)
+            #rc = subprocess.check_output(command, shell=True, timeout=timeout_seconds)
+            log = re.sub(r'(b\'|\')', '', str(rc))  
+            log = log.strip()
+            log = log.replace('\\x', '')
+            log = log.replace('\\r\\n', '\n')
+            log = log.replace('\'', '')
+            log = log.replace('\"', '')
+            log = log.replace('\\t', '    ')
+            log = log.replace('1b[0m', '')
+            print ('\n' + log)
+
+            if log.find(pass_msg) == -1:
+                xml_output = xml_output + '>\n\t\t\t<failure message="'+ 'failed' +'"> </failure>\n</testcase>\n'
+                print (bcolors.FAIL + suite_name + '.' + tc_name + ': failed' + bcolors.ENDC)
+            else:
+                xml_output = xml_output + '/>\n'
+                status = 'passed'
+                print (bcolors.OKGREEN + suite_name + '.' + tc_name + ': ' + 'passed' + bcolors.ENDC)
+                result = True
+
+        except subprocess.TimeoutExpired:
+                xml_output = xml_output + '>\n\t\t\t<failure message="'+ ' Timeout occur' +'"> </failure>\n</testcase>\n'
+                print (bcolors.FAIL + suite_name + '.' + tc_name + ': timeout' + bcolors.ENDC)
+
+        except subprocess.CalledProcessError:
+                xml_output = xml_output + '>\n\t\t\t<failure message="'+ ' Crash occur' +'"> </failure>\n</testcase>\n'
+                print (bcolors.FAIL + suite_name + '.' + tc_name + ': timeout' + bcolors.ENDC)
+
+
+        xml_output = xml_output + '</testsuite>\n'
+        xml_output = xml_output + '</testsuites>\n'
+        
+        timestring = datetime.now().strftime("%Y%m%d_%H%M%S.%f")
             
-    xml_file = open(testresult + os.sep + file_name + '.xml', 'w')
-    xml_file.write(xml_output)
+        file_name = "%s_%s_%s_%s_%s_%s" %(platform, target, transport, network, timestring, file_suffix)
 
+        if os.path.isfile(testresult + os.sep + file_name + '.log') or os.path.isfile(testresult + os.sep + file_name + '.xml'):
+                print (bcolors.FAIL + 'File name exist !!!\nRunner Internal Error' + bcolors.ENDC)
+                exit(0)
+
+        os.system('adb ' + device_name + ' logcat -d > ' + testresult + os.sep + file_name + '.log')
+
+        log_file = open(testresult + os.sep + file_name + '.log', 'a')
+        log_file.write('\n' + log)
+                
+        xml_file = open(testresult + os.sep + file_name + '.xml', 'w')
+        xml_file.write(xml_output)
+
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        traceback.print_exc(file=sys.stdout)
+
+    return result
 
 def run_gtest_testcase(testresult, file_filter, given_testsuites, given_testcases, platform, target, transport, network):
 
     command = 'adb ' + device_name + ' shell ls ' + app_path + '/' + TC_BIN_PREFIX + '*' + TC_BIN_SUFFIX
+    print (command)
+
     process= subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     log, err = process.communicate(timeout = 30)
 
@@ -216,15 +269,20 @@ def run_gtest_testcase(testresult, file_filter, given_testsuites, given_testcase
 
     for binary_name in binary_list:
 
+        print (binary_name)
+
         if file_filter:
             if file_filter not in binary_name:
                 continue
 
         if given_module:
+            if len(binary_name.split('_')) < 3:
+                continue
+
             if binary_name.split('_')[1] not in given_module:
                 continue
 
-        testset = set()
+        list_of_testcase = []
         testsuite = ''
 
         command = 'adb ' + device_name + ' shell LD_LIBRARY_PATH=' + app_path + ' ' + app_path + '/' + binary_name + ' --gtest_list_tests'
@@ -251,14 +309,27 @@ def run_gtest_testcase(testresult, file_filter, given_testsuites, given_testcase
                 continue
 
             if testsuite != '' and line != '':
-                testset.add(testsuite + line)
+                list_of_testcase.append(Testcase(testsuite + line))
 
-        sz = sz + len(testset)
+        sz = sz + len(list_of_testcase)
 
-        for tc_name in testset:
-            tc_info = tc_name.split('.')
-            command = 'adb ' + device_name + ' shell ' + app_path + '/runner.sh ' + binary_name + ' ' + tc_name
-            run_standalone_tc (tc_info[0], tc_info[1], command, '[  PASSED  ] 1 test.', platform, target, transport, network, binary_name)
+        while list_of_testcase:
+
+            print(len(list_of_testcase), ' testcase(s) needed to be run')
+
+            for testcase in list_of_testcase:
+                tc_name = testcase.name
+                tc_info = tc_name.split('.')
+                command = 'adb ' + device_name + ' shell ' + app_path + '/runner.sh ' + binary_name + ' ' + tc_name
+                result = run_standalone_tc (tc_info[0], tc_info[1], command, '[  PASSED  ] 1 test.', platform, target, transport, network, binary_name)
+                if result:
+                    testcase.increase_pass_count()
+                else:
+                    testcase.increase_fail_count()
+
+                testcase.increase_total_count()
+
+            list_of_testcase[:] = [x for x in list_of_testcase if not x.is_execution_complete()]
 
     if sz == 0:
         print (bcolors.FAIL + 'No testcase Found !!!\nPlease, Check command parameter(s)' + bcolors.ENDC)
@@ -269,7 +340,7 @@ def run_gtest_testcase(testresult, file_filter, given_testsuites, given_testcase
 
 def run_junit_testcase(testresult, base_package, given_testsuites, given_testcases, platform, target, transport, network, tc_scenario):
 
-    testset = set()
+    list_of_testcase = []
 
     for testcase_type in TESTCASE_TYPES:
 
@@ -301,9 +372,13 @@ def run_junit_testcase(testresult, base_package, given_testsuites, given_testcas
                 base_package = 'org.iotivity.test.' + module.lower() + '.tc'
 
             cwd = os.getcwd()
-            build_dir = cwd + os.sep + TEST_ROOT + os.sep + 'bin' + os.sep + 'android' + os.sep + module.lower() + os.sep + 'intermediates' + os.sep + 'classes' + os.sep + 'debug' + os.sep
-            build_dir = build_dir + base_package.replace('.', os.sep) + os.sep + testcase_type.lower()
+            print (cwd)
+
+            build_dir = os.path.join(cwd, TEST_ROOT, 'bin', 'android', module.lower(), 'intermediates', 'classes', 'debug', base_package.replace('.', os.sep), testcase_type.lower())
+            print (build_dir)
+
             os.chdir(build_dir)
+            print (os.getcwd())
 
             file_list = [f for f in listdir(build_dir) if isfile(join(build_dir, f))]
 
@@ -329,24 +404,38 @@ def run_junit_testcase(testresult, base_package, given_testsuites, given_testcas
                             if given_testcases and tc_name not in given_testcases:
                                 continue
 
-                            testset.add(testcase_type.lower() + '.' + suite_name + '.' + tc_name)
+                            list_of_testcase.append(Testcase(testcase_type.lower() + '.' + suite_name + '.' + tc_name))
 
             os.chdir(cwd)
 
-    if not testset:
+    if not list_of_testcase:
         print (bcolors.FAIL + 'No testcase Found !!!\nPlease, Check command parameter(s)' + bcolors.ENDC)
+        return
 
-    for tc in testset:
-        tc_info = tc.split('.')
+    while list_of_testcase:
 
-        command = 'adb ' + device_name + ' shell am instrument -w  -e class '
-        command = command + base_package + '.' + tc_info[0] + '.' + tc_info[1] + '#' + tc_info[2] + ' ' + base_package
-        command = command + '/com.zutubi.android.junitreport.JUnitReportTestRunner'
+        print(len(list_of_testcase), ' testcase(s) needed to be run')
 
-        run_standalone_tc (tc_info[1], tc_info[2], command, 'OK (1 test)', platform, target, transport, network, tc_info[1].lower() + '_' + tc_info[0])
+        for testcase in list_of_testcase:
+            tc_info = testcase.name.split('.')
 
-    if testset:
-        print("### Test Is Done!!")
+            command = 'adb ' + device_name + ' shell am instrument -w  -e class '
+            command = command + base_package + '.' + tc_info[0] + '.' + tc_info[1] + '#' + tc_info[2] + ' ' + base_package
+            command = command + '/com.zutubi.android.junitreport.JUnitReportTestRunner'
+
+            result = run_standalone_tc (tc_info[1], tc_info[2], command, 'OK (1 test)', platform, target, transport, network, tc_info[1].lower() + '_' + tc_info[0])
+
+            if result:
+                testcase.increase_pass_count()
+            else:
+                testcase.increase_fail_count()
+
+            testcase.increase_total_count()
+
+        list_of_testcase[:] = [x for x in list_of_testcase if not x.is_execution_complete()]
+
+
+    print("### Test Is Done!!")
 
 if TESTFW_TYPES.GTEST in tc_framework:
     run_gtest_testcase(testresult, file_filter, given_testsuites, given_testcases, platform, target, transport, network)

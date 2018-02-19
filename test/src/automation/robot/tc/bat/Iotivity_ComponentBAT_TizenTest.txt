@@ -1,0 +1,87 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Settings ***
+Documentation     BAT Test for Linux platform
+Variables         ../../helper/variable.py
+#Library           Remote    ${REMOTE_IP}:${REMOTE_PORT}    WITH NAME    Local
+Resource    ../../helper/Iotivity_Test_Helper.txt
+Suite Setup    Do Suite Init Task
+
+*** Variables ***
+${device_type}    Linux
+${device_tc}      Linux1
+${iotivity_out_dir}    ${IOTIVITY_ROOT}/out/linux/${x86}/${RELEASE_DIR}
+${rpms_dir}    ${GBS_ROOT_PARENT}/GBS-ROOT-OIC/local/repos/tizen/${TIZEN_TARGET_ARCH}/RPMS
+${iotivity_rpm}    iotivity-${RPM_VERSION}.${TIZEN_TARGET_ARCH}.rpm
+${iotivity_service_rpm}    iotivity-service-${RPM_VERSION}.${TIZEN_TARGET_ARCH}.rpm
+${iotivity_test_rpm}    iotivity-test-${RPM_VERSION}.${TIZEN_TARGET_ARCH}.rpm
+${device_dir}    /tmp
+
+*** Test Cases ***
+Build Iotivity Source For Tizen
+    [Documentation]    |Item |Description |
+    ...    |since |2016-07-27 |
+    ...    |see | |
+    ...    |objective | Build Iotivity Source For Tizen|
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Run Terminal    ${IOTIVITY_ROOT}    ./gbsbuild.sh    Build is successful
+
+Install Iotivity RPM
+    [Documentation]    |Item |Description |
+    ...    |since |2016-07-27 |
+    ...    |see | |
+    ...    |objective | Build Iotivity Source For Tizen|
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Run Terminal    ${rpms_dir}    sdb -s ${TIZEN_DEVICE_ID} push ${iotivity_rpm} ${device_dir}/    100%
+    Run Command Negative Check    ${IOTIVITY_ROOT}    sdb -s ${TIZEN_DEVICE_ID} shell rpm -Uvh ${device_dir}/${iotivity_rpm} --force --nodeps    error
+
+*** Keywords ***
+Run Command Negative Check
+    [Arguments]    ${path}    ${command}    ${message}=${None}
+    Add Specific Device    Linux    Terminal_Device    Terminal Device
+    ${original_path}    Get Working Directory Path    Terminal_Device
+    Change Working Directory    Terminal_Device    ${path}
+    Execute Application    Terminal_Device    terminal    ${command}
+    BuiltIn.Log    ${command}
+    Start Application Log    Terminal_Device    terminal
+    Wait Until Application Exit    Terminal_Device    terminal
+    ${log} =    Get Application Log    Terminal_Device    terminal
+    BuiltIn.Log    ${log}
+    ${log} =    Get Application Log    Terminal_Device    terminal
+    BuiltIn.Log    ${log}
+    BuiltIn.Log    ${message}
+    ${check}    Check Keyword    ${message}    ${log}
+    Change Working Directory    Terminal_Device    ${original_path}
+    Remove Device    Terminal_Device
+    Run Keyword If    '${message}' != '${None}'    Should Not Be True    ${check}

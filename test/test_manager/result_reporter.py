@@ -21,6 +21,7 @@ from configuration import *
 
 from ite.tc.xmlanalyzer import TCXMLAnalyzer
 from ite.tc.container import TestSpecContainer
+from ite.reporter.tc_reporter import TestSpecReporter
 from ite.reporter.result_reporter import TestResultReporter
 
 XLSX_FILE_NAME = "TestResult.xlsx"
@@ -46,14 +47,22 @@ else:
 
 testspec_path = os.path.join(result_dir, TEST_SPEC_XML_FOR_RESULT)
 testspec_data = None
+
+if not os.path.exists(testspec_path):
+    if os.path.exists(API_TC_SRC_DIR):
+        container = TestSpecContainer()
+        container.extract_api_testspec(API_TC_SRC_DIR, '')
+        reporter = TestSpecReporter()
+        reporter.generate_testspec_report(container.data)
+        reporter.report('XML', testspec_path)
+
 if os.path.exists(testspec_path):
     container = TCXMLAnalyzer()
     container.read_spec_xml(testspec_path)
     testspec_data = container.data
-elif os.path.exists(API_TC_SRC_DIR):
-    container = TestSpecContainer()
-    container.extract_api_testspec(API_TC_SRC_DIR, '')
-    testspec_data = container.data
+else:
+    print ('Unable to generate report. Problem with Testspec file')
+    exit(-1)
 
 report_name = "TestResult_" + timestring + ".xlsx"
 reporter = TestResultReporter()

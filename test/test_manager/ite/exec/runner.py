@@ -17,10 +17,12 @@ import threading
 import signal
 from time import strftime
 from datetime import datetime
-import platform
+
 from ite.result.collector import TestResultCollector
 from ite.constants import *
 from ite.util import *
+import configuration
+from configuration import *
 
 class TestRunner:
 
@@ -44,20 +46,11 @@ class TestRunner:
         return testset
 
     def terminate_process(self, name):
-        if platform.system().lower()== 'linux':
-            proc = subprocess.Popen(["pgrep", name], stdout=subprocess.PIPE)
-            for pid in proc.stdout:
-                os.kill(int(pid), signal.SIGTERM)
+        proc = subprocess.Popen(["pgrep", name], stdout=subprocess.PIPE)
+        for pid in proc.stdout:
+            os.kill(int(pid), signal.SIGTERM)
 
-        if platform.system().lower() == 'windows':
-            proc = subprocess.Popen('tasklist', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell= True)
-            teeProcess = [str(x) for x in proc.stdout if name in str(x)]
-            for teeProc in teeProcess:
-                PID = teeProc.split()[1]
-                subprocess.call('taskkill /pid %s /f' % str(PID), shell=True)
-
-
-    def run_gtest(self, exe_path, is_shuffle, repeat, filter_str, output, log_path, memcheck_xml = ""):
+    def run_gtest(self, exe_path, is_shuffle, repeat, filter_str, output, log_path):
         shuffle_option = ''
         if is_shuffle:
             shuffle_option = "--gtest_shuffle"
@@ -65,28 +58,12 @@ class TestRunner:
         repeat_option = "--gtest_repeat=" + str(repeat)
         filter_option = "--gtest_filter=" + filter_str
         output_option = "--gtest_output=xml:" + output
-        valgrind_environment = ""
-        test_cmd =""
-        if len(memcheck_xml) > 0:
-            currentWorkingDir = os.getcwd();
+        command = ["./%s" % os.path.basename(exe_path), shuffle_option, repeat_option, output_option, filter_option]
 
-            suppressionFilePath = os.path.join((currentWorkingDir[:currentWorkingDir.rfind('/test/')]),'tools/valgrind/iotivity.supp')
-            print (suppressionFilePath)
-            test_cmd = ['valgrind', '--leak-check=full',
-                        '--num-callers=24', '--xml=yes', '--suppressions=%s' %suppressionFilePath, '--xml-file=%s' %memcheck_xml]
-            
-        if platform.system().lower() == 'linux' and len(memcheck_xml) > 0:
-            command = test_cmd+["./%s" %os.path.basename(exe_path), shuffle_option, repeat_option, output_option, filter_option]
-            proc = subprocess.Popen(command, cwd=os.path.dirname(exe_path), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        configuration.EXECUTION_LOG_FP.write (str(command) + '\n')
+        configuration.EXECUTION_LOG_FP.flush()
 
-        elif platform.system().lower() == 'linux':
-            command =  ["./%s" %os.path.basename(exe_path), shuffle_option, repeat_option, output_option, filter_option]
-            proc = subprocess.Popen(command, cwd=os.path.dirname(exe_path), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-
-        elif platform.system().lower() == 'windows':
-            command = ["%s" % os.path.basename(exe_path), shuffle_option, repeat_option, output_option, filter_option]
-            proc = subprocess.Popen(command, cwd=os.path.dirname(exe_path), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen(command, cwd=os.path.dirname(exe_path), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         hangchecking = True
         isHanged = False
@@ -111,19 +88,14 @@ class TestRunner:
 
                 if elapsed_time > timeout:
                     isHanged = True
-                    if platform.system().lower() == 'linux':
-                        self.terminate_process("tee")
-                    elif platform.system().lower() == 'windows':
-                        self.terminate_process("mtee.exe")
+                    self.terminate_process("tee")
                     proc.terminate()
                     break
 
         t = threading.Thread(target=check_hang)
         t.start()
-        if platform.system().lower() == 'linux':
-            subprocess.call("tee %s" % log_path, shell=True, stdin=proc.stdout, stderr=proc.stderr)
-        elif platform.system().lower() == 'windows':
-            subprocess.call("mtee.exe %s" % log_path, shell=True, stdin=proc.stdout, stderr=proc.stderr)
+
+        subprocess.call("tee %s" % log_path, shell=True, stdin=proc.stdout, stderr=proc.stderr)
 
         hangchecking = False
         if t.is_alive():
@@ -136,19 +108,16 @@ class TestRunner:
             txt.close()
 
 
-    def create_test_file_info(self, platform, target, transport, network, exe_path, result_dir, memcheckOn="", memcheckLocation="", filterstr=""):
+    def create_test_file_info(self, platform, target, transport, network, exe_path, result_dir):
         timestring = datetime.now().strftime("%Y%m%d_%H%M%S.%f")
         file_name = "%s_%s_%s_%s_%s_%s" % (platform, target, transport, network, timestring, os.path.basename(exe_path))
-        memCheck_xml = ""
         while os.path.exists(os.path.join(result_dir, "%s.log" % file_name)):
             file_name += "_"
 
-        if memcheckOn == "1":
-             memCheck_xml=os.path.join(os.path.abspath(memcheckLocation), "%s_%s.xml" %(file_name, filterstr))
         log_file = os.path.join(result_dir, "%s.log" % file_name)
         xml_file = os.path.join(os.path.abspath(result_dir), "%s.xml" % file_name)
 
-        return log_file, xml_file, memCheck_xml
+        return log_file, xml_file
 
     def write_test_progress(self, progress_path, testfilter, testkey, status):
         if progress_path == None or progress_path == '' or testkey == None:
@@ -167,18 +136,19 @@ class TestRunner:
 
         txt.close()
 
-    def complete_test(self, platform, target, transport, network, exe_path, result_dir, testset, run_standalone, progress_path, testkey, memcheckOn ="", memcheckLocation=""):
+    def complete_test(self, platform, target, transport, network, exe_path, result_dir, testset, run_standalone, progress_path, testkey):
         crashedset = set()
         failedset = set()
         analyzer = TestResultCollector()
+        #filter_str = '*'
         filter_str = ':'.join(testset)
         while True :
+            log_file, xml_file = self.create_test_file_info(platform, target, transport, network, exe_path, result_dir)
+
             if run_standalone:
                 filter_str = testset.pop()
 
-            log_file, xml_file, memcheck_xml = self.create_test_file_info(platform, target, transport, network, exe_path, result_dir, memcheckOn, memcheckLocation, filter_str)
-
-            self.run_gtest(exe_path, True, 1, filter_str, xml_file, log_file, memcheck_xml)
+            self.run_gtest(exe_path, True, 1, filter_str, xml_file, log_file)
 
             results = analyzer.analyze_result_log(log_file)
             for result in results:
@@ -195,6 +165,9 @@ class TestRunner:
                 elif status == GT_LOG.CRASHED:
                     print("==> Found Crashed TC: " + test)
                     crashedset.add(test)
+                elif status == GT_LOG.HANG:
+                    print("==> Found Hang TC: " + test)
+                    failedset.add(test)
                 else:
                     print("TC is success: %s.%s" % (testsuite, testcase))
 
@@ -210,15 +183,14 @@ class TestRunner:
 
         return failedset, crashedset
 
-
-    def repeat_test_standalone(self, platform, target, transport, network, exe_path, result_dir, testset, memcheckOn, memcheckLocation):
+    def repeat_test_standalone(self, platform, target, transport, network, exe_path, result_dir, testset):
         for test in testset:
-            log_file, xml_file, memcheck_xml = self.create_test_file_info(platform, target, transport, network, exe_path, result_dir, memcheckOn, memcheckLocation, test)
+            log_file, xml_file = self.create_test_file_info(platform, target, transport, network, exe_path, result_dir)
 
             filter_str = test
             print("==> Repeat TC: " + filter_str)
-            self.run_gtest(exe_path, True, 1, filter_str, xml_file, log_file, memcheck_xml)
 
+            self.run_gtest(exe_path, True, 1, filter_str, xml_file, log_file)
 
     def run_test_executable(self, option):
         if (not os.path.isfile(option.exe_path)):
@@ -236,13 +208,13 @@ class TestRunner:
             else:
                 standalone = option.run_standalone;
 
-            failedset, crashedset = self.complete_test(option.platform, option.target, option.transport, option.network, option.exe_path, option.result_dir, testset, standalone, option.testprogress_path, option.testkey, option.memcheckOn, option.memcheckLocation)
+            failedset, crashedset = self.complete_test(option.platform, option.target, option.transport, option.network, option.exe_path, option.result_dir, testset, standalone, option.testprogress_path, option.testkey)
 
             if option.repeat_failed:
-                self.repeat_test_standalone(option.platform, option.target, option.transport, option.network, option.exe_path, option.result_dir, failedset, option.memcheckOn, option.memcheckLocation)
+                self.repeat_test_standalone(option.platform, option.target, option.transport, option.network, option.exe_path, option.result_dir, failedset)
 
             if option.repeat_crashed :
-                self.repeat_test_standalone(option.platform, option.target, option.transport, option.network, option.exe_path, option.result_dir, crashedset, option.memcheckOn, option.memcheckLocation)
+                self.repeat_test_standalone(option.platform, option.target, option.transport, option.network, option.exe_path, option.result_dir, crashedset)
 
             option.runtime -= 1
 

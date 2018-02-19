@@ -1,0 +1,660 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Settings ***
+Documentation     Test RI Interoperability for all supported platform
+Variables         ../../helper/variable.py
+Library           Remote    ${REMOTE_IP}:${REMOTE_PORT}    WITH NAME    Local
+Resource    ../../helper/Iotivity_Interop_Test_Helper.txt
+Resource    ../../helper/Iotivity_Test_Helper.txt
+Suite Setup    Do Suite Setup
+Suite Teardown    Do Suite Teardown
+Test Setup       Do Test Setup
+Test Teardown    Do Test Teardown
+
+*** Test Cases ***
+1 RI DISCOVERY MULTICAST Resource
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test the feature multicast resource discovery |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 12, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |procedure | 1. [Client] Select Option 100 to select NON as message type |
+    ...    |procedure | 2. [Client] Select Option 12 to discover resource |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | Created resources in TestStep will show up in client |
+    [Tags]    nsmt
+    [Setup]    Do Custom Test Setup
+    ${log}    Provide Input    ${second_app}    100    1s
+    Do Discover Multiple
+    Check Substring Count    ${log}    6    ${GE}    Found a resource!!
+    Check Substring Count    ${log}    1    ${GE}    uri of the found resource is /BinarySwitchResURI
+    Check Substring Count    ${log}    1    ${GE}    uri of the found resource is /AirFlowResURI
+    Check Substring Count    ${log}    1    ${GE}    uri of the found resource is /TemperatureResURI
+    Check Substring Count    ${log}    0    ${EQ}    uri of the found resource is /Vendor/AirConditioner/Swinger
+
+2 RI DISCOVERY MULTICAST Device
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test the feature multicast resource discovery |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 10, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |procedure | 1. [Client] Select Option 100 to select NON as message type |
+    ...    |procedure | 2. [Client] Select Option 10 to discover device |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | Created devices in precondition and procedure will show up in client |
+    [Tags]    nsmt
+    [Setup]    Do Custom Test Setup
+    ${log}    Provide Input    ${second_app}    100    1s
+    Do Discover Multiple
+    ${log}    Provide Input    ${second_app}    10    15s
+    Check Substring Count    ${log}    1    ${GE}    Device Information received
+    Check Substring Count    ${log}    1    ${GE}    Vendor Smart Home AirCon Device
+
+3 RI DISCOVERY MULTICAST Platform
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test the feature multicast platform discovery |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |procedure | 1. [Client] Select Option 100 to select NON as message type |
+    ...    |procedure | 2. [Client] Select Option 11 to discover platform |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | Created resources in precondition will show up in client |
+    [Tags]    nsmt
+    [Setup]    Do Custom Test Setup
+    ${log}    Provide Input    ${second_app}    100    1s
+    Do Discover Multiple
+    ${log}    Provide Input    ${second_app}    11    15s
+    Check Substring Count    ${log}    2    ${GE}    Platform Information received
+
+4 RI DISCOVERY UNICAST Resource
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test the feature unicast resource discovery |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 13 to Discover Resources - Unicast |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | All the resource should response to the GET request |
+    [Tags]    con    non
+    ${log}    Provide Input    ${second_app}    13    15s
+    Check Substring Count    ${log}    7    ${GE}    Found a resource!!
+    Check Substring Count    ${log}    1    ${GE}    uri of the found resource is /BinarySwitchResURI
+    Check Substring Count    ${log}    1    ${GE}    uri of the found resource is /AirFlowResURI
+    Check Substring Count    ${log}    1    ${GE}    uri of the found resource is /TemperatureResURI
+
+5 RI RI DISCOVERY MULTICAST With Query
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test the feature multicast resource discovery with resource type query |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 14, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |procedure | 1. [Client] Select Option 100 to select NON as message type |
+    ...    |procedure | 2. [Client] Select Option 14 to Discover Resources - Multicast with Query |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | Test the feature multicast resource discovery with resource type query |
+    [Tags]    nsmt
+    [Setup]    Do Custom Test Setup
+    ${log}    Provide Input    ${second_app}    100    1s
+    ${log}    Provide Input    ${second_app}    14    15s
+    Check Substring Count    ${log}    1    ${GE}    Found a resource!!
+    Check Substring Count    ${log}    1    ${GE}    uri of the found resource is /TemperatureResURI
+
+6 RI CRUDN GET
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test GET Request and Response is working |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 15 to send GET Request to Vertical Resources |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | All the resource should response to the GET request |
+    [Tags]    con    non
+    ${log}    Provide Input    ${second_app}    15    15s
+    Check Substring Count    ${log}    4    ${GE}    Response: GET request was successful
+    Check Substring Count    ${log}    1    ${GE}    The representation has uri: /BinarySwitchResURI
+    Check Substring Count    ${log}    1    ${GE}    The representation has uri: /AirFlowResURI
+    Check Substring Count    ${log}    1    ${GE}    The representation has uri: /TemperatureResURI
+    ${log}    Get Output    ${first_app}
+    Check Substring Count    ${log}    4    ${GE}    Inside handleGetRequest...
+
+7 RI CRUDN POST Vertial
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test Partial Update(POST) is working fine |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 15 to send GET Request to Vertical Resources |
+    ...    |procedure | 1. [Client] Select Option 19 to send POST Request to Vertical Resources |
+    ...    |procedure | 1. [Client] Select Option 15 to send GET Request to Vertical Resources |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | Both the representation of light and fan resource should be updated |
+    [Tags]    con    non
+    ${log}    Provide Input    ${second_app}    15    15s
+    ${log}    Provide Input    ${second_app}    19    15s
+    ${log}    Provide Input    ${second_app}    15    25s
+    Check Substring Count    ${log}    8    ${GE}    Response: GET request was successful
+    Check Substring Count    ${log}    4    ${GE}    Response: POST request was successful
+    Check Substring Count    ${log}    1    ${GE}    direction : up
+    ${return}    Match Any String    ${log}    direction : right    direction : left
+    Should Be True    ${return}
+    ${log}    Get Output    ${first_app}
+    Check Substring Count    ${log}    4    ${GE}    Inside handlePostRequest...
+    Check Substring Count    ${log}    8    ${GE}    Inside handleGetRequest...
+
+8 RI CRUDN POST Core
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test Partial Update(POST) can not change core resource attributes |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 16 to send GET Request to Core Resources |
+    ...    |procedure | 1. [Client] Select Option 20 to send Post Request to Core Resources |
+    ...    |procedure | 1. [Client] Select Option 16 to send GET Request to Core Resources |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | No core defined resources will be updated |
+    [Tags]    con    non
+    ${log}    Provide Input    ${second_app}    16    15s
+    ${log}    Provide Input    ${second_app}    20    15s
+    ${log}    Provide Input    ${second_app}    16    15s
+    Check Substring Count    ${log}    4    ${GE}    Response: GET request was successful
+    Run Keyword If    '${os2}' != '${android}'    Check Substring Count    ${log}    2    ${GE}    onPOST Response error: 46
+    Run Keyword If    '${os2}' == '${android}'    Check Substring Count    ${log}    2    ${GE}    onPostCallback UNAUTHORIZED_REQ
+    Check Substring Count    ${log}    2    ${GE}    n : Vendor Smart Home AirCon Device
+    Check Substring Count    ${log}    2    ${GE}    mnmn : Vendor
+
+9 RI CRUDN PUT Vertical
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test Complete Update(PUT) is rejected by vertical resources |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 15 to send GET Request to Vertical Resources |
+    ...    |procedure | 1. [Client] Send PUT Request to Vertical Resources |
+    ...    |procedure | 1. [Client] Select Option 15 to send GET Request to Vertical Resources |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | The servers should completely updae their representation upon receiving PUT request |
+    [Tags]    con    non
+    ${log}    Provide Input    ${second_app}    15    15s
+    ${log}    Provide Input    ${second_app}    17    20s
+    ${log}    Provide Input    ${second_app}    15    15s
+    Check Substring Count    ${log}    4    ${GE}    Response: GET request was successful
+    #Run Keyword If    '${os2}' != '${android}'    Check Substring Count    ${log}    4    ${GE}    onPUT Response error: 21
+    #Run Keyword If    '${os2}' == '${android}'    Check Substring Count    ${log}    4    ${GE}    onPutCallback INVALID_QUERY
+    Check Substring Count    ${log}    1    ${GE}    direction : up
+    BuiltIn.Sleep    60s
+    ${log}    Get Output    ${first_app}
+    Check Substring Count    ${log}    4    ${GE}    Inside handlePutRequest...
+    Check Substring Count    ${log}    8    ${GE}    Inside handleGetRequest...
+
+10 RI CRUDN PUT Core
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test Complete Update(PUT) can not change core resource attributes |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 16 to send GET Request to Core Resources |
+    ...    |procedure | 1. [Client] Select Option 18 to send PUT Request to Core Resources |
+    ...    |procedure | 1. [Client] Select Option 16 to send GET Request to Core Resources |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | Both the representation of light and fan resource should be updated |
+    [Tags]    con    non
+    ${log}    Provide Input    ${second_app}    16    15s
+    ${log}    Provide Input    ${second_app}    18    15s
+    ${log}    Provide Input    ${second_app}    16    15s
+    Check Substring Count    ${log}    4    ${GE}    Response: GET request was successful
+    Run Keyword If    '${os2}' != '${android}'    Check Substring Count    ${log}    2    ${GE}    onPUT Response error: 46
+    Run Keyword If    '${os2}' == '${android}'    Check Substring Count    ${log}    2    ${GE}    onPutCallback UNAUTHORIZED_REQ
+    Check Substring Count    ${log}    2    ${GE}    n : Vendor Smart Home AirCon Device
+    Check Substring Count    ${log}    2    ${GE}    mnmn : Vendor
+
+11 RI CRUDN DELETE Vertical
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test Delete is working fine |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 15 to Send GET Request to Vertical Resources |
+    ...    |procedure | 2. [Client] Select Option 21 to Send Delete Request to Vertical Resources |
+    ...    |procedure | 3. [Client] Select Option 15 to Send GET Request to Vertical Resources |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | The server resources should be deleted upon receiving delete request from client |
+    [Tags]    con    non
+    ${log}    Provide Input    ${second_app}    15    15s
+    ${log}    Provide Input    ${second_app}    21    15s
+    ${log}    Provide Input    ${second_app}    15    25s
+    Check Substring Count    ${log}    4    ${GE}    Response: GET request was successful
+    Check Substring Count    ${log}    4    ${GE}    Response: DELETE request was successful
+    Run Keyword If    '${os2}' != '${android}'    Check Substring Count    ${log}    4    ${GE}    onGET Response error: 33
+    Run Keyword If    '${os2}' == '${android}'    Check Substring Count    ${log}    4    ${GE}    onGetCallback NO_RESOURCE
+    BuiltIn.Sleep    60s
+    ${log}    Get Output    ${first_app}
+    Check Substring Count    ${log}    4    ${GE}    Inside handleDeleteRequest...
+    Check Substring Count    ${log}    4    ${GE}    Inside handleGetRequest...
+
+12 RI CRUDN DELETE Core
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test Delete is working fine |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 16 to Send GET Request to Core Resources |
+    ...    |procedure | 2. [Client] Select Option 22 to Send Delete Request to Core Resources |
+    ...    |procedure | 3. [Client] Select Option 16 to Send GET Request to Core Resources |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | The core resources should not be deleted upon receiving delete request from client |
+    [Tags]    con    non
+    ${log}    Provide Input    ${second_app}    16    15s
+    ${log}    Provide Input    ${second_app}    22    15s
+    ${log}    Provide Input    ${second_app}    16    15s
+    Check Substring Count    ${log}    4    ${GE}    Response: GET request was successful
+    Run Keyword If    '${os2}' != '${android}'    Check Substring Count    ${log}    2    ${GE}    onDELETE Response error: 46
+    Run Keyword If    '${os2}' == '${android}'    Check Substring Count    ${log}    2    ${GE}    onDeleteCallback UNAUTHORIZED_REQ
+
+13 RI CRUDN Observe Vertical
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test Delete request can not delete core defined resources |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 23 to Send Observe Request to Vertical Observable Resources |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | Smart home resources should add the client as observer |
+    [Tags]    con    non
+    ${log}    Provide Input    ${second_app}    23    15s
+    Check Substring Count    ${log}    3    ${GE}    SequenceNumber: 0
+    Check Substring Count    ${log}    1    ${GE}    The representation has uri: /BinarySwitchResURI
+    Check Substring Count    ${log}    1    ${GE}    The representation has uri: /AirFlowResURI
+    Check Substring Count    ${log}    1    ${GE}    The representation has uri: /TemperatureResURI
+    ${log}    Get Output    ${first_app}
+    Check Substring Count    ${log}    3    ${GE}    Inside handleObserveRequest...
+
+14 RI CRUDN Observe Core
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test Observe request to vedor observale resource is working fine |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 15 to Send Observe Request to Core Resources |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | Core defined resources should reject observe request |
+    [Tags]    con    non
+    ${log}    Provide Input    ${second_app}    24    15s
+    Check Substring Count    ${log}    2    ${GE}    SequenceNumber: 16777216
+    Check Substring Count    ${log}    2    ${GE}    The representation has no uri
+
+15 RI CRUDN Observe Non-Observable
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test Observe request to core defined resources is rejected |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 24 to Send Observe Request to Vertical Non-observable Resources |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | The timer resource should deny the observe request and reply with a Get response, with sequence number 2 |
+    [Tags]    con    non
+    ${log}    Provide Input    ${second_app}    25    15s
+    Check Substring Count    ${log}    1    ${GE}    SequenceNumber: 16777216
+    Check Substring Count    ${log}    1    ${GE}    The representation has no uri
+
+16 RI CRUDN Observe Notification CON Server
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test Observe notifiaction is working fine for observale resource |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 23 to Send Observe Request to Vertical Observable Resources |
+    ...    |procedure | 2. [Server] Select Option 4 to Update Local Resource three times |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | The client should receive 9 observe notifications and the option sequence no. should be increasing |
+    [Tags]    con    non
+    ${log}    Provide Input    ${second_app}    23    15s
+    ${log}    Provide Input    ${first_app}    4    5s
+    ${log}    Provide Input    ${first_app}    4    5s
+    ${log}    Provide Input    ${first_app}    4    5s
+    ${log}    Get Output    ${second_app}
+    Check Substring Count    ${log}    3    ${GE}    SequenceNumber: 1
+    Check Substring Count    ${log}    3    ${GE}    SequenceNumber: 2
+    Check Substring Count    ${log}    3    ${GE}    SequenceNumber: 3
+    ${log}    Get Output    ${first_app}
+    Check Substring Count    ${log}    3    ${GE}    Inside handleObserveRequest...
+    Check Substring Count    ${log}    9    ${GE}    Sending Notification to Observers....
+
+17 RI CRUDN Observe Notification NON Server
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test Observe notifiaction is working fine for observale resource |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 101 to select NON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 23 to Send Observe Request to Vertical Observable Resources |
+    ...    |procedure | 2. [Server] Select Option 4 to Update Local Resource three times |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | The client should receive 9 observe notifications and the option sequence no. should be increasing |
+    [Tags]    con    non
+    ${log}    Provide Input    ${second_app}    23    15s
+    ${log}    Provide Input    ${first_app}    4    5s
+    ${log}    Provide Input    ${first_app}    4    5s
+    ${log}    Provide Input    ${first_app}    4    5s
+    ${log}    Get Output    ${second_app}
+    Check Substring Count    ${log}    3    ${GE}    SequenceNumber:
+    ${log}    Get Output    ${first_app}
+    Check Substring Count    ${log}    3    ${GE}    Inside handleObserveRequest...
+    Check Substring Count    ${log}    9    ${GE}    Sending Notification to Observers....
+
+18 RI CRUDN Observe Cancel
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test Observe cancel is working fine for observable resource |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 23 to send GET Request to Vertical Resources |
+    ...    |procedure | 2. [Client] Select Option 26 to Cancel Observing Resource |
+    ...    |procedure | 3. [Server] Select Option 4 to Update Local Resource three times |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | 1. Observe should have been canceled |
+    ...    |expected | 2. The server should remove client from observer list |
+    ...    |expected | 3. the client should not receive any more observe notification |
+    [Tags]    con    non
+    [Setup]    Do Test Setup    101
+    ${log}    Provide Input    ${second_app}    23    15s
+    ${log}    Provide Input    ${second_app}    26    15s
+    ${log}    Provide Input    ${first_app}    4    5s
+    ${log}    Provide Input    ${first_app}    4    5s
+    ${log}    Provide Input    ${first_app}    4    5s
+    ${log}    Get Output    ${second_app}
+    Check Substring Count    ${log}    3    ${GE}    SequenceNumber: 0
+    Check Substring Count    ${log}    0    ${EQ}    SequenceNumber: 3
+    Run Keyword If    '${QOS}'=='con'    Check Substring Count    ${log}    3    ${GE}    The representation has no uri
+    Run Keyword If    '${QOS}'=='non'    Check Substring Count    ${log}    3    ${GE}    Observe Cancel request will be sent when a CON Notification is received!!
+    ${log}    Get Output    ${first_app}
+    Run Keyword If    '${QOS}'=='con'    Check Substring Count    ${log}    3    ${GE}    Removing observer from observer list
+    Run Keyword If    '${QOS}'=='con'    Check Substring Count    ${log}    9    ${GE}    No observers available to notify!!
+    Run Keyword If    '${QOS}'=='non'    Check Substring Count    ${log}    3    ${GE}    Sending Notification to Observers
+    Run Keyword If    '${QOS}'=='non'    Check Substring Count    ${log}    6    ${GE}    No observers available to notify!!
+
+19 RI DISCOVERY MULTICAST BWT
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test BWT is working for discovery response |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100 |
+    ...    |procedure | 1. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 2. [Client] Select Option 15 to send GET Request to Vertical Resources |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | All resources should be discovered |
+    [Tags]    nsmt
+    [Setup]    Do Custom Test Setup
+    Do Discover Multiple
+    ${log}    Provide Input    ${second_app}    15    15s
+    Check Substring Count    ${log}    4    ${GE}    Found a resource!!
+    Check Substring Count    ${log}    1    ${GE}    uri of the found resource is /BinarySwitchResURI
+    Check Substring Count    ${log}    1    ${GE}    uri of the found resource is /AirFlowResURI
+    Check Substring Count    ${log}    1    ${GE}    uri of the found resource is /TemperatureResURI
+
+20 RI CRUDN GET BWT
+    [Documentation]    |Item |Description |
+    ...    |since |2017-04-07 |
+    ...    |see | |
+    ...    |objective | Test BWT is working fine for GET/POST |
+    ...    |target | |
+    ...    |test_data | Menu option: 100, 104, 1, 11, 0 |
+    ...    |pre_condition | 1. In secure mode, Client and Server both are provisioned and  pairwise linked |
+    ...    |pre_condition | 2. Start RI interop server and client apps |
+    ...    |pre_condition | 3. Select Appropriate Transport in both apps |
+    ...    |pre_condition | 4. [Server] Select Option 100 to select CON as message type |
+    ...    |pre_condition | 5. [Server] Select Option 1 (in non-secure mode) or 2 (in secure mode) |
+    ...    |pre_condition | 6. [Client] Select Option 100(for CON) or 101(for NON) |
+    ...    |pre_condition | 7. [Client] Select Option 12 to discover resource |
+    ...    |procedure | 1. [Client] Select Option 27 to send POST Request with Blockwise Payload |
+    ...    |procedure | 2. [Client] Select Option 15 to send GET Request to Vertical Resources |
+    ...    |post_condition | 1. [Server] Select 0 to terminate interop server |
+    ...    |post_condition | 1. [Client] Select 0 to terminate interop client |
+    ...    |expected | 1. Server should receive blockwise POST request and response with a blockwise data |
+    ...    |expected | 2. Client should receive blockwise POST response |
+    ...    |expected | 3. Client should receive blockwise GET response |
+    [Tags]    con    non
+    ${log}    Provide Input    ${second_app}    27    15s
+    ${log}    Provide Input    ${second_app}    15    25s
+    Check Substring Count    ${log}    1    ${GE}    Response: GET request was successful
+    Check Substring Count    ${log}    1    ${GE}    Response: POST request was successful
+    Check Substring Count    ${log}    2    ${GE}    x.com.vendor.timer.clock.location : Dhaka, Bangladesh
+    ${log}    Get Output    ${first_app}
+    Check Substring Count    ${log}    1    ${GE}    Inside handlePostRequest...
+    Check Substring Count    ${log}    1    ${GE}    Inside handleGetRequest...
+
+*** Keywords ***
+Do Suite Setup
+    [Arguments]    
+    ${iotivity_build_parmeters}    Set Variable   SECURED=0 WITH_TCP=1
+    ${tc_build_parmeters}    Set Variable   ${EMPTY}
+    BuiltIn.Log    ${OS}->${OS2}
+    BuiltIn.Log    ${TRANSPORT}
+    BuiltIn.Log    ${QOS}
+    Load Default Settings    ${iotivity_build_parmeters}    ${tc_build_parmeters}
+    Get Test Environment Details
+    Build Iotivity and Test App
+
+Do Suite Teardown
+    [Arguments]    
+    Remove All Devices
+
+Do Test Setup
+    [Arguments]    ${server_msg_type}=100
+    BuiltIn.Sleep    60s
+    Execute Interop Apps
+    Do Custom Test Setup
+    ${qos_input}    Set Variable If    '${QOS}'=='non'    101    100
+    Provide Input    ${second_app}    ${qos_input}    1s
+    Provide Input    ${second_app}    12    15s
+    Provide Input    ${second_app}    12    15s
+    Provide Input    ${second_app}    12    15s
+    Provide Input    ${second_app}    12    15s
+
+Do Test Teardown
+    [Arguments]
+    ${log}    Get Output From First App
+    BuiltIn.Log    ${log}
+    ${log}    Get Output From Second App
+    BuiltIn.Log    ${log}    
+    Provide Input    ${first_app}    0    1s
+    Provide Input    ${second_app}    0    1s
+
+
+Do Custom Test Setup
+    [Arguments]    ${server_msg_type}=100
+    Execute Interop Apps
+    #${TRANSPORT}    Set Variable    4
+    Provide Input    ${first_app}    ${server_msg_type}    1s
+    ${transport_input}    Set Variable    102
+    ${transport_input}    Set Variable If    '${TRANSPORT}'=='ipv6'    103    ${transport_input}
+    ${transport_input}    Set Variable If    '${TRANSPORT}'=='tcp'    107    ${transport_input}
+    Provide Input    ${first_app}    ${transport_input}    1s
+    Provide Input    ${second_app}    ${transport_input}    1s
+    Provide Input    ${first_app}    1    1s
+
+Do Discover Multiple
+    ${log}    Provide Input    ${second_app}    12    15s
+    ${log}    Provide Input    ${second_app}    12    15s
+    ${log}    Provide Input    ${second_app}    12    15s
+    ${log}    Provide Input    ${second_app}    12    15s

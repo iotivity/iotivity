@@ -1,0 +1,496 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Keywords ***
+Run Android API TC
+    [Arguments]    ${iotivity_parameters}=${EMPTY}
+    ${ANDROID_PATHS}    Set Variable    ${PARAM_ANDROID_HOME} ${PARAM_ANDROID_NDK} ${PARAM_ANDROID_GRADLE}
+    ${iotivity_build_command}    Set Variable    scons ${iotivity_parameters} TARGET_OS=android TARGET_ARCH=${ANDROID_TARGET_ARCH} RELEASE=${RELEASE} ${ANDROID_PATHS} -j ${J}
+    ${iotivity_build_success_text}    Set Variable    done building targets
+    ${iotivity_binary}    Set Variable    android/android_api/base/build/outputs/aar/iotivity-base-${ANDROID_TARGET_ARCH}-${RELEASE_DIR}.aar
+    ${tc_build_command}    Set Variable    scons RELEASE=${RELEASE} IOTIVITY_ROOT=${IOTIVITY_ROOT} TARGET_OS=android ${ANDROID_PATHS} TARGET_ARCH=${ANDROID_TARGET_ARCH} MODULE=${MODULE}
+    ${tc_build_success_text}    Set Variable    BUILD SUCCESSFUL
+    ${tc_binary}    Set Variable    ${module}test-debug.apk
+    ${tc_run_command}    Set Variable    ./common_test_runner.py -p android -d ${ANDROID_DEVICE_ID} -m ${MODULE} -r ../TestReport/Result/__${MODULE}_${OS}__
+    Run Keyword If    '${ENABLE_TC_BUILD}'!='0'    Execute Terminal Command    ${ADB} -s ${ANDROID_DEVICE_ID} uninstall org.iotivity.test.${MODULE}.tc
+    Run API TC    ${iotivity_build_command}    ${iotivity_build_success_text}    ${iotivity_binary}    ${tc_build_command}    ${tc_build_success_text}    ${tc_binary}    ${tc_run_command}
+
+Run Android TC With Linux Simulator
+    [Arguments]    ${android_iotivity_parameters}    ${android_tc_parameters}    ${linux_iotivity_parameters}    ${linux_tc_parameters}    ${runner_params}    @{simulator_run}
+    ${ANDROID_PATHS}    Set Variable    ${PARAM_ANDROID_HOME} ${PARAM_ANDROID_NDK} ${PARAM_ANDROID_GRADLE}
+    ${android_iotivity_build}    Set Variable    scons ${android_iotivity_parameters} TARGET_OS=android TARGET_ARCH=${ANDROID_TARGET_ARCH} RELEASE=${RELEASE} ${ANDROID_PATHS} -j ${J}
+    ${iotivity_build_success_text}    Set Variable    done building targets
+    ${android_iotivity_binary}    Set Variable    android/android_api/base/build/outputs/aar/iotivity-base-${ANDROID_TARGET_ARCH}-${RELEASE_DIR}.aar
+    ${android_tc_binary}    Set Variable    ${module}test-debug.apk
+    ${android_tc_build}    Set Variable    scons ${android_tc_parameters} RELEASE=${RELEASE} IOTIVITY_ROOT=${IOTIVITY_ROOT} TARGET_OS=android ${ANDROID_PATHS} TARGET_ARCH=${ANDROID_TARGET_ARCH} MODULE=${MODULE}
+    ${linux_iotivity_build}    Set Variable If    '${linux_iotivity_parameters}'=='${False}'    ${EMPTY}    scons ${linux_iotivity_parameters} TARGET_OS=linux RELEASE=${RELEASE} -j ${J}
+    ${linux_tc_build}    Set Variable If    '${linux_tc_parameters}'=='${False}'    ${EMPTY}    scons ${linux_tc_parameters} RELEASE=${RELEASE} IOTIVITY_ROOT=${IOTIVITY_ROOT} TARGET_OS=linux MODULE=${MODULE}
+    ${tc_build_success_text}    Set Variable    BUILD SUCCESSFUL
+    ${tc_run_command}    Set Variable    ./common_test_runner.py -p android -d ${ANDROID_DEVICE_ID} -m ${MODULE} -r ../TestReport/Result/__${MODULE}_${OS}__
+    ${tc_run_command}    Set Variable If    '${runner_params}'==''    ${tc_run_command}    ${tc_run_command} ${runner_params}
+    Run Keyword If    '${ENABLE_TC_BUILD}'!='0'    Execute Terminal Command    ${ADB} -s ${ANDROID_DEVICE_ID} uninstall org.iotivity.test.${MODULE}.tc
+    Run API TC With Linux Simulator    ${android_iotivity_build}    ${iotivity_build_success_text}    ${android_iotivity_binary}    ${android_tc_build}    ${tc_build_success_text}    ${android_tc_binary}    ${linux_iotivity_build}    ${linux_tc_build}    ${tc_run_command}    @{simulator_run}
+
+Run Linux API TC
+    [Arguments]    ${iotivity_parameters}    ${tc_build_parameters}=${EMPTY}
+    ${iotivity_build_command}    Set Variable    scons ${iotivity_parameters} TARGET_OS=linux RELEASE=${RELEASE}  TARGET_ARCH=${x86} -j ${J}
+    ${iotivity_build_success_text}    Set Variable    done building targets
+    ${tc_build_command}    Set Variable    scons ${tc_build_parameters} RELEASE=${RELEASE} IOTIVITY_ROOT=${IOTIVITY_ROOT} TARGET_OS=linux MODULE=${module} COVERAGE=${COVERAGE}
+    ${tc_build_success_text}    Set Variable    done building targets
+    ${flag}    Set Variable    Is File Exist    ${TEST_ROOT}/bin/linux    iotivity_    _test
+    Should Be True    ${flag}    Unable to find any test
+    ${flag}    Set Variable    Is File Exist    ${TEST_ROOT}/bin/linux    iotivity_    _test
+    ${iotivity_binary}    Set Variable    ${EMPTY}
+    ${tc_binary}    Set Variable    ${EMPTY}
+    ${tc_run_command}    Set Variable    ./common_test_runner.py -p linux -m ${MODULE} -p linux -t ${VERSION}.04.${BIT}bit -r ../TestReport/Result/__${MODULE}_${OS}__
+    Run API TC    ${iotivity_build_command}    ${iotivity_build_success_text}    ${iotivity_binary}    ${tc_build_command}    ${tc_build_success_text}    ${tc_binary}    ${tc_run_command}
+
+Run Linux TC With Simulator
+    [Arguments]    ${iotivity_parameters}    ${tc_build_parameters}    ${runner_params}    @{simulator_run}
+    ${iotivity_build_command}    Set Variable    scons ${iotivity_parameters} TARGET_OS=linux RELEASE=${RELEASE} TARGET_ARCH=${x86} -j ${J}
+    ${iotivity_build_success_text}    Set Variable    done building targets
+    ${tc_build}    Set Variable    scons ${tc_build_parameters} RELEASE=${RELEASE} IOTIVITY_ROOT=${IOTIVITY_ROOT} TARGET_OS=linux MODULE=${module} COVERAGE=${COVERAGE}
+    ${tc_build_success_text}    Set Variable    done building targets
+    ${flag}    Set Variable    Is File Exist    ${TEST_ROOT}/bin/linux    iotivity_    _test
+    Should Be True    ${flag}    Unable to find any test
+    ${tc_run_command}    Set Variable    ./common_test_runner.py -p linux -m ${MODULE} -p linux -t ${VERSION}.04.${BIT}bit -r ../TestReport/Result/__${MODULE}_${OS}__
+    ${tc_run_command}    Set Variable If    '${runner_params}'==''    ${tc_run_command}    ${tc_run_command} ${runner_params}
+    ${iotivity_binary}    Set Variable    ${EMPTY}
+    ${tc_binary}    Set Variable    ${EMPTY}
+    Run API TC With Linux Simulator    ${iotivity_build_command}    ${iotivity_build_success_text}    ${iotivity_binary}    ${tc_build}    ${tc_build_success_text}    ${tc_binary}    ${EMPTY}    ${EMPTY}    ${tc_run_command}    @{simulator_run}
+
+Run Tizen API TC
+    [Arguments]    ${gbs_root}    ${iotivity_build_command}    ${iotivity_binary}
+    ${iotivity_build_success_text}    Set Variable    Build is successful
+    ${tc_build}    Set Variable    scons RELEASE=${RELEASE} IOTIVITY_ROOT=${IOTIVITY_ROOT} TARGET_OS=tizen  TIZEN_HOME=${TIZEN_HOME} PUSH=all TARGET_ARCH=${TIZEN_TARGET_ARCH} GBS_ROOT=${gbs_root} MODULE=${MODULE}
+    ${tc_build_success_text}    Set Variable    scons: done building targets
+    ${tizen_tc_binary}    Set Variable    ${gbs_root}/local/repos/tizen/${RPM_VERSION}/RPMS/com-oic-${MODULE}-test-${RPM_VERSION}.${TIZEN_TARGET_ARCH}.rpm
+    ${tc_run_command}    Set Variable    ./common_test_runner.py -p tizen -d ${TIZEN_DEVICE_ID} -m ${MODULE} -r ../TestReport/Result/__${MODULE}_${OS}__
+    Run API TC    ${iotivity_build_command}    ${iotivity_build_success_text}    ${iotivity_binary}    ${tc_build}    ${tc_build_success_text}    ${tizen_tc_binary}    ${tc_run_command}
+
+Run Tizen TC With Linux Simulator
+    [Arguments]    ${gbs_root}    ${tizen_iotivity_build}    ${tizen_iotivity_binary}    ${tc_build_parameters}    ${linux_iotivity_parameters}    ${linux_tc_parameters}    ${runner_params}    @{simulator_run}
+    ${iotivity_build_success_text}    Get Tizen Build Success Text    ${tizen_iotivity_build}
+    ${tizen_tc_build}    Set Variable    scons ${tc_build_parameters} RELEASE=${RELEASE} IOTIVITY_ROOT=${IOTIVITY_ROOT} TARGET_OS=tizen  TIZEN_HOME=${TIZEN_HOME} PUSH=all TARGET_ARCH=${TIZEN_TARGET_ARCH} GBS_ROOT=${gbs_root} MODULE=${MODULE}
+    ${tc_build_success_text}    Set Variable    scons: done building targets
+    ${tizen_tc_binary}    Set Variable    ${gbs_root}/local/repos/tizen/${RPM_VERSION}/RPMS/com-oic-${MODULE}-test-${RPM_VERSION}.${TIZEN_TARGET_ARCH}.rpm
+    ${linux_iotivity_build}    Set Variable If    '${linux_iotivity_parameters}'=='${False}'    ${EMPTY}    scons ${linux_iotivity_parameters} TARGET_OS=linux RELEASE=${RELEASE} -j ${J}
+    ${linux_tc_build}    Set Variable If    '${linux_tc_parameters}'=='${False}'    ${EMPTY}    scons ${linux_tc_parameters} RELEASE=${RELEASE} IOTIVITY_ROOT=${IOTIVITY_ROOT} TARGET_OS=linux MODULE=${MODULE}
+    ${tc_run}    Set Variable    ./common_test_runner.py -p tizen -d ${TIZEN_DEVICE_ID} -m ${MODULE} -r ../TestReport/Result/__${MODULE}_${OS}__
+    ${tc_run}    Set Variable If    '${runner_params}'==''    ${tc_run}    ${tc_run} ${runner_params}
+    ${iotivity_binary}    Set Variable    ${EMPTY}
+    Run API TC With Linux Simulator    ${tizen_iotivity_build}    ${iotivity_build_success_text}    ${tizen_iotivity_binary}    ${tizen_tc_build}    ${tc_build_success_text}    ${tizen_tc_binary}    ${linux_iotivity_build}    ${linux_tc_build}    ${tc_run}    @{simulator_run}
+
+Run API TC
+    [Arguments]    ${iotivity_build_command}    ${success_text1}    ${iotivity_binary}    ${tc_build_command}    ${success_text2}    ${tc_binary}    ${tc_run_command}
+    Build Iotivity    ${IOTIVITY_ROOT}    ${iotivity_build_command}    ${success_text1}
+    Build Iotivity TEST    ${TEST_ROOT}    ${tc_build_command}    ${success_text2}
+    Run Keyword If    '${ENABLE_TC_BUILD}'!='0'    Run Keyword If    '${MODULE}'=='cs'    Update Cloud Resource
+    Run Keyword If    '${ENABLE_TC_BUILD}'!='0'    Run Keyword If    '${MODULE}'=='ic'    Update Cloud Resource
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Remove Run Folder
+    Execute Common Runner    ${tc_run_command}
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run Linux Command    Linux1    cmd_terminal    ${TEST_MANAGER_ROOT}    ./result_reporter.py ../TestReport/Result/__${MODULE}_${OS}__ ${MODULE}_${OS}    Making Test Result Report is Done!!
+
+Run API TC With Linux Simulator
+    [Arguments]    ${iotivity_build}    ${success_text1}    ${iotivity_binary}    ${tc_build}    ${success_text2}    ${tc_binary}    ${linux_iotivity_build}    ${linux_tc_build}    ${tc_run}    @{simulator_run}
+    Build Iotivity    ${IOTIVITY_ROOT}    ${iotivity_build}    ${success_text1}
+    Build Iotivity TEST    ${TEST_ROOT}    ${tc_build}    ${success_text2}
+    Run Keyword If    '${linux_iotivity_build}'!=''    Build Iotivity    ${IOTIVITY_ROOT}    ${linux_iotivity_build} TARGET_ARCH=${x86}    done building targets
+    Run Keyword If    '${linux_tc_build}'!=''    Build Iotivity TEST    ${TEST_ROOT}    ${linux_tc_build}    done building targets
+    Run Keyword If    '${ENABLE_TC_BUILD}'!='0'    Run Keyword If    '${MODULE}'=='cs'    Update Cloud Resource
+    Run Keyword If    '${ENABLE_TC_BUILD}'!='0'    Run Keyword If    '${MODULE}'=='ic'    Update Cloud Resource
+    ${total_simulator}    Get Collection Length    @{simulator_run}
+    : For    ${temp}        IN RANGE   0    ${total_simulator}
+    \    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Add Simulator    ${OS}    Linux1    app_sim${temp}    @{simulator_run}[${temp}]    ${DLM}
+    Set Robot Execution Status     ${OS}    ${MODULE}    ${TC_TYPE}    ${TEST_PRE_CONDITION_FAIL}
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Wait Until Keyword Succeeds    5x    5 minutes    Start Simulators Until Succeed
+    Set Robot Execution Status     ${OS}    ${MODULE}    ${TC_TYPE}    ${TEST_PRE_CONDITION_PASS}
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Remove Run Folder
+    Execute Common Runner    ${tc_run}
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run Linux Command    Linux1    cmd_terminal    ${TEST_MANAGER_ROOT}    ./result_reporter.py ../TestReport/Result/__${MODULE}_${OS}__ ${MODULE}_${OS}     Making Test Result Report is Done!!
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Stop Simulators
+
+Run Terminal
+    [Arguments]    ${cmd_dir}    ${linux_command}    ${search_word}=${EMPTY}
+    Run Linux Command    Linux1    cmd_terminal    ${cmd_dir}    ${linux_command}    ${search_word}
+
+Run Console App Until Stop
+    [Arguments]    ${cmd_dir}    ${linux_command}    ${search_word}    @{inputs}
+    Run Console App    ${cmd_dir}    ${linux_command}    ${INFINITE}    ${search_word}    @{inputs}
+
+Run Console App For Specified Time
+    [Arguments]    ${cmd_dir}    ${linux_command}    ${search_word}    @{inputs}
+    Run Console App    ${cmd_dir}    ${linux_command}    10s    ${search_word}    @{inputs}
+
+Run Console App
+    [Arguments]    ${cmd_dir}    ${linux_command}    ${wait_time}    ${search_word}    @{inputs}
+    ${device_id}    Set Variable    Linux1
+    ${cmd_terminal}    Set Variable    cmd_terminal
+    BuiltIn.Log    ${device_id}
+    Add Specific Device    Linux    ${device_id}    ${device_id}
+    ${orginal_path}    Get Working Directory Path    ${device_id}
+    BuiltIn.Log    ${orginal_path}
+    BuiltIn.Log    ${cmd_dir}
+    Run Keyword If    '${cmd_dir}'!=''    Change Working Directory    ${device_id}    ${cmd_dir}
+    BuiltIn.Log    ${linux_command}
+    Execute Application    ${device_id}    ${cmd_terminal}    stdbuf -oL ${linux_command}
+    Start Application Log    ${device_id}    ${cmd_terminal}
+    : FOR    ${input}    IN    @{inputs}
+    \    Input Command To Application    ${device_id}    ${cmd_terminal}    ${input}
+    Run Keyword If    '${wait_time}'=='${INFINITE}'    Wait Until Application Exit    ${device_id}    ${cmd_terminal}
+    Run Keyword If    '${wait_time}'!='${INFINITE}'    BuiltIn.Sleep    ${wait_time}
+    ${log} =    Get Application Log    ${device_id}    ${cmd_terminal}
+    BuiltIn.Log    ${log}
+    BuiltIn.Log    ${search_word}
+    BuiltIn.Log    ${cmd_dir}
+    Run Keyword If    '${wait_time}'!='${INFINITE}'    Terminate Application    ${device_id}    ${cmd_terminal}
+    ${check}    Check Keyword    ${search_word}    ${log}
+    Run Keyword If    '${cmd_dir}'!=''    Change Working Directory    ${device_id}    ${orginal_path}
+    BuiltIn.Log to console    command: [${linux_command}]\n
+    Should Be True    ${check}
+    [Return]    ${log}
+
+Run Linux Command
+    [Arguments]    ${device_id}    ${cmd_terminal}    ${cmd_dir}    ${linux_command}    ${search_word}    ${wait_time}=1s    ${wait_for_stop}=${True}
+    BuiltIn.Log to console    ${cmd_dir}
+    BuiltIn.Log to console    command: [${linux_command}]\n
+    Add Specific Device    Linux    ${device_id}    ${device_id}
+    ${orginal_path}    Get Working Directory Path    ${device_id}
+    BuiltIn.Log    ${orginal_path}
+    BuiltIn.Log    ${cmd_dir}
+    Run Keyword If    '${cmd_dir}'!=''    Change Working Directory    ${device_id}    ${cmd_dir}
+    BuiltIn.Log    ${linux_command}
+    Execute Application    ${device_id}    ${cmd_terminal}    ${linux_command}
+    Start Application Log    ${device_id}    ${cmd_terminal}
+    BuiltIn.Sleep    ${wait_time}
+    Run Keyword If    '${wait_for_stop}'=='${True}'    Wait Until Application Exit    ${device_id}    ${cmd_terminal}
+    ${log} =    Get Application Log    ${device_id}    ${cmd_terminal}
+    BuiltIn.Log    ${log}
+    BuiltIn.Log    ${search_word}
+    BuiltIn.Log    ${cmd_dir}
+    ${check}    Check Keyword    ${search_word}    ${log}
+    Run Keyword If    '${cmd_dir}'!=''    Change Working Directory    ${device_id}    ${orginal_path}
+    Should Be True    ${check}
+    [Return]    ${log}
+
+Run Command Until Expected Log Found Or Logging Stop
+    [Arguments]    ${device_id}    ${cmd_terminal}    ${cmd_dir}    ${linux_command}    ${search_word}    ${running_sec}=10    ${time_out}=600
+    BuiltIn.Log to console    ${cmd_dir}
+    BuiltIn.Log to console    command: [${linux_command}]\n
+    Add Specific Device    Linux    ${device_id}    ${device_id}
+    ${orginal_path}    Get Working Directory Path    ${device_id}
+    BuiltIn.Log    ${orginal_path}
+    BuiltIn.Log    ${cmd_dir}
+    Run Keyword If    '${cmd_dir}'!=''    Change Working Directory    ${device_id}    ${cmd_dir}
+    BuiltIn.Log    ${linux_command}
+    Execute Application    ${device_id}    ${cmd_terminal}    ${linux_command}
+    Start Application Log    ${device_id}    ${cmd_terminal}
+    @{info}    Get Test Manager Log File Info    ${ROBOT_ROOT}    ${OS}    ${TC_TYPE}    ${MODULE}
+    Wait Until Log File Complete    ${device_id}    ${cmd_terminal}    ${running_sec}    ${time_out}    ${search_word}    @{info}[0]    @{info}[1]    @{info}[2]
+    ${log} =    Get Application Log    ${device_id}    ${cmd_terminal}
+    BuiltIn.Log    ${log}
+    BuiltIn.Log    ${search_word}
+    BuiltIn.Log    ${cmd_dir}
+    ${check}    Check Keyword    ${search_word}    ${log}
+    Run Keyword If    '${cmd_dir}'!=''    Change Working Directory    ${device_id}    ${orginal_path}
+    Should Be True    ${check}
+    [Return]    ${log}
+
+Run Linux Command And Return Status Log
+    [Arguments]    ${device_id}    ${cmd_terminal}    ${cmd_dir}    ${linux_command}    ${search_word}    ${wait_time}=1s    ${wait_for_stop}=${True}
+    BuiltIn.Log    ${device_id}
+    Add Specific Device    Linux    ${device_id}    ${device_id}
+    ${orginal_path}    Get Working Directory Path    ${device_id}
+    BuiltIn.Log    ${orginal_path}
+    BuiltIn.Log    ${cmd_dir}
+    Run Keyword If    '${cmd_dir}'!=''    Change Working Directory    ${device_id}    ${cmd_dir}
+    BuiltIn.Log    ${linux_command}
+    Execute Application    ${device_id}    ${cmd_terminal}    ${linux_command}
+    Start Application Log    ${device_id}    ${cmd_terminal}
+    BuiltIn.Sleep    ${wait_time}
+    Run Keyword If    '${wait_for_stop}'=='${True}'    Wait Until Application Exit    ${device_id}    ${cmd_terminal}
+    ${log} =    Get Application Log    ${device_id}    ${cmd_terminal}
+    BuiltIn.Log    ${log}
+    BuiltIn.Log    ${search_word}
+    BuiltIn.Log    ${cmd_dir}
+    ${check}    Check Keyword    ${search_word}    ${log}
+    Run Keyword If    '${cmd_dir}'!=''    Change Working Directory    ${device_id}    ${orginal_path}
+    BuiltIn.Log to console    command: [${linux_command}]\n
+    [Return]    ${check}    ${log}
+
+Execute Terminal Command
+    [Arguments]    ${command}    ${wait_time}=-1s    ${show_in_console}=${True}
+    Run Keyword If    '${show_in_console}'=='${True}'    BuiltIn.Log to console    \nexecuting command: [${command}]\n
+    BuiltIn.Log    ${command}
+    Add Specific Device    Linux    Linux_temp    Linux_temp
+    ${orginal_path}    Get Working Directory Path    Linux_temp
+    BuiltIn.Log    ${orginal_path}
+    Execute Application    Linux_temp    cmd_terminal    ${command}
+    Start Application Log    Linux_temp    cmd_terminal
+    Run Keyword If    '${wait_time}'=='-1s'    Wait Until Application Exit    Linux_temp    cmd_terminal
+    Run Keyword If    '${wait_time}'!='-1s'    BuiltIn.Sleep    ${wait_time}
+    ${log} =    Get Application Log    Linux_temp    cmd_terminal
+    BuiltIn.Log    ${log}
+    Run Keyword If    '${show_in_console}'=='${True}'    BuiltIn.Log to console    command: [${command}]\n
+
+Run Simulator Commands
+    [Arguments]    ${device_id}    ${app_id}    ${simulator_run_command}
+    BuiltIn.Log    ${device_id}
+    BuiltIn.Log    $${app_id}
+    BuiltIn.Log    ${simulator_run_command}
+    @{commands}    Get Split Strings    ${simulator_run_command}    ${DLM}
+    ${file_name}   Get File Name From Run Command    @{commands}[1]
+    BuiltIn.Log    ${file_name}
+    ${flag}    Set Variable    Is File Exists    @{commands}[0]    ${file_name}
+    ${len}    Get Collection Length    @{commands}
+    Should Be True    ${flag}    Unable to the find file
+    Run Linux Command    ${device_id}    ${app_id}    @{commands}[0]    @{commands}[1]    @{commands}[2]    @{commands}[3]    @{commands}[4]
+    : For    ${index}        IN RANGE   5    ${len}
+    \    BuiltIn.Log    @{commands}[${index}]
+    \    Input Command To Application    ${device_id}    ${app_id}    @{commands}[${index}]
+
+Stop Simulator
+    [Arguments]    ${device_id}    ${app_id}    ${index}
+    ${log}    Get Simulator Log    ${index}
+    BuiltIn.Log    ${log}
+    Set Simulator Log    ${index}    ${log}
+    Terminate Application    ${device_id}    ${app_id}
+
+Remove Run Folder
+    Execute Terminal Command    rm -rf ${TEST_MANAGER_ROOT}/../TestReport/Result/__${MODULE}_${OS}__
+    BuiltIn.Sleep    2s
+
+Get Cloud Services
+    [Arguments]    ${tls}
+    [Return]    @{cloud_services}
+    ${proxy_flag}    Get Java Proxy Flag    ${HTTP_PROXY_ADDRESS}    ${HTTPS_PROXY_ADDRESS}
+    BuiltIn.Log    ${proxy_flag}
+    ${mongod_server}    Get Concatenated String    ${DLM}    ${MONGODB_ROOT}/${MONGODB_FOLDER}/bin    ./mongod --dbpath=${MONGODB_ROOT}/db    waiting for connections    5s    ${False}
+    ${zookeeper_server}    Get Concatenated String    ${DLM}    ${KAFKA_ROOT}    bin/zookeeper-server-start.sh config/zookeeper.properties    ${EMPTY}    10s    ${False}
+    ${kafka_server}    Get Concatenated String    ${DLM}    ${KAFKA_ROOT}    bin/kafka-server-start.sh config/server.properties    ${EMPTY}    5s    ${False}
+    ${command}    Remove Extra Space    java ${proxy_flag} -jar CloudResourceDirectory-0.0.1-SNAPSHOT.jar 5684 127.0.0.1 27017 ${tls}
+    ${rd_server}    Get Concatenated String    ${DLM}    ${IOTIVITY_ROOT}/cloud/resourcedirectory/target    ${command}    ${EMPTY}    5s    ${False}
+    ${command}    Remove Extra Space    java ${proxy_flag} -jar CloudMessageQueue-0.0.1-SNAPSHOT.jar 5686 127.0.0.1 2181 127.0.0.1 9092 ${tls}
+    ${mq_server}    Get Concatenated String    ${DLM}    ${IOTIVITY_ROOT}/cloud/messagequeue/target    ${command}    ${EMPTY}    5s    ${False}
+    ${command}    Remove Extra Space    java ${proxy_flag} -jar CloudAccount-0.0.1-SNAPSHOT.jar 5685 127.0.0.1 27017 ${tls}
+    ${ca_server}    Get Concatenated String    ${DLM}    ${IOTIVITY_ROOT}/cloud/account/target    ${command}    ${EMPTY}    15s    ${False}
+    ${command}    Remove Extra Space    java ${proxy_flag} -jar CloudInterface-0.0.1-SNAPSHOT.jar 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 0 0 ${tls}
+    ${ci_server}    Get Concatenated String    ${DLM}    ${IOTIVITY_ROOT}/cloud/interface/target    ${command}    to terminate    15s    ${False}
+    @{cloud_services}    Create List    ${zookeeper_server}    ${kafka_server}    ${rd_server}    ${mq_server}    ${ca_server}    ${ci_server}
+    Return From Keyword If    '${x86}' != 'x86'    @{cloud_services}
+    @{cloud_services}    Create List    ${mongod_server}    ${zookeeper_server}    ${kafka_server}    ${rd_server}    ${mq_server}    ${ca_server}    ${ci_server}
+
+Update Cloud Resource
+    ${net_interface}    Set Variable If    '${OS}'=='linux'    lo    wlan0
+    ${ip}    Get Ip Address    ${net_interface}
+    ${ip_key}    Set Variable If    '${OS}'=='linux'    ${CI_SERVER_ETHERNET_IP_KEY}    ${CI_SERVER_WIFI_IP_KEY}
+    Execute Terminal Command    cp ${TEST_ROOT}/res/common/config.properties ${TEST_ROOT}/bin/${OS}/config.properties
+    Update Common Config File    ${TEST_ROOT}/bin/${OS}/config.properties    ${GITHUB_USER_KEY}    ${AUTH_USERNAME}    ${GITHUB_PASSWORD_KEY}    ${AUTH_PASSWORD}    ${ip_key}    ${ip}
+    Run Keyword If    '${OS}'=='android'    Execute Terminal Command    ${ADB} -s ${ANDROID_DEVICE_ID} push ${TEST_ROOT}/bin/${OS}/config.properties /data/local/tmp/
+    Run Keyword If    '${OS}'=='tizen'    Execute Terminal Command    ${SDB} -s ${TIZEN_DEVICE_ID} push ${TEST_ROOT}/bin/${OS}/config.properties /opt/usr/media/bin/
+
+Build Iotivity
+    Return From Keyword If    '${ENABLE_IOTIVITY_BUILD}'=='0'
+    [Arguments]    ${build_path}    ${iotivity_build_command}    ${success_text}
+    Wait Until Keyword Succeeds    5x    1 minutes    Build Iotivity Single Time    ${build_path}    ${iotivity_build_command}    ${success_text}
+
+Build Iotivity Single Time
+    [Arguments]    ${build_path}    ${iotivity_build_command}    ${success_text}
+    ${iotivity_build_command}    Remove Extra Space    ${iotivity_build_command}
+    BuiltIn.Log    ${iotivity_build_command}
+    Set Suite Variable     ${IOTIVITY_BUILD_COMMAND}    ${iotivity_build_command}
+    BuiltIn.Log    ${iotivity_build_command}
+    ${build_needed}    Is Build Needed    ${build_path}    ${iotivity_build_command}
+    Set Suite Variable    ${IOTIVITY_BUILD_NEEDED}    ${build_needed}
+    Run Keyword If    '${build_needed}'=='False'    BuiltIn.Log to console    Using pervious iotivity build
+    ${status}    Set Variable If    '${build_needed}'=='False'    ${True}    ${False}
+    Set Suite Variable     ${IOTIVITY_BUILD_STATUS}    ${status}
+    Return From Keyword If    '${build_needed}'=='False'
+    ${current_os}    Get Os From Build Command    ${iotivity_build_command}
+    Run Keyword If    '${current_os}' == 'tizen'    Run Terminal    ${TEST_ROOT}/src/automation/robot    ./tizen_build_prep.sh ${IOTIVITY_ROOT} move ${HTTP_PROXY_ADDRESS} ${HTTPS_PROXY_ADDRESS}
+    @{items}    Execute Shell Command    ${build_path}    ${iotivity_build_command}    ${success_text}
+    Set Suite Variable     ${IOTIVITY_BUILD_LOG}    @{items}[1]
+    ${status}    Set Variable    @{items}[0]
+    Run Keyword If    '${current_os}' == 'tizen'    Run Terminal    ${TEST_ROOT}/src/automation/robot    ./tizen_build_prep.sh ${IOTIVITY_ROOT} restore
+    ${extra_check}    Verify Build Success    ${iotivity_build_command}    ${IOTIVITY_BUILD_LOG}
+    ${status}    Set Variable If     '${status}' == '${True}'    ${extra_check}    ${status}
+    Run Keyword If    '${status}' == '${False}'    Set Robot Execution Status     ${OS}    ${MODULE}    ${TC_TYPE}    ${BUILD_IOTIVITY_FAIL}
+    Set Suite Variable     ${IOTIVITY_BUILD_STATUS}    ${status}
+    Write Iotivity Build Log    ${OS}    ${MODULE}    ${TC_TYPE}    ${IOTIVITY_BUILD_COMMAND}    ${IOTIVITY_BUILD_STATUS}    ${IOTIVITY_BUILD_LOG}
+    Should Be True    ${status}    iotivity build failed
+    Add Build Command    ${build_path}    ${iotivity_build_command}
+
+Build Iotivity TEST
+    [Arguments]    ${build_path}    ${test_build_command}    ${success_text}
+    Return From Keyword If    '${ENABLE_TC_BUILD}'=='0'
+    ${test_build_command}    Remove Extra Space    ${test_build_command}
+    BuiltIn.Log    ${test_build_command}
+    Set Suite Variable     ${TEST_BUILD_COMMAND}    ${test_build_command}
+    BuiltIn.Log    ${test_build_command}
+    @{items}    Run Linux Command And Return Status Log    Linux1    cmd_terminal    ${build_path}    ${test_build_command}    ${success_text}
+    ${status}    Set Variable    @{items}[0]
+    Set Suite Variable     ${TEST_BUILD_STATUS}    ${status}
+    Set Suite Variable     ${TEST_BUILD_LOG}    @{items}[1]
+    Should Be True    ${status}    Test build failed
+
+Build Module
+    [Arguments]    ${tc_build}=${False}    ${iotivity_build}=${True}    ${module}=${MODULE}    ${os}=${OS}
+    ${param_prefix}    Set Variable    ${EMPTY}
+    ${with_tcp}    Set Variable    0
+    ${with_tcp}    Set Variable If    '${module}' == 'ca'    1    ${with_tcp}
+    ${with_tcp}    Set Variable If    '${module}' == 'es'    1    ${with_tcp}
+    ${with_tcp}    Set Variable If    '${module}' == 'ic'    1    ${with_tcp}
+    ${with_tcp}    Set Variable If    '${module}' == 'cs'    1    ${with_tcp}
+    ${multiple_owner}    Set Variable    0
+    ${multiple_owner}    Set Variable If    '${module}' == 'pm'    1    ${multiple_owner}
+    ${with_cloud}    Set Variable    0
+    ${with_cloud}    Set Variable If    '${module}' == 'es'    1    ${with_cloud}
+    ${with_cloud}    Set Variable If    '${module}' == 'ic'    1    ${with_cloud}
+    ${with_cloud}    Set Variable If    '${module}' == 'cs'    1    ${with_cloud}
+    ${with_mq}    Set Variable    OFF
+    ${with_mq}    Set Variable If    '${module}' == 'ic'    PUB,SUB    ${with_mq}
+    ${with_mq}    Set Variable If    '${module}' == 'cs'    PUB,SUB    ${with_mq}
+    ${with_proxy}    Set Variable    0
+    ${with_proxy}    Set Variable If    '${module}' == 'chp'    1    ${with_proxy}
+    ${build_command_prefix}    Set Variable If    '${os}' == '${linux}'    scons ${param_prefix} TARGET_OS=${os} TARGET_ARCH=${LINUX_TARGET_ARCH} -j ${J}
+    ${build_command_prefix}    Set Variable If    '${os}' == '${android}'    scons ${param_prefix} TARGET_OS=${os} TARGET_ARCH=${ANDROID_TARGET_ARCH} ${PARAM_ANDROID_HOME} ${PARAM_ANDROID_NDK} ${PARAM_ANDROID_GRADLE} -j ${J}    ${build_command_prefix}
+    ${build_command_prefix}    Set Variable If    '${os}' == '${tizen}'    ./gbsbuild.sh    ${build_command_prefix}
+    ${build_command}    Set Variable    ${build_command_prefix} SECURED=${SECURED} RELEASE=${RELEASE} WITH_TCP=${with_tcp} WITH_CLOUD=${with_cloud} WITH_MQ=${with_mq} WITH_PROXY=${with_proxy} MULTIPLE_OWNER=${multiple_owner}
+    ${build_command}    Remove Extra Space    ${build_command}
+    BuiltIn.Log    ${build_command}
+    ${success_text}    Set Variable If    '${os}' == '${tizen}'    Build is successful    done building targets
+    Run Keyword If    '${iotivity_build}' == '${True}'    Build Iotivity    ${IOTIVITY_ROOT}    ${build_command}    ${success_text}
+
+Start Simulators Until Succeed
+    ${status}    Run Keyword And Return Status     Start Simulators
+    Run Keyword Unless    ${status}    Stop Simulators
+    Should Be True    ${status}    Problem with running simulator(s)
+
+Run Executables
+    [Arguments]    @{simulator_run}
+    ${total_simulator}    Get Collection Length    @{simulator_run}
+    : For    ${temp}        IN RANGE   0    ${total_simulator}
+    \    Run Simulator commands    Linux1    app_sim${temp}    @{simulator_run}[${temp}]
+
+Start Simulators
+    ${total_simulator}    Total Simulator Count
+    : For    ${index}        IN RANGE   0    ${total_simulator}
+    \    ${device_name}    Get Simulator Device Name    ${index}
+    \    ${app_name}    Get Simulator App Name    ${index}
+    \    ${app_command}    Get Simulator App Command    ${index}
+    \    Run Simulator commands    ${device_name}    ${app_name}    ${app_command}
+    \    Set Simulator Status    ${index}    ${True}
+
+Stop Simulators
+    ${total_simulator}    Total Simulator Count
+    : For    ${index}        IN RANGE   0    ${total_simulator}
+    \    ${log}    Get Simulator Log    ${index}
+    \    @{simulator_info}    Get Simulator Info    ${index}
+    \    ${expected_log}    Set Variable    @{simulator_info}[4]
+    \    ${status}    Set Variable    @{simulator_info}[5]
+    \    BuiltIn.Log    ${status}
+    \    BuiltIn.Log    ${expected_log}
+    \    BuiltIn.Log    ${log}
+    \    Write Precondition Log    ${OS}    ${MODULE}    ${TC_TYPE}    ${index}
+    \    Stop Simulator    @{simulator_info}[1]    @{simulator_info}[2]    ${index}
+
+Common API TC Teardown
+    Check Robot Execution Status    ${ROBOT_ROOT}    ${OS}    ${MODULE}    ${TC_TYPE}
+    Run Keyword If    '${ENABLE_IOTIVITY_BUILD}'!='0'    BuiltIn.Log    ${IOTIVITY_BUILD_COMMAND}
+    Run Keyword If    '${ENABLE_IOTIVITY_BUILD}'!='0'    Run Keyword If    '${IOTIVITY_BUILD_NEEDED}'!='False'    BuiltIn.Log    ${IOTIVITY_BUILD_LOG}
+    Run Keyword If    '${ENABLE_IOTIVITY_BUILD}'!='0'    Run Keyword If    '${IOTIVITY_BUILD_NEEDED}'!='False'    Write Iotivity Build Log    ${OS}    ${MODULE}    ${TC_TYPE}    ${IOTIVITY_BUILD_COMMAND}    ${IOTIVITY_BUILD_STATUS}    ${IOTIVITY_BUILD_LOG}
+    Run Keyword If    '${ENABLE_IOTIVITY_BUILD}'!='0'    Return From Keyword If    '${IOTIVITY_BUILD_STATUS}' == '${False}'
+    Run Keyword If    '${ENABLE_TC_BUILD}'!='0'    Run Keyword If    '${CLEAN_BUILD}'!='0'    Store Binary    ${IOTIVITY_ROOT}    ${RELEASE_DIR}    ${OS}    ${TC_TYPE}    ${MODULE}
+    Run Keyword If    '${ENABLE_TC_BUILD}'!='0'    BuiltIn.Log    ${TEST_BUILD_COMMAND}
+    Run Keyword If    '${ENABLE_TC_BUILD}'!='0'    BuiltIn.Log    ${TEST_BUILD_LOG}
+    Run Keyword If    '${ENABLE_TC_BUILD}'!='0'    Write Test Build Log    ${OS}    ${MODULE}    ${TC_TYPE}    ${TEST_BUILD_COMMAND}    ${TEST_BUILD_STATUS}    ${TEST_BUILD_LOG}
+    Run Keyword If    '${ENABLE_TC_BUILD}'!='0'    Return From Keyword If    '${TEST_BUILD_STATUS}' == '${False}'
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Stop Simulators
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run Keyword And Continue On Failure    Run Linux Command    Linux1    cmd_terminal    ${TEST_MANAGER_ROOT}    ./result_reporter.py ../TestReport/Result/__${MODULE}_${OS}__ ${MODULE}_${OS}     ${EMPTY}
+    Run Keyword If    '${OS}'=='${android}'    Execute Terminal Command    ${ADB} -s ${ANDROID_DEVICE_ID} shell am force-stop org.iotivity.test.${MODULE}.tc
+    Run Keyword If    '${OS}'=='${android}'    Run Keyword If    '${ENABLE_TC_BUILD}'!='0'    Execute Terminal Command    ${ADB} -s ${ANDROID_DEVICE_ID} uninstall org.iotivity.test.${MODULE}.tc
+
+Cloud API TC Teardown
+    [Arguments]    @{simulator_run}
+    Common API TC Teardown
+    Execute Terminal Command    ${TEST_ROOT}/res/cloud_resource/cloud_run.sh kill
+
+Common API TC Setup
+    Set Suite Variable    ${IOTIVITY_BUILD_COMMAND}    ${EMPTY}
+    Set Suite Variable    ${IOTIVITY_BUILD_NEEDED}    ${EMPTY}
+    Set Suite Variable    ${IOTIVITY_BUILD_STATUS}    ${EMPTY}
+    Set Suite Variable    ${IOTIVITY_BUILD_LOG}    ${EMPTY}
+    Set Suite Variable    ${TEST_BUILD_COMMAND}    ${EMPTY}
+    Set Suite Variable    ${TEST_BUILD_STATUS}    ${EMPTY}
+    Set Suite Variable    ${TEST_BUILD_LOG}    ${EMPTY}
+    Clear Simulator List
+
+Select Library
+    Run Keyword If    '${LIB_MODE}' == 'file'    Import Library   ${TEST_ROOT}/src/automation/robot/helper/DeviceControlKeyword.py    WITH NAME    Local
+    Run Keyword If    '${LIB_MODE}' != 'file'    Import Library    Remote    ${REMOTE_IP}:${REMOTE_PORT}    WITH NAME    Local
+
+Sample App Common Suite Setup
+    Select Library
+    Build Module
+
+Do Suite Init Task
+    Select Library
+    Set Robot Root    ${ROBOT_ROOT}
+
+Get Test Environment Details
+    BuiltIn.Log    ${OS} ${OS2} ${SDK} ${SDK2} ${TRANSPORT} ${SECURED} ${QOS}
+
+Execute Common Runner
+    [Arguments]    ${command}
+    Return From Keyword If    '${ENABLE_TC_RUN}'=='0'
+    BuiltIn.Log    ${command}
+    BuiltIn.Log    ${SECURED}
+    ${file_suffix}    Get Verdict File Suffix    ${SECURED}    ${command}
+    ${verdict_param}    Set Variable    --save_verdict --verdict_path ../src/automation/robot/report/${TC_TYPE}/${OS}/verdict_${module}_${file_suffix}.txt
+    ${build_param}    Get Build Info    ${command}    ${SECURED}
+    Run Command Until Expected Log Found Or Logging Stop    Linux1    cmd_terminal    ${TEST_MANAGER_ROOT}    ${command} ${build_param} ${verdict_param}    Test Is Done!!
+
+Execute All Testcase Form List
+    [Arguments]    ${command}    @{additional_params_list}
+    : FOR    ${additional_params}    IN    @{additional_params_list}
+    \    BuiltIn.Log    ${additional_params}
+    \    ${log}    Run Process For a Maximum Time    Linux1    cmd_terminal    ${TEST_MANAGER_ROOT}    ${command} ${additional_params}    Test Is Done!!
+    \    Set Tc Status    ${additional_params}    ${log}
+
+Run Process For a Maximum Time
+    [Arguments]    ${device_id}    ${cmd_terminal}    ${cmd_dir}    ${linux_command}    ${search_word}    ${maximum_time}=900
+    BuiltIn.Log to console    command: [${linux_command}]\n
+    Add Specific Device    Linux    ${device_id}    ${device_id}
+    ${orginal_path}    Get Working Directory Path    ${device_id}
+    BuiltIn.Log    ${orginal_path}
+    BuiltIn.Log    ${cmd_dir}
+    Run Keyword If    '${cmd_dir}'!=''    Change Working Directory    ${device_id}    ${cmd_dir}
+    BuiltIn.Log    ${linux_command}
+    Execute Application    ${device_id}    ${cmd_terminal}    ${linux_command}
+    Start Application Log    ${device_id}    ${cmd_terminal}
+    ${status} =    Wait Until Expected Log Found    ${device_id}    ${cmd_terminal}    ${search_word}     ${maximum_time}
+    ${log} =    Get Application Log    ${device_id}    ${cmd_terminal}
+    Terminate Application    ${device_id}    ${cmd_terminal}
+    BuiltIn.Log    ${log}
+    BuiltIn.Log    ${search_word}
+    BuiltIn.Log    ${cmd_dir}
+    Run Keyword If    '${cmd_dir}'!=''    Change Working Directory    ${device_id}    ${orginal_path}
+    [Return]    ${log}

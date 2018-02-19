@@ -11,25 +11,28 @@
 
 from ite.config import *
 
-def walk_through_testcases_by_transport(transport_action, network_action, tctype_action, module_action, suite_action, tc_action):
-    networks = transport_action()
+def walk_through_testcases_by_transport(buildtype_action, transport_action, network_action, tctype_action, module_action, suite_action, tc_action):
+    buildtypes = buildtype_action()
+    networks = transport_action(buildtypes)
     types = network_action(networks)
     modules = tctype_action(types)
     suites = module_action(modules)
     testcases = suite_action(suites)
     tc_action(testcases)
 
-def walk_through_testcases_by_module(platform, tctype_action, module_action, transport_action, network_action, suite_action, tc_action):
-    modules = tctype_action(platform)
+def walk_through_testcases_by_module(platform, buildtype_action, tctype_action, module_action, transport_action, network_action, suite_action, tc_action):
+    buildtypes = buildtype_action(platform)
+    modules = tctype_action(buildtypes)
     transports = module_action(modules)
     networks = transport_action(transports)
     suites = network_action(networks)
     testcases = suite_action(suites)
     tc_action(testcases)
 
-def walk_through_results(platform_action, target_action, transport_action, network_action, tctype_action, module_action, suite_action, tc_action):
+def walk_through_results(platform_action, target_action, build_type_action, transport_action, network_action, tctype_action, module_action, suite_action, tc_action):
     targets = platform_action(TEST_PLATFORM)
-    transports = target_action(targets)
+    build_types = target_action(targets)
+    transports = build_type_action(build_types)
     networks = transport_action(transports)
     types = network_action(networks)
     modules = tctype_action(types)

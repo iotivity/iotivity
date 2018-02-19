@@ -29,42 +29,46 @@ class TestSpecReporter:
     def makeSummary(self):
         for platform in TEST_PLATFORM:
 
-            for transport in TEST_TRANSPORT:
-                if not transport in self.data[platform]:
-                    continue
+            for build_type in self.data[platform]:
 
-                for network in TEST_NETWORK:
-                    if not network in self.data[platform][transport]:
+                for transport in TEST_TRANSPORT:
+                    if not transport in self.data[platform][build_type]:
+                        print ('transport type not match')
                         continue
 
-                    for tctype in TESTCASE_TYPES:
-                        if not tctype in self.data[platform][transport][network]:
+                    for network in TEST_NETWORK:
+                        if not network in self.data[platform][build_type][transport]:
                             continue
 
-                        for module in TESTSUITE_MODULES:
-                            if not module in self.data[platform][transport][network][tctype]:
+                        for tctype in TESTCASE_TYPES:
+                            if not tctype in self.data[platform][build_type][transport][network]:
                                 continue
 
-                            for suite in list(self.data[platform][transport][network][tctype][module]):
-                                count = len(self.data[platform][transport][network][tctype][module][suite])
-                                reviewer_count = 0
+                            for module in TESTSUITE_MODULES:
+                                if not module in self.data[platform][build_type][transport][network][tctype]:
+                                    continue
 
-                                for spec in self.data[platform][transport][network][tctype][module][suite].values():
-                                    reviewer = spec.__dict__['reviewer']
-                                    if reviewer != None and reviewer != '':
-                                        reviewer_count += 1
+                                for suite in list(self.data[platform][build_type][transport][network][tctype][module]):
+                                    count = len(self.data[platform][build_type][transport][network][tctype][module][suite])
+                                    reviewer_count = 0
 
-                                self.summary.update_tc(platform, transport, network, tctype, module, count, reviewer_count)
+                                    for spec in self.data[platform][build_type][transport][network][tctype][module][suite].values():
+                                        reviewer = spec.__dict__['reviewer']
+                                        if reviewer != None and reviewer != '':
+                                            reviewer_count += 1
+
+                                    self.summary.update_tc(platform, build_type, transport, network, tctype, module, count, reviewer_count)
 
         print("### Iterating over contain.data")
         for platform in self.data:
-            for transport in self.data[platform]:
-                for network in self.data[platform][transport]:
-                    for tctype in self.data[platform][transport][network]:
-                        for module in self.data[platform][transport][network][tctype]:
-                            for suite in list(self.data[platform][transport][network][tctype][module]):
-                                count = len(self.data[platform][transport][network][tctype][module][suite])
-                                #print (platform + ' - ' + transport + ' - ' + network + ' -- ' + tctype + ' - ' + module + ' - ' + suite + ' = ' + str(count))
+            for build_type in self.data[platform]:
+                for transport in self.data[platform][build_type]:
+                    for network in self.data[platform][build_type][transport]:
+                        for tctype in self.data[platform][build_type][transport][network]:
+                            for module in self.data[platform][build_type][transport][network][tctype]:
+                                for suite in list(self.data[platform][build_type][transport][network][tctype][module]):
+                                    count = len(self.data[platform][build_type][transport][network][tctype][module][suite])
+                                    #print (platform + ' - ' + build_type + ' - ' + transport + ' - ' + network + ' -- ' + tctype + ' - ' + module + ' - ' + suite + ' = ' + str(count))
 
     def generate_testspec_report(self, data):
         self.data = data
@@ -92,20 +96,25 @@ class TestSpecReporter:
             total += self.summary.platform_count[platform]
             print("[%s]: %d" % (platform, self.summary.platform_count[platform]), file=txt)
 
-            for transport in TEST_TRANSPORT:
-                if not transport in self.data[platform]:
-                    continue
-                print("\t[%s]: %d" % (transport, self.summary.transport_count[platform][transport]), file=txt)
+            for build_type in self.data[platform]:
+                print("\t[%s]: %d" % (build_type, self.summary.buildType_count[platform][build_type]), file=txt)
 
-                for tctype in TESTCASE_TYPES:
-                    if not tctype in self.summary.tctype_count[platform][transport]:
+                for transport in TEST_TRANSPORT:
+                    if not transport in self.data[platform][build_type]:
                         continue
-                    print("\t[%s]: %d" % (tctype, self.summary.tctype_count[platform][transport][tctype]), file=txt)
+                    print("\t[%s]: %d" % (transport, self.summary.transport_count[platform][build_type][transport]), file=txt)
 
-                    for module in TESTSUITE_MODULES:
-                        print("\t\t[%s]: %d" %(module, self.summary.module_count[platform][transport][tctype][module]), file=txt)
 
-            print("-------------------------------------------", file=txt)
+                    for tctype in TESTCASE_TYPES:
+                        if not tctype in self.summary.tctype_count[platform][build_type][transport]:
+                            #print ('line 117', tctype, )
+                            continue
+                        print("\t[%s]: %d" % (tctype, self.summary.tctype_count[platform][build_type][transport][tctype]), file=txt)
+
+                        for module in TESTSUITE_MODULES:
+                            print("\t\t[%s]: %d" %(module, self.summary.module_count[platform][build_type][transport][tctype][module]), file=txt)
+
+                print("-------------------------------------------", file=txt)
 
         print("[Total] : %d" % total, file=txt)
 
@@ -115,35 +124,39 @@ class TestSpecReporter:
             print("[%s]" % platform, file=txt)
             print("===========================================", file=txt)
 
-            for transport in TEST_TRANSPORT:
-                if not transport in self.data[platform]:
-                    continue
-                print("[%s]" % transport, file=txt)
+            for build_type in self.data[platform]:
+                print("[%s]" % build_type, file=txt)
                 print("-------------------------------------------", file=txt)
 
-                for tctype in TESTCASE_TYPES:
-                    if not tctype in self.data[platform][transport]:
+                for transport in TEST_TRANSPORT:
+                    if not transport in self.data[platform]:
                         continue
-                    print("[%s]" % tctype, file=txt)
+                    print("[%s]" % transport, file=txt)
                     print("-------------------------------------------", file=txt)
 
-                    for module in TESTSUITE_MODULES:
-                        if not module in self.data[platform][transport][tctype]:
+                    for tctype in TESTCASE_TYPES:
+                        if not tctype in self.data[platform][build_type][transport]:
                             continue
+                        print("[%s]" % tctype, file=txt)
+                        print("-------------------------------------------", file=txt)
 
-                        print("[%s]" % module, file=txt)
-
-                        for suite in list(self.data[platform][transport][tctype][module]):
-                            if len(self.data[platform][transport][tctype][module]) <= 0:
+                        for module in TESTSUITE_MODULES:
+                            if not module in self.data[platform][build_type][transport][tctype]:
                                 continue
-                            print("[%s]" % suite, file=txt)
 
-                            for spec in sorted(self.data[platform][transport][tctype][module][suite].values(), key=operator.attrgetter('line')):
-                                print("%s" % spec.to_string(), file=txt)
+                            print("[%s]" % module, file=txt)
 
-                    print("-------------------------------------------", file=txt)
+                            for suite in list(self.data[platform][build_type][transport][tctype][module]):
+                                if len(self.data[platform][build_type][transport][tctype][module]) <= 0:
+                                    continue
+                                print("[%s]" % suite, file=txt)
 
-            print("===========================================", file=txt)
+                                for spec in sorted(self.data[platform][build_type][transport][tctype][module][suite].values(), key=operator.attrgetter('line')):
+                                    print("%s" % spec.to_string(), file=txt)
+
+                        print("-------------------------------------------", file=txt)
+
+                print("===========================================", file=txt)
 
         txt.close()
 
@@ -158,19 +171,20 @@ class TestSpecReporter:
         for platform in TEST_PLATFORM:
             total += self.summary.platform_count[platform]
             print("%s, , ,%d" % (platform, self.summary.platform_count[platform]), file=csv)
-
-            for transport in TEST_TRANSPORT:
-                if not transport in self.data[platform]:
-                    continue
-                print(" ,%s, ,%d" % (transport, self.summary.transport_count[platform][transport]), file=csv)
-
-                for tctype in TESTCASE_TYPES:
-                    if not tctype in self.summary.tctype_count[platform][transport]:
+            for build_type in self.data[platform]:
+                print("\t[%s]:, ,%d" % (build_type, self.summary.buildType_count[platform][build_type]), file=csv)
+                for transport in TEST_TRANSPORT:
+                    if not transport in self.data[platform][build_type]:
                         continue
-                    print(" ,%s, ,%d" % (tctype, self.summary.tctype_count[platform][transport][tctype]), file=csv)
+                    print(" ,%s, ,%d" % (transport, self.summary.transport_count[platform][build_type][transport]), file=csv)
 
-                    for module in TESTSUITE_MODULES:
-                        print(" , ,%s,%d" %(module, self.summary.module_count[platform][transport][tctype][module]), file=csv)
+                    for tctype in TESTCASE_TYPES:
+                        if not tctype in self.summary.tctype_count[platform][build_type][transport]:
+                            continue
+                        print(" ,%s, ,%d" % (tctype, self.summary.tctype_count[platform][build_type][transport][tctype]), file=csv)
+
+                        for module in TESTSUITE_MODULES:
+                            print(" , ,%s,%d" %(module, self.summary.module_count[platform][build_type][transport][tctype][module]), file=csv)
 
         print("", file=csv)
         print("<Test Spec>", file=csv)
@@ -184,32 +198,33 @@ class TestSpecReporter:
         print("Platform,Type,Module,Test Suite,Test Case,%s" % tag_titles, file=csv)
         for platform in TEST_PLATFORM:
             print("%s" % platform, file=csv)
-
-            for transport in TEST_TRANSPORT:
-                if not transport in self.data[platform]:
-                    continue
-                print(" ,%s" % transport, file=csv)
-
-                for tctype in TESTCASE_TYPES:
-                    if not tctype in self.data[platform][transport]:
+            for build_type in self.data[platform]:
+                print("\t\t%s %d" % (build_type, self.summary.buildType_count[platform][build_type]), file=csv)
+                for transport in TEST_TRANSPORT:
+                    if not transport in self.data[platform][build_type]:
                         continue
-                    print(" ,%s" % tctype, file=csv)
+                    print(" ,%s" % transport, file=csv)
 
-                    for module in TESTSUITE_MODULES:
-                        if not module in self.data[platform][transport][tctype]:
+                    for tctype in TESTCASE_TYPES:
+                        if not tctype in self.data[platform][build_type][transport]:
                             continue
-                        print(" , ,%s" % module, file=csv)
+                        print(" ,%s" % tctype, file=csv)
 
-                        for suite in list(self.data[platform][transport][tctype][module]):
-                            print(" , , ,%s" % suite, file=csv)
+                        for module in TESTSUITE_MODULES:
+                            if not module in self.data[platform][build_type][transport][tctype]:
+                                continue
+                            print(" , ,%s" % module, file=csv)
 
-                            for spec in sorted(self.data[platform][transport][tctype][module][suite].values(), key=operator.attrgetter('line')):
-                                tag_data = spec.name + ','
-                                for key, title in sorted(TAG_DIC.items(), key=operator.itemgetter(1)):
-                                    if (title[1] == ''):
-                                        continue
-                                    tag_data += '''"%s",''' % spec.__dict__[key]
-                                print(" , , , ,%s" % tag_data, file=csv)
+                            for suite in list(self.data[platform][build_type][transport][tctype][module]):
+                                print(" , , ,%s" % suite, file=csv)
+
+                                for spec in sorted(self.data[platform][build_type][transport][tctype][module][suite].values(), key=operator.attrgetter('line')):
+                                    tag_data = spec.name + ','
+                                    for key, title in sorted(TAG_DIC.items(), key=operator.itemgetter(1)):
+                                        if (title[1] == ''):
+                                            continue
+                                        tag_data += '''"%s",''' % spec.__dict__[key]
+                                    print(" , , , ,%s" % tag_data, file=csv)
 
         csv.close()
 
@@ -235,71 +250,76 @@ class TestSpecReporter:
             platform_elm.setAttribute(SPEC_ATT.NAME, platform)
             platform_elm.setAttribute(SPEC_ATT.NO, str(self.summary.platform_count[platform]))
 
-            for tctype in TESTCASE_TYPES:
+            buildtotal = 0
+            for build_type in self.data[platform]:
+                buildtotal += self.summary.buildType_count[platform][build_type]
+                buildType_elm = self.create_xml_element(doc, platform_elm, SPEC_ELM.BUILDTYPE)
+                buildType_elm.setAttribute(SPEC_ATT.NAME, build_type)
+                buildType_elm.setAttribute(SPEC_ATT.NO, str(self.summary.buildType_count[platform][build_type]))
 
-                cnt = 0
-                for transport in TEST_TRANSPORT:
-                    for network in TEST_NETWORK:
-                        cnt += self.summary.tctype_count[platform][transport][network][tctype]
-
-                type_elm = self.create_xml_element(doc, platform_elm, SPEC_ELM.TYPE)
-                type_elm.setAttribute(SPEC_ATT.NAME, tctype)
-                type_elm.setAttribute(SPEC_ATT.NO, str(cnt))
-
-                for module in TESTSUITE_MODULES:
-
-                    module_tc_count = 0
-                    module_review_count = 0
+                for tctype in TESTCASE_TYPES:
+                    cnt = 0
                     for transport in TEST_TRANSPORT:
                         for network in TEST_NETWORK:
-                            if not module in self.summary.module_count[platform][transport][network][tctype]:
-                                continue
-                            module_tc_count += self.summary.module_count[platform][transport][network][tctype][module]
-                            module_review_count += self.summary.review_count[platform][transport][network][tctype][module]
+                            cnt += self.summary.tctype_count[platform][build_type][transport][network][tctype]
 
-                    if module_tc_count == 0:
-                        continue
+                    type_elm = self.create_xml_element(doc, buildType_elm, SPEC_ELM.TYPE)
+                    type_elm.setAttribute(SPEC_ATT.NAME, tctype)
+                    type_elm.setAttribute(SPEC_ATT.NO, str(cnt))
 
-                    module_elm = self.create_xml_element(doc, type_elm, SPEC_ELM.MODULE)
-                    module_elm.setAttribute(SPEC_ATT.NAME, module)
-                    module_elm.setAttribute(SPEC_ATT.NO, str(module_tc_count))
-                    module_elm.setAttribute(SPEC_ATT.REVIEW, str(module_review_count))
+                    for module in TESTSUITE_MODULES:
+                        module_tc_count = 0
+                        module_review_count = 0
+                        for transport in TEST_TRANSPORT:
+                            for network in TEST_NETWORK:
+                                if not module in self.summary.module_count[platform][build_type][transport][network][tctype]:
+                                    continue
+                                module_tc_count += self.summary.module_count[platform][build_type][transport][network][tctype][module]
+                                module_review_count += self.summary.review_count[platform][build_type][transport][network][tctype][module]
 
-                    transport_tc_count = 0
-                    for transport in TEST_TRANSPORT:
-                        for network in TEST_NETWORK:
-                            if network != TEST_NETWORK.NONE:
-                                transport_tc_count += self.summary.module_count[platform][transport][network][tctype][module]
-
-                    if transport_tc_count == 0:
-                        continue
-
-                    for transport in TEST_TRANSPORT:
-
-                        network_tc_count = 0
-                        named_network_tc_count = 0
-                        for network in TEST_NETWORK:
-                            network_tc_count += self.summary.module_count[platform][transport][network][tctype][module]
-                            if network != TEST_NETWORK.NONE:
-                                named_network_tc_count += self.summary.module_count[platform][transport][network][tctype][module]
-
-                        if network_tc_count == 0:
+                        if module_tc_count == 0:
                             continue
 
-                        transport_elm = self.create_xml_element(doc, module_elm, SPEC_ELM.TRANSPORT)
-                        transport_elm.setAttribute(SPEC_ATT.NAME, transport)
-                        transport_elm.setAttribute(SPEC_ATT.NO, str(network_tc_count))
+                        module_elm = self.create_xml_element(doc, type_elm, SPEC_ELM.MODULE)
+                        module_elm.setAttribute(SPEC_ATT.NAME, module)
+                        module_elm.setAttribute(SPEC_ATT.NO, str(module_tc_count))
+                        module_elm.setAttribute(SPEC_ATT.REVIEW, str(module_review_count))
 
-                        if named_network_tc_count == 0:
+                        transport_tc_count = 0
+                        for transport in TEST_TRANSPORT:
+                            for network in TEST_NETWORK:
+                                if network != TEST_NETWORK.NONE:
+                                    transport_tc_count += self.summary.module_count[platform][build_type][transport][network][tctype][module]
+
+                        if transport_tc_count == 0:
                             continue
 
-                        for network in TEST_NETWORK:
-                            if self.summary.module_count[platform][transport][network][tctype][module] == 0:
+                        for transport in TEST_TRANSPORT:
+
+                            network_tc_count = 0
+                            named_network_tc_count = 0
+                            for network in TEST_NETWORK:
+                                network_tc_count += self.summary.module_count[platform][build_type][transport][network][tctype][module]
+                                if network != TEST_NETWORK.NONE:
+                                    named_network_tc_count += self.summary.module_count[platform][build_type][transport][network][tctype][module]
+
+                            if network_tc_count == 0:
                                 continue
 
-                            network_elm = self.create_xml_element(doc, transport_elm, SPEC_ELM.NETWORK)
-                            network_elm.setAttribute(SPEC_ATT.NAME, network)
-                            network_elm.setAttribute(SPEC_ATT.NO, str(self.summary.module_count[platform][transport][network][tctype][module]))
+                            transport_elm = self.create_xml_element(doc, module_elm, SPEC_ELM.TRANSPORT)
+                            transport_elm.setAttribute(SPEC_ATT.NAME, transport)
+                            transport_elm.setAttribute(SPEC_ATT.NO, str(network_tc_count))
+
+                            if named_network_tc_count == 0:
+                                continue
+
+                            for network in TEST_NETWORK:
+                                if self.summary.module_count[platform][build_type][transport][network][tctype][module] == 0:
+                                    continue
+
+                                network_elm = self.create_xml_element(doc, transport_elm, SPEC_ELM.NETWORK)
+                                network_elm.setAttribute(SPEC_ATT.NAME, network)
+                                network_elm.setAttribute(SPEC_ATT.NO, str(self.summary.module_count[platform][build_type][transport][network][tctype][module]))
 
         summary.setAttribute(SPEC_ATT.NO, str(total))
 
@@ -307,22 +327,30 @@ class TestSpecReporter:
         platform_elm = None
         platform = None
 
-        def write_tctype(platform):
-            for tctype in TESTCASE_TYPES:
-                type_elm = self.create_xml_element(doc, platform_elm, SPEC_ELM.TYPE)
-                type_elm.setAttribute(SPEC_ATT.NAME, tctype)
-                yield TESTSUITE_MODULES, type_elm, platform, tctype
+        def write_buildtype(platform):
+            for build_type in self.data[platform]:
+                buildtype_elm = self.create_xml_element(doc, platform_elm, SPEC_ELM.BUILDTYPE)
+                buildtype_elm.setAttribute(SPEC_ATT.NAME, build_type)
+                yield buildtype_elm, platform, build_type
+
+        def write_tctype(buildtypes_data):
+            for buildtype_data in buildtypes_data:
+                buildtype_elm, platform, build_type = buildtype_data
+                for tctype in TESTCASE_TYPES:
+                    type_elm = self.create_xml_element(doc, buildtype_elm, SPEC_ELM.TYPE)
+                    type_elm.setAttribute(SPEC_ATT.NAME, tctype)
+                    yield TESTSUITE_MODULES, type_elm, platform, build_type, tctype
 
         def write_module(tctypes_data):
             for tctype_data in tctypes_data:
-                module_names, type_elm, platform, tctype = tctype_data
+                module_names, type_elm, platform, build_type, tctype = tctype_data
                 for module in module_names:
                     module_tc_count = 0
                     for transport in TEST_TRANSPORT:
                         for network in TEST_NETWORK:
-                            if not module in self.data[platform][transport][network][tctype]:
+                            if not module in self.data[platform][build_type][transport][network][tctype]:
                                 continue
-                            module_tc_count += len(self.data[platform][transport][network][tctype][module])
+                            module_tc_count += len(self.data[platform][build_type][transport][network][tctype][module])
 
                     if module_tc_count == 0:
                         continue
@@ -330,24 +358,24 @@ class TestSpecReporter:
                     module_elm = self.create_xml_element(doc, type_elm, SPEC_ELM.MODULE)
                     module_elm.setAttribute(SPEC_ATT.NAME, module)
 
-                    yield module_elm, platform, tctype, module
+                    yield module_elm, platform, build_type, tctype, module
 
         def write_transport(modules_data):
             for module_data in modules_data:
-                module_elm, platform, tctype, module = module_data
+                module_elm, platform, build_type, tctype, module = module_data
 
                 named_transport_tc_count = 0
                 for transport in TEST_TRANSPORT:
                     for network in TEST_NETWORK:
                         if transport != TEST_TRANSPORT.NONE:
-                            named_transport_tc_count += len(self.data[platform][transport][network][tctype][module])
+                            named_transport_tc_count += len(self.data[platform][build_type][transport][network][tctype][module])
 
                 for transport in TEST_TRANSPORT:
                     last_elm = module_elm
 
                     transport_tc_count = 0
                     for network in TEST_NETWORK:
-                        transport_tc_count += len(self.data[platform][transport][network][tctype][module])
+                        transport_tc_count += len(self.data[platform][build_type][transport][network][tctype][module])
 
                     if transport_tc_count == 0:
                         continue
@@ -357,21 +385,21 @@ class TestSpecReporter:
                         transport_elm.setAttribute(SPEC_ATT.NAME, transport)
                         last_elm = transport_elm
 
-                    yield last_elm, platform, tctype, module, transport
+                    yield last_elm, platform, build_type, tctype, module, transport
 
         def write_network(transports_data):
             for transport_data in transports_data:
-                transport_elm, platform, tctype, module, transport = transport_data
+                transport_elm, platform, build_type, tctype, module, transport = transport_data
 
                 named_network_tc_count = 0
                 for network in TEST_NETWORK:
                     if network != TEST_NETWORK.NONE:
-                        named_network_tc_count += len(self.data[platform][transport][network][tctype][module])
+                        named_network_tc_count += len(self.data[platform][build_type][transport][network][tctype][module])
 
                 for network in TEST_NETWORK:
                     last_elm = transport_elm
 
-                    if len(self.data[platform][transport][network][tctype][module]) == 0:
+                    if len(self.data[platform][build_type][transport][network][tctype][module]) == 0:
                         continue
 
                     if named_network_tc_count > 0:
@@ -379,7 +407,7 @@ class TestSpecReporter:
                         network_elm.setAttribute(SPEC_ATT.NAME, network)
                         last_elm = network_elm
 
-                    yield self.data[platform][transport][network][tctype][module], last_elm
+                    yield self.data[platform][build_type][transport][network][tctype][module], last_elm
 
 
         def write_suite(modules):
@@ -411,7 +439,7 @@ class TestSpecReporter:
             platform_elm = self.create_xml_element(doc, spec_elm, SPEC_ELM.PLATFORM)
             platform_elm.setAttribute(SPEC_ATT.NAME, platform)
 
-            walk_through_testcases_by_module(platform, write_tctype, write_module, write_transport, write_network, write_suite, write_tc)
+            walk_through_testcases_by_module(platform, write_buildtype, write_tctype, write_module, write_transport, write_network, write_suite, write_tc)
 
         doc.writexml(xml, '\t', '\t', '\n', 'UTF-8')
 
@@ -427,7 +455,7 @@ class TestSpecReporter:
         col = 0
 
         col += 1
-
+        print (TEST_PLATFORM + ('Total',))
         for platform in TEST_PLATFORM + ('Total',):
             start_platfom_col = col
 
@@ -456,7 +484,8 @@ class TestSpecReporter:
                     cnt = 0
                     for transport in TEST_TRANSPORT:
                         for network in TEST_NETWORK:
-                            cnt = cnt + self.summary.module_count[platform][transport][network][tctype][module]
+                            for build_type in self.data[platform]:
+                                cnt = cnt + self.summary.module_count[platform][build_type][transport][network][tctype][module]
                     summarysheet.write(row, col, cnt, form.cell)
                     row += 1
 
@@ -518,16 +547,28 @@ class TestSpecReporter:
             row += 1
             col = 0
 
-            def write_transport():
-                for transport in self.data[platform]:
+            def write_buildtype():
+                for build_type in self.data[platform]:
                     nonlocal row, col
-                    transport_first_row = row
+                    build_type_first_row = row
                     col += 1
 
-                    yield transport, self.data[platform][transport]
+                    yield build_type, self.data[platform][build_type]
 
                     col -= 1
-                    merge_cell(specsheet, transport_first_row, col, row-1, col, transport, form.cell)
+                    merge_cell(specsheet, build_type_first_row, col, row-1, col, build_type, form.cell)
+
+            def write_transport(tuple_data):
+                for build_type, transport_data in tuple_data:
+                    for transport in transport_data:
+                        nonlocal row, col
+                        transport_first_row = row
+                        col += 1
+
+                        yield transport, transport_data[transport]
+
+                        col -= 1
+                        merge_cell(specsheet, transport_first_row, col, row-1, col, transport, form.cell)
 
             def write_network(tuple_data):
                 for transport, network_data in tuple_data:
@@ -601,7 +642,7 @@ class TestSpecReporter:
                         row += 1
                         col = spec_col
 
-            walk_through_testcases_by_transport(write_transport, write_network, write_tctype, write_module, write_suite, write_tc)
+            walk_through_testcases_by_transport(write_buildtype, write_transport, write_network, write_tctype, write_module, write_suite, write_tc)
 
         workbook.close()
 
@@ -611,6 +652,7 @@ class TCSummary:
 
     def __init__(self):
         self.platform_count = dict()
+        self.buildType_count = dict()
         self.transport_count = dict()
         self.network_count = dict()
         self.tctype_count = dict()
@@ -619,41 +661,51 @@ class TCSummary:
 
         for platform in TEST_PLATFORM:
             self.platform_count[platform] = 0
+            self.buildType_count[platform] = dict()
             self.transport_count[platform] = dict()
             self.network_count[platform] = dict()
             self.tctype_count[platform] = dict()
             self.module_count[platform] = dict()
             self.review_count[platform] = dict()
 
-            for transport in TEST_TRANSPORT:
-                self.transport_count[platform][transport] = 0
-                self.network_count[platform][transport] = dict()
-                self.tctype_count[platform][transport] = dict()
-                self.module_count[platform][transport] = dict()
-                self.review_count[platform][transport] = dict()
+            for build_type in BUILD_TYPE:
+                self.buildType_count[platform][build_type] = 0
+                self.transport_count[platform][build_type] = dict()
+                self.network_count[platform][build_type] = dict()
+                self.tctype_count[platform][build_type] = dict()
+                self.module_count[platform][build_type] = dict()
+                self.review_count[platform][build_type] = dict()
 
-                for network in TEST_NETWORK:
-                    self.network_count[platform][transport][network] = 0
-                    self.tctype_count[platform][transport][network] = dict()
-                    self.module_count[platform][transport][network] = dict()
-                    self.review_count[platform][transport][network] = dict()
+                for transport in TEST_TRANSPORT:
+                    self.transport_count[platform][build_type][transport] = 0
+                    self.network_count[platform][build_type][transport] = dict()
+                    self.tctype_count[platform][build_type][transport] = dict()
+                    self.module_count[platform][build_type][transport] = dict()
+                    self.review_count[platform][build_type][transport] = dict()
 
-                    for tctype in TESTCASE_TYPES:
-                        self.tctype_count[platform][transport][network][tctype] = 0
-                        self.module_count[platform][transport][network][tctype] = dict()
-                        self.review_count[platform][transport][network][tctype] = dict()
+                    for network in TEST_NETWORK:
+                        self.network_count[platform][build_type][transport][network] = 0
+                        self.tctype_count[platform][build_type][transport][network] = dict()
+                        self.module_count[platform][build_type][transport][network] = dict()
+                        self.review_count[platform][build_type][transport][network] = dict()
 
-                        for module in TESTSUITE_MODULES:
-                            self.module_count[platform][transport][network][tctype][module] = 0
-                            self.review_count[platform][transport][network][tctype][module] = 0
+                        for tctype in TESTCASE_TYPES:
+                            self.tctype_count[platform][build_type][transport][network][tctype] = 0
+                            self.module_count[platform][build_type][transport][network][tctype] = dict()
+                            self.review_count[platform][build_type][transport][network][tctype] = dict()
+
+                            for module in TESTSUITE_MODULES:
+                                self.module_count[platform][build_type][transport][network][tctype][module] = 0
+                                self.review_count[platform][build_type][transport][network][tctype][module] = 0
 
 
-    def update_tc(self, platform, transport, network, tctype, module, count, reviewer_count):
-        #print (platform + ' - ' + transport + ' - ' + tctype + ' - ' + module + ' = ' + str(count))
+    def update_tc(self, platform, build_type, transport, network, tctype, module, count, reviewer_count):
+        #print (platform + ' - ' + build_type + ' - '  + transport + ' - ' + tctype + ' - ' + module + ' = ' + str(count))
         self.platform_count[platform] += count
-        self.transport_count[platform][transport] += count
-        self.network_count[platform][transport][network] += count
-        self.tctype_count[platform][transport][network][tctype] += count
-        self.module_count[platform][transport][network][tctype][module] += count
-        self.review_count[platform][transport][network][tctype][module] += reviewer_count
+        self.buildType_count[platform][build_type] += count
+        self.transport_count[platform][build_type][transport] += count
+        self.network_count[platform][build_type][transport][network] += count
+        self.tctype_count[platform][build_type][transport][network][tctype] += count
+        self.module_count[platform][build_type][transport][network][tctype][module] += count
+        self.review_count[platform][build_type][transport][network][tctype][module] += reviewer_count
 

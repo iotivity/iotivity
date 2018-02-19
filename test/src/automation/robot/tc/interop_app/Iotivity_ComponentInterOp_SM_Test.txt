@@ -1,0 +1,105 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Settings ***
+Documentation     Test SM Interoperability for all supported platform
+Variables         ../../helper/variable.py
+Library           Remote    ${REMOTE_IP}:${REMOTE_PORT}    WITH NAME    Local
+Resource    ../../helper/Iotivity_Interop_Test_Helper.txt
+Resource    ../../helper/Iotivity_Test_Helper.txt
+Suite Setup    Do Suite Setup
+Suite Teardown    Do Suite Teardown
+Test Setup       Do Test Setup
+Test Teardown    Do Test Teardown
+
+*** Test Cases ***
+SM Create Resources
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - create resources |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1 |
+    ...    |pre_condition | Run sm_testappRun sm_testapp  |
+    ...    |procedure | 1. [SERVER] Create Resources: Input 1 |
+    ...    |post_condition | Terminate sm_testapp |
+    ...    |expected | Success to create light and fan resources |
+    [Tags]    all
+    ${expected_log}    Set Variable    Resources were created successfully
+    BuiltIn.Log    ${expected_log}
+    Provide Input To First App    1
+    BuiltIn.Sleep     5s
+    ${log}    Get Output From First App
+    BuiltIn.Log    ${log}
+    ${status}    Check Keyword    ${expected_log}    ${log}
+    Should Be True    False
+    Should Be True    ${status}    Resource Creation Not Successful
+
+SM Create Resources Create Resources
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Create Resources and Local scene |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1 |
+    ...    |pre_condition | Run sm_testapp |
+    ...    |procedure | 1. [SERVER] Create Resources: Input 1 |
+    ...    |procedure | 2. [SERVER] Create Resources: Input 1 |
+    ...    |post_condition | Terminate sm_testapp |
+    ...    |expected | Failed to resources if already created |
+    [Tags]    all
+    ${expected_log}    Set Variable    Resources were created already
+    BuiltIn.Log    ${expected_log}
+    Provide Input To First App    1
+    BuiltIn.Sleep     5s
+    Provide Input To First App    1
+    BuiltIn.Sleep     5s
+    ${log}    Get Output From First App
+    BuiltIn.Log    ${log}
+    ${status}    Check Keyword    ${expected_log}    ${log}
+    Should Be True    ${False}
+    Should Be True    ${status}    Resource Creation Should Not Be Successful
+
+*** Keywords ***
+Do Suite Setup
+    [Arguments]    
+    ${iotivity_build_parmeters}    Set Variable   SECURED=0
+    ${tc_build_parmeters}    Set Variable   SECURED=0
+    BuiltIn.Log    ${OS}->${OS2}
+    Load Default Settings    ${iotivity_build_parmeters}    ${tc_build_parmeters}
+    Get Test Environment Details
+    Build Iotivity and Test App
+
+Do Suite Teardown
+    [Arguments]    
+    Remove All Devices
+
+Do Test Setup
+    [Arguments]    
+    Execute Interop Apps
+
+Do Test Teardown
+    [Arguments]
+    ${log}    Get Output From First App
+    BuiltIn.Log    ${log}
+    ${log}    Get Output From Second App
+    BuiltIn.Log    ${log}    
+    Terminate Interop Apps

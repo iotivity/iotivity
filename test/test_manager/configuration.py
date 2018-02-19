@@ -9,8 +9,7 @@
  * Samsung Electronics.
  ***************************************************************************************************/
 '''
-import os
-import platform
+
 try:
     import xlsxwriter
 except:
@@ -18,21 +17,15 @@ except:
     exit (0)
 
 # Path Configuration
-API_TC_SRC_DIR = os.path.join("..","src","tc")
-SAMPLEAPP_TC_SRC_DIR = os.path.join ("..","IotivityTest","testsuite","IotivityTC" )
-TC_BIN_DIR = os.path.join("..","bin",platform.system().lower())
+API_TC_SRC_DIR = "../src/tc"
+SAMPLEAPP_TC_SRC_DIR = "../src/automation/robot/tc/sample_app"
+TC_BIN_DIR = "../bin/linux"
 
-
-TEST_REPORT_DIR = ".."+os.sep+"TestReport"
-TEST_RESULT_DIR = TEST_REPORT_DIR + ""+os.sep+"Result"
-TEST_RESULT_RUN_DIR = TEST_RESULT_DIR + ""+os.sep+"__run__"
-TEST_SPEC_DIR = TEST_REPORT_DIR + ""+os.sep+"Spec"
-TEST_DEFECT_DIR = TEST_REPORT_DIR + ""+os.sep+"Defect"
-
-MEMCHECK_REPORT_DIR = ".."+os.sep+"MemCheckReport"
-MEMCHECK_RESULT_DIR = MEMCHECK_REPORT_DIR + os.sep + "Result"
-MEMCHECK_RESULT_RUN_DIR = MEMCHECK_RESULT_DIR + ""+os.sep+"__run__"
-
+TEST_REPORT_DIR = "../TestReport"
+TEST_RESULT_DIR = TEST_REPORT_DIR + "/Result"
+TEST_RESULT_RUN_DIR = TEST_RESULT_DIR + "/__run__"
+TEST_SPEC_DIR = TEST_REPORT_DIR + "/Spec"
+TEST_DEFECT_DIR = TEST_REPORT_DIR + "/Defect"
 
 # Test Spec Configuration
 SPEC_REPORT_TYPE = {
@@ -52,7 +45,7 @@ TEST_STANDALONE = False
 TEST_SPEC_XML_FOR_RESULT = "TestSpec.xml"
 
 # Jira Defect Configuration
-TEST_JIRA_DEFECT_FILE_PATH = TEST_DEFECT_DIR + ""+os.sep+"SearchRequest.xml"
+TEST_JIRA_DEFECT_FILE_PATH = TEST_DEFECT_DIR + "/SearchRequest.xml"
 
-# Valgrind Configurations
-VALGRIND_SUPPRESSION_FILE= 'tools/valgrind/iotivity.supp'
+EXECUTION_LOG_FILE = 'excution_log.txt'
+EXECUTION_LOG_FP = None

@@ -21,9 +21,6 @@ from ite.util import *
 class TestResultCollector:
 
 
-    LOG_START_PATTERN = re.compile(r'\n.*\[\s*RUN\s*\]\s*(?P<testsuite>\w+)\.(?P<testcase>\w+).*')
-    LOG_END_PATTERN = re.compile(r'\n.*\[\s*(?P<result>(OK|FAILED))\s*\]\s*(?P<testsuite>\w+)\.(?P<testcase>\w+).*')
-
     def __init__(self):
         self.result = TestResult()
         self.tcType = "UnKnown"
@@ -45,10 +42,16 @@ class TestResultCollector:
 
         return target
 
+    def get_buildtype_from_path(self, path):
+        filename = os.path.basename(path)
+        items = filename.split('_')
+        build_type = items[2]
+        return build_type.upper()
+
     def get_transport_from_path(self, path):
         filename = os.path.basename(path)
         items = filename.split('_')
-        transport = items[2]
+        transport = items[3]
         if transport == '' or transport == None:
             transport = NO_TRANSPORT
 
@@ -57,7 +60,7 @@ class TestResultCollector:
     def get_network_from_path(self, path):
         filename = os.path.basename(path)
         items = filename.split('_')
-        network = items[3]
+        network = items[4]
         if network == '' or network == None:
             network = NO_NETWORK
 
@@ -95,8 +98,10 @@ class TestResultCollector:
     def analyze_result_xml(self, path):
         platform = self.get_platform_from_path(path)
         target = self.get_target_from_path(path)
+        build_type = self.get_buildtype_from_path(path)
         transport = self.get_transport_from_path(path)
         network = self.get_network_from_path(path)
+        runtype = GT_RUN_TYPE.STANDALONE
 
         tctype = 'UnKnown'
         if platform.upper() == TEST_PLATFORM.ARDUINO or platform.upper() == TEST_PLATFORM.ANDROID:
@@ -104,6 +109,10 @@ class TestResultCollector:
 
         try :
             doc = ElementTree(file=path)
+
+            if not doc.getroot().tag == GT_ELM.TESTSUITES:
+                print("==> Invalid result file path: " + path)
+                return;
 
             for testsuite in doc.findall(GT_ELM.TESTSUITE):
                 suite_name = testsuite.get(GT_ATT.NAME)
@@ -118,139 +127,20 @@ class TestResultCollector:
                     tc_status = testcase.get(GT_ATT.STATUS)
                     tc_time = testcase.get(GT_ATT.TIME)
 
-                    tc_result = self.result.find_testcase(platform, target, transport, network, tctype, module, suite_name, tc_name)
+                    tc_result = self.result.find_testcase(platform, target, build_type, transport, network, tctype, module, suite_name, tc_name)
 
                     tc_result.add_result(tc_status, tc_time, testcase.findall(GT_ELM.FAILURE))
 
+                    log_path = path.replace('.xml', '.log')
+                    if os.path.isfile(log_path):
+                        prefix = '\nLog File Name: ' + os.path.basename(path) + '\n\n\nContent:\n'
+                        testlog = prefix + read_file(log_path)
+                        tc_result.add_test_log(testlog)
+
+                    tc_result.add_test_runtype(runtype)
+
         except ParseError:
-            print("There is a Parse Error on " + path)
-
-    def parse_log_pattern(self, path):
-        source = read_file(path);
-        if source == '':
-            return
-
-        search_pos = 0
-        while(True):
-            start_match = self.LOG_START_PATTERN.search(source, search_pos)
-            if (start_match == None):
-                break;
-
-            start_data = (start_match.group('testsuite'), start_match.group('testcase'))
-
-            end_match = self.LOG_END_PATTERN.search(source, search_pos)
-            if (end_match == None):
-                test_result = GT_LOG.CRASHED
-                if GT_HANG_LOG in source:
-                    test_result = GT_LOG.HANG
-
-                yield start_data + (test_result, start_match.end(), start_match.endpos)
-                break;
-
-            search_pos = end_match.end()
-
-            end_data = (end_match.group('testsuite'), end_match.group('testcase'))
-
-
-            if (start_data != end_data):
-                print("Start(%s.%s) and End(%s.%s) Test Name is not matched! - %s" % (start_data[0], start_data[1], end_data[0], end_data[1], path))
-                #continue
-
-            yield start_data + (end_match.group('result'), start_match.end(), end_match.start())
-
-    def analyze_result_log(self, path):
-        infolist = list()
-
-        for info in self.parse_log_pattern(path):
-            infolist.append(info)
-
-        return infolist
-
-    def create_xml_element(self, doc, parent, tagname):
-        element = doc.createElement(tagname)
-        parent.appendChild(element)
-
-        return element
-
-    def create_result_xml_from_log(self, loglist, path):
-        xml = open_write_file(path)
-        if xml == False:
-            return
-
-        doc = Document()
-        testsuites = self.create_xml_element(doc, doc, GT_ELM.TESTSUITES)
-
-        suite_dict = dict()
-        for loginfo in loglist:
-            testsuite, testcase, result, startpos, endpos = loginfo
-
-            if (not testsuite in suite_dict):
-                suite_elm = self.create_xml_element(doc, testsuites, GT_ELM.TESTSUITE)
-                suite_elm.setAttribute(GT_ATT.NAME, testsuite)
-                suite_dict[testsuite] = suite_elm
-
-            suite_elm = suite_dict[testsuite]
-            tc_elm = self.create_xml_element(doc, suite_elm, GT_ELM.TESTCASE)
-            tc_elm.setAttribute(GT_ATT.NAME, testcase)
-            tc_elm.setAttribute(GT_ATT.STATUS, GT_ATT_STATUS[result])
-            tc_elm.setAttribute(GT_ATT.TIME, '0')
-
-            if (result == GT_LOG.FAILED):
-                failure_elm = self.create_xml_element(doc, tc_elm, GT_ELM.FAILURE)
-                failure_elm.setAttribute(GT_ATT.MESSAGE, '')
-                failure_elm.appendChild(doc.createTextNode(' '))
-
-        doc.writexml(xml, '\t', '\t', '\n', 'UTF-8')
-
-        xml.close()
-
-    def merge_result_info(self, path, loginfo, log_len):
-        platform = self.get_platform_from_path(path)
-        target = self.get_target_from_path(path)
-        transport = self.get_transport_from_path(path)
-        network = self.get_network_from_path(path)
-        runtype = GT_RUN_TYPE.STANDALONE
-        if (log_len > 1):
-            runtype = GT_RUN_TYPE.GROUPED
-
-        testsuite, testcase, result, startpos, endpos = loginfo
-
-        tctype = 'UnKnown'
-
-        if platform.upper() == TEST_PLATFORM.ARDUINO or platform.upper() == TEST_PLATFORM.ANDROID:
-            tctype = self.get_tctype_from_path(path)
-
-        if tctype == 'UnKnown':
-            tctype = self.get_tctype_from_suite(testsuite)
-
-        module = self.get_module_from_suite(testsuite)
-
-        testlog = read_file(path, startpos, endpos)
-
-        tc_result = self.result.find_testcase(platform, target, transport, network, tctype, module, testsuite, testcase)
-
-        tc_result.add_test_log(testlog)
-        tc_result.add_test_runtype(runtype)
-
-    def analyze_result(self, path):
-        if (not os.path.isfile(path) or not path.endswith('.xml')):
-            print("==> Invalid result file path: " + path)
-            return;
-
-        doc = ElementTree(file=path)
-        if not doc.getroot().tag == GT_ELM.TESTSUITES:
-            print("==> Invalid result file path: " + path)
-            return;
-
-        loglist = list()
-        log_path = path.replace('.xml', '.log')
-        if os.path.isfile(log_path):
-            loglist = self.analyze_result_log(log_path)
-
-        self.analyze_result_xml(path)
-
-        for loginfo in loglist :
-            self.merge_result_info(path, loginfo, len(loglist))
+            print("There is a XML Parse Error on " + path)
 
     def collect_results(self, path):
         if (not os.path.isdir(path)):
@@ -260,16 +150,9 @@ class TestResultCollector:
             for filename in filenames:
                 filepath = os.path.join(dirpath, filename)
 
-                if filename.endswith('.log'):
-                    loglist = self.analyze_result_log(filepath)
-                    xml_path = filepath.replace('.log', '.xml')
-                    if (not os.path.isfile(xml_path)):
-                        self.create_result_xml_from_log(loglist, xml_path)
-
-                    self.analyze_result(xml_path)
-                elif filename.endswith('.xml'):
+                if filename.endswith('.xml'):
                     if not filename.endswith('TestSpec.xml'):
-                        self.analyze_result(filepath)
+                        self.analyze_result_xml(filepath)
 
 
 class TestResult:
@@ -278,23 +161,24 @@ class TestResult:
     def __init__(self):
         self.data = dict()
 
-    def find_testcase(self, platform, target, transport, network, tctype, module, suite, name):
+    def find_testcase(self, platform, target, build_type, transport, network, tctype, module, suite, name):
         def assign_dict(key, parent_dict):
             if (not key in parent_dict):
                 parent_dict[key] = dict()
 
         assign_dict(platform, self.data)
         assign_dict(target, self.data[platform])
-        assign_dict(transport, self.data[platform][target])
-        assign_dict(network, self.data[platform][target][transport])
-        assign_dict(tctype, self.data[platform][target][transport][network])
-        assign_dict(module, self.data[platform][target][transport][network][tctype])
-        assign_dict(suite, self.data[platform][target][transport][network][tctype][module])
+        assign_dict(build_type, self.data[platform][target])
+        assign_dict(transport, self.data[platform][target][build_type])
+        assign_dict(network, self.data[platform][target][build_type][transport])
+        assign_dict(tctype, self.data[platform][target][build_type][transport][network])
+        assign_dict(module, self.data[platform][target][build_type][transport][network][tctype])
+        assign_dict(suite, self.data[platform][target][build_type][transport][network][tctype][module])
 
-        if (not name in self.data[platform][target][transport][network][tctype][module][suite]):
-            self.data[platform][target][transport][network][tctype][module][suite][name] = TestCaseResult(name)
+        if (not name in self.data[platform][target][build_type][transport][network][tctype][module][suite]):
+            self.data[platform][target][build_type][transport][network][tctype][module][suite][name] = TestCaseResult(name)
 
-        return self.data[platform][target][transport][network][tctype][module][suite][name]
+        return self.data[platform][target][build_type][transport][network][tctype][module][suite][name]
 
 
 class TestCaseResult:
@@ -322,8 +206,8 @@ class TestCaseResult:
 
             fail_msg = ''
             for failure in failurelist:
-                fail_msg += failure.get(GT_ATT.MESSAGE)
-            runresult.fail_msg = fail_msg
+                fail_msg += failure.get(GT_ATT.MESSAGE) + '\n\n'
+            runresult.fail_msg = fail_msg.strip()
         else:
             # Success
             self.success += 1

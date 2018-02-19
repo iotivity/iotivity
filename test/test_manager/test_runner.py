@@ -15,6 +15,7 @@ import optparse
 import subprocess
 import re
 import platform
+import configuration
 from configuration import *
 from ite.exec.runner import TestRunner, TestRunnerOption
 from ite.reporter.tc_reporter import TestSpecReporter
@@ -49,12 +50,13 @@ oparser.add_option("--testsuite", action="store", dest="testsuite")
 oparser.add_option("-c", action="store", dest="testcase")
 oparser.add_option("--testcase", action="store", dest="testcase")
 
+
 oparser.add_option("--memcheck", action = "store", dest = "memcheck", default= "0")
 oparser.add_option("-v", action= "store", dest= "memcheck", default="0")
 oparser.add_option("--memcheckLocation", action="store", dest ="memcheckLocation", default = "")
 oparser.add_option("-g", action="store", dest ="memcheckLocation", default = "")
 
-oparser.set_defaults(file_filter='', platform=platform.system().lower(), target='', testlist='', testprogress='', testresult='', 
+oparser.set_defaults(file_filter='', platform=platform.system().lower(), target='', testlist='', testprogress='', testresult='',
                      standalone=TEST_STANDALONE, runonce=False)
 
 opts, args = oparser.parse_args()
@@ -76,10 +78,9 @@ memcheckLocation = opts.memcheckLocation
 if testresult == '':
     testresult = TEST_RESULT_RUN_DIR
 
-
 if not os.path.exists(testresult):
     os.makedirs(testresult)
-    
+
 if not testlist == '':
     list_analyzer = TCListReporter()
     testgroup = list_analyzer.analyze(testlist)
@@ -90,29 +91,29 @@ if memcheckOn == "1":
     if not os.path.exists(memcheckLocation):
         os.makedirs(memcheckLocation)
 
-
-testspec_path = os.path.join(testresult, TEST_SPEC_XML_FOR_RESULT)    
+testspec_path = os.path.join(testresult, TEST_SPEC_XML_FOR_RESULT)
 if not os.path.exists(testspec_path) and os.path.exists(API_TC_SRC_DIR):
     container = TestSpecContainer()
     container.extract_api_testspec(API_TC_SRC_DIR, '')
-    
+
     reporter = TestSpecReporter()
     reporter.generate_testspec_report(container.data)
     reporter.report('XML', testspec_path)
 
+configuration.EXECUTION_LOG_FP = open(testresult + os.sep + EXECUTION_LOG_FILE, "w")
+
 file_filter = file_filter.replace(TC_BIN_PREFIX, '')
 total_found_tc = 0
 runner = TestRunner()
-
 for fname in os.listdir(TC_BIN_DIR):
     if "." in fname:
         if fname.endswith('.exe'):
             fname = fname.split('.')[0]
         else:
             continue
+
     if not fname.startswith(TC_BIN_PREFIX):
         continue
-
 
     if not fname.endswith(TC_BIN_SUFFIX):
         continue
@@ -126,25 +127,25 @@ for fname in os.listdir(TC_BIN_DIR):
     tname = fname.replace(TC_BIN_PREFIX, '')
 
     option = TestRunnerOption()
-    
+
     current_filter = ''
     if not testlist == '':
         for tcfile_filter in list(testgroup):
             if tcfile_filter in fname:
-                current_filter = tcfile_filter 
+                current_filter = tcfile_filter
                 break
-            
+
         if current_filter == '':
             continue
-        
+
         option.testset = set(testgroup[current_filter].keys())
         option.testkey = testgroup[current_filter]
-        
+
     elif (file_filter != '') and (not file_filter in tname):
-        continue    
-    
+        continue
+
     filepath = os.path.join(TC_BIN_DIR, fname)
-        
+
     print("### Start to run : " + filepath)
 
     if given_testsuite:
@@ -201,12 +202,10 @@ for fname in os.listdir(TC_BIN_DIR):
     option.testset = testset
     option.exe_path = filepath
     option.platform = platform
-    option.target = target 
+    option.target = target
     option.transport = transport
     option.network = network
     option.result_dir = testresult
-    option.memcheckOn = memcheckOn
-    option.memcheckLocation = memcheckLocation
     option.runtime = TEST_REPEAT
     option.run_standalone = standalone
     option.testprogress_path = testprogress
@@ -215,7 +214,7 @@ for fname in os.listdir(TC_BIN_DIR):
     if runonce == True:
         option.repeat_failed = False
         option.repeat_crashed = False
-    
+
     runner.run_test_executable(option)
 
 if total_found_tc == 0:

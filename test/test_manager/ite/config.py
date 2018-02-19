@@ -11,11 +11,35 @@
 
 from collections import namedtuple
 
+SECURE_BUILD_TYPE = 'SECURED'
+NON_SECURE_BUILD_TYPE = 'NON-SECURED'
+
+TLS_BUILD_TYPE = 'TLS'
+NON_TLS_BUILD_TYPE = 'NON-TLS'
+
 TESTCASE_TYPES = ('BTC', 'STC')
-TESTSUITE_MODULES = ('IC', 'SM', 'RE', 'RC', 'CA', 'PM', 'IS', 'ES', 'NS', 'RI', 'CS', 'TM', 'RH', 'RD')
+
+TESTSUITE_MODULES = ('IC', 'SM', 'RE', 'RC', 'CA', 'PM', 'IS', 'ES', 'NS', 'RI', 'CS', 'CHP')
+
+MODULES_BUILD_TYPES = {
+                    'IC': [NON_SECURE_BUILD_TYPE],
+                    'SM': [NON_SECURE_BUILD_TYPE],
+                    'RE': [NON_SECURE_BUILD_TYPE],
+                    'RC': [NON_SECURE_BUILD_TYPE],
+                    'CA': [NON_SECURE_BUILD_TYPE],
+                    'PM': [SECURE_BUILD_TYPE],
+                    'IS': [NON_SECURE_BUILD_TYPE],
+                    'ES': [NON_SECURE_BUILD_TYPE, SECURE_BUILD_TYPE],
+                    'NS': [NON_SECURE_BUILD_TYPE],
+                    'RI': [NON_SECURE_BUILD_TYPE],
+                    'CS': [NON_TLS_BUILD_TYPE, TLS_BUILD_TYPE],
+                    'CHP': [NON_SECURE_BUILD_TYPE, SECURE_BUILD_TYPE]
+}
+
 TESTCASE_CATEGORY = ('_P', '_N')
 
-TITLE = (('Transport', 8),
+TITLE = (('Build Type', 8),
+         ('Transport', 8),
          ('Network', 8),
          ('Type', 8),
          ('Module', 8),
@@ -25,6 +49,7 @@ TITLE = (('Transport', 8),
 
 RESULT_CAT_TITLE = (('Platform', 10),
                     ('Target', 12),
+                    ('Build_type', 12),
                     ('Transport', 12),
                     ('Network', 8),
                     ('Type', 8),
@@ -55,21 +80,21 @@ DEFECT_TITLE = (('Fail Rate', 10),
                 ('Jira ID', 10),
                 ('Description', 80))
 
-PM_TYPES = namedtuple('PM_TYPES',
-                           ['PMCSDK', 'PMCPP'])\
-                           ('pmcsdk', 'pmcpp')
-
-RI_TYPES = namedtuple('RI_TYPES',
-                           ['RICSDK', 'RICPP'])\
-                           ('ricsdk', 'ricpp')
+SDK_TYPES = namedtuple('SDK_TYPES',
+                           ['csdk', 'cpp'])\
+                           ('csdk', 'cpp')
 
 TESTFW_TYPES = namedtuple('TESTFW_TYPES',
                            ['GTEST', 'JUNIT', 'ARDUINOUNIT'])\
                            ('gtest', 'junit', 'arduinounit')
 
 TEST_PLATFORM = namedtuple('TEST_PLATFORM',
-                           ['LINUX', 'TIZEN', 'ANDROID', 'ARDUINO', 'WINDOWS'])\
-                           ('LINUX', 'TIZEN', 'ANDROID', 'ARDUINO', 'WINDOWS')
+                           ['LINUX', 'TIZEN', 'ANDROID', 'ARDUINO'])\
+                           ('LINUX', 'TIZEN', 'ANDROID', 'ARDUINO')
+
+BUILD_TYPE = namedtuple('BUILD_TYPE',
+                           ['SECURE', 'NON_SECURE', 'TLS', 'NON_TLS'])\
+                           (SECURE_BUILD_TYPE, NON_SECURE_BUILD_TYPE, TLS_BUILD_TYPE, NON_TLS_BUILD_TYPE)
 
 NO_TRANSPORT = 'NONE'
 NO_NETWORK = 'NONE'
@@ -95,10 +120,9 @@ TRANSPORT_VALUES = {
 
 ALL_TRANSPORT_VALUES = {
                         'LINUX'   : '(IP+TCP)',
-                        'TIZEN'   : '(IP+BT+BLE)',
+                        'TIZEN'   : '(IP+BT+BLE+TCP)',
                         'ANDROID' : '(IP+TCP)',
-                        'ARDUINO' : '(IP+BLE)',
-                        'WINDOWS' : '(IP+TCP)'
+                        'ARDUINO' : '(IP+BLE)'
                       }
 
 DEFECT_STATUS = namedtuple('DEFECT_STATUS',

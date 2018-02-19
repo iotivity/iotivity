@@ -23,17 +23,20 @@ class TestSpecContainer:
         for platform in TEST_PLATFORM:
             self.data[platform] = dict()
 
-            for transport in TEST_TRANSPORT:
-                self.data[platform][transport] = dict()
+            for build_type in BUILD_TYPE:
+                self.data[platform][build_type] = dict()
 
-                for network in TEST_NETWORK:
-                    self.data[platform][transport][network] = dict()
+                for transport in TEST_TRANSPORT:
+                    self.data[platform][build_type][transport] = dict()
 
-                    for tctype in TESTCASE_TYPES:
-                        self.data[platform][transport][network][tctype] = dict()
+                    for network in TEST_NETWORK:
+                        self.data[platform][build_type][transport][network] = dict()
 
-                        for module in TESTSUITE_MODULES:
-                            self.data[platform][transport][network][tctype][module] = dict()
+                        for tctype in TESTCASE_TYPES:
+                            self.data[platform][build_type][transport][network][tctype] = dict()
+
+                            for module in TESTSUITE_MODULES:
+                                self.data[platform][build_type][transport][network][tctype][module] = dict()
 
 
     def extract_api_testspec_bysuite(self, tctype, module, testfw, path):
@@ -49,9 +52,9 @@ class TestSpecContainer:
                     continue
 
                 if not (filepath.endswith('.cpp') or filepath.endswith('.c') or filepath.endswith('.java')):
-                    return
+                    continue
 
-                testspec_dict, invalid_list = analyzer.analyze_tc_file(filepath)
+                testspec_dict, invalid_list = analyzer.analyze_tc_file(filepath, module)
 
                 for invalid in invalid_list:
                     print("=> Invalid Test Case : %s(%d), %s.%s, message:%s" %
@@ -62,15 +65,16 @@ class TestSpecContainer:
                     if not platform in self.data.keys():
                         print("=> Invalid Platform: " + platform)
                         continue
-
-                    for transport in testspec_dict[platform].keys():
-
-                        for network, testspec_list in testspec_dict[platform][transport].items():
-
-                            for testspec in testspec_list:
-                                if (not testspec.suite in self.data[platform][transport][network][tctype][module]):
-                                    self.data[platform][transport][network][tctype][module][testspec.suite] = dict()
-                                self.data[platform][transport][network][tctype][module][testspec.suite][testspec.name] = testspec
+                    for build_type in testspec_dict[platform]:
+                        for transport in testspec_dict[platform][build_type].keys():
+                            #print (testspec_dict[platform][build_type][transport].items())
+                            for network, testspec_list in testspec_dict[platform][build_type][transport].items():
+                                #print('line 77:', len(testspec_list), testspec_list)
+                                for testspec in testspec_list:
+                                    #print (self.data[platform][build_type][transport][network][tctype][module])
+                                    if (not testspec.suite in self.data[platform][build_type][transport][network][tctype][module]):
+                                        self.data[platform][build_type][transport][network][tctype][module][testspec.suite] = dict()
+                                    self.data[platform][build_type][transport][network][tctype][module][testspec.suite][testspec.name] = testspec
 
         return api_valid_convention
 
@@ -96,25 +100,27 @@ class TestSpecContainer:
             tmp_dir = fw_dir
 
             if (os.path.isdir(fw_dir)):
-                if (module == "PM" and testfw.lower() == "gtest"):
-                    for pmtypes in PM_TYPES:
-                        fw_dir = os.path.join(tmp_dir, pmtypes.lower())
-                        fw_dir = os.path.join(fw_dir, "src")
+                if (testfw.lower() == "gtest"):
+                    for sdk_type in SDK_TYPES:
+                        sdk_fw_dir = os.path.join(tmp_dir, sdk_type.lower())
+                        if (os.path.isdir(sdk_fw_dir)):
+                            sdk_fw_dir = os.path.join(sdk_fw_dir, "src")
+                            valid = self.extract_api_testspec_bytypes(module, testfw, sdk_fw_dir)
+                            api_valid_convention = api_valid_convention and valid
+                    fw_dir = os.path.join(tmp_dir, "src")
+                    if (os.path.isdir(fw_dir)):
                         valid = self.extract_api_testspec_bytypes(module, testfw, fw_dir)
-                elif (module == "RI" and testfw.lower() == "gtest"):
-                    for ritypes in RI_TYPES:
-                        fw_dir = os.path.join(tmp_dir, ritypes.lower())
-                        fw_dir = os.path.join(fw_dir, "src")
-                        valid = self.extract_api_testspec_bytypes(module, testfw, fw_dir)
+                        api_valid_convention = api_valid_convention and valid
                 else:
-                    fw_dir = os.path.join(fw_dir, "src")
+                    fw_dir = os.path.join(tmp_dir, "src")
                     if (testfw.lower() == "junit"):
                         fw_dir = os.path.join(fw_dir, "org")
                         fw_dir = os.path.join(fw_dir, "iotivity")
                         fw_dir = os.path.join(fw_dir, "test")
                         fw_dir = os.path.join(fw_dir, module.lower())
+                        fw_dir = os.path.join(fw_dir, "tc")
                     valid = self.extract_api_testspec_bytypes(module, testfw, fw_dir)
-                api_valid_convention = api_valid_convention and valid
+                    api_valid_convention = api_valid_convention and valid
 
         return api_valid_convention
 
@@ -164,7 +170,7 @@ class TestSpecContainer:
                     continue
 
                 if not filepath.endswith('.txt'):
-                    return
+                    continue
 
                 test_data, invalid_list = analyzer.analyze_tc_file(filepath)
 
@@ -178,9 +184,10 @@ class TestSpecContainer:
                         print("=> Invalid Platform: " + platform)
                         continue
 
-                    if (not testspec.suite in self.data[platform][NO_TRANSPORT][NO_NETWORK]['STC'][module]):
-                        self.data[platform][NO_TRANSPORT][NO_NETWORK]['STC'][module][testspec.suite] = dict()
-                    self.data[platform][NO_TRANSPORT][NO_NETWORK]['STC'][module][testspec.suite][testspec.name] = testspec
+                    for build_type in self.data[platform]:
+                        if (not testspec.suite in self.data[platform][build_type][NO_TRANSPORT][NO_NETWORK]['STC'][module]):
+                            self.data[platform][build_type][NO_TRANSPORT][NO_NETWORK]['STC'][module][testspec.suite] = dict()
+                        self.data[platform][build_type][NO_TRANSPORT][NO_NETWORK]['STC'][module][testspec.suite][testspec.name] = testspec
 
         return api_valid_convention
 

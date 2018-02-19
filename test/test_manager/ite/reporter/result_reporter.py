@@ -46,44 +46,49 @@ class TestResultReporter:
                 self.failtc[platform][target] = dict()
                 self.passtc[platform][target] = dict()
 
-                for transport in data[platform][target]:
-                    self.summary[platform][target][transport] = dict()
-                    self.failtc[platform][target][transport] = dict()
-                    self.passtc[platform][target][transport] = dict()
+                for build_type in data[platform][target]:
+                    self.summary[platform][target][build_type] = dict()
+                    self.failtc[platform][target][build_type] = dict()
+                    self.passtc[platform][target][build_type] = dict()
 
-                    for network in data[platform][target][transport]:
-                        self.summary[platform][target][transport][network] = dict()
-                        self.failtc[platform][target][transport][network] = dict()
-                        self.passtc[platform][target][transport][network] = dict()
+                    for transport in data[platform][target][build_type]:
+                        self.summary[platform][target][build_type][transport] = dict()
+                        self.failtc[platform][target][build_type][transport] = dict()
+                        self.passtc[platform][target][build_type][transport] = dict()
 
-                        for tctype in TESTCASE_TYPES:
-                            self.summary[platform][target][transport][network][tctype] = dict()
-                            self.failtc[platform][target][transport][network][tctype] = dict()
-                            self.passtc[platform][target][transport][network][tctype] = dict()
+                        for network in data[platform][target][build_type][transport]:
+                            self.summary[platform][target][build_type][transport][network] = dict()
+                            self.failtc[platform][target][build_type][transport][network] = dict()
+                            self.passtc[platform][target][build_type][transport][network] = dict()
 
-                            for module in TESTSUITE_MODULES:
-                                self.summary[platform][target][transport][network][tctype][module] = dict()
-                                self.failtc[platform][target][transport][network][tctype][module] = dict()
-                                self.passtc[platform][target][transport][network][tctype][module] = dict()
+                            for tctype in TESTCASE_TYPES:
+                                self.summary[platform][target][build_type][transport][network][tctype] = dict()
+                                self.failtc[platform][target][build_type][transport][network][tctype] = dict()
+                                self.passtc[platform][target][build_type][transport][network][tctype] = dict()
 
-                                for result in TC_RESULT:
-                                    self.summary[platform][target][transport][network][tctype][module][result] = 0
+                                for module in TESTSUITE_MODULES:
+                                    self.summary[platform][target][build_type][transport][network][tctype][module] = dict()
+                                    self.failtc[platform][target][build_type][transport][network][tctype][module] = dict()
+                                    self.passtc[platform][target][build_type][transport][network][tctype][module] = dict()
 
-                                if ((not tctype in list(data[platform][target][transport][network])) or (not module in list(data[platform][target][transport][network][tctype]))):
-                                    continue
+                                    for result in TC_RESULT:
+                                        self.summary[platform][target][build_type][transport][network][tctype][module][result] = 0
 
-                                for suite in list(data[platform][target][transport][network][tctype][module]):
-                                    self.failtc[platform][target][transport][network][tctype][module][suite] = list()
-                                    self.passtc[platform][target][transport][network][tctype][module][suite] = list()
+                                    if ((not tctype in list(data[platform][target][build_type][transport][network])) or (not module in list(data[platform][target][build_type][transport][network][tctype]))):
+                                        continue
 
-                                    for tc_name in list(data[platform][target][transport][network][tctype][module][suite]):
-                                        testcase = data[platform][target][transport][network][tctype][module][suite][tc_name]
-                                        if (testcase.fail > 0):
-                                            self.summary[platform][target][transport][network][tctype][module][TC_RESULT.FAIL] += 1
-                                            self.failtc[platform][target][transport][network][tctype][module][suite].append(testcase)
-                                        else:
-                                            self.summary[platform][target][transport][network][tctype][module][TC_RESULT.PASS] += 1
-                                            self.passtc[platform][target][transport][network][tctype][module][suite].append(testcase)
+                                    for suite in list(data[platform][target][build_type][transport][network][tctype][module]):
+                                        self.failtc[platform][target][build_type][transport][network][tctype][module][suite] = list()
+                                        self.passtc[platform][target][build_type][transport][network][tctype][module][suite] = list()
+
+                                        for tc_name in list(data[platform][target][build_type][transport][network][tctype][module][suite]):
+                                            testcase = data[platform][target][build_type][transport][network][tctype][module][suite][tc_name]
+                                            if (testcase.success == 0):
+                                                self.summary[platform][target][build_type][transport][network][tctype][module][TC_RESULT.FAIL] += 1
+                                                self.failtc[platform][target][build_type][transport][network][tctype][module][suite].append(testcase)
+                                            else:
+                                                self.summary[platform][target][build_type][transport][network][tctype][module][TC_RESULT.PASS] += 1
+                                                self.passtc[platform][target][build_type][transport][network][tctype][module][suite].append(testcase)
 
 
     def generate_testresult_report(self, path, spec_data):
@@ -106,53 +111,58 @@ class TestResultReporter:
                 continue
 
             for target in result_suite[platform]:
-                for transport in result_suite[platform][target]:
-                    transport_name = transport
-                    if transport_name == NO_TRANSPORT:
-                        transport_name = ''
-                    for network in result_suite[platform][target][transport]:
-                        network_name = network
-                        if network_name == NO_NETWORK:
-                            network_name = ''
-                        new_dir = os.path.join(dir_path, '%s_%s_%s_%s' %(platform, target.strip(), transport_name, network_name))
-                        os.makedirs(new_dir)
-                        for tctype in result_suite[platform][target][transport][network]:
-                            for module in result_suite[platform][target][transport][network][tctype]:
-                                for suite in list(result_suite[platform][target][transport][network][tctype][module]):
-                                    for testcase in list(result_suite[platform][target][transport][network][tctype][module][suite]):
-                                        file_path = os.path.join(new_dir, testcase.name + ".txt")
-                                        txt = open_write_file(file_path)
-                                        if txt == False:
-                                            continue
-                                        print("[Defect Info]", file=txt)
-                                        print(" Title: ", file=txt)
-                                        print(" Description: \n", file=txt)
+                for build_type in  result_suite[platform][target]:
+                    for transport in result_suite[platform][target][build_type]:
+                        transport_name = transport
+                        if transport_name == NO_TRANSPORT:
+                            transport_name = ''
+                        for network in result_suite[platform][target][build_type][transport]:
+                            network_name = network
+                            if network_name == NO_NETWORK:
+                                network_name = ''
+                            new_dir = os.path.join(dir_path, '%s_%s_%s_%s_%s' %(platform, target.strip(), build_type, transport_name, network_name))
+                            os.makedirs(new_dir)
+                            for tctype in result_suite[platform][target][build_type][transport][network]:
+                                for module in result_suite[platform][target][build_type][transport][network][tctype]:
+                                    for suite in list(result_suite[platform][target][build_type][transport][network][tctype][module]):
+                                        for testcase in list(result_suite[platform][target][build_type][transport][network][tctype][module][suite]):
+                                            text_file_name = suite
+                                            if not ('_' + tctype.lower()) in suite.lower():
+                                                text_file_name += '_' + tctype.lower()
+                                            text_file_name += '_' + testcase.name + '_' + build_type + '.txt'
+                                            file_path = os.path.join(new_dir, text_file_name)
+                                            txt = open_write_file(file_path)
+                                            if txt == False:
+                                                continue
+                                            print("[Defect Info]", file=txt)
+                                            print(" Title: ", file=txt)
+                                            print(" Description: \n", file=txt)
 
-                                        if platform in self.testspec:
-                                            if transport in self.testspec[platform]:
-                                                if network in self.testspec[platform][transport]:
-                                                    if tctype in self.testspec[platform][transport][network]:
-                                                        if module in self.testspec[platform][transport][network][tctype]:
-                                                            if suite in self.testspec[platform][transport][network][tctype][module]:
-                                                                if testcase.name in self.testspec[platform][transport][network][tctype][module][suite]:
-                                                                    spec = self.testspec[platform][transport][network][tctype][module][suite][testcase.name]
-                                                                    print("[Test Case Info]", file=txt)
-                                                                    print(spec.to_string(), file=txt)
+                                            if platform in self.testspec:
+                                                if tctype in self.testspec[platform]:
+                                                    if module in self.testspec[platform][tctype]:
+                                                        if transport in self.testspec[platform][tctype][module]:
+                                                            if network in self.testspec[platform][tctype][module][transport]:
+                                                                if suite in self.testspec[platform][tctype][module][transport][network]:
+                                                                    if testcase.name in self.testspec[platform][tctype][module][transport][network][suite]:
+                                                                        spec = self.testspec[platform][tctype][module][transport][network][suite][testcase.name]
+                                                                        print("[Test Case Info]", file=txt)
+                                                                        print(spec.to_string(), file=txt)
 
-                                        print("\n[Test Result]", file=txt)
-                                        print("Fail Rate: %d/%d\n" % (testcase.fail, testcase.fail+testcase.success), file=txt)
+                                            print("\n[Test Result]", file=txt)
+                                            print("Fail Rate: %d/%d\n" % (testcase.fail, testcase.fail+testcase.success), file=txt)
 
-                                        index = 1
-                                        for result in testcase.runresult:
-                                            print("[%d Try]" % index, file=txt)
-                                            print("--------------------------------------------------------------------", file=txt)
-                                            print("Result: " + result.result, file=txt)
-                                            print("Run Type: " + result.runtype, file=txt)
-                                            print("Run Time: " + str(result.runtime), file=txt)
-                                            print("\n<<<Fail Message>>> \n" + result.fail_msg, file=txt)
-                                            print("\n<<<Test Log>>> \n" + result.test_log, file=txt)
-                                            print("--------------------------------------------------------------------\n\n", file=txt)
-                                            index += 1
+                                            index = 1
+                                            for result in testcase.runresult:
+                                                print("[%d Try]" % index, file=txt)
+                                                print("--------------------------------------------------------------------", file=txt)
+                                                print("Result: " + result.result, file=txt)
+                                                print("Run Type: " + result.runtype, file=txt)
+                                                print("Run Time: " + str(result.runtime), file=txt)
+                                                print("\n<<<Fail Message>>> \n" + result.fail_msg, file=txt)
+                                                print("\n<<<Test Log>>> \n" + result.test_log, file=txt)
+                                                print("--------------------------------------------------------------------\n\n", file=txt)
+                                                index += 1
 
     def report_result(self, sheet, form, report_title, result_writer, result_suite):
         row = 0
@@ -182,39 +192,49 @@ class TestResultReporter:
 
                 col += 1
 
-                yield_testspec = dict()
-                if not self.testspec == None and platform in self.testspec:
-                    yield_testspec = self.testspec[platform]
-
-                yield result_suite[platform], yield_testspec, platform
+                yield result_suite[platform], platform
 
                 col -= 1
                 merge_cell(sheet, platform_first_row, col, row-1, col, platform, form.cell)
 
         def write_target(platforms):
             for platform in platforms:
-                targets, testspec, platform_name = platform
+                targets, platform_name = platform
                 for target in list(targets):
                     nonlocal row, col
                     target_first_row = row
 
                     col += 1
 
-                    yield targets[target], testspec, platform_name, target
+                    yield targets[target], platform_name, target
 
                     col -= 1
                     merge_cell(sheet, target_first_row, col, row-1, col, target, form.cell)
 
-        def write_transport(targets):
+        def write_build_type(targets):
             for target in targets:
-                transports, testspec, platform, target = target
+                build_types, platform, target = target
+                for build_type in list(build_types):
+                    nonlocal row, col
+                    build_type_first_row = row
+
+                    col += 1
+
+                    yield build_types[build_type], platform, target, build_type
+
+                    col -= 1
+                    merge_cell(sheet, build_type_first_row, col, row-1, col, build_type, form.cell)
+
+        def write_transport(build_types):
+            for build_type in build_types:
+                transports, platform, target, build_type = build_type
                 for transport in list(transports):
                     nonlocal row, col
                     transport_first_row = row
 
                     col += 1
 
-                    yield transports[transport], testspec, platform, target, transport
+                    yield transports[transport], platform, target, build_type, transport
 
                     col -= 1
                     merge_cell(sheet, transport_first_row, col, row-1, col, transport, form.cell)
@@ -222,14 +242,14 @@ class TestResultReporter:
 
         def write_network(transports):
             for transport in transports:
-                networks, testspec, platform, target, transport = transport
+                networks, platform, target, build_type, transport = transport
                 for network in list(networks):
                     nonlocal row, col
                     network_first_row = row
 
                     col += 1
 
-                    yield networks[network], testspec, platform, target, transport
+                    yield networks[network], platform, target, build_type, transport, network
 
                     col -= 1
                     merge_cell(sheet, network_first_row, col, row-1, col, network, form.cell)
@@ -237,7 +257,7 @@ class TestResultReporter:
 
         def write_tctype(networks):
             for network in networks:
-                types, testspec, platform, target, transport = network
+                types, platform, target, build_type, transport, network = network
                 for tctype in list(types):
                     nonlocal row, col
                     type_first_row = row
@@ -250,18 +270,14 @@ class TestResultReporter:
 
                     col += 1
 
-                    yield_testspec = dict()
-                    if tctype in testspec:
-                        yield_testspec = testspec[tctype]
-
-                    yield TESTSUITE_MODULES, types[tctype], yield_testspec, platform, target, transport, network
+                    yield TESTSUITE_MODULES, types[tctype], platform, target, build_type, transport, network, tctype
 
                     col -= 1
                     merge_cell(sheet, type_first_row, col, row-1, col, tctype, form.cell)
 
         def write_module(tctypes):
             for tctype in tctypes:
-                module_names, modules, testspec, platform, target, transport, network = tctype
+                module_names, modules, platform, target, build_type, transport, network, tctype = tctype
                 for module in module_names:
                     nonlocal row, col
                     module_first_row = row
@@ -271,18 +287,14 @@ class TestResultReporter:
 
                     col += 1
 
-                    yield_testspec = dict()
-                    if module in testspec:
-                        yield_testspec = testspec[module]
-
-                    yield modules[module], yield_testspec, platform, target, transport, network
+                    yield modules[module], platform, target, build_type, transport, network, tctype, module
 
                     col -= 1
                     merge_cell(sheet, module_first_row, col, row-1, col, module, form.cell)
 
         def write_suite(modules):
             for module in modules:
-                suites, testpsec, platform, target, transport, network = module
+                suites, platform, target, build_type, transport, network, tctype, module = module
                 for suite in list(suites):
                     nonlocal row, col
                     suite_first_row = row
@@ -290,29 +302,27 @@ class TestResultReporter:
                     if (len(suites[suite]) == 0):
                         continue
 
-                    if not suite in suites and not suite in testpsec:
+                    if not suite in suites and not suite in self.testspec[platform][build_type][tctype][module][transport][network]:
+                        print ('suite not found: ', platform, tctype, module, transport, network, suite)
                         continue
 
                     col += 1
 
-                    yield_testspec = dict()
-                    if suite in testpsec:
-                        yield_testspec = testpsec[suite]
-
-                    yield suites[suite], yield_testspec, platform, target, transport, network
+                    yield suites[suite], platform, target, build_type, transport, network, tctype, module, suite
 
                     col -=1
                     merge_cell(sheet, suite_first_row, col, row-1, col, suite, form.cell)
 
         def write_tc(suites):
             for suite in suites:
-                testcases, testspec, platform, target, transport, network = suite
+                testcases, platform, target, build_type, transport, network, tctype, module, suite = suite
+                testspec = self.testspec[platform][build_type][tctype][module][transport][network][suite]
                 for testcase in testcases:
                     nonlocal row, col
                     row, col = result_writer(row, col, testcase, testspec, sheet, platform, target, transport, network)
 
 
-        walk_through_results(write_platform, write_target, write_transport, write_network, write_tctype, write_module, write_suite, write_tc)
+        walk_through_results(write_platform, write_target, write_build_type, write_transport, write_network, write_tctype, write_module, write_suite, write_tc)
 
 
     def report_to_xlsx(self, path):
@@ -352,8 +362,8 @@ class TestResultReporter:
                 row -= 1
                 summarysheet.merge_range(row, target_col, row, col-1, target, form.title)
 
-            row -= 1
-            summarysheet.merge_range(row, platform_col, row, col-1, platform, form.title)
+                row -= 1
+                summarysheet.merge_range(row, platform_col, row, col-1, platform, form.title)
 
         total_col = col
         for result in TC_RESULT + ('Total','Pass Rate',):
@@ -381,9 +391,10 @@ class TestResultReporter:
                     for tc_type in TESTCASE_TYPES:
                         for result in TC_RESULT:
                             result_sum = 0
-                            for transport in self.summary[platform][target]:
-                                for network in self.summary[platform][target][transport]:
-                                    result_sum += self.summary[platform][target][transport][network][tc_type][module][result]
+                            for build_type in self.summary[platform][target]:
+                                for transport in self.summary[platform][target][build_type]:
+                                    for network in self.summary[platform][target][build_type][transport]:
+                                        result_sum += self.summary[platform][target][build_type][transport][network][tc_type][module][result]
                             summarysheet.write(row, col, result_sum, form.cell)
                             col += 1
 
@@ -440,7 +451,8 @@ class TestResultReporter:
                 sheet.write(row, col + 1, testcase.runresult[index].runtype, form.cell)
                 sheet.write(row, col + 2, testcase.runresult[index].runtime, form.cell)
                 sheet.write(row, col + 3, testcase.runresult[index].fail_msg, form.cell_wrap)
-                sheet.write(row, col + 4, testcase.runresult[index].test_log, form.cell_wrap)
+                temp_log = get_log_content_or_filename(testcase.runresult[index].test_log)
+                sheet.write(row, col + 4, temp_log, form.cell_wrap)
                 index += 1
                 row +=1
 
@@ -474,7 +486,8 @@ class TestResultReporter:
                 sheet.write(row, col + 1, testcase.runresult[index].runtype, form.cell)
                 sheet.write(row, col + 2, testcase.runresult[index].runtime, form.cell)
                 sheet.write(row, col + 3, testcase.runresult[index].fail_msg, form.cell_wrap)
-                sheet.write(row, col + 4, testcase.runresult[index].test_log, form.cell_wrap)
+                temp_log = get_log_content_or_filename(testcase.runresult[index].test_log)
+                sheet.write(row, col + 4, temp_log, form.cell_wrap)
                 index += 1
                 row +=1
 
@@ -535,6 +548,13 @@ class TestResultReporter:
             col = tc_col
 
             return row, col
+
+        def get_log_content_or_filename(log):
+            if len(log) > 10000:
+                begin_index = log.find('Log File Name:') + len('Log File Name:')
+                end_index = log.find('Content:')
+                log = log[begin_index:end_index].strip()
+            return log
 
         passsheet = workbook.add_worksheet('PassTC')
         self.report_result(passsheet, form, RESULT_TITLE, write_pass_result, self.passtc)

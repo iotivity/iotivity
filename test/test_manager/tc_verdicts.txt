@@ -1,0 +1,1 @@
+verdict |  |ESRemoteEnrolleeTest |testESSProvisionSecurity_NV_ETC_N |org.iotivity.test.es.tc.btc |pass

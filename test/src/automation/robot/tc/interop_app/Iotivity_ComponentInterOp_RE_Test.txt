@@ -1,0 +1,421 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Settings ***
+Documentation     Test RE Interoperability for all supported platform
+Variables         ../../helper/variable.py
+Library           Remote    ${REMOTE_IP}:${REMOTE_PORT}    WITH NAME    Local
+Resource    ../../helper/Iotivity_Interop_Test_Helper.txt
+Resource    ../../helper/Iotivity_Test_Helper.txt
+Suite Setup    Do Suite Setup
+Suite Teardown    Do Suite Teardown
+Test Setup       Do Test Setup
+Test Teardown    Do Test Teardown
+
+*** Test Cases ***
+1 RE Create Resource Discover Resource Without Query
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - create resource & discovery |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1 |
+    ...    |test_data | 2. Menu option: 4 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Resource without query: Input 4 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${expected_log}    Set Variable    All resource found successfully
+    Provide Input    ${first_app}    1    15s
+    ${log}    Provide Input    ${second_app}    4    15s
+    Search Expected Log    ${log}    ${expected_log}
+
+2 RE Discover Resource without query without Create Resource
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - discover  resource without creating it first |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 4 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [CLIENT] Discover Resource without query: Input 4 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Failed to found proper resources |
+    [Tags]    all
+    ${expected_log}    Set Variable    Could not found proper resources
+    ${log}    Provide Input    ${second_app}    4    15s
+    Search Expected Log    ${log}    ${expected_log}
+
+3 RE Create Resource Discover Resource with resource Type
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - discover  resource with resource type |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1 |
+    ...    |test_data | 2. Menu option: 5 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Resource with Resource Type : Input 5 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Success to found proper resource |
+    [Tags]    all
+    ${expected_log}    Set Variable    Resource found successfully
+    Provide Input    ${first_app}    1    15s
+    ${log}    Provide Input    ${second_app}    5    15s
+    Search Expected Log    ${log}    ${expected_log}
+
+4 RE Start Monitoring
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features -  start monitoring |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1, 4, 8, 9 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Resource without query: Input 4 |
+    ...    |procedure | 3. [CLIENT] Start Monitoring: Input 8 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${expected_log}    Set Variable    Monitoring started successfully
+    Provide Input    ${first_app}    1    15s
+    ${log}    Provide Inputs    ${second_app}    15s    4    8
+    Search Expected Log    ${log}    ${expected_log}
+
+5 RE Stop Monitoring
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - create resource & discovery |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1 |
+    ...    |test_data | 2. Menu option: 4 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Resource with resource type: Input 5 |
+    ...    |procedure | 3. [CLIENT] Start Monitoring: Input 8 |
+    ...    |procedure | 4. [CLIENT] Stop Monitoring: Input 9 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Success to stop monitoring |
+    [Tags]    all
+    ${expected_log}    Set Variable    Monitoring stopped successfully
+    Provide Input    ${first_app}    1    15s
+    ${log}    Provide Inputs    ${second_app}    15s    5    8    9
+    Search Expected Log    ${log}    ${expected_log}
+
+6 RE Start Monitoring without resource discovery
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - start monitoring without resource discovery |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1 |
+    ...    |test_data | 2. Menu option: 4 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Start Monitoring: Input 8 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Failed to start monitoring |
+    [Tags]    all
+    ${expected_log}    Set Variable    Discover Resource First
+    Provide Input    ${first_app}    1    15s
+    ${log}    Provide Input    ${second_app}    8    15s
+    Check Substring Count    ${log}    1    ${GE}    Discover Resource first
+
+7 RE Stop Monitoring without start monitoring
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - stop monitoring without start monitoring |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1, 6, 9 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Resource with Resource Types: Input 6 |
+    ...    |procedure | 3. [CLIENT] Stop Monitoring: Input 9 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Failed to stop monitoring |
+    [Tags]    all
+    ${expected_log}    Set Variable    Monitoring is not started yet
+    Provide Inputs    ${first_app}    15s    1
+    ${log}    Provide Inputs    ${second_app}    15s    6    9
+    Search Expected Log    ${log}    ${expected_log}
+
+8 RE Get State
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - get resource state before and after start monitoring and stop monitoring |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1, 4, 10, 8, 10, 9, 10 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Resource without query: Input 4 |
+    ...    |procedure | 3. [CLIENT] Get State: Input 10 |
+    ...    |procedure | 4. [CLIENT] Start Monitoring: Input 8 |
+    ...    |procedure | 5. [CLIENT] Get State: Input 10 |
+    ...    |procedure | 6. [CLIENT] Stop Monitoring: Input 9 |
+    ...    |procedure | 7. [CLIENT] Get State: Input 10 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Success to get different resource states |
+    [Tags]    all
+    ${expected_log}    Set Variable    1. Remote Resource State: NONE\n2. Remote Resource State: ALIVE\n3. Remote Resource State: NONE
+    Provide Input    ${first_app}    1    15s
+    ${log}    Provide Inputs    ${second_app}    15s    4    10    8    10    9    10
+    Check Substring Count    ${log}    1    ${GE}    Remote Resource State : NONE
+    Check Substring Count    ${log}    1    ${GE}    Remote Resource State : ALIVE
+    Check Substring Count    ${log}    1    ${GE}    Remote Resource State : NONE
+
+9 RE Set Attributes Get State
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - get resource state after set ting resource attributes from server |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1, 5, 2, 10 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Resource with Resource Type: Input 5 |
+    ...    |procedure | 3. [SERVER] Set Attributes: Input 2 |
+    ...    |procedure | 4. [CLIENT] Get State: Input 10 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Success to get resource state as None |
+    [Tags]    all
+    ${expected_log}    Set Variable    Remote Resource State : NONE
+    Provide Input    ${first_app}    1    15s
+    ${log}    Provide Inputs    ${second_app}    15s    5
+    ${log}    Provide Inputs    ${first_app}    15s    2
+    ${log}    Provide Inputs    ${second_app}    15s    10
+    Search Expected Log    ${log}    ${expected_log}
+
+10 RE Start Caching Stop Caching
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - start Caching and Stop Caching |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1, 5, 13, 14 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Resource with Resource Type: Input 5 |
+    ...    |procedure | 3. [CLIENT] Start Caching: Input 13 |
+    ...    |procedure | 4. [CLIENT] Stop Caching: Input 14 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Success to start and stop resource caching |
+    [Tags]    all
+    ${expected_log}    Set Variable    1. Caching started successfully.\n2. Caching stopped successfully.
+    Provide Input    ${first_app}    1    15s
+    ${log}    Provide Inputs    ${second_app}    15s    5    13    14
+    Check Substring Count    ${log}    1    ${GE}    Caching started successfully
+    Check Substring Count    ${log}    1    ${GE}    Caching stopped successfully
+
+11 RE Get Cached State
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Get Cache State before and after start caching and stop caching |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1, 4, 16, 13, 14 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Resource without query: Input 4 |
+    ...    |procedure | 3. [CLIENT] Get Cached State : Input 16 |
+    ...    |procedure | 4. [CLIENT] Start Caching: Input 13 |
+    ...    |procedure | 5. [CLIENT] Get Cached State : Input 16 |
+    ...    |procedure | 6. [CLIENT] Stop Caching: Input 14 |
+    ...    |procedure | 7. [CLIENT] Get Cached State : Input 16 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Success to get different cache states |
+    [Tags]    all
+    ${expected_log}    Set Variable    1. Cached State : NONE\n2. Cached State: ALIVE\n3. Cached State: NONE
+    Provide Input    ${first_app}    1    15s
+    ${log}    Provide Inputs    ${second_app}    15s    4    16
+    ${log}    Provide Inputs    ${second_app}    60s    13
+    ${log}    Provide Inputs    ${second_app}    15s    16    14    16
+    Check Substring Count    ${log}    1    ${GE}    Cached State : NONE
+    Check Substring Count    ${log}    1    ${GE}    Cached State : ALIVE
+    Check Substring Count    ${log}    1    ${GE}    Cached State : NONE
+
+12 RE Get Cached Attributes
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features -Get Cached Attributes after start caching and stop caching |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1,5, 13, 15, 14 |
+    ...    |test_data | 2. Menu option: 4 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Resource with resource types: Input 5 |
+    ...    |procedure | 3. [CLIENT] Start Caching: Input 13 |
+    ...    |procedure | 4. [CLIENT] Get Cached Attributes: Input 15 |
+    ...    |procedure | 5. [CLIENT] Stop Caching: Input 14 |
+    ...    |procedure | 6. [CLIENT] Get Cached Attributes: Input 15 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Success to get cached attributes |
+    [Tags]    all
+    ${expected_log}    Set Variable    ***[Attributes]***
+    Provide Input    ${first_app}    1    15s
+    Provide Inputs    ${second_app}    15s    5    13    15    14
+    ${log}    Provide Inputs    ${second_app}    15s    15
+    Match Any String    ${log}    units = "C"    units = C
+    Match Any String    ${log}    range = "0,30"    range = 0,30
+    Check Substring Count    ${log}    1    ${GE}    temperature = 0
+
+13 RE Set Remote Attributes Get Attributes
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Set Remote Attributes and get from server |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1 |
+    ...    |test_data | 2. Menu option: 4 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Resource with resource types: Input 6 |
+    ...    |procedure | 3. [CLIENT] Set Remote Attributes: Input 11 |
+    ...    |procedure | 4.  [SERVER] Get Attributes: Input 3 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${expected_log}    Set Variable    All resources found successfully
+    Provide Input    ${first_app}    1    15s
+    Provide Inputs    ${second_app}    15s    6    11
+    ${log}    Provide Input    ${first_app}    3    15s
+    ${log}    Get Output    ${second_app}
+    Check Substring Count    ${log}    1    ${GE}    temperature = 1
+    Match Any String    ${log}    units = "C"    units = C
+    Match Any String    ${log}    range = "0,30"    range = 0,30
+
+14 RE Set Attributes Get Remote Attributes
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Set attributes from server and Get Remote Attributes |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1, 5, 2, 12 |
+    ...    |test_data | 2. Menu option: 4 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Resource with resource types: Input 5 |
+    ...    |procedure | 3. [CLIENT] Get Remote Attributes: Input 12 |
+    ...    |procedure | 4. [SERVER] Set Attributes: Input 2 |
+    ...    |procedure | 5. [CLIENT] Get Remote Attributes: Input 12 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Success to get attribute value remotely |
+    [Tags]    all
+    ${expected_log}    Set Variable    Getting Remote Attributes...
+    Provide Input    ${first_app}    1    15s
+    Provide Inputs    ${second_app}    15s    5    12
+    Provide Input    ${first_app}    2    15s
+    ${log}    Provide Input    ${second_app}    12    15s
+    Check Substring Count    ${log}    1    ${GE}    temperature = 1
+    Match Any String    ${log}    units = "C"    units = C
+    Match Any String    ${log}    range = "0,30"    range = 0,30
+
+15 RE Set Remote Attributes Get Remote Attributes
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Set and Get remote attributes |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1, 5, 11, 12 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Resource with resource type: Input 5 |
+    ...    |procedure | 3. [CLIENT] Set Remote Attributes: Input 11 |
+    ...    |procedure | 4. [CLIENT] Get Remote Attributes: Input 12 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Success to set and get attribute value from client side |
+    [Tags]    all
+    ${expected_log}    Set Variable    *** [ATTRIBUTES] ***
+    Provide Input    ${first_app}    1    15s
+    ${log}    Provide Inputs    ${second_app}    20s    5    11    12
+    Check Substring Count    ${log}    1    ${GE}    temperature = 1
+    Match Any String    ${log}    units = "C"    units = C
+    Match Any String    ${log}    range = "0,30"    range = 0,30
+
+16 RE Create Resource Discover Non-Discoverable Resources
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Create Resource and Discover Non-discoverable Resources |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1, 7 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Non Discoverable Resource: Input 7 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Failed to found non-Discoverable resources |
+    [Tags]    all
+    ${expected_log}    Set Variable    Could not found Non-Discoverable Resource
+    Provide Input    ${first_app}    1    15s
+    ${log}    Provide Input    ${second_app}    7    15s
+    Match Any String    ${log}    Could not found Non-Discoverable Resource    Can't find proper resource
+
+17 RE Discover Non-Discoverable Resources Start Monitoring
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Create Resource and Discover Non-discoverable Resources |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 1, 7, 8 |
+    ...    |pre_condition | Run RE Interop App |
+    ...    |procedure | 1. [SERVER] Create Resource: Input 1 |
+    ...    |procedure | 2. [CLIENT] Discover Non Discoverable Resource: Input 7 |
+    ...    |procedure | 3. [CLIENT] Start Monitoring: Input 8 |
+    ...    |post_condition | Terminate RE Interop App |
+    ...    |expected | Failed to start monitoring |
+    [Tags]    all
+    ${expected_log}    Set Variable    Discover Resource first
+    Provide Input    ${first_app}    1    15s
+    ${log}    Provide Inputs    ${second_app}    15s    7    8
+    Search Expected Log    ${log}    ${expected_log}
+
+*** Keywords ***
+Do Suite Setup
+    [Arguments]    
+    ${iotivity_build_parmeters}    Set Variable   SECURED=0
+    ${tc_build_parmeters}    Set Variable   SECURED=0
+    BuiltIn.Log    ${OS}->${OS2}
+    Load Default Settings    ${iotivity_build_parmeters}    ${tc_build_parmeters}
+    Get Test Environment Details
+    Build Iotivity and Test App
+
+Do Suite Teardown
+    [Arguments]    
+    Remove All Devices
+
+Do Test Setup
+    [Arguments]    
+    Execute Interop Apps
+
+Do Test Teardown
+    [Arguments]
+    ${log}    Get Output From First App
+    BuiltIn.Log    ${log}
+    ${log}    Get Output From Second App
+    BuiltIn.Log    ${log}    
+    Terminate Interop Apps

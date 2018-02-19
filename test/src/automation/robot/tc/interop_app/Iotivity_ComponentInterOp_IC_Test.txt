@@ -1,0 +1,1289 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Settings ***
+Documentation     Test IC Interoperability for all supported platform
+Variables         ../../helper/variable.py
+Library           Remote    ${REMOTE_IP}:${REMOTE_PORT}    WITH NAME    Local
+Resource    ../../helper/Iotivity_Interop_Test_Helper.txt
+Resource    ../../helper/Iotivity_Test_Helper.txt
+Suite Setup    Do Suite Setup
+Suite Teardown    Do Suite Teardown
+Test Setup       Do Test Setup
+Test Teardown    Do Test Teardown
+
+*** Test Cases ***
+test#1
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Testing Sign Up with Cloud |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 201 |
+    ...    |test_data | 4. Menu option: 202 |               
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up   |
+    ...    |procedure | 3. [Controller] press[201] for start controller   |
+    ...    |procedure | 4. [Controller] Prees [202] for Sign Up   |
+    ...    |post_condition | Terminate Server/s and Client/s |  
+    ...    |expected | Callback for SignUp will response with a Success Code and provide AuthToken |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 4
+    ${log}    Provide Input    ${first_app}    101    5s
+    ${log}    Provide Input    ${first_app}    102    60s	
+    Match Any String    ${log}    Auth response received code: 4    SIGNUP Successful
+    Check Substring Count    ${log}    0    ${GE}    accesstoken: null
+    Match Any String    ${log}    accesstoken:    accesstoken :
+    Check Substring Count    ${log}    0    ${GE}    uid: null
+    Match Any String    ${log}    uid:    UID :
+    Match Any String    ${log}    refreshtoken:\t(null)    refreshtoken : null
+    ${log}    Provide Input    ${second_app}    201    5s
+    ${log}    Provide Input    ${second_app}    202    60s
+    Match Any String    ${log}    Auth response received code: 4    SIGNUP Successful
+    Check Substring Count    ${log}    0    ${GE}    accesstoken:\tnull
+    Match Any String    ${log}    accesstoken:    accesstoken :
+    Check Substring Count    ${log}    0    ${GE}    uid: null
+    Match Any String    ${log}    uid:    UID :
+    Match Any String    ${log}    refreshtoken:\t(null)    refreshtoken : null
+
+
+test#2
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Testing Sign In with Cloud |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 201 |
+    ...    |test_data | 5. Menu option: 202 |
+    ...    |test_data | 6. Menu option: 203 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controller] press[201] for start controller |
+    ...    |procedure | 5. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 6. [Controller] Prees [203] for Sign In   |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 4
+    Do Controlee Register
+    Do Controller Register
+
+test#3
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Testing Sign Out with Cloud |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 104 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 204 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] press[104] for signout |
+    ...    |procedure | 5. [Controller] press[201] for start controller |
+    ...    |procedure | 6. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 7. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 8. [Controller] press[204] for signout   |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 4
+    Do Controlee Register
+    Do Controller Register
+    ${log}    Provide Input    ${first_app}    104    30s
+    Match Any String    ${log}    Auth response received code: 4    SIGNOUT Successful
+    ${log}    Provide Input    ${second_app}    204    30s
+    Match Any String    ${log}    Auth response received code: 4    SIGNOUT Successful
+
+test#4
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Create Group |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback will response with a successcode that Resource Published Successful |
+    [Tags]    all
+    ${expected_log}    Set Variable    Publish resource response received code: 4
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    Check Substring Count    ${log}    1    ${GE}    gname:\tDEFAULT_GNAME
+    Check Substring Count    ${log}    0    ${GE}    gid: null
+    Check Substring Count    ${log}    1    ${GE}    gid:
+    Check Substring Count    ${log}    0    ${GE}    members: null
+    Check Substring Count    ${log}    1    ${GE}    members:
+    Check Substring Count    ${log}    0    ${GE}    owner: null
+    Check Substring Count    ${log}    1    ${GE}    owner:
+
+test#5
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Search User |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 205 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controller] press[201] for start controller |
+    ...    |procedure | 6. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 7. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 8. [Controller] Prees [205] for Search user information with UUID   |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 4
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${owner_id}    Get Text    owner:\t    \n    ${log}
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    205    60s
+    ${log}    Provide Input    ${second_app}    ${owner_id}    60s
+    Check Substring Count    ${log}    1    ${GE}    uid:\t${owner_id}
+
+test#6
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Search User |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 205 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controller] press[201] for start controller |
+    ...    |procedure | 6. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 7. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 8. [Controller] Prees [205] for Search user information with phone number   |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 4
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${owner_id}    Get Text    owner:\t    \n    ${log} 
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    205    60s
+    ${log}    Provide Input    ${second_app}    01715    60s
+    Check Substring Count    ${log}    1    ${GE}    ulist:\t(null)
+
+test#7
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Search User |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 205 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controller] press[201] for start controller |
+    ...    |procedure | 6. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 7. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 8. [Controller] Prees [205] for Search user information with email   |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 4
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${owner_id}    Get Text    owner:\t    \n    ${log} 
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    205    60s
+    ${log}    Provide Input    ${second_app}    xx@xx.com    60s
+    Check Substring Count    ${log}    1    ${GE}    ulist:\t(null)
+
+test#8
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Getting Group List |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 210 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controller] press[201] for start controller |
+    ...    |procedure | 6. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 7. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 8. [Controller] Prees [210] for get group info all   |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 4
+    Do Controlee Register
+    Provide Input    ${first_app}    105    60s
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    210    60s
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    1    ${GE}    groups:\t[OC::OCRepresentation OC::OCRepresentation ]
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    1    ${GE}    gacl:\t[OC::OCRepresentation ]
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    1    ${GE}    permission:\t31
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    1    ${GE}    resources:\t[OC::OCRepresentation ]
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    1    ${GE}    href:\t*
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    1    ${GE}    if:\t[oic.if.baseline ]
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    1    ${GE}    oic.if.baseline
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    1    ${GE}    rt:\t(null)
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    1    ${GE}    if:\toic.if.baseline
+    Check Substring Count    ${log}    1    ${GE}    gname:\tDEFAULT_GNAME
+    Check Substring Count    ${log}    0    ${GE}    gid: null
+    Check Substring Count    ${log}    1    ${GE}    gid:
+    Check Substring Count    ${log}    0    ${GE}    members: null
+    Check Substring Count    ${log}    1    ${GE}    members:
+    Check Substring Count    ${log}    0    ${GE}    owner: null
+    Check Substring Count    ${log}    1    ${GE}    owner:
+
+test#9
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test getting Group Info |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 211 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controller] press[201] for start controller |
+    ...    |procedure | 6. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 7. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 8. [Controller] Prees [211] for get group info and enter a groupid  |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 4
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${group_id}    Get Text    gid:\t    \n    ${log} 
+    Do Controller Register
+    ${log}    Run Keyword If    '${os2}' == '${android}'    Provide Input    ${second_app}    210    60s
+    ${log}    Provide Input    ${second_app}    211    60s
+    Run Keyword If    '${os2}' == '${linux}'    ${log}    Run Keyword If    '${os2}' == '${linux}'    Provide Input    ${second_app}    ${group_id}    60s
+    Check Substring Count    ${log}    1    ${GE}    gid:\t${group_id}
+
+test#10
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Delete Group |
+    ...    |target | |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 209 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controller] press[201] for start controller |
+    ...    |procedure | 6. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 7. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 8. [Controller] Prees [209] for delete group and enter a groupid   |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${group_id}    Get Text    gid:\t    \n    ${log} 
+    Do Controller Register
+    ${log}    Run Keyword If    '${os2}' == '${android}'    Provide Input    ${second_app}    210    60s
+    ${log}    Provide Input    ${second_app}    209    60s
+    Run Keyword If    '${os2}' == '${linux}'    ${log}    Run Keyword If    '${os2}' == '${linux}'    Provide Input    ${second_app}    ${group_id}    60s
+    ${return}    Match Any String    ${log}    response received code: 2    Delete device succeed
+    Should Be True    ${return}
+
+test#11
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Observing Group |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 212 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controller] press[201] for start controller |
+    ...    |procedure | 6. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 7. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 8. [Controller] Prees [212] for observe group and enter a groupid    |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${group_id}    Get Text    gid:\t    \n    ${log} 
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    212    60s
+    Run Keyword If    '${os2}' == '${linux}'    ${log}    Run Keyword If    '${os2}' == '${linux}'    Provide Input    ${second_app}    ${group_id}    60s
+    Match Any String    ${log}    onObserve CB response received code: 0    REGISTER was successful
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    1    ${GE}    onObserve CB response sequenceNumber: 0
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    1    ${GE}    gid:\t${group_id}
+
+test#12
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Sending Invitation |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 107 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controlee] Prees [107] for sent inviation |
+    ...    |expected | Callback will response with a list with All available Group |
+    [Tags]    all
+    ${expected_log}    Set Variable    onSendInvitation CB response received code: 4
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${group_id}    Get Text    gid:\t    \n    ${log}
+    ${log}    Provide Input    ${first_app}    107    60s
+    ${log}    Provide Input    ${first_app}    ${group_id}    60s
+    ${log}    Provide Input    ${first_app}    ${uid}    60s
+    Search Expected Log    ${log}    ${expected_log}
+
+test#13
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Observing Invitation |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 107 |
+    ...    |test_data | 6. Menu option: 201 |
+    ...    |test_data | 7. Menu option: 202 |
+    ...    |test_data | 8. Menu option: 203 |
+    ...    |test_data | 9. Menu option: 214 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 4. [Controlee] Prees [107] for send inviation |
+    ...    |procedure | 5. [Controller] press[201] for start controller |
+    ...    |procedure | 6. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 7. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 8. [Controller] Prees [214] for Observe Invitation and enter a groupid     |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${group_id}    Get Text    gid:\t    \n    ${log}
+    ${log}    Provide Input    ${first_app}    107    60s
+    ${log}    Provide Input    ${first_app}    ${group_id}    60s
+    ${log}    Provide Input    ${first_app}    ${uid}    60s
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    214    60s
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    1    ${GE}    invite:\t[OC::OCRepresentation ]
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    0    ${GE}    gid: null
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    2    ${GE}    gid:
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    0    ${GE}    mid: null
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    2    ${GE}    mid:
+    Run Keyword If    '${os2}' == '${linux}'    Check Substring Count    ${log}    1    ${GE}    invited:\t[OC::OCRepresentation
+    Run Keyword If    '${os2}' == '${android}'    Check Substring Count    ${log}    1    ${GE}    REGISTER was successful 
+
+test#14
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Canceling Invitation |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 107 |
+    ...    |test_data | 6. Menu option: 201 |
+    ...    |test_data | 7. Menu option: 202 |
+    ...    |test_data | 8. Menu option: 203 |
+    ...    |test_data | 9. Menu option: 214 |
+    ...    |test_data | 10. Menu option: 216 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controlee] Prees [107] for send inviation |
+    ...    |procedure | 6. [Controller] press[201] for start controller |
+    ...    |procedure | 7. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 8. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 9. [Controller] Prees [214] for Observe Invitation|
+    ...    |procedure | 10. [Controller] Prees [216] for Cancel Invitation     |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${group_id}    Get Text    gid:\t    \n    ${log}
+    ${log}    Provide Input    ${first_app}    107    60s
+    ${log}    Provide Input    ${first_app}    ${group_id}    60s
+    ${log}    Provide Input    ${first_app}    ${uid}    60s
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    214    60s
+    ${mid}    Get Text    mid:\t    \n    ${log}
+    ${log}    Provide Input    ${second_app}    216    60s
+    ${log}    Provide Input    ${second_app}    ${group_id}    60s
+    ${log}    Provide Input    ${second_app}    ${mid}    60s
+    Check Substring Count    ${log}    1    ${GE}    CB response received code: 0
+    Check Substring Count    ${log}    0    ${GE}    onObserveInvitation CB response sequenceNumber: null
+    Check Substring Count    ${log}    1    ${GE}    onObserveInvitation CB response sequenceNumber:
+    Check Substring Count    ${log}    1    ${GE}    onCancelInvitation CB response received code: 2
+
+test#15
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Deleting Invitation |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 107 |
+    ...    |test_data | 6. Menu option: 201 |
+    ...    |test_data | 7. Menu option: 202 |
+    ...    |test_data | 8. Menu option: 203 |
+    ...    |test_data | 9. Menu option: 214 |
+    ...    |test_data | 10. Menu option: 217 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controlee] Prees [107] for send inviation |
+    ...    |procedure | 6. [Controller] press[201] for start controller |
+    ...    |procedure | 7. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 8. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 9. [Controller] Prees [214] for Observe Invitation|
+    ...    |procedure | 10. [Controller] Prees [217] for delete Invitation     |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${group_id}    Get Text    gid:\t    \n    ${log}
+    ${log}    Provide Input    ${first_app}    107    60s
+    ${log}    Provide Input    ${first_app}    ${group_id}    60s
+    ${log}    Provide Input    ${first_app}    ${uid}    60s
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    214    60s
+    ${mid}    Get Text    mid:\t    \n    ${log}
+    ${log}    Provide Input    ${second_app}    217    60s
+    ${log}    Provide Input    ${second_app}    ${group_id}    60s
+    ${log}    Provide Input    ${second_app}    ${mid}    60s
+    Check Substring Count    ${log}    1    ${GE}    CB response received code: 0
+    Check Substring Count    ${log}    0    ${GE}    onObserveInvitation CB response sequenceNumber: null
+    Check Substring Count    ${log}    1    ${GE}    onObserveInvitation CB response sequenceNumber:
+    Check Substring Count    ${log}    1    ${GE}    onDeleteInvitation CB response received code: 2
+
+test#16
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Cancel Observing Group |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 107 |
+    ...    |test_data | 6. Menu option: 201 |
+    ...    |test_data | 7. Menu option: 202 |
+    ...    |test_data | 8. Menu option: 203 |
+    ...    |test_data | 9. Menu option: 212 |
+    ...    |test_data | 10. Menu option: 213 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controlee] Prees [107] for send inviation |
+    ...    |procedure | 6. [Controller] press[201] for start controller |
+    ...    |procedure | 7. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 8. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 9. [Controller] Prees [212] for Observe Group|
+    ...    |procedure | 10. [Controller] Prees [213] cancel observe group     |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${group_id}    Get Text    gid:\t    \n    ${log}
+    ${log}    Provide Input    ${first_app}    107    60s
+    ${log}    Provide Input    ${first_app}    ${group_id}    60s
+    ${log}    Provide Input    ${first_app}    ${uid}    60s
+    Do Controller Register
+    Provide Input    ${second_app}    212    60s
+    Provide Input    ${second_app}    ${group_id}    60s
+    ${log}    Provide Input    ${second_app}    213    60s
+    ${log}    Provide Input    ${second_app}    ${group_id}    60s
+    Check Substring Count    ${log}    1    ${GE}    CB response received code: 0
+    Check Substring Count    ${log}    0    ${GE}    onObserve CB response sequenceNumber: null
+    Check Substring Count    ${log}    1    ${GE}    onObserve CB response sequenceNumber:
+    Check Substring Count    ${log}    0    ${GE}    cancelObserveGroup failed
+
+test#17
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Cancel Observe Invitation |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 107 |
+    ...    |test_data | 6. Menu option: 201 |
+    ...    |test_data | 7. Menu option: 202 |
+    ...    |test_data | 8. Menu option: 203 |
+    ...    |test_data | 9. Menu option: 214 |
+    ...    |test_data | 10. Menu option: 215 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controlee] Prees [107] for send inviation |
+    ...    |procedure | 6. [Controller] press[201] for start controller |
+    ...    |procedure | 7. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 8. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 9. [Controller] Prees [214] for Observe Invitation|
+    ...    |procedure | 10. [Controller] Prees [215] cancel observe invitation     |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${group_id}    Get Text    gid:\t    \n    ${log}
+    ${log}    Provide Input    ${first_app}    107    60s
+    ${log}    Provide Input    ${first_app}    ${group_id}    60s
+    ${log}    Provide Input    ${first_app}    ${uid}    60s
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    214    60s
+    ${log}    Provide Input    ${second_app}    215    60s
+    ${log}    Provide Input    ${second_app}    ${group_id}    60s
+    Check Substring Count    ${log}    1    ${GE}    CB response received code: 0
+    Check Substring Count    ${log}    0    ${GE}    onObserveInvitation CB response sequenceNumber: null
+    Check Substring Count    ${log}    1    ${GE}    onObserveInvitation CB response sequenceNumber:
+
+test#18
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Add property value to group |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 221 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controller] press[201] for start controller |
+    ...    |procedure | 6. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 7. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 8. [Controller] Prees [221] for add property value to group |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${group_id}    Get Text    gid:\t    \n    ${log}
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    221    60s
+    ${log}    Provide Input    ${second_app}    ${group_id}    10s
+    ${log}    Provide Input    ${second_app}    members    10s
+    ${log}    Provide Input    ${second_app}    sami    10s
+    Check Substring Count    ${log}    1    ${GE}    addPropertyValueToGroup returns 0
+    Check Substring Count    ${log}    1    ${GE}    Response: POST request was successful
+
+test#19
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test delete property value to group |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 221 |
+    ...    |test_data | 9. Menu option: 222 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controller] press[201] for start controller |
+    ...    |procedure | 6. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 7. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 8. [Controller] Prees [221] for add property value to group |
+    ...    |procedure | 9. [Controller] Prees [222] for delete property value to group  |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${group_id}    Get Text    gid:\t    \n    ${log}
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    221    60s
+    ${log}    Provide Input    ${second_app}    ${group_id}    10s
+    ${log}    Provide Input    ${second_app}    members    10s
+    ${log}    Provide Input    ${second_app}    sami    10s
+    ${log}    Provide Input    ${second_app}    222    60s
+    ${log}    Provide Input    ${second_app}    ${group_id}    20s
+    ${log}    Provide Input    ${second_app}    members    20s
+    ${log}    Provide Input    ${second_app}    sami    20s
+    Check Substring Count    ${log}    1    ${GE}    deletePropertyValueFromGroup returns 0
+    Check Substring Count    ${log}    1    ${GE}    Response: POST request was successful
+
+test#20
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test update property value to group |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 105 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 221 |
+    ...    |test_data | 9. Menu option: 222 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [105] for create group |
+    ...    |procedure | 5. [Controller] press[201] for start controller |
+    ...    |procedure | 6. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 7. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 8. [Controller] Prees [221] for add property value to group |
+    ...    |procedure | 9. [Controller] Prees [223] for update property value to group   |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    105    60s
+    ${group_id}    Get Text    gid:\t    \n    ${log}
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    221    60s
+    ${log}    Provide Input    ${second_app}    ${group_id}    10s
+    ${log}    Provide Input    ${second_app}    members    10s
+    ${log}    Provide Input    ${second_app}    sami    10s
+    ${log}    Provide Input    ${second_app}    223    60s
+    ${log}    Provide Input    ${second_app}    ${group_id}    20s
+    ${log}    Provide Input    ${second_app}    gname    20s
+    ${log}    Provide Input    ${second_app}    sami    20s
+    Check Substring Count    ${log}    1    ${GE}    updatePropertyValueFromGroup returns 0
+    Check Substring Count    ${log}    1    ${GE}    Response: POST request was successful
+
+test#21
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Creating MQ Topic and discovering |
+    ...    |target | |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 301 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 401 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4.  [Controlee] Prees [301] for Create MQ topic |
+    ...    |procedure | 5. [Controller] press[201] for start controller |
+    ...    |procedure | 6. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 7. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 8. [Controller] Prees [401] for discover topic |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    301    5s
+    ${log}    Provide Input    ${first_app}    /oic/ps/light3313    60s
+    Check Substring Count    ${log}    1    ${GE}    Create topic response received, code: 1
+    Check Substring Count    ${log}    1    ${GE}    Created topic : /oic/ps/light3313
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    401    60s
+    Check Substring Count    ${log}    1    ${GE}    Topic discovered code: 0
+    Check Substring Count    ${log}    1    ${GE}    /oic/ps/light3313 discovered
+
+test#22
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Creating type based MQ Topic and discovering |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 302 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 402 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [Controlee] press [101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |
+    ...    |procedure | 4. [Controlee] Prees [302] for Create Type MQ topic |
+    ...    |procedure | 5. [Controller] press[201] for start controller |
+    ...    |procedure | 6. [Controller] Prees [202] for Sign Up   |
+    ...    |procedure | 7. [Controller] Prees [203] for Sign In   |
+    ...    |procedure | 8. [Controller] Prees [402] for discover Typied topic |
+    ...    |post_condition | Terminate Server/s and Client/s |
+    ...    |expected | Callback Will response with a success code |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    302    5s
+    ${log}    Provide Input    ${first_app}    /oic/ps/light55    60s
+    ${log}    Provide Input    ${first_app}    light55    60s
+    Check Substring Count    ${log}    1    ${GE}    Create topic response received, code: 1
+    Check Substring Count    ${log}    1    ${GE}    Created topic : /oic/ps/light55
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    402   5s
+    ${log}    Provide Input    ${second_app}    light55    60s
+    Check Substring Count    ${log}    1    ${GE}    Topic discovered code: 0
+    Check Substring Count    ${log}    1    ${GE}    /oic/ps/light55 discovered
+
+test#23
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Publish and Subscribe MQ Topic |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 301 |
+    ...    |test_data | 5. Menu option: 303 |
+    ...    |test_data | 6. Menu option: 305 |
+    ...    |test_data | 7. Menu option: 306 |
+    ...    |test_data | 8. Menu option: 201 |
+    ...    |test_data | 9. Menu option: 202 |
+    ...    |test_data | 10. Menu option: 203 |
+    ...    |test_data | 11. Menu option: 401 |
+    ...    |test_data | 12. Menu option: 403 |
+    ...    |test_data | 13. Menu option: 404 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [MQ Publisher] press[101] for start controllee |
+    ...    |procedure | 2. [MQ Publisher] Prees [102] for Sign Up |
+    ...    |procedure | 3. [MQ Publisher] Prees [103] Sign In with AuthToken Obtained from the Sign Up Response |
+    ...    |procedure | 4. [MQ Publisher] Prees [301] for Create MQ topic |
+    ...    |procedure | 5. [MQ Publisher] Prees [303] for discover topic |
+    ...    |procedure | 6. [MQ Publisher] Prees [305] for selete index(give 0 as index input) |
+    ...    |procedure | 7. [MQ Publisher] Prees [306] for publish date |
+    ...    |procedure | 8. [MQ SubsCriber] press [201] for start controller |
+    ...    |procedure | 9. [MQ SubsCriber] press [202] for Sign Up |
+    ...    |procedure | 10. [MQ SubsCriber] Prees [203] for Sign In  |
+    ...    |procedure | 11. [MQ SubsCriber] Prees [401] for discover all topic |
+    ...    |procedure | 12. [MQ SubsCriber] Prees [403] for select topic index |
+    ...    |procedure | 13. [MQ SubsCriber] Prees [404] for subscribe topic |
+    ...    |expected | Topic Subscription will be Successful |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    301    5s
+    ${log}    Provide Input    ${first_app}    /oic/ps/light55    60s
+    ${log}    Provide Input    ${first_app}    303    60s
+    ${log}    Provide Input    ${first_app}    305    5s
+    ${log}    Provide Input    ${first_app}    0    60s
+    ${log}    Provide Input    ${first_app}    306    5s
+    ${log}    Provide Input    ${first_app}    Hello    60s
+    Check Substring Count    ${log}    1    ${GE}    Publish message response received, code: 4
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    401   60s
+    ${log}    Provide Input    ${second_app}    403   5s
+    ${log}    Provide Input    ${second_app}    0   60s
+    ${log}    Provide Input    ${second_app}    404   60s
+    Check Substring Count    ${log}    1    ${GE}    Observe registration action is successful
+    Check Substring Count    ${log}    1    ${GE}    OBSERVE RESULT:\n\tsamplemessage:\tHello
+
+test#24
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Publish and Subscribe typed based MQ Topic |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 302 |
+    ...    |test_data | 5. Menu option: 304 |
+    ...    |test_data | 6. Menu option: 305 |
+    ...    |test_data | 7. Menu option: 306 |
+    ...    |test_data | 8. Menu option: 201 |
+    ...    |test_data | 9. Menu option: 202 |
+    ...    |test_data | 10. Menu option: 203 |
+    ...    |test_data | 11. Menu option: 402 |
+    ...    |test_data | 12. Menu option: 403 |
+    ...    |test_data | 13. Menu option: 404 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [MQ Publisher] press[101] for start controllee |
+    ...    |procedure | 2. [MQ Publisher] Prees [102] for Sign Up |
+    ...    |procedure | 3. [MQ Publisher] Prees [103] Sign In with AuthToken Obtained from the Sign Up Response |
+    ...    |procedure | 4. [MQ Publisher] Prees [302] for Create Type MQ topic |
+    ...    |procedure | 5. [MQ Publisher] Prees [304] for discover typed topic |
+    ...    |procedure | 6. [MQ Publisher] Prees [305] for selete index(give 0 as index input) |
+    ...    |procedure | 7. [MQ Publisher] Prees [306] for publish date |
+    ...    |procedure | 8. [MQ SubsCriber] press [201] for start controller |
+    ...    |procedure | 9. [MQ SubsCriber] press [202] for Sign Up |
+    ...    |procedure | 10. [MQ SubsCriber] Prees [203] for Sign In  |
+    ...    |procedure | 11. [MQ SubsCriber] Prees [402] for discover type base topic |
+    ...    |procedure | 12. [MQ SubsCriber] Prees [403] for select topic index |
+    ...    |procedure | 13. [MQ SubsCriber] Prees [404] for subscribe topic |
+    ...    |expected | Topic Subscription will be Successful |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    302    5s
+    ${log}    Provide Input    ${first_app}    /oic/ps/light55    60s
+    ${log}    Provide Input    ${first_app}    light55    60s
+    ${log}    Provide Input    ${first_app}    304    5s
+    ${log}    Provide Input    ${first_app}    light55    60s
+    ${log}    Provide Input    ${first_app}    305    5s
+    ${log}    Provide Input    ${first_app}    0    60s
+    ${log}    Provide Input    ${first_app}    306    5s
+    ${log}    Provide Input    ${first_app}    Hello    60s
+    Check Substring Count    ${log}    1    ${GE}    Publish message response received, code: 4
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    402   60s
+    ${log}    Provide Input    ${second_app}    light55    60s
+    ${log}    Provide Input    ${second_app}    403   5s
+    ${log}    Provide Input    ${second_app}    0   60s
+    ${log}    Provide Input    ${second_app}    404   60s
+    Check Substring Count    ${log}    1    ${GE}    Observe registration action is successful
+    Check Substring Count    ${log}    1    ${GE}    OBSERVE RESULT:\n\tsamplemessage:\tHello
+
+test#25
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Test Publish and Subscribe  and unsubscribe MQ Topic |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 302 |
+    ...    |test_data | 5. Menu option: 304 |
+    ...    |test_data | 6. Menu option: 305 |
+    ...    |test_data | 7. Menu option: 306 |
+    ...    |test_data | 8. Menu option: 201 |
+    ...    |test_data | 9. Menu option: 202 |
+    ...    |test_data | 10. Menu option: 203 |
+    ...    |test_data | 11. Menu option: 402 |
+    ...    |test_data | 12. Menu option: 403 |
+    ...    |test_data | 13. Menu option: 404 |
+    ...    |test_data | 14. Menu option: 405 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [MQ Publisher] press[101] for start controllee |
+    ...    |procedure | 2. [MQ Publisher] Prees [102] for Sign Up |
+    ...    |procedure | 3. [MQ Publisher] Prees [103] Sign In with AuthToken Obtained from the Sign Up Response |
+    ...    |procedure | 4. [MQ Publisher] Prees [302] for Create Type MQ topic |
+    ...    |procedure | 5. [MQ Publisher] Prees [304] for discover typed topic |
+    ...    |procedure | 6. [MQ Publisher] Prees [305] for selete index(give 0 as index input) |
+    ...    |procedure | 7. [MQ Publisher] Prees [306] for publish date |
+    ...    |procedure | 8. [MQ SubsCriber] press [201] for start controller |
+    ...    |procedure | 9. [MQ SubsCriber] press [202] for Sign Up |
+    ...    |procedure | 10. [MQ SubsCriber] Prees [203] for Sign In  |
+    ...    |procedure | 11. [MQ SubsCriber] Prees [402] for discover type base topic |
+    ...    |procedure | 12. [MQ SubsCriber] Prees [403] for select topic index |
+    ...    |procedure | 13. [MQ SubsCriber] Prees [404] for subscribe topic |
+    ...    |procedure | 14. [MQ SubsCriber] Prees [405] for Unsubscribe topic |
+    ...    |expected | Topic Subscription will be Successful |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    302    5s
+    ${log}    Provide Input    ${first_app}    /oic/ps/light55    60s
+    ${log}    Provide Input    ${first_app}    light55    60s
+    ${log}    Provide Input    ${first_app}    304    5s
+    ${log}    Provide Input    ${first_app}    light55    60s
+    ${log}    Provide Input    ${first_app}    305    5s
+    ${log}    Provide Input    ${first_app}    0    60s
+    ${log}    Provide Input    ${first_app}    306    5s
+    ${log}    Provide Input    ${first_app}    Hello    60s
+    Check Substring Count    ${log}    1    ${GE}    Publish message response received, code: 4
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    402   60s
+    ${log}    Provide Input    ${second_app}    light55    60s
+    ${log}    Provide Input    ${second_app}    403   5s
+    ${log}    Provide Input    ${second_app}    0   60s
+    ${log}    Provide Input    ${second_app}    404   60s
+    ${log}    Provide Input    ${second_app}    405   60s
+    Check Substring Count    ${log}    1    ${GE}    Observe registration action is successful
+    Check Substring Count    ${log}    1    ${GE}    OBSERVE RESULT:\n\tsamplemessage:\tHello
+    Check Substring Count    ${log}    1    ${GE}    Observe registration failed or de-registration action failed/succeeded
+
+test#26
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Testing Publishing Resource with Cloud |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 108 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1.  [Controlee] press[101] for start controllee |
+    ...    |procedure | 2. [Controlee] Prees [102] for Sign Up |
+    ...    |procedure | 3. [Controlee] Prees [103] for Sign In |  
+    ...    |procedure | 4. [Controlee] Prees [108] for pulish resource |
+    ...    |expected | Data modification success |
+    [Tags]    all
+    ${expected_log}    Set Variable    Publish resource response received code: 4
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    108    30s
+    Search Expected Log    ${log}    ${expected_log}
+
+test#27
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Testing Discovering Resource from Cloud |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 108 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 219 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [MQ Publisher] press[101] for start controllee |
+    ...    |procedure | 2. [MQ Publisher] Prees [102] for Sign Up |
+    ...    |procedure | 3. [MQ Publisher] Prees [103] Sign In with AuthToken Obtained from the Sign Up Response |
+    ...    |procedure | 4. [MQ Publisher] Prees [108] for pulish resource |
+    ...    |procedure | 8. [MQ SubsCriber] press [201] for start controller |
+    ...    |procedure | 9. [MQ SubsCriber] press [202] for Sign Up |
+    ...    |procedure | 10. [MQ SubsCriber] Prees [203] for Sign In  |
+    ...    |procedure | 11. [MQ SubsCriber] Prees [219] for find resource |
+    ...    |expected | Topic Subscription will be Successful |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    108    30s
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    219   60s
+    Check Substring Count    ${log}    1    ${GE}    foundDevice CB Invoked
+    Check Substring Count    ${log}    0    ${GE}    Resource found with URI:\tnull
+    Check Substring Count    ${log}    1    ${GE}    Resource found with URI:
+    Check Substring Count    ${log}    0    ${GE}    Resource DI:\tnull
+    Check Substring Count    ${log}    1    ${GE}    Resource DI:
+
+test#28
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Testing GET Request using Cloud |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 108 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 109 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [MQ Publisher] press[101] for start controllee |
+    ...    |procedure | 2. [MQ Publisher] Prees [102] for Sign Up |
+    ...    |procedure | 3. [MQ Publisher] Prees [103] Sign In with AuthToken Obtained from the Sign Up Response |
+    ...    |procedure | 4. [MQ Publisher] Prees [108] for pulish resource |
+    ...    |procedure | 8. [MQ SubsCriber] press [201] for start controller |
+    ...    |procedure | 9. [MQ SubsCriber] press [202] for Sign Up |
+    ...    |procedure | 10. [MQ SubsCriber] Prees [203] for Sign In  |
+    ...    |procedure | 11. [MQ SubsCriber] Press [109] for ON/Off device power |
+    ...    |expected | Topic Subscription will be Successful |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    108    30s
+    Do Controller Register
+    ${log}    Provide Input    ${first_app}    109   60s
+    Check Substring Count    ${log}    1    ${GE}    value: 0
+
+test#29
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-05 |
+    ...    |see | |
+    ...    |objective | Testing POST Request using Cloud |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 101 |
+    ...    |test_data | 2. Menu option: 102 |
+    ...    |test_data | 3. Menu option: 103 |
+    ...    |test_data | 4. Menu option: 108 |
+    ...    |test_data | 5. Menu option: 201 |
+    ...    |test_data | 6. Menu option: 202 |
+    ...    |test_data | 7. Menu option: 203 |
+    ...    |test_data | 8. Menu option: 109 |
+    ...    |pre_condition | 1. [Server] Start MongoDB, Kafka and ZooKepper Server |
+    ...    |pre_condition | 2. [Server] Start RD, MQ, Account and Interface Server |
+    ...    |pre_condition | 3. [Client] Start Cloud Controlee |
+    ...    |procedure | 1. [MQ Publisher] press[101] for start controllee |
+    ...    |procedure | 2. [MQ Publisher] Prees [102] for Sign Up |
+    ...    |procedure | 3. [MQ Publisher] Prees [103] Sign In with AuthToken Obtained from the Sign Up Response |
+    ...    |procedure | 4. [MQ Publisher] Prees [108] for pulish resource |
+    ...    |procedure | 8. [MQ SubsCriber] press [201] for start controller |
+    ...    |procedure | 9. [MQ SubsCriber] press [202] for Sign Up |
+    ...    |procedure | 10. [MQ SubsCriber] Prees [203] for Sign In  |
+    ...    |procedure | 11. [MQ SubsCriber] Press [220] for ON/Off device power |
+    ...    |expected | Topic Subscription will be Successful |
+    [Tags]    all
+    ${expected_log}    Set Variable    Auth response received code: 2
+    Do Controlee Register
+    ${log}    Provide Input    ${first_app}    108    30s
+    Do Controller Register
+    ${log}    Provide Input    ${second_app}    220    60s
+    Check Substring Count    ${log}    1    ${GE}    value: 0
+    Check Substring Count    ${log}    1    ${GE}    POST response: 4
+
+*** Keywords ***
+Do Suite Setup
+    [Arguments]    
+    ${iotivity_build_parmeters}    Set Variable   SECURED=0 WITH_CLOUD=1 WITH_TCP=1 WITH_MQ=PUB,SUB
+    ${tc_build_parmeters}    Set Variable   CLOUD_SERVICE=1 KAFKA_ROOT=${KAFKA_ROOT}
+    BuiltIn.Log    ${OS}->${OS2}
+    Load Default Settings    ${iotivity_build_parmeters}    ${tc_build_parmeters}
+    Build Iotivity and Test App
+    Execute Terminal Command    ${TEST_ROOT}/res/cloud_resource/cloud_run.sh kill ${KAFKA_ROOT}
+    @{cloud_services}    Get Cloud Services    0
+    Run Executables    @{cloud_services}
+
+Do Suite Teardown
+    [Arguments]    
+    Remove All Devices
+    Execute Terminal Command    ${TEST_ROOT}/res/cloud_resource/cloud_run.sh kill ${KAFKA_ROOT}
+
+Do Test Setup
+    [Arguments]    
+    Execute Interop Apps
+
+Do Test Teardown
+    [Arguments]
+    ${log}    Get Output From First App
+    BuiltIn.Log    ${log}
+    ${log}    Get Output From Second App
+    BuiltIn.Log    ${log}     
+    Terminate Interop Apps
+
+Do Controlee Register
+    ${log}    Provide Input    ${first_app}    101    5s
+    ${log}    Provide Input    ${first_app}    102    60s		
+    Match Any String    ${log}    Auth response received code: 4    SIGNUP Successful
+    Check Substring Count    ${log}    0    ${GE}    accesstoken: null
+    Match Any String    ${log}    accesstoken:    accesstoken :
+    Check Substring Count    ${log}    0    ${GE}    uid: null
+    Match Any String    ${log}    uid:    UID :
+    Match Any String    ${log}    refreshtoken:\t(null)    refreshtoken : null
+    ${log}    Provide Input    ${first_app}    103    30s
+    ${text}    Get Text    uid:\t    \n    ${log}
+    set suite variable  ${uid}    ${text}
+    Match Any String    ${log}    Auth response received code: 4    SIGNIN Successful
+
+Do Controller Register
+    ${log}    Provide Input    ${second_app}    201    5s
+    ${log}    Provide Input    ${second_app}    202    60s
+    Match Any String    ${log}    Auth response received code: 4    SIGNUP Successful
+    Check Substring Count    ${log}    0    ${GE}    accesstoken:\tnull
+    Match Any String    ${log}    accesstoken:    accesstoken :
+    Check Substring Count    ${log}    0    ${GE}    uid: null
+    Match Any String    ${log}    uid:    UID :
+    Match Any String    ${log}    refreshtoken:\t(null)    refreshtoken : null
+    ${log}    Provide Input    ${second_app}    203    30s
+    Match Any String    ${log}    Auth response received code: 4    SIGNIN Successful

@@ -1,0 +1,332 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Settings ***
+Documentation     Test API Test for Linux platform
+Variables         ../../helper/variable.py
+#Library           Remote    ${REMOTE_IP}:${REMOTE_PORT}    WITH NAME    Local
+Resource    ../../helper/Iotivity_Test_Helper.txt
+Suite Setup    Do Suite Init Task
+Test Setup    Common API TC Setup
+Test Teardown    Common API TC Teardown
+
+*** Test Cases ***
+Run RI API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-10 |
+    ...    |reviewer | |
+    ...    |since |2017-01-10 |
+    ...    |see | |
+    ...    |objective |Run RI Linux API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for linux platform |
+    ...    |procedure | 2. Build RI gtest testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    RI
+    [Timeout]    150 minutes
+    Run Linux API TC    resource SECURED=0
+
+Run RE API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-20 |
+    ...    |reviewer | |
+    ...    |since |2017-01-20 |
+    ...    |see | |
+    ...    |objective |Run RE Linux API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for linux platform |
+    ...    |procedure | 2. Build RE gtest testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    RE
+    [Timeout]    150 minutes
+    Run Linux API TC    SECURED=0
+
+Run RC API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-20 |
+    ...    |reviewer | |
+    ...    |since |2017-01-20 |
+    ...    |see | |
+    ...    |objective |Run RC Linux API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for linux platform |
+    ...    |procedure | 2. Build RC gtest testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    RC
+    [Timeout]    120 minutes
+    Run Linux API TC    SECURED=0
+
+Run SM API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-20 |
+    ...    |reviewer | |
+    ...    |since |2017-01-20 |
+    ...    |see | |
+    ...    |objective |Run SM Linux API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for linux platform |
+    ...    |procedure | 2. Build SM gtest testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    SM
+    [Timeout]    120 minutes
+    Run Linux API TC    SECURED=0
+
+Run NS API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-10 |
+    ...    |reviewer | |
+    ...    |since |2017-01-10 |
+    ...    |see | |
+    ...    |objective |Run NS Linux API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for linux platform |
+    ...    |procedure | 2. Build NS gtest testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    NS
+    [Timeout]    150 minutes
+    Run Linux API TC    SECURED=0
+
+Run CHP API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-04-04 |
+    ...    |reviewer | |
+    ...    |since |2017-04-04 |
+    ...    |see | |
+    ...    |objective |Run CHP Linux API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for linux platform |
+    ...    |procedure | 2. Build CHP gtest testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    chp
+    [Timeout]    60 minutes
+    Run Linux API TC    SECURED=${SECURED} WITH_PROXY=1
+
+Run CA API Test
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com |
+    ...    |reviewer | |
+    ...    |since |2016-06-22 |
+    ...    |see | |
+    ...    |objective | Execute CA Test Suite |
+    ...    |target | CA Test Suite |
+    ...    |test_data | |
+    ...    |pre_condition | 1. Build iotivity library for CA module |
+    ...    |pre_condition | 2. Build testcase for CA module |
+    ...    |procedure | Execute test_runner to run Network Independent Basic Test Suite |
+    ...    |post_condition | Run result reporter create excel report |
+    ...    |expected | All the testcase from suite all be run and excel test report will be generated |
+    [Tags]    CA
+    [Timeout]    300 minutes
+    Run Keyword If    '${LIB_MODE}' == 'file'    Import Library   ${TEST_ROOT}/src/automation/robot/helper/DeviceControlKeyword.py    WITH NAME    Peer
+    Run Keyword If    '${LIB_MODE}' != 'file'    Import Library    Remote    ${PEER_IP}:${REMOTE_PORT}    WITH NAME    Peer
+    ${iotivity_build_command}    Set Variable    scons resource/csdk/connectivity RELEASE=${RELEASE} TARGET_TRANSPORT=ALL SECURED=1 WITH_TCP=1 TARGET_ARCH=${x86} -j ${J}
+    ${tc_build_command}    Set Variable    scons MODULE=ca IOTIVITY_ROOT=${IOTIVITY_ROOT} RELEASE=${RELEASE} SECURED=1 COVERAGE=${COVERAGE}
+    ${peer_tc_build_command}    Set Variable    scons MODULE=ca IOTIVITY_ROOT=${PEER_IOTIVITY_ROOT} RELEASE=${RELEASE} SECURED=1 COVERAGE=${COVERAGE}
+    Set Library Search Order    Local
+    Add Specific Device    Linux    Linux1    Linux1
+    Build Iotivity    ${IOTIVITY_ROOT}    ${iotivity_build_command}    done building targets
+    Build Iotivity TEST    ${TEST_ROOT}    ${tc_build_command}    done building targets
+    Set Library Search Order    Peer
+    Add Specific Device    Linux    Linux2    Linux2
+    Run Keyword If    '${REMOTE_IP}'!='${PEER_IP}'    Build Iotivity    ${PEER_IOTIVITY_ROOT}    ${iotivity_build_command}    done building targets
+    Run Keyword If    '${REMOTE_IP}'!='${PEER_IP}'    Build Iotivity TEST    ${PEER_TEST_ROOT}    ${peer_tc_build_command}    done building targets
+    Remove Run Folder
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run CA Suite With Simulator    test    ${EMPTY}    ${EMPTY}
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run CA Suite With Simulator    ip_test    -x ip -n eth    0 ${REMOTE_IP} eq
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run CA Suite With Simulator    tcp_test    -x tcp -n eth    4 ${REMOTE_IP} eq
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run CA Suite With Simulator    ip_test    -x ip -n wifi    0 ${REMOTE_IP} ne
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run CA Suite With Simulator    tcp_test    -x tcp -n wifi    4 ${REMOTE_IP} ne
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run Linux Command    Linux1    cmd_terminal    ${TEST_MANAGER_ROOT}    ./result_reporter.py ../TestReport/Result/__${MODULE}_${OS}__ ${MODULE}_${OS}    Making Test Result Report is Done!!
+    Remove All Devices
+    Set Library Search Order    Peer
+    Remove All Devices
+
+Run ES API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-20 |
+    ...    |reviewer | |
+    ...    |since |2017-01-20 |
+    ...    |see | |
+    ...    |objective |Run RE Linux API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for linux platform |
+    ...    |procedure | 2. Build RE gtest testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    ES
+    [Timeout]    120 minutes
+    Run SPECIFIC ES API TC    ${SECURED}
+
+Run IC API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-20 |
+    ...    |reviewer | |
+    ...    |since |2017-01-20 |
+    ...    |see | |
+    ...    |objective |Run IC Linux API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for linux platform |
+    ...    |procedure | 2. Build IC gtest testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    IC
+    [Timeout]    120 minutes
+    ${cloud_services}    Get Cloud Services    0
+    ${ic_server}    Get Concatenated String    ${DLM}    ${TEST_ROOT}/bin/linux    ./iotivity_ic_server    Cloud Initialization Successful    1s    ${True}
+    @{simulator_run}    Get List    ${cloud_services}    ${ic_server}
+    Execute Terminal Command    ${TEST_ROOT}/res/cloud_resource/cloud_run.sh kill ${KAFKA_ROOT}
+    Run Linux TC With Simulator    SECURED=0 WITH_CLOUD=1 WITH_TCP=1 WITH_MQ=PUB,SUB   CLOUD_SERVICE=1 KAFKA_ROOT=${KAFKA_ROOT}    ${EMPTY}    @{simulator_run}
+    [Teardown]    Cloud API TC Teardown
+
+Run CS API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-20 |
+    ...    |reviewer | |
+    ...    |since |2017-01-20 |
+    ...    |see | |
+    ...    |objective |Run CS Linux API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for linux platform |
+    ...    |procedure | 2. Build CS gtest testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    CS
+    [Timeout]    120 minutes
+    @{binary_strings}    Create List    csdk_tlsoff    cpp_tlsoff    csdk_tlson    cpp_tlson
+    @{build_types}    Create List    non-tls    non-tls    tls    tls
+    : FOR  ${index}  IN RANGE    0    4
+    \    Clear Simulator List
+    \    ${tls_mode}    Evaluate    ${index}/2
+    \    ${cs_server}    Get Concatenated String    ${DLM}    ${TEST_ROOT}/bin/linux    ./iotivity_cs_server    Cloud Initialization Successful    5s    ${True}
+    \    ${cloud_services}    Get Cloud Services    ${tls_mode}
+    \    @{simulator_run}    Get List    ${cloud_services}    ${cs_server}
+    \    ${runner_params}    Set Variable    -f @{binary_strings}[${index}] -b @{build_types}[${index}]
+    \    Run Keyword And Continue On Failure    Run CS Testcase    ${tls_mode}    ${runner_params}    @{simulator_run}
+    \    Stop Simulators
+    \    Execute Terminal Command    ${TEST_ROOT}/res/cloud_resource/cloud_run.sh kill
+    \    Check Robot Execution Status    ${ROBOT_ROOT}    ${OS}    ${MODULE}    ${TC_TYPE}
+
+Run PM API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-20 |
+    ...    |reviewer | |
+    ...    |since |2017-01-20 |
+    ...    |see | |
+    ...    |objective |Run PM Linux API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for linux platform |
+    ...    |procedure | 2. Build PM gtest testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    PM
+    [Timeout]    300 minutes
+    ${pm_client}    Get Concatenated String    ${DLM}    ${TEST_ROOT}/bin/linux    ./iotivity_pm_client    PM Initialization Successful    5s    ${True}
+    ${kill_iotivity_server}    Get Concatenated String    ${DLM}    ${TEST_ROOT}/bin/linux    ./SerialKiller    ${EMPTY}    10s    ${True}
+    @{simulator_run}    Get List    ${kill_iotivity_server}    ${pm_client}
+    Run Linux TC With Simulator    SECURED=1 MULTIPLE_OWNER=1    ${EMPTY}    ${EMPTY}    @{simulator_run}
+
+*** Keywords ***
+Run CA Suite With Simulator
+    [Arguments]    ${binary_suffix}    ${runner_substring}    ${simulator_params}
+    Run CA Simulator     ${simulator_params}
+    Set Library Search Order    Local
+    BuiltIn.Sleep    2s
+    ${tc_run_command}    Set Variable    ./common_test_runner.py -m ca -p linux -f ${MODULE}_${binary_suffix} ${runner_substring} -t ${VERSION}.04.${BIT}bit -r ../TestReport/Result/__${MODULE}_${OS}__ ${MODULE}_${OS}
+    Execute Common Runner    ${tc_run_command}
+    Set Library Search Order    Peer
+    Return From Keyword If    '${simulator_params}'==''
+    ${log}    Get Application Log    Linux2    cmd_terminal
+    BuiltIn.Log    ${log}
+    Terminate Application    Linux2    cmd_terminal
+
+Run SPECIFIC ES API TC
+    [Arguments]    ${secured}
+    ${iotivity_parameters}    Set Variable   SECURED=${secured} WITH_CLOUD=1 WITH_TCP=1
+    ${tc_build_parameters}    Set Variable   SECURED=${secured}
+    ${mediator}    Get Concatenated String    ${DLM}    ${IOTIVITY_ROOT}/out/linux/${x86}/${RELEASE_DIR}    stdbuf -oL ./mediator    Discover Enrollee Resource    1s    ${False}    ${EMPTY}    i
+    ${enrollee}    Get Concatenated String    ${DLM}    ${IOTIVITY_ROOT}/out/linux/${x86}/${RELEASE_DIR}    stdbuf -oL ./enrollee    EasySetup Enrollee SAMPLE    1s    ${False}    s    i
+    @{simulator_run}    Create List    ${mediator}    ${enrollee}
+    Run Linux TC With Simulator    ${iotivity_parameters}    ${tc_build_parameters}    ${EMPTY}    @{simulator_run}
+
+Run Cloud Clean Task
+    Execute Terminal Command    ${TEST_ROOT}/res/cloud_resource/cloud_run.sh kill
+    Remove All Devices
+
+Run CS Testcase
+    [Arguments]    ${tls_mode}    ${runner_params}    @{simulator_run}
+    Run Keyword If    '${x86}' == 'x86'    Execute Terminal Command    fuser -k -n tcp ${MONGODB_PORT}
+    Execute Terminal Command    ${TEST_ROOT}/res/cloud_resource/cloud_run.sh kill
+    Run Linux TC With Simulator    SECURED=1 WITH_CLOUD=1 WITH_TCP=1 WITH_MQ=PUB,SUB    CLOUD_SERVICE=1 KAFKA_ROOT=${KAFKA_ROOT} TLS_MODE=${tls_mode}   ${runner_params}    @{simulator_run}
+
+Run CA Simulator
+    [Arguments]    ${simulator_params}
+    Return From Keyword If    '${ENABLE_TC_RUN}'=='0'
+    Return From Keyword If    '${simulator_params}'==''
+    Set Library Search Order    Peer
+    Run Linux Command    Linux2    cmd_terminal    ${TEST_ROOT}/bin/linux    stdbuf -oL ./iotivity_ca_simulator ${simulator_params}   CASimulator    5s    ${False}
+    ${sim_result}    Get Application Log    Linux2    cmd_terminal
+    BuiltIn.Log    ${sim_result}

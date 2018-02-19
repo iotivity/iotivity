@@ -1,0 +1,387 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** variable ***
+${linux_iotivity_build_command}    ${EMPTY}
+${tizen_iotivity_build_command}    ${EMPTY}
+${android_iotivity_build_command}    ${EMPTY}
+${linux_tc_build_command}    ${EMPTY}
+${tizen_tc_build_command}    ${EMPTY}
+${android_tc_build_command}    ${EMPTY}
+${linux_binary_path}    ${EMPTY}
+${tizen_binary_path}    ${EMPTY}
+${android_package}    ${EMPTY}
+${linux_tc_binary}    ${EMPTY}
+${tizen_tc_binary}    ${EMPTY}
+${android_main_activity}    ${EMPTY}
+${first_device}    device1
+${second_device}    device2
+${third_device}    device3
+${fourth_device}    device4
+${first_app}    0
+${second_app}    1
+${third_app}    2
+${fourth_app}    3
+@{device_ids}    ${first_device}    ${second_device}    ${third_device}    ${fourth_device}
+@{app_ids}    app1    app2    app3    app4
+@{os_types}    ${OS}    ${OS2}    ${OS}    ${OS}
+${total_app}   2
+${input_intent}    org.iotivity.test.INPUT_INTENT --es input
+
+*** Keywords ***
+Load Default Settings
+    [Arguments]    ${iotivity_parameters}=${EMPTY}    ${tc_parameters}=${EMPTY}
+    Load Default Settings By OS    ${OS}    ${iotivity_parameters}    ${tc_parameters}
+    Load Default Settings By OS    ${OS2}    ${iotivity_parameters}    ${tc_parameters}
+
+Build Iotivity and Test App
+    [Arguments]
+    Build Iotivity and Test App By OS    @{os_types}[0]
+    Run Keyword If    '@{os_types}[0]'!='@{os_types}[1]'    Build Iotivity and Test App By OS    @{os_types}[1]
+
+Execute Interop Apps
+    Set Suite Variable    ${total_app}    2
+    :FOR    ${index}    IN RANGE    0    2
+    \    Execute Interop Apps By OS    @{os_types}[${index}]    @{device_ids}[${index}]    @{app_ids}[${index}]    ${index}
+
+Execute More Interop App
+    [Arguments]    ${os}
+    Execute Interop Apps By OS    ${os}    @{device_ids}[${total_app}]    @{app_ids}[${total_app}]    ${index}
+    @{items}    Update List Item    ${os}    ${total_app}    @{os_types}
+    Set Suite Variable    @{os_types}    @{items}
+    ${temp}   Evaluate    ${total_app}+1
+    Set Suite Variable    ${total_app}    ${temp}
+
+Terminate Interop Apps
+    :FOR   ${index}    IN RANGE    0    2
+    \    Terminate Interop Apps By OS    @{os_types}[${index}]    @{device_ids}[${index}]    @{app_ids}[${index}]
+
+Terminate Interop App
+    [Arguments]    ${app}
+    Terminate Interop Apps By OS    @{os_types}[${app}]    @{device_ids}[${app}]    @{app_ids}[${app}]
+
+Provide Input
+    [Arguments]    ${app}    ${input}    ${wait_time}=5s
+    [Return]    ${log}
+    ${os_type}    Set Variable    @{os_types}[${app}]
+    ${device_id}    Set Variable    @{device_ids}[${app}]
+    ${app_id}    Set Variable    @{app_ids}[${app}]
+    Run Keyword If    '${os_type}' == '${linux}'    Input Command To Application    ${device_id}    ${app_id}    ${input}
+    Run Keyword If    '${os_type}' == '${android}'    Input Into Android Interop App    ${device_id}    ${input}
+    Run Keyword If    '${os_type}' == '${tizen}'    Input Command To Console Application    ${device_id}    ${app_id}    ${input}
+    BuiltIn.Sleep     ${wait_time}
+    ${log}    Get Output    ${app}
+    BuiltIn.Log    ${log}
+
+Provide Inputs
+    [Arguments]    ${app}    ${wait_time}    @{inputs}
+    [Return]    ${log}
+    :FOR    ${input}    IN    @{inputs}
+    \    ${log}    Provide Input    ${app}    ${input}     ${wait_time}
+
+Provide List of Input And Wait Time
+    [Arguments]    ${app}    @{items}
+    [Return]    ${log}
+    ${len}    Get Collection Length    @{items}
+    ${len}    Evaluate    ${len}/2
+    :FOR    ${index}    IN Range    0     ${len}
+    \    ${input}    Set Variable    @{items}[${pos}]
+    \    ${pos}    Evaluate    ${index}*2
+    \    ${input}    Set Variable    @{items}[${pos}]
+    \    ${pos}    Evaluate    ${index}*2+1
+    \    ${wait_time}    Set Variable    @{items}[${pos}]
+    \    BuiltIn.Sleep     @{items}[${pos}
+    \    ${log}    Provide Input    ${app}    ${input}     ${wait_time}
+
+Verify Second App After Processing First App Inputs
+    [Arguments]    ${second_app_input}    ${second_app_wait_time}    ${expected_log}    ${first_app_wait_time}    @{first_app_inputs}
+    :FOR    ${input}    IN    @{first_app_inputs}
+    \    Provide Input To First App    ${input}
+    \    BuiltIn.Sleep     ${first_app_wait_time}
+    Provide Input To Second App    ${second_app_input}
+    BuiltIn.Sleep     ${second_app_wait_time}
+    ${log}    Get Output From Second App
+    BuiltIn.Log    ${log}
+    ${status}    Check Keyword    ${expected_log}    ${log}
+    Should Be True    ${status}    Expected: ${expected_log}
+
+Verify First App After Processing Second App Inputs
+    [Arguments]    ${first_app_input}    ${first_app_wait_time}    ${expected_log}    ${second_app_wait_time}    @{second_app_inputs}
+    :FOR    ${input}    IN    @{second_app_inputs}
+    \    Provide Input To Second App    ${input}
+    \    BuiltIn.Sleep     ${second_app_wait_time}
+    Provide Input To First App    ${first_app_input}
+    BuiltIn.Sleep     ${first_app_wait_time}
+    ${log}    Get Output From First App
+    BuiltIn.Log    ${log}
+    ${status}    Check Keyword    ${expected_log}    ${log}
+    Should Be True    ${status}    Expected: ${expected_log}
+
+Verify Log After Processing Inputs
+    [Arguments]    ${target_app}    ${expected_log}    @{items}
+    ${len}    Get Collection Length    @{items}
+    ${len}    Evaluate    ${len}/3
+    :FOR    ${index}    IN Range    0     ${len}
+    \    ${pos}    Evaluate    ${index}*3
+    \    ${current_app}    Set Variable    @{items}[${pos}]
+    \    ${pos}    Evaluate    ${index}*3+1
+    \    ${input}    Set Variable    @{items}[${pos}]
+    \    ${pos}    Evaluate    ${index}*3+2
+    \    ${wait_time}    Set Variable    @{items}[${pos}]
+    \    ${log}    Provide Input    ${current_app}    ${input}     ${wait_time}
+
+Provide Input To First App
+    [Arguments]    ${input}    ${wait_time}=5s
+    [Return]    ${log}
+    ${log}    Provide Input    ${first_app}     ${input}    ${wait_time}
+
+Provide Input To Second App
+    [Arguments]    ${input}    ${wait_time}=5s
+    [Return]    ${log}
+    ${log}    Provide Input    ${second_app}     ${input}    ${wait_time}
+
+Get Output
+    [Arguments]    ${app}
+    [Return]    ${log}
+    ${log}    Set Variable    ${EMPTY}
+    ${os_type}    Set Variable    @{os_types}[${app}]
+    ${device_id}    Set Variable    @{device_ids}[${app}]
+    ${app_id}    Set Variable    @{app_ids}[${app}]
+    ${temp}    Get Output From Linux Interop App    ${os_type}    ${device_id}    ${app_id}
+    ${log}    Set Variable If    '${os_type}' == '${linux}'    ${temp}    ${log}
+    ${temp}    Get Output From Android Interop App    ${os_type}    ${device_id}
+    ${log}    Set Variable If    '${os_type}' == '${android}'    ${temp}    ${log}
+    ${temp}    Get Output From Tizen Interop App    ${os_type}    ${device_id}    ${app_id}
+    ${log}    Set Variable If    '${os_type}' == '${tizen}'    ${temp}    ${log}
+
+Get Output From First App
+    [Arguments]    
+    [Return]    ${log}
+    ${log}    Get Output    ${first_app}
+
+Get Output From Second App
+    [Arguments]    
+    [Return]    ${log}
+    ${log}    Get Output    ${second_app}
+
+Get Output From Linux Interop App
+    [Arguments]    ${os_type}    ${device_id}    ${app_id}
+    [Return]    ${log}
+    BuiltIn.Log    ${device_id}
+    Return From Keyword If    '${os_type}' != '${linux}'    ${EMPTY}
+    ${log}    Get Application Log    ${device_id}    ${app_id}
+
+Get Output From Android Interop App
+    [Arguments]        ${os_type}    ${device_id}
+    [Return]    ${log}
+    BuiltIn.Log    ${device_id}
+    Return From Keyword If    '${os_type}' != '${android}'    ${EMPTY}
+    ${log}    Get Device Log    ${device_id}
+
+Get Output From Tizen Interop App
+    [Arguments]        ${os_type}    ${device_id}    ${app_id}
+    [Return]    ${log}
+    BuiltIn.Log    ${device_id}
+    Return From Keyword If    '${os_type}' != '${tizen}'    ${EMPTY}
+    ${log}    Get Application Log    ${device_id}    ${app_id}
+
+Run Linux Interop App
+    [Arguments]    ${binary_path}    ${binary_run_command}    ${device_id}    ${app_id}
+    BuiltIn.Log    ${binary_path}
+    BuiltIn.Log    ${binary_run_command}
+    Add Specific Device    Linux    ${device_id}    ${device_id}
+    ${orginal_path}    Get Working Directory Path    ${device_id}
+    BuiltIn.Log    ${orginal_path}
+    Change Working Directory    ${device_id}    ${binary_path}
+    Execute Application    ${device_id}    ${app_id}    stdbuf -oL ./${binary_run_command}
+    Start Application Log    ${device_id}    ${app_id}
+    Change Working Directory    ${device_id}    ${orginal_path}
+
+Run Android Interop App
+    [Arguments]    ${package_name}    ${activity_name}    ${device_id}    ${app_id}
+    BuiltIn.Log    ${device_id}
+    BuiltIn.Log    ${package_name}
+    BuiltIn.Log    ${activity_name}
+    Wait Until Keyword Succeeds    1min    20sec    Add Device    Android    ${device_id}
+    Start Device Log    ${device_id}
+    Execute Application    ${device_id}    ${package_name}    ${activity_name}
+    BuiltIn.Sleep    2s
+
+Run Tizen Interop App
+    [Arguments]    ${binary_path}    ${binary_run_command}    ${device_id}    ${app_id}
+    ${added} =    Add Device    Tizen    ${device_id}
+    Should Be True    ${added}
+    BuiltIn.Log    ${device_id}
+    Execute Console Application    ${device_id}    ${app_id}    ifconfig
+    Start Console Application Log    ${device_id}    ${app_id}
+    Input Command To Console Application    ${device_id}    ${app_id}    cd ${binary_path}
+    Input Command To Console Application    ${device_id}    ${app_id}    ./${binary_run_command}
+    BuiltIn.Sleep    5s
+
+Input Into Android Interop App
+    [Arguments]    ${device_id}    ${input}
+    ${real_device_id}    Get Android Device Id    ${device_id}
+    Execute Terminal Command    ${ADB} -s ${real_device_id} shell am broadcast -a ${input_intent} ${input}    -1s    ${False}
+
+Set Linux Iotivity Build Command
+    [Arguments]    ${linux_command}
+    Set Suite Variable    ${linux_iotivity_build_command}    ${linux_command}
+
+Set Android Iotivity Build Command
+    [Arguments]    ${android_command}
+    Set Suite Variable    ${android_iotivity_build_command}    ${android_command}
+
+Set Tizen Iotivity Build Command
+    [Arguments]    ${tizen_command}
+    Set Suite Variable    ${tizen_iotivity_build_command}    ${tizen_command}
+
+Add Params In Linux Iotivity Build Command
+    [Arguments]    ${params}
+    Set Suite Variable    ${linux_iotivity_build_command}    ${linux_iotivity_build_command}${params}
+
+Add Params In Android Iotivity Build Command
+    [Arguments]    ${params}
+    Set Suite Variable    ${android_iotivity_build_command}    ${android_iotivity_build_command}${params}
+
+Add Params In Tizen Iotivity Build Command
+    [Arguments]    ${params}
+    Set Suite Variable    ${tizen_iotivity_build_command}    ${tizen_iotivity_build_command}${params}
+
+Add Params In Iotivity Build Command
+    [Arguments]    ${params}
+    Add Params In Iotivity Linux Build Command    ${params}
+    Add Params In Iotivity Android Build Command    ${params}
+    Add Params In Iotivity Tizen Build Command    ${params}
+
+Set Iotivity Build Command
+    [Arguments]    ${linux_command}    ${android_command}    ${tizen_command}
+    Set Iotivity Linux Build Command    ${linux_iotivity_build_command}    ${linux_command}
+    Set Iotivity Android Build Command    ${android_iotivity_build_command}    ${android_command}
+    Set Iotivity Tizen Build Command    ${iotivity_tizen_build_command}    ${tizen_command}
+
+Set Linux TC Build Command
+    [Arguments]    ${linux_command}
+    Set Suite Variable    ${linux_tc_build_command}    ${linux_command}
+
+Set Android TC Build Command
+    [Arguments]    ${android_command}
+    Set Suite Variable    ${android_tc_build_command}    ${android_command}
+
+Set Tizen TC Build Command
+    [Arguments]    ${tizen_command}
+    Set Suite Variable    ${tizen_tc_build_command}    ${tizen_command}
+
+Add Params In Linux TC Build Command
+    [Arguments]    ${params}
+    Set Suite Variable    ${linux_tc_build_command}    ${linux_tc_build_command}${params}
+
+Add Params In Android TC Build Command
+    [Arguments]    ${params}
+    Set Suite Variable    ${android_tc_build_command}    ${android_tc_build_command}${params}
+
+Add Params In Tizen TC Build Command
+    [Arguments]    ${params}
+    Set Suite Variable    ${tizen_tc_build_command}    ${tizen_tc_build_command}${params}
+
+Add Params In TC Build Command
+    [Arguments]    ${params}
+    Add Params In Linux TC Build Command    ${params}
+    Add Params In Android TC Build Command    ${params}
+    Add Params In Tizen TC Build Command    ${params}
+
+Set TC Build Command
+    [Arguments]    ${linux_command}    ${android_command}    ${tizen_command}
+    Set Suite Variable    ${linux_tc_build_command}    ${linux_command}
+    Set Suite Variable    ${android_tc_build_command}    ${android_command}
+    Set Suite Variable    ${tizen_tc_build_command}    ${tizen_command}
+
+Set TC Binary Name
+    [Arguments]    ${linux_path}    ${linux_binary}    ${android_package}    ${android_app}    ${tizen_path}    ${tizen_path}
+    Set Suite Variable    ${linux_tc_build_command}    ${linux_command}
+    Set Suite Variable    ${android_tc_build_command}    ${android_command}
+    Set Suite Variable    ${tizen_tc_build_command}    ${tizen_command}
+
+Load Default Settings By OS
+    [Arguments]    ${os_type}    ${iotivity_parameters}=${EMPTY}    ${tc_parameters}=${EMPTY}
+    Run Keyword If    '${os_type}' == '${linux}'    Set Linux Iotivity Build Command    scons ${iotivity_parameters} RELEASE=${RELEASE} TARGET_OS=linux TARGET_ARCH=${LINUX_TARGET_ARCH} -j ${J}
+    Run Keyword If    '${os_type}' == '${android}'    Set Android Iotivity Build Command    scons ${iotivity_parameters} RELEASE=${RELEASE} TARGET_OS=android TARGET_ARCH=${ANDROID_TARGET_ARCH} ${PARAM_ANDROID_HOME} ${PARAM_ANDROID_NDK} ${PARAM_ANDROID_GRADLE} -j ${J}
+    Run Keyword If    '${os_type}' == '${tizen}'    Set Tizen Iotivity Build Command    ./gbsbuild.sh ${iotivity_parameters} RELEASE=${RELEASE} TARGET_ARCH=${TIZEN_TARGET_ARCH}
+    Run Keyword If    '${os_type}' == '${linux}'    Set Linux TC Build Command    scons ${tc_parameters} RELEASE=${RELEASE} TARGET_OS=linux IOTIVITY_ROOT=${IOTIVITY_ROOT} MODULE=${MODULE} TEST=app
+    Run Keyword If    '${os_type}' == '${android}'    Set Android TC Build Command    scons ${tc_parameters} RELEASE=${RELEASE} TARGET_OS=android TARGET_ARCH=${ANDROID_TARGET_ARCH} ${PARAM_ANDROID_HOME} ${PARAM_ANDROID_NDK} ${PARAM_ANDROID_GRADLE} IOTIVITY_ROOT=${IOTIVITY_ROOT} MODULE=${MODULE} TEST=app
+    Run Keyword If    '${os_type}' == '${tizen}'    Set Tizen TC Build Command    scons ${tc_parameters} RELEASE=${RELEASE} TARGET_OS=tizen TARGET_ARCH=${TIZEN_TARGET_ARCH} GBS_ROOT=${GBS_ROOT_PARENT}/GBS-ROOT-OIC PUSH=all TIZEN_HOME=${TIZEN_HOME} PROJECT_VERSION=${RPM_VERSION} IOTIVITY_ROOT=${IOTIVITY_ROOT} MODULE=${MODULE} TEST=app
+    Run Keyword If    '${os_type}' == '${linux}'    Set Suite Variable    ${linux_binary_path}    ${TEST_ROOT}/bin/linux
+    Run Keyword If    '${os_type}' == '${tizen}'    Set Suite Variable    ${tizen_binary_path}    /opt/usr/media/bin
+    Run Keyword If    '${os_type}' == '${android}'    Set Suite Variable    ${android_package}    org.iotivity.test.${MODULE}.app
+    Run Keyword If    '${os_type}' == '${linux}'    Run Keyword If    '${SDK}' == 'undefined'    Set Suite Variable    ${linux_tc_binary}    iotivity_${MODULE}_app
+    Run Keyword If    '${os_type}' == '${linux}'    Run Keyword If    '${SDK}' != 'undefined'    Set Suite Variable    ${linux_tc_binary}    iotivity_${MODULE}_${SDK}_app
+    Run Keyword If    '${MODULE}' == 'ns'    Run Keyword If    '${os_type}' == '${linux}'    Set Suite Variable    ${linux_tc_binary}    iotivity_${MODULE}_${SDK}_app
+    Run Keyword If    '${os_type}' == '${tizen}'    Run Keyword If    '${SDK}' == 'undefined'    Set Suite Variable    ${tizen_tc_binary}    iotivity_${MODULE}_app
+    Run Keyword If    '${os_type}' == '${tizen}'    Run Keyword If    '${SDK}' != 'undefined'    Set Suite Variable    ${tizen_tc_binary}    iotivity_${MODULE}_${SDK}_app
+    Run Keyword If    '${os_type}' == '${android}'    Set Suite Variable    ${android_main_activity}    org.iotivity.test.${MODULE}.app.MainActivity
+
+Build Iotivity and Test App By OS
+    [Arguments]    ${os_type}
+    Run Keyword If    '${os_type}' == '${linux}'    Build Iotivity    ${IOTIVITY_ROOT}    ${linux_iotivity_build_command}    done building targets
+    Run Keyword If    '${os_type}' == '${linux}'    Build Iotivity TEST    ${TEST_ROOT}    ${linux_tc_build_command}    done building targets
+    Run Keyword If    '${os_type}' == '${android}'    Build Iotivity    ${IOTIVITY_ROOT}    ${android_iotivity_build_command}   done building targets
+    Run Keyword If    '${os_type}' == '${android}'    Build Iotivity TEST    ${TEST_ROOT}    ${android_tc_build_command}    done building targets
+    Run Keyword If    '${os_type}' == '${tizen}'    Build Iotivity    ${IOTIVITY_ROOT}    ${tizen_iotivity_build_command}    Build is successful
+    Run Keyword If    '${os_type}' == '${tizen}'    Build Iotivity TEST    ${TEST_ROOT}    ${tizen_tc_build_command}    GBS build is successful
+
+Execute Interop Apps By OS
+    [Arguments]    ${os_type}    ${device_id}    ${app_id}    ${index}=0
+    Run Keyword If    '${os_type}' == '${linux}'    Run Keyword If    '${MODULE}' == 'ns'    Run Keyword If    '${index}' == '0'    Run Linux Interop App    ${linux_binary_path}    iotivity_${MODULE}_${SDK}_provider_app    ${device_id}    ${app_id}
+    Run Keyword If    '${os_type}' == '${linux}'    Run Keyword If    '${MODULE}' == 'ns'    Run Keyword If    '${index}' != '0'    Run Linux Interop App    ${linux_binary_path}    iotivity_${MODULE}_${SDK2}_consumer_app    ${device_id}    ${app_id}
+    Run Keyword If    '${os_type}' == '${linux}'    Run Keyword If    '${MODULE}' != 'ns'    Run Linux Interop App    ${linux_binary_path}    ${linux_tc_binary}    ${device_id}    ${app_id}
+    Run Keyword If    '${os_type}' == '${android}'    Run Android Interop App    ${android_package}    ${android_main_activity}    ${device_id}    ${app_id}
+    Run Keyword If    '${os_type}' == '${tizen}'    Run Tizen Interop App    ${tizen_binary_path}    ${tizen_tc_binary}    ${device_id}    ${app_id}
+
+Terminate Interop Apps By OS
+    [Arguments]    ${os_type}    ${device_id}    ${app_id}
+    Run Keyword If    '${os_type}' == '${linux}'    Terminate Application    ${device_id}    ${app_id}
+    Run Keyword If    '${os_type}' == '${android}'    Terminate Application    ${device_id}    ${android_package}
+    Run Keyword If    '${os_type}' == '${tizen}'    Terminate Application    ${device_id}    ${app_id}
+
+Search Expected Log
+    [Arguments]    ${log}    ${expected_log}
+    BuiltIn.Log    ${log}
+    ${status}    Check Keyword    ${expected_log}    ${log}
+    Should Be True    ${status}    Expected Log: ${expected_log}
+
+Check Substring Count
+    [Arguments]    ${log}    ${cnt}    ${op}    ${expected_log}
+    BuiltIn.Log    ${log}
+    BuiltIn.Log    ${expected_log}
+    ${match}    Is Substring Count Match    ${log}    ${cnt}    ${op}    ${expected_log}
+    Should Be True    ${match}
+
+Get Android Device Id
+    [Arguments]    ${device_id}
+    [Return]    ${real_device_id}
+    ${real_device_id}    Set Variable    ${ANDROID_DEVICE_ID}
+    Return From Keyword If    '${OS}' == '${linux}'    ${real_device_id}
+    Return From Keyword If    '${OS2}' == '${linux}'    ${real_device_id}
+    Return From Keyword If    '${OS}' == '${tizen}'    ${real_device_id}
+    Return From Keyword If    '${OS2}' == '${tizen}'    ${real_device_id}
+    @{device_ids}    Create List    ${ANDROID_DEVICE_ID}    ${PEER_ANDROID_DEVICE_ID}
+    :FOR    ${index}    IN RANGE    1    ${total_app}
+    \    ${temp}    Evaluate    ${index}+1
+    \    ${real_device_id}    Set Variable If    '${device_id}' == 'device${temp}'    @{device_ids}[${index}]    ${real_device_id}

@@ -47,8 +47,8 @@ GT_HANG_LOG = '[  HANG  ]'
 
 # Test Spec XML Constants
 SPEC_ELM = namedtuple('SPEC_ELM',
-                      ['TESTSPEC_REPORT', 'SUMMARY', 'TESTSPEC', 'PLATFORM', 'TRANSPORT', 'NETWORK', 'TYPE', 'MODULE', 'TESTSUITE', 'TESTCASE'])\
-                      ('testspec_report', 'summary', 'testspec', 'platform', 'transport', 'network', 'type', 'module', 'testsuite', 'testcase')
+                      ['TESTSPEC_REPORT', 'SUMMARY', 'TESTSPEC', 'PLATFORM' , 'BUILDTYPE' , 'TRANSPORT', 'NETWORK', 'TYPE', 'MODULE', 'TESTSUITE', 'TESTCASE'])\
+                      ('testspec_report', 'summary', 'testspec', 'platform', 'buildtype' , 'transport', 'network', 'type', 'module', 'testsuite', 'testcase')
 SPEC_ATT = namedtuple('SPEC_ATT',
                       ['NAME', 'NO', 'FILELINE', 'REVIEW'])\
                       ('name', 'NO', 'fileline', 'Review')

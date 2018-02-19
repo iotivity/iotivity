@@ -16,10 +16,12 @@ import sys
 import fnmatch
 import subprocess
 import optparse
+import traceback
+
 from time import strftime
 from time import sleep
 from datetime import datetime
-
+import configuration
 from configuration import *
 from ite.config import *
 from ite.constants import *
@@ -30,7 +32,7 @@ from ite.webreporter.tc_list_reporter import TCListReporter
 
 from xml.etree.ElementTree import ElementTree, ParseError
 
-timeout_seconds = 300
+timeout_seconds = 60
 passStr='\033[0;32m[  PASSED  ] \033[0m1 test.'
 
 oparser = optparse.OptionParser()
@@ -77,6 +79,35 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+class Testcase:
+
+    max_total_count = 3
+    min_pass_count = 1
+    
+
+    def __init__(self, name):
+        self.name = name
+        self.total_count = 0
+        self.pass_count = 0
+        self.fail_count = 0
+
+    def increase_total_count(self):
+        self.total_count += 1
+
+    def increase_pass_count(self):
+        self.pass_count += 1
+
+    def increase_fail_count(self):
+        self.fail_count += 1
+
+    def is_execution_complete(self):
+
+        if self.pass_count > 0 or self.total_count > self.max_total_count:
+            return True
+
+        return False
+
+
 if not testresult:
     testresult = TEST_RESULT_RUN_DIR
 
@@ -108,7 +139,7 @@ if not device_name:
 else:
     device_name = '-s ' + device_name
 
-if transport.upper() == TEST_TRANSPORT.IP:
+if transport.upper() == TEST_TRANSPORT.IP or transport.upper() == TEST_TRANSPORT.TCP:
     network = TEST_NETWORK.WIFI.lower()
 
 testspec_path = os.path.join(testresult, TEST_SPEC_XML_FOR_RESULT)
@@ -119,6 +150,8 @@ if not os.path.exists(testspec_path) and os.path.exists(API_TC_SRC_DIR):
     reporter = TestSpecReporter()
     reporter.generate_testspec_report(container.data)
     reporter.report('XML', testspec_path)
+
+configuration.EXECUTION_LOG_FP  = open(testresult + os.sep + EXECUTION_LOG_FILE, "w")
 
 def remove_invalid_character_from_log(log) :
     if "\"" in log :
@@ -131,6 +164,88 @@ def remove_invalid_character_from_log(log) :
        log = log.replace('>','')
     return log
 
+def execute_testcase(testcase):
+
+    binary_name = testcase.name.split('.')[0]
+    suite_name = testcase.name.split('.')[1]
+    tc_name = testcase.name.split('.')[2]
+    full_tc_name = suite_name + '.' + tc_name
+
+    logs = ''
+    outXML = ''
+    outXML += '<testsuites>\n'
+    outXML += '<testsuite name="' + suite_name + '">\n'
+    outXML = outXML + '<testcase name="' + tc_name + '" status="run" time="0"'
+    result = False
+
+    os.system('sdb ' + device_name + ' dlog -c')
+    
+    try:
+        #command = 'sdb %s shell %s/%s --gtest_filter=%s'%(device_name, app_path, binary_name, full_tc_name)
+        command = 'sdb %s shell %s/tizen_runner.sh %s %s --gtest_filter=%s.%s'%(device_name, app_path, app_path, binary_name, suite_name, tc_name)
+        print("Start Execution TC: " , command+'\n')
+        #rc = subprocess.check_output(command, shell=True)
+        rc = subprocess.check_output(('timeout {} {}').format(timeout_seconds, command), shell=True)
+        #rc= subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        #log, err = proc.communicate(timeout = timeout_seconds) 
+        log = re.sub(r'(b\'|\')', '', str(rc))
+        #log = log.strip()
+        #log = str(log)
+        log = remove_invalid_character_from_log(log)
+        log = log.replace('\\x', '')
+        log = log.replace('1b[0;33m', '\033[0;33m')
+        log = log.replace('1b[0;32m', '\033[0;32m')
+        log = log.replace('1b[0;31m', '\033[0;31m')
+        log = log.replace('1b[0;30m', '\033[0;30m')
+        log = log.replace('1b[m', '\033[0m')
+
+        log_part = log.split('\\r\\n')
+
+        for log in log_part:
+            print (log)
+            logs += log + '\n'
+
+        if logs.find(passStr) != -1:
+            outXML = outXML + "/>\n"
+            print (bcolors.OKGREEN + full_tc_name + ': ' + 'passed' + bcolors.ENDC)
+            result = True
+        else:
+            outXML = outXML + '>\n<failure message="'+ 'fail' +'"> </failure>\n</testcase>\n'
+            print (bcolors.FAIL + full_tc_name + ': failed' + bcolors.ENDC)
+
+    except subprocess.TimeoutExpired:
+        print ('Timeout exception')
+        outXML = outXML + '>\n<failure message="'+ ' Timeout occur' +'"> </failure>\n</testcase>\n'
+        print (bcolors.FAIL + full_tc_name + ': timeout' + bcolors.ENDC)
+
+    except subprocess.CalledProcessError:
+        outXML = outXML + '>\n\t\t\t<failure message="'+ ' Crash occur' +'"> </failure>\n</testcase>\n'
+        print (bcolors.FAIL + suite_name + '.' + tc_name + ': timeout' + bcolors.ENDC)
+
+    print('Finised Execution TC :' + full_tc_name + '\n')
+
+    outXML = outXML + "</testsuite>\n"
+    outXML = outXML + '</testsuites>\n'
+
+    timestring = datetime.now().strftime("%Y%m%d_%H%M%S.%f")
+
+    file_name = platform + '_' + target + '_' + transport + '_' + network + '_' + timestring + '_' + binary_name
+
+    if os.path.isfile(testresult + os.sep + file_name + '.log') or os.path.isfile(testresult + os.sep + file_name + '.xml'):
+            print (bcolors.FAIL + 'File name exist !!!\nRunner Internal Error' + bcolors.ENDC)
+            exit(0)
+
+    os.system('sdb ' + device_name + ' dlog -d > ' + testresult + os.sep + file_name + '.log')
+
+    logFile = open(testresult + os.sep + file_name + '.log', 'a')
+    logFile.write(logs)
+
+    xmlFile = open(testresult + os.sep + file_name + '.xml', 'w')
+    xmlFile.write(outXML)
+
+    return result
+
+
 command = 'sdb %s root on'%(device_name)
 process= subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 log, err = process.communicate(timeout = 30)
@@ -141,7 +256,7 @@ log, err = process.communicate(timeout = 30)
 
 binary_list = str(log).replace('b\'', '').replace('\'', '').replace(app_path + '/', '').replace('\\r\\n', ' ').split()
 
-testset = set()
+list_of_testcase = []
 
 for binary_name in binary_list:
     print (binary_name)
@@ -161,6 +276,8 @@ for binary_name in binary_list:
     command = 'sdb %s shell %s/%s --gtest_list_tests'%(device_name, app_path, binary_name)
 
     print ('command: ' + command)
+    configuration.EXECUTION_LOG_FP.write (str(command) + '\n')
+    configuration.EXECUTION_LOG_FP.flush()
 
     process = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     testsuite = ''
@@ -182,82 +299,32 @@ for binary_name in binary_list:
             continue
 
         if testsuite != '' and line != '':
-            testset.add(binary_name + '.' + testsuite + line)
+            testcase = Testcase(binary_name + '.' + testsuite + line)
+            list_of_testcase.append(testcase)
 
-if not testset:
+if not list_of_testcase:
     print (bcolors.FAIL + 'no testcase is found with given parameter' + bcolors.ENDC)
     exit(0)
 
-for single_test in testset:
-    binary_name = single_test.split('.')[0]
-    suite_name = single_test.split('.')[1]
-    tc_name = single_test.split('.')[2]
-    full_tc_name = suite_name + '.' + tc_name
-    logs = ''
-    outXML = ''
-    outXML += '<testsuites>\n'
-    outXML += '<testsuite name="' + suite_name + '">\n'
-    outXML = outXML + '<testcase name="' + full_tc_name + '" status="run" time="0"'
+while list_of_testcase:
 
-    os.system('sdb ' + device_name + ' dlog -c')
-    
-    try:
-        #command = 'sdb %s shell %s/%s --gtest_filter=%s'%(device_name, app_path, binary_name, full_tc_name)
-        command = 'sdb %s shell %s/tizen_runner.sh %s %s --gtest_filter=%s.%s'%(device_name, app_path, app_path, binary_name, suite_name, tc_name)
-        print("Start Execution TC:" , command+'\n')
-        proc= subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        log, err = proc.communicate(timeout = timeout_seconds) 
+    print(len(list_of_testcase))
 
-        log = str(log)
-        log = remove_invalid_character_from_log(log)
-        log = log.replace('\\x', '')
-        log = log.replace('1b[0;33m', '\033[0;33m')
-        log = log.replace('1b[0;32m', '\033[0;32m')
-        log = log.replace('1b[0;31m', '\033[0;31m')
-        log = log.replace('1b[0;30m', '\033[0;30m')
-        log = log.replace('1b[m', '\033[0m')
+    for testcase in list_of_testcase:
 
-        log_part = log.split('\\r\\n')
+        result = execute_testcase(testcase)
 
-        for log in log_part:
-            print (log)
-            logs += log + '\n'
+        print (testcase.name, testcase.total_count, testcase.pass_count, testcase.fail_count, result)
 
-        if logs.find(passStr) != -1:
-            outXML = outXML + "/>\n"
-            print (bcolors.OKGREEN + full_tc_name + ': ' + 'passed' + bcolors.ENDC)
+        if result:
+            testcase.increase_pass_count()
         else:
-            outXML = outXML + '>\n<failure message="'+ 'fail' +'"> </failure>\n</testcase>\n'
-            print (bcolors.FAIL + full_tc_name + ': failed' + bcolors.ENDC)
+            testcase.increase_fail_count()
 
-    except subprocess.TimeoutExpired:
-        print ('Timeout exception')
-        outXML = outXML + '>\n<failure message="'+ ' Timeout occur' +'"> </failure>\n</testcase>\n'
-        print (bcolors.FAIL + full_tc_name + ': timeout' + bcolors.ENDC)
+        testcase.increase_total_count()
 
-    print('Finised Execution TC :' + full_tc_name + '\n')
+    list_of_testcase[:] = [x for x in list_of_testcase if not x.is_execution_complete()]
 
-    outXML = outXML + "</testsuite>\n"
-    outXML = outXML + '</testsuites>\n'
-
-    timestring = datetime.now().strftime("%Y%m%d_%H%M%S.%f")
-
-    file_name = platform + '_' + target + '_' + transport + '_' + network + '_' + timestring + '_' + binary_name
-
-    if os.path.isfile(testresult + os.sep + file_name + '.log') or os.path.isfile(testresult + os.sep + file_name + '.xml'):
-            print (bcolors.FAIL + 'File name exist !!!\nRunner Internal Error' + bcolors.ENDC)
-            exit(0)
-
-    os.system('sdb ' + device_name + ' dlog -d > ' + testresult + os.sep + file_name + '.log')
-
-    logFile = open(testresult + os.sep + file_name + '.log', 'a')
-    logFile.write(logs)
-
-    xmlFile = open(testresult + os.sep + file_name + '.xml', 'w')
-    xmlFile.write(outXML) 
-
-
-if testset:
-    print("### Test Is Done!!")
+print("### Test Is Done!!")
 
 #./tizen_test_runner -f ca_test -u CATest_btc
