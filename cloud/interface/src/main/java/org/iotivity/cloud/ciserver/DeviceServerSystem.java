@@ -217,9 +217,12 @@ public class DeviceServerSystem extends ServerSystem {
                 // This is CoapResponse
                 // Once the response is valid, add this to deviceList
                 CoapResponse response = (CoapResponse) msg;
+                if (!response.getStatus().isSuccess()) {
+                    ctx.writeAndFlush(msg);
+                    return;
+                }
 
                 String urlPath = response.getUriPath();
-
                 if (urlPath == null) {
                     throw new InternalServerErrorException(
                             "request uriPath is null");
@@ -250,10 +253,14 @@ public class DeviceServerSystem extends ServerSystem {
         public void channelActive(ChannelHandlerContext ctx) {
             Device device = ctx.channel().attr(keyDevice).get();
             // Authenticated device connected
-
-            sendDevicePresence(device.getDeviceId(), "on");
+            Log.debug("Device: {} online", device.getDeviceId());
+            try {
+                sendDevicePresence(device.getDeviceId(), "on");
+            } catch (ServerException.ServiceUnavailableException e) {
+                Log.warn(e.getMessage());
+                ctx.close();
+            }
             mDevicePool.addDevice(device);
-
             device.onConnected();
         }
 
@@ -266,13 +273,17 @@ public class DeviceServerSystem extends ServerSystem {
             // same di.
             // So compare actual value, and remove if same.
             if (device != null) {
-                sendDevicePresence(device.getDeviceId(), "off");
-
-                device.onDisconnected();
-
-                mDevicePool.removeDevice(device);
-                ctx.channel().attr(keyDevice).remove();
-
+                Log.debug("Device: {} offline ", device.getDeviceId());
+                try {
+                    sendDevicePresence(device.getDeviceId(), "off");
+                } catch (ServerException.ServiceUnavailableException e) {
+                    Log.warn(e.getMessage());
+                    ctx.close();
+                } finally {
+                    device.onDisconnected();
+                    mDevicePool.removeDevice(device);
+                    ctx.channel().attr(keyDevice).remove();
+                }
             }
         }
 
@@ -328,14 +339,16 @@ public class DeviceServerSystem extends ServerSystem {
                 // Once the response is valid, add this to deviceList
 
                 CoapResponse response = (CoapResponse) msg;
+                if (!response.getStatus().isSuccess()) {
+                    ctx.writeAndFlush(msg);
+                    return;
+                }
 
                 String urlPath = response.getUriPath();
-
                 if (urlPath == null) {
                     throw new InternalServerErrorException(
                             "request uriPath is null");
                 }
-
                 switch (urlPath) {
                     /*
                      * case OICConstants.ACCOUNT_FULL_URI:

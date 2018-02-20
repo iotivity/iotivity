@@ -82,6 +82,9 @@ public class DBManager {
 
     private void createTables() {
         mMongoDB.createTable(Constants.RD_TABLE);
+
+        // TODO cannot be drop in case of component scaling
+        mMongoDB.dropTable(Constants.PRESENCE_TABLE);
         mMongoDB.createTable(Constants.PRESENCE_TABLE);
     }
 

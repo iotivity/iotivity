@@ -98,16 +98,17 @@ public class ServerSystem extends ResourceManager {
                 }
 
             } catch (ServerException e) {
-                ctx.writeAndFlush(MessageBuilder.createResponse(msg,
-                        e.getErrorResponse()));
-                Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), e);
+                ctx.writeAndFlush(MessageBuilder.createResponse(msg, e.getErrorResponse()));
+                if (e instanceof ServerException.ServiceUnavailableException)
+                    Log.warn(e.getMessage());
+                else
+                    Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), e);
             } catch (ClientException e) {
                 Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), e);
             } catch (Throwable t) {
                 Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), t);
                 if (msg instanceof CoapRequest) {
-                    ctx.writeAndFlush(MessageBuilder.createResponse(msg,
-                            ResponseStatus.INTERNAL_SERVER_ERROR));
+                    ctx.writeAndFlush(MessageBuilder.createResponse(msg, ResponseStatus.INTERNAL_SERVER_ERROR));
                 }
             }
         }

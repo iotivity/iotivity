@@ -58,9 +58,7 @@ public class MongoDB {
      * @throws Exception
      */
     public MongoDB(String host, String dbname) throws Exception {
-
         mongoClient = new MongoClient(host);
-        mongoClient.dropDatabase(dbname);
         db = mongoClient.getDatabase(dbname);
     }
 
@@ -71,8 +69,23 @@ public class MongoDB {
      *            collection name
      */
     public void createTable(String tableName) {
+        if (!collectionExists(tableName))
+            db.createCollection(tableName);
+    }
 
-        db.createCollection(tableName);
+    private boolean collectionExists(String tableName ) {
+        return db.listCollectionNames().into(new ArrayList<>()).contains(tableName);
+    }
+
+    /**
+     * API for dropping collection
+     *
+     * @param tableName
+     *            collection name
+     */
+    public void dropTable(String tableName) {
+        if (collectionExists(tableName))
+            db.getCollection(tableName).drop();
     }
 
     /**

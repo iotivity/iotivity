@@ -78,8 +78,15 @@ public class Acl {
         return (object == null) ? "" : object.toString();
     }
 
+    public static Acl convertMaptoAcl(HashMap<String, Object> aclMap) {
+        return new Acl(
+                valueOf(aclMap.get(Constants.KEYFIELD_ACLID)),
+                valueOf(aclMap.get(Constants.REQ_OWNER_ID)),
+                valueOf(aclMap.get(Constants.KEYFIELD_DI)));
+    }
+
     @SuppressWarnings("unchecked")
-    public static AclTable convertMaptoAclObject(
+    public static AclTable convertMaptoAclTable(
             HashMap<String, Object> aclMap) {
         AclTable aclTable = new AclTable();
         try {
@@ -343,7 +350,7 @@ public class Acl {
 
     private AclTable getAclTable() {
         AclTable getAclTable = new AclTable();
-        getAclTable = convertMaptoAclObject(AccountDBManager.getInstance()
+        getAclTable = convertMaptoAclTable(AccountDBManager.getInstance()
                 .selectRecord(Constants.ACL_TABLE, getCondition()).get(0));
         return getAclTable;
     }

@@ -43,6 +43,8 @@ import javax.net.ssl.SSLException;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class CoapConnector {
     private final static Logger Log             = LoggerFactory.getLogger(CoapConnector.class);
@@ -152,7 +154,7 @@ public class CoapConnector {
         }
     }
 
-    private static Map<Channel, CoapClient> mChannelMap     = new HashMap<>();
+    private static ConcurrentMap<Channel, CoapClient> mChannelMap     = new ConcurrentHashMap<>();
     Bootstrap                    mBootstrap      = new Bootstrap();
     EventLoopGroup               mConnectorGroup = new NioEventLoopGroup();
     Timer                        mTimer          = new Timer();
@@ -189,6 +191,7 @@ public class CoapConnector {
 
             private void addCloseDetectListener(Channel channel) {
                 channel.closeFuture().addListener((ChannelFutureListener) future -> {
+                    ConnectorPool.removeConnection(connectionName);
                     Log.debug("Connection to " + inetSocketAddress.getHostString() + " was lost. Retrying...");
                     scheduleConnect(connectionName, inetSocketAddress, tlsMode, 5);
                 });

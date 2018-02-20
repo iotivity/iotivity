@@ -68,6 +68,10 @@ public class AccountSession extends Resource {
                     ContentFormat.APPLICATION_CBOR,
                     mCbor.encodingPayloadToCbor(payloadData));
         }
+        if (!ConnectorPool.containConnection("rd")) {
+            // connection is required for proper presence state configuration
+            throw new ServerException.ServiceUnavailableException("Required connection to resource directory is not available");
+        }
         ConnectorPool.getConnection("account").sendRequest(request, srcDevice);
     }
 }

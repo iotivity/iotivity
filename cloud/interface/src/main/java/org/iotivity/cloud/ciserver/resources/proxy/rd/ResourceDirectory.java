@@ -40,6 +40,7 @@ import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -50,6 +51,7 @@ import org.iotivity.cloud.util.Cbor;
 
 public class ResourceDirectory extends Resource {
     private Cbor<HashMap<String, Object>> mCbor     = new Cbor<>();
+    private final static org.slf4j.Logger Log       = LoggerFactory.getLogger(ResourceDirectory.class);
 
     public ResourceDirectory() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.RD_URI));
@@ -83,8 +85,9 @@ public class ResourceDirectory extends Resource {
                         query.toString(), ContentFormat.APPLICATION_CBOR,
                         mCbor.encodingPayloadToCbor(requestPayload));
 
+                IRequestChannel resourceDirectoryConnection = ConnectorPool.getConnection("rd");
                 ConnectorPool.getConnection("account").sendRequest(requestToAS,
-                        new AccountReceiveHandler(request, srcDevice));
+                        new AccountReceiveHandler(resourceDirectoryConnection, request, srcDevice));
                 break;
 
             case DELETE:
@@ -98,10 +101,12 @@ public class ResourceDirectory extends Resource {
     }
 
     class AccountReceiveHandler implements IResponseEventHandler {
+        private IRequestChannel resourceDirectoryConnection;
         private Device   mSrcDevice;
         private IRequest mRequest;
 
-        public AccountReceiveHandler(IRequest request, Device srcDevice) {
+        public AccountReceiveHandler(IRequestChannel resourceDirectoryConnection, IRequest request, Device srcDevice) {
+            this.resourceDirectoryConnection = resourceDirectoryConnection;
             mSrcDevice = srcDevice;
             mRequest = request;
         }
@@ -119,7 +124,7 @@ public class ResourceDirectory extends Resource {
                             null, ContentFormat.APPLICATION_CBOR,
                             convertedPayload);
 
-                    ConnectorPool.getConnection("rd").sendRequest(mRequest,
+                    resourceDirectoryConnection.sendRequest(mRequest,
                             new PublishResponseHandler(mSrcDevice));
                     break;
 
