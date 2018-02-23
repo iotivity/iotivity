@@ -165,8 +165,6 @@ public class MongoDB {
             return false;
         }
 
-        showRecord(tableName);
-
         return true;
     }
 
@@ -204,8 +202,6 @@ public class MongoDB {
             return false;
         }
 
-        showRecord(tableName);
-
         return true;
     }
 
@@ -234,8 +230,6 @@ public class MongoDB {
             Log.warn("DB update failed due to no matched record!");
             return false;
         }
-
-        showRecord(tableName);
 
         return true;
     }
@@ -266,8 +260,6 @@ public class MongoDB {
             e.printStackTrace();
             return false;
         }
-
-        showRecord(tableName);
 
         return true;
     }
@@ -328,26 +320,5 @@ public class MongoDB {
         }
 
         return resourceMap;
-    }
-
-    private void showRecord(String tableName) {
-
-        MongoCollection<Document> collection = db.getCollection(tableName);
-        MongoCursor<Document> cursor = collection.find().iterator();
-
-        Log.info("<" + tableName + ">");
-
-        HashMap<String, Object> records = null;
-        int index = 0;
-        while (cursor.hasNext()) {
-
-            Document doc = cursor.next();
-            records = convertDocumentToHashMap(doc);
-
-            Log.info("[" + index + "] " + records.toString());
-            index++;
-        }
-
-        cursor.close();
     }
 }
