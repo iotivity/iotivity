@@ -22,6 +22,7 @@
 #include "OCApi.h"
 #include "octypes.h"
 #include "rd_client.h"
+#include <mutex>
 
 typedef std::function<void(const OC::OCRepresentation&, const int)> PublishResourceCallback;
 typedef std::function<void(const int)> DeleteResourceCallback;
