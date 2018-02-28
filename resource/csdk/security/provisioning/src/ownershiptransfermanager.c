@@ -1667,7 +1667,7 @@ static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
 
         int secureFlag = 0;
         //Send owner credential to new device : POST /oic/sec/cred [ owner credential ]
-        if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData,
+        if (OC_STACK_OK != CredToCBORPayloadWithRowner(&newCredential, &credSubjectId, &secPayload->securityData,
                                         &secPayload->payloadSize, secureFlag))
         {
             OICFree(secPayload);
