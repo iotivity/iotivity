@@ -148,8 +148,6 @@ if target_os in ['msys_nt', 'windows']:
         mediaserver = examples_env.Program('mediaserver', 'mediaserver.cpp')
         examples += [mediaserver]
 
-examples_env. SConscript('ocf_light/SConscript', exports='examples_env')
-
 examples_env.Alias("examples", examples)
 examples_env.AppendTarget('examples')
 examples_env.Alias("install", examples)
