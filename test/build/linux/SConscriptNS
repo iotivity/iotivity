@@ -1,7 +1,7 @@
 '''
 ******************************************************************
 *
-* Copyright 2016 Samsung Electronics All Rights Reserved.
+* Copyright 2018 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -50,6 +50,7 @@ iotivity_include_paths = [
     iotivity_root + '/resource/csdk/ocsocket/include',
     iotivity_root + '/resource/csdk/ocrandom/include',
     iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
     iotivity_root + '/resource/csdk/security/include',
     iotivity_root + '/resource/c_common',
     iotivity_root + '/resource/c_common/oic_string/include',

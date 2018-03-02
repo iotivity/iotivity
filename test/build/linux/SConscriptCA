@@ -1,7 +1,7 @@
 '''
 /******************************************************************
 *
-* Copyright 2016 Samsung Electronics All Rights Reserved.
+* Copyright 2018 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -66,6 +66,7 @@ iotivity_include_paths = [
     iotivity_root + '/resource/c_common',
     iotivity_root + '/resource/csdk/include',
     iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
     iotivity_root + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include',
     iotivity_lib_path + '/resource/c_common'
 ]

@@ -1,7 +1,7 @@
 '''
 /******************************************************************
 *
-* Copyright 2016 Samsung Electronics All Rights Reserved.
+* Copyright 2018 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -51,6 +51,7 @@ iotivity_include_paths = [
     iotivity_root + '/extlibs/timer',
     iotivity_root + '/extlibs/timer/',
     iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
     iotivity_root + '/extlibs/tinycbor/tinycbor/src',
     iotivity_root + '/resource/csdk/security/include',
     iotivity_root + '/service/resource-encapsulation/include/',

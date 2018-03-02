@@ -62,6 +62,7 @@ SConscript(iotivity_test_root + '/extlibs/gtest-1.7.0/SConscript')
 
 iotivity_common_includes_paths = [
     iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
     iotivity_root + '/resource/csdk/stack/include',
     iotivity_root + '/resource/c_common',
     iotivity_root + '/resource/c_common/oic_malloc/include',
