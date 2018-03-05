@@ -52,6 +52,7 @@ static CertProfileResult GenerateTestCert(CertType certType, CertProfileViolatio
 static CertProfileResult GenerateInternalCert(CertType certType, mbedtls_x509_crt *issuerCert, mbedtls_x509_crt *outCert);
 static void InitTestCert(mbedtls_x509_crt *cert);
 static void FreeTestCert(mbedtls_x509_crt *cert);
+static void removeCertChaining(mbedtls_x509_crt* rootCert, mbedtls_x509_crt* intCert, mbedtls_x509_crt* eeCert);
 static CertProfileResult SetNotBefore(ValidityTime notBefore, bool invalid);
 static CertProfileResult SetNotAfter(ValidityTime notAfter, bool invalid);
 
@@ -496,10 +497,157 @@ TEST_F(CACertProfileTests, VerifyInternalCertChain)
     InitTestCert(&eeCert);
 }
 
+TEST_F(CACertProfileTests, ChainProfileValidation)
+{
+    CertProfileResult cpResult = CP_STATUS_OK;
+    CertProfileViolations violations = CP_NO_VIOLATIONS;
+    CertProfileViolations violationsToGen = CP_NO_VIOLATIONS;
+    int ret = 0;
 
+    mbedtls_x509_crt validRootCert;
+    mbedtls_x509_crt validIntCert;
+    mbedtls_x509_crt validEeCert;
+
+    mbedtls_x509_crt badRootCert;
+    mbedtls_x509_crt badIntCert;
+    mbedtls_x509_crt badEeCert;
+
+    mbedtls_x509_crt *certChain = NULL;
+
+    InitTestCert(&validRootCert);
+    InitTestCert(&validIntCert);
+    InitTestCert(&validEeCert);
+
+    InitTestCert(&badRootCert);
+    InitTestCert(&badIntCert);
+    InitTestCert(&badEeCert);
+
+    //
+    // Valid chains
+    //
+
+    violationsToGen = CP_NO_VIOLATIONS;
+    cpResult = GenerateTestCert(CERT_CA_ROOT, violationsToGen, &validRootCert);
+    violations = ValidateRootCACertProfile(&validRootCert);
+    EXPECT_TRUE(CP_STATUS_OK == cpResult);
+    EXPECT_TRUE(violations == violationsToGen);
+    VERIFY_SUCCESS_OR_RETURN(TAG, ((CP_STATUS_OK == cpResult) && (violations == violationsToGen)),
+                             "Could not generate Root CA cert for chain test", ERROR);
+
+    violationsToGen = CP_NO_VIOLATIONS;
+    cpResult = GenerateTestCert(CERT_CA_INT, violationsToGen, &validIntCert);
+    violations = ValidateIntermediateCACertProfile(&validIntCert);
+    EXPECT_TRUE(CP_STATUS_OK == cpResult);
+    EXPECT_TRUE(violations == violationsToGen);
+    VERIFY_SUCCESS_OR_RETURN(TAG, ((CP_STATUS_OK == cpResult) && (violations == violationsToGen)),
+                             "Could not generate Intermediate CA cert for chain test", ERROR);
+
+
+    violationsToGen = CP_NO_VIOLATIONS;
+    cpResult = GenerateTestCert(CERT_EE, violationsToGen, &validEeCert);
+    violations = ValidateEndEntityCertProfile(&validEeCert);
+    EXPECT_TRUE(CP_STATUS_OK == cpResult);
+    EXPECT_TRUE(violations == violationsToGen);
+    VERIFY_SUCCESS_OR_RETURN(TAG, ((CP_STATUS_OK == cpResult) && (violations == violationsToGen)),
+                             "Could not generate End Entity cert for chain test", ERROR);
+
+    certChain = &validIntCert;
+    certChain->next = &validEeCert;
+    certChain->next->next = NULL;
+    ret = ValidateAuthCertChainProfiles(certChain);
+    EXPECT_TRUE(0 == ret);
+    removeCertChaining(&validRootCert, &validIntCert, &validEeCert);
+
+    certChain = &validRootCert;
+    ret = ValidateRootCACertListProfiles(certChain);
+    EXPECT_TRUE(0 == ret);
+
+    //
+    // Invalid chains
+    //
+
+    violationsToGen = CP_NOT_YET_VALID | CP_INVALID_KEY_USAGE_EXTRA | CP_INVALID_KEY_USAGE_MISSING;
+    cpResult = GenerateTestCert(CERT_CA_ROOT, violationsToGen, &badRootCert);
+    violations = ValidateRootCACertProfile(&badRootCert);
+    EXPECT_TRUE(CP_STATUS_OK == cpResult);
+    EXPECT_TRUE(violations == violationsToGen);
+    VERIFY_SUCCESS_OR_RETURN(TAG, ((CP_STATUS_OK == cpResult) && (violations == violationsToGen)),
+                             "Could not generate Root CA cert for chain test", ERROR);
+
+    violationsToGen = CP_EXPIRED | CP_INVALID_SIG_ALGORITHM;
+    cpResult = GenerateTestCert(CERT_CA_INT, violationsToGen, &badIntCert);
+    violations = ValidateIntermediateCACertProfile(&badIntCert);
+    EXPECT_TRUE(CP_STATUS_OK == cpResult);
+    EXPECT_TRUE(violations == violationsToGen);
+    VERIFY_SUCCESS_OR_RETURN(TAG, ((CP_STATUS_OK == cpResult) && (violations == violationsToGen)),
+                             "Could not generate Intermediate CA cert for chain test", ERROR);
+
+
+    violationsToGen = CP_INVALID_EKU_NO_SERVER_AUTH | CP_INVALID_VERSION | CP_INVALID_EKU_NO_OCF_ID_OID;
+    cpResult = GenerateTestCert(CERT_EE, violationsToGen, &badEeCert);
+    violations = ValidateEndEntityCertProfile(&badEeCert);
+    EXPECT_TRUE(CP_STATUS_OK == cpResult);
+    EXPECT_TRUE(violations == violationsToGen);
+    VERIFY_SUCCESS_OR_RETURN(TAG, ((CP_STATUS_OK == cpResult) && (violations == violationsToGen)),
+                             "Could not generate End Entity cert for chain test", ERROR);
+
+    // no EE cert in auth chain
+    certChain = &validRootCert;
+    certChain->next = &validIntCert;
+    certChain->next->next = NULL;
+    ret = ValidateAuthCertChainProfiles(certChain);
+    EXPECT_TRUE(CP_INVALID_CERT_CHAIN == ret);
+    removeCertChaining(&validRootCert, &validIntCert, &validEeCert);
+
+    // multiple EE certs in auth chain
+    certChain = &validEeCert;
+    certChain->next = &badEeCert;
+    certChain->next->next = NULL;
+    ret = ValidateAuthCertChainProfiles(certChain);
+    EXPECT_TRUE(CP_INVALID_CERT_CHAIN == ret);
+    removeCertChaining(&validRootCert, &validIntCert, &validEeCert);
+    removeCertChaining(&badRootCert, &badIntCert, &badEeCert);
+
+    // Auth cert profile errors
+    certChain = &badIntCert;
+    certChain->next = &validEeCert;
+    certChain->next->next = NULL;
+    ret = ValidateAuthCertChainProfiles(certChain);
+    EXPECT_TRUE(1 == ret);
+    certChain->next = &badEeCert;
+    certChain->next->next = NULL;
+    ret = ValidateAuthCertChainProfiles(certChain);
+    EXPECT_TRUE(2 == ret);
+    removeCertChaining(&validRootCert, &validIntCert, &validEeCert);
+    removeCertChaining(&badRootCert, &badIntCert, &badEeCert);
+
+    // Time window errors
+    certChain = &badRootCert;
+    certChain->next = &badIntCert;
+    certChain->next->next = NULL;
+    ret = CheckCertListTimeWindows(certChain);
+    EXPECT_TRUE(2 == ret);
+    removeCertChaining(&validRootCert, &validIntCert, &validEeCert);
+    removeCertChaining(&badRootCert, &badIntCert, &badEeCert);
+
+    FreeTestCert(&validRootCert);
+    FreeTestCert(&validIntCert);
+    FreeTestCert(&validEeCert);
+
+    FreeTestCert(&badRootCert);
+    FreeTestCert(&badIntCert);
+    FreeTestCert(&badEeCert);
+}
 //*****************************************************************************
 // Helper fxns
 //*****************************************************************************
+
+static void removeCertChaining(mbedtls_x509_crt* rootCert, mbedtls_x509_crt* intCert, mbedtls_x509_crt* eeCert)
+{
+    rootCert->next = NULL;
+    intCert->next = NULL;
+    eeCert->next = NULL;
+}
 
 static CertProfileResult SetNotBefore(ValidityTime notBefore, bool invalid)
 {
@@ -545,6 +693,10 @@ static int constructEku( unsigned int numOids, const OCByteString **oidList, uns
     size_t encodingLen = 0;
     unsigned char *curPtr = buf;
     unsigned char *bufEnd = buf+buflen;
+    if (0 == numOids )
+    {
+        return 0;
+    }
 
     // add header
     if ( (curPtr + s_ekuHeader.len > bufEnd) ||
@@ -826,19 +978,22 @@ static CertProfileResult GenerateTestCert(CertType certType, CertProfileViolatio
             numOids++;
         }
 
-        int encodingLen = constructEku(numOids, oidList, (unsigned char*)buf, sizeof(buf));
-        cpResult = (0 < encodingLen) ? CP_STATUS_OK : CP_STATUS_FAILED;
-        VERIFY_SUCCESS_OR_EXIT(TAG, (0 < encodingLen), "Insufficient buffer size for EKU encoding", ERROR);
+        if ( numOids > 0 )
+        {
+            int encodingLen = constructEku(numOids, oidList, (unsigned char*)buf, sizeof(buf));
+            cpResult = (0 < encodingLen) ? CP_STATUS_OK : CP_STATUS_FAILED;
+            VERIFY_SUCCESS_OR_EXIT(TAG, (0 < encodingLen), "Insufficient buffer size for EKU encoding", ERROR);
 
 
-        mbedRet = mbedtls_x509write_crt_set_extension(
-                    &outCertCtx,
-                    MBEDTLS_OID_EXTENDED_KEY_USAGE,
-                    MBEDTLS_OID_SIZE(MBEDTLS_OID_EXTENDED_KEY_USAGE), 0,
-                    (const unsigned char*)buf, encodingLen);
-        CP_LOG_MBED_ERROR(TAG, mbedRet, mbedErrBuf, sizeof(mbedErrBuf), ERROR);
-        cpResult = (0 == mbedRet) ? CP_STATUS_OK : CP_STATUS_FAILED;
-        VERIFY_SUCCESS_OR_EXIT(TAG, (0 == mbedRet), "Problem writing eku OCF OID", ERROR);
+            mbedRet = mbedtls_x509write_crt_set_extension(
+                        &outCertCtx,
+                        MBEDTLS_OID_EXTENDED_KEY_USAGE,
+                        MBEDTLS_OID_SIZE(MBEDTLS_OID_EXTENDED_KEY_USAGE), 0,
+                        (const unsigned char*)buf, encodingLen);
+            CP_LOG_MBED_ERROR(TAG, mbedRet, mbedErrBuf, sizeof(mbedErrBuf), ERROR);
+            cpResult = (0 == mbedRet) ? CP_STATUS_OK : CP_STATUS_FAILED;
+            VERIFY_SUCCESS_OR_EXIT(TAG, (0 == mbedRet), "Problem writing eku OCF OID", ERROR);
+        }
     }
 
     // Create the cert

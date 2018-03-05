@@ -458,12 +458,12 @@ CertProfileViolations ValidateCertTimeWindow(const mbedtls_x509_crt *cert)
 
     if (mbedtls_x509_time_is_future(&cert->valid_from))
     {
-        OIC_LOG(WARNING, TAG, "Certificate is not yet valid");
+        OIC_LOG(ERROR, TAG, "Certificate is not yet valid");
         profileViolations |= CP_NOT_YET_VALID;
     }
     if (mbedtls_x509_time_is_past(&cert->valid_to))
     {
-        OIC_LOG(WARNING, TAG, "Certificate is no longer valid");
+        OIC_LOG(ERROR, TAG, "Certificate is no longer valid");
         profileViolations |= CP_EXPIRED;
     }
     return profileViolations;
