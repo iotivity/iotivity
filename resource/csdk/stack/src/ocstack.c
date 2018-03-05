@@ -57,6 +57,7 @@
 #include "trace.h"
 #include "ocserverrequest.h"
 #include "secureresourcemanager.h"
+#include "srmutility.h"
 #include "psinterface.h"
 #include "experimental/doxmresource.h"
 #include "cacommon.h"
@@ -174,6 +175,9 @@ bool g_multicastServerStopped = false;
 // Macros
 //-----------------------------------------------------------------------------
 #define TAG  "OIC_RI_STACK"
+#ifdef VERIFY_SUCCESS
+#undef VERIFY_SUCCESS
+#endif
 #define VERIFY_SUCCESS(op, successCode) { if ((op) != (successCode)) \
             {OIC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
 #define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OIC_LOG((logLevel), \

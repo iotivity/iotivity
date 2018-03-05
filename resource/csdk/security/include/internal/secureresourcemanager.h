@@ -114,14 +114,6 @@ void SRMDeInitSecureResources();
  */
 typedef bool (*SPResponseCallback) (const CAEndpoint_t *object,
                                     const CAResponseInfo_t *responseInfo);
-
-/**
- * Check the security resource URI.
- * @param uri Pointers to security resource URI.
- * @return true if the URI is one of security resources, otherwise false.
- */
-bool SRMIsSecurityResourceURI(const char* uri);
-
 /**
  * Get the resource type from the URI.
  * @param   uri [IN] Pointers to security resource URI.

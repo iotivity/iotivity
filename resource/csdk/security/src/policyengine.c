@@ -775,8 +775,17 @@ void CheckPermission(SRMRequestContext_t *context)
     OicSecDostype_t dos;
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
 
+    // As of Bangkok Security Specification, only the Device Configuration
+    // Resources are accessible outside of RFNOP
+    if ((DOS_RFNOP != dos.state) &&
+        (!IsDeviceConfigurationResourceUri(context->resourceUri)))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: denying request for any NCR when device is not"
+            " in RFNOP state!", __func__);
+        context->responseVal = ACCESS_DENIED;
+    }
     // Test for implicit access.
-    if (IsRequestFromDevOwner(context) &&
+    else if (IsRequestFromDevOwner(context) &&
         ((DOS_RFOTM == dos.state) || (DOS_SRESET == dos.state)) &&
         (NOT_A_SVR_RESOURCE != context->resourceType))
     {
@@ -811,7 +820,7 @@ void CheckPermission(SRMRequestContext_t *context)
     else if (((OIC_R_DOXM_TYPE == context->resourceType) ||
               (OIC_R_PSTAT_TYPE == context->resourceType) ||
               (OIC_R_CRED_TYPE == context->resourceType) ||
-              (OIC_R_ACL_TYPE == context->resourceType)) && 
+              (OIC_R_ACL_TYPE == context->resourceType)) &&
              (IsRequestFromDoxs(context)))
     {
         OIC_LOG_V(INFO, TAG, "%s: granting DOXS implicit access to /acl2, /cred, /doxm or /pstat.", __func__);

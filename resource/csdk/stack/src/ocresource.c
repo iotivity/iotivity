@@ -48,6 +48,7 @@
 #include "experimental/logger.h"
 #include "ocpayload.h"
 #include "secureresourcemanager.h"
+#include "srmutility.h"
 #include "cacommon.h"
 #include "cainterface.h"
 #include "oickeepalive.h"
@@ -69,6 +70,9 @@
 // Using 1k as block size since most persistent storage implementations use a power of 2.
 #define INTROSPECTION_FILE_SIZE_BLOCK  1024
 
+#ifdef VERIFY_SUCCESS
+#undef VERIFY_SUCCESS
+#endif
 #define VERIFY_SUCCESS(op) { if (op != (OC_STACK_OK)) \
             {OIC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
 

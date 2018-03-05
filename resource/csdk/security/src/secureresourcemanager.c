@@ -236,7 +236,7 @@ static void ClearRequestContext(SRMRequestContext_t *context)
 // this function, or this function may incorrectly read the nil-UUID (0s)
 // and assume CoAP request (which can result in request being incorrectly
 // denied).
-bool isRequestOverSecureChannel(SRMRequestContext_t *context)
+bool IsRequestOverSecureChannel(SRMRequestContext_t *context)
 {
     OicUuid_t nullSubjectId = {.id = {0}};
 
@@ -310,7 +310,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 #endif
 
     // Set secure channel boolean.
-    ctx->secureChannel = isRequestOverSecureChannel(ctx);
+    ctx->secureChannel = IsRequestOverSecureChannel(ctx);
 
 #if defined( __WITH_TLS__) || defined(__WITH_DTLS__)
 
@@ -459,59 +459,6 @@ OCStackResult SRMInitSecureResources()
 void SRMDeInitSecureResources()
 {
     DestroySecureResources();
-}
-
-bool SRMIsSecurityResourceURI(const char* uri)
-{
-    if (!uri)
-    {
-        return false;
-    }
-
-#ifdef _MSC_VER
-    // The strings below are const but they are also marked as extern so they cause warnings.
-#pragma warning(push)
-#pragma warning(disable:4204)
-#endif
-    const char *rsrcs[] = {
-        OIC_RSRC_SVC_URI,
-        OIC_RSRC_AMACL_URI,
-        OIC_RSRC_CRL_URI,
-        OIC_RSRC_CRED_URI,
-        OIC_RSRC_CSR_URI,
-        OIC_RSRC_ACL_URI,
-        OIC_RSRC_ACL2_URI,
-        OIC_RSRC_DOXM_URI,
-        OIC_RSRC_PSTAT_URI,
-        OIC_RSRC_VER_URI,
-        OIC_RSRC_ROLES_URI,
-        OC_RSRVD_PROV_CRL_URL
-    };
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-    // Remove query from Uri for resource string comparison
-    size_t uriLen = strlen(uri);
-    char *query = strchr (uri, '?');
-    if (query)
-    {
-        uriLen = query - uri;
-    }
-
-    for (size_t i = 0; i < sizeof(rsrcs)/sizeof(rsrcs[0]); i++)
-    {
-        size_t svrLen = strlen(rsrcs[i]);
-
-        if ((uriLen == svrLen) &&
-            (strncmp(uri, rsrcs[i], svrLen) == 0))
-        {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 /**
