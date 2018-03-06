@@ -94,6 +94,9 @@ src_files.extend([File(src) for src in (
     'caretransmission.c',
 )])
 
+if  with_tcp:
+    src_files.append(File('caping.c'))
+
 if (('IP' in ca_transport) or ('ALL' in ca_transport)):
     src_files.append(File('cablockwisetransfer.c'))
 

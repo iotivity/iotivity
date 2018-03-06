@@ -45,6 +45,7 @@ typedef struct
     CARequestInfo_t *requestInfo;
     CAResponseInfo_t *responseInfo;
     CAErrorInfo_t *errorInfo;
+    CASignalingInfo_t *signalingInfo;
     CADataType_t dataType;
 } CAData_t;
 
@@ -97,7 +98,7 @@ void CAHandleRequestResponseCallbacks();
  */
 void CASetNetworkMonitorCallback(CANetworkMonitorCallback nwMonitorHandler);
 
-#ifdef WITH_BWT
+#if defined(WITH_BWT) || defined(TCP_ADAPTER)
 /**
  * Add the data to the send queue thread.
  * @param[in] data    send data.
@@ -110,6 +111,60 @@ void CAAddDataToSendThread(CAData_t *data);
  */
 void CAAddDataToReceiveThread(CAData_t *data);
 #endif
+
+#ifdef TCP_ADAPTER
+/**
+ * Add a header option to the given header option array.
+ * @param[in/out] hdrOpt            Pointer to existing options.
+ * @param[in/out] numOptions        Number of existing options.
+ * @param[in]     optionID          COAP option ID.
+ * @param[in]     optionData        Option data value.
+ * @param[in]     optionDataLength  Size of Option data value.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAAddHeaderOption(CAHeaderOption_t **hdrOpt, uint8_t *numOptions,
+                             uint16_t optionID, void* optionData,
+                             size_t optionDataLength);
+
+/**
+ * Get data value of the option with specified option ID from given header option array.
+ * @param[in] hdrOpt                Pointer to existing options.
+ * @param[in] numOptions            Number of existing options.
+ * @param[in] optionID              COAP option ID.
+ * @param[out] optionData           Pointer to option data.
+ * @param[in] optionDataLength      Size of option data value.
+ * @param[out] receivedDataLen      Pointer to the actual length of received data.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAGetHeaderOption(CAHeaderOption_t *hdrOpt, size_t numOptions, uint16_t optionID,
+                             void *optionData, size_t optionDataLength, uint16_t *receivedDataLen);
+
+/**
+ * Generate signaling message from the given information.
+ * @param[in] endpoint      endpoint information where the data has to be sent.
+ * @param[in] code          signaling code has to be sent.
+ * @param[in] headerOpt     Pointer to existing options.
+ * @param[in] numOptions    Number of existing options.
+ * @return  generated signaling message object.
+ */
+CAData_t *CAGenerateSignalingMessage(const CAEndpoint_t *endpoint, CASignalingCode_t code,
+                                     CAHeaderOption_t *headerOpt, uint8_t numOptions);
+
+/**
+ * Generate signaling message from the given information.
+ * @param[in] endpoint      endpoint information where the data has to be sent.
+ * @param[in] code          signaling code has to be sent.
+ * @param[in] headerOpt     Pointer to existing options.
+ * @param[in] numOptions    Number of existing options.
+ * @param[in] token         The token to be used for the message (required for pong messages)
+ * @param[in] tokenLength   The length of the token
+ * @return  generated signaling message object.
+ */
+CAData_t *CAGenerateSignalingMessageUsingToken(const CAEndpoint_t *endpoint, CASignalingCode_t code,
+                                               CAHeaderOption_t *headerOpt, uint8_t numOptions,
+                                               const CAToken_t token, uint8_t tokenLength);
+
+#endif //TCP_ADAPTER
 
 #ifdef __cplusplus
 } /* extern "C" */

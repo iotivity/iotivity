@@ -98,6 +98,20 @@ CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endp
     return ret;
 }
 
+CAResult_t CAGetSignalingInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
+                                     CASignalingInfo_t *outSigInfo)
+{
+    VERIFY_NON_NULL(pdu, TAG, "pdu");
+    VERIFY_NON_NULL(endpoint, TAG, "endpoint");
+    VERIFY_NON_NULL(outSigInfo, TAG, "outSigInfo");
+
+    uint32_t code = CA_NOT_FOUND;
+    CAResult_t ret = CAGetInfoFromPDU(pdu, endpoint, &code, &(outSigInfo->info));
+    outSigInfo->code = code;
+
+    return ret;
+}
+
 coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_t *endpoint,
                           coap_list_t **optlist, coap_transport_t *transport)
 {

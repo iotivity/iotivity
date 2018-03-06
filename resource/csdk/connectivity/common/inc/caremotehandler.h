@@ -86,6 +86,13 @@ void CADestroyRequestInfoInternal(CARequestInfo_t *request);
 CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *response);
 
 /**
+ * Creates a new signaling information.
+ * @param[in]   sig           signaling message information that needs to be duplicated.
+ * @return  duplicated signaling info object.
+ */
+CASignalingInfo_t *CACloneSignalingInfo(const CASignalingInfo_t *sig);
+
+/**
  * Destroy the response information.
  * @param[in]   response           response information that needs to be destroyed.
  */
@@ -96,6 +103,12 @@ void CADestroyResponseInfoInternal(CAResponseInfo_t *response);
  * @param[in]   errorInfo           error information to be freed.
  */
 void CADestroyErrorInfoInternal(CAErrorInfo_t *errorInfo);
+
+/**
+ * Free the signaling information.
+ * @param[in]   sig         signaling information to be freed.
+ */
+void CADestroySignalingInfoInternal(CASignalingInfo_t *sig);
 
 #ifdef __cplusplus
 } /* extern "C" */

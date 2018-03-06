@@ -407,6 +407,26 @@ CAResult_t CAStartTCP()
     return CA_STATUS_OK;
 }
 
+CAResult_t CATCPDisconnectSession(const CAEndpoint_t *endpoint)
+{
+    CAResult_t res = CA_STATUS_OK;
+#ifdef __WITH_TLS__
+    res = CAcloseSslConnection(endpoint);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "failed to close TLS session");
+    }
+#endif
+
+    res = CASearchAndDeleteTCPSession(endpoint);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "failed to close TCP session");
+    }
+
+    return res;
+}
+
 CAResult_t CAStartTCPListeningServer()
 {
     if (!caglobals.server)
@@ -590,11 +610,27 @@ void CATCPSendDataThread(void *threadData)
                     OIC_LOG(ERROR, TAG, "CAAdapterNetDtlsEncrypt failed!");
                     CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
                     CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
-                                      CA_SEND_FAILED);
+                            CA_SEND_FAILED);
                 }
+
+                // if capability and settings message sent successfully update csm state.
+                if (CAGetCodeFromHeader(tcpData->data) == CA_CSM)
+                {
+                    OIC_LOG(DEBUG, TAG, "CSM sent successfully.");
+                    CACSMExchangeState_t csmState = CAGetCSMState(tcpData->remoteEndpoint);
+                    if (csmState == NONE)
+                    {
+                        CAUpdateCSMState(tcpData->remoteEndpoint, SENT);
+                    }
+                    else if (csmState == RECEIVED)
+                    {
+                        CAUpdateCSMState(tcpData->remoteEndpoint, SENT_RECEIVED);
+                    }
+                }
+
                 OIC_LOG_V(DEBUG, TAG,
-                          "CAAdapterNetDtlsEncrypt returned with result[%d]", result);
-               return;
+                        "CAAdapterNetDtlsEncrypt returned with result[%d]", result);
+                return;
             }
 #endif
         }
@@ -608,6 +644,20 @@ void CATCPSendDataThread(void *threadData)
             CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
                               CA_SEND_FAILED);
         }
+         // if capability and settings message sent successfully update csm state.
+         else if (CAGetCodeFromHeader(tcpData->data) == CA_CSM)
+         {
+             OIC_LOG(DEBUG, TAG, "CSM sent successfully.");
+             CACSMExchangeState_t csmState = CAGetCSMState(tcpData->remoteEndpoint);
+             if (csmState == NONE)
+             {
+                 CAUpdateCSMState(tcpData->remoteEndpoint, SENT);
+             }
+             else if (csmState == RECEIVED)
+             {
+                 CAUpdateCSMState(tcpData->remoteEndpoint, SENT_RECEIVED);
+             }
+         }
     }
 }
 

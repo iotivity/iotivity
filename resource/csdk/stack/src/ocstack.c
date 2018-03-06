@@ -72,6 +72,7 @@
 #include "ocatomic.h"
 #include "platform_features.h"
 #include "oic_platform.h"
+#include "caping.h"
 
 #ifdef UWP_APP
 #include "ocsqlite3helper.h"
@@ -2812,6 +2813,7 @@ OCStackResult OCInitializeInternal(OCMode mode, OCTransportFlags serverFlags,
     if (result == OC_STACK_OK)
     {
         result = InitializeKeepAlive(myStackMode);
+        result = CAInitializePing();
     }
 #endif
 
@@ -2885,6 +2887,7 @@ OCStackResult OCDeInitializeInternal(void)
 
 #ifdef TCP_ADAPTER
     TerminateKeepAlive(myStackMode);
+    CATerminatePing();
 #endif
 
     OCStackResult result = CAResultToOCResult(
@@ -3958,6 +3961,7 @@ OCStackResult OC_CALL OCProcess(void)
 
 #ifdef TCP_ADAPTER
     ProcessKeepAlive();
+    CAProcessPing();
 #endif
     return OC_STACK_OK;
 }

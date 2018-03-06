@@ -160,6 +160,12 @@ do \
         FD_SET(caglobals.tcp.TYPE.fd, FDS); \
     }
 
+#define CA_TCP_RESPONSE_CLASS(C) (((C) >> 5)*100)
+
+#define CA_TCP_RESPONSE_CODE(C) \
+    (CA_TCP_RESPONSE_CLASS(C) \
+            + (C - COAP_RESPONSE_CODE(CA_TCP_RESPONSE_CLASS(C))))
+
 static void CATCPDestroyMutex(void)
 {
     if (g_mutexObjectList)
@@ -1619,7 +1625,52 @@ size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer)
     return headerLen + optPaylaodLen;
 }
 
+uint32_t CAGetCodeFromHeader(const unsigned char *recvBuffer)
+{
+    OIC_LOG(DEBUG, TAG, "IN - CAGetCodeFromHeader");
+
+    coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
+                ((unsigned char *)recvBuffer)[0] >> 4);
+    size_t headerLen = coap_get_tcp_header_length_for_transport(transport);
+    uint32_t code = CA_TCP_RESPONSE_CODE(recvBuffer[headerLen -1]);
+
+    OIC_LOG_V(DEBUG, TAG, "header length [%zu]", headerLen);
+    OIC_LOG_V(DEBUG, TAG, "code [%d]", code);
+
+    OIC_LOG(DEBUG, TAG, "OUT - CAGetCodeFromHeader");
+    return code;
+}
+
 void CATCPSetErrorHandler(CATCPErrorHandleCallback errorHandleCallback)
 {
     g_tcpErrorHandler = errorHandleCallback;
+}
+
+CACSMExchangeState_t CAGetCSMState(const CAEndpoint_t *endpoint)
+{
+    oc_mutex_lock(g_mutexObjectList);
+
+    CACSMExchangeState_t csmState = NONE;
+    CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(endpoint);
+    if (svritem)
+    {
+        csmState = svritem->CSMState;
+    }
+
+    oc_mutex_unlock(g_mutexObjectList);
+    return csmState;
+}
+
+void CAUpdateCSMState(const CAEndpoint_t *endpoint, CACSMExchangeState_t state)
+{
+    oc_mutex_lock(g_mutexObjectList);
+
+    CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(endpoint);
+    if (svritem)
+    {
+        svritem->CSMState = state;
+    }
+
+    oc_mutex_unlock(g_mutexObjectList);
+    return;
 }

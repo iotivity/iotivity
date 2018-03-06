@@ -88,6 +88,16 @@ CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endp
                                  CAErrorInfo_t *errorInfo);
 
 /**
+ * extracts signaling information from received pdu.
+ * @param[in]   pdu                   received pdu.
+ * @param[in]   endpoint              endpoint information.
+ * @param[out]  outSigInfo            signaling info structure made from received pdu.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAGetSignalingInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
+                                     CASignalingInfo_t *outSigInfo);
+
+/**
  * creates pdu from the request information.
  * @param[in]   code                 request or response code.
  * @param[in]   info                 information to create pdu.

@@ -175,6 +175,14 @@ CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint
 size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer);
 
 /**
+ * Get code from CoAP over TCP header.
+ *
+ * @param[in]   recvBuffer    received header data.
+ * @return  method/response code
+ */
+uint32_t CAGetCodeFromHeader(const unsigned char *recvBuffer);
+
+/**
  * Get socket file descriptor from remote device information.
  *
  * @param[in]   endpoint    Remote Endpoint information (such as ipaddress,

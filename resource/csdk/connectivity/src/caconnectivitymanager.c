@@ -317,9 +317,6 @@ static CAResult_t CASendMessageMultiAdapter(const CAEndpoint_t *object, const vo
 #ifdef RA_ADAPTER
             ,CA_ADAPTER_REMOTE_ACCESS
 #endif
-#ifdef TCP_ADAPTER
-            ,CA_ADAPTER_TCP
-#endif
         };
 
     CAEndpoint_t *cloneEp = CACloneEndpoint(object);

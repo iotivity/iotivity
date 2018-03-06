@@ -140,6 +140,19 @@ extern "C"
 #define DEFAULT_VERSION_VALUE 2048
 
 /**
+ * Option numbers for Signaling messages are specific to the message code.
+ * They do not share the number space with CoAP options for request/response
+ * messages or with Signaling messages using other codes.
+ */
+#define CA_OPTION_SERVER_NAME_SETTING 1    /**< Capability and Settings messages, code=7.01 */
+#define CA_OPTION_MAX_MESSAGE_SIZE 2       /**< Capability and Settings messages, code=7.01 */
+#define CA_OPTION_BLOCK_WISE_TRANSFER 4    /**< Capability and Settings messages, code=7.01 */
+#define CA_OPTION_CUSTODY 2                /**< Ping and Pong Messages, code=7.02 */
+#define CA_OPTION_BAD_SERVER_NAME 2        /**< Release Messages, code=7.04 */
+#define CA_OPTION_ALTERNATE_ADDRESS 4      /**< Abort Messages, code=7.05 */
+#define CA_OPTION_HOLD_OFF 6               /**< Abort Messages, code=7.05 */
+
+/**
  * Payload information from resource model.
  */
 typedef uint8_t *CAPayload_t;
@@ -359,6 +372,7 @@ typedef enum
     CA_DTLS_AUTHENTICATION_FAILURE, /**< Decryption error in DTLS */
     CA_CONTINUE_OPERATION,          /**< Error happens but current operation should continue */
     CA_HANDLE_ERROR_OTHER_MODULE,   /**< Error happens but it should be handled in other module */
+    CA_STATUS_NOT_FOUND,            /**< Not Found*/
     CA_STATUS_FAILED =255           /**< Failure */
     /* Result code - END HERE */
 } CAResult_t;
@@ -394,6 +408,20 @@ typedef enum
 } CAResponseResult_t;
 
 /**
+ * Enums for CA Signaling codes.
+ */
+typedef enum
+{
+    /* Signaling code - START HERE */
+    CA_CSM = 701,                           /**< Capability and Settings messages */
+    CA_PING = 702,                          /**< Ping messages */
+    CA_PONG = 703,                          /**< Pong messages */
+    CA_RELEASE = 704,                       /**< Release messages */
+    CA_ABORT = 705,                         /**< Abort messages */
+    /* Signaling code - END HERE */
+} CASignalingCode_t;
+
+/**
  * Data type whether the data is Request Message or Response Message.
  * if there is some failure before send data on network.
  * Type will be set as error type for error callback.
@@ -403,7 +431,8 @@ typedef enum
     CA_REQUEST_DATA = 1,
     CA_RESPONSE_DATA,
     CA_ERROR_DATA,
-    CA_RESPONSE_FOR_RES
+    CA_RESPONSE_FOR_RES,
+    CA_SIGNALING_DATA
 } CADataType_t;
 
 /**
@@ -531,6 +560,17 @@ typedef struct
     CAInfo_t info;      /**< message information such as token and payload data
                              helpful to identify the error */
 } CAErrorInfo_t;
+
+/**
+ * Signaling information received.
+ *
+ * This structure is used to hold signaling information.
+ */
+typedef struct
+{
+    CASignalingCode_t code;
+    CAInfo_t info;              /**< Information of the signaling */
+} CASignalingInfo_t;
 
 /**
  * Hold global variables for CA layer. (also used by RI layer)
