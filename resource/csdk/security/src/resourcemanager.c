@@ -24,6 +24,7 @@
 #include "pstatresource.h"
 #include "experimental/doxmresource.h"
 #include "credresource.h"
+#include "spresource.h"
 #include "amaclresource.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -81,8 +82,15 @@ OCStackResult InitSecureResources( )
     }
     if(OC_STACK_OK == ret)
     {
+        ret = InitSpResource();
+    }
+    if(OC_STACK_OK == ret)
+    {
         ret = InitACLResource();
     }
+
+    // Warning: InitCredResource() alters the database.
+    // Initialization for any newly added resources should likely happen before this.
     if(OC_STACK_OK == ret)
     {
         ret = InitCredResource();

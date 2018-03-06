@@ -70,6 +70,19 @@ void DeleteSVCList(OicSecSvc_t* svc);
 OCStackResult CreatePstatResource();
 
 /**
+ * Create SP resource after default SP initialization is done.
+ */
+OCStackResult CreateSpResource();
+
+/**
+ * This internal method is the entity handler for sp resources
+ * to handle REST request (PUT/POST)
+ */
+OCEntityHandlerResult SpEntityHandler(OCEntityHandlerFlag flag,
+                                      OCEntityHandlerRequest * ehRequest,
+                                      void* callbackParameter);
+
+/**
  * This internal method is the entity handler for PSTAT resources and
  * will handle REST request (GET/PUT/POST/DEL) for them.
  */

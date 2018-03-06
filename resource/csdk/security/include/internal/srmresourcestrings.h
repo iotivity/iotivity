@@ -60,6 +60,11 @@ extern const char * OIC_RSRC_TYPE_SEC_DOXM;
 extern const char * OIC_RSRC_DOXM_URI;
 extern const char * OIC_JSON_DOXM_NAME;
 
+// sp
+extern const char * OIC_RSRC_TYPE_SEC_SP;
+extern const char * OIC_RSRC_SP_URI;
+extern const char * OIC_JSON_SP_NAME;
+
 //cred
 extern const char * OIC_RSRC_TYPE_SEC_CRED;
 extern const char * OIC_RSRC_CRED_URI;
@@ -145,6 +150,9 @@ extern const char * OIC_JSON_CM_NAME;
 extern const char * OIC_JSON_TM_NAME;
 extern const char * OIC_JSON_OM_NAME;
 extern const char * OIC_JSON_SM_NAME;
+extern const char * OIC_JSON_SUPPORTED_SP_NAME;
+extern const char * OIC_JSON_ACTIVE_SP_NAME;
+extern const char * OIC_JSON_SP_CREDID_NAME;
 extern const char * OIC_JSON_SERVICE_DEVICE_ID;
 extern const char * OIC_JSON_SERVICE_TYPE;
 extern const char * OIC_JSON_SUPPORTED_CRED_TYPE_NAME;

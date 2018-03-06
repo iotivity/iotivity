@@ -467,6 +467,12 @@ OCStackResult OC_CALL OCGetCSRResource(void* ctx, const OCProvisionDev_t *select
     return SRPGetCSRResource(ctx, selectedDeviceInfo, resultCallback);
 }
 
+OCStackResult OC_CALL OCGetSpResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                       OCGetSpResultCB resultCallback)
+{
+    return SRPGetSpResource(ctx, selectedDeviceInfo, resultCallback);
+}
+
 OCStackResult OC_CALL OCGetRolesResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
                                          OCGetRolesResultCB resultCallback)
 {
@@ -1504,6 +1510,23 @@ OCStackResult OC_CALL OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type
 {
     return SRPProvisionTrustCertChain(ctx, type, credId,
                                       selectedDeviceInfo, resultCallback);
+}
+
+/**
+ * function to provision a security profile resource to devices.
+ *
+ * @param[in] ctx Application context returned in the result callback.
+ * @param[in] sp security profile to be provisioned
+ * @param[in] selectedDeviceInfo Pointer to OCProvisionDev_t instance,respresenting resource to be provisioned.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from first resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OC_CALL OCProvisionSecurityProfileInfo(void *ctx, OicSecSp_t *sp,
+                                      const OCProvisionDev_t *selectedDeviceInfo,
+                                      OCProvisionResultCB resultCallback)
+{
+    return SRPProvisionSecurityProfileInfo(ctx, sp, selectedDeviceInfo, resultCallback);
 }
 
 /**

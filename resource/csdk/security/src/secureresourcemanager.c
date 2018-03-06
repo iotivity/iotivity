@@ -566,6 +566,15 @@ OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
         }
     }
 
+    svrLen = strlen(OIC_RSRC_SP_URI);
+    if (uriLen == svrLen)
+    {
+        if (0 == strncmp(uri, OIC_RSRC_SP_URI, svrLen))
+        {
+            return OIC_R_SP_TYPE;
+        }
+    }
+
     svrLen = strlen(OIC_RSRC_DOXM_URI);
     if (uriLen == svrLen)
     {

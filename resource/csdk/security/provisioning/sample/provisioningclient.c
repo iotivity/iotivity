@@ -34,6 +34,7 @@
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "srmutility.h"
+#include "spresource.h"
 #include "pmtypes.h"
 #include "oxmverifycommon.h"
 #include "mbedtls/config.h"
@@ -77,6 +78,7 @@ extern "C"
 #ifdef WITH_CLOUD
 #define _36_PROVIS_CLOUD_CONF_      36
 #endif //WITH_CLOUD
+#define _37_PROVIS_SEC_PROFILE             37
 #define _40_UNLINK_PAIR_DEVS_       40
 #define _50_REMOVE_SELEC_DEV_       50
 #define _51_REMOVE_DEV_WITH_UUID_   51
@@ -85,6 +87,7 @@ extern "C"
 #define _60_GET_CRED_               60
 #define _61_GET_ACL_                61
 #define _62_GET_CSR_                62
+#define _63_GET_SP_                 63
 #ifdef MULTIPLE_OWNER
 #define _70_MOT_CHANGE_MOM_         70
 #define _71_MOT_PROV_PRECONF_PIN_   71
@@ -146,6 +149,25 @@ static void printUuid(const OicUuid_t*);
 static FILE* fopen_prvnMng(const char*, const char*);
 static int waitCallbackRet(void);
 static int selectTwoDiffNum(int*, int*, const int, const char*);
+
+char * gSupportedProfilesDefault[] = { "oic.sec.sp.baseline" };
+OicSecSp_t gSpDefault =
+{
+    1,                          // supportedLen
+    gSupportedProfilesDefault,  // supportedProfiles[0]
+    "oic.sec.sp.baseline",      // activeProfile
+    0                           // credid
+};
+
+char * gSupportedProfilesAll[] = { "oic.sec.sp.black", "oic.sec.sp.blue", "oic.sec.sp.baseline",  };
+OicSecSp_t gSpAll =
+{
+    3,                      // supportedLen
+    gSupportedProfilesAll,  // supportedProfiles[0]
+    "oic.sec.sp.black",     // activeProfile
+    1                       // credid (arbitrary for testing)
+};
+
 
 /* At a few places in this file, warning 4028 is incorrectly produced, disable it for the whole file. */
 #ifdef _MSC_VER
@@ -349,6 +371,25 @@ static void getCsrCB(void* ctx, size_t nOfRes, OCPMGetCsrResult_t* arr, bool has
             }
             printf("\n");
         }
+    }
+    g_doneCB = true;
+}
+
+static void getSpCB(void* ctx, size_t nOfRes, OCPMGetSpResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "getSpCB SUCCEEDED - ctx: %s", (char*) ctx);
+        OIC_LOG(INFO, TAG, "Retrieved Security Profile(s)");
+        for (size_t i = 0; i < nOfRes; i++)
+        {
+            LogSp((arr[i]).sp, INFO, TAG, NULL);
+        }
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "getSpCB FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
     g_doneCB = true;
 }
@@ -1280,6 +1321,92 @@ static int provisionCert(void)
     return 0;
 }
 
+static int provisionSecurityProfileInfo(void)
+{
+    // make sure we own at least one device to provision
+    if (!g_own_list || g_own_cnt == 0)
+    {
+        printf("   > Owned Device List, to Provision Security Profile Info, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for provisioning security profile
+    int dev_num = 0;
+    if (g_own_cnt == 1)
+    {
+        dev_num = 1;
+    }
+    else
+    {
+        for (; ; )
+        {
+            printf("   > Enter Device Number, for security profile provisioning: ");
+            for (int ret = 0; 1 != ret; )
+            {
+                ret = scanf("%d", &dev_num);
+                for (; 0x20 <= getchar(); );  // for removing overflow garbages
+                                              // '0x20<=code' is character region
+            }
+            if (0<dev_num && g_own_cnt >= dev_num)
+            {
+                break;
+            }
+            printf("     Entered Wrong Number. Please Enter Again\n");
+        }
+    }
+
+    OCProvisionDev_t* targetDevice = getDevInst((const OCProvisionDev_t*)g_own_list, dev_num);
+    if (targetDevice == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Error, invalid device %d");
+        return -1;
+    }
+
+    int sp_selection = 0;
+    for (; ; )
+    {
+        printf("   > Enter (1) for SP defaults or (2) for SP containing all profiles: ");
+        for (int ret = 0; 1 != ret; )
+        {
+            ret = scanf("%d", &sp_selection);
+            for (; 0x20 <= getchar(); );  // for removing overflow garbages
+                                          // '0x20<=code' is character region
+        }
+        if ((1 == sp_selection) || (2 >= sp_selection))
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    printf("   > Posting new security profile info to device ...\n");
+    g_doneCB = false;
+
+    OicSecSp_t *sp = (sp_selection == 1) ? &gSpDefault : &gSpAll;
+    OCStackResult rst = OCProvisionSecurityProfileInfo(
+        (void*)g_ctx, sp, targetDevice, (OCProvisionResultCB)&provisionTrustChainCB);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "provisionSecurityProfileInfo returned error: %d", rst);
+        return -1;
+    }
+
+    if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "provisionSecurityProfileInfo callback error");
+        return -1;
+    }
+    if (!g_successCB)
+    {
+        return -1;
+    }
+
+    printf("   > Provisioned security profile info\n");
+
+    return 0;
+}
+
 #ifdef WITH_CLOUD
 static int provisionCloudConfig(void)
 {
@@ -1843,6 +1970,67 @@ static int getCsr(void)
     return 0;
 
 GETCSR_ERROR:
+    return -1;
+}
+
+static int getSp(void)
+{
+    // check |own_list| for retrieving SP
+    if(!g_own_list || 1>g_own_cnt)
+    {
+        printf("   > Owned Device List, to retrieve SP, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for retrieving SP
+    int dev_num = 0;
+    for( ; ; )
+    {
+        printf("   > Enter Device Number, for retrieving SP: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0<dev_num && g_own_cnt>=dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    // call |getDevInst| API
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*) g_own_list, dev_num);
+    if(!dev)
+    {
+        OIC_LOG(ERROR, TAG, "getDevInst: device instance empty");
+        goto GETSP_ERROR;
+    }
+    OCStackResult rst = OCGetSpResource((void*) g_ctx, dev, getSpCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGetSpResource API error: %d", rst);
+
+        goto GETSP_ERROR;
+    }
+
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCGetSpResource callback error");
+        goto GETSP_ERROR;
+    }
+
+    // display the result of get credential
+    printf("   > Get SP SUCCEEDED\n");
+
+    return 0;
+
+GETSP_ERROR:
     return -1;
 }
 
@@ -2942,7 +3130,8 @@ static void printMenu(void)
     printf("** 33. Check Linked Status of the Selected Device on PRVN DB\n");
     printf("** 34. Save the Selected Access Control List(ACL) into local SVR DB\n");
     printf("** 35. Provision certificate credential\n");
-    printf("** 36. Provision cloud credential\n\n");
+    printf("** 36. Provision cloud credential\n");
+    printf("** 37. Provision security profile info\n\n");
 
 
     printf("** [D] UNLINK PAIRWISE THINGS\n");
@@ -2957,7 +3146,8 @@ static void printMenu(void)
     printf("** [F] GET SECURITY RESOURCE FOR DEBUGGING ONLY\n");
     printf("** 60. Get the Credential resources of the Selected Device\n");
     printf("** 61. Get the ACL resources of the Selected Device\n");
-    printf("** 62. Get the CSR of the Selected Device\n\n");
+    printf("** 62. Get the CSR of the Selected Device\n");
+    printf("** 63. Get the SP of the Selected Device\n\n");
 
 #ifdef MULTIPLE_OWNER
     printf("** [G] UPDATE THE MULTIPLE OWNERSHIP TRANSFER RELATED VALUE\n");
@@ -3135,6 +3325,12 @@ int main()
             }
             break;
 #endif //WITH_CLOUD
+        case _37_PROVIS_SEC_PROFILE:
+            if (provisionSecurityProfileInfo())
+            {
+                OIC_LOG(ERROR, TAG, "_37_PROVIS_SEC_PROFILE: error");
+            }
+            break;
         case _40_UNLINK_PAIR_DEVS_:
             if(unlinkPairwise())
             {
@@ -3181,6 +3377,12 @@ int main()
             if(getCsr())
             {
                 OIC_LOG(ERROR, TAG, "_62_GET_CSR_: error");
+            }
+            break;
+        case _63_GET_SP_:
+            if(getSp())
+            {
+                OIC_LOG(ERROR, TAG, "_63_GET_SP_: error");
             }
             break;
 #ifdef MULTIPLE_OWNER

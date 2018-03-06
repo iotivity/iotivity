@@ -96,6 +96,7 @@ unittest = srmtest_env.Program('unittest', [
     'policyengine.cpp',
     'securityresourcemanager.cpp',
     'credentialresource.cpp',
+    'spresource.cpp',
     'srmutility.cpp',
     'iotvticalendartest.cpp',
     'base64tests.cpp',

@@ -243,6 +243,7 @@ bool SRMIsSecurityResourceURI(const char* uri)
         OIC_RSRC_AMACL_URI,
         OIC_RSRC_CRL_URI,
         OIC_RSRC_CRED_URI,
+        OIC_RSRC_SP_URI,
         OIC_RSRC_CSR_URI,
         OIC_RSRC_ACL_URI,
         OIC_RSRC_ACL2_URI,

@@ -34,6 +34,7 @@ typedef enum
     ACL_TYPE,                             /**< Access control list.**/
     PSK_TYPE,                             /**< Pre-Shared Key.**/
     CERT_TYPE,                            /**< X.509 certificate.**/
+    SP_TYPE,                              /**< Security Profiles. **/
     MOT_TYPE                              /**< Multiple Ownership Transfer.**/
 } DataType_t;
 
@@ -113,6 +114,18 @@ OCStackResult SRPGetCSRResource(void *ctx, const OCProvisionDev_t *selectedDevic
                                 OCGetCSRResultCB resultCallback);
 
 /**
+ * API to request the Security Profile (SP) resource.
+ *
+ * @param[in] ctx Application context to be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPGetSpResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                                OCGetSpResultCB resultCallback);
+
+/**
  * API to request the Roles resource.
  *
  * @param[in] ctx Application context to be returned in result callback.
@@ -154,6 +167,20 @@ OCStackResult SRPDeleteRoleCertificateByCredId(void *ctx, const OCProvisionDev_t
 OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
                                       const OCProvisionDev_t *selectedDeviceInfo,
                                       OCProvisionResultCB resultCallback);
+
+/**
+ * function to provision security profile info
+ *
+ * @param[in] ctx Application context to be returned in result callback.
+ * @param[in] sp security profile to be provisioned
+ * @param[in] selectedDeviceInfo Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from first resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPProvisionSecurityProfileInfo(void *ctx, OicSecSp_t *sp,
+                                              const OCProvisionDev_t *selectedDeviceInfo,
+                                              OCProvisionResultCB resultCallback);
 
 /**
  * function to save Trust certificate chain into Cred of SVR.

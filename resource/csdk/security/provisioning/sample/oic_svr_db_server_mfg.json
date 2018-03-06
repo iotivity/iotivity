@@ -1,4 +1,12 @@
 {
+    "sp": {
+        "supported_profiles": [ "oic.sec.sp.black", "oic.sec.sp.blue", "oic.sec.sp.baseline" ],
+        "active_profile": "oic.sec.sp.black",
+        "credid": 1,
+        "rowneruuid": "00000000-0000-0000-0000-000000000000",
+        "rt": ["oic.r.ps"],
+        "if": ["oic.if.baseline"]
+    },
     "cred": {
         "creds": [
             {
@@ -79,7 +87,21 @@
                     { "href": "/oic/sec/roles" }
                 ],
                 "permission": 14
+            },
+            {
+                "aceid": 5,
+                "subject": { "uuid": "11111111-1111-1111-1111-111111111111" },
+                "resources": [
+                    { "href": "/oic/sec/acl2" },
+                    { "href": "/oic/sec/cred" },
+                    { "href": "/oic/sec/doxm" },
+                    { "href": "/oic/sec/pstat" },
+                    { "href": "/oic/sec/csr" },
+                    { "href": "/oic/sec/sp" }
+                ],
+                "permission": 15
             }
+
         ],
       "rowneruuid": "00000000-0000-0000-0000-000000000000",
       "rt": ["oic.r.acl"],

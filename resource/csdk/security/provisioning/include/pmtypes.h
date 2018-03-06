@@ -95,6 +95,13 @@ typedef struct OCPMGetCsrResult
     OicEncodingType_t   encoding; /* Determines contents of csr; either OIC_ENCODING_DER or OIC_ENCODING_PEM */
 } OCPMGetCsrResult_t;
 
+typedef struct OCPMGetSpResult
+{
+    OicUuid_t           deviceId;
+    OCStackResult       res;
+    OicSecSp_t         *sp;
+} OCPMGetSpResult_t;
+
 typedef struct OCPMRoleCertChain
 {
     uint64_t            credId;         /**< credential ID */
@@ -158,6 +165,19 @@ typedef void (*OCProvisionResultCB)(void* ctx, size_t nOfRes, OCProvisionResult_
  *                        be true. Examine the elements of arr to discover which failed.
  */
 typedef void (*OCGetCSRResultCB)(void* ctx, size_t nOfRes, OCPMGetCsrResult_t *arr, bool hasError);
+
+/**
+ * Callback function definition of SP retrieve API
+ *
+ * @param[OUT] ctx - If user set a context, it will be returned here.
+ * @param[OUT] nOfRes - total number of results
+ * @param[OUT] arr - Array of OCPMGetSpResult_t, containing one entry for each target device. If an entry's res
+ *                   member is OC_STACK_OK, This memory is only valid while the callback is executing;
+ *                   callers must make copies if the data needs to be kept longer.
+ * @param[OUT] hasError - If all calls succeded, this will be false. One or more errors, and this will
+ *                        be true. Examine the elements of arr to discover which failed.
+ */
+typedef void (*OCGetSpResultCB)(void* ctx, size_t nOfRes, OCPMGetSpResult_t *arr, bool hasError);
 
 /**
  * Callback function definition of roles retrieve API

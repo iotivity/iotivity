@@ -35,6 +35,7 @@
 #include "srmutility.h"
 #include "aclresource.h"
 #include "pstatresource.h"
+#include "spresource.h"
 #include "experimental/doxmresource.h"
 #include "amaclresource.h"
 #include "credresource.h"
@@ -49,6 +50,7 @@
 #define DELTA_ERROR 0.0000001
 
 static OicSecPstat_t *JSONToPstatBin(const char *jsonStr);
+static OicSecSp_t *JSONToSpBin(const char *jsonStr);
 static OicSecDoxm_t *JSONToDoxmBin(const char *jsonStr);
 static OicSecAcl_t *JSONToAclBin(OicSecAclVersion_t *aclVersion,
                                  const char *jsonStr);
@@ -311,6 +313,7 @@ static OCStackResult ConvertOCJSONStringToCBORFile(const char *jsonStr, const ch
     OCStackResult ret = OC_STACK_ERROR;
     uint8_t *aclCbor = NULL;
     uint8_t *pstatCbor = NULL;
+    uint8_t *spCbor = NULL;
     uint8_t *doxmCbor = NULL;
     uint8_t *amaclCbor = NULL;
     uint8_t *credCbor = NULL;
@@ -366,6 +369,31 @@ static OCStackResult ConvertOCJSONStringToCBORFile(const char *jsonStr, const ch
     else
     {
         printf("JSON contains no /pstat\n");
+    }
+
+    value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_SP_NAME);
+    text = cJSON_PrintUnformatted(value);
+    printf("/sp json : \n%s\n", text);
+    size_t spCborSize = 0;
+    OICFree(text);
+    if (NULL != value)
+    {
+        OicSecSp_t *sp = JSONToSpBin(jsonStr);;
+        VERIFY_NOT_NULL(TAG, sp, FATAL);
+
+        ret = SpToCBORPayload(sp, &spCbor, &spCborSize);
+        if (OC_STACK_OK != ret)
+        {
+            OIC_LOG (ERROR, TAG, "Failed converting sp to Cbor Payload");
+            DeleteSpBinData(sp);
+            goto exit;
+        }
+        printf("SP Cbor Size: %" PRIuPTR "\n", spCborSize);
+        DeleteSpBinData(sp);
+    }
+    else
+    {
+        printf("JSON contains no /sp\n");
     }
 
     value = cJSON_GetObjectItem(jsonRoot, OIC_JSON_DOXM_NAME);
@@ -464,8 +492,8 @@ static OCStackResult ConvertOCJSONStringToCBORFile(const char *jsonStr, const ch
     }
 
     CborEncoder encoder;
-    size_t cborSize = aclCborSize + pstatCborSize + doxmCborSize + credCborSize + amaclCborSize +
-                      dpCborSize;
+    size_t cborSize = aclCborSize + pstatCborSize + spCborSize + doxmCborSize +
+                      credCborSize + amaclCborSize + dpCborSize;
 
     printf("Total Cbor Size : %" PRIuPTR "\n", cborSize);
     cborSize += 255; // buffer margin for adding map and byte string
@@ -475,6 +503,13 @@ static OCStackResult ConvertOCJSONStringToCBORFile(const char *jsonStr, const ch
     CborEncoder map;
     CborError cborEncoderResult = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Creating Main Map.");
+    if ((spCborSize > 0) && spCbor)
+    {
+        cborEncoderResult = cbor_encode_text_string(&map, OIC_JSON_SP_NAME, strlen(OIC_JSON_SP_NAME));
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding SP Name.");
+        cborEncoderResult = cbor_encode_byte_string(&map, spCbor, spCborSize);
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding SP Value.");
+    }
     if ((aclCborSize > 0) && aclCbor)
     {
         cborEncoderResult = cbor_encode_text_string(&map, OIC_JSON_ACL_NAME, strlen(OIC_JSON_ACL_NAME));
@@ -482,7 +517,6 @@ static OCStackResult ConvertOCJSONStringToCBORFile(const char *jsonStr, const ch
         cborEncoderResult = cbor_encode_byte_string(&map, aclCbor, aclCborSize);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding ACL Value.");
     }
-
     if ((pstatCborSize > 0) && pstatCbor)
     {
         cborEncoderResult = cbor_encode_text_string(&map, OIC_JSON_PSTAT_NAME, strlen(OIC_JSON_PSTAT_NAME));
@@ -536,6 +570,7 @@ exit:
     OICFree(aclCbor);
     OICFree(doxmCbor);
     OICFree(pstatCbor);
+    OICFree(spCbor);
     OICFree(amaclCbor);
     OICFree(credCbor);
     OICFree(dpCbor);
@@ -1146,6 +1181,93 @@ exit:
     }
     printf("OUT %s: %s\n", __func__, (pstat != NULL) ? "success" : "failure");
     return pstat;
+}
+
+static OicSecSp_t *JSONToSpBin(const char *jsonStr)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    cJSON *jsonRoot = NULL;
+    cJSON *jsonSp = NULL;
+    cJSON *jsonActiveProfileName = NULL;
+    cJSON *jsonSupportedProfilesArray = NULL;
+    cJSON *jsonProfileName = NULL;
+    cJSON *jsonCredid = NULL;
+
+    OicSecSp_t *sp = NULL;
+
+    VERIFY_NOT_NULL(TAG, jsonStr, INFO);
+    jsonRoot = cJSON_Parse(jsonStr);
+    VERIFY_NOT_NULL(TAG, jsonRoot, INFO);
+    jsonSp = cJSON_GetObjectItem(jsonRoot, OIC_JSON_SP_NAME);
+    VERIFY_NOT_NULL(TAG, jsonSp, INFO);
+    sp = (OicSecSp_t *)OICCalloc(1, sizeof(OicSecSp_t));
+    VERIFY_NOT_NULL(TAG, sp, INFO);
+
+    // Supported Profiles
+
+    jsonSupportedProfilesArray = cJSON_GetObjectItem(jsonSp, OIC_JSON_SUPPORTED_SP_NAME);
+    VERIFY_NOT_NULL(TAG, jsonSupportedProfilesArray, ERROR);
+    VERIFY_SUCCESS(TAG, (cJSON_Array == jsonSupportedProfilesArray->type), ERROR);
+    sp->supportedLen = cJSON_GetArraySize(jsonSupportedProfilesArray);
+    VERIFY_SUCCESS(TAG, (0 < sp->supportedLen), ERROR);
+    sp->supportedProfiles = (char **)OICCalloc(sp->supportedLen, sizeof(char *));
+    VERIFY_NOT_NULL(TAG, (sp->supportedProfiles), ERROR);
+
+    for (size_t i = 0; i < sp->supportedLen; i++)
+    {
+        jsonProfileName = cJSON_GetArrayItem(jsonSupportedProfilesArray, i);
+        VERIFY_NOT_NULL(TAG, jsonProfileName, ERROR);
+        sp->supportedProfiles[i] = OICStrdup(jsonProfileName->valuestring);
+        VERIFY_NOT_NULL(TAG, (sp->supportedProfiles[i]), ERROR);
+    }
+
+    // Active Profile
+
+    jsonActiveProfileName = cJSON_GetObjectItem(jsonSp, OIC_JSON_ACTIVE_SP_NAME);
+    VERIFY_NOT_NULL(TAG, jsonActiveProfileName, ERROR);
+    VERIFY_SUCCESS(TAG, (cJSON_String == jsonActiveProfileName->type), ERROR);
+    sp->activeProfile = OICStrdup(jsonActiveProfileName->valuestring);
+    VERIFY_NOT_NULL(TAG, (sp->activeProfile), ERROR);
+
+    if (0 > ProfileIdx(sp->supportedLen, sp->supportedProfiles, sp->activeProfile))
+    {
+        OIC_LOG_V(ERROR, TAG, "sp active profile %s not contained in supported profile list", sp->activeProfile);
+        goto exit;
+    }
+
+    // credid
+
+    jsonCredid = cJSON_GetObjectItem(jsonSp, OIC_JSON_SP_CREDID_NAME);
+    if (NULL == jsonCredid)
+    {
+        if (true == SpRequiresCred(sp->activeProfile))
+        {
+            OIC_LOG(ERROR, TAG, "sp active profile requires cred, but credid not present in json");
+            goto exit;
+        }
+        else
+        {
+            sp->credid = 0;
+        }
+    }
+    else
+    {
+        VERIFY_SUCCESS(TAG, (cJSON_Number == jsonCredid->type), ERROR);
+        sp->credid = (uint16_t)jsonCredid->valueint;
+    }
+
+    ret = OC_STACK_OK;
+
+exit:
+    cJSON_Delete(jsonRoot);
+    if (OC_STACK_OK != ret)
+    {
+        DeleteSpBinData(sp);
+        sp = NULL;
+    }
+    printf("OUT %s: %s\n", __func__, (sp != NULL) ? "success" : "failure");
+    return sp;
 }
 
 static OicEncodingType_t GetEncodingTypeFromStr(const char *encodingType)
