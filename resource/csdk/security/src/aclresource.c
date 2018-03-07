@@ -823,13 +823,13 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl,
                         OIC_LOG_V(DEBUG, TAG, "%s encoded v2 %s tag.", __func__, OIC_JSON_WC_NAME);
                         switch(rsrc->wildcard)
                         {
-                            case ALL_DISCOVERABLE:
+                            case ALL_DISCOVERABLE_NCRS_WITH_OC_SECURE:
                             wcstring = OIC_JSON_WC_PLUS_NAME;
                             break;
-                            case ALL_NON_DISCOVERABLE:
+                            case ALL_DISCOVERABLE_NCRS_WITH_OC_NONSECURE:
                             wcstring = OIC_JSON_WC_MINUS_NAME;
                             break;
-                            case ALL_RESOURCES:
+                            case ALL_NCRS:
                             wcstring = OIC_JSON_WC_ASTERISK_NAME;
                             break;
                             default:
@@ -1815,7 +1815,7 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                                                 {
                                                     free(rsrc->href);
                                                     rsrc->href = NULL;
-                                                    rsrc->wildcard = ALL_RESOURCES;
+                                                    rsrc->wildcard = ALL_NCRS;
                                                     OIC_LOG_V(DEBUG, TAG, "%s: replaced \"*\" href with wildcard = ALL_RESOURCES.",
                                                         __func__);
                                                 }
@@ -1890,18 +1890,18 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                                                 OIC_LOG_V(DEBUG, TAG, "%s found wc = %s.", __func__, wc);
                                                 if (0 == strcmp(OIC_JSON_WC_ASTERISK_NAME, wc))
                                                 {
-                                                    rsrc->wildcard = ALL_RESOURCES;
-                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_RESOURCES.", __func__);
+                                                    rsrc->wildcard = ALL_NCRS;
+                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_NCRS.", __func__);
                                                 }
                                                 else if (0 == strcmp(OIC_JSON_WC_PLUS_NAME, wc))
                                                 {
-                                                    rsrc->wildcard = ALL_DISCOVERABLE;
-                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_DISCOVERABLE.", __func__);
+                                                    rsrc->wildcard = ALL_DISCOVERABLE_NCRS_WITH_OC_SECURE;
+                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_DISCOVERABLE_NCRS_WITH_OC_SECURE.", __func__);
                                                 }
                                                 else if (0 == strcmp(OIC_JSON_WC_MINUS_NAME, wc))
                                                 {
-                                                    rsrc->wildcard = ALL_NON_DISCOVERABLE;
-                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_NON_DISCOVERABLE.", __func__);
+                                                    rsrc->wildcard = ALL_DISCOVERABLE_NCRS_WITH_OC_NONSECURE;
+                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_DISCOVERABLE_NCRS_WITH_OC_NONSECURE.", __func__);
                                                 }
                                                 else
                                                 {

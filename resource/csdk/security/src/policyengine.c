@@ -602,11 +602,26 @@ static bool IsResourceInAce(SRMRequestContext_t *context, const OicSecAce_t *ace
         {
             if (NO_WILDCARD != rsrc->wildcard)
             {
-                if ((ALL_RESOURCES == rsrc->wildcard) ||
-                    (ALL_DISCOVERABLE == rsrc->wildcard &&
-                        DISCOVERABLE_TRUE == context->discoverable) ||
-                    (ALL_NON_DISCOVERABLE == rsrc->wildcard &&
-                        DISCOVERABLE_FALSE == context->discoverable))
+                if  (IsNonConfigurationResourceUri(context->resourceUri) &&
+                        (
+                            // "*" matches all NCRs
+                            (
+                                (ALL_NCRS == rsrc->wildcard)
+                            ) ||
+                            // "+" matches all discoverable NCRs that expose at least one Secure Endpoint
+                            (
+                                (ALL_DISCOVERABLE_NCRS_WITH_OC_SECURE == rsrc->wildcard) &&
+                                (DISCOVERABLE_TRUE == context->discoverable) &&
+                                (true == context->resourceIsOcSecure)
+                            ) ||
+                            // "-" matches all discoverable NCRs that expose at least one Unsecure Endpoint
+                            (
+                                (ALL_DISCOVERABLE_NCRS_WITH_OC_NONSECURE == rsrc->wildcard) &&
+                                (DISCOVERABLE_TRUE == context->discoverable) &&
+                                (true == context->resourceIsOcNonsecure)
+                            )
+                        )
+                    )
                 {
                     OIC_LOG_V(DEBUG, TAG, "%s: found wc type %d matching resource.",
                         __func__, rsrc->wildcard);

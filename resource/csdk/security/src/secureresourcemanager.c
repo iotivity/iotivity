@@ -163,7 +163,7 @@ static void SetResourceUriAndType(SRMRequestContext_t *context)
     return;
 }
 
-static void SetDiscoverable(SRMRequestContext_t *context)
+static void SetDiscoverableAndOcSecureFlags(SRMRequestContext_t *context)
 {
     if (NULL == context)
     {
@@ -196,6 +196,33 @@ static void SetDiscoverable(SRMRequestContext_t *context)
     {
         context->discoverable = DISCOVERABLE_FALSE;
         OIC_LOG_V(DEBUG, TAG, "%s: resource %s is NOT OC_DISCOVERABLE.",
+                  __func__, context->resourceUri);
+    }
+
+    if (OC_SECURE == (resource->resourceProperties & OC_SECURE))
+    {
+        context->resourceIsOcSecure = true;
+        OIC_LOG_V(DEBUG, TAG, "%s: resource %s is OC_SECURE.",
+                  __func__, context->resourceUri);
+    }
+    else
+    {
+        context->resourceIsOcSecure = false;
+        OIC_LOG_V(DEBUG, TAG, "%s: resource %s is *not* OC_SECURE.",
+                  __func__, context->resourceUri);
+    }
+    // Reminder: a Resource can set both flags, and expose both an
+    // unsecure (e.g. CoAP) and secure (e.g. CoAPS) endpoint.
+    if (OC_NONSECURE == (resource->resourceProperties & OC_NONSECURE))
+    {
+        context->resourceIsOcNonsecure = true;
+        OIC_LOG_V(DEBUG, TAG, "%s: resource %s is OC_NONSECURE.",
+                  __func__, context->resourceUri);
+    }
+    else
+    {
+        context->resourceIsOcNonsecure = false;
+        OIC_LOG_V(DEBUG, TAG, "%s: resource %s is *not* OC_NONSECURE.",
                   __func__, context->resourceUri);
     }
 }
@@ -334,8 +361,8 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     // Set resource URI and type.
     SetResourceUriAndType(ctx);
 
-    // Set discoverable enum.
-    SetDiscoverable(ctx);
+    // Set discoverable enum, and OC_SECURE and/or OC_NONSECURE flags.
+    SetDiscoverableAndOcSecureFlags(ctx);
 
     // Initialize responseInfo.
     memcpy(&(ctx->responseInfo.info), &(requestInfo->info),

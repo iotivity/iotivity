@@ -712,8 +712,8 @@ OicSecAcl_t *JSONToAclBin(OicSecAclVersion_t *aclVersion, const char *jsonStr)
                     {
                         free(rsrc->href);
                         rsrc->href = NULL;
-                        rsrc->wildcard = ALL_RESOURCES;
-                        OIC_LOG_V(DEBUG, TAG, "%s: replaced \"*\" href with wildcard = ALL_RESOURCES.",
+                        rsrc->wildcard = ALL_NCRS;
+                        OIC_LOG_V(DEBUG, TAG, "%s: replaced \"*\" href with wildcard = ALL_NCRS.",
                                   __func__);
                     }
                 }
@@ -786,15 +786,15 @@ OicSecAcl_t *JSONToAclBin(OicSecAclVersion_t *aclVersion, const char *jsonStr)
                     VERIFY_NOT_NULL(TAG, wc, ERROR);
                     if (0 == strcmp(OIC_JSON_WC_ASTERISK_NAME, wc))
                     {
-                        rsrc->wildcard = ALL_RESOURCES;
+                        rsrc->wildcard = ALL_NCRS;
                     }
                     else if (0 == strcmp(OIC_JSON_WC_PLUS_NAME, wc))
                     {
-                        rsrc->wildcard = ALL_DISCOVERABLE;
+                        rsrc->wildcard = ALL_DISCOVERABLE_NCRS_WITH_OC_SECURE;
                     }
                     else if (0 == strcmp(OIC_JSON_WC_MINUS_NAME, wc))
                     {
-                        rsrc->wildcard = ALL_NON_DISCOVERABLE;
+                        rsrc->wildcard = ALL_DISCOVERABLE_NCRS_WITH_OC_NONSECURE;
                     }
                     else
                     {

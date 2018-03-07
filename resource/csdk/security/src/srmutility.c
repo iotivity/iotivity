@@ -332,5 +332,17 @@ bool IsDeviceConfigurationResourceUri(const char *uri)
         }
     }
 
+    OIC_LOG_V(INFO, TAG, "%s: resource %s is not DCR => resource is NCR.", __func__, uri);
     return false;
+}
+
+/**
+ * Is the URI for a Non0Configuration Resource as defined
+ * by Security Specification.
+ *
+ * @return true IFF the uri is for a NCR
+ */
+bool IsNonConfigurationResourceUri(const char *uri)
+{
+    return !IsDeviceConfigurationResourceUri(uri);
 }

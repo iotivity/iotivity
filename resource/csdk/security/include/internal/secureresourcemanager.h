@@ -49,6 +49,8 @@ typedef struct SRMRequestContext
     bool                    responseSent;                       // Is servicing this request complete?
     SRMAccessResponse_t     responseVal;                        // The SRM internal response code
     const CARequestInfo_t   *requestInfo;                       // ptr to info for this request
+    bool                    resourceIsOcSecure;                 // Was Resource created w OC_SECURE bit set?
+    bool                    resourceIsOcNonsecure;              // Was Resource created w OC_NONSECURE bit set?
     bool                    secureChannel;                      // Was request recv'd over secure channel?
     bool                    slowResponseSent;                   // Is a full response still needed?
     OicSecDiscoverable_t    discoverable;                       // Is resource discoverable?

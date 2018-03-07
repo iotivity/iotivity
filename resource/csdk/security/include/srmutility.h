@@ -180,6 +180,14 @@ OCStackResult OC_CALL ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid);
 bool IsDeviceConfigurationResourceUri(const char *uri);
 
 /**
+ * Is the URI for a Non0Configuration Resource as defined
+ * by Security Specification.
+ *
+ * @return true IFF the uri is for a NCR
+ */
+bool IsNonConfigurationResourceUri(const char *uri);
+
+/**
  * Compares two OicUuid_t structs.
  *
  * @return true if the two OicUuid_t structs are equal, else false.

@@ -432,12 +432,17 @@ struct OicSecOpt
     bool                revstat;
 };
 
+/**
+ * Note: the Resource wildcard definitions changed in OCF Bangkok specifation.
+ * IoTivity now implements the revised Resource wildcard behavior, which is
+ * more restrictive (i.e. the wildcards map to a subset of the prior Resources).
+ */
 typedef enum OicSecAceResourceWildcard
 {
     NO_WILDCARD = 0,
-    ALL_DISCOVERABLE,       // maps to "+" in JSON/CBOR
-    ALL_NON_DISCOVERABLE,   // maps to "-" in JSON/CBOR
-    ALL_RESOURCES           // maps to "*" in JSON/CBOR
+    ALL_DISCOVERABLE_NCRS_WITH_OC_SECURE,       // maps to "+" in JSON/CBOR
+    ALL_DISCOVERABLE_NCRS_WITH_OC_NONSECURE,    // maps to "-" in JSON/CBOR
+    ALL_NCRS                                    // maps to "*" in JSON/CBOR
 } OicSecAceResourceWildcard_t;
 
 struct OicSecRsrc
