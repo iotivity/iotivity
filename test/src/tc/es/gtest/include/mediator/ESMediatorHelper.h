@@ -42,6 +42,7 @@
 
 #define AUTH_CODE "authCode"
 #define AUTH_PROVIDER "authProvider"
+#define AUTH_ACCESSTOKEN "accesstoken"
 #define CI_SERVER "ciServer"
 #define NULL_VALUE NULL
 #define SSID "Iotivity_SSID"
@@ -99,6 +100,7 @@ public:
     static void *listeningFunc(void * data);
     void findEnrolleeResource();
     void provisionCloudProperty();
+    void provisionCloudPropertyWithAcessToken();
     void printStatus(EnrolleeStatus status);
     void getStatus();
     void printConfiguration(EnrolleeConf conf);

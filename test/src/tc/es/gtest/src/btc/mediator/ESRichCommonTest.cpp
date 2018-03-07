@@ -409,6 +409,108 @@ TEST_F(ESRichCommonTest_btc, GetCloudID_SRC_P)
 }
 
 /**
+ * @since 2018-02-07
+ * @objective Test 'setCloudPropWithAccessToken' API with positive basic way
+ * @target Void setCloudPropWithAccessToken();
+ * @test_data    None
+ * @pre_condition None
+ * @procedure Perform setCloudPropWithAccessToken()
+ * @post_condition None
+ * @expected successfully called api
+ **/
+TEST_F(ESRichCommonTest_btc, SetCloudPropWithAccessToken_SRC_P)
+{
+    try
+    {
+        const OCRepresentation mDevConfRep;
+        CloudProp cloudProp(mDevConfRep);
+        cloudProp.setCloudPropWithAccessToken(AUTH_ACCESSTOKEN, OAUTH_TOKENTYPE_BEARER, AUTH_PROVIDER, CI_SERVER);
+    }
+
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred in SetCloudPropWithAccessToken: " + std::string(e.what()));
+    }
+}
+
+/**
+ * @since 2018-02-07
+ * @objective Test 'setCloudPropWithAccessToken' API in negative way with empty value
+ * @target Void setCloudPropWithAccessToken();
+ * @test_data    None
+ * @pre_condition None
+ * @procedure Perform setCloudPropWithAccessToken()
+ * @post_condition None
+ * @expected successfully called api
+ **/
+TEST_F(ESRichCommonTest_btc, SetCloudPropWithAccessToken_ESV_P)
+{
+    try
+    {
+        const OCRepresentation mDevConfRep;
+        CloudProp cloudProp(mDevConfRep);
+        cloudProp.setCloudPropWithAccessToken(EMPTY_STRING, OAUTH_TOKENTYPE_BEARER, EMPTY_STRING, EMPTY_STRING);
+    }
+
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred in SetCloudPropWithAccessToken: " + std::string(e.what()));
+    }
+}
+
+/**
+ * @since 2018-02-07
+ * @objective Test 'getAccessToken' API with positive basic way
+ * @target std::string getAccessToken() const;
+ * @test_data    None
+ * @pre_condition None
+ * @procedure Perform getAccessToken()
+ * @post_condition None
+ * @expected successfully called api
+ **/
+ TEST_F(ESRichCommonTest_btc, GetAccessToken_SRC_P)
+{
+    try
+    {
+        const OCRepresentation mDevConfRep;
+        CloudProp cloudProp(mDevConfRep);
+        cloudProp.setCloudPropWithAccessToken(AUTH_ACCESSTOKEN, OAUTH_TOKENTYPE_BEARER, AUTH_PROVIDER, CI_SERVER);
+        ASSERT_EQ(cloudProp.getAccessToken(), AUTH_ACCESSTOKEN);
+    }
+
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred in SetCloudPropWithAccessToken: " + std::string(e.what()));
+    }
+}
+
+/**
+ * @since 2018-02-07
+ * @objective Test 'getAccessTokenType' API with positive basic way
+ * @target std::string getAccessTokenType() const;
+ * @test_data    None
+ * @pre_condition None
+ * @procedure Perform getAccessTokenType()
+ * @post_condition None
+ * @expected successfully called api
+ **/
+ TEST_F(ESRichCommonTest_btc, GetAccessTokenType_SRC_P)
+{
+    try
+    {
+        const OCRepresentation mDevConfRep;
+        CloudProp cloudProp(mDevConfRep);
+        cloudProp.setCloudPropWithAccessToken(AUTH_ACCESSTOKEN, OAUTH_TOKENTYPE_BEARER, AUTH_PROVIDER, CI_SERVER);
+        ASSERT_EQ(cloudProp.getAccessTokenType(), OAUTH_TOKENTYPE_BEARER);
+    }
+
+    catch (exception& e)
+    {
+        SET_FAILURE("Exception occurred in SetCloudPropWithAccessToken: " + std::string(e.what()));
+    }
+}
+
+/**
  * @since 2016-08-18
  * @objective Test 'setWiFiProp' API with positive basic way
  * @target void setWiFiProp() const;

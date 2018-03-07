@@ -153,7 +153,25 @@ void ESMediatorHelper::provisionCloudProperty()
     {
         s_remoteEnrollee->provisionCloudProperties(cloudProp, cloudProvisioningStatusCallback);
         s_isProvisionCloudPropSuccess = true;
-        
+    }
+    catch (OCException &e)
+    {
+        IOTIVITYTEST_LOG(INFO, "Exception during provisionCloudProperties call");
+        return;
+    }
+    CommonUtil::waitInSecond(5);
+}
+
+void ESMediatorHelper::provisionCloudPropertyWithAcessToken()
+{
+
+    CloudProp cloudProp;
+    cloudProp.setCloudPropWithAccessToken("accessToken", OAUTH_TOKENTYPE_BEARER, "authProvider", "ciServer");
+
+    try
+    {
+        s_remoteEnrollee->provisionCloudProperties(cloudProp, cloudProvisioningStatusCallback);
+        s_isProvisionCloudPropSuccess = true;
     }
     catch (OCException &e)
     {
