@@ -612,11 +612,14 @@ static OCStackResult provisionCredentials(OicSecCred_t *cred,
         }
         secPayload->base.type = PAYLOAD_TYPE_SECURITY;
         int secureFlag = 0;
-        res = CredToCBORPayload(cred, &secPayload->securityData, &secPayload->payloadSize, secureFlag);
+        bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+        memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+        propertiesToInclude[CRED_CREDS] = true;
+        res = CredToCBORPayloadPartial(cred, NULL, &secPayload->securityData, &secPayload->payloadSize, secureFlag, propertiesToInclude);
         if ((OC_STACK_OK != res) && (NULL == secPayload->securityData))
         {
             OCPayloadDestroy((OCPayload *)secPayload);
-            OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
+            OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayloadPartial");
             return OC_STACK_NO_MEMORY;
         }
 
@@ -688,11 +691,14 @@ static OCStackResult ProvisionCredentialsDos(void *ctx, OicSecCred_t *cred,
         }
         secPayload->base.type = PAYLOAD_TYPE_SECURITY;
         int secureFlag = 0;
-        res = CredToCBORPayload(cred, &secPayload->securityData, &secPayload->payloadSize, secureFlag);
+        bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+        memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+        propertiesToInclude[CRED_CREDS] = true;
+        res = CredToCBORPayloadPartial(cred, NULL, &secPayload->securityData, &secPayload->payloadSize, secureFlag, propertiesToInclude);
         if ((OC_STACK_OK != res) && (NULL == secPayload->securityData))
         {
             OCPayloadDestroy((OCPayload *)secPayload);
-            OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
+            OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayloadPartial");
             return OC_STACK_NO_MEMORY;
         }
 
@@ -1195,12 +1201,15 @@ static OCStackApplicationResult ProvisionTrustChainCB(void *ctx, OCDoHandle UNUS
         }
         secPayload->base.type = PAYLOAD_TYPE_SECURITY;
         int secureFlag = 1; /* Don't send the private key to the device, if it happens to be present */
-        if (OC_STACK_OK != CredToCBORPayload(trustCertChainCred, &secPayload->securityData,
-                                             &secPayload->payloadSize, secureFlag))
+        bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+        memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+        propertiesToInclude[CRED_CREDS] = true;
+        if (OC_STACK_OK != CredToCBORPayloadPartial(trustCertChainCred, NULL, &secPayload->securityData,
+                                             &secPayload->payloadSize, secureFlag, propertiesToInclude))
         {
             DeleteCredList(trustCertChainCred);
             OCPayloadDestroy((OCPayload *)secPayload);
-            OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
+            OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayloadPartial");
             return OC_STACK_NO_MEMORY;
         }
         DeleteCredList(trustCertChainCred);
@@ -1618,8 +1627,11 @@ static OCStackApplicationResult ProvisionCertificateCB(void *ctx, OCDoHandle han
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
 
     int secureFlag = 0;//don't send private data(key)
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == CredToCBORPayload(cred, &secPayload->securityData,
-                                             &secPayload->payloadSize, secureFlag), ERROR);
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[CRED_CREDS] = true;
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == CredToCBORPayloadPartial(cred, NULL, &secPayload->securityData,
+                                             &secPayload->payloadSize, secureFlag, propertiesToInclude), ERROR);
     OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
     query = OICCalloc(1, DEFAULT_URI_LENGTH);
@@ -4283,10 +4295,10 @@ OCStackResult SRPReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
     OIC_LOG(DEBUG, TAG, "IN SRPReadTrustCertChain");
 
     OCStackResult res = OC_STACK_ERROR;
-    int secureFlag = 0;
     OicSecCred_t* credData = GetCredEntryByCredId(credId);
     if(credData)
     {
+        int secureFlag = 0;
         res = CredToCBORPayload((const OicSecCred_t*) credData, trustCertChain,
                                 chainSize, secureFlag);
         if(OC_STACK_OK != res)

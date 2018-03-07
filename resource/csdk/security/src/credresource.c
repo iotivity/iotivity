@@ -89,7 +89,7 @@ static const uint16_t CBOR_SIZE = 2048;
 
 /** CRED size - Number of mandatory items. */
 static const uint8_t CRED_ROOT_MAP_SIZE = 4;
-static const uint8_t CRED_MAP_SIZE = 3;
+static const uint8_t CRED_MAP_SIZE = 2;
 static const uint8_t ROLEID_MAP_SIZE = 1;
 
 
@@ -658,8 +658,8 @@ static void logCredMetadata(void)
 #endif
 }
 
-OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUuid_t *rownerId, uint8_t **cborPayload,
-                                size_t *cborSize, int secureFlag)
+OCStackResult CredToCBORPayloadPartial(const OicSecCred_t *credS, const OicUuid_t *rownerId, uint8_t **cborPayload,
+                                size_t *cborSize, int secureFlag, const bool *propertiesToInclude)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s:", __func__);
     if (NULL == cborPayload || NULL != *cborPayload || NULL == cborSize)
@@ -714,7 +714,10 @@ OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUu
         {
             mapSize++;
         }
-
+        if(propertiesToInclude[CRED_ROWNERUUID])
+        {
+            mapSize++;
+        }
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 #ifdef MULTIPLE_OWNER
         if(cred->eownerID)
@@ -888,6 +891,7 @@ OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUu
     cred = credS;
 
     // Rownerid
+    if(propertiesToInclude[CRED_ROWNERUUID])
     {
         char *rowner = NULL;
         cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_ROWNERID_NAME,
@@ -940,28 +944,28 @@ OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUu
 
     if (CborNoError == cborEncoderResult)
     {
-        OIC_LOG(DEBUG, TAG, "CredToCBORPayload Successed");
+        OIC_LOG(DEBUG, TAG, "CredToCBORPayloadPartial Successed");
         *cborPayload = outPayload;
         *cborSize = cbor_encoder_get_buffer_size(&encoder, outPayload);
         ret = OC_STACK_OK;
     }
-    OIC_LOG(DEBUG, TAG, "CredToCBORPayload OUT");
+    OIC_LOG(DEBUG, TAG, "CredToCBORPayloadPartial OUT");
 exit:
     if (CborErrorOutOfMemory == cborEncoderResult)
     {
-        OIC_LOG(DEBUG, TAG, "CredToCBORPayload:CborErrorOutOfMemory : retry with more memory");
+        OIC_LOG(DEBUG, TAG, "CredToCBORPayloadPartial:CborErrorOutOfMemory : retry with more memory");
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
         cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
-        ret = CredToCBORPayload(credS, cborPayload, &cborLen, secureFlag);
+        ret = CredToCBORPayloadPartial(credS, NULL, cborPayload, &cborLen, secureFlag, propertiesToInclude);
         *cborSize = cborLen;
     }
 
     if (CborNoError != cborEncoderResult)
     {
-        OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
+        OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayloadPartial");
         OICFree(outPayload);
         outPayload = NULL;
         *cborSize = 0;
@@ -980,6 +984,17 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
     return CredToCBORPayloadWithRowner(credS, &gRownerId, cborPayload, cborSize, secureFlag);
 }
 
+OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUuid_t *rownerId, uint8_t **cborPayload,
+                                size_t *cborSize, int secureFlag)
+{
+    bool allProps[PSTAT_PROPERTY_COUNT];
+
+    for (int i = 0; i < PSTAT_PROPERTY_COUNT; i++)
+    {
+        allProps[i] = true;
+    }
+    return CredToCBORPayloadPartial(credS, rownerId, cborPayload, cborSize, secureFlag, allProps);
+}
 
 OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 OicSecCred_t **secCred, OicUuid_t **rownerid)

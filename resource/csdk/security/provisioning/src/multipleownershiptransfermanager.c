@@ -489,9 +489,11 @@ static OCStackApplicationResult MOTProvisionPreconfigPINCB(void *ctx, OCDoHandle
     secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
     VERIFY_NOT_NULL(TAG, secPayload, ERROR);
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-
-    postCredRes = CredToCBORPayload(motCtx->cred, &secPayload->securityData, &secPayload->payloadSize,
-                                    false);
+    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+    propertiesToInclude[CRED_CREDS] = true;
+    postCredRes = CredToCBORPayloadPartial(motCtx->cred, NULL, &secPayload->securityData, &secPayload->payloadSize,
+                                    false, propertiesToInclude);
     VERIFY_SUCCESS(TAG, (OC_STACK_OK == postCredRes), ERROR);
 
     OIC_LOG(DEBUG, TAG, "Created Credential payload to register PIN credential:");
@@ -1103,7 +1105,7 @@ static OCStackApplicationResult PostSubOwnerCredentialCB(void *ctx, OCDoHandle h
 #endif
         //Send owner credential to new device : POST /oic/sec/cred [ owner credential ]
         if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData,
-                                             &secPayload->payloadSize, 0))
+                                            &secPayload->payloadSize, 0))
         {
             OICFree(secPayload);
             OIC_LOG(ERROR, TAG, "Error while converting bin to cbor.");
