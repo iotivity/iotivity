@@ -2340,15 +2340,12 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest* ehRequest
     OCEntityHandlerResult ret = OC_EH_INTERNAL_SERVER_ERROR;
     OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest IN");
 
-    OicSecDostype_t dos;
-    // Get binary representation of cbor
     OicSecCred_t *cred = NULL;
     OicUuid_t     *rownerId = NULL;
     uint8_t *payload = (((OCSecurityPayload*)ehRequest->payload)->securityData);
     size_t size = (((OCSecurityPayload*)ehRequest->payload)->payloadSize);
 
-    OCStackResult res = OC_STACK_OK;
-
+    OicSecDostype_t dos;
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
     if ((DOS_RESET == dos.state) ||
         (DOS_RFNOP == dos.state))
@@ -2358,7 +2355,8 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest* ehRequest
         goto exit;
     }
 
-    res = CBORPayloadToCred(payload, size, &cred, &rownerId);
+    OCStackResult res = CBORPayloadToCred(payload, size, &cred, &rownerId);
+
 #ifdef MULTIPLE_OWNER
     if (IsSubOwner(cred->eownerID) && !IsNilUuid(cred->eownerID))
     {
@@ -2463,6 +2461,16 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
         return ehRet;
     }
 
+    OicSecDostype_t dos;
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
+    if ((DOS_RESET == dos.state) ||
+        (DOS_RFNOP == dos.state))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s /cred resource is read-only in RESET and RFNOP.", __func__);
+        ehRet = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
+    }
+
     if (GetCredIdsFromQueryString(ehRequest->query, &credIdList))
     {
         if (OC_STACK_RESOURCE_DELETED == RemoveCredentialByCredIds(credIdList))
@@ -2485,7 +2493,7 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
             ehRet = OC_EH_RESOURCE_DELETED;
         }
     }
-
+exit:
     //Send response to request originator
     ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
                    OC_EH_OK : OC_EH_ERROR;
@@ -3720,7 +3728,7 @@ void GetPrimaryCertKey(ByteArray_t * key)
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
 
     VERIFY_NOT_NULL(TAG, key, ERROR);
-    
+
     key->len = 0;
     OicSecCred_t * temp = NULL;
 

@@ -3113,6 +3113,17 @@ static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest
 
     VERIFY_NOT_NULL(TAG, ehRequest->query, ERROR);
 
+    OicSecDostype_t dos;
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
+    ehRet = OC_EH_OK;
+    if ((DOS_RESET == dos.state) ||
+        (DOS_RFNOP == dos.state))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s /acl resource is read-only in RESET and RFNOP.", __func__);
+        ehRet = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
+    }
+
     if (GetAceIdsFromQueryString(ehRequest->query, &aceIdList))
     {
         if (OC_STACK_RESOURCE_DELETED == RemoveAceByAceIds(aceIdList))
