@@ -80,6 +80,12 @@ namespace OC
                                      observationIds, pResponse, QoS);
         }
 
+
+        OCResourceHandle getResourceHandleAtUri(const std::string& uri)
+        {
+            return OCPlatform_impl::Instance().getResourceHandleAtUri(uri);
+        }
+
         OCResource::Ptr constructResourceObject(const std::string& host,
                                      const std::string& uri,
                                      OCConnectivityType connectivityType,

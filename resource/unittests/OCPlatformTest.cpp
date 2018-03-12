@@ -912,9 +912,9 @@ namespace OCPlatformTest
             dmv));
         EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
             "99a74220-73d3-426f-8397-3c06d586a865"));
-        OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+        OCResourceHandle handle = OCPlatform::getResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
         ASSERT_TRUE(NULL != handle);
-        EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::bindTypeToResource(handle, "oic.wk.tv"));
     }
 
 
@@ -929,9 +929,9 @@ namespace OCPlatformTest
             "mySpecVersion"));
         EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
             "myDataModelVersions"));
-        OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+        OCResourceHandle handle = OCPlatform::getResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
         ASSERT_TRUE(NULL != handle);
-        EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::bindTypeToResource(handle, "oic.wk.tv"));
 
         std::string value;
         EXPECT_EQ(OC_STACK_OK, OCPlatform::getPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,

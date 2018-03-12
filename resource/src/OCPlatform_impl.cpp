@@ -306,6 +306,11 @@ namespace OC
         return result_guard(result);
     }
 
+    OCResourceHandle OCPlatform_impl::getResourceHandleAtUri(const std::string& uri)
+    {
+        return OCGetResourceHandleAtUri(uri.c_str());
+    }
+
     OCResource::Ptr OCPlatform_impl::constructResourceObject(const std::string& host,
                                                 const std::string& uri,
                                                 OCConnectivityType connectivityType,

@@ -774,7 +774,7 @@ OCStackResult SetDeviceInfo()
 {
     OCStackResult result = OC_STACK_ERROR;
 
-    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    OCResourceHandle handle = OCPlatform::getResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
 
     if (handle == NULL)
     {
@@ -782,7 +782,7 @@ OCStackResult SetDeviceInfo()
         return result;
     }
 
-    result = OCBindResourceTypeToResource(handle, "oic.d.airconditioner");
+    result = OCPlatform::bindTypeToResource(handle, "oic.d.airconditioner");
 
     if (result != OC_STACK_OK)
     {

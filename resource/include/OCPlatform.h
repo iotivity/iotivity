@@ -125,6 +125,15 @@ namespace OC
                     QualityOfService QoS);
 
         /**
+        * Gets a resource handle by resource uri.
+        *
+        * @param uri   Uri of Resource to get Resource handle.
+        *
+        * @return Found  resource handle or NULL if not found.
+        */
+        OCResourceHandle getResourceHandleAtUri(const std::string& uri);
+
+        /**
          * API for Service and Resource Discovery.
          * @note This API applies to client side only.
          *
