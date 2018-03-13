@@ -30,6 +30,7 @@
 
 #define TAG "OIC_CC_CERT_PROFILE"
 
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 // OCF Compliant ID Cert profiles
 static const mbedtls_x509_crt_profile s_certProfile = {
     MBEDTLS_X509_ID_FLAG(MBEDTLS_MD_SHA256),        // MD algorithms
@@ -64,8 +65,6 @@ static const unsigned int s_caNonKeyUsage = MBEDTLS_X509_KU_DIGITAL_SIGNATURE |
                                             MBEDTLS_X509_KU_KEY_AGREEMENT |
                                             MBEDTLS_X509_KU_ENCIPHER_ONLY |
                                             MBEDTLS_X509_KU_DECIPHER_ONLY;
-
-#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 
 static CertProfileResult FindEndEntityCert(const mbedtls_x509_crt *certChain, mbedtls_x509_crt const **eeCert)
 {

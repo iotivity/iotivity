@@ -191,7 +191,10 @@ namespace OC
                 useLegacyCleanup(false)
         {}
             /* @deprecated: Use a non deprecated constructor. */
-            PlatformConfig()
+            OC_DEPRECATED_MSG(
+            PlatformConfig(),
+            "Use a non deprecated constructor",
+            2014.10)
                 : serviceType(ServiceType::InProc),
                 mode(ModeType::Both),
                 serverConnectivity(CT_DEFAULT),
@@ -204,12 +207,15 @@ namespace OC
                 useLegacyCleanup(true)
         {}
             /* @deprecated: Use a non deprecated constructor. */
+            OC_DEPRECATED_MSG(
             PlatformConfig(const ServiceType serviceType_,
-            const ModeType mode_,
-            OCConnectivityType serverConnectivity_,
-            OCConnectivityType clientConnectivity_,
-            const QualityOfService QoS_,
-            OCPersistentStorage *ps_ = nullptr)
+                           const ModeType mode_,
+                           OCConnectivityType serverConnectivity_,
+                           OCConnectivityType clientConnectivity_,
+                           const QualityOfService QoS_,
+                           OCPersistentStorage *ps_ = nullptr),
+            "Use a non deprecated constructor",
+            2017.03)
                 : serviceType(serviceType_),
                 mode(mode_),
                 serverConnectivity(serverConnectivity_),
@@ -222,12 +228,15 @@ namespace OC
                 useLegacyCleanup(true)
         {}
             /* @deprecated: Use a non deprecated constructor. */
+            OC_DEPRECATED_MSG(
             PlatformConfig(const ServiceType serviceType_,
-            const ModeType mode_,
-            const std::string& ipAddress_,
-            const uint16_t port_,
-            const QualityOfService QoS_,
-            OCPersistentStorage *ps_ = nullptr)
+                           const ModeType mode_,
+                           const std::string& ipAddress_,
+                           const uint16_t port_,
+                           const QualityOfService QoS_,
+                           OCPersistentStorage *ps_ = nullptr),
+            "Use a non deprecated constructor",
+            2017.03)
                 : serviceType(serviceType_),
                 mode(mode_),
                 serverConnectivity(CT_DEFAULT),
@@ -240,13 +249,16 @@ namespace OC
                 useLegacyCleanup(true)
         {}
             /* @deprecated: Use a non deprecated constructor. */
+            OC_DEPRECATED_MSG(
             PlatformConfig(const ServiceType serviceType_,
-            const ModeType mode_,
-            const std::string& ipAddress_,
-            const uint16_t port_,
-            const OCTransportAdapter transportType_,
-            const QualityOfService QoS_,
-            OCPersistentStorage *ps_ = nullptr)
+                           const ModeType mode_,
+                           const std::string& ipAddress_,
+                           const uint16_t port_,
+                           const OCTransportAdapter transportType_,
+                           const QualityOfService QoS_,
+                           OCPersistentStorage *ps_ = nullptr),
+            "Use a non deprecated constructor",
+            2017.03)
                 : serviceType(serviceType_),
                 mode(mode_),
                 serverConnectivity(CT_DEFAULT),
@@ -258,10 +270,10 @@ namespace OC
                 ps(ps_)
         {}
             PlatformConfig(const ServiceType serviceType_,
-            const ModeType mode_,
-            OCTransportAdapter transportType_,
-            const QualityOfService QoS_,
-            OCPersistentStorage *ps_ = nullptr)
+                           const ModeType mode_,
+                           OCTransportAdapter transportType_,
+                           const QualityOfService QoS_,
+                           OCPersistentStorage *ps_ = nullptr)
                 : serviceType(serviceType_),
                 mode(mode_),
                 serverConnectivity(CT_DEFAULT),
@@ -274,13 +286,16 @@ namespace OC
                 useLegacyCleanup(true)
         {}
             /* @deprecated: Use a non deprecated constructor. */
+            OC_DEPRECATED_MSG(
             PlatformConfig(const ServiceType serviceType_,
-            const ModeType mode_,
-            OCConnectivityType serverConnectivity_,
-            OCConnectivityType clientConnectivity_,
-            OCTransportAdapter transportType_,
-            const QualityOfService QoS_,
-            OCPersistentStorage *ps_ = nullptr)
+                           const ModeType mode_,
+                           OCConnectivityType serverConnectivity_,
+                           OCConnectivityType clientConnectivity_,
+                           OCTransportAdapter transportType_,
+                           const QualityOfService QoS_,
+                           OCPersistentStorage *ps_ = nullptr),
+            "Use a non deprecated constructor",
+            2017.03)
                 : serviceType(serviceType_),
                 mode(mode_),
                 serverConnectivity(serverConnectivity_),

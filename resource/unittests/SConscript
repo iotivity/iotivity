@@ -104,6 +104,9 @@ unittests_src = [
 
 # TODO: IOT-2039: Fix errors in the following Windows tests.
 if target_os in ['windows']:
+    # Ignore deprecated code warning in unit tests.
+    # We still test deprecated code till removal.
+    unittests_env.AppendUnique(CCFLAGS=['/wd4996'])
     if '12.0' == unittests_env['MSVC_VERSION']:
         unittests_src.remove('OCPlatformTest.cpp')
         unittests_src.remove('OCRepresentationEncodingTest.cpp')

@@ -53,8 +53,12 @@ namespace OC
             return OC_STACK_NOTIMPL;
         }
 
+        // @deprecated: Use setPropertyValue instead.
+        OC_DEPRECATED_MSG(
         virtual OCStackResult registerDeviceInfo(
-            const OCDeviceInfo /*deviceInfo*/)
+            const OCDeviceInfo /*deviceInfo*/),
+            "Use setPropertyValue instead.",
+            2017.01)
         {
             // Not implemented
             return OC_STACK_NOTIMPL;

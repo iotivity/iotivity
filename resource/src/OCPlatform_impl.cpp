@@ -55,7 +55,11 @@ namespace OC
 
     PlatformConfig& OCPlatform_impl::globalConfig()
     {
-        static PlatformConfig s_config;
+        static PlatformConfig s_config(ServiceType::InProc,
+                                       ModeType::Both,
+                                       OC_DEFAULT_ADAPTER,
+                                       QualityOfService::NaQos,
+                                       nullptr);
         return s_config;
     }
 

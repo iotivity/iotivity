@@ -502,7 +502,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
     {
         port = static_cast<uint16_t>(jPort);
     }
-
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     PlatformConfig cfg{
         JniUtils::getServiceType(env, jServiceType),
         JniUtils::getModeType(env, jModeType),
@@ -512,6 +515,9 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
         JniUtils::getQOS(env, static_cast<int>(jQOS)),
         JniOcSecurity::getOCPersistentStorage()
     };
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     OCPlatform::Configure(cfg);
 }
 

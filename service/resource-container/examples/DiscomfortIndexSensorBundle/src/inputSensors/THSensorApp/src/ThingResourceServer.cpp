@@ -196,7 +196,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
 int main()
 {
     // Create PlatformConfig object
-    PlatformConfig cfg(COAP_SRVTYPE, COAP_MODE, COAP_IP, COAP_PORT, OC::QualityOfService::LowQos);
+    PlatformConfig cfg(COAP_SRVTYPE, COAP_MODE, OC_DEFAULT_ADAPTER, OC::QualityOfService::LowQos);
 
     try
     {

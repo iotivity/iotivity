@@ -199,6 +199,13 @@ namespace OCProvisioningTest
         EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::setDisplayPinCB(nullptr));
     }
 
+    TEST(SetDisplayPinCBTest, RegisterDisplayPinCallbackTestNullCB)
+    {
+        DisplayPinCallbackHandle displayPinCallbackHandle;
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::registerDisplayPinCallback(nullptr, &displayPinCallbackHandle));
+    }
+
+
     TEST(ProvisionAclTest, ProvisionAclTestNullAcl)
     {
         OCSecureResource device;

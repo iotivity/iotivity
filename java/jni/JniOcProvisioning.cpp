@@ -119,7 +119,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_ownershipTransferCB
             {
                 delete jniPinListener;
                 jniPinListener = new JniPinCheckListener(env, jListener);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
                 result = OCSecure::setInputPinCallback(Callback);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
             }
             else
             {
@@ -500,12 +507,19 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
 
     try
     {
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
         OCStackResult result = OCSecure::setDisplayPinCB(displayPinCB);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Failed to set displayPinListener");
             return;
         }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     }
     catch (OCException& e)
     {

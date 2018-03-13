@@ -193,9 +193,7 @@ bool ElevatorServer::Start(const std::string& elevatorName)
         PlatformConfig Configuration {
                                 ServiceType::InProc,
                                 ModeType::Server,
-                                "0.0.0.0", // By setting to "0.0.0.0", it binds to all available
-                                           // interfaces
-                                0,         // Uses randomly available port
+                                OC_DEFAULT_ADAPTER,
                                 QualityOfService::NaQos,
                                 &ps
                             };

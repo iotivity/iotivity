@@ -562,7 +562,7 @@ int main(void)
 
     PlatformConfig config
     {
-        OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::HighQos, &ps
+        OC::ServiceType::InProc, ModeType::Both, OC_DEFAULT_ADAPTER, OC::QualityOfService::HighQos, &ps
     };
 
     OCPlatform::Configure(config);

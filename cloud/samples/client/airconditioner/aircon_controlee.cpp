@@ -827,8 +827,7 @@ int main(int argc, char *argv[])
     {
         ServiceType::InProc,
         ModeType::Both,
-        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-        0,         // Uses randomly available port
+        OC_DEFAULT_ADAPTER,
         QualityOfService::LowQos,
         &ps
     };

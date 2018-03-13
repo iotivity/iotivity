@@ -548,7 +548,7 @@ void configurePlatform()
 {
     PlatformConfig config
     {
-        OC::ServiceType::InProc, ModeType::Client, "0.0.0.0", 0, OC::QualityOfService::LowQos
+        OC::ServiceType::InProc, ModeType::Client, OC_DEFAULT_ADAPTER, OC::QualityOfService::LowQos
     };
     OCPlatform::Configure(config);
 }

@@ -321,8 +321,7 @@ namespace
         {
             OC::ServiceType::InProc,
             OC::ModeType::Both,
-            "0.0.0.0",
-            0,
+            OC_DEFAULT_ADAPTER,
             OC::QualityOfService::LowQos,
             &gps
         };
