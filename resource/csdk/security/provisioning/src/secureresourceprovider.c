@@ -4019,11 +4019,14 @@ static OCStackApplicationResult ProvisionAclCB(void *ctx, OCDoHandle UNUSED,
             return OC_STACK_NO_MEMORY;
         }
         secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-        if (OC_STACK_OK != AclToCBORPayload(aclData->acl, aclData->aclVersion, &secPayload->securityData,
-                                            &secPayload->payloadSize))
+        bool propertiesToInclude[PSTAT_PROPERTY_COUNT];
+        memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+        propertiesToInclude[ACL_ACELIST] = true;
+        if (OC_STACK_OK != AclToCBORPayloadPartial(aclData->acl, aclData->aclVersion, &secPayload->securityData,
+                                            &secPayload->payloadSize, propertiesToInclude))
         {
             OCPayloadDestroy((OCPayload *)secPayload);
-            OIC_LOG(ERROR, TAG, "Failed to AclToCBORPayload");
+            OIC_LOG(ERROR, TAG, "Failed to AclToCBORPayloadPartial");
             OIC_LOG_V(ERROR, TAG, "OUT %s", __func__);
             return OC_STACK_NO_MEMORY;
         }
