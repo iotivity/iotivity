@@ -131,7 +131,6 @@ void CoapCloudConfProvCbInApp(ESCoapCloudConfData *eventData)
         return ;
     }
 
-    printf("AuthCode : %s\n", eventData->authCode);
     printf("AcessToken : %s\n", eventData->accessToken);
     printf("AcessTokenType : %d\n", eventData->accessTokenType);
     printf("AuthProvider : %s\n", eventData->authProvider);

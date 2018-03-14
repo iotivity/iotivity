@@ -151,7 +151,6 @@ void CoapCloudConfProvCbInApp(ESCoapCloudConfData *eventData)
         return ;
     }
 
-    cout << "AuthCode : " << eventData->authCode << endl;
     cout << "AcessToken : " <<  eventData->accessToken << endl;
     cout << "AcessTokenType : "<< eventData->accessTokenType << endl;
     cout << "AuthProvider : " << eventData->authProvider << endl;

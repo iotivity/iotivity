@@ -72,7 +72,6 @@ typedef struct
 typedef struct
 {
     OCResourceHandle handle;
-    char authCode[OIC_STRING_MAX_VALUE];
     char accessToken[OIC_STRING_MAX_VALUE];
     OAUTH_TOKENTYPE accessTokenType;
     char authProvider[OIC_STRING_MAX_VALUE];

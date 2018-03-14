@@ -302,10 +302,8 @@ OCStackResult initCoapCloudConfResource(bool isSecured)
 {
     OCStackResult res = OC_STACK_ERROR;
 
-    OICStrcpy(g_ESCoapCloudConfResource.authCode, sizeof(g_ESCoapCloudConfResource.authCode), "");
     OICStrcpy(g_ESCoapCloudConfResource.accessToken, sizeof(g_ESCoapCloudConfResource.accessToken),
             "");
-    g_ESCoapCloudConfResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
     OICStrcpy(g_ESCoapCloudConfResource.authProvider,
             sizeof(g_ESCoapCloudConfResource.authProvider), "");
     OICStrcpy(g_ESCoapCloudConfResource.ciServer, sizeof(g_ESCoapCloudConfResource.ciServer), "");
@@ -722,35 +720,24 @@ void updateCoapCloudConfResource(OCRepPayload* input)
         return;
     }
 
-    memset(cloudData->authCode, 0, OIC_STRING_MAX_VALUE);
     memset(cloudData->accessToken, 0, OIC_STRING_MAX_VALUE);
-    g_ESCoapCloudConfResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
+    cloudData->accessTokenType = NONE_OAUTH_TOKENTYPE;
     memset(cloudData->authProvider, 0, OIC_STRING_MAX_VALUE);
     memset(cloudData->ciServer, 0, OIC_URI_STRING_MAX_VALUE);
     cloudData->userdata = NULL;
 
-    char *authCode = NULL;
-    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHCODE, &authCode))
-    {
-        OICStrcpy(g_ESCoapCloudConfResource.authCode, sizeof(g_ESCoapCloudConfResource.authCode), authCode);
-        OICStrcpy(cloudData->authCode, sizeof(cloudData->authCode), authCode);
-        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESCoapCloudConfResource.authCode %s", g_ESCoapCloudConfResource.authCode);
-    }
+
+    // As per OCF 1.4 Spec, Access Token Type property in not supported in CoAPCloudConf Resource.
+    // Hence, setting Token Type as "Bearer" by default.
+    g_ESCoapCloudConfResource.accessTokenType = OAUTH_TOKENTYPE_BEARER;
 
     char *accessToken = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_ACCESSTOKEN, &accessToken))
     {
         OICStrcpy(g_ESCoapCloudConfResource.accessToken, sizeof(g_ESCoapCloudConfResource.accessToken), accessToken);
         OICStrcpy(cloudData->accessToken, sizeof(cloudData->accessToken), accessToken);
-        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESCoapCloudConfResource.accessToken %s", g_ESCoapCloudConfResource.accessToken);
-    }
-
-    int64_t accessTokenType = -1;
-    if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_ACCESSTOKEN_TYPE, &accessTokenType))
-    {
-        g_ESCoapCloudConfResource.accessTokenType = accessTokenType;
         cloudData->accessTokenType = g_ESCoapCloudConfResource.accessTokenType;
-        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESCoapCloudConfResource.accessTokenType %d", g_ESCoapCloudConfResource.accessTokenType);
+        OIC_LOG_V(INFO_PRIVATE, ES_RH_TAG, "g_ESCoapCloudConfResource.accessToken %s", g_ESCoapCloudConfResource.accessToken);
     }
 
     char *authProvider = NULL;
@@ -774,7 +761,7 @@ void updateCoapCloudConfResource(OCRepPayload* input)
         gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF, &cloudData->userdata);
     }
 
-    if (authCode || accessToken || authProvider || ciServer)
+    if (accessToken || authProvider || ciServer)
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "Send CoapCloudConfRsrc Callback To ES");
 
@@ -1058,9 +1045,7 @@ OCRepPayload* constructResponseOfCoapCloudConf(char *interface, ES_BATCH_UPDATE_
 
     if (RES_INCLUDE == resp)
     {
-        OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHCODE, g_ESCoapCloudConfResource.authCode);
         OCRepPayloadSetPropString(payload, OC_RSRVD_ES_ACCESSTOKEN, g_ESCoapCloudConfResource.accessToken);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ACCESSTOKEN_TYPE, (int)g_ESCoapCloudConfResource.accessTokenType);
         OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHPROVIDER, g_ESCoapCloudConfResource.authProvider);
         OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CISERVER, g_ESCoapCloudConfResource.ciServer);
 

@@ -448,7 +448,7 @@ TEST_F(EasysetupEnrolleeTest, CloudServerProperiesProvisionedWithSuccess)
     mocks.OnCallFunc(CoapCloudConfCbInApp).Do(
         [& cntForReceivedCallbackWithSuccess](ESCoapCloudConfData *data)
         {
-            if(!strcmp(data->authCode, "authCode") &&
+            if(!strcmp(data->accessToken, "accessToken") &&
                 !strcmp(data->authProvider, "authProvider") &&
                 !strcmp(data->ciServer, "ciServer"))
             {

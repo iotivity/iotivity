@@ -549,7 +549,7 @@ namespace OIC
 
             m_cloudPropProvStatusCb = callback;
 
-            if((cloudProp.getAuthCode().empty() && cloudProp.getAccessToken().empty()) ||
+            if(cloudProp.getAccessToken().empty() ||
                 cloudProp.getAuthProvider().empty() ||
                 cloudProp.getCiServer().empty())
             {

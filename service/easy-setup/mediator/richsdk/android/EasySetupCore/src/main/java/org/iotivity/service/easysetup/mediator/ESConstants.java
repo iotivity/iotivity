@@ -35,6 +35,7 @@ public class ESConstants {
     public static final String OC_RSRVD_ES_CRED = "cd";
     public static final String OC_RSRVD_ES_AUTHTYPE = "wat";
     public static final String OC_RSRVD_ES_ENCTYPE = "wet";
+    // Auth Code is no longer supported as per OCF 1.4 CoAPCloudConf Resource schema.
     public static final String OC_RSRVD_ES_AUTHCODE = "ac";
     public static final String OC_RSRVD_ES_ACCESSTOKEN = "at";
     public static final String OC_RSRVD_ES_ACCESSTOKEN_TYPE = "att";

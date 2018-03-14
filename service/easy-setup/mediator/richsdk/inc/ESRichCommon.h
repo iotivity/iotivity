@@ -166,8 +166,15 @@ namespace OIC
              * @param authCode  Auth code issued by OAuth2.0-compatible account server
              * @param authProvider Auth provider ID
              * @param ciServer Cloud interface server URL which an Enrollee is going to registered
+             * @deprecated OCF 1.4 Resource schema for CoAPCloudConf Resource no longer supports
+             * auth code property. Recommended to use access token for cloud configuration instead.
+             *
+             * @see setCloudPropWithAccessToken
              */
-            void setCloudProp(string authCode, string authProvider, string ciServer)
+            OC_DEPRECATED_MSG(
+            void setCloudProp(string authCode, string authProvider, string ciServer),
+                                        "Auth code is no longer supported",
+                                        2018.03)
             {
                 m_rep.setValue(OC_RSRVD_ES_AUTHCODE, authCode);
                 m_rep.setValue(OC_RSRVD_ES_AUTHPROVIDER, authProvider);
@@ -182,14 +189,36 @@ namespace OIC
              * @param tokenType Access token type, i.e. "bearer"
              * @param authProvider Auth provider ID
              * @param ciServer Cloud interface server URL which an Enrollee is going to registered
+             * @deprecated OCF 1.4 Resource schema for CoAPCloudConf Resource no longer supports
+             * Access Token Type property. Recommended to use overloaded function which doesn't expect
+             * tokenType input parameter instead.
              *
              * @see OAUTH_TOKENTYPE
              */
+            OC_DEPRECATED_MSG(
             void setCloudPropWithAccessToken(string accessToken, OAUTH_TOKENTYPE tokenType,
-                                                string authProvider, string ciServer)
+                                                string authProvider, string ciServer),
+                                        "Setting Access token type is no longer supported",
+                                        2018.03)
             {
                 m_rep.setValue(OC_RSRVD_ES_ACCESSTOKEN, accessToken);
                 m_rep.setValue(OC_RSRVD_ES_ACCESSTOKEN_TYPE, tokenType);
+                m_rep.setValue(OC_RSRVD_ES_AUTHPROVIDER, authProvider);
+                m_rep.setValue(OC_RSRVD_ES_CISERVER, ciServer);
+            }
+
+            /**
+             * Set CoapCloudConf resource properties with Access token to be delivered to Enrollee
+             *
+             * @param accessToken  Access token which is given in a return of auth code issued by
+             *                     OAuth2.0-compatible account server
+             * @param authProvider Auth provider ID
+             * @param ciServer Cloud interface server URL which an Enrollee is going to registered
+             */
+            void setCloudPropWithAccessToken(string accessToken, string authProvider,
+                                                string ciServer)
+            {
+                m_rep.setValue(OC_RSRVD_ES_ACCESSTOKEN, accessToken);
                 m_rep.setValue(OC_RSRVD_ES_AUTHPROVIDER, authProvider);
                 m_rep.setValue(OC_RSRVD_ES_CISERVER, ciServer);
             }
@@ -218,8 +247,13 @@ namespace OIC
              * Get an auth code to be delivered.
              *
              * @return an auth code to be delivered.
+             * @deprecated OCF 1.4 Resource schema for CoAPCloudConf Resource no longer supports
+             * auth code.
              */
-            std::string getAuthCode() const
+            OC_DEPRECATED_MSG(
+            std::string getAuthCode() const,
+                    "Auth code is no longer supported",
+                    2018.03)
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_AUTHCODE))
                 {
@@ -294,16 +328,22 @@ namespace OIC
              * Get an access token type to be delivered.
              *
              * @return an access token type to be delivered.
+             * @deprecated OCF 1.4 Resource schema for CoAPCloudConf Resource no longer supports
+             * access token type.
              */
-            OAUTH_TOKENTYPE getAccessTokenType() const
+            OC_DEPRECATED_MSG(
+            OAUTH_TOKENTYPE getAccessTokenType() const,
+                            "Access token type is no longer supported",
+                            2018.03)
             {
-
                 if(m_rep.hasAttribute(OC_RSRVD_ES_ACCESSTOKEN_TYPE))
                 {
                     return static_cast<OAUTH_TOKENTYPE>(
                                 m_rep.getValue<int>(OC_RSRVD_ES_ACCESSTOKEN_TYPE));
                 }
-                return NONE_OAUTH_TOKENTYPE;
+
+                // Default value for Access Token Type is "Bearer"
+                return OAUTH_TOKENTYPE_BEARER;
             }
 
             /**
@@ -332,28 +372,19 @@ namespace OIC
                 }
 
                 // Representation should be updated as per OCF 1.3 Easy Setup resource schemas.
-                std::string authCode = m_rep.getValue<std::string>(OC_RSRVD_ES_AUTHCODE);
                 std::string authProvider = m_rep.getValue<std::string>(OC_RSRVD_ES_AUTHPROVIDER);
                 std::string ciServer = m_rep.getValue<std::string>(OC_RSRVD_ES_CISERVER);
 
                 std::string accessToken = m_rep.getValue<std::string>(OC_RSRVD_ES_ACCESSTOKEN);
-                OAUTH_TOKENTYPE accessTokenType = static_cast<OAUTH_TOKENTYPE>(
-                                m_rep.getValue<int>(OC_RSRVD_ES_ACCESSTOKEN_TYPE));
 
                 OCRepresentation rootRep;
                 rootRep.setUri(OC_RSRVD_ES_URI_EASYSETUP);
 
                 OCRepresentation cloudDataRep;
 
-                if(authCode.length() > 0)
-                {
-                    cloudDataRep.setValue(OC_RSRVD_ES_AUTHCODE, authCode);
-                }
-
                 if(accessToken.length() > 0)
                 {
                     cloudDataRep.setValue(OC_RSRVD_ES_ACCESSTOKEN, accessToken);
-                    cloudDataRep.setValue(OC_RSRVD_ES_ACCESSTOKEN_TYPE, accessTokenType);
                 }
 
                 cloudDataRep.setValue(OC_RSRVD_ES_AUTHPROVIDER, authProvider);

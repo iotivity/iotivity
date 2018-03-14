@@ -323,8 +323,7 @@ void provisionCloudProperty()
     }
 
     CloudProp cloudProp;
-    cloudProp.setCloudPropWithAccessToken("accessToken", OAUTH_TOKENTYPE_BEARER, "authProvider",
-                                          "ciServer");
+    cloudProp.setCloudPropWithAccessToken("accessToken", "authProvider", "ciServer");
 
     try
     {

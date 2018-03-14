@@ -456,7 +456,7 @@ private:
             if(m_remoteEnrollee != NULL)
             {
                 CloudProp cloudProp;
-                cloudProp.setCloudProp("authCode", "authProvider", "ciServer");
+                cloudProp.setCloudPropWithAccessToken("accessToken", "authProvider", "ciServer");
 
                 m_remoteEnrollee->provisionCloudProperties(cloudProp,
                     std::bind(&ESMediatorSimulator::cloudProvisioningStatusCallback,
