@@ -242,6 +242,10 @@ static int saveTrustCert(void)
     return res;
 }
 
+extern OCStackResult CloudSignUp(OCDevAddr  *endPoint, const char *authProvider, const char *authToken);
+extern OCStackResult CloudSignIn(OCDevAddr  *endPoint);
+extern OCStackResult CloudSignOut(OCDevAddr  *endPoint);
+
 static void userRequests(void *data)
 {
     (void) data;
@@ -285,13 +289,13 @@ static void userRequests(void *data)
                 printf("Paste to browser %s and get auth code\n", GITHUB_AUTH_LINK);
             }
             readString(token, sizeof(token), "auth token", "check link above");
-            res = CloudSignUp(&endPoint, authProvider, token, handleCloudSignUpResponse);
+            res = CloudSignUp(&endPoint, authProvider, token);
             break;
         case SIGN_IN:
-            res = CloudSignIn(&endPoint, handleCloudSignInResponse);
+            res = CloudSignIn(&endPoint);
             break;
         case SIGN_OUT:
-            res = CloudSignOut(&endPoint, handleCloudSignOutResponse);
+            res = CloudSignOut(&endPoint);
             break;
         case HOST:
             {
@@ -307,7 +311,6 @@ static void userRequests(void *data)
             int tmp = 0;
             readInteger(&tmp, "port number", example);
             endPoint.port = tmp;
-            g_cloudProv.setPort((uint16_t)tmp);
         }
         break;
         case CRL_GET:

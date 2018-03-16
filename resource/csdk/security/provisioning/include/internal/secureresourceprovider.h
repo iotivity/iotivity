@@ -25,6 +25,7 @@
 #include "experimental/securevirtualresourcetypes.h"
 #include "pmtypes.h"
 #include "octypes.h"
+#include "occloudprovisioning.h"
 
 // Enum type index for data types.
 typedef enum
@@ -45,6 +46,7 @@ typedef struct Data
     DataType_t type;                             /**< Data type of the context.**/
 } Data_t;
 
+#define DEFAULT_URI_LENGTH (MAX_URI_LENGTH + MAX_QUERY_LENGTH)
 
 #ifdef __cplusplus
 extern "C"
@@ -375,6 +377,24 @@ OCStackResult SRPProvisionCertificate(void *ctx, const OCProvisionDev_t *pDev,
  */
 OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t dos,
                             OCClientResponseHandler resultCallback);
+
+/**
+ * Callback handler for handling callback of posting DOS_RFNOP.
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] UNUSED          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and  OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+OCStackApplicationResult SetReadyForNormalOperationCB(void *ctx, OCDoHandle handler,
+        OCClientResponse *clientResponse);
+
+/**
+ * Restores pstat after provisioning.
+ */
+OCStackApplicationResult ProvisionCB(void *ctx, OCDoHandle handle,
+        OCClientResponse *clientResponse);
 
 void FreeData(Data_t *data);
 

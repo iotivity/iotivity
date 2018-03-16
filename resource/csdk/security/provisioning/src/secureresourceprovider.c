@@ -54,8 +54,6 @@
 #include "crlresource.h"
 #endif
 
-#define DEFAULT_URI_LENGTH (MAX_URI_LENGTH + MAX_QUERY_LENGTH)
-
 #define TAG "OIC_SRPAPI"
 
 trustCertChainContext_t g_trustCertChainNotifier;
@@ -720,16 +718,8 @@ static OCStackResult ProvisionLocalCredential(void *ctx, OicSecCred_t *cred)
  */
 static OCStackResult RegisterProvResult(const OCProvisionDev_t *targetDev, OCProvisionResult_t *resArr,
                                int *numOfResults, OCStackResult stackResult);
-/**
- * Callback handler for handling callback of posting DOS_RFNOP.
- *
- * @param[in] ctx             ctx value passed to callback from calling function.
- * @param[in] UNUSED          handle to an invocation
- * @param[in] clientResponse  Response from queries to remote servers.
- * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
- *          and  OC_STACK_KEEP_TRANSACTION to keep it.
- */
-static OCStackApplicationResult SetReadyForNormalOperationCB(void *ctx, OCDoHandle handler,
+
+OCStackApplicationResult SetReadyForNormalOperationCB(void *ctx, OCDoHandle handler,
         OCClientResponse *clientResponse)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
@@ -968,10 +958,7 @@ error:
     return res;
 }
 
-/**
- * Restores pstat after provisioning.
- */
-static OCStackApplicationResult ProvisionCB(void *ctx, OCDoHandle handle,
+OCStackApplicationResult ProvisionCB(void *ctx, OCDoHandle handle,
         OCClientResponse *clientResponse)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);

@@ -24,6 +24,8 @@ Import('provisioning_env')
 provisioning_lib_env = provisioning_env.Clone()
 target_os = provisioning_lib_env.get('TARGET_OS')
 
+provisioning_lib_env.AppendUnique(CPPPATH=['#resource/csdk/security/include/experimental'])
+
 provisioning_lib_env.PrependUnique(LIBS=['coap'])
 
 if target_os not in ['msys_nt', 'windows']:
@@ -77,7 +79,10 @@ if provisioning_lib_env.get('WITH_TCP') == True and provisioning_lib_env.get('WI
         'cloud/aclgroup.c',
         'cloud/aclinvite.c',
         'cloud/aclid.c',
-        'cloud/csr.c'
+        'cloud/csr.c',
+        'cloud/auth.c',
+        'cloud/cloudresource.c',
+        'cloud/config.c'
     ]
 
 if target_os in ['linux', 'tizen']:

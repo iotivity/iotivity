@@ -197,8 +197,7 @@ exit:
 OCStackResult
 CloudSignUp(OCDevAddr *endPoint,
            const char *authProvider,
-           const char *authToken,
-           OCClientResponseHandler response)
+           const char *authToken)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
@@ -224,8 +223,7 @@ CloudSignUp(OCDevAddr *endPoint,
 
     OCCallbackData cbData;
     memset(&cbData, 0, sizeof(OCCallbackData));
-    cbData.cb = response;
-    cbData.context = (void*)handleCloudSignUpResponse;
+    cbData.cb = handleCloudSignUpResponse;
 
     OCRepPayload *payload = OCRepPayloadCreate();
     if (!payload)
@@ -295,7 +293,7 @@ exit:
  * @param[in] endPoint          cloud host and port
  * @return  OCStackResult application result
  */
-OCStackResult CloudSignIn(OCDevAddr  *endPoint, OCClientResponseHandler response)
+OCStackResult CloudSignIn(OCDevAddr  *endPoint)
 {
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
@@ -344,8 +342,7 @@ OCStackResult CloudSignIn(OCDevAddr  *endPoint, OCClientResponseHandler response
 
     OCCallbackData cbData;
     memset(&cbData, 0, sizeof(OCCallbackData));
-    cbData.cb = response;
-    cbData.context = (void*)handleCloudSignInResponse;
+    cbData.cb = handleCloudSignInResponse;
 
     return OCDoResource(NULL, OC_REST_POST, uri, NULL,
                        (OCPayload *)payload,
@@ -395,7 +392,7 @@ exit:
  * @param[in] endPoint          cloud host and port
  * @return  OCStackResult application result
  */
-OCStackResult CloudSignOut(OCDevAddr  *endPoint, OCClientResponseHandler response)
+OCStackResult CloudSignOut(OCDevAddr  *endPoint)
 {
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
@@ -431,8 +428,7 @@ OCStackResult CloudSignOut(OCDevAddr  *endPoint, OCClientResponseHandler respons
 
     OCCallbackData cbData;
     memset(&cbData, 0, sizeof(OCCallbackData));
-    cbData.cb = response;
-    cbData.context = (void*)handleCloudSignOutResponse;
+    cbData.cb = handleCloudSignOutResponse;
 
     return OCDoResource(NULL, OC_REST_POST, uri, NULL,
                        (OCPayload *)payload,

@@ -41,7 +41,8 @@
  * @param[out] out        string array pair to fill
  * @return  OCStackResult application result
  */
-static OCStackResult parseInvitePayload(const OCRepPayload *payload, const char *name, stringArrayPair_t *out)
+static OCStackResult parseInvitePayload(const OCRepPayload *payload, const char *name,
+                                        stringArrayPair_t *out)
 {
     OCStackResult result = OC_STACK_NO_MEMORY;
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
@@ -121,7 +122,8 @@ exit:
  * @param[in] response  peer response
  * @return  OCStackResult application result
  */
-static OCStackResult handleAclGetInvitationResponse(void *ctx, void **data, OCClientResponse *response)
+static OCStackResult handleAclGetInvitationResponse(void *ctx, void **data,
+        OCClientResponse *response)
 {
     OC_UNUSED(ctx);
     OCStackResult result = OC_STACK_OK;
@@ -166,7 +168,8 @@ exit:
  * @param[in] response  peer response
  * @return  OCStackResult application result
  */
-static OCStackResult handleAclPolicyCheckResponse(void *ctx, void **data, OCClientResponse *response)
+static OCStackResult handleAclPolicyCheckResponse(void *ctx, void **data,
+                                                  OCClientResponse *response)
 {
     OC_UNUSED(ctx);
 
@@ -178,7 +181,8 @@ static OCStackResult handleAclPolicyCheckResponse(void *ctx, void **data, OCClie
 
     char *gp = NULL;
 
-    if (!OCRepPayloadGetPropString((const OCRepPayload *)response->payload, OC_RSRVD_GROUP_PERMISSION, &gp))
+    if (!OCRepPayloadGetPropString((const OCRepPayload *)response->payload, OC_RSRVD_GROUP_PERMISSION,
+                                   &gp))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_GROUP_PERMISSION);
         return OC_STACK_MALFORMED_RESPONSE;
@@ -188,18 +192,18 @@ static OCStackResult handleAclPolicyCheckResponse(void *ctx, void **data, OCClie
     return OC_STACK_OK;
 }
 
-OCStackResult OCCloudAclInviteUser(void* ctx,
+OCStackResult OCCloudAclInviteUser(void *ctx,
                                    const char *userId,
                                    const stringArray_t *groupIds,
                                    const stringArray_t *memberIds,
-                                   const OCDevAddr *endPoint,
+                                   const char *cloudUri,
                                    OCCloudResponseCB callback)
 {
     OCStackResult result = OC_STACK_ERROR;
     char uri[MAX_URI_LENGTH] = { 0 };
     size_t i = 0;
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupIds, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(memberIds, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
@@ -209,8 +213,7 @@ OCStackResult OCCloudAclInviteUser(void* ctx,
         return OC_STACK_INVALID_PARAM;
     }
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_INVITE_URL);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s", cloudUri, OC_RSRVD_ACL_INVITE_URL);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
@@ -246,7 +249,7 @@ OCStackResult OCCloudAclInviteUser(void* ctx,
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
     dimensions[0] = groupIds->length;
     OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_INVITE,
-            (const struct OCRepPayload **)heplerPayload, dimensions);
+                                   (const struct OCRepPayload **)heplerPayload, dimensions);
 
     return OCDoResource(NULL, OC_REST_POST, uri, NULL, (OCPayload *)payload,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
@@ -260,22 +263,21 @@ no_memory:
     return result;
 }
 
-OCStackResult OCCloudAclGetInvitation(void* ctx,
+OCStackResult OCCloudAclGetInvitation(void *ctx,
                                       const char *userId,
-                                      const OCDevAddr *endPoint,
+                                      const char *cloudUri,
                                       OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_INVITE_URL);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s", cloudUri, OC_RSRVD_ACL_INVITE_URL);
 
     if (userId)
     {
         size_t len = strlen(uri);
-        snprintf(uri + len, MAX_URI_LENGTH -len, "?%s=%s", OC_RSRVD_USER_UUID, userId);
+        snprintf(uri + len, MAX_URI_LENGTH - len, "?%s=%s", OC_RSRVD_USER_UUID, userId);
     }
 
     OCCallbackData cbData;
@@ -285,19 +287,18 @@ OCStackResult OCCloudAclGetInvitation(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclDeleteInvitation(void* ctx,
+OCStackResult OCCloudAclDeleteInvitation(void *ctx,
                                          const char *userId,
                                          const char *groupId,
-                                         const OCDevAddr *endPoint,
+                                         const char *cloudUri,
                                          OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_INVITE_URL);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s", cloudUri, OC_RSRVD_ACL_INVITE_URL);
 
     if (userId)
     {
@@ -306,7 +307,8 @@ OCStackResult OCCloudAclDeleteInvitation(void* ctx,
     }
 
     size_t len = strlen(uri);
-    snprintf(uri + len, MAX_URI_LENGTH - len, "%c%s=%s", userId?'&':'?', OC_RSRVD_GROUP_ID, groupId);
+    snprintf(uri + len, MAX_URI_LENGTH - len, "%c%s=%s", userId ? '&' : '?', OC_RSRVD_GROUP_ID,
+             groupId);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
@@ -315,22 +317,21 @@ OCStackResult OCCloudAclDeleteInvitation(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclCancelInvitation(void* ctx,
+OCStackResult OCCloudAclCancelInvitation(void *ctx,
                                          const char *userId,
                                          const char *groupId,
                                          const char *memberId,
-                                         const OCDevAddr *endPoint,
+                                         const char *cloudUri,
                                          OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
     size_t len = 0 ;
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(memberId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_INVITE_URL);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s", cloudUri, OC_RSRVD_ACL_INVITE_URL);
 
     if (userId)
     {
@@ -339,7 +340,8 @@ OCStackResult OCCloudAclCancelInvitation(void* ctx,
     }
 
     len = strlen(uri);
-    snprintf(uri + len, MAX_URI_LENGTH - len, "%c%s=%s", userId?'&':'?', OC_RSRVD_GROUP_ID, groupId);
+    snprintf(uri + len, MAX_URI_LENGTH - len, "%c%s=%s", userId ? '&' : '?', OC_RSRVD_GROUP_ID,
+             groupId);
     len = strlen(uri);
     snprintf(uri + len, MAX_URI_LENGTH - len, "&%s=%s", OC_RSRVD_MEMBER_ID, memberId);
 
@@ -350,25 +352,24 @@ OCStackResult OCCloudAclCancelInvitation(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclPolicyCheck(void* ctx,
+OCStackResult OCCloudAclPolicyCheck(void *ctx,
                                     const char *subjectId,
                                     const char *deviceId,
                                     const char *method,
                                     const char *user_uri,
-                                    const OCDevAddr *endPoint,
+                                    const char *cloudUri,
                                     OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
     size_t len = 0;
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(subjectId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(deviceId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(method, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(user_uri, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_VERIFY_URL);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s", cloudUri, OC_RSRVD_ACL_VERIFY_URL);
 
     len = strlen(uri);
     snprintf(uri + len, MAX_URI_LENGTH - len, "?%s=%s", OC_RSRVD_SUBJECT_ID, subjectId);

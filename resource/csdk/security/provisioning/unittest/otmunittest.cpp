@@ -48,11 +48,11 @@
 static OCPersistentStorage gPst;
 static bool g_doneCB;
 static bool g_callbackResult;
-static const char* g_otmCtx = "Test User Context";
-static OCProvisionDev_t* g_unownedDevices = NULL;
-static OCProvisionDev_t* g_ownedDevices = NULL;
-static int gNumOfUnownDevice = 0;
-static int gNumOfOwnDevice = 0;
+static const char *g_otmCtx = "Test User Context";
+static OCProvisionDev_t *g_unownedDevices = NULL;
+static OCProvisionDev_t *g_ownedDevices = NULL;
+static size_t gNumOfUnownDevice = 0;
+static size_t gNumOfOwnDevice = 0;
 
 using namespace std;
 
@@ -60,7 +60,7 @@ using namespace std;
 
 TEST(JustWorksOxMTest, NullParam)
 {
-    OTMContext_t* otmCtx = NULL;
+    OTMContext_t *otmCtx = NULL;
     OCStackResult res = OC_STACK_ERROR;
     uint8_t *payloadRes = NULL;
     size_t size = 0;
@@ -97,7 +97,7 @@ TEST(JustWorksOxMTest, NullParam)
 
 TEST(RandomPinOxMTest, NullParam)
 {
-    OTMContext_t* otmCtx = NULL;
+    OTMContext_t *otmCtx = NULL;
     OCStackResult res = OC_STACK_ERROR;
     uint8_t *payloadRes = NULL;
     size_t size = 0;
@@ -134,7 +134,7 @@ TEST(RandomPinOxMTest, NullParam)
 
 TEST(ManufacturerCertOxMTest, NullParam)
 {
-    OTMContext_t* otmCtx = NULL;
+    OTMContext_t *otmCtx = NULL;
     OCStackResult res = OC_STACK_ERROR;
     uint8_t *payloadRes = NULL;
     size_t size = 0;
@@ -170,30 +170,31 @@ TEST(ManufacturerCertOxMTest, NullParam)
 /****************************************
  * Test the OTM modules with sample server
  ****************************************/
-static FILE* fopen_prvnMng(const char* path, const char* mode)
+static FILE *fopen_prvnMng(const char *path, const char *mode)
 {
     if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
     {
-      return fopen(SVR_DB_FILE_NAME, mode);
+        return fopen(SVR_DB_FILE_NAME, mode);
     }
     OIC_LOG_V(DEBUG, TAG, "use db: %s", path);
     return fopen(path, mode);
 }
 
 // callback function(s) for provisioning client using C-level provisioning API
-static void ownershipTransferCB(void* ctx, size_t UNUSED1, OCProvisionResult_t* UNUSED2, bool hasError)
+static void ownershipTransferCB(void *ctx, size_t UNUSED1, OCProvisionResult_t *UNUSED2,
+                                bool hasError)
 {
     OC_UNUSED(UNUSED1);
     OC_UNUSED(UNUSED2);
     OC_UNUSED(ctx);
 
-    if(!hasError)
+    if (!hasError)
     {
-        OIC_LOG_V(DEBUG, TAG, "Ownership Transfer SUCCEEDED - ctx: %s", (char*) ctx);
+        OIC_LOG_V(DEBUG, TAG, "Ownership Transfer SUCCEEDED - ctx: %s", (char *) ctx);
     }
     else
     {
-        OIC_LOG_V(FATAL, TAG, "Ownership Transfer FAILED - ctx: %s", (char*) ctx);
+        OIC_LOG_V(FATAL, TAG, "Ownership Transfer FAILED - ctx: %s", (char *) ctx);
     }
     g_callbackResult = !hasError;
     g_doneCB = true;
@@ -202,19 +203,19 @@ static void ownershipTransferCB(void* ctx, size_t UNUSED1, OCProvisionResult_t* 
 }
 
 // callback function(s) for provisioning client using C-level provisioning API
-static void removeDeviceCB(void* ctx, size_t UNUSED1, OCProvisionResult_t* UNUSED2, bool hasError)
+static void removeDeviceCB(void *ctx, size_t UNUSED1, OCProvisionResult_t *UNUSED2, bool hasError)
 {
     OC_UNUSED(UNUSED1);
     OC_UNUSED(UNUSED2);
     OC_UNUSED(ctx);
 
-    if(!hasError)
+    if (!hasError)
     {
-        OIC_LOG_V(DEBUG, TAG, "Remove device request SUCCEEDED - ctx: %s", (char*) ctx);
+        OIC_LOG_V(DEBUG, TAG, "Remove device request SUCCEEDED - ctx: %s", (char *) ctx);
     }
     else
     {
-        OIC_LOG_V(FATAL, TAG, "Remove device request FAILED - ctx: %s", (char*) ctx);
+        OIC_LOG_V(FATAL, TAG, "Remove device request FAILED - ctx: %s", (char *) ctx);
     }
     g_callbackResult = !hasError;
     g_doneCB = true;
@@ -222,10 +223,10 @@ static void removeDeviceCB(void* ctx, size_t UNUSED1, OCProvisionResult_t* UNUSE
 
 static int waitCallbackRet(void)
 {
-    for(int i = 0; !g_doneCB && OTM_TIMEOUT > i; ++i)
+    for (int i = 0; !g_doneCB && OTM_TIMEOUT > i; ++i)
     {
         sleep(1);
-        if(OC_STACK_OK != OCProcess())
+        if (OC_STACK_OK != OCProcess())
         {
             OIC_LOG(FATAL, TAG, "OCStack process error");
             return -1;
@@ -237,32 +238,6 @@ static int waitCallbackRet(void)
 
 #define UUID_TEMPLATE "11111111-1234-1234-1234-12345678901"
 #define UUID_TEMPLATE_LEN 35
-
-static void RemoveUnknownDeviceFromDevList(OCProvisionDev_t* devList)
-{
-    OCProvisionDev_t* unknowDev = NULL;
-    OCProvisionDev_t* tempDev1 = NULL;
-    OCProvisionDev_t* tempDev2 =NULL;
-
-    LL_FOREACH_SAFE(devList, tempDev1, tempDev2)
-    {
-        char *uuidString = NULL;
-        EXPECT_EQ(OC_STACK_OK, ConvertUuidToStr((const OicUuid_t*) &tempDev1->doxm->deviceID, &uuidString));
-
-        if (strncmp(UUID_TEMPLATE, uuidString, UUID_TEMPLATE_LEN) != 0)
-        {
-            OIC_LOG_V(DEBUG, TAG, "%s: delete from list id:%s ip:%s:%d",__func__,
-            uuidString ? uuidString :"unknow id",
-            tempDev1->endpoint.addr,tempDev1->endpoint.port);
-
-            LL_DELETE(devList, tempDev1);
-            LL_APPEND(unknowDev, tempDev1);
-        }
-        OICFree(uuidString);
-    }
-
-    OCDeleteDiscoveredDevices(unknowDev);
-}
 
 TEST(InitForOTM, NullParam)
 {
@@ -337,26 +312,33 @@ TEST(OCDiscoverUnownedDevices, Simple)
     EXPECT_EQ(OC_STACK_OK, OCInitPM(PM_DB_FILE_NAME));
     EXPECT_EQ(OC_STACK_OK, OCDiscoverUnownedDevices(DISCOVERY_TIMEOUT, &g_unownedDevices));
 
-    RemoveUnknownDeviceFromDevList(g_unownedDevices);
-
-    OCProvisionDev_t* tempDev = g_unownedDevices;
-    while(tempDev)
+    OCProvisionDev_t *tempDev1 = NULL;
+    OCProvisionDev_t *tempDev2 = NULL;
+    gNumOfUnownDevice = 0;
+    LL_FOREACH_SAFE(g_unownedDevices, tempDev1, tempDev2)
     {
-        gNumOfUnownDevice++;
-
         char *uuidString = NULL;
-        EXPECT_EQ(OC_STACK_OK, ConvertUuidToStr((const OicUuid_t*) &tempDev->doxm->deviceID, &uuidString));
+        EXPECT_EQ(OC_STACK_OK, ConvertUuidToStr((const OicUuid_t *) &tempDev1->doxm->deviceID,
+                                                &uuidString));
 
-        OIC_LOG_V(DEBUG, TAG, "%d: id:%s ip:%s:%d", gNumOfUnownDevice,
-        uuidString ? uuidString :"unknow id",
-        tempDev->endpoint.addr,tempDev->endpoint.port);
+        OIC_LOG_V(DEBUG, TAG, "%s: id:%s ip:%s:%d", __func__,
+                      uuidString ? uuidString : "unknow id",
+                      tempDev1->endpoint.addr, tempDev1->endpoint.port);
 
+        if (0 != strncmp(UUID_TEMPLATE, uuidString, UUID_TEMPLATE_LEN))
+        {
+            LL_DELETE(g_unownedDevices,tempDev1);
+        }
+        else
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: append in list", __func__);
+            gNumOfUnownDevice++;
+        }
         OICFree(uuidString);
-
-        tempDev = tempDev->next;
     }
 
     EXPECT_EQ(true, gNumOfUnownDevice > 0);
+
     // close Provisioning DB
     EXPECT_EQ(OC_STACK_OK, OCClosePM());
 }
@@ -368,9 +350,10 @@ TEST(OCDoOwnershipTransfer, Simple)
     ASSERT_EQ(true, gNumOfUnownDevice > 0);
 
     g_doneCB = false;
-    EXPECT_EQ(OC_STACK_OK, OCDoOwnershipTransfer((void*)g_otmCtx, g_unownedDevices, ownershipTransferCB));
+    EXPECT_EQ(OC_STACK_OK, OCDoOwnershipTransfer((void *)g_otmCtx, g_unownedDevices,
+              ownershipTransferCB));
 
-    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    if (waitCallbackRet()) // input |g_doneCB| flag implicitly
     {
         OIC_LOG(FATAL, TAG, "OCProvisionCredentials callback error");
         return;
@@ -386,56 +369,16 @@ TEST(OCDiscoverOwnedDevices, Simple)
 {
     //initialize Provisioning DB Manager
     EXPECT_EQ(OC_STACK_OK, OCInitPM(PM_DB_FILE_NAME));
-    OCStackResult result = OC_STACK_ERROR;
-    gNumOfOwnDevice = 0;
 
     EXPECT_EQ(OC_STACK_OK, OCDiscoverOwnedDevices(DISCOVERY_TIMEOUT, &g_ownedDevices));
 
-    RemoveUnknownDeviceFromDevList(g_ownedDevices);
+    gNumOfOwnDevice = 0;
 
-    OCProvisionDev_t* tempDev = g_ownedDevices;
-    while(tempDev)
+    OCProvisionDev_t *tempDev = g_ownedDevices;
+    while (tempDev)
     {
         gNumOfOwnDevice++;
         tempDev = tempDev->next;
-    }
-
-    if (gNumOfUnownDevice > gNumOfOwnDevice)
-    {
-        OIC_LOG(DEBUG, TAG, "Discovering unowned devices on");
-
-        if(g_unownedDevices)
-        {
-            OCDeleteDiscoveredDevices(g_unownedDevices);
-            g_unownedDevices = NULL;
-        }
-
-        result = OCDiscoverUnownedDevices(DISCOVERY_TIMEOUT, &g_unownedDevices);
-        EXPECT_EQ(OC_STACK_OK, result);
-
-        RemoveUnknownDeviceFromDevList(g_unownedDevices);
-
-        tempDev = g_unownedDevices;
-        while(tempDev)
-        {
-            gNumOfUnownDevice++;
-            tempDev = tempDev->next;
-        }
-
-        if (gNumOfUnownDevice)
-        {
-            g_doneCB = false;
-            EXPECT_EQ(OC_STACK_OK, OCDoOwnershipTransfer((void*)g_otmCtx, g_unownedDevices, ownershipTransferCB));
-
-            if(waitCallbackRet())  // input |g_doneCB| flag implicitly
-            {
-                OIC_LOG(FATAL, TAG, "OCProvisionCredentials callback error");
-                return;
-            }
-
-            EXPECT_EQ(true, g_callbackResult);
-            EXPECT_EQ(true, g_doneCB);
-        }
     }
 
     EXPECT_EQ(true, gNumOfOwnDevice > 0);
@@ -448,7 +391,7 @@ TEST(PerformLinkDevices, NullParam)
     if (gNumOfOwnDevice < 2)
     {
         OIC_LOG(WARNING, TAG, "Link can only pair owned devices");
-        OIC_LOG_V(DEBUG, TAG, "Number of owned devices: %d",gNumOfOwnDevice);
+        OIC_LOG_V(DEBUG, TAG, "Number of owned devices: %lu", gNumOfOwnDevice);
         return;
     }
 
@@ -458,19 +401,19 @@ TEST(PerformLinkDevices, NullParam)
     EXPECT_EQ(OC_STACK_OK, result);
 
     //Extract target device except PT to perform link devices.
-    OCProvisionDev_t* dev1 = NULL;
-    OCProvisionDev_t* dev2 = NULL;
-    OCProvisionDev_t* tempDev = g_ownedDevices;
+    OCProvisionDev_t *dev1 = NULL;
+    OCProvisionDev_t *dev2 = NULL;
+    OCProvisionDev_t *tempDev = g_ownedDevices;
 
-    while(tempDev)
+    while (tempDev)
     {
-        if(memcmp(tempDev->doxm->deviceID.id, myUuid.id, UUID_LENGTH) != 0)
+        if (memcmp(tempDev->doxm->deviceID.id, myUuid.id, UUID_LENGTH) != 0)
         {
-            if(NULL == dev1)
+            if (NULL == dev1)
             {
                 dev1 = tempDev;
             }
-            else if(NULL == dev2)
+            else if (NULL == dev2)
             {
                 dev2 = tempDev;
                 break;
@@ -501,38 +444,39 @@ TEST(PerformUnlinkDevices, NullParam)
 //TODO will fix after IOT-2106
 #if 0
 //#ifdef MULTIPLE_OWNER
-static OCProvisionDev_t* g_motEnabledDevices = NULL;
-static OCProvisionDev_t* g_multiplOwnedDevices = NULL;
+static OCProvisionDev_t *g_motEnabledDevices = NULL;
+static OCProvisionDev_t *g_multiplOwnedDevices = NULL;
 
-static void updateDoxmForMOTCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void updateDoxmForMOTCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
     OC_UNUSED(nOfRes);
     OC_UNUSED(arr);
 
-    if(!hasError)
+    if (!hasError)
     {
-        OIC_LOG_V(DEBUG, TAG, "POST 'doxm' SUCCEEDED - ctx: %s", (char*) ctx);
+        OIC_LOG_V(DEBUG, TAG, "POST 'doxm' SUCCEEDED - ctx: %s", (char *) ctx);
     }
     else
     {
-        OIC_LOG_V(FATAL, TAG, "POST 'doxm'  FAILED - ctx: %s", (char*) ctx);
+        OIC_LOG_V(FATAL, TAG, "POST 'doxm'  FAILED - ctx: %s", (char *) ctx);
     }
     g_callbackResult = !hasError;
     g_doneCB = true;
 }
 
-static void provisionPreconfiguredPinCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionPreconfiguredPinCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr,
+                                        bool hasError)
 {
     OC_UNUSED(nOfRes);
     OC_UNUSED(arr);
 
-    if(!hasError)
+    if (!hasError)
     {
-        OIC_LOG_V(DEBUG, TAG, "Provision Preconfigured-PIN SUCCEEDED - ctx: %s", (char*) ctx);
+        OIC_LOG_V(DEBUG, TAG, "Provision Preconfigured-PIN SUCCEEDED - ctx: %s", (char *) ctx);
     }
     else
     {
-        OIC_LOG_V(FATAL, TAG, "Provision Preconfigured-PIN FAILED - ctx: %s", (char*) ctx);
+        OIC_LOG_V(FATAL, TAG, "Provision Preconfigured-PIN FAILED - ctx: %s", (char *) ctx);
     }
     g_callbackResult = !hasError;
     g_doneCB = true;
@@ -542,7 +486,7 @@ TEST(EnableMOT, NullParam)
 {
     OCStackResult result = OC_STACK_OK;
 
-    if(NULL == g_ownedDevices)
+    if (NULL == g_ownedDevices)
     {
         OIC_LOG(DEBUG, TAG, "Discovering Only Owned Devices on Network..");
         result = OCDiscoverOwnedDevices(DISCOVERY_TIMEOUT, &g_ownedDevices);
@@ -550,11 +494,12 @@ TEST(EnableMOT, NullParam)
         RemoveUnknownDeviceFromDevList(g_ownedDevices);
     }
 
-    EXPECT_NE((OCProvisionDev_t*)NULL, g_ownedDevices);
+    EXPECT_NE((OCProvisionDev_t *)NULL, g_ownedDevices);
 
     g_doneCB = false;
-    ASSERT_EQ(OC_STACK_OK, OCChangeMOTMode(NULL, g_ownedDevices, OIC_MULTIPLE_OWNER_ENABLE, updateDoxmForMOTCB));
-    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    ASSERT_EQ(OC_STACK_OK, OCChangeMOTMode(NULL, g_ownedDevices, OIC_MULTIPLE_OWNER_ENABLE,
+                                           updateDoxmForMOTCB));
+    if (waitCallbackRet()) // input |g_doneCB| flag implicitly
     {
         OIC_LOG(FATAL, TAG, "OCChangeMOTMode callback error");
         return;
@@ -565,12 +510,13 @@ TEST(EnableMOT, NullParam)
 
 TEST(DiscoverMOTEnabledDevices, NullParam)
 {
-    if(g_motEnabledDevices)
+    if (g_motEnabledDevices)
     {
         PMDeleteDeviceList(g_motEnabledDevices);
     }
 
-    ASSERT_EQ(OC_STACK_OK, OCDiscoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT, &g_motEnabledDevices));
+    ASSERT_EQ(OC_STACK_OK, OCDiscoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
+              &g_motEnabledDevices));
 
     RemoveUnknownDeviceFromDevList(g_motEnabledDevices);
 
@@ -589,9 +535,10 @@ TEST(ProvisonPreconfiguredPIN, NullParam)
     OCStackResult result = OC_STACK_OK;
 
     g_doneCB = false;
-    result = OCProvisionPreconfigPin(NULL, g_motEnabledDevices, "12341234", strlen("12341234"), provisionPreconfiguredPinCB);
+    result = OCProvisionPreconfigPin(NULL, g_motEnabledDevices, "12341234", strlen("12341234"),
+                                     provisionPreconfiguredPinCB);
     ASSERT_EQ(OC_STACK_OK, result);
-    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    if (waitCallbackRet()) // input |g_doneCB| flag implicitly
     {
         OIC_LOG(FATAL, TAG, "OCProvisionPreconfigPin callback error");
         return;
@@ -608,7 +555,7 @@ TEST(SelectMOTMethod, NullParam)
     g_doneCB = false;
     result = OCSelectMOTMethod(NULL, g_motEnabledDevices, OIC_PRECONFIG_PIN, updateDoxmForMOTCB);
     ASSERT_EQ(OC_STACK_OK, result);
-    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    if (waitCallbackRet()) // input |g_doneCB| flag implicitly
     {
         OIC_LOG(FATAL, TAG, "OCSelectMOTMethod callback error");
         return;
@@ -626,7 +573,7 @@ TEST(PerformMOT, NullParam)
     g_doneCB = false;
     result = OCDoMultipleOwnershipTransfer(NULL, g_motEnabledDevices, ownershipTransferCB);
     ASSERT_EQ(OC_STACK_OK, result);
-    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    if (waitCallbackRet()) // input |g_doneCB| flag implicitly
     {
         OIC_LOG(FATAL, TAG, "OCDoMultipleOwnershipTransfer callback error");
         return;
@@ -638,7 +585,7 @@ TEST(DiscoverMultipleOwnedDevices, NullParam)
 {
     OCStackResult result = OC_STACK_OK;
 
-    if(g_multiplOwnedDevices)
+    if (g_multiplOwnedDevices)
     {
         PMDeleteDeviceList(g_multiplOwnedDevices);
     }
@@ -646,7 +593,7 @@ TEST(DiscoverMultipleOwnedDevices, NullParam)
     OIC_LOG(DEBUG, TAG, "Discovering MOT Enabled Devices on Network..");
     result = OCDiscoverMultipleOwnedDevices(DISCOVERY_TIMEOUT, &g_multiplOwnedDevices);
     ASSERT_EQ(OC_STACK_OK, result);
-    RemoveUnknownDeviceFromDevList(g_multiplOwnedDevices);
+    RemoveUnknownDeviceFromDevList(&g_multiplOwnedDevices);
     EXPECT_TRUE(NULL != g_multiplOwnedDevices);
 }
 #endif //MULTIPLE_OWNER
@@ -663,10 +610,10 @@ TEST(OCRemoveDevice, Simple)
     EXPECT_EQ(OC_STACK_OK, result);
 
     //Extract target device except PT to perform remove device.
-    OCProvisionDev_t* removeDev = g_ownedDevices;
-    while(removeDev)
+    OCProvisionDev_t *removeDev = g_ownedDevices;
+    while (removeDev)
     {
-        if(memcmp(removeDev->doxm->deviceID.id, myUuid.id, UUID_LENGTH) != 0)
+        if (memcmp(removeDev->doxm->deviceID.id, myUuid.id, UUID_LENGTH) != 0)
         {
             break;
         }
@@ -677,7 +624,7 @@ TEST(OCRemoveDevice, Simple)
     g_doneCB = false;
     g_callbackResult = false;
 
-    result = OCRemoveDevice((void*)g_otmCtx, DISCOVERY_TIMEOUT, removeDev, removeDeviceCB);
+    result = OCRemoveDevice((void *)g_otmCtx, DISCOVERY_TIMEOUT, removeDev, removeDeviceCB);
     EXPECT_EQ(OC_STACK_OK, result);
     EXPECT_EQ(true, g_callbackResult);
     EXPECT_EQ(true, g_doneCB);

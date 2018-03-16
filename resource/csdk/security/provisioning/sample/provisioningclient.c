@@ -41,6 +41,8 @@
 #include "mbedtls/x509_csr.h"
 #include "occertutility.h"
 #include "pmutility.h"
+#include "occloudprovisioning.h"
+#include "auth.h"
 
 #ifdef _MSC_VER
 #include <io.h>
@@ -71,6 +73,9 @@ extern "C"
 #define _33_CHECK_LINK_STATUS_      33
 #define _34_SAVE_ACL_               34
 #define _35_PROVIS_CERT_            35
+#ifdef WITH_CLOUD
+#define _36_PROVIS_CLOUD_CONF_      36
+#endif //WITH_CLOUD
 #define _40_UNLINK_PAIR_DEVS_       40
 #define _50_REMOVE_SELEC_DEV_       50
 #define _51_REMOVE_DEV_WITH_UUID_   51
@@ -207,6 +212,22 @@ void provisionTrustChainCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool
     }
     g_doneCB = true;
 }
+
+#ifdef WITH_CLOUD
+static void provisionCloudConfigCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "Provision Pairwise SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Provision Pairwise FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+#endif //WITH_CLOUD
 
 static void provisionAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
@@ -1257,6 +1278,179 @@ static int provisionCert(void)
 
     return 0;
 }
+
+#ifdef WITH_CLOUD
+static int provisionCloudConfig(void)
+{
+    // make sure we own at least one device to provision
+    if (!g_own_list || g_own_cnt == 0)
+    {
+        printf("   > Owned Device List, to Provision Credentials, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for provisioning certificate
+    int dev_num = 0;
+    if (g_own_cnt == 1)
+    {
+        dev_num = 1;
+    }
+    else
+    {
+        for (; ; )
+        {
+            printf("   > Enter Device Number, for certificate provisioning: ");
+            for (int ret = 0; 1 != ret; )
+            {
+                ret = scanf("%d", &dev_num);
+                for (; 0x20 <= getchar(); );  // for removing overflow garbages
+                                          // '0x20<=code' is character region
+            }
+            if (0<dev_num && g_own_cnt >= dev_num)
+            {
+                break;
+            }
+            printf("     Entered Wrong Number. Please Enter Again\n");
+        }
+    }
+
+    OCProvisionDev_t* targetDevice = getDevInst((const OCProvisionDev_t*)g_own_list, dev_num);
+    if (targetDevice == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Error, invalid device %d");
+        return -1;
+    }
+
+    // Install the CA trust anchor
+    FILE *F;
+    F = fopen("rootca.crt", "rb");
+    fseek (F , 0 , SEEK_END);
+    int certsize = ftell (F);
+    rewind (F);
+    uint8_t* cert = (uint8_t*) malloc (sizeof(char)*certsize);
+    int res = fread (cert, 1, certsize, F);
+    /* Set our own trust anchor so that we trust certs we've issued. */
+    res = OCSaveTrustCertChain((uint8_t*) cert, certsize, OIC_ENCODING_PEM, &g_caCredId);
+    if (OC_STACK_OK != res)
+    {
+        printf("     Failed to setup CA\n");
+        return -1;
+    }
+
+    // Provision the CA root cert to the target device
+    printf("   > Saving root certificate (trust anchor) to selected device..\n");
+    g_doneCB = false;
+    OicSecCredType_t type = SIGNED_ASYMMETRIC_KEY;
+
+    OCStackResult rst = OCProvisionTrustCertChain((void*)g_ctx, type, g_caCredId, targetDevice, (OCProvisionResultCB)&provisionTrustChainCB);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCProvisionTrustCertChain returned error: %d", rst);
+        return -1;
+    }
+
+    if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionTrustCertChain callback error");
+        return -1;
+    }
+    if (!g_successCB)
+    {
+        return -1;
+    }
+
+    OicCloud_t *cloud = OICCalloc(1,sizeof(OicCloud_t));
+    if (NULL == cloud)
+    {
+        OIC_LOG(ERROR, TAG, "Error, invalid cloud");
+        return -1;
+    }
+    cloud->apn = (char*)OICCalloc(1,1024);
+    if (NULL == cloud->apn)
+    {
+        OICFree(cloud);
+        OIC_LOG(ERROR, TAG, "Error, invalid cloud->apn");
+        return -1;
+    }
+    cloud->cis = (char*)OICCalloc(1,1024);
+    if (NULL == cloud->cis)
+    {
+        OICFree(cloud->apn);
+        OICFree(cloud);
+        OIC_LOG(ERROR, TAG, "Error, invalid cloud->cis");
+        return -1;
+    }
+    cloud->at = (char*)OICCalloc(1,1024);
+    if (NULL == cloud->at)
+    {
+        OICFree(cloud->cis);
+        OICFree(cloud->apn);
+        OICFree(cloud);
+        OIC_LOG(ERROR, TAG, "Error, invalid cloud->at");
+        return -1;
+    }
+
+    printf("   > cloud uri (coaps+tcp://ip:port): ");
+    for(int ret=0; 1!=ret; )
+    {
+        ret = scanf("%32s", cloud->cis);
+        for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                    // '0x20<=code' is character region
+    }
+
+    printf("   > oauth provider: ");
+    for(int ret=0; 1!=ret; )
+    {
+        ret = scanf("%32s", cloud->apn);
+        for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                    // '0x20<=code' is character region
+    }
+
+    printf("   > access token: ");
+    for(int ret=0; 1!=ret; )
+    {
+        ret = scanf("%32s", cloud->at);
+        for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                    // '0x20<=code' is character region
+    }
+
+    //Provision the new cert
+    printf("   > Provisioning certificate credential to selected device..\n");
+    g_doneCB = false;
+    rst = OCProvisionCloudConfig((void*)g_ctx, targetDevice, cloud, (OCClientResponseHandler)provisionCloudConfigCB);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCProvisionCertificate returned error: %d", rst);
+        OICFree(cloud->at);
+        OICFree(cloud->cis);
+        OICFree(cloud->apn);
+        OICFree(cloud);
+        return -1;
+    }
+    if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionCertificate callback error");
+        OICFree(cloud->at);
+        OICFree(cloud->cis);
+        OICFree(cloud->apn);
+        OICFree(cloud);
+        return -1;
+    }
+    if (!g_successCB)
+    {
+        OICFree(cloud->at);
+        OICFree(cloud->cis);
+        OICFree(cloud->apn);
+        OICFree(cloud);
+        return -1;
+    }
+
+    printf("   > Provisioned cloud crendentials\n");
+
+    return 0;
+}
+#endif //WITH_CLOUD
 
 static int provisionAcl(void)
 {
@@ -2746,7 +2940,8 @@ static void printMenu(void)
     printf("** 32. Provision the Selected Access Control List(ACL)\n");
     printf("** 33. Check Linked Status of the Selected Device on PRVN DB\n");
     printf("** 34. Save the Selected Access Control List(ACL) into local SVR DB\n");
-    printf("** 35. Provision certificate credential\n\n");
+    printf("** 35. Provision certificate credential\n");
+    printf("** 36. Provision cloud credential\n\n");
 
 
     printf("** [D] UNLINK PAIRWISE THINGS\n");
@@ -2928,6 +3123,14 @@ int main()
                 OIC_LOG(ERROR, TAG, "_36_PROVIS_CERT_: error");
             }
             break;
+#ifdef WITH_CLOUD
+        case _36_PROVIS_CLOUD_CONF_:
+            if (provisionCloudConfig())
+            {
+                OIC_LOG(ERROR, TAG, "_36_PROVIS_CLOUD_CONF_: error");
+            }
+            break;
+#endif //WITH_CLOUD
         case _40_UNLINK_PAIR_DEVS_:
             if(unlinkPairwise())
             {

@@ -462,16 +462,16 @@ extern "C" {
 /** Cloud Account */
 
 /** Account URI.*/
-#define OC_RSRVD_ACCOUNT_URI               "/oic/account"
+#define OC_RSRVD_ACCOUNT_URI               "/oic/sec/account"
 
 /** Account user URI.*/
 #define OC_RSRVD_ACCOUNT_SEARCH_URI        "/oic/account/search"
 
 /** Account session URI.*/
-#define OC_RSRVD_ACCOUNT_SESSION_URI       "/oic/account/session"
+#define OC_RSRVD_ACCOUNT_SESSION_URI       "/oic/sec/session"
 
 /** Account token refresh URI.*/
-#define OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI "/oic/account/tokenrefresh"
+#define OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI "/oic/sec/tokenrefresh"
 
 /** ACL group URI.*/
 #define OC_RSRVD_ACL_GROUP_URI             "/oic/acl/group"

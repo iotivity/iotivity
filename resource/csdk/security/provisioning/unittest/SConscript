@@ -160,6 +160,7 @@ sptest_env.PrependUnique(CPPPATH=[
     '../../../ocrandom/include',
     '../../../logger/include',
     '../../../stack/include',
+    '../../../stack/include/internal',
     '../../../security/include',
     '../../../security/include/internal',
     '../../../security/provisioning/include/internal',
@@ -169,7 +170,9 @@ sptest_env.PrependUnique(CPPPATH=[
     '../../../connectivity/inc',
     '../../../connectivity/inc/pkix',
     '../../../connectivity/common/inc',
-    '../../../connectivity/api'
+    '../../../connectivity/api',
+    '#resource/csdk/security/provisioning/src/cloud',
+    '#resource/csdk/security/provisioning/include/cloud/'
 ])
 
 sptest_env.PrependUnique(LIBS=[
@@ -215,6 +218,11 @@ unittest_src = [
     'credentialgeneratortest.cpp',
     'otmunittest.cpp',
 ]
+
+if sptest_env.get('WITH_TCP') == True and sptest_env.get('WITH_CLOUD') == True:
+    unittest_src = unittest_src + [
+        'cloudresource.cpp',
+    ]
 
 tests = sptest_env.Program(unittest_bin, unittest_src)
 server = sptest_env.Program(server_bin, ['sampleserver.cpp'])

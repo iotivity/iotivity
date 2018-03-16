@@ -34,6 +34,9 @@
 #include "ocstack.h"
 #include "ocpayload.h"
 #include "ocprovisioningmanager.h"
+#if defined(__WITH_TLS__) && defined(WITH_CLOUD)
+#include "cloud/cloudresource.h"
+#endif // __WITH_TLS__ && WITH_CLOUD
 
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
@@ -449,6 +452,12 @@ int main()
         OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
+#if defined(__WITH_TLS__) && defined(WITH_CLOUD)
+    if (OC_STACK_OK != InitCloudResource())
+    {
+        OIC_LOG(ERROR, TAG, "Cloud init error");
+    }
+#endif // __WITH_TLS__ && WITH_CLOUD
     OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, (void*) specVersion);
 
     /*
@@ -473,6 +482,9 @@ int main()
     }
 
     OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");
+#if defined(__WITH_TLS__) && defined(WITH_CLOUD)
+    DeInitCloudResource();
+#endif // __WITH_TLS__ && WITH_CLOUD
 
     if (OCStop() != OC_STACK_OK)
     {

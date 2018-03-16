@@ -90,6 +90,11 @@ const char * OIC_RSRC_TYPE_SEC_VER = "oic.r.ver";
 const char * OIC_RSRC_VER_URI =  "/oic/sec/ver";
 const char * OIC_JSON_VER_NAME = "ver";
 
+//cloud conf
+const char * OIC_RSRC_TYPE_CLOUD_CONF = "oic.r.coapcloudconf";
+const char * OIC_RSRC_CLOUD_CONF_URI = "/oic/r/coapcloudconf";
+const char * OIC_JSON_CLOUD_CONF_NAME = "coapcloudconf";
+
 //reset profile
 const char * OIC_JSON_RESET_PF_NAME = "resetpf";
 

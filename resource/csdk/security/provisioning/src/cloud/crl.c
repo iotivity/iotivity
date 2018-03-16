@@ -85,20 +85,19 @@ exit:
     return result;
 }
 
-OCStackResult OCCloudGetCRL(void* ctx,
-                            const OCDevAddr *endPoint,
+OCStackResult OCCloudGetCRL(void *ctx,
+                            const char *cloudUri,
                             OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
     char *lastUpdate = NULL;
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
 
     getLastUpdateFromDB(&lastUpdate);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s?%s=%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port,
-            OC_RSRVD_PROV_CRL_URL, OC_RSRVD_LAST_UPDATE, lastUpdate);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s?%s=%s", cloudUri, OC_RSRVD_PROV_CRL_URL, OC_RSRVD_LAST_UPDATE,
+             lastUpdate);
 
     OICFree(lastUpdate);
 
@@ -109,12 +108,12 @@ OCStackResult OCCloudGetCRL(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudPostCRL(void* ctx,
+OCStackResult OCCloudPostCRL(void *ctx,
                              const char *thisUpdate,
                              const char *nextUpdate,
                              const OCByteString *crl,
                              const stringArray_t *serialNumbers,
-                             const OCDevAddr *endPoint,
+                             const char *cloudUri,
                              OCCloudResponseCB callback)
 {
     OCStackResult result = OC_STACK_ERROR;
@@ -125,7 +124,7 @@ OCStackResult OCCloudPostCRL(void* ctx,
     size_t cbor_len = 0;
     OicSecKey_t crl1;
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(thisUpdate, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(nextUpdate, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
@@ -136,8 +135,7 @@ OCStackResult OCCloudPostCRL(void* ctx,
         crl1.encoding = OIC_ENCODING_DER;
     }
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_PROV_CRL_URL);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s", cloudUri, OC_RSRVD_PROV_CRL_URL);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
@@ -158,7 +156,7 @@ OCStackResult OCCloudPostCRL(void* ctx,
         size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
         dimensions[0] = serialNumbers->length;
         OCRepPayloadSetStringArray(payload, OC_RSRVD_SERIAL_NUMBERS,
-                                   (const char**)serialNumbers->array, dimensions);
+                                   (const char **)serialNumbers->array, dimensions);
 
     }
     if (crl) OCRepPayloadSetPropPubDataType(payload, OC_RSRVD_CRL, &crl1);
@@ -186,7 +184,7 @@ OCStackResult OCCloudPostCRL(void* ctx,
     secPayload->payloadSize = cbor_len;
 
     result = OCDoResource(NULL, OC_REST_POST, uri, NULL, (OCPayload *)secPayload,
-                        CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+                          CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 exit:
     OCPayloadDestroy((OCPayload *)payload);
     return result;

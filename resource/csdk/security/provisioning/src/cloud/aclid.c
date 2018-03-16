@@ -74,7 +74,7 @@ static OCStackResult getAclIdFromResponse(void *ctx, void **data, OCClientRespon
  * @return  OCStackResult application result
  */
 static OCStackResult handleGetAclIdByDeviceResponse(void *ctx, void **data,
-                                                    OCClientResponse *response)
+        OCClientResponse *response)
 {
     return getAclIdFromResponse(ctx, data, response);
 }
@@ -92,18 +92,18 @@ static OCStackResult handleAclIdCreateResponse(void *ctx, void **data, OCClientR
     return getAclIdFromResponse(ctx, data, response);
 }
 
-OCStackResult OCCloudGetAclIdByDevice(void* ctx,
+OCStackResult OCCloudGetAclIdByDevice(void *ctx,
                                       const char *deviceId,
-                                      const OCDevAddr *endPoint,
+                                      const char *cloudUri,
                                       OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(deviceId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s?%s=%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, OC_RSRVD_DEVICE_ID, deviceId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s?%s=%s", cloudUri, OC_RSRVD_ACL_ID_URL, OC_RSRVD_DEVICE_ID,
+             deviceId);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, handleGetAclIdByDeviceResponse, NULL);
@@ -112,21 +112,21 @@ OCStackResult OCCloudGetAclIdByDevice(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclIdCreate(void* ctx,
+OCStackResult OCCloudAclIdCreate(void *ctx,
                                  const char *ownerId,
                                  const char *deviceId,
-                                 const OCDevAddr *endPoint,
+                                 const char *cloudUri,
                                  OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(ownerId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(deviceId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s?%s=%s&%s=%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL,
-            OC_RSRVD_OWNER_ID, ownerId, OC_RSRVD_DEVICE_ID, deviceId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s?%s=%s&%s=%s",
+             cloudUri, OC_RSRVD_ACL_ID_URL,
+             OC_RSRVD_OWNER_ID, ownerId, OC_RSRVD_DEVICE_ID, deviceId);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, handleAclIdCreateResponse, NULL);
@@ -135,18 +135,17 @@ OCStackResult OCCloudAclIdCreate(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclIdDelete(void* ctx,
+OCStackResult OCCloudAclIdDelete(void *ctx,
                                  const char *aclId,
-                                 const OCDevAddr *endPoint,
+                                 const char *cloudUri,
                                  OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH]  = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s?%s=%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, OC_RSRVD_ACL_ID, aclId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s?%s=%s", cloudUri, OC_RSRVD_ACL_ID_URL, OC_RSRVD_ACL_ID, aclId);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
@@ -185,7 +184,7 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
         goto exit;
     }
 
-    OicSecAcl_t* acl = CBORPayloadToCloudAcl(cbor, size);
+    OicSecAcl_t *acl = CBORPayloadToCloudAcl(cbor, size);
     if (NULL == acl)
     {
         OIC_LOG(ERROR, TAG, "Can't parse CBOR payload");
@@ -213,18 +212,17 @@ exit:
     return result;
 }
 
-OCStackResult OCCloudAclIndividualGetInfo(void* ctx,
+OCStackResult OCCloudAclIndividualGetInfo(void *ctx,
                                           const char *aclId,
-                                          const OCDevAddr *endPoint,
+                                          const char *cloudUri,
                                           OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH]  = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, aclId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s/%s", cloudUri, OC_RSRVD_ACL_ID_URL, aclId);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, handleAclGetInfoResponse, NULL);
@@ -233,10 +231,10 @@ OCStackResult OCCloudAclIndividualGetInfo(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclIndividualAclUpdate(void* ctx,
+OCStackResult OCCloudAclIndividualAclUpdate(void *ctx,
                                             const char *aclId,
                                             const cloudAce_t *aces,
-                                            const OCDevAddr *endPoint,
+                                            const char *cloudUri,
                                             OCCloudResponseCB callback)
 {
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
@@ -247,12 +245,11 @@ OCStackResult OCCloudAclIndividualAclUpdate(void* ctx,
     OCRepPayload **helperPayload  = NULL;
     OCRepPayload **helperPayload2 = NULL;
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aces, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, aclId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s/%s", cloudUri, OC_RSRVD_ACL_ID_URL, aclId);
 
     OCRepPayload *payload = OCRepPayloadCreate();
     if (!payload)
@@ -264,7 +261,7 @@ OCStackResult OCCloudAclIndividualAclUpdate(void* ctx,
     size_t acllist_count = 0;
     //code below duplicates LL_COUNT, implemented in newer version of utlist.h
     {
-        cloudAce_t *ace = (cloudAce_t*)aces;
+        cloudAce_t *ace = (cloudAce_t *)aces;
         while (ace)
         {
             ace = ace->next;
@@ -282,7 +279,7 @@ OCStackResult OCCloudAclIndividualAclUpdate(void* ctx,
     i = 0;
     cloudAce_t *ace = NULL;
 
-    LL_FOREACH((cloudAce_t*)aces, ace)
+    LL_FOREACH((cloudAce_t *)aces, ace)
     {
         OCRepPayload *acePayload = OCRepPayloadCreate();
         if (!acePayload)
@@ -346,11 +343,11 @@ OCStackResult OCCloudAclIndividualAclUpdate(void* ctx,
         }
         dimensions[0] = reslist_count;
         OCRepPayloadSetPropObjectArray(acePayload, OC_RSRVD_RESOURCES,
-                (const OCRepPayload **)helperPayload2, dimensions);
+                                       (const OCRepPayload **)helperPayload2, dimensions);
     }
     dimensions[0] = acllist_count;
     OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_ACCESS_CONTROL_LIST,
-            (const OCRepPayload **)helperPayload, dimensions);
+                                   (const OCRepPayload **)helperPayload, dimensions);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
@@ -375,12 +372,12 @@ no_memory:
     return OC_STACK_NO_MEMORY;
 }
 
-OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
-                                            const char *aclId,
-                                            const char *aceId,
-                                            const cloudAce_t *aces,
-                                            const OCDevAddr *endPoint,
-                                            OCCloudResponseCB callback)
+OCStackResult OCCloudAclIndividualAceUpdate(void *ctx,
+        const char *aclId,
+        const char *aceId,
+        const cloudAce_t *aces,
+        const char *cloudUri,
+        OCCloudResponseCB callback)
 {
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
     char uri[MAX_URI_LENGTH]  = { 0 };
@@ -390,14 +387,13 @@ OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
     OCRepPayload **helperPayload  = NULL;
     OCRepPayload **helperPayload2 = NULL;
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aceId, TAG, "NULL aceId", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aces, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s?%s=%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, aclId,
-            OC_RSRVD_ACE_ID, aceId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s/%s?%s=%s", cloudUri, OC_RSRVD_ACL_ID_URL, aclId,
+             OC_RSRVD_ACE_ID, aceId);
 
     OCRepPayload *payload = OCRepPayloadCreate();
     if (!payload)
@@ -418,7 +414,7 @@ OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
     i = 0;
     cloudAce_t *ace = NULL;
 
-    LL_FOREACH((cloudAce_t*)aces, ace)
+    LL_FOREACH((cloudAce_t *)aces, ace)
     {
         OCRepPayload *acePayload = OCRepPayloadCreate();
         if (!acePayload)
@@ -482,11 +478,11 @@ OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
         }
         dimensions[0] = reslist_count;
         OCRepPayloadSetPropObjectArray(acePayload, OC_RSRVD_RESOURCES,
-                (const OCRepPayload **)helperPayload2, dimensions);
+                                       (const OCRepPayload **)helperPayload2, dimensions);
     }
     dimensions[0] = acllist_count;
     OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_ACCESS_CONTROL_LIST,
-            (const OCRepPayload **)helperPayload, dimensions);
+                                   (const OCRepPayload **)helperPayload, dimensions);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
@@ -513,18 +509,17 @@ no_memory:
 
 
 
-OCStackResult OCCloudAclAcesDelete(void* ctx,
-                                         const char *aclId,
-                                         const OCDevAddr *endPoint,
-                                         OCCloudResponseCB callback)
+OCStackResult OCCloudAclAcesDelete(void *ctx,
+                                   const char *aclId,
+                                   const char *cloudUri,
+                                   OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH]  = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, aclId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s/%s", cloudUri, OC_RSRVD_ACL_ID_URL, aclId);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
@@ -533,21 +528,20 @@ OCStackResult OCCloudAclAcesDelete(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclIndividualAceDelete(void* ctx,
-                                         const char *aclId,
-                                         const char *aceId,
-                                         const OCDevAddr *endPoint,
-                                         OCCloudResponseCB callback)
+OCStackResult OCCloudAclIndividualAceDelete(void *ctx,
+                                            const char *aclId,
+                                            const char *aceId,
+                                            const char *cloudUri,
+                                            OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH]  = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aceId, TAG, "NULL aceId", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s?%s=%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, aclId,
-            OC_RSRVD_ACE_ID, aceId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s/%s?%s=%s", cloudUri, OC_RSRVD_ACL_ID_URL, aclId,
+             OC_RSRVD_ACE_ID, aceId);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
