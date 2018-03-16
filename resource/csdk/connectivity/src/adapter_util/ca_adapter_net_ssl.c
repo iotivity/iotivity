@@ -48,6 +48,8 @@
 #include "mbedtls/ssl_internal.h"
 #include "mbedtls/net_sockets.h"
 #include "mbedtls/oid.h"
+#include "mbedtls/x509.h"
+#include "mbedtls/error.h"
 #ifdef __WITH_DTLS__
 #include "mbedtls/timing.h"
 #include "mbedtls/ssl_cookie.h"
@@ -1208,7 +1210,18 @@ static bool checkSslOperation(SslEndPoint_t*  peer,
         (MBEDTLS_SSL_ALERT_MSG_UNKNOWN_PSK_IDENTITY != ret) &&
         (MBEDTLS_SSL_ALERT_MSG_NO_APPLICATION_PROTOCOL != ret))
     {
-        OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: -0x%x", (str), -ret);
+        size_t bufSize = 1024;
+        char *bufMsg = (char*)OICCalloc(1, bufSize);
+        if (bufMsg)
+        {
+            mbedtls_strerror(ret, bufMsg, bufSize);
+            OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: 0x%X: %s", __func__, -ret, bufMsg);
+            OICFree(bufMsg);
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: -0x%x", (str), -ret);
+        }
 
         // Make a copy of the endpoint, because the callback might
         // free the peer object, during notifySubscriber() below.
@@ -2210,7 +2223,21 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
         uint32_t flags = mbedtls_ssl_get_verify_result(&peer->ssl);
         if (0 != flags)
         {
+            size_t bufSize = 1024;
+            char *bufMsg = (char*)OICCalloc(1, bufSize);
+            if (bufMsg)
+            {
+                mbedtls_x509_crt_verify_info(bufMsg, bufSize, "", flags);
+                OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: session verification(%X): %s", __func__, flags, bufMsg);
+                OICFree(bufMsg);
+            }
+            else
+            {
+                OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: session verification(%X)", __func__, flags);
+            }
+
             OIC_LOG_BUFFER(ERROR, NET_SSL_TAG, (const uint8_t *) &flags, sizeof(flags));
+
             if (!checkSslOperation(peer,
                                    (int)flags,
                                    "Cert verification failed",
