@@ -27,6 +27,7 @@ public:
     RICsdkHelper *m_pRICsdkHelper;
     OCMode m_ClientMode = OC_CLIENT;
     OCTransportFlags m_DefaultTransportFlags = OC_DEFAULT_FLAGS;
+    OCTransportAdapter m_TransportType = OC_DEFAULT_ADAPTER;
     OCStackResult m_result;
     OCCallbackData m_cbData;
     OCDoHandle m_doHandle;
@@ -102,6 +103,29 @@ TEST_F(RICsdkClientTest_btc, OCInit1Client_SRC_P)
 {
     m_result = OCInit1(m_ClientMode, m_DefaultTransportFlags, m_DefaultTransportFlags);
     ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit1 failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+}
+#endif
+
+/**
+ * @since 2018-03-15
+ * @see none
+ * @objective Test OCInit2 with positive basic way
+ * @target OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags,
+ *         OCTransportFlags clientFlags, OCTransportAdapter transportType)
+ * @test_data      1. mode OCMode client mode
+ *                 2. serverFlags Default server transport flags
+ *                 3. clientFlags Default client transport flags
+ *                 4. transportType Default transport adapter value
+ * @pre_condition none
+ * @procedure Call OCInit2() API
+ * @post_condition None
+ * @expected Should return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RICsdkClientTest_btc, OCInit2Client_SRC_P)
+{
+    m_result = OCInit2(m_ClientMode, m_DefaultTransportFlags, m_DefaultTransportFlags, m_TransportType);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit2 failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 

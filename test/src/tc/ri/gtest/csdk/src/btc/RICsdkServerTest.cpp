@@ -29,6 +29,7 @@ public:
     OCMode m_GatewayMode = OC_GATEWAY;
     OCMode m_ClientServerMode = OC_CLIENT_SERVER;
     OCTransportFlags m_DefaultTransportFlags = OC_DEFAULT_FLAGS;
+    OCTransportAdapter m_TransportType = OC_DEFAULT_ADAPTER;
     OCStackResult m_result;
     OCResourceHandle m_handle;
     OCResourceHandle m_lightHandle;
@@ -206,6 +207,81 @@ TEST_F(RICsdkServerTest_btc, OCInit1Server_USV_N)
 {
     m_result = OCInit1(m_GatewayMode, m_DefaultTransportFlags, m_DefaultTransportFlags);
     ASSERT_EQ(OC_STACK_INVALID_PARAM, m_result) << "OCInit1 failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(
+                            m_result);
+}
+#endif
+
+/**
+ * @since 2018-03-15
+ * @see none
+ * @see OCStackResult OCStop()
+ * @objective Test OCInit2 with positive basic way
+ * @target OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags,
+ *         OCTransportFlags clientFlags, OCTransportAdapter transportType)
+ * @test_data      1. mode OCMode server mode
+ *                 2. serverFlags Default server transport flags
+ *                 3. clientFlags Default client transport flag
+ *                 4. transportType Default transport adapter value
+ * @pre_condition none
+ * @procedure Call OCInit2() API
+ * @post_condition Call OCStop()
+ * @expected Should return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RICsdkServerTest_btc, OCInit2Server_SRC_P)
+{
+    m_result = OCInit2(m_ServerMode, m_DefaultTransportFlags, m_DefaultTransportFlags, m_TransportType);
+    ASSERT_EQ(OC_STACK_OK, m_result) << "OCInit2 failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(
+                            m_result);
+}
+#endif
+
+/**
+ * @since 2018-03-15
+ * @see none
+ * @see OCStackResult OCStop()
+ * @objective Test OCInit2 with positive basic way
+ * @target OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags,
+ *         OCTransportFlags clientFlags, OCTransportAdapter transportType)
+ * @test_data      1. mode OCMode clientserver mode
+ *                 2. serverFlags Default server transport flags
+ *                 3. clientFlags Default client transport flag
+ *                 4. transportType Default transport adapter value
+ * @pre_condition none
+ * @procedure Call OCInit2() API
+ * @post_condition Call OCStop()
+ * @expected Should return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RICsdkServerTest_btc, OCInit2ClientServer_SRC_P)
+{
+    m_result = OCInit2(m_ClientServerMode, m_DefaultTransportFlags, m_DefaultTransportFlags, m_TransportType);
+    ASSERT_EQ(OC_STACK_OK, m_result) << "OCInit2 failed for client-server. Actual result : " <<
+                                     CommonUtil::s_OCStackResultString.at(m_result);
+}
+#endif
+
+/**
+ * @since 2018-03-15
+ * @see none
+ * @see OCStackResult OCStop()
+ * @objective Test OCInit2 with negative basic way with mode as gateway
+ * @target OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags,
+ *         OCTransportFlags clientFlags, OCTransportAdapter transportType)
+ * @test_data      1. mode gateway mode
+ *                 2. serverFlags Default server transport flags
+ *                 3. clientFlags Default client transport flags
+ *                 4. transportType Default transport adapter value
+ * @pre_condition none
+ * @procedure Call OCInit2() API
+ * @post_condition Call OCStop()
+ * @expected Should return OC_STACK_INVALID_PARAM
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RICsdkServerTest_btc, OCInit2Server_USV_N)
+{
+    m_result = OCInit2(m_GatewayMode, m_DefaultTransportFlags, m_DefaultTransportFlags, m_TransportType);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM, m_result) << "OCInit2 failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(
                             m_result);
 }
 #endif
@@ -420,6 +496,251 @@ TEST_F(RICsdkServerTest_btc, OCCreateResourceURI_ESV_N)
     m_result = OCCreateResource(&m_handle, RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
     EMPTY_STRING, OCEntityHandlerCb, NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
     ASSERT_EQ(OC_STACK_INVALID_URI,m_result)<< "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+}
+#endif
+
+/**
+ * @since 2018-03-15
+ * @see OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @see OCStackResult OCStop()
+ * @objective Test OCCreateResourceWithEp with positive basic way
+ * @target OCStackResult OCCreateResourceWithEp(OCResourceHandle *handle,
+ *       const char *resourceTypeName,
+ *       const char *resourceInterfaceName,
+ *       const char *uri,
+ *       OCEntityHandler entityHandler,
+ *       void* callbackParam,
+ *       uint8_t resourceProperties
+ *        OCTpsSchemeFlags resourceTpsTypes)
+ * @test_data     1. OCResourceHandle pointer to the created resource
+ *                 2. resourceTypeName "core.light"
+ *                 3. resourceInterfaceName "oc.if.a"
+ *                 4. uri "/a/light"
+ *                 5. entityHandler entity handler to be called
+ *                 6. callbackParam null
+ *                 7. resourceProperties OC_DISCOVERABLE|OC_OBSERVABLE
+ *                 8. resourceTpsTypes "OC_ALL"
+ * @pre_condition Call OCInit() API
+ * @procedure Call OCCreateResourceWithEp() API
+ * @post_condition Call OCStop()
+ * @expected Should return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RICsdkServerTest_btc, OCCreateResourceWithEp_SRC_P)
+{
+    m_result = m_pRICsdkHelper->initServer();
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+
+    m_result = OCCreateResourceWithEp(&m_handle, RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT, OCEntityHandlerCb, NULL, OC_DISCOVERABLE | OC_OBSERVABLE, OC_ALL);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+}
+#endif
+
+/**
+ * @since 2018-03-15
+ * @see OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @see OCStackResult OCStop()
+ * @objective Test OCCreateResourceWithEp with positive basic way
+ * @target OCStackResult OCCreateResourceWithEp(OCResourceHandle *handle,
+ *       const char *resourceTypeName,
+ *       const char *resourceInterfaceName,
+ *       const char *uri,
+ *       OCEntityHandler entityHandler,
+ *       void* callbackParam,
+ *       uint8_t resourceProperties
+ *       OCTpsSchemeFlags resourceTpsTypes)
+ * @test_data     1. OCResourceHandle pointer to the created resource
+ *                 2. resourceTypeName "core.light"
+ *                 3. resourceInterfaceName "oc.if.a"
+ *                 4. uri "/a/light"
+ *                 5. entityHandler entity handler to be called
+ *                 6. callbackParam null
+ *                 7. resourceProperties OC_DISCOVERABLE|OC_OBSERVABLE
+ *                 8. resourceTpsTypes "OC_COAP"
+ * @pre_condition Call OCInit() API
+ * @procedure Call OCCreateResourceWithEp() API
+ * @post_condition Call OCStop()
+ * @expected Should return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RICsdkServerTest_btc, OCCreateResourceWithEpCOAP_SRC_P)
+{
+    m_result = m_pRICsdkHelper->initServer();
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+
+    m_result = OCCreateResourceWithEp(&m_handle, RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT, OCEntityHandlerCb, NULL, OC_DISCOVERABLE | OC_OBSERVABLE, OC_COAP);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+}
+#endif
+
+/**
+ * @since 2018-03-15
+ * @see OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @see OCStackResult OCStop()
+ * @objective Test OCCreateResourceWithEp with positive basic way
+ * @target OCStackResult OCCreateResourceWithEp(OCResourceHandle *handle,
+ *       const char *resourceTypeName,
+ *       const char *resourceInterfaceName,
+ *       const char *uri,
+ *       OCEntityHandler entityHandler,
+ *       void* callbackParam,
+ *       uint8_t resourceProperties)
+ * @test_data     1. OCResourceHandle pointer to the created resource
+ *                 2. resourceTypeName "core.light"
+ *                 3. resourceInterfaceName "oc.if.a"
+ *                 4. uri "/a/light"
+ *                 5. entityHandler entity handler to be called
+ *                 6. callbackParam null
+ *                 7. resourceProperties OC_DISCOVERABLE|OC_OBSERVABLE
+ *                 8. resourceTpsTypes "OC_COAPS"
+ * @pre_condition Call OCInit() API
+ * @procedure Call OCCreateResourceWithEp() API
+ * @post_condition Call OCStop()
+ * @expected Should return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RICsdkServerTest_btc, OCCreateResourceWithEpCOAPS_SRC_P)
+{
+    m_result = m_pRICsdkHelper->initServer();
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+
+    m_result = OCCreateResourceWithEp(&m_handle, RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT, OCEntityHandlerCb, NULL, OC_DISCOVERABLE | OC_OBSERVABLE, OC_COAPS);
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+}
+#endif
+
+/**
+ * @since 2018-03-15
+ * @see OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @see OCStackResult OCStop()
+ * @objective Test OCCreateResourceWithEp with negative basic way using empty resourceTypeName
+ * @target OCStackResult OCCreateResourceWithEp(OCResourceHandle *handle,
+ *       const char *resourceTypeName,
+ *       const char *resourceInterfaceName,
+ *       const char *uri,
+ *       OCEntityHandler entityHandler,
+ *       void* callbackParam,
+ *       uint8_t resourceProperties
+ *       OCTpsSchemeFlags resourceTpsTypes)
+ * @test_data      1. OCResourceHandle pointer to the created resource
+ *                 2. resourceTypeName ""
+ *                 3. resourceInterfaceName "oc.if.a"
+ *                 4. uri "/a/light"
+ *                 5. entityHandler entity handler to be called
+ *                 6. callbackParam null
+ *                 7. resourceProperties OC_DISCOVERABLE|OC_OBSERVABLE
+ *                 8. resourceTpsTypes "OC_NO_TPS"
+ * @pre_condition Call OCInit() API
+ * @procedure Call OCCreateResourceWithEp() API
+ * @post_condition Call OCStop()
+ * @expected Should return OC_STACK_INVALID_PARAM
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RICsdkServerTest_btc, OCCreateResourceWithEp_NV_N)
+{
+    m_result = m_pRICsdkHelper->initServer();
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+
+    m_result = OCCreateResourceWithEp(&m_handle, RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT, OCEntityHandlerCb, NULL, OC_DISCOVERABLE | OC_OBSERVABLE, OC_NO_TPS);
+    ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result)<< "OCCreateResource failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+}
+#endif
+
+/**
+ * @since 2018-03-15
+ * @see OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @see OCStackResult OCStop()
+ * @objective Test OCGetSupportedEndpointTpsFlags() with positive basic way
+ * @target OCTpsSchemeFlags OCGetSupportedEndpointTpsFlags();
+ * @Returns flags of supported endpoint TPS on stack
+ * @pre_condition Call OCInit() API
+ * @procedure Call OCGetSupportedEndpointTpsFlags() API
+ * @expected Should return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RICsdkServerTest_btc, OCGetSupportedEndpointTpsFlags_SRC_P)
+{
+    m_result = m_pRICsdkHelper->initServer();
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    OCTpsSchemeFlags schemeflags;
+    schemeflags = OCGetSupportedEndpointTpsFlags();
+    ASSERT_EQ(OC_STACK_OK,m_result);
+}
+#endif
+
+/**
+ * @since 2018-03-15
+ * @see OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @see OCStackResult OCStop()
+ * @objective Test OCGetResourceHandleAtUri() with positive basic way
+ * @Target OCGetResourceHandleAtUri(const char *uri)
+ * @test_data   Uri of resource to get Resource handle
+  *             uri = OC_RSRVD_WELL_KNOWN_URI                
+ * @pre_condition Call OCInit() API
+ * @procedure Call OCGetResourceHandleAtUri() API
+ * @post_condition Call OCStop()
+ * @expected Should return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RICsdkServerTest_btc, OCGetResourceHandleAtUri_SRC_P)
+{
+    m_result = m_pRICsdkHelper->initServer();
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+
+    m_handle = OCGetResourceHandleAtUri(OC_RSRVD_WELL_KNOWN_URI);
+    ASSERT_EQ(OC_STACK_OK, m_result)<< "OCDoResponse failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+}
+#endif
+
+/**
+ * @since 2018-03-15
+ * @see OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @see OCStackResult OCStop()
+ * @objective Test OCGetResourceHandleAtUri() with positive basic way
+ * @Target OCGetResourceHandleAtUri(const char *uri)
+ * @test_data   Uri of resource to get Resource handle
+  *             uri = OC_RSRVD_DEVICE_URI                
+ * @pre_condition Call OCInit() API
+ * @procedure Call OCGetResourceHandleAtUri() API
+ * @post_condition Call OCStop()
+ * @expected Should return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RICsdkServerTest_btc, OCGetResourceHandleAtUriDeviceURI_SRC_P)
+{
+    m_result = m_pRICsdkHelper->initServer();
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+
+    m_handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    ASSERT_EQ(OC_STACK_OK, m_result)<< "OCDoResponse failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+}
+#endif
+
+/**
+ * @since 2018-03-15
+ * @see OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @see OCStackResult OCStop()
+ * @objective Test OCGetResourceHandleAtUri() with negative basic way
+ * @Target OCGetResourceHandleAtUri(const char *uri)
+ * @test_data   Uri of resource to get Resource handle
+ *              uri = NULL                 
+ * @pre_condition Call OCInit() API
+ * @procedure Call OCGetResourceHandleAtUri() API
+ * @post_condition Call OCStop()
+ * @expected Should return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RICsdkServerTest_btc, OCGetResourceHandleAtUri_NV_V)
+{
+    m_result = m_pRICsdkHelper->initServer();
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+
+    m_handle = OCGetResourceHandleAtUri(NULL);
+    ASSERT_EQ(NULL, m_result)<< "OCDoResponse failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
 }
 #endif
 
@@ -1898,6 +2219,80 @@ TEST_F(RICsdkServerTest_btc, OCGetResourceProperties_SRC_P)
     OCResourceProperty receivedProperty = (OCResourceProperty)NULL;
     receivedProperty = OCGetResourceProperties(m_handle);
     ASSERT_NE(NULL,receivedProperty)<< "OCGetResourceProperties failed. Received property is null";
+}
+#endif
+
+/**
+ * @since 2018-03-15
+ * @see OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @see OCStackResult OCCreateResource(OCResourceHandle *handle,
+ *       uint8_t resourceProperties)
+ * @see OCStackResult OCStop()
+ * @objective Test OCSetResourceProperties with positive basic way
+ * @target OCResourceProperty OCGetResourceProperties(OCResourceHandle handle)
+ * @test_data handle pointer to the created resource
+ * @pre_condition      1. Call OCInit() API
+ *                     2. Call OCCreateResource() API
+ * @procedure Call OCSetResourceProperties() API
+ * @post_condition Call OCStop()
+ * @expected Should return resource property
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RICsdkServerTest_btc, OCSetResourceProperties_SRC_FSV_P)
+{
+    m_result = m_pRICsdkHelper->initServer();
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
+
+    try
+    {
+        m_result = OCSetResourceProperties(m_handle, OC_DISCOVERABLE|OC_OBSERVABLE);
+        ASSERT_EQ(OC_STACK_OK,m_result)<< "OCSetResourceProperties failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    }
+    catch (exception &e)
+    {
+        SET_FAILURE("Exception occured. Exception is " + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2018-03-15
+ * @see OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+ * @see OCStackResult OCClearResourceProperties(OCResourceHandle *handle,
+ *       uint8_t resourceProperties)
+ * @see OCStackResult OCStop()
+ * @objective Test OCClearResourceProperties with positive basic way
+ * @target OCResourceProperty OCGetResourceProperties(OCResourceHandle handle)
+ * @test_data handle pointer to the created resource
+ * @pre_condition      1. Call OCInit() API
+ *                     2. Call OCCreateResource() API
+ * @procedure Call OCClearResourceProperties() API
+ * @post_condition Call OCStop()
+ * @expected Should return resource property
+ */
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RICsdkServerTest_btc, OCClearResourceProperties_SRC_FSV_P)
+{
+    m_result = m_pRICsdkHelper->initServer();
+    ASSERT_EQ(OC_STACK_OK,m_result)<< "OCInit failed for server. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+
+    m_handle = m_pRICsdkHelper->createResource(RESOURCE_TYPE_LIGHT, RESOURCE_INTERFACE_DEFAULT,
+            RESOURCE_URI_LIGHT);
+    ASSERT_NE(m_handle,(OCResourceHandle)NULL)<< m_pRICsdkHelper->getFailureMessage();
+
+    try
+    {
+        m_result = OCClearResourceProperties(m_handle, OC_DISCOVERABLE|OC_OBSERVABLE);
+        ASSERT_EQ(OC_STACK_OK,m_result)<< "OCClearResourceProperties failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
+    }
+    catch (exception &e)
+    {
+        SET_FAILURE("Exception occured. Exception is " + std::string(e.what()));
+    }
 }
 #endif
 
