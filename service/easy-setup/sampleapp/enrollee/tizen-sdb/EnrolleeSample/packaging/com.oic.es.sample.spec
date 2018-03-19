@@ -3,7 +3,7 @@
 %{!?VERBOSE: %define VERBOSE 1}
 
 Name: com-oic-es-sample
-Version:    1.3.1
+Version:    1.4.0
 Release:    0
 Summary: Tizen adapter interfacesample application
 Group: Network & Connectivity / IoT Connectivity
