@@ -20,7 +20,7 @@
 #include <string.h>
 #include "cloudCommon.h"
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocpayload.h"
 
 #include "cloudResource.h"
@@ -228,7 +228,6 @@ OCLedHandler (OCEntityHandlerFlag flag,
             memset(&response, 0, sizeof(OCEntityHandlerResponse));
 
             response.requestHandle = request->requestHandle;
-            response.resourceHandle = request->resource;
             response.ehResult = result;
             response.payload = (OCPayload*)payload;
             response.numSendVendorSpecificHeaderOptions = 0;

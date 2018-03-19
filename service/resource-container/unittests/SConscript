@@ -29,7 +29,6 @@ from tools.scons.RunTest import run_test
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
 target_os = lib_env.get('TARGET_OS')
-src_dir = lib_env.get('SRC_DIR')
 rd_mode = lib_env.get('RD_MODE')
 
 containerJavaSupport = ARGUMENTS.get('containerJavaSupport', 0)
@@ -52,8 +51,6 @@ else:
     lib_env.AppendUnique(CCFLAGS=['-g'])
 
 
-# Add third party libraries
-SConscript(src_dir + '/service/third_party_libs.scons', 'lib_env')
 container_gtest_env = lib_env.Clone()
 
 if int(containerJavaSupport):

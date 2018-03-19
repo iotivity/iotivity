@@ -32,14 +32,14 @@
 #include "ocserverrequest.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "ocpayload.h"
 #include "utlist.h"
 #include "acl_logging.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "srmresourcestrings.h"
 #include "aclresource.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "rolesresource.h"
 #include "resourcemanager.h"
 #include "srmutility.h"
@@ -823,13 +823,13 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl,
                         OIC_LOG_V(DEBUG, TAG, "%s encoded v2 %s tag.", __func__, OIC_JSON_WC_NAME);
                         switch(rsrc->wildcard)
                         {
-                            case ALL_DISCOVERABLE:
+                            case ALL_DISCOVERABLE_NCRS_WITH_OC_SECURE:
                             wcstring = OIC_JSON_WC_PLUS_NAME;
                             break;
-                            case ALL_NON_DISCOVERABLE:
+                            case ALL_DISCOVERABLE_NCRS_WITH_OC_NONSECURE:
                             wcstring = OIC_JSON_WC_MINUS_NAME;
                             break;
-                            case ALL_RESOURCES:
+                            case ALL_NCRS:
                             wcstring = OIC_JSON_WC_ASTERISK_NAME;
                             break;
                             default:
@@ -1453,6 +1453,7 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                     OIC_LOG_V(DEBUG, TAG, "%s Found v1 ACL; assigning 'versionCheck' and returning NULL.", __func__);
                     *versionCheck = OIC_SEC_ACL_V1;
                     OICFree(acl);
+                    free(tagName);
                     return NULL;
                 }
                 OIC_LOG_V(DEBUG, TAG, "%s decoding v1 ACL.", __func__);
@@ -1467,6 +1468,7 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                     OIC_LOG_V(DEBUG, TAG, "%s Found v2 ACL; assigning 'versionCheck' and returning NULL.", __func__);
                     *versionCheck = OIC_SEC_ACL_V2;
                     OICFree(acl);
+                    free(tagName);
                     return NULL;
                 }
                 OIC_LOG_V(DEBUG, TAG, "%s decoding v2 ACL.", __func__);
@@ -1481,6 +1483,7 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                         " Assigning 'versionCheck' to OIC_SEC_ACL_UNKNOWN and returning NULL.", __func__);
                     *versionCheck = OIC_SEC_ACL_UNKNOWN;
                     OICFree(acl);
+                    free(tagName);
                     return NULL;
                 }
             }
@@ -1732,6 +1735,8 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                                                 {
                                                     OIC_LOG_V(WARNING, TAG, "Unknown tag in subject map: %s", subjectTag);
                                                 }
+
+                                                free(subjectTag);       // we are done with this instance
                                             }
 
                                             // advance to next elt in subject map
@@ -1810,7 +1815,7 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                                                 {
                                                     free(rsrc->href);
                                                     rsrc->href = NULL;
-                                                    rsrc->wildcard = ALL_RESOURCES;
+                                                    rsrc->wildcard = ALL_NCRS;
                                                     OIC_LOG_V(DEBUG, TAG, "%s: replaced \"*\" href with wildcard = ALL_RESOURCES.",
                                                         __func__);
                                                 }
@@ -1885,18 +1890,18 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                                                 OIC_LOG_V(DEBUG, TAG, "%s found wc = %s.", __func__, wc);
                                                 if (0 == strcmp(OIC_JSON_WC_ASTERISK_NAME, wc))
                                                 {
-                                                    rsrc->wildcard = ALL_RESOURCES;
-                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_RESOURCES.", __func__);
+                                                    rsrc->wildcard = ALL_NCRS;
+                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_NCRS.", __func__);
                                                 }
                                                 else if (0 == strcmp(OIC_JSON_WC_PLUS_NAME, wc))
                                                 {
-                                                    rsrc->wildcard = ALL_DISCOVERABLE;
-                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_DISCOVERABLE.", __func__);
+                                                    rsrc->wildcard = ALL_DISCOVERABLE_NCRS_WITH_OC_SECURE;
+                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_DISCOVERABLE_NCRS_WITH_OC_SECURE.", __func__);
                                                 }
                                                 else if (0 == strcmp(OIC_JSON_WC_MINUS_NAME, wc))
                                                 {
-                                                    rsrc->wildcard = ALL_NON_DISCOVERABLE;
-                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_NON_DISCOVERABLE.", __func__);
+                                                    rsrc->wildcard = ALL_DISCOVERABLE_NCRS_WITH_OC_NONSECURE;
+                                                    OIC_LOG_V(DEBUG, TAG, "%s set wildcard = ALL_DISCOVERABLE_NCRS_WITH_OC_NONSECURE.", __func__);
                                                 }
                                                 else
                                                 {
@@ -2080,19 +2085,16 @@ exit:
         acl = NULL;
     }
 
-    if(NULL != subjectTag)
-    {
-        free(subjectTag);
-        subjectTag = NULL;
-    }
-
-    if (NULL != rMapName)
+    if (rMapName)
     {
         free(rMapName);
         rMapName = NULL;
     }
 
-    free(tagName);
+    if (tagName)
+    {
+        free(tagName);
+    }
 
     return acl;
 }
@@ -3110,6 +3112,17 @@ static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest
     char resource[MAX_URI_LENGTH] = { 0 };
 
     VERIFY_NOT_NULL(TAG, ehRequest->query, ERROR);
+
+    OicSecDostype_t dos;
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
+    ehRet = OC_EH_OK;
+    if ((DOS_RESET == dos.state) ||
+        (DOS_RFNOP == dos.state))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s /acl resource is read-only in RESET and RFNOP.", __func__);
+        ehRet = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
+    }
 
     if (GetAceIdsFromQueryString(ehRequest->query, &aceIdList))
     {

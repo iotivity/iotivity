@@ -58,7 +58,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <oic_malloc.h>
-#include "logger.h"
+#include "experimental/logger.h"
 
 /**
  * TAG
@@ -618,6 +618,11 @@ OCWaitResult_t oc_cond_wait_for(oc_cond cond, oc_mutex mutex, uint64_t microseco
 #endif
 
         // Wait forever
+#ifndef NDEBUG
+        // The conditional variable wait API used will atomically release the mutex, but the
+        // best we can do here is to just clear the owner info before the API is called.
+        mutexInfo->owner = OC_INVALID_THREAD_ID;
+#endif
         int ret = pthread_cond_wait(&eventInfo->cond, &mutexInfo->mutex);
         retVal = (ret == 0) ? OC_WAIT_SUCCESS : OC_WAIT_INVAL;
 

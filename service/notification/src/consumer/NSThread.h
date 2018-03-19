@@ -61,7 +61,7 @@ void NSThreadStop(NSConsumerThread *);
 
 void NSDestroyThreadHandle(NSConsumerThread *);
 
-void NSThreadDetach();
+void NSThreadDetach(void);
 
 #ifdef __cplusplus
 }

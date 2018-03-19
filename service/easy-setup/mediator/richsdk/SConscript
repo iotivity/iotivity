@@ -37,17 +37,7 @@ if easy_setup_env.get('RELEASE'):
 else:
     easy_setup_env.AppendUnique(CCFLAGS=['-g'])
 
-# Easysetup provides reference implemenation of Arduino Enrollee.
-# Mediator applications developed on different platforms will be default defining the
-# flag 'REMOTE_ARDUINO_ENROLEE'. If the target Enrollee is not Arduino, the below commented
-# modifications must be enabled instead (and the existing define must be commented).
-#
-##### The following lines must be uncommented, if target Enrollee is not Arduino
 target_enrollee = env.get('ES_TARGET_ENROLLEE')
-if target_enrollee == 'arduino':
-    print("REMOTE_ARDUINO_ENROLEE flag is defined.")
-    print("The Mediator application will be working only with Arduino Enrollee.")
-    easy_setup_env.AppendUnique(CPPDEFINES=['REMOTE_ARDUINO_ENROLEE'])
 target_os = env.get('TARGET_OS')
 
 ######################################################################
@@ -138,10 +128,6 @@ if target_os in ['android', 'ios', 'linux', 'tizen']:
         ])
         easy_setup_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
-if not env.get('RELEASE') and target_os not in ['ios']:
-    easy_setup_env.PrependUnique(LIBS=['gcov'])
-    easy_setup_env.AppendUnique(CCFLAGS=['--coverage'])
-
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -171,6 +157,7 @@ if target_os in ['android', 'ios', 'linux', 'tizen']:
     if target_os not in ['ios']:
         es_sdk_shared = easy_setup_env.SharedLibrary('ESMediatorRich',
                                                      easy_setup_env.get('es_src'))
+        easy_setup_env.InstallTarget(es_sdk_shared, 'libESMediatorRich')
         easy_setup_env.UserInstallTargetLib(es_sdk_shared, 'libESMediatorRich')
         easy_setup_env.AppendUnique(
             LINKFLAGS=['-Wl,-soname,libESMediatorRich.so'])
@@ -207,6 +194,6 @@ if target_os in ['android']:
 ######################################################################
 #Build UnitTestcases for Mediator[RichSDK]
 ################################################ ######################
-if env.get('SECURED') == '0':
+if easy_setup_env.get('WITH_TEST') and easy_setup_env.get('SECURED') == '0':
     if target_os == 'linux':
         SConscript('unittests/SConscript')

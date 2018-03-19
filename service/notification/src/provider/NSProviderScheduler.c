@@ -34,7 +34,7 @@ void * NSSubScriptionSchedule(void *ptr);
 void * NSNotificationSchedule(void *ptr);
 void * NSTopicSchedule(void * ptr);
 
-bool NSInitScheduler()
+bool NSInitScheduler(void)
 {
     NS_LOG(DEBUG, "NSInitScheduler - IN");
 
@@ -52,7 +52,7 @@ bool NSInitScheduler()
     return true;
 }
 
-bool NSStartScheduler()
+bool NSStartScheduler(void)
 {
     int i = 0;
 
@@ -110,7 +110,7 @@ bool NSStartScheduler()
     return true;
 }
 
-bool NSStopScheduler()
+bool NSStopScheduler(void)
 {
     NS_LOG(DEBUG, "NSStopScheduler - IN");
     int i = 0;

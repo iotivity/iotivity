@@ -27,6 +27,7 @@
 #include <srmutility.h>
 #include <OCProvisioningManager.hpp>
 #include <gtest/gtest.h>
+#include "provisioningdatabasemanager.h"
 
 #define TIMEOUT 5
 #define DB_FILE "./dbPath.tmp"

@@ -168,7 +168,7 @@ class Configuration:
         return """
 #include <unistd.h>
 #include <pthread.h>
-int main()
+int main(void)
 {
     #ifndef _POSIX_THREADS
     # error POSIX Threads support not available

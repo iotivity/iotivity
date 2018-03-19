@@ -45,37 +45,43 @@ def maskFlags(flags):
 ######################################################################
 
 lyric_env.PrependUnique(CPPPATH=[
-    os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
-    os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
-    os.path.join(src_dir, 'resource', 'c_common'),
-    os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
-    os.path.join(src_dir, 'resource', 'include'),
-    os.path.join(src_dir, 'extlibs', 'cjson'),
-    os.path.join(src_dir, 'extlibs', 'tinycbor', 'src'),
-    os.path.join(src_dir, 'extlibs', 'rapidjson', 'rapidjson', 'include', 'rapidjson')
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/c_common',
+    '#/resource/oc_logger/include',
+    '#/resource/csdk/logger/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/extlibs/cjson',
+    '#/extlibs/tinycbor/src',
+    '#/extlibs/rapidjson/rapidjson/include/rapidjson'
 ])
 lyric_env.AppendUnique(CPPPATH=[
-    os.path.join(bridging_path, 'include'),
-    os.path.join(bridging_path, 'plugins', 'lyric_plugin'),
-    os.path.join(bridging_path, 'plugins', 'lyric_plugin', 'honeywell_objects')
+    '#/bridging/include',
+    '#/bridging/plugins/lyric_plugin',
+    '#/bridging/plugins/lyric_plugin/honeywell_objects',
 ])
 
 if 'g++' in lyric_env.get('CXX'):
     lyric_env.AppendUnique(
         CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
+libmpm = lyric_env.get('BUILD_DIR') + 'libmpmcommon.a'
 lyric_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
-lyric_env.AppendUnique(LINKFLAGS=['-Wl,--allow-shlib-undefined'])
 lyric_env.AppendUnique(LINKFLAGS=[
-    '-Wl,--whole-archive',
-    lyric_env.get('BUILD_DIR') + 'libmpmcommon.a', '-Wl,-no-whole-archive'
+    '-Wl,--allow-shlib-undefined',
+    '-Wl,--whole-archive', libmpm,
+    '-Wl,-no-whole-archive'
 ])
 
 lyric_env.AppendUnique(LIBS=[
-    'm', 'octbstack', 'ocsrm', 'connectivity_abstraction', 'coap', 'curl'
+    'm',
+    'octbstack',
+    'ocsrm',
+    'connectivity_abstraction',
+    'coap',
+    'curl',
 ])
 
 #####################################################################
@@ -83,14 +89,15 @@ lyric_env.AppendUnique(LIBS=[
 ######################################################################
 
 lyric_src = [
-    os.path.join(bridging_path, 'plugins', 'lyric_plugin', 'honeywellResource.cpp'),
-    os.path.join(bridging_path, 'plugins', 'lyric_plugin', 'honeywellHelpers.cpp'),
-    os.path.join(bridging_path, 'plugins', 'lyric_plugin', 'honeywell_objects', 'honeywellLyric.cpp'),
-    os.path.join(bridging_path, 'plugins', 'lyric_plugin', 'honeywell_objects', 'honeywell.cpp'),
-    os.path.join(bridging_path, 'plugins', 'lyric_plugin', 'honeywell_objects', 'honeywellThermostat.cpp'),
+    'honeywellResource.cpp',
+    'honeywellHelpers.cpp',
+    'honeywell_objects/honeywellLyric.cpp',
+    'honeywell_objects/honeywell.cpp',
+    'honeywell_objects/honeywellThermostat.cpp',
 ]
 
 lyric_env.AppendUnique(LYRIC_SRC=lyric_src)
 lyriclib = lyric_env.SharedLibrary('lyricplugin', lyric_env.get('LYRIC_SRC'))
+lyric_env.Depends(lyriclib, libmpm)
 lyric_env.InstallTarget(lyriclib, 'lyricplugin')
 lyric_env.UserInstallTargetLib(lyriclib, 'lyricplugin')

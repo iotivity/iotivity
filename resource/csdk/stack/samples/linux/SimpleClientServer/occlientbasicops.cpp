@@ -34,10 +34,10 @@
 #include <getopt.h>
 
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "occlientbasicops.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "common.h"

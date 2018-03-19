@@ -22,11 +22,10 @@
 
 #include "srmutility.h"
 #include "srmresourcestrings.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
-#include "base64.h"
-#include "ocrandom.h"
-#include "doxmresource.h"
+#include "experimental/ocrandom.h"
+#include "experimental/doxmresource.h"
 
 #define TAG  "OIC_SRM_UTILITY"
 
@@ -226,3 +225,124 @@ OCStackResult OC_CALL SetDeviceIdSeed(const uint8_t* seed, size_t seedSize)
     return SetDoxmDeviceIDSeed(seed, seedSize);
 }
 #endif
+
+bool SRMIsSecurityResourceURI(const char* uri)
+{
+    if (!uri)
+    {
+        return false;
+    }
+
+#ifdef _MSC_VER
+    // The strings below are const but they are also marked as extern so they cause warnings.
+#pragma warning(push)
+#pragma warning(disable:4204)
+#endif
+    const char *rsrcs[] = {
+        OIC_RSRC_SVC_URI,
+        OIC_RSRC_AMACL_URI,
+        OIC_RSRC_CRL_URI,
+        OIC_RSRC_CRED_URI,
+        OIC_RSRC_CSR_URI,
+        OIC_RSRC_ACL_URI,
+        OIC_RSRC_ACL2_URI,
+        OIC_RSRC_DOXM_URI,
+        OIC_RSRC_PSTAT_URI,
+        OIC_RSRC_VER_URI,
+        OIC_RSRC_ROLES_URI,
+        OC_RSRVD_PROV_CRL_URL
+    };
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
+    // Remove query from Uri for resource string comparison
+    size_t uriLen = strlen(uri);
+    char *query = strchr (uri, '?');
+    if (query)
+    {
+        uriLen = query - uri;
+    }
+
+    for (size_t i = 0; i < sizeof(rsrcs)/sizeof(rsrcs[0]); i++)
+    {
+        size_t svrLen = strlen(rsrcs[i]);
+
+        if ((uriLen == svrLen) &&
+            (strncmp(uri, rsrcs[i], svrLen) == 0))
+        {
+            OIC_LOG_V(INFO, TAG, "%s: resource %s is SVR.", __func__, uri);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * return true IFF the uri is for a DCR as defined by Security Specification.
+ */
+bool IsDeviceConfigurationResourceUri(const char *uri)
+{
+    if (!uri)
+    {
+        return false;
+    }
+
+    if (SRMIsSecurityResourceURI(uri))
+    {
+        return true;
+    }
+
+#ifdef _MSC_VER
+    // The strings below are const but they are also marked as extern so they cause warnings.
+#pragma warning(push)
+#pragma warning(disable:4204)
+#endif
+    const char *rsrcs[] = {
+        OC_RSRVD_DEVICE_URI,
+        OC_RSRVD_PLATFORM_URI,
+        OC_RSRVD_WELL_KNOWN_URI
+        // TODO [IOT-3006]: add WES resources as needed to enable easy setup use cases
+        // TODO [IOT-3006]: add CNC resources as needed to enable CNC use cases
+    };
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
+    // Remove query from Uri for resource string comparison
+    size_t uriLen = strlen(uri);
+    char *query = strchr (uri, '?');
+    if (query)
+    {
+        uriLen = query - uri;
+    }
+
+    for (size_t i = 0; i < sizeof(rsrcs)/sizeof(rsrcs[0]); i++)
+    {
+        size_t svrLen = strlen(rsrcs[i]);
+
+        if ((uriLen == svrLen) &&
+            (strncmp(uri, rsrcs[i], svrLen) == 0))
+        {
+            OIC_LOG_V(INFO, TAG, "%s: resource %s is DCR.", __func__, uri);
+            return true;
+        }
+    }
+
+    OIC_LOG_V(INFO, TAG, "%s: resource %s is not DCR => resource is NCR.", __func__, uri);
+    return false;
+}
+
+/**
+ * Is the URI for a Non0Configuration Resource as defined
+ * by Security Specification.
+ *
+ * @return true IFF the uri is for a NCR
+ */
+bool IsNonConfigurationResourceUri(const char *uri)
+{
+    return !IsDeviceConfigurationResourceUri(uri);
+}

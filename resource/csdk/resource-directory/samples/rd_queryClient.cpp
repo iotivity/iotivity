@@ -21,7 +21,7 @@
 #include <iostream>
 #include "octypes.h"
 #include "ocstack.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 
 bool g_foundResource = true;
 static int count = 0;
@@ -63,7 +63,7 @@ OCStackResult findResource(std::string str, OCClientResponseHandler cb)
              &cbData, nullptr, 0);
 }
 
-int main()
+int main(void)
 {
     bool sendRequest = true;
     std::cout << "Initializing IoTivity Platform" << std::endl;

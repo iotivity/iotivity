@@ -36,8 +36,6 @@ else:
 ######################################################################
 #unit test setting
 ######################################################################
-src_dir = lib_env.get('SRC_DIR')
-
 easysetup_test_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
 
@@ -86,11 +84,9 @@ easysetup_mediator_test_env = easysetup_test_env.Clone()
 easysetup_mediator_test_env.AppendUnique(
     LIBS=['ESEnrolleeSDK', 'ESMediatorRich'])
 
-easysetup_mediator_test_src = env.Glob(
-    src_dir +
-    '/service/easy-setup/mediator/richsdk/unittests/ESMediatorTest.cpp')
+src_files = ['ESMediatorTest.cpp']
 easysetup_mediator_test = easysetup_mediator_test_env.Program(
-    'easysetup_mediator_test', easysetup_mediator_test_src)
+    'easysetup_mediator_test', src_files)
 Alias("easysetup_mediator_test", easysetup_mediator_test)
 easysetup_mediator_test_env.AppendTarget('easysetup_mediator_test')
 

@@ -30,13 +30,13 @@ extern "C" {
 #include <pthread.h>
 #include "NSConsumerCommon.h"
 
-NSCacheList * NSConsumerStorageCreate();
+NSCacheList * NSConsumerStorageCreate(void);
 NSCacheElement * NSConsumerStorageRead(NSCacheList * list, const char * findId);
 NSResult NSConsumerStorageWrite(NSCacheList * list, NSCacheElement * newObj);
 NSResult NSConsumerStorageDelete(NSCacheList * list, const char * delId);
 NSResult NSConsumerStorageDestroy(NSCacheList * list);
 
-pthread_mutex_t * NSGetCacheMutex();
+pthread_mutex_t * NSGetCacheMutex(void);
 
 bool NSConsumerCompareIdCacheData(NSCacheType type, void * data, const char * id);
 

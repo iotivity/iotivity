@@ -22,6 +22,8 @@ Import('connectivity_env')
 
 import os.path
 
+connectivity_env.PrependUnique(CPPPATH=[Dir('.')])
+
 # Top-level build (variant) directory.
 root_build_dir = connectivity_env['BUILD_DIR']
 
@@ -45,17 +47,17 @@ service_name = '\"org.iotivity.gatt.service\"'
 dbus_policy_in = 'org.iotivity.gatt.service.conf.in'
 
 conf_dict = {}
-subst_env = connectivity_env.Clone(tools = [ 'default', 'textfile' ],
-                      SUBST_DICT = conf_dict)
+subst_env = connectivity_env.Clone(
+    tools=['default', 'textfile'], SUBST_DICT=conf_dict)
 
-conf_dict = { '@service_name@' : service_name }
+conf_dict = {'@service_name@': service_name}
 
-subst_env.Substfile(dbus_policy_in, SUBST_DICT = conf_dict)
+subst_env.Substfile(dbus_policy_in, SUBST_DICT=conf_dict)
 
 # The resulting D-Bus policy file should go in to the appropriate
 # D-Bus configuration directory, such as /etc/dbus-1/system.d/.
 
-dbus_policy    = os.path.splitext(dbus_policy_in)[0]  # Drop '.in' extension.
+dbus_policy = os.path.splitext(dbus_policy_in)[0]  # Drop '.in' extension.
 generated_dbus_policy = os.path.join(this_build_dir, dbus_policy)
 connectivity_env.Clean(dbus_policy, generated_dbus_policy)
 
@@ -66,10 +68,8 @@ connectivity_env.Clean(dbus_policy, generated_dbus_policy)
 # Also add a minimum required version of GLib 2.32, which is what the
 # older GNU/Linux distributions supported by IoTivity shipped with.
 connectivity_env.AppendUnique(
-    CPPDEFINES = [
-        ('CA_DBUS_GATT_SERVICE_NAME', "'%s'" % service_name),
-        ('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_32')
-    ])
+    CPPDEFINES=[('CA_DBUS_GATT_SERVICE_NAME', "'%s'" % service_name),
+                ('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_32')])
 
 # The Linux BLE adapter implementation uses GDBus to make D-Bus based
 # method calls to BlueZ.  Pull in the necessary dependencies.
@@ -81,31 +81,32 @@ freedesktop_prefix = 'org.freedesktop.DBus.'
 bluez_prefix = 'org.bluez.'
 
 dbus_introspection_xml = {
-    'object_manager' : freedesktop_prefix,
-    'bluez'          : bluez_prefix,
+    'object_manager': freedesktop_prefix,
+    'bluez': bluez_prefix,
 }
 
 # The source files to be compiled as part of the connectivity
 # abstraction library.
-src_files = [ 'characteristic.c',
-              'descriptor.c',
-              'service.c',
-              'advertisement.c',
-              'utils.c',
-              'central.c',
-              'peripheral.c',
-              'client.c',
-              'server.c',
-              'recv.c',
-              'caleinterface.c'
-          ]
-src_files = [ os.path.join(this_src_dir, src_file) for src_file in src_files ]
+src_files = [File(src) for src in (
+    'characteristic.c',
+    'descriptor.c',
+    'service.c',
+    'advertisement.c',
+    'utils.c',
+    'central.c',
+    'peripheral.c',
+    'client.c',
+    'server.c',
+    'recv.c',
+    'caleinterface.c'
+)]
 
 glue_files = []
+updated_files = []
 
-for file, prefix in dbus_introspection_xml.items():
-    source_xml  = file + '.xml'
-    glue        = file + '-glue'
+for file, prefix in list(dbus_introspection_xml.items()):
+    source_xml = file + '.xml'
+    glue = file + '-glue'
     glue_source = glue + '.c'
     glue_header = glue + '.h'
 
@@ -114,33 +115,56 @@ for file, prefix in dbus_introspection_xml.items():
     # A link to the generated GDBus glue header is also created in the
     # source directory to avoid having to explicitly add the variant
     # directory to the preprocessor include path.
-    glue_source_gen  = os.path.join(this_build_dir, glue_source)
-    glue_header_gen  = os.path.join(this_build_dir, glue_header)
+    glue_source_gen = os.path.join(this_build_dir, glue_source)
+    glue_header_gen = os.path.join(this_build_dir, glue_header)
     glue_header_copy = os.path.join(this_src_dir, glue_header)
-    targets     = [ glue_source_gen, glue_header_gen ]
+    targets = [glue_source_gen, glue_header_gen]
 
     glue_files.append(glue_source_gen)
 
-    gen = connectivity_env.Command(targets,
-                      source_xml,
-                      'cd %s '
-                      '&& gdbus-codegen --generate-c-code %s '
-                      '   --interface-prefix %s ${SOURCE.abspath} '
-                      '&& ln -sf %s %s '
-                      '&& cd -'
-                      % (this_build_dir,
-                         glue, prefix,
-                         glue_header_gen, glue_header_copy))
+    gen = connectivity_env.Command(
+        targets, source_xml, 'cd %s '
+        '&& gdbus-codegen --generate-c-code %s '
+        '   --interface-prefix %s ${SOURCE.abspath} '
+        '&& ln -sf %s %s '
+        '&& cd -' % (this_build_dir, glue, prefix, glue_header_gen,
+                     glue_header_copy))
 
+    # Share header files in the updated folder
+    updated_files.append(Command("updated/" +  glue_header , glue_header_gen , Copy("$TARGET", "$SOURCE")))
     connectivity_env.Clean(gen, glue_header_copy)
 
     # Force a dependency on copied glue header to make sure it exists
     # before compilation of the non-generated source files begins.
+    Depends(updated_files, gen)
     Depends(src_files, gen)
 
-src_files += glue_files
+# open the input file and add pragmas to ignore the unused-parameter
+# warning around the entier file.
+# Since the input file and output file both end in the same subfix the
+# source and target must differ in name or path.
+def add_pragma_function(target, source, env):
+    for n in source:
+        with open(n.get_abspath(), 'r') as f:
+            with open(target[0].get_abspath(), 'w') as out_f:
+                out_f.write('#pragma GCC diagnostic push\n')
+                out_f.write('#pragma GCC diagnostic ignored "-Wunused-parameter"\n')
+                out_f.write(f.read())
+                out_f.write('#pragma GCC diagnostic pop\n')
+    return None
 
-connectivity_env.AppendUnique(CA_SRC = src_files)
+bldr = Builder(action=add_pragma_function, suffix='.c', src_suffix='.c')
+env_foo = Environment(BUILDERS={'AddPragma': bldr}, tools=['default', 'textfile'])
+
+# Add the pragmas to the generated files place them in the updated directory. Add those files to the list of source files.
+# The generated files produce many unused-parameter warnings.  This is to prevent those warnings when the generated files
+# are included in the rest of the project.
+for glue_file in glue_files:
+    src_files += env_foo.AddPragma(target=this_build_dir + '/updated/' + os.path.basename(glue_file), source=glue_file)
+
+Depends(src_files, updated_files)
+
+connectivity_env.AppendUnique(CA_SRC=src_files)
 
 # Local Variables:
 # mode:python

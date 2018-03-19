@@ -104,7 +104,7 @@ ESResult ESSetErrorCode(ESErrorCode esErrCode);
  *
  * @return ::ES_OK on success, some other value upon failure.
  */
-ESResult ESTerminateEnrollee();
+ESResult ESTerminateEnrollee(void);
 
 /**
  * This function is to set two function pointer to handle user-specific properties in in-comming

@@ -22,7 +22,7 @@
 
 #include "iotivity_config.h"
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
@@ -30,11 +30,11 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "cacommon.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "cacommonutil.h"
 
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "pmutility.h"
 #include "srmutility.h"
 #include "srmresourcestrings.h"
@@ -42,6 +42,7 @@
 // headers required for mbed TLS
 #include "mbedtls/config.h"
 #include "mbedtls/platform.h"
+#include "mbedtls/error.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/x509_csr.h"
@@ -76,8 +77,13 @@
 
 #define MAX_STRING_LEN 254
 
-/* ASN.1 DER encoding of the EKU for identity certificates (1.3.6.1.4.1.44924.1.6) */
-static const unsigned char s_ekuIdentity[] = { 0x30, 0x0C, 0x06, 0x0A, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0xDE, 0x7C, 0x01, 0x06 };
+/* ASN.1 DER encoding of the EKU for identity certificates */
+static const unsigned char s_ekuIdentity[] = {
+    0x30, 0x20,
+    0x06, 0x08, 0x2B, 0x06, 0x01, 0x05, 0x05, 0x07, 0x03, 0x01, // serverAuth (1.3.6.1.5.5.7.3.1)
+    0x06, 0x08, 0x2B, 0x06, 0x01, 0x05, 0x05, 0x07, 0x03, 0x02, // clientAuth (1.3.6.1.5.5.7.3.2)
+    0x06, 0x0A, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0xDE, 0x7C, 0x01, 0x06 // OCF ID OID (1.3.6.1.4.1.44924.1.6)
+};
 
 /* ASN.1 DER encoding of the EKU for role certificates (1.3.6.1.4.1.44924.1.7) */
 static const unsigned char s_ekuRole[] = { 0x30, 0x0C, 0x06, 0x0A, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0xDE, 0x7C, 0x01, 0x07 };
@@ -221,7 +227,8 @@ exit:
 }
 
 typedef enum {
-    CERT_TYPE_CA,
+    CERT_TYPE_ROOT_CA,
+    CERT_TYPE_INTERMEDIATE_CA,
     CERT_TYPE_IDENTITY,
     CERT_TYPE_ROLE
 } CertificateType_t;
@@ -251,6 +258,8 @@ static OCStackResult GenerateCertificate(
     mbedtls_ctr_drbg_context ctr_drbg;
 
     char buf[2048];
+    char mbedErrorBuf[256];
+
 
     if (NULL == subjectPublicKey || NULL == issuerPrivateKey || NULL == subject || NULL == serial ||
         NULL == notValidBefore || NULL == notValidAfter)
@@ -269,23 +278,28 @@ static OCStackResult GenerateCertificate(
     memset(certificate, 0, sizeof(*certificate));
 
     ret = mbedtls_mpi_read_string(&serialMpi, 10, serial);
-    VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+    LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+    VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not parse serial number for internal cert generation", ERROR);
 
     ret = mbedtls_pk_parse_public_key(&subjKeyCtx, (const uint8_t *)subjectPublicKey, strlen(subjectPublicKey) + 1);
-    VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+    LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+    VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not parse public key for internal cert generation",  ERROR);
 
     ret = mbedtls_pk_parse_key(&issKeyCtx, (const uint8_t *)issuerPrivateKey, strlen(issuerPrivateKey) + 1, NULL, 0);
-    VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+    LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+    VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not parse private key for internal cert generation",  ERROR);
 
     /* If issuerCert is NULL, then the cert will be self-signed. */
     if (NULL != issuerCert)
     {
         ret = mbedtls_x509_crt_parse(&issCertCtx, (const uint8_t *)issuerCert, strlen(issuerCert) + 1);
-        VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not parse issuer cert for internal cert generation",  ERROR);
     }
 
     ret = mbedtls_x509write_crt_set_validity(&outCertCtx, notValidBefore, notValidAfter);
-    VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+    LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+    VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not write validity time for internal cert generation",  ERROR);
 
     mbedtls_x509write_crt_set_version(&outCertCtx, MBEDTLS_X509_CRT_VERSION_3);
     mbedtls_x509write_crt_set_md_alg(&outCertCtx, MBEDTLS_MD_SHA256);
@@ -294,20 +308,23 @@ static OCStackResult GenerateCertificate(
 
     ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
         &entropy, (const uint8_t *)PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING));
-    VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+    LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+    VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not generate seed for internal cert generation",  ERROR);
     mbedtls_ctr_drbg_set_prediction_resistance(&ctr_drbg, MBEDTLS_CTR_DRBG_PR_ON);
 
     ret = mbedtls_x509write_crt_set_serial(&outCertCtx, &serialMpi);
-    VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+    LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+    VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not write serial number for internal cert generation",  ERROR);
 
     ret = mbedtls_x509write_crt_set_subject_name(&outCertCtx, subject);
-    VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+    LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+    VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not write subject name for internal cert generation",  ERROR);
 
     if (NULL != issuerCert)
     {
         // mbedtls_x509_dn_gets returns the number of bytes written to buf.
         ret = mbedtls_x509_dn_gets(buf, sizeof(buf), &issCertCtx.subject);
-        VERIFY_SUCCESS(TAG, 0 < ret, ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 < ret,  "Could not parse subject name from issuer for internal cert generation", ERROR);
         ret = mbedtls_x509write_crt_set_issuer_name(&outCertCtx, buf);
     }
     else
@@ -315,30 +332,50 @@ static OCStackResult GenerateCertificate(
         /* If self-signed, use the same contents of subject for the issuer name. */
         ret = mbedtls_x509write_crt_set_issuer_name(&outCertCtx, subject);
     }
-    VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+    LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+    VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not write issuer name for internal cert generation",  ERROR);
 
     mbedtls_x509write_crt_set_subject_key(&outCertCtx, &subjKeyCtx);
 
     mbedtls_x509write_crt_set_issuer_key(&outCertCtx, &issKeyCtx);
 
-    if (certType == CERT_TYPE_CA)
+    /*
+     * mbedtls max_pathlen behaviour
+     * CA Cert: Expects RFC5280_val as encoding input
+     *          Provides RFC5280_val+1 as decoding output, where 0 = not present
+     * EE Cert: Does not encode
+     *          Provides 0 as decoding output
+    */
+
+    if (CERT_TYPE_ROOT_CA == certType)
     {
         ret = mbedtls_x509write_crt_set_basic_constraints(&outCertCtx, 1, -1);
-        VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not write basic constraints for internal root ca cert generation",  ERROR);
         ret = mbedtls_x509write_crt_set_key_usage(&outCertCtx,
-            MBEDTLS_X509_KU_DIGITAL_SIGNATURE | MBEDTLS_X509_KU_KEY_CERT_SIGN);
-        VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+            MBEDTLS_X509_KU_KEY_CERT_SIGN | MBEDTLS_X509_KU_CRL_SIGN);
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not write key usage for internal root ca cert generation",  ERROR);
+    }
+    else if (CERT_TYPE_INTERMEDIATE_CA == certType)
+    {
+        ret = mbedtls_x509write_crt_set_basic_constraints(&outCertCtx, 1, 0);
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not write basic constraints for internal intermediate ca cert generation",  ERROR);
+        ret = mbedtls_x509write_crt_set_key_usage(&outCertCtx,
+            MBEDTLS_X509_KU_KEY_CERT_SIGN | MBEDTLS_X509_KU_CRL_SIGN);
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not write key usage for internal intermediate ca cert generation",  ERROR);
     }
     else
     {
-        ret = mbedtls_x509write_crt_set_basic_constraints(&outCertCtx, 0, 0);
-        VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+        ret = mbedtls_x509write_crt_set_basic_constraints(&outCertCtx, 0, -1);
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not write basic constraints for internal root ee cert generation",  ERROR);
         ret = mbedtls_x509write_crt_set_key_usage(&outCertCtx,
-            MBEDTLS_X509_KU_DIGITAL_SIGNATURE |
-            MBEDTLS_X509_KU_KEY_ENCIPHERMENT |
-            MBEDTLS_X509_KU_DATA_ENCIPHERMENT |
-            MBEDTLS_X509_KU_KEY_AGREEMENT);
-        VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+            MBEDTLS_X509_KU_DIGITAL_SIGNATURE | MBEDTLS_X509_KU_KEY_AGREEMENT);
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not write key usage for internal ee cert generation",  ERROR);
     }
 
     switch (certType)
@@ -348,18 +385,21 @@ static OCStackResult GenerateCertificate(
             MBEDTLS_OID_EXTENDED_KEY_USAGE, MBEDTLS_OID_SIZE(MBEDTLS_OID_EXTENDED_KEY_USAGE),
             0,
             s_ekuRole, sizeof(s_ekuRole));
-        VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret,  "Could not write eku for internal role cert generation", ERROR);
         ret = snprintf(buf, sizeof(buf), "CN=%s%s%s", role, (NULL != authority) ? ",OU=" : "", (NULL != authority) ? authority : "");
         // To prevent sign-compare warning sizeof(buf) is cast to int. This is safe because the max size of buf fits into int.
         // Note ret value from snprintf may be negative if there was an error so it should not be cast to size_t.
-        VERIFY_SUCCESS(TAG, ret < (int)sizeof(buf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, ret < (int)sizeof(buf),  "snprintf error during internal cert generation", ERROR);
         names.next = NULL;
         names.general_name.name_type = MBEDTLS_X509_GENERALNAME_DIRECTORYNAME;
         ret = mbedtls_x509_string_to_names(&names.general_name.directory_name, buf);
-        VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret,  "Could not parse direcotry name for internal role cert generation", ERROR);
 
         ret = mbedtls_x509write_crt_set_subject_alt_names(&outCertCtx, &names);
-        VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret,  "Could not write subject alt names for internal role cert generation", ERROR);
         break;
 
     case CERT_TYPE_IDENTITY:
@@ -367,24 +407,28 @@ static OCStackResult GenerateCertificate(
             MBEDTLS_OID_EXTENDED_KEY_USAGE, MBEDTLS_OID_SIZE(MBEDTLS_OID_EXTENDED_KEY_USAGE),
             0,
             s_ekuIdentity, sizeof(s_ekuIdentity));
-        VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret,  "Could not write eku for internal ee cert generation", ERROR);
         break;
 
-    case CERT_TYPE_CA:
+    case CERT_TYPE_ROOT_CA:
+    case CERT_TYPE_INTERMEDIATE_CA:
         ret = mbedtls_x509write_crt_set_extension(&outCertCtx,
             MBEDTLS_OID_EXTENDED_KEY_USAGE, MBEDTLS_OID_SIZE(MBEDTLS_OID_EXTENDED_KEY_USAGE),
             0,
             s_ekuCA, sizeof(s_ekuCA));
-        VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not write eku for internal root/int ca cert generation",  ERROR);
         break;
 
     default:
         assert(false);
-        VERIFY_SUCCESS(TAG, false, ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, false, "Unkown cert type during internal cert generation", ERROR);
     }
 
     ret = mbedtls_x509write_crt_pem(&outCertCtx, (uint8_t *)buf, sizeof(buf), mbedtls_ctr_drbg_random, &ctr_drbg);
-    VERIFY_SUCCESS(TAG, 0 == ret, ERROR);
+    LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+    VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not generate pem buffer for internal cert generation",  ERROR);
 
     certificate->len = strlen(buf) + 1;
     certificate->bytes = (uint8_t *)OICCalloc(1, certificate->len);
@@ -414,7 +458,7 @@ exit:
     return res;
 }
 
-OCStackResult OC_CALL OCGenerateCACertificate(
+OCStackResult OC_CALL OCGenerateRootCACertificate(
     const char *subject,
     const char *subjectPublicKey,
     const char *issuerCert,
@@ -429,7 +473,43 @@ OCStackResult OC_CALL OCGenerateCACertificate(
     OCByteString byteStr = { 0 };
 
     res = GenerateCertificate(
-        CERT_TYPE_CA,
+        CERT_TYPE_ROOT_CA,
+        subject,
+        subjectPublicKey,
+        issuerCert,
+        issuerPrivateKey,
+        serial,
+        notValidBefore,
+        notValidAfter,
+        NULL,
+        NULL,
+        &byteStr);
+
+    if (OC_STACK_OK == res)
+    {
+        *certificate = (char *)byteStr.bytes;
+        *certificateLen = byteStr.len;
+    }
+
+    return res;
+}
+
+OCStackResult OC_CALL OCGenerateIntermediateCACertificate(
+    const char *subject,
+    const char *subjectPublicKey,
+    const char *issuerCert,
+    const char *issuerPrivateKey,
+    const char *serial,
+    const char *notValidBefore,
+    const char *notValidAfter,
+    char **certificate,
+    size_t *certificateLen)
+{
+    OCStackResult res = OC_STACK_OK;
+    OCByteString byteStr = { 0 };
+
+    res = GenerateCertificate(
+        CERT_TYPE_INTERMEDIATE_CA,
         subject,
         subjectPublicKey,
         issuerCert,

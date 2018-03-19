@@ -26,7 +26,7 @@
 #include "oic_string.h"
 
 #include "rd_client.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 
 #define TAG ("RD_PublishClient")
 #define DEFAULT_CONTEXT_VALUE 0x99
@@ -100,7 +100,7 @@ static OCStackApplicationResult handlePublishCB(__attribute__((unused))void *ctx
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-int main()
+int main(void)
 {
     std::cout << "Initializing IoTivity Platform" << std::endl;
     OCStackResult result = OCInit(NULL, 0, OC_CLIENT_SERVER);

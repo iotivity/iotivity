@@ -37,20 +37,23 @@
 #include <strings.h>
 #endif
 
+#include <coap/coap.h>
+
 #include "ocresource.h"
 #include "ocresourcehandler.h"
 #include "ocobserve.h"
 #include "occollection.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocpayload.h"
 #include "secureresourcemanager.h"
+#include "srmutility.h"
 #include "cacommon.h"
 #include "cainterface.h"
 #include "oickeepalive.h"
 #include "platform_features.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "ocendpoint.h"
 #include "ocstackinternal.h"
 #include "oickeepalive.h"
@@ -67,6 +70,9 @@
 // Using 1k as block size since most persistent storage implementations use a power of 2.
 #define INTROSPECTION_FILE_SIZE_BLOCK  1024
 
+#ifdef VERIFY_SUCCESS
+#undef VERIFY_SUCCESS
+#endif
 #define VERIFY_SUCCESS(op) { if (op != (OC_STACK_OK)) \
             {OIC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
 
@@ -885,7 +891,7 @@ static OCStackResult UpdateDevicePropertiesDatabase(const OCDeviceProperties *de
     return result;
 }
 
-OCStackResult InitializeDeviceProperties()
+OCStackResult InitializeDeviceProperties(void)
 {
     OIC_LOG(DEBUG, TAG, "InitializeDeviceProperties IN");
 
@@ -1614,7 +1620,7 @@ static bool includeThisResourceInResponse(OCResource *resource,
            resourceMatchesRTFilter(resource, resourceTypeFilter);
 }
 
-OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCResource *resource,
+static OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request,
                                 OCPayload *discoveryPayload, OCEntityHandlerResult ehResult)
 {
     OCEntityHandlerResponse *response = NULL;
@@ -1627,7 +1633,6 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
     response->payload = discoveryPayload;
     response->persistentBufferFlag = 0;
     response->requestHandle = (OCRequestHandle) request;
-    response->resourceHandle = (OCResourceHandle) resource;
 
     result = OCDoResponse(response);
 
@@ -1769,6 +1774,108 @@ static bool isUnicast(OCServerRequest *request)
            (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE));
 }
 
+/**
+ * Handle registering/deregistering of observers of virtual resources.  Currently only the
+ * well-known virtual resource (/oic/res) may be observable.
+ *
+ * @param request a virtual resource server request
+ *
+ * @return ::OC_STACK_OK on success, ::OC_STACK_DUPLICATE_REQUEST when registering a duplicate
+ *         observer, some other value upon failure.
+ */
+static OCStackResult HandleVirtualObserveRequest(OCServerRequest *request)
+{
+    OCStackResult result = OC_STACK_OK;
+    if (request->notificationFlag)
+    {
+        // The request is to send an observe payload, not register/deregister an observer
+        goto exit;
+    }
+    OCVirtualResources virtualUriInRequest;
+    virtualUriInRequest = GetTypeOfVirtualURI(request->resourceUrl);
+    if (virtualUriInRequest != OC_WELL_KNOWN_URI)
+    {
+        // OC_WELL_KNOWN_URI is currently the only virtual resource that may be observed
+        goto exit;
+    }
+    OCResource *resourcePtr;
+    resourcePtr = FindResourceByUri(OC_RSRVD_WELL_KNOWN_URI);
+    if (NULL == resourcePtr)
+    {
+        OIC_LOG(FATAL, TAG, "Well-known URI not found.");
+        result = OC_STACK_ERROR;
+        goto exit;
+    }
+    if (request->observationOption == OC_OBSERVE_REGISTER)
+    {
+        OIC_LOG(INFO, TAG, "Observation registration requested");
+        ResourceObserver *obs = GetObserverUsingToken (resourcePtr,
+                                                       request->requestToken,
+                                                       request->tokenLength);
+        if (obs)
+        {
+            OIC_LOG (INFO, TAG, "Observer with this token already present");
+            OIC_LOG (INFO, TAG, "Possibly re-transmitted CON OBS request");
+            OIC_LOG (INFO, TAG, "Not adding observer. Not responding to client");
+            OIC_LOG (INFO, TAG, "The first request for this token is already ACKED.");
+            result = OC_STACK_DUPLICATE_REQUEST;
+            goto exit;
+        }
+        OCObservationId obsId;
+        result = GenerateObserverId(&obsId);
+        if (result == OC_STACK_OK)
+        {
+            result = AddObserver ((const char*)(request->resourceUrl),
+                                  (const char *)(request->query),
+                                  obsId, request->requestToken, request->tokenLength,
+                                  resourcePtr, request->qos, request->acceptFormat,
+                                  request->acceptVersion, &request->devAddr);
+        }
+        if (result == OC_STACK_OK)
+        {
+            OIC_LOG(INFO, TAG, "Added observer successfully");
+            request->observeResult = OC_STACK_OK;
+        }
+        else if (result == OC_STACK_RESOURCE_ERROR)
+        {
+            OIC_LOG(INFO, TAG, "The Resource is not active, discoverable or observable");
+            request->observeResult = OC_STACK_ERROR;
+        }
+        else
+        {
+            // The error in observeResult for the request will be used when responding to this
+            // request by omitting the observation option/sequence number.
+            request->observeResult = OC_STACK_ERROR;
+            OIC_LOG(ERROR, TAG, "Observer Addition failed");
+        }
+    }
+    else if (request->observationOption == OC_OBSERVE_DEREGISTER)
+    {
+        OIC_LOG(INFO, TAG, "Deregistering observation requested");
+        result = DeleteObserverUsingToken (resourcePtr,
+                                           request->requestToken, request->tokenLength);
+        if (result == OC_STACK_OK)
+        {
+            OIC_LOG(INFO, TAG, "Removed observer successfully");
+            request->observeResult = OC_STACK_OK;
+            // There should be no observe option header for de-registration response.
+            // Set as an invalid value here so we can detect it later and remove the field in response.
+            request->observationOption = MAX_SEQUENCE_NUMBER + 1;
+        }
+        else
+        {
+            request->observeResult = OC_STACK_ERROR;
+            OIC_LOG(ERROR, TAG, "Observer Removal failed");
+        }
+    }
+    // Whether the observe request succeeded or failed, the request is processed as normal
+    // and excludes/includes the OBSERVE option depending on request->observeResult
+    result = OC_STACK_OK;
+
+exit:
+    return result;
+}
+
 static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource* resource)
 {
     if (!request || !resource)
@@ -1809,7 +1916,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         // for the request in ocserverrequest.c : HandleSingleResponse()
         // Since we are making an early return and not responding, the server request
         // needs to be deleted.
-        FindAndDeleteServerRequest (request);
+        DeleteServerRequest (request);
         discoveryResult = OC_STACK_OK;
         goto exit;
     }
@@ -1828,7 +1935,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         if (g_multicastServerStopped && !isUnicast(request))
         {
             // Ignore the discovery request
-            FindAndDeleteServerRequest(request);
+            DeleteServerRequest(request);
             discoveryResult = OC_STACK_CONTINUE;
             goto exit;
         }
@@ -1930,7 +2037,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     {
         // Received request for a gateway
         OIC_LOG(INFO, TAG, "Request is for Gateway Virtual Request");
-        discoveryResult = RMHandleGatewayRequest(request, resource);
+        discoveryResult = RMHandleGatewayRequest(request);
     }
 #endif
     else if (OC_INTROSPECTION_URI == virtualUriInRequest)
@@ -1984,7 +2091,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             SendDirectStackResponse(&endpoint, request->coapID, CA_EMPTY, CA_MSG_ACKNOWLEDGE,
                                     0, NULL, NULL, 0, NULL, CA_RESPONSE_FOR_RES);
         }
-        FindAndDeleteServerRequest(request);
+        DeleteServerRequest(request);
 
         // Presence uses observer notification api to respond via SendPresenceNotification.
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
@@ -1999,7 +2106,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         OIC_LOG_PAYLOAD(DEBUG, payload);
         if(discoveryResult == OC_STACK_OK)
         {
-            SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
+            SendNonPersistantDiscoveryResponse(request, payload, OC_EH_OK);
         }
         else // Error handling
         {
@@ -2007,7 +2114,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             {
                 OIC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d) discovery request",
                     discoveryResult, virtualUriInRequest);
-                SendNonPersistantDiscoveryResponse(request, resource, NULL,
+                SendNonPersistantDiscoveryResponse(request, NULL,
                     (discoveryResult == OC_STACK_NO_RESOURCE) ?
                         OC_EH_RESOURCE_NOT_FOUND : OC_EH_ERROR);
             }
@@ -2017,7 +2124,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                 OIC_LOG(INFO, TAG, "Silently ignoring the request since no useful data to send.");
                 // the request should be removed.
                 // since it never remove and causes a big memory waste.
-                FindAndDeleteServerRequest(request);
+                DeleteServerRequest(request);
             }
             discoveryResult = OC_STACK_CONTINUE;
         }
@@ -2063,7 +2170,7 @@ HandleDefaultDeviceEntityHandler(OCServerRequest *request)
     }
     else if(ehResult == OC_EH_ERROR)
     {
-        FindAndDeleteServerRequest(request);
+        DeleteServerRequest(request);
     }
     result = EntityHandlerCodeToOCStackCode(ehResult);
 exit:
@@ -2107,8 +2214,8 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
     {
         OIC_LOG(INFO, TAG, "Observation registration requested");
 
-        ResourceObserver *obs = GetObserverUsingToken (request->requestToken,
-                                    request->tokenLength);
+        ResourceObserver *obs = GetObserverUsingToken(resource,
+                                                      request->requestToken, request->tokenLength);
 
         if (obs)
         {
@@ -2121,7 +2228,7 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
             // for the request in ocserverrequest.c : HandleSingleResponse()
             // Since we are making an early return and not responding, the server request
             // needs to be deleted.
-            FindAndDeleteServerRequest (request);
+            DeleteServerRequest (request);
             return OC_STACK_OK;
         }
 
@@ -2153,7 +2260,7 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
             request->observeResult = OC_STACK_ERROR;
             OIC_LOG(ERROR, TAG, "Observer Addition failed");
             ehFlag = OC_REQUEST_FLAG;
-            FindAndDeleteServerRequest(request);
+            DeleteServerRequest(request);
             goto exit;
         }
 
@@ -2162,7 +2269,8 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
     {
         OIC_LOG(INFO, TAG, "Deregistering observation requested");
 
-        resObs = GetObserverUsingToken (request->requestToken, request->tokenLength);
+        resObs = GetObserverUsingToken (resource,
+                                        request->requestToken, request->tokenLength);
 
         if (NULL == resObs)
         {
@@ -2174,7 +2282,8 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
         ehRequest.obsInfo.obsId = resObs->observeId;
         ehFlag = (OCEntityHandlerFlag)(ehFlag | OC_OBSERVE_FLAG);
 
-        result = DeleteObserverUsingToken (request->requestToken, request->tokenLength);
+        result = DeleteObserverUsingToken (resource,
+                                           request->requestToken, request->tokenLength);
 
         if(result == OC_STACK_OK)
         {
@@ -2188,7 +2297,7 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
         {
             request->observeResult = OC_STACK_ERROR;
             OIC_LOG(ERROR, TAG, "Observer Removal failed");
-            FindAndDeleteServerRequest(request);
+            DeleteServerRequest(request);
             goto exit;
         }
     }
@@ -2206,7 +2315,7 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
     }
     else if(ehResult == OC_EH_ERROR)
     {
-        FindAndDeleteServerRequest(request);
+        DeleteServerRequest(request);
     }
     result = EntityHandlerCodeToOCStackCode(ehResult);
 exit:
@@ -2667,3 +2776,67 @@ OCStackResult OC_CALL OCSetPropertyValue(OCPayloadType type, const char *prop, c
 
     return res;
 }
+
+bool IsObservationIdExisting(const OCObservationId observationId)
+{
+    OCResource *resource = NULL;
+    LL_FOREACH(headResource, resource)
+    {
+        if (NULL != GetObserverUsingId(resource, observationId))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GetObserverFromResourceList(OCResource **outResource, ResourceObserver **outObserver,
+                                 const CAToken_t token, uint8_t tokenLength)
+{
+    OCResource *resPtr = NULL;
+    ResourceObserver* obsPtr = NULL;
+    LL_FOREACH(headResource, resPtr)
+    {
+        obsPtr = GetObserverUsingToken(resPtr, token, tokenLength);
+        if (obsPtr)
+        {
+            *outResource = resPtr;
+            *outObserver = obsPtr;
+            return true;
+        }
+    }
+
+    *outResource = NULL;
+    *outObserver = NULL;
+    return false;
+}
+
+void GiveStackFeedBackObserverNotInterested(const OCDevAddr *devAddr)
+{
+    if (!devAddr)
+    {
+        return;
+    }
+
+    OIC_LOG_V(INFO, TAG, "Observer(%s:%u) is not interested anymore", devAddr->addr,
+              devAddr->port);
+
+    OCResource *resource = NULL;
+    ResourceObserver *observer = NULL;
+    ResourceObserver *tmp = NULL;
+
+    LL_FOREACH(headResource, resource)
+    {
+        LL_FOREACH_SAFE(resource->observersHead, observer, tmp)
+        {
+            if ((strcmp(observer->devAddr.addr, devAddr->addr) == 0)
+                    && observer->devAddr.port == devAddr->port)
+            {
+                OCStackFeedBack(observer->token, observer->tokenLength,
+                                OC_OBSERVER_NOT_INTERESTED);
+            }
+        }
+    }
+}
+
+

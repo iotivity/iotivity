@@ -18,12 +18,15 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
+
 #include "NSThread.h"
 
 #include "NSConstants.h"
 #include "NSConsumerCommon.h"
-
+#ifdef HAVE_MEMORY_H
 #include <memory.h>
+#endif
 #include "oic_malloc.h"
 
 static pthread_mutex_t g_create_mutex;
@@ -115,7 +118,7 @@ void NSDestroyThreadHandle(NSConsumerThread * handle)
     pthread_mutex_unlock(&g_create_mutex);
 }
 
-void NSThreadDetach()
+void NSThreadDetach(void)
 {
     pthread_detach(pthread_self());
 }

@@ -40,12 +40,12 @@ elif target_os in ['darwin', 'linux', 'msys_nt']:
 if build_tests:
     # Verify that 'google unit test' library is installed.  If not,
     # get it and install it
-    test_env = SConscript('#extlibs/gtest/SConscript')
+    test_env = SConscript('#/extlibs/gtest/SConscript')
 
     if target_os in ['linux', 'windows']:
         # Verify that 'hippomocks' mocking code is installed.  If not,
         # get it and install it
-        SConscript('#extlibs/hippomocks/SConscript')
+        SConscript('#/extlibs/hippomocks/SConscript')
 
         # Build Common unit tests
         SConscript('c_common/unittests/SConscript', 'test_env')

@@ -28,8 +28,8 @@
 
 #include "octypes.h"
 #include "ocstack.h"
-#include "ocrandom.h"
-#include "logger.h"
+#include "experimental/ocrandom.h"
+#include "experimental/logger.h"
 #include "ocpayload.h"
 #include "ocendpoint.h"
 #include "oic_malloc.h"

@@ -42,10 +42,10 @@
 #include <sstream>
 #include <getopt.h>
 #include <coap/pdu.h>
-#include "logger.h"
 #include "occlient.h"
-#include "payload_logging.h"
 #include "common.h"
+#include "experimental/logger.h"
+#include "experimental/payload_logging.h"
 
 #define VERIFY_SUCCESS(op)                          \
 do                                                  \

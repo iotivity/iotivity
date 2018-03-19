@@ -34,7 +34,7 @@ with_ra_ibb = provisiontests_env.get('WITH_RA_IBB')
 ######################################################################
 # Build flags
 ######################################################################
-provisiontests_env.PrependUnique(CPPPATH = [
+provisiontests_env.PrependUnique(CPPPATH=[
     '#/resource/include',
     '#/resource/c_common',
     '#/resource/c_common/oic_malloc/include',
@@ -56,11 +56,11 @@ provisiontests_env.PrependUnique(CPPPATH = [
     '#/resource/csdk/logger/include',
     '#/resource/csdk/connectivity/lib/libcoap-4.1.1/include',
     '#/extlibs/hippomocks/hippomocks',
-])
+    ])
 
 if target_os in ['windows']:
     # Non-Windows platforms find the boost headers under /usr/include or similar path.
-    provisiontests_env.AppendUnique(CPPPATH = ['#extlibs/boost/boost'])
+    provisiontests_env.AppendUnique(CPPPATH=['#/extlibs/boost/boost'])
 
     provisiontests_env.AppendUnique(LIBS=['sqlite3', 'win_helper'])
 elif target_os in ['tizen', 'linux']:
@@ -72,7 +72,7 @@ if target_os in ('msys_nt', 'windows'):
 else:
     calib = 'connectivity_abstraction'
 
-provisiontests_env.PrependUnique(LIBS = [
+provisiontests_env.PrependUnique(LIBS=[
     'ocprovision',
     'oc',
     'ocpmapi_internal',
@@ -97,10 +97,14 @@ if with_ra_ibb:
     print("RARPATH = %s" % provisiontests_env['RARPATH'])
 else:
     if with_ra:
-        provisiontests_env.AppendUnique(LIBS = ['ra_xmpp'])
+        provisiontests_env.AppendUnique(LIBS=['ra_xmpp'])
 
 if provisiontests_env.get('SECURED') == '1':
-    provisiontests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+    provisiontests_env.AppendUnique(LIBS=[
+        'mbedtls',
+        'mbedx509',
+        'mbedcrypto'
+    ])
 
 ######################################################################
 # Source files and Targets
@@ -121,18 +125,18 @@ if provisiontests_env.get('TEST') == '1':
     # Workaround for IOT-2038: don't run this test on Windows yet, because Jenkins times out.
     if target_os in ['linux']:
         out_dir = provisiontests_env.get('BUILD_DIR')
-        result_dir = os.path.join(provisiontests_env.get('BUILD_DIR'), 'test_out') + os.sep
+        result_dir = os.path.join(
+            provisiontests_env.get('BUILD_DIR'), 'test_out') + os.sep
         if not os.path.isdir(result_dir):
             os.makedirs(result_dir)
-        provisiontests_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
+        provisiontests_env.AppendENVPath('GTEST_OUTPUT', ['xml:' + result_dir])
         provisiontests_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
         run_test(provisiontests_env,
                  'resource_provisioning_unittests_provisiontests.memcheck',
                  'resource/provisioning/unittests/provisiontests',
                   unittests)
 
-src_dir = provisiontests_env.get('SRC_DIR')
-svr_db_src_dir = src_dir + '/resource/provisioning/examples/'
-svr_db_build_dir = os.path.join(provisiontests_env.get('BUILD_DIR'), 'resource', 'provisioning', 'unittests')
-provisiontests_env.Alias("install", provisiontests_env.Install( svr_db_build_dir,
-                                svr_db_src_dir + 'oic_svr_db_client.json'))
+src = File('#/resource/provisioning/examples/oic_svr_db_client.json')
+dst = provisiontests_env.get('BUILD_DIR') + Dir('.').srcnode().path + "/" + src.name
+i_n = provisiontests_env.Command(dst, src, Copy("$TARGET", "$SOURCE"))
+provisiontests_env.Alias("install", i_n)

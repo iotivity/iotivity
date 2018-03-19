@@ -31,7 +31,7 @@
 #include "oic_string.h"
 #include "ocstackinternal.h"
 #include "ocresource.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocendpoint.h"
 #include "cacommon.h"
 #include "ocstack.h"
@@ -76,7 +76,7 @@ void OC_CALL OCPayloadDestroy(OCPayload* payload)
     }
 }
 
-OCRepPayload* OC_CALL OCRepPayloadCreate()
+OCRepPayload* OC_CALL OCRepPayloadCreate(void)
 {
     OCRepPayload* payload = (OCRepPayload*)OICCalloc(1, sizeof(OCRepPayload));
 
@@ -1644,7 +1644,7 @@ void OC_CALL OCRepPayloadDestroy(OCRepPayload* payload)
     OICFree(payload);
 }
 
-OCDiscoveryPayload* OC_CALL OCDiscoveryPayloadCreate()
+OCDiscoveryPayload* OC_CALL OCDiscoveryPayloadCreate(void)
 {
     OCDiscoveryPayload* payload = (OCDiscoveryPayload*)OICCalloc(1, sizeof(OCDiscoveryPayload));
 
@@ -1825,10 +1825,11 @@ OCEndpointPayload* CreateEndpointPayloadList(const OCResource *resource, const O
         for (size_t i = 0; i < infoSize; i++)
         {
             CAEndpoint_t *info = networkInfo + i;
+            OIC_LOG_V(DEBUG, TAG, "CATransportAdapter_t value = %d", info->adapter);
+            OIC_LOG_V(DEBUG, TAG, "info[%d], info->ifindex = %d, devAddr->ifindex = %d"
+                                  , (int)i, info->ifindex, devAddr->ifindex);
 
-            if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter &&
-                 info->ifindex == devAddr->ifindex) ||
-                info->adapter == CA_ADAPTER_RFCOMM_BTEDR)
+            if ((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter)
             {
                 OCTpsSchemeFlags matchedTps = OC_NO_TPS;
                 if (OC_STACK_OK != OCGetMatchedTpsFlags(info->adapter,
@@ -1855,7 +1856,7 @@ OCEndpointPayload* CreateEndpointPayloadList(const OCResource *resource, const O
                     OCStackResult ret = OCConvertTpsToString(matchedTps, &(tmpNode->tps));
                     if (ret != OC_STACK_OK)
                     {
-                        OIC_LOG_V(DEBUG, TAG, "OCConvertTpsToString(%s) is false", tmpNode->tps);
+                        OIC_LOG_V(ERROR, TAG, "OCConvertTpsToString(%s) is false", tmpNode->tps);
                         OCDiscoveryEndpointDestroy(tmpNode);
                         goto exit;
                     }
@@ -1899,10 +1900,6 @@ OCEndpointPayload* CreateEndpointPayloadList(const OCResource *resource, const O
                         (*epSize)++;
                     }
                 }
-            }
-            else
-            {
-                OIC_LOG_V(DEBUG, TAG, "CATransportAdapter_t value = %d", info->adapter);
             }
         }
     }

@@ -468,18 +468,6 @@ Support on Tizen v2.3 and higher
 - The software should be ported on Tizen v2.3 and higher without change.
 - The platform specific portion should be controlled by build configurations.
 
-@paragraph cao_ddoc_nfr604 NFR.604
-Support on Arduino Mega
-- The software should be ported on Arduino Mega without change.
-- Connectivity function can be supported through the various shields.
-- The platform specific portion should be controlled by build configurations.
-
-@paragraph cao_ddoc_nfr605 NFR.605
-Support on Arduino Due
-- The software should be ported on Arduino Due without change.
-- Connectivity function can be supported through the various shields.
-- The platform specific portion should be controlled by build configurations.
-
 
 @subsubsection cao_ddoc_qattr_extensibility Extensibility
 

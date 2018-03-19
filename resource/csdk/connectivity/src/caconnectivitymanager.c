@@ -23,14 +23,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "cainterface.h"
 #include "caremotehandler.h"
 #include "camessagehandler.h"
 #include "caprotocolmessage.h"
 #include "canetworkconfigurator.h"
 #include "cainterfacecontroller.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 #include "ca_adapter_net_ssl.h"
@@ -316,9 +316,6 @@ static CAResult_t CASendMessageMultiAdapter(const CAEndpoint_t *object, const vo
 #endif
 #ifdef RA_ADAPTER
             ,CA_ADAPTER_REMOTE_ACCESS
-#endif
-#ifdef TCP_ADAPTER
-            ,CA_ADAPTER_TCP
 #endif
         };
 

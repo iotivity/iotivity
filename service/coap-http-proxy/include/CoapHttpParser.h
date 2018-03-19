@@ -133,12 +133,12 @@ typedef void (*CHPResponseCallback)(const HttpResponse_t *response, void *contex
 /**
  * Function to initialize Parser and HTTP stack.
  */
-OCStackResult CHPParserInitialize();
+OCStackResult CHPParserInitialize(void);
 
 /**
  * Function to terminate parser and HTTP stack.
  */
-OCStackResult CHPParserTerminate();
+OCStackResult CHPParserTerminate(void);
 
 /**
  * Function to initiate TCP session and post HTTP request. If the method returns

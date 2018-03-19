@@ -103,14 +103,14 @@ OCStackResult SetDeviceInfo()
 {
     OCStackResult result = OC_STACK_ERROR;
 
-    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    OCResourceHandle handle = OCPlatform::getResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
     if (handle == NULL)
     {
         std::cout << "Failed to find resource " << OC_RSRVD_DEVICE_URI << std::endl;
         return result;
     }
 
-    result = OCBindResourceTypeToResource(handle, deviceType.c_str());
+    result = OCPlatform::bindTypeToResource(handle, deviceType);
     if (result != OC_STACK_OK)
     {
         std::cout << "Failed to add device type" << std::endl;
@@ -150,7 +150,7 @@ OCStackResult SetDeviceInfo()
     return OC_STACK_OK;
 }
 
-int main()
+int main(void)
 {
     // Create PlatformConfig object
     PlatformConfig cfg {

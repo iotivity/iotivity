@@ -224,15 +224,15 @@ std::string OCResource::setHost(const std::string& host)
 
     if (host.compare(0, sizeof(COAPS) - 1, COAPS) == 0)
     {
-        if (!OC_SECURE)
-        {
-            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
-            m_interfaces.empty(), m_clientWrapper.expired(), false, false);
-        }
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         prefix_len = sizeof(COAPS) - 1;
         m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags | OC_SECURE);
         m_devAddr.adapter = OC_ADAPTER_IP;
         usingIpAddr = true;
+#else
+        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+        m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+#endif
     }
     else if (host.compare(0, sizeof(COAP) - 1, COAP) == 0)
     {
@@ -248,15 +248,15 @@ std::string OCResource::setHost(const std::string& host)
     }
     else if (host.compare(0, sizeof(COAPS_TCP) - 1, COAPS_TCP) == 0)
     {
-        if (!OC_SECURE)
-        {
-            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
-            m_interfaces.empty(), m_clientWrapper.expired(), false, false);
-        }
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         prefix_len = sizeof(COAPS_TCP) - 1;
         m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags | OC_SECURE);
         m_devAddr.adapter = OC_ADAPTER_TCP;
         usingIpAddr = true;
+#else
+        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+        m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+#endif
     }
     else if (host.compare(0, sizeof(COAP_GATT) - 1, COAP_GATT) == 0)
     {

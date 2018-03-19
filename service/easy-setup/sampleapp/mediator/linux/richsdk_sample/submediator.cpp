@@ -323,8 +323,7 @@ void provisionCloudProperty()
     }
 
     CloudProp cloudProp;
-    cloudProp.setCloudPropWithAccessToken("accessToken", OAUTH_TOKENTYPE_BEARER, "authProvider",
-                                          "ciServer");
+    cloudProp.setCloudPropWithAccessToken("accessToken", "authProvider", "ciServer");
 
     try
     {
@@ -557,7 +556,7 @@ static FILE *client_open(const char *path, const char *mode)
     }
 }
 
-int main()
+int main(void)
 {
     OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
 

@@ -93,6 +93,20 @@ void PrintBuffer(const uint8_t *buf, size_t bufLen)
     }
 }
 
+size_t InputSize(const char *infoText)
+{
+    size_t inputValue = 0;
+
+    PRINT_PROG("%s", infoText);
+    for (int ret = 0; 1 != ret; )
+    {
+        ret = scanf("%zu", &inputValue);
+        while ('\n' != getchar());
+    }
+
+    return inputValue;
+}
+
 int InputNumber(const char *infoText)
 {
     int inputValue = 0;

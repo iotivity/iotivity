@@ -38,35 +38,116 @@
  */
 #define TAG "OIC_CA_LE_UTIL"
 
-/**
- * Number of services connected.
- */
-static int32_t g_numberOfServiceConnected = 0;
-
-void CAIncrementRegisteredServiceCount()
+CAResult_t CAAddLEDataToList(LEDataList **dataList, const void *data, uint32_t dataLength)
 {
-    g_numberOfServiceConnected++;
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    VERIFY_NON_NULL(dataList, TAG, "Data list is null");
+    VERIFY_NON_NULL(data, TAG, "data is null");
+
+    if (0 == dataLength)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid input: data length is zero!");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    LEDataList *pending_data = (LEDataList *) OICMalloc(sizeof(LEDataList));
+    if (NULL == pending_data)
+    {
+        OIC_LOG(ERROR, TAG, "OICMalloc failed (data list)!");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    pending_data->data = (LEData *) OICMalloc(sizeof(LEData));
+    if (NULL == pending_data->data)
+    {
+        OIC_LOG(ERROR, TAG, "OICMalloc failed (data node)!");
+        OICFree(pending_data);
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    pending_data->next = NULL;
+    pending_data->data->data = (void *) OICMalloc(dataLength); //data
+    if (NULL == pending_data->data->data)
+    {
+        OIC_LOG(ERROR, TAG, "OICMalloc failed (data)!");
+        OICFree(pending_data->data);
+        OICFree(pending_data);
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    memcpy(pending_data->data->data, data, dataLength);
+    pending_data->data->dataLength = dataLength;
+
+    if (NULL == *dataList)
+    {
+        *dataList = pending_data;
+    }
+    else
+    {
+        LEDataList *curNode = *dataList;
+        while (curNode->next != NULL)
+        {
+            curNode = curNode->next;
+        }
+        curNode->next = pending_data;
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
 }
 
-void CADecrementRegisteredServiceCount()
+void CARemoveLEDataFromList(LEDataList **dataList)
 {
-    g_numberOfServiceConnected--;
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    VERIFY_NON_NULL(dataList, TAG, "Data list is null");
+
+    if (*dataList)
+    {
+        LEDataList *curNode = *dataList;
+        *dataList = (*dataList)->next;
+
+        //Delete the first node
+        CADestroyLEData(curNode->data);
+        OICFree(curNode);
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-void CAResetRegisteredServiceCount()
+void CADestroyLEDataList(LEDataList **dataList)
 {
-    g_numberOfServiceConnected = 0;
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    VERIFY_NON_NULL_VOID(dataList, TAG, "Data list is null");
+
+    while (*dataList)
+    {
+        LEDataList *curNode = *dataList;
+        *dataList = (*dataList)->next;
+
+        CADestroyLEData(curNode->data);
+        OICFree(curNode);
+    }
+
+    *dataList = NULL;
+
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-int32_t  CAGetRegisteredServiceCount()
+void CADestroyLEData(LEData *data)
 {
-    return g_numberOfServiceConnected ;
+    if (data)
+    {
+        OICFree(data->data);
+        OICFree(data);
+    }
 }
 
 CAResult_t CAAddLEServerInfoToList(LEServerInfoList **serverList,
                                    LEServerInfo *leServerInfo)
 {
-
     OIC_LOG(DEBUG, TAG, "IN");
 
     VERIFY_NON_NULL(serverList, TAG, "serverList");
@@ -75,7 +156,7 @@ CAResult_t CAAddLEServerInfoToList(LEServerInfoList **serverList,
     LEServerInfoList *node = (LEServerInfoList *) OICCalloc(1, sizeof(LEServerInfoList));
     if (NULL == node)
     {
-        OIC_LOG(ERROR, TAG, "Malloc failed!");
+        OIC_LOG(ERROR, TAG, "Calloc failed!");
         return CA_STATUS_FAILED;
     }
 
@@ -92,8 +173,6 @@ CAResult_t CAAddLEServerInfoToList(LEServerInfoList **serverList,
         *serverList = node;
     }
 
-    CAIncrementRegisteredServiceCount();
-
     OIC_LOG_V(DEBUG, TAG, "Device [%s] added to list",
               leServerInfo->remoteAddress);
 
@@ -103,7 +182,7 @@ CAResult_t CAAddLEServerInfoToList(LEServerInfoList **serverList,
 }
 
 void CARemoveLEServerInfoFromList(LEServerInfoList **serverList,
-                                        const char *remoteAddress)
+                                  const char *remoteAddress)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL_VOID(serverList, TAG, "serverList");
@@ -123,10 +202,7 @@ void CARemoveLEServerInfoFromList(LEServerInfoList **serverList,
             {
                 prev->next = temp->next;
             }
-            CADecrementRegisteredServiceCount();
-            bt_gatt_client_destroy(temp->serverInfo->clientHandle);
-            OICFree(temp->serverInfo->remoteAddress);
-            OICFree(temp->serverInfo);
+            CAFreeLEServerInfo(temp->serverInfo);
             OICFree(temp);
             OIC_LOG_V(DEBUG, TAG, "Device [%s] removed from list", remoteAddress);
             break;
@@ -144,9 +220,14 @@ CAResult_t CAGetLEServerInfo(LEServerInfoList *serverList, const char *leAddress
 
     OIC_LOG(DEBUG, TAG, "IN");
 
-    VERIFY_NON_NULL(serverList, TAG, "clientList");
     VERIFY_NON_NULL(leServerInfo, TAG, "leClientInfo");
     VERIFY_NON_NULL(leAddress, TAG, "leAddress");
+
+    if (NULL == serverList)
+    {
+        OIC_LOG(DEBUG, TAG, "Server list is empty");
+        return CA_STATUS_FAILED;
+    }
 
     LEServerInfoList *cur = serverList;
     *leServerInfo = NULL;
@@ -166,38 +247,6 @@ CAResult_t CAGetLEServerInfo(LEServerInfoList *serverList, const char *leAddress
     return CA_STATUS_FAILED;
 }
 
-CAResult_t CAGetLEServerInfoByPosition(LEServerInfoList *serverList, int32_t position,
-                                       LEServerInfo **leServerInfo)
-{
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    VERIFY_NON_NULL(serverList, TAG, "clientList");
-    VERIFY_NON_NULL(leServerInfo, TAG, "leClientInfo");
-
-    if (0 > position)
-    {
-        OIC_LOG(ERROR, TAG, "Position Invalid input !");
-        return CA_STATUS_INVALID_PARAM;
-    }
-
-    *leServerInfo = NULL;
-    int32_t count = 0;
-    LEServerInfoList *cur = serverList;
-    while (cur != NULL)
-    {
-        if (position == count)
-        {
-            *leServerInfo = cur->serverInfo;
-            OIC_LOG(DEBUG, TAG, "OUT");
-            return CA_STATUS_OK;
-        }
-        count++;
-        cur = cur->next;
-    }
-    OIC_LOG(DEBUG, TAG, "Client info not found for the position");
-    return CA_STATUS_FAILED;
-}
-
 void CAFreeLEServerList(LEServerInfoList *serverList)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -214,11 +263,21 @@ void CAFreeLEServerList(LEServerInfoList *serverList)
 void CAFreeLEServerInfo(LEServerInfo *leServerInfo)
 {
     OIC_LOG(DEBUG, TAG, "IN");
+
     if (leServerInfo)
     {
-        if (leServerInfo->remoteAddress)
+        if (leServerInfo->clientHandle)
         {
             bt_gatt_client_destroy(leServerInfo->clientHandle);
+        }
+
+        if (leServerInfo->pendingDataList)
+        {
+            CADestroyLEDataList(&(leServerInfo->pendingDataList));
+        }
+
+        if (leServerInfo->status > LE_STATUS_CONNECTED)
+        {
             int32_t ret = bt_gatt_disconnect(leServerInfo->remoteAddress);
 
             if (BT_ERROR_NONE != ret)
@@ -228,10 +287,12 @@ void CAFreeLEServerInfo(LEServerInfo *leServerInfo)
                           ret);
                 return;
             }
-            OICFree(leServerInfo->remoteAddress);
         }
+
+        OICFree(leServerInfo->remoteAddress);
         OICFree(leServerInfo);
     }
+
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
@@ -249,7 +310,7 @@ CAResult_t CAAddLEClientInfoToList(LEClientInfoList **clientList,
         return CA_STATUS_FAILED;
     }
 
-    node->remoteAddress= clientAddress;
+    node->remoteAddress = clientAddress;
     node->next = NULL;
 
     if (*clientList == NULL)   // Empty list

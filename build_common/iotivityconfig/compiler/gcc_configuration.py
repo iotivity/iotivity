@@ -14,7 +14,7 @@
 # limitations under the License.
 # ------------------------------------------------------------------------
 
-from configuration import Configuration
+from .configuration import Configuration
 
 # GCC compiler-specific configuration
 class GccConfiguration(Configuration):
@@ -31,7 +31,7 @@ class GccConfiguration(Configuration):
         # flag is required to compile C99 code without warning or
         # error.
 
-        from default_configuration import DefaultConfiguration
+        from .default_configuration import DefaultConfiguration
         def_config = DefaultConfiguration(self._context)
 
         return """
@@ -82,7 +82,7 @@ class GccConfiguration(Configuration):
 #define _POSIX_C_SOURCE 200112L
 #include <stdio.h>
 
-int main()
+int main(void)
 {
     int x = 3210;
     auto f = [x](){

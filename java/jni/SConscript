@@ -24,7 +24,7 @@
 Import('env')
 # Add third party libraries
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
+SConscript('#/resource/third_party_libs.scons', exports=['lib_env'])
 
 jni_env = lib_env.Clone()
 rd_mode = jni_env.get('RD_MODE')
@@ -68,9 +68,7 @@ target_os = env.get('TARGET_OS')
 if target_os not in ['windows', 'winrt']:
     jni_env.AppendUnique(CCFLAGS=[
         '-Werror',
-        '-Wno-comment',
         '-Wno-unused-function',
-        '-Wno-unused-parameter'
     ])
     jni_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-pthread'])
     # Note: 'pthread' is in libc for android. On other platform, if use

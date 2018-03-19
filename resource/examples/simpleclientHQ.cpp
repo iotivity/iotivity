@@ -48,6 +48,7 @@ struct dereference_compare
         return *lhs < *rhs;
     }
 };
+static const char* SVR_DB_FILE_NAME = "./oic_svr_db_client.dat";
 typedef std::set<std::shared_ptr<OCResource>, dereference_compare> DiscoveredResourceSet;
 
 DiscoveredResourceSet discoveredResources;
@@ -390,6 +391,19 @@ void PrintUsage()
     std::cout << "   ConnectivityType : 0 - IP"<< std::endl;
 }
 
+
+static FILE* override_fopen(const char* path, const char* mode)
+{
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(SVR_DB_FILE_NAME, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
+}
+
 int main(int argc, char* argv[]) {
 
     std::ostringstream requestURI;
@@ -449,12 +463,12 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-
+    OCPersistentStorage ps {override_fopen, fread, fwrite, fclose, unlink };
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Client,
-        nullptr
+        &ps
     };
     
     cfg.QoS = OC::QualityOfService::HighQos;

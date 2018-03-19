@@ -45,19 +45,19 @@ typedef struct
 } NSMessageStateList;
 
 // Mutex of MessageState storage
-pthread_mutex_t ** NSGetMessageListMutex();
-void NSLockMessageListMutex();
-void NSUnlockMessageListMutex();
+pthread_mutex_t ** NSGetMessageListMutex(void);
+void NSLockMessageListMutex(void);
+void NSUnlockMessageListMutex(void);
 
 // Function for MessageState
-NSMessageStateList * NSGetMessageStateList();
+NSMessageStateList * NSGetMessageStateList(void);
 NSMessageStateLL * NSFindMessageState(uint64_t msgId);
 bool NSUpdateMessageState(uint64_t msgId, NSSyncType state);
 bool NSDeleteMessageState(uint64_t msgId);
 bool NSInsertMessageState(uint64_t msgId, NSSyncType state);
-void NSDestroyMessageStateList();
+void NSDestroyMessageStateList(void);
 
-NSCacheList ** NSGetProviderCacheList()
+NSCacheList ** NSGetProviderCacheList(void)
 {
     static NSCacheList * providerCache = NULL;
     return & providerCache;
@@ -68,7 +68,7 @@ void NSSetProviderCacheList(NSCacheList * cache)
     *(NSGetProviderCacheList()) = cache;
 }
 
-void NSDestroyInternalCachedList()
+void NSDestroyInternalCachedList(void)
 {
     NSCacheList * cache = *(NSGetProviderCacheList());
     if (cache)
@@ -154,7 +154,7 @@ NSResult NSProviderCacheUpdate(NSProvider_internal * provider)
     return NS_OK;
 }
 
-void NSCancelAllSubscription()
+void NSCancelAllSubscription(void)
 {
     NSCacheList * ProviderCache = *(NSGetProviderCacheList());
     if (!ProviderCache)
@@ -523,7 +523,7 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
 }
 
 // implements of MessageState function
-pthread_mutex_t ** NSGetMessageListMutex()
+pthread_mutex_t ** NSGetMessageListMutex(void)
 {
     static pthread_mutex_t * g_mutex = NULL;
     if (g_mutex == NULL)
@@ -536,19 +536,19 @@ pthread_mutex_t ** NSGetMessageListMutex()
     return & g_mutex;
 }
 
-void NSLockMessageListMutex()
+void NSLockMessageListMutex(void)
 {
     NS_LOG_V(DEBUG, "%s", __func__);
     pthread_mutex_lock(*NSGetMessageListMutex());
 }
 
-void NSUnlockMessageListMutex()
+void NSUnlockMessageListMutex(void)
 {
     NS_LOG_V(DEBUG, "%s", __func__);
     pthread_mutex_unlock(*NSGetMessageListMutex());
 }
 
-NSMessageStateList ** NSGetMessageStateListAddr()
+NSMessageStateList ** NSGetMessageStateListAddr(void)
 {
     static NSMessageStateList * g_messageStateList = NULL;
     if (g_messageStateList == NULL)
@@ -563,7 +563,7 @@ NSMessageStateList ** NSGetMessageStateListAddr()
     return & g_messageStateList;
 }
 
-NSMessageStateList * NSGetMessageStateList()
+NSMessageStateList * NSGetMessageStateList(void)
 {
     return * NSGetMessageStateListAddr();
 }
@@ -693,7 +693,7 @@ bool NSInsertMessageState(uint64_t msgId, NSSyncType state)
     return true;
 }
 
-void NSDestroyMessageStateList()
+void NSDestroyMessageStateList(void)
 {
     NS_LOG_V(DEBUG, "%s", __func__);
     NSLockMessageListMutex();

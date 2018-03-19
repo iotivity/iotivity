@@ -38,7 +38,7 @@
 #include "ocstack.h"
 #include "ocstackconfig.h"
 #include "occlientcb.h"
-#include <ocrandom.h>
+#include "experimental/ocrandom.h"
 
 #include "cacommon.h"
 #include "cainterface.h"
@@ -202,7 +202,7 @@ OCStackResult SendPresenceNotification(OCResourceType *resourceType,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult SendStopNotification();
+OCStackResult SendStopNotification(void);
 #endif // WITH_PRESENCE
 
 /**

@@ -27,7 +27,7 @@ extern "C" {
 
 #include "NSCommon.h"
 
-NSResult NSConsumerSystemInit();
+NSResult NSConsumerSystemInit(void);
 
 #ifdef __cplusplus
 }

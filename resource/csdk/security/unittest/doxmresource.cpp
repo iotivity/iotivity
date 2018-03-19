@@ -25,9 +25,9 @@
 #include "oic_malloc.h"
 #include "resourcemanager.h"
 #include "srmresourcestrings.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "security_internals.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 
 #define TAG  "SRM-DOXM"
 

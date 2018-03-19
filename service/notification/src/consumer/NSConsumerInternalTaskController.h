@@ -29,19 +29,19 @@ extern "C" {
 #include "NSConsumerMemoryCache.h"
 #include "NSConsumerCommunication.h"
 
-NSCacheList ** NSGetMessageCacheList();
+NSCacheList ** NSGetMessageCacheList(void);
 
 void NSSetMessageCacheList(NSCacheList *);
 
-NSCacheList ** NSGetProviderCacheList();
+NSCacheList ** NSGetProviderCacheList(void);
 
-void NSCancelAllSubscription();
+void NSCancelAllSubscription(void);
 
 void NSSetProviderCacheList(NSCacheList *);
 
-void NSDestroyMessageCacheList();
+void NSDestroyMessageCacheList(void);
 
-void NSDestroyInternalCachedList();
+void NSDestroyInternalCachedList(void);
 
 NSMessage * NSMessageCacheFind(const char *);
 

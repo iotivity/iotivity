@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include <jni.h>
-#include "logger.h"
+#include "experimental/logger.h"
 #include <stdio.h>
 #include "caadapterutils.h"
 #include "cainterface.h"
@@ -60,6 +60,7 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaInterface_initialize
 (JNIEnv *env, jclass clazz, jobject activity, jobject context)
 {
+    OC_UNUSED(clazz);
     LOGI("CaInterface_initialize");
 
     CANativeSetActivity(env, activity);
@@ -224,6 +225,7 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaInterface_caManagerInitialize(JNIEnv *env, jclass clazz,
                                                      jobject context, jobject listener)
 {
+    OC_UNUSED(clazz);
     LOGI("CaManager_initialize");
 
     CAUtilClientInitialize(env, g_jvm, context);

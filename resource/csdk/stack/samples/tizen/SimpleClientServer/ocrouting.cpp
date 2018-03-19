@@ -29,7 +29,7 @@
 #include <array>
 #include <iostream>
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocpayload.h"
 
 using namespace std;
@@ -71,7 +71,7 @@ void *GMainLoopThread(void *param)
     return NULL;
 }
 
-int main()
+int main(void)
 {
     cout << "\nOCRouting sample is starting...";
     g_mainloop = g_main_loop_new(NULL, FALSE);

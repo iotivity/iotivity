@@ -5,12 +5,8 @@ import os
 
 Import('connectivity_env')
 
-print("Reading util folder script")
-
 ca_transport = connectivity_env.get('TARGET_TRANSPORT')
 target_os = connectivity_env.get('TARGET_OS')
-src_dir = os.path.join(os.path.abspath(os.curdir), 'src')
-camanager_src_dir = os.path.join(src_dir, 'camanager')
 with_cloud = connectivity_env.get('WITH_CLOUD')
 with_tcp = connectivity_env.get('WITH_TCP')
 
@@ -18,24 +14,40 @@ with_tcp = connectivity_env.get('WITH_TCP')
 # Source files to build common for platforms
 ######################################################################
 
-connectivity_env.AppendUnique(CA_SRC = [os.path.join(src_dir, 'cautilinterface.c')])
+src_files = [File('src/cautilinterface.c'),]
 
 if target_os == 'android':
-    if (('BLE' in ca_transport) or ('ALL' in ca_transport)):
-        bt_le_manager_src_dir = os.path.join(camanager_src_dir, 'bt_le_manager', 'android')
-        connectivity_env.AppendUnique(CA_SRC = [
-            os.path.join(bt_le_manager_src_dir, 'caleconnectionmanager.c'),
-            os.path.join(bt_le_manager_src_dir, 'caleautoconnector.c'),
-            os.path.join(bt_le_manager_src_dir, 'camanagerleutil.c'),
-            os.path.join(bt_le_manager_src_dir, 'camanagerdevice.c')])
+    if 'BLE' in ca_transport or 'ALL' in ca_transport:
+        bt_srcdir = 'src/camanager/bt_le_manager/android/'
+        src_files.extend([File(src) for src in (
+            bt_srcdir + 'caleconnectionmanager.c',
+            bt_srcdir + 'caleautoconnector.c',
+            bt_srcdir + 'camanagerleutil.c',
+            bt_srcdir + 'camanagerdevice.c',
+        )])
+        connectivity_env.AppendUnique(CPPPATH=['../src/bt_le_adapter/android'])
 
-    if (('BT' in ca_transport) or ('ALL' in ca_transport)):
-        connectivity_env.AppendUnique(CA_SRC = [os.path.join(src_dir, 'btpairing', 'android', 'cabtpairing.c')])
+    if 'BT' in ca_transport or 'ALL' in ca_transport:
+        bt_srcdir = 'src/btpairing/android/'
+        src_files.extend([File(src) for src in (
+            bt_srcdir + 'cabtpairing.c',
+        )])
+
+if target_os == 'tizen':
+    if 'BLE' in ca_transport or 'ALL' in ca_transport:
+        bt_srcdir = 'src/camanager/bt_le_manager/tizen/'
+        src_files.extend([File(src) for src in (
+           bt_srcdir + 'caleconnectionmanager.c',
+        )])
+        connectivity_env.AppendUnique(CPPPATH=['../src/bt_le_adapter/tizen'])
 
 if with_cloud and with_tcp:
-    connectivity_env.AppendUnique(CA_SRC = [
-        os.path.join(camanager_src_dir, 'caconnectionmanager.c'),
-        os.path.join(camanager_src_dir, 'camanagerutil.c'),
-        os.path.join(camanager_src_dir, 'camessagearbiter.c'),
-        os.path.join(camanager_src_dir, 'capolicymanager.c')])
+    ca_srcdir = 'src/camanager/'
+    src_files.extend([File(src) for src in (
+        ca_srcdir + 'caconnectionmanager.c',
+        ca_srcdir + 'camanagerutil.c',
+        ca_srcdir + 'camessagearbiter.c',
+        ca_srcdir + 'capolicymanager.c',
+    )])
 
+connectivity_env.AppendUnique(CA_SRC=src_files)

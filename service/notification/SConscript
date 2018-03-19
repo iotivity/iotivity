@@ -26,7 +26,7 @@ import platform
 Import('env')
 
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 notification_env = lib_env.Clone()
 
 if notification_env.get('RELEASE'):
@@ -71,10 +71,6 @@ if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
     notification_env.AppendUnique(LINKFLAGS=['-Wl,--no-undefined'])
 
 notification_env.AddPthreadIfNeeded()
-
-if (target_os == 'linux') and (not env.get('RELEASE')):
-    notification_env.PrependUnique(LIBS=['gcov'])
-    notification_env.AppendUnique(CCFLAGS=['--coverage'])
 
 if target_os == 'android':
     notification_env.AppendUnique(CCFLAGS=['-frtti', '-fexceptions'])
@@ -145,7 +141,7 @@ notification_consumer_env.UserInstallTargetHeader(
     'include/NSCommon.h', 'service/notification', 'NSCommon.h')
 
 # Go to build Unit test
-if target_os in ['linux']:
+if notification_env.get('WITH_TEST') and target_os in ('linux'):
     SConscript('unittest/SConscript')
 
 # Go to build c++ wrapper

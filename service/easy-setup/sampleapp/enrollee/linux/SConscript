@@ -72,17 +72,8 @@ if enrollee_env.get('SECURED') == '1':
 enrollee = enrollee_env.Program('enrollee',
                                 ['enrolleewifi.c', 'easysetup_x.c'])
 
-i_enrollee = enrollee_env.Install(env.get('BUILD_DIR'), enrollee)
+enrollee += enrollee_env.ScanJSON('service/easy-setup/sampleapp/enrollee/linux')
 
-justworksdat = enrollee_env.Install(
-    env.get('BUILD_DIR') + '/service/easy-setup/sampleapp/enrollee/linux/',
-    env.get('SRC_DIR') +
-    '/service/easy-setup/sampleapp/enrollee/linux/oic_svr_db_server.dat')
-
-MOTdat = enrollee_env.Install(
-    env.get('BUILD_DIR') + '/service/easy-setup/sampleapp/enrollee/linux/',
-    env.get('SRC_DIR') +
-    '/service/easy-setup/sampleapp/enrollee/linux/oic_svr_db_server_MOT.dat')
-
-Alias('enrollee', [i_enrollee, justworksdat, MOTdat])
+Alias('enrollee', enrollee)
 env.AppendTarget('enrollee')
+enrollee_env.UserInstallTargetExtra(enrollee)

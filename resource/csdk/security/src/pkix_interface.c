@@ -22,7 +22,7 @@
 #include "credresource.h"
 #include "crlresource.h"
 #include "srmresourcestrings.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "OIC_SRM_PKIX_INTERFACE"
 

@@ -32,5 +32,5 @@ if target_os == 'linux':
     SConscript('examples/linux/SConscript')
 
 # Go to build c++ wrapper unittest
-if target_os == 'linux':
+if env.get('WITH_TEST') and target_os in ('linux'):
     SConscript('unittest/SConscript')

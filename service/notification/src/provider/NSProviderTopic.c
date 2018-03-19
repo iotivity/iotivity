@@ -23,9 +23,9 @@
 #include "oic_malloc.h"
 #include <pthread.h>
 
-NSResult NSSendTopicUpdation();
+NSResult NSSendTopicUpdation(void);
 
-NSResult NSInitTopicList()
+NSResult NSInitTopicList(void)
 {
     NS_LOG(DEBUG, "NSInitTopicList - IN");
 
@@ -117,7 +117,7 @@ NSResult NSUnregisterTopic(const char * topicName)
     return result;
 }
 
-NSResult NSSendTopicUpdation()
+NSResult NSSendTopicUpdation(void)
 {
     NS_LOG(DEBUG, "NSSendTopicUpdation - IN");
 
@@ -319,6 +319,7 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
             OCRepPayloadDestroy(payloadTopicArray[i]);
         }
         NSOICFree(payloadTopicArray);
+
     }
     else
     {
@@ -340,7 +341,6 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
 
     NSOICFree(copyReq);
     response.requestHandle = entityHandlerRequest->requestHandle;
-    response.resourceHandle = entityHandlerRequest->resource;
     response.persistentBufferFlag = 0;
     response.ehResult = OC_EH_OK;
     response.payload = (OCPayload *) payload;
@@ -393,8 +393,10 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
         int64_t topicState = 0;
 
         OCRepPayloadGetPropString(topicListPayload[i], NS_ATTRIBUTE_TOPIC_NAME, &topicName);
-        OCRepPayloadGetPropInt(topicListPayload[i], NS_ATTRIBUTE_TOPIC_SELECTION, &topicState);
-        NS_LOG_V(DEBUG, "Topic Name(state):  %s(%d)", topicName, (int)topicState);
+        if (OCRepPayloadGetPropInt(topicListPayload[i], NS_ATTRIBUTE_TOPIC_SELECTION, &topicState))
+        {
+            NS_LOG_V(DEBUG, "Topic Name(state):  %s(%d)", topicName, (int)topicState);
+        }
 
         if (NS_TOPIC_SUBSCRIBED == (NSTopicState) topicState)
         {
@@ -418,7 +420,10 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
             newObj->data = (NSCacheData *) topicSubData;
             newObj->next = NULL;
 
-            NSProviderStorageWrite(consumerTopicList, newObj);
+            if (NS_OK != NSProviderStorageWrite(consumerTopicList, newObj))
+            {
+                NS_LOG(ERROR, "Fail to write cache");
+            }
         }
     }
     NSSendTopicUpdationToConsumer(consumerId);

@@ -7,7 +7,7 @@ Please refer to the following page to install scons:
 (Note: on Windows, install Python 2.x before installing scons)
 
 * 2. IDE/SDK Pre-requites
-To build for some OS (Android / Arduino / IOS ...), an IDE/SDK may be required,
+To build for some OS (Android / IOS ...), an IDE/SDK may be required,
 please go to the relative page to download and install the required IDE/SDK.
 
 Note: Connectivity module building has been changed. We have to build connectivity
@@ -85,43 +85,4 @@ Tizen Build:
 
 Note :- Upon successful execution of above command(s) CA library and sample applications will be
         generated at path "~/GBS-ROOT/local/repos/redwood/armv7l/RPMS".
-
-Arduino Build:
-
-Note :- Currently Mega & Due build is supported.
-
-1) Set up Arduino first before building. Refer to "connectivity\build\arduino\Arduino_Setup_README.txt" file for help.
-
-2) Go to "iotivity/" folder.
-
-3) Execute following command to start build :
-
-For Arduino Mega
-    $ scons resource/csdk/connectivity/samples/arduino/ TARGET_OS=arduino TARGET_TRANSPORT=<transport> TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation>
-For Arduino Due
-    $ scons resource/csdk/connectivity/samples/arduino/ TARGET_OS=arduino TARGET_TRANSPORT=<transport> TARGET_ARCH=arm BOARD=arduino_due_x_dbg ARDUINO_HOME=<path_to_arduino_installation>
-    NOTE: BOARD=arduino_due_x_dbg|arduino_due_x. Default is arduino_due_x_dbg.
-
-    Possible values for <transport> are:
-    -> IP :
-    $ scons resource/csdk/connectivity/samples/arduino/ TARGET_OS=arduino TARGET_TRANSPORT=IP TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation>
-    -> BLE :
-    $ scons resource/csdk/connectivity/samples/arduino/ TARGET_OS=arduino TARGET_TRANSPORT=BLE TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation>
-
-    Note :- Only single transport can be built at a time for Arduino.
-
-4) The above command will build sample also. The "CASample.hex" can be found at "/samples/arduino/"
-
-5) After building sample, script will try to install on "/dev/ttyACM0" port in 'sudo' mode.
-   To skip installation, set command line argument 'UPLOAD=false'.
-   "scons resource/csdk/connectivity/samples/arduino/ TARGET_OS=arduino TARGET_TRANSPORT=ETHERNET TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation> UPLOAD=false"
-
-6) To set BLE Shield Name, include the option DEVICE_NAME during scons build.
-
-   -> $ scons resource/csdk/connectivity/samples/arduino/ TARGET_OS=arduino TARGET_TRANSPORT=ETHERNET TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation> DEVICE_NAME=OIC
-
-   Specified Device name length MUST be less than 10 characters. RBL Library has this limitation.
-   By Default DEVICE_NAME=OIC-DEVICE, if device name option is not specified
-
-   To change the port number, please modify  "port" variable in __upload() function in: "/build/arduino/SConscript".
 

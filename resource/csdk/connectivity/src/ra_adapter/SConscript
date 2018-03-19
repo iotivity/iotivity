@@ -21,9 +21,5 @@ import os
 
 Import('connectivity_env')
 
-print("Reading RA adapter script")
-
-src_dir = os.path.abspath(os.curdir)
-
 #Source files to build in Linux platform
-connectivity_env.AppendUnique(CA_SRC = [os.path.join(src_dir, 'caraadapter.c')])
+connectivity_env.AppendUnique(CA_SRC='caraadapter.c')

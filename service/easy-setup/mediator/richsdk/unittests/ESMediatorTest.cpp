@@ -35,7 +35,7 @@
 #include "ESEnrolleeCommon.h"
 #include "easysetup.h"
 
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "cainterface.h"
 #include "OCPlatform.h"
 
@@ -464,7 +464,7 @@ TEST_F(ProvisionCloudPropertiesTest,
           ThrowExceptionWhenProvisionCloudPropertiesFailedByCallbackIsNull)
 {
     CloudProp cloudProp;
-    cloudProp.setCloudProp("authCode", "authProvider", "ciServer");
+    cloudProp.setCloudPropWithAccessToken("accessToken", "authProvider", "ciServer");
     cloudProp.setCloudID("f002ae8b-c42c-40d3-8b8d-1927c17bd1b3");
 
     EXPECT_ANY_THROW(g_remoteEnrollee->provisionCloudProperties(cloudProp, nullptr));
@@ -474,7 +474,7 @@ TEST_F(ProvisionCloudPropertiesTest,
           ThrowExceptionWhenProvisionCloudPropertiesFailedWithoutAuthCode)
 {
     CloudProp cloudProp;
-    cloudProp.setCloudProp("", "authProvider", "ciServer");
+    cloudProp.setCloudPropWithAccessToken("", "authProvider", "ciServer");
     cloudProp.setCloudID("f002ae8b-c42c-40d3-8b8d-1927c17bd1b3");
     EXPECT_ANY_THROW(g_remoteEnrollee->provisionCloudProperties(cloudProp,
                                                                 cloudPropProvStatusCb));
@@ -484,7 +484,7 @@ TEST_F(ProvisionCloudPropertiesTest,
           ThrowExceptionWhenProvisionCloudPropertiesFailedWithoutAuthProvider)
 {
     CloudProp cloudProp;
-    cloudProp.setCloudProp("authCode", "", "ciServer");
+    cloudProp.setCloudPropWithAccessToken("accessToken", "", "ciServer");
     cloudProp.setCloudID("f002ae8b-c42c-40d3-8b8d-1927c17bd1b3");
     EXPECT_ANY_THROW(g_remoteEnrollee->provisionCloudProperties(cloudProp,
                                                                 cloudPropProvStatusCb));
@@ -494,7 +494,7 @@ TEST_F(ProvisionCloudPropertiesTest,
           ThrowExceptionWhenProvisionCloudPropertiesFailedWithoutCIServer)
 {
     CloudProp cloudProp;
-    cloudProp.setCloudProp("authCode", "authProvider", "");
+    cloudProp.setCloudPropWithAccessToken("accessToken", "authProvider", "");
     cloudProp.setCloudID("f002ae8b-c42c-40d3-8b8d-1927c17bd1b3");
     EXPECT_ANY_THROW(g_remoteEnrollee->provisionCloudProperties(cloudProp,
                                                                 cloudPropProvStatusCb));
@@ -503,7 +503,7 @@ TEST_F(ProvisionCloudPropertiesTest,
 TEST_F(ProvisionCloudPropertiesTest, ProvisionCloudPropertiesSucceed)
 {
     CloudProp cloudProp;
-    cloudProp.setCloudProp("authCode", "authProvider", "ciServer");
+    cloudProp.setCloudPropWithAccessToken("accessToken", "authProvider", "ciServer");
     cloudProp.setCloudID("f002ae8b-c42c-40d3-8b8d-1927c17bd1b3");
 
     int cntForReceivedCallbackWithSuccess = 0;
@@ -528,7 +528,7 @@ TEST_F(ProvisionCloudPropertiesTest, ProvisionCloudPropertiesSucceed)
 TEST_F(ProvisionCloudPropertiesTest, ProvisionCloudPropertiesWithResourceSucceed)
 {
     CloudProp cloudProp;
-    cloudProp.setCloudProp("authCode", "authProvider", "ciServer");
+    cloudProp.setCloudPropWithAccessToken("accessToken", "authProvider", "ciServer");
     cloudProp.setCloudID("f002ae8b-c42c-40d3-8b8d-1927c17bd1b3");
 
     int cntForReceivedCallbackWithSuccess = 0;

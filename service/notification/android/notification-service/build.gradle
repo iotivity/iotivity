@@ -29,7 +29,7 @@ android {
         variant.outputs.each { output ->
             def outputFile = output.outputFile
             if (outputFile != null && outputFile.name.endsWith('.aar')) {
-                def fileName = "${archivesBaseName}-${TARGET_ARCH}-${outputFile.name}"
+                def fileName = "${archivesBaseName}-${outputFile.name}"
                 output.outputFile = new File(outputFile.parent, fileName)
             }
         }
@@ -41,7 +41,7 @@ android {
         versionCode 1
         versionName "1.0"
     }
-    repositories {        
+    repositories {
         flatDir {
             dirs '../../../../java/iotivity-android/build/outputs/aar', '../../../../../java/iotivity-android/build/outputs/aar' 
         }
@@ -69,7 +69,7 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile ":iotivity-base-${TARGET_ARCH}-${RELEASE}@aar"
+    compile ":iotivity-base-${RELEASE}@aar"
     androidTestCompile 'com.google.dexmaker:dexmaker-mockito:1.0'
     androidTestCompile 'com.google.dexmaker:dexmaker:1.0'
     androidTestCompile 'org.mockito:mockito-core:1.10.19'

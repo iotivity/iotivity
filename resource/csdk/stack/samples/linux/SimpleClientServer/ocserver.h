@@ -101,7 +101,7 @@ OCEntityHandlerResult ProcessNonExistingResourceRequest (OCEntityHandlerRequest 
 void ProcessObserveRegister (OCEntityHandlerRequest *ehRequest);
 void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest);
 
-void DeleteDeviceInfo();
+void DeleteDeviceInfo(void);
 
 OCStackResult SetDeviceInfo(const char *contentType, const char *dateOfManufacture,
                 const char *deviceName, const char *deviceUUID, const char *firmwareVersion,

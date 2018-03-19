@@ -28,15 +28,15 @@
 
 #include "ocstack.h"
 #include "oic_malloc.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "utlist.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
 #include "cainterface.h"
 #include "ocserverrequest.h"
 #include "resourcemanager.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "pstatresource.h"
 #include "deviceonboardingstate.h"
 #include "aclresource.h"
@@ -47,6 +47,7 @@
 #include "srmutility.h"
 #include "pinoxmcommon.h"
 #include "oxmverifycommon.h"
+#include "ocstackinternal.h"
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 #include <mbedtls/ssl_ciphersuites.h>
 #include <mbedtls/md.h>
@@ -99,7 +100,7 @@ static OicSecDoxm_t gDefaultDoxm =
 #define W PERMISSION_WRITE
 #define RW PERMISSION_READ | PERMISSION_WRITE
 
-// NOTE that this table must match the DoxmProperty_t enum in doxmresource.h
+// NOTE that this table must match the DoxmProperty_t enum in experimental/doxmresource.h
 static const uint8_t gDoxmPropertyAccessModes[DOXM_PROPERTY_COUNT][DOS_STATE_COUNT] =
 { // RESET RFOTM  RFPRO   RFNOP   SRESET
     { R,    R,      R,      R,      R   }, // .oxmtype TODO [IOT-2105]
@@ -1368,7 +1369,7 @@ OCEntityHandlerResult StartOTMJustWorks(OCEntityHandlerRequest *ehRequest)
             OicUuid_t deviceID = {.id = {0}};
 
             //Generate mutualVerifNum
-            OCServerRequest *request = GetServerRequestUsingHandle(ehRequest->requestHandle);
+            OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
 
             char label[LABEL_LEN] = {0};
             snprintf(label, LABEL_LEN, "%s%s", MUTUAL_VERIF_NUM, OXM_MV_JUST_WORKS);

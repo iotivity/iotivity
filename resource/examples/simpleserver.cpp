@@ -538,14 +538,14 @@ OCStackResult SetDeviceInfo()
 {
     OCStackResult result = OC_STACK_ERROR;
 
-    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    OCResourceHandle handle = OCPlatform::getResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
     if (handle == NULL)
     {
         cout << "Failed to find resource " << OC_RSRVD_DEVICE_URI << endl;
         return result;
     }
 
-    result = OCBindResourceTypeToResource(handle, deviceType.c_str());
+    result = OCPlatform::bindTypeToResource(handle, deviceType);
     if (result != OC_STACK_OK)
     {
         cout << "Failed to add device type" << endl;
@@ -626,7 +626,7 @@ static FILE* client_open(const char* path, const char* mode)
     }
     else if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME))
     {
-        filename = "light_introspection.json";
+        filename = "simpleserver_introspection.dat";
     }
     return fopen(filename, mode);
 }

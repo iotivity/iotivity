@@ -87,7 +87,7 @@ void alternative_demo()
  logger() << "Hello, logging world!" << std::flush;
 }
 
-int main()
+int main(void)
 {
  basic_demo();
  c_demo();

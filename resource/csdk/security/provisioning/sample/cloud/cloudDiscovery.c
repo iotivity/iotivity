@@ -18,9 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "oic_string.h"
 #include "srmresourcestrings.h"
 #include "pmutility.h"
@@ -41,7 +41,7 @@ bool withTcp = true;
 /**
  * This function clears internal data
  */
-static void clearData()
+static void clearData(void)
 {
     memset(&endPoint, 0, sizeof(endPoint));
     memset(gUri, 0, sizeof(gUri));
@@ -211,7 +211,7 @@ static OCStackApplicationResult handleResponse(void *ctx, OCDoHandle handle,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackResult InitDiscovery()
+OCStackResult InitDiscovery(void)
 {
     clearData();
 

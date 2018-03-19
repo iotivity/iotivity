@@ -1,0 +1,53 @@
+#******************************************************************
+#
+# Copyright 2017  Microsoft
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+import os
+import os.path
+from tools.scons.RunTest import *
+
+Import('test_env')
+
+eventtests_env = test_env.Clone()
+target_os = eventtests_env.get('TARGET_OS')
+
+######################################################################
+# Build flags
+######################################################################
+eventtests_env.PrependUnique(CPPPATH=['#resource/c_common/ocevent/include'])
+
+eventtests_env.AppendUnique(LIBPATH=[eventtests_env.get('BUILD_DIR')])
+eventtests_env.Append(LIBS=['logger'])
+
+if eventtests_env.get('LOGGING'):
+    eventtests_env.AppendUnique(CPPDEFINES=['TB_LOG'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+eventtests = eventtests_env.Program('eventtests', ['eventtest.cpp'])
+
+Alias("test", [eventtests])
+
+eventtests_env.AppendTarget('test')
+if eventtests_env.get('TEST') == '1':
+    if target_os in ['linux', 'windows']:
+        run_test(eventtests_env,
+                 'resource_c_common_event_test.memcheck',
+                 'resource/c_common/ocevent/test/eventtests')

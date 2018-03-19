@@ -21,7 +21,9 @@
 #define OC_CLOUD_PROVISIONING_H
 
 #include "octypes.h"
+#include "ocprovisioningmanager.h"
 #include "experimental/securevirtualresourcetypes.h"
+#include "auth.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,24 +62,24 @@ typedef struct {
  * Certificate-Issue request function
  *
  * @param[in] ctx               user-defined context
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudCertificateIssueRequest(void* ctx,
-                                             const OCDevAddr *endPoint,
+                                             const char *cloudUri,
                                              OCCloudResponseCB callback);
 
 /**
  * CRL GET request function
  *
  * @param[in] ctx               user-defined context
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudGetCRL(void* ctx,
-                            const OCDevAddr *endPoint,
+                            const char *cloudUri,
                             OCCloudResponseCB callback);
 
 /**
@@ -88,7 +90,7 @@ OCStackResult OCCloudGetCRL(void* ctx,
  * @param[in] nextUpdate        mandatory parameter nextUpdate
  * @param[in] crl               optional parameter crl
  * @param[in] serialNumbers     optional parameter serial numbers
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
@@ -97,7 +99,7 @@ OCStackResult OCCloudPostCRL(void* ctx,
                              const char *nextUpdate,
                              const OCByteString *crl,
                              const stringArray_t *serialNumbers,
-                             const OCDevAddr *endPoint,
+                             const char *cloudUri,
                              OCCloudResponseCB callback);
 
 /**
@@ -105,13 +107,13 @@ OCStackResult OCCloudPostCRL(void* ctx,
  *
  * @param[in] ctx               user-defined context
  * @param[in] deviceId          mandatory parameter device id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudGetAclIdByDevice(void* ctx,
                                       const char *deviceId,
-                                      const OCDevAddr *endPoint,
+                                      const char *cloudUri,
                                       OCCloudResponseCB callback);
 
 /**
@@ -120,14 +122,14 @@ OCStackResult OCCloudGetAclIdByDevice(void* ctx,
  * @param[in] ctx               user-defined context
  * @param[in] ownerId           mandatory parameter owner id
  * @param[in] deviceId          mandatory parameter device id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudAclIdCreate(void* ctx,
                                  const char *ownerId,
                                  const char *deviceId,
-                                 const OCDevAddr *endPoint,
+                                 const char *cloudUri,
                                  OCCloudResponseCB callback);
 
 /**
@@ -135,13 +137,13 @@ OCStackResult OCCloudAclIdCreate(void* ctx,
  *
  * @param[in] ctx               user-defined context
  * @param[in] aclId             mandatory parameter acl id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudAclIdDelete(void* ctx,
                                  const char *aclId,
-                                 const OCDevAddr *endPoint,
+                                 const char *cloudUri,
                                  OCCloudResponseCB callback);
 
 /**
@@ -149,13 +151,13 @@ OCStackResult OCCloudAclIdDelete(void* ctx,
  *
  * @param[in] ctx               user-defined context
  * @param[in] aclId             mandatory parameter acl id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudAclIndividualGetInfo(void* ctx,
                                           const char *aclId,
-                                          const OCDevAddr *endPoint,
+                                          const char *cloudUri,
                                           OCCloudResponseCB callback);
 
 /**
@@ -164,14 +166,14 @@ OCStackResult OCCloudAclIndividualGetInfo(void* ctx,
  * @param[in] ctx               user-defined context
  * @param[in] aclId             mandatory parameter acl id
  * @param[in] aces              mandatory parameter aces
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudAclIndividualAclUpdate(void* ctx,
                                             const char *aclId,
                                             const cloudAce_t *aces,
-                                            const OCDevAddr *endPoint,
+                                            const char *cloudUri,
                                             OCCloudResponseCB callback);
 
 /**
@@ -181,7 +183,7 @@ OCStackResult OCCloudAclIndividualAclUpdate(void* ctx,
  * @param[in] aclId             mandatory parameter acl id
  * @param[in] aceId             mandatory parameter target ace id
  * @param[in] aces              mandatory parameter aces
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
@@ -189,7 +191,7 @@ OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
                                             const char *aclId,
                                             const char *aceId,
                                             const cloudAce_t *aces,
-                                            const OCDevAddr *endPoint,
+                                            const char *cloudUri,
                                             OCCloudResponseCB callback);
 
 /**
@@ -197,13 +199,13 @@ OCStackResult OCCloudAclIndividualAceUpdate(void* ctx,
  *
  * @param[in] ctx               user-defined context
  * @param[in] aclId             mandatory parameter acl id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudAclAcesDelete(void* ctx,
                                          const char *aclId,
-                                         const OCDevAddr *endPoint,
+                                         const char *cloudUri,
                                          OCCloudResponseCB callback);
 
 /**
@@ -212,14 +214,14 @@ OCStackResult OCCloudAclAcesDelete(void* ctx,
  * @param[in] ctx               user-defined context
  * @param[in] aclId             mandatory parameter acl id
  * @param[in] aceId             target ace id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudAclIndividualAceDelete(void* ctx,
                                          const char *aclId,
                                          const char *aceId,
-                                         const OCDevAddr *endPoint,
+                                         const char *cloudUri,
                                          OCCloudResponseCB callback);
 
 /**
@@ -228,14 +230,14 @@ OCStackResult OCCloudAclIndividualAceDelete(void* ctx,
  * @param[in] ctx               user-defined context
  * @param[in] groupType         mandatory parameter group type
  * @param[in] groupMasterId     optional parameter group master id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudAclCreateGroup(void* ctx,
                                     const char *groupType,
                                     const char *groupMasterId,
-                                    const OCDevAddr *endPoint,
+                                    const char *cloudUri,
                                     OCCloudResponseCB callback);
 
 /**
@@ -243,13 +245,13 @@ OCStackResult OCCloudAclCreateGroup(void* ctx,
  *
  * @param[in] ctx               user-defined context
  * @param[in] memberId          member id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudAclFindMyGroup(void* ctx,
                                     const char *memberId,
-                                    const OCDevAddr *endPoint,
+                                    const char *cloudUri,
                                     OCCloudResponseCB callback);
 
 /**
@@ -258,14 +260,14 @@ OCStackResult OCCloudAclFindMyGroup(void* ctx,
  * @param[in] ctx               user-defined context
  * @param[in] groupId           mandatory parameter group id
  * @param[in] groupMasterId     optional parameter group master id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudAclDeleteGroup(void* ctx,
                                     const char *groupId,
                                     const char *groupMasterId,
-                                    const OCDevAddr *endPoint,
+                                    const char *cloudUri,
                                     OCCloudResponseCB callback);
 
 /**
@@ -273,13 +275,13 @@ OCStackResult OCCloudAclDeleteGroup(void* ctx,
  *
  * @param[in] ctx               user-defined context
  * @param[in] groupId           mandatory parameter group id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudAclJoinToInvitedGroup(void* ctx,
                                            const char *groupId,
-                                           const OCDevAddr *endPoint,
+                                           const char *cloudUri,
                                            OCCloudResponseCB callback);
 
 /**
@@ -287,13 +289,13 @@ OCStackResult OCCloudAclJoinToInvitedGroup(void* ctx,
  *
  * @param[in] ctx               user-defined context
  * @param[in] groupId           mandatory parameter group id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudAclObserveGroup(void* ctx,
                                      const char *groupId,
-                                     const OCDevAddr *endPoint,
+                                     const char *cloudUri,
                                      OCCloudResponseCB callback);
 
 /**
@@ -303,7 +305,7 @@ OCStackResult OCCloudAclObserveGroup(void* ctx,
  * @param[in] groupId           mandatory parameter group id
  * @param[in] memberIds         mandatory parameter members list
  * @param[in] deviceIds         mandatory parameter devices list
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
@@ -311,7 +313,7 @@ OCStackResult OCCloudAclShareDeviceIntoGroup(void* ctx,
                                              const char *groupId,
                                              const stringArray_t *memberIds,
                                              const stringArray_t *deviceIds,
-                                             const OCDevAddr *endPoint,
+                                             const char *cloudUri,
                                              OCCloudResponseCB callback);
 
 /**
@@ -321,7 +323,7 @@ OCStackResult OCCloudAclShareDeviceIntoGroup(void* ctx,
  * @param[in] groupId           mandatory parameter group id
  * @param[in] memberIds         mandatory parameter members list
  * @param[in] deviceIds         mandatory parameter devices list
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
@@ -329,7 +331,7 @@ OCStackResult OCCloudAclDeleteDeviceFromGroup(void* ctx,
                                               const char *groupId,
                                               const stringArray_t *memberIds,
                                               const stringArray_t *deviceIds,
-                                              const OCDevAddr *endPoint,
+                                              const char *cloudUri,
                                               OCCloudResponseCB callback);
 
 /**
@@ -338,14 +340,14 @@ OCStackResult OCCloudAclDeleteDeviceFromGroup(void* ctx,
  * @param[in] ctx               user-defined context
  * @param[in] groupId           mandatory parameter group id
  * @param[in] memberId          optional parameter member id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudAclGroupGetInfo(void* ctx,
                                      const char *groupId,
                                      const char *memberId,
-                                     const OCDevAddr *endPoint,
+                                     const char *cloudUri,
                                      OCCloudResponseCB callback);
 
 /**
@@ -355,7 +357,7 @@ OCStackResult OCCloudAclGroupGetInfo(void* ctx,
  * @param[in] userId            optional parameter user id
  * @param[in] groupIds          mandatory parameter groups list
  * @param[in] memberIds         mandatory parameter members list
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
@@ -363,7 +365,7 @@ OCStackResult OCCloudAclInviteUser(void* ctx,
                                    const char *userId,
                                    const stringArray_t *groupIds,
                                    const stringArray_t *memberIds,
-                                   const OCDevAddr *endPoint,
+                                   const char *cloudUri,
                                    OCCloudResponseCB callback);
 
 /**
@@ -371,13 +373,13 @@ OCStackResult OCCloudAclInviteUser(void* ctx,
  *
  * @param[in] ctx               user-defined context
  * @param[in] userId            optional parameter user id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudAclGetInvitation(void* ctx,
                                       const char *userId,
-                                      const OCDevAddr *endPoint,
+                                      const char *cloudUri,
                                       OCCloudResponseCB callback);
 
 /**
@@ -386,14 +388,14 @@ OCStackResult OCCloudAclGetInvitation(void* ctx,
  * @param[in] ctx               user-defined context
  * @param[in] userId            optional parameter user id
  * @param[in] groupId           mandatory parameter group id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
 OCStackResult OCCloudAclDeleteInvitation(void* ctx,
                                          const char *userId,
                                          const char *groupId,
-                                         const OCDevAddr *endPoint,
+                                         const char *cloudUri,
                                          OCCloudResponseCB callback);
 
 /**
@@ -403,7 +405,7 @@ OCStackResult OCCloudAclDeleteInvitation(void* ctx,
  * @param[in] userId            optional parameter user id
  * @param[in] groupId           mandatory parameter group id
  * @param[in] memberId          mandatory parameter member id
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
@@ -411,7 +413,7 @@ OCStackResult OCCloudAclCancelInvitation(void* ctx,
                                          const char *userId,
                                          const char *groupId,
                                          const char *memberId,
-                                         const OCDevAddr *endPoint,
+                                         const char *cloudUri,
                                          OCCloudResponseCB callback);
 
 /**
@@ -422,7 +424,7 @@ OCStackResult OCCloudAclCancelInvitation(void* ctx,
  * @param[in] deviceId          mandatory parameter device id
  * @param[in] method            mandatory parameter method
  * @param[in] uri               mandatory parameter uri
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
@@ -431,8 +433,22 @@ OCStackResult OCCloudAclPolicyCheck(void* ctx,
                                     const char *deviceId,
                                     const char *method,
                                     const char *uri,
-                                    const OCDevAddr *endPoint,
+                                    const char *cloudUri,
                                     OCCloudResponseCB callback);
+
+/**
+ * Provision cloud configuration
+ *
+ * @param[in] ctx               user-defined context
+ * @param[in] pDev              provision device
+ * @param[in] cloud             provisioned parameters
+ * @param[in] resultCallback    optional result callback, can be NULL if not required
+ * @return  OCStackResult application result
+ */
+OCStackResult OCProvisionCloudConfig(void *ctx,
+                                     const OCProvisionDev_t *pDev,
+                                     const OicCloud_t *cloud,
+                                     OCClientResponseHandler resultCallback);
 
 #ifdef __cplusplus
 }

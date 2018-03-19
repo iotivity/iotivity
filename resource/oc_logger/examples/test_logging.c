@@ -49,7 +49,7 @@ void basic_demo(void)
 }
 
 /* Example of calling a C++ log implementation from C: */
-void cpp_demo()
+void cpp_demo(void)
 {
  oc_log_ctx_t *log;
 
@@ -73,7 +73,7 @@ void cpp_demo()
  oc_log_destroy(log);
 }
 
-int main()
+int main(void)
 {
  basic_demo();
  cpp_demo();

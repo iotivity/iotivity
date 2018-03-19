@@ -28,7 +28,7 @@
 #include <pthread.h>
 #include <array>
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocpayload.h"
 
 #define TAG "ocrouting"
@@ -44,7 +44,7 @@ void handleSigInt(int signum)
     }
 }
 
-int main()
+int main(void)
 {
     OIC_LOG(DEBUG, TAG, "OCRouting sample is starting...");
 

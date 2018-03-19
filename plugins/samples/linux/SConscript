@@ -24,30 +24,37 @@ import os.path
 target_os = env.get('TARGET_OS')
 target_arch = env.get('TARGET_ARCH')
 samples_env = env.Clone()
-src_dir = env.get('SRC_DIR')
-pi_dir = os.path.join(src_dir, 'plugins')
 
 ######################################################################
 # Build flags
 ######################################################################
 samples_env.PrependUnique(CPPPATH=[
-    os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
-    os.path.join(pi_dir, 'include')
+    '#/resource/oc_logger/include',
+    '#/resource/csdk/logger/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/plugins/include',
 ])
 
 samples_env.AppendUnique(
     CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 
 if target_os in ['darwin', 'ios']:
-    samples_env.PrependUnique(
-        LIBS=['m', 'octbstack', 'ocsrm', 'connectivity_abstraction', 'coap'])
-elif target_os not in ['arduino']:
     samples_env.PrependUnique(LIBS=[
-        'm', 'octbstack', 'ocsrm', 'connectivity_abstraction', 'coap',
-        'plugin_interface'
+        'm',
+        'octbstack',
+        'ocsrm',
+        'connectivity_abstraction',
+        'coap',
+    ])
+else:
+    samples_env.PrependUnique(LIBS=[
+        'm',
+        'octbstack',
+        'ocsrm',
+        'connectivity_abstraction',
+        'coap',
+        'plugin_interface',
     ])
     samples_env.AppendUnique(LIBS=['rt'])
     if target_arch in ['x86_64', 'arm64']:
@@ -72,3 +79,4 @@ list_of_samples = [iotivityandzigbeeserver, iotivityandzigbeeclient]
 Alias("samples", list_of_samples)
 
 env.AppendTarget('samples')
+samples_env.UserInstallTargetExtra(list_of_samples)

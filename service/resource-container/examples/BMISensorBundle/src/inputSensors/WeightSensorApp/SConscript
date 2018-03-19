@@ -38,3 +38,4 @@ weightsensorapp = linux_sample_env.Program('WeightSensorApp',
                                            'src/WeightSensorApp.cpp')
 Alias("weightsensorapp_sample", weightsensorapp)
 env.AppendTarget('weightsensorapp')
+linux_sample_env.UserInstallTargetExtra(weightsensorapp)

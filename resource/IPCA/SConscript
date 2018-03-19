@@ -28,7 +28,7 @@ Import('env')
 ipca_env = env.Clone()
 
 # c_common calls into mbedcrypto and ipca calls into c_common
-ipca_env.AppendUnique(LIBS = ['mbedcrypto'])
+ipca_env.AppendUnique(LIBS=['mbedcrypto'])
 
 # Build ipca lib
 SConscript('src/SConscript', 'ipca_env')

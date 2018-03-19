@@ -138,13 +138,13 @@ uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_
  * Initializes the Connection Manager
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAUtilCMInitailize();
+CAResult_t CAUtilCMInitailize(void);
 
 /**
  * Terminate the Connection Manager
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAUtilCMTerminate();
+CAResult_t CAUtilCMTerminate(void);
 
 /**
  * Update RemoteDevice Information for Connection Manager
@@ -158,7 +158,7 @@ CAResult_t CAUtilCMUpdateRemoteDeviceInfo(const CAEndpoint_t *endpoint, bool isC
  * Reset RemoteDevice Info. for Connection Manager
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAUtilCMResetRemoteDeviceInfo();
+CAResult_t CAUtilCMResetRemoteDeviceInfo(void);
 
 /**
  * Set Connection Manager configuration
@@ -244,7 +244,7 @@ CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount);
  * stop LE scan.
  * @return  ::CA_STATUS_OK or ::CA_NOT_SUPPORTED
  */
-CAResult_t CAUtilStopLEScan();
+CAResult_t CAUtilStopLEScan(void);
 #endif //__JAVA__
 
 // BLE util

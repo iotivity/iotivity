@@ -38,3 +38,4 @@ thsensorapp1 = linux_sample_env.Program('THSensorApp1',
                                         'src/ThingResourceServer1.cpp')
 Alias("thsensorapp1_sample", thsensorapp1)
 env.AppendTarget('thsensorapp1_sample')
+linux_sample_env.UserInstallTargetExtra(thsensorapp1)

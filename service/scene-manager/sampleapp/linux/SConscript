@@ -46,10 +46,6 @@ if env.get('SECURED') == '1':
     scenemanager_sample_env.AppendUnique(
         LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
-if not env.get('RELEASE'):
-    scenemanager_sample_env.PrependUnique(LIBS=['gcov'])
-    scenemanager_sample_env.AppendUnique(CXXFLAGS=['--coverage'])
-
 if 'gcc' == lib_env.get('CC') and target_os not in ['android']:
     scenemanager_sample_env.AppendUnique(CFLAGS=['-pthread'])
     scenemanager_sample_env.AppendUnique(LIBS=['pthread'])
@@ -60,3 +56,6 @@ sceneserver = scenemanager_sample_env.Program('sceneserver', 'sceneserver.cpp')
 sceneclient = scenemanager_sample_env.Program('sceneclient', 'sceneclient.cpp')
 fanserver = scenemanager_sample_env.Program('fanserver', 'fanserver.cpp')
 lightserver = scenemanager_sample_env.Program('lightserver', 'lightserver.cpp')
+
+examples = [ sceneserver, sceneclient, fanserver, lightserver ]
+scenemanager_sample_env.UserInstallTargetExtra(examples)

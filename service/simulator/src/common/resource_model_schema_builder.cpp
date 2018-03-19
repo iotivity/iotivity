@@ -22,7 +22,7 @@
 #include "simulator_resource_model_schema.h"
 #include "Raml.h"
 #include "Properties.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "RES_MODEL_BUILDER"
 

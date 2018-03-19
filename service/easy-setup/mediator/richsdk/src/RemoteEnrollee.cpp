@@ -23,11 +23,10 @@
 #include "CloudResource.h"
 #include "OCPlatform.h"
 #include "ESException.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "OCResource.h"
 #ifdef __WITH_DTLS__
 #include "EnrolleeSecurity.h"
-#include "base64.h"
 #include "oic_malloc.h"
 #endif //__WITH_DTLS
 
@@ -550,7 +549,7 @@ namespace OIC
 
             m_cloudPropProvStatusCb = callback;
 
-            if((cloudProp.getAuthCode().empty() && cloudProp.getAccessToken().empty()) ||
+            if(cloudProp.getAccessToken().empty() ||
                 cloudProp.getAuthProvider().empty() ||
                 cloudProp.getCiServer().empty())
             {

@@ -3,7 +3,7 @@
 prefix=@PREFIX@
 exec_prefix=${prefix}
 libdir=@LIB_INSTALL_DIR@
-includedir=${prefix}/include
+includedir=${prefix}/include/iotivity
 svcincludedir=${includedir}/service
 
 Name: iotivity

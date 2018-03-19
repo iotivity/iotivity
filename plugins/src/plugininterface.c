@@ -32,7 +32,7 @@
 #include "oic_malloc.h"
 #include "ocstack.h"
 #include "ocpayload.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -192,7 +192,7 @@ OCStackResult PIStopPlugin(PIPluginPtr plugin)
     return DeletePlugin((PIPluginBase *) plugin);
 }
 
-OCStackResult PIStopAll()
+OCStackResult PIStopAll(void)
 {
     return DeletePluginList();
 }

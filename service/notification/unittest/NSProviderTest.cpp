@@ -574,7 +574,9 @@ TEST_F(NotificationProviderTest, ExpectFailUnsetConsumerTopics)
 
 TEST_F(NotificationProviderTest, CancelObserves)
 {
-    bool ret = g_consumerSimul.cancelObserves();
+    bool ret = false;
+    g_consumerSimul.findProvider();
+    ret = g_consumerSimul.cancelObserves();
 
     std::chrono::milliseconds waitForTerminate(g_timeout);
     std::this_thread::sleep_for(waitForTerminate);

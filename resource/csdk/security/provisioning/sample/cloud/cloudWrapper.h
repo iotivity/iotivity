@@ -25,218 +25,218 @@
 /**
  * Certificate-Issue request function
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperCertificateIssueRequest(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperCertificateIssueRequest(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * CRL GET request function
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperGetCRL(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperGetCRL(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * CRL POST request function (with Serial Numbers list to revoke)
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperPostCRL(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperPostCRL(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL id retrieve by device id
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclIdGetByDevice(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclIdGetByDevice(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL id create
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclIdCreate(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclIdCreate(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL id delete
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclIdDelete(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclIdDelete(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL individual get info
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclIndividualGetInfo(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclIndividualGetInfo(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL individual update ACE
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclIndividualUpdateAce(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL individual update. Replaces an existing ACE with a new one
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclIndividualUpdate(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclIndividualUpdate(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL individual delete
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclIndividualDelete(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclIndividualDelete(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL individual delete ACE
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclIndividualDeleteAce(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclIndividualDeleteAce(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL post group request function
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclCreateGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclCreateGroup(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL get group request function
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclFindMyGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclFindMyGroup(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL delete group request function
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclDeleteGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclDeleteGroup(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL join to invited group request function
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclJoinToInvitedGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclJoinToInvitedGroup(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL observe group request function
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclObserveGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclObserveGroup(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL share device into group request function
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclShareDeviceIntoGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclShareDeviceIntoGroup(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL delete device from group request function
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclDeleteDeviceFromGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclDeleteDeviceFromGroup(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL get group info request function
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclGroupGetInfo(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclGroupGetInfo(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL invite user to group request function
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclInviteUser(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclInviteUser(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL get invitation request function
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclGetInvitation(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclGetInvitation(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL delete invitation request function (by receiver)
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclDeleteInvitation(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclDeleteInvitation(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL cancel invitation request function (by sender)
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclCancelInvitation(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclCancelInvitation(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * ACL check that given request can be applied to resource
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCWrapperAclPolicyCheck(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+OCStackResult OCWrapperAclPolicyCheck(const char *cloudUri, OCCloudResponseCB callback);
 
 /**
  * Read user input (expect string value)

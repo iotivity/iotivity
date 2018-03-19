@@ -23,7 +23,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "caremotehandler.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "OIC_CA_REMOTE_HANDLER"
 
@@ -151,6 +151,49 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
     return clone;
 }
 
+CASignalingInfo_t *CACloneSignalingInfo(const CASignalingInfo_t *sig)
+{
+    if (NULL == sig)
+    {
+        OIC_LOG(ERROR, TAG, "Singnaling pointer is NULL");
+        return NULL;
+    }
+
+    // check the result value of signaling info.
+    // Keep this check in sync with CASignalingCode_t.
+    switch (sig->code)
+    {
+        case CA_CSM:
+        case CA_PING:
+        case CA_PONG:
+        case CA_RELEASE:
+        case CA_ABORT:
+            break;
+        default:
+            OIC_LOG_V(ERROR, TAG, "Signaling code  %u is invalid", sig->code);
+            return NULL;
+    }
+
+    // allocate the signaling info structure.
+    CASignalingInfo_t *clone = (CASignalingInfo_t *) OICCalloc(1, sizeof(CASignalingInfo_t));
+    if (NULL == clone)
+    {
+        OIC_LOG(ERROR, TAG, "CACloneSignalingInfo Out of memory");
+        return NULL;
+    }
+
+    CAResult_t result = CACloneInfo(&sig->info, &clone->info);
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG(ERROR, TAG, "CACloneResponseInfo error in CACloneInfo");
+        CADestroySignalingInfoInternal(clone);
+        return NULL;
+    }
+
+    clone->code = sig->code;
+    return clone;
+}
+
 CAEndpoint_t *CACreateEndpointObject(CATransportFlags_t flags,
                                      CATransportAdapter_t adapter,
                                      const char *address,
@@ -236,6 +279,18 @@ void CADestroyErrorInfoInternal(CAErrorInfo_t *errorInfo)
 
     CADestroyInfoInternal(&errorInfo->info);
     OICFree(errorInfo);
+}
+
+void CADestroySignalingInfoInternal(CASignalingInfo_t *sig)
+{
+    if (NULL == sig)
+    {
+        OIC_LOG(ERROR, TAG, "parameter is null");
+        return;
+    }
+
+    CADestroyInfoInternal(&sig->info);
+    OICFree(sig);
 }
 
 CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)

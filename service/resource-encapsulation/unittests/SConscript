@@ -94,6 +94,8 @@ rcs_client_test = rcs_test_env.Program('rcs_client_test', rcs_test_src)
 Alias("rcs_client_test", rcs_client_test)
 rcs_test_env.AppendTarget('rcs_client_test')
 
+actions = rcs_test_env.ScanJSON('service/resource-encapsulation/unittests')
+rcs_test_env.Alias("install", actions)
 
 if rcs_test_env.get('TEST') == '1':
     if target_os in ['linux']:
@@ -104,16 +106,3 @@ if rcs_test_env.get('TEST') == '1':
             'service/resource-encapsulation/unittests/rcs_client_test')
 else:
     rcs_test_env.AppendUnique(CPPDEFINES=['LOCAL_RUNNING'])
-
-if lib_env.get('SECURED') == '1':
-    src_dir = rcs_test_env.get('SRC_DIR')
-    svr_db_src_dir = os.path.join(src_dir,
-                                  'service/resource-encapsulation/unittests/')
-    svr_db_build_dir = os.path.join(
-        rcs_test_env.get('BUILD_DIR'), 'service', 'resource-encapsulation',
-        'unittests') + os.sep
-    rcs_test_env.Alias("install",
-                       rcs_test_env.Install(svr_db_build_dir,
-                                            os.path.join(
-                                                svr_db_src_dir,
-                                                'oic_svr_db_re_client.dat')))

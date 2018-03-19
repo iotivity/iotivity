@@ -160,6 +160,7 @@ sptest_env.PrependUnique(CPPPATH=[
     '../../../ocrandom/include',
     '../../../logger/include',
     '../../../stack/include',
+    '../../../stack/include/internal',
     '../../../security/include',
     '../../../security/include/internal',
     '../../../security/provisioning/include/internal',
@@ -169,7 +170,9 @@ sptest_env.PrependUnique(CPPPATH=[
     '../../../connectivity/inc',
     '../../../connectivity/inc/pkix',
     '../../../connectivity/common/inc',
-    '../../../connectivity/api'
+    '../../../connectivity/api',
+    '#resource/csdk/security/provisioning/src/cloud',
+    '#resource/csdk/security/provisioning/include/cloud/'
 ])
 
 sptest_env.PrependUnique(LIBS=[
@@ -198,14 +201,15 @@ if target_os in ['msys_nt', 'windows']:
     sptest_env.AppendUnique(LIBS=['sqlite3'])
 else:
     if target_os in ['linux', 'tizen']:
-        sptest_env.ParseConfig(
-            'pkg-config --cflags --libs sqlite3 gobject-2.0 gio-2.0 glib-2.0')
+        sptest_env.ParseConfig('pkg-config --cflags --libs sqlite3')
+        sptest_env.ParseConfig('pkg-config --cflags --libs gobject-2.0 gio-2.0 glib-2.0')
         # TODO: remove this workaround needed for g++-4.7
         sptest_env.Append(LIBS=['m'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
+
 unittest_src = [
     'pmutilitytest.cpp',
     'secureresourceprovider.cpp',
@@ -214,6 +218,11 @@ unittest_src = [
     'credentialgeneratortest.cpp',
     'otmunittest.cpp',
 ]
+
+if sptest_env.get('WITH_TCP') == True and sptest_env.get('WITH_CLOUD') == True:
+    unittest_src = unittest_src + [
+        'cloudresource.cpp',
+    ]
 
 tests = sptest_env.Program(unittest_bin, unittest_src)
 server = sptest_env.Program(server_bin, ['sampleserver.cpp'])

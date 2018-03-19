@@ -31,7 +31,7 @@
 #include "NSTopicsList.h"
 
 // base
-#include "logger.h"
+#include "experimental/logger.h"
 #include "octypes.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
@@ -113,7 +113,7 @@ std::shared_ptr<OIC::Service::NSConsumer> printAvailableConsumers()
     return consumer;
 }
 
-int main()
+int main(void)
 {
     int num = 0;
     pthread_t processThread = 0;

@@ -63,9 +63,7 @@ if stacktest_env.get('SECURED') == '1':
 # c_common calls into mbedcrypto.
 stacktest_env.AppendUnique(LIBS=['mbedcrypto'])
 
-if 'CLIENT' in rd_mode and target_os not in [
-        'arduino', 'darwin', 'ios', 'windows', 'winrt'
-]:
+if 'CLIENT' in rd_mode and target_os not in ['darwin', 'ios', 'windows', 'winrt']:
     stacktest_env.PrependUnique(LIBS=['oc', 'oc_logger'])
 if 'SERVER' in rd_mode:
     if target_os in ['linux', 'tizen']:
@@ -77,8 +75,7 @@ if target_os not in ['msys_nt', 'windows']:
     stacktest_env.PrependUnique(LIBS=['m'])
 
     if target_os in ['tizen', 'linux']:
-        stacktest_env.ParseConfig(
-            "pkg-config --cflags --libs gobject-2.0 gio-2.0 glib-2.0")
+        stacktest_env.ParseConfig("pkg-config --cflags --libs gobject-2.0 gio-2.0 glib-2.0")
 
 ######################################################################
 # Source files and Targets

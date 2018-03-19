@@ -16,12 +16,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-//Not supported on Arduino due lack of absolute time need to implement iCalendar
-#ifndef WITH_ARDUINO
-
 #include <gtest/gtest.h>
 #include "iotvticalendar.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG  "CALENDAR-UT"
 
@@ -344,5 +341,3 @@ TEST(IsRequestWithinValidTimeTest, IsRequestWithinValidTimeInValidPeriodAndValid
 
     EXPECT_EQ(IOTVTICAL_INVALID_ACCESS, IsRequestWithinValidTime(periodStr, recurStr));
 }
-
-#endif

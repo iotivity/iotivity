@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "uarraylist.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 
 #define TAG "OIC_UARRAYLIST"

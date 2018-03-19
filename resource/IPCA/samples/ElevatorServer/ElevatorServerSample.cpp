@@ -22,7 +22,7 @@
 
 ElevatorServer g_testElevator;
 
-int main()
+int main(void)
 {
     std::string elevatorName = "Standalone Test Elevator";
     g_testElevator.Start(elevatorName);

@@ -24,13 +24,13 @@
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "ocrandom.h"
-#include "logger.h"
+#include "experimental/ocrandom.h"
+#include "experimental/logger.h"
 #include "pinoxmcommon.h"
 #include "pbkdf2.h"
-#include "base64.h"
+#include "mbedtls/base64.h"
 #include "srmresourcestrings.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "credresource.h"
 #include "cainterface.h"
 #include "oic_string.h"
@@ -598,11 +598,11 @@ int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
                     const OicSecCred_t* cred = GetCredResourceData(&uuid);
                     if(cred)
                     {
-                        char* pinBuffer = NULL;
+                        unsigned char* pinBuffer = NULL;
                         size_t pinLength = 0;
                         if(OIC_ENCODING_RAW == cred->privateData.encoding)
                         {
-                            pinBuffer = (char*)OICCalloc(1, cred->privateData.len + 1);
+                            pinBuffer = (unsigned char*)OICCalloc(1, cred->privateData.len + 1);
                             if(NULL == pinBuffer)
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to allocate memory");
@@ -613,15 +613,21 @@ int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
                         }
                         else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
                         {
-                            size_t pinBufSize = B64DECODE_OUT_SAFESIZE((cred->privateData.len + 1));
-                            pinBuffer = (char*)OICCalloc(1, pinBufSize);
+                            int decodeResult = mbedtls_base64_decode(NULL, 0, &pinLength, cred->privateData.data, cred->privateData.len);
+                            if (MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL != decodeResult)
+                            {
+                                OIC_LOG(ERROR, TAG, "Base64 decoding failed");
+                                return ret;
+                            }
+                            size_t pinBufSize = pinLength;
+                            pinBuffer = (unsigned char*)OICCalloc(1, pinBufSize);
                             if(NULL == pinBuffer)
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to allocate memory");
                                 return ret;
                             }
 
-                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, (uint8_t*)pinBuffer, pinBufSize, &pinLength))
+                            if(0 != mbedtls_base64_decode(pinBuffer, pinBufSize, &pinLength, cred->privateData.data, cred->privateData.len))
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
                                 OICFree(pinBuffer);
@@ -704,11 +710,11 @@ int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
                     const OicSecCred_t* cred = GetCredResourceData(&uuid);
                     if(cred)
                     {
-                        char* pinBuffer = NULL;
+                        unsigned char* pinBuffer = NULL;
                         size_t pinLength = 0;
                         if(OIC_ENCODING_RAW == cred->privateData.encoding)
                         {
-                            pinBuffer = (char*)OICCalloc(1, cred->privateData.len + 1);
+                            pinBuffer = (unsigned char*)OICCalloc(1, cred->privateData.len + 1);
                             if(NULL == pinBuffer)
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to allocate memory");
@@ -719,15 +725,21 @@ int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
                         }
                         else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
                         {
-                            size_t pinBufSize = B64DECODE_OUT_SAFESIZE((cred->privateData.len + 1));
-                            pinBuffer = (char*)OICCalloc(1, pinBufSize);
+                            int decodeResult = mbedtls_base64_decode(NULL, 0, &pinLength, cred->privateData.data, cred->privateData.len);
+                            if ( MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL != decodeResult)
+                            {
+                                OIC_LOG(ERROR, TAG, "Failed base64 decoding");
+                                return ret;
+                            }
+                            size_t pinBufSize = pinLength;
+                            pinBuffer = (unsigned char*)OICCalloc(1, pinBufSize);
                             if(NULL == pinBuffer)
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to allocate memory");
                                 return ret;
                             }
 
-                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, (uint8_t*)pinBuffer, pinBufSize, &pinLength))
+                            if(0 != mbedtls_base64_decode(pinBuffer, pinBufSize, &pinLength, cred->privateData.data, cred->privateData.len))
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
                                 OICFree(pinBuffer);

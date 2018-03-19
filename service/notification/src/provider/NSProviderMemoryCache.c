@@ -34,7 +34,7 @@
         } \
     }
 
-NSCacheList * NSProviderStorageCreate()
+NSCacheList * NSProviderStorageCreate(void)
 {
     pthread_mutex_lock(&NSCacheMutex);
     NSCacheList * newList = (NSCacheList *) OICMalloc(sizeof(NSCacheList));

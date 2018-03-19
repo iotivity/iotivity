@@ -45,15 +45,15 @@ def maskFlags(flags):
 ######################################################################
 
 mpmcommon_env.PrependUnique(CPPPATH=[
-                            os.path.join(src_dir, 'resource', 'include'),
-                            os.path.join(bridging_path, 'include'),
-                            os.path.join(src_dir, 'resource', 'c_common'),
-                            os.path.join(src_dir, 'resource', 'c_common', 'ocrandom', 'include'),
-                            os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
-                            os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include')
+    '#/resource/include',
+    '#/bridging/include',
+    '#/resource/c_common',
+    '#/resource/c_common/ocrandom/include',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
 ])
 
-if target_os not in ['arduino', 'windows']:
+if target_os not in ['windows']:
     mpmcommon_env.AppendUnique(
         CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror', '-fpic'])
 
@@ -73,13 +73,13 @@ mpmcommon_env.PrependUnique(LIBS=[
 ######################################################################
 
 mpmcommon_src = [
-    os.path.join(bridging_path, 'common', 'pluginIf.cpp'),
-    os.path.join(bridging_path, 'common', 'pluginServer.cpp'),
-    os.path.join(bridging_path, 'common', 'pipeHandler.cpp'),
-    os.path.join(bridging_path, 'common', 'messageHandler.cpp'),
-    os.path.join(bridging_path, 'common', 'curlClient.cpp'),
-    os.path.join(bridging_path, 'common', 'pluginProcess.cpp'),
-    os.path.join(bridging_path, 'common', 'ConcurrentIotivityUtils.cpp')
+    'pluginIf.cpp',
+    'pluginServer.cpp',
+    'pipeHandler.cpp',
+    'messageHandler.cpp',
+    'curlClient.cpp',
+    'pluginProcess.cpp',
+    'ConcurrentIotivityUtils.cpp',
 ]
 
 mpmcommon_env.AppendUnique(MPMCOMMON_SRC=mpmcommon_src)

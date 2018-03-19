@@ -415,7 +415,7 @@ NSResult NSFreeMediaContents(NSMediaContents * obj)
     return NS_OK;
 }
 
-NSMessage * NSInitializeMessage()
+NSMessage * NSInitializeMessage(void)
 {
     NSMessage * msg = (NSMessage *)OICMalloc(sizeof(NSMessage));
 
@@ -462,7 +462,7 @@ OCRepPayloadValue* NSPayloadFindValue(const OCRepPayload* payload, const char* n
     return NULL;
 }
 
-NSTopicList * NSInitializeTopicList()
+NSTopicList * NSInitializeTopicList(void)
 {
     NSTopicList * topicList = (NSTopicList *)OICMalloc(sizeof(NSTopicList));
 

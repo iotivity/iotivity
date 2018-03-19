@@ -22,11 +22,11 @@
 #include <string.h>
 
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "octhread.h"
 #include "cathreadpool.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "aclresource.h"
 #include "acl_logging.h"
 #include "crl_logging.h"
@@ -36,7 +36,7 @@
 #include "mbedtls/ssl_ciphersuites.h"
 
 #include "utils.h"
-#include "cloudAuth.h"
+#include "cloud/auth.h"
 #include "cloudCommon.h"
 #include "cloudWrapper.h"
 #include "cloudDiscovery.h"
@@ -64,9 +64,6 @@
 static bool fExit = false;
 
 static oc_thread g_requestsThread = NULL;
-static OCDevAddr endPoint;
-static char token[1024] = "";
-static char authProvider[1024] = DEFAULT_AUTH_PROVIDER;
 static char *fname = DEFAULT_DB_FILE;
 static uint64_t timeout;
 static uint16_t g_credId = 0;
@@ -407,7 +404,7 @@ static OCStackResult configSelfOwnership(void)
     return res;
 }
 
-static void wrongRequest()
+static void wrongRequest(void)
 {
     printf(">> Entered Wrong Menu Number. Please Enter Again\n\n");
 }
@@ -422,12 +419,39 @@ static void *userRequests(void *data)
 
     OCMode mode = *(OCMode*)data;
 
-    memset(&endPoint, 0, sizeof(endPoint));
-    strncpy(endPoint.addr, DEFAULT_HOST, sizeof(endPoint.addr));
-    endPoint.port = DEFAULT_PORT;
-
     mutex = oc_mutex_new();
     cond = oc_cond_new();
+
+    OicCloud_t *cloud = (OicCloud_t *)OICCalloc(1,sizeof(OicCloud_t));
+    if (NULL == cloud)
+    {
+        OIC_LOG(ERROR, TAG, "cloud calloc failed");
+        return NULL;
+    }
+    cloud->cis = (char *)OICCalloc(1,1024 * 4);
+    if (NULL == cloud)
+    {
+        OIC_LOG(ERROR, TAG, "cloud->cis calloc failed");
+        OICFree(cloud);
+        return NULL;
+    }
+    cloud->apn = (char *)OICCalloc(1,512);
+    if (NULL == cloud->apn)
+    {
+        OIC_LOG(ERROR, TAG, "cloud->apn calloc failed");
+        OICFree(cloud->cis);
+        OICFree(cloud);
+        return NULL;
+    }
+    cloud->at = (char *)OICCalloc(1,1024);
+    if (NULL == cloud->at)
+    {
+        OIC_LOG(ERROR, TAG, "cloud->at calloc failed");
+        OICFree(cloud->apn);
+        OICFree(cloud->cis);
+        OICFree(cloud);
+        return NULL;
+    }
 
     while (false == fExit)
     {
@@ -436,10 +460,8 @@ static void *userRequests(void *data)
         timeout = DEFAULT_RESPONSE_WAIT_TIME;
         //startup report
         printf("-----------------------------------------------------------\n");
-        printf("Connecting to: %s:%d\n", endPoint.addr, endPoint.port);
-        printf("via auth provider: %s\n", authProvider);
+        printf("Connecting to: %s\n", cloud->cis);
         printf("srv file: %s\n", fname);
-        printf("CoAP prefix: %s\n", DEFAULT_PREFIX);
         printf("-----------------------------------------------------------\n");
 
         printMenu(mode);
@@ -450,106 +472,96 @@ static void *userRequests(void *data)
         switch (request)
         {
         case SIGN_UP:
-            if (0 == strncmp(authProvider, DEFAULT_AUTH_PROVIDER, sizeof(authProvider)))
+            if (0 == strcmp(cloud->at, DEFAULT_AUTH_PROVIDER))
             {
                 printf("Paste to browser %s and get auth code\n", GITHUB_AUTH_LINK);
             }
-            readString(token, sizeof(token), "auth token", "check link above");
-            res = CloudSignUp(&endPoint, authProvider, token);
+            readString(cloud->at, 1024, "auth token", "check link above");
+            res = OCCloudSignUp(cloud);
             break;
         case SIGN_IN:
-            res = CloudSignIn(&endPoint);
+            res = OCCloudSignIn(cloud);
             break;
         case SIGN_OUT:
-            res = CloudSignOut(&endPoint);
+            res = OCCloudSignOut(cloud);
             break;
         case HOST:
-            readString(endPoint.addr, sizeof(endPoint.addr), "host ip address", DEFAULT_HOST);
+            readString(cloud->cis, 1024 * 4, "cloud uri(coaps+tcp://ip:port)", DEFAULT_HOST);
             sendDataToServer = false;
             break;
-        case PORT:
-        {
-            char example[8];
-            snprintf(example, sizeof(example), "%d", DEFAULT_PORT);
-            uint16_t tmp = 0;
-            readUInt16(&tmp, "port number", example);
-            endPoint.port = tmp;
-            sendDataToServer = false;
-        }
-        break;
         case CRL_GET:
-            res = OCWrapperGetCRL(&endPoint, handleGetCrlCB);
+            res = OCWrapperGetCRL(cloud->cis, handleGetCrlCB);
             break;
         case CRL_POST:
-            res = OCWrapperPostCRL(&endPoint, handleCB);
+            res = OCWrapperPostCRL(cloud->cis, handleCB);
             break;
 #ifndef DISABLE_50_83_REQUESTS_FOR_1_3_REL
         case ACL_GROUP_CREATE:
-            res = OCWrapperAclCreateGroup(&endPoint, handleAclCreateGroupCB);
+            res = OCWrapperAclCreateGroup(cloud->cis, handleAclCreateGroupCB);
             break;
         case ACL_GROUP_FIND:
-            res = OCWrapperAclFindMyGroup(&endPoint, handleAclFindMyGroupCB);
+            res = OCWrapperAclFindMyGroup(cloud->cis, handleAclFindMyGroupCB);
             break;
         case ACL_GROUP_DELETE:
-            res = OCWrapperAclDeleteGroup(&endPoint, handleCB);
+            res = OCWrapperAclDeleteGroup(cloud->cis, handleCB);
             break;
         case ACL_GROUP_JOIN:
-            res = OCWrapperAclJoinToInvitedGroup(&endPoint, handleCB);
+            res = OCWrapperAclJoinToInvitedGroup(cloud->cis, handleCB);
             break;
         case ACL_GROUP_OBSERVE:
-            res = OCWrapperAclObserveGroup(&endPoint, handleCB);
+            res = OCWrapperAclObserveGroup(cloud->cis, handleCB);
             break;
         case ACL_GROUP_SHARE_DEVICE:
-            res = OCWrapperAclShareDeviceIntoGroup(&endPoint, handleCB);
+            res = OCWrapperAclShareDeviceIntoGroup(cloud->cis, handleCB);
             break;
         case ACL_GROUP_DELETE_DEVICE:
-            res = OCWrapperAclDeleteDeviceFromGroup(&endPoint, handleCB);
+            res = OCWrapperAclDeleteDeviceFromGroup(cloud->cis, handleCB);
             break;
         case ACL_GROUP_GET_INFO:
-            res = OCWrapperAclGroupGetInfo(&endPoint, handleCB);
+            res = OCWrapperAclGroupGetInfo(cloud->cis, handleCB);
             break;
         case ACL_GROUP_INVITE_USER:
-            res = OCWrapperAclInviteUser(&endPoint, handleCB);
+            res = OCWrapperAclInviteUser(cloud->cis, handleCB);
             break;
         case ACL_GROUP_GET_INVITE:
-            res = OCWrapperAclGetInvitation(&endPoint, handleAclGetInvitationCB);
+            res = OCWrapperAclGetInvitation(cloud->cis, handleAclGetInvitationCB);
             break;
         case ACL_GROUP_DELETE_INVITE:
-            res = OCWrapperAclDeleteInvitation(&endPoint, handleCB);
+            res = OCWrapperAclDeleteInvitation(cloud->cis, handleCB);
             break;
         case ACL_GROUP_CANCEL_INVITE:
-            res = OCWrapperAclCancelInvitation(&endPoint, handleCB);
+            res = OCWrapperAclCancelInvitation(cloud->cis, handleCB);
             break;
         case ACL_POLICY_CHECK_REQUEST:
-            res = OCWrapperAclPolicyCheck(&endPoint, handleAclPolicyCheckCB);
+            res = OCWrapperAclPolicyCheck(cloud->cis, handleAclPolicyCheckCB);
             break;
 #endif
         case ACL_ID_GET_BY_DEVICE:
-            res = OCWrapperAclIdGetByDevice(&endPoint, handleAclIdCB);
+            res = OCWrapperAclIdGetByDevice(cloud->cis, handleAclIdCB);
             break;
         case ACL_ID_CREATE:
-            res = OCWrapperAclIdCreate(&endPoint, handleAclIdCB);
+            res = OCWrapperAclIdCreate(cloud->cis, handleAclIdCB);
             break;
         case ACL_ID_DELETE:
-            res = OCWrapperAclIdDelete(&endPoint, handleCB);
+            res = OCWrapperAclIdDelete(cloud->cis, handleCB);
             break;
         case ACL_INDIVIDUAL_GET_INFO:
-            res = OCWrapperAclIndividualGetInfo(&endPoint, handleAclIndividualGetInfoCB);
+            res = OCWrapperAclIndividualGetInfo(cloud->cis, handleAclIndividualGetInfoCB);
             break;
         case ACL_INDIVIDUAL_UPDATE_ACE:
-            res = OCWrapperAclIndividualUpdateAce(&endPoint, handleCB);
+            res = OCWrapperAclIndividualUpdateAce(cloud->cis, handleCB);
             break;
         case ACL_INDIVIDUAL_UPDATE:
-            res = OCWrapperAclIndividualUpdate(&endPoint, handleCB);
+            res = OCWrapperAclIndividualUpdate(cloud->cis, handleCB);
             break;
         case ACL_INDIVIDUAL_DELETE:
-            res = OCWrapperAclIndividualDelete(&endPoint, handleCB);
+            res = OCWrapperAclIndividualDelete(cloud->cis, handleCB);
             break;
         case ACL_INDIVIDUAL_DELETE_ACE:
-            res = OCWrapperAclIndividualDeleteAce(&endPoint, handleCB);
+            res = OCWrapperAclIndividualDeleteAce(cloud->cis, handleCB);
             break;
         case CSR_SIGN:
-            res = OCWrapperCertificateIssueRequest(&endPoint, handleCB);
+            res = OCWrapperCertificateIssueRequest(cloud->cis, handleCB);
             break;
         case DISCOVERY:
             CLIENT_ONLY(mode);
@@ -623,7 +635,7 @@ static void *userRequests(void *data)
             }
         }
     }
-
+    OICFree(cloud);
     return NULL;
 }
 
@@ -685,7 +697,7 @@ bool parseCommandLineArguments(int argc, char *argv[])
     return result;
 }
 
-OCStackResult initPersistentStorage()
+OCStackResult initPersistentStorage(void)
 {
     //Initialize Persistent Storage for SVR database
     static OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
@@ -711,7 +723,7 @@ OCStackResult initProcess(OCMode mode)
     return OCInit(NULL, 0, mode);
 }
 
-void startProcess()
+void startProcess(void)
 {
     while(false == fExit)
     {
@@ -728,7 +740,7 @@ void startProcess()
     }
 }
 
-void freeThreadResources()
+void freeThreadResources(void)
 {
     if (g_requestsThread)
     {

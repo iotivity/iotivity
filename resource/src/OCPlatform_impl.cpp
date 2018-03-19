@@ -45,7 +45,7 @@
 #include "ocpayload.h"
 #include "iotivity_debug.h"
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oc_logger.hpp"
 
 #define TAG "OIC_PLATFORM"
@@ -304,6 +304,11 @@ namespace OC
                             static_cast<OCQualityOfService>(QoS));
         OCRepPayloadDestroy(pl);
         return result_guard(result);
+    }
+
+    OCResourceHandle OCPlatform_impl::getResourceHandleAtUri(const std::string& uri)
+    {
+        return OCGetResourceHandleAtUri(uri.c_str());
     }
 
     OCResource::Ptr OCPlatform_impl::constructResourceObject(const std::string& host,

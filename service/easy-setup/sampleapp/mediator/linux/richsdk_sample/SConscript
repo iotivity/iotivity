@@ -80,22 +80,9 @@ mediator_env.AppendUnique(LIBS=['oc',
 mediator = mediator_env.Program('mediator', 'mediator.cpp')
 submediator = mediator_env.Program('submediator', 'submediator.cpp')
 
-i_mediator = mediator_env.Install(
-    env.get('BUILD_DIR'), [mediator, submediator])
+submediator += mediator_env.ScanJSON('service/easy-setup/sampleapp/mediator/linux/richsdk_sample')
 
-clientdat = mediator_env.Install(
-    env.get('BUILD_DIR') +
-    '/service/easy-setup/sampleapp/mediator/linux/richsdk_sample',
-    env.get('SRC_DIR') +
-    '/service/easy-setup/sampleapp/mediator/linux/richsdk_sample/oic_svr_db_client.dat'
-)
-
-subclientdat = mediator_env.Install(
-    env.get('BUILD_DIR') +
-    '/service/easy-setup/sampleapp/mediator/linux/richsdk_sample',
-    env.get('SRC_DIR') +
-    '/service/easy-setup/sampleapp/mediator/linux/richsdk_sample/oic_svr_db_subclient.dat'
-)
-
-Alias('mediator_rich', [i_mediator, clientdat, subclientdat])
+Alias('mediator_rich', submediator)
 env.AppendTarget('mediator_rich')
+examples = [mediator, submediator]
+mediator_env.UserInstallTargetExtra(examples)

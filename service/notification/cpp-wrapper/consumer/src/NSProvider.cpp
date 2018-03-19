@@ -103,7 +103,7 @@ namespace OIC
             return m_providerId;
         }
 
-        std::shared_ptr<NSTopicsList> NSProvider::getTopicList() const  throw (NSException)
+        std::shared_ptr<NSTopicsList> NSProvider::getTopicList() const noexcept(false)
         {
             NS_LOG(DEBUG, "getTopicList - IN");
             if (!isValid())
@@ -119,7 +119,7 @@ namespace OIC
             return topicList;
         }
 
-        NSResult NSProvider::updateTopicList(std::shared_ptr<NSTopicsList> topicList)  throw (NSException)
+        NSResult NSProvider::updateTopicList(std::shared_ptr<NSTopicsList> topicList) noexcept(false)
         {
             NS_LOG(DEBUG, "updateTopicList - IN");
             if (!isValid())
@@ -203,7 +203,7 @@ namespace OIC
             return m_state;
         }
 
-        NSProviderSubscribedState NSProvider::getProviderSubscribedState() const  throw (NSException)
+        NSProviderSubscribedState NSProvider::getProviderSubscribedState() const noexcept(false)
         {
             NS_LOG_V(DEBUG, "getProviderSubscribedState  state : %d", (int)m_subscribedState);
             if (!isValid())
@@ -213,7 +213,7 @@ namespace OIC
             return m_subscribedState;
         }
 
-        NSResult NSProvider::subscribe()  throw (NSException)
+        NSResult NSProvider::subscribe() noexcept(false)
         {
             NS_LOG(DEBUG, "Subscribe - IN");
             if (!isValid())
@@ -225,7 +225,7 @@ namespace OIC
             return result;
         }
 
-        NSResult NSProvider::unsubscribe()  throw (NSException)
+        NSResult NSProvider::unsubscribe() noexcept(false)
         {
             NS_LOG(DEBUG, "unsubscribe - IN");
             if (!isValid())
@@ -237,7 +237,7 @@ namespace OIC
             return result;
         }
 
-        bool NSProvider::isSubscribed()  throw (NSException)
+        bool NSProvider::isSubscribed() noexcept(false)
         {
             NS_LOG(DEBUG, "isSubscribed - IN");
             if (!isValid())
@@ -252,7 +252,7 @@ namespace OIC
             return false;
         }
 
-        NSResult NSProvider::sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type)  throw (NSException)
+        NSResult NSProvider::sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type) noexcept(false)
         {
             NS_LOG(DEBUG, "SendSyncInfo - IN");
             if (!isValid())

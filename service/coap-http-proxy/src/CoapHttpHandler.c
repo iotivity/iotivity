@@ -22,7 +22,7 @@
 #include "platform_features.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include <coap/pdu.h>
 #include "ocpayload.h"
 #include "internal/ocpayloadcbor.h"
@@ -64,7 +64,7 @@ OCStackResult CHPHandleOCFRequest(const OCEntityHandlerRequest* requestInfo,
 OCEntityHandlerResult CHPEntityHandler(OCEntityHandlerFlag flag,
                                        OCEntityHandlerRequest* entityHandlerRequest,
                                        void* callbackParam);
-bool CHPIsInitialized()
+bool CHPIsInitialized(void)
 {
     return g_isCHProxyInitialized;
 }
@@ -118,7 +118,7 @@ OCStackResult CHPInitialize(bool secure)
     return OC_STACK_OK;
 }
 
-OCStackResult CHPTerminate()
+OCStackResult CHPTerminate(void)
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
 
@@ -184,7 +184,7 @@ static void CHPGetProxyURI(OCHeaderOption* options, uint8_t *numOptions, char* u
 }
 
 // TODO: Will be moved to OCProxyPayload
-static OCRepPayload* CHPGetDiscoveryPayload()
+static OCRepPayload* CHPGetDiscoveryPayload(void)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
@@ -256,7 +256,6 @@ OCEntityHandlerResult CHPEntityHandler(OCEntityHandlerFlag flag,
                     ehResult = OC_EH_OK;
                     OCEntityHandlerResponse response =
                                 { .requestHandle = entityHandlerRequest->requestHandle,
-                                  .resourceHandle = entityHandlerRequest->resource,
                                   .ehResult = ehResult};
 
                     response.payload = (OCPayload *)CHPGetDiscoveryPayload();
@@ -296,8 +295,7 @@ void CHPHandleHttpResponse(const HttpResponse_t *httpResponse, void *context)
     }
 
     CHPRequest_t *ctxt = (CHPRequest_t *)context;
-    OCEntityHandlerResponse response = { .requestHandle = ctxt->requestHandle,
-                                         .resourceHandle = g_proxyHandle};
+    OCEntityHandlerResponse response = { .requestHandle = ctxt->requestHandle };
     response.persistentBufferFlag = 0;
 
     OCStackResult result = CHPGetOCCode(httpResponse->status, ctxt->method,
@@ -415,8 +413,7 @@ OCStackResult CHPHandleOCFRequest(const OCEntityHandlerRequest* requestInfo,
     HttpRequest_t httpRequest = { .httpMajor = 1,
                                   .httpMinor = 1};
 
-    OCEntityHandlerResponse response = { .requestHandle = requestInfo->requestHandle,
-                                         .resourceHandle = requestInfo->resource};
+    OCEntityHandlerResponse response = { .requestHandle = requestInfo->requestHandle };
     OCStackResult result = CHPGetHttpMethod(requestInfo->method, &httpRequest.method);
     if (OC_STACK_OK != result)
     {

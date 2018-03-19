@@ -23,7 +23,7 @@
 #include <string.h>
 
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #include "caconnectionmanager.h"
 
@@ -93,7 +93,7 @@ CAResult_t CAPolicyMgrGetConfigure(CAConnectUserPref_t *connPrefer)
     return CA_STATUS_OK;
 }
 
-void CAPolicyMgrTerminate()
+void CAPolicyMgrTerminate(void)
 {
     if (g_userConfigureMutex)
     {

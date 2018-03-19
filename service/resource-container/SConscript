@@ -269,12 +269,13 @@ lib_env = conf2.Finish()
 ######################################################################
 # build resource container unit tests
 ######################################################################
-if target_os in ['linux']:
+if lib_env.get('WITH_TEST') and target_os in ('linux'):
     SConscript('unittests/SConscript')
 
 ######################################################################
 # Build Container Sample
 ######################################################################
+examples = []
 if target_os not in ['ios']:
     containersample_env = resource_container_env.Clone()
     containersample_env.AppendUnique(LINKFLAGS=["-rdynamic"])
@@ -293,6 +294,7 @@ if target_os not in ['ios']:
                                                      containersampleapp_src)
     Alias("containersample", containersampleapp)
     env.AppendTarget('containersample')
+    examples += containersampleapp;
 
     ######################################################################
     # Build Container Sample Client
@@ -306,9 +308,12 @@ if target_os not in ['ios']:
         'ContainerSampleClient', containersampleclient_src)
     Alias("containersampleclient", containersampleclientapp)
     env.AppendTarget('containersampleclient')
+    examples += containersampleclientapp;
 
+containersample_env.UserInstallTargetExtra(examples)
 ######################################################################
 # Build Container Java SDK
 ######################################################################
 if target_os == 'android':
     SConscript('android/SConscript')
+

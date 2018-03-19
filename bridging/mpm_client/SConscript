@@ -36,9 +36,9 @@ def maskFlags(flags):
 # Build flags
 ######################################################################
 mpmclient_env.PrependUnique(CPPPATH=[
-    os.path.join(bridging_dir, 'include'),
-    os.path.join(bridging_dir, 'mini_plugin_manager'),
-    os.path.join(bridging_dir, 'mpm_client')
+    '#/bridging/include',
+    '#/bridging/mini_plugin_manager',
+    '#/bridging/mpm_client',
 ])
 
 # Note: Each of the plugin names need to be listed here after 'minipluginmanager'.
@@ -46,7 +46,13 @@ mpmclient_env.PrependUnique(CPPPATH=[
 mpmclient_env.PrependUnique(LIBS=['minipluginmanager'])
 mpmclient_env.AppendUnique(LIBS=['pthread'])
 mpmclient_env.AppendUnique(LIBS=[
-    'm', 'octbstack', 'ocsrm', 'mpmcommon', 'connectivity_abstraction', 'coap', 'curl'
+    'm',
+    'octbstack',
+    'ocsrm',
+    'mpmcommon',
+    'connectivity_abstraction',
+    'coap',
+    'curl'
 ])
 
 if target_os in ['linux', 'tizen', 'yocto']:

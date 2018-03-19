@@ -24,7 +24,7 @@
 #include "routingutility.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "include/logger.h"
+#include "experimental/logger.h"
 
 /**
  * Logging tag for module name.
@@ -1101,8 +1101,6 @@ uint64_t RTMGetCurrentTime()
     clock_gettime(CLOCK_MONOTONIC, &getTs);
 
     currentTime = getTs.tv_sec;
-#elif defined __ARDUINO__
-    currentTime = millis() / 1000;
 #else
 #if _POSIX_TIMERS > 0
     struct timespec ts;

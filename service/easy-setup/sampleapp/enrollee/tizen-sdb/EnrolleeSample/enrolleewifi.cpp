@@ -62,7 +62,7 @@ static bool gWiFiCBflag = false;
 static char gSSID[OIC_STRING_MAX_VALUE];
 static char gPasswd[OIC_STRING_MAX_VALUE];
 
-void PrintMenu()
+void PrintMenu(void)
 {
     cout << "========================" << endl;
     cout << "A: Enabled Security" << endl;
@@ -151,7 +151,6 @@ void CoapCloudConfProvCbInApp(ESCoapCloudConfData *eventData)
         return ;
     }
 
-    cout << "AuthCode : " << eventData->authCode << endl;
     cout << "AcessToken : " <<  eventData->accessToken << endl;
     cout << "AcessTokenType : "<< eventData->accessTokenType << endl;
     cout << "AuthProvider : " << eventData->authProvider << endl;
@@ -180,7 +179,7 @@ FILE* server_fopen(const char *path, const char *mode)
     }
 }
 
-void EnableSecurity()
+void EnableSecurity(void)
 {
     cout << "Inside EnableSecurity API.." << endl;
 
@@ -191,7 +190,7 @@ void EnableSecurity()
     OCRegisterPersistentStorageHandler(&ps);
 }
 
-void StartEasySetup()
+void StartEasySetup(void)
 {
     cout << "StartEasySetup IN" << endl;
 
@@ -242,7 +241,7 @@ void StartEasySetup()
     cout << "StartEasySetup OUT" << endl;
 }
 
-void SetDeviceInfo()
+void SetDeviceInfo(void)
 {
     cout << "SetDeviceInfo IN" << endl;
 
@@ -268,7 +267,7 @@ void SetDeviceInfo()
     cout << "SetDeviceInfo OUT" << endl;
 }
 
-void StopEasySetup()
+void StopEasySetup(void)
 {
     cout << "StopEasySetup IN" << endl;
     if (ESTerminateEnrollee() == ES_ERROR)
@@ -395,7 +394,7 @@ gboolean mainThread(GIOChannel *source, GIOCondition condition, gpointer data)
     return TRUE;
 }
 
-int main()
+int main(void)
 {
     cout << "#########################" << endl;
     cout << "EasySetup Enrollee SAMPLE" << endl;

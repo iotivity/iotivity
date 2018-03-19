@@ -33,7 +33,7 @@
 #include <iomanip>
 #include "iotivity_config.h"
 #include "ocpayload.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocstack.h"

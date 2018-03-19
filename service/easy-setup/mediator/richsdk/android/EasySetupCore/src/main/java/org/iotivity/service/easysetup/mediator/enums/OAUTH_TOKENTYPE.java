@@ -23,8 +23,12 @@
 package org.iotivity.service.easysetup.mediator.enums;
 
 /**
- * This enum class indicates an OAuth Token type like "bearer" and "mac"
+ * This enum class indicates an OAuth Token type like "bearer" and "mac".
+ *
+ * @deprecated OCF 1.4 Resource schema for CoAPCloudConf Resource no longer supports Access
+ * Token Type property. A default value of "Bearer" token type can be assumed.
  */
+@Deprecated
 public enum OAUTH_TOKENTYPE
 {
     NONE_OAUTH_TOKENTYPE(0),

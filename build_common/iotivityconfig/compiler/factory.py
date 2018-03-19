@@ -14,8 +14,8 @@
 # limitations under the License.
 # ------------------------------------------------------------------------
 
-from default_configuration import *
-from gcc_configuration import *
+from .default_configuration import *
+from .gcc_configuration import *
 
 # Canonicalize the C or C++ compiler name to "gcc" if gcc is being
 # used to simplify mapping to the GCC compiler configuration since GCC

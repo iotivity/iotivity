@@ -21,7 +21,7 @@
 #ifndef _NS_UTIL__H_
 #define _NS_UTIL__H_
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include <octypes.h>
 #include <stdbool.h>
 #include "ocstack.h"
@@ -31,14 +31,14 @@
 #include "NSConstants.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "oic_time.h"
 #include "NSProviderSystem.h"
 
 OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *);
 NSResult NSFreeOCEntityHandlerRequest(OCEntityHandlerRequest *);
 
-NSMessage * NSInitializeMessage();
+NSMessage * NSInitializeMessage(void);
 NSResult NSFreeMessage(NSMessage *);
 NSMessage * NSDuplicateMessage(NSMessage *);
 
@@ -49,7 +49,7 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload);
 NSResult NSFreeConsumer(NSConsumer *);
 NSConsumer * NSDuplicateConsumer(NSConsumer *);
 
-NSTopicList * NSInitializeTopicList();
+NSTopicList * NSInitializeTopicList(void);
 
 void NSDuplicateSetPropertyString(OCRepPayload **, const char *, const char *);
 void NSDuplicateSetPropertyInt(OCRepPayload ** msgPayload, const char * name, int64_t value);

@@ -45,24 +45,25 @@ def maskFlags(flags):
 ######################################################################
 
 hue_env.PrependUnique(CPPPATH=[
-    os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
-    os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
-    os.path.join(src_dir, 'resource', 'c_common'),
-    os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'include'),
-    os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
-    os.path.join(src_dir, 'resource', 'include'),
-    os.path.join(src_dir, 'extlibs', 'cjson'),
-    os.path.join(src_dir, 'extlibs', 'tinycbor', 'src'),
-    os.path.join(src_dir, 'extlibs', 'rapidjson', 'rapidjson', 'include', 'rapidjson')
-])
-hue_env.AppendUnique(CPPPATH=[
-    os.path.join(bridging_path, 'include'),
-    os.path.join(bridging_path, 'plugins', 'hue_plugin', 'hue_objects')
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/c_common',
+    '#/resource/oc_logger/include',
+    '#/resource/csdk/logger/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/include',
+    '#/extlibs/cjson',
+    '#/extlibs/tinycbor/src',
+    '#/extlibs/rapidjson/rapidjson/include/rapidjson'
 ])
 
-if target_os not in ['arduino', 'windows']:
+hue_env.AppendUnique(CPPPATH=[
+    '#/bridging/include',
+    '#/bridging/plugins/hue_plugin/hue_objects',
+])
+
+if target_os not in ['windows']:
     hue_env.AppendUnique(CPPDEFINES=['WITH_POSIX'])
 
 if target_os in ['darwin', 'ios']:
@@ -73,15 +74,22 @@ hue_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 if hue_env.get('LOGGING'):
     hue_env.AppendUnique(CPPDEFINES=['TB_LOG'])
 
+
+libmpm = hue_env.get('BUILD_DIR') + 'libmpmcommon.a'
 hue_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])
-hue_env.AppendUnique(LINKFLAGS=['-Wl,--allow-shlib-undefined'])
 hue_env.AppendUnique(LINKFLAGS=[
-    '-Wl,--whole-archive',
-    hue_env.get('BUILD_DIR') + 'libmpmcommon.a', '-Wl,-no-whole-archive'
+    '-Wl,--allow-shlib-undefined',
+    '-Wl,--whole-archive', libmpm,
+    '-Wl,-no-whole-archive',
 ])
 
 hue_env.AppendUnique(LIBS=[
-    'm', 'cjson', 'octbstack', 'ocsrm', 'connectivity_abstraction', 'coap',
+    'm',
+    'cjson',
+    'octbstack',
+    'ocsrm',
+    'connectivity_abstraction',
+    'coap',
     'curl'
 ])
 
@@ -90,16 +98,15 @@ hue_env.AppendUnique(LIBS=[
 ######################################################################
 
 hue_src = [
-    os.path.join(bridging_path, 'plugins', 'hue_plugin', 'hue_resource.cpp'),
-    os.path.join(bridging_path, 'plugins', 'hue_plugin', 'hue_auth_spec.cpp'),
-    os.path.join(bridging_path, 'plugins', 'hue_plugin', 'hue_file.cpp'),
-    os.path.join(bridging_path, 'plugins', 'hue_plugin', 'hue_objects',
-                 'hue_bridge.cpp'),
-    os.path.join(bridging_path, 'plugins', 'hue_plugin', 'hue_objects',
-                 'hue_light.cpp'),
+    'hue_resource.cpp',
+    'hue_auth_spec.cpp',
+    'hue_file.cpp',
+    'hue_objects/hue_bridge.cpp',
+    'hue_objects/hue_light.cpp',
 ]
 
 hue_env.AppendUnique(HUE_SRC=hue_src)
 huelib = hue_env.SharedLibrary('hueplugin', hue_env.get('HUE_SRC'))
+hue_env.Depends(huelib, libmpm)
 hue_env.InstallTarget(huelib, 'hueplugin')
 hue_env.UserInstallTargetLib(huelib, 'hueplugin')

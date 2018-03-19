@@ -20,6 +20,7 @@
 
 import os
 import subprocess
+import SCons.Util
 
 Import('env')
 
@@ -27,13 +28,13 @@ src_dir = env.get('SRC_DIR')
 target_os = env.get('TARGET_OS')
 
 cborDir = os.path.join(src_dir, 'extlibs', 'tinycbor', 'tinycbor')
-cborRevision = 'v0.4.1'
+cborRevision = 'v0.5.0'
 
 if not os.path.exists(cborDir):
     msg = '''
 *********************************** Error: ************************************
 * Please download cbor using the following command:
-*   $ git clone https://github.com/01org/tinycbor.git extlibs/tinycbor/tinycbor -b %s
+*   $ git clone https://github.com/intel/tinycbor.git extlibs/tinycbor/tinycbor -b %s
 *******************************************************************************
 ''' % cborRevision
     Exit(msg)
@@ -46,8 +47,8 @@ os.chdir(cborDir)
 # This code also assumes tinycbor_revision is a tag; if it changes to a branch
 # or an arbitrary commit, disable this check below.
 if target_os != 'tizen' and os.path.exists('.git/HEAD'):
-    out = subprocess.check_output('git tag -l ' + cborRevision, shell=True)
-    if cborRevision not in out:
+    out = subprocess.check_output('git tag -l ' + cborRevision, shell=True).rstrip()
+    if cborRevision not in SCons.Util.to_String(out):
         print(out)
         msg = '''
 *********************************** Error: ************************************

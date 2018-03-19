@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include "experimental/payload_logging.h"
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
@@ -34,7 +35,6 @@
 #ifdef HAVE_IN6ADDR_H
 #include <in6addr.h>
 #endif
-#include "payload_logging.h"
 #include "ocpayload.h"
 #include "octypes.h"
 #include "oic_string.h"
@@ -54,7 +54,6 @@ static OCStackResult sendResponse(const OCEntityHandlerRequest *ehRequest, OCRep
 {
     OCEntityHandlerResponse response = { 0 };
     response.requestHandle = ehRequest->requestHandle;
-    response.resourceHandle = ehRequest->resource;
     response.ehResult = ehResult;
     response.payload = (OCPayload*)(rdPayload);
     return OCDoResponse(&response);

@@ -67,6 +67,9 @@ proguard-project.txt
 *.iml
 .idea
 
+# Ignore Project files for VS Code
+.vscode/
+
 # Ignore CTags default data
 tags
 
@@ -91,6 +94,7 @@ iotivity.pc
 tmp/
 *.tmp
 *.tmp.*
+/*.dat
 
 # Ignore GCov generated files
 *.gcda
@@ -136,8 +140,11 @@ extlibs/yaml/yaml
 # Ignore Valgrind generated files.
 *.memcheck
 
-# Ignore  generated files
-*.dat
+# Ignore generated documentation files
+docs/c-doc/docs/
+docs/c-doc/doxygen.log
+docs/cpp-doc/docs/
+docs/cpp-doc/doxygen.log
 
 # Ignore generated documentation files
 docs/c-doc/docs/

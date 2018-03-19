@@ -66,7 +66,7 @@ TWSock * TWGetSock(PIPlugin_Zigbee * plugin);
 
 TWResultCode TWDeleteTWSock(TWSock * sock);
 
-TWResultCode TWDeleteAllTWSock();
+TWResultCode TWDeleteAllTWSock(void);
 
 TWResultCode TWFreeQueue(PIPlugin_Zigbee * plugin);
 

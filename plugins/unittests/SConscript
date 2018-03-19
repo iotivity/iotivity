@@ -25,16 +25,13 @@ from tools.scons.RunTest import run_test
 # SConscript file for Local PKI google tests
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 unittests_env = gtest_env.Clone()
-src_dir = unittests_env.get('SRC_DIR')
-pi_dir = os.path.join(src_dir, 'plugins')
-build_dir = unittests_env.get('BUILD_DIR')
 target_os = unittests_env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
 ######################################################################
 unittests_env.PrependUnique(CPPPATH=[
-    os.path.join(pi_dir, 'include'),
+    '#/plugins/include',
 ])
 
 unittests_env.AppendUnique(LIBPATH=[unittests_env.get('BUILD_DIR')])

@@ -76,6 +76,8 @@ namespace OC
                     const std::shared_ptr<OCResourceResponse> responsePtr,
                     QualityOfService QoS);
 
+        OCResourceHandle getResourceHandleAtUri(const std::string& uri);
+
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     OCConnectivityType connectivityType, FindCallback resourceHandler);
 

@@ -79,21 +79,13 @@ if target_os == 'android':
 ######################################################################
 # Source files and Targets
 ######################################################################
-
-# Link with gcov if building in debug mode
-if target_os in ['linux']:
-    if not env.get('RELEASE'):
-        local_env.PrependUnique(LIBS=['gcov'])
-        local_env.AppendUnique(CXXFLAGS=['--coverage'])
-        local_env.AppendUnique(CFLAGS=['--coverage'])
-
 proxy_src = [
     './src/CoapHttpHandler.c',
     './src/CoapHttpMap.c',
     './src/CoapHttpParser.c',
 ]
 
-if target_os in ['tizen']:
+if target_os in ['tizen', 'linux']:
     proxysdk = local_env.SharedLibrary('coap_http_proxy', proxy_src)
 else:
     proxysdk = local_env.StaticLibrary('coap_http_proxy', proxy_src)
@@ -109,5 +101,5 @@ local_env.UserInstallTargetHeader(
 if target_os in ['linux', 'tizen']:
     SConscript('samples/SConscript')
 
-if target_os in ['linux']:
+if local_env.get('WITH_TEST') and target_os in ('linux'):
     SConscript('unittests/SConscript')

@@ -55,9 +55,7 @@
 #define TIMEOUT_USED   1
 #define TIMEOUT_UNUSED  2
 
-#ifndef WITH_ARDUINO
 pthread_t thread_id = 0; // 0: initial thread id (meaningless)
-#endif
 
 struct timelist_t
 {
@@ -65,6 +63,7 @@ struct timelist_t
     time_t timeout_seconds;
     time_t timeout_time;
     TimerCallback cb;
+    void *ctx;
 } timeout_list[TIMEOUTS];
 
 time_t timespec_diff(const time_t after, const time_t before)
@@ -79,8 +78,6 @@ void timespec_add(time_t *to, const time_t seconds)
         (*to) += seconds;
     }
 }
-
-#ifndef WITH_ARDUINO
 
 long int getSeconds(struct tm *tp)
 {
@@ -156,7 +153,7 @@ time_t getSecondsFromAbsTime(struct tm *tp)
     return delayed_time;
 }
 
-time_t OC_CALL registerTimer(const time_t seconds, int *id, TimerCallback cb)
+time_t OC_CALL registerTimer(const time_t seconds, int *id, TimerCallback cb, void *ctx)
 {
     time_t now, then;
     time_t next;
@@ -191,6 +188,7 @@ time_t OC_CALL registerTimer(const time_t seconds, int *id, TimerCallback cb)
 
     timeout_list[idx].timeout_time = then;
     timeout_list[idx].timeout_seconds = seconds;
+    timeout_list[idx].ctx = ctx;
 
     // printf( "\nbefore timeout_list[idx].cb = %X\n", timeout_list[idx].cb);
     timeout_list[idx].cb = cb;
@@ -240,7 +238,7 @@ void checkTimeout()
                 timeout_list[i].timeout_state = TIMEOUT_UNUSED;
                 if (timeout_list[i].cb)
                 {
-                    timeout_list[i].cb();
+                    timeout_list[i].cb(timeout_list[i].ctx);
                 }
             }
         }
@@ -269,105 +267,3 @@ int initThread()
 
     return 0;
 }
-#else   // WITH_ARDUINO
-time_t timeToSecondsFromNow(tmElements_t *t_then)
-{
-    time_t t, then;
-
-    t = now();
-    then = makeTime((*t_then));
-
-    return (time_t) (then - t);
-}
-
-time_t OC_CALL registerTimer(const time_t seconds, int *id, TimerCallback cb)
-{
-    time_t t, then;
-    time_t next;
-    int i, idx;
-
-    if (seconds <= 0)
-        return -1;
-
-    // get the current time
-    t = now();
-
-    for (idx = 0; idx < TIMEOUTS; ++idx)
-        if (!((timeout_list[idx].timeout_state & TIMEOUT_USED) & TIMEOUT_USED))
-            break;
-
-    if (TIMEOUTS == idx)// reach to end of timer list
-        return -1;
-
-    // idx th timeout will be used.
-    // Reset and set state of the timer
-    timeout_list[idx].timeout_state = 0;
-    timeout_list[idx].timeout_state |= TIMEOUT_USED;
-
-    // calculate when the timeout should fire
-    then = t;
-    timespec_add(&then, seconds);
-
-    timeout_list[idx].timeout_time = then;
-    timeout_list[idx].timeout_seconds = seconds;
-
-    // printf( "\nbefore timeout_list[idx].cb = %X\n", timeout_list[idx].cb);
-    timeout_list[idx].cb = cb;
-    // printf( " after timeout_list[idx].cb = %X\n", timeout_list[idx].cb);
-
-    // How long till the next timeout?
-    next = seconds;
-    for (i = 0; i < TIMEOUTS; i++)
-    {
-        if ((timeout_list[i].timeout_state & (TIMEOUT_USED | TIMEOUT_UNUSED))
-            == TIMEOUT_USED)
-        {
-            const time_t secs = timespec_diff(timeout_list[i].timeout_time,
-                                              t);
-
-            if (secs >= 0 && secs < next)
-                next = secs;
-        }
-    }
-
-    *id = idx;
-    /* Return the timeout number. */
-    return timeout_list[idx].timeout_time;
-}
-
-void OC_CALL unregisterTimer(int idx)
-{
-    if (0 <= idx && idx < TIMEOUTS)
-        timeout_list[idx].timeout_state = TIMEOUT_UNUSED;
-}
-
-void checkTimeout()
-{
-    time_t t;
-    int i;
-
-    t = now();
-
-    /* Check all timeouts that are used and armed, but not passed yet. */
-    for (i = 0; i < TIMEOUTS; i++)
-    {
-        if ((timeout_list[i].timeout_state & (TIMEOUT_USED | TIMEOUT_UNUSED))
-            == TIMEOUT_USED)
-        {
-            const time_t seconds = timespec_diff(timeout_list[i].timeout_time,
-                                                 t);
-
-            if (seconds <= 0)
-            {
-                /* timeout [i] fires! */
-                timeout_list[i].timeout_state = TIMEOUT_UNUSED;
-                if (timeout_list[i].cb)
-                {
-                    timeout_list[i].cb();
-                }
-            }
-        }
-    }
-}
-
-#endif

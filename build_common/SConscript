@@ -4,15 +4,17 @@
 #    release/debug, target os, target arch, cross toolchain, build environment etc
 ##
 import os
+import sys
 import platform
+import re
 
 project_version = '1.3.1'
 
 # Map of build host to possible target os
 host_target_map = {
-    'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
-    'windows': ['windows', 'android', 'arduino'],
-    'darwin': ['darwin', 'ios', 'android', 'arduino'],
+    'linux': ['linux', 'android', 'yocto', 'tizen'],
+    'windows': ['windows', 'android'],
+    'darwin': ['darwin', 'ios', 'android'],
     'msys_nt': ['msys_nt'],
 }
 
@@ -32,7 +34,6 @@ os_arch_map = {
     'msys_nt': ['x86', 'x86_64'],
     'darwin': ['i386', 'x86_64'],
     'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
-    'arduino': ['avr', 'arm'],
     'yocto': [
         'i586', 'i686', 'x86_64', 'arm', 'aarch64', 'powerpc', 'powerpc64',
         'mips', 'mipsel'
@@ -74,13 +75,6 @@ else:
 
 target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch)  # target arch
 
-# True if binary needs to be installed on board. (Might need root permissions)
-# set to 'no', 'false' or 0 for only compilation
-require_upload = ARGUMENTS.get('UPLOAD', False)
-
-# Get the device name. This name can be used as network display name wherever possible
-device_name = ARGUMENTS.get('DEVICE_NAME', "OIC-DEVICE")
-
 default_with_upstream_libcoap = 0
 
 if ARGUMENTS.get('TEST'):
@@ -92,15 +86,6 @@ else:
     ]:
         release_mode = True
     logging_default = (release_mode is False)
-
-# targets that do not support the DTLS build (SECURED=1 build option)
-targets_without_dtls_support = ['arduino']
-if ARGUMENTS.get('SECURED') == '1' and target_os in targets_without_dtls_support:
-    msg = "\nError: DTLS not supported on target '%s', MUST build with SECURED=0\n" % (target_os)
-    Exit(msg)
-
-# targets that do not support multiple values for TARGET_TRANSPORT
-targets_disallow_multitransport = ['arduino']
 
 # generate a list of unique targets: convert to set() for uniqueness,
 # then convert back to a list
@@ -125,6 +110,14 @@ help_vars.AddVariables(
                  'Target platform',
                  default=host,
                  allowed_values=targetlist),
+    EnumVariable('SECURED',
+                 'Build with DTLS',
+                 default='1',
+                 allowed_values=('0', '1')),
+    ListVariable('TARGET_TRANSPORT',
+                 'Target transport',
+                 default='ALL',
+                 names=('ALL', 'BT', 'BLE', 'IP', 'NFC')),
     BoolVariable('WITH_TCP',
                  'Build with TCP adapter',
                  default=False),
@@ -138,6 +131,9 @@ help_vars.AddVariables(
     BoolVariable('WITH_CLOUD',
                  'Build including AccountManager class and Cloud Client sample',
                  default=False),
+    BoolVariable('WITH_TEST',
+                 'Build unit tests',
+                 default=True),
     ListVariable('RD_MODE',
                  'Resource Directory build mode',
                  default='CLIENT',
@@ -168,9 +164,6 @@ help_vars.AddVariables(
                  'Enable stack logging level',
                  default='DEBUG',
                  allowed_values=('DEBUG', 'INFO', 'ERROR', 'WARNING', 'FATAL')),
-    BoolVariable('UPLOAD',
-                 'Upload binary? (For Arduino)',
-                 default=require_upload),
     EnumVariable('ROUTING',
                  'Enable routing',
                  default='EP',
@@ -183,9 +176,6 @@ help_vars.AddVariables(
                  'Build with sample',
                  default='ON',
                  allowed_values=('ON', 'OFF')),
-    ('DEVICE_NAME',
-                 'Network display name for device (For Arduino)',
-                 device_name),
 #    ANDROID_NDK set at end after default computed
 #    ANDROID_HOME set at end after default computed
 #    ANDROID_GRADLE set at end after default computed
@@ -211,54 +201,48 @@ help_vars.AddVariables(
 ######################################################################
 # Platform (build target) specific options
 ######################################################################
-if target_os in targets_disallow_multitransport:
-    help_vars.Add(
-        EnumVariable('TARGET_TRANSPORT',
-                     'Target transport',
-                     default='IP',
-                     allowed_values=('BT', 'BLE', 'IP', 'NFC')))
-else:
-    help_vars.Add(
-        ListVariable('TARGET_TRANSPORT',
-                     'Target transport',
-                     default='ALL',
-                     names=('ALL', 'BT', 'BLE', 'IP', 'NFC')))
-
-if target_os in targets_without_dtls_support:
-    help_vars.Add(
-        # cannot be a bool since True not allowed
-        EnumVariable('SECURED',
-                     'Build with DTLS',
-                     default='0',
-                     allowed_values=('0',)))
-else:
-    help_vars.Add(
-        EnumVariable('SECURED',
-                     'Build with DTLS',
-                     default='1',
-                     allowed_values=('0', '1')))
-
 if target_os in ['linux']:
-    # This build option is provided for temporary use when upgrading to newer
-    # compilers or to temporarily bypass build warnings. It should default to True
-    # for all code submitted to upstream.
+    # Build option to enable failing build if warnings encountered.
+    # May need to be off for developing with newer compilers which
+    # are stricter about emitting warnings. Defaults to true so
+    # developer builds and gerrit builds have all warnings examined.
     help_vars.Add(
         BoolVariable('ERROR_ON_WARN',
                      'Make all compiler warnings into errors.',
+                      default=False))
+
+targets_support_valgrind = ['linux', 'darwin']
+if target_os in targets_support_valgrind:
+    # Build option to enable unit tests to be run under valgrind.
+    # May need to disable on small-memory platforms (e.g. Raspberry Pi)
+    # Checking for memory leak and usage errors is part of the
+    # acceptance criteria for project code, so this should default to on.
+    help_vars.Add(
+        BoolVariable('VALGRIND_CHECKS',
+                     'Build support for running code coverage checks',
                       default=True))
+
+targets_support_gcov = ['linux', 'darwin']
+if target_os in targets_support_gcov:
+    # Build option to enable coverage checking using gcov.
+    # Requires gcc or clang family compilers.
+    # Actual compiler flags need to be set in target-specific script.
+    help_vars.Add(
+        BoolVariable('COVERAGE_CHECKS',
+                     'Build support for running code coverage checks',
+                      default=False))
 
 if target_os == 'windows':
     # Builds differ based on Visual Studio version
     #   For VS2013, MSVC_VERSION is '12.0'.
     #   For VS2015, MSVC_VERSION is '14.0'.
-    #   For VS2017, MSVC_VERSION is '15.0'.
+    #   For VS2017, MSVC_VERSION is '14.1'.
     # Default value is None, which means SCons will pick
     help_vars.Add(
         EnumVariable('MSVC_VERSION',
                      'MSVC compiler version - Windows',
                      default=None,
-                     allowed_values=('12.0', '14.0')))
-                     #TODO allowed_values=('12.0', '14.0', '15.0')))
+                     allowed_values=('12.0', '14.0', '14.1')))
     help_vars.Add(
         EnumVariable('MSVC_UWP_APP',
                      'Build a Universal Windows Platform (UWP) Application',
@@ -277,7 +261,7 @@ AddOption(
 ######################################################################
 # Platform (build target) specific options: SDK/NDK & toolchain
 ######################################################################
-targets_support_cc = ['linux', 'arduino', 'tizen']
+targets_support_cc = ['linux', 'tizen']
 
 if target_os in targets_support_cc:
     # Set cross compile toolchain
@@ -293,8 +277,8 @@ if target_os in targets_support_cc:
 ######################################################################
 # this is where the setup of the construction envionment begins
 ######################################################################
-if target_os in ['android', 'arduino']:
-    # Android/Arduino always uses GNU compiler regardless of the host
+if target_os in ['android']:
+    # Android always uses GNU compiler regardless of the host
     env = Environment(
         variables=help_vars,
         tools=['gnulink', 'gcc', 'g++', 'ar', 'as', 'textfile'])
@@ -445,51 +429,73 @@ def __set_dir(env, dir):
 
 
 def __src_to_obj(env, src, home=''):
-    #
-    # make sure builds happen in BUILD_DIR (by default they
-    # would happen in the directory of the source file)
-    # Note this does not seem to be used, VariantDir is used instead
-    #
+    '''
+    Make sure builds happen in BUILD_DIR (by default they
+    would happen in the directory of the source file)
+    Note this does not seem to be used, VariantDir is used instead
+    '''
     obj = env.get('BUILD_DIR') + src.replace(home, '')
     if env.get('OBJSUFFIX'):
         obj += env.get('OBJSUFFIX')
     return env.Object(obj, src)
 
 
-def __install(ienv, targets, name):
-    i_n = ienv.Install(env.get('BUILD_DIR'), targets)
-    Alias(name, i_n)
-    env.AppendUnique(TS=[name])
+def __install(ienv, targets, name=''):
+    '''
+    Copy files to internal place (not for install to system)
+    only use UserInstall() for copying files to system using "scons install"
+    '''
+    for filename in ienv.GetBuildPath(targets):
+        basename = os.path.basename(filename)
+        dst = env.get('BUILD_DIR') + basename
+        i_n = Command(dst, filename, Copy("$TARGET", "$SOURCE"))
+        if '' == name:
+            name = basename
+        ienv.Alias(name, i_n)
+        env.AppendUnique(TS=[name])
 
 
-def __installlib(ienv, targets, name):
+def __installlib(ienv, targets, name=''):
+    '''
+    Install files to system, using "scons install" and remove rpath info if present
+    If prefix or lib install dir is not specified, for developer convenience
+    files are copied in relative "deploy" folder along executables (rpath is kept)
+    to avoid overlap with "internal place" above
+    '''
     user_prefix = env.get('PREFIX')
     if user_prefix:
         user_lib = env.get('LIB_INSTALL_DIR')
         if user_lib:
-            i_n = ienv.Install(user_lib, targets)
+            dst_dir  = user_lib
         else:
-            i_n = ienv.Install(user_prefix + '/lib', targets)
-        ienv.Alias("install", i_n)
+            dst_dir  = user_prefix + '/lib'
     else:
-        i_n = ienv.Install(env.get('BUILD_DIR'), targets)
-    ienv.Alias("install", i_n)
+        dst_dir  = env.get('BUILD_DIR') + '/deploy'
+    action = ienv.Install(dst_dir, targets)
+    ienv.Alias("install", action)
 
 
-def __installbin(ienv, targets, name):
+
+def __installbin(ienv, targets, name=''):
+    '''
+    ' Install files to system, using "scons install"
+    ' If prefix is not specified, for developer convenience
+    ' files are copied in relative "deploy" folder along libraries
+    '''
     user_prefix = env.get('PREFIX')
     if user_prefix:
-        i_n = ienv.Install(user_prefix + '/bin', targets)
-        ienv.Alias("install", i_n)
+        dst_dir  = user_prefix + '/bin'
+    else:
+        dst_dir  = env.get('BUILD_DIR') + '/deploy'
+    ienv.Alias("install", ienv.Install(dst_dir , targets))
 
 
 def __installheader(ienv, targets, dir, name):
     user_prefix = env.get('PREFIX')
     if user_prefix:
-        i_n = ienv.Install(user_prefix + '/include/' + dir, targets)
+        i_n = ienv.Install(user_prefix + '/include/iotivity/' + dir, targets)
     else:
-        i_n = ienv.Install(
-            os.path.join(env.get('BUILD_DIR'), 'include', dir), targets)
+        i_n = ienv.Install(env.get('BUILD_DIR') + 'deploy/include/' + dir, targets)
     ienv.Alias("install", i_n)
 
 
@@ -502,8 +508,30 @@ def __installpcfile(ienv, targets, name):
         else:
             i_n = ienv.Install(user_prefix + '/lib/pkgconfig', targets)
     else:
-        i_n = ienv.Install(env.get('BUILD_DIR') + 'lib/pkgconfig', targets)
+        i_n = ienv.Install(env.get('BUILD_DIR') + 'deploy/pkgconfig', targets)
     ienv.Alias("install", i_n)
+
+
+def __installextra(ienv, targets, subdir="."):
+    '''
+    Install extra files, by default use file relative location as subdir
+    or use any other prefix of your choice, or in explicit "deploy" folder
+    '''
+    user_lib = env.get('LIB_INSTALL_DIR')
+    user_prefix = env.get('PREFIX')
+    for target in targets:
+        if "." == subdir:
+            dst = Dir('.').srcnode().path
+        else:
+            dst = subdir
+        if user_lib:
+            dst = user_lib + '/iotivity/' + dst
+        elif user_prefix:
+            dst = user_prefix + '/lib/iotivity/' + dst
+        else:
+            dst = env.get('BUILD_DIR') + '/deploy/extra/' + dst
+        i_n = ienv.Install(dst, target)
+        ienv.Alias('install', i_n)
 
 
 def __append_target(ienv, name, targets=None):
@@ -515,6 +543,7 @@ def __append_target(ienv, name, targets=None):
 def __add_pthread_if_needed(ienv):
     if 'gcc' == ienv.get('CC') and target_os not in ['android']:
         ienv.AppendUnique(LINKFLAGS="-pthread")
+
 
 def __print_targets(env):
     Help('''
@@ -541,6 +570,7 @@ env.AddMethod(__installlib, 'UserInstallTargetLib')
 env.AddMethod(__installbin, 'UserInstallTargetBin')
 env.AddMethod(__installheader, 'UserInstallTargetHeader')
 env.AddMethod(__installpcfile, 'UserInstallTargetPCFile')
+env.AddMethod(__installextra, 'UserInstallTargetExtra')
 env.SetDir(env.GetLaunchDir())
 env['ROOT_DIR'] = env.GetLaunchDir() + '/..'
 
@@ -556,7 +586,10 @@ user_prefix = env.get('PREFIX')
 user_lib = env.get('LIB_INSTALL_DIR')
 
 if not user_prefix:
-    user_prefix = env.get('BUILD_DIR').encode('string_escape')
+    try:
+        user_prefix = env.get('BUILD_DIR').encode('string_escape')
+    except LookupError:
+        user_prefix = env.get('BUILD_DIR').encode('unicode_escape')
 
 if not user_lib:
     user_lib = '$${prefix}/lib'
@@ -604,10 +637,13 @@ with_ra_ibb = env.get('WITH_RA_IBB')
 
 env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
+if not env.get('PREFIX') and not env.get('LIB_INSTALL_DIR'):
+   env.AppendUnique(LIBPATH = [env.get('BUILD_DIR') + '/deploy'])
+
 if (env.get('WITH_UPSTREAM_LIBCOAP') == '1'):
     env.AppendUnique(CPPDEFINES=['WITH_UPSTREAM_LIBCOAP'])
 
-if (target_os not in ['arduino', 'windows']):
+if (target_os not in ['windows']):
     env.AppendUnique(CPPDEFINES=['WITH_POSIX'])
 
 if (target_os in ['darwin', 'ios']):
@@ -628,16 +664,13 @@ if (env.get('ROUTING') == 'GW'):
 elif (env.get('ROUTING') == 'EP'):
     env.AppendUnique(CPPDEFINES=['ROUTING_EP'])
 
-if (target_os == 'arduino'):
-    env.AppendUnique(CPPDEFINES=['SINGLE_THREAD'])
-    env.AppendUnique(CPPDEFINES=['WITH_ARDUINO'])
-elif (('IP' in target_transport) or ('ALL' in target_transport)):
+if (('IP' in target_transport) or ('ALL' in target_transport)):
     env.AppendUnique(CPPDEFINES=['WITH_BWT'])
 
 if (target_os in ['linux', 'tizen', 'android'] and with_tcp):
     env.AppendUnique(CPPDEFINES=['WITH_TCP'])
 
-if (target_os in ['linux', 'tizen', 'android', 'arduino', 'ios']):
+if (target_os in ['linux', 'tizen', 'android', 'ios']):
     if (('BLE' in target_transport) or ('BT' in target_transport) or
         ('ALL' in target_transport)):
         env.AppendUnique(CPPDEFINES=['WITH_TCP'])
@@ -682,7 +715,7 @@ else:
 
     if with_tcp:
         if (target_os in [
-                'linux', 'tizen', 'android', 'arduino', 'ios', 'windows'
+                'linux', 'tizen', 'android', 'ios', 'windows'
         ]):
             env.AppendUnique(CPPDEFINES=['TCP_ADAPTER', 'WITH_TCP'])
         else:
@@ -823,10 +856,56 @@ conf = Configure(
 # threading and mutexes.  This will set the environment variable
 # POSIX_SUPPORTED, 1 if it is supported, 0 otherwise
 conf.CheckPThreadsSupport()
-
 env = conf.Finish()
-######################################################################
 
+######################################################################
+# Generate Cbor from json files
+######################################################################
+json2cbor = env.get('BUILD_DIR') + 'resource/csdk/security/tool/json2cbor' + env.get('PROGSUFFIX')
+
+def generate_actions(source, target, env, for_signature):
+    Depends(target, json2cbor)
+    return " %s %s %s" % (json2cbor, source[0], target[0])
+
+builder = Builder(generator = generate_actions,
+                  suffix = '.dat',
+                  src_suffix = '.json')
+
+env.Append(BUILDERS = {'Cbor' : builder})
+
+
+def ScanJSON(env, directory=None):
+    targets = []
+    if not directory:
+        directory = Dir('.').srcnode().path
+    if env.GetOption('clean') or env.get('SECURED') != '1':
+        return targets
+    dst_dir = env.get('BUILD_DIR') + '/' + directory + '/'
+    src_dir = env.get('SRC_DIR') + '/' + directory + '/'
+    for json_file in Glob('*.json'):
+        filename = str(json_file.name)
+        src = src_dir + filename
+        dst = dst_dir + filename
+        targets += Command(dst, src, Copy("$TARGET", "$SOURCE"))
+        if env.get('CROSS_COMPILE') == None:
+            # Copy back compiled files to sources (to be used when compilation is not possible)
+            cbor_file = env.Cbor(json_file)
+            targets.append(cbor_file)
+            cbor_file = Flatten(cbor_file)[0].name
+            src = dst_dir + cbor_file
+            dst = src_dir + cbor_file
+            Command(dst, src, Copy("$TARGET", "$SOURCE"))
+        else:
+            # Can compile files at build time, so rely on previous generated files
+            cbor_file = re.sub('\.json$', '.dat', filename)
+            src = src_dir + cbor_file
+            dst = dst_dir + cbor_file
+            targets += Command(dst, src, Copy("$TARGET", "$SOURCE"))
+    return targets
+
+AddMethod(env, ScanJSON)
+
+######################################################################
 env.SConscript('external_libs.scons')
 
 # these variables depend on a subsidiary script having set a path to
@@ -863,7 +942,7 @@ help_vars.AddVariables(
                  validator=PathVariable.PathAccept),
 )
 help_vars.Update(env)
-Help(help_vars.GenerateHelpText(env, sort=cmp))
+Help(help_vars.GenerateHelpText(env, sort=True))
 # Replicate change that occured after help_var initialisation from env
 if target_os == "yocto":
     env['TARGET_OS'] = 'linux'

@@ -53,7 +53,7 @@ namespace OC
     {
 
         private:
-            OCDevAddr  m_devAddr;
+            std::string  m_devAddr;
         public:
 
             /**
@@ -66,12 +66,7 @@ namespace OC
 
             void setIpAddr(std::string& ipAddr)
             {
-                memcpy(m_devAddr.addr, ipAddr.c_str(), MAX_ADDR_STR_SIZE);
-            }
-
-            void setPort(uint16_t port)
-            {
-                m_devAddr.port = port;
+                m_devAddr = ipAddr;
             }
 
             /**

@@ -18,14 +18,19 @@
  *
  * *****************************************************************/
 
+#include "iotivity_config.h"
+
+#ifdef HAVE_MEMORY_H
 #include <memory.h>
+#endif
+
 #include "ocstack.h"
 #include "experimental/securevirtualresourcetypes.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "cacommon.h"
 #include "cainterface.h"
 #include "oic_malloc.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "pmtypes.h"
 #include "ownershiptransfermanager.h"
 #include "ocstackinternal.h"

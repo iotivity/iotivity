@@ -33,7 +33,7 @@
 #include "platform_features.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "uarraylist.h"
 #include "CoapHttpParser.h"
 #include "CoapHttpMap.h"
@@ -49,13 +49,13 @@ static OCConnectivityType connType;
 class CoApHttpTest: public TestWithMock
 {
 protected:
-    void SetUp()
+    void SetUp(void)
     {
         TestWithMock::SetUp();
         OCInit(NULL, 0, OC_CLIENT_SERVER);
     }
 
-    void TearDown()
+    void TearDown(void)
     {
         OCStop();
     }

@@ -18,10 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
+#include "iotivity_config.h"
 
 #include "curlClient.h"
 #include <iostream>
-#include "logger.h"
+#include "experimental/logger.h"
 
 using namespace std;
 using namespace OC::Bridging;

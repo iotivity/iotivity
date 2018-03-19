@@ -44,6 +44,11 @@ public class CloudProp {
         mCloudID = "";
     }
 
+    /**
+     * @deprecated OCF 1.4 Resource schema for CoAPCloudConf Resource no longer supports Auth Code
+     * property.
+     */
+    @Deprecated
     public void setCloudProp(String authCode, String authProvider, String ciServer)
     {
         if(authCode == null)
@@ -67,6 +72,12 @@ public class CloudProp {
         }
     }
 
+    /**
+     * @deprecated OCF 1.4 Resource schema for CoAPCloudConf Resource no longer supports Access
+     * Token Type property. Recommended to use overloaded method which doesn't expect tokenType
+     * input parameter instead.
+     */
+    @Deprecated
     public void setCloudPropWithAccessToken(String accessToken, OAUTH_TOKENTYPE tokenType,
                                         String authProvider, String ciServer)
     {
@@ -92,19 +103,56 @@ public class CloudProp {
         }
     }
 
+    /**
+     * This method sets Cloud Properties like access token, auth provider name and Cloud Server URL.
+     */
+    public void setCloudPropWithAccessToken(String accessToken,String authProvider, String ciServer)
+    {
+        if(accessToken == null)
+        {
+            accessToken = "";
+        }
+        if(authProvider == null)
+        {
+            authProvider = "";
+        }
+        if(ciServer == null)
+        {
+            ciServer = "";
+        }
+        try {
+            mRep.setValue(ESConstants.OC_RSRVD_ES_ACCESSTOKEN, accessToken);
+            mRep.setValue(ESConstants.OC_RSRVD_ES_AUTHPROVIDER, authProvider);
+            mRep.setValue(ESConstants.OC_RSRVD_ES_CISERVER, ciServer);
+        } catch (OcException e) {
+            Log.e(TAG, "setCloudPropWithAccessToken is failed: "  + e.toString());
+        }
+    }
+
+    /**
+     * This method sets Cloud Interface server's UUID.
+     */
     public void setCloudID(String cloudID)
     {
         mCloudID = cloudID;
     }
 
+    /**
+     * This method sets Cloud Interface server's credential ID of certificate.
+     */
     public void setCredID(int credID)
     {
         mCredID = credID;
     }
+
     /**
-     * This method returns the authCode used for the first registration to IoTivity cloud
-     * @return AuthCode for sign-up to IoTivity cloud
+     * This method returns the authCode used for the first registration to IoTivity Cloud.
+     *
+     * @return AuthCode for sign-up to IoTivity Cloud.
+     * @deprecated OCF 1.4 Resource schema for CoAPCloudConf Resource no longer supports Auth Code
+     * property.
      */
+    @Deprecated
     public String getAuthCode()
     {
         if(mRep == null)
@@ -147,7 +195,7 @@ public class CloudProp {
         return null;
     }
 
-	/**
+    /**
      * This method returns the Cloud Interface server's URL to be registered
      * @return CI server's URL to be registered
      */
@@ -189,8 +237,9 @@ public class CloudProp {
     }
 
     /**
-     * This method returns an accessToken used for the first registration to IoTivity cloud
-     * @return accessToken for sign-up to IoTivity cloud
+     * This method returns an accessToken used for the first registration to IoTivity Cloud.
+     *
+     * @return accessToken for sign-up to IoTivity Cloud.
      */
     public String getAccessToken()
     {
@@ -212,9 +261,12 @@ public class CloudProp {
     }
 
     /**
-     * This method returns an access token type
-     * @return tokenType of access token
+     * This method returns an access token type.
+     * @return Type of access token
+     * @deprecated OCF 1.4 Resource schema for CoAPCloudConf Resource no longer supports Access
+     * Token Type property. A default value of "Bearer" can be assumed.
      */
+    @Deprecated
     public OAUTH_TOKENTYPE getAccessTokenType()
     {
         if(mRep == null)
@@ -231,7 +283,9 @@ public class CloudProp {
         {
             Log.e(TAG, "getAccessTokenType is failed: "  + e.toString());
         }
-        return OAUTH_TOKENTYPE.NONE_OAUTH_TOKENTYPE;
+
+        /* Default Value for Access Token Type is "Bearer" */
+        return OAUTH_TOKENTYPE.OAUTH_TOKENTYPE_BEARER;
     }
 
     public OcRepresentation toOCRepresentation()

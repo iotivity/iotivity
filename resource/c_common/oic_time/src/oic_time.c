@@ -38,7 +38,7 @@
 #if defined(HAVE_WINDOWS_H)
 # include <windows.h>
 # define HAVE_QUERYPERFORMANCEFREQUENCY
-#elif !defined(WITH_ARDUINO)
+#else
 # if _POSIX_TIMERS > 0
 #  include <time.h>        // For clock_gettime()
 # else
@@ -52,9 +52,7 @@ uint64_t OICGetCurrentTime(OICTimePrecision precision)
 {
     uint64_t currentTime = 0;
 
-#ifdef WITH_ARDUINO
-    currentTime = (TIME_IN_MS == precision) ? millis() : micros();
-#elif defined(HAVE_QUERYPERFORMANCEFREQUENCY)
+#if defined(HAVE_QUERYPERFORMANCEFREQUENCY)
     static LARGE_INTEGER frequency = {0};
 
     if (!frequency.QuadPart)
@@ -106,7 +104,7 @@ uint64_t OICGetCurrentTime(OICTimePrecision precision)
             : (((uint64_t) current.tv_sec * US_PER_SEC) + (current.tv_usec));
     }
 # endif  // _POSIX_TIMERS > 0
-#endif  // WITH_ARDUINO
+#endif  // HAVE_QUERYPERFORMANCEFREQUENCY
 
     return currentTime;
 }

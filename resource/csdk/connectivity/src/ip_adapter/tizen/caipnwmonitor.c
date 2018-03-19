@@ -36,7 +36,7 @@
 #include "caipinterface.h"
 #include "caipnwmonitor.h"
 #include "caadapterutils.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include <coap/utlist.h>

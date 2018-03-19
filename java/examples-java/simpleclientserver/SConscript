@@ -27,7 +27,7 @@ simpleclientserver_classes = jdk_env.Java(target='classes', source=['src/main/ja
 # SCons is incorrectly calculating the output classes for simpleclientserver sample.
 # The following is a work around for the build command above. The unfortunate
 # side effect of this work around results in a larger output.
-example_jar =jdk_env.Jar(target='simpleclientserver.jar',
-            source=['classes','MANIFEST.MF'],
+example_jar = jdk_env.Jar(target='simpleclientserver.jar',
+            source=['classes', File('MANIFEST.MF')],
             JARCHDIR='$SOURCE')
 jdk_env.Install("../..", example_jar)

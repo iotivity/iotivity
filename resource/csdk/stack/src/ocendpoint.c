@@ -19,7 +19,7 @@
  ******************************************************************/
 
 #include "ocendpoint.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include <string.h>
@@ -513,7 +513,7 @@ exit:
     return OC_STACK_ERROR;
 }
 
-OCTpsSchemeFlags OCGetSupportedTpsFlags()
+OCTpsSchemeFlags OCGetSupportedTpsFlags(void)
 {
     OCTpsSchemeFlags ret = OC_NO_TPS;
     CATransportAdapter_t SelectedNetwork = CAGetSelectedNetwork();

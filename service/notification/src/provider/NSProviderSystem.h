@@ -22,7 +22,7 @@
 #define _NS_PROVIDER_SYSTEM__H_
 
 #include <string.h>
-#include "logger.h"
+#include "experimental/logger.h"
 #include "NSCommon.h"
 #include "NSConstants.h"
 #include "oic_malloc.h"
@@ -30,15 +30,15 @@
 #include "NSUtil.h"
 
 void NSSetProviderConnectionState(NSConnectionState state);
-NSConnectionState NSGetProviderConnectionState();
+NSConnectionState NSGetProviderConnectionState(void);
 
 void NSInitProviderInfo(const char * userInfo);
-void NSDeinitProviderInfo();
-NSProviderInfo * NSGetProviderInfo();
-const char * NSGetUserInfo();
-bool NSGetPolicy();
+void NSDeinitProviderInfo(void);
+NSProviderInfo * NSGetProviderInfo(void);
+const char * NSGetUserInfo(void);
+bool NSGetPolicy(void);
 void NSSetPolicy(bool policy);
-bool NSGetResourceSecurity();
+bool NSGetResourceSecurity(void);
 void NSSetResourceSecurity(bool secured);
 
 #ifdef WITH_MQ

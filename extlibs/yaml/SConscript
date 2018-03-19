@@ -45,7 +45,7 @@ yaml_env.AppendUnique(LIBS=['pthread'])
 
 # Remove -Werror build flag when building the 'YamlParser' library  it
 # is external code. see IOT-2539
-while '-Werror' in yaml_env['CFLAGS']: yaml_env['CFLAGS'].remove('-Werror')
+while '-Werror' in yaml_env['CCFLAGS']: yaml_env['CCFLAGS'].remove('-Werror')
 
 
 yaml_env.AppendUnique(

@@ -69,6 +69,7 @@ void PrintString(const char *text);
 void PrintBuffer(const uint8_t *buf, size_t bufLen);
 
 int InputNumber(const char *infoText);
+size_t InputSize(const char *infoText);
 char *InputString(const char *infoText);
 int InputUuid(OicUuid_t *uuid);
 

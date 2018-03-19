@@ -24,7 +24,7 @@
 #include "utils.h"
 
 #include "oic_malloc.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocstack.h"
 #include "ocpayload.h"
 #include "pmutility.h"
@@ -40,7 +40,8 @@
  * @param[in] response  peer response
  * @return  OCStackResult application result
  */
-static OCStackResult handleAclCreateGroupResponse(void *ctx, void **data, OCClientResponse *response)
+static OCStackResult handleAclCreateGroupResponse(void *ctx, void **data,
+        OCClientResponse *response)
 {
     OC_UNUSED(ctx);
     if (NULL == response->payload)
@@ -69,7 +70,8 @@ static OCStackResult handleAclCreateGroupResponse(void *ctx, void **data, OCClie
  * @param[in] response  peer response
  * @return  OCStackResult application result
  */
-static OCStackResult handleAclFindMyGroupResponse(void *ctx, void **data, OCClientResponse *response)
+static OCStackResult handleAclFindMyGroupResponse(void *ctx, void **data,
+        OCClientResponse *response)
 {
     OC_UNUSED(ctx);
     if (NULL == response->payload)
@@ -101,19 +103,18 @@ static OCStackResult handleAclFindMyGroupResponse(void *ctx, void **data, OCClie
     return OC_STACK_OK;
 }
 
-OCStackResult OCCloudAclCreateGroup(void* ctx,
+OCStackResult OCCloudAclCreateGroup(void *ctx,
                                     const char *groupType,
                                     const char *groupMasterId,
-                                    const OCDevAddr *endPoint,
+                                    const char *cloudUri,
                                     OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupType, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_GROUP_URL);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s", cloudUri, OC_RSRVD_ACL_GROUP_URL);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, handleAclCreateGroupResponse, NULL);
@@ -133,17 +134,16 @@ OCStackResult OCCloudAclCreateGroup(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclFindMyGroup(void* ctx,
+OCStackResult OCCloudAclFindMyGroup(void *ctx,
                                     const char *memberId,
-                                    const OCDevAddr *endPoint,
+                                    const char *cloudUri,
                                     OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_GROUP_URL);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s", cloudUri, OC_RSRVD_ACL_GROUP_URL);
 
     if (memberId)
     {
@@ -158,19 +158,19 @@ OCStackResult OCCloudAclFindMyGroup(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclDeleteGroup(void* ctx,
+OCStackResult OCCloudAclDeleteGroup(void *ctx,
                                     const char *groupId,
                                     const char *groupMasterId,
-                                    const OCDevAddr *endPoint,
+                                    const char *cloudUri,
                                     OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s?%s=%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_GROUP_URL, OC_RSRVD_GROUP_ID, groupId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s?%s=%s", cloudUri,
+             OC_RSRVD_ACL_GROUP_URL, OC_RSRVD_GROUP_ID, groupId);
 
     if (groupMasterId)
     {
@@ -185,18 +185,18 @@ OCStackResult OCCloudAclDeleteGroup(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclJoinToInvitedGroup(void* ctx,
+OCStackResult OCCloudAclJoinToInvitedGroup(void *ctx,
                                            const char *groupId,
-                                           const OCDevAddr *endPoint,
+                                           const char *cloudUri,
                                            OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_GROUP_URL, groupId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s/%s", cloudUri,
+             OC_RSRVD_ACL_GROUP_URL, groupId);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
@@ -205,18 +205,18 @@ OCStackResult OCCloudAclJoinToInvitedGroup(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclObserveGroup(void* ctx,
+OCStackResult OCCloudAclObserveGroup(void *ctx,
                                      const char *groupId,
-                                     const OCDevAddr *endPoint,
+                                     const char *cloudUri,
                                      OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_GROUP_URL, groupId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s/%s", cloudUri,
+             OC_RSRVD_ACL_GROUP_URL, groupId);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
@@ -225,23 +225,23 @@ OCStackResult OCCloudAclObserveGroup(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclShareDeviceIntoGroup(void* ctx,
+OCStackResult OCCloudAclShareDeviceIntoGroup(void *ctx,
                                              const char *groupId,
                                              const stringArray_t *memberIds,
                                              const stringArray_t *deviceIds,
-                                             const OCDevAddr *endPoint,
+                                             const char *cloudUri,
                                              OCCloudResponseCB callback)
 {
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
     char uri[MAX_URI_LENGTH] = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(memberIds, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(deviceIds, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_GROUP_URL, groupId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s/%s", cloudUri,
+             OC_RSRVD_ACL_GROUP_URL, groupId);
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
@@ -263,38 +263,37 @@ OCStackResult OCCloudAclShareDeviceIntoGroup(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclDeleteDeviceFromGroup(void* ctx,
+OCStackResult OCCloudAclDeleteDeviceFromGroup(void *ctx,
                                               const char *groupId,
                                               const stringArray_t *memberIds,
                                               const stringArray_t *deviceIds,
-                                              const OCDevAddr *endPoint,
+                                              const char *cloudUri,
                                               OCCloudResponseCB callback)
 
 {
     char uri[MAX_URI_LENGTH * 4] = { 0 };
     int max_size = sizeof(uri);
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(memberIds, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(deviceIds, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, max_size, "%s%s:%d%s/%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_GROUP_URL, groupId);
+    snprintf(uri, max_size, "%s%s/%s", cloudUri, OC_RSRVD_ACL_GROUP_URL, groupId);
 
     for (size_t i = 0; i < memberIds->length; i++)
     {
         size_t len = strlen(uri);
-        snprintf(uri + len, max_size - len, "%c%s=%s", (0 == i)?'?':'&',
-                OC_RSRVD_MEMBER_ID_LIST, memberIds->array[i]);
+        snprintf(uri + len, max_size - len, "%c%s=%s", (0 == i) ? '?' : '&',
+                 OC_RSRVD_MEMBER_ID_LIST, memberIds->array[i]);
     }
 
     for (size_t i = 0; i < deviceIds->length; i++)
     {
         size_t len = strlen(uri);
         snprintf(uri + len, max_size - len, "%c%s=%s",
-                (0 == i && 0 == memberIds->length)?'?':'&',
-                OC_RSRVD_DEVICE_ID_LIST, deviceIds->array[i]);
+                 (0 == i && 0 == memberIds->length) ? '?' : '&',
+                 OC_RSRVD_DEVICE_ID_LIST, deviceIds->array[i]);
     }
 
     OCCallbackData cbData;
@@ -304,19 +303,19 @@ OCStackResult OCCloudAclDeleteDeviceFromGroup(void* ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
-OCStackResult OCCloudAclGroupGetInfo(void* ctx,
+OCStackResult OCCloudAclGroupGetInfo(void *ctx,
                                      const char *groupId,
                                      const char *memberId,
-                                     const OCDevAddr *endPoint,
+                                     const char *cloudUri,
                                      OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
-    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_GROUP_URL, groupId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s/%s", cloudUri,
+             OC_RSRVD_ACL_GROUP_URL, groupId);
 
     if (memberId)
     {

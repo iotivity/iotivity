@@ -18,17 +18,29 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ * Support for working with elapsed time.
+ */
+
 #ifndef OIC_TIME_H_
 #define OIC_TIME_H_
 
 #include <stdint.h>
 
+/**
+ * @name
+ * Useful constants for time unit conversions.
+ *
+ * @{
+ */
 #define MS_PER_SEC  (1000)
 #define US_PER_SEC  (1000000)
 #define US_PER_MS   (1000)
 #define NS_PER_US   (1000)
 #define NS_PER_MS   (1000000)
 #define HNS_PER_US  (10)
+/** @} */
 
 
 #ifdef __cplusplus
@@ -38,32 +50,30 @@ extern "C"
 
 typedef enum
 {
-    TIME_IN_MS = 0,
-    TIME_IN_US,
-}OICTimePrecision;
+    TIME_IN_MS = 0,     //!< milliseconds
+    TIME_IN_US,         //!< microseconds
+} OICTimePrecision;
 
-/*
- * If monotonic coarse/monotonic clock supported then gets current time as monotonic time
- * in milliseconds or microseconds as the elapsed time since some unspecified starting point
- * else gets current time in milliseconds or microseconds as the elapsed time since the epoch.
+/**
+ * Get the current time using the specified precision.
  *
- * For Arduino gets current time in milliseconds or microseconds since Arduino board begin
- * running this program.
+ * Return the time in units of `precision`.
+ * If the implementation supports a monotonic clock, then
+ * the returned value will be from the monotonic clock,
+ * and the difference between two retrieved times can be considered
+ * an accurate elapsed time. The time base is unspecified
+ * in this case. If a monotonic clock is not supported,
+ * the time returned will be `precision` time units since the epoch,
+ * without adjustment for any external changes to the clock.
  *
- * @param     precision   based on this parameter, current time is returned in milliseconds or
- *                        microseconds
+ * @param     precision   based on this parameter, current time is
+ * returned in milliseconds or microseconds
  *
- * @warning   This function may be sensitive to system time changes on some platforms.
- *
- * @note
- *            On Arduino platform:
- *            if the time precision is in milliseconds then the function will overflow
- *            (go back to 0) after approximately 50 days.
- *            if the time precision is in microseconds then the function will overflow
- *            (go back to 0) after approximately 70minutes.
+ * @warning   This function may be sensitive to system time changes on
+ * platforms which do not support a monotonic clock.
  *
  * @return
- *         returns current time in milliseconds or microseconds.
+ *         Returns current time in milliseconds or microseconds.
  */
 uint64_t OICGetCurrentTime(OICTimePrecision precision);
 

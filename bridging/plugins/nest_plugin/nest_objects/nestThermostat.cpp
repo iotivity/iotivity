@@ -28,7 +28,7 @@
 #include "writer.h"
 #include "stringbuffer.h"
 #include "curlClient.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "NEST_THERMOSTAT"
 

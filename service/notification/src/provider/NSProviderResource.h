@@ -22,7 +22,7 @@
 #define _NS_PROVIDER_RESOURCE_H_
 
 #include <ocstack.h>
-#include "logger.h"
+#include "experimental/logger.h"
 #include "NSCommon.h"
 #include "NSProviderListener.h"
 #include "NSProviderSystem.h"
@@ -53,9 +53,9 @@ NSResult NSCreateResource(char *uri);
 
 NSResult NSPublishResourceToCloud(char *host);
 
-NSResult NSRegisterResource();
+NSResult NSRegisterResource(void);
 
-NSResult NSUnRegisterResource();
+NSResult NSUnRegisterResource(void);
 
 NSResult NSPutNotificationResource(bool policy, OCResourceHandle * handle);
 

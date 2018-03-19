@@ -54,9 +54,7 @@ namespace OC
 
     OCCloudProvisioning::OCCloudProvisioning(std::string& ipAddr, uint16_t port)
     {
-        memset(&m_devAddr, 0, sizeof(m_devAddr));
-        memcpy(m_devAddr.addr, ipAddr.c_str(), MAX_ADDR_STR_SIZE);
-        m_devAddr.port = port;
+        m_devAddr = ipAddr + ":" + std::to_string(port);
     }
 
     OCCloudProvisioning::~OCCloudProvisioning(void)
@@ -79,7 +77,7 @@ namespace OC
             CloudProvisionContext *context = new CloudProvisionContext(callback);
 
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            result = OCCloudCertificateIssueRequest(static_cast<void*>(context), &m_devAddr,
+            result = OCCloudCertificateIssueRequest(static_cast<void*>(context), m_devAddr.c_str(),
                     &OCCloudProvisioning::callbackWrapper);
         }
         else
@@ -108,7 +106,7 @@ namespace OC
 
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCCloudAclIndividualGetInfo(static_cast<void*>(context), aclId.c_str(),
-                    &m_devAddr,
+                    m_devAddr.c_str(),
                     &OCCloudProvisioning::callbackWrapper);
         }
         else
@@ -137,7 +135,7 @@ namespace OC
 
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCCloudGetAclIdByDevice(static_cast<void*>(context), deviceId.c_str(),
-                    &m_devAddr,
+                    m_devAddr.c_str(),
                     &OCCloudProvisioning::aclIdResponseWrapper);
         }
         else
@@ -166,7 +164,7 @@ namespace OC
 
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCCloudAclIdCreate(static_cast<void*>(context), ownerId.c_str(),
-                                        deviceId.c_str(), &m_devAddr,
+                                        deviceId.c_str(), m_devAddr.c_str(),
                                         &OCCloudProvisioning::aclIdResponseWrapper);
         }
         else
@@ -193,7 +191,7 @@ namespace OC
             CloudProvisionContext *context = new CloudProvisionContext(callback);
 
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            result = OCCloudGetCRL(static_cast<void*>(context), &m_devAddr,
+            result = OCCloudGetCRL(static_cast<void*>(context), m_devAddr.c_str(),
                     &OCCloudProvisioning::callbackWrapper);
         }
         else
@@ -225,7 +223,7 @@ namespace OC
 
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCCloudAclIndividualAclUpdate(static_cast<void*>(context), aclId.c_str(),
-                    aces, &m_devAddr, &OCCloudProvisioning::callbackWrapper);
+                    aces, m_devAddr.c_str(), &OCCloudProvisioning::callbackWrapper);
         }
         else
         {
@@ -256,7 +254,7 @@ namespace OC
 
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCCloudPostCRL(static_cast<void*>(context), thisUpdate.c_str(),
-                    nextUpdate.c_str(), crl, serialNumbers, &m_devAddr,
+                    nextUpdate.c_str(), crl, serialNumbers, m_devAddr.c_str(),
                     &OCCloudProvisioning::callbackWrapper);
         }
         else

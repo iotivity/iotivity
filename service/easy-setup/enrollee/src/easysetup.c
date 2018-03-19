@@ -25,7 +25,7 @@
  */
 
 #include "easysetup.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "resourcehandler.h"
 #include "oic_string.h"
 
@@ -268,7 +268,7 @@ ESResult ESSetErrorCode(ESErrorCode esErrCode)
 #pragma GCC diagnostic pop
 #endif
 
-ESResult ESTerminateEnrollee()
+ESResult ESTerminateEnrollee(void)
 {
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESTerminateEnrollee IN");
 

@@ -21,7 +21,7 @@
 #include "NSProviderSubscription.h"
 #include "NSProviderListener.h"
 
-NSResult NSInitSubscriptionList()
+NSResult NSInitSubscriptionList(void)
 {
     NS_LOG(DEBUG, "NSInitSubscriptionList - IN");
 
@@ -101,7 +101,6 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_TOPIC, NS_COLLECTION_TOPIC_URI);
 
     response.requestHandle = entityHandlerRequest->requestHandle;
-    response.resourceHandle = entityHandlerRequest->resource;
     response.persistentBufferFlag = 0;
     response.ehResult = OC_EH_OK;
     response.payload = (OCPayload *) payload;
@@ -207,7 +206,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         element->data = (void*) subData;
         element->next = NULL;
 
-        if (NSProviderStorageWrite(consumerSubList, element) != NS_OK)
+        if (NS_OK != NSProviderStorageWrite(consumerSubList, element))
         {
             NS_LOG(ERROR, "Fail to write cache");
         }

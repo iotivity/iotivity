@@ -19,10 +19,10 @@
  * *****************************************************************/
 #include "utils.h"
 
-#include "logger.h"
-#include "payload_logging.h"
+#include "experimental/logger.h"
+#include "experimental/payload_logging.h"
 #include "oic_malloc.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "srmutility.h"
 #include "pmutility.h"
 
@@ -125,7 +125,7 @@ void fillCallbackData(OCCallbackData *cbData, void *ctx, OCCloudResponseCB cb,
     cbData->context = info;
 }
 
-char * getDeviceId()
+char * getDeviceId(void)
 {
     char *deviceId = NULL;
     OicUuid_t uuid;

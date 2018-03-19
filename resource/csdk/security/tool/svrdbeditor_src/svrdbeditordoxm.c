@@ -23,8 +23,7 @@
 #include "oic_malloc.h"
 
 #include "psinterface.h"
-
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "svrdbeditordoxm.h"
 
 #ifdef MULTIPLE_OWNER

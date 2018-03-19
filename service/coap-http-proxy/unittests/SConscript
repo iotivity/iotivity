@@ -55,12 +55,7 @@ CoAP_test_env.AppendUnique(LIBS=[
 ])
 
 if target_os not in ['windows']:
-    CoAP_test_env.AppendUnique(
-        CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0'])
-
-if not CoAP_test_env.get('RELEASE'):
-    CoAP_test_env.PrependUnique(LIBS=['gcov'])
-    CoAP_test_env.AppendUnique(CXXFLAGS=['--coverage'])
+    CoAP_test_env.AppendUnique(CXXFLAGS=['-O2', '-g', '-Wall', '-fmessage-length=0'])
 
 CoAP_test_env.AppendUnique(CPPPATH=[
     '#/extlibs/hippomocks/hippomocks',
@@ -108,7 +103,7 @@ CoAP_unit_test_src = CoAP_test_env.Glob('./CoAPHttpUnitTest.cpp')
 CoAP_unit_test = CoAP_test_env.Program('CoAP_unit_test', CoAP_unit_test_src)
 Alias("CoAP_unit_test", CoAP_unit_test)
 CoAP_test_env.AppendTarget('CoAP_unit_test')
-CoAP_test_env.InstallTarget(CoAP_unit_test, 'CoAP_unit_test')
+CoAP_test_env.UserInstallTargetExtra(CoAP_unit_test)
 
 if CoAP_test_env.get('TEST') == '1':
     if target_os in ['linux']:

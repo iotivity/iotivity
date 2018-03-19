@@ -21,6 +21,7 @@
 #ifndef _IOTVT_B64_H_
 #define _IOTVT_B64_H_
 
+#include "iotivity_config.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -39,6 +40,9 @@ extern "C" {
  * defined in RFC4648 are not implemented. Base 64 encoding with URL
  * and filename safe alphabet, Bass 32, and Base 16 Encoding are not
  * implemented.
+ *
+ * @deprecated This implementation of base64 has been deprecated in favor of
+ * the base64 implementation that is available as part of the mbedtls library
  */
 
 /**
@@ -91,9 +95,17 @@ typedef enum
  * @note `outBuf` adds a NULL to the string configuration.
  *
  * @return ::B64_OK for Success, otherwise some error value.
+ *
+ * @deprecated This implementation of base64 encode has been deprecated in favor
+ * of the base64 implementation that is available as part of the mbedtls library.
+ * @see mbedtls_base64_encode()
+ *
  */
+OC_DEPRECATED_MSG(
 B64Result b64Encode(const uint8_t *in, const size_t inLen,
-                    char *outBuf, const size_t outBufSize, size_t *outLen);
+                    char *outBuf, const size_t outBufSize, size_t *outLen),
+                    "Please use mbedtls implementation",
+                    2017.11);
 
 /**
  * Decode the encoded message in base64.
@@ -116,9 +128,16 @@ B64Result b64Encode(const uint8_t *in, const size_t inLen,
  * @param[out] outLen is the byte length of decoded message.
  *
  * @return ::B64_OK for Success, otherwise some error value.
+ *
+ * @deprecated This implementation of base64 decode has been deprecated in favor
+ * of the base64 implementation that is available as part of the mbedtls library.
+ * @see mbedtls_base64_decode()
  */
+OC_DEPRECATED_MSG(
 B64Result b64Decode(const char *in, const size_t inLen,
-                    uint8_t *outBuf, size_t outBufSize, size_t *outLen);
+                    uint8_t *outBuf, size_t outBufSize, size_t *outLen),
+                    "Please use mbedtls implementation",
+                    2017.11);
 
 #ifdef __cplusplus
 }

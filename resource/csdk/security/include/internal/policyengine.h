@@ -22,7 +22,7 @@
 #define IOTVT_SRM_PE_H
 
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "experimental/securevirtualresourcetypes.h"
 #include "secureresourcemanager.h"
 #include "cainterface.h"

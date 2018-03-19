@@ -60,7 +60,7 @@ OCStackResult OC_CALL OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen,
                                         char **privateKey, size_t *privateKeyLen);
 
 /**
- * Generate a certificate to act as a Certificate Authority (CA).
+ * Generate a certificate to act as a Root Certificate Authority (CA).
  *
  * @param subject               Comma-separated list of RDN types and values:
  *                              e.g. "C=US, O=Open Connectivity Foundation, CN=Main CA"
@@ -86,7 +86,45 @@ OCStackResult OC_CALL OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen,
  *
  * @return OC_STACK_OK if successful, error code otherwise
  */
-OCStackResult OC_CALL OCGenerateCACertificate(
+OCStackResult OC_CALL OCGenerateRootCACertificate(
+    const char *subject,
+    const char *subjectPublicKey,
+    const char *issuerCert,
+    const char *issuerPrivateKey,
+    const char *serial,
+    const char *notValidBefore,
+    const char *notValidAfter,
+    char **certificate,
+    size_t *certificateLen);
+
+/**
+ * Generate a certificate to act as an Intermediate Certificate Authority (CA).
+ *
+ * @param subject               Comma-separated list of RDN types and values:
+ *                              e.g. "C=US, O=Open Connectivity Foundation, CN=Main CA"
+ * @param subjectPublicKey      Subject's public key in PEM format
+ * @param issuerCert            Issuer's certificate in PEM format
+ *                              If this certificate will be self-signed, pass in NULL.
+ * @param issuerPrivateKey      Issuer's private key in PEM format
+ *                              If self-signing (issuerCert is NULL), this must be the private
+ *                              key corresponding to subjectPublicKey.
+ * @param serial                String containing the serial number in ASCII numerals:
+ *                              e.g., "12345". Caller must ensure each certificate issued by a
+ *                              CA has a unique serial number, and it is recommended to generate
+ *                              them randomly by producing 19 random bytes and converting them to
+ *                              a numerical value. See GenerateRandomSerialNumber().
+ * @param notValidBefore        The notValidBefore date in UTC for the certificate in the form YYYYMMDDhhmmss
+ *                              e.g., "20131231235959" for December 31st 2013 at 23:59:59
+ * @param notValidAfter         The notValidAfter date in UTC for the certificate in the form YYYYMMDDhhmmss
+ *                              e.g., "20140101010203" for January 1st 2014 at 01:02:03
+ * @param[OUT] certificate      Pointer to a buffer that will receive the PEM-encoded certificate. Memory will be
+ *                              allocated internally; caller must call OICFree on certificate when finished to free
+ *                              its memory.
+ * @param[OUT] certificateLen   Variable to receive the size of certificate, which will include the terminating NULL.
+ *
+ * @return OC_STACK_OK if successful, error code otherwise
+ */
+OCStackResult OC_CALL OCGenerateIntermediateCACertificate(
     const char *subject,
     const char *subjectPublicKey,
     const char *issuerCert,

@@ -40,10 +40,10 @@
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocserverslow.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 
 volatile sig_atomic_t gQuitFlag = 0;
 
@@ -132,7 +132,6 @@ void ProcessGetPutRequest (OCEntityHandlerRequest *ehRequest)
 
     // Format the response.  Note this requires some info about the request
     response.requestHandle = ehRequest->requestHandle;
-    response.resourceHandle = ehRequest->resource;
     response.ehResult = OC_EH_OK;
     response.payload = reinterpret_cast<OCPayload*> (getResp);
     response.numSendVendorSpecificHeaderOptions = 0;

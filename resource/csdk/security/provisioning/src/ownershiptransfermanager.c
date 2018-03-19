@@ -44,15 +44,15 @@
 #include <string.h>
 #include <assert.h>
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "cacommon.h"
 #include "cainterface.h"
-#include "base64.h"
+#include "mbedtls/base64.h"
 #include "utlist.h"
 #include "srmresourcestrings.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "pstatresource.h"
 #include "credresource.h"
 #include "aclresource.h"
@@ -70,7 +70,7 @@
 #include "srmutility.h"
 #include "provisioningdatabasemanager.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "pkix_interface.h"
 #include "oxmverifycommon.h"
 #include "psinterface.h"
@@ -844,16 +844,29 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
         VERIFY_NOT_NULL(TAG, cred, ERROR);
 
         size_t outSize = 0;
-        size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
-        char* b64Buf = (char *)OICCalloc(1, b64BufSize);
+        int encodeResult = mbedtls_base64_encode(NULL, 0, &outSize, cred->privateData.data, cred->privateData.len);
+        if (MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL != encodeResult)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Error base64 encoding PSK private data", __func__);
+            res = OC_STACK_ERROR;
+            goto exit;
+        }
+        size_t b64BufSize = outSize;
+        unsigned char* b64Buf = (unsigned char *)OICCalloc(1, b64BufSize);
         VERIFY_NOT_NULL(TAG, b64Buf, ERROR);
-        b64Encode(cred->privateData.data, cred->privateData.len, b64Buf, b64BufSize, &outSize);
-
+       encodeResult =  mbedtls_base64_encode(b64Buf, b64BufSize, &outSize, cred->privateData.data, cred->privateData.len);
+       if (0 != encodeResult)
+       {
+           OIC_LOG_V(ERROR, TAG, "%s: Error base64 encoding PSK private data", __func__);
+           OICFree(b64Buf);
+           res = OC_STACK_ERROR;
+           goto exit;
+       }
         OICFree( cred->privateData.data );
         cred->privateData.data = (uint8_t *)OICCalloc(1, outSize + 1);
         VERIFY_NOT_NULL(TAG, cred->privateData.data, ERROR);
 
-        strncpy((char*)(cred->privateData.data), b64Buf, outSize);
+        strncpy((char*)(cred->privateData.data), (char*)b64Buf, outSize);
         cred->privateData.data[outSize] = '\0';
         cred->privateData.encoding = OIC_ENCODING_BASE64;
         cred->privateData.len = outSize;
@@ -1225,14 +1238,15 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
             //OC_STACK_UNAUTHORIZED_REQ. After such a failure, OwnerAclHandler
             //will close the current session and re-establish a new session,
             //using the Owner Credential.
-            CAEndpoint_t* endpoint = (CAEndpoint_t *)&otmCtx->selectedDeviceInfo->endpoint;
+            CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+            CopyDevAddrToEndpoint(&otmCtx->selectedDeviceInfo->endpoint, &endpoint);
 
             /**
               * If we select NULL cipher,
               * client will select appropriate cipher suite according to server's cipher-suite list.
               */
             // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 = 0xC037, /**< see RFC 5489 */
-            CAResult_t caResult = CASelectCipherSuite(0xC037, endpoint->adapter);
+            CAResult_t caResult = CASelectCipherSuite(0xC037, endpoint.adapter);
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
@@ -1653,7 +1667,7 @@ static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
 
         int secureFlag = 0;
         //Send owner credential to new device : POST /oic/sec/cred [ owner credential ]
-        if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData,
+        if (OC_STACK_OK != CredToCBORPayloadWithRowner(&newCredential, &credSubjectId, &secPayload->securityData,
                                         &secPayload->payloadSize, secureFlag))
         {
             OICFree(secPayload);

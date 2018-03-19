@@ -28,7 +28,7 @@
  */
 
 #include "twsocketlist.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 
 #include <sys/stat.h>
@@ -174,7 +174,7 @@ TWResultCode TWDeleteTWSock(TWSock * sock)
     return result;
 }
 
-TWResultCode TWDeleteAllTWSock()
+TWResultCode TWDeleteAllTWSock(void)
 {
     TWSock * out = NULL;
     TWSock * tmp = NULL;

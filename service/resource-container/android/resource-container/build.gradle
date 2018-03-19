@@ -33,7 +33,7 @@ android {
         variant.outputs.each { output ->
             def outputFile = output.outputFile
             if (outputFile != null && outputFile.name.endsWith('.aar')) {
-                def fileName = "${archivesBaseName}-${TARGET_ARCH}-${outputFile.name}"
+                def fileName = "${archivesBaseName}-${outputFile.name}"
                 output.outputFile = new File(outputFile.parent, fileName)
             }
         }

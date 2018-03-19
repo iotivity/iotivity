@@ -21,7 +21,7 @@
 // Do not remove the include below
 
 #include <string.h>
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocstack.h"
 #include "escommon.h"
 #include "ESEnrolleeCommon.h"
@@ -72,7 +72,6 @@ typedef struct
 typedef struct
 {
     OCResourceHandle handle;
-    char authCode[OIC_STRING_MAX_VALUE];
     char accessToken[OIC_STRING_MAX_VALUE];
     OAUTH_TOKENTYPE accessTokenType;
     char authProvider[OIC_STRING_MAX_VALUE];
@@ -96,7 +95,7 @@ extern CoapCloudConfResource g_ESCoapCloudConfResource;
 extern DevConfResource g_ESDevConfResource;
 
 OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMask);
-OCStackResult DeleteEasySetupResources();
+OCStackResult DeleteEasySetupResources(void);
 
 OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty);
 OCStackResult SetEnrolleeState(ESEnrolleeState esState);

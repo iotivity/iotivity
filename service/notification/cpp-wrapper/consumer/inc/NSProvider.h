@@ -140,7 +140,7 @@ namespace OIC
                       *
                       * @return NSTopicsList  as pointer.
                       */
-                std::shared_ptr<NSTopicsList> getTopicList() const  throw (NSException);
+                std::shared_ptr<NSTopicsList> getTopicList() const noexcept(false);
 
                 /**
                      * Update Topic list that is wanted to be subscribed from provider
@@ -148,7 +148,7 @@ namespace OIC
                      * @param topicList - NSTopicsList of interested Topics.
                      * @return NSResult
                      */
-                NSResult updateTopicList(std::shared_ptr<NSTopicsList> topicList)  throw (NSException);
+                NSResult updateTopicList(std::shared_ptr<NSTopicsList> topicList) noexcept(false);
 
                 /**
                       * This method is for getting ProviderState from the Notification service provider.
@@ -162,7 +162,7 @@ namespace OIC
                       *
                       * @return subscribedState as NSProviderSubscribedState.
                       */
-                NSProviderSubscribedState getProviderSubscribedState() const  throw (NSException);
+                NSProviderSubscribedState getProviderSubscribedState() const noexcept(false);
 
                 /**
                       * This method is for requesting subscription of Notification service.
@@ -175,7 +175,7 @@ namespace OIC
                       *
                       * @return ::NS_OK or result code of NSResult
                       */
-                NSResult subscribe()  throw (NSException);
+                NSResult subscribe() noexcept(false);
 
                 /**
                       * Request to unsubscribe in order not to receive notification message from provider
@@ -185,13 +185,13 @@ namespace OIC
                       *
                       * @return ::NS_OK or result code of NSResult
                      */
-                NSResult unsubscribe()  throw (NSException);
+                NSResult unsubscribe() noexcept(false);
 
                 /**
                       * This method is for requesting subscription status from Provider of Notification service.
                       *
                       */
-                bool isSubscribed()  throw (NSException);
+                bool isSubscribed() noexcept(false);
 
                 /**
                       * This method is for Sending SyncInfo of Notification service.
@@ -200,7 +200,7 @@ namespace OIC
                       * @param type - NSSyncType of Notification service.
                       * @return ::NS_OK or result code of NSResult
                       */
-                NSResult sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type)  throw (NSException);
+                NSResult sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type) noexcept(false);
 
                 /**
                       * This method is for registering for listeners of Notification .

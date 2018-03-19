@@ -21,7 +21,7 @@
 #include "deviceonboardingstate.h"
 #include "srmutility.h"
 #include "octypes.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "srmresourcestrings.h"
 #include "aclresource.h"
 #include "amaclresource.h"
@@ -29,7 +29,7 @@
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 #include "crlresource.h"
 #endif /* (__WITH_DTLS__) || (__WITH_TLS__) */
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "pstatresource.h"
 #include "resourcemanager.h"
 

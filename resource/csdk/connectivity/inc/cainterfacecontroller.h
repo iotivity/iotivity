@@ -31,29 +31,23 @@
 #include "cainterface.h"
 #include "cautilinterface.h"
 
-#ifndef SINGLE_THREAD
 #include "cathreadpool.h" /* for thread pool */
-#endif
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#ifdef SINGLE_THREAD
-/**
- * Initializes different adapters based on the compilation flags.
- */
-void CAInitializeAdapters();
-#else
 /**
  * Initializes different adapters based on the compilation flags.
  * @param[in]   handle           thread pool handle created by message handler
  *                               for different adapters.
  * @param[in]   transportType    transport type to initialize.
+ *
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-void CAInitializeAdapters(ca_thread_pool_t handle, CATransportAdapter_t transportType);
-#endif
+
+CAResult_t CAInitializeAdapters(ca_thread_pool_t handle, CATransportAdapter_t transportType);
 
 /**
  * Set the received packets callback for message handler.
@@ -100,6 +94,11 @@ CAResult_t CAStartAdapter(CATransportAdapter_t transportType);
  * @param[in]   transportType    network type that want to stop.
  */
 void CAStopAdapter(CATransportAdapter_t transportType);
+
+/**
+ * Stop connectivity adapters all.
+ */
+void CAStopAdapters();
 
 #ifdef RA_ADAPTER
 /**
@@ -172,13 +171,6 @@ bool CAIsLocalEndpoint(const CAEndpoint_t *ep);
  */
 void CATerminateAdapters();
 
-#ifdef SINGLE_THREAD
-/**
- * Checks for available data and reads it.
- * @return   ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CAReadData();
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

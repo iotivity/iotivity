@@ -21,13 +21,14 @@ else:
     env.AppendUnique(CCFLAGS=['-g'])
 
 # Test Coverage Flags and Library (if RELEASE=0)
-if not env.get('RELEASE'):
+if not env.get('RELEASE') and env.get('COVERAGE_CHECKS'):
     env.AppendUnique(CCFLAGS=['--coverage', '-fPIC', '-O0'])
     env.AppendUnique(LINKFLAGS=['--coverage'])
 
 env.AppendUnique(CPPDEFINES=['WITH_POSIX', '__linux__'])
 env.AppendUnique(CFLAGS=['-std=gnu99'])
 env.AppendUnique(CCFLAGS=['-Wall', '-Wextra', '-fPIC'])
+env.AppendUnique(SHLINKFLAGS=['-Wl,--as-needed'])
 env.AppendUnique(LIBS=['dl', 'pthread', 'uuid'])
 
 # The -Wno-error=missing-field-initializers is used due to a bug in versions
@@ -58,7 +59,7 @@ if LooseVersion(gcc_ver) < LooseVersion('5.0'):
     env.AppendUnique(CCFLAGS=['-Wno-missing-braces'])
 
 if env.get('ERROR_ON_WARN'):
-    env.AppendUnique(CFLAGS=['-Werror'])
+    env.AppendUnique(CCFLAGS=['-Werror'])
 
 # Set arch flags that match best TARGET_ARCH variable
 if not env.get('WITH_ENV'):

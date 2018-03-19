@@ -31,14 +31,13 @@
 #include <string.h>
 
 #include "utlist.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "cacommon.h"
 #include "cainterface.h"
-#include "base64.h"
 #include "srmresourcestrings.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "pstatresource.h"
 #include "credresource.h"
 #include "aclresource.h"
@@ -51,14 +50,15 @@
 #include "provisioningdatabasemanager.h"
 #include "oxmrandompin.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "oxmjustworks.h"
 #include "oxmpreconfpin.h"
 #include "oxmrandompin.h"
 #include "otmcontextlist.h"
 #include "ocstackinternal.h"
 #include "mbedtls/ssl_ciphersuites.h"
-#include "ocrandom.h"
+#include "mbedtls/base64.h"
+#include "experimental/ocrandom.h"
 #include "secureresourceprovider.h"
 
 #define TAG "OIC_MULTIPLE_OTM"
@@ -775,12 +775,13 @@ exit:
 OCStackResult MOTAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
                                  const char *preconfPIN, size_t preconfPINLen)
 {
-    OCStackResult addCredRes = OC_STACK_INVALID_PARAM;
+    OCStackResult addCredRes = OC_STACK_ERROR;
     OicSecCred_t *pinCred = NULL;
 
     OIC_LOG(DEBUG, TAG, "IN MOTAddPreconfigPIN");
 
     VERIFY_NOT_NULL(TAG, targetDeviceInfo, ERROR);
+    VERIFY_NOT_NULL(TAG, targetDeviceInfo->doxm, ERROR);
     VERIFY_NOT_NULL(TAG, preconfPIN, ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen), ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen && OXM_PRECONFIG_PIN_MAX_SIZE >= preconfPINLen), ERROR);
@@ -792,7 +793,6 @@ OCStackResult MOTAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
         return OC_STACK_OK;
     }
 
-    addCredRes = OC_STACK_NO_MEMORY;
     //Generate PIN based credential
     pinCred = (OicSecCred_t *)OICCalloc(1, sizeof(OicSecCred_t));
     VERIFY_NOT_NULL(TAG, pinCred, ERROR);
@@ -808,10 +808,8 @@ OCStackResult MOTAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
     memcpy(pinCred->subject.id, targetDeviceInfo->doxm->deviceID.id, sizeof(pinCred->subject.id));
 
     addCredRes = AddCredential(pinCred);
-    VERIFY_SUCCESS(TAG, (OC_STACK_OK == addCredRes), ERROR);
-
 exit:
-    if (OC_STACK_OK != addCredRes)
+    if (OC_STACK_OK != addCredRes && NULL != pinCred)
     {
         OICFree(pinCred->privateData.data);
         OICFree(pinCred);
@@ -881,16 +879,30 @@ static OCStackResult SaveSubOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
         VERIFY_NOT_NULL(TAG, cred, ERROR);
 
         size_t outSize = 0;
-        size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
-        char *b64Buf = (char *)OICCalloc(1, b64BufSize);
+        int encodeResult = mbedtls_base64_encode(NULL, 0, &outSize, cred->privateData.data, cred->privateData.len);
+        if (MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL != encodeResult)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Error base64 encoding PSK private data", __func__);
+            res = OC_STACK_ERROR;
+            goto exit;
+        }
+        size_t b64BufSize = outSize;
+        unsigned char *b64Buf = (unsigned char *)OICCalloc(1, b64BufSize);
         VERIFY_NOT_NULL(TAG, b64Buf, ERROR);
-        b64Encode(cred->privateData.data, cred->privateData.len, b64Buf, b64BufSize, &outSize);
+        encodeResult = mbedtls_base64_encode(b64Buf, b64BufSize, &outSize, cred->privateData.data, cred->privateData.len);
+        if (0 != encodeResult)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Error base64 encoding PSK private data", __func__);
+            OICFree(b64Buf);
+            res = OC_STACK_ERROR;
+            goto exit;
+        }
 
         OICFree(cred->privateData.data);
         cred->privateData.data = (uint8_t *)OICCalloc(1, outSize + 1);
         VERIFY_NOT_NULL(TAG, cred->privateData.data, ERROR);
 
-        strncpy((char *)(cred->privateData.data), b64Buf, outSize);
+        strncpy((char *)(cred->privateData.data), (char *)b64Buf, outSize);
         cred->privateData.data[outSize] = '\0';
         cred->privateData.encoding = OIC_ENCODING_BASE64;
         cred->privateData.len = outSize;
@@ -943,9 +955,10 @@ static OCStackApplicationResult SubOwnerCredentialHandler(void *ctx, OCDoHandle 
         if (motCtx && motCtx->selectedDeviceInfo)
         {
             //Close the temporal secure session to verify the owner credential
-            CAEndpoint_t *endpoint = (CAEndpoint_t *)&motCtx->selectedDeviceInfo->endpoint;
-            endpoint->port = motCtx->selectedDeviceInfo->securePort;
-            CAResult_t caResult = CAcloseSslSession(endpoint);
+            CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+            CopyDevAddrToEndpoint(&motCtx->selectedDeviceInfo->endpoint, &endpoint);
+            endpoint.port = motCtx->selectedDeviceInfo->securePort;
+            CAResult_t caResult = CAcloseSslSession(&endpoint);
             if (CA_STATUS_OK != caResult)
             {
                 OIC_LOG(ERROR, TAG, "Failed to close DTLS session");
@@ -953,7 +966,7 @@ static OCStackApplicationResult SubOwnerCredentialHandler(void *ctx, OCDoHandle 
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
-            caResult = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, endpoint->adapter);
+            caResult = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, endpoint.adapter);
             if (CA_STATUS_OK != caResult)
             {
                 OIC_LOG(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256");

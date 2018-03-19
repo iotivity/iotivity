@@ -22,12 +22,12 @@
 #include "resourcemanager.h"
 #include "aclresource.h"
 #include "pstatresource.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "credresource.h"
 #include "amaclresource.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "utlist.h"
 #include "psinterface.h"
 
@@ -52,7 +52,6 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCSecurityPayload ocPayload = {.base = {.type = PAYLOAD_TYPE_INVALID}};
 
         response.requestHandle = ehRequest->requestHandle;
-        response.resourceHandle = ehRequest->resource;
         response.ehResult = ehRet;
         response.payload = (OCPayload *)(&ocPayload);
         response.payload->type = PAYLOAD_TYPE_SECURITY;

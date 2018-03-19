@@ -59,7 +59,7 @@ samples_env.PrependUnique(LIBS=['octbstack', 'ocsrm'])
 if target_os in ['darwin']:
     samples_env.AppendUnique(LIBS=['routingmanager'])
 
-if target_os not in ['arduino', 'windows', 'darwin', 'ios', 'msys_nt']:
+if target_os not in ['windows', 'darwin', 'ios', 'msys_nt']:
     samples_env.AppendUnique(LIBS=['rt'])
 
 if target_os not in ['windows']:
@@ -69,17 +69,6 @@ if samples_env.get('SECURED') == '1':
     samples_env.AppendUnique(LIBS=['mbedtls'])
 
 samples_env.AppendUnique(CPPDEFINES=['TB_LOG'])
-
-src_dir = samples_env.get('SRC_DIR')
-sample_src_dir = src_dir + '/resource/csdk/stack/samples/linux/SimpleClientServer/'
-sample_build_dir = samples_env.get(
-    'BUILD_DIR') + '/resource/csdk/stack/samples/linux/SimpleClientServer/'
-
-introspectionDat = samples_env.Install(
-    sample_build_dir, sample_src_dir + 'introspection.dat')
-
-deviceProperties = samples_env.Install(
-    sample_build_dir, sample_src_dir + 'device_properties.dat')
 
 ######################################################################
 # Source files and Targets
@@ -115,8 +104,12 @@ list_of_samples = [
     ocserverslow,
     occlientslow
 ]
+
 if with_ra:
     list_of_samples.append(ocremoteaccessclient)
+
+list_of_samples += samples_env.ScanJSON('resource/csdk/stack/samples/linux/SimpleClientServer')
 Alias("samples", list_of_samples)
 
 samples_env.AppendTarget('samples')
+samples_env.UserInstallTargetExtra(list_of_samples)

@@ -50,15 +50,16 @@
 #include "ocresourcehandler.h"
 #include "occlientcb.h"
 #include "ocobserve.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "trace.h"
 #include "ocserverrequest.h"
 #include "secureresourcemanager.h"
+#include "srmutility.h"
 #include "psinterface.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "cacommon.h"
 #include "cainterface.h"
 #include "ocpayload.h"
@@ -71,6 +72,7 @@
 #include "ocatomic.h"
 #include "platform_features.h"
 #include "oic_platform.h"
+#include "caping.h"
 
 #ifdef UWP_APP
 #include "ocsqlite3helper.h"
@@ -91,9 +93,6 @@
 #include "oickeepalive.h"
 #endif
 
-#ifdef HAVE_ARDUINO_TIME_H
-#include "Time.h"
-#endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -177,6 +176,9 @@ bool g_multicastServerStopped = false;
 // Macros
 //-----------------------------------------------------------------------------
 #define TAG  "OIC_RI_STACK"
+#ifdef VERIFY_SUCCESS
+#undef VERIFY_SUCCESS
+#endif
 #define VERIFY_SUCCESS(op, successCode) { if ((op) != (successCode)) \
             {OIC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
 #define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OIC_LOG((logLevel), \
@@ -191,10 +193,6 @@ bool g_multicastServerStopped = false;
 
 #define MILLISECONDS_PER_SECOND   (1000)
 
-// handle case that SCNd64 is not defined in arduino's inttypes.h
-#if defined(WITH_ARDUINO) && !defined(SCNd64)
-#define SCNd64 "lld"
-#endif
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
 //-----------------------------------------------------------------------------
@@ -204,14 +202,14 @@ bool g_multicastServerStopped = false;
  *
  * @return Generated OCDoResource handle.
  */
-static OCDoHandle GenerateInvocationHandle();
+static OCDoHandle GenerateInvocationHandle(void);
 
 /**
  * Initialize resource data structures, variables, etc.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-static OCStackResult initResources();
+static OCStackResult initResources(void);
 
 /**
  * Add a resource to the end of the linked list of resources.
@@ -310,7 +308,7 @@ static OCStackResult deleteResource(OCResource *resource);
 /**
  * Delete all of the resources in the resource list.
  */
-static void deleteAllResources();
+static void deleteAllResources(void);
 
 /**
  * Increment resource sequence number.  Handles rollover.
@@ -459,7 +457,7 @@ static void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, boo
  * @param payload Discovery payload which has Endpoint information.
  * @param ifindex index which indicate network interface.
  */
-#if defined (IP_ADAPTER) && !defined (WITH_ARDUINO)
+#if defined (IP_ADAPTER)
 static OCStackResult OCMapZoneIdToLinkLocalEndpoint(OCDiscoveryPayload *payload, uint32_t ifindex);
 #endif
 
@@ -482,7 +480,7 @@ static OCStackResult OCInitializeInternal(OCMode mode, OCTransportFlags serverFl
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-static OCStackResult OCDeInitializeInternal();
+static OCStackResult OCDeInitializeInternal(void);
 
 //-----------------------------------------------------------------------------
 // Internal functions
@@ -502,7 +500,7 @@ static OCPayloadFormat CAToOCPayloadFormat(CAPayloadFormat_t caFormat)
     }
 }
 
-static void OCEnterInitializer()
+static void OCEnterInitializer(void)
 {
     for (;;)
     {
@@ -513,17 +511,12 @@ static void OCEnterInitializer()
             break;
         }
         OC_VERIFY(oc_atomic_decrement(&g_ocStackStartStopThreadCount) >= 0);
-#if !defined(ARDUINO)
         // Yield execution to the thread that is holding the lock.
         sleep(0);
-#else // ARDUINO
-        assert(!"Not expecting initCount to go above 1 on Arduino");
-        break;
-#endif // ARDUINO
     }
 }
 
-static void OCLeaveInitializer()
+static void OCLeaveInitializer(void)
 {
     OC_VERIFY(oc_atomic_decrement(&g_ocStackStartStopThreadCount) >= 0);
 }
@@ -695,15 +688,57 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
 OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t status)
 {
     OCStackResult result = OC_STACK_ERROR;
-    ResourceObserver * observer = NULL;
     OCEntityHandlerRequest ehRequest = {0};
+    OCResource *resource = NULL;
+    ResourceObserver *observer = NULL;
+
+    if (false == GetObserverFromResourceList(&resource, &observer, token, tokenLength))
+    {
+        OIC_LOG(DEBUG, TAG, "Observer is not found.");
+        return OC_STACK_OBSERVER_NOT_FOUND;
+    }
+    assert(resource);
+    assert(observer);
 
     switch(status)
     {
     case OC_OBSERVER_NOT_INTERESTED:
         OIC_LOG(DEBUG, TAG, "observer not interested in our notifications");
-        observer = GetObserverUsingToken(token, tokenLength);
-        if (observer)
+        result = FormOCEntityHandlerRequest(&ehRequest,
+                                            (OCRequestHandle)NULL,
+                                            OC_REST_NOMETHOD,
+                                            &observer->devAddr,
+                                            (OCResourceHandle)NULL,
+                                            NULL,
+                                            PAYLOAD_TYPE_REPRESENTATION, OC_FORMAT_CBOR,
+                                            NULL, 0, 0, NULL,
+                                            OC_OBSERVE_DEREGISTER,
+                                            observer->observeId,
+                                            0);
+        if (result != OC_STACK_OK)
+        {
+            return result;
+        }
+
+        if (resource->entityHandler)
+        {
+            resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest,
+                                    resource->entityHandlerCallbackParam);
+        }
+
+        DeleteObserverUsingToken(resource, token, tokenLength);
+        break;
+
+    case OC_OBSERVER_STILL_INTERESTED:
+        OIC_LOG(DEBUG, TAG, "observer still interested, reset the failedCount");
+        observer->forceHighQos = 0;
+        observer->failedCommCount = 0;
+        result = OC_STACK_OK;
+        break;
+
+    case OC_OBSERVER_FAILED_COMM:
+        OIC_LOG(DEBUG, TAG, "observer is unreachable");
+        if (MAX_OBSERVER_FAILED_COMM <= observer->failedCommCount)
         {
             result = FormOCEntityHandlerRequest(&ehRequest,
                                                 (OCRequestHandle)NULL,
@@ -718,98 +753,32 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                 0);
             if (result != OC_STACK_OK)
             {
-                return result;
+                return OC_STACK_ERROR;
             }
 
-            if (observer->resource && observer->resource->entityHandler)
+            if (resource->entityHandler)
             {
-                observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest,
-                                                  observer->resource->entityHandlerCallbackParam);
+                resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest,
+                                        resource->entityHandlerCallbackParam);
             }
-        }
 
-        result = DeleteObserverUsingToken(token, tokenLength);
-        if (result == OC_STACK_OK)
-        {
-            OIC_LOG(DEBUG, TAG, "Removed observer successfully");
+            DeleteObserverUsingToken(resource, token, tokenLength);
         }
         else
         {
-            result = OC_STACK_OK;
-            OIC_LOG(DEBUG, TAG, "Observer Removal failed");
+            observer->failedCommCount++;
+            observer->forceHighQos = 1;
+            OIC_LOG_V(DEBUG, TAG, "Failure counter for this observer is %d",
+                      observer->failedCommCount);
+            result = OC_STACK_CONTINUE;
         }
         break;
 
-    case OC_OBSERVER_STILL_INTERESTED:
-        OIC_LOG(DEBUG, TAG, "observer still interested, reset the failedCount");
-        observer = GetObserverUsingToken(token, tokenLength);
-        if (observer)
-        {
-            observer->forceHighQos = 0;
-            observer->failedCommCount = 0;
-            result = OC_STACK_OK;
-        }
-        else
-        {
-            result = OC_STACK_OBSERVER_NOT_FOUND;
-        }
-        break;
-
-    case OC_OBSERVER_FAILED_COMM:
-        OIC_LOG(DEBUG, TAG, "observer is unreachable");
-        observer = GetObserverUsingToken (token, tokenLength);
-        if (observer)
-        {
-            if (observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
-            {
-                result = FormOCEntityHandlerRequest(&ehRequest,
-                                                    (OCRequestHandle)NULL,
-                                                    OC_REST_NOMETHOD,
-                                                    &observer->devAddr,
-                                                    (OCResourceHandle)NULL,
-                                                    NULL,
-                                                    PAYLOAD_TYPE_REPRESENTATION, OC_FORMAT_CBOR,
-                                                    NULL, 0, 0, NULL,
-                                                    OC_OBSERVE_DEREGISTER,
-                                                    observer->observeId,
-                                                    0);
-                if (result != OC_STACK_OK)
-                {
-                    return OC_STACK_ERROR;
-                }
-
-                if (observer->resource && observer->resource->entityHandler)
-                {
-                    observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest,
-                                        observer->resource->entityHandlerCallbackParam);
-                }
-
-                result = DeleteObserverUsingToken(token, tokenLength);
-                if (result == OC_STACK_OK)
-                {
-                    OIC_LOG(DEBUG, TAG, "Removed observer successfully");
-                }
-                else
-                {
-                    result = OC_STACK_OK;
-                    OIC_LOG(DEBUG, TAG, "Observer Removal failed");
-                }
-            }
-            else
-            {
-                observer->failedCommCount++;
-                observer->forceHighQos = 1;
-                OIC_LOG_V(DEBUG, TAG, "Failed count for this observer is %d",
-                          observer->failedCommCount);
-                result = OC_STACK_CONTINUE;
-            }
-        }
-        break;
     default:
         OIC_LOG(ERROR, TAG, "Unknown status");
         result = OC_STACK_ERROR;
         break;
-        }
+    }
     return result;
 }
 
@@ -1301,7 +1270,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         goto exit;
     }
     OIC_LOG(INFO, TAG, "check for unicast presence");
-    cbNode = GetClientCB(NULL, 0, NULL, presenceUri);
+    cbNode = GetClientCBUsingUri(presenceUri);
     if (cbNode)
     {
         presenceSubscribe = 1;
@@ -1310,7 +1279,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     {
         // check for multicast presence
         OIC_LOG(INFO, TAG, "check for multicast presence");
-        cbNode = GetClientCB(NULL, 0, NULL, OC_RSRVD_PRESENCE_URI);
+        cbNode = GetClientCBUsingUri(OC_RSRVD_PRESENCE_URI);
         if (cbNode)
         {
             multicastPresenceSubscribe = 1;
@@ -1388,10 +1357,10 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     }
 
     // Ensure that a filter is actually applied.
-    if (resourceTypeName && cbNode->filterResourceType)
+    if (resourceTypeName && cbNode->interestingPresenceResourceType)
     {
         OIC_LOG_V(INFO, TAG, "find resource type : %s", resourceTypeName);
-        if(!findResourceType(cbNode->filterResourceType, resourceTypeName))
+        if(!findResourceType(cbNode->interestingPresenceResourceType, resourceTypeName))
         {
             goto exit;
         }
@@ -1403,7 +1372,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
 
     if (cbResult == OC_STACK_DELETE_TRANSACTION)
     {
-        FindAndDeleteClientCB(cbNode);
+        DeleteClientCB(cbNode);
     }
 
 exit:
@@ -1450,7 +1419,7 @@ OCStackResult HandleBatchResponse(char *requestUri, OCRepPayload **payload)
     return OC_STACK_INVALID_PARAM;
 }
 
-#if defined (IP_ADAPTER) && !defined (WITH_ARDUINO)
+#if defined (IP_ADAPTER)
 OCStackResult OCMapZoneIdToLinkLocalEndpoint(OCDiscoveryPayload *payload, uint32_t ifindex)
 {
     if (!payload)
@@ -1517,12 +1486,8 @@ void OC_CALL OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo
         return;
     }
 
-    ClientCB *cbNode = GetClientCB(responseInfo->info.token,
-            responseInfo->info.tokenLength, NULL, NULL);
-
-    ResourceObserver * observer = GetObserverUsingToken (responseInfo->info.token,
-            responseInfo->info.tokenLength);
-
+    ClientCB *cbNode = GetClientCBUsingToken(responseInfo->info.token,
+                                             responseInfo->info.tokenLength);
     if(cbNode)
     {
         OIC_LOG(INFO, TAG, "There is a cbNode associated with the response token");
@@ -1696,7 +1661,7 @@ void OC_CALL OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo
             response->result = CAResponseToOCStackResult(responseInfo->result);
             cbNode->callBack(cbNode->context,
                     cbNode->handle, response);
-            FindAndDeleteClientCB(cbNode);
+            DeleteClientCB(cbNode);
             OICFree(response);
         }
         else if ((cbNode->method == OC_REST_OBSERVE || cbNode->method == OC_REST_OBSERVE_ALL)
@@ -1726,7 +1691,7 @@ void OC_CALL OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo
             cbNode->callBack(cbNode->context,
                              cbNode->handle,
                              response);
-            FindAndDeleteClientCB(cbNode);
+            DeleteClientCB(cbNode);
             OICFree(response);
         }
         else
@@ -1873,7 +1838,7 @@ void OC_CALL OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo
 
                     // Check endpoints has link-local ipv6 address.
                     // if there is, map zone-id which parsed from ifindex
-#if defined (IP_ADAPTER) && !defined (WITH_ARDUINO)
+#if defined (IP_ADAPTER)
                     if (PAYLOAD_TYPE_DISCOVERY == response->payload->type)
                     {
                         OCDiscoveryPayload *disPayload = (OCDiscoveryPayload*)(response->payload);
@@ -1990,7 +1955,7 @@ void OC_CALL OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo
 
                 if (appFeedback == OC_STACK_DELETE_TRANSACTION)
                 {
-                    FindAndDeleteClientCB(cbNode);
+                    DeleteClientCB(cbNode);
                 }
                 else
                 {
@@ -2013,7 +1978,11 @@ void OC_CALL OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo
         return;
     }
 
-    if(observer)
+    OCResource *resource = NULL;
+    ResourceObserver *observer = NULL;
+    if (true == GetObserverFromResourceList(&resource, &observer,
+                                            responseInfo->info.token,
+                                            responseInfo->info.tokenLength))
     {
         OIC_LOG(INFO, TAG, "There is an observer associated with the response token");
         if(responseInfo->result == CA_EMPTY)
@@ -2133,8 +2102,8 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
     OIC_LOG(INFO, TAG, "Enter HandleCAErrorResponse");
     OIC_TRACE_BEGIN(%s:HandleCAErrorResponse, TAG);
 
-    ClientCB *cbNode = GetClientCB(errorInfo->info.token,
-                                   errorInfo->info.tokenLength, NULL, NULL);
+    ClientCB *cbNode = GetClientCBUsingToken(errorInfo->info.token,
+                                             errorInfo->info.tokenLength);
     if (cbNode)
     {
         OCClientResponse *response = NULL;
@@ -2159,14 +2128,15 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
         OCStackApplicationResult cbResult = cbNode->callBack(cbNode->context, cbNode->handle, response);
         if (cbResult == OC_STACK_DELETE_TRANSACTION)
         {
-            FindAndDeleteClientCB(cbNode);
+            DeleteClientCB(cbNode);
         }
         OICFree(response);
     }
 
-    ResourceObserver *observer = GetObserverUsingToken(errorInfo->info.token,
-                                                       errorInfo->info.tokenLength);
-    if (observer)
+    OCResource *resource = NULL;
+    ResourceObserver *observer = NULL;
+    if (true == GetObserverFromResourceList(&resource, &observer,
+                                            errorInfo->info.token, errorInfo->info.tokenLength))
     {
         OIC_LOG(INFO, TAG, "Receiving communication error for an observer");
         OCStackResult result = CAResultToOCResult(errorInfo->result);
@@ -2843,6 +2813,7 @@ OCStackResult OCInitializeInternal(OCMode mode, OCTransportFlags serverFlags,
     if (result == OC_STACK_OK)
     {
         result = InitializeKeepAlive(myStackMode);
+        result = CAInitializePing();
     }
 #endif
 
@@ -2866,7 +2837,7 @@ exit:
     return result;
 }
 
-OCStackResult OC_CALL OCStop()
+OCStackResult OC_CALL OCStop(void)
 {
     OIC_LOG(INFO, TAG, "Entering OCStop");
 
@@ -2896,7 +2867,7 @@ OCStackResult OC_CALL OCStop()
     return result;
 }
 
-OCStackResult OCDeInitializeInternal()
+OCStackResult OCDeInitializeInternal(void)
 {
     assert(stackState == OC_STACK_INITIALIZED);
 
@@ -2916,6 +2887,7 @@ OCStackResult OCDeInitializeInternal()
 
 #ifdef TCP_ADAPTER
     TerminateKeepAlive(myStackMode);
+    CATerminatePing();
 #endif
 
     OCStackResult result = CAResultToOCResult(
@@ -2927,8 +2899,6 @@ OCStackResult OCDeInitializeInternal()
     }
 
     TerminateScheduleResourceList();
-    // Remove all observers
-    DeleteObserverList();
     // Free memory dynamically allocated for resources
     deleteAllResources();
     // Remove all the client callbacks
@@ -2949,7 +2919,7 @@ OCStackResult OCDeInitializeInternal()
     return OC_STACK_OK;
 }
 
-OCStackResult OC_CALL OCStartMulticastServer()
+OCStackResult OC_CALL OCStartMulticastServer(void)
 {
     if(stackState != OC_STACK_INITIALIZED)
     {
@@ -2960,7 +2930,7 @@ OCStackResult OC_CALL OCStartMulticastServer()
     return OC_STACK_OK;
 }
 
-OCStackResult OC_CALL OCStopMulticastServer()
+OCStackResult OC_CALL OCStopMulticastServer(void)
 {
     g_multicastServerStopped = true;
     return OC_STACK_OK;
@@ -3401,6 +3371,14 @@ OCStackResult OC_CALL OCDoRequest(OCDoHandle *handle,
     if (devAddr)
     {
         OIC_LOG_V(DEBUG, TAG, "remoteId of devAddr : %s", devAddr->remoteId);
+
+        if ((devAddr->remoteId[0] == 0)
+            && destination
+            && (destination->remoteId[0] != 0))
+        {
+            OIC_LOG_V(DEBUG, TAG, "Copying remoteId from destination parameter: %s", destination->remoteId);
+            OICStrcpy(devAddr->remoteId, sizeof(devAddr->remoteId), destination->remoteId);
+        }
     }
 
     resHandle = GenerateInvocationHandle();
@@ -3712,7 +3690,7 @@ exit:
     if (result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCDoResource error");
-        FindAndDeleteClientCB(clientCB);
+        DeleteClientCB(clientCB);
         CADestroyToken(token);
         if (handle)
         {
@@ -3758,7 +3736,7 @@ OCStackResult OC_CALL OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHead
         return OC_STACK_INVALID_PARAM;
     }
 
-    ClientCB *clientCB = GetClientCB(NULL, 0, handle, NULL);
+    ClientCB *clientCB = GetClientCBUsingHandle(handle);
     if (!clientCB)
     {
         OIC_LOG(ERROR, TAG, "Callback not found. Called OCCancel on same resource twice?");
@@ -3776,7 +3754,7 @@ OCStackResult OC_CALL OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHead
 
             if ((endpoint.adapter & CA_ADAPTER_IP) && qos != OC_HIGH_QOS)
             {
-                FindAndDeleteClientCB(clientCB);
+                DeleteClientCB(clientCB);
                 break;
             }
 
@@ -3811,12 +3789,12 @@ OCStackResult OC_CALL OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHead
         case OC_REST_DISCOVER:
             OIC_LOG_V(INFO, TAG, "Cancelling discovery callback for resource %s",
                                            clientCB->requestUri);
-            FindAndDeleteClientCB(clientCB);
+            DeleteClientCB(clientCB);
             break;
 
 #ifdef WITH_PRESENCE
         case OC_REST_PRESENCE:
-            FindAndDeleteClientCB(clientCB);
+            DeleteClientCB(clientCB);
             break;
 #endif
         case OC_REST_GET:
@@ -3825,7 +3803,7 @@ OCStackResult OC_CALL OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHead
         case OC_REST_DELETE:
             OIC_LOG_V(INFO, TAG, "Cancelling request callback for resource %s",
                                            clientCB->requestUri);
-            FindAndDeleteClientCB(clientCB);
+            DeleteClientCB(clientCB);
             break;
 
         default:
@@ -3862,14 +3840,14 @@ OCStackResult OC_CALL OCRegisterPersistentStorageHandler(OCPersistentStorage* pe
     return OC_STACK_OK;
 }
 
-OCPersistentStorage *OC_CALL OCGetPersistentStorageHandler()
+OCPersistentStorage *OC_CALL OCGetPersistentStorageHandler(void)
 {
     return g_PersistentStorageHandler;
 }
 
 #ifdef WITH_PRESENCE
 
-OCStackResult OCProcessPresence()
+OCStackResult OCProcessPresence(void)
 {
     OCStackResult result = OC_STACK_OK;
 
@@ -3881,7 +3859,7 @@ OCStackResult OCProcessPresence()
     OCClientResponse clientResponse;
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
 
-    LL_FOREACH_SAFE(cbList, cbNode, cbTemp)
+    LL_FOREACH_SAFE(g_cbList, cbNode, cbTemp)
     {
         if (OC_REST_PRESENCE != cbNode->method || !cbNode->presence)
         {
@@ -3922,7 +3900,7 @@ OCStackResult OCProcessPresence()
             cbResult = cbNode->callBack(cbNode->context, cbNode->handle, &clientResponse);
             if (cbResult == OC_STACK_DELETE_TRANSACTION)
             {
-                FindAndDeleteClientCB(cbNode);
+                DeleteClientCB(cbNode);
             }
         }
 
@@ -3965,7 +3943,7 @@ exit:
 }
 #endif // WITH_PRESENCE
 
-OCStackResult OC_CALL OCProcess()
+OCStackResult OC_CALL OCProcess(void)
 {
     if (stackState == OC_STACK_UNINITIALIZED)
     {
@@ -3983,6 +3961,7 @@ OCStackResult OC_CALL OCProcess()
 
 #ifdef TCP_ADAPTER
     ProcessKeepAlive();
+    CAProcessPing();
 #endif
     return OC_STACK_OK;
 }
@@ -4047,7 +4026,7 @@ OCStackResult OC_CALL OCStartPresence(const uint32_t ttl)
             OC_PRESENCE_TRIGGER_CREATE);
 }
 
-OCStackResult OC_CALL OCStopPresence()
+OCStackResult OC_CALL OCStopPresence(void)
 {
     OIC_LOG(INFO, TAG, "Entering OCStopPresence");
     OCStackResult result = OC_STACK_ERROR;
@@ -4082,7 +4061,7 @@ OCStackResult OC_CALL OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler enti
     return OC_STACK_OK;
 }
 
-OCTpsSchemeFlags OC_CALL OCGetSupportedEndpointTpsFlags()
+OCTpsSchemeFlags OC_CALL OCGetSupportedEndpointTpsFlags(void)
 {
     return OCGetSupportedTpsFlags();
 }
@@ -4270,6 +4249,9 @@ OCStackResult OC_CALL OCCreateResourceWithEp(OCResourceHandle *handle,
 
     // Initialize a pointer indicating child resources in case of collection
     pointer->rsrcChildResourcesHead = NULL;
+
+    // Initialize a pointer indicating observers to this resource
+    pointer->observersHead = NULL;
 
     *handle = pointer;
     result = OC_STACK_OK;
@@ -4957,7 +4939,7 @@ OCStackResult SendPresenceNotification(OCResourceType *resourceType,
     return result;
 }
 
-OCStackResult SendStopNotification()
+OCStackResult SendStopNotification(void)
 {
     OIC_LOG(INFO, TAG, "SendStopNotification");
     OCResource *resPtr = NULL;
@@ -5059,7 +5041,7 @@ OCStackResult OC_CALL OCDoResponse(OCEntityHandlerResponse *ehResponse)
 
     // Normal response
     // Get pointer to request info
-    serverRequest = GetServerRequestUsingHandle((OCServerRequest *)ehResponse->requestHandle);
+    serverRequest = (OCServerRequest *)ehResponse->requestHandle;
     if(serverRequest)
     {
         // response handler in ocserverrequest.c. Usually HandleSingleResponse.
@@ -5073,7 +5055,7 @@ OCStackResult OC_CALL OCDoResponse(OCEntityHandlerResponse *ehResponse)
 //-----------------------------------------------------------------------------
 // Private internal function definitions
 //-----------------------------------------------------------------------------
-static OCDoHandle GenerateInvocationHandle()
+static OCDoHandle GenerateInvocationHandle(void)
 {
     OCDoHandle handle = NULL;
     // Generate token here, it will be deleted when the transaction is deleted
@@ -5116,7 +5098,7 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
 }
 #endif
 
-OCStackResult initResources()
+OCStackResult initResources(void)
 {
     OCStackResult result = OC_STACK_OK;
 
@@ -5138,12 +5120,11 @@ OCStackResult initResources()
             &(((OCResource *) presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 0);
 #endif
-#ifndef WITH_ARDUINO
+
     if (result == OC_STACK_OK)
     {
         result = SRMInitSecureResources();
     }
-#endif
 
     if(result == OC_STACK_OK)
     {
@@ -5293,7 +5274,7 @@ OCResource *findResource(OCResource *resource)
     return NULL;
 }
 
-void deleteAllResources()
+void deleteAllResources(void)
 {
     OCResource *pointer = headResource;
     OCResource *temp = NULL;
@@ -5425,6 +5406,8 @@ void deleteResourceElements(OCResource *resource)
     {
         OCDeleteResourceAttributes(resource->rsrcAttributes);
     }
+
+    DeleteObserverList(resource);
 }
 
 void deleteResourceType(OCResourceType *resourceType)
@@ -5462,7 +5445,9 @@ void OCDeleteResourceAttributes(OCAttribute *rsrcAttributes)
     for (OCAttribute *pointer = rsrcAttributes; pointer; pointer = next)
     {
         next = pointer->next;
-        if (pointer->attrName && 0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, pointer->attrName))
+        if (pointer->attrName && (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, pointer->attrName) ||
+                                  0 == strcmp(OC_RSRVD_DEVICE_DESCRIPTION, pointer->attrName) ||
+                                  0 == strcmp(OC_RSRVD_DEVICE_MFG_NAME, pointer->attrName)))
         {
             OCFreeOCStringLL((OCStringLL *)pointer->attrValue);
         }
@@ -6181,7 +6166,7 @@ void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isCon
         CopyEndpointToDevAddr(info, &devAddr);
 
         // remove observer list with remote device address.
-        DeleteObserverUsingDevAddr(&devAddr);
+        GiveStackFeedBackObserverNotInterested(&devAddr);
     }
 }
 

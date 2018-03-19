@@ -24,7 +24,7 @@
 
 #include "caedrinterface.h"
 #include "caedrnwmonitor.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "cathreadpool.h" /* for thread pool */
 #include "octhread.h"

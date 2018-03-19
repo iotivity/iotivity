@@ -13,9 +13,9 @@ import platform
 
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
-    'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
-    'windows': ['windows', 'android', 'arduino'],
-    'darwin': ['darwin', 'ios', 'android', 'arduino'],
+    'linux': ['linux', 'android', 'yocto', 'tizen'],
+    'windows': ['windows', 'android'],
+    'darwin': ['darwin', 'ios', 'android'],
 }
 
 # Map of os and allowed archs (os: allowed archs)
@@ -29,12 +29,11 @@ os_arch_map = {
     'windows': ['x86', 'amd64', 'arm'],
     'darwin': ['i386', 'x86_64'],
     'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
-    'arduino': ['avr', 'arm'],
     'yocto':
     ['i586', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
 }
 
-es_target_enrollee_map = {'arduino', 'tizen', 'linux'}
+es_target_enrollee_map = ['tizen', 'linux']
 
 host = platform.system().lower()
 
@@ -69,7 +68,7 @@ device_name = ARGUMENTS.get('DEVICE_NAME', "OIC-DEVICE")
 es_target_enrollee = ARGUMENTS.get('ES_TARGET_ENROLLEE')
 
 if es_target_enrollee not in es_target_enrollee_map:
-    msg = "\nError: Unknown ES_TARGET_ENROLLEE: %s (Allow values: %s)\n" % (
+    msg = "\nError: Unknown ES_TARGET_ENROLLEE: %s (Allowed values: %s)\n" % (
         es_target_enrollee, es_target_enrollee_map)
     Exit(msg)
 
@@ -91,8 +90,6 @@ help_vars.Add(
 help_vars.Add(
     EnumVariable('SECURED', 'Build with DTLS', '1', allowed_values=('0', '1')))
 help_vars.Add(
-    BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
-help_vars.Add(
     EnumVariable(
         'ROUTING', 'Enable routing', 'EP', allowed_values=('GW', 'EP')))
 help_vars.Add(
@@ -110,13 +107,13 @@ help_vars.AddVariables(
     ('DEVICE_NAME', 'Network display name for device', 'OIC-DEVICE', None,
      None), )
 
-#ES_TARGET_ENROLLEE is for specifying what is our target enrollee (Arduino or rest of platforms which support Multicast)
+#ES_TARGET_ENROLLEE is for specifying what is our target enrollee
 help_vars.Add(
     EnumVariable(
         'ES_TARGET_ENROLLEE',
         'Target Enrollee',
-        'arduino',
-        allowed_values=('arduino', 'tizen', 'linux')))
+        'linux',
+        allowed_values=('tizen', 'linux')))
 
 AddOption(
     '--prefix',
@@ -130,7 +127,7 @@ AddOption(
 ######################################################################
 # Platform(build target) specific options: SDK/NDK & toolchain
 ######################################################################
-targets_support_cc = ['linux', 'arduino', 'tizen']
+targets_support_cc = ['linux', 'tizen']
 
 if target_os in targets_support_cc:
     # Set cross compile toolchain
@@ -144,9 +141,8 @@ if target_os in targets_support_cc:
             'Toolchain path (Generally only be required for cross-compiling)',
             os.environ.get('TC_PATH')))
 
-if target_os in [
-        'android', 'arduino'
-]:  # Android/Arduino always uses GNU compiler regardless of the host
+if target_os in ['android']:
+    # Android always uses GNU compiler regardless of the host
     env = Environment(
         variables=help_vars, tools=['gnulink', 'gcc', 'g++', 'ar', 'as'])
 else:

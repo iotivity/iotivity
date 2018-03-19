@@ -25,7 +25,7 @@
  *
  * @param[in] secure   secure flag
  */
-OCStackResult InitDiscovery();
+OCStackResult InitDiscovery(void);
 
 /**
  * This function sends GET/PUT/POST request to peer

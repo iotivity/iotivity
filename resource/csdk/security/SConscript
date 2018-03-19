@@ -65,24 +65,16 @@ if libocsrm_env.get('SECURED') == '1':
     if target_os in ['linux', 'android', 'tizen', 'msys_nt', 'windows']:
         SConscript('provisioning/SConscript', 'libocsrm_env')
 
-    if target_os in ['linux', 'windows', 'darwin']:
+    if target_os in ['linux', 'tizen', 'windows', 'darwin']:
         SConscript('tool/SConscript', 'libocsrm_env')
 
-# As in the source code, it includes arduino Time library (C++)
-# It requires compile the .c with g++
-if target_os == 'arduino':
-    libocsrm_env.Replace(CC=libocsrm_env.get('CXX'))
-    libocsrm_env.Replace(CFLAGS=libocsrm_env.get('CXXFLAGS'))
-
-if target_os not in ['arduino', 'windows']:
+if target_os not in ['windows']:
     libocsrm_env.AppendUnique(CPPDEFINES=['WITH_POSIX', '_GNU_SOURCE'])
     libocsrm_env.AppendUnique(CFLAGS=['-std=c99', '-Wall'])
 
 libocsrm_env.AppendUnique(LIBS=['coap'])
 
-if target_os == 'arduino':
-    libocsrm_env.AppendUnique(CPPDEFINES=['NDEBUG', 'WITH_ARDUINO'])
-elif target_os not in ['windows', 'msys_nt']:
+if target_os not in ['windows', 'msys_nt']:
     libocsrm_env.AppendUnique(CFLAGS=['-fPIC'])
     libocsrm_env.AppendUnique(LIBS=['m'])
 
@@ -139,14 +131,12 @@ if target_os in ['windows', 'msys_nt']:
 
 libocsrm_src.extend(env['cbor_files'])
 
-# Insert a hack for Arduino, whose compiler may not support all defines expected
-# by tinycbor
-if target_os in ['arduino']:
-    libocsrm_env.AppendUnique(CPPDEFINES=['INT64_MAX=0x7FFFFFFFFFFFFFFF'])
-
 libocsrm = libocsrm_env.StaticLibrary('ocsrm', libocsrm_src)
 
 libocsrm_env.InstallTarget(libocsrm, 'ocsrm')
 libocsrm_env.UserInstallTargetHeader(
     'include/experimental/securevirtualresourcetypes.h',
     'resource/stack/experimental', 'securevirtualresourcetypes.h')
+libocsrm_env.UserInstallTargetHeader(
+    'include/experimental/doxmresource.h',
+    'resource/stack/experimental', 'doxmresource.h')

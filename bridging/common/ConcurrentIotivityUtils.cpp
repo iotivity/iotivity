@@ -23,7 +23,7 @@
 #include "octypes.h"
 #include "ConcurrentIotivityUtils.h"
 #include "ocpayload.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "CONCURRENT_IOTIVITY_UTILS"
 
@@ -72,7 +72,6 @@ OCStackResult ConcurrentIotivityUtils::respondToRequest(OCEntityHandlerRequest *
     std::unique_ptr<OCEntityHandlerResponse> response = make_unique<OCEntityHandlerResponse>();
 
     response->requestHandle = request->requestHandle;
-    response->resourceHandle = request->resource;
     response->ehResult = responseCode;
 
     // Clone a copy since this allocation is going across thread boundaries.

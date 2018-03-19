@@ -188,12 +188,22 @@ class NSConsumerSimulator
 
         OCStackResult msgResourceCancelObserve(OC::QualityOfService qos)
         {
-            return m_msgResource->cancelObserve(qos);
+            //Check the m_msgResource before calling
+            OCStackResult result = OC_STACK_ERROR;
+            if(m_msgResource != NULL) {
+                result = m_msgResource->cancelObserve(qos);
+            }
+            return result;
         }
 
         OCStackResult syncResourceCancelObserve(OC::QualityOfService qos)
         {
-            return m_syncResource->cancelObserve(qos);
+            //Check the m_syncResource before calling
+            OCStackResult result = OC_STACK_ERROR;
+            if(m_syncResource != NULL) {
+                result = m_syncResource->cancelObserve(qos);
+            }
+            return result;
         }
 };
 

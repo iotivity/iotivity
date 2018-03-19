@@ -31,7 +31,7 @@
 #include "oic_string.h"
 #include "octhread.h"
 #include "occollection.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "octimer.h"
 
 #define TAG "OIC_RI_GROUP"
@@ -126,12 +126,7 @@ ScheduledResourceInfo* GetScheduledResource(ScheduledResourceInfo *head)
 
     ScheduledResourceInfo *tmp = NULL;
     tmp = head;
-
-#if !defined(WITH_ARDUINO)
     time(&t_now);
-#else
-    t_now = now();
-#endif
 
     if (tmp)
     {
@@ -636,13 +631,11 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
     // yyyy-mm-dd hh:mm:ss d
     iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterTokenPtr);
     VARIFY_PARAM_NULL(iterToken, result, exit)
-#if !defined(WITH_ARDUINO)
     if( 2 != sscanf(iterToken, "%ld %u", &(*set)->timesteps, &(*set)->type) )
     {
         // If the return value should be 2, the number of items in the argument. Otherwise, it fails.
         goto exit;
     }
-#endif
 
     OIC_LOG_V(INFO, TAG, "ActionSet Name : %s", (*set)->actionsetName);
 
@@ -889,7 +882,6 @@ OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
 
         // Format the response.  Note this requires some info about the request
         response.requestHandle = info->ehRequest;
-        response.resourceHandle = info->collResource;
         response.payload = clientResponse->payload;
         response.numSendVendorSpecificHeaderOptions = 0;
         memset(response.sendVendorSpecificHeaderOptions, 0,
@@ -1020,8 +1012,9 @@ OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
     return result;
 }
 
-void DoScheduledGroupAction()
+void DoScheduledGroupAction(void *ctx)
 {
+    OC_UNUSED(ctx);
     OIC_LOG(INFO, TAG, "DoScheduledGroupAction Entering...");
     ScheduledResourceInfo* info = GetScheduledResource(g_scheduleResourceList);
 
@@ -1073,7 +1066,8 @@ void DoScheduledGroupAction()
 
                 schedule->time = registerTimer(info->actionset->timesteps,
                         &schedule->timer_id,
-                        &DoScheduledGroupAction);
+                        &DoScheduledGroupAction,
+                        NULL);
 
                 OIC_LOG(INFO, TAG, "Reregistration.");
                 oc_mutex_unlock(g_scheduledResourceLock);
@@ -1182,7 +1176,6 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
 
             // Format the response.  Note this requires some info about the request
             response.requestHandle = ehRequest->requestHandle;
-            response.resourceHandle = ehRequest->resource;
             response.payload = (OCPayload*) payload;
             response.numSendVendorSpecificHeaderOptions = 0;
             memset(response.sendVendorSpecificHeaderOptions, 0,
@@ -1292,7 +1285,8 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                                 oc_mutex_lock(g_scheduledResourceLock);
                                 schedule->time = registerTimer(delay,
                                         &schedule->timer_id,
-                                        &DoScheduledGroupAction);
+                                        &DoScheduledGroupAction,
+                                        NULL);
                                 oc_mutex_unlock(g_scheduledResourceLock);
                                 AddScheduledResource(&g_scheduleResourceList,
                                         schedule);
@@ -1361,7 +1355,6 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
 
             // Format the response.  Note this requires some info about the request
             response.requestHandle = ehRequest->requestHandle;
-            response.resourceHandle = ehRequest->resource;
             response.payload = (OCPayload*) payload;
             response.numSendVendorSpecificHeaderOptions = 0;
             memset(response.sendVendorSpecificHeaderOptions, 0,
@@ -1389,7 +1382,7 @@ exit:
     return stackRet;
 }
 
-OCStackResult InitializeScheduleResourceList()
+OCStackResult InitializeScheduleResourceList(void)
 {
     assert(g_scheduledResourceLock == NULL);
 
@@ -1403,7 +1396,7 @@ OCStackResult InitializeScheduleResourceList()
     return OC_STACK_OK;
 }
 
-void TerminateScheduleResourceList()
+void TerminateScheduleResourceList(void)
 {
     assert(g_scheduleResourceList == NULL);
 

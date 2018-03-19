@@ -20,19 +20,19 @@
 
 #include "utlist.h"
 #include "crl_logging.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "psinterface.h"
 #include "resourcemanager.h"
 #include "srmresourcestrings.h"
 #include "srmutility.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "crlresource.h"
 #include "ocpayloadcbor.h"
-#include "base64.h"
+#include "mbedtls/base64.h"
 #include <time.h>
 
 #define TAG  "OIC_SRM_CRL"
@@ -129,13 +129,16 @@ static CborError setCrlData(CborEncoder *out, const char *name, const OicSecKey_
     CborError result = CborErrorInternalError;
 
     size_t len = 0;
-    size_t encodeBufferSize = B64ENCODE_OUT_SAFESIZE((value->len + 1));
-    char *encodeBuffer = OICCalloc(1, encodeBufferSize);
+    unsigned char *encodeBuffer = NULL;
+    int b64result = mbedtls_base64_encode(NULL, 0, &len, value->data, value->len);
+    VERIFY_SUCCESS(TAG, (MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL == b64result), ERROR);
 
+    size_t encodeBufferSize = len;
+    encodeBuffer = OICCalloc(1, encodeBufferSize);
     VERIFY_NOT_NULL(TAG, encodeBuffer, ERROR);
 
-    B64Result b64result = b64Encode(value->data, value->len, encodeBuffer, encodeBufferSize, &len);
-    VERIFY_SUCCESS(TAG, (B64_OK == b64result), ERROR);
+    b64result = mbedtls_base64_encode(encodeBuffer, encodeBufferSize, &len, value->data, value->len);
+    VERIFY_SUCCESS(TAG, (0 == b64result), ERROR);
 
     result = cbor_encode_text_string(out, name, strlen(name));
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, result, "Failed Adding name Tag.");
@@ -159,7 +162,7 @@ static CborError getCrlData(CborValue *in, const char *name, OicSecKey_t *value)
 
     CborError result = CborNoError;
     CborValue crlNode = { .parser = NULL };
-    char *decodeBuffer = NULL;
+    unsigned char *decodeBuffer = NULL;
     size_t decodeBufferSize;
 
     result = cbor_value_map_find_value(in, name, &crlNode);
@@ -169,17 +172,23 @@ static CborError getCrlData(CborValue *in, const char *name, OicSecKey_t *value)
                 (char **)&decodeBuffer, &decodeBufferSize, NULL);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, result, "Failed Advancing Byte Array.");
 
-        value->len = B64DECODE_OUT_SAFESIZE(decodeBufferSize + 1);
+        size_t outLen = 0;
+        int decodeResult = mbedtls_base64_decode(NULL, 0, &outLen, decodeBuffer, decodeBufferSize);
+        if (MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL != decodeResult)
+        {
+            OIC_LOG(ERROR, TAG, "Failed base64 decoding -- invalid character");
+            return CborErrorInternalError;
+        }
+        value->len = outLen;
         value->data = OICCalloc(1, value->len);
         VERIFY_NOT_NULL(TAG, value->data, ERROR);
 
-        B64Result b64result = b64Decode(decodeBuffer, decodeBufferSize, value->data, value->len, &value->len);
-        if (B64_OK != b64result)
+        decodeResult = mbedtls_base64_decode(value->data, value->len, &outLen, decodeBuffer, decodeBufferSize);
+        if (0 != decodeResult)
         {
-            OIC_LOG_V(ERROR, TAG, "CRL b64Decode error");
+            OIC_LOG_V(ERROR, TAG, "CRL mbedtls_base64_decode error");
             result = CborErrorInternalError;
         }
-
     }
 
 exit:
@@ -810,20 +819,26 @@ void GetDerCrl(ByteArray_t* out)
 
     if (OIC_ENCODING_BASE64 == crl->encoding)
     {
-        size_t decodeBufferSize = B64DECODE_OUT_SAFESIZE((crl->len + 1));
-        uint8_t *decodeBuffer = OICCalloc(1, decodeBufferSize);
+        size_t len = 0;
+        int decodeResult = mbedtls_base64_decode(NULL, 0, &len, crl->data, crl->len);
+        if (MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL != decodeResult)
+        {
+            OIC_LOG(ERROR, TAG, "Base64 decoding failed");
+            return;
+        }
+
+        size_t decodeBufferSize = len;
+        unsigned char *decodeBuffer = OICCalloc(1, decodeBufferSize);
         if (!decodeBuffer)
         {
             OIC_LOG(ERROR, TAG, "Can't allocate memory for base64 str");
             return;
         }
-        size_t len = 0;
 
-        if(B64_OK == b64Decode((char*)crl->data, crl->len, decodeBuffer, decodeBufferSize, &len))
+        if (0 == mbedtls_base64_decode(decodeBuffer, decodeBufferSize, &len, crl->data, crl->len))
         {
             memcpy(crl->data, decodeBuffer, len);
             crl->len = (size_t)len;
-
             OIC_LOG (ERROR, TAG, "Crl successfully decoded to base64.");
         }
         else

@@ -23,14 +23,14 @@
  *
  * @return ::OC_STACK_OK or Appropriate error code.
  */
-OCStackResult OCCMInitialize();
+OCStackResult OCCMInitialize(void);
 
 /**
  * Terminate the Connection Manager
  *
  * @return ::OC_STACK_OK or Appropriate error code.
  */
-OCStackResult OCCMTerminate();
+OCStackResult OCCMTerminate(void);
 
 /**
  *  Discover Resources by Connection Manager

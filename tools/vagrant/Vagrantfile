@@ -5,8 +5,24 @@
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  # Every Vagrant virtual environment requires a box to build off of.
-  config.vm.box = "hashicorp/precise64"
+  # We are not trying to provision multiple boxes at once, this
+  # is just a trick to give a name other than "default" to the box.
+  # Pick the stanza you want. Warning: non-LTS releases vanish fast!
+  config.vm.define "iotivity1604" do |iotivity1604|
+    # Every Vagrant virtual environment requires a box to build off of.
+    iotivity1604.vm.box = "bento/ubuntu-16.04"
+    iotivity1604.vm.hostname = "iotivity1604"
+  end
+  #config.vm.define "iotivity1704" do |iotivity1704|
+  #  # Every Vagrant virtual environment requires a box to build off of.
+  #  iotivity1704.vm.box = "bento/ubuntu-17.04"
+  #  iotivity1704.vm.hostname = "iotivity1704"
+  #end
+  #config.vm.define "iotivity1710" do |iotivity1710|
+  #  # Every Vagrant virtual environment requires a box to build off of.
+  #  iotivity1710.vm.box = "bento/ubuntu-17.10"
+  #  iotivity1710.vm.hostname = "iotivity1710"
+  #end
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -25,24 +41,48 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
   # your network.
-  # config.vm.network "public_network"
+  # iotivity: to enable this box to participate in the network so other
+  # iotivity devices can see it, we want this:
+  config.vm.network "public_network"
 
+  #config.vm.post_up_message "This is a test message.  Try 'vagrant ssh'"
+
+  # Provider-specific configuration example:
+  config.vm.provider "virtualbox" do |vb|
+      # Display the VirtualBox GUI when booting
+      vb.gui = false
+      # Customize memory in VM - 2GB about minimum for full building/testing
+      vb.memory = "2048"
+  end
+
+  # Provision the VM:
+  # copies current user's files, maybe use a separate key for Vagrant?
   config.vm.provision :file, source: "~/.gitconfig", destination: ".gitconfig"
-  # maybe should have a separate key for Vagrant
   config.vm.provision :file, source: "~/.ssh/id_rsa", destination: ".ssh/id_rsa"
   config.vm.provision :file, source: "~/.ssh/id_rsa.pub", destination: ".ssh/id_rsa.pub"
   config.vm.provision :file, source: "~/.ssh/known_hosts", destination: ".ssh/known_hosts"
   config.vm.provision :file, source: "~/.ssh/config", destination: ".ssh/config"
 
-  # Simple script configuration
-  config.vm.provision :shell, path: "bootstrap.sh"
+  # Provision the needed distro packages
+  config.vm.provision :shell, inline: <<-SHELL
+    apt-get update
+    apt-get -qy upgrade
+    # for C/C++ development:
+    apt-get -qy install \
+        build-essential git scons ssh unzip valgrind \
+        doxygen libtool autoconf pkg-config gcovr \
+        libboost-all-dev libsqlite3-dev \
+        uuid-dev libglib2.0-dev libcurl4-gnutls-dev \
+        libbz2-dev
+    # for Android/Java development:
+    apt-get -qy install openjdk-8-jdk icedtea-plugin
+    apt-get clean
+  SHELL
+
+  # run a script to provision iotivity project itself
   config.vm.provision :shell do |shell|
     shell.path = "iotivity-setup.sh"
-    user = ENV['USER']
-    if (user.empty?)
-      user = ENV['USERNAME']
-    end
-    shell.args = "#{user}"
+    #shell.args = "-no-android -no-adruino"
     shell.privileged = false
   end
 end

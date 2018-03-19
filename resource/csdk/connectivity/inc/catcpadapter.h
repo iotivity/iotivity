@@ -55,6 +55,19 @@ typedef enum
 } CATCPConnectionState_t;
 
 /**
+ * TCP Capability and Settings message(CSM) exchange state.
+ * Capability and Settings message must be sent
+ * as the first message for both server/client.
+ */
+typedef enum
+{
+    NONE = 0,
+    SENT,
+    RECEIVED,
+    SENT_RECEIVED
+} CACSMExchangeState_t;
+
+/**
  * TCP Session Information for IPv4/IPv6 TCP transport
  */
 typedef struct CATCPSessionInfo_t
@@ -68,6 +81,7 @@ typedef struct CATCPSessionInfo_t
     size_t tlsLen;                      /**< received tls data length */
     CAProtocol_t protocol;              /**< application-level protocol */
     CATCPConnectionState_t state;       /**< current tcp session state */
+    CACSMExchangeState_t CSMState;      /**< Capability and Setting Message shared status */
     bool isClient;                      /**< Host Mode of Operation. */
     struct CATCPSessionInfo_t *next;    /**< Linked list; for multiple session list. */
 } CATCPSessionInfo_t;
@@ -98,7 +112,16 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
  * Start TCP Interface adapter.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAStartTCP();
+CAResult_t CAStartTCP(void);
+
+/**
+ * Disconnect TCP session.
+ * Per RFC 8323 TCP session needs to be disconnected in certain situations
+ * like if CSM message is not the first message for the session.
+ * @param[in]   endpoint       Remote Endpoint information (like ipaddress,
+ *                             port)
+ */
+CAResult_t CATCPDisconnectSession(const CAEndpoint_t *endpoint);
 
 /**
  * Start listening server for receiving connect requests.
@@ -107,7 +130,7 @@ CAResult_t CAStartTCP();
  * number and as per OIC Specification.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAStartTCPListeningServer();
+CAResult_t CAStartTCPListeningServer(void);
 
 /**
  * Stops listening server from receiving connect requests.
@@ -116,7 +139,7 @@ CAResult_t CAStartTCPListeningServer();
  * number and as per OIC Specification.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAStopTCPListeningServer();
+CAResult_t CAStopTCPListeningServer(void);
 
 /**
  * Start discovery servers for receiving advertisements.
@@ -125,7 +148,7 @@ CAResult_t CAStopTCPListeningServer();
  * number as per OIC Specification.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAStartTCPDiscoveryServer();
+CAResult_t CAStartTCPDiscoveryServer(void);
 
 /**
  * Sends data to the endpoint using the adapter connectivity.
@@ -169,19 +192,19 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, size_t *size);
  * Read Synchronous API callback.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAReadTCPData();
+CAResult_t CAReadTCPData(void);
 
 /**
  * Stops Unicast, servers and close the sockets.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAStopTCP();
+CAResult_t CAStopTCP(void);
 
 /**
  * Terminate the TCP connectivity adapter.
  * Configuration information will be deleted from further use.
  */
-void CATerminateTCP();
+void CATerminateTCP(void);
 
 /**
  * Set connection status changes callback to process KeepAlive.
@@ -189,6 +212,23 @@ void CATerminateTCP();
  * @param[in]   ConnHandler     Connection status changes callback.
  */
 void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectionCallback ConnHandler);
+
+/**
+ * Get Capability and Settings message(CSM) exchange state.
+ * @param[in]   endpoint        Remote Endpoint information (like ipaddress,
+ *                              port, reference uri and transport type)
+ *                              to check CSM state in session information.
+ * @return  current CSM exchange state of the session.
+ */
+CACSMExchangeState_t CAGetCSMState(const CAEndpoint_t *endpoint);
+
+/**
+* Update Capability and Settings message(CSM) exchange state when sending or receiving CSM.
+* @param[in]   endpoint        Remote Endpoint information (like ipaddress,
+*                              port, reference uri and transport type) to update CSM state.
+* @param[in]   state           CSM exchange state to be updated.
+*/
+void CAUpdateCSMState(const CAEndpoint_t *endpoint, CACSMExchangeState_t state);
 
 #ifdef __cplusplus
 } /* extern "C" */

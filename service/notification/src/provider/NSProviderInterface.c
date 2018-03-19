@@ -39,13 +39,13 @@ bool initProvider = false;
 pthread_mutex_t nsInitMutex;
 pthread_cond_t nstopicCond;
 
-void initializeMutex()
+void initializeMutex(void)
 {
     static pthread_mutex_t initMutex = PTHREAD_MUTEX_INITIALIZER;
     nsInitMutex = initMutex;
 }
 
-void NSInitialize()
+void NSInitialize(void)
 {
     NS_LOG(DEBUG, "NSSetList - IN");
 
@@ -59,7 +59,7 @@ void NSInitialize()
     NS_LOG(DEBUG, "NSSetList - OUT");
 }
 
-void NSDeinitailize()
+void NSDeinitailize(void)
 {
     NSProviderStorageDestroy(consumerSubList);
     NSProviderStorageDestroy(consumerTopicList);
@@ -122,7 +122,7 @@ NSResult NSStartProvider(NSProviderConfig config)
     return NS_OK;
 }
 
-NSResult NSStopProvider()
+NSResult NSStopProvider(void)
 {
     NS_LOG(DEBUG, "NSStopProvider - IN");
     pthread_mutex_lock(&nsInitMutex);
@@ -266,6 +266,7 @@ NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type)
     if (!initProvider || !syncInfo)
     {
         NS_LOG(ERROR, "Provider is not started");
+        NSOICFree(syncInfo);
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
@@ -309,7 +310,7 @@ NSResult NSAcceptSubscription(const char * consumerId, bool accepted)
     return NS_OK;
 }
 
-NSMessage * NSCreateMessage()
+NSMessage * NSCreateMessage(void)
 {
     NS_LOG(DEBUG, "NSCreateMessage - IN");
     pthread_mutex_lock(&nsInitMutex);
@@ -350,7 +351,7 @@ NSTopicLL * NSProviderGetConsumerTopics(const char * consumerId)
     return topicSync.topics;
 }
 
-NSTopicLL * NSProviderGetTopics()
+NSTopicLL * NSProviderGetTopics(void)
 {
     NS_LOG(DEBUG, "NSProviderGetTopics - IN");
     pthread_mutex_lock(&nsInitMutex);

@@ -19,7 +19,7 @@
 
 #include "oic_time.h"
 #include "ipcainternal.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 
 // Object that implements interface to IoTivity.
 // @future: Consider having an instance of this per app when there's mechanism to unregister

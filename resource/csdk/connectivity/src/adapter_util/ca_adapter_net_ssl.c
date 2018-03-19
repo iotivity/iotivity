@@ -32,8 +32,9 @@
 #include "ca_adapter_net_ssl.h"
 #include "cacommon.h"
 #include "caipinterface.h"
+#include "cacertprofile.h"
 #include "oic_malloc.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "experimental/byte_array.h"
 #include "octhread.h"
 #include "octimer.h"
@@ -758,6 +759,19 @@ static int InitPKIX(CATransportAdapter_t adapter)
         OIC_LOG_V(WARNING, NET_SSL_TAG, "Own certificate chain parsing error: %d certs failed to parse", errNum);
         goto required;
     }
+
+    ret = ValidateAuthCertChainProfiles(&g_caSslContext->crt);
+    if (CP_INVALID_CERT_CHAIN == ret)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "Invalid own cert chain");
+        goto required;
+    }
+    else if (0 != ret)
+    {
+        OIC_LOG_V(ERROR, NET_SSL_TAG, "%d certificate(s) in own cert chain do not satisfy OCF profile requirements", ret);
+        goto required;
+    }
+
     ret =  mbedtls_pk_parse_key(&g_caSslContext->pkey, pkiInfo.key.data, pkiInfo.key.len,
                                                                                NULL, 0);
     if (0 != ret)
@@ -807,6 +821,24 @@ static int InitPKIX(CATransportAdapter_t adapter)
     if(0 != errNum)
     {
         OIC_LOG_V(WARNING, NET_SSL_TAG, "CA chain parsing warning: %d certs failed to parse", errNum);
+    }
+    else
+    {
+        ret = ValidateRootCACertListProfiles(&g_caSslContext->ca);
+        if (CP_INVALID_CERT_LIST == ret)
+        {
+            OIC_LOG(ERROR, NET_SSL_TAG, "Invalid own CA cert chain");
+            OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+            DeInitPkixInfo(&pkiInfo);
+            return -1;
+        }
+        else if (0 < ret )
+        {
+            OIC_LOG_V(ERROR, NET_SSL_TAG, "%d certificate(s) in own CA cert chain violate OCF Root CA cert profile requirements", ret);
+            OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+            DeInitPkixInfo(&pkiInfo);
+            return -1;
+        }
     }
 
     ret = mbedtls_x509_crl_parse_der(&g_caSslContext->crl, pkiInfo.crl.data, pkiInfo.crl.len);
@@ -1417,15 +1449,25 @@ static int InitPskIdentity(mbedtls_ssl_config * config)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return 0;
 }
-static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapter,
+
+/**
+ * Select cipher suites for use with (D)TLS based on the credentials available.
+ *
+ * @param[in]  config     the (D)TLS configuration object
+ * @param[in]  adapter    the associated transport adapter
+ * @param[in]  deviceId   the device ID of the peer we will connect to
+ *
+ * @return  true on success or false on error
+ */
+static bool SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapter,
                         const char* deviceId)
 {
     int index = 0;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
 
-    VERIFY_NON_NULL_VOID(config, NET_SSL_TAG, "Invaild param");
-    VERIFY_NON_NULL_VOID(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL");
-    VERIFY_NON_NULL_VOID(g_getCredentialTypesCallback, NET_SSL_TAG, "Param callback is null");
+    VERIFY_NON_NULL_RET(config, NET_SSL_TAG, "Invailid param", false);
+    VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL", false);
+    VERIFY_NON_NULL_RET(g_getCredentialTypesCallback, NET_SSL_TAG, "Param callback is null", false);
 
     //Resetting cipherFlag
     g_caSslContext->cipherFlag[0] = false;
@@ -1434,7 +1476,8 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
     if (NULL == g_getCredentialTypesCallback)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Param callback is null");
-        return;
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+        return false;
     }
 
     g_getCredentialTypesCallback(g_caSslContext->cipherFlag, deviceId);
@@ -1444,6 +1487,7 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
          true == g_caSslContext->cipherFlag[0]) && 0 != InitPskIdentity(config))
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "PSK identity initialization failed!");
+        /* Don't return error, the connection may work with another cred type */
     }
 
     // Retrieve the Cert credential from SRM
@@ -1453,6 +1497,7 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
         if (0 != ret)
         {
             OIC_LOG(ERROR, NET_SSL_TAG, "Failed to init X.509");
+            /* Don't return error, the connection may work with another cred type */
         }
     }
 
@@ -1497,7 +1542,15 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
 
     mbedtls_ssl_conf_ciphersuites(config, g_cipherSuitesList);
 
+    if (0 == index)
+    {
+        OIC_LOG_V(ERROR, NET_SSL_TAG, "No ciphersuites configured, secure connections will fail");
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+        return false;
+    }
+
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+    return true;
 }
 /**
  * Initiate TLS handshake with endpoint.
@@ -1526,7 +1579,12 @@ static SslEndPoint_t * InitiateTlsHandshake(const CAEndpoint_t *endpoint)
     }
 
     //Load allowed SVR suites from SVR DB
-    SetupCipher(config, endpoint->adapter, endpoint->remoteId);
+    if(!SetupCipher(config, endpoint->adapter, endpoint->remoteId))
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "Failed to set up cipher");
+        DeleteSslEndPoint(tep);
+        return NULL;
+    }
 
     oc_mutex_lock(g_sslContextMutex);
     ret = u_arraylist_add(g_caSslContext->peerList, (void *) tep);
@@ -1669,11 +1727,12 @@ static int InitConfig(mbedtls_ssl_config * conf, int transport, int mode)
 /**
  * Starts DTLS retransmission.
  */
-static void StartRetransmit()
+static void StartRetransmit(void *ctx)
 {
     size_t listIndex = 0;
     size_t listLength = 0;
     SslEndPoint_t *tep = NULL;
+    OC_UNUSED(ctx);
 
     oc_mutex_lock(g_sslContextMutex);
     if (NULL == g_caSslContext)
@@ -1703,7 +1762,7 @@ static void StartRetransmit()
             if (MBEDTLS_ERR_SSL_CONN_EOF != ret)
             {
                 //start new timer
-                registerTimer(RETRANSMISSION_TIME, &g_caSslContext->timerId, StartRetransmit);
+                registerTimer(RETRANSMISSION_TIME, &g_caSslContext->timerId, StartRetransmit, NULL);
                 //unlock & return
                 if (!checkSslOperation(tep,
                                        ret,
@@ -1717,7 +1776,7 @@ static void StartRetransmit()
         }
     }
     //start new timer
-    registerTimer(RETRANSMISSION_TIME, &g_caSslContext->timerId, StartRetransmit);
+    registerTimer(RETRANSMISSION_TIME, &g_caSslContext->timerId, StartRetransmit, NULL);
     oc_mutex_unlock(g_sslContextMutex);
 }
 #endif
@@ -1862,7 +1921,7 @@ CAResult_t CAinitSslAdapter()
 
    oc_mutex_unlock(g_sslContextMutex);
 #ifdef __WITH_DTLS__
-    StartRetransmit();
+    StartRetransmit(NULL);
 #endif
 
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
@@ -2109,7 +2168,13 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
             return CA_STATUS_FAILED;
         }
         //Load allowed TLS suites from SVR DB
-        SetupCipher(config, sep->endpoint.adapter, NULL);
+        if(!SetupCipher(config, sep->endpoint.adapter, NULL))
+        {
+            OIC_LOG(ERROR, NET_SSL_TAG, "Failed to set up cipher");
+            DeleteSslEndPoint(peer);
+            oc_mutex_unlock(g_sslContextMutex);
+            return CA_STATUS_FAILED;
+        }
 
         ret = u_arraylist_add(g_caSslContext->peerList, (void *) peer);
         if (!ret)
@@ -2171,6 +2236,22 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
             mbedtls_x509_crt *peerCert = peer->ssl.session_negotiate->peer_cert;
             if (NULL != peerCert)
             {
+                ret = ValidateAuthCertChainProfiles(peerCert);
+                if (CP_INVALID_CERT_CHAIN == ret)
+                {
+                    oc_mutex_unlock(g_sslContextMutex);
+                    OIC_LOG(ERROR, NET_SSL_TAG, "Invalid peer cert chain");
+                    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+                    return CA_STATUS_FAILED;
+                }
+                else if (0 != ret)
+                {
+                    oc_mutex_unlock(g_sslContextMutex);
+                    OIC_LOG_V(ERROR, NET_SSL_TAG, "%d certificate(s) in peer cert chain do not satisfy OCF profile requirements", ret);
+                    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+                    return CA_STATUS_FAILED;
+                }
+
                 ret = PeerCertExtractCN(peerCert);
                 if (CA_STATUS_OK != ret)
                 {

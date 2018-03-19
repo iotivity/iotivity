@@ -22,7 +22,7 @@
 #include "octhread.h"
 #include "uarraylist.h"
 #include "caremotehandler.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 
@@ -69,7 +69,6 @@ static CAErrorHandleCallback g_errorCallback = NULL;
 
 static void CANFCPacketReceivedCB(const CASecureEndpoint_t *endpoint, const void *data,
                                   size_t dataLength);
-#ifndef SINGLE_THREAD
 
 static CAResult_t CANFCInitializeQueueHandles();
 
@@ -128,7 +127,6 @@ void CANFCDeinitializeQueueHandles()
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-#endif // SINGLE_THREAD
 void CANFCConnectionStateCB(const char *nfcAddress, CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, TAG, "Currently Not Supported");

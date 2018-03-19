@@ -19,19 +19,19 @@
  * *****************************************************************/
 
 #include "octypes.h"
-#include "logger.h"
-#include "payload_logging.h"
+#include "experimental/logger.h"
+#include "experimental/payload_logging.h"
 #include "ocstack.h"
 #include "ocpayload.h"
 //#include "psinterface.h"
 #include "experimental/securevirtualresourcetypes.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "srmutility.h"
 #include "pmutility.h"
 #include "credresource.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 
 #include "utils.h"
 #include "cloudAuth.h"
@@ -166,17 +166,10 @@ OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
     OC_UNUSED(ctx);
     OC_UNUSED(handle);
 
-    if (!response)
-    {
-        OIC_LOG(ERROR, TAG, "Received NULL response!");
-        goto exit;
-    }
+    VERIFY_NOT_NULL_RETURN(TAG, response, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL(TAG, response->payload, ERROR);
 
-    if (response->payload)
-    {
-        OIC_LOG(ERROR, TAG, "Payload received");
-        OIC_LOG_PAYLOAD(DEBUG, response->payload);
-    }
+    OIC_LOG_PAYLOAD(DEBUG, response->payload);
 
     if (response->result != LOGIN_OK)
     {
@@ -204,8 +197,7 @@ exit:
 OCStackResult
 CloudSignUp(OCDevAddr *endPoint,
            const char *authProvider,
-           const char *authToken,
-           OCClientResponseHandler response)
+           const char *authToken)
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
@@ -231,8 +223,7 @@ CloudSignUp(OCDevAddr *endPoint,
 
     OCCallbackData cbData;
     memset(&cbData, 0, sizeof(OCCallbackData));
-    cbData.cb = response;
-    cbData.context = (void*)handleCloudSignUpResponse;
+    cbData.cb = handleCloudSignUpResponse;
 
     OCRepPayload *payload = OCRepPayloadCreate();
     if (!payload)
@@ -264,19 +255,12 @@ OCStackApplicationResult handleCloudSignInResponse(void *ctx,
     OC_UNUSED(ctx);
     OC_UNUSED(handle);
 
-    if (!response)
-    {
-        OIC_LOG(ERROR, TAG, "Received NULL response!");
-        goto exit;
-    }
+    VERIFY_NOT_NULL_RETURN(TAG, response, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL(TAG, response->payload, ERROR);
 
-    if (response->payload)
-    {
-        OIC_LOG(ERROR, TAG, "Payload received");
-        OIC_LOG_PAYLOAD(DEBUG, response->payload);
-    }
+    OIC_LOG_PAYLOAD(DEBUG, response->payload);
 
-    if (response->result < 4 && response->payload)
+    if (response->result < 4)
     {
         OIC_LOG_V(ERROR, TAG, "Sign In error: result: %d, payload exist: %s",
                   response->result, response->payload ? "yes" : "no");
@@ -309,7 +293,7 @@ exit:
  * @param[in] endPoint          cloud host and port
  * @return  OCStackResult application result
  */
-OCStackResult CloudSignIn(OCDevAddr  *endPoint, OCClientResponseHandler response)
+OCStackResult CloudSignIn(OCDevAddr  *endPoint)
 {
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
@@ -358,8 +342,7 @@ OCStackResult CloudSignIn(OCDevAddr  *endPoint, OCClientResponseHandler response
 
     OCCallbackData cbData;
     memset(&cbData, 0, sizeof(OCCallbackData));
-    cbData.cb = response;
-    cbData.context = (void*)handleCloudSignInResponse;
+    cbData.cb = handleCloudSignInResponse;
 
     return OCDoResource(NULL, OC_REST_POST, uri, NULL,
                        (OCPayload *)payload,
@@ -381,19 +364,12 @@ OCStackApplicationResult handleCloudSignOutResponse(void *ctx,
     OC_UNUSED(ctx);
     OC_UNUSED(handle);
 
-    if (!response)
-    {
-        OIC_LOG(ERROR, TAG, "Received NULL response!");
-        goto exit;
-    }
+    VERIFY_NOT_NULL_RETURN(TAG, response, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL(TAG, response->payload, ERROR);
 
-    if (response->payload)
-    {
-        OIC_LOG(ERROR, TAG, "Payload received");
-        OIC_LOG_PAYLOAD(DEBUG, response->payload);
-    }
+    OIC_LOG_PAYLOAD(DEBUG, response->payload);
 
-    if (response->result < 4 && response->payload)
+    if (response->result < 4)
     {
         OIC_LOG_V(ERROR, TAG, "Sign Out error");
         return OC_STACK_DELETE_TRANSACTION;
@@ -416,7 +392,7 @@ exit:
  * @param[in] endPoint          cloud host and port
  * @return  OCStackResult application result
  */
-OCStackResult CloudSignOut(OCDevAddr  *endPoint, OCClientResponseHandler response)
+OCStackResult CloudSignOut(OCDevAddr  *endPoint)
 {
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
@@ -452,8 +428,7 @@ OCStackResult CloudSignOut(OCDevAddr  *endPoint, OCClientResponseHandler respons
 
     OCCallbackData cbData;
     memset(&cbData, 0, sizeof(OCCallbackData));
-    cbData.cb = response;
-    cbData.context = (void*)handleCloudSignOutResponse;
+    cbData.cb = handleCloudSignOutResponse;
 
     return OCDoResource(NULL, OC_REST_POST, uri, NULL,
                        (OCPayload *)payload,

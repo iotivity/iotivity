@@ -1,0 +1,1 @@
+--langmap=Python:+(SConscript),Python:+(SConstruct)

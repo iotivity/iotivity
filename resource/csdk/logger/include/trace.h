@@ -24,12 +24,11 @@
 #include <stddef.h>
 
 #ifdef __ANDROID__
-#include "logger.h"
+#include "experimental/logger.h"
 #elif defined(__TIZEN__)
 #ifdef OIC_SUPPORT_TIZEN_TRACE
 #include <ttrace.h>
 #endif
-#elif defined(ARDUINO)
 #endif
 
 #ifdef __cplusplus
@@ -77,13 +76,6 @@ void oic_trace_buffer(const char *name, const uint8_t * buffer, size_t bufferSiz
 #define OIC_TRACE_MARK(MSG, ...)
 #define OIC_TRACE_BUFFER(MSG, BUF, SIZ)
 #endif
-
-#elif defined(ARDUINO)
-/* trace macro for Arduino. currently this will call nothing*/
-#define OIC_TRACE_BEGIN(MSG, ...)
-#define OIC_TRACE_END()
-#define OIC_TRACE_MARK(MSG, ...)
-#define OIC_TRACE_BUFFER(MSG, BUF, SIZ)
 
 #else
 #define OIC_TRACE_BEGIN(MSG, ...)

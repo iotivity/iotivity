@@ -18,7 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
+
+#ifdef HAVE_MEMORY_H
 #include <memory.h>
+#endif
 #include <string.h>
 
 #include "NSConstants.h"
@@ -36,7 +40,7 @@ void NSConnectionStateListener(const CAEndpoint_t * info, bool isConnected);
 
 void NSAdapterStateListener(CATransportAdapter_t adapter, bool enabled);
 
-OCDoHandle * getPresenceHandle()
+OCDoHandle * getPresenceHandle(void)
 {
     static OCDoHandle g_PresenceHandle = NULL;
 
@@ -44,7 +48,7 @@ OCDoHandle * getPresenceHandle()
 }
 
 
-NSResult NSConsumerListenerInit()
+NSResult NSConsumerListenerInit(void)
 {
     // TODO replace with comment lines when enable network monitor of IP Adapter
     CARegisterNetworkMonitorHandler(NSAdapterStateListener, NSConnectionStateListener);
@@ -69,7 +73,7 @@ NSResult NSConsumerListenerInit()
     return NS_OK;
 }
 
-void NSConsumerListenerTermiate()
+void NSConsumerListenerTermiate(void)
 {
     CAUnregisterNetworkMonitorHandler(NSAdapterStateListener, NSConnectionStateListener);
     OCCancel(*getPresenceHandle(), NS_QOS, NULL, 0);

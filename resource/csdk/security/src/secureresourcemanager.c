@@ -20,7 +20,7 @@
 
 #include <string.h>
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "cainterface.h"
 #include "resourcemanager.h"
 #include "credresource.h"
@@ -31,7 +31,7 @@
 #include "secureresourcemanager.h"
 #include "srmresourcestrings.h"
 #include "ocresourcehandler.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 
 #if defined( __WITH_TLS__) || defined(__WITH_DTLS__)
 #include "pkix_interface.h"
@@ -163,7 +163,7 @@ static void SetResourceUriAndType(SRMRequestContext_t *context)
     return;
 }
 
-static void SetDiscoverable(SRMRequestContext_t *context)
+static void SetDiscoverableAndOcSecureFlags(SRMRequestContext_t *context)
 {
     if (NULL == context)
     {
@@ -196,6 +196,33 @@ static void SetDiscoverable(SRMRequestContext_t *context)
     {
         context->discoverable = DISCOVERABLE_FALSE;
         OIC_LOG_V(DEBUG, TAG, "%s: resource %s is NOT OC_DISCOVERABLE.",
+                  __func__, context->resourceUri);
+    }
+
+    if (OC_SECURE == (resource->resourceProperties & OC_SECURE))
+    {
+        context->resourceIsOcSecure = true;
+        OIC_LOG_V(DEBUG, TAG, "%s: resource %s is OC_SECURE.",
+                  __func__, context->resourceUri);
+    }
+    else
+    {
+        context->resourceIsOcSecure = false;
+        OIC_LOG_V(DEBUG, TAG, "%s: resource %s is *not* OC_SECURE.",
+                  __func__, context->resourceUri);
+    }
+    // Reminder: a Resource can set both flags, and expose both an
+    // unsecure (e.g. CoAP) and secure (e.g. CoAPS) endpoint.
+    if (OC_NONSECURE == (resource->resourceProperties & OC_NONSECURE))
+    {
+        context->resourceIsOcNonsecure = true;
+        OIC_LOG_V(DEBUG, TAG, "%s: resource %s is OC_NONSECURE.",
+                  __func__, context->resourceUri);
+    }
+    else
+    {
+        context->resourceIsOcNonsecure = false;
+        OIC_LOG_V(DEBUG, TAG, "%s: resource %s is *not* OC_NONSECURE.",
                   __func__, context->resourceUri);
     }
 }
@@ -236,7 +263,7 @@ static void ClearRequestContext(SRMRequestContext_t *context)
 // this function, or this function may incorrectly read the nil-UUID (0s)
 // and assume CoAP request (which can result in request being incorrectly
 // denied).
-bool isRequestOverSecureChannel(SRMRequestContext_t *context)
+bool IsRequestOverSecureChannel(SRMRequestContext_t *context)
 {
     OicUuid_t nullSubjectId = {.id = {0}};
 
@@ -310,7 +337,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 #endif
 
     // Set secure channel boolean.
-    ctx->secureChannel = isRequestOverSecureChannel(ctx);
+    ctx->secureChannel = IsRequestOverSecureChannel(ctx);
 
 #if defined( __WITH_TLS__) || defined(__WITH_DTLS__)
 
@@ -334,8 +361,8 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     // Set resource URI and type.
     SetResourceUriAndType(ctx);
 
-    // Set discoverable enum.
-    SetDiscoverable(ctx);
+    // Set discoverable enum, and OC_SECURE and/or OC_NONSECURE flags.
+    SetDiscoverableAndOcSecureFlags(ctx);
 
     // Initialize responseInfo.
     memcpy(&(ctx->responseInfo.info), &(requestInfo->info),
@@ -459,59 +486,6 @@ OCStackResult SRMInitSecureResources()
 void SRMDeInitSecureResources()
 {
     DestroySecureResources();
-}
-
-bool SRMIsSecurityResourceURI(const char* uri)
-{
-    if (!uri)
-    {
-        return false;
-    }
-
-#ifdef _MSC_VER
-    // The strings below are const but they are also marked as extern so they cause warnings.
-#pragma warning(push)
-#pragma warning(disable:4204)
-#endif
-    const char *rsrcs[] = {
-        OIC_RSRC_SVC_URI,
-        OIC_RSRC_AMACL_URI,
-        OIC_RSRC_CRL_URI,
-        OIC_RSRC_CRED_URI,
-        OIC_RSRC_CSR_URI,
-        OIC_RSRC_ACL_URI,
-        OIC_RSRC_ACL2_URI,
-        OIC_RSRC_DOXM_URI,
-        OIC_RSRC_PSTAT_URI,
-        OIC_RSRC_VER_URI,
-        OIC_RSRC_ROLES_URI,
-        OC_RSRVD_PROV_CRL_URL
-    };
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-    // Remove query from Uri for resource string comparison
-    size_t uriLen = strlen(uri);
-    char *query = strchr (uri, '?');
-    if (query)
-    {
-        uriLen = query - uri;
-    }
-
-    for (size_t i = 0; i < sizeof(rsrcs)/sizeof(rsrcs[0]); i++)
-    {
-        size_t svrLen = strlen(rsrcs[i]);
-
-        if ((uriLen == svrLen) &&
-            (strncmp(uri, rsrcs[i], svrLen) == 0))
-        {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 /**

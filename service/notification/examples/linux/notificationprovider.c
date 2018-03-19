@@ -26,7 +26,7 @@
 
 #include "NSProviderInterface.h"
 #include "NSCommon.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "octypes.h"
 #include "pthread.h"
 #include "oic_string.h"
@@ -160,7 +160,7 @@ void input(char * buffer)
     buffer[i] = '\0';
 }
 
-int main()
+int main(void)
 {
     int num = 0;
     pthread_t processThread = 0;

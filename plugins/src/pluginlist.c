@@ -28,7 +28,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "pluginlist"
 
@@ -62,7 +62,7 @@ OCStackResult DeletePlugin(PIPluginBase * plugin)
 }
 
 
-OCStackResult DeletePluginList()
+OCStackResult DeletePluginList(void)
 {
     OCStackResult result = OC_STACK_OK;
     PIPluginBase * out = NULL;

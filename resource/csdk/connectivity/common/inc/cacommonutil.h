@@ -22,7 +22,7 @@
 #define CA_COMMON_UTIL_H_
 
 #include "cacommon.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -88,6 +88,31 @@ extern "C"
         OIC_LOG_V(ERROR, (log_tag), "Invalid input:%s", (log_message)); \
         return; \
     } \
+
+/**
+ * Macro to verify an expression, goto exit: if not satisfied
+ *
+ * @param  log_tag    log tag
+ * @param  expr       Expression to verify.
+ * @param  msg        Message to log prior to exiting
+ * @param  log_level  logging level
+ *
+ * @note Invoking function must define "exit:" label for goto functionality to work correctly.
+ */
+#define VERIFY_SUCCESS_OR_EXIT(log_tag, expr, msg, log_level) do{ if (!(expr)) \
+    {OIC_LOG((log_level), (log_tag), (msg)); goto exit; } }while(0)
+
+
+/**
+ * Macro to verify an expression, or return
+ *
+ * @param  log_tag    log tag
+ * @param  expr       Expression to verify.
+ * @param  msg        Message to log prior to exiting
+ * @param  log_level  logging level
+ */
+#define VERIFY_SUCCESS_OR_RETURN(log_tag, expr, msg, log_level) do{ if (!(expr)) \
+    {OIC_LOG((log_level), (log_tag), (msg)); return; } }while(0)
 
 #ifdef __cplusplus
 } /* extern "C" */

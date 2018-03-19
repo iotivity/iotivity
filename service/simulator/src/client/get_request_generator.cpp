@@ -21,7 +21,7 @@
 #include "get_request_generator.h"
 #include "request_model.h"
 #include "simulator_exceptions.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "GET_REQUEST_GEN"
 

@@ -38,7 +38,7 @@ bool parseCommandLineArguments(int argc, char *argv[]);
  *
  * @return  OCStackResult application result
  */
-OCStackResult initPersistentStorage();
+OCStackResult initPersistentStorage(void);
 
 /**
  * Used to display Main Menu and send requests
@@ -59,12 +59,12 @@ OCStackResult initProcess(OCMode mode);
 /**
  * This function starts main process which responds to any requests
  */
-void startProcess();
+void startProcess(void);
 
 /**
  * This function frees thread pool data
  */
-void freeThreadResources();
+void freeThreadResources(void);
 
 /**
  * Used to sync with Main Menu

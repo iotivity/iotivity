@@ -14,7 +14,10 @@
 ##
 import os
 import subprocess
-import urllib2
+try:
+    from urllib2 import urlopen
+except ModuleNotFoundError:
+    from urllib.request import urlopen
 import SCons.Errors
 
 Import('env')
@@ -47,9 +50,9 @@ def __prepare_lib(ienv, libname, lib=None, path=None, script=None):
 
         # Execute the script to download (if required) and build source code
         if script:
-            st = os.path.join(dir, script)
+            st = dir + '/' + script
         else:
-            st = os.path.join(dir, 'SConscript')
+            st = dir + 'SConscript'
 
         if os.path.exists(st):
             SConscript(st)
@@ -68,8 +71,8 @@ def __prepare_lib(ienv, libname, lib=None, path=None, script=None):
 def __configure(env, cwd, cmd):
     print("Configuring using [%s/%s] ..." % (cwd, cmd))
     # build it now (we need the shell, because some programs need it)
-    devnull = open(os.devnull, "wb")
-    handle = subprocess.Popen(cmd, shell=True, cwd=cwd, stdout=devnull)
+    with open(os.devnull, "wb") as devnull:
+        handle = subprocess.Popen(cmd, shell=True, cwd=cwd, stdout=devnull)
 
     if handle.wait() != 0:
         raise SCons.Errors.BuildError("Run configuring script [%s]" % (cmd))
@@ -83,14 +86,16 @@ def __download(ienv, target, url):
     try:
         print("Download %s from %s" % (target, url))
         print("Downloading ...")
-        stream = urllib2.urlopen(url)
-        file = open(target, 'wb')
-        file.write(stream.read())
-        file.close()
-        print("Download %s from %s complete" % (target, url))
-        return target
+        # Python2 does not have a context manager for urlopen
+        stream = urlopen(url)
+        with open(target, 'wb') as file:
+            file.write(stream.read())
     except Exception as e:
         raise SCons.Errors.StopError('%s [%s]' % (e, url))
+    finally:
+        print("Download %s from %s complete" % (target, url))
+        stream.close()
+        return target
 
 
 # Install header file(s) to <src_dir>/deps/<target_os>/include

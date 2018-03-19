@@ -26,7 +26,7 @@ import platform
 Import('env')
 
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 notification_env = lib_env.Clone()
 
 target_os = env.get('TARGET_OS')
@@ -81,10 +81,6 @@ if target_os == 'android':
     notification_env.PrependUnique(LIBS=['gnustl_shared', 'log'])
     notification_env.AppendUnique(
         LINKFLAGS=['-Wl,-soname,libnotification_provider_wrapper.so'])
-
-if not env.get('RELEASE') and target_os not in ['ios']:
-    notification_env.PrependUnique(LIBS=['gcov'])
-    notification_env.AppendUnique(CCFLAGS=['--coverage'])
 
 if target_os in ['linux', 'tizen']:
     notification_env.AppendUnique(LIBS=['rt'])

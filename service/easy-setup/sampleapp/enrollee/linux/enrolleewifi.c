@@ -55,7 +55,7 @@ static bool gIsSecured = false;
 
 UserProperties g_userProperties;
 
-void PrintMenu()
+void PrintMenu(void)
 {
     printf("============\n");
     printf("S: Enabled Security\n");
@@ -131,7 +131,6 @@ void CoapCloudConfProvCbInApp(ESCoapCloudConfData *eventData)
         return ;
     }
 
-    printf("AuthCode : %s\n", eventData->authCode);
     printf("AcessToken : %s\n", eventData->accessToken);
     printf("AcessTokenType : %d\n", eventData->accessTokenType);
     printf("AuthProvider : %s\n", eventData->authProvider);
@@ -159,7 +158,7 @@ FILE* server_fopen(const char *path, const char *mode)
     }
 }
 
-void EnableSecurity()
+void EnableSecurity(void)
 {
     printf("Inside EnableSecurity API..\n");
 
@@ -170,7 +169,7 @@ void EnableSecurity()
     OCRegisterPersistentStorageHandler(&ps);
 }
 
-void StartEasySetup()
+void StartEasySetup(void)
 {
     printf("StartEasySetup IN\n");
 
@@ -196,7 +195,7 @@ void StartEasySetup()
     printf("StartEasySetup OUT\n");
 }
 
-void SetDeviceInfo()
+void SetDeviceInfo(void)
 {
     printf("SetDeviceInfo IN\n");
 
@@ -226,7 +225,7 @@ void SetDeviceInfo()
     printf("SetDeviceInfo OUT\n");
 }
 
-void StopEasySetup()
+void StopEasySetup(void)
 {
     printf("StopEasySetup IN\n");
 
@@ -252,12 +251,12 @@ void StopEasySetup()
     printf("StopEasySetup OUT\n");
 }
 
-void SetCallbackForUserdata()
+void SetCallbackForUserdata(void)
 {
     ESSetCallbackForUserdata(&ReadUserdataCb, &WriteUserdataCb);
 }
 
-int main()
+int main(void)
 {
     printf("#########################\n");
     printf("EasySetup Enrollee SAMPLE\n");

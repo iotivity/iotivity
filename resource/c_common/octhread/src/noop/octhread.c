@@ -99,6 +99,13 @@ void oc_mutex_unlock(oc_mutex mutex)
     return;
 }
 
+void oc_mutex_assert_owner(const oc_mutex mutex, bool currentThreadIsOwner)
+{
+    OC_UNUSED(mutex);
+    OC_UNUSED(currentThreadIsOwner);
+    return;
+}
+
 oc_cond oc_cond_new(void)
 {
     return (oc_cond)&g_condInfo;

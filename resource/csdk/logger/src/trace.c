@@ -58,7 +58,7 @@ void oic_trace_buffer(const char *name, const uint8_t * buffer, size_t bufferSiz
 
 #ifndef __TIZEN__
 
-#include "logger.h"
+#include "experimental/logger.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -214,9 +214,5 @@ void oic_trace_end()
         OIC_LOG_V(INFO, TAG, "oic_trace_end: invalid fd: %d", g_trace_marker_hd);
     }
 }
-
-#elif defined ARDUINO
-/* TODO: Trace api for ARDUINO and others will be implemented */
-#endif //ARDUINO
-
+#endif // #ifdef __ANDROID__
 #endif // #ifndef __TIZEN__

@@ -25,13 +25,13 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "oic_time.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "uarraylist.h"
 #include "ocstackinternal.h"
 #include "ocpayloadcbor.h"
 #include "ocpayload.h"
 #include "ocresourcehandler.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 /**
  * Logging tag for module name.
@@ -142,13 +142,13 @@ static OCStackApplicationResult PingRequestCallback(void* ctx, OCDoHandle handle
  * This function creates KeepAlive resource.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-static OCStackResult CreateKeepAliveResource();
+static OCStackResult CreateKeepAliveResource(void);
 
 /**
  * This function deletes KeepAlive resource.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-static OCStackResult DeleteKeepAliveResource();
+static OCStackResult DeleteKeepAliveResource(void);
 
 /**
  * API to handle the GET request received for a KeepAlive resource.
@@ -306,7 +306,7 @@ OCStackResult TerminateKeepAlive(OCMode mode)
     return OC_STACK_OK;
 }
 
-OCStackResult CreateKeepAliveResource()
+OCStackResult CreateKeepAliveResource(void)
 {
     OIC_LOG(DEBUG, TAG, "InitKeepAliveResource IN");
 
@@ -333,7 +333,7 @@ OCStackResult CreateKeepAliveResource()
     return result;
 }
 
-OCStackResult DeleteKeepAliveResource()
+OCStackResult DeleteKeepAliveResource(void)
 {
     OIC_LOG(DEBUG, TAG, "DeleteKeepAliveResource IN");
 
@@ -421,8 +421,7 @@ OCStackResult SendKeepAliveResponse(OCServerRequest *request,
 
     OCEntityHandlerResponse ehResponse = { .ehResult = result, 
                                            .payload = (OCPayload*) payload, 
-                                           .requestHandle = request,
-                                           .resourceHandle = g_keepAliveHandle };
+                                           .requestHandle = request };
     OICStrcpy(ehResponse.resourceUri, sizeof(ehResponse.resourceUri), KEEPALIVE_RESOURCE_URI);
 
     // Send response message.

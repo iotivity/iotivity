@@ -29,7 +29,7 @@ using namespace std::placeholders;
 #include "OCApi.h"
 #include "pinoxmcommon.h"
 #include "srmutility.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "oic_platform.h"
 
 #define TAG                "IPCA_OcfFramework"

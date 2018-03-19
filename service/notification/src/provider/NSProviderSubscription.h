@@ -21,7 +21,7 @@
 #ifndef _NS_PROVIDER_SUBSCRIPTION_H_
 #define _NS_PROVIDER_SUBSCRIPTION_H_
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocstack.h"
 #include "ocpayload.h"
 #include "NSCommon.h"
@@ -36,7 +36,7 @@
 
 NSCacheList * consumerSubList;
 
-NSResult NSInitSubscriptionList();
+NSResult NSInitSubscriptionList(void);
 NSResult NSSetSubscriptionAccessPolicy(bool policy);
 NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest);
 void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest,

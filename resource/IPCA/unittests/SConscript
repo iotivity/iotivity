@@ -20,6 +20,7 @@
 
 import os
 import os.path
+from tools.scons.RunTest import run_test
 
 # Set to 1 for the test elevator client and elevator server to communicate through IoTivity stack.
 use_iotivity = 0
@@ -28,6 +29,7 @@ Import('test_env')
 ipcatest_env = test_env.Clone()
 src_dir = ipcatest_env.get('SRC_DIR')
 target_os = ipcatest_env.get('TARGET_OS')
+with_cloud = ipcatest_env.get('WITH_CLOUD')
 
 ######################################################################
 # Build flags
@@ -57,8 +59,14 @@ ipcatest_env.AppendUnique(CPPPATH=[
     '../src/inc',
 ])
 
+if target_os in ['windows', 'ios']:
+    oclib = 'oc'
+else:
+    oclib = 'oc_internal',
+
 ipcatest_env.PrependUnique(LIBS=[
         'oc_logger_internal',
+        oclib,
         'octbstack',
         'ipca_static',
         'logger',
@@ -66,34 +74,40 @@ ipcatest_env.PrependUnique(LIBS=[
         ])
 
 if use_iotivity == 1:
-    ipcatest_env.PrependUnique(LIBS = [
+    ipcatest_env.PrependUnique(LIBS=[
         'oc',
         'connectivity_abstraction',
         'coap',
-        ])
+    ])
 
     if ipcatest_env.get('SECURED') == '1':
-        ipcatest_env.PrependUnique(LIBS = [
+        ipcatest_env.PrependUnique(LIBS=[
             'mbedtls',
             'mbedx509',
             'mbedcrypto',
             'ocprovision'
-            ])
+        ])
 
 if target_os in ['msys_nt', 'windows']:
-    ipcatest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
+    ipcatest_env.AppendUnique(LINKFLAGS=['/subsystem:CONSOLE'])
     ipcatest_env.AppendUnique(LIBS=['win_helper'])
+
+if ipcatest_env.get('MULTIPLE_OWNER') == '1':
+    ipcatest_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
+
+if with_cloud:
+    ipcatest_env.AppendUnique(CPPDEFINES=['WITH_CLOUD'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
 
 unittests_src = [
-        'ipcaunittests.cpp',
-        'IPCAElevatorClient.cpp',
-        'testelevatorserver.cpp',
-        'testelevatorclient.cpp'
-    ]
+    'ipcaunittests.cpp',
+    'IPCAElevatorClient.cpp',
+    'testelevatorserver.cpp',
+    'testelevatorclient.cpp'
+]
 
 if use_iotivity == 0:
     unittests_src += [
@@ -102,30 +116,16 @@ if use_iotivity == 0:
         'mockInProcServerWrapper.cpp',
         'mockOCPlatform_impl.cpp',
         'mockOCProvision.cpp',
-        '#/resource/src/OCRepresentation.cpp'
-        ]
+    ]
 
 if target_os not in ['windows', 'msys_nt']:
-    ipcatest_env.AppendUnique(LIBS = ['dl'])
+    ipcatest_env.AppendUnique(LIBS=['dl'])
 
 if 'g++' in ipcatest_env.get('CXX'):
-    ipcatest_env.AppendUnique(LIBS = ['pthread'])
-
-if target_os in ['linux']:
-    if not ipcatest_env.get('RELEASE'):
-        ipcatest_env.PrependUnique(LIBS = ['gcov'])
-        ipcatest_env.AppendUnique(CXXFLAGS = ['--coverage'])
-
-ipcatest_src_dir = os.path.join(src_dir, 'resource', 'IPCA', 'unittests') + os.sep
-ipcatest_build_dir = os.path.join(
-                         ipcatest_env.get('BUILD_DIR'), 'resource', 'IPCA', 'unittests') + os.sep
-
-ipcatest_env.Alias("install", ipcatest_env.Install( ipcatest_build_dir,
-    ipcatest_src_dir + 'IPCAUnitTest.json'))
-ipcatest_env.Alias("install", ipcatest_env.Install( ipcatest_build_dir,
-    ipcatest_src_dir + 'IPCAUnitTest.dat'))
+    ipcatest_env.AppendUnique(LIBS=['pthread'])
 
 ipcatests = ipcatest_env.Program('ipcatests', unittests_src)
+ipcatest_env.ScanJSON('resource/IPCA/unittests')
 
 if target_os in ['windows']:
     #path to ipca.dll
@@ -133,9 +133,5 @@ if target_os in ['windows']:
 
 if ipcatest_env.get('TEST') == '1':
     if target_os in ['windows']:
-        from tools.scons.RunTest import *
-        run_test(ipcatest_env,
-                 'resource_ipca_unittests.memcheck',
-                 'resource/ipca/unittests/ipcatests',
-                 ipcatests)
-
+        run_test(ipcatest_env, 'resource_ipca_unittests.memcheck',
+                 'resource/ipca/unittests/ipcatests', ipcatests)

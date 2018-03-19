@@ -29,7 +29,7 @@
 #include "NSCommon.h"
 #include "NSConstants.h"
 #include "NSStructs.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "NSUtil.h"
@@ -48,10 +48,10 @@ extern void * NSSubScriptionSchedule(void *ptr);
 extern void * NSNotificationSchedule(void *ptr);
 extern void * NSTopicSchedule(void * ptr);
 
-void NSSetList();
-bool NSInitScheduler();
-bool NSStartScheduler();
-bool NSStopScheduler();
+void NSSetList(void);
+bool NSInitScheduler(void);
+bool NSStartScheduler(void);
+bool NSStopScheduler(void);
 void NSPushQueue(NSSchedulerType, NSTaskType, void*);
 void NSFreeData(NSSchedulerType, NSTask * );
 

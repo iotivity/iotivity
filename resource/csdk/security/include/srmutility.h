@@ -59,39 +59,66 @@ struct OicParseQueryIter
  * eg: VERIFY_SUCCESS(TAG, OC_STACK_OK == foo(), ERROR);
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  */
+#ifndef VERIFY_SUCCESS
 #define VERIFY_SUCCESS(tag, op, logLevel) do{ if (!(op)) \
             {OIC_LOG((logLevel), tag, #op " failed!!"); goto exit; } }while(0)
+#endif
+
+/**
+ * Macro to verify a conditional, if fails, log supplied message and goto exit
+ * eg: VERIFY_SUCCESS_OR_LOG_AND_EXIT(TAG, OC_STACK_OK == foo(), ERROR);
+ * @note Invoking function must define "exit:" label for goto functionality to work correctly.
+ */
+#define VERIFY_OR_LOG_AND_EXIT(tag, op, msg, logLevel) do{ if (!(op)) \
+            {OIC_LOG((logLevel), tag, msg); goto exit; } }while(0)
 
 /**
  * Macro to verify expression evaluates to bool true.
  * eg: VERIFY_TRUE_OR_EXIT(TAG, OC_STACK_OK == foo(), ERROR);
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  */
+#ifndef VERIFY_TRUE_OR_EXIT
 #define VERIFY_TRUE_OR_EXIT(tag, op, logLevel) do{ if (!(op)) \
             {OIC_LOG_V((logLevel), tag, "%s:" #op "evaluates to false!",__func__); \
             goto exit; } }while(0)
+#endif
 
 /**
  * Macro to verify success of operation.
  * eg: VERIFY_SUCCESS_RETURN(TAG, OC_STACK_OK == foo(), ERROR, OC_STACK_ERROR);
  */
+#ifndef VERIFY_SUCCESS_RETURN
 #define VERIFY_SUCCESS_RETURN(tag, op, logLevel, retValue) do { if (!(op)) \
             {OIC_LOG((logLevel), tag, #op " failed!!"); return retValue;} } while(0)
+#endif
 
 /**
  * Macro to verify argument is not equal to NULL.
  * eg: VERIFY_NOT_NULL(TAG, ptrData, ERROR);
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  */
+#ifndef VERIFY_NOT_NULL
 #define VERIFY_NOT_NULL(tag, arg, logLevel) do{ if (NULL == (arg)) \
             { OIC_LOG((logLevel), tag, #arg " is NULL"); goto exit; } }while(0)
+#endif
 
 /**
  * Macro to verify argument is not equal to NULL.
  * eg: VERIFY_NOT_NULL_RETURN(TAG, ptrData, ERROR, OC_STACK_ERROR);
  */
+#ifndef VERIFY_NOT_NULL_RETURN
 #define VERIFY_NOT_NULL_RETURN(tag, arg, logLevel, retValue) do { if (NULL == (arg)) \
             { OIC_LOG((logLevel), tag, #arg " is NULL"); return retValue; } } while(0)
+#endif
+
+/**
+ * Macro to log an mbedtls error
+ * For mbedtls functions that return 0 as non-error
+ * @note Invoker must provide message buffer, and must include "mbedtls/error.h"
+ */
+#define LOG_MBED_ERROR(tag, ret, buf, bufSize, logLevel) do{ if (0!=(ret)) { \
+    mbedtls_strerror((ret), (buf), (bufSize));                               \
+    OIC_LOG_V((logLevel), (tag), "mbedtls error:  %s", (buf)); } }while(0)
 
 /**
  * This method initializes the @ref OicParseQueryIter_t struct.
@@ -145,6 +172,22 @@ OCStackResult ConvertUuidToStr(const OicUuid_t* uuid, char** strUuid);
 OCStackResult OC_CALL ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid);
 
 /**
+ * Is the URI for a Device Configuration Resource as defined
+ * by Security Specification.
+ *
+ * @return true IFF the uri is for a DCR
+ */
+bool IsDeviceConfigurationResourceUri(const char *uri);
+
+/**
+ * Is the URI for a Non0Configuration Resource as defined
+ * by Security Specification.
+ *
+ * @return true IFF the uri is for a NCR
+ */
+bool IsNonConfigurationResourceUri(const char *uri);
+
+/**
  * Compares two OicUuid_t structs.
  *
  * @return true if the two OicUuid_t structs are equal, else false.
@@ -172,6 +215,14 @@ bool IsNilUuid(const OicUuid_t *uuid);
  */
 OCStackResult OC_CALL SetDeviceIdSeed(const uint8_t* seed, size_t seedSize);
 #endif
+
+/**
+ * Is the URI for a Security Virtual Resource as defined
+ * by Security Specification.
+ *
+ * @return true IFF the uri is for a SVR
+ */
+bool SRMIsSecurityResourceURI(const char* uri);
 
 /**
  * Log OicUuid_t structs.

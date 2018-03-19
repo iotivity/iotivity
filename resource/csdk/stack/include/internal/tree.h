@@ -745,6 +745,80 @@ name##_RB_MINMAX(struct name *head, int val)				\
 	    ((x) != NULL) && ((y) = name##_RB_PREV(x), 1);		\
 	     (x) = (y))
 
+#define RBL_ENTRY(type)							\
+struct {								\
+	RB_ENTRY(type) rb_entry;					\
+	struct type *next;						\
+	struct type *prev;						\
+}
+
+/* Main rbl operation.
+ * Just like rb, but links elm to existing tree node with the same key if found.
+ */
+#define	RBL_GENERATE(name, type, field, cmp)				\
+	RBL_GENERATE_INTERNAL(name, type, field, cmp,)
+#define	RBL_GENERATE_STATIC(name, type, field, cmp)			\
+	RBL_GENERATE_INTERNAL(name, type, field, cmp, __attribute__((__unused__)) static)
+#define RBL_GENERATE_INTERNAL(name, type, field, cmp, attr)		\
+RB_GENERATE_INTERNAL(name, type, field.rb_entry, (cmp), attr)		\
+									\
+attr struct type *							\
+name##_RBL_INSERT(struct name *head, struct type *elm)			\
+{									\
+	struct type *inserted = RB_INSERT(name, head, elm);		\
+	if (inserted && inserted != elm) {				\
+		elm->field.next = inserted->field.next;			\
+		if (elm->field.next) {					\
+			elm->field.next->field.prev = elm;		\
+		}							\
+		elm->field.prev = inserted;				\
+		if (elm->field.prev) {					\
+			elm->field.prev->field.next = elm;		\
+		}							\
+	}								\
+	return elm;							\
+}									\
+									\
+attr struct type *							\
+name##_RBL_REMOVE(struct name *head, struct type *elm)			\
+{									\
+	if (elm->field.prev) {						\
+									\
+		/* The element is somewhere down the linked list */	\
+		elm->field.prev->field.next = elm->field.next;		\
+		if (elm->field.next) {					\
+			elm->field.next->field.prev = elm->field.prev;	\
+		}							\
+	} else if (elm->field.next) {					\
+									\
+		/* The element is the head of the linked list and it	\
+		 * has links */						\
+		struct type *parent = elm->field.rb_entry.rbe_parent;	\
+		struct type *next = elm->field.next;			\
+									\
+		next->field.rb_entry = elm->field.rb_entry;		\
+		next->field.prev = NULL;				\
+		if (parent) {						\
+			if (parent->field.rb_entry.rbe_left == elm) {	\
+				parent->field.rb_entry.rbe_left = next;	\
+			} else if (parent->field.rb_entry.rbe_right	\
+					== elm ) {			\
+				parent->field.rb_entry.rbe_right = next;\
+			}						\
+		}							\
+	} else {							\
+									\
+		/* The element is the head of the linked list and it	\
+		 * has no links */					\
+		elm = RB_REMOVE(name, head, elm);			\
+	}								\
+	return elm;							\
+}
+
+#define RBL_INSERT(name, x, y)	name##_RBL_INSERT(x, y)
+
+#define RBL_REMOVE(name, x, y)	name##_RBL_REMOVE(x, y)
+
 #ifdef _KERNEL
 
 /*

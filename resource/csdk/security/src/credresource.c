@@ -33,10 +33,9 @@
 #include <inttypes.h>
 
 #include "cainterface.h"
-#include "payload_logging.h"
+#include "experimental/payload_logging.h"
 #include "ocstack.h"
-#include "ocrandom.h"
-#include "base64.h"
+#include "experimental/ocrandom.h"
 #include "ocserverrequest.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -44,7 +43,7 @@
 #include "ocpayloadcbor.h"
 #include "utlist.h"
 #include "credresource.h"
-#include "doxmresource.h"
+#include "experimental/doxmresource.h"
 #include "pstatresource.h"
 #include "iotvticalendar.h"
 #include "pbkdf2.h"
@@ -56,6 +55,7 @@
 #include "certhelpers.h"
 #include "cacommon.h"
 #include "secureresourcemanager.h"
+#include "ocstackinternal.h"
 #include "deviceonboardingstate.h"
 
 #ifdef __unix__
@@ -299,6 +299,7 @@ void FreeCred(OicSecCred_t *cred)
     //Clean eowner
     OICFree(cred->eownerID);
 #endif
+    cred->next = NULL;
 
     cred->next = NULL;
 
@@ -1986,7 +1987,7 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
 {
     //Derive OwnerPSK locally
     const char* oxmLabel = GetOxmString(doxm->oxmSel);
-    char* b64Buf = NULL;
+    unsigned char* b64Buf = NULL;
     size_t b64BufSize = 0;
     VERIFY_NOT_NULL(TAG, oxmLabel, ERROR);
 
@@ -2013,19 +2014,21 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
     }
     else if(OIC_ENCODING_BASE64 == receviedCred->privateData.encoding)
     {
-        B64Result b64res = B64_OK;
+        int b64res = MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL;
         size_t b64OutSize = 0;
-        b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
+        b64res = mbedtls_base64_encode(NULL, 0, &b64OutSize, ownerPSK, OWNER_PSK_LENGTH_128);
+        VERIFY_SUCCESS(TAG, MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL == b64res, ERROR);
+        b64BufSize = b64OutSize;
         b64Buf = OICCalloc(1, b64BufSize);
         VERIFY_NOT_NULL(TAG, b64Buf, ERROR);
 
-        b64res = b64Encode(ownerPSK, OWNER_PSK_LENGTH_128, b64Buf, b64BufSize, &b64OutSize);
-        VERIFY_SUCCESS(TAG, B64_OK == b64res, ERROR);
+        b64res = mbedtls_base64_encode(b64Buf, b64BufSize, &b64OutSize, ownerPSK, OWNER_PSK_LENGTH_128);
+        VERIFY_SUCCESS(TAG, 0 == b64res, ERROR);
 
         receviedCred->privateData.data = (uint8_t *)OICCalloc(1, b64OutSize + 1);
         VERIFY_NOT_NULL(TAG, receviedCred->privateData.data, ERROR);
         receviedCred->privateData.len = b64OutSize;
-        strncpy((char*)receviedCred->privateData.data, b64Buf, b64OutSize);
+        strncpy((char*)receviedCred->privateData.data, (char*)b64Buf, b64OutSize);
         receviedCred->privateData.data[b64OutSize] = '\0';
         OICClearMemory(b64Buf, b64BufSize);
         OICFree(b64Buf);
@@ -2068,7 +2071,7 @@ exit:
 static bool FillPrivateDataOfSubOwnerPSK(OicSecCred_t* receivedCred, const CAEndpoint_t* ownerAddr,
                            const OicSecDoxm_t* doxm, const OicUuid_t* subOwner)
 {
-    char* b64Buf = NULL;
+    unsigned char* b64Buf = NULL;
     //Derive OwnerPSK locally
     const char* oxmLabel = GetOxmString(doxm->oxmSel);
     VERIFY_NOT_NULL(TAG, oxmLabel, ERROR);
@@ -2096,18 +2099,18 @@ static bool FillPrivateDataOfSubOwnerPSK(OicSecCred_t* receivedCred, const CAEnd
     else if(OIC_ENCODING_BASE64 == receivedCred->privateData.encoding)
     {
         size_t b64OutSize = 0;
-        size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
+        int encodeResult = mbedtls_base64_encode(NULL, 0, &b64OutSize, subOwnerPSK, OWNER_PSK_LENGTH_128);
+        VERIFY_SUCCESS(TAG, MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL == encodeResult, ERROR);
+        size_t b64BufSize = b64OutSize;
         b64Buf = OICCalloc(1, b64BufSize);
         VERIFY_NOT_NULL(TAG, b64Buf, ERROR);
-
-        VERIFY_SUCCESS(TAG, \
-                       B64_OK == b64Encode(subOwnerPSK, OWNER_PSK_LENGTH_128, b64Buf, b64BufSize, &b64OutSize), \
-                       ERROR);
+        encodeResult = mbedtls_base64_encode(b64Buf, b64BufSize, &b64OutSize, subOwnerPSK, OWNER_PSK_LENGTH_128);
+        VERIFY_SUCCESS(TAG, 0 == encodeResult, ERROR);
 
         receivedCred->privateData.data = (uint8_t *)OICCalloc(1, b64OutSize + 1);
         VERIFY_NOT_NULL(TAG, receivedCred->privateData.data, ERROR);
         receivedCred->privateData.len = b64OutSize;
-        strncpy((char*)receivedCred->privateData.data, b64Buf, b64OutSize);
+        strncpy((char*)receivedCred->privateData.data, (char*)b64Buf, b64OutSize);
         receivedCred->privateData.data[b64OutSize] = '\0';
     }
     else
@@ -2337,15 +2340,12 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest* ehRequest
     OCEntityHandlerResult ret = OC_EH_INTERNAL_SERVER_ERROR;
     OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest IN");
 
-    OicSecDostype_t dos;
-    // Get binary representation of cbor
     OicSecCred_t *cred = NULL;
     OicUuid_t     *rownerId = NULL;
     uint8_t *payload = (((OCSecurityPayload*)ehRequest->payload)->securityData);
     size_t size = (((OCSecurityPayload*)ehRequest->payload)->payloadSize);
 
-    OCStackResult res = OC_STACK_OK;
-
+    OicSecDostype_t dos;
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
     if ((DOS_RESET == dos.state) ||
         (DOS_RFNOP == dos.state))
@@ -2355,7 +2355,14 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest* ehRequest
         goto exit;
     }
 
-    res = CBORPayloadToCred(payload, size, &cred, &rownerId);
+    OCStackResult res = CBORPayloadToCred(payload, size, &cred, &rownerId);
+
+#ifdef MULTIPLE_OWNER
+    if (IsSubOwner(cred->eownerID) && !IsNilUuid(cred->eownerID))
+    {
+        memcpy(rownerId, cred->eownerID, sizeof(OicUuid_t));
+    }
+#endif // MULTIPLE_OWNER
 
     if (OC_STACK_OK == res)
     {
@@ -2454,6 +2461,16 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
         return ehRet;
     }
 
+    OicSecDostype_t dos;
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
+    if ((DOS_RESET == dos.state) ||
+        (DOS_RFNOP == dos.state))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s /cred resource is read-only in RESET and RFNOP.", __func__);
+        ehRet = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
+    }
+
     if (GetCredIdsFromQueryString(ehRequest->query, &credIdList))
     {
         if (OC_STACK_RESOURCE_DELETED == RemoveCredentialByCredIds(credIdList))
@@ -2476,7 +2493,7 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
             ehRet = OC_EH_RESOURCE_DELETED;
         }
     }
-
+exit:
     //Send response to request originator
     ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
                    OC_EH_OK : OC_EH_ERROR;
@@ -2899,22 +2916,29 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                         else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
                         {
                             OIC_LOG_V(DEBUG, TAG, "%s: OIC_ENCODING_BASE64 detected; copying PSK.", __func__);
-                            size_t outBufSize = B64DECODE_OUT_SAFESIZE((cred->privateData.len + 1));
-                            uint8_t* outKey = OICCalloc(1, outBufSize);
                             size_t outKeySize;
+                            int decodeResult = mbedtls_base64_decode(NULL, 0, &outKeySize, cred->privateData.data, cred->privateData.len);
+                            if(MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL != decodeResult)
+                            {
+                                OIC_LOG(ERROR, TAG, "Failed base64 decoding");
+                                goto exit;
+                            }
+                            size_t outBufSize = outKeySize;
+                            uint8_t* outKey = OICCalloc(1, outBufSize);
                             if(NULL == outKey)
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to allocate memory.");
                                 goto exit;
                             }
 
-                            if(B64_OK == b64Decode((char*)cred->privateData.data, cred->privateData.len, outKey, outBufSize, &outKeySize))
+                            if(0 == mbedtls_base64_decode(outKey, outBufSize, &outKeySize, cred->privateData.data, cred->privateData.len))
                             {
                                 if (ValueWithinBounds(outKeySize, INT32_MAX))
                                 {
                                     if (result_length < outKeySize)
                                     {
                                         OIC_LOG (ERROR, TAG, "Wrong value for result_length");
+                                        OICFree(outKey);
                                         goto exit;
                                     }
                                     memcpy(result, outKey, outKeySize);
@@ -2959,7 +2983,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                 //Read PIN/PW
                                 char* pinBuffer = NULL;
                                 size_t pinLength = 0;
-                                if(OIC_ENCODING_RAW == wildCardCred->privateData.encoding)
+                                if (OIC_ENCODING_RAW == wildCardCred->privateData.encoding)
                                 {
                                     pinBuffer = OICCalloc(1, wildCardCred->privateData.len + 1);
                                     if(NULL == pinBuffer)
@@ -2972,17 +2996,23 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                 }
                                 else if(OIC_ENCODING_BASE64 == wildCardCred->privateData.encoding)
                                 {
-                                    size_t pinBufSize = B64DECODE_OUT_SAFESIZE((wildCardCred->privateData.len + 1));
+                                    int decodeResult = mbedtls_base64_decode(NULL, 0, &pinLength, wildCardCred->privateData.data, wildCardCred->privateData.len);
+                                    if (MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL != decodeResult)
+                                    {
+                                        OIC_LOG(ERROR, TAG, "Failed base64 decoding for preconfig PIN");
+                                        goto exit;
+                                    }
+                                    size_t pinBufSize = pinLength;
                                     pinBuffer = OICCalloc(1, pinBufSize);
-                                    if(NULL == pinBuffer)
+                                    if (NULL == pinBuffer)
                                     {
                                         OIC_LOG (ERROR, TAG, "Failed to allocate memory.");
                                         goto exit;
                                     }
-
-                                    if(B64_OK != b64Decode((char*)wildCardCred->privateData.data, wildCardCred->privateData.len, (uint8_t*)pinBuffer, pinBufSize, &pinLength))
+                                    if (0 != mbedtls_base64_decode((unsigned char*)pinBuffer, pinBufSize, &pinLength, wildCardCred->privateData.data, wildCardCred->privateData.len))
                                     {
-                                        OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
+                                        OIC_LOG (ERROR, TAG, "Failed base64 decoding.");
+                                        OICFree(pinBuffer);
                                         goto exit;
                                     }
                                 }
@@ -3649,9 +3679,10 @@ void GetDerKey(ByteArray_t * key, const char * usage)
                 uint8_t *tmp = OICRealloc(key->data, ctx.buflen);
                 if (NULL == tmp)
                 {
+                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                    memset(key->data, 0x0, key->len);
                     OICFree(key->data);
                     key->data = NULL;
-                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
                     mbedtls_pem_free(&ctx);
                     return;
                 }
@@ -3667,9 +3698,10 @@ void GetDerKey(ByteArray_t * key, const char * usage)
                 uint8_t *tmp = OICRealloc(key->data, key->len + temp->privateData.len);
                 if (NULL == tmp)
                 {
+                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                    memset(key->data, 0x0, key->len);
                     OICFree(key->data);
                     key->data = NULL;
-                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
                     return;
                 }
                 key->data = tmp;
@@ -3696,7 +3728,7 @@ void GetPrimaryCertKey(ByteArray_t * key)
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
 
     VERIFY_NOT_NULL(TAG, key, ERROR);
-    
+
     key->len = 0;
     OicSecCred_t * temp = NULL;
 

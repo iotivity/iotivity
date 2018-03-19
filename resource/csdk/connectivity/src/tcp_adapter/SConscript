@@ -5,15 +5,14 @@ import os
 
 Import('connectivity_env')
 
-print("Reading TCP adapter script")
-
 target_os = connectivity_env.get('TARGET_OS')
-src_dir = os.path.abspath(os.curdir)
 
 # Source files to build common for all platforms
-common_files = [os.path.join(src_dir, 'catcpadapter.c')]
+common_files = [File('catcpadapter.c')]
+
+# Target-specific sources
 if target_os in ['linux', 'tizen', 'android', 'ios', 'windows']:
-    common_files.append(os.path.join(src_dir, 'catcpserver.c'))
+    common_files.append(File('catcpserver.c'))
 
 connectivity_env.AppendUnique(CA_SRC=common_files)
 
@@ -23,9 +22,12 @@ connectivity_env.AppendUnique(CA_SRC=common_files)
 # Target-specific SConscript files are expected to return that list.
 
 # Check for the existence of the platform-specific SConscript file
-# relative to the top-level source directory, not the build (variant)
-# directory, before calling that SConscript file to prevent a missing
-# file warning platforms that don't provide one.
-target_sconscript = target_os + '/SConscript'
-if os.path.exists(target_sconscript):
+# before calling it - some target platforms do not provide one.
+# The check has to happen in the source tree because os.path.*
+# methods cannot know about SCons's rewriting rules, but the actual
+# call to the script should happen normally or the targets will
+# not be adjusted properly - scons keeps track of the directory
+# an sconscript is invoked in and actions are relative to that path.
+target_sconscript = File(os.path.join(target_os, 'SConscript'))
+if os.path.exists(target_sconscript.srcnode().abspath):
     SConscript(target_sconscript, exports='connectivity_env')

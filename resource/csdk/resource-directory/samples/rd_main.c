@@ -33,7 +33,7 @@ void handleSigInt(int signum);
 * This function should be run only on the device that it could be host device.
 */
 
-int main()
+int main(void)
 {
     printf("OCResourceDirectory is starting...\n");
     OCStackResult result = OCInit(NULL, 0, OC_CLIENT_SERVER);

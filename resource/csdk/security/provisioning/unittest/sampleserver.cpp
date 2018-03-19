@@ -27,12 +27,12 @@
 #include <time.h>
 
 #include "ocstack.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "ocpayload.h"
 #include "oic_string.h"
 #include "srmutility.h"
-#include "doxmresource.h"
-#include "ocrandom.h"
+#include "experimental/doxmresource.h"
+#include "experimental/ocrandom.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -365,7 +365,6 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
             {
                 // Format the response.  Note this requires some info about the request
                 response.requestHandle = entityHandlerRequest->requestHandle;
-                response.resourceHandle = entityHandlerRequest->resource;
                 response.ehResult = ehResult;
                 response.payload = (OCPayload*)(payload);
                 response.numSendVendorSpecificHeaderOptions = 0;

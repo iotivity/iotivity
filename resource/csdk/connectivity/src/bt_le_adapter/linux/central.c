@@ -21,7 +21,7 @@
 #include "bluez.h"
 
 #include "cagattservice.h"  // For CA_GATT_SERVICE_UUID.
-#include "logger.h"
+#include "experimental/logger.h"
 
 #include <stdbool.h>
 #include <assert.h>

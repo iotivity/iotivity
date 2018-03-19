@@ -7,6 +7,7 @@
 import os
 import subprocess
 from distutils.version import StrictVersion
+import SCons.Util
 
 Import('env')
 
@@ -18,7 +19,7 @@ target_os = env.get('TARGET_OS')
 # output not guaranteed not to change (has already happened)
 # These two commands are used to query the xcode environment:
 tc_path = subprocess.check_output('xcode-select -p', shell=True).rstrip()
-tc_sdks = subprocess.check_output('xcodebuild -showsdks', shell=True)
+tc_sdks = subprocess.check_output('xcodebuild -showsdks', shell=True).rstrip()
 
 # 'xcodebuild -showsdks'  returns information formatted as:
 #
@@ -34,7 +35,7 @@ mac_sdks = []
 ios_sdks = []
 sim_sdks = []
 collecting = False
-for line in tc_sdks.split('\n'):
+for line in SCons.Util.to_String(tc_sdks).split('\n'):
     if collecting:
         if "-sdk" in line:
             # drop the trailing "-sdk sdktag
@@ -113,7 +114,7 @@ else:
 if env.get('SECURED') == '1':
     env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
-sys_root = tc_path
+sys_root = SCons.Util.to_String(tc_path)
 tmpl = '/Platforms/%s.platform/Developer/SDKs/%s%s.sdk/'
 if target_os == 'darwin':
     sys_root += tmpl % ('MacOSX', 'MacOSX', sys_version)

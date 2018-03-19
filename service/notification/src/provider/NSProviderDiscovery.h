@@ -26,7 +26,7 @@
 #include "NSProviderScheduler.h"
 #include "NSProviderResource.h"
 
-NSResult NSStartPresence();
-NSResult NSStopPresence();
+NSResult NSStartPresence(void);
+NSResult NSStopPresence(void);
 
 #endif /* _NS_PROVIDER_DISCOVERY_H_ */

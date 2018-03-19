@@ -14,7 +14,7 @@
 # limitations under the License.
 # ------------------------------------------------------------------------
 
-from configuration import Configuration
+from .configuration import Configuration
 
 # Default (very simple) compiler configuration
 class DefaultConfiguration(Configuration):
@@ -31,7 +31,7 @@ class DefaultConfiguration(Configuration):
 #include <stdbool.h>
 #include <stdint.h>
 
-int main()
+int main(void)
 {
     struct foo
     {
@@ -63,7 +63,7 @@ int main()
     # ------------------------------------------------------------
     def _cxx11_test_program(self):
         return """
-int main()
+int main(void)
 {
     int x = 3210;
     auto f = [x](){

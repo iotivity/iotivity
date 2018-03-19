@@ -36,7 +36,7 @@ void NSSetProviderConnectionState(NSConnectionState state)
     NSProviderConnectionState = state;
 }
 
-NSConnectionState NSGetProviderConnectionState()
+NSConnectionState NSGetProviderConnectionState(void)
 {
     NS_LOG(DEBUG, "Change Connection State");
 
@@ -61,7 +61,7 @@ void NSInitProviderInfo(const char * userInfo)
     }
 }
 
-void NSDeinitProviderInfo()
+void NSDeinitProviderInfo(void)
 {
     NS_LOG(DEBUG, "NSDeinitProviderInfo");
 
@@ -87,14 +87,14 @@ void NSDeinitProviderInfo()
     providerInfo = NULL;
 }
 
-NSProviderInfo * NSGetProviderInfo()
+NSProviderInfo * NSGetProviderInfo(void)
 {
     NS_LOG_V(INFO_PRIVATE, "ProviderInfo: %s", providerInfo->providerId);
 
     return providerInfo;
 }
 
-bool NSGetPolicy()
+bool NSGetPolicy(void)
 {
     return NSPolicy;
 }
@@ -104,7 +104,7 @@ void NSSetPolicy(bool policy)
     NSPolicy = policy;
 }
 
-bool NSGetResourceSecurity()
+bool NSGetResourceSecurity(void)
 {
     return NSResourceSecurity;
 }
@@ -114,7 +114,7 @@ void NSSetResourceSecurity(bool secured)
     NSResourceSecurity = secured;
 }
 
-const char * NSGetUserInfo()
+const char * NSGetUserInfo(void)
 {
     return providerInfo->userInfo;
 }

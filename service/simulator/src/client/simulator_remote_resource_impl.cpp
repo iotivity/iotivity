@@ -23,7 +23,7 @@
 #include "simulator_exceptions.h"
 #include "simulator_utils.h"
 #include "simulator_logger.h"
-#include "logger.h"
+#include "experimental/logger.h"
 
 #define TAG "SIMULATOR_REMOTE_RESOURCE"
 

@@ -20,42 +20,41 @@
 #ifndef CLOUD_AUTH_H
 #define CLOUD_AUTH_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Sends Sign UP request to cloud
  *
  * @param[in] endPoint         peer endpoint
  * @param[in] authProvider     authentication provider
  * @param[in] authToken        authentication token
- * @param[in] response         response callback
  * @return  OCStackResult application result
  */
-OCStackResult CloudSignUp(OCDevAddr  *endPoint, const char *authProvider, const char *authToken,
-                          OCClientResponseHandler response);
+OCStackResult CloudSignUp(OCDevAddr  *endPoint, const char *authProvider, const char *authToken);
 
 /**
  * Sends Sign IN request to cloud
  *
  * @param[in] endPoint         peer endpoint
- * @param[in] response         response callback
  * @return  OCStackResult application result
  */
-OCStackResult CloudSignIn(OCDevAddr  *endPoint, OCClientResponseHandler response);
+OCStackResult CloudSignIn(OCDevAddr  *endPoint);
 
 /**
  * Sends Sign IN request to cloud
  *
  * @param[in] endPoint         peer endpoint
- * @param[in] response         response callback
  * @return  OCStackResult application result
  */
-OCStackResult CloudSignOut(OCDevAddr  *endPoint, OCClientResponseHandler response);
+OCStackResult CloudSignOut(OCDevAddr  *endPoint);
 
 /**
  * Sends Sign Up request to cloud
  *
  * @param[in] ctx                    context
  * @param[in] handle                 handle
- * @param[in] response               response from peer
  * @return  OCStackApplicationResult application result
  */
 OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
@@ -86,5 +85,9 @@ OCStackApplicationResult handleCloudSignOutResponse(void *ctx,
                                                     OCDoHandle handle,
                                                     OCClientResponse *response);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // CLOUD_AUTH_H

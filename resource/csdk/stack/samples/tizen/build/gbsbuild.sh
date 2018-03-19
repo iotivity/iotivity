@@ -57,6 +57,7 @@ cp -Rf ./extlibs/mbedtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/rapidxml $sourcedir/tmp/extlibs
 cp -R ./extlibs/libcoap $sourcedir/tmp/extlibs
 cp -LR ./extlibs/sqlite3 $sourcedir/tmp/extlibs
+cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
 cp -R ./resource/csdk/stack/samples/tizen/build/packaging/*.spec $sourcedir/tmp/packaging
 cp -R ./resource $sourcedir/tmp/
 cp -R ./build_common/external_libs.scons $sourcedir/tmp/
@@ -103,8 +104,13 @@ if [ ! -d .git ]; then
    git commit -m "Initial commit"
 fi
 
+gbsprofile=${gbsprofile:=profile.tizen}
+gbscommand_prefix="gbs build -A ${gbsarch} -P ${gbsprofile} "
+nproc=$(expr 1 + $(expr `nproc --ignore=1` / 2 ) )
+gbscommand_prefix=${gbscommand_prefix}" --define '_smp_mflags -j${nproc}'"
+
 echo "Calling core gbs build command"
-gbscommand="gbs build -A "${gbsarch}" -B ~/GBS-ROOT-RI-OIC --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6' --define 'WITH_TCP $7' --define 'WITH_PROXY $8' --define 'WITH_MQ $9'"
+gbscommand=${gbscommand_prefix}" -B ~/GBS-ROOT-RI-OIC --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6' --define 'WITH_TCP $7' --define 'WITH_PROXY $8' --define 'WITH_MQ $9'"
 echo $gbscommand
 if eval $gbscommand; then
    echo "Core build is successful"
@@ -127,7 +133,7 @@ if echo $BUILD_SAMPLE|grep -qi '^ON$'; then
       git commit -m "Initial commit"
    fi
    echo "Calling sample gbs build command"
-   gbscommand="gbs build -A "${gbsarch}" -B ~/GBS-ROOT-RI-OIC --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6' --define 'WITH_TCP $7' --define 'WITH_PROXY $8' --define 'WITH_MQ $9'"
+   gbscommand=${gbscommand_prefix}" -B ~/GBS-ROOT-RI-OIC --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6' --define 'WITH_TCP $7' --define 'WITH_PROXY $8' --define 'WITH_MQ $9'"
    echo $gbscommand
    if eval $gbscommand; then
       echo "Sample build is successful"

@@ -13,7 +13,7 @@ Usage:
     build:
         python %s <targetbuild>
         Allowed values for <target_build>: all, linux_unsecured, linux_secured, linux_full, linux_unsecured_with_rd, linux_secured_with_rd,
-        android, android_unsecured, android_secured, arduino, tizen, tizen_unsecured, tizen_secured, simulator, darwin, windows, msys
+        android, android_unsecured, android_secured, tizen, tizen_unsecured, tizen_secured, simulator, darwin, windows, msys
         Note: \"linux\" will build \"linux_unsecured\", \"linux_secured\", \"linux_secured_with_rd\", \"linux_unsecured_with_mq\", \"linux_secured_with_tcp\" & \"linux_unsecured_with_tcp\" & \"linux_unsecured_with_rd\".
         Any selection will build both debug and release versions of all available targets in the scope you've selected.
         To choose any specific command, please use the SCons commandline directly. Please refer to [IOTIVITY_REPO]/Readme.scons.txt.
@@ -61,7 +61,6 @@ def build_all(flag, extra_option_str):
 
         build_android_unsecured(flag, extra_option_str)
         build_android_secured(flag, extra_option_str)
-        build_arduino(flag, extra_option_str)
         build_tizen(flag, extra_option_str)
 
     if platform.system() == "Windows":
@@ -79,6 +78,7 @@ def build_linux_unsecured(flag, extra_option_str):
     build_options = {
                         'RELEASE':flag,
                         'SECURED':0,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -88,6 +88,7 @@ def build_linux_secured_with_tcp(flag, extra_option_str):
                         'RELEASE':flag,
                         'WITH_TCP': 1,
                         'WITH_CLOUD':1,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -97,6 +98,7 @@ def build_linux_unsecured_with_java(flag, extra_option_str):
                         'RELEASE':flag,
                         'BUILD_JAVA': 1,
                         'TARGET_TRANSPORT': 'IP',
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -107,6 +109,7 @@ def build_linux_secured_with_java(flag, extra_option_str):
                         'BUILD_JAVA': 1,
                         'TARGET_TRANSPORT': 'IP',
                         'SECURED': 1,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -117,6 +120,7 @@ def build_linux_unsecured_with_tcp(flag, extra_option_str):
                         'WITH_TCP': 1,
                         'TARGET_TRANSPORT': 'IP',
                         'SECURED':0,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -126,6 +130,7 @@ def build_linux_unsecured_with_rm(flag, extra_option_str):
                         'ROUTING':'GW',
                         'RELEASE':flag,
                         'SECURED':0,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -133,12 +138,14 @@ def build_linux_secured(flag, extra_option_str):
     print ("*********** Build for linux with Security *************")
     build_options = {
                         'RELEASE':flag,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
 def build_linux_full(flag, extra_option_str):
     print ("*********** Build for linux with full features *************")
     build_options = {
+                        'BUILD_JAVA':1,
                         'MULTIPLE_OWNER':1,
                         'RELEASE':flag,
                         'SECURED':1,
@@ -146,6 +153,7 @@ def build_linux_full(flag, extra_option_str):
                         'WITH_RA':1,
                         'WITH_RA_IBB':1,
                         'WITH_TCP':1,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -155,6 +163,7 @@ def build_linux_unsecured_with_rd(flag, extra_option_str):
                         'RELEASE':flag,
                         'RD_MODE':'all',
                         'SECURED':0,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -163,6 +172,7 @@ def build_linux_secured_with_rd(flag, extra_option_str):
     build_options = {
                         'RELEASE':flag,
                         'RD_MODE':'all',
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -172,6 +182,7 @@ def build_linux_unsecured_with_mq(flag, extra_option_str):
                         'RELEASE':flag,
                         'WITH_MQ':'PUB,SUB,BROKER',
                         'SECURED':0,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -181,6 +192,7 @@ def build_linux_unsecured_with_tcp(flag, extra_option_str):
                         'RELEASE':flag,
                         'WITH_TCP':'1',
                         'SECURED':0,
+                        'ERROR_ON_WARN':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -195,6 +207,58 @@ def build_android(flag, extra_option_str):
                         'RELEASE':flag,
                     }
     call_scons(build_options, extra_option_str)
+
+def build_android_universal(flag, extra_option_str):
+    print('''
+*******************************************************************************
+    Starting Android Universal build
+    This Will take a very long time to complete. It will build the android
+    build for the following architectures.
+       - armeabi
+       - armeabi-v7a
+       - arm64-v8a
+       - x86
+       - x86_64
+    If you do not need to build a universal APK or you can target a specific
+    architecture we recommend you build android for that specific target. 
+*******************************************************************************
+''')
+    print ("*********** Build for android armeabi *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'armeabi',
+                        'RELEASE':flag,
+                    }
+    call_scons(build_options, extra_option_str)
+    print ("*********** Build for android x86 *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'x86',
+                        'RELEASE':flag,
+                    }
+    call_scons(build_options, extra_option_str)
+    print ("*********** Build for android armeabi-v7a *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'armeabi-v7a',
+                        'RELEASE':flag,
+                    }
+    call_scons(build_options, extra_option_str)
+    print ("*********** Build for android x86_64 *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'x86_64',
+                        'RELEASE':flag,
+                    }
+    call_scons(build_options, extra_option_str)
+    print ("*********** Build for android arm64-v8a *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'arm64-v8a',
+                        'RELEASE':flag,
+                    }
+    call_scons(build_options, extra_option_str)
+    print ("*********** Finishing Android universal build *************")
 
 def build_android_secured(flag, extra_option_str):
     build_android(flag, extra_option_str + " SECURED=1")
@@ -351,40 +415,6 @@ def build_android_armeabi_with_rm_and_ble(flag, extra_option_str):
                         'TARGET_TRANSPORT':'BLE',
                     }
     call_scons(build_options, extra_option_str)
-
-def build_arduino(flag, extra_option_str):
-    print ("*********** Build for arduino avr *************")
-    extra_option_str = "resource " + extra_option_str
-    build_options = {
-                        'TARGET_OS':'arduino',
-                        'UPLOAD':'false',
-                        'BOARD':'mega',
-                        'MULTIPLE_OWNER':0,
-                        'TARGET_ARCH':'avr',
-                        'TARGET_TRANSPORT':'IP',
-                        'SHIELD':'ETH',
-                        'RELEASE':flag,
-                    }
-    call_scons(build_options, extra_option_str)
-
-    build_options['SHIELD'] = 'WIFI'
-    call_scons(build_options, extra_option_str)
-
-    build_options['TARGET_TRANSPORT'] = 'BLE'
-    build_options['SHIELD']           = 'RBL_NRF8001'
-    call_scons(build_options, extra_option_str)
-
-    print ("*********** Build for arduino arm *************")
-    build_options['BOARD']            = 'arduino_due_x'
-    build_options['TARGET_ARCH']      = 'arm'
-    build_options['TARGET_TRANSPORT'] = 'IP'
-    build_options['SHIELD']           = 'ETH'
-    call_scons(build_options, extra_option_str)
-
-    build_options['SHIELD'] = 'WIFI'
-    call_scons(build_options, extra_option_str)
-
-    # BLE support for the Arduino Due is currently unavailable.
 
 def build_tizen(flag, extra_option_str):
     print ("*********** Build for Tizen with options *************")
@@ -605,6 +635,14 @@ elif arg_num == 2:
         build_android("true", "")
         build_android("false", "")
 
+    elif str(sys.argv[1]) == "android_universal":
+        # only build the release version due to long amount of time to build.
+        build_android_universal("true", "")
+
+    elif str(sys.argv[1]) == "android_universal_unsecured":
+        # only build the release version due to long amount of time to build.
+        build_android_universal("true", "SECURED=0")
+
     elif str(sys.argv[1]) == "android_unsecured":
         build_android_unsecured("true", "")
         build_android_unsecured("false", "")
@@ -672,10 +710,6 @@ elif arg_num == 2:
     elif str(sys.argv[1]) == "android_armeabi_with_rm_and_ble":
         build_android_armeabi_with_rm_and_ble("true", "")
         build_android_armeabi_with_rm_and_ble("false", "")
-
-    elif str(sys.argv[1]) == "arduino":
-        build_arduino("true", "")
-        build_arduino("false", "")
 
     elif str(sys.argv[1]) == "windows":
         build_windows("true", "")

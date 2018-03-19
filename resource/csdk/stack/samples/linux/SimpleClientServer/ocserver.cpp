@@ -40,10 +40,10 @@
 #include <array>
 #include "oic_malloc.h"
 #include <getopt.h>
-#include "logger.h"
 #include "ocserver.h"
 #include "common.h"
 #include "oic_string.h"
+#include "experimental/logger.h"
 
 #define VERIFY_SUCCESS(op)                          \
 do                                                  \
@@ -541,7 +541,6 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
         {
             // Format the response.  Note this requires some info about the request
             response.requestHandle = entityHandlerRequest->requestHandle;
-            response.resourceHandle = entityHandlerRequest->resource;
             response.ehResult = ehResult;
             response.payload = reinterpret_cast<OCPayload*>(payload);
             // Indicate that response is NOT in a persistent buffer
@@ -640,7 +639,6 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
         {
             // Format the response.  Note this requires some info about the request
             response.requestHandle = entityHandlerRequest->requestHandle;
-            response.resourceHandle = entityHandlerRequest->resource;
             response.ehResult = ehResult;
             response.payload = reinterpret_cast<OCPayload*>(payload);
             // Indicate that response is NOT in a persistent buffer

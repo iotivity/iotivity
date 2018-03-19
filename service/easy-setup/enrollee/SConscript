@@ -66,10 +66,6 @@ if enrollee_env.get('SECURED') == '1':
 if target_os not in ['windows']:
     enrollee_env.AppendUnique(CXXFLAGS=['-Wall', '-std=c++0x'])
 
-if not env.get('RELEASE'):
-    enrollee_env.PrependUnique(LIBS=['gcov'])
-    enrollee_env.AppendUnique(CCFLAGS=['--coverage'])
-
 ######################################################################
 # Linux Enrollee
 ######################################################################
@@ -100,18 +96,6 @@ if target_os == 'tizen':
     ])
 
 ######################################################################
-# Arduino Enrollee
-######################################################################
-if target_os == 'arduino':
-    enrollee_env.PrependUnique(LIBS=[
-        'oc',
-        'octbstack',
-        'oc_logger',
-        'pthread',
-        'connectivity_abstraction',
-    ])
-
-######################################################################
 # Source files and Targets
 ######################################################################
 es_enrollee_src = None
@@ -131,18 +115,7 @@ if target_os in ['linux', 'tizen']:
     enrollee_env.UserInstallTargetHeader('inc/easysetup.h',
                                          'service/easy-setup', 'easysetup.h')
 
-if target_os == 'arduino':
-    es_enrollee_common_src = ['./src/easysetup.c', './src/resourcehandler.c', './src/es_util.c']
-    enrollee_sdk_static = enrollee_env.StaticLibrary('ESEnrolleeSDK',
-                                                     es_enrollee_common_src)
-    enrollee_env.InstallTarget(enrollee_sdk_static, 'libESEnrolleeSDK')
-    enrollee_env.UserInstallTargetLib(enrollee_sdk_static, 'libESEnrollee')
-
-#Go to build sample apps
-#if target_os == 'arduino':
-#    SConscript('../sampleapp/enrollee/arduino/SConscript')
-
-if target_os in ['linux']:
+if enrollee_env.get('WITH_TEST') and target_os in ('linux'):
     SConscript('../sampleapp/enrollee/linux/SConscript')
     #Build UnitTestcases for Enrollee
     if enrollee_env.get('SECURED') == '0':

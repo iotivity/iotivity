@@ -96,7 +96,7 @@ typedef struct
 
 } NSSyncInfo_internal;
 
-bool NSIsStartedConsumer();
+bool NSIsStartedConsumer(void);
 void NSSetIsStartedConsumer(bool setValue);
 
 void NSSetProviderChangedCb(NSProviderStateCallback cb);
@@ -108,7 +108,7 @@ void NSMessagePost(NSMessage * obj);
 void NSSetNotificationSyncCb(NSSyncInfoReceivedCallback cb);
 void NSNotificationSync(NSSyncInfo * sync);
 
-char ** NSGetConsumerId();
+char ** NSGetConsumerId(void);
 void NSSetConsumerId(char * cId);
 
 char * NSMakeRequestUriWithConsumerId(const char * uri);

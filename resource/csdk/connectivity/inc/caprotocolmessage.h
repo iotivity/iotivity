@@ -41,14 +41,7 @@ typedef uint32_t code_t;
 #define CA_RESPONSE_CLASS(C) (((C) >> 5)*100)
 #define CA_RESPONSE_CODE(C) (CA_RESPONSE_CLASS(C) + (C - COAP_RESPONSE_CODE(CA_RESPONSE_CLASS(C))))
 
-
-// Include files from the arduino platform do not provide these conversions:
-#ifdef ARDUINO
-#define htons(x) ( ((x)<< 8 & 0xFF00) | ((x)>> 8 & 0x00FF) )
-#define ntohs(x) htons(x)
-#else
 #define HAVE_TIME_H 1
-#endif
 
 #ifdef WITH_TCP
 static const uint8_t PAYLOAD_MARKER = 1;
@@ -93,6 +86,16 @@ CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *out
  */
 CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                  CAErrorInfo_t *errorInfo);
+
+/**
+ * extracts signaling information from received pdu.
+ * @param[in]   pdu                   received pdu.
+ * @param[in]   endpoint              endpoint information.
+ * @param[out]  outSigInfo            signaling info structure made from received pdu.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAGetSignalingInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
+                                     CASignalingInfo_t *outSigInfo);
 
 /**
  * creates pdu from the request information.

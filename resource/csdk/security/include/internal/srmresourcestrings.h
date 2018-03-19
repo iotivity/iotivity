@@ -96,6 +96,9 @@ extern const char * OIC_RSRC_TYPE_SEC_VER;
 extern const char * OIC_RSRC_VER_URI;
 extern const char * OIC_JSON_VER_NAME;
 
+//cloud conf
+extern const char * OIC_RSRC_CLOUD_CONF_URI;
+
 //reset profile
 extern const char * OIC_JSON_RESET_PF_NAME;
 extern const char * OIC_JSON_SUBJECTID_NAME;

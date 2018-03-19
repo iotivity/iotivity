@@ -118,10 +118,10 @@ static CATCPConnectionHandleCallback g_connectionCallback = NULL;
  */
 static CATCPSessionInfo_t *g_sessionList = NULL;
 
-static CAResult_t CATCPCreateMutex();
-static void CATCPDestroyMutex();
-static CAResult_t CATCPCreateCond();
-static void CATCPDestroyCond();
+static CAResult_t CATCPCreateMutex(void);
+static void CATCPDestroyMutex(void);
+static CAResult_t CATCPCreateCond(void);
+static void CATCPDestroyCond(void);
 static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock);
 static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock);
 static void CAFindReadyMessage();
@@ -160,7 +160,13 @@ do \
         FD_SET(caglobals.tcp.TYPE.fd, FDS); \
     }
 
-static void CATCPDestroyMutex()
+#define CA_TCP_RESPONSE_CLASS(C) (((C) >> 5)*100)
+
+#define CA_TCP_RESPONSE_CODE(C) \
+    (CA_TCP_RESPONSE_CLASS(C) \
+            + (C - COAP_RESPONSE_CODE(CA_TCP_RESPONSE_CLASS(C))))
+
+static void CATCPDestroyMutex(void)
 {
     if (g_mutexObjectList)
     {
@@ -169,7 +175,7 @@ static void CATCPDestroyMutex()
     }
 }
 
-static CAResult_t CATCPCreateMutex()
+static CAResult_t CATCPCreateMutex(void)
 {
     if (!g_mutexObjectList)
     {
@@ -184,7 +190,7 @@ static CAResult_t CATCPCreateMutex()
     return CA_STATUS_OK;
 }
 
-static void CATCPDestroyCond()
+static void CATCPDestroyCond(void)
 {
     if (g_condObjectList)
     {
@@ -193,7 +199,7 @@ static void CATCPDestroyCond()
     }
 }
 
-static CAResult_t CATCPCreateCond()
+static CAResult_t CATCPCreateCond(void)
 {
     if (!g_condObjectList)
     {
@@ -772,6 +778,11 @@ static CAResult_t CAReceiveMessage(CATCPSessionInfo_t *svritem)
             {
                 OIC_LOG_V(ERROR, TAG, "total tls length is too big (buffer size : %" PRIuPTR ")",
                                     sizeof(svritem->tlsdata));
+                if (CA_STATUS_OK != CAcloseSslConnection(&svritem->sep.endpoint))
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to close TLS session");
+                }
+                CASearchAndDeleteTCPSession(&(svritem->sep.endpoint));
                 return CA_RECEIVE_FAILED;
             }
             nbRead = tlsLength - svritem->tlsLen;
@@ -1130,7 +1141,7 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
     return CA_STATUS_OK;
 }
 
-void CATCPStopServer()
+void CATCPStopServer(void)
 {
     if (caglobals.tcp.terminate)
     {
@@ -1145,16 +1156,11 @@ void CATCPStopServer()
     caglobals.tcp.terminate = true;
 
 #if !defined(WSA_WAIT_EVENT_0)
-    if (caglobals.tcp.shutdownFds[1] != -1)
+    if (caglobals.tcp.shutdownFds[1] != OC_INVALID_SOCKET)
     {
         close(caglobals.tcp.shutdownFds[1]);
         caglobals.tcp.shutdownFds[1] = OC_INVALID_SOCKET;
         // receive thread will stop immediately
-    }
-    if (caglobals.tcp.connectionFds[1] != -1)
-    {
-        close(caglobals.tcp.connectionFds[1]);
-        caglobals.tcp.connectionFds[1] = OC_INVALID_SOCKET;
     }
 #else
     // unit tests sometimes stop the TCP Server after starting just the UDP Server.
@@ -1177,8 +1183,18 @@ void CATCPStopServer()
     if (caglobals.tcp.started)
     {
         oc_cond_wait(g_condObjectList, g_mutexObjectList);
+        caglobals.tcp.started = false;
     }
-    caglobals.tcp.started = false;
+
+#if !defined(WSA_WAIT_EVENT_0)
+    close(caglobals.tcp.connectionFds[1]);
+    close(caglobals.tcp.connectionFds[0]);
+    caglobals.tcp.connectionFds[1] = OC_INVALID_SOCKET;
+    caglobals.tcp.connectionFds[0] = OC_INVALID_SOCKET;
+
+    close(caglobals.tcp.shutdownFds[0]);
+    caglobals.tcp.shutdownFds[0] = OC_INVALID_SOCKET;
+#endif
 
     // mutex unlock
     oc_mutex_unlock(g_mutexObjectList);
@@ -1485,7 +1501,7 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *removedData)
     return CA_STATUS_OK;
 }
 
-void CATCPDisconnectAll()
+void CATCPDisconnectAll(void)
 {
     oc_mutex_lock(g_mutexObjectList);
     CATCPSessionInfo_t *session = NULL;
@@ -1609,7 +1625,52 @@ size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer)
     return headerLen + optPaylaodLen;
 }
 
+uint32_t CAGetCodeFromHeader(const unsigned char *recvBuffer)
+{
+    OIC_LOG(DEBUG, TAG, "IN - CAGetCodeFromHeader");
+
+    coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
+                ((unsigned char *)recvBuffer)[0] >> 4);
+    size_t headerLen = coap_get_tcp_header_length_for_transport(transport);
+    uint32_t code = CA_TCP_RESPONSE_CODE(recvBuffer[headerLen -1]);
+
+    OIC_LOG_V(DEBUG, TAG, "header length [%zu]", headerLen);
+    OIC_LOG_V(DEBUG, TAG, "code [%d]", code);
+
+    OIC_LOG(DEBUG, TAG, "OUT - CAGetCodeFromHeader");
+    return code;
+}
+
 void CATCPSetErrorHandler(CATCPErrorHandleCallback errorHandleCallback)
 {
     g_tcpErrorHandler = errorHandleCallback;
+}
+
+CACSMExchangeState_t CAGetCSMState(const CAEndpoint_t *endpoint)
+{
+    oc_mutex_lock(g_mutexObjectList);
+
+    CACSMExchangeState_t csmState = NONE;
+    CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(endpoint);
+    if (svritem)
+    {
+        csmState = svritem->CSMState;
+    }
+
+    oc_mutex_unlock(g_mutexObjectList);
+    return csmState;
+}
+
+void CAUpdateCSMState(const CAEndpoint_t *endpoint, CACSMExchangeState_t state)
+{
+    oc_mutex_lock(g_mutexObjectList);
+
+    CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(endpoint);
+    if (svritem)
+    {
+        svritem->CSMState = state;
+    }
+
+    oc_mutex_unlock(g_mutexObjectList);
+    return;
 }

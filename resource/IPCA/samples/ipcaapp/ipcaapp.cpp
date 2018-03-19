@@ -598,7 +598,7 @@ IPCAStatus IPCA_CALL PasswordDisplayCallback(
     return IPCA_FAIL;
 }
 
-int main()
+int main(void)
 {
     // @future:
     // possible options:

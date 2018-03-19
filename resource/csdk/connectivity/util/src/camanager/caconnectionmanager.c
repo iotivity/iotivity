@@ -29,7 +29,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "octhread.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "caadapterutils.h"
 
 #include "caconnectionmanager.h"
@@ -40,13 +40,13 @@
 #define TAG "OIC_CM"
 
 
-CAResult_t CACMInitialize()
+CAResult_t CACMInitialize(void)
 {
     OIC_LOG(DEBUG, TAG, "CACMInitialize");
     return CAMsgArbiterInitialize();
 }
 
-CAResult_t CACMTerminate()
+CAResult_t CACMTerminate(void)
 {
     OIC_LOG(DEBUG, TAG, "CACMTerminate");
 
@@ -80,7 +80,7 @@ CAResult_t CACMUpdateRemoteDeviceInfo(const CAEndpoint_t *endpoint, bool isCloud
     return CAMsgArbiterUpdateDeviceInfo(endpoint, isCloud);
 }
 
-CAResult_t CACMResetRemoteDeviceInfo()
+CAResult_t CACMResetRemoteDeviceInfo(void)
 {
     return CAMsgArbiterResetDeviceInfo();
 }

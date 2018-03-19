@@ -20,7 +20,7 @@
 #include "iotivity_config.h"
 #include "utils.h"
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include <stddef.h>
 #include <string.h>
 #include "oic_malloc.h"
@@ -28,8 +28,8 @@
 #include "cacommonutil.h"
 
 #include "ocpayload.h"
-#include "payload_logging.h"
-#include "doxmresource.h"
+#include "experimental/payload_logging.h"
+#include "experimental/doxmresource.h"
 #include "pmutility.h"
 #include "secureresourceprovider.h"
 
@@ -82,16 +82,17 @@ typedef struct
  * @param[in] subj              the subject
  */
 static void CSRMakeSubject(char *subject, const char *countryCode, const char *organisation,
-                    const char *organizationalUnitName, const char *deviceId)
+                           const char *organizationalUnitName, const char *deviceId)
 {
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
     if (!deviceId)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: The device id is NULL",__func__);
+        OIC_LOG_V(ERROR, TAG, "%s: The device id is NULL", __func__);
         return;
     }
-    snprintf(subject, MAX_STRING_LEN, "C=%s, O=%s, OU=%s, CN=uuid:%s", countryCode, organisation, organizationalUnitName, deviceId);
+    snprintf(subject, MAX_STRING_LEN, "C=%s, O=%s, OU=%s, CN=uuid:%s", countryCode, organisation,
+             organizationalUnitName, deviceId);
 
     OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
 }
@@ -102,7 +103,7 @@ static void CSRMakeSubject(char *subject, const char *countryCode, const char *o
  *
  * @return  0 on success or -1 on error
  */
-static int ecdsaGenKeypair(mbedtls_pk_context * pk)
+static int ecdsaGenKeypair(mbedtls_pk_context *pk)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     mbedtls_entropy_context entropy;
@@ -114,7 +115,7 @@ static int ecdsaGenKeypair(mbedtls_pk_context * pk)
     mbedtls_ctr_drbg_init(&ctr_drbg);
     mbedtls_entropy_init(&entropy);
     if (0 != mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
-                                   &entropy, (const unsigned char*)PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING)))
+                                   &entropy, (const unsigned char *)PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING)))
     {
         OIC_LOG(ERROR, TAG, "Seed initialization failed!");
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
@@ -174,10 +175,10 @@ static int GenerateCSR(char *subject, OCByteString *csr)
 
     int len = 0;
     int bufsize = 1024;
-    unsigned char * buf = NULL;
+    unsigned char *buf = NULL;
     mbedtls_entropy_context entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
-    mbedtls_pk_context * key = NULL;
+    mbedtls_pk_context *key = NULL;
     mbedtls_x509write_csr req;
 
     // Initialize keypair context
@@ -213,7 +214,7 @@ static int GenerateCSR(char *subject, OCByteString *csr)
     mbedtls_entropy_init(&entropy);
 
     result = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
-             &entropy, (const unsigned char*)PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING));
+                                   &entropy, (const unsigned char *)PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING));
     if (result < 0)
     {
         OIC_LOG(ERROR, TAG, "Seed initialization failed!");
@@ -265,7 +266,7 @@ static int GenerateCSR(char *subject, OCByteString *csr)
     memcpy(g_privateKey.bytes, buf + bufsize - len, len * sizeof(uint8_t));
     g_privateKey.len = len;
 
-    exit:
+exit:
     mbedtls_entropy_free(&entropy);
     mbedtls_ctr_drbg_free(&ctr_drbg);
     mbedtls_x509write_csr_free(&req);
@@ -289,7 +290,8 @@ static int GenerateCSR(char *subject, OCByteString *csr)
  * @param[in] response  peer response
  * @return  OCStackResult application result
  */
-static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCClientResponse *response)
+static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data,
+        OCClientResponse *response)
 {
     OCStackResult result = OC_STACK_OK;
 
@@ -298,7 +300,7 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
 
     if (!response)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: Client response is null",__func__);
+        OIC_LOG_V(ERROR, TAG, "%s: Client response is null", __func__);
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -321,7 +323,7 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
 
     OicSecKey_t cert;
     if (!OCRepPayloadGetPropPubDataType((OCRepPayload *)response->payload,
-                                   OC_RSRVD_CERT, &cert))
+                                        OC_RSRVD_CERT, &cert))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_CERT);
         return OC_STACK_ERROR;
@@ -352,7 +354,7 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
     //get cacert
     OicSecKey_t caCert;
     if (!OCRepPayloadGetPropPubDataType((OCRepPayload *)response->payload,
-                                   OC_RSRVD_CACERT, &caCert))
+                                        OC_RSRVD_CACERT, &caCert))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_CACERT);
         return OC_STACK_ERROR;
@@ -373,18 +375,18 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
 /**
  * Certificate-Issue request function
  *
- * @param[in] endPoint          cloud host and port
+ * @param[in] cloudUri          cloud host and port
  * @return  OCStackResult application result
  */
-OCStackResult OCCloudCertificateIssueRequest(void* ctx,
-                                             const OCDevAddr *endPoint,
-                                             OCCloudResponseCB callback)
+OCStackResult OCCloudCertificateIssueRequest(void *ctx,
+        const char *cloudUri,
+        OCCloudResponseCB callback)
 {
     OCStackResult ret = OC_STACK_OK;
 
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
-    if (NULL == endPoint)
+    if (NULL == cloudUri)
     {
         OIC_LOG(ERROR, TAG, "Input parameter endpoint is NULL");
         return OC_STACK_INVALID_PARAM;
@@ -410,7 +412,7 @@ OCStackResult OCCloudCertificateIssueRequest(void* ctx,
     OIC_LOG(DEBUG, TAG, "Private Key:");
     OIC_LOG_BUFFER(DEBUG, TAG, g_privateKey.bytes, g_privateKey.len);
 
-    OCRepPayload* payload = OCRepPayloadCreate();
+    OCRepPayload *payload = OCRepPayloadCreate();
     if (!payload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
@@ -431,9 +433,7 @@ OCStackResult OCCloudCertificateIssueRequest(void* ctx,
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *)payload);
 
     char uri[MAX_URI_QUERY] = { 0 };
-    snprintf(uri, MAX_URI_QUERY, DEFAULT_QUERY,
-             endPoint->addr, endPoint->port,
-             OC_RSRVD_PROV_CERT_URI);
+    snprintf(uri, MAX_URI_QUERY, "%s%s", cloudUri, OC_RSRVD_PROV_CERT_URI);
     OIC_LOG_V(DEBUG, TAG, "Certificate Request Query: %s", uri);
 
     OCCallbackData cbData;

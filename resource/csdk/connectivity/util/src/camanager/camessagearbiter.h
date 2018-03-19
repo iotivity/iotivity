@@ -38,12 +38,12 @@ extern "C"
  * Initializes the Message Arbiter
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAMsgArbiterInitialize();
+CAResult_t CAMsgArbiterInitialize(void);
 
 /**
  * Terminate the Message Arbiter
  */
-CAResult_t CAMsgArbiterTerminate();
+CAResult_t CAMsgArbiterTerminate(void);
 
 /**
  * Update Device Info. in managed data
@@ -57,7 +57,7 @@ CAResult_t CAMsgArbiterUpdateDeviceInfo(const CAEndpoint_t *endpoint, bool isClo
  * Reset Device Info in managed data
  * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAMsgArbiterResetDeviceInfo();
+CAResult_t CAMsgArbiterResetDeviceInfo(void);
 
 /**
  * Get request/response message to send.

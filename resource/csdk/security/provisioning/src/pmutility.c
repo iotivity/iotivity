@@ -38,12 +38,12 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "oic_time.h"
-#include "logger.h"
+#include "experimental/logger.h"
 #include "utlist.h"
 #include "ocpayload.h"
 
 #include "srmresourcestrings.h" //@note: SRM's internal header
-#include "doxmresource.h"       //@note: SRM's internal header
+#include "experimental/doxmresource.h"       //@note: SRM's internal header
 #include "pstatresource.h"      //@note: SRM's internal header
 
 #include "pmtypes.h"
@@ -573,6 +573,7 @@ bool OC_CALL PMGenerateQuery(bool isSecure,
     {
         case CT_ADAPTER_TCP:
             prefix = (isSecure == true) ? COAPS_TCP_PREFIX : COAP_TCP_PREFIX;
+            /* fall through */
         case CT_ADAPTER_IP:
             switch(connType & CT_MASK_FLAGS & ~CT_FLAG_SECURE)
             {

@@ -83,6 +83,11 @@
  */
 #define TAG "OIC_CA_IP_SERVER"
 
+/*
+ * Enable or disable log for network changed event
+ */
+#define NETWORK_INTERFACE_CHANGED_LOGGING 1
+
 #define SELECT_TIMEOUT 1     // select() seconds (and termination latency)
 
 #define IPv4_MULTICAST     "224.0.1.187"
@@ -272,7 +277,9 @@ static void CASelectReturned(fd_set *readFds, int ret)
         else ISSET(m4s, readFds, CA_MULTICAST | CA_IPV4 | CA_SECURE)
         else if ((caglobals.ip.netlinkFd != OC_INVALID_SOCKET) && FD_ISSET(caglobals.ip.netlinkFd, readFds))
         {
-            OIC_LOG_V(DEBUG, TAG, "Netlink event detacted");
+#if NETWORK_INTERFACE_CHANGED_LOGGING
+            OIC_LOG_V(DEBUG, TAG, "Netlink event detected");
+#endif
             u_arraylist_t *iflist = CAFindInterfaceChange();
             if (iflist)
             {
@@ -1214,12 +1221,16 @@ CAResult_t CAIPStartListenServer()
         }
         if (ifitem->family == AF_INET)
         {
+#if NETWORK_INTERFACE_CHANGED_LOGGING
             OIC_LOG_V(DEBUG, TAG, "Adding IPv4 interface(%i) to multicast group", ifitem->index);
+#endif
             applyMulticastToInterface4(ifitem->index);
         }
         if (ifitem->family == AF_INET6)
         {
+#if NETWORK_INTERFACE_CHANGED_LOGGING
             OIC_LOG_V(DEBUG, TAG, "Adding IPv6 interface(%i) to multicast group", ifitem->index);
+#endif
             applyMulticastToInterface6(ifitem->index);
         }
     }

@@ -26,7 +26,7 @@
 
 #include "ocstack.h"
 #include "oic_malloc.h"
-#include "ocrandom.h"
+#include "experimental/ocrandom.h"
 #include "occertutility.h"
 
 #ifdef HAVE_WINDOWS_H
@@ -91,7 +91,8 @@ static char *ReadLine(char *buf, size_t len)
 }
 
 typedef enum {
-    CA_CERT,
+    ROOT_CA_CERT,
+    INT_CA_CERT,
     IDENTITY_CERT,
     ROLE_CERT
 } CertType;
@@ -127,11 +128,7 @@ static void DoGenCertificate(CertType certType)
         goto exit;
     }
 
-    /* This sample only supports self-signed CAs. Intermediates can be created with
-     * the helper functions, though, by providing a different issuer private key and
-     * certificate.
-     */
-    if (CA_CERT != certType)
+    if (ROOT_CA_CERT != certType)
     {
         printf("Issuer cert/key pair name (do not include .crt, .pub, or .prv): ");
         if (NULL == ReadLine(issKeyPairName, sizeof(issKeyPairName)))
@@ -207,7 +204,7 @@ static void DoGenCertificate(CertType certType)
     f = NULL;
 
     // -- Load issuer cert if applicable --
-    if (CA_CERT != certType)
+    if (ROOT_CA_CERT != certType)
     {
         snprintf(filename, sizeof(filename), "%s.crt", issKeyPairName);
         f = fopen(filename, "rb");
@@ -242,7 +239,7 @@ static void DoGenCertificate(CertType certType)
 
     // -- Prompt user for subject name --
 
-    if (CA_CERT == certType)
+    if (IDENTITY_CERT != certType)
     {
         printf("Subject name as comma-separated list of RDN types and values\n");
         printf("e.g.: C=US, O=Open Connectivity Foundation, CN=Main CA : ");
@@ -298,11 +295,24 @@ static void DoGenCertificate(CertType certType)
 
     switch (certType)
     {
-    case CA_CERT:
-        res = OCGenerateCACertificate(
+    case ROOT_CA_CERT:
+        res = OCGenerateRootCACertificate(
             subject,
             publicKey.data(),
             NULL,
+            privateKey.data(),
+            serial,
+            notValidBefore,
+            notValidAfter,
+            &certificate,
+            &certificateLen);
+        break;
+
+    case INT_CA_CERT:
+        res = OCGenerateIntermediateCACertificate(
+            subject,
+            publicKey.data(),
+            issuerCert.data(),
             privateKey.data(),
             serial,
             notValidBefore,
@@ -484,10 +494,12 @@ int main()
         printf("-- Certificate Generator Sample Utility --\n\n");
 
         printf(" 1. Generate a new key pair\n");
-        printf(" 2. Generate a self-signed CA certificate (requires a key pair for the CA)\n");
-        printf(" 3. Generate an identity certificate for a particular device UUID\n");
-        printf("       (requires the CA's private key and certificate, and the device's public key)\n");
-        printf(" 4. Generate a role certificate for a particular device UUID and role\n");
+        printf(" 2. Generate a self-signed Root CA certificate (requires a key pair for the CA)\n");
+        printf(" 3. Generate an Intermediate CA certificate, signed by a Root CA\n");
+        printf("       (requires the Root CA's private key and certificate\n");
+        printf(" 4. Generate an identity certificate for a particular device UUID\n");
+        printf("       (requires the Root/Intermediate CA's private key and certificate, and the device's public key)\n");
+        printf(" 5. Generate a role certificate for a particular device UUID and role\n");
         printf("       (requires the CA's private key and certificate, and the device's public key)\n");
 
         printf("\n");
@@ -509,12 +521,15 @@ int main()
             DoGenKeyPair();
             break;
         case 2:
-            DoGenCertificate(CA_CERT);
+            DoGenCertificate(ROOT_CA_CERT);
             break;
         case 3:
-            DoGenCertificate(IDENTITY_CERT);
+            DoGenCertificate(INT_CA_CERT);
             break;
         case 4:
+            DoGenCertificate(IDENTITY_CERT);
+            break;
+        case 5:
             DoGenCertificate(ROLE_CERT);
             break;
         case 0:

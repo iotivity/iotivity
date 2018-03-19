@@ -158,7 +158,7 @@ def __fileextractor_win_7zip( env, count, no, i ) :
 def __getExtractor( source, env ) :
     # we check each unpacker and get the correc  list command first, run the command and
     # replace the target filelist with the list values, we sorte the extractors by their priority
-    for unpackername, extractor in sorted(env["UNPACK"]["EXTRACTOR"].iteritems(), key = lambda (k,v) : (v["PRIORITY"],k)):
+    for unpackername, extractor in sorted(iter(env["UNPACK"]["EXTRACTOR"].items()), key = lambda k_v : (k_v[1]["PRIORITY"],k_v[0])):
 
         # if the run command not set, we continue the extractor search, otherwise we check the extractor parameters
         if not SCons.Util.is_String(extractor["RUN"]) :
@@ -267,7 +267,7 @@ def __emitter( target, source, env ) :
     # a string we push it back to the target list
     try :
         if callable(extractor["LISTEXTRACTOR"]) :
-            target = filter(lambda s: SCons.Util.is_String(s), [extractor["LISTEXTRACTOR"](env, len(target), no, i) for no, i in enumerate(target)])
+            target = [s for s in [extractor["LISTEXTRACTOR"](env, len(target), no, i) for no, i in enumerate(target)] if SCons.Util.is_String(s)]
     except Exception as e :
         raise SCons.Errors.StopError( "%s" % (e) )
 

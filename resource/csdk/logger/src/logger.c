@@ -51,9 +51,9 @@
 #include <windows.h>
 #endif
 
-#include "logger.h"
+#include "experimental/logger.h"
 #include "string.h"
-#include "logger_types.h"
+#include "experimental/logger_types.h"
 
 // log level
 static int g_level = DEBUG;
@@ -208,12 +208,12 @@ void OCLogConfig(oc_log_ctx_t *ctx)
     logCtx = ctx;
 }
 
-void OCLogInit()
+void OCLogInit(void)
 {
 
 }
 
-void OCLogShutdown()
+void OCLogShutdown(void)
 {
 #if defined(__linux__) || defined(__APPLE__) || defined(_WIN32)
     if (logCtx && logCtx->destroy)
@@ -339,7 +339,7 @@ void OCLog(int level, const char * tag, const char * logStr)
  * Initialize the serial logger for Arduino
  * Only defined for Arduino
  */
-void OCLogInit()
+void OCLogInit(void)
 {
     Serial.begin(115200);
 }

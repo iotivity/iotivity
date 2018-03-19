@@ -20,7 +20,7 @@
 
 import os
 import os.path
-from tools.scons.RunTest import *
+from tools.scons.RunTest import run_test
 
 Import('test_env')
 
@@ -33,29 +33,29 @@ with_mq = unittests_env.get('WITH_MQ')
 ######################################################################
 # Build flags
 ######################################################################
-unittests_env.PrependUnique(CPPPATH = [
-        '#/resource/include',
-        '#/resource/oc_logger/include',
-        '#/resource/csdk/include',
-        '#/resource/csdk/stack/include',
-        '#/resource/csdk/security/include',
-        '#/resource/csdk/stack/include/internal',
-        '#/resource/csdk/connectivity/api',
-        '#/resource/csdk/connectivity/external/inc',
-        '#/resource/csdk/ocsocket/include',
-        '#/resource/c_common',
-        '#/resource/c_common/ocrandom/include',
-        '#/resource/c_common/octhread/include',
-        '#/resource/c_common/oic_malloc/include',
-        '#/resource/c_common/oic_string/include',
-        '#/resource/c_common/oic_time/include',
-        '#/resource/csdk/logger/include',
-        '#/extlibs/hippomocks/hippomocks',
-        ])
+unittests_env.PrependUnique(CPPPATH=[
+    '#/resource/include',
+    '#/resource/oc_logger/include',
+    '#/resource/csdk/include',
+    '#/resource/csdk/stack/include',
+    '#/resource/csdk/security/include',
+    '#/resource/csdk/stack/include/internal',
+    '#/resource/csdk/connectivity/api',
+    '#/resource/csdk/connectivity/external/inc',
+    '#/resource/csdk/ocsocket/include',
+    '#/resource/c_common',
+    '#/resource/c_common/ocrandom/include',
+    '#/resource/c_common/octhread/include',
+    '#/resource/c_common/oic_malloc/include',
+    '#/resource/c_common/oic_string/include',
+    '#/resource/c_common/oic_time/include',
+    '#/resource/csdk/logger/include',
+    '#/extlibs/hippomocks/hippomocks',
+    ])
 
 if target_os in ['windows']:
     # Non-Windows platforms find the boost headers under /usr/include or similar path.
-    unittests_env.AppendUnique(CPPPATH = ['#extlibs/boost/boost'])
+    unittests_env.AppendUnique(CPPPATH=['#extlibs/boost/boost'])
     unittests_env.AppendUnique(LIBS=['sqlite3', 'win_helper'])
 
     if unittests_env['CC'] == 'cl':
@@ -63,7 +63,8 @@ if target_os in ['windows']:
         # number of sections exceeded object file format limit: compile with /bigobj"
         unittests_env.AppendUnique(CCFLAGS=['/bigobj'])
 elif target_os in ['linux', 'tizen']:
-    unittests_env.ParseConfig('pkg-config --cflags --libs sqlite3 gobject-2.0 gio-2.0 glib-2.0')
+    unittests_env.ParseConfig('pkg-config --cflags --libs sqlite3')
+    unittests_env.ParseConfig('pkg-config --cflags --libs gobject-2.0 gio-2.0 glib-2.0')
 
 unittests_env.PrependUnique(LIBS=[
     'oc',
@@ -81,10 +82,10 @@ if target_os in ['linux', 'tizen']:
     unittests_env.AppendUnique(LIBS = ['rt'])
 
 if unittests_env.get('SECURED') == '1':
-    unittests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509'])
+    unittests_env.AppendUnique(LIBS=['mbedtls', 'mbedx509'])
 
 # c_common calls into mbedcrypto.
-unittests_env.AppendUnique(LIBS = ['mbedcrypto'])
+unittests_env.AppendUnique(LIBS=['mbedcrypto'])
 
 ######################################################################
 # Source files and Targets
@@ -99,7 +100,7 @@ unittests_src = [
     'OCExceptionTest.cpp',
     'OCResourceResponseTest.cpp',
     'OCHeaderOptionTest.cpp',
-    ]
+]
 
 # TODO: IOT-2039: Fix errors in the following Windows tests.
 if target_os in ['windows']:
@@ -124,13 +125,7 @@ if unittests_env.get('TEST') == '1':
     if target_os in ['windows']:
         unittests_env.AppendENVPath('PATH', unittests_env.get('BUILD_DIR'))
     if target_os in ['linux', 'windows']:
-        run_test(unittests_env,
-        'resource_unittests_unittests.memcheck',
-        'resource/unittests/unittests',
-        unittests)
-
-src_dir = unittests_env.get('SRC_DIR')
-svr_db_src_dir = os.path.join(src_dir, 'resource/examples/')
-svr_db_build_dir = os.path.join(unittests_env.get('BUILD_DIR'), 'resource', 'unittests') + os.sep
-unittests_env.Alias("install",
-    unittests_env.Install(svr_db_build_dir, os.path.join(svr_db_src_dir, 'oic_svr_db_client.dat')))
+        run_test(unittests_env, 
+                 'resource_unittests_unittests.memcheck',
+                 'resource/unittests/unittests', 
+                 unittests)

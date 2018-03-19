@@ -23,7 +23,7 @@
 #include "NSConstants.h"
 #include "NSConsumerCommon.h"
 
-NSResult NSConsumerSystemInit()
+NSResult NSConsumerSystemInit(void)
 {
     return NS_OK;
 }

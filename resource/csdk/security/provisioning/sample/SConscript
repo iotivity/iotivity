@@ -31,7 +31,8 @@ target_os = provisioning_sample_env.get('TARGET_OS')
 provisioning_sample_env.AppendUnique(CPPPATH=[
     '#/resource/csdk/include',
     '#/extlibs/base64',
-    '#/resource/csdk/security/provisioning/sample/cloud'
+    '#/resource/csdk/security/provisioning/sample/cloud',
+    '#resource/csdk/security/provisioning/include/cloud'
 ])
 
 target_os = env.get('TARGET_OS')
@@ -106,7 +107,6 @@ if provisioning_sample_env.get('MULTIPLE_OWNER') == '1':
 if target_os not in ['msys_nt', 'windows']:
     if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True:
         cloud_src = [
-            'cloud/cloudAuth.c',
             'cloud/cloudCommon.c',
             'cloud/cloudWrapper.c',
             'cloud/cloudDiscovery.c'
@@ -125,68 +125,33 @@ sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sampl
 sec_provisioning_build_dir = env.get(
     'BUILD_DIR') + '/resource/csdk/security/provisioning/sample/'
 
-clientdat = provisioning_sample_env.Install(
-    sec_provisioning_build_dir,
-    sec_provisioning_src_dir + 'oic_svr_db_client.dat')
-justworksdat = provisioning_sample_env.Install(
-    sec_provisioning_build_dir,
-    sec_provisioning_src_dir + 'oic_svr_db_server_justworks.dat')
-randompindat = provisioning_sample_env.Install(
-    sec_provisioning_build_dir,
-    sec_provisioning_src_dir + 'oic_svr_db_server_randompin.dat')
-mfgdat = provisioning_sample_env.Install(
-    sec_provisioning_build_dir,
-    sec_provisioning_src_dir + 'oic_svr_db_server_mfg.dat')
-randompin_with_emptyuuid_dat = provisioning_sample_env.Install(
-    sec_provisioning_build_dir,
-    sec_provisioning_src_dir + 'oic_svr_db_randompin_with_empty_deviceid.dat')
-mvjustworksdat = provisioning_sample_env.Install(
-    sec_provisioning_build_dir,
-    sec_provisioning_src_dir + 'oic_svr_db_server_mvjustworks.dat')
-
-if provisioning_sample_env.get('MULTIPLE_OWNER') == '1':
-    subownerclientdat = provisioning_sample_env.Install(
-        sec_provisioning_build_dir,
-        sec_provisioning_src_dir + 'oic_svr_db_subowner_client.dat')
-    preconfserverdat = provisioning_sample_env.Install(
-        sec_provisioning_build_dir,
-        sec_provisioning_src_dir + 'oic_svr_db_server_preconfpin.dat')
 
 if target_os not in ['msys_nt', 'windows']:
     if provisioning_sample_env.get('WITH_TCP') == True:
-        clouddat = provisioning_sample_env.Install(
-            sec_provisioning_build_dir, sec_provisioning_src_dir + 'cloud.dat')
         rootcert = provisioning_sample_env.Install(
             sec_provisioning_build_dir,
             sec_provisioning_src_dir + 'rootca.crt')
         if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True:
             Alias("cloud", [
-                clouddat,
                 rootcert,
                 cloudClient,
                 cloudServer
             ])
             provisioning_sample_env.AppendTarget("cloud")
-
 sampleapps = [
     provisioningclient,
     autoprovisioningclient,
     sampleserver_justworks,
     sampleserver_randompin,
     sampleserver_mfg,
-    clientdat,
-    justworksdat,
-    randompindat,
-    mfgdat,
-    randompin_with_emptyuuid_dat,
-    mvjustworksdat,
 ]
-if provisioning_sample_env.get('MULTIPLE_OWNER') == '1':
-    sampleapps.extend([
-        subownerclient,
-        sampleserver_preconfpin,
-        subownerclientdat,
-        preconfserverdat,
-    ])
-Alias('samples', sampleapps)
+sampleapps += provisioning_sample_env.ScanJSON('resource/csdk/security/provisioning/sample')
+if target_os not in ['msys_nt', 'windows']:
+    if provisioning_sample_env.get('WITH_TCP') == True:
+        rootcert = provisioning_sample_env.Install(
+            sec_provisioning_build_dir,
+            sec_provisioning_src_dir + 'rootca.crt')
+
+Alias("samples", sampleapps)
 provisioning_sample_env.AppendTarget('samples')
+provisioning_sample_env.UserInstallTargetExtra(sampleapps)

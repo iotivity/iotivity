@@ -26,8 +26,7 @@ import os, sys
 Import('env')
 
 lib_env = env.Clone()
-src_dir = env.get('SRC_DIR')
-SConscript(src_dir + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 simulator_env = lib_env.Clone()
 
 #Raml Parser

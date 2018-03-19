@@ -20,6 +20,7 @@
 
 Import('env')
 import SCons.Errors
+import SCons.Util
 import os
 import sys
 import re
@@ -34,7 +35,6 @@ mbedtls_config_file = 'config-iotivity.h' if target_os != 'windows' else 'config
 
 # The mbedtls_revision tag here must match the one in extlibs/mbedtls/prep.sh.
 mbedtls_revision = 'mbedtls-2.4.2'
-
 if not os.path.exists(mbedtls_dir):
     msg = '''
 *********************************** Error: ************************************
@@ -54,8 +54,8 @@ os.chdir(mbedtls_dir)
 # with that name doesn't exist.
 # Tizen uses its own process to prepare the mbedTLS repo in gbsbuild.sh.
 if os.path.exists('.git/HEAD'):
-    out = subprocess.check_output('git tag -l ' + mbedtls_revision, shell=True)
-    if mbedtls_revision not in out:
+    out = subprocess.check_output('git tag -l ' + mbedtls_revision, shell=True).rstrip()
+    if mbedtls_revision not in SCons.Util.to_String(out):
         print(out)
         msg = '''
 *********************************** Error: ************************************

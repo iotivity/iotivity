@@ -17,7 +17,7 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#include "logger.h"
+#include "experimental/logger.h"
 #include "occloudprovisioning.h"
 #include "OCCloudProvisioning.hpp"
 #include "oic_malloc.h"
@@ -130,6 +130,22 @@ void readInteger(int* item, const char* description, const char* example)
         getchar();
     }
 }
+/**
+ * Read user input (expect integer value)
+ *
+ * @param[out] item           size_t item to fill
+ * @param[in] description     item description
+ * @param[in] example         item example
+ */
+void readSize(size_t* item, const char* description, const char* example)
+{
+    printf("Enter %s (f.e. %s):\n", description, example);
+    if (scanf("%zd", item))
+    {
+        getchar();
+    }
+}
+
 
 /**
  * Read user input (expect array of strings)
@@ -141,16 +157,16 @@ void readInteger(int* item, const char* description, const char* example)
  */
 static void readStringArray(stringArray_t *list, int length, const char* description, const char* example)
 {
-    int i = 0;
-    int count = 0;
+    size_t i = 0;
+    size_t count = 0;
     char hint[MAX_STRING_LENGTH] = { 0 };
 
     snprintf(hint, sizeof(hint), "%s items count", description);
-    readInteger(&count, hint, "2");
+    readSize(&count, hint, "2");
 
     char **item = NULL;
 
-    if (0 >= count)
+    if (0 == count || 10 * 1024 < count)
     {
         return;
     }
@@ -171,16 +187,16 @@ static void readStringArray(stringArray_t *list, int length, const char* descrip
             goto no_memory;
         }
 
-        snprintf(hint, sizeof(hint), "%s %d item", description, i + 1);
+        snprintf(hint, sizeof(hint), "%s %zd item", description, i + 1);
         readString(item[i], length, hint, example);
     }
     list->array  = item;
-    list->length = (size_t)count;
+    list->length = count;
     return;
 
 no_memory:
     //free already allocated memory here
-    for (int k = 0; k < i; k++)
+    for (size_t k = 0; k < i; k++)
     {
         OICFree(item[k]);
     }
@@ -271,6 +287,7 @@ static int ReadFile(const char *name, OCByteString *crl)
     result = 0;
 exit:
     fclose(file);
+    OICFree(buffer);
     return 0;
 }
 
@@ -331,6 +348,13 @@ OCStackResult OCWrapperAclIdGetByDevice(OCCloudProvisioning& ptr, AclIdResponseC
     return ptr.getAclIdByDevice(di, callback);
 }
 
+const char *getUri(const OCDevAddr *ep)
+{
+    char *uri = (char *)OICCalloc(1,1024);
+    snprintf(uri,1024,"%s:%d",ep->addr, ep->port);
+    return uri;
+}
+
 OCStackResult OCWrapperAclIdCreate(const OCDevAddr *endPoint, OCCloudResponseCB callback)
 {
     char oid[MAX_ID_LENGTH]  = { 0 };
@@ -339,7 +363,7 @@ OCStackResult OCWrapperAclIdCreate(const OCDevAddr *endPoint, OCCloudResponseCB 
     readString(oid, sizeof(oid), "owner id", UUID_EXAMPLE_2);
     readString(di, sizeof(di), "device id", UUID_EXAMPLE_1);
 
-    return OCCloudAclIdCreate(NULL, oid, di, endPoint, callback);
+    return OCCloudAclIdCreate(NULL, oid, di, getUri(endPoint), callback);
 }
 
 OCStackResult OCWrapperAclIdDelete(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -348,7 +372,7 @@ OCStackResult OCWrapperAclIdDelete(const OCDevAddr *endPoint, OCCloudResponseCB 
 
     readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
 
-    return OCCloudAclIdDelete(NULL, aclid, endPoint, callback);
+    return OCCloudAclIdDelete(NULL, aclid, getUri(endPoint), callback);
 }
 
 OCStackResult OCWrapperAclIndividualGetInfo(OCCloudProvisioning& ptr, ResponseCallBack callback)
@@ -371,7 +395,7 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
 
     int acllist_count = 0;
     readInteger(&acllist_count, "acl list count", "1");
-    if (0 >= acllist_count)
+    if (0 >= acllist_count || 1024 < acllist_count)
     {
         OIC_LOG(ERROR, TAG, "Wrong number of aclList");
         goto exit;
@@ -436,7 +460,7 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
         }
     }
 
-    result = OCCloudAclIndividualAclUpdate(NULL, aclid, aces, endPoint, callback);
+    result = OCCloudAclIndividualAclUpdate(NULL, aclid, aces, getUri(endPoint), callback);
 exit:
     if (aces)
     {
@@ -471,7 +495,7 @@ OCStackResult OCWrapperAclIndividualDelete(const OCDevAddr *endPoint, OCCloudRes
 
     readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
 
-    return OCCloudAclAcesDelete(NULL, aclid, endPoint, callback);
+    return OCCloudAclAcesDelete(NULL, aclid, getUri(endPoint), callback);
 }
 
 OCStackResult OCWrapperAclCreateGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -482,7 +506,7 @@ OCStackResult OCWrapperAclCreateGroup(const OCDevAddr *endPoint, OCCloudResponse
     readString(gtype, sizeof(gtype), "Group type value", "Public");
     readOptionalString(gmid, sizeof(gmid), "group member id value", UUID_EXAMPLE_2);
 
-    return OCCloudAclCreateGroup(NULL, gtype, OPTIONAL(gmid), endPoint, callback);
+    return OCCloudAclCreateGroup(NULL, gtype, OPTIONAL(gmid), getUri(endPoint), callback);
 }
 
 OCStackResult OCWrapperAclFindMyGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -491,7 +515,7 @@ OCStackResult OCWrapperAclFindMyGroup(const OCDevAddr *endPoint, OCCloudResponse
 
     readOptionalString(mid, sizeof(mid), "member id value", UUID_EXAMPLE_2);
 
-    return OCCloudAclFindMyGroup(NULL, OPTIONAL(mid), endPoint, callback);
+    return OCCloudAclFindMyGroup(NULL, OPTIONAL(mid), getUri(endPoint), callback);
 }
 
 OCStackResult OCWrapperAclDeleteGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -503,7 +527,7 @@ OCStackResult OCWrapperAclDeleteGroup(const OCDevAddr *endPoint, OCCloudResponse
 
     readOptionalString(gmid, sizeof(gmid), "group member id value", UUID_EXAMPLE_2);
 
-    return OCCloudAclDeleteGroup(NULL, gid, OPTIONAL(gmid), endPoint, callback);
+    return OCCloudAclDeleteGroup(NULL, gid, OPTIONAL(gmid), getUri(endPoint), callback);
 }
 
 OCStackResult OCWrapperAclJoinToInvitedGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -512,7 +536,7 @@ OCStackResult OCWrapperAclJoinToInvitedGroup(const OCDevAddr *endPoint, OCCloudR
 
     readString(gid, sizeof(gid), "Group id value", ID_EXAMPLE_1);
 
-    return OCCloudAclJoinToInvitedGroup(NULL, gid, endPoint, callback);
+    return OCCloudAclJoinToInvitedGroup(NULL, gid, getUri(endPoint), callback);
 }
 
 OCStackResult OCWrapperAclObserveGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -521,7 +545,7 @@ OCStackResult OCWrapperAclObserveGroup(const OCDevAddr *endPoint, OCCloudRespons
 
     readString(gid, sizeof(gid), "Group id value", ID_EXAMPLE_1);
 
-    return OCCloudAclObserveGroup(NULL, gid, endPoint, callback);
+    return OCCloudAclObserveGroup(NULL, gid, getUri(endPoint), callback);
 }
 
 OCStackResult OCWrapperAclShareDeviceIntoGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -537,7 +561,7 @@ OCStackResult OCWrapperAclShareDeviceIntoGroup(const OCDevAddr *endPoint, OCClou
 
     readStringArray(&dilist, MAX_ID_LENGTH, "device list", UUID_EXAMPLE_1);
 
-    result = OCCloudAclShareDeviceIntoGroup(NULL, gid, &midlist, &dilist, endPoint, callback);
+    result = OCCloudAclShareDeviceIntoGroup(NULL, gid, &midlist, &dilist, getUri(endPoint), callback);
 
     clearStringArray(&midlist);
     clearStringArray(&dilist);
@@ -558,7 +582,7 @@ OCStackResult OCWrapperAclDeleteDeviceFromGroup(const OCDevAddr *endPoint, OCClo
 
     readStringArray(&dilist, MAX_ID_LENGTH, "device list", UUID_EXAMPLE_1);
 
-    result = OCCloudAclDeleteDeviceFromGroup(NULL, gid, &midlist, &dilist, endPoint, callback);
+    result = OCCloudAclDeleteDeviceFromGroup(NULL, gid, &midlist, &dilist, getUri(endPoint), callback);
 
     clearStringArray(&midlist);
     clearStringArray(&dilist);
@@ -575,7 +599,7 @@ OCStackResult OCWrapperAclGroupGetInfo(const OCDevAddr *endPoint, OCCloudRespons
 
     readOptionalString(mid, sizeof(mid), "member id value", UUID_EXAMPLE_2);
 
-    return OCCloudAclGroupGetInfo(NULL, gid, OPTIONAL(mid), endPoint, callback);
+    return OCCloudAclGroupGetInfo(NULL, gid, OPTIONAL(mid), getUri(endPoint), callback);
 }
 
 OCStackResult OCWrapperAclInviteUser(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -591,7 +615,7 @@ OCStackResult OCWrapperAclInviteUser(const OCDevAddr *endPoint, OCCloudResponseC
 
     readStringArray(&midlist, MAX_ID_LENGTH, "member id list", UUID_EXAMPLE_2);
 
-    result = OCCloudAclInviteUser(NULL, OPTIONAL(uid), &gidlist, &midlist, endPoint, callback);
+    result = OCCloudAclInviteUser(NULL, OPTIONAL(uid), &gidlist, &midlist, getUri(endPoint), callback);
 
     clearStringArray(&midlist);
     clearStringArray(&gidlist);
@@ -605,7 +629,7 @@ OCStackResult OCWrapperAclGetInvitation(const OCDevAddr *endPoint, OCCloudRespon
 
     readOptionalString(uid, sizeof(uid), "user uuid value", UUID_EXAMPLE_2);
 
-    return OCCloudAclGetInvitation(NULL, OPTIONAL(uid), endPoint, callback);
+    return OCCloudAclGetInvitation(NULL, OPTIONAL(uid), getUri(endPoint), callback);
 }
 
 OCStackResult OCWrapperAclDeleteInvitation(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -616,7 +640,7 @@ OCStackResult OCWrapperAclDeleteInvitation(const OCDevAddr *endPoint, OCCloudRes
     readOptionalString(uid, sizeof(uid), "user uuid value", UUID_EXAMPLE_2);
     readString(gid, sizeof(gid), "Group id value", ID_EXAMPLE_1);
 
-    return OCCloudAclDeleteInvitation(NULL, OPTIONAL(uid), gid, endPoint, callback);
+    return OCCloudAclDeleteInvitation(NULL, OPTIONAL(uid), gid, getUri(endPoint), callback);
 }
 
 OCStackResult OCWrapperAclCancelInvitation(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -630,7 +654,7 @@ OCStackResult OCWrapperAclCancelInvitation(const OCDevAddr *endPoint, OCCloudRes
     readString(gid, sizeof(gid), "Group id value", ID_EXAMPLE_1);
     readString(mid, sizeof(mid), "member id value", ID_EXAMPLE_1);
 
-    return OCCloudAclCancelInvitation(NULL, OPTIONAL(uid), gid, mid, endPoint, callback);
+    return OCCloudAclCancelInvitation(NULL, OPTIONAL(uid), gid, mid, getUri(endPoint), callback);
 }
 
 OCStackResult OCWrapperAclPolicyCheck(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -645,5 +669,5 @@ OCStackResult OCWrapperAclPolicyCheck(const OCDevAddr *endPoint, OCCloudResponse
     readString(rm, sizeof(rm), "request method", "GET or POST or DELETE");
     readString(user_uri, sizeof(user_uri), "request uri", RESOURCE_URI_EXAMPLE);
 
-    return OCCloudAclPolicyCheck(NULL, sid, di, rm, user_uri, endPoint, callback);
+    return OCCloudAclPolicyCheck(NULL, sid, di, rm, user_uri, getUri(endPoint), callback);
 }
