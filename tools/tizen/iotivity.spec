@@ -1,7 +1,7 @@
 Name: iotivity
-Version: %{!?version:1.3.1}%{?version}
+Version: %{!?version:1.4.0}%{?version}
 Release: %{!?release:0}%{?release}
-Summary: IoT Connectivity sponsored by the OCF
+Summary: IoT Connectivity sponsored by OCF
 Group: Network & Connectivity / IoT Connectivity
 License: Apache-2.0 and BSD-2-Clause and (MIT or BSL-1.0) and MIT
 URL: https://www.iotivity.org/
@@ -70,15 +70,9 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?VERBOSE: %define VERBOSE 1}
 %{!?WITH_CLOUD: %define WITH_CLOUD False}
 %{!?WITH_MQ: %define WITH_MQ OFF}
-<<<<<<< HEAD
-%{!?WITH_PROXY: %define WITH_PROXY 0}
-%{!?WITH_TCP: %define WITH_TCP 1}
-%{!?MULTIPLE_OWNER: %define MULTIPLE_OWNER 0}
-=======
 %{!?WITH_PROXY: %define WITH_PROXY 1}
 %{!?WITH_TCP: %define WITH_TCP 0}
 %{!?MULTIPLE_OWNER: %define MULTIPLE_OWNER 1}
->>>>>>> 1.4.0-RC1
 %{!?OIC_SUPPORT_TIZEN_TRACE: %define OIC_SUPPORT_TIZEN_TRACE False}
 %define BUILD_DIR out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/
 
