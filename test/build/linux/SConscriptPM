@@ -66,7 +66,7 @@ iotivity_include_paths = [
     iotivity_root + '/resource/c_common/oic_malloc/include',
     iotivity_root + '/resource/c_common',
     iotivity_root + '/resource/c_common/oic_string/include',
-    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/c_common/octhread/include',
     iotivity_root + '/resource/oc_logger/include',
     iotivity_root + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include/',
     iotivity_root + '/resource/csdk/resource-directory/include',
@@ -76,7 +76,10 @@ iotivity_include_paths = [
     iotivity_root + '/extlibs/mbedtls/mbedtls/include',
     iotivity_root + '/extlibs/tinydtls',
     iotivity_root + '/extlibs/mbedtls/mbedtls/include/mbedtls',
-    iotivity_lib_path + '/resource/c_common'
+    iotivity_lib_path + '/resource/c_common',
+    iotivity_lib_path + '/deploy/include/c_common',
+    iotivity_lib_path + '/deploy/include/c_common/experimental',
+    iotivity_lib_path + '/deploy/include/resource/stack/experimental'
 ]
 
 cert_include_paths = [
