@@ -135,15 +135,6 @@ void ESEnrolleeHelper::cloudDataProvCbInApp(ESCoapCloudConfData *eventData)
 {
     IOTIVITYTEST_LOG(INFO,"cloudDataProvCbInApp IN\n");
     ESEnrolleeHelper::isCallbackInvoked = true;
-    if (eventData->authCode != NULL)
-    {
-        IOTIVITYTEST_LOG(INFO,"AuthCode : %s\n", eventData->authCode);
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(INFO,"ERROR! AuthCode IS NULL\n");
-    }
-
     if (eventData->authProvider != NULL)
     {
         IOTIVITYTEST_LOG(INFO,"AuthProvider : %s\n", eventData->authProvider);
