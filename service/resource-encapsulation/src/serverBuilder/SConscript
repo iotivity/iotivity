@@ -126,7 +126,8 @@ if server_builder_env.get('WITH_TEST') and target_os in ('linux'):
         'rcs_server_test', server_builder_test_src)
     Alias("rcs_server_test", server_builder_test)
     server_builder_test_env.AppendTarget('rcs_server_test')
-
+    server_builder_test_env.UserInstallTargetExtra(server_builder_test,'tests/service/resource-encapsulation/src/serverBuilder/')
+    
     if server_builder_test_env.get('TEST') == '1':
         server_builder_test_env.AppendUnique(CPPDEFINES=['HIPPOMOCKS_ISSUE'])
         # this import needs to remain here so it is protected by target check
