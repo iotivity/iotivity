@@ -88,7 +88,7 @@ if env.get('SECURED') == '1':
 ######################################################################
 # Build Test
 ######################################################################
-
+unittests = []
 notification_consumer_test_env = notification_test_env.Clone()
 notification_consumer_test_env.AppendUnique(LIBS=['notification_consumer'])
 
@@ -100,25 +100,31 @@ notification_consumer_test = notification_consumer_test_env.Program(
     'notification_consumer_test', notification_consumer_test_src)
 Alias("notification_consumer_test", notification_consumer_test)
 notification_consumer_test_env.AppendTarget('notification_consumer_test')
+unittests += notification_consumer_test
 
 notification_consumer_test_src = env.Glob('./NSConsumerTest.cpp')
 notification_consumer_internaltest = notification_consumer_test_env.Program(
     'notification_consumer_internaltest', notification_consumer_test_src)
 Alias("notification_consumer_internaltest", notification_consumer_internaltest)
+unittests += notification_consumer_internaltest
 
 notification_provider_test_src = env.Glob('./NSProviderTest2.cpp')
 notification_provider_test = notification_provider_test_env.Program(
     'notification_provider_test', notification_provider_test_src)
 Alias("notification_provider_test", notification_provider_test)
 notification_provider_test_env.AppendTarget('notification_provider_test')
+unittests += notification_provider_test
 
 notification_provider_test_src = env.Glob('./NSProviderTest.cpp')
 notification_provider_internaltest = notification_provider_test_env.Program(
     'notification_provider_internaltest', notification_provider_test_src)
 Alias("notification_provider_internaltest", notification_provider_internaltest)
+unittests += notification_provider_internaltest
 
-actions = notification_provider_test_env.ScanJSON('service/notification/unittest')
-notification_consumer_test_env.Alias("install", actions)
+
+unittests += notification_provider_test_env.ScanJSON('service/notification/unittest')
+notification_consumer_test_env.Alias("install", unittests)
+notification_consumer_test_env.UserInstallTargetExtra(unittests,'tests/service/notification/')
 
 if env.get('TEST') == '1':
     if target_os in ['linux'] and env.get('SECURED') != '1':
