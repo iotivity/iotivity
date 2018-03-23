@@ -72,6 +72,8 @@ else:
         default_arch = default_arch.lower()
     if target_os == 'linux' and default_arch in ('i586', 'i686'):
         default_arch = 'x86'
+    if target_os == 'tizen' and default_arch in ('i586', 'i686'):
+        default_arch = 'x86'
 
 target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch)  # target arch
 
