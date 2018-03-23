@@ -50,12 +50,14 @@ if unittests_env.get('LOGGING'):
 ######################################################################
 # Source files and Targets
 ######################################################################
-piunittests = unittests_env.Program('piunittests', ['plugininterfacetest.cpp'])
-
-Alias("piunittests", [piunittests])
+piunittests = [unittests_env.Program('piunittests', ['plugininterfacetest.cpp'])]
+Alias("piunittests", piunittests)
 
 unittests_env.AppendTarget('piunittests')
 if unittests_env.get('TEST') == '1':
     if target_os in ['linux']:
         run_test(unittests_env, 'plugins_unittests.memcheck',
                  'plugins/unittests/piunittests', piunittests)
+
+unittests_env.UserInstallTargetExtra(piunittests,'tests/plugins/unittests/')
+
