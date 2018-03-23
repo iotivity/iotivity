@@ -115,9 +115,9 @@ if catest_env.get('SECURED') == '1' and catest_env.get('WITH_TCP') == True:
 if catest_env.get('SECURED') == '1':
     tests_src.append('cacertprofiletest.cpp')
 
-catests = catest_env.Program('catests', tests_src)
+catests = [catest_env.Program('catests', tests_src)]
 
-Alias("test", [catests])
+Alias("test", catests)
 
 catest_env.AppendTarget('test')
 if catest_env.get('TEST') == '1':
@@ -126,3 +126,6 @@ if catest_env.get('TEST') == '1':
         run_test(catest_env,
                  'resource_csdk_connectivity_test_catests.memcheck',
                  'resource/csdk/connectivity/test/catests')
+
+catest_env.UserInstallTargetExtra(catests, 'tests/resource/csdk/connectivity/')
+

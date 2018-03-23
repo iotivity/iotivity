@@ -88,7 +88,8 @@ else:
 ######################################################################
 # Source files and Targets
 ######################################################################
-unittest = srmtest_env.Program('unittest', [
+unittests = []
+unittests += srmtest_env.Program('unittest', [
     'aclresourcetest.cpp',
     'amaclresourcetest.cpp',
     'pstatresource.cpp',
@@ -118,7 +119,7 @@ srmtest_env.AppendUnique(CPPDEFINES=[
     'SECURITY_BUILD_UNITTEST_DIR=' + unittest_build_dir
 ])
 
-unittest += srmtest_env.ScanJSON('resource/csdk/security/unittest')
+unittests += srmtest_env.ScanJSON('resource/csdk/security/unittest')
 
 srmtest_env.AppendTarget('test')
 if srmtest_env.get('TEST') == '1':
@@ -132,3 +133,6 @@ if srmtest_env.get('TEST') == '1':
         run_test(srmtest_env,
                  'resource_csdk_security_unittest.memcheck',
                  'resource/csdk/security/unittest/unittest')
+
+srmtest_env.UserInstallTargetExtra(unittests, 'tests/resource/csdk/security/')
+
