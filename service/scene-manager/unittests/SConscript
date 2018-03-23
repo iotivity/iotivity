@@ -88,34 +88,39 @@ if scene_test_env.get('SECURED') == '1':
 ######################################################################
 # Build Test
 ######################################################################
-
+unittests = []
 scene_list_test_src = scene_test_env.Glob('./SceneListTest.cpp')
 scene_list_test = scene_test_env.Program('scene_list_test',
                                          scene_list_test_src)
 Alias("scene_list_test", scene_list_test)
+unittests += scene_list_test
 scene_test_env.AppendTarget('scene_list_test')
 
 scene_collection_test_src = scene_test_env.Glob('./SceneCollectionTest.cpp')
 scene_collection_test = scene_test_env.Program('scene_collection_test',
                                                scene_collection_test_src)
 Alias("scene_collection_test", scene_collection_test)
+unittests += scene_collection_test
 scene_test_env.AppendTarget('scene_collection_test')
 
 scene_test_src = scene_test_env.Glob('./SceneTest.cpp')
 scene_test = scene_test_env.Program('scene_test', scene_test_src)
 Alias("scene_test", scene_test)
+unittests += scene_test
 scene_test_env.AppendTarget('scene_test')
 
 scene_action_test_src = scene_test_env.Glob('./SceneActionTest.cpp')
 scene_action_test = scene_test_env.Program('scene_action_test',
                                            scene_action_test_src)
 Alias("scene_action_test", scene_action_test)
+unittests += scene_action_test
 scene_test_env.AppendTarget('scene_action_test')
 
 remote_scene_list_test_src = scene_test_env.Glob('./RemoteSceneListTest.cpp')
 remote_scene_list_test = scene_test_env.Program('remote_scene_list_test',
                                                 remote_scene_list_test_src)
 Alias("remote_scene_list_test", remote_scene_list_test)
+unittests += remote_scene_list_test
 scene_test_env.AppendTarget('remote_scene_list_test')
 
 remote_scene_col_test_src = scene_test_env.Glob(
@@ -123,12 +128,14 @@ remote_scene_col_test_src = scene_test_env.Glob(
 remote_scene_col_test = scene_test_env.Program('remote_scene_col_test',
                                                remote_scene_col_test_src)
 Alias("remote_scene_col_test", remote_scene_col_test)
+unittests += remote_scene_col_test
 scene_test_env.AppendTarget('remote_scene_col_test')
 
 remote_scene_test_src = scene_test_env.Glob('./RemoteSceneTest.cpp')
 remote_scene_test = scene_test_env.Program('remote_scene_test',
                                            remote_scene_test_src)
 Alias("remote_scene_test", remote_scene_test)
+unittests += remote_scene_test
 scene_test_env.AppendTarget('remote_scene_test')
 
 remote_scene_action_test_src = scene_test_env.Glob(
@@ -136,7 +143,11 @@ remote_scene_action_test_src = scene_test_env.Glob(
 remote_scene_action_test = scene_test_env.Program('remote_scene_action_test',
                                                   remote_scene_action_test_src)
 Alias("remote_scene_action_test", remote_scene_action_test)
+unittests += remote_scene_action_test
 scene_test_env.AppendTarget('remote_scene_action_test')
+
+scene_test_env.UserInstallTargetExtra(unittests,'tests/service/scene-manager/')
+
 
 if env.get('TEST') == '1':
     if env.get('SECURED') != '1':
