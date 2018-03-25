@@ -20,8 +20,13 @@
 
 /**
  * @file
- * This file contains the APIs for routing manager.
+ * This file contains interfaces for the routing manager.
  */
+
+/** @addtogroup routingmanager
+ * @{
+ */
+
 #ifndef ROUTING_MANAGER_H_
 #define ROUTING_MANAGER_H_
 
@@ -121,5 +126,5 @@ OCStackResult RMHandleResponse(CAResponseInfo_t *message, const CAEndpoint_t *se
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-
-#endif /* ROUTING_MANAGER_H_ */
+/// @}
+#endif // ROUTING_MANAGER_H_

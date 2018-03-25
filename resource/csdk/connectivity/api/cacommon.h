@@ -20,8 +20,12 @@
 
 /**
  * @file cacommon.h
- * This file contains the common data structures between Resource , CA and adapters
+ * This file contains the common data structures between Resource, CA and adapters
  */
+
+/** @addtogroup connectivity_abstraction
+ */
+/// @{
 
 #ifndef CA_COMMON_H_
 #define CA_COMMON_H_
@@ -761,5 +765,5 @@ typedef void (*CANetworkMonitorCallback)(const CAEndpoint_t *info, CANetworkStat
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-
+/// @}
 #endif // CA_COMMON_H_

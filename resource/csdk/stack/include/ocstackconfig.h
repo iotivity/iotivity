@@ -19,11 +19,13 @@
 //******************************************************************
 
 
-/**
- * @file
+/** @file
  *
- * This file contains all the variables which can be configured/modified as
- * per platform or specific product usage scenarios.
+ * stack configurations parameters
+ */
+
+/** @addtogroup ocbtbstack
+ * @{
  */
 
 #ifndef OCSTACK_CONFIG_H_
@@ -94,4 +96,5 @@
  */
 #define MAX_CB_TIMEOUT_SECONDS   (2 * 60 * 60)  // 2 hours = 7200 seconds.
 
-#endif //OCSTACK_CONFIG_H_
+/// @}
+#endif // OCSTACK_CONFIG_H_

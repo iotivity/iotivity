@@ -21,6 +21,17 @@
 #ifndef PAYLOAD_LOGGING_H_
 #define PAYLOAD_LOGGING_H_
 
+/** @file
+ *
+ * payload logging functions (experimental API)
+ */
+
+/** @addtogroup ocbtbstack
+ * These definitions are experimental and not part of the official API
+ * for the stack library
+ * @{
+ */
+
 #ifdef __TIZEN__
 #include <dlog.h>
 #endif
@@ -352,5 +363,5 @@ INLINE_API void OCPayloadLog(LogLevel level, OCPayload* payload)
 #ifdef __cplusplus
 }
 #endif
-
-#endif
+/// @}
+#endif // PAYLOAD_LOGGING_H_

@@ -18,9 +18,13 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
+/** @file
  *
+ * facilities for operating on message payloads
+ */
+
+/** @addtogroup ocbtbstack
+ * @{
  */
 
 #ifndef OCPAYLOAD_H_
@@ -126,7 +130,7 @@ bool OC_CALL OCRepPayloadSetPropDouble(OCRepPayload* payload, const char* name, 
 bool OC_CALL OCRepPayloadGetPropDouble(const OCRepPayload* payload, const char* name, double* value);
 
 /**
- * This function allocates memory for the byte string and sets it in the payload.
+ * Allocate memory for a byte string and set it in the payload.
  *
  * @param payload      Pointer to the payload to which byte string needs to be added.
  * @param name         Name of the byte string.
@@ -137,7 +141,7 @@ bool OC_CALL OCRepPayloadGetPropDouble(const OCRepPayload* payload, const char* 
 bool OC_CALL OCRepPayloadSetPropByteString(OCRepPayload* payload, const char* name, OCByteString value);
 
 /**
- * This function sets the byte string in the payload.
+ * Set the byte string in the payload.
  *
  * @param payload      Pointer to the payload to which byte string needs to be added.
  * @param name         Name of the byte string.
@@ -149,7 +153,7 @@ bool OC_CALL OCRepPayloadSetPropByteStringAsOwner(OCRepPayload* payload, const c
         OCByteString* value);
 
 /**
- * This function gets the byte string from the payload.
+ * Get the byte string from the payload.
  *
  * @param payload      Pointer to the payload from which byte string needs to be retrieved.
  * @param name         Name of the byte string.
@@ -180,7 +184,7 @@ bool OC_CALL OCRepPayloadGetPropPubDataType(const OCRepPayload *payload, const c
 #endif
 
 /**
- * This function allocates memory for the byte string array and sets it in the payload.
+ * Allocate memory for a byte string array and set it in the payload.
  *
  * @param payload      Pointer to the payload to which byte string array needs to be added.
  * @param name         Name of the byte string.
@@ -193,7 +197,7 @@ bool OC_CALL OCRepPayloadSetByteStringArrayAsOwner(OCRepPayload* payload, const 
         OCByteString* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
 /**
- * This function sets the byte string array in the payload.
+ * Set a byte string array in the payload.
  *
  * @param payload      Pointer to the payload to which byte string array needs to be added.
  * @param name         Name of the byte string.
@@ -206,7 +210,7 @@ bool OC_CALL OCRepPayloadSetByteStringArray(OCRepPayload* payload, const char* n
         const OCByteString* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
 /**
- * This function gets the byte string array from the payload.
+ * Gets a byte string array from the payload.
  *
  * @param payload      Pointer to the payload from which byte string array needs to be retrieved.
  * @param name         Name of the byte string array.
@@ -307,7 +311,7 @@ OCStringLL* OC_CALL CloneOCStringLL (OCStringLL* ll);
 void OC_CALL OCFreeOCStringLL(OCStringLL* ll);
 
 /**
- * This function creates a list from a string (with separated contents if several)
+ * Create a list from a string (with separated contents if several)
  * @param text         single string or CSV text fields
  * @return newly allocated linked list
  * @note separator is ',' (according to rfc4180, ';' is not valid)
@@ -315,7 +319,7 @@ void OC_CALL OCFreeOCStringLL(OCStringLL* ll);
 OCStringLL* OC_CALL OCCreateOCStringLL(const char* text);
 
 /**
- * This function creates a string from a list (with separated contents if several)
+ * Create a string from a list (with separated contents if several)
  * @param ll           Pointer to list
  * @return newly allocated string. Caller takes ownership and must later free this memory with OICFree.
  * @note separator is ',' (according to rfc4180)
@@ -323,15 +327,15 @@ OCStringLL* OC_CALL OCCreateOCStringLL(const char* text);
 char* OC_CALL OCCreateString(const OCStringLL* ll);
 
 /**
- * This function copies contents
- * @param dest existing bytestring.  The existing contents will be OICFree()'d.
+ * Copy a byte string.
+ * @param dest destination bytestring.  Enough space is allocated to hold a copy of the source string. If \a dest points to existing space, it is freed by a call to OICFree() first.
  * @param source existing bytestring
  * @return true of success false on any errors
  **/
 bool OC_CALL OCByteStringCopy(OCByteString *dest, const OCByteString *source);
 
 /**
- * This function creates the payloadArray for links parameter of collection resource.
+ * Creates a payloadArray for the links parameter of a collection resource.
  * @param[in] resourceUri Resource URI (this should be a collection resource)
  * @param[in] ehRequest parameter received from Entity Handler for client request
  * @param[in] insertSelfLink flag to specify whether links array can contain a self link
@@ -355,5 +359,5 @@ OCRepPayload** OC_CALL OCLinksPayloadArrayCreate(const char *resourceUri,
 #ifdef __cplusplus
 }
 #endif
-
-#endif
+#endif // OCPAYLOAD_H_
+/// @}

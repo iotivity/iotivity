@@ -1,13 +1,60 @@
-/*!
+/**
 
 @mainpage Welcome
 
-IoTivity is an open source software framework enabling seamless device-to-device connectivity to address the emerging needs of the Internet of Things. These API references are for any developer trying to utilize the IoTivity project for building applications.
+IoTivity is an open source software framework enabling seamless
+device-to-device connectivity to address the emerging needs of the
+Internet of Things. These API references are for any developer trying
+to utilize the IoTivity project for building applications.
 
-\li <a href="annotated.html"><strong>API References</strong></a><br />Provides a reference to all public APIs available to utilize the power of IoTivity.
+@li <a href="annotated.html"><strong>API References</strong></a>\n
+Provides a reference to all public APIs available to utilize the power of IoTivity.
 
-\li <a href="https://www.iotivity.org/documentation"><strong>Additional Documentation</strong></a><br />Additional API docs, links to the IoTivity Wiki, and tools; can be found on the iotivity.org website.
+@li <a href="https://www.iotivity.org/documentation"><strong>Additional Documentation</strong></a>\n
+Additional API docs, links to the IoTivity Wiki, and tools; can be found on the iotivity.org website.
 
-\li <a href="https://wiki.iotivity.org"><strong>Wiki</strong></a><br />Additional documentation can be found on the IoTivity Wiki.
+@li <a href="https://wiki.iotivity.org"><strong>Wiki</strong></a>\n
+Additional documentation can be found on the IoTivity Wiki.
 
 */
+
+/**
+ * @defgroup c_common libc_common
+ * IoTivity Common library
+ */
+
+/**
+ * @defgroup ocbtbstack libobctbstack
+ * The Stack library
+ */
+
+/**
+ * @defgroup connectivity_abstraction libconnectivity_abstraction
+ * The Connectivity Abstraction library
+ */
+
+/**
+ * @defgroup resource_directory libresource_directory
+ * The Resource Directory library
+ */
+
+/**
+ * @defgroup routingmanager libroutingmanager
+ * The Routing Manager library
+ */
+
+/**
+ * @defgroup ocpmapi libocpmapi
+ * The Provisioning Manager library
+ */
+
+/**
+ * @defgroup ocsrm libocsrm
+ * The Secure Resource Manager library
+ */
+
+/* the logger library is not public API (confirm)
+ * @defgroup logger liblogger
+ * The Logging library
+ */
+

@@ -19,10 +19,13 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
 
-/**
- * @file
+/** @file
  *
- * This file contains APIs for OIC Stack to be implemented.
+ * Basic implementation of the OCF stack
+ */
+
+/** @addtogroup ocbtbstack
+ * @{
  */
 
 #ifndef OCSTACK_H_
@@ -46,7 +49,10 @@ extern "C" {
  */
 
 /**
- * This function Initializes the OC Stack.  Must be called prior to starting the stack.
+ * Initialize the stack for a particular operating mode with transport characteristics.
+ *
+ * Equivalent to calling OCInit2() with @a transportType set to OC_DEFAULT_ADAPTER.
+ * An initialization function must be called prior to starting the stack.
  *
  * @param mode            OCMode Host device is client, server, or client-server.
  * @param serverFlags     OCTransportFlags Default server transport flags.
@@ -57,7 +63,10 @@ extern "C" {
 OCStackResult OC_CALL OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags);
 
 /**
- * This function Initializes the OC Stack.  Must be called prior to starting the stack.
+ * Initialize the stack for a particular operating mode with transport characteristics
+ * and transport type.
+ *
+ * An initialization function must be called prior to starting the stack.
  *
  * @param mode            OCMode Host device is client, server, or client-server.
  * @param serverFlags     OCTransportFlags Default server transport flags.
@@ -70,7 +79,12 @@ OCStackResult OC_CALL OCInit2(OCMode mode, OCTransportFlags serverFlags, OCTrans
                       OCTransportAdapter transportType);
 
 /**
- * This function Initializes the OC Stack.  Must be called prior to starting the stack.
+ * Initialize the stack for a particular operating mode.
+ *
+ * Equivalent to calling OCInit2() with @a serverFlags @a clientFlags set to
+ * OC_DEFAULT_FLAGS and @a transportType set to OC_DEFAULT_ADAPTER.
+ * An initialization function must be called prior to starting the stack.
+ * The @a ipAddr and @a port parameters are ignored.
  *
  * @param ipAddr      IP Address of host device. Deprecated parameter.
  * @param port        Port of host device. Deprecated parameter.
@@ -88,31 +102,31 @@ OCStackResult OC_CALL OCInit(const char *ipAddr, uint16_t port, OCMode mode);
  * @return  ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OC_CALL OCSetRAInfo(const OCRAInfo_t *raInfo);
-#endif
+#endif // RA_ADAPTER
 
 /**
- * This function Stops the OC stack.  Use for a controlled shutdown.
+ * Request controlled shutdown of stack.
  *
- * @note: OCStop() performs operations similar to OCStopPresence(), as well as OCDeleteResource() on
- * all resources this server is hosting. OCDeleteResource() performs operations similar to
- * OCNotifyAllObservers() to notify all client observers that the respective resource is being
- * deleted.
+ * @note: OCStop() performs operations similar to OCStopPresence(), as well as
+ * OCDeleteResource() on all resources this server is hosting.
+ * OCDeleteResource() performs operations similar to OCNotifyAllObservers() to
+ * notify all client observers that the respective resource is being deleted.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OC_CALL OCStop(void);
 
 /**
- * This function starts responding to multicast /oic/res requests.  This can be
- * only called when stack is in OC_STACK_INITIALIZED state but device is not
- * receiving multicast traffic.
+ * Start responding to multicast discovery requests.  Can only
+ * be called when stack is in OC_STACK_INITIALIZED state but device is not
+ * yet receiving multicast traffic.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OC_CALL OCStartMulticastServer(void);
 
 /**
- * This function stops responding to multicast /oic/res requests.  This is to be
+ * Stop responding to multicast discovery requests.  This is to be
  * used for devices that uses other entity to push resources.
  *
  * Note that other multicast requests, such as those used during ownership
@@ -134,7 +148,7 @@ OCStackResult OC_CALL OCProcess(void);
  * This function discovers or Perform requests on a specified resource
  * (specified by that Resource's respective URI).
  *
- * @deprecated: Use OCDoRequest instead which does not free given payload.
+ * @deprecated: Use OCDoRequest() instead which does not free given payload.
  *
  * @param handle            To refer to the request sent out on behalf of
  *                          calling this API. This handle can be used to cancel this operation
@@ -280,8 +294,7 @@ OCStackResult OC_CALL OCStartPresence(const uint32_t ttl);
  */
 
 OCStackResult OC_CALL OCStopPresence(void);
-#endif
-
+#endif // WITH_PRESENCE
 
 /**
  * This function sets default device entity handler.
@@ -933,5 +946,5 @@ OCStackResult OC_CALL OCSendPingMessage(const OCDevAddr *devAddr, bool withCusto
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-
-#endif /* OCSTACK_H_ */
+#endif // OCSTACK_H_
+/// @}
