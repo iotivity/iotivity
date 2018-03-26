@@ -28,6 +28,32 @@
 
 #include "cacommon.h"
 
+/**
+ * Callback that notifies the user when a pong message is received
+ */
+typedef void (* CAPongHandler)(void *context, CAEndpoint_t endpoint, bool withCustody);
+
+/**
+ * Callback to delete the context upon removal of the callback/context pointer
+ * from the internal callback-list
+ */
+typedef void (* CAPongContextDeleter)(void *context);
+
+/**
+ * This info is passed when initiating ping message
+ */
+typedef struct CAPongCallbackData
+{
+    /** Pointer to the context */
+    void *context;
+
+    /** The pointer to a function the stack will call when a pong message is received */
+    CAPongHandler cb;
+
+    /** A pointer to a function to delete the context when this callback is removed */
+    CAPongContextDeleter cd;
+} CAPongCallbackData;
+
 typedef struct PingInfo_t
 {
     CAEndpoint_t        endpoint;       // remote endpoint that was pinged
@@ -35,6 +61,7 @@ typedef struct PingInfo_t
     CAToken_t           token;          // token used in the ping message
     uint8_t             tokenLength;    // length of the token
     uint64_t            timeStamp;      // time stamp at which the ping was sent
+    CAPongCallbackData  cbData;         // Callback data associated with this ping/pong exchange
     struct PingInfo_t   *next;          // pointer to next ping info
 } PingInfo;
 
@@ -56,9 +83,11 @@ CAResult_t CAInitializePing();
  * Send a ping message to the given remote endpoint
  * @param[in] endpoint    endpoint information where the data has to be sent.
  * @param[in] withCustody true if the message needs to be sent with custody option
+ * @param[in] cbData      the callback data used to notify OC layer when a pong is received.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CASendPingMessage(const CAEndpoint_t *endpoint, bool withCustody);
+CAResult_t CASendPingMessage(const CAEndpoint_t *endpoint, bool withCustody,
+                             CAPongCallbackData *cbData);
 
 /**
  * Send a pong message to the given remote endpoint

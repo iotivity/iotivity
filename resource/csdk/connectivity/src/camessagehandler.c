@@ -1055,7 +1055,7 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
             if (!data)
             {
                 OIC_LOG(ERROR, TAG, "GenerateSignalingMessage failed");
-                return CA_MEMORY_ALLOC_FAILED;
+                return CA_STATUS_FAILED;
             }
             OICFree(csmOpts);
 
