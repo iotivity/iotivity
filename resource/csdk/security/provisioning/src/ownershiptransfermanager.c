@@ -834,7 +834,7 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
 
     if (CA_STATUS_OK == pskRet)
     {
-        OIC_LOG(DEBUG, TAG,"Owner PSK dump:\n");
+        OIC_LOG(DEBUG, TAG,"Owner PSK dump:");
         OIC_LOG_BUFFER(DEBUG, TAG,ownerPSK, OWNER_PSK_LENGTH_128);
         //Generating new credential for provisioning tool
         OicSecCred_t *cred = GenerateCredential(&selectedDeviceInfo->doxm->deviceID,

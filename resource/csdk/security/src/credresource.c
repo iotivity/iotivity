@@ -3325,13 +3325,24 @@ void LogCert(uint8_t *data, size_t len, OicEncodingType_t encoding, const char* 
                 mbedRet = mbedtls_x509_crt_info(infoBuf, CERT_INFO_BUF_LEN, tag, &mbedCert);
                 if (0 < mbedRet)
                 {
+                    int pos = strlen(infoBuf)-1;
+                    if (infoBuf[pos] == '\n')
+                    {
+                        infoBuf[pos] = '\0';
+                    }
                     OIC_LOG_V(DEBUG, tag, "%s", infoBuf);
                 }
             }
             mbedtls_x509_crt_free(&mbedCert);
 
             // raw pem dump
-            OIC_LOG_V(DEBUG, tag, "%s", pem);
+            int pos = strlen((char *)pem)-1;
+            if (pem[pos] == '\n')
+            {
+                pem[pos] = '\0';
+            }
+            snprintf(infoBuf, CERT_INFO_BUF_LEN, "\n%s", pem);
+            OIC_LOG_V(DEBUG, tag, "%s", infoBuf);
         }
         if ( true == needTofreePem )
         {
@@ -3426,15 +3437,12 @@ void LogCredResource(OicSecCred_t *cred, const char* tag, const char* label)
     OIC_LOG_V(DEBUG, tag, "=== %s ========================", (NULL != label) ? label : "cred" );
     VERIFY_NOT_NULL(tag, cred, ERROR);
 
-    OIC_LOG(DEBUG, tag, "\n");
-
     uuid = NULL;
     if (OCConvertUuidToString(gRownerId.id, uuidString))
     {
         uuid = uuidString;
     }
     OIC_LOG_V(DEBUG, tag, "rowner uuid:  %s", (NULL != uuid) ? uuid : "None or Error");
-    OIC_LOG(DEBUG, tag, "\n");
 
     LL_FOREACH(cred, curCred)
     {
@@ -3444,7 +3452,6 @@ void LogCredResource(OicSecCred_t *cred, const char* tag, const char* label)
     }
 
     exit:
-        OIC_LOG(DEBUG, tag, "\n");
         OIC_LOG(DEBUG, tag, "============================================================");
 
     return;

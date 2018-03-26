@@ -44,7 +44,11 @@ extern "C"
 #define PCF(str) str
 
 // Max buffer size used in variable argument log function
+#ifndef NDEBUG
+#define MAX_LOG_V_BUFFER_SIZE (2048)
+#else
 #define MAX_LOG_V_BUFFER_SIZE (256)
+#endif
 
 // Setting this flag for a log level means that the corresponding log message
 // contains private data. This kind of message is logged only when a call to
