@@ -914,6 +914,22 @@ OCStackResult OC_CALL OCGetIpv6AddrScope(const char *addr, OCTransportFlags *sco
 OCStackResult OC_CALL OCGetRequestPayloadVersion(OCEntityHandlerRequest *ehRequest,
                                   OCPayloadFormat* pContentFormat, uint16_t* pAcceptVersion);
 
+#ifdef TCP_ADAPTER
+/**
+ * Send a ping message to the remote TCP server
+ *
+ * @param[in] devAddr           complete description of remote TCP server destination.
+ * @param[in] withCustody       true if the ping message should include the custody option,
+ *                              false otherwise. Refer RFC 8323 section 5.4.1 for details.
+ * @param[in] cbData            Asynchronous callback function that is invoked by the stack
+ *                              when the pong message is received for this ping message.
+ *
+ * @return ::OC_STACK_OK if successful.
+ */
+OCStackResult OC_CALL OCSendPingMessage(const OCDevAddr *devAddr, bool withCustody,
+                                        OCCallbackData *cbData);
+#endif
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

@@ -49,6 +49,12 @@ static oc_mutex g_pingInfoListMutex = NULL;
  */
 static uint64_t g_timeout = CA_DEFAULT_PING_TIMEOUT;
 
+static void CADestroyPingInfo(PingInfo* pingInfo)
+{
+    pingInfo->cbData.cd(pingInfo->cbData.context);
+    OICFree(pingInfo);
+}
+
 CAResult_t CAInitializePing()
 {
     OIC_LOG(DEBUG, TAG, "CAInitializePing IN");
@@ -64,7 +70,32 @@ CAResult_t CAInitializePing()
     return CA_STATUS_OK;
 }
 
-CAResult_t CASendPingMessage(const CAEndpoint_t *endpoint, bool withCustody)
+void CASendCSMMessage(const CAEndpoint_t *endpoint)
+{
+    CAData_t *data = NULL;
+    OIC_LOG_V(DEBUG, TAG, "Generate CSM message for [%s:%d]",
+              endpoint->addr, endpoint->port);
+
+    uint8_t numOptions = 0;
+    CAHeaderOption_t *csmOpts = NULL;
+    unsigned int maxMsgSize = 1152;
+    unsigned char optionData[CA_MAX_HEADER_OPTION_DATA_LENGTH] = { 0 };
+    size_t optionDataLength = coap_encode_var_bytes(optionData, maxMsgSize);
+    CAAddHeaderOption(&csmOpts, &numOptions, CA_OPTION_MAX_MESSAGE_SIZE,
+                      optionData, optionDataLength);
+
+    data = CAGenerateSignalingMessage(endpoint, CA_CSM, csmOpts, numOptions);
+    if (!data)
+    {
+        OIC_LOG(ERROR, TAG, "GenerateSignalingMessage failed");
+        return;
+    }
+    OICFree(csmOpts);
+
+    CAAddDataToSendThread(data);
+}
+
+CAResult_t CASendPingMessage(const CAEndpoint_t *endpoint, bool withCustody, CAPongCallbackData *cbData)
 {
     OIC_LOG(DEBUG, TAG, "CASendPingMessage IN");
 
@@ -88,9 +119,21 @@ CAResult_t CASendPingMessage(const CAEndpoint_t *endpoint, bool withCustody)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
+    CAData_t *data = NULL;
+#ifdef TCP_ADAPTER
+    if (CA_ADAPTER_TCP == endpoint->adapter)
+    {
+        CACSMExchangeState_t CSMstate = CAGetCSMState(endpoint);
+        if (CSMstate != SENT && CSMstate != SENT_RECEIVED)
+        {
+            CASendCSMMessage(endpoint);
+        }
+    }
+#endif
+
     // Generate ping message and add to send thread
     // TODO: Implement ping message with custody option
-    CAData_t *data = CAGenerateSignalingMessage(endpoint, CA_PING, NULL, 0);
+    data = CAGenerateSignalingMessage(endpoint, CA_PING, NULL, 0);
     if (!data)
     {
         OICFree(cur);
@@ -106,6 +149,7 @@ CAResult_t CASendPingMessage(const CAEndpoint_t *endpoint, bool withCustody)
     cur->withCustody = withCustody;
     OICStrcpy(cur->token, data->signalingInfo->info.tokenLength, data->signalingInfo->info.token);
     cur->timeStamp = OICGetCurrentTime(TIME_IN_MS);
+    cur->cbData = *cbData;
     oc_mutex_lock(g_pingInfoListMutex);
     cur->next = g_pingInfoList;
     g_pingInfoList = cur;
@@ -121,10 +165,23 @@ CAResult_t CASendPongMessage(const CAEndpoint_t *endpoint, bool withCustody,
     (void) withCustody;
     OIC_LOG(DEBUG, TAG, "CASendPongMessage IN");
 
+    CAData_t *data = NULL;
+#ifdef TCP_ADAPTER
+    if (CA_ADAPTER_TCP == endpoint->adapter)
+    {
+        // #1. Try to find session info from tcp_adapter.
+        CACSMExchangeState_t CSMstate = CAGetCSMState(endpoint);
+        if (CSMstate != SENT && CSMstate != SENT_RECEIVED)
+        {
+            CASendCSMMessage(endpoint);
+        }
+    }
+#endif
+
     // Generate pong message and add to send thread
     // TODO: Implement pong message with custody option
-    CAData_t *data = CAGenerateSignalingMessageUsingToken(endpoint, CA_PONG, NULL,
-                                                          0, token, tokenLength);
+    data = CAGenerateSignalingMessageUsingToken(endpoint, CA_PONG, NULL,
+                                                0, token, tokenLength);
     if (!data)
     {
         OIC_LOG(ERROR, TAG, "Could not generate signaling message");
@@ -164,7 +221,7 @@ void CAProcessPing()
         PingInfo *tmp = del;
         del = del->next;
         CATCPDisconnectSession(&tmp->endpoint);
-        OICFree(tmp);
+        CADestroyPingInfo(tmp);
     }
     oc_mutex_unlock(g_pingInfoListMutex);
 }
@@ -185,8 +242,9 @@ void CAPongReceivedCallback(const CAEndpoint_t *endpoint, const CAToken_t token,
             !strncmp((*cur)->token, token, tokenLength))
         {
             del = *cur;
+            del->cbData.cb(del->cbData.context, del->endpoint, del->withCustody);
             *cur = del->next;
-            OICFree(del);
+            CADestroyPingInfo(del);
             break;
         }
         cur = &((*cur)->next);
@@ -208,7 +266,7 @@ void CATerminatePing()
     {
         del = cur;
         cur = cur->next;
-        OICFree(del);
+        CADestroyPingInfo(del);
     }
     oc_mutex_unlock(g_pingInfoListMutex);
 
