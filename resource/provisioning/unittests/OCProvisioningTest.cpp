@@ -202,7 +202,7 @@ namespace OCProvisioningTest
     TEST(SetDisplayPinCBTest, RegisterDisplayPinCallbackTestNullCB)
     {
         DisplayPinCallbackHandle displayPinCallbackHandle;
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::registerDisplayPinCallback(nullptr, &displayPinCallbackHandle));
+        EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCSecure::registerDisplayPinCallback(nullptr, &displayPinCallbackHandle));
     }
 
 
