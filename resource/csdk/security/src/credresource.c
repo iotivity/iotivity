@@ -3288,7 +3288,7 @@ void LogCert(uint8_t *data, size_t len, OicEncodingType_t encoding, const char* 
     char infoBuf[CERT_INFO_BUF_LEN];
     int mbedRet = 0;
     OCStackResult ret = OC_STACK_OK;
-    int pemLen = 0;
+    size_t pemLen = 0;
     uint8_t *pem = NULL;
     mbedtls_x509_crt mbedCert;
     bool needTofreePem = false;
@@ -3325,7 +3325,7 @@ void LogCert(uint8_t *data, size_t len, OicEncodingType_t encoding, const char* 
                 mbedRet = mbedtls_x509_crt_info(infoBuf, CERT_INFO_BUF_LEN, tag, &mbedCert);
                 if (0 < mbedRet)
                 {
-                    int pos = strlen(infoBuf)-1;
+                    size_t pos = strlen(infoBuf)-1;
                     if (infoBuf[pos] == '\n')
                     {
                         infoBuf[pos] = '\0';
@@ -3336,7 +3336,7 @@ void LogCert(uint8_t *data, size_t len, OicEncodingType_t encoding, const char* 
             mbedtls_x509_crt_free(&mbedCert);
 
             // raw pem dump
-            int pos = strlen((char *)pem)-1;
+            size_t pos = strlen((char *)pem)-1;
             if (pem[pos] == '\n')
             {
                 pem[pos] = '\0';
@@ -3400,6 +3400,8 @@ void LogCred(OicSecCred_t *cred, const char* tag)
         "PEM",
         "DER"
     };
+    // encodingType is only used in logging. With some build options it is unused.
+    OC_UNUSED(encodingType);
 
     OIC_LOG(DEBUG, tag, "...............................................");
     if ( (SIGNED_ASYMMETRIC_KEY == cred->credType) && (0 < cred->publicData.len) && (NULL != cred->publicData.data) )
@@ -3429,6 +3431,8 @@ void LogCred(OicSecCred_t *cred, const char* tag)
 
 void LogCredResource(OicSecCred_t *cred, const char* tag, const char* label)
 {
+    // label is only used in logging. With some build options it is unused.
+    OC_UNUSED(label);
     OicSecCred_t *curCred = NULL;
     int curCredIdx = 0;
     char uuidString[UUID_STRING_SIZE];
