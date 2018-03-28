@@ -55,16 +55,6 @@ OCStackResult CreateCloudResource();
 */
 bool UpdateCloudPersistentStorage();
 
-/**
- * Parse GET cloudconf payload
- *
- * @param[in] cborPayload       payload to parse
- * @param[in] size              payload size
- * @param[out] cloudState       cloud state
- * @return ::OC_STACK_OK for Success, otherwise some error value.
- */
-OCStackResult CloudGetRequestPayloadParse(const uint8_t *cborPayload, size_t size, int *cloudState);
-
 #ifdef __cplusplus
 }
 #endif

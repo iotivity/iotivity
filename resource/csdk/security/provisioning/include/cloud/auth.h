@@ -74,6 +74,7 @@ struct OicCloud
     char        *apn;   // Authorization Provider Name
     char        *cis;   // OCF Cloud URL
     char        *at;    // Access Token
+    char        *sid;   // Cloud UUID
     CloudStatus stat;
     oc_thread   pid;
     session_t   *session;
@@ -84,7 +85,8 @@ struct OicCloud
 #define OIC_JSON_CLOUD_APN      "apn"
 #define OIC_JSON_CLOUD_CIS      "cis"
 #define OIC_JSON_CLOUD_AT       "at"
-#define OIC_JSON_CLOUD_ATT      "att"
+#define OIC_JSON_CLOUD_SID      "sid"
+#define OIC_JSON_CLOUD_CLEC     "clec"
 
 /**
  * Sends Sign UP request to cloud
@@ -125,6 +127,16 @@ void FreeCloud(OicCloud_t *cloud);
  * @return  OCStackResult application result
  */
 OCStackResult CloudToCBORPayload(const OicCloud_t *clouds, uint8_t **payload, size_t *size);
+
+/**
+ * Cloud to CBOR for resource
+ *
+ * @param[in] cloud
+ * @param[out] payload
+ * @param[out] size
+ * @return  OCStackResult application result
+ */
+OCStackResult CloudToCBORPayloadResource(const OicCloud_t *clouds, uint8_t **payload, size_t *size);
 
 /**
  * CBOR to Cloud

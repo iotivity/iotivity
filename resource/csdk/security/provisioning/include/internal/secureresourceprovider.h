@@ -35,6 +35,9 @@ typedef enum
     PSK_TYPE,                             /**< Pre-Shared Key.**/
     CERT_TYPE,                            /**< X.509 certificate.**/
     SP_TYPE,                              /**< Security Profiles. **/
+#if defined(WITH_CLOUD)
+    CLOUD_TYPE,                           /**< CoAP Cloud Conf.**/
+#endif
     MOT_TYPE                              /**< Multiple Ownership Transfer.**/
 } DataType_t;
 

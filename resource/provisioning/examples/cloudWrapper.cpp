@@ -350,8 +350,12 @@ OCStackResult OCWrapperAclIdGetByDevice(OCCloudProvisioning& ptr, AclIdResponseC
 
 const char *getUri(const OCDevAddr *ep)
 {
-    char *uri = (char *)OICCalloc(1,1024);
-    snprintf(uri,1024,"%s:%d",ep->addr, ep->port);
+    char *uri = NULL;
+    uri = (char *)OICCalloc(1,1024);
+    if (uri)
+    {
+        snprintf(uri,1024,"%s:%d",ep->addr, ep->port);
+    }
     return uri;
 }
 

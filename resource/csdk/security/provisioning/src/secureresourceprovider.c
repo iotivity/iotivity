@@ -288,6 +288,15 @@ void FreeData(Data_t *data)
                 OICFree(motData);
                 break;
             }
+#if defined(WITH_CLOUD)
+        case CLOUD_TYPE:
+            {
+                CloudData_t *cloudData = (CloudData_t *) data->ctx;
+                OICFree(cloudData->resArr);
+                OICFree(cloudData);
+                break;
+            }
+#endif
         default:
             {
                 OIC_LOG_V(INFO, TAG, "Unknown type %d", data->type);
@@ -821,6 +830,23 @@ OCStackApplicationResult SetReadyForNormalOperationCB(void *ctx, OCDoHandle hand
             dataCtx = certData->ctx;
             break;
         }
+#if defined(WITH_CLOUD)
+        case CLOUD_TYPE:
+        {
+            CloudData_t *cloudData = (CloudData_t *) ((Data_t *) ctx)->ctx;
+            if (NULL == cloudData)
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: cloudData is NULL", __func__);
+                break;
+            }
+            resultCallback = cloudData->resultCallback;
+            targetDev = cloudData->targetDev;
+            resArr = cloudData->resArr;
+            numOfResults = &(cloudData->numOfResults);
+            dataCtx = cloudData->ctx;
+            break;
+        }
+#endif
         default:
         {
             OIC_LOG_V(ERROR, TAG, "Unknown type %d", dataType);
@@ -908,6 +934,13 @@ OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t dos,
             pTargetDev = ((OTMContext_t *)data->ctx)->selectedDeviceInfo;
             break;
         }
+#if defined(WITH_CLOUD)
+        case CLOUD_TYPE:
+        {
+            pTargetDev = ((CloudData_t *)data->ctx)->targetDev;
+            break;
+        }
+#endif
         default:
         {
             OIC_LOG_V(ERROR, TAG, "Unknown type: %d", data->type);

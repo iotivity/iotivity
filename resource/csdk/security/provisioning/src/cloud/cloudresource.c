@@ -49,13 +49,11 @@ static oc_mutex     gCloudMutex;
 #define OC_CLOUD_PROVISIONING_APN   "apn"
 #define OC_CLOUD_PROVISIONING_CIS   "cis"
 #define OC_CLOUD_PROVISIONING_AT    "at"
-
-#define OIC_JSON_CLOUD_CLEC         "clec"
-
-static const size_t CBOR_DEFAULT_SIZE = 512;
+#define OC_CLOUD_PROVISIONING_SID   "sid"
 
 static OicCloud_t gDefaultCloud =
 {
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -192,6 +190,11 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
         OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_AT);
         goto exit;
     }
+    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_SID, &newCloud->sid))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_SID);
+        goto exit;
+    }
 
     if (!ValidCloud(newCloud))
     {
@@ -238,143 +241,38 @@ exit:
     return ehRet;
 }
 
-OCStackResult CloudGetRequestPayloadCreate(int cloudState, uint8_t **payload, size_t *size)
+OCRepPayload *CreateCloudGetPayload(const OicCloud_t *cloud)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
-    VERIFY_NOT_NULL_RETURN(TAG, size, ERROR, OC_STACK_INVALID_PARAM);
-    VERIFY_NOT_NULL_RETURN(TAG, payload, ERROR, OC_STACK_INVALID_PARAM);
+    OCRepPayload *payload = NULL;
+    payload = OCRepPayloadCreate();
+    VERIFY_NOT_NULL(TAG, payload, ERROR);
 
-    if ( NULL != *payload)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: *payload is not NULL", __func__);
-        return OC_STACK_INVALID_PARAM;
-    }
+    VERIFY_NOT_NULL_RETURN(TAG, cloud, WARNING, payload);
 
-    size_t cborLen = *size;
-    if (0 == cborLen)
-    {
-        cborLen = CBOR_DEFAULT_SIZE;
-    }
-    *payload = NULL;
-    *size = 0;
+    OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, cloud->apn);
+    OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, cloud->cis);
+    OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_SID, cloud->sid);
+    OCRepPayloadSetPropInt(payload, OIC_JSON_CLOUD_CLEC, (int64_t)cloud->stat);
 
-    OCStackResult ret = OC_STACK_ERROR;
-
-    CborError cborError = CborNoError;
-
-    uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
-
-    CborEncoder encoder;
-    cbor_encoder_init(&encoder, outPayload, cborLen, 0);
-
-    CborEncoder rootMap;
-    cborError = cbor_encoder_create_map(&encoder, &rootMap, 1);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add root map");
-
-    cborError = cbor_encode_text_string(&rootMap, OIC_JSON_CLOUD_CLEC,
-                                        sizeof(OIC_JSON_CLOUD_CLEC) + 1);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: clec");
-
-    cborError = cbor_encode_int(&rootMap, cloudState);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: clec");
-
-    cborError = cbor_encoder_close_container(&encoder, &rootMap);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed close root map");
-
-    if (CborNoError == cborError)
-    {
-        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
-        *payload = outPayload;
-        ret = OC_STACK_OK;
-    }
 exit:
-    if ((CborNoError != cborError) || (OC_STACK_OK != ret))
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: Failed", __func__);
-        OICFree(outPayload);
-        outPayload = NULL;
-        *payload = NULL;
-        *size = 0;
-        ret = OC_STACK_ERROR;
-    }
-
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
-    return ret;
+    return payload;
 }
-
-OCStackResult CloudGetRequestPayloadParse(const uint8_t *cborPayload, size_t size, int *cloudState)
-{
-    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
-
-    VERIFY_NOT_NULL_RETURN(TAG, cborPayload, ERROR, OC_STACK_INVALID_PARAM);
-    VERIFY_NOT_NULL_RETURN(TAG, cloudState, ERROR, OC_STACK_INVALID_PARAM);
-
-    if (0 == size)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: zero size", __func__);
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    OCStackResult ret = OC_STACK_ERROR;
-    CborValue cloudCbor = { NULL, NULL, 0, 0, 0, 0};
-    CborParser parser = { NULL, 0 };
-    CborError cborError = CborNoError;
-    char *name = NULL;
-    size_t len = 0;
-
-    cbor_parser_init(cborPayload, size, 0, &parser, &cloudCbor);
-
-    if (!cbor_value_is_container(&cloudCbor))
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: it's not container", __func__);
-        return OC_STACK_ERROR;
-    }
-
-    CborValue map = { NULL, NULL, 0, 0, 0, 0 };
-    cborError = cbor_value_enter_container(&cloudCbor, &map);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Cant't find root map");
-
-    cborError = cbor_value_dup_text_string(&map, &name, &len, NULL);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed find name in map");
-
-    if (0 == len || NULL == name || 0 != strncmp(name, OIC_JSON_CLOUD_CLEC, len))
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: wrong name", __func__);
-        goto exit;
-    }
-
-    cborError = cbor_value_advance(&map);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed move");
-
-    cborError = cbor_value_get_int(&map, cloudState);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed get cloud state");
-
-    ret = OC_STACK_OK;
-exit:
-    if ((CborNoError != cborError) || (OC_STACK_OK != ret))
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: Failed", __func__);
-    }
-    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
-    return ret;
-}
-
 
 static OCEntityHandlerResult HandleCloudGetRequest(OCEntityHandlerRequest *ehRequest)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
     OCEntityHandlerResult ehRet = OC_EH_INTERNAL_SERVER_ERROR;
-    OicCloud_t *newCloud = NULL;
+    OicCloud_t *cloud = NULL;
     OCRepPayload *payload = NULL;
     bool isDeviceOwned = false;
-    uint8_t *payloadResponse = NULL;
-    size_t sizeResponse = 0;
     OicCloud_t *p1 = NULL, *p2 = NULL;
+    OCEntityHandlerResponse response;
 
     VERIFY_NOT_NULL(TAG, ehRequest, ERROR);
-    VERIFY_NOT_NULL(TAG, ehRequest->payload, ERROR);
+    VERIFY_NOT_NULL(TAG, gCloud, ERROR);
 
     OCGetDeviceOwnedState(&isDeviceOwned);
 
@@ -385,49 +283,51 @@ static OCEntityHandlerResult HandleCloudGetRequest(OCEntityHandlerRequest *ehReq
         goto exit;
     }
 
-    newCloud = (OicCloud_t *) OICCalloc(1, sizeof(OicCloud_t));
-    VERIFY_NOT_NULL(TAG, newCloud, ERROR);
+    cloud = (OicCloud_t *) OICCalloc(1, sizeof(OicCloud_t));
+    VERIFY_NOT_NULL(TAG, cloud, ERROR);
 
     payload = (OCRepPayload *)ehRequest->payload;
 
-    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &newCloud->cis))
+    if (!payload || !OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &cloud->cis))
     {
         OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_CIS);
+        p1 = gCloud;
+        ehRet = OC_EH_OK;
         goto exit;
     }
-    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_APN, &newCloud->apn))
+    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_APN, &cloud->apn))
     {
         OIC_LOG_V(WARNING, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_APN);
     }
-    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_AT, &newCloud->at))
+    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_AT, &cloud->at))
     {
         OIC_LOG_V(WARNING, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_AT);
     }
 
     LL_FOREACH_SAFE(gCloud, p1, p2)
     {
-        if (0 == strcmp(p1->cis, newCloud->cis))
+        if (0 == strcmp(p1->cis, cloud->cis))
         {
-            if (OC_STACK_OK != CloudGetRequestPayloadCreate(p1->stat, &payloadResponse, &sizeResponse))
-            {
-                OIC_LOG_V(ERROR, TAG, "%s: Error create cbor", __func__);
-                goto exit;
-            }
+            ehRet = OC_EH_OK;
             break;
         }
     }
-
-    if (0 == sizeResponse)
-    {
-        ehRet = OC_EH_RESOURCE_NOT_FOUND;
-    }
-    else
-    {
-        ehRet = OC_EH_OK;
-    }
 exit:
-    ehRet = ((SendSRMResponse(ehRequest, ehRet, payloadResponse, sizeResponse)) == OC_STACK_OK) ?
-            OC_EH_OK : OC_EH_ERROR;
+    payload = CreateCloudGetPayload(p1);
+
+    response.requestHandle = ehRequest->requestHandle;
+    response.ehResult = payload ? ehRet : OC_EH_INTERNAL_SERVER_ERROR;
+    response.payload = (OCPayload *)payload;
+    response.payload->type = PAYLOAD_TYPE_REPRESENTATION;
+    response.persistentBufferFlag = 0;
+
+    if (OC_STACK_OK != OCDoResponse(&response))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: send response", __func__);
+        ehRet = OC_EH_ERROR;
+    }
+
+    FreeCloud(cloud);
 
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 
@@ -438,10 +338,11 @@ static OCEntityHandlerResult HandleCloudDeleteRequest(OCEntityHandlerRequest *eh
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
     OCEntityHandlerResult ehRet = OC_EH_INTERNAL_SERVER_ERROR;
-    OicCloud_t *newCloud = NULL;
+    OicCloud_t *cloud = NULL;
     OCRepPayload *payload = NULL;
     bool isDeviceOwned = false;
     OicCloud_t *p1 = NULL, *p2 = NULL;
+    OCEntityHandlerResponse response;
 
     VERIFY_NOT_NULL(TAG, ehRequest, ERROR);
     VERIFY_NOT_NULL(TAG, ehRequest->payload, ERROR);
@@ -455,40 +356,51 @@ static OCEntityHandlerResult HandleCloudDeleteRequest(OCEntityHandlerRequest *eh
         goto exit;
     }
 
-    newCloud = (OicCloud_t *) OICCalloc(1, sizeof(OicCloud_t));
-    VERIFY_NOT_NULL(TAG, newCloud, ERROR);
+    cloud = (OicCloud_t *) OICCalloc(1, sizeof(OicCloud_t));
+    VERIFY_NOT_NULL(TAG, cloud, ERROR);
 
     payload = (OCRepPayload *)ehRequest->payload;
 
-    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &newCloud->cis))
+    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &cloud->cis))
     {
         OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_CIS);
         goto exit;
     }
-    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_APN, &newCloud->apn))
+    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_APN, &cloud->apn))
     {
         OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_APN);
     }
-    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_AT, &newCloud->at))
+    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_AT, &cloud->at))
     {
         OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_AT);
     }
 
     LL_FOREACH_SAFE(gCloud, p1, p2)
     {
-        if (0 == strcmp(p1->cis, newCloud->cis))
+        if (0 == strcmp(p1->cis, cloud->cis))
         {
             OIC_LOG_V(INFO, TAG, "%s: delete cloud: %s", __func__, p1->cis);
             p1->stat = OC_CLOUD_EXIT;
             LL_DELETE(gCloud, p1);
+            FreeCloud(p1);
+            ehRet = OC_EH_OK;
             break;
         }
     }
-
-    ehRet = OC_EH_OK;
 exit:
-    ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
-            OC_EH_OK : OC_EH_ERROR;
+    response.requestHandle = ehRequest->requestHandle;
+    response.ehResult = ehRet;
+    response.payload->type = PAYLOAD_TYPE_REPRESENTATION;
+    response.payload = (OCPayload *)OCRepPayloadCreate();
+    response.persistentBufferFlag = 0;
+
+    if (OC_STACK_OK != OCDoResponse(&response))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: send response", __func__);
+        ehRet = OC_EH_ERROR;
+    }
+
+    FreeCloud(cloud);
 
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 

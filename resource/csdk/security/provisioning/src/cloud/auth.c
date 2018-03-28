@@ -48,8 +48,7 @@
 
 static const int TIME_OUT_SHIFT = 3;
 
-
-#define CBOR_CLOUD_MAP_SIZE 3
+#define CBOR_CLOUD_MAP_SIZE 4
 #define MAX_STR_LEN 2048
 
 const char *OIC_JSON_CLOUD_SESSION_ACCESS_TOKEN = "accesstoken";
@@ -87,6 +86,11 @@ void SessionFree(session_t *session)
 
 void FreeCloud(OicCloud_t *cloud)
 {
+    if (!cloud)
+    {
+        return;
+    }
+
     cloud->stat = OC_CLOUD_PROV;
 
 
@@ -110,6 +114,7 @@ void FreeCloud(OicCloud_t *cloud)
     OICFree(cloud->apn);
     OICFree(cloud->cis);
     OICFree(cloud->at);
+    OICFree(cloud->sid);
 
     if (cloud->session)
     {
@@ -196,7 +201,8 @@ exit:
     return ret;
 }
 
-OCStackResult CloudToCBORPayload(const OicCloud_t *clouds, uint8_t **payload, size_t *size)
+static OCStackResult CloudToCBORPayloadInternal(const OicCloud_t *clouds, uint8_t **payload,
+        size_t *size, bool secure)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
@@ -204,7 +210,7 @@ OCStackResult CloudToCBORPayload(const OicCloud_t *clouds, uint8_t **payload, si
     VERIFY_NOT_NULL_RETURN(TAG, size, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, payload, ERROR, OC_STACK_INVALID_PARAM);
 
-    if ( NULL != *payload)
+    if (NULL != *payload)
     {
         OIC_LOG_V(ERROR, TAG, "%s: *payload is not NULL", __func__);
         return OC_STACK_INVALID_PARAM;
@@ -244,7 +250,11 @@ OCStackResult CloudToCBORPayload(const OicCloud_t *clouds, uint8_t **payload, si
     while (cloud)
     {
         CborEncoder map;
-        size_t mapSize = CBOR_CLOUD_MAP_SIZE + SESSION_CBOR_CLOUD_MAP_SIZE;
+        size_t mapSize = CBOR_CLOUD_MAP_SIZE;
+        if (secure)
+        {
+            mapSize += SESSION_CBOR_CLOUD_MAP_SIZE + 1;
+        }
         cborError = cbor_encoder_create_map(&cloudArray, &map, mapSize);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add map");
 
@@ -260,19 +270,37 @@ OCStackResult CloudToCBORPayload(const OicCloud_t *clouds, uint8_t **payload, si
         cborError = cbor_encode_text_string(&map, cloud->cis, strnlen(cloud->cis, MAX_STR_LEN));
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: cis");
 
-        cborError = cbor_encode_text_string(&map, OIC_JSON_CLOUD_AT,
-                                            sizeof(OIC_JSON_CLOUD_AT) + 1);
-        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: at");
-        cborError = cbor_encode_text_string(&map, cloud->at, strnlen(cloud->at, MAX_STR_LEN));
-        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: at");
-
-        if (cloud->session)
+        if (secure)
         {
-            ret = CloudSessionToCBORPayload(cloud->session, &map);
-            if (OC_STACK_OK != ret)
+            cborError = cbor_encode_text_string(&map, OIC_JSON_CLOUD_AT,
+                                                sizeof(OIC_JSON_CLOUD_AT) + 1);
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: at");
+            cborError = cbor_encode_text_string(&map, cloud->at, strnlen(cloud->at, MAX_STR_LEN));
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: at");
+        }
+
+        cborError = cbor_encode_text_string(&map, OIC_JSON_CLOUD_SID,
+                                            sizeof(OIC_JSON_CLOUD_SID) + 1);
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: sid");
+        cborError = cbor_encode_text_string(&map, cloud->sid, strnlen(cloud->sid, MAX_STR_LEN));
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: sid");
+
+        cborError = cbor_encode_text_string(&map, OIC_JSON_CLOUD_CLEC,
+                                            sizeof(OIC_JSON_CLOUD_CLEC) + 1);
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: clec");
+        cborError = cbor_encode_int(&map, cloud->stat);
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: clec");
+
+        if (secure)
+        {
+            if (cloud->session)
             {
-                OIC_LOG_V(ERROR, TAG, "%s: Failed convert session to cbor", __func__);
-                goto exit;
+                ret = CloudSessionToCBORPayload(cloud->session, &map);
+                if (OC_STACK_OK != ret)
+                {
+                    OIC_LOG_V(ERROR, TAG, "%s: Failed convert session to cbor", __func__);
+                    goto exit;
+                }
             }
         }
 
@@ -307,6 +335,17 @@ exit:
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
     return ret;
 }
+
+OCStackResult CloudToCBORPayload(const OicCloud_t *clouds, uint8_t **payload, size_t *size)
+{
+    return CloudToCBORPayloadInternal(clouds, payload, size, true);
+}
+
+OCStackResult CloudToCBORPayloadResource(const OicCloud_t *clouds, uint8_t **payload, size_t *size)
+{
+    return CloudToCBORPayloadInternal(clouds, payload, size, false);
+}
+
 
 OCStackResult CBORPayloadToCloud(const uint8_t *cborPayload, size_t size, OicCloud_t **clouds)
 {
@@ -384,6 +423,8 @@ OCStackResult CBORPayloadToCloud(const uint8_t *cborPayload, size_t size, OicClo
             cloud->session = (session_t *) OICCalloc(1, sizeof(session_t));
             VERIFY_NOT_NULL(TAG, cloud->session, ERROR);
 
+            cloud->stat = OC_CLOUD_OK;
+
             LL_APPEND(*clouds, cloud);
 
             char *name = NULL;
@@ -424,6 +465,12 @@ OCStackResult CBORPayloadToCloud(const uint8_t *cborPayload, size_t size, OicClo
                 {
                     cborError = cbor_value_dup_text_string(&map, &cloud->at, &len, NULL);
                     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed get at value");
+                    goto next;
+                }
+                else if (strncmp(name, OIC_JSON_CLOUD_SID, len)  == 0)
+                {
+                    cborError = cbor_value_dup_text_string(&map, &cloud->sid, &len, NULL);
+                    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed get sid value");
                     goto next;
                 }
                 else if (strncmp(name, OIC_JSON_CLOUD_SESSION_ACCESS_TOKEN, len)  == 0)
@@ -920,6 +967,7 @@ OCStackResult OCCloudSignUp(OicCloud_t *cloud)
     VERIFY_NOT_NULL_RETURN(TAG, cloud->cis, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cloud->apn, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cloud->at, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud->sid, ERROR, OC_STACK_INVALID_PARAM);
 
     if (OC_CLOUD_PROV != cloud->stat)
     {
@@ -940,6 +988,7 @@ OCStackResult OCCloudSignUp(OicCloud_t *cloud)
     OCRepPayloadSetPropString(payload, OC_RSRVD_AUTHPROVIDER, cloud->apn);
 #endif // __MANDATORY__
     OCRepPayloadSetPropString(payload, OC_RSRVD_ACCESS_TOKEN, cloud->at);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_ID, cloud->sid);
 
     OCCallbackData cbData =
     {

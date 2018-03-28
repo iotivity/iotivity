@@ -66,12 +66,14 @@ OicCloud_t *getCloud()
     cloud->apn = (char *)OICCalloc(STR_LEN, sizeof(char));
     cloud->cis = (char *)OICCalloc(STR_LEN, sizeof(char));
     cloud->at = (char *)OICCalloc(STR_LEN, sizeof(char));
+    cloud->sid = (char *)OICCalloc(STR_LEN, sizeof(char));
 
     for (int i = 0; i < STR_LEN; i++)
     {
         cloud->apn[i] = sample[rand() % STR_LEN];
         cloud->cis[i] = sample[rand() % STR_LEN];
         cloud->at[i] = sample[rand() % STR_LEN];
+        cloud->sid[i] = sample[rand() % STR_LEN];
     }
 
     cloud->session = (session_t *)OICCalloc(STR_LEN, sizeof(session_t));
@@ -121,6 +123,19 @@ TEST(CloudResourceTest, CloudToCBORPayloadVALID)
     OICFree(payload);
 }
 
+TEST(CloudResourceTest, CloudToCBORPayloadResourceVALID)
+{
+    OicCloud_t *cloud = getCloud();
+
+    uint8_t *payload = NULL;
+    size_t size = 0;
+    EXPECT_EQ(OC_STACK_OK, CloudToCBORPayloadResource(cloud, &payload, &size));
+    EXPECT_TRUE(payload != NULL);
+
+    FreeCloud(cloud);
+    OICFree(payload);
+}
+
 TEST(CloudResourceTest, CBORPayloadToCloudNULL)
 {
     OicCloud_t *cloud = NULL;
@@ -147,6 +162,7 @@ TEST(CloudResourceTest, CBORPayloadToCloudFULL)
     ASSERT_STREQ(cloudX->apn, cloud->apn);
     ASSERT_STREQ(cloudX->cis, cloud->cis);
     ASSERT_STREQ(cloudX->at, cloud->at);
+    ASSERT_EQ(OC_CLOUD_OK, cloudX->stat);
 
     if (cloud->session && cloudX->session)
     {
@@ -165,6 +181,26 @@ TEST(CloudResourceTest, CBORPayloadToCloudFULL)
     OICFree(payload);
 }
 
+TEST(CloudResourceTest, CBORPayloadToCloudResourceFULL)
+{
+    OicCloud_t *cloud =  getCloud();
+    uint8_t *payload = NULL;
+    size_t size = 0;
+    EXPECT_EQ(OC_STACK_OK, CloudToCBORPayloadResource(cloud, &payload, &size));
+    EXPECT_TRUE(payload != NULL);
+
+    OicCloud_t *cloudX = NULL;
+    EXPECT_EQ(OC_STACK_OK, CBORPayloadToCloud(payload, size, &cloudX));
+    ASSERT_TRUE(cloudX != NULL);
+    ASSERT_STREQ(cloudX->apn, cloud->apn);
+    ASSERT_STREQ(cloudX->cis, cloud->cis);
+    ASSERT_EQ(OC_CLOUD_OK, cloudX->stat);
+
+    FreeCloud(cloudX);
+    FreeCloud(cloud);
+    OICFree(payload);
+}
+
 TEST(CloudResourceTest, ValidCloudFULL)
 {
     OicCloud_t *cloud =  getCloud();
@@ -173,16 +209,3 @@ TEST(CloudResourceTest, ValidCloudFULL)
     ASSERT_TRUE(true == ValidCloud(cloud));
     FreeCloud(cloud);
 }
-
-TEST(CloudResourceGetTest, PayloadFULL)
-{
-    int cloudState = rand();
-    int cloudStateX;
-    uint8_t *payload = NULL;
-    size_t size = 0;
-
-    ASSERT_TRUE(OC_STACK_OK == CloudGetRequestPayloadCreate(cloudState, &payload, &size));
-    ASSERT_TRUE(OC_STACK_OK == CloudGetRequestPayloadParse(payload, size, &cloudStateX));
-    ASSERT_TRUE(cloudState == cloudStateX);
-}
-

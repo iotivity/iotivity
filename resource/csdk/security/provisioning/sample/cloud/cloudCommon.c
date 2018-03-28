@@ -429,7 +429,7 @@ static void *userRequests(void *data)
         return NULL;
     }
     cloud->cis = (char *)OICCalloc(1,1024 * 4);
-    if (NULL == cloud)
+    if (NULL == cloud->cis)
     {
         OIC_LOG(ERROR, TAG, "cloud->cis calloc failed");
         OICFree(cloud);
