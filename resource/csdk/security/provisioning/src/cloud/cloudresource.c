@@ -390,8 +390,8 @@ static OCEntityHandlerResult HandleCloudDeleteRequest(OCEntityHandlerRequest *eh
 exit:
     response.requestHandle = ehRequest->requestHandle;
     response.ehResult = ehRet;
-    response.payload->type = PAYLOAD_TYPE_REPRESENTATION;
     response.payload = (OCPayload *)OCRepPayloadCreate();
+    response.payload->type = PAYLOAD_TYPE_REPRESENTATION;
     response.persistentBufferFlag = 0;
 
     if (OC_STACK_OK != OCDoResponse(&response))
