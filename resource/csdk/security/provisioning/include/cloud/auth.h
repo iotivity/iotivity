@@ -115,8 +115,9 @@ OCStackResult OCCloudSignOut(OicCloud_t *cloud);
 /**
  * Session free function
  * @param[in] cloud
+ * @return  OicCloud_t * pointer to next
  */
-void FreeCloud(OicCloud_t *cloud);
+OicCloud_t * FreeCloud(OicCloud_t *cloud);
 
 /**
  * Cloud to CBOR

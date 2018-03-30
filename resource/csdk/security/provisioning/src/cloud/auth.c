@@ -75,27 +75,39 @@ void SessionFree(session_t *session)
         OIC_LOG_V(ERROR, TAG, "%s: session is NULL", __func__);
         return;
     }
-
-    OICFree(session->accessToken);
-    OICFree(session->refreshToken);
+    if (session->accessToken)
+    {
+        memset(session->accessToken, 0, strlen(session->accessToken));
+        OICFree(session->accessToken);
+        session->accessToken = NULL;
+    }
+    if (session->refreshToken)
+    {
+        memset(session->refreshToken, 0, strlen(session->refreshToken));
+        OICFree(session->refreshToken);
+        session->refreshToken = NULL;
+    }
     OICFree(session->uid);
+    session->uid = NULL;
 #if !defined(__MANDATORY__)
     OICFree(session->redirectUri);
+    session->redirectUri = NULL;
 #endif // __MANDATORY__
+    OICFree(session);
+    session = NULL;
 }
 
-void FreeCloud(OicCloud_t *cloud)
+OicCloud_t *FreeCloud(OicCloud_t *cloud)
 {
     if (!cloud)
     {
-        return;
+        return NULL;
     }
-
     cloud->stat = OC_CLOUD_PROV;
-
 
     if (cloud->pid)
     {
+        OIC_LOG_V(DEBUG, TAG, "oc_thread_waiting for cloud %s/%s", cloud->cis, cloud->apn);
         OCThreadResult_t res = oc_thread_wait(cloud->pid);
 
         if (OC_THREAD_SUCCESS != res)
@@ -109,24 +121,32 @@ void FreeCloud(OicCloud_t *cloud)
         {
             OIC_LOG_V(ERROR, TAG, "oc_thread_free failed - error %u", res);
         }
+        OIC_LOG_V(DEBUG, TAG, "thread for cloud %s/%s is stopped", cloud->cis, cloud->apn);
     }
+    cloud->pid = 0;
 
+    OicCloud_t *ret = cloud->next;
+    cloud->next = NULL;
     OICFree(cloud->apn);
+    cloud->apn = NULL;
     OICFree(cloud->cis);
+    cloud->cis = NULL;
     OICFree(cloud->at);
+    cloud->at = NULL;
     OICFree(cloud->sid);
+    cloud->sid = NULL;
 
-    if (cloud->session)
-    {
-        SessionFree(cloud->session);
-    }
+    SessionFree(cloud->session);
 
     OICFree(cloud);
+    cloud = NULL;
+
+    return ret;
 }
 
 bool CloudFind(OicCloud_t *list, const OicCloud_t *cloud)
 {
-    if (!list || !cloud)
+    if (!list || !cloud || !cloud->cis)
     {
         return false;
     }
@@ -134,7 +154,7 @@ bool CloudFind(OicCloud_t *list, const OicCloud_t *cloud)
     OicCloud_t *p1 = NULL, *p2 = NULL;
     LL_FOREACH_SAFE(list, p1, p2)
     {
-        if (0 == strcmp(p1->cis, cloud->cis))
+        if (p1 && p1->cis && 0 == strcmp(p1->cis, cloud->cis))
         {
             return true;
         }
@@ -406,6 +426,8 @@ OCStackResult CBORPayloadToCloud(const uint8_t *cborPayload, size_t size, OicClo
             continue;
         }
 
+        OICFree(mainSecName);
+
         CborValue cloudArray = { NULL, NULL, 0, 0, 0, 0 };
         cborError = cbor_value_enter_container(&rootMap, &cloudArray);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed find cloud array");
@@ -603,10 +625,10 @@ OCStackResult OCCloudTokenRefresh(OicCloud_t *cloud)
     OCStackResult ret = OC_STACK_OK;
 
     VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, OC_STACK_INVALID_PARAM);
-    VERIFY_NOT_NULL_RETURN(TAG, cloud->cis, ERROR, OC_STACK_DELETE_TRANSACTION);
-    VERIFY_NOT_NULL_RETURN(TAG, cloud->session, ERROR, OC_STACK_DELETE_TRANSACTION);
-    VERIFY_NOT_NULL_RETURN(TAG, cloud->session->uid, ERROR, OC_STACK_DELETE_TRANSACTION);
-    VERIFY_NOT_NULL_RETURN(TAG, cloud->session->refreshToken, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud->cis, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud->session, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud->session->uid, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud->session->refreshToken, ERROR, OC_STACK_INVALID_PARAM);
 
     char *deviceId = getDeviceId();
     VERIFY_NON_NULL_RET(deviceId, TAG, "Can't get the device id", OC_STACK_ERROR);
@@ -620,6 +642,8 @@ OCStackResult OCCloudTokenRefresh(OicCloud_t *cloud)
     OCRepPayloadSetPropString(payload, OC_RSRVD_DEVICE_ID, deviceId);
     OCRepPayloadSetPropString(payload, OC_RSRVD_REFRESH_TOKEN, cloud->session->refreshToken);
 
+    OICFree(deviceId);
+
     OCCallbackData cbData =
     {
         .context = (void *)cloud,
@@ -627,10 +651,17 @@ OCStackResult OCCloudTokenRefresh(OicCloud_t *cloud)
         .cd = NULL
     };
 
-    ret = OCDoResource(NULL, OC_REST_POST, uri, NULL, (OCPayload *)payload,
-                       CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+    if (OC_CLOUD_TOKEN_REFRESH4 < cloud->stat)
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: token refresh cloud: %s break", __func__, cloud->apn);
+    }
+    else
+    {
+        ret = OCDoResource(NULL, OC_REST_POST, uri, NULL, (OCPayload *)payload,
+                           CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+    }
 
-    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT: %d", __func__, (int)ret);
 
     return ret;
 }
@@ -640,7 +671,7 @@ static void *CloudTokenRefresh(void *data)
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
     OicCloud_t *cloud = (OicCloud_t *)data;
-    VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, NULL);
+    VERIFY_NOT_NULL(TAG, cloud, ERROR);
 
     OIC_LOG_V(INFO, TAG, "%s: cloud(%s) refresh start", __func__, cloud->cis);
 
@@ -648,16 +679,20 @@ static void *CloudTokenRefresh(void *data)
 
     while (OC_CLOUD_TOKEN_REFRESH4 > cloud->stat)
     {
-        struct timespec timeout;
-        timeout.tv_sec  = cloud->session->expireSin - TIME_OUT_SHIFT;
-        timeout.tv_nsec = 0;
+
+        long ts_nsec = cloud->session->expireSin - TIME_OUT_SHIFT;
+        if (2 < ts_nsec)
+        {
+            ts_nsec = 1;
+        }
+        struct timespec timeout = {ts_nsec / 1000000000, ts_nsec % 1000000000};
 
         nanosleep(&timeout, NULL);
 
         if (OC_STACK_OK != OCCloudTokenRefresh(cloud))
         {
             OIC_LOG_V(ERROR, TAG, "%s: token refresh", __func__);
-            cloud->stat++;
+            cloud->stat = (CloudStatus)(cloud->stat + 1);
         }
     }
 
@@ -666,7 +701,7 @@ static void *CloudTokenRefresh(void *data)
         SessionFree(cloud->session);
         cloud->session = NULL;
     }
-
+exit:
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
     return NULL;
 }
@@ -790,24 +825,26 @@ static OCStackResult CloudSign(OicCloud_t *cloud, bool signIn)
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
     VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, OC_STACK_INVALID_PARAM);
-    VERIFY_NOT_NULL_RETURN(TAG, cloud->cis, ERROR, OC_STACK_DELETE_TRANSACTION);
-    VERIFY_NOT_NULL_RETURN(TAG, cloud->session, ERROR, OC_STACK_DELETE_TRANSACTION);
-    VERIFY_NOT_NULL_RETURN(TAG, cloud->session->uid, ERROR, OC_STACK_DELETE_TRANSACTION);
-    VERIFY_NOT_NULL_RETURN(TAG, cloud->session->accessToken, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud->cis, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud->session, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud->session->uid, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud->session->accessToken, ERROR, OC_STACK_INVALID_PARAM);
 
     OCStackResult ret = OC_STACK_OK;
     char uri[MAX_URI_QUERY] = { 0 };
 
     char *deviceId = getDeviceId();
-    VERIFY_NOT_NULL_RETURN(TAG, deviceId, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, deviceId, ERROR, OC_STACK_INVALID_PARAM);
 
     OCRepPayload *payload = OCRepPayloadCreate();
-    VERIFY_NOT_NULL_RETURN(TAG, payload, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, payload, ERROR, OC_STACK_INVALID_PARAM);
 
     OCRepPayloadSetPropString(payload, OC_RSRVD_DEVICE_ID, deviceId);
     OCRepPayloadSetPropString(payload, OC_RSRVD_USER_UUID, cloud->session->uid);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ACCESS_TOKEN, cloud->session->accessToken);
     OCRepPayloadSetPropBool(payload, OC_RSRVD_LOGIN, signIn);
+
+    OICFree(deviceId);
 
     snprintf(uri, MAX_URI_QUERY, "%s/%s", cloud->cis, OC_RSRVD_ACCOUNT_SESSION_URI);
 
@@ -851,11 +888,12 @@ OCStackResult OCCloudSignOut(OicCloud_t *cloud)
  * @param[in] session session data
  * @return  OCStackResult application result
  */
-static bool SessionParsePayload(OCRepPayload *payload, session_t *session)
+static bool SessionParsePayload(const OCRepPayload *payload, session_t *session)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
     bool ret = true;
-    VERIFY_NOT_NULL_RETURN(TAG, payload, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, payload, ERROR, false);
+    VERIFY_NOT_NULL_RETURN(TAG, session, ERROR, false);
 
     if (!OCRepPayloadGetPropString(payload, OC_RSRVD_ACCESS_TOKEN,
                                    &session->accessToken))
@@ -932,8 +970,7 @@ static OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
 
     if (NULL != cloud->session)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: session is run", __func__);
-        cloud->stat = OC_CLOUD_ERROR_CHECK_SESSION;
+        OIC_LOG_V(WARNING, TAG, "%s: session is running", __func__);
         goto exit;
     }
 
@@ -1003,6 +1040,8 @@ OCStackResult OCCloudSignUp(OicCloud_t *cloud)
                        CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 
     OIC_LOG_V(INFO, TAG, "%s: cloud(%s) sign in", __func__, cloud->cis);
+
+    OICFree(deviceId);
 
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 

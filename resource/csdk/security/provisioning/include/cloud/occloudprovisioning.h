@@ -61,15 +61,15 @@ typedef struct {
 typedef struct CloudData
 {
     void *ctx;                                  /**< Pointer to user context.**/
-    const OCProvisionDev_t *targetDev;          /**< Pointer to OCProvisionDev_t.**/
+    OCProvisionDev_t *targetDev;          /**< Pointer to OCProvisionDev_t.**/
     OicSecCred_t *credInfo;                     /**< Array of pointers to OicSecCred_t.**/
     OCProvisionResultCB resultCallback;         /**< Pointer to result callback.**/
     OCProvisionResult_t *resArr;                /**< Result array.**/
     int numOfResults;                           /**< Number of results in result array.**/
-    const char* cloudURI;                       /**< Cloud URI.**/
-    const char* oauthProvider;                  /**< Authorisation provider name.**/
-    const char* accessToken;                    /**< Access token that can be validated by the Cloud.**/
-    const char* sid;                            /**< Cloud UUID.**/
+    char* cloudURI;                       /**< Cloud URI.**/
+    char* oauthProvider;                  /**< Authorisation provider name.**/
+    char* accessToken;                    /**< Access token that can be validated by the Cloud.**/
+    char* sid;                            /**< Cloud UUID.**/
 } CloudData_t;
 
 /**

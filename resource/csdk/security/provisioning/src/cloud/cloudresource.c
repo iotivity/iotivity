@@ -94,23 +94,21 @@ static bool ValidCloud(OicCloud_t *cloud)
 static void DeleteCloudList(OicCloud_t *clouds)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
-
     if (!clouds)
     {
         OIC_LOG_V(WARNING, TAG, "%s: cloud is NULL", __func__);
-        return;
     }
-
-    OicCloud_t *p1 = NULL, *p2 = NULL;
-    oc_mutex_lock(gCloudMutex);
-    LL_FOREACH_SAFE(clouds, p1, p2)
+    else
     {
-        LL_DELETE(clouds, p1);
-        FreeCloud(p1);
-        p1 = NULL;
+        oc_mutex_lock(gCloudMutex);
+        OicCloud_t *p1 = clouds->next;
+        while(p1)
+        {
+            p1 = FreeCloud(p1);
+        }
+        FreeCloud(clouds);
+        oc_mutex_unlock(gCloudMutex);
     }
-    oc_mutex_unlock(gCloudMutex);
-
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 }
 
@@ -288,7 +286,7 @@ static OCEntityHandlerResult HandleCloudGetRequest(OCEntityHandlerRequest *ehReq
 
     payload = (OCRepPayload *)ehRequest->payload;
 
-    if (!payload || !OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &cloud->cis))
+    if (!payload || !cloud->cis || !OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &cloud->cis))
     {
         OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_CIS);
         p1 = gCloud;
@@ -306,18 +304,16 @@ static OCEntityHandlerResult HandleCloudGetRequest(OCEntityHandlerRequest *ehReq
 
     LL_FOREACH_SAFE(gCloud, p1, p2)
     {
-        if (0 == strcmp(p1->cis, cloud->cis))
+        if (p1 && p1->cis && 0 == strcmp(p1->cis, cloud->cis))
         {
             ehRet = OC_EH_OK;
             break;
         }
     }
 exit:
-    payload = CreateCloudGetPayload(p1);
-
-    response.requestHandle = ehRequest->requestHandle;
+    response.requestHandle = ehRequest ? ehRequest->requestHandle : NULL;
     response.ehResult = payload ? ehRet : OC_EH_INTERNAL_SERVER_ERROR;
-    response.payload = (OCPayload *)payload;
+    response.payload = (OCPayload *)CreateCloudGetPayload(p1);
     response.payload->type = PAYLOAD_TYPE_REPRESENTATION;
     response.persistentBufferFlag = 0;
 
@@ -327,6 +323,7 @@ exit:
         ehRet = OC_EH_ERROR;
     }
 
+    OCPayloadDestroy((OCPayload *)response.payload);
     FreeCloud(cloud);
 
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
@@ -361,7 +358,7 @@ static OCEntityHandlerResult HandleCloudDeleteRequest(OCEntityHandlerRequest *eh
 
     payload = (OCRepPayload *)ehRequest->payload;
 
-    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &cloud->cis))
+    if (!cloud->cis || !OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &cloud->cis))
     {
         OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_CIS);
         goto exit;
@@ -377,7 +374,7 @@ static OCEntityHandlerResult HandleCloudDeleteRequest(OCEntityHandlerRequest *eh
 
     LL_FOREACH_SAFE(gCloud, p1, p2)
     {
-        if (0 == strcmp(p1->cis, cloud->cis))
+        if (p1 && p1->cis && 0 == strcmp(p1->cis, cloud->cis))
         {
             OIC_LOG_V(INFO, TAG, "%s: delete cloud: %s", __func__, p1->cis);
             p1->stat = OC_CLOUD_EXIT;
@@ -388,7 +385,7 @@ static OCEntityHandlerResult HandleCloudDeleteRequest(OCEntityHandlerRequest *eh
         }
     }
 exit:
-    response.requestHandle = ehRequest->requestHandle;
+    response.requestHandle = ehRequest ? ehRequest->requestHandle : NULL;
     response.ehResult = ehRet;
     response.payload = (OCPayload *)OCRepPayloadCreate();
     response.payload->type = PAYLOAD_TYPE_REPRESENTATION;

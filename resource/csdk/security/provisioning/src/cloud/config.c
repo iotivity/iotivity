@@ -49,6 +49,7 @@ OCStackResult OCProvisionCloudConfig(void *ctx,
     OIC_LOG_V(INFO, TAG, "IN %s", __func__);
     OCStackResult ret = OC_STACK_ERROR;
     char *query = NULL;
+    OCDoHandle lHandle = NULL;
 
     VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, pDev, ERROR,  OC_STACK_INVALID_PARAM);
@@ -59,6 +60,8 @@ OCStackResult OCProvisionCloudConfig(void *ctx,
     VERIFY_NOT_NULL_RETURN(TAG, cloud->sid, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_PARAM);
 
+    OCCallbackData cbData =  {.context = ctx, .cb = resultCallback, .cd = NULL};
+
     OCRepPayload *payload = OCRepPayloadCreate();
     VERIFY_NOT_NULL(TAG, payload, ERROR);
 
@@ -67,7 +70,7 @@ OCStackResult OCProvisionCloudConfig(void *ctx,
     OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_AT, cloud->at);
     OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_SID, cloud->sid);
 
-    query = OICCalloc(1, DEFAULT_URI_LENGTH);
+    query = (char *)OICCalloc(1, DEFAULT_URI_LENGTH);
     VERIFY_NOT_NULL(TAG, query, ERROR);
 
     VERIFY_SUCCESS(TAG, PMGenerateQuery(true,
@@ -76,8 +79,6 @@ OCStackResult OCProvisionCloudConfig(void *ctx,
                                         pDev->connType,
                                         query, DEFAULT_URI_LENGTH, OIC_RSRC_CLOUDCONF_URI), ERROR);
 
-    OCCallbackData cbData =  {.context = ctx, .cb = resultCallback, .cd = NULL};
-    OCDoHandle lHandle = NULL;
 
     ret = OCDoResource(&lHandle, OC_REST_POST, query,
                        &pDev->endpoint, (OCPayload *)payload,
@@ -172,6 +173,7 @@ OCStackResult OCGetCloudStatusRequest(void *ctx,
     OIC_LOG_V(INFO, TAG, "IN %s", __func__);
     OCStackResult ret = OC_STACK_ERROR;
     char *query = NULL;
+    OCDoHandle lHandle = NULL;
 
     VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, pDev, ERROR,  OC_STACK_INVALID_PARAM);
@@ -179,7 +181,9 @@ OCStackResult OCGetCloudStatusRequest(void *ctx,
     VERIFY_NOT_NULL_RETURN(TAG, cloud->cis, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_PARAM);
 
-    query = OICCalloc(1, DEFAULT_URI_LENGTH);
+    OCCallbackData cbData =  {.context = (void *)resultCallback, .cb = handleCloudStatusResponse, .cd = NULL};
+
+    query = (char *)OICCalloc(1, DEFAULT_URI_LENGTH);
     VERIFY_NOT_NULL(TAG, query, ERROR);
 
     VERIFY_SUCCESS(TAG, PMGenerateQuery(true,
@@ -187,9 +191,6 @@ OCStackResult OCGetCloudStatusRequest(void *ctx,
                                         pDev->securePort,
                                         pDev->connType,
                                         query, DEFAULT_URI_LENGTH, OIC_RSRC_CLOUDCONF_URI), ERROR);
-
-    OCCallbackData cbData =  {.context = resultCallback, .cb = handleCloudStatusResponse, .cd = NULL};
-    OCDoHandle lHandle = NULL;
 
     ret = OCDoResource(&lHandle, OC_REST_GET, query,
                        &pDev->endpoint, NULL,
@@ -218,15 +219,19 @@ static OCStackApplicationResult OCRemoveCloudConfigCB(void *ctx, OCDoHandle hand
     const OCProvisionDev_t *pDev = NULL;
     const char *sid = NULL;
     char *buf = NULL;
+    OCDoHandle lHandle = NULL;
+    int res = 0, bufLen = 0;
 
-    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NOT_NULL_RETURN(TAG, clientResponse, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, clientResponse, ERROR, OC_STACK_DELETE_TRANSACTION);
 
     VERIFY_SUCCESS_RETURN(TAG, (OC_STACK_RESOURCE_CHANGED == clientResponse->result), ERROR,
-                          OC_STACK_INVALID_PARAM);
+                          OC_STACK_DELETE_TRANSACTION);
 
     Data_t *data = (Data_t *) ctx;
-    VERIFY_SUCCESS_RETURN(TAG, (CLOUD_TYPE == data->type), ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_SUCCESS_RETURN(TAG, (CLOUD_TYPE == data->type), ERROR, OC_STACK_DELETE_TRANSACTION);
+
+    OCCallbackData cbData =  {.context = ctx, .cb = ProvisionCB, .cd = NULL};
 
     CloudData_t *cloudData = (CloudData_t *) (data->ctx);
     VERIFY_NOT_NULL(TAG, cloudData, ERROR);
@@ -235,14 +240,14 @@ static OCStackApplicationResult OCRemoveCloudConfigCB(void *ctx, OCDoHandle hand
     sid = cloudData->sid;
     VERIFY_NOT_NULL(TAG, sid, ERROR);
 
-    query = OICCalloc(1, DEFAULT_URI_LENGTH);
+    query = (char *)OICCalloc(1, DEFAULT_URI_LENGTH);
     VERIFY_NOT_NULL(TAG, query, ERROR);
 
-    int bufLen = strlen(OIC_RSRC_ACL2_URI) + strlen("?Subject=") + strlen(sid) + 1;
+    bufLen = strlen(OIC_RSRC_ACL2_URI) + strlen("?Subject=") + strlen(sid) + 1;
     buf = (char *)OICCalloc(1, bufLen);
     VERIFY_NOT_NULL(TAG, buf, ERROR);
 
-    int res = snprintf(buf, bufLen, "%s%s%s", OIC_RSRC_ACL2_URI, "?Subject=", sid);
+    res = snprintf(buf, bufLen, "%s%s%s", OIC_RSRC_ACL2_URI, "?Subject=", sid);
     if (res + 1 != bufLen)
     {
         OIC_LOG_V(ERROR, TAG, "%s: error assembling query", __func__);
@@ -255,20 +260,22 @@ static OCStackApplicationResult OCRemoveCloudConfigCB(void *ctx, OCDoHandle hand
                                         pDev->connType,
                                         query, DEFAULT_URI_LENGTH, buf), ERROR);
 
-    OCCallbackData cbData =  {.context = ctx, .cb = ProvisionCB, .cd = NULL};
-    OCDoHandle lHandle = NULL;
-
     ret = OCDoResource(&lHandle, OC_REST_DELETE, query,
                        &pDev->endpoint, NULL,
                        pDev->connType, OC_HIGH_QOS, &cbData, NULL, 0);
-    OIC_LOG_V(DEBUG, TAG, "DELETE:%s ret:%d", query, ret);
+    OIC_LOG_V(DEBUG, TAG, "%s:query: %s, do resource return: %d", __func__, query, (int)ret);
 exit:
+    if (ret == OC_STACK_ERROR)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s exit by error: %d", query, (int)ret);
+    }
+
     OICFree(query);
     OICFree(buf);
 
     OIC_LOG_V(INFO, TAG, "OUT %s", __func__);
 
-    return ret;
+    return OC_STACK_DELETE_TRANSACTION;
 }
 
 OCStackResult OCRemoveCloudConfig(void *ctx,
@@ -280,10 +287,11 @@ OCStackResult OCRemoveCloudConfig(void *ctx,
 
     VERIFY_NOT_NULL_RETURN(TAG, pDev, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
-    VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR,  OC_STACK_INVALID_CALLBACK);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR,  OC_STACK_INVALID_PARAM);
 
     OCStackResult ret = OC_STACK_ERROR;
     Data_t *data = NULL;
+    CloudData_t *cloudData =  NULL;
 
     OicUuid_t provTooldeviceID =   {{0,}};
     if (OC_STACK_OK != GetDoxmDeviceID(&provTooldeviceID))
@@ -296,11 +304,11 @@ OCStackResult OCRemoveCloudConfig(void *ctx,
     VERIFY_NOT_NULL(TAG, data, ERROR);
     data->type = CLOUD_TYPE;
 
-    CloudData_t *cloudData = (CloudData_t *)OICCalloc(1, sizeof(CloudData_t));
+    cloudData = (CloudData_t *)OICCalloc(1, sizeof(CloudData_t));
     VERIFY_NOT_NULL(TAG, cloudData, ERROR);
     data->ctx = cloudData;
     cloudData->ctx = ctx;
-    cloudData->targetDev = pDev;
+    cloudData->targetDev = (OCProvisionDev_t *)pDev;
     cloudData->resultCallback = resultCallback;
     cloudData->numOfResults = 0;
     cloudData->credInfo = NULL;

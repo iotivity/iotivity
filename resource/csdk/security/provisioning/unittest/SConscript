@@ -171,6 +171,8 @@ sptest_env.PrependUnique(CPPPATH=[
     '../../../connectivity/inc/pkix',
     '../../../connectivity/common/inc',
     '../../../connectivity/api',
+    '#resource/csdk/security/include',
+    '#resource/csdk/security/include/experimental',
     '#resource/csdk/security/provisioning/src/cloud',
     '#resource/csdk/security/provisioning/include/cloud/'
 ])
