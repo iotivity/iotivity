@@ -30,3 +30,6 @@ jdk_env.SConscript('simpleclient/SConscript', exports='jdk_env')
 
 # Build simpleclientserver sample
 jdk_env.SConscript('simpleclientserver/SConscript', exports='jdk_env')
+
+# Build ocflightserver sample
+jdk_env.SConscript('ocflightserver/SConscript', exports='jdk_env')
