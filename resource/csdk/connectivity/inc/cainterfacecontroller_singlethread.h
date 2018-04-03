@@ -36,45 +36,45 @@ extern "C"
 
 /**
  * @brief   Initializes different adapters based on the compilation flags.
- * @param   handle          [IN]    thread pool handle created by message handler for different
- *                                  adapters.
+ * @param[in] handle  thread pool handle created by message handler for different
+ *                    adapters.
  * @return   none
  */
 void CAInitializeAdapters();
 
 /**
  * @brief   Set the received packets callback for message handler
- * @param   callback        [IN]    message handler callback to receive packets from different
- *                                  adapters.
+ * @param[in] callback  message handler callback to receive packets from different
+ *                      adapters.
  * @return   none
  */
 void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback);
 
 /**
  * @brief   Set the adapter status changed callback for message handler
- * @param   callback        [IN]    message handler network status callback to receive network
- *                                  changes.
+ * @param[in] callback  message handler network status callback to receive network
+ *                      changes.
  * @return   none
  */
 void CASetNetworkChangeCallback(CAAdapterChangeCallback callback);
 
 /**
  * @brief   Set the error handler callback for message handler
- * @param   errorCallback       [IN]    error handler callback from adapters
+ * @param[in] errorCallback  error handler callback from adapters
  * @return  none
  */
 void CASetErrorHandleCallback(CAErrorHandleCallback errorCallback);
 
 /**
  * @brief   Starting different connectivity adapters based on the network selection.
- * @param   transportAdapter [IN]    network type that want to stop
+ * @param[in] transportAdapter network type that want to stop
  * @return  none
  */
 CAResult_t CAStartAdapter(CATransportAdapter_t transportType);
 
 /**
  * @brief   Stopping different connectivity adapters based on the network un-selection.
- * @param   transportAdapter [IN]    un selected network for stopping the packets transfer
+ * @param[in] transportAdapter  un selected network for stopping the packets transfer
  * @return   none
  */
 void CAStopAdapter(CATransportAdapter_t transportType);
@@ -82,26 +82,26 @@ void CAStopAdapter(CATransportAdapter_t transportType);
 /**
  * @brief   Get network information such as ipaddress and mac information.  Gets the network
  *          information of the adapter whichever is enabled. Otherwise info is NULL.
- * @param   info            [OUT]    connectivity information such as ipaddress and mac information
- * @param   size            [OUT]    number of connectivity information structures
+ * @param[out] info  connectivity information such as ipaddress and mac information
+ * @param[out] size  number of connectivity information structures
  * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size);
 
 /**
  * @brief   Sends unicast data to the remote endpoint
- * @param   endpoint        [IN]    endpoint information where the data has to be sent
- * @param   data            [IN]    data that needs to be sent
- * @param   length          [IN]    length of the data that needs to be sent
+ * @param[in] endpoint  endpoint information where the data has to be sent
+ * @param[in] data      data that needs to be sent
+ * @param[in] length    length of the data that needs to be sent
  * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length);
 
 /**
  * @brief   Sends multicast data to all endpoints in the network.
- * @param   endpoint        [IN]    endpoint information where the data has to be sent
- * @param   data            [IN]    data that needs to be sent
- * @param   length          [IN]    length of the data that needs to be sent
+ * @param[in] endpoint  endpoint information where the data has to be sent
+ * @param[in] data      data that needs to be sent
+ * @param[in] length    length of the data that needs to be sent
  * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length);

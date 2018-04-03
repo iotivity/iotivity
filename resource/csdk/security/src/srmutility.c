@@ -282,7 +282,7 @@ bool SRMIsSecurityResourceURI(const char* uri)
 }
 
 /**
- * return true IFF the uri is for a DCR as defined by Security Specification.
+ * return true IFF the URI is for a DCR as defined by Security Specification.
  */
 bool IsDeviceConfigurationResourceUri(const char *uri)
 {

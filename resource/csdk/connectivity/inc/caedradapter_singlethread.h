@@ -40,12 +40,12 @@ extern "C"
 
 /**
  * @brief  Initialize EDR Interface.
- * @param  registerCallback  [IN] Callback to register EDR interface to Connectivity
- *                                Abstraction Layer
- * @param  reqRespCallback   [IN] Callback to notify request and response messages from server(s)
- *                                started at Connectivity Abstraction Layer.
- * @param  netCallback       [IN] Callback to notify the network additions to Connectivity
- *                                Abstraction Layer.
+ * @param[in] registerCallback  Callback to register EDR interface to Connectivity
+ *                              Abstraction Layer
+ * @param[in] reqRespCallback   Callback to notify request and response messages from server(s)
+ *                              started at Connectivity Abstraction Layer.
+ * @param[in] netCallback       Callback to notify the network additions to Connectivity
+ *                              Abstraction Layer.
  * @return #CA_STATUS_OK or Appropriate error code
  * @retval #CA_STATUS_OK Successful
  * @retval #CA_STATUS_INVALID_PARAM Invalid input parameters
@@ -98,10 +98,10 @@ CAResult_t CAStartEDRDiscoveryServer(void);
 
 /**
  * @brief  Sends data to the peer bluetooth OIC device using the adapter connectivity.
- * @param  endpoint        [IN] Remote Endpoint information (like ipaddress, port, reference uri and
- *                              connectivity type) to which the unicast data has to be sent.
- * @param  data            [IN] Data to be sent.
- * @param  dataLength      [IN] Size of data to be sent.
+ * @param[in]  endpoint    Remote Endpoint information (like ipaddress, port, reference URI and
+ *                         connectivity type) to which the unicast data has to be sent.
+ * @param[in]  data        Data to be sent.
+ * @param[in]  dataLength  Size of data to be sent.
  * @return Number of bytes sent on the network. Returns -1 on error.
  */
 int32_t CASendEDRUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data,
@@ -110,8 +110,8 @@ int32_t CASendEDRUnicastData(const CAEndpoint_t *remoteEndpoint, const void *dat
 /**
  * @brief  Sends multicast data to all discovered bluetooth OIC devices using the adapter
  *         connectivity.
- * @param  data         [IN]  Data which needs to be sent to all discovered bluetooth OIC device.
- * @param  dataLength   [IN]  Length of data in bytes.
+ * @param[in]  data        Data which needs to be sent to all discovered bluetooth OIC device.
+ * @param[in]  dataLength  Length of data in bytes.
  * @return Number of bytes sent on the network. Returns -1 on error.
  */
 int32_t CASendEDRMulticastData(const void *data, uint32_t dataLength);
@@ -119,8 +119,8 @@ int32_t CASendEDRMulticastData(const void *data, uint32_t dataLength);
 /**
  * @brief  Get EDR Connectivity network information.
  *
- * @param  info [OUT] Array of local connectivity information structures.
- * @param  size [OUT] Size of the array @info.
+ * @param[out] info  Array of local connectivity information structures.
+ * @param[out] size  Size of the array @info.
  *
  * @return #CA_STATUS_OK or Appropriate error code
  * @retval #CA_STATUS_OK  Successful

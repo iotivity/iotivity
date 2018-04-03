@@ -111,7 +111,7 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
 
 /**
  * parse the URI and creates the options.
- * @param[in]    uriInfo             uri information.
+ * @param[in]    uriInfo             URI information.
  * @param[out]   options             options information.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
@@ -133,7 +133,7 @@ CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, uint16_t t
 
 /**
  * create option list from header information in the info.
- * @param[in]   code                 uri information.
+ * @param[in]   code                 URI information.
  * @param[in]   info                 information of the request/response.
  * @param[out]  optlist              options information.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).

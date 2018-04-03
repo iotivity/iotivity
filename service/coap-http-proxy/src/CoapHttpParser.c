@@ -726,9 +726,9 @@ static OCStackResult CHPInitializeEasyHandle(CURL** easyHandle, HttpRequest_t *r
         return OC_STACK_ERROR;
     }
 
-    /* Set http resource uri */
+    /* Set http resource URI */
     curl_easy_setopt(e, CURLOPT_URL, req->resourceUri);
-    /* Default protocol when scheme is not available in uri */
+    /* Default protocol when scheme is not available in URI */
     // curl version 7.22 don't support this option.
     //curl_easy_setopt(e, CURLOPT_DEFAULT_PROTOCOL, "http");
     /* Set handle context */

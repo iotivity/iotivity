@@ -140,8 +140,8 @@ namespace OC
         const ObservationInfo& getObservationInfo() const {return m_observationInfo;}
 
         /**
-        *  sets resource uri
-        *  @param resourceUri specifies the resource uri
+        *  sets resource URI
+        *  @param resourceUri specifies the resource URI
         */
         void setResourceUri(const std::string resourceUri)
         {
@@ -149,8 +149,8 @@ namespace OC
         }
 
         /**
-        *  gets resource uri
-        *  @return std::string resource uri
+        *  gets resource URI
+        *  @return std::string resource URI
         */
         std::string getResourceUri(void)
         {

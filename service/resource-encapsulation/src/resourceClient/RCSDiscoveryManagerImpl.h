@@ -94,7 +94,7 @@ namespace OIC
                  * @return DiscoverTask pointer
                  *
                  * @param address        A RCSAddress object
-                 * @param relativeURI    The relative uri of resource to be searched
+                 * @param relativeURI    The relative URI of resource to be searched
                  * @param resourceType   Resource Type
                  * @param cb             A callback to obtain discovered resource
                  *

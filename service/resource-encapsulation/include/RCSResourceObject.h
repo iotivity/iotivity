@@ -161,7 +161,7 @@ namespace OIC
                 /**
                  * Constructs a Builder.
                  *
-                 * @param uri Resource uri
+                 * @param uri Resource URI
                  * @param type Resource type
                  * @param interface Resource interface
                  *
@@ -533,7 +533,7 @@ namespace OIC
             std::vector< RCSResourceObject::Ptr > getBoundResources() const;
 
             /**
-             * Returns the uri of the resource.
+             * Returns the URI of the resource.
              */
             std::string getUri() const;
 

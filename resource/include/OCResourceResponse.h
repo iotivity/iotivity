@@ -84,8 +84,8 @@ namespace OC
         virtual ~OCResourceResponse(void) {}
 
         /**
-        *  gets new resource uri
-        *  @return std::string new resource uri
+        *  gets new resource URI
+        *  @return std::string new resource URI
         */
         std::string getNewResourceUri(void)
         {
@@ -93,8 +93,8 @@ namespace OC
         }
 
         /**
-        *  sets new resource uri
-        *  @param newResourceUri specifies the resource uri of the resource created
+        *  sets new resource URI
+        *  @param newResourceUri specifies the resource URI of the resource created
         */
         void setNewResourceUri(const std::string newResourceUri)
         {

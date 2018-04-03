@@ -88,11 +88,11 @@ namespace OIC
             static std::string OICGenerateUUIDStr();
 
             /**
-             * Returns host resource's address and uri from coap address.
+             * Returns host resource's address and URI from coap address.
              *
-             * @param address uri of host resource (e.g. coap://192.168.0.2:12345/a/light)
+             * @param address URI of host resource (e.g. coap://192.168.0.2:12345/a/light)
              * @param[out] host host resource's address (e.g. 192.168.0.2:12345)
-             * @param[out] uri host resource's uri (e.g. /a/light)
+             * @param[out] uri host resource's URI (e.g. /a/light)
              *
              * @throw RCSInvalidParameterException
              */
@@ -112,7 +112,7 @@ namespace OIC
             /**
             * Returns RCSRemoteResourceObject pointer created with provided resource information.
             *
-            * @param address uri of resource (e.g. coap://192.168.0.2:12345/a/light)
+            * @param address URI of resource (e.g. coap://192.168.0.2:12345/a/light)
             * @param ct OCConnectivityType type of connectivity indicating the interface
             * @param vecRT a vector of resource types implemented by the resource
             * @param vecIF a vector of interfaces that the resource supports/implements

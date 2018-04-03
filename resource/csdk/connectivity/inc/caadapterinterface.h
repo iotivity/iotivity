@@ -84,11 +84,12 @@ typedef CAResult_t (*CAAdapterStartDiscoveryServer)(void);
 /**
  * Sends data to the endpoint using the adapter connectivity.
  * Note: length must be > 0.
- * @param[in]   endpoint        Remote Endpoint information (like ipaddress , port,
- * reference uri and connectivity type) to which the unicast data has to be sent.
- * @param[in]   data            Data which required to be sent.
- * @param[in]   dataLen         Size of data to be sent.
- * @param[in]   dataType        Data type which is REQUEST or RESPONSE.
+ * @param[in]   endpoint  Remote Endpoint information (like ipaddress , port,
+ *                        reference URI and connectivity type) to which the
+ *                        unicast data has to be sent.
+ * @param[in]   data      Data which required to be sent.
+ * @param[in]   dataLen   Size of data to be sent.
+ * @param[in]   dataType  Data type which is REQUEST or RESPONSE.
  * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
  */
 typedef int32_t (*CAAdapterSendUnicastData)(const CAEndpoint_t *endpoint,

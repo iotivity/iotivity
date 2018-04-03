@@ -55,12 +55,12 @@ namespace OIC
                     const RCSResourceAttributes& attrs);
 
             /**
-             * Returns the uri.
+             * Returns the URI.
              */
             std::string getUri() const;
 
             /**
-             * Sets the uri of this representation.
+             * Sets the URI of this representation.
              */
             void setUri(std::string uri);
 

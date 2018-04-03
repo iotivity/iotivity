@@ -544,7 +544,7 @@ namespace OIC
                     SetCallback cb);
 
             /**
-             * Returns the uri of the resource.
+             * Returns the URI of the resource.
              *
              */
             std::string getUri() const;

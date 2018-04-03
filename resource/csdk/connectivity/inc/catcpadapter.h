@@ -153,7 +153,7 @@ CAResult_t CAStartTCPDiscoveryServer(void);
 /**
  * Sends data to the endpoint using the adapter connectivity.
  * @param[in]   endpoint       Remote Endpoint information (like ipaddress,
- *                              port, reference uri and transport type) to
+ *                              port, reference URI and transport type) to
  *                              which the unicast data has to be sent.
  * @param[in]   data           Data which is required to be sent.
  * @param[in]   dataLen        Size of data to be sent.
@@ -216,7 +216,7 @@ void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectionCallback ConnHandler);
 /**
  * Get Capability and Settings message(CSM) exchange state.
  * @param[in]   endpoint        Remote Endpoint information (like ipaddress,
- *                              port, reference uri and transport type)
+ *                              port, reference URI and transport type)
  *                              to check CSM state in session information.
  * @return  current CSM exchange state of the session.
  */
@@ -225,7 +225,7 @@ CACSMExchangeState_t CAGetCSMState(const CAEndpoint_t *endpoint);
 /**
 * Update Capability and Settings message(CSM) exchange state when sending or receiving CSM.
 * @param[in]   endpoint        Remote Endpoint information (like ipaddress,
-*                              port, reference uri and transport type) to update CSM state.
+*                              port, reference URI and transport type) to update CSM state.
 * @param[in]   state           CSM exchange state to be updated.
 */
 void CAUpdateCSMState(const CAEndpoint_t *endpoint, CACSMExchangeState_t state);

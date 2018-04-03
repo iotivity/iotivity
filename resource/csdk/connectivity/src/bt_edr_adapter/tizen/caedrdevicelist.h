@@ -76,7 +76,7 @@ typedef struct _EDRDeviceList
 /**
  * Creates ::EDRDevice for specified remote address and uuid and to device list.
  *
- * @param[in/out]  deviceList       Device list which created device add to.
+ * @param[in,out]  deviceList       Device list which created device add to.
  * @param[in]      deviceAddress    Bluetooth device address.
  * @param[in]      uuid             Service uuid.
  * @param[in]      device           Created ::EDRDevice.
@@ -92,7 +92,7 @@ CAResult_t CACreateAndAddToDeviceList(EDRDeviceList **deviceList, const char *de
 /**
  * Insert device to specified list.
  *
- * @param[in/out]  deviceList        Device list to which specifed @device to be added.
+ * @param[in,out]  deviceList        Device list to which specifed @device to be added.
  * @param[in]      device            Device to be added to list.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
@@ -135,7 +135,7 @@ CAResult_t CAGetEDRDeviceBySocketId(EDRDeviceList *deviceList, int32_t socketID,
 /**
  * Remove and delete the device matching specified device address from list.
  *
- * @param[in/out]  deviceList        Device list to search for the device.
+ * @param[in,out]  deviceList        Device list to search for the device.
  * @param[in]      deviceAddress     Bluetooth device address.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
@@ -148,7 +148,7 @@ CAResult_t CARemoveEDRDeviceFromList(EDRDeviceList **deviceList,
 
 /**
  * Destroy the specified device list. Removes and delete all the devices in the list.
- * @param[in/out]  deviceList      Device list to be destroyed.
+ * @param[in,out]  deviceList      Device list to be destroyed.
  */
 void CADestroyEDRDeviceList(EDRDeviceList **deviceList);
 
@@ -168,7 +168,7 @@ CAResult_t CAAddEDRDataToList(EDRDataList **dataList, const void *data, uint32_t
 
 /**
  * Remove and delete data from front end of list.
- * @param[in/out]  dataList      Data list from which data will be removed.
+ * @param[in,out]  dataList      Data list from which data will be removed.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.

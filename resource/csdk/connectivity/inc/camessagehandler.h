@@ -115,8 +115,8 @@ void CAAddDataToReceiveThread(CAData_t *data);
 #ifdef TCP_ADAPTER
 /**
  * Add a header option to the given header option array.
- * @param[in/out] hdrOpt            Pointer to existing options.
- * @param[in/out] numOptions        Number of existing options.
+ * @param[in,out] hdrOpt            Pointer to existing options.
+ * @param[in,out] numOptions        Number of existing options.
  * @param[in]     optionID          COAP option ID.
  * @param[in]     optionData        Option data value.
  * @param[in]     optionDataLength  Size of Option data value.

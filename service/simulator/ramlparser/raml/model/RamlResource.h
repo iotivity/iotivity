@@ -218,7 +218,7 @@ namespace RAML
                    * @param resourceKey - name of the Resource
                    * @param yamlNode - Reference to YamlNode for reading the RamlResource
                    * @param includeResolver - Reference to IncludeResolver for reading external files
-                   * @param parentUri - Uri of the Parent to form the Absolute Uri
+                   * @param parentUri - URI of the Parent to form the Absolute URI
                    *
                    */
             RamlResource(const std::string &resourceKey, const YAML::Node &yamlNode ,

@@ -115,9 +115,9 @@ class ResourceURIFactory
         /**
          * API to construct unique URI from the given base @uri.
          *
-         * @param uri - Base uri to be used to construct unique uri.
+         * @param uri - Base URI to be used to construct unique URI.
          *
-         * @return Unique uri.
+         * @return Unique URI.
          */
         std::string makeUniqueURI(const std::string &uri);
 

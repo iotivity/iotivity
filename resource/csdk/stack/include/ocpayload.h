@@ -332,7 +332,7 @@ bool OC_CALL OCByteStringCopy(OCByteString *dest, const OCByteString *source);
 
 /**
  * This function creates the payloadArray for links parameter of collection resource.
- * @param[in] resourceUri Resource uri (this should be a collection resource)
+ * @param[in] resourceUri Resource URI (this should be a collection resource)
  * @param[in] ehRequest parameter received from Entity Handler for client request
  * @param[in] insertSelfLink flag to specify whether links array can contain a self link
  * @param[out] createdArraySize return value array size, Null is allowed if no need to know size

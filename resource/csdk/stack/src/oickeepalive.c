@@ -181,7 +181,7 @@ OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
 /**
  * Gets keepalive entry.
  * @param[in]   endpoint    Remote Endpoint information (like ipaddress,
- *                          port, reference uri and transport type) to
+ *                          port, reference URI and transport type) to
  *                          which the ping message has to be sent.
  * @param[out]  index       index of array list.
  * @return  KeepAlive entry to send ping message.
@@ -191,7 +191,7 @@ static KeepAliveEntry_t *GetEntryFromEndpoint(const CAEndpoint_t *endpoint, size
 /**
  * Add keepalive entry.
  * @param[in]   endpoint    Remote Endpoint information (like ipaddress,
- *                          port, reference uri and transport type).
+ *                          port, reference URI and transport type).
  * @param[in]   mode        Whether it is OIC Server or OIC Client.
  * @param[in]   intervalArray   Received interval values from cloud server.
  * @return  The KeepAlive entry added in KeepAlive Table.
@@ -202,7 +202,7 @@ KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode,
 /**
  * Remove keepalive entry.
  * @param[in]   endpoint    Remote Endpoint information (like ipaddress,
- *                          port, reference uri and transport type).
+ *                          port, reference URI and transport type).
  * @return  The KeepAlive entry removed in KeepAlive Table.
  */
 static OCStackResult RemoveKeepAliveEntry(const CAEndpoint_t *endpoint);

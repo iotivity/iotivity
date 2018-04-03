@@ -2951,7 +2951,7 @@ CAMessageType_t qualityOfServiceToMessageType(OCQualityOfService qos)
 }
 
 /**
- *  A request uri consists of the following components in order:
+ *  A request URI consists of the following components in order:
  *                              example
  *  optionally one of
  *      CoAP over UDP prefix    "coap://"
@@ -3816,7 +3816,7 @@ OCStackResult OC_CALL OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHead
 
 /**
  * @brief   Register Persistent storage callback.
- * @param   persistentStorageHandler [IN] Pointers to open, read, write, close & unlink handlers.
+ * @param[in] persistentStorageHandler  Pointers to open, read, write, close & unlink handlers.
  * @return
  *     OC_STACK_OK    - No errors; Success
  *     OC_STACK_INVALID_PARAM - Invalid parameter
@@ -5656,7 +5656,7 @@ OCResourceInterface *findResourceInterfaceAtIndex(OCResourceHandle handle,
 }
 
 /*
- * This function splits the uri using the '?' delimiter.
+ * This function splits the URI using the '?' delimiter.
  * "uriWithoutQuery" is the block of characters between the beginning
  * till the delimiter or '\0' which ever comes first.
  * "query" is whatever is to the right of the delimiter if present.
@@ -5664,8 +5664,8 @@ OCResourceInterface *findResourceInterfaceAtIndex(OCResourceHandle handle,
  * If either are present, they will be malloc'ed into the params 2, 3.
  * The first param, *uri is left untouched.
 
- * NOTE: This function does not account for whitespace at the end of the uri NOR
- *       malformed uri's with '??'. Whitespace at the end will be assumed to be
+ * NOTE: This function does not account for whitespace at the end of the URI NOR
+ *       malformed URIs with '??'. Whitespace at the end will be assumed to be
  *       part of the query.
  */
 OCStackResult getQueryFromUri(const char * uri, char** query, char ** uriWithoutQuery)

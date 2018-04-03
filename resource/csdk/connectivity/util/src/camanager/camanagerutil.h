@@ -130,7 +130,7 @@ CAResult_t CAMgrUtilResetDevInfo(CMDeviceInfoList_t *devInfoList);
 void CAMgrUtilDestroyDevInfoList(CMDeviceInfoList_t *devInfoList);
 
 /**
- *  This function is used to get a device id from uri.
+ *  This function is used to get a device id from URI.
  *
  *  @param[in] uri
  *

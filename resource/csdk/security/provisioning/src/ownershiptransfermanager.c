@@ -740,8 +740,8 @@ exit:
 /**
  * Function to handle the handshake result in OTM.
  * This function will be invoked after DTLS handshake
- * @param   endPoint  [IN] The remote endpoint.
- * @param   errorInfo [IN] Error information from the endpoint.
+ * @param[in] endPoint   The remote endpoint.
+ * @param[in] errorInfo  Error information from the endpoint.
  * @return  NONE
  */
 CAResult_t DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)

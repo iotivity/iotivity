@@ -374,7 +374,7 @@ MPMResult pluginScan(MPMPluginCtx *, MPMPipeMessage *)
 /**
  * Creates 1 OCF resource for a NestThermostat for temperature control.
  *
- * @param[in] uri            Base uri. Resource uri is the same as base uri
+ * @param[in] uri            Base URI. Resource URI is the same as base URI
  *
  * @return MPM_RESULT_OK
  */
@@ -433,7 +433,7 @@ void updateMPMPluginSpecificData(NestThermostat::THERMOSTAT thermostat,
  * For adding a new thermostat
  *
  * @param[in] message            The add request message coming from client. It contains
- *                               the uri of the device to be added
+ *                               the URI of the device to be added
  *
  * @return MPM_RESULT_OK if no error, specific error code defined in mpmErrorCode.h
  * upon error
@@ -504,7 +504,7 @@ MPMResult pluginAdd(MPMPluginCtx *, MPMPipeMessage *message)
  * For removing a thermostat
  *
  * @param[in] message            The remove request message coming from client. It contains
- *                               the uri of the device to be removed
+ *                               the URI of the device to be removed
  *
  * @return MPM_RESULT_OK if no error, MPM_RESULT_INTERNAL_ERROR if error
  */

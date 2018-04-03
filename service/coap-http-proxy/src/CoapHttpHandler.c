@@ -226,8 +226,8 @@ OCEntityHandlerResult CHPEntityHandler(OCEntityHandlerFlag flag,
     {
         /*
          *  A proxy can handle two type of requests:
-         *  1. Discovery request in which case proxy-uri option will not be present.
-         *  2. Request for HTTP resource with proxy-uri option.
+         *  1. Discovery request in which case proxy-URI option will not be present.
+         *  2. Request for HTTP resource with proxy-URI option.
          */
         char proxyUri[MAX_HEADER_OPTION_DATA_LENGTH] = {'\0'};
         CHPGetProxyURI(entityHandlerRequest->rcvdVendorSpecificHeaderOptions,

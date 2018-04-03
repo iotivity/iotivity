@@ -1883,10 +1883,10 @@ typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
 /**
  * Callback function definition for Change in TrustCertChain
  *
- * @param[IN] ctx - user context returned in the callback.
- * @param[IN] credId - trustCertChain changed for this ID
- * @param[IN] trustCertChain - trustcertchain binary blob.
- * @param[IN] chainSize - size of trustchain
+ * @param[in] ctx - user context returned in the callback.
+ * @param[in] credId - trustCertChain changed for this ID
+ * @param[in] trustCertChain - trustcertchain binary blob.
+ * @param[in] chainSize - size of trustchain
  */
 typedef void (*TrustCertChainChangeCB)(void *ctx, uint16_t credId, uint8_t *trustCertChain,
         size_t chainSize);

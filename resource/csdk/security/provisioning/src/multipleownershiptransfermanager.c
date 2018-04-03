@@ -1272,8 +1272,8 @@ exit:
 /**
  * Function to handle the handshake result in MOT.
  * This function will be invoked after DTLS handshake
- * @param   endPoint  [IN] The remote endpoint.
- * @param   errorInfo [IN] Error information from the endpoint.
+ * @param[in] endPoint  The remote endpoint.
+ * @param[in] errorInfo Error information from the endpoint.
  * @return  NONE
  */
 static CAResult_t MOTDtlsHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
@@ -1320,7 +1320,7 @@ exit:
 /**
  * Function to add a device to the provisioning database via the
  * Provisioning Database Manager (PDM).
- * @param  selectedDevice [IN] Device to add to the provisioning database.
+ * @param[in] selectedDevice  Device to add to the provisioning database.
  * @return OC_STACK_OK in case of success and other values otherwise.
  */
 static OCStackResult SetupMOTPDM(OCProvisionDev_t *selectedDevice)

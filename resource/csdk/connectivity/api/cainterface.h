@@ -242,9 +242,9 @@ CAResult_t CASetRAInfo(const CARAInfo_t *caraInfo);
 #endif
 
 /**
- * This function sets uri being used for proxy.
+ * This function sets URI being used for proxy.
  *
- * @param uri            NULL terminated resource uri for CoAP-HTTP Proxy.
+ * @param uri            NULL terminated resource URI for CoAP-HTTP Proxy.
  *
  * @return  ::CA_STATUS_OK or ::CA_STATUS_INVALID_PARAM
  */

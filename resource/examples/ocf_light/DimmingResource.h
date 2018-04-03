@@ -36,7 +36,7 @@ public:
     /*
      * constructor
      *
-     * @param resourceUri the uri the resource will be register with
+     * @param resourceUri the URI the resource will be register with
      */
     DimmingResource(std::string resourceUri = "/dimming");
 

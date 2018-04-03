@@ -136,8 +136,8 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context)
 
 /**
  * @brief   check timeout routine
- * @param   currentTime     [IN]microseconds
- * @param   retData         [IN]retransmission data
+ * @param[in] currentTime  microseconds
+ * @param[in] retData      retransmission data
  * @return  true if the timeout period has elapsed, false otherwise
  */
 static bool CACheckTimeout(uint64_t currentTime, CARetransmissionData_t *retData)

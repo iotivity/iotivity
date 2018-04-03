@@ -57,7 +57,7 @@ namespace OIC
                 /**
                 * Callback method for getting notification from bundle resources
                 *
-                * @param strResourceUri Uri of attribute updated bundle resource
+                * @param strResourceUri URI of attribute updated bundle resource
                 *
                 * @return void
                 */

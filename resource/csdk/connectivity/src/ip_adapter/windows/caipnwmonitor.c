@@ -692,7 +692,7 @@ static bool IsValidNetworkAdapter(PIP_ADAPTER_ADDRESSES pAdapterAddr, int desire
  * Allocate a new CAInterface_t structure and add it to a given list.  A new entry is added
  * for each address.
  *
- * @param[in/out] iflist  List to add to.
+ * @param[in,out] iflist  List to add to.
  * @param[in]     name    Interface name.
  * @param[in]     index   Interface index.
  * @param[in]     family  Address family.

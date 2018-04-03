@@ -490,7 +490,7 @@ void SRMDeInitSecureResources(void)
 
 /**
  * Get the Secure Virtual Resource (SVR) type from the URI.
- * @param   uri [IN] Pointer to URI in question.
+ * @param[in] uri  Pointer to URI in question.
  * @return  The OicSecSvrType_t of the URI passed (note: if not a Secure Virtual
             Resource, e.g. /a/light, will return "NOT_A_SVR_TYPE" enum value)
  */

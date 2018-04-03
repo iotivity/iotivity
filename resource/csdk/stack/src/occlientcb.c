@@ -416,7 +416,7 @@ ClientCB* GetClientCBUsingUri(const char *requestUri)
     ClientCB* tmp = NULL;
     LL_FOREACH_SAFE(g_cbList, out, tmp)
     {
-        /* de-annotate below line if want to see all uri in g_cbList */
+        /* de-annotate below line if want to see all URI in g_cbList */
         //OIC_LOG_V(INFO, TAG, "%s", out->requestUri);
         if (out->requestUri && strcmp(out->requestUri, requestUri ) == 0)
         {

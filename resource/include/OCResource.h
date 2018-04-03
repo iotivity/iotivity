@@ -581,7 +581,7 @@ namespace OC
         * SubTopic is also created through this method.
         *
         * @param rep representation of the topic
-        * @param topicUri new uri of the topic which want to create
+        * @param topicUri new URI of the topic which want to create
         * @param queryParametersMap map which can have the query parameter name and value
         * @param attributeHandler handles callback
         * @param qos the quality of communication

@@ -29,7 +29,7 @@ typedef struct LEDRESOURCE{
 /**
  * Creates resource with all required request handlers
  *
- * @param[in] uri          resource uri
+ * @param[in] uri          resource URI
  * @param[in] resource     resource
   * @return  OCStackResult application result
  */

@@ -83,7 +83,7 @@ OCStackResult OC_CALL OCInit(const char *ipAddr, uint16_t port, OCMode mode);
 #ifdef RA_ADAPTER
 /**
  * @brief   Set Remote Access information for XMPP Client.
- * @param   raInfo            [IN] remote access info.
+ * @param[in] raInfo  remote access info.
  *
  * @return  ::OC_STACK_OK on success, some other value upon failure.
  */
@@ -149,7 +149,7 @@ OCStackResult OC_CALL OCProcess(void);
  * @param payload           Encoded request payload,
                             OCDoResource will free given payload when return OC_STATUS_OK.
  * @param connectivityType  Modifier flags when destination is not given.
- * @param qos               Quality of service. Note that if this API is called on a uri with the
+ * @param qos               Quality of service. Note that if this API is called on a URI with the
  *                          well-known multicast IP address, the qos will be forced to ::OC_LOW_QOS
  *                          since it is impractical to send other QOS levels on such addresses.
  * @param cbData            Asynchronous callback function that is invoked by the stack when
@@ -194,7 +194,7 @@ OCStackResult OC_CALL OCDoResource(OCDoHandle *handle,
  * @param payload           Encoded request payload.
                             OCDoRequest does not free given payload.
  * @param connectivityType  Modifier flags when destination is not given.
- * @param qos               Quality of service. Note that if this API is called on a uri with the
+ * @param qos               Quality of service. Note that if this API is called on a URI with the
  *                          well-known multicast IP address, the qos will be forced to ::OC_LOW_QOS
  *                          since it is impractical to send other QOS levels on such addresses.
  * @param cbData            Asynchronous callback function that is invoked by the stack when
@@ -643,9 +643,9 @@ OCStackResult OC_CALL OCNotifyListOfObservers (OCResourceHandle handle,
 OCStackResult OC_CALL OCDoResponse(OCEntityHandlerResponse *response);
 
 /**
- * This function sets uri being used for proxy.
+ * This function sets URI being used for proxy.
  *
- * @param uri            NULL terminated resource uri for CoAP-HTTP Proxy.
+ * @param uri            NULL terminated resource URI for CoAP-HTTP Proxy.
  */
 OCStackResult OC_CALL OCSetProxyURI(const char *uri);
 
@@ -673,7 +673,7 @@ OCStackResult OC_CALL OCGetResourceIns(OCResourceHandle handle, int64_t *ins);
 #ifdef RD_SERVER
 /**
  * Sets the filename to be used for database persistent storage.
- * @param   filename            [IN] the filename.
+ * @param[in] filename  the filename.
  *
  * @return  ::OC_STACK_OK on success, some other value upon failure.
  */
@@ -721,9 +721,9 @@ OCStackResult OC_CALL OCRDDatabaseDiscoveryPayloadCreateWithEp(const char *inter
 /**
 * This function gets a resource handle by resource uri.
 *
-* @param uri   Uri of Resource to get Resource handle.
+* @param uri URI of Resource to get Resource handle.
 *
-* @return Found  resource handle or NULL if not found.
+* @return Found resource handle or NULL if not found.
 */
 OCResourceHandle OC_CALL OCGetResourceHandleAtUri(const char *uri);
 

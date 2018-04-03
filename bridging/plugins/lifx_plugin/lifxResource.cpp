@@ -236,7 +236,7 @@ MPMResult createPayloadForMetadata(MPMResourceList **list, const std::string &ur
  * Creates 2 OCF resources for a LifxLight. One for the switch to turn it on and off
  * and one for brightness.
  *
- * @param[in] uri Base uri. Switch and brightness uris are baseUri appended with "/switch" & "/brightness"
+ * @param[in] uri Base URI. Switch and brightness URIs are baseUri appended with "/switch" & "/brightness"
  * @return MPM_RESULT_OK
  */
 MPMResult createOCFResources(const std::string &uri)

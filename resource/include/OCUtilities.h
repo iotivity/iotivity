@@ -38,7 +38,7 @@ namespace OC {
 
         /*
          * @brief helper function that parses the query parameters component
-         * of a URI into a key-value map.  This function expects the uri
+         * of a URI into a key-value map.  This function expects the URI
          * parameter to contain the query parameters component of a URI
          * (everything after the '?', excluding anything anchors).
          *

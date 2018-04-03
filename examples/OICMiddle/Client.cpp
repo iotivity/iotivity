@@ -62,7 +62,7 @@ void MiddleClient::foundOCResource(shared_ptr<OCResource> resource)
 }
 
 /*
- *  I need a unique ID, so I concatenate the host string and resource uri
+ *  I need a unique ID, so I concatenate the host string and resource URI
  *  It's arbitrary and sufficient.
  */
 string MiddleClient::formatResourceID(std::shared_ptr<OCResource> resource)

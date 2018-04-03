@@ -101,7 +101,7 @@ namespace OIC
             static RCSDiscoveryManager* getInstance();
 
             /**
-             * Discovers resources of interest, regardless of uri and resource type.
+             * Discovers resources of interest, regardless of URI and resource type.
              * It will consistently discover resources until the discovery task is canceled.
              *
              * @param address         A RCSAddress object
@@ -120,7 +120,7 @@ namespace OIC
              * It will consistently discover resources until the discovery task is canceled.
              *
              * @param address          A RCSAddress object
-             * @param relativeUri      The relative uri of resource to be searched
+             * @param relativeUri      The relative URI of resource to be searched
              * @param cb               A callback to obtain discovered resource
              *
              * @throws InvalidParameterException If cb is empty.
@@ -172,7 +172,7 @@ namespace OIC
              * It will consistently discover resources until the discovery task is canceled.
              *
              * @param address          A RCSAddress object
-             * @param relativeUri      The relative uri of resource to be searched
+             * @param relativeUri      The relative URI of resource to be searched
              * @param resourceType     Resource Type
              * @param cb               A callback to obtain discovered resource
              *
@@ -190,7 +190,7 @@ namespace OIC
              * It will consistently discover resources until the discovery task is canceled.
              *
              * @param address          A RCSAddress object
-             * @param relativeUri      The relative uri of resource to be searched
+             * @param relativeUri      The relative URI of resource to be searched
              * @param resourceTypes     List of Resource Types
              * @param cb               A callback to obtain discovered resource
              *

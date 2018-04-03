@@ -68,9 +68,9 @@ static oc_mutex g_bleConnectionStateChangedCbMutex = NULL;
 /**
 * This is the callback which will be called when the adapter state gets changed.
 *
-* @param result         [IN] Result of the query done to the platform.
-* @param adapter_state  [IN] State of the LE adapter.
-* @param user_data      [IN] User data passed by the caller when querying for the state changed cb.
+* @param[in] result         Result of the query done to the platform.
+* @param[in] adapter_state  State of the LE adapter.
+* @param[in] user_data      User data passed by the caller when querying for the state changed cb.
 *
 * @return  None.
 */
@@ -80,10 +80,10 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
 /**
 * This is the callback which will be called when the connection state gets changed.
 *
-* @param result         [IN] Result of the query done to the platform.
-* @param connected      [IN] State of connection.
-* @param remoteAddress  [IN] LE address of the device to be notified.
-* @param user_data      [IN] User data passed by the caller when querying for the state changed cb.
+* @param[in] result         Result of the query done to the platform.
+* @param[in] connected      State of connection.
+* @param[in] remoteAddress  LE address of the device to be notified.
+* @param[in] user_data      User data passed by the caller when querying for the state changed cb.
 *
 * @return  None.
 */

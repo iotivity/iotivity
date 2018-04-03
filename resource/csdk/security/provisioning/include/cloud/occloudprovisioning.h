@@ -437,7 +437,7 @@ OCStackResult OCCloudAclCancelInvitation(void* ctx,
  * @param[in] subjectId         mandatory parameter subject id
  * @param[in] deviceId          mandatory parameter device id
  * @param[in] method            mandatory parameter method
- * @param[in] uri               mandatory parameter uri
+ * @param[in] uri               mandatory parameter URI
  * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result

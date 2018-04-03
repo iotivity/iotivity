@@ -110,7 +110,7 @@ bool OCConvertStringToUuid(const char uuidString[UUID_STRING_SIZE],
  * 2. Hyphens are expected at positions {9, 14, 19, 24}.
  * 3. The rest charcters should be simple xdigits.
  *
- * @param[in] uuid    uuid extracted from uri
+ * @param[in] uuid    uuid extracted from URI
  *
  * @retval true for success, otherwise false and an error is logged
  */
