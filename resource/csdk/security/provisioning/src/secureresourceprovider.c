@@ -1925,6 +1925,7 @@ OCStackResult SRPProvisionCredentialsDos(void *ctx, OicSecCredType_t type, size_
                                          OCProvisionResultCB resultCallback)
 {
     VERIFY_NOT_NULL_RETURN(TAG, pDev1, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, pDev2, ERROR,  OC_STACK_INVALID_PARAM);
     if (!resultCallback)
     {
         OIC_LOG(INFO, TAG, "SRPProvisionCredentialsDos: NULL Callback");
