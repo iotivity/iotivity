@@ -115,7 +115,6 @@ public class CoapDevice extends Device {
                 Long token = iterator.next();
                 CoapClient coapClient = (CoapClient) channel;
                 if (coapClient.isObserveRequest(token) != null) {
-                    coapClient.removeObserve(token);
                     CoapRequest coapRequest = (CoapRequest) mObserveRequestList
                             .get(token);
                     coapRequest.setObserve(Observe.UNSUBSCRIBE);
