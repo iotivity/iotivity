@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -26,11 +26,11 @@
 
 using namespace OIC::Service;
 
-#define PROVIDER_SIMULATOR "./ns_provider_cpp_simulator"
-#define PROVIDER_SIMULATOR_ALLOW "./ns_provider_cpp_simulator 0"
-#define PROVIDER_SIMULATOR_NOT_ALLOW "./ns_provider_cpp_simulator 1"
-#define CONSUMER_SIMULATOR "./ns_consumer_cpp_simulator"
-#define CONSUMER_SIMULATOR_OPTION "./ns_consumer_cpp_simulator 0"
+#define PROVIDER_SIMULATOR "./iotivity_ns_provider_cpp_simulator"
+#define PROVIDER_SIMULATOR_ALLOW "./iotivity_ns_provider_cpp_simulator 0"
+#define PROVIDER_SIMULATOR_NOT_ALLOW "./iotivity_ns_provider_cpp_simulator 1"
+#define CONSUMER_SIMULATOR "./iotivity_ns_consumer_cpp_simulator"
+#define CONSUMER_SIMULATOR_OPTION "./iotivity_ns_consumer_cpp_simulator 0"
 
 class NSCppHelper
 {

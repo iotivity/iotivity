@@ -40,6 +40,7 @@ test_src_root = iotivity_test_root + '/' + variant_dir
 test = env_linux.get('TEST')
 sdk = env_linux.get('SDK')
 common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
+common_rpath = [iotivity_lib_path, '.', '/usr/local/lib']
 
 install_targets = []
 
@@ -144,11 +145,11 @@ consumer_shared_libs = Split('notification_consumer pthread')
 ns_cpp_shared_libs = Split('notification_provider_wrapper notification_consumer_wrapper pthread')
 
 ### NS Simulator ###
-ns_cpp_provider_simulator_bin = 'ns_provider_cpp_simulator'
-ns_cpp_consumer_simulator_bin = 'ns_consumer_cpp_simulator'
+ns_cpp_provider_simulator_bin = 'iotivity_ns_provider_cpp_simulator'
+ns_cpp_consumer_simulator_bin = 'iotivity_ns_consumer_cpp_simulator'
 
-ns_csdk_provider_simulator_bin = 'ns_provider_csdk_simulator'
-ns_csdk_consumer_simulator_bin = 'ns_consumer_csdk_simulator'
+ns_csdk_provider_simulator_bin = 'iotivity_ns_provider_csdk_simulator'
+ns_csdk_consumer_simulator_bin = 'iotivity_ns_consumer_csdk_simulator'
 
 
 if 'tc' in test:
@@ -172,7 +173,7 @@ if 'tc' in test:
                             CPPPATH = iotivity_include_paths + csdk_include_paths,
                             LIBS = csdk_util + csdk_libs + provier_shared_libs,
                             LIBPATH =  tc_lib_paths,
-                            RPATH = iotivity_lib_path,
+                            RPATH = common_rpath,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
         install_targets += [csdk_provider_tc]
@@ -183,7 +184,7 @@ if 'tc' in test:
                             CPPPATH = iotivity_include_paths + csdk_include_paths,
                             LIBS = csdk_util + csdk_libs + consumer_shared_libs,
                             LIBPATH =  tc_lib_paths,
-                            RPATH = iotivity_lib_path,
+                            RPATH = common_rpath,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
         install_targets += [csdk_consumer_tc]
@@ -194,7 +195,7 @@ if 'tc' in test:
                             CPPPATH = iotivity_include_paths + csdk_simulator_include_paths, 
                             LIBS = testapp_shared_libs + provier_shared_libs, 
                             LIBPATH = common_lib_paths, 
-                            RPATH = iotivity_lib_path, 
+                            RPATH = common_rpath, 
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
         install_targets += [csdk_provider_simulator]
@@ -205,7 +206,7 @@ if 'tc' in test:
                             CPPPATH = iotivity_include_paths + csdk_simulator_include_paths,
                             LIBS = testapp_shared_libs + consumer_shared_libs, 
                             LIBPATH = common_lib_paths,
-                            RPATH = iotivity_lib_path,
+                            RPATH = common_rpath,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
         install_targets += [csdk_consumer_simulator]
@@ -225,7 +226,7 @@ if 'tc' in test:
                             CPPPATH = iotivity_include_paths + cpp_include_paths,
                             LIBS = cpp_util + cpp_libs + ns_cpp_shared_libs,
                             LIBPATH =  tc_lib_paths,
-                            RPATH = iotivity_lib_path,
+                            RPATH = common_rpath,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
         install_targets += [cpp_provider_tc]
@@ -236,7 +237,7 @@ if 'tc' in test:
                             CPPPATH = iotivity_include_paths + cpp_include_paths,
                             LIBS = cpp_util + cpp_libs + ns_cpp_shared_libs ,
                             LIBPATH =  tc_lib_paths,
-                            RPATH = iotivity_lib_path,
+                            RPATH = common_rpath,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
         install_targets += [cpp_consumer_tc]
@@ -247,7 +248,7 @@ if 'tc' in test:
                             CPPPATH = iotivity_include_paths + cpp_include_paths,
                             LIBS = cpp_util + cpp_libs + ns_cpp_shared_libs + ['gtest', 'pthread'],
                             LIBPATH =  tc_lib_paths,
-                            RPATH = iotivity_lib_path,
+                            RPATH = common_rpath,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
         install_targets += [cpp_scenario_tc]
@@ -258,7 +259,7 @@ if 'tc' in test:
                             CPPPATH = iotivity_include_paths + cpp_simulator_include_paths,
                             LIBS = testapp_shared_libs + ns_cpp_shared_libs,
                             LIBPATH = common_lib_paths,
-                            RPATH = iotivity_lib_path,
+                            RPATH = common_rpath,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
         install_targets += [cpp_provider_simulator]
@@ -269,7 +270,7 @@ if 'tc' in test:
                             CPPPATH = iotivity_include_paths + cpp_simulator_include_paths,
                             LIBS = testapp_shared_libs + ns_cpp_shared_libs,
                             LIBPATH = common_lib_paths,
-                            RPATH = iotivity_lib_path,
+                            RPATH = common_rpath,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
         install_targets += [cpp_consumer_simulator]
@@ -283,7 +284,7 @@ if 'tc' in test or 'app' in test:
                             CPPPATH = iotivity_include_paths + csdk_testapp_include_paths,
                             LIBS = testapp_shared_libs + provier_shared_libs,
                             LIBPATH = common_lib_paths,
-                            RPATH = iotivity_lib_path,
+                            RPATH = common_rpath,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
         install_targets += [csdk_provider_interop_testapp]
@@ -294,7 +295,7 @@ if 'tc' in test or 'app' in test:
                             CPPPATH = iotivity_include_paths + csdk_testapp_include_paths,
                             LIBS = testapp_shared_libs + consumer_shared_libs,
                             LIBPATH = common_lib_paths,
-                            RPATH = iotivity_lib_path,
+                            RPATH = common_rpath,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
         install_targets += [csdk_consumer_interop_testapp]
@@ -306,7 +307,7 @@ if 'tc' in test or 'app' in test:
                             #LIBS = testapp_shared_libs + ns_cpp_shared_libs,
                             LIBS = testapp_shared_libs + ['notification_provider_wrapper'],
                             LIBPATH = common_lib_paths,
-                            RPATH = iotivity_lib_path,
+                            RPATH = common_rpath,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
         install_targets += [cpp_provider_interop_testapp]
@@ -318,7 +319,7 @@ if 'tc' in test or 'app' in test:
                             #LIBS = testapp_shared_libs + ns_cpp_shared_libs,
                             LIBS = testapp_shared_libs + ['notification_consumer_wrapper'],
                             LIBPATH = common_lib_paths,
-                            RPATH = iotivity_lib_path,
+                            RPATH = common_rpath,
                             CPPFLAGS = common_flags + common_linux_cppflags,
                             CPPDEFINES = common_defines)
         install_targets += [cpp_consumer_interop_testapp]

@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -27,8 +27,8 @@
 #include "NSCommon.h"
 #include "NSProviderInterface.h"
 
-#define CONSUMER_SIMULATOR "./ns_consumer_csdk_simulator"
-#define CONSUMER_SIMULATOR_OPTION "./ns_consumer_csdk_simulator 0"
+#define CONSUMER_SIMULATOR "./iotivity_ns_consumer_csdk_simulator"
+#define CONSUMER_SIMULATOR_OPTION "./iotivity_ns_consumer_csdk_simulator 0"
 
 #define TOPIC_NAME_PROVIDER "Test_Topic_1"
 #define TOPIC_BODY "TESTAPP_Body_1"

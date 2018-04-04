@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -109,8 +109,10 @@ int main(int argc, char **argv)
 
     IOTIVITYTEST_LOG(INFO, "Press any key and the enter to stop the servers :-)....");
 
-    char n;
-    cin >> n;
+    char n = 0;
+    while (n <= 0){
+        cin >> n;
+    }
 
     stopConsumer();
 

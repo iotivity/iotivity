@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2017 Samsung Electronics All Rights Reserved.
+// Copyright 2018 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -130,6 +130,7 @@ TEST_F(NSCppTest_stc, ProviderStateChanged_SRC_P)
  * @expected 1. No exception occurs
  *           2. Should get the Notification in consumer side
  */
+#if defined(__LINUX__)
 TEST_F(NSCppTest_stc, SendMessage_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -153,6 +154,7 @@ TEST_F(NSCppTest_stc, SendMessage_SRC_P)
 
     ASSERT_NE("", m_pNSHelper->getNotification().getContentText())<< "Doesn't get any notification";
 }
+#endif
 
 /**
  * @since 2017-03-21
@@ -186,6 +188,7 @@ TEST_F(NSCppTest_stc, SendMessage_SRC_P)
  *           2. Should get the Notification in consumer side
  *           3. Title, ContentText, SourceName and Topic should be same
  */
+#if defined(__LINUX__)
 TEST_F(NSCppTest_stc, SendMessageAndVerifyMessage_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -216,6 +219,7 @@ TEST_F(NSCppTest_stc, SendMessageAndVerifyMessage_SRC_P)
     ASSERT_EQ(SOURCE_NAME, msg.getSourceName());
     ASSERT_EQ(TEST_TOPIC_1, msg.getTopic());
 }
+#endif
 
 /**
  * @since 2017-03-21
@@ -251,6 +255,7 @@ TEST_F(NSCppTest_stc, SendMessageAndVerifyMessage_SRC_P)
  *           2. Should get the Notification in consumer side
  *           3. Should get syncInfo in Provider side
  */
+#if defined(__LINUX__)
 TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsRead_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -287,6 +292,7 @@ TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsRead_SRC_P)
     ASSERT_EQ(OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ,
             syncInfo.getState())<< "Syc state must be READ";
 }
+#endif
 
 /**
  * @since 2017-03-21
@@ -322,6 +328,7 @@ TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsRead_SRC_P)
  *           2. Should get the Notification in consumer side
  *           3. Should get syncInfo in Provider side
  */
+#if defined(__LINUX__)
 TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsDeleted_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -358,6 +365,7 @@ TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsDeleted_SRC_P)
     ASSERT_EQ(OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED,
             syncInfo.getState())<< "Sync state must be DELETED";
 }
+#endif
 
 /**
  * @since 2017-03-21
@@ -393,6 +401,7 @@ TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsDeleted_SRC_P)
  *           2. Should get the Notification in consumer side
  *           3. Should get syncInfo in Provider side
  */
+#if defined(__LINUX__)
 TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsUnread_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -428,6 +437,7 @@ TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsUnread_SRC_P)
     ASSERT_EQ(OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_UNREAD,
             syncInfo.getState())<< "Syanc state must be UNREAD";
 }
+#endif
 
 /**
  * @since 2017-03-21
@@ -463,6 +473,7 @@ TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsUnread_SRC_P)
  *           2. Should get the Notification in consumer side
  *           3. Should get syncInfo in shared_ptr<OIC::Service::NSConsumer> side
  */
+#if defined(__LINUX__)
 TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsREAD_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -498,6 +509,7 @@ TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsREAD_SRC_P)
     ASSERT_NE("" , syncInfo.getProviderId())<< "SyncInfo should not be null";
     ASSERT_EQ(OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ, syncInfo.getState());
 }
+#endif
 
 /**
  * @since 2017-03-21
@@ -533,6 +545,7 @@ TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsREAD_SRC_P)
  *           2. Should get the Notification in consumer side
  *           3. Should not get syncInfo in shared_ptr<OIC::Service::NSConsumer> side
  */
+#if defined(__LINUX__)
 TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsUNREAD_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -567,6 +580,7 @@ TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsUNREAD_SRC_P)
 
     ASSERT_NE("" , syncInfo.getProviderId())<< "SyncInfo should not be null";
 }
+#endif
 
 /**
  * @since 2017-03-21
@@ -602,6 +616,7 @@ TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsUNREAD_SRC_P)
  *           2. Should get the Notification in consumer side
  *           3. Should get syncInfo in shared_ptr<OIC::Service::NSConsumer> side
  */
+#if defined(__LINUX__)
 TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsDELETED_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -637,6 +652,7 @@ TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsDELETED_SRC_P)
     ASSERT_NE("" , syncInfo.getProviderId())<< "SyncInfo should not be null";
     ASSERT_EQ(OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED, syncInfo.getState());
 }
+#endif
 
 /**
  * @since 2016-10-20
@@ -665,6 +681,7 @@ TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsDELETED_SRC_P)
  * @expected 1. No exception occurs
  *           2. Topic state should be UNSUBSCRIBED at initial stage
  */
+#if defined(__LINUX__)
 TEST_F(NSCppTest_stc, TopicState_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, true);
@@ -694,6 +711,7 @@ TEST_F(NSCppTest_stc, TopicState_SRC_P)
         FAIL() << "Can't get consumerTopicList. Exception: " << e.what();
     }
 }
+#endif
 
 /**
  * @since 2016-10-20
@@ -726,6 +744,7 @@ TEST_F(NSCppTest_stc, TopicState_SRC_P)
  *           2. Topic state should be SUBSCRIBED state after set
  *           3. Topic state should be UNSUBSCRIBED state after unset
  */
+#if defined(__LINUX__)
 TEST_F(NSCppTest_stc, SetUnsetTopic_SQV_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, true);
@@ -764,4 +783,4 @@ TEST_F(NSCppTest_stc, SetUnsetTopic_SQV_P)
         FAIL() << "Can't get consumerTopicList. Exception: " << e.what();
     }
 }
-
+#endif

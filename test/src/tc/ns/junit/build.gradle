@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -18,12 +18,6 @@
  *
  ******************************************************************/
 
-apply from: "../../../../build/android/build.gradle"
-
-project.buildDir = "${binDirectory}/ns"
-def nsAARFileDir = "${iotivityRootDirectoryFromModules}/service/notification/android/notification-service/build/outputs/aar"
-def nsAARFile = "iotivity-${architecture}-notification-service-${buildmode}"
-
 buildscript {
     repositories {
         jcenter()
@@ -33,66 +27,117 @@ buildscript {
     }
 }
 
-repositories {
+task nsbuild (dependsOn:['assemble']){
+
+    project.buildDir = "${binDirectory}/${module_name}"
+
+    repositories {
+        mavenCentral()
+
         flatDir{
-                dirs "$baseAARFileDirFromModules", "${nsAARFileDir}"
-        }
-}
-
-apply plugin: 'com.android.application'
-
-android {
-    compileSdkVersion  21
-    buildToolsVersion "21.1.2"
-
-    packagingOptions {
-        pickFirst 'lib/armeabi/libca-interface.so'
-        pickFirst 'lib/armeabi-v7a/libca-interface.so'
-        pickFirst 'lib/x86/libca-interface.so'
-        pickFirst 'lib/x86_64/libca-interface.so'
-        pickFirst 'lib/arm64-v8a/libca-interface.so'
-        pickFirst 'lib/armeabi/libocstack-jni.so'
-        pickFirst 'lib/armeabi-v7a/libocstack-jni.so'
-        pickFirst 'lib/x86/libocstack-jni.so'
-        pickFirst 'lib/armeabi/libresource_directory.so'
-        pickFirst 'lib/armeabi-v7a/libresource_directory.so'
-        pickFirst 'lib/x86/libresource_directory.so'
-    }
-
-    sourceSets {
-
-        main {
-              manifest.srcFile 'AndroidManifest.xml'
-              java.srcDirs 'src'
-              jni.srcDirs = [] //disable automatic ndk-build
+            if("${src_type}" == "java") { 
+                dirs "${iotivityRoot}/java/iotivity-java/build/libs"
+            } else {
+                dirs "${iotivity_root}/java/iotivity-android/build/outputs/aar"
+                dirs "${iotivity_root}/service/resource-encapsulation/android/service/build/outputs/aar"
+                dirs "${iotivity_root}/service/notification/android/notification-service/build/outputs/aar"
+            }
         }
     }
 
-    lintOptions {
-          abortOnError false
-     }
+    def javaType = 'generic'
 
-    defaultConfig {
-      applicationId "org.iotivity.test.ns.tc"
-      minSdkVersion 21
-      targetSdkVersion 21
+    if(src_type == 'android') {
+        javaType = 'android'
     }
 
+    def commonSrcDir = ['./src/org/iotivity/test/' + module_name + '/tc',
+                        '../../../../src/common/commonutil/java/java-' + javaType + '/iotivityhelpers/ri',
+                        '../../../../src/common/commonutil/java/java-' + javaType + '/logger',
+                        '../../../../src/common/commonutil/java/java-' + javaType + '/testcase',
+                        '${testRoot}/src/common/commonuti/java/common/resource'
+    ]
 
-    println ("\nConfigured $commonText android properties")
-}
+    def printSrcDir = { listParam -> 
+         println '------------------\nSource Directories\n------------------'
+         listParam.eachWithIndex { item, index ->
+             println "    " + item
+         }
+    }
 
-dependencies {
-    compile fileTree(dir: "${androidLibFileDirFromModules}", include: ['*.jar'])
-    compile(name:"${baseAARFile}", ext:'aar')
-    compile(name:"${nsAARFile}", ext:'aar')
-    println ("\n$commonText Library Dependency Resolved")
-}
+    def buildFatJar = { isJava ->
 
-task nsbuild (dependsOn:['deleteBuildDirectory', 'installDebug']) << {
-   println ("\n############# Finished $commonText #############\n")
-}
+        if(isJava == "java") { 
+            apply plugin: 'java'
 
-task deleteBuildDirectory(type: Delete) {
-    delete project.buildDir
+            sourceSets {
+                main {
+                    java {
+                        srcDirs += commonSrcDir
+                        srcDirs '../../../../src/common/testcase/junit/'
+                        printSrcDir(srcDirs)
+                    }
+                }
+            }
+
+            dependencies {
+                compile fileTree(dir: "${iotivityRoot}/java/iotivity-java/build/libs", include: ['*.jar']) 
+                compile group: 'commons-collections', name: 'commons-collections', version: '3.2'
+                compile group: 'junit', name: 'junit', version: '4.12'
+            }
+
+            jar {
+                archiveName module_name + '_test.jar'
+                from { 
+                (configurations.runtime).collect { it.isDirectory() ? it : zipTree(it)}
+                }
+
+                manifest {
+                    attributes('Main-Class': 'org.iotivity.test.IotivityJunitRunner')
+                }
+            }
+        } else { 
+            apply plugin: 'com.android.application'
+
+            android {
+                compileSdkVersion  21
+                buildToolsVersion "21.1.2"
+
+                packagingOptions {
+                    pickFirst 'lib/' + arch +'/libca-interface.so'
+                    pickFirst 'lib/' + arch +'/libocstack-jni.so'
+                    pickFirst 'lib/' + arch +'/libresource_directory.so'
+                }
+                sourceSets {
+                    main {
+                        java { 
+                            manifest.srcFile 'AndroidManifest.xml'
+                            srcDirs += commonSrcDir
+                            srcDirs '../../../../src/common/commonutil/java/java-android/broadcast/'
+                            printSrcDir(srcDirs)
+                       }        
+                    }
+                }
+
+                lintOptions {
+                    abortOnError false
+                }
+
+                defaultConfig {
+                    applicationId 'org.iotivity.test.' + module_name + '.tc'
+                    minSdkVersion 21
+                    targetSdkVersion 21
+                }
+            }
+
+            dependencies {
+                compile fileTree(dir: "${javaExtLibDir}", include: ['*.jar'])
+                compile(name:"${iotivityBaseAARFile}", ext:'aar')
+                compile(name: "iotivity-${arch}-service-${release}", ext:'aar')
+                compile(name:"iotivity-${architecture}-notification-service-${release}", ext:'aar')
+            }
+        }   
+    }
+
+    buildFatJar(src_type)
 }

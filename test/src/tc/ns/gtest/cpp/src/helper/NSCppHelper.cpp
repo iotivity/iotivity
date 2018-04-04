@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -157,7 +157,7 @@ void NSCppHelper::preConfigure()
 
 shared_ptr< OIC::Service::NSConsumer > NSCppHelper::getConsumer(bool subcontrollability)
 {
-    CommonUtil::launchApp(CONSUMER_SIMULATOR_OPTION, true);
+    CommonUtil::launchApp(CONSUMER_SIMULATOR_OPTION, false);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
     m_pProviderService = NSProviderService::getInstance();
