@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -31,7 +31,8 @@ protected:
     uint16_t m_credId = 0;
     ByteArray_t m_trustCertChainArray =
     { 0, 0 };
-    OCDevAddr m_endPoint = {0, 0};
+    OCDevAddr m_endPoint;
+    OicCloud_t* m_pCloud = NULL;
     cloudAce_t *m_aces = NULL;
 
     virtual void SetUp()
@@ -50,6 +51,7 @@ protected:
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
         m_endPoint = CloudCommonUtil::getDefaultEndPoint();
+        m_pCloud = CloudCommonUtil::getCloudServer();
         m_aces = CSCsdkUtilityHelper::createCloudAces();
 
 #ifdef __TLS_ON__
@@ -95,7 +97,7 @@ protected:
  * @objective       Test OCCloudGetAclIdByDevice positively with regualr data
  * @target          OCStackResult OCCloudGetAclIdByDevice(void* ctx, const char *deviceId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regualr data
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix for TLS MODE enabled
@@ -109,7 +111,7 @@ protected:
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_stc, OCCloudAclIdGetByDevice_SRC_RV_P)
 {
-    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, &m_endPoint, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, m_pCloud->cis, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -128,7 +130,7 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIdGetByDevice_SRC_RV_P)
  * @objective       Test OCCloudGetAclIdByDevice positively with OCCloudResponseCB as NULL
  * @target          OCStackResult OCCloudGetAclIdByDevice(void* ctx, const char *deviceId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       OCCloudResponseCB as NULL
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix for TLS MODE enabled
@@ -155,7 +157,7 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIdGetByDeviceCb_NV_P)
         return;
     }
 
-    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, &m_endPoint, NULL, CSCsdkCloudHelper::s_aclId, OC_STACK_OK, false))
+    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, m_pCloud->cis, NULL, CSCsdkCloudHelper::s_aclId, OC_STACK_OK, false))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -174,7 +176,7 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIdGetByDeviceCb_NV_P)
  * @objective       Test OCCloudAclIdCreate positively with regular data
  * @target          OCStackResult OCCloudAclIdCreate(void* ctx, const char *ownerId, const char *deviceId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data for target API
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix for TLS MODE enabled
@@ -201,7 +203,7 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIdCreate_SRC_RV_P)
         return;
     }
 
-    if (!m_CloudAclHelper.cloudAclIdCreate((void*) CTX_INDIVIDUAL_GET_INFO, DEFAULT_OWNER_ID, DEFAULT_DEV_ID_CS_01, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclIdCreate((void*) CTX_INDIVIDUAL_GET_INFO, DEFAULT_OWNER_ID, DEFAULT_DEV_ID_CS_01, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -219,7 +221,7 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIdCreate_SRC_RV_P)
  * @objective       Test OCCloudAclIndividualGetInfo positively with regular data
  * @target          OCStackResult OCCloudAclIndividualGetInfo(void* ctx, const char *aclId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call OCSaveTrustCertChain
@@ -233,17 +235,17 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIdCreate_SRC_RV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualGetInfo_SRC_RV_P)
 {
-    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, &m_endPoint, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, m_pCloud->cis, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
 
-    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
 
-    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -261,7 +263,7 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualGetInfo_SRC_RV_P)
  * @objective       Test OCCloudAclIndividualGetInfo positively with callback as NULL
  * @target          OCStackResult OCCloudAclIndividualGetInfo(void* ctx, const char *aclId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       callback as NULL
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call OCSaveTrustCertChain
@@ -288,19 +290,19 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualGetInfoCb_NV_P)
         return;
     }
 
-    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, &m_endPoint, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, m_pCloud->cis, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
         return;
     }
 
-    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
         return;
     }
 
-    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, NULL, OC_STACK_OK, false))
+    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), m_pCloud->cis, NULL, OC_STACK_OK, false))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -318,7 +320,7 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualGetInfoCb_NV_P)
  * @objective       Test OCCloudAclIndividualGetInfo positively with callback as NULL
  * @target          OCStackResult OCCloudAclIndividualGetInfo(void* ctx, const char *aclId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       callback as NULL
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call OCSaveTrustCertChain
@@ -345,13 +347,13 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualAclUpdate_SRC_RV_P)
         return;
     }
 
-    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, &m_endPoint, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, m_pCloud->cis, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
         return;
     }
 
-    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -368,7 +370,7 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualAclUpdate_SRC_RV_P)
  * @objective       Test OCCloudAclIndividualAclUpdate positively with OCCloudResponseCB as NULL
  * @target          OCStackResult OCCloudAclIndividualAclUpdate(void* ctx, const char *aclId, const cloudAce_t *aces, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       OCCloudResponseCB as NULL
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call OCSaveTrustCertChain
@@ -394,13 +396,13 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualAclUpdateCb_NV_P)
         return;
     }
 
-    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, &m_endPoint, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, m_pCloud->cis, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
         return;
     }
 
-    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, &m_endPoint, NULL, OC_STACK_OK, false))
+    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, m_pCloud->cis, NULL, OC_STACK_OK, false))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -419,7 +421,7 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualAclUpdateCb_NV_P)
  * @objective       Test OCCloudAclIndividualAceUpdate positively with regular data
  * @target          OCStackResult OCCloudAclIndividualAceUpdate(void* ctx, const char *aclId, const char *aceId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call OCSaveTrustCertChain
@@ -434,30 +436,30 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualAclUpdateCb_NV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualAceUpdate_SRC_RV_P)
 {
-    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, &m_endPoint, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, m_pCloud->cis, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
         return;
     }
 
-    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
         return;
     }
 
-    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
         return;
     }
 
-    if (!m_CloudAclHelper.cloudAclIndividualAceUpdate((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), CSCsdkCloudHelper::s_aceid.c_str(), m_aces, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclIndividualAceUpdate((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), (char*)CSCsdkCloudHelper::s_aceid.c_str(), m_aces, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
 
-    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
         return;
@@ -477,7 +479,7 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualAceUpdate_SRC_RV_P)
  * @objective       Test OCCloudAclIndividualAceUpdate positively with callback as NULL
  * @target          OCStackResult OCCloudAclIndividualAceUpdate(void* ctx, const char *aclId, const char *aceId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       callback as NULL
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call OCSaveTrustCertChain
@@ -492,25 +494,25 @@ TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualAceUpdate_SRC_RV_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_stc, OCCloudAclIndividualAceUpdateCb_NV_P)
 {
-    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, &m_endPoint, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, m_pCloud->cis, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
         return;
     }
 
-    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
         return;
     }
 
-    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
         return;
     }
 
-    if (!m_CloudAclHelper.cloudAclIndividualAceUpdate((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), CSCsdkCloudHelper::s_aceid.c_str(), m_aces, &m_endPoint, NULL, OC_STACK_OK, false))
+    if (!m_CloudAclHelper.cloudAclIndividualAceUpdate((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), (char*)CSCsdkCloudHelper::s_aceid.c_str(), m_aces, m_pCloud->cis, NULL, OC_STACK_OK, false))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }

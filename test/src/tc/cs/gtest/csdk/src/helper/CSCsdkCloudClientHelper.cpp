@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -361,7 +361,7 @@ void publishResource() {
     resourceHandles.push_back(g_acSwitchResource->getResourceHandle());
     resourceHandles.push_back(g_acTemperatureResource->getResourceHandle());
 
-    int result = RDClient::Instance().publishResourceToRD(CloudCommonUtil::getDefaultHostAddess().c_str(), OCConnectivityType::CT_ADAPTER_TCP,
+    RDClient::Instance().publishResourceToRD(CloudCommonUtil::getDefaultHostAddess().c_str(), OCConnectivityType::CT_ADAPTER_TCP,
              resourceHandles,
              &onPublish);
 

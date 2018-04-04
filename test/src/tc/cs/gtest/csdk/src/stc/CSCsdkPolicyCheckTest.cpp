@@ -32,7 +32,8 @@ protected:
     ByteArray_t m_trustCertChainArray =
     { 0, 0 };
 
-    OCDevAddr m_endPoint = {0, 0};
+    OCDevAddr m_endPoint;
+    OicCloud_t* m_pCloud = NULL;
     cloudAce_t *m_aces = NULL;
 
     virtual void SetUp()
@@ -51,6 +52,7 @@ protected:
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
         m_endPoint = CloudCommonUtil::getDefaultEndPoint();
+        m_pCloud = CloudCommonUtil::getCloudServer();
         m_aces = CSCsdkUtilityHelper::createCloudAces();
 
 #ifdef __TLS_ON__
@@ -77,19 +79,19 @@ protected:
             return;
         }
 
-        if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, &m_endPoint, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
+        if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, DEFAULT_DEV_ID, m_pCloud->cis, CSCsdkCloudHelper::aclResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_OK))
         {
             SET_FAILURE(m_CloudAclHelper.getFailureMessage());
             return;
         }
 
-        if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+        if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), m_aces, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
         {
             SET_FAILURE(m_CloudAclHelper.getFailureMessage());
             return;
         }
 
-        if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+        if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
         {
             SET_FAILURE(m_CloudAclHelper.getFailureMessage());
             return;
@@ -113,7 +115,7 @@ protected:
  * @objective       Test OCCloudAclPolicyCheck positively with regular data
  * @target          OCStackResult OCCloudAclPolicyCheck(void* ctx, const char *subjectId, const char *deviceId, const char *method, const char *uri, const OCDevAddr *endPoint, OCCloudResponseCB callback);
  * @test_data       method = "GET"
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call OCSaveTrustCertChain
@@ -129,7 +131,7 @@ TEST_F(CSCsdkPolicyCheckTest_stc, OCCloudAclPolicyCheckGetAllowed_SRC_RV_P)
 {
     if (!m_CloudAclHelper.cloudAclPolicyCheck((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_subjectuuid.c_str(),
             CSCsdkCloudHelper::s_deviceId.c_str(), m_CloudAclHelper.GET_REQUEST.c_str(),
-            CSCsdkCloudHelper::s_href.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+            CSCsdkCloudHelper::s_href.c_str(), m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -147,7 +149,7 @@ TEST_F(CSCsdkPolicyCheckTest_stc, OCCloudAclPolicyCheckGetAllowed_SRC_RV_P)
  * @objective       Test OCCloudAclPolicyCheck positively with regular data
  * @target          OCStackResult OCCloudAclPolicyCheck(void* ctx, const char *subjectId, const char *deviceId, const char *method, const char *uri, const OCDevAddr *endPoint, OCCloudResponseCB callback);
  * @test_data       method = "PUT"
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call OCSaveTrustCertChain
@@ -163,7 +165,7 @@ TEST_F(CSCsdkPolicyCheckTest_stc, OCCloudAclPolicyCheckPutAllowed_SRC_RV_P)
 {
     if (!m_CloudAclHelper.cloudAclPolicyCheck((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_subjectuuid.c_str(),
             CSCsdkCloudHelper::s_deviceId.c_str(), m_CloudAclHelper.PUT_REQUEST.c_str(),
-            CSCsdkCloudHelper::s_href.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+            CSCsdkCloudHelper::s_href.c_str(), m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -181,7 +183,7 @@ TEST_F(CSCsdkPolicyCheckTest_stc, OCCloudAclPolicyCheckPutAllowed_SRC_RV_P)
  * @objective       Test OCCloudAclPolicyCheck positively with regular data
  * @target          OCStackResult OCCloudAclPolicyCheck(void* ctx, const char *subjectId, const char *deviceId, const char *method, const char *uri, const OCDevAddr *endPoint, OCCloudResponseCB callback);
  * @test_data       method = "POST"
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call OCSaveTrustCertChain
@@ -197,7 +199,7 @@ TEST_F(CSCsdkPolicyCheckTest_stc, OCCloudAclPolicyCheckPostAllowed_SRC_RV_P)
 {
     if (!m_CloudAclHelper.cloudAclPolicyCheck((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_subjectuuid.c_str(),
             CSCsdkCloudHelper::s_deviceId.c_str(), m_CloudAclHelper.POST_REQUEST.c_str(),
-            CSCsdkCloudHelper::s_href.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+            CSCsdkCloudHelper::s_href.c_str(), m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -215,7 +217,7 @@ TEST_F(CSCsdkPolicyCheckTest_stc, OCCloudAclPolicyCheckPostAllowed_SRC_RV_P)
  * @objective       Test OCCloudAclPolicyCheck positively with regular data
  * @target          OCStackResult OCCloudAclPolicyCheck(void* ctx, const char *subjectId, const char *deviceId, const char *method, const char *uri, const OCDevAddr *endPoint, OCCloudResponseCB callback);
  * @test_data       method = "DELETE"
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call OCSaveTrustCertChain
@@ -231,7 +233,7 @@ TEST_F(CSCsdkPolicyCheckTest_stc, OCCloudAclPolicyCheckDeleteAllowed_SRC_RV_P)
 {
     if (!m_CloudAclHelper.cloudAclPolicyCheck((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_subjectuuid.c_str(),
             CSCsdkCloudHelper::s_deviceId.c_str(), m_CloudAclHelper.DELETE_REQUEST.c_str(),
-            CSCsdkCloudHelper::s_href.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+            CSCsdkCloudHelper::s_href.c_str(), m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }

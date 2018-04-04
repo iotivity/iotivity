@@ -41,7 +41,7 @@ protected:
     ByteArray_t m_trustCertChainArray =
     { 0, 0 };
 
-    OCDevAddr m_endPoint = {0, 0};
+    OCDevAddr m_endPoint;
 
     stringArray_t *m_memberArray = NULL;
     stringArray_t *m_deviceArray = NULL;
@@ -114,7 +114,7 @@ protected:
  * @objective       Test OCCloudAclCreateGroup positively with regular data
  * @target          OCStackResult OCCloudAclCreateGroup(void* ctx, const char *groupType,const char *groupMasterId, const OCDevAddr *endPoint,OCCloudResponseCB callback)
  * @test_data       regular data for target API
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix wtih true param
@@ -147,7 +147,7 @@ TEST_F(CSCsdkGroupTest_stc, OCCloudAclCreateGroup_SRC_P)
  * @objective       Test OCCloudAclFindMyGroup positively with regular data
  * @target          OCStackResult OCCloudAclFindMyGroup(void* ctx, const char *memberId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data for target API
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix wtih true param
@@ -188,7 +188,7 @@ TEST_F(CSCsdkGroupTest_stc, OCCloudAclFindMyGroup_SRC_P)
  * @objective       Test OCCloudAclFindMyGroup positively with regular data
  * @target          OCStackResult OCCloudAclDeleteGroup(void* ctx, const char *groupId, const char *groupMasterId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data for target API
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix wtih true param
@@ -229,7 +229,7 @@ TEST_F(CSCsdkGroupTest_stc, OCCloudAclDeleteGroup_SRC_P)
  * @objective       Test OCCloudAclGroupGetInfo positively with regular data
  * @target          OCStackResult OCCloudAclGroupGetInfo(void* ctx, const char *groupId, const char *memberId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data for target API
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix wtih true param
@@ -271,7 +271,7 @@ TEST_F(CSCsdkGroupTest_stc, OCCloudAclGroupGetInfo_SRC_P)
  * @objective       Test OCCloudAclInviteUser positively with regular data
  * @target          OCStackResult OCCloudAclInviteUser(void* ctx, const char *userId, const stringArray_t *memberIds, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data for target API
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix wtih true param
@@ -322,7 +322,7 @@ TEST_F(CSCsdkGroupTest_stc, OCCloudAclInviteUser_SRC_P)
  * @objective       Test OCCloudAclCancelInvitation positively with regular data
  * @target          OCStackResult OCCloudAclCancelInvitation(void* ctx, const char *userId, const char *groupId, const char *memberId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data for target API
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix wtih true param
@@ -382,7 +382,7 @@ TEST_F(CSCsdkGroupTest_stc, OCCloudCancelInvitation_SRC_P)
  * @objective       Test OCCloudAclShareDeviceIntoGroup positively with regular data
  * @target          OCStackResult OCCloudAclShareDeviceIntoGroup(void* ctx, const char *groupId, const stringArray_t *memberIds, const stringArray_t *deviceIds, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data for target API
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix wtih true param
@@ -451,7 +451,7 @@ TEST_F(CSCsdkGroupTest_stc, OCCloudAclShareDeviceIntoGroup_SRC_P)
  * @objective       Test OCCloudAclDeleteDeviceFromGroup positively with regular data
  * @target          OCStackResult OCCloudAclDeleteDeviceFromGroup(void* ctx, const char *groupId, const stringArray_t *memberIds, const stringArray_t *deviceIds, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data for target API
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix wtih true param

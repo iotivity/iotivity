@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 20167 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *

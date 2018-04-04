@@ -50,6 +50,8 @@
 #include "OCRepresentation.h"
 
 #ifdef __SECURED__
+#include "ca_adapter_net_ssl.h"
+#include "CAManager.h"
 #include "casecurityinterface.h"
 #include "cathreadpool.h"
 #include "casecurityinterface.h"
@@ -59,11 +61,11 @@
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "pmtypes.h"
-#include "securevirtualresourcetypes.h"
 #include "srmutility.h"
 #include "ssl_ciphersuites.h"
 #include "utils.h"
 #include "utlist.h"
+#include "auth.h"
 #endif
 
 #include "Configuration.h"
@@ -112,11 +114,15 @@ public:
     static std::string getDefaultIp();
     static std::string getDefaultHostAddess();
     static OCDevAddr getDefaultEndPoint();
+#ifdef __SECURED__
+    static OicCloud_t* getCloudServer();
+#endif
     static char* get_authenticity_token(const char* resposeTxt);
     static void create_file(string filename, string data);
     static char* get_auth_token_code(const char* responseTxt, char *code);
-    static char* getgithubcode(const char gitlogin[], const char gitpassword[], char *code);
+    static char const* getgithubcode(const char gitlogin[], const char gitpassword[], char *code);
     static void printRepresentation(OCRepresentation rep);
+    static OCRepresentation parseOCClientResponse(OCClientResponse* clientResponse);
     static std::string readfile(std::string filename);
     static char* getGitLoginAuthCodeMain();
     static bool signUp(OCAccountManager::Ptr accountMgr);

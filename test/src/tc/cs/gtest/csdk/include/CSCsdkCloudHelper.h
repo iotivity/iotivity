@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 20167 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -103,7 +103,7 @@ public:
             OCStackResult expectedResult);
 
     bool cloudCertificateIssueRequest(void* ctx,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -116,7 +116,7 @@ public:
             OCStackResult expectedResult);
 
     bool cloudGetCRL(void* ctx,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -126,7 +126,7 @@ public:
             const char *nextUpdate,
             const OCByteString *crl,
             const stringArray_t *serialNumbers,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -134,28 +134,28 @@ public:
     bool cloudAclIdCreate(void* ctx,
             const char *ownerId,
             const char *deviceId,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
 
     bool cloudAclIdDelete(void* ctx,
             const char *aclId,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
 
     bool cloudAclIndividualGetInfo(void* ctx,
             const char *aclId,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
 
     bool cloudGetAclIdByDevice(void* ctx,
             const char *deviceId,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             std::string &devAclID,
             OCStackResult expectedResult,
@@ -164,7 +164,7 @@ public:
     bool cloudAclIndividualAclUpdate(void* ctx,
             const char *aclId,
             cloudAce_t *aces,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -173,14 +173,14 @@ public:
             const char *aclId,
             char *aceId,
             const cloudAce_t *aces,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
 
     bool cloudAclAcesDelete(void* ctx,
             const char *aclId,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -188,7 +188,7 @@ public:
     bool cloudAclIndividualAceDelete(void* ctx,
             const char *aclId,
             const char *aceId,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -197,7 +197,7 @@ public:
     bool cloudAclCreateGroup(void* ctx,
             const char *groupType,
             const char *groupMasterId,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             std::string &groupId,
             OCStackResult expectedResult,
@@ -205,7 +205,7 @@ public:
 
     bool cloudAclFindMyGroup(void* ctx,
             const char *memberId,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -213,7 +213,7 @@ public:
     bool cloudAclDeleteGroup(void* ctx,
             const char *groupId,
             const char *groupMasterId,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -221,7 +221,7 @@ public:
     bool cloudAclGroupGetInfo(void* ctx,
             const char *groupId,
             const char *memberId,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -230,7 +230,7 @@ public:
             const char *userId,
             const stringArray_t *groupIds,
             const stringArray_t *memberIds,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -239,7 +239,7 @@ public:
             const char *userId,
             const char *groupId,
             const char *memberId,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -248,7 +248,7 @@ public:
             const char *groupId,
             const stringArray_t *memberIds,
             const stringArray_t *deviceIds,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -257,7 +257,7 @@ public:
             const char *groupId,
             const stringArray_t *memberIds,
             const stringArray_t *deviceIds,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -265,7 +265,7 @@ public:
 //D2D Client 2
     bool cloudAclGetInvitation(void* ctx,
             const char *userId,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -273,21 +273,21 @@ public:
     bool cloudAclDeleteInvitation(void* ctx,
             const char *userId,
             const char *groupId,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
 
     bool cloudAclJoinToInvitedGroup(void* ctx,
             const char *groupId,
-            OCDevAddr *endPoint,
+            char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
 
     bool cloudAclObserveGroup(void* ctx,
             const char *groupId,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -297,7 +297,7 @@ public:
             const char *deviceId,
             const char *method,
             const char *uri,
-            const OCDevAddr *endPoint,
+            const char *endPoint,
             OCCloudResponseCB callback,
             OCStackResult expectedResult,
             bool checkCallback = true);
@@ -312,12 +312,6 @@ public:
     static void aclResponseCB(void* ctx, OCClientResponse* response, void* data);
 
     static void createGroupResponseCB(void* ctx, OCClientResponse* response, void* data);
-
-//    static void cloudResponseCB(void* ctx, OCStackResult result, void* data);
-//
-//    static void aclResponseCB(void* ctx, OCStackResult result, void* data);
-//
-//    static void createGroupResponseCB(void* ctx, OCStackResult result, void* data);
 
     static void onPublish(const OCRepresentation &, const int &eCode);
 

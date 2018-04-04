@@ -73,7 +73,7 @@ protected:
  * @objective       Test OCSaveTrustCertChain positively with regular data
  * @target          OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
  * @test_data       regular data for target API
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix wtih true param
@@ -105,8 +105,7 @@ TEST_F(CSCsdkCloudTest_stc, OCSaveTrustCertChain_SRC_RV_P)
  * @objective       Test OCCloudGetCRL positively with regular data
  * @target          OCStackResult OCCloudGetCRL(void* ctx, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data for target API
- * @pre_condition   none
- * @procedure       1. call OCRegisterPersistentStorageHandler
+ * @pre_condition   StorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix
  *                  4. call CASelectCipherSuite
@@ -132,9 +131,9 @@ TEST_F(CSCsdkCloudTest_stc, OCCloudGetCRL_SRC_RV_P)
         return;
     }
 
-    OCDevAddr endPoint = CSCsdkUtilityHelper::getOCDevAddrEndPoint();
+    OicCloud_t* pCloud = CloudCommonUtil::getCloudServer();
 
-    if (!m_CloudAclHelper.cloudGetCRL((void*) CTX_GET_CRL, &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudGetCRL((void*) CTX_GET_CRL, pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -153,7 +152,7 @@ TEST_F(CSCsdkCloudTest_stc, OCCloudGetCRL_SRC_RV_P)
  * @objective       Test OCCloudGetCRL positively with OCCloudResponseCB as NULL
  * @target          OCStackResult OCCloudGetCRL(void* ctx, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       OCCloudResponseCB as NULL
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix
@@ -180,9 +179,9 @@ TEST_F(CSCsdkCloudTest_stc, OCCloudGetCRLCb_NV_P)
         return;
     }
 
-    OCDevAddr endPoint = CSCsdkUtilityHelper::getOCDevAddrEndPoint();
+    OicCloud_t* pCloud = CloudCommonUtil::getCloudServer();
 
-    if (!m_CloudAclHelper.cloudGetCRL((void*) CTX_GET_CRL, &endPoint, NULL, OC_STACK_OK, false))
+    if (!m_CloudAclHelper.cloudGetCRL((void*) CTX_GET_CRL, pCloud->cis, NULL, OC_STACK_OK, false))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -201,7 +200,7 @@ TEST_F(CSCsdkCloudTest_stc, OCCloudGetCRLCb_NV_P)
  * @objective       Test OCCloudCertificateIssueRequest positively with regular data
  * @target          OCStackResult OCCloudCertificateIssueRequest(void* ctx, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix
@@ -228,9 +227,9 @@ TEST_F(CSCsdkCloudTest_stc, OCCloudCertificateIssueRequest_SRC_RV_P)
         return;
     }
 
-    OCDevAddr endPoint = CSCsdkUtilityHelper::getOCDevAddrEndPoint();
+    OicCloud_t* pCloud = CloudCommonUtil::getCloudServer();
 
-    if (!m_CloudAclHelper.cloudCertificateIssueRequest((void*) CTX_CERT_REQ_ISSUE, &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
+    if (!m_CloudAclHelper.cloudCertificateIssueRequest((void*) CTX_CERT_REQ_ISSUE, pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -249,7 +248,7 @@ TEST_F(CSCsdkCloudTest_stc, OCCloudCertificateIssueRequest_SRC_RV_P)
  * @objective       Test OCCloudCertificateIssueRequest positively with OCCloudResponseCB as NULL
  * @target          OCStackResult OCCloudCertificateIssueRequest(void* ctx, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       OCCloudResponseCB as NULL
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix
@@ -276,9 +275,9 @@ TEST_F(CSCsdkCloudTest_stc, OCCloudCertificateIssueRequest_CB_NV_P)
         return;
     }
 
-    OCDevAddr endPoint = CSCsdkUtilityHelper::getOCDevAddrEndPoint();
+    OicCloud_t* pCloud = CloudCommonUtil::getCloudServer();
 
-    if (!m_CloudAclHelper.cloudCertificateIssueRequest((void*) CTX_CERT_REQ_ISSUE, &endPoint, NULL, OC_STACK_OK, false))
+    if (!m_CloudAclHelper.cloudCertificateIssueRequest((void*) CTX_CERT_REQ_ISSUE, pCloud->cis, NULL, OC_STACK_OK, false))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }

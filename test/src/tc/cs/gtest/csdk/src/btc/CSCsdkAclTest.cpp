@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -31,7 +31,8 @@ protected:
     uint16_t m_credId = 0;
     ByteArray_t m_trustCertChainArray =
     { 0, 0 };
-    OCDevAddr m_endPoint = {0, 0};
+    OCDevAddr m_endPoint;
+    OicCloud_t* m_pCloud = NULL;
     cloudAce_t *m_aces = NULL;
 
 
@@ -53,6 +54,7 @@ protected:
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
         m_endPoint = CloudCommonUtil::getDefaultEndPoint();
+        m_pCloud = CloudCommonUtil::getCloudServer();
         m_aces = CSCsdkUtilityHelper::createCloudAces();
 
 
@@ -90,7 +92,7 @@ protected:
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_btc, OCCloudGetAclIdByDeviceDevId_NV_N)
 {
-    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV, NULL, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, CSCsdkCloudHelper::s_aclId, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -138,7 +140,7 @@ TEST_F(CSCsdkAclTest_btc, OCCloudGetAclIdByDeviceDevAddr_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_btc, OCCloudAclIdCreateOwnerId_NV_N)
 {
-    if (!m_CloudAclHelper.cloudAclIdCreate((void*) CTX_INDIVIDUAL_GET_INFO, NULL, DEFAULT_DEV_ID_CS_01, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudAclIdCreate((void*) CTX_INDIVIDUAL_GET_INFO, NULL, DEFAULT_DEV_ID_CS_01, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -162,7 +164,7 @@ TEST_F(CSCsdkAclTest_btc, OCCloudAclIdCreateOwnerId_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_btc, OCCloudAclIdCreateDevId_NV_N)
 {
-    if (!m_CloudAclHelper.cloudAclIdCreate((void*) CTX_INDIVIDUAL_GET_INFO, DEFAULT_OWNER_ID, NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudAclIdCreate((void*) CTX_INDIVIDUAL_GET_INFO, DEFAULT_OWNER_ID, NULL, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -210,7 +212,7 @@ TEST_F(CSCsdkAclTest_btc, OCCloudAclIdCreateDevAddr_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualGetInfoAclId_NV_N)
 {
-    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, NULL, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -260,7 +262,7 @@ TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualGetInfoDevAddr_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualAclUpdateAclId_NV_N)
 {
-    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, NULL, m_aces, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, NULL, m_aces, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -284,7 +286,7 @@ TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualAclUpdateAclId_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualAclUpdateCloudAce_t_NV_N)
 {
-    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), NULL, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -334,7 +336,7 @@ TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualAclUpdateDevAddr_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualAceUpdateAclId_NV_N)
 {
-    if (!m_CloudAclHelper.cloudAclIndividualAceUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, NULL, CSCsdkCloudHelper::s_aceid.c_str(), m_aces, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudAclIndividualAceUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, NULL, (char*)CSCsdkCloudHelper::s_aceid.c_str(), m_aces, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -358,7 +360,7 @@ TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualAceUpdateAclId_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualAceUpdateAceId_NV_N)
 {
-    if (!m_CloudAclHelper.cloudAclIndividualAceUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), NULL, m_aces, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudAclIndividualAceUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), NULL, m_aces, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -382,7 +384,7 @@ TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualAceUpdateAceId_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualAceUpdateAces_NV_N)
 {
-    if (!m_CloudAclHelper.cloudAclIndividualAceUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), CSCsdkCloudHelper::s_aceid.c_str(), NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudAclIndividualAceUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), (char*)CSCsdkCloudHelper::s_aceid.c_str(), NULL, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -406,7 +408,7 @@ TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualAceUpdateAces_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualAceUpdateDevAddr_NV_N)
 {
-    if (!m_CloudAclHelper.cloudAclIndividualAceUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), CSCsdkCloudHelper::s_aceid.c_str(), m_aces, NULL, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudAclIndividualAceUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE, CSCsdkCloudHelper::s_aclId.c_str(), (char*)CSCsdkCloudHelper::s_aceid.c_str(), m_aces, NULL, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }

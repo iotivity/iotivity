@@ -431,7 +431,7 @@ bool CSCsdkCloudHelper::saveTrustCertChain(uint8_t *trustCertChain, size_t chain
     return true;
 }
 
-bool CSCsdkCloudHelper::cloudCertificateIssueRequest(void* ctx, const OCDevAddr *endPoint,
+bool CSCsdkCloudHelper::cloudCertificateIssueRequest(void* ctx, const char *endPoint,
         OCCloudResponseCB callback, OCStackResult expectedResult, bool checkCallback)
 {
     __FUNC_IN__
@@ -460,7 +460,7 @@ bool CSCsdkCloudHelper::cloudCertificateIssueRequest(void* ctx, const OCDevAddr 
     return true;
 }
 
-bool CSCsdkCloudHelper::cloudGetCRL(void* ctx, const OCDevAddr *endPoint,
+bool CSCsdkCloudHelper::cloudGetCRL(void* ctx, const char *endPoint,
         OCCloudResponseCB callback, OCStackResult expectedResult, bool checkCallback)
 {
     __FUNC_IN__
@@ -491,7 +491,7 @@ bool CSCsdkCloudHelper::cloudGetCRL(void* ctx, const OCDevAddr *endPoint,
 }
 
 bool CSCsdkCloudHelper::cloudPostCRL(void* ctx, const char *thisUpdate, const char *nextUpdate,
-        const OCByteString *crl, const stringArray_t *serialNumbers, const OCDevAddr *endPoint,
+        const OCByteString *crl, const stringArray_t *serialNumbers, const char *endPoint,
         OCCloudResponseCB callback, OCStackResult expectedResult, bool checkCallback)
 {
     __FUNC_IN__
@@ -523,7 +523,7 @@ bool CSCsdkCloudHelper::cloudPostCRL(void* ctx, const char *thisUpdate, const ch
 }
 
 bool CSCsdkCloudHelper::cloudAclIdCreate(void* ctx, const char *ownerId, const char *deviceId,
-        const OCDevAddr *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
+        const char *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
         bool checkCallback)
 {
     __FUNC_IN__
@@ -553,7 +553,7 @@ bool CSCsdkCloudHelper::cloudAclIdCreate(void* ctx, const char *ownerId, const c
     return true;
 }
 
-bool CSCsdkCloudHelper::cloudAclIdDelete(void* ctx, const char *aclId, const OCDevAddr *endPoint,
+bool CSCsdkCloudHelper::cloudAclIdDelete(void* ctx, const char *aclId, const char *endPoint,
         OCCloudResponseCB callback, OCStackResult expectedResult, bool checkCallback)
 {
     __FUNC_IN__
@@ -584,7 +584,7 @@ bool CSCsdkCloudHelper::cloudAclIdDelete(void* ctx, const char *aclId, const OCD
 }
 
 bool CSCsdkCloudHelper::cloudGetAclIdByDevice(void* ctx, const char *deviceId,
-        const OCDevAddr *endPoint, OCCloudResponseCB callback, std::string &devAclID,
+        const char *endPoint, OCCloudResponseCB callback, std::string &devAclID,
         OCStackResult expectedResult, bool checkCallback)
 {
     __FUNC_IN__
@@ -615,7 +615,7 @@ bool CSCsdkCloudHelper::cloudGetAclIdByDevice(void* ctx, const char *deviceId,
 }
 
 bool CSCsdkCloudHelper::cloudAclIndividualGetInfo(void* ctx, const char *aclId,
-        const OCDevAddr *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
+        const char *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
         bool checkCallback)
 {
     __FUNC_IN__
@@ -646,7 +646,7 @@ bool CSCsdkCloudHelper::cloudAclIndividualGetInfo(void* ctx, const char *aclId,
 }
 
 bool CSCsdkCloudHelper::cloudAclIndividualAclUpdate(void* ctx, const char *aclId, cloudAce_t *aces,
-        const OCDevAddr *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
+        const char *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
         bool checkCallback)
 {
     __FUNC_IN__
@@ -683,7 +683,7 @@ bool CSCsdkCloudHelper::cloudAclIndividualAclUpdate(void* ctx, const char *aclId
 }
 
 bool CSCsdkCloudHelper::cloudAclCreateGroup(void* ctx, const char *groupType,
-        const char *groupMasterId, const OCDevAddr *endPoint, OCCloudResponseCB callback,
+        const char *groupMasterId, const char *endPoint, OCCloudResponseCB callback,
         std::string &groupId, OCStackResult expectedResult, bool checkCallback)
 {
     __FUNC_IN__
@@ -716,7 +716,7 @@ bool CSCsdkCloudHelper::cloudAclCreateGroup(void* ctx, const char *groupType,
 }
 
 bool CSCsdkCloudHelper::cloudAclFindMyGroup(void* ctx, const char *memberId,
-        const OCDevAddr *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
+        const char *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
         bool checkCallback)
 {
     __FUNC_IN__
@@ -747,7 +747,7 @@ bool CSCsdkCloudHelper::cloudAclFindMyGroup(void* ctx, const char *memberId,
 }
 
 bool CSCsdkCloudHelper::cloudAclDeleteGroup(void* ctx, const char *groupId,
-        const char *groupMasterId, const OCDevAddr *endPoint, OCCloudResponseCB callback,
+        const char *groupMasterId, const char *endPoint, OCCloudResponseCB callback,
         OCStackResult expectedResult, bool checkCallback)
 {
     __FUNC_IN__
@@ -778,7 +778,7 @@ bool CSCsdkCloudHelper::cloudAclDeleteGroup(void* ctx, const char *groupId,
 }
 
 bool CSCsdkCloudHelper::cloudAclJoinToInvitedGroup(void* ctx, const char *groupId,
-        OCDevAddr *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
+        char *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
         bool checkCallback)
 {
     __FUNC_IN__
@@ -809,7 +809,7 @@ bool CSCsdkCloudHelper::cloudAclJoinToInvitedGroup(void* ctx, const char *groupI
 }
 
 bool CSCsdkCloudHelper::cloudAclObserveGroup(void* ctx, const char *groupId,
-        const OCDevAddr *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
+        const char *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
         bool checkCallback)
 {
     __FUNC_IN__
@@ -840,7 +840,7 @@ bool CSCsdkCloudHelper::cloudAclObserveGroup(void* ctx, const char *groupId,
 }
 
 bool CSCsdkCloudHelper::cloudAclShareDeviceIntoGroup(void* ctx, const char *groupId,
-        const stringArray_t *memberIds, const stringArray_t *deviceIds, const OCDevAddr *endPoint,
+        const stringArray_t *memberIds, const stringArray_t *deviceIds, const char *endPoint,
         OCCloudResponseCB callback, OCStackResult expectedResult, bool checkCallback)
 {
     __FUNC_IN__
@@ -872,7 +872,7 @@ bool CSCsdkCloudHelper::cloudAclShareDeviceIntoGroup(void* ctx, const char *grou
 }
 
 bool CSCsdkCloudHelper::cloudAclDeleteDeviceFromGroup(void* ctx, const char *groupId,
-        const stringArray_t *memberIds, const stringArray_t *deviceIds, const OCDevAddr *endPoint,
+        const stringArray_t *memberIds, const stringArray_t *deviceIds, const char *endPoint,
         OCCloudResponseCB callback, OCStackResult expectedResult, bool checkCallback)
 {
     __FUNC_IN__
@@ -904,7 +904,7 @@ bool CSCsdkCloudHelper::cloudAclDeleteDeviceFromGroup(void* ctx, const char *gro
 }
 
 bool CSCsdkCloudHelper::cloudAclGroupGetInfo(void* ctx, const char *groupId, const char *memberId,
-        const OCDevAddr *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
+        const char *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
         bool checkCallback)
 {
     __FUNC_IN__
@@ -935,7 +935,7 @@ bool CSCsdkCloudHelper::cloudAclGroupGetInfo(void* ctx, const char *groupId, con
 }
 
 bool CSCsdkCloudHelper::cloudAclIndividualAceUpdate(void* ctx, const char *aclId, char *aceId,
-        const cloudAce_t *aces, const OCDevAddr *endPoint, OCCloudResponseCB callback,
+        const cloudAce_t *aces, const char *endPoint, OCCloudResponseCB callback,
         OCStackResult expectedResult,
         bool checkCallback)
 {
@@ -972,7 +972,7 @@ bool CSCsdkCloudHelper::cloudAclIndividualAceUpdate(void* ctx, const char *aclId
     return true;
 }
 
-bool CSCsdkCloudHelper::cloudAclAcesDelete(void* ctx, const char *aclId, const OCDevAddr *endPoint,
+bool CSCsdkCloudHelper::cloudAclAcesDelete(void* ctx, const char *aclId, const char *endPoint,
         OCCloudResponseCB callback, OCStackResult expectedResult,
         bool checkCallback)
 {
@@ -1009,7 +1009,7 @@ bool CSCsdkCloudHelper::cloudAclAcesDelete(void* ctx, const char *aclId, const O
 }
 
 bool CSCsdkCloudHelper::cloudAclIndividualAceDelete(void* ctx, const char *aclId, const char *aceId,
-        const OCDevAddr *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
+        const char *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
         bool checkCallback)
 {
     __FUNC_IN__
@@ -1046,7 +1046,7 @@ bool CSCsdkCloudHelper::cloudAclIndividualAceDelete(void* ctx, const char *aclId
 }
 
 bool CSCsdkCloudHelper::cloudAclInviteUser(void* ctx, const char *userId,
-        const stringArray_t *groupIds, const stringArray_t *memberIds, const OCDevAddr *endPoint,
+        const stringArray_t *groupIds, const stringArray_t *memberIds, const char *endPoint,
         OCCloudResponseCB callback, OCStackResult expectedResult, bool checkCallback)
 {
     __FUNC_IN__
@@ -1078,7 +1078,7 @@ bool CSCsdkCloudHelper::cloudAclInviteUser(void* ctx, const char *userId,
 }
 
 bool CSCsdkCloudHelper::cloudAclGetInvitation(void* ctx, const char *userId,
-        const OCDevAddr *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
+        const char *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
         bool checkCallback)
 {
     __FUNC_IN__
@@ -1109,7 +1109,7 @@ bool CSCsdkCloudHelper::cloudAclGetInvitation(void* ctx, const char *userId,
 }
 
 bool CSCsdkCloudHelper::cloudAclDeleteInvitation(void* ctx, const char *userId, const char *groupId,
-        const OCDevAddr *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
+        const char *endPoint, OCCloudResponseCB callback, OCStackResult expectedResult,
         bool checkCallback)
 {
     __FUNC_IN__
@@ -1140,7 +1140,7 @@ bool CSCsdkCloudHelper::cloudAclDeleteInvitation(void* ctx, const char *userId, 
 }
 
 bool CSCsdkCloudHelper::cloudAclCancelInvitation(void* ctx, const char *userId, const char *groupId,
-        const char *memberId, const OCDevAddr *endPoint, OCCloudResponseCB callback,
+        const char *memberId, const char *endPoint, OCCloudResponseCB callback,
         OCStackResult expectedResult, bool checkCallback)
 {
     __FUNC_IN__
@@ -1172,7 +1172,7 @@ bool CSCsdkCloudHelper::cloudAclCancelInvitation(void* ctx, const char *userId, 
 }
 
 bool CSCsdkCloudHelper::cloudAclPolicyCheck(void* ctx, const char *subjectId, const char *deviceId,
-        const char *method, const char *uri, const OCDevAddr *endPoint, OCCloudResponseCB callback,
+        const char *method, const char *uri, const char *endPoint, OCCloudResponseCB callback,
         OCStackResult expectedResult, bool checkCallback)
 {
     __FUNC_IN__
@@ -1239,7 +1239,7 @@ void CSCsdkCloudHelper::cloudResponseCB(void* ctx, OCClientResponse* response, v
         printRepresentation(parseOCClientResponse(response));
     }
 
-    if (OC_STACK_RESOURCE_CHANGED == response->result
+    if (OC_STACK_RESOURCE_CHANGED >= response->result
             || OC_STACK_DUPLICATE_REQUEST == response->result)
     {
         s_isCbInvoked = true;
@@ -1261,7 +1261,7 @@ void CSCsdkCloudHelper::aclResponseCB(void* ctx, OCClientResponse* response, voi
         printRepresentation(parseOCClientResponse(response));
     }
 
-    if (OC_STACK_RESOURCE_CHANGED == response->result
+    if (OC_STACK_RESOURCE_CHANGED >= response->result
             || OC_STACK_DUPLICATE_REQUEST == response->result)
     {
         s_isCbInvoked = true;

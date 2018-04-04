@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -104,7 +104,7 @@ protected:
  * @objective       Test OCCloudAclGetInvitation positively with regular data
  * @target          OCStackResult OCCloudAclGetInvitation(void* ctx, const char *userId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data for target API
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix wtih true param
@@ -136,7 +136,7 @@ TEST_F(CSCsdkGetInvitationTest_stc, OCCloudAclGetInvitation_SRC_P)
  * @objective       Test OCCloudAclGetInvitation positively with regular data
  * @target          OCStackResult OCCloudAclDeleteInvitation(void* ctx, const char *userId, const char *groupId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data for target API
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix wtih true param
@@ -175,7 +175,7 @@ TEST_F(CSCsdkGetInvitationTest_stc, OCCloudAclDeleteInvitation_SRC_P)
  * @objective       Test OCCloudAclJoinToInvitedGroup positively with regular data
  * @target          OCStackResult OCCloudAclJoinToInvitedGroup(void* ctx, const char *groupId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data for target API
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix wtih true param
@@ -215,7 +215,7 @@ TEST_F(CSCsdkGetInvitationTest_stc, OCCloudAclJoinToInvitedGroup_SRC_P)
  * @objective       Test OCCloudAclObserveGroup positively with regular data
  * @target          OCStackResult OCCloudAclObserveGroup(void* ctx,const char *groupId, const OCDevAddr *endPoint, OCCloudResponseCB callback)
  * @test_data       regular data for target API
- * @pre_condition   none
+ * @pre_condition   Run iotivity_cs_server
  * @procedure       1. call OCRegisterPersistentStorageHandler
  *                  2. call OCInit
  *                  3. call setCoapPrefix wtih true param

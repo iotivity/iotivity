@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -28,7 +28,8 @@ protected:
     CSCsdkCloudHelper m_CloudAclHelper;
     string m_hostAddress = COAP_HOST_ADDRESS;
     OCAccountManager::Ptr m_accountMgrControlee = nullptr;
-    OCDevAddr m_endPoint = {0, 0};
+    OCDevAddr m_endPoint;
+    OicCloud_t* m_pCloud = NULL;
     virtual void SetUp()
     {
         if (!m_CloudAclHelper.initCloudACLClient())
@@ -39,6 +40,7 @@ protected:
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
         m_endPoint = CloudCommonUtil::getDefaultEndPoint();
+        m_pCloud = CloudCommonUtil::getCloudServer();
         m_accountMgrControlee = OCPlatform::constructAccountManagerObject(m_hostAddress,
                 CT_ADAPTER_TCP);
     }
@@ -68,7 +70,7 @@ TEST_F(CSCsdkPolicyCheckTest_btc, OCCloudAclPolicyCheckGetAllowedSubjectId_NV_N)
 {
     if (!m_CloudAclHelper.cloudAclPolicyCheck((void*) CTX_INDIVIDUAL_GET_INFO, NULL,
                     CSCsdkCloudHelper::s_deviceId.c_str(), m_CloudAclHelper.GET_REQUEST.c_str(),
-                    CSCsdkCloudHelper::s_href.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+                    CSCsdkCloudHelper::s_href.c_str(), m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -94,7 +96,7 @@ TEST_F(CSCsdkPolicyCheckTest_btc, OCCloudAclPolicyCheckGetAllowedDeviceId_NV_N)
 {
     if (!m_CloudAclHelper.cloudAclPolicyCheck((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_subjectuuid.c_str(),
                     NULL, m_CloudAclHelper.GET_REQUEST.c_str(),
-                    CSCsdkCloudHelper::s_href.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+                    CSCsdkCloudHelper::s_href.c_str(), m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -120,7 +122,7 @@ TEST_F(CSCsdkPolicyCheckTest_btc, OCCloudAclPolicyCheckGetAllowedMethod_NV_N)
 {
     if (!m_CloudAclHelper.cloudAclPolicyCheck((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_subjectuuid.c_str(),
                     CSCsdkCloudHelper::s_deviceId.c_str(), NULL,
-                    CSCsdkCloudHelper::s_href.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+                    CSCsdkCloudHelper::s_href.c_str(), m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -146,7 +148,7 @@ TEST_F(CSCsdkPolicyCheckTest_btc, OCCloudAclPolicyCheckGetAllowedUri_NV_N)
 {
     if (!m_CloudAclHelper.cloudAclPolicyCheck((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_subjectuuid.c_str(),
                     CSCsdkCloudHelper::s_deviceId.c_str(), m_CloudAclHelper.GET_REQUEST.c_str(),
-                    NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+                    NULL, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }

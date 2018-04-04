@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -124,9 +124,9 @@ TEST_F(CSCsdkCloudTest_btc, OCCloudGetCRLDev_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkCloudTest_btc, OCCloudPostCRLThisUpdate_NV_N)
 {
-    OCDevAddr endPoint = CSCsdkUtilityHelper::getOCDevAddrEndPoint();
+    OicCloud_t* pCloud = CloudCommonUtil::getCloudServer();
 
-    if (!m_CloudAclHelper.cloudPostCRL((void*)CTX_POST_CRL, NULL, CRL_NEXT_DATE.c_str(), NULL, NULL, &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudPostCRL((void*)CTX_POST_CRL, NULL, CRL_NEXT_DATE.c_str(), NULL, NULL, pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -150,9 +150,9 @@ TEST_F(CSCsdkCloudTest_btc, OCCloudPostCRLThisUpdate_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkCloudTest_btc, OCCloudPostCRLNextUpdate_NV_N)
 {
-    OCDevAddr endPoint = CSCsdkUtilityHelper::getOCDevAddrEndPoint();
+    OicCloud_t* pCloud = CloudCommonUtil::getCloudServer();
 
-    if (!m_CloudAclHelper.cloudPostCRL((void*)CTX_POST_CRL, CRL_THIS_UPDATE.c_str(), NULL, NULL, NULL, &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudPostCRL((void*)CTX_POST_CRL, CRL_THIS_UPDATE.c_str(), NULL, NULL, NULL, pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }

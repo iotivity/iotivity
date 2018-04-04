@@ -69,6 +69,7 @@ iotivity_common_includes_paths = [
     iotivity_root + '/resource/c_common/oic_string/include',
     iotivity_root + '/resource/oc_logger/include',
     iotivity_root + '/resource/csdk/logger/include/experimental',
+    iotivity_root + '/resource/csdk/stack/include/experimental',
     iotivity_root + '/extlibs/tinycbor/tinycbor/src',
     iotivity_root + '/resource/include',
     iotivity_root + '/resource/csdk/include',
@@ -76,12 +77,31 @@ iotivity_common_includes_paths = [
     iotivity_root + '/out/linux/' + target_arch + '/' + release_dir + '/resource/c_common'
 ]
 
+if env_linux.get('SECURED') == '1':
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/c_common/octhread/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/connectivity/inc')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/connectivity/api')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/connectivity/common/inc')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/provisioning/include/internal')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/provisioning/include/cloud')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/provisioning/include/oxm')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/provisioning/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/extlibs/mbedtls/mbedtls/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/extlibs/tinydtls')
+    iotivity_common_includes_paths.append(iotivity_root + '/extlibs/mbedtls/mbedtls/include/mbedtls')
+
+
 iotivity_test_include_paths = [ iotivity_test_root + '/include' ]
 extlibs_include_paths = [ iotivity_test_root + '/extlibs/gtest-1.7.0/include' ]
 
 common_linux_cppflags = ['-DLINUX', '-D__LINUX__']
 
 cppflags = Split('-s -pthread -march=native -std=gnu++0x -Wall')
+
+if env_linux.get('SECURED') == '1':
+    cppflags.append('-D__SECURED__ ')
 
 if env_linux.get('COVERAGE'):
     common_linux_cppflags.append('-finstrument-functions')

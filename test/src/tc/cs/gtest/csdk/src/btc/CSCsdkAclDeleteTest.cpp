@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -31,8 +31,9 @@ protected:
     uint16_t m_credId = 0;
     ByteArray_t m_trustCertChainArray =
     { 0, 0 };
-    OCDevAddr m_endPoint =
-    { 0, 0 };
+    OCDevAddr m_endPoint;
+    OicCloud_t* m_pCloud = NULL;
+
 
     virtual void SetUp()
     {
@@ -50,6 +51,7 @@ protected:
 
         m_hostAddress = CloudCommonUtil::getDefaultHostAddess();
         m_endPoint = CloudCommonUtil::getDefaultEndPoint();
+        m_pCloud = CloudCommonUtil::getCloudServer();
 
 #ifdef __TLS_ON__
         setCoapPrefix(true);
@@ -84,7 +86,7 @@ protected:
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclDeleteTest_btc, OCCloudAclIdDeleteAclid_NV_N)
 {
-    if (!m_CloudAclHelper.cloudAclIdDelete((void*) CTX_DELETE_ACL, NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudAclIdDelete((void*) CTX_DELETE_ACL, NULL, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -132,7 +134,7 @@ TEST_F(CSCsdkAclDeleteTest_btc, OCCloudAclIdDeleteDevAddr_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclDeleteTest_btc, OCCloudAclAcesDeleteAclId_NV_N)
 {
-    if (!m_CloudAclHelper.cloudAclAcesDelete((void*) CTX_ACES_DELETE, NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudAclAcesDelete((void*) CTX_ACES_DELETE, NULL, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -180,7 +182,7 @@ TEST_F(CSCsdkAclDeleteTest_btc, OCCloudAclAcesDeleteDevAddr_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclDeleteTest_btc, OCCloudAclIndividualAceDeleteAclId_NV_N)
 {
-    if (!m_CloudAclHelper.cloudAclIndividualAceDelete((void*) CTX_INDIVIDUAL_ACE_DELETE, NULL, CSCsdkCloudHelper::s_aceid.c_str(), &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudAclIndividualAceDelete((void*) CTX_INDIVIDUAL_ACE_DELETE, NULL, CSCsdkCloudHelper::s_aceid.c_str(), m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
@@ -204,7 +206,7 @@ TEST_F(CSCsdkAclDeleteTest_btc, OCCloudAclIndividualAceDeleteAclId_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclDeleteTest_btc, OCCloudAclIndividualAceDeleteAceId_NV_N)
 {
-    if (!m_CloudAclHelper.cloudAclIndividualAceDelete((void*) CTX_INDIVIDUAL_ACE_DELETE, CSCsdkCloudHelper::s_aclId.c_str(), NULL, &m_endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
+    if (!m_CloudAclHelper.cloudAclIndividualAceDelete((void*) CTX_INDIVIDUAL_ACE_DELETE, CSCsdkCloudHelper::s_aclId.c_str(), NULL, m_pCloud->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());
     }
