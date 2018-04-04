@@ -1500,7 +1500,10 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_getResourceHandleAtU
     OCResourceHandle resourceHandle;
 
     resourceHandle = OCGetResourceHandleAtUri(resourceUri.c_str());
-
+    if (nullptr == resourceHandle)
+    {
+        return nullptr;
+    }
     JniOcResourceHandle* jniHandle = new JniOcResourceHandle(resourceHandle);
     jlong handle = reinterpret_cast<jlong>(jniHandle);
     jobject jResourceHandle;
