@@ -3511,19 +3511,19 @@ int main(void)
         case _33_CHECK_LINK_STATUS_:
             if(checkLinkedStatus())
             {
-                OIC_LOG(ERROR, TAG, "_34_CHECK_LINK_STATUS_: error");
+                OIC_LOG(ERROR, TAG, "_33_CHECK_LINK_STATUS_: error");
             }
             break;
         case _34_SAVE_ACL_:
             if(saveAcl())
             {
-                OIC_LOG(ERROR, TAG, "_35_SAVE_ACL_: error");
+                OIC_LOG(ERROR, TAG, "_34_SAVE_ACL_: error");
             }
             break;
         case _35_PROVIS_CERT_:
             if (provisionCert())
             {
-                OIC_LOG(ERROR, TAG, "_36_PROVIS_CERT_: error");
+                OIC_LOG(ERROR, TAG, "_35_PROVIS_CERT_: error");
             }
             break;
 #ifdef WITH_CLOUD
@@ -3549,7 +3549,7 @@ int main(void)
         case _39_PROVIS_SEC_PROFILE:
             if (provisionSecurityProfileInfo())
             {
-                OIC_LOG(ERROR, TAG, "_37_PROVIS_SEC_PROFILE: error");
+                OIC_LOG(ERROR, TAG, "_39_PROVIS_SEC_PROFILE: error");
             }
             break;
         case _40_UNLINK_PAIR_DEVS_:

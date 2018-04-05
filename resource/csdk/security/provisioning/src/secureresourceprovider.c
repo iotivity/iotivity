@@ -3868,17 +3868,14 @@ static OCStackApplicationResult SRPGetSpResourceCB(void *ctx, OCDoHandle UNUSED,
     GetSpData_t *getSpData = (GetSpData_t*)ctx;
     OCGetSpResultCB resultCallback = getSpData->resultCallback;
 
-    if (clientResponse)
+    if (clientResponse && (OC_STACK_OK == clientResponse->result))
     {
-        if (OC_STACK_OK == clientResponse->result)
-        {
             uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
             size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
 
             OIC_LOG_BUFFER(DEBUG, TAG, payload, size);
 
             registerResultForGetSpResourceCB(getSpData, OC_STACK_OK, payload, size);
-        }
     }
     else
     {
