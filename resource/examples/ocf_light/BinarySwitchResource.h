@@ -112,8 +112,6 @@ private:
     std::string m_RESOURCE_TYPE[1]; // rt value (as an array)
     std::string m_RESOURCE_INTERFACE[2]; // interface if (as an array)
     std::string m_IF_UPDATE[3]; // updateble interfaces
-    int m_nr_resource_types;
-    int m_nr_resource_interfaces;
     OC::ObservationIds m_interestedObservers;
 
     // member variables for path: /binaryswitch
@@ -140,7 +138,7 @@ protected:
      */
     bool in_updatable_interfaces(std::string interface_name)
     {
-        for (int i=0; i<3; i++)
+        for (size_t i = 0; i < (sizeof(m_IF_UPDATE)/sizeof(m_IF_UPDATE[0])); i++)
         {
             if (m_IF_UPDATE[i].compare(interface_name) == 0)
                 return true;

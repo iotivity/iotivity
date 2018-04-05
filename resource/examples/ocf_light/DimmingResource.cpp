@@ -31,8 +31,6 @@ using namespace OC;
 namespace PH = std::placeholders;
 
 DimmingResource::DimmingResource(std::string resourceUri):
-        m_nr_resource_types{1},
-        m_nr_resource_interfaces{2},
         m_interestedObservers{},
         m_var_value_dimmingSetting{100},
         m_var_value_n{},
@@ -84,7 +82,7 @@ OCStackResult DimmingResource::registerResource(uint8_t resourceProperty)
     }
 
     /// add the additional resource types
-    for( int a = 1; a < m_nr_resource_types; a++ )
+    for( size_t a = 1; a < (sizeof(m_RESOURCE_TYPE)/sizeof(m_RESOURCE_TYPE[0])); a++ )
     {
         result = OCPlatform::bindTypeToResource(m_resourceHandle, m_RESOURCE_TYPE[a].c_str());
         if (OC_STACK_OK != result)
@@ -93,8 +91,9 @@ OCStackResult DimmingResource::registerResource(uint8_t resourceProperty)
             return result;
         }
     }
+
     // add the additional interfaces
-    for( int a = 1; a < m_nr_resource_interfaces; a++)
+    for( size_t a = 1; a < (sizeof(m_RESOURCE_INTERFACE)/sizeof(m_RESOURCE_INTERFACE[0])); a++)
     {
         result = OCPlatform::bindInterfaceToResource(m_resourceHandle, m_RESOURCE_INTERFACE[a].c_str());
         if (OC_STACK_OK != result)
@@ -105,8 +104,10 @@ OCStackResult DimmingResource::registerResource(uint8_t resourceProperty)
     }
 
     std::cout << "DimmingResource:" << std::endl;
-    std::cout << "\t" << "# resource interfaces: " << m_nr_resource_interfaces << std::endl;
-    std::cout << "\t" << "# resource types     : " << m_nr_resource_types << std::endl;
+    std::cout << "\t" << "# resource interfaces: "
+              << (sizeof(m_RESOURCE_INTERFACE)/sizeof(m_RESOURCE_INTERFACE[0])) << std::endl;
+    std::cout << "\t" << "# resource types     : "
+              << (sizeof(m_RESOURCE_TYPE)/sizeof(m_RESOURCE_TYPE[0])) << std::endl;
 
     return result;
 }

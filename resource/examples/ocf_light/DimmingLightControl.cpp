@@ -31,7 +31,7 @@
 
 DimmingLightControl::DimmingLightControl(DimmingLightServer& dimmingLightServer):
     m_quit{false},
-    m_dimmingLightServer{dimmingLightServer}
+    m_dimmingLightServer(dimmingLightServer)
 { }
 
 DimmingLightControl::~DimmingLightControl(void) { }
@@ -132,7 +132,7 @@ void DimmingLightControl::help(void)
             " 'off': turn the light off\n"
             " 'toggle': flip the light value\n"
             " 'dim [0-100]': change the dimming setting\n"
-            " 'info': print current server values"
+            " 'info': print current server values\n"
             " 'quit' or 'q': exit server\n"
             " 'help` or 'h': help\n"
             "**************************************\n";
