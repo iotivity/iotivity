@@ -1628,8 +1628,8 @@ CAData_t *CAGenerateSignalingMessageUsingToken(const CAEndpoint_t *endpoint, CAS
     OIC_LOG(DEBUG, TAG, "GenerateSignalingMessage - IN");
 
     // create token for signaling message.
-    CAToken_t token = (char *)OICCalloc(pingTokenLength + 1, sizeof(char));
-    OICStrcpy(token, pingTokenLength, pingToken);
+    CAToken_t token = (char *)OICCalloc(pingTokenLength, sizeof(char));
+    memcpy(token, pingToken, pingTokenLength);
 
     CAInfo_t signalingData = { .type = CA_MSG_NONCONFIRM,
                                .token = token,
