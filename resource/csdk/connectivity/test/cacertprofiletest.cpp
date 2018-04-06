@@ -739,8 +739,8 @@ static CertProfileResult GenerateTestCert(CertType certType, CertProfileViolatio
     int mbedRet = 0;
     CertProfileResult cpResult = CP_STATUS_OK;
 
-    char buf[2048];
-    char mbedErrBuf[256];
+    char buf[2048] = "";
+    char mbedErrBuf[256] = "";
 
     int isCa = 0;
     int maxPathLen = 0;
