@@ -104,13 +104,13 @@ def kill_all():
                 if not cmd_list[1].isdigit():
                     continue
                 try:
+                    print("killing:" + cmd_list[1])
                     pid = int(cmd_list[1])
-                    print("killing: " + pid)
                     kill(pid, SIGTERM)
                 except Exception as ex:
                     print(line)
                     print("Cannot kill: " + cmd_list[1])
-                    print("exception: " + ex.message)
+                    print("exception: " + str(ex))
     else:
         try:
             from psutil import process_iter

@@ -251,8 +251,8 @@ if with_upstream_libcoap == '1':
                 'flsll',
             ]
 
-            def get_define_from_string(string):
-                string_converted = string.replace("/", "_").replace(".", "_").upper()
+            def get_define_from_string(string_):
+                string_converted = string_.replace("/", "_").replace(".", "_").upper()
                 return "HAVE_" + string_converted
 
             for header_file_name in cxx_headers:
