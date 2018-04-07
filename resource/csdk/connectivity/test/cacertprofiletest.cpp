@@ -445,7 +445,7 @@ TEST_F(CACertProfileTests, InternalEndEntityCert)
 
     FreeTestCert(&rootCert);
     FreeTestCert(&intCert);
-    InitTestCert(&eeCert);
+    FreeTestCert(&eeCert);
 }
 
 TEST_F(CACertProfileTests, VerifyInternalCertChain)
@@ -1014,6 +1014,7 @@ static CertProfileResult GenerateTestCert(CertType certType, CertProfileViolatio
     }
 
 exit:
+    mbedtls_mpi_free(&serialMpi);
     mbedtls_pk_free(&subjectPubKeyCtx);
     mbedtls_pk_free(&issuerPrivKeyCtx);
     mbedtls_x509write_crt_free(&outCertCtx);
