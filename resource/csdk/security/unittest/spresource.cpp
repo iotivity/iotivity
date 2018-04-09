@@ -187,6 +187,7 @@ static void TestEncodeDecode(OicSecSp_t* spToTest, bool* propsToTest, bool check
 exit:
     OICFree(cborPayload);
     DeleteSpBinData(spDecoded);
+    OICFree(spDecoded);
 }
 
 // can pass in spProps = NULL;
