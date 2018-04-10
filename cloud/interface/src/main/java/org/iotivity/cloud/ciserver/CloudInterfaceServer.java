@@ -197,8 +197,8 @@ public class CloudInterfaceServer {
             resourceDirectoryPort = Integer.parseInt(System.getenv("RESOURCE_DIRECTORY_PORT"));
             accountServerAddress = System.getenv("ACCOUNT_SERVER_ADDRESS");
             accountServerPort = Integer.parseInt(System.getenv("ACCOUNT_SERVER_PORT"));
-            hcProxyMode = Integer.parseInt(System.getenv("HC_PROXY_MODE")) == 1;
-            hcProxyPort = Constants.DEFAULT_HC_PROXY_PORT;
+            hcProxyMode = Integer.parseInt(System.getenv("HTTP_PROXY_MODE")) == 1;
+            hcProxyPort = Integer.parseInt(System.getenv("HTTP_PROXY_PORT"));
             websocketMode = Integer.parseInt(System.getenv("WEBSOCKET_MODE")) == 1;
             websocketPort = Constants.DEFAULT_WEBSOCKET_PORT;
             keepAlive = Integer.parseInt(System.getenv("KEEPALIVE_CLOUD")) == 1;
