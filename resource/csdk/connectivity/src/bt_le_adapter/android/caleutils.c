@@ -28,8 +28,14 @@
 #include "uarraylist.h"
 #include "caadapterutils.h"
 
+/**
+ * Logging tag for module name
+ */
 #define TAG PCF("OIC_CA_LE_UTILS")
 
+/**
+ * Get UUID(jni object) from UUID(character).
+ */
 jobject CALEGetUuidFromString(JNIEnv *env, const char* uuid)
 {
     VERIFY_NON_NULL_RET(uuid, TAG, "uuid is null", NULL);
@@ -73,6 +79,9 @@ error_exit:
     return NULL;
 }
 
+/**
+ * Get parcel UUID object.
+ */
 jobject CALEGetParcelUuid(JNIEnv *env, jobject uuid)
 {
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
@@ -106,6 +115,9 @@ error_exit:
     return NULL;
 }
 
+/**
+ * Get parcel UUID object from UUID string value.
+ */
 jobject CALEGetParcelUuidFromString(JNIEnv *env, const char* uuid)
 {
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
@@ -150,6 +162,9 @@ error_exit:
     return NULL;
 }
 
+/**
+ * Checks blutooth device is bonded or not.
+ */
 bool CALEIsBondedDevice(JNIEnv *env, jobject bluetoothDevice)
 {
     VERIFY_NON_NULL_RET(env, TAG, "env is null", false);
@@ -180,6 +195,9 @@ bool CALEIsBondedDevice(JNIEnv *env, jobject bluetoothDevice)
     }
 }
 
+/**
+ * Get bonded list.
+ */
 jobjectArray CALEGetBondedDevices(JNIEnv *env)
 {
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
@@ -244,6 +262,9 @@ error_exit:
     return NULL;
 }
 
+/**
+ * Get constants information of bluetooth state-on.
+ */
 jint CALEGetBTStateOnInfo(JNIEnv *env)
 {
     VERIFY_NON_NULL_RET(env, TAG, "env is null", -1);
@@ -271,6 +292,9 @@ jint CALEGetBTStateOnInfo(JNIEnv *env)
     return jni_int_val;
 }
 
+/**
+ * Check this device can be supported as BLE client or server.
+ */
 CAResult_t CALECheckPlatformVersion(JNIEnv *env, uint16_t level)
 {
     jint jni_int_sdk = CALEGetBuildVersion(env);
@@ -283,6 +307,9 @@ CAResult_t CALECheckPlatformVersion(JNIEnv *env, uint16_t level)
     return CA_STATUS_OK;
 }
 
+/**
+ * Get constants information of android.os.Build.VERSION.SDK_INT.
+ */
 jint CALEGetBuildVersion(JNIEnv *env)
 {
     VERIFY_NON_NULL_RET(env, TAG, "env is null", -1);
@@ -311,6 +338,9 @@ jint CALEGetBuildVersion(JNIEnv *env)
     return jni_int_sdk;
 }
 
+/**
+ * Get constants information of android.os.Build.VERSION_CODES.[VersionName].
+ */
 jint CALEGetBuildVersionCodeForName(JNIEnv *env, const char* versionName)
 {
     VERIFY_NON_NULL_RET(env, TAG, "env is null", -1);
@@ -340,6 +370,9 @@ jint CALEGetBuildVersionCodeForName(JNIEnv *env, const char* versionName)
     return jni_int_version;
 }
 
+/**
+ * Get bluetooth adapter state information.
+ */
 jboolean CALEIsEnableBTAdapter(JNIEnv *env)
 {
     VERIFY_NON_NULL_RET(env, TAG, "env is null", JNI_FALSE);
@@ -393,6 +426,9 @@ jboolean CALEIsEnableBTAdapter(JNIEnv *env)
     return jni_isEnable;
 }
 
+/**
+ * Get address from remote device.
+ */
 jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
 {
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
@@ -419,6 +455,9 @@ jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
     return jni_address;
 }
 
+/**
+ * Get value from selected constants.
+ */
 jint CALEGetConstantsValue(JNIEnv *env, const char* classType, const char* name)
 {
     VERIFY_NON_NULL_RET(env, TAG, "env", -1);
@@ -447,6 +486,9 @@ jint CALEGetConstantsValue(JNIEnv *env, const char* classType, const char* name)
     return jni_id;
 }
 
+/**
+ * Get bluetooth device object from bluetooth adapter.
+ */
 jobject CALEGetRemoteDevice(JNIEnv *env, jstring address)
 {
     OIC_LOG(DEBUG, TAG, "CALEGetRemoteDevice");
@@ -504,6 +546,9 @@ error_exit:
     return NULL;
 }
 
+/**
+ * Get address from gatt profile object.
+ */
 jstring CALEGetAddressFromGatt(JNIEnv *env, jobject gatt)
 {
     OIC_LOG(DEBUG, TAG, "CALEGetAddressFromGatt");

@@ -28,12 +28,25 @@
 #include "camanagerdevice.h"
 #include "oic_malloc.h"
 
+/**
+ * Logging tag for module name.
+ */
 #define TAG "OIC_CA_MANAGER_DEVICE"
 
+/**
+ * List to store devices for auto connection.
+ */
 static u_arraylist_t *g_deviceACDataList = NULL;
+
+/**
+ * Mutex to synchronize access to the auto connection list.
+ */
 static oc_mutex g_deviceACDataListMutex = NULL;
 static bool g_isBTRecovery = false;
 
+/**
+ * Get address from auto connection list.
+ */
 jstring CAManagerGetLEAddressFromACData(JNIEnv *env, size_t idx)
 {
     OIC_LOG_V(DEBUG, TAG, "CAManagerGetLEAddressFromACData (idx : %d)", idx);
@@ -62,6 +75,9 @@ jstring CAManagerGetLEAddressFromACData(JNIEnv *env, size_t idx)
     return NULL;
 }
 
+/**
+ * Create auto connection list.
+ */
 void CAManagerCreateACDataList()
 {
     OIC_LOG(DEBUG, TAG, "CAManagerCreateACDataList");
@@ -75,6 +91,9 @@ void CAManagerCreateACDataList()
     oc_mutex_unlock(g_deviceACDataListMutex);
 }
 
+/**
+ * Destroy auto connection list.
+ */
 void CAManagerDestroyACDataList()
 {
     OIC_LOG(DEBUG, TAG, "CAManagerDestroyACDataList");
@@ -86,6 +105,9 @@ void CAManagerDestroyACDataList()
     }
 }
 
+/**
+ * Initialize mutex.
+ */
 CAResult_t CAManagerInitMutexVaraibles()
 {
     if (NULL == g_deviceACDataListMutex)
@@ -100,6 +122,9 @@ CAResult_t CAManagerInitMutexVaraibles()
     return CA_STATUS_OK;
 }
 
+/**
+ * Terminate mutex.
+ */
 void CAManagerTerminateMutexVariables()
 {
     if (g_deviceACDataListMutex)
@@ -109,6 +134,9 @@ void CAManagerTerminateMutexVariables()
     }
 }
 
+/**
+ * Create auto connection data for device to be added in list.
+ */
 static CAManagerACData_t *CAManagerCreateACData(jstring jaddress)
 {
     VERIFY_NON_NULL_RET(jaddress, TAG, "jaddress", NULL);
@@ -126,6 +154,9 @@ static CAManagerACData_t *CAManagerCreateACData(jstring jaddress)
     return data;
 }
 
+/**
+ * Check whether target address is already contained in ACData list or not.
+ */
 bool CAManagerIsInACDataList(JNIEnv *env, jstring jaddress)
 {
     VERIFY_NON_NULL_RET(env, TAG, "env", NULL);
@@ -180,6 +211,9 @@ bool CAManagerIsInACDataList(JNIEnv *env, jstring jaddress)
     return false;
 }
 
+/**
+ * Add auto connection data into list.
+ */
 void CAManagerAddACData(JNIEnv *env, jstring jaddress)
 {
     VERIFY_NON_NULL_VOID(env, TAG, "env");
@@ -190,7 +224,7 @@ void CAManagerAddACData(JNIEnv *env, jstring jaddress)
         OIC_LOG(DEBUG, TAG, "new ACdata will be added in List");
         // add CAManagerACData
         jobject gaddress = (*env)->NewGlobalRef(env, jaddress);
-
+        //creating auto connection data
         CAManagerACData_t *data = CAManagerCreateACData(gaddress);
 
         oc_mutex_lock(g_deviceACDataListMutex);
@@ -203,6 +237,9 @@ void CAManagerAddACData(JNIEnv *env, jstring jaddress)
     }
 }
 
+/**
+ * Remove auto connection data from ACData list for selected ble address.
+ */
 CAResult_t CAManagerRemoveACData(JNIEnv *env, jstring jaddress)
 {
     OIC_LOG(DEBUG, TAG, "CAManagerRemoveACData");
@@ -277,6 +314,9 @@ CAResult_t CAManagerRemoveACData(JNIEnv *env, jstring jaddress)
     return CA_STATUS_OK;
 }
 
+/**
+ * Remove auto connection data from ACData list for all devices.
+ */
 CAResult_t CAManagerRemoveAllACData(JNIEnv *env)
 {
     OIC_LOG(DEBUG, TAG, "IN - CAManagerRemoveAllACData");
@@ -315,6 +355,9 @@ CAResult_t CAManagerRemoveAllACData(JNIEnv *env)
     return CA_STATUS_OK;
 }
 
+/**
+ * Get isAutoConnecting flag for the address.
+ */
 CAResult_t CAManagerGetAutoConnectingFlag(JNIEnv *env, jstring jaddress, bool *flag)
 {
     OIC_LOG(DEBUG, TAG, "CAManagerGetAutoConnectingFlag");
@@ -373,6 +416,9 @@ CAResult_t CAManagerGetAutoConnectingFlag(JNIEnv *env, jstring jaddress, bool *f
     return CA_STATUS_FAILED;
 }
 
+/**
+ * Set isAutoConnecting flag for the address.
+ */
 bool CAManagerSetAutoConnectingFlag(JNIEnv *env, jstring jaddress, bool flag)
 {
     OIC_LOG(DEBUG, TAG, "CAManagerSetAutoConnectingFlag");
@@ -431,17 +477,25 @@ bool CAManagerSetAutoConnectingFlag(JNIEnv *env, jstring jaddress, bool flag)
     return false;
 }
 
+/**
+ * Get length of auto connection list.
+ */
 size_t CAManagerGetACDataLength()
 {
     return u_arraylist_length(g_deviceACDataList);
 }
-
+/**
+ * Set BT adapter recovery flag.
+ */
 void CAManagerSetBTRecovery(bool flag)
 {
     g_isBTRecovery = flag;
     OIC_LOG_V(DEBUG, TAG, "BT recovery flag is set to %d", g_isBTRecovery);
 }
 
+/**
+ * Get BT adapter recovery flag.
+ */
 bool CAManagerIsRecoveryFlagSet()
 {
     return g_isBTRecovery;
