@@ -41,19 +41,19 @@ namespace OIC
         class RCSResourceObject;
 
         /**
-        * This class describes the request.
-        *
-        */
+         * This class describes the request.
+         *
+         */
         class RCSRequest
         {
         public:
             RCSRequest() = default;
 
             /**
-            * Constructor to set resource URI.
-            *
-            * @param resourceUri URI of the resource for which the request is generated.
-            */
+             * Constructor to set resource URI.
+             *
+             * @param resourceUri URI of the resource for which the request is generated.
+             */
             explicit RCSRequest(const std::string& resourceUri);
 
             RCSRequest(const std::shared_ptr< RCSResourceObject >&,
@@ -65,22 +65,29 @@ namespace OIC
             std::weak_ptr< RCSResourceObject > getResourceObject() const noexcept;
 
             /**
-            * @return the URI of the request.
-            *
-            */
+             * Gets the resouce URI.
+             *
+             * @return the URI of the request.
+             */
             std::string getResourceUri() const;
 
             /**
+             * Gets the OC resouce request.
+             *
              * @return the OCResourceRequest.
              */
             std::shared_ptr< OC::OCResourceRequest > getOCRequest() const noexcept;
 
             /**
+             * Gets the query parameter of request.
+             *
              * @return the query parameters of the request.
              */
             const std::map< std::string, std::string >& getQueryParams() const;
 
             /**
+             * Gets the interface of request.
+             *
              * @return the interface of the request.
              */
             std::string getInterface() const;

@@ -68,8 +68,8 @@ namespace OIC
 
         enum class CacheMode
         {
-            OBSERVE_ONLY,
-            OBSERVE_WITH_POLLING
+            OBSERVE_ONLY, /**< Caching with observe.*/
+            OBSERVE_WITH_POLLING /**< Caching with periodic polling.*/
         };
 
         /**
@@ -103,24 +103,30 @@ namespace OIC
         public:
 
             /**
-             * Sets an interface of the resource to operate on
+             * Sets an interface of the resource to operate on.
              *
-             * @param interface interface
+             * @param interface resource interface to be set.
+             *
+             * @return Updated RCSQueryParams instance.
              */
             RCSQueryParams& setResourceInterface(std::string interface);
 
             /**
-             * Sets a resource type of the resource to operate on
+             * Sets a resource type of the resource to operate on.
              *
-             * @param type resource type
+             * @param type resource type to be set.
+             *
+             * @return Updated RCSQueryParams instance.
              */
             RCSQueryParams& setResourceType(std::string type);
 
             /**
-             * Sets a resource type of the resource to operate on
+             * Puts given key and value in query params.
              *
-             * @param key key to be inserted
-             * @param value value to be inserted
+             * @param key key to be inserted.
+             * @param value value to be inserted.
+             *
+             * @return Updated RCSQueryParams instance.
              *
              * @note "rt" and "if" are reserved, so you should avoid them as a key.
              *
@@ -128,26 +134,34 @@ namespace OIC
             RCSQueryParams& put(std::string key, std::string value);
 
             /**
-             * Returns the resource interface.
+             * Gets the resource interface.
+             *
+             * @return Resource interface.
              */
             std::string getResourceInterface() const;
 
             /**
-             * Returns the resource type.
+             * Gets the resource type.
+             *
+             * @return Resource type.
              */
             std::string getResourceType() const;
 
             /**
-             * Returns a value.
+             * Gets query value for the given key.
              *
              * @param key key of the element whose mapped value is accessed.
+             *
+             * @return Value associated with given key.
              *
              * @throws InvalidKeyException If @a key doesn't match the key of any value.
              */
             std::string get(const std::string& key) const;
 
             /**
-             * Returns all params.
+             * Get all the query params.
+             *
+             * @return Map containing all the queries [Key-Value pair].
              */
             const Map& getAll() const;
 
@@ -250,7 +264,9 @@ namespace OIC
             ~RCSRemoteResourceObject();
 
             /**
-             * Creates an instance from an OCResource instance.
+             * Creates an RCSRemoteResourceObject instance from an OCResource instance.
+             *
+             * @return RCSRemoteResourceObject instance.
              *
              * @throw RCSInvalidParameterException If ocResource is nullptr.
              */
@@ -258,7 +274,9 @@ namespace OIC
                     std::shared_ptr< OC::OCResource > ocResource);
 
             /**
-             * Returns an equivalent OCResource using RCSRemoteResourceObject instance.
+             * Converts RCSRemoteResourceObject instance to an equivalent OCResource.
+             *
+             * @return OCResource instance.
              *
              * @throw RCSInvalidParameterException If rcsResource is nullptr.
              */
@@ -266,14 +284,18 @@ namespace OIC
                     RCSRemoteResourceObject::Ptr rcsResource);
 
             /**
-             * Returns whether monitoring is enabled.
+             * Checks whether monitoring is started or not.
+             *
+             * @return True if monitoring started, otherwise false.
              *
              * @see startMonitoring()
              */
             bool isMonitoring() const;
 
             /**
-             * Returns whether caching is enabled.
+             * Checks whether caching is started or not.
+             *
+             * @return True if caching started, otherwise false.
              *
              * @see startCaching()
              */
@@ -281,8 +303,9 @@ namespace OIC
             bool isCaching() const;
 
             /**
-             * Returns whether the resource is observable.
+             * Checks whether resource is observable or not.
              *
+             * @return True if resource is observable, otherwise false.
              */
             bool isObservable() const;
 
@@ -318,9 +341,12 @@ namespace OIC
             void stopMonitoring();
 
             /**
-             * Returns the current state of the resource.
+             * Gets the current state of the resource.
+             *
+             * @return Current resource state.
              *
              * @see startMonitoring
+             * @see ResourceState
              */
             ResourceState getState() const;
 
@@ -376,16 +402,23 @@ namespace OIC
             void stopCaching();
 
             /**
-             * Returns the current cache state.
+             * Gets the current cache state.
+             *
+             * @return Current cache state.
+             *
+             * @see startCaching
+             * @see CacheState
              *
              */
             CacheState getCacheState() const;
 
             /**
-             * Returns whether cached data is available.
+             * Checks whether cached data is available.
              *
              * Cache will be available always once cache state had been CacheState::READY
              * even if current state is CacheState::LOST_SIGNAL.
+             *
+             * @return True if caching data available, otherwise false.
              *
              * @see getCacheState()
              */
@@ -544,26 +577,30 @@ namespace OIC
                     SetCallback cb);
 
             /**
-             * Returns the URI of the resource.
+             * Gets the resource URI.
              *
+             * @return Resource URI.
              */
             std::string getUri() const;
 
             /**
-             * Returns the address of the resource .
+             * Gets the resource address.
              *
+             * @return Resource address.
              */
             std::string getAddress() const;
 
             /**
-             * Returns the resource types of the resource.
+             * Gets the resource types.
              *
+             * @return Vector containing resource types.
              */
             std::vector< std::string > getTypes() const;
 
             /**
-             * Returns the resource interfaces of the resource.
+             * Gets the resource interfaces.
              *
+             * @return Vector containing resource interfaces.
              */
             std::vector< std::string > getInterfaces() const;
 

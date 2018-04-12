@@ -46,6 +46,7 @@ namespace OIC
             /**
              * Factory method for multicast.
              *
+             * @return RCSAddress Instance.
              */
             static RCSAddress multicast();
 
@@ -53,6 +54,8 @@ namespace OIC
              * Factory method for unicast.
              *
              * @param address A physical address for the target.
+             *
+             * @return RCSAddress Instance.
              */
             static RCSAddress unicast(const std::string& address);
 

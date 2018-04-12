@@ -18,6 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to Resource Presence.
+ */
+
 #ifndef RB_RESOURCEPRESENCE_H_
 #define RB_RESOURCEPRESENCE_H_
 
@@ -35,24 +41,103 @@ namespace OIC
 {
     namespace Service
     {
+       /**
+        * This is internal class used by ResourceBroker, provides simple APIs to
+        * monitor resource.
+        *
+        * @see ResourceBroker
+        */
         class ResourcePresence : public std::enable_shared_from_this<ResourcePresence>
         {
         public:
             ResourcePresence();
             ~ResourcePresence();
 
+            /**
+             * Start Monitoring state for the given resource.
+             * This method will be called internally by ResourceBroker.
+             *
+             * @param pResource Primitive resource.
+             *
+             * @see ResourceBroker
+             * @see PrimitiveResourcePtr
+             */
             void initializeResourcePresence(PrimitiveResourcePtr pResource);
 
+            /**
+             * Add given brokerId and callback in BrokerIDMap.
+             *
+             * @param _id Broker id to be added.
+             * @param _cb Broker callback to be added.
+             *
+             * @see BrokerCB
+             * @see BrokerIDMap
+             */
             void addBrokerRequester(BrokerID _id, BrokerCB _cb);
+
+           /**
+            * Remove given brokerId from BrokerIDMap.
+            *
+            * @param _id Broker id to be removed.
+            *
+            * @see BrokerIDMap
+            */
             void removeBrokerRequester(BrokerID _id);
+
+           /**
+            * Remove all the brokerId [Requester entries] from BrokerIDMap.
+            *
+            * @see BrokerIDMap
+            */
             void removeAllBrokerRequester();
 
+           /**
+            * Requests the current state of resource.
+            *
+            */
             void requestResourceState() const;
+
+           /**
+            * Change the broker mode.
+            *
+            * @see BROKER_MODE
+            */
             void changePresenceMode(BROKER_MODE newMode);
 
+           /**
+            * Check whether BrokerIDMap is empty or not.
+            *
+            * @return True if BrokerIDMap is empty, otherwise false.
+            *
+            * @see BrokerIDMap
+            */
             bool isEmptyRequester() const;
+
+           /**
+            * Gets BrokerIDMap size.
+            *
+            * @return Size of BrokerIDMap.
+            *
+            * @see BrokerIDMap
+            */
             int  requesterListSize() const;
+
+           /**
+            * Gets primitive resource.
+            *
+            * @return Primitive resource.
+            *
+            * @see PrimitiveResourcePtr
+            */
             const PrimitiveResourcePtr getPrimitiveResource() const;
+
+             /**
+             * Gets current state of resource.
+             *
+             * @return Current resource state.
+             *
+             * @see BROKER_STATE
+             */
             BROKER_STATE getResourceState() const;
 
         private:

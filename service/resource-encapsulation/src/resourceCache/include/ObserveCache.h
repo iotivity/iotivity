@@ -18,6 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to Cache.
+ */
+
 #ifndef RCM_OBSERVECACHE_H_
 #define RCM_OBSERVECACHE_H_
 
@@ -35,6 +41,13 @@ namespace OIC
 {
     namespace Service
     {
+
+      /**
+       * This is internal class for ResourceCacheManager, represents resource
+       * cache and provides simple ways to interact with it.
+       *
+       * @see ResourceCacheManager
+       */
         class ObserveCache : public std::enable_shared_from_this<ObserveCache>
         {
             public:
@@ -51,14 +64,55 @@ namespace OIC
                 ObserveCache & operator = (const ObserveCache &) = delete;
                 ObserveCache & operator = (ObserveCache &&) = delete;
 
+                /**
+                 * Starts Caching of data [attributes].
+                 * This method will be called internally by ResourceCacheManager.
+                 *
+                 * @param func Data cache callback.
+                 *
+                 * @see ResourceCacheManager
+                 * @see DataCacheCB
+                 */
                 void startCache(DataCacheCB func);
+
+                /**
+                 * Stops Caching of data [attributes].
+                 * This method will be called internally by ResourceCacheManager.
+                 *
+                 * @see ResourceCacheManager
+                 */
                 void stopCache();
 
+                /**
+                 * Gets cache state.
+                 *
+                 * @return cache state.
+                 *
+                 * @see CACHE_STATE
+                 */
                 CACHE_STATE getCacheState() const;
 
+                /**
+                 * Gets cached data.
+                 *
+                 * @return cached resource attributes.
+                 *
+                 * @see CACHE_STATE
+                 */
                 RCSResourceAttributes getCachedData() const;
 
+                /**
+                 * Checks whether cached data is available.
+                 *
+                 * @return True if cached data is available, otherwise false.
+                 */
                 bool isCachedData() const;
+
+                /**
+                 * Checks whether caching started or not.
+                 *
+                 * @return True if caching started, otherwise false.
+                 */
                 bool isStartCache() const;
 
             private:

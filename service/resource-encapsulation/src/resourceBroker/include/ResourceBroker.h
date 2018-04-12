@@ -18,6 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to Resource Broker.
+ */
+
 #ifndef RB_RESOURCEBROKER_H_
 #define RB_RESOURCEBROKER_H_
 
@@ -35,15 +41,35 @@ namespace OIC
 {
     namespace Service
     {
+       /**
+        * This is internal class for RCSRemoteResourceObject, represents resource
+        * broker and provides simple ways to interact with it.
+        * Resource broker represents, one of the feature of resource-encapsulation layer:
+        * "Monitor the state of remote resource".
+        *
+        * @see RCSRemoteResourceObject
+        */
         class ResourceBroker
         {
         public:
+
+            /**
+             * The Invalid parameter exception class for resource broker.
+             *
+             * @see RCSException
+             */
             class InvalidParameterException: public RCSException
             {
             public:
                 InvalidParameterException(std::string&& what)
                 : RCSException{ std::move(what) } {}
             };
+
+            /**
+             * The failed to subscribe presence exception class for resource broker.
+             *
+             * @see RCSPlatformException
+             */
             class FailedSubscribePresenceException: public RCSPlatformException
             {
             public:
@@ -51,12 +77,60 @@ namespace OIC
                 : RCSPlatformException{reason} {}
             };
 
+            /**
+             * Gets instance of ResourceBroker.
+             *
+             * @return ResourceBroker instance.
+             */
             static ResourceBroker * getInstance();
 
+            /**
+             * Start Monitoring state for the given resource.
+             * This method will be called internally by RCSRemoteResourceObject.
+             *
+             * @param pResource Primitive resource.
+             * @param cb Broker callback function.
+             *
+             * @return Broker Id.
+             *
+             * @see BrokerCB
+             * @see PrimitiveResourcePtr
+             * @see RCSRemoteResourceObject
+             */
             BrokerID hostResource(PrimitiveResourcePtr pResource, BrokerCB cb);
+
+            /**
+             * Stop Monitoring state for the given broker Id.
+             * This method  will be called internally by RCSRemoteResourceObject.
+             *
+             * @param brokerId Broker Id.
+             *
+             * @see RCSRemoteResourceObject
+             * @see BrokerID
+             */
             void cancelHostResource(BrokerID brokerId);
 
+           /**
+            * Gets the current state for the given broker Id.
+            *
+            * @param brokerId Broker Id.
+            *
+            * @return Current state of resource.
+            *
+            * @see BROKER_STATE
+            */
             BROKER_STATE getResourceState(BrokerID brokerId);
+
+           /**
+            * Gets the current state for the given primitive resource.
+            *
+            * @param pResource Primitive resource.
+            *
+            * @return Current state of resource.
+            *
+            * @see PrimitiveResourcePtr
+            * @see BROKER_STATE
+            */
             BROKER_STATE getResourceState(PrimitiveResourcePtr pResource);
 
         private:

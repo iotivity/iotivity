@@ -95,8 +95,9 @@ namespace OIC
                         ResourceDiscoveredCallback;
 
             /**
-             * @return RCSDiscoveryManager instance.
+             * Gets instance of RCSDiscoveryManager.
              *
+             * @return RCSDiscoveryManager instance.
              */
             static RCSDiscoveryManager* getInstance();
 
@@ -106,6 +107,8 @@ namespace OIC
              *
              * @param address         A RCSAddress object
              * @param cb              A callback to obtain discovered resource
+             *
+             * @return Unique pointer of DiscoveryTask.
              *
              * @throws InvalidParameterException If cb is empty.
              *
@@ -123,6 +126,8 @@ namespace OIC
              * @param relativeUri      The relative URI of resource to be searched
              * @param cb               A callback to obtain discovered resource
              *
+             * @return Unique pointer of DiscoveryTask.
+             *
              * @throws InvalidParameterException If cb is empty.
              *
              * @note The callback will be invoked in an internal thread.
@@ -139,6 +144,8 @@ namespace OIC
              * @param resourceType     Resource Type
              * @param cb               A callback to obtain discovered resource
              *
+             * @return Unique pointer of DiscoveryTask.
+             *
              * @throws InvalidParameterException If cb is empty.
              *
              * @note The callback will be invoked in an internal thread.
@@ -154,6 +161,8 @@ namespace OIC
              * @param address          A RCSAddress object
              * @param resourceTypes    List of Resource Types
              * @param cb               A callback to obtain discovered resource
+             *
+             * @return Unique pointer of DiscoveryTask.
              *
              * @throws InvalidParameterException If cb is empty.
              * @throws RCSBadRequestException If resourceTypes contain more than one element and
@@ -176,6 +185,8 @@ namespace OIC
              * @param resourceType     Resource Type
              * @param cb               A callback to obtain discovered resource
              *
+             * @return Unique pointer of DiscoveryTask.
+             *
              * @throws InvalidParameterException If cb is empty.
              *
              * @note The callback will be invoked in an internal thread.
@@ -193,6 +204,8 @@ namespace OIC
              * @param relativeUri      The relative URI of resource to be searched
              * @param resourceTypes     List of Resource Types
              * @param cb               A callback to obtain discovered resource
+             *
+             * @return Unique pointer of DiscoveryTask.
              *
              * @throws InvalidParameterException If cb is empty.
              * @throws RCSBadRequestException If resourceTypes contain more than one element and
