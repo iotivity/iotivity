@@ -104,22 +104,6 @@ if provisioning_sample_env.get('MULTIPLE_OWNER') == '1':
     sampleserver_preconfpin = provisioning_sample_env.Program(
         'sampleserver_preconfpin', 'sampleserver_preconfpin.cpp')
 
-if target_os not in ['msys_nt', 'windows']:
-    if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True:
-        cloud_src = [
-            'cloud/cloudCommon.c',
-            'cloud/cloudWrapper.c',
-            'cloud/cloudDiscovery.c'
-        ]
-        cloudClient = provisioning_sample_env.Program(
-            'cloudClient', cloud_src + ['cloudClient.c'])
-        cloudServer = provisioning_sample_env.Program(
-            'cloudServer',
-            cloud_src + [
-                'cloudServer.c',
-                'cloud/cloudResource.c'
-            ])
-
 src_dir = provisioning_sample_env.get('SRC_DIR')
 sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sample/'
 sec_provisioning_build_dir = env.get(
@@ -133,9 +117,7 @@ if target_os not in ['msys_nt', 'windows']:
             sec_provisioning_src_dir + 'rootca.crt')
         if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True:
             Alias("cloud", [
-                rootcert,
-                cloudClient,
-                cloudServer
+                rootcert
             ])
             provisioning_sample_env.AppendTarget("cloud")
 sampleapps = [
