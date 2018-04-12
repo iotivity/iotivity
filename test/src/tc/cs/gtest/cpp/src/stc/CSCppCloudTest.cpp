@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -305,91 +305,6 @@ TEST_F(CSCppCloudTest_stc, GetCRLCb_NV_N)
 }
 #endif
 
-/**
- * @since           2016-09-23
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             void setCoapPrefix(bool secured)
- * @see             CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
- * @see             static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
- * @see             OCStackResult signIn(const std::string& userUuid, const std::string& accessToken, PostCallback cloudConnectHandler)
- * @see             OCStackResult requestCertificate(ResponseCallBack callback)
- * @see             OCStackResult getCRL(ResponseCallBack callback)
- * @objective       Test postCRL positively with regular data
- * @target          OCStackResult postCRL(const std::string& thisUpdate, const std::string& nextUpdate, const OCByteString *crl, const stringArray_t *serialNumbers, ResponseCallBack callback)
- * @test_data       Regular data
- * @pre_condition   none
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call setCoapPrefix
- *                  4. call CASelectCipherSuite
- *                  5. call saveTrustCertChain
- *                  6. call signIn
- *                  7. call requestCertificate
- *                  8. call getCRL
- *                  9. call postCRL
- * @post_condition  none
- * @expected        postCRL will return OC_STACK_OK
- */
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(CSCppCloudTest_stc, PostCRL_SRC_RV_P)
-{
-    OCCloudProvisioning cloudProv(ip, DEFAULT_PORT);
-
-    if (!m_CloudAclHelper.saveTrustCertChain(m_trustCertChainArray.data, m_trustCertChainArray.len,
-                    OIC_ENCODING_PEM, &m_credId, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!CloudCommonUtil::signIn(m_accountMgrControlee))
-    {
-        SET_FAILURE(ERROR_SIGN_IN);
-        return;
-    }
-
-    if (!m_CloudAclHelper.requestCertificate(cloudProv, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_CloudAclHelper.getCRL(cloudProv, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-        return;
-    }
-    OCByteString crlData =
-    {   0, 0};
-
-    stringArray_t serialNumbers =
-    {   0, 0};
-    stringArray_t *rcsn = 0;
-    OCByteString *crl = 0;
-    int cnt = 1;
-    int len = 1;
-
-    char **item = (char**)OICCalloc(cnt, sizeof(char*));
-    char *item_name = "1";
-    for (int i = 0; i < cnt; i++)
-    {
-        item[i] = (char*)OICCalloc(len, sizeof(char));
-        strncpy(item[i], item_name, strlen(item_name));
-    }
-
-    serialNumbers.array = item;
-    serialNumbers.length = (size_t)cnt;
-
-    rcsn = serialNumbers.array? &serialNumbers : NULL;
-    crl = crlData.bytes? &crlData : NULL;
-
-    if (!m_CloudAclHelper.postCRL(cloudProv, CRL_THIS_UPDATE, CRL_NEXT_DATE, crl, rcsn, CSCppCloudHelper::cloudResponseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_CloudAclHelper.getFailureMessage());
-    }
-}
-#endif
 
 /**
  * @since           2016-10-20

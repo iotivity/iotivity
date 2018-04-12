@@ -258,8 +258,8 @@ public class OcAccountManagerHelper
                 instance.signUp(authProvider, s_mAuthCode, onPostListener);
 
                 if (CALLBACK_NOT_INVOKED == waitTillCBInvoke()) {
-                    showLog(LogLevel.DEBUG, CALLBACK_NOT_INVOKED);
-                    s_mErrorMessage = CALLBACK_NOT_INVOKED;
+                    showLog(LogLevel.DEBUG, CALLBACK_NOT_INVOKED_MSG);
+                    s_mErrorMessage = CALLBACK_NOT_INVOKED_MSG;
                     return false;
                 }
             } else {
@@ -292,8 +292,8 @@ public class OcAccountManagerHelper
             instance.signIn(userUuid, accessToken, onPostListener);
 
             if (CALLBACK_NOT_INVOKED == waitTillCBInvoke()) {
-                showLog(LogLevel.DEBUG, CALLBACK_NOT_INVOKED);
-                s_mErrorMessage = CALLBACK_NOT_INVOKED;
+                showLog(LogLevel.DEBUG, CALLBACK_NOT_INVOKED_MSG);
+                s_mErrorMessage = CALLBACK_NOT_INVOKED_MSG;
                 return false;
             }
 
@@ -320,8 +320,8 @@ public class OcAccountManagerHelper
             showLog(LogLevel.DEBUG, "accessToken : " + accessToken);
             instance.signOut(accessToken, onPostListener);
             if (CALLBACK_NOT_INVOKED == waitTillCBInvoke()) {
-                showLog(LogLevel.DEBUG, CALLBACK_NOT_INVOKED);
-                s_mErrorMessage = CALLBACK_NOT_INVOKED;
+                showLog(LogLevel.DEBUG, CALLBACK_NOT_INVOKED_MSG);
+                s_mErrorMessage = CALLBACK_NOT_INVOKED_MSG;
                 return false;
             }
 

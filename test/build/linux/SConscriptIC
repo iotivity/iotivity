@@ -59,7 +59,10 @@ iotivity_include_paths = [
     iotivity_root + '/resource/csdk/stack/include/experimental',
     iotivity_root + '/resource/csdk/logger/include/experimental',
     iotivity_root + '/extlibs/tinycbor/tinycbor/src',
-    iotivity_lib_path + '/resource/c_common'
+    iotivity_lib_path + '/resource/c_common',
+    iotivity_lib_path + '/deploy/include/c_common',
+    iotivity_lib_path + '/deploy/include/c_common/experimental',
+    iotivity_lib_path + '/deploy/include/resource/stack/experimental'
 ]
 
 tc_include_paths = [
@@ -99,7 +102,7 @@ cloud_defines = ['WITH_CLOUD', 'MQ_BROKER', 'WITH_MQ','RD_CLIENT', 'MQ_PUBLISHER
 
 cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermissive')
 
-libs = Split('connectivity_abstraction octbstack coap boost_system boost_filesystem boost_thread dl expat oc oc_logger resource_directory glib-2.0 uuid gcov cloud_util curl common_util pthread')
+libs = Split('connectivity_abstraction octbstack coap boost_system boost_filesystem boost_thread dl expat oc oc_logger resource_directory glib-2.0 uuid gcov cloud_util curl common_util connectivity_abstraction octbstack pthread')
 
 if 'tc' in test:
     ic_tc = env_linux.Program(source = tc_src, 
@@ -146,13 +149,13 @@ if 'tc' in test or 'app' in test:
 
 install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
 install_res = env_linux.Install(iotivity_test_root + '/' + install_dir, ic_dat_file)
-install_res += env_linux.Install(iotivity_test_root + '/bin', ic_dat_file)
-install_res += env_linux.Install(iotivity_test_root + '/' + install_dir, ic_crt_file)
-install_res += env_linux.Install(iotivity_test_root + '/bin', ic_crt_file)
+install_res += env_linux.Install(iotivity_test_root + '/bin/', ic_dat_file)
+install_res += env_linux.Install(iotivity_test_root + '/' + install_dir + '/rootca.crt', ic_crt_file)
+install_res += env_linux.Install(iotivity_test_root + '/bin/rootca.crt', ic_crt_file)
 install_res = env_linux.Install(iotivity_test_root + '/' + install_dir, ic_resource_list)
-install_res += env_linux.Install(iotivity_test_root + '/bin', ic_resource_list)
+install_res += env_linux.Install(iotivity_test_root + '/bin/', ic_resource_list)
 install_res += env_linux.Install(iotivity_test_root + '/' + install_dir, common_resource_list)
-install_res += env_linux.Install(iotivity_test_root + '/bin', common_resource_list)
+install_res += env_linux.Install(iotivity_test_root + '/bin/', common_resource_list)
 
 if cloud_service_build:
     build_command = 'bash ' + iotivity_test_root + '/res/cloud_resource/cloud_build.sh ' + kafka_root + ' ' + iotivity_root

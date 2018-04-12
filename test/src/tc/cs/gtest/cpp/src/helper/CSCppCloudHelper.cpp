@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -28,8 +28,7 @@ std::string CSCppCloudHelper::s_accesstoken = "";
 std::string CSCppCloudHelper::s_refreshToken = "";
 std::string CSCppCloudHelper::s_groupID = "";
 std::string CSCppCloudHelper::s_aclId = "";
-OCPersistentStorage CSCppCloudHelper::s_pst =
-{   0, 0, 0, 0, 0};
+OCPersistentStorage CSCppCloudHelper::s_pst = {0, 0, 0, 0, 0};
 
 int CSCppCloudHelper::waitCallbackRet()
 {
@@ -148,6 +147,7 @@ bool CSCppCloudHelper::signUp(OCAccountManager::Ptr accountMgr, std::string auth
         std::string &devAccessToken, std::string &devRefreshToken, OCStackResult expectedResult)
 {
     __FUNC_IN__
+    OC_UNUSED(devRefreshToken);
 
     s_isCbInvoked = CALLBACK_NOT_INVOKED;
 
@@ -183,6 +183,8 @@ bool CSCppCloudHelper::signIn(OCAccountManager::Ptr accountMgr, const std::strin
         OCStackResult expectedResult)
 {
     __FUNC_IN__
+    OC_UNUSED(userUuid);
+    OC_UNUSED(accessToken);
 
     s_isCbInvoked = CALLBACK_NOT_INVOKED;
 
@@ -326,14 +328,9 @@ ByteArray CSCppCloudHelper::getTrustCertChainArray()
             {
                 IOTIVITYTEST_LOG(ERROR, "OICCalloc");
                 fclose(fp);
-                return trustCertChainArray;
             }
             rewind(fp);
             fsize = fread(trustCertChainArray.data, 1, fsize, fp);
-            if(fsize > 0)
-            {
-                OC_UNUSED(fsize);
-            }     
             fclose(fp);
         }
     }
@@ -550,7 +547,7 @@ void CSCppCloudHelper::provisionResultCB(void* ctx, int nOfRes, OCProvisionResul
 
 void CSCppCloudHelper::cloudResponseCB(OCStackResult result, void* data)
 {
-    //char* dataChar = (char*) data;
+    OC_UNUSED(data);
 
     IOTIVITYTEST_LOG(INFO, "%s: Received result = %d", __func__, result);
 
@@ -580,4 +577,3 @@ std::string CSCppCloudHelper::getFailureMessage()
 }
 
 #endif /*__CLOUD__*/
-

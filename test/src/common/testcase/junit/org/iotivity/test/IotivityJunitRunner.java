@@ -49,7 +49,7 @@ public class IotivityJunitRunner {
         }
 
         if (result.wasSuccessful()) {
-            System.out.println("Result : " + "\033[32m TC Passed Successfully");
+            System.out.println("Result : " + "\033[32m TC Execution Finished Successfully");
         } else {
             System.out.println("\033[37m Result : \033[31m"
                     + "Execution Failed, reason: ");

@@ -31,27 +31,6 @@ OCDevAddr CSCsdkUtilityHelper::getOCDevAddrEndPoint()
     return endPoint;
 }
 
-static void readStringArray(stringArray_t *list, int length, const char* description,
-        const char* example)
-{
-    OC_UNUSED(description);
-    int i = 0;
-    int count = 1;
-
-    char **item = NULL;
-
-    item = (char**) OICCalloc(count, sizeof(char*));
-
-    for (i = 0; i < count; i++)
-    {
-        item[i] = (char*) OICCalloc(length, sizeof(char));
-        OICStrdup(example);
-    }
-    list->array = item;
-    list->length = count;
-    return;
-}
-
 cloudAce_t* CSCsdkUtilityHelper::createCloudAces()
 {
 
@@ -66,9 +45,7 @@ cloudAce_t* CSCsdkUtilityHelper::createCloudAces()
         if (!ace)
         {
             IOTIVITYTEST_LOG(ERROR, "Can't allocate memory for ace");
-            return NULL;
         }
-
         LL_APPEND(aces, ace);
 
         char aceid[MAX_ID_LENGTH] =
@@ -90,34 +67,33 @@ cloudAce_t* CSCsdkUtilityHelper::createCloudAces()
         for (j = 0; j < reslist_count; j++)
         {
             OicSecRsrc_t *res = (OicSecRsrc_t*) OICCalloc(1, sizeof(OicSecRsrc_t));
-            if (res)
+            if (!res)
             {
-                LL_APPEND(ace->resources, res);
-
-                static int resourceNumber = 2;
-                static char* resTypeArray[2] =
-                { "core.test.light", "core.test.bulb" };
-
-                stringArray_t *rt = (stringArray_t*) OICCalloc(resourceNumber,
-                        sizeof(stringArray_t));
-                rt->array = resTypeArray;
-                rt->length = resourceNumber;
-
-                static int interfaceNumber = 2;
-                static char* interfaceArray[2] =
-                { "oic.if.baseline", "oic.if.a" };
-
-                stringArray_t *_if = (stringArray_t*) OICCalloc(interfaceNumber,
-                        sizeof(stringArray_t));
-                _if->array = interfaceArray;
-                _if->length = interfaceNumber;
-
-                res->href = OICStrdup(RESOURCE_URI_EXAMPLE);
-                res->types = rt->array;
-                res->typeLen = rt->length;
-                res->interfaces = _if->array;
-                res->interfaceLen = _if->length;
+                IOTIVITYTEST_LOG(ERROR, "Adding Resource ID Failed");
             }
+            LL_APPEND(ace->resources, res);
+
+            static int resourceNumber = 2;
+            static const char* resTypeArray[2] =
+            { "core.test.light", "core.test.bulb" };
+
+            stringArray_t *rt =  (stringArray_t*) OICCalloc(resourceNumber, sizeof(stringArray_t*));
+            rt->array = resTypeArray;
+            rt->length = resourceNumber;
+
+            static int interfaceNumber = 2;
+            static const char* interfaceArray[2] =
+            { "oic.if.baseline", "oic.if.a" };
+
+            stringArray_t *_if =  (stringArray_t*) OICCalloc(resourceNumber, sizeof(stringArray_t*));
+            _if->array = interfaceArray;
+            _if->length = interfaceNumber;
+
+            res->href = OICStrdup(RESOURCE_URI_EXAMPLE);
+            res->types = rt->array;
+            res->typeLen = rt->length;
+            res->interfaces = _if->array;
+            res->interfaceLen = _if->length;
         }
     }
 
@@ -279,14 +255,11 @@ std::string CSCsdkUtilityHelper::readfile(std::string filename)
     if (NULL == fp)
     {
         IOTIVITYTEST_LOG(ERROR, "[CSC Helper] ERROR Opening File : %s", filename.c_str());
-        return NULL;
     }
 
     if (NULL == fgets(buff, 100, (FILE*) fp))
     {
         IOTIVITYTEST_LOG(ERROR, "[CSC Helper] Unable to Get input from File: %s", filename.c_str());
-        fclose(fp);
-        return NULL;
     }
 
     fclose(fp);

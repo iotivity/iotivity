@@ -18,7 +18,7 @@
  *
  ******************************************************************/
 
-package org.iotivity.service.ic;
+package org.iotivity.test.ic.app;
 
 import java.util.List;
 import android.util.Log;
@@ -43,7 +43,7 @@ import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.ErrorCode;
 import org.iotivity.base.OcAccountManager;
 
-import static org.iotivity.service.ic.ICUtility.*;
+import static org.iotivity.test.ic.app.ICUtility.*;
 import org.iotivity.service.testapp.framework.Base;
 
 public class ICMessageAdapter extends Base implements OnMQTopicCreatedListener,

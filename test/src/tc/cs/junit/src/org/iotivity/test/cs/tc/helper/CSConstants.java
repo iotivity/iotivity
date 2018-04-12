@@ -36,7 +36,8 @@ public class CSConstants {
     // Callback Related Resources
     public static final int SUCCES_CODE = 0;
     public static final int ERROR_CODE = 1;
-    public static final int CALLBACK_TIMEOUT = 60;                                 // 60 seconds
+    public static final int CALLBACK_TIMEOUT = 60;                                    // 60
+    // seconds
     public static final boolean CALLBACK_INVOKED = true;
     public static final boolean CALLBACK_NOT_INVOKED = false;
     public static final int CALLBACK_INVOKED_BUT_FAILED = 0;

@@ -82,7 +82,7 @@ testapp_src = [
 ]
 
 simulator_src = [
-    iotivity_test_root + '/src/testapp/cloud/cloud_server.cpp'
+    iotivity_test_root + '/src/testapp/ic/iotivity_ic_server.cpp'
 ]
 
 cloud_defines = ['WITH_CLOUD', 'MQ_BROKER', 'WITH_MQ','RD_CLIENT', 'MQ_PUBLISHER', 'MQ_SUBSCRIBER']

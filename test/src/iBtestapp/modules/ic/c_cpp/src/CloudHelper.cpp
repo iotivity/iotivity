@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -356,6 +356,7 @@ void subscribeCB(const HeaderOptions &, const OCRepresentation &rep, const int e
                 exit(-1);
             }
         }
+        g_isCbInvoked = CALLBACK_INVOKED;
     }
     catch (exception &e)
     {
@@ -597,6 +598,7 @@ bool cancelObserveGroup(OCAccountManager::Ptr accountMgr)
     IOTIVITYTEST_LOG(DEBUG, "[Cloud API Return Code ] cancelObserveGroup returns %d", result);
     if (OC_STACK_OK != result)
     {
+        IOTIVITYTEST_LOG(ERROR, "cancelObserveGroup failed");
         return false;
     }
     IOTIVITYTEST_LOG(DEBUG, "cancelObserveGroup OUT");
@@ -757,7 +759,7 @@ bool updatePropertyValueOnGroup(OCAccountManager::Ptr accountMgr, const std::str
 {
     IOTIVITYTEST_LOG(DEBUG, "deletePropertyValueFromGroup IN");
     g_isCbInvoked = CALLBACK_NOT_INVOKED;
-    OCStackResult result = accountMgr->deletePropertyValueFromGroup(groupId, propertyValue,
+    OCStackResult result = accountMgr->updatePropertyValueOnGroup(groupId, propertyValue,
             cloudConnectHandler);
     IOTIVITYTEST_LOG(DEBUG, "[Cloud API Return Code ] deletePropertyValueFromGroup returns %d",
             result);
@@ -939,8 +941,9 @@ void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
 // callback handler on POST request
 void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
-    if (eCode == 0 || eCode == OC_STACK_OK)
+    if (eCode == 0 || eCode == OC_STACK_OK || eCode == 4)
     {
+        g_isCbInvoked = CALLBACK_INVOKED;
         IOTIVITYTEST_LOG(DEBUG, "Response: POST request was successful");
         IOTIVITYTEST_LOG(DEBUG, "The POST Response has the following representation:");
         printRepresentation(rep);

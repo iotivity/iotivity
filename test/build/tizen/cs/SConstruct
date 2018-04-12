@@ -133,7 +133,7 @@ simulator_include_paths = [
 ]
 
 simulator_src = [
-    iotivity_test_root + '/src/testapp/cloud/cloud_server.cpp'
+    iotivity_test_root + '/src/testapp/cs/iotivity_cs_server.cpp'
 ]
 
 lib_list = Split('m pthread rt dl stdc++ gobject-2.0 gio-2.0 glib-2.0 dlog capi-network-wifi capi-network-bluetooth  boost_system boost_filesystem boost_thread connectivity_abstraction dl expat gcov oc oc_logger ocpmapi ocprovision octbstack uuid mbedtls resource_directory curl')

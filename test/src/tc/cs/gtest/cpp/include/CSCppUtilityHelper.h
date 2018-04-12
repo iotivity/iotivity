@@ -44,7 +44,6 @@
 #include "payload_logging.h"
 #include "pmtypes.h"
 #include "rd_client.h"
-#include "securevirtualresourcetypes.h"
 #include "ssl_ciphersuites.h"
 #include "srmutility.h"
 #include "utils.h"

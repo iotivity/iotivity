@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -18,9 +18,8 @@
  *
  ******************************************************************/
 
-apply from: "../../../../../build/android/build.gradle"
-
-project.buildDir = "${binDirectory}/ictestapp"
+apply plugin: 'com.android.application'
+project.buildDir = "${binDirectory}/${module_name}testapp"
 
 buildscript {
     repositories {
@@ -33,48 +32,59 @@ buildscript {
 
 repositories {
         flatDir{
-                dirs "${baseAARFileDirFromModules}"
+            dirs "${iotivity_root}/java/iotivity-android/build/outputs/aar"
         }
 }
 
-apply plugin: 'com.android.application'
-
+def printSrcDir = { listParam -> 
+     println '------------------\nSource Directories\n------------------'
+     listParam.eachWithIndex { item, index ->
+         println "    " + item
+     }
+}
+    
 android {
     compileSdkVersion  21
     buildToolsVersion "21.1.2"
-
+    
     sourceSets {
-
         main {
               manifest.srcFile 'AndroidManifest.xml'
+              java.srcDirs "${test_root}/src/iBtestapp/common/android/"
+              java.srcDirs "${test_root}/src/common/commonutil/java/common/resource"
+              java.srcDirs "${test_root}/src/common/commonutil/java/common/util"
+              java.srcDirs "${test_root}/src/common/commonutil/java/java-" + src_type + "/cloud"
+                            java.srcDirs "${test_root}/src/common/commonutil/java/java-" + src_type + "/logger"
               java.srcDirs 'src'
-              java.srcDirs "${testCommonUtilSrcDirectory}/resource"
-              java.srcDirs "${testAppFrameworkSrcDir}"
               jni.srcDirs = [] //disable automatic ndk-build
+              printSrcDir(java.srcDirs)
         }
     }
 
     lintOptions {
           abortOnError false
-     }
+    }
 
     defaultConfig {
-      applicationId "org.iotivity.service.ic"
+      applicationId 'org.iotivity.test.' + module_name + '.app.testapp'
       minSdkVersion 21
       targetSdkVersion 21
-      resValue 'string', 'app_name', 'IC TestApp'
+      resValue 'string', 'app_name', '${module_name} TestApp'
     }
-    println ("\nConfigured $commonText android properties")
+}
+
+android.applicationVariants.all{ variant ->
+       variant.outputs.each { output ->
+         output.processResources.manifestFile = file('AndroidManifest.xml')
+         output.processManifest.enabled=false
+       }
 }
 
 dependencies {
-    compile fileTree(dir: "${androidLibFileDirFromModules}", include: ['*.jar'])
-    compile(name:"${baseAARFile}", ext:'aar')
-    println ("\n$commonText Library Dependency Resolved")
+    compile(name:"${iotivityBaseAARFile}", ext:'aar')
 }
 
 task icbuild (dependsOn:['deleteBuildDirectory', 'installDebug']) << {
-   println ("\n############# Finished $commonText #############\n")
 }
 
 task deleteBuildDirectory(type: Delete) {

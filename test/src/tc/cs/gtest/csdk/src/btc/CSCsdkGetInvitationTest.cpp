@@ -29,7 +29,7 @@ protected:
 
     CSCsdkCloudHelper m_CloudAclHelper;
     string m_hostAddress = COAP_HOST_ADDRESS;
-    OCDevAddr m_endPoint = {0, 0};
+    OCDevAddr m_endPoint;
     string m_authProvider = "github";
     string m_authCode = "";
     string m_groupId = "";

@@ -18,7 +18,7 @@
  *
  ******************************************************************/
 
-package org.iotivity.service.ic;
+package org.iotivity.test.ic.app;
 
 import java.util.List;
 import android.util.Log;
@@ -45,21 +45,25 @@ import org.iotivity.base.ErrorCode;
 import org.iotivity.base.OcRDClient;
 import org.iotivity.base.OcAccountManager;
 
-import static org.iotivity.service.ic.ICUtility.*;
+import static org.iotivity.test.ic.app.ICUtility.*;
 import org.iotivity.service.testapp.framework.Base;
 
-public class ICResourceDirectoryCommonAdapter extends Base implements OcRDClient.OnPublishResourceListener,
-        OcRDClient.OnDeleteResourceListener, OcResource.OnObserveListener {
+public class ICResourceDirectoryCommonAdapter extends Base
+        implements OcRDClient.OnPublishResourceListener,
+        OcRDClient.OnDeleteResourceListener, OcResource.OnObserveListener,
+        OcPlatform.OnResourceFoundListener {
 
-    public static boolean isOnPublishResourceCompleted = false;
-    public static boolean onDeleteResourceCompleted = false;
+    public static boolean    isOnPublishResourceCompleted = false;
+    public static boolean    onDeleteResourceCompleted    = false;
+    public static OcResource mFoundResource               = null;
 
     public ICResourceDirectoryCommonAdapter() {
 
     }
 
     @Override
-    public void onObserveCompleted(List<OcHeaderOption> arg0, OcRepresentation arg1, int arg2) {
+    public void onObserveCompleted(List<OcHeaderOption> arg0,
+            OcRepresentation arg1, int arg2) {
         showOutPut("Observe Completed.");
     }
 
@@ -85,7 +89,8 @@ public class ICResourceDirectoryCommonAdapter extends Base implements OcRDClient
         isOnPublishResourceCompleted = true;
         for (OcRepresentation child : ocRepresentation.getChildren()) {
             try {
-                System.out.println("\tPublished Resource URI : " + child.getValue("href"));
+                System.out.println(
+                        "\tPublished Resource URI : " + child.getValue("href"));
             } catch (OcException e) {
                 e.printStackTrace();
             }
@@ -98,4 +103,20 @@ public class ICResourceDirectoryCommonAdapter extends Base implements OcRDClient
         isOnPublishResourceCompleted = true;
     }
 
+    @Override
+    public void onResourceFound(OcResource ocResource) {
+        final String resourceUri = ocResource.getUri();
+
+        if (mFoundResource == null) {
+            if (resourceUri.contains("/a/light")) {
+                showOutPut("onResourceFound : " + ocResource.getUri());
+                mFoundResource = ocResource;
+            }
+        }
+    }
+
+    @Override
+    public void onFindResourceFailed(Throwable throwable, String uri) {
+        showOutPut("findResource request has failed");
+    }
 }

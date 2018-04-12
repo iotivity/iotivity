@@ -62,7 +62,6 @@
 #include "pmtypes.h"
 #include "RDClient.h"
 #include "rd_client.h"
-#include "securevirtualresourcetypes.h"
 #include "srmutility.h"
 #include "ssl_ciphersuites.h"
 #include "utils.h"

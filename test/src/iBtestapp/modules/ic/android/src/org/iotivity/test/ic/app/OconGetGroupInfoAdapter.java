@@ -18,10 +18,13 @@
  *
  ******************************************************************/
 
-package org.iotivity.service.ic;
+package org.iotivity.test.ic.app;
 
 import java.util.List;
 import android.util.Log;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.iotivity.base.OcAccountManager.OnDeleteListener;
 import org.iotivity.base.OcAccountManager.OnGetListener;
@@ -44,67 +47,27 @@ import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.ErrorCode;
 
-import static org.iotivity.service.ic.ICUtility.*;
+import static org.iotivity.test.ic.app.ICUtility.*;
 import org.iotivity.service.testapp.framework.Base;
 
-public class OconGetGroupInfoAllAdapter extends Base implements OnGetListener{
+public class OconGetGroupInfoAdapter extends Base implements OnGetListener{
     public static String sGroupId = null;
     public static boolean sGroupInfoCallbackinvoked = false;
     @Override
     public synchronized void onGetCompleted(List<OcHeaderOption> list,
                                             OcRepresentation ocRepresentation) {
-         showOutPut("getGroupInfoAll was successful");
+         showOutPut("getGroupInfo was successful");
          sGroupInfoCallbackinvoked = true;
-         try {
+         Map<String, Object> valueMap = ocRepresentation.getValues();
 
-             OcRepresentation[] gidlist = ocRepresentation.getValue("groups");
-             if (gidlist == null || gidlist.length == 0) {
-                 System.out.println("\tgroup list is empty");
-                 sGroupId = null;
-             } else {
-                 System.out.println("\tgroup list");
-
-                 for (OcRepresentation group : gidlist) {
-                     String gid = group.getValue("gid");
-                     String gname = group.getValue("gname");
-                     String owner = group.getValue("owner");
-
-                     System.out.println("\t\t-GroupID : " + gid);
-                     System.out.println("\t\t Group name : " + gname);
-                     System.out.println("\t\t Owner : " + owner);
-
-                     String[] members = group.getValue("members");
-                     if (members != null && members.length != 0) {
-                         System.out.println("\t\t members :");
-                         for (String member : members) {
-                             System.out.println("\t\t\t" + member);
-                         }
-                     }
-
-                     String[] devices = group.getValue("devices");
-                     if (devices != null && devices.length != 0) {
-                         System.out.println("\t\t devices");
-                         for (String device : devices) {
-                             System.out.println("\t\t\t" + device);
-                         }
-                     }
-
-                     if (group.hasAttribute("parent")) {
-                         System.out.println("\t\t parent group : " + group.getValue("parent"));
-                     }
-
-                     sGroupId = gid;
-                 }
-                 System.out.println("\tcurrent group is " + sGroupId);
-             }
-         } catch (OcException e) {
-             e.printStackTrace();
-         }
+            for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
+                System.out.println("\tproperty: " + entry.getKey() + ":\t" + entry.getValue());
+            }         
      }
 
       @Override
       public void onGetFailed(Throwable throwable) {
-          showOutPut("Failed to getGroupInfoAll");
+          showOutPut("Failed to getGroupInfo");
           if (throwable instanceof OcException) {
               OcException ocEx = (OcException) throwable;
               Log.e(TAG, ocEx.toString());

@@ -38,6 +38,7 @@ tls_mode = env_linux.get('TLS_MODE')
 cloud_service_build = env_linux.get('CLOUD_SERVICE')
 kafka_root = env_linux.get('KAFKA_ROOT')
 common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
+common_rpath = [iotivity_lib_path, '.', '/usr/local/lib']
 
 install_targets = []
 default_targets = []
@@ -138,7 +139,7 @@ lib_paths = [
 ]
 
 simulator_src = [
-    test_src_root + '/testapp/cloud/cloud_server.cpp'
+    test_src_root + '/testapp/cs/iotivity_cs_server.cpp'
 ]
 
 cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -D__SECURED__ -D__CLOUD__ -DCA_DBUS_GATT_SERVICE_NAME -DROUTING_EP -DGLIB_VERSION_MIN_REQUIRED -DGLIB_VERSION_2_32 -DWITH_BWT -DTB_LOG -DIP_ADAPTER -DLE_ADAPTER -DNO_EDR_ADAPTER -DHAVE_SYS_TIME_H -DDTLSV12 -DRD_CLIENT -DWITH_CLOUD -D_ENABLE_MULTIPLE_OWNER_ -DWITH_POSIX -DNDEBUG -DTCP_ADAPTER -fpermissive -D__WITH_DTLS__ -D__WITH_TLS__ -DWITH_TCP')
@@ -157,14 +158,14 @@ if 'tc' in test:
         cpp_target_binary = 'iotivity_cs_cpp_tlson_test'
 
     if 'csdk' in sdk:
-        csdk_tc = env_linux.Program(source=csdk_tc_src,
-                                 target=csdk_target_binary,
-                                 CPPPATH=iotivity_include_paths + csdk_tc_include_paths,
-                                 LIBS=lib_list + ['gtest', 'tc_util', 'dl'],
-                                 LIBPATH=lib_paths + ['.', '/usr/local/lib'],
-                                 RPATH=iotivity_lib_path,
-                                 CPPFLAGS=cppflags + common_linux_cppflags,
-                                 CXXFLAGS=cxxflags)
+        csdk_tc = env_linux.Program(source = csdk_tc_src,
+                                 target = csdk_target_binary,
+                                 CPPPATH = iotivity_include_paths + csdk_tc_include_paths,
+                                 LIBS = lib_list + ['gtest', 'tc_util', 'dl'],
+                                 LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                                 RPATH = common_rpath,
+                                 CPPFLAGS = cppflags + common_linux_cppflags,
+                                 CXXFLAGS = cxxflags)
         install_targets += csdk_tc
 
     if 'cpp' in sdk:
@@ -172,10 +173,10 @@ if 'tc' in test:
                             target = cpp_target_binary,
                             CPPPATH = iotivity_include_paths + cpp_tc_include_paths,
                             LIBS=lib_list + ['gtest', 'tc_util', 'dl'],
-                            LIBPATH=lib_paths + ['.', '/usr/local/lib'],
-                            RPATH=iotivity_lib_path,
-                            CPPFLAGS=cppflags + common_linux_cppflags,
-                            CXXFLAGS=cxxflags)
+                            LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                            RPATH = common_rpath,
+                            CPPFLAGS = cppflags + common_linux_cppflags,
+                            CXXFLAGS = cxxflags)
         install_targets += cpp_tc
 
 if 'app' in test:
@@ -188,40 +189,47 @@ if 'app' in test:
         cpp_target_binary = 'iotivity_cs_cpp_tlson_app'
 
     if 'csdk' in sdk:
-        csdk_tc = env_linux.Program(source=csdk_app_src,
-                                 target=csdk_target_binary,
-                                 CPPPATH=iotivity_include_paths + csdk_app_include_paths,
-                                 LIBS=lib_list,
-                                 LIBPATH=lib_paths + ['.', '/usr/local/lib'],
-                                 RPATH=iotivity_lib_path,
-                                 CPPFLAGS=cppflags + common_linux_cppflags,
-                                 CXXFLAGS=cxxflags)
+        csdk_tc = env_linux.Program(source = csdk_app_src,
+                                 target = csdk_target_binary,
+                                 CPPPATH = iotivity_include_paths + csdk_app_include_paths,
+                                 LIBS = lib_list,
+                                 LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                                 RPATH = common_rpath,
+                                 CPPFLAGS = cppflags + common_linux_cppflags,
+                                 CXXFLAGS = cxxflags)
         install_targets += csdk_tc
         
 if 'tc' in test or 'simulator' in test:
-    csc_simulator = env_linux.Program(source= simulator_src,
-                                      target='iotivity_cs_server',
-                                      CPPPATH= iotivity_include_paths + csdk_tc_include_paths,
-                                      LIBS=lib_list,
-                                      LIBPATH=lib_paths + ['.', '/usr/local/lib'],
-                                      RPATH=iotivity_lib_path,
-                                      CPPFLAGS=cppflags + common_linux_cppflags,
-                                      CXXFLAGS=cxxflags)
+    csc_simulator = env_linux.Program(source = simulator_src,
+                                      target = 'iotivity_cs_server',
+                                      CPPPATH = iotivity_include_paths + csdk_tc_include_paths,
+                                      LIBS = lib_list,
+                                      LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                                      RPATH = common_rpath,
+                                      CPPFLAGS = cppflags + common_linux_cppflags,
+                                      CXXFLAGS = cxxflags)
     install_targets += csc_simulator
     
 if 'tc' in test or 'app' in test:
     cs_resource_path = iotivity_test_root + '/res/cloud_resource'
     cs_resource_list = Glob(cs_resource_path + '/*.*')
     common_resource_list = Glob(iotivity_test_root + '/res/common/*.*')
-
+    cs_dat_file = iotivity_root + '/resource/csdk/security/provisioning/sample/cloud.dat'
+    cs_crt_file = iotivity_root + '/resource/csdk/security/provisioning/sample/rootca.crt'
+    
 install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
-install_res = env_linux.Install(iotivity_test_root + '/' + install_dir, cs_resource_list)
-install_res += env_linux.Install(iotivity_test_root + '/bin', cs_resource_list)
+install_res = env_linux.Install(iotivity_test_root + '/' + install_dir, cs_dat_file)
+install_res += env_linux.Install(iotivity_test_root + '/bin', cs_dat_file)
+install_res += env_linux.Install(iotivity_test_root + '/' + install_dir + '/rootca.crt', cs_crt_file)
+install_res += env_linux.Install(iotivity_test_root + '/bin/rootca.crt', cs_crt_file)
 install_res += env_linux.Install(iotivity_test_root + '/' + install_dir, common_resource_list)
 install_res += env_linux.Install(iotivity_test_root + '/bin', common_resource_list)
+install_res += env_linux.Install(iotivity_test_root + '/' + install_dir, cs_resource_list)
+install_res += env_linux.Install(iotivity_test_root + '/bin', cs_resource_list)
+
+
 
 if cloud_service_build:
-
     build_command = 'bash ' + iotivity_test_root + '/res/cloud_resource/cloud_build.sh ' + kafka_root + ' ' + iotivity_root
     cloud_build = env_linux.Command('cloud_build', None, build_command)
     default_targets += [cloud_build]

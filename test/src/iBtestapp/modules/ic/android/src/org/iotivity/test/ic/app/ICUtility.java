@@ -18,7 +18,7 @@
  *
  ******************************************************************/
 
-package org.iotivity.service.ic;
+package org.iotivity.test.ic.app;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +34,7 @@ public interface ICUtility {
                                                                       put("a", "b");
                                                                   }
                                                               };
-    public final String              IC_HOST_ADDRESS          = "coap+tcp://192.168.43.174:5683";
+    public static String              IC_HOST_ADDRESS          = "coap+tcp://192.168.43.174:5683";
     public final String              MQ_BROKER_URI            = "/oic/ps";
     public final QualityOfService    IC_OC_QUALITY_OF_SERVICE = QualityOfService.LOW;
     public final String              DEFAULT_AUTH_PROVIDER    = "github";

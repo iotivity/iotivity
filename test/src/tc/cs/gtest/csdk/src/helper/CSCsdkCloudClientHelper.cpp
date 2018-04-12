@@ -47,7 +47,6 @@ string g_commonVendorUri = "Vendor";
 ResourceHelper *g_resourceHelper;
 
 static mutex s_mutex;
-static bool s_isFirstTime = true;
 static const char CRED_FILE_SERVER[] = "oic_svr_db_server.dat";
 static const char CRED_FILE_CLIENT[] = "oic_svr_db_client.dat";
 
@@ -123,11 +122,10 @@ void onDeviceInfoReceived(const OCRepresentation& rep)
 // callback handler on GET request
 void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
+    OC_UNUSED(headerOptions);
     if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK)
     {
         cout << "Response: GET request was successful" << endl;
-
-//        g_resourceHelper->printIncomingRepresentation(rep);
 
         vector< string > interfacelist = rep.getResourceInterfaces();
 
@@ -176,6 +174,8 @@ void onPublish(const OCRepresentation &, const int &eCode)
 // callback handler on PUT request
 void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
+    OC_UNUSED(headerOptions);
+
     if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CREATED
             || eCode == OC_STACK_RESOURCE_CHANGED)
     {
@@ -193,6 +193,8 @@ void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
 // callback handler on POST request
 void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
+    OC_UNUSED(headerOptions);
+
     if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CHANGED
             || eCode == OC_STACK_RESOURCE_CREATED)
     {
@@ -211,6 +213,8 @@ void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, con
 // callback handler on DELETE request
 void onDelete(const HeaderOptions &headerOptions, const int eCode)
 {
+    OC_UNUSED(headerOptions);
+
     if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_DELETED)
     {
         cout << "Response: DELETE request was successful" << endl;
@@ -225,6 +229,7 @@ void onDelete(const HeaderOptions &headerOptions, const int eCode)
 void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep, const int &eCode,
         const int &sequenceNumber)
 {
+    OC_UNUSED(headerOptions);
     try
     {
         if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK)
@@ -278,7 +283,9 @@ void createAirConDevice(bool isSecured)
     if (g_isAirConDeviceCreated == false)
     {
         cout << "Creating AirCon Device Resources!!" << endl;
-        SampleResource::setDeviceInfo("Vendor Smart Home AirCon Device", Device_TYPE_AC);
+        vector<string> deviceTypes;
+        deviceTypes.push_back(Device_TYPE_AC);
+        SampleResource::setDeviceInfo("Vendor Smart Home AirCon Device", deviceTypes);
 
         g_acSwitchResource = new SampleResource();
         g_acSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,

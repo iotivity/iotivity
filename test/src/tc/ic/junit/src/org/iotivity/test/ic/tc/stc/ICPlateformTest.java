@@ -49,14 +49,13 @@ import static org.iotivity.test.ic.tc.helper.ICResourceDirectoryCommonAdapter.*;
 import org.iotivity.testcase.IoTivityLog;
 import org.iotivity.testcase.IoTivityTc;
 
-public class ICPlatformTest extends IoTivityTc implements IConfiguration {
-    private static final String              ALL_INTERFACE_TYPE = "0.0.0.0";
+public class ICPlateformTest extends IoTivityTc implements IConfiguration {
     public OcAccountManager                  mAccountManager;
-    private ICResourceDirectoryCommonAdapter mICResourceDirectoryCommonAdapter;
-    private ICHelper                         mICHelper;
+    private ICResourceDirectoryCommonAdapter m_ICResourceDirectoryCommonAdapter;
     private OcPresenceHandle                 mOcPresenceHandle;
     private List<String>                     mDi;
     private OcAccountManagerHelper           mCloudHelper;
+    private ICHelper                         mICHelper;
 
     protected void setUp() throws Exception {
         super.setUp();
@@ -64,7 +63,7 @@ public class ICPlatformTest extends IoTivityTc implements IConfiguration {
         mICHelper.copyCborFromAsset("cloud.dat");
         mICHelper.configClientServerPlatform("cloud.dat");
 
-        mICResourceDirectoryCommonAdapter = new ICResourceDirectoryCommonAdapter();
+        m_ICResourceDirectoryCommonAdapter = new ICResourceDirectoryCommonAdapter();
 
         mOcPresenceHandle = null;
         mDi = new ArrayList<>();
@@ -87,18 +86,16 @@ public class ICPlatformTest extends IoTivityTc implements IConfiguration {
 
     /**
      * @since 2017-02-22
-     * @see public void signUp(String authProvider, String authCode,
-     *      OnPostListener onPostListener)
-     * @see public void signIn(String userUuid, String accessToken,
-     *      OnPostListener onPostListener)
-     * @see public void signOut(String accessToken, OnPostListener
-     *      onPostListener)
+     * @see string SignUp() API
+     * @see string SignIn() API
+     * @see string SignOut() API
      * @objective Test 'subscribeDevicePresence' API With valid scenario
      * @target "OCStackResult subscribeDevicePresence(OCPresenceHandle&
-     *         presenceHandle, const std::string& host, const
-     *         std::vector<std::string>& di,                                    
-     *                  OCConnectivityType connectivityType,                    
-     *                                  ObserveCallback callback);"
+     *         presenceHandle,                                            
+     *          const std::string& host,                                        
+     *              const std::vector<std::string>& di,                        
+     *                              OCConnectivityType connectivityType,        
+     *                                              ObserveCallback callback);"
      * @test_data host, presenceHandle, di, connectivityType
      * @pre_condition constructAccountManagerObject(host, connectivity_type),
      *                SignUp(), SignIn() API
@@ -111,7 +108,8 @@ public class ICPlatformTest extends IoTivityTc implements IConfiguration {
             mOcPresenceHandle = OcPlatform.subscribeDevicePresence(
                     IC_HOST_ADDRESS, mDi,
                     EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP),
-                    mICResourceDirectoryCommonAdapter);
+                    m_ICResourceDirectoryCommonAdapter);
+            Thread.sleep(3000);
             assertTrue("observeGroup not worked",
                     ICResourceDirectoryCommonAdapter.sIsPlatformObserveCompleted);
             assertNotNull("mOcPresenceHandle is null", mOcPresenceHandle);
@@ -123,12 +121,9 @@ public class ICPlatformTest extends IoTivityTc implements IConfiguration {
 
     /**
      * @since 2017-02-06
-     * @see public void signUp(String authProvider, String authCode,
-     *      OnPostListener onPostListener)
-     * @see public void signIn(String userUuid, String accessToken,
-     *      OnPostListener onPostListener)
-     * @see public void signOut(String accessToken, OnPostListener
-     *      onPostListener)
+     * @see string SignUp() API
+     * @see string SignIn() API
+     * @see string SignOut() API
      * @objective Test 'UnsubscribeDevicePresence' API With valid scenario
      * @target "OCStackResult unsubscribeDevicePresence(OCPresenceHandle&
      *         presenceHandle);"
@@ -144,7 +139,7 @@ public class ICPlatformTest extends IoTivityTc implements IConfiguration {
             mOcPresenceHandle = OcPlatform.subscribeDevicePresence(
                     IC_HOST_ADDRESS, mDi,
                     EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP),
-                    mICResourceDirectoryCommonAdapter);
+                    m_ICResourceDirectoryCommonAdapter);
             assertTrue("observeGroup not worked",
                     ICResourceDirectoryCommonAdapter.sIsPlatformObserveCompleted);
             assertNotNull("mOcPresenceHandle is null", mOcPresenceHandle);

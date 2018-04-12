@@ -68,7 +68,7 @@ public interface IConfiguration {
     int     CALLBACK_TIMEOUT              = 60;                                                                                                                                                                              // 60
 
     int     CALLBACK_INVOKED_BUT_FAILED   = 0;
-    String  CALLBACK_NOT_INVOKED            = "CallBack Not Invoked";
+    String  CALLBACK_NOT_INVOKED_MSG      = "CallBack Not Invoked";
 
     int     SERVER_TIMEOUT_DELAY          = 40000;
 

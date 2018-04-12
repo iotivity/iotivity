@@ -588,6 +588,7 @@ bool CSCsdkCloudHelper::cloudGetAclIdByDevice(void* ctx, const char *deviceId,
         OCStackResult expectedResult, bool checkCallback)
 {
     __FUNC_IN__
+    OC_UNUSED(devAclID);
     s_isCbInvoked = CALLBACK_NOT_INVOKED;
 
     OCStackResult result = OCCloudGetAclIdByDevice(ctx, deviceId, endPoint, callback);

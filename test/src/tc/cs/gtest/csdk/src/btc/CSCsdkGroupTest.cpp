@@ -39,8 +39,7 @@ protected:
     ByteArray_t m_trustCertChainArray =
     { 0, 0 };
 
-    OCDevAddr m_endPoint =
-    { 0, 0 };
+    OCDevAddr m_endPoint;
     stringArray_t *m_memberArray = NULL;
     stringArray_t *m_deviceArray = NULL;
     stringArray_t *m_groupArray = NULL;

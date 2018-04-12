@@ -18,7 +18,7 @@
  *
  ******************************************************************/
 
-package org.iotivity.service.ic;
+package org.iotivity.test.ic.app;
 
 import java.util.List;
 import java.util.EnumSet;
@@ -49,7 +49,7 @@ import org.iotivity.base.OcResourceHandle;
 import org.iotivity.base.OcAccountManager.OnPostListener;
 import org.iotivity.base.OcHeaderOption;
 
-import static org.iotivity.service.ic.ICUtility.*;
+import static org.iotivity.test.ic.app.ICUtility.*;
 import org.iotivity.service.testapp.framework.Base;
 
 public class ICMessageQueueHelper extends Base {

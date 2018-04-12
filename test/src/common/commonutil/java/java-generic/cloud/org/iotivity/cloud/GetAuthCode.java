@@ -189,7 +189,7 @@ public class GetAuthCode implements IConfiguration {
         String authCode = "";
         String pageResponse = "";
         try {
-            s_mCookieManager = new s_mCookieManager(null, CookiePolicy.ACCEPT_ALL);
+            s_mCookieManager = new CookieManager(null, CookiePolicy.ACCEPT_ALL);
             URL url = new URL(INIT_GET_LOGIN_URL);
             pageResponse = getResponse(url, null);
 

@@ -18,7 +18,7 @@
  *
  ******************************************************************/
 
-package org.iotivity.service.ic;
+package org.iotivity.test.ic.app;
 
 import java.util.List;
 import android.util.Log;
@@ -44,7 +44,7 @@ import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.ErrorCode;
 import org.iotivity.base.OcAccountManager;
 
-import static org.iotivity.service.ic.ICUtility.*;
+import static org.iotivity.test.ic.app.ICUtility.*;
 import org.iotivity.service.testapp.framework.Base;
 
 public class OcAccountManagerAdapter extends Base
@@ -53,6 +53,9 @@ public class OcAccountManagerAdapter extends Base
 
     public static String  sInviteeUuid                  = null;
     public static String  sGroupId                      = null;
+    public static String[]  sMembers                      = null;
+    public static String  sOwner                      = null;
+    public static String  sGname                      = null;
     public static boolean sIsObserveCompleted            = false;
     public static boolean sIs_onDeleteCompletedCBInvoked = false;
     public static boolean sIs_sendInvitationCBInvoked    = false;
@@ -64,7 +67,13 @@ public class OcAccountManagerAdapter extends Base
         sIs_sendInvitationCBInvoked = true;
         try {
             sGroupId = ocRepresentation.getValue("gid");
-            showOutPut("\tgroupId: " + sGroupId);
+            sMembers = ocRepresentation.getValue("members");
+            sOwner = ocRepresentation.getValue("owner");
+            sGname = ocRepresentation.getValue("gname");
+            showOutPut("\tgid:\t" + sGroupId);
+            showOutPut("\tmembers:\t" + sMembers);
+            showOutPut("\towner:\t" + sOwner);
+            showOutPut("\tgname:\t" + sGname);
             showOutPut("getGroupInfo");
         } catch (OcException e) {
             Log.e(TAG, e.toString());
@@ -153,11 +162,13 @@ public class OcAccountManagerAdapter extends Base
         showOutPut("searchUser was successful");
         try {
             OcRepresentation[] userList = ocRepresentation.getValue("ulist");
+            if (userList.length == 0)
+                Log.d(TAG, "userList is null");
             for (OcRepresentation user : userList) {
                 sInviteeUuid = user.getValue("uid");
-                OcRepresentation userInfo = user.getValue("uinfo");
-                String inviteeUserId = userInfo.getValue("userid");
-                Log.d(TAG, "inviteeUserId : " + inviteeUserId);
+               // OcRepresentation userInfo = user.getValue("uinfo");
+                //String inviteeUserId = userInfo.getValue("userid");
+                Log.d(TAG, "User id is: " + sInviteeUuid);
             }
         } catch (OcException e) {
             e.printStackTrace();

@@ -2,8 +2,8 @@
 
 #setup
 command=${1}
-tls=${2}
-kafka_root=${3}
+kafka_root=${2}
+tls=${3}
 iotivity_root=${4}
 
 #example
@@ -47,7 +47,7 @@ function run_cloud_server {
     #xdotool key ctrl+shift+t
     current_dir=`pwd`
     cd $iotivity_root/cloud/$1/target
-    gnome-terminal -x bash -c "java -jar $2"
+    gnome-terminal --title=${1} -x bash -c "java -jar $2"
     sleep 10s
     cd ${current_dir}
 }
@@ -62,6 +62,32 @@ function run_all_cloud_servers {
     cd ${current_dir}
 }
 
+function clean_tc_generated_junk {
+    current_dir=`pwd`
+    if [[ "${kafka_root}" == "" ]]; then
+        return 127
+    fi
+    cd ${kafka_root}
+    zookeeper_port=2181
+    output="$(lsof -i :${zookeeper_port})"
+    if [[ "${output}" != *"${zookeeper_port} (LISTEN)"* ]]; then
+        bin/zookeeper-server-start.sh config/zookeeper.properties &
+        sleep 10s
+    fi
+
+    kafka_port=9092
+    output="$(lsof -i :${kafka_port})"
+    if [[ "${output}" != *"${kafka_port} (LISTEN)"* ]]; then
+        bin/kafka-server-start.sh config/server.properties &
+        sleep 3s
+    fi
+    bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic .oic.ps.light313 #this action removes MQ topic, created by IC MQ create TC 
+    bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic .oic.ps.light55  #update require if MQ uri changed in TC
+    bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic .oic.ps.light7
+    bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic .oic.ps.light13
+    cd ${current_dir}
+}
+
 init_current_dir=`pwd`
 
 if [[ "${command}" == "start" ]]; then
@@ -69,6 +95,7 @@ if [[ "${command}" == "start" ]]; then
     run_external_server
     run_all_cloud_servers
 elif [[ "${command}" == "kill" ]]; then
+    clean_tc_generated_junk
     clean_up
 fi
 

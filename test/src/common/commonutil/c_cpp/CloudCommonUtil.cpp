@@ -82,26 +82,72 @@ OCDevAddr CloudCommonUtil::getDefaultEndPoint()
     return endPoint;
 }
 
+#ifdef __SECURED__
+OicCloud_t* CloudCommonUtil::getCloudServer()
+{
+    OicCloud_t *cloud = (OicCloud_t *)OICCalloc(1,sizeof(OicCloud_t));
+    if (NULL == cloud)
+    {
+        IOTIVITYTEST_LOG(ERROR, "[CSC Helper] cloud calloc failed");
+        return NULL;
+    }
+    cloud->cis = (char *)OICCalloc(1,1024 * 4);
+    if (NULL == cloud)
+    {
+        IOTIVITYTEST_LOG(ERROR, "[CSC Helper] cloud->cis calloc failed");
+        OICFree(cloud);
+        return NULL;
+    }
+    cloud->apn = (char *)OICCalloc(1,512);
+    if (NULL == cloud->apn)
+    {
+        IOTIVITYTEST_LOG(ERROR, "[CSC Helper] cloud->apn calloc failed");
+        OICFree(cloud->cis);
+        OICFree(cloud);
+        return NULL;
+    }
+    cloud->at = (char *)OICCalloc(1,1024);
+    if (NULL == cloud->at)
+    {
+        IOTIVITYTEST_LOG(ERROR, "[CSC Helper] cloud->at calloc failed");
+        OICFree(cloud->apn);
+        OICFree(cloud->cis);
+        OICFree(cloud);
+        return NULL;
+    }
+
+    string ci_server_ip;
+
+#ifdef __LINUX__
+    ci_server_ip = g_configPropFile.getProperties(CI_SERVER_ETHERNET_IP_KEY);
+#elif __TIZEN__
+    ci_server_ip = g_configPropFile.getProperties(CI_SERVER_WIFI_IP_KEY);
+#endif
+
+    ci_server_ip = ci_server_ip + ":" + std::to_string(OC_MULTICAST_PORT);
+    strncpy(cloud->cis, ci_server_ip.c_str(), sizeof(cloud->cis));
+
+
+    return cloud;
+}
+#endif
+
 std::string CloudCommonUtil::readfile(std::string filename)
 {
     __FUNC_IN__
     FILE *fp;
-    char buff[100] =
-    { 0, };
+    char buff[100];
 
     fp = fopen(filename.c_str(), "r");
 
     if (NULL == fp)
     {
         IOTIVITYTEST_LOG(ERROR, "[CSC Helper] ERROR Opening File : %s", filename.c_str());
-        return NULL;
     }
 
     if (NULL == fgets(buff, 100, (FILE*) fp))
     {
         IOTIVITYTEST_LOG(ERROR, "[CSC Helper] Unable to Get input from File: %s", filename.c_str());
-        fclose(fp);
-        return NULL;
     }
 
     fclose(fp);
@@ -116,13 +162,6 @@ void CloudCommonUtil::create_file(string filename, string data)
 {
     FILE *fp;
     fp = fopen(filename.c_str(), "w+");
-
-    if (!fp)
-    {
-        IOTIVITYTEST_LOG(ERROR, "[CSC Helper] Unable to Open File");
-        return;
-    }
-
     fprintf(fp, "%s", data.c_str());
     fclose(fp);
 }
@@ -163,7 +202,7 @@ void CloudCommonUtil::init_string(Stringstr *str)
     if (str->ptr == NULL)
     {
         fprintf(stderr, "malloc() failed\n");
-        exit(EXIT_FAILURE);
+        exit (EXIT_FAILURE);
     }
     str->ptr[0] = '\0';
 }
@@ -175,7 +214,7 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, Stringstr *str)
     if (str->ptr == NULL)
     {
         fprintf(stderr, "realloc() failed\n");
-        exit(EXIT_FAILURE);
+        exit (EXIT_FAILURE);
     }
     memcpy(str->ptr + str->len, ptr, size * nmemb);
     str->ptr[new_len] = '\0';
@@ -186,7 +225,7 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, Stringstr *str)
 
 char* CloudCommonUtil::get_authenticity_token(const char* responseText)
 {
-    char* authLast = "";
+    char* authLast = NULL;
     char* auth_token = (char*) strstr(responseText,
             "<input name=\"authenticity_token\" type=\"hidden\" value=\"");
     auth_token = strstr(auth_token, "value=\"");
@@ -198,8 +237,7 @@ char* CloudCommonUtil::get_authenticity_token(const char* responseText)
 
 char* CloudCommonUtil::get_auth_token_code(const char* resposeTxt, char *code)
 {
-    char* authLast = "";
-    char *authcode;
+    char* authLast = NULL;
 
     int len;
     char* auth_token = (char*) strstr(resposeTxt,
@@ -217,20 +255,19 @@ char* CloudCommonUtil::get_auth_token_code(const char* resposeTxt, char *code)
     return code;
 }
 
-char* CloudCommonUtil::getgithubcode(const char *gitlogin, const char *gitpassword, char *code)
+char const* CloudCommonUtil::getgithubcode(const char *gitlogin, const char *gitpassword,
+        char *code)
 {
     char demoPost[1000] =
     { 0 };
-    char *auth_text = "";
-    char *auth_url_text = "";
-    char *code_text = "";
+    char *auth_text = NULL;
+    char *auth_url_text = NULL;
+    char *code_text = NULL;
     CURL *curl;
     CURLcode res;
 
     struct curl_slist *cookies;
     struct curl_slist *nc;
-    struct curl_slist *header;
-    struct curl_slist *rheader;
 
     int i;
     int http_code = 0;
@@ -326,7 +363,7 @@ char* CloudCommonUtil::getgithubcode(const char *gitlogin, const char *gitpasswo
         if (res != CURLE_OK)
         {
             fprintf(stderr, "Curl perform failed: %s\n", curl_easy_strerror(res));
-            return "";
+            return (char*) "";
         }
 
         code_text = get_auth_token_code(str.ptr, code);
@@ -348,7 +385,7 @@ char* CloudCommonUtil::getGitLoginAuthCodeMain()
     char *code = (char*) calloc(30, sizeof(char));
     string github_user_id = g_configPropFile.getProperties(GITHUB_USER_KEY);
     string github_password = g_configPropFile.getProperties(GITHUB_PASSWORD_KEY);
-    code = getgithubcode(github_user_id.c_str(), github_password.c_str(), code);
+    code = (char*) getgithubcode(github_user_id.c_str(), github_password.c_str(), code);
     IOTIVITYTEST_LOG(INFO, "Auth Code: %s", code);
     __FUNC_OUT__
     return code;
@@ -372,7 +409,62 @@ void CloudCommonUtil::printRepresentation(OCRepresentation rep)
             CloudCommonUtil::g_uid = itr->getValueToString();
             g_cloudPropFile.setProperties(CLOUD_UID_KEY, CloudCommonUtil::g_uid);
         }
+
+        if (itr->attrname().compare("aclid") == 0)
+        {
+            IOTIVITYTEST_LOG(INFO, "ACL ID : %s", itr->getValueToString().c_str());
+
+        }
+
+        if (itr->attrname().compare("aceid") == 0)
+        {
+            IOTIVITYTEST_LOG(INFO, "ACE ID : %s", itr->getValueToString().c_str());
+        }
     }
+}
+
+OCRepresentation CloudCommonUtil::parseOCClientResponse(OCClientResponse* clientResponse)
+{
+    __FUNC_OUT__
+    if (nullptr == clientResponse)
+    {
+        IOTIVITYTEST_LOG(ERROR, "clientResponse is NULL");
+        return OCRepresentation();
+    }
+
+    if (nullptr == clientResponse->payload
+            || PAYLOAD_TYPE_REPRESENTATION != clientResponse->payload->type)
+    {
+        IOTIVITYTEST_LOG(ERROR, "clientResponse->payload is NULL");
+        return OCRepresentation();
+    }
+
+    if (PAYLOAD_TYPE_REPRESENTATION != clientResponse->payload->type)
+    {
+        IOTIVITYTEST_LOG(ERROR, "clientResponse is not of PAYLOAD_TYPE_REPRESENTATION");
+        return OCRepresentation();
+    }
+
+    MessageContainer oc;
+    oc.setPayload(clientResponse->payload);
+
+    std::vector< OCRepresentation >::const_iterator it = oc.representations().begin();
+    if (it == oc.representations().end())
+    {
+        return OCRepresentation();
+    }
+
+    // first one is considered the root, everything else is considered a child of this one.
+    OCRepresentation root = *it;
+    root.setDevAddr(clientResponse->devAddr);
+    root.setUri(clientResponse->resourceUri);
+    ++it;
+
+    std::for_each(it, oc.representations().end(), [&root](const OCRepresentation& repItr)
+    {   root.addChild(repItr);});
+
+    __FUNC_OUT__
+    return root;
 }
 
 static void handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep, const int ecode)
@@ -407,7 +499,8 @@ bool CloudCommonUtil::signUp(OCAccountManager::Ptr accountMgr)
 
     char* g_chAuthCode = CloudCommonUtil::getGitLoginAuthCodeMain();
     CloudCommonUtil::g_authCode = string(g_chAuthCode);
-
+    IOTIVITYTEST_LOG(INFO, "[Cloud Common] AuthCode for SignUp %s",
+            CloudCommonUtil::g_authCode.c_str());
     OCStackResult result = accountMgr->signUp(CloudCommonUtil::g_authprovider,
             CloudCommonUtil::g_authCode, handleLoginoutCB);
 
@@ -432,7 +525,6 @@ bool CloudCommonUtil::signUp(OCAccountManager::Ptr accountMgr)
         }
     }
     g_cloudPropFile.save();
-    free(g_chAuthCode);
     __FUNC_OUT__
     return true;
 }
@@ -538,4 +630,3 @@ bool CloudCommonUtil::signOut(OCAccountManager::Ptr accountMgr)
     __FUNC_OUT__
     return true;
 }
-

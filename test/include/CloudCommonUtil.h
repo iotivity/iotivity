@@ -20,6 +20,8 @@
 
 #ifndef __CLOUD_COMMON_UTIL_H__
 #define __CLOUD_COMMON_UTIL_H__
+
+#include <stddef.h>
 #include <malloc.h>
 #include <unistd.h>
 #include <string>

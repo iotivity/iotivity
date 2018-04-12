@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -170,12 +170,11 @@ TEST_F(CSCppCloudTest_btc, PostCRLCb_NV_N)
     int len = 1;
 
     char **item = (char**)OICCalloc(cnt, sizeof(char*));
-    char *item_name = "1";
 
     for (int i = 0; i < cnt; i++)
     {
         item[i] = (char*)OICCalloc(len, sizeof(char));
-        strncpy(item[i], item_name, strlen(item_name));
+        strcpy(item[i], "1");
     }
 
     serialNumbers.array = item;

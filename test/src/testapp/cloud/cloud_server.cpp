@@ -47,7 +47,7 @@
 #include "pmtypes.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
-#include "ca_adapter_net_ssl.h";
+#include "ca_adapter_net_ssl.h"
 #include "CAManager.h"
 #endif
 
@@ -68,11 +68,10 @@ static string g_authCode = "";
 static string g_uid = "";
 static string g_accesstoken = "";
 static string g_hostAddress = "";
-static OCAccountManager::Ptr accountMgr = nullptr;
+static OCAccountManager::Ptr g_accountMgr = nullptr;
 
-static char* g_ctx = "cloud";
-static OCDevAddr g_endPoint =
-{ 0, };
+static char* g_ctx = (char*)"cloud";
+static OCDevAddr g_endPoint;
 static int g_isCbInvoked = CALLBACK_NOT_INVOKED;
 
 #ifdef __SECURED__
@@ -110,15 +109,10 @@ static bool readFile(const char *name, OCByteString *out)
     if (length < 0)
     {
         OIC_LOG(ERROR, TAG, "Failed to ftell");
-        fclose(file);
-        return result;
     }
 
     if (fseek(file, 0, SEEK_SET))
     {
-        OIC_LOG(ERROR, TAG, "Failed to SEEK_SET");
-        fclose(file);
-        return result;
     }
 
     //Allocate memory
@@ -126,8 +120,6 @@ static bool readFile(const char *name, OCByteString *out)
     if (!buffer)
     {
         OIC_LOG(ERROR, TAG, "Failed to allocate buffer");
-        fclose(file);
-        return result;
     }
 
     //Read file contents into buffer
@@ -136,9 +128,6 @@ static bool readFile(const char *name, OCByteString *out)
     if (realCount != count)
     {
         OIC_LOG_V(ERROR, TAG, "Read %d bytes %" PRIuPTR " times instead of %" PRIuPTR, length, realCount, count);
-        free(buffer);
-        fclose(file);
-        return false;
     }
 
     out->bytes = buffer;
@@ -202,27 +191,6 @@ void enableTlsMode()
 
 #endif
 
-static void printRepresentation(OCRepresentation rep)
-{
-    for (auto itr = rep.begin(); itr != rep.end(); ++itr)
-    {
-        cout << "\t" << itr->attrname() << ":\t" << itr->getValueToString() << endl;
-
-        if (itr->attrname().compare("accesstoken") == 0)
-        {
-            g_accesstoken = itr->getValueToString();
-            CloudCommonUtil::create_file(CLOUD_ACCESSTOKEN_TXT, g_accesstoken);
-
-        }
-
-        if (itr->attrname().compare("uid") == 0)
-        {
-            g_uid = itr->getValueToString();
-            CloudCommonUtil::create_file(CLOUD_UUID_TXT, g_uid);
-        }
-    }
-}
-
 static int waitCallbackRet()
 {
     IOTIVITYTEST_LOG(DEBUG, "Waiting for Callback to be invoked");
@@ -284,20 +252,8 @@ void initServer()
 
     IOTIVITYTEST_LOG(INFO, "[CLOUD SIMULATOR] Host Addess : %s", g_hostAddress.c_str());
 
-    accountMgr = OCPlatform::constructAccountManagerObject(g_hostAddress, CT_ADAPTER_TCP);
+    g_accountMgr = OCPlatform::constructAccountManagerObject(g_hostAddress, CT_ADAPTER_TCP);
     __FUNC_OUT__
-    return;
-}
-
-static void handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep, const int ecode)
-{
-    IOTIVITYTEST_LOG(INFO, "Auth response received code: %d", ecode);
-    if (rep.getPayload() != NULL)
-    {
-        printRepresentation(rep);
-    }
-
-    g_isCbInvoked = CALLBACK_INVOKED;
 }
 
 #ifdef __SECURED__
@@ -404,46 +360,34 @@ int main()
     IOTIVITYTEST_LOG(INFO, "TLS MODE : Off");
 #endif
 
-    try
-    {
-        g_hostAddress = CloudCommonUtil::getDefaultHostAddess();
+    g_hostAddress = CloudCommonUtil::getDefaultHostAddess();
 
-        initServer();
+    initServer();
 #ifdef __SECURED__
-        g_endPoint = CloudCommonUtil::getDefaultEndPoint();
+    g_endPoint = CloudCommonUtil::getDefaultEndPoint();
 #ifdef __TLS_ON__
-        enableTlsMode();
+    enableTlsMode();
 #endif
 #endif
 
-        isInitialized = CloudCommonUtil::signUp(accountMgr);
+    isInitialized = CloudCommonUtil::signUp(g_accountMgr);
 
+    if (isInitialized)
+    {
+
+        isInitialized = CloudCommonUtil::signIn(g_accountMgr);
+
+#ifdef __SECURED__
         if (isInitialized)
         {
-
-            isInitialized = CloudCommonUtil::signIn(accountMgr);
-
-#ifdef __SECURED__
-            if (isInitialized)
-            {
-                createAcl();
-                getAclId();
-                CloudCommonUtil::signOut(accountMgr);
-            }
-#endif
+            createAcl();
+            getAclId();
+            CloudCommonUtil::signOut(g_accountMgr);
         }
-
-    }
-    catch (const std::logic_error& e)
-    {
-        isInitialized = false;
-    }
-    catch (const std::out_of_range& e)
-    {
-        isInitialized = false;
+#endif
     }
 
     IOTIVITYTEST_LOG(INFO, "Cloud Initialization %s", isInitialized ? "Successful" : "Failed");
+
     return 0;
 }
-

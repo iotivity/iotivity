@@ -236,8 +236,6 @@ TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualGetInfoAclId_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CSCsdkAclTest_btc, OCCloudAclIndividualGetInfoDevAddr_NV_N)
 {
-    cloudAce_t *aces = CSCsdkUtilityHelper::createCloudAces();
-
     if (!m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO, CSCsdkCloudHelper::s_aclId.c_str(), NULL, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_CloudAclHelper.getFailureMessage());

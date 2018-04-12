@@ -45,7 +45,7 @@ protected:
     ByteArray_t m_trustCertChainArray =
     { 0, 0 };
 
-    OCDevAddr m_endPoint = {0, 0};
+    OCDevAddr m_endPoint;
     cloudAce_t *m_aces = NULL;
 
     virtual void SetUp()
