@@ -88,8 +88,8 @@
 static const uint16_t CBOR_SIZE = 2048;
 
 /** CRED size - Number of mandatory items. */
-static const uint8_t CRED_ROOT_MAP_SIZE = 4;
-static const uint8_t CRED_MAP_SIZE = 2;
+static const uint8_t CRED_ROOT_MAP_SIZE = 3;
+static const uint8_t CRED_MAP_SIZE = 3;
 static const uint8_t ROLEID_MAP_SIZE = 1;
 
 
@@ -691,6 +691,10 @@ OCStackResult CredToCBORPayloadPartial(const OicSecCred_t *credS, const OicUuid_
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     size_t credRootMapSize = CRED_ROOT_MAP_SIZE;
+    if (propertiesToInclude[CRED_ROWNERUUID])
+    {
+        credRootMapSize++;
+    }
 
     // Create CRED Root Map (creds, rownerid)
     cborEncoderResult = cbor_encoder_create_map(&encoder, &credRootMap, credRootMapSize);
@@ -714,10 +718,7 @@ OCStackResult CredToCBORPayloadPartial(const OicSecCred_t *credS, const OicUuid_
         {
             mapSize++;
         }
-        if(propertiesToInclude[CRED_ROWNERUUID])
-        {
-            mapSize++;
-        }
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 #ifdef MULTIPLE_OWNER
         if(cred->eownerID)
@@ -987,9 +988,9 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
 OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUuid_t *rownerId, uint8_t **cborPayload,
                                 size_t *cborSize, int secureFlag)
 {
-    bool allProps[PSTAT_PROPERTY_COUNT];
+    bool allProps[CRED_PROPERTY_COUNT];
 
-    for (int i = 0; i < PSTAT_PROPERTY_COUNT; i++)
+    for (int i = 0; i < CRED_PROPERTY_COUNT; i++)
     {
         allProps[i] = true;
     }

@@ -56,7 +56,7 @@
 #define NUMBER_OF_DEFAULT_SEC_RSCS 2
 #define STRING_UUID_SIZE (UUID_LENGTH * 2 + 5)
 
-static const uint8_t ACL_MAP_SIZE = 4; // aclist, rowneruuid, RT and IF
+static const uint8_t ACL_MAP_SIZE = 2; // RT and IF
 static const uint8_t ACL_ACLIST_MAP_SIZE = 1; // aces object
 static const uint8_t ACL_ACE_MAP_SIZE = 3; // subject, resource, permissions
 static const uint8_t ACL_ACE2_MAP_SIZE = 4; // aceid, subject, resource, permissions
@@ -418,6 +418,16 @@ OCStackResult AclToCBORPayloadPartial(const OicSecAcl_t *secAcl,
         cborLen = CBOR_SIZE;
     }
 
+    int sizeOfMap = ACL_MAP_SIZE;
+    if (propertiesToInclude[ACL_ACELIST])
+    {
+        sizeOfMap++;
+    }
+    if (propertiesToInclude[ACL_ROWNERUUID])
+    {
+        sizeOfMap++;
+    }
+
     outPayload = (uint8_t *)OICCalloc(1, cborLen);
     VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
 
@@ -426,7 +436,7 @@ OCStackResult AclToCBORPayloadPartial(const OicSecAcl_t *secAcl,
     // Create ACL Map which contains aclist or aclist2, rowneruuid, rt and if
     if(propertiesToInclude[ACL_ACELIST])
     {
-        cborEncoderResult = cbor_encoder_create_map(&encoder, &aclMap, ACL_MAP_SIZE);
+        cborEncoderResult = cbor_encoder_create_map(&encoder, &aclMap, sizeOfMap);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Creating ACL Map.");
         OIC_LOG_V(DEBUG, TAG, "%s starting encoding of %s resource.",
             __func__, (OIC_SEC_ACL_V1 == aclVersion)?"v1 acl":"v2 acl2");
