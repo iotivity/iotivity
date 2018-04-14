@@ -498,6 +498,7 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 
     // Perform cleanup
     DeInitACLResource();
+    DeleteACLList(&acl);
     OICFree(ehReq.query);
     OCPayloadDestroy((OCPayload *)securityPayload);
     OICFree(payload);
@@ -570,6 +571,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     // Perform cleanup
     OCPayloadDestroy((OCPayload *)securityPayload);
     DeInitACLResource();
+    DeleteACLList(&acl);
     OICFree(ehReq.query);
     OICFree(payload);
 }
@@ -617,6 +619,7 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
     // Perform cleanup
     OCPayloadDestroy((OCPayload *)securityPayload);
     DeInitACLResource();
+    DeleteACLList(&acl);
     OICFree(ehReq.query);
     OICFree(payload);
 }
