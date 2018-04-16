@@ -618,7 +618,7 @@ OCStackResult OCCloudTokenRefresh(OicCloud_t *cloud)
 
     OCRepPayloadSetPropString(payload, OC_RSRVD_USER_UUID, cloud->session->uid);
     OCRepPayloadSetPropString(payload, OC_RSRVD_DEVICE_ID, deviceId);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ACCESS_TOKEN, cloud->session->refreshToken);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_REFRESH_TOKEN, cloud->session->refreshToken);
 
     OCCallbackData cbData =
     {
@@ -880,7 +880,7 @@ static bool SessionParsePayload(OCRepPayload *payload, session_t *session)
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_USER_UUID);
         ret = false;
     }
-#if defined(__MANDATORY__)
+#if !defined(__MANDATORY__)
     if (!OCRepPayloadGetPropString(payload, OC_RSRVD_REDIRECT_URI,
                                    &session->redirectUri))
     {
