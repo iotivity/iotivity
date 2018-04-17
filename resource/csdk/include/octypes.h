@@ -77,6 +77,9 @@ extern "C" {
 /** KeepAlive URI.*/
 #define OC_RSRVD_KEEPALIVE_URI                "/oic/ping"
 
+/** Cloudconf URI.*/
+#define OC_RSRVD_CLOUDCONF_URI                "/oic/cloudconf"
+
 /** Presence */
 
 /** Presence URI through which the OIC devices advertise their presence.*/

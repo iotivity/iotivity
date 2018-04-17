@@ -304,7 +304,8 @@ bool IsDeviceConfigurationResourceUri(const char *uri)
     const char *rsrcs[] = {
         OC_RSRVD_DEVICE_URI,
         OC_RSRVD_PLATFORM_URI,
-        OC_RSRVD_WELL_KNOWN_URI
+        OC_RSRVD_WELL_KNOWN_URI,
+        OC_RSRVD_CLOUDCONF_URI
         // TODO [IOT-3006]: add WES resources as needed to enable easy setup use cases
         // TODO [IOT-3006]: add CNC resources as needed to enable CNC use cases
     };

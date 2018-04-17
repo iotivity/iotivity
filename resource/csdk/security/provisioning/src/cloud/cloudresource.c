@@ -114,7 +114,7 @@ static void DeleteCloudList(OicCloud_t *clouds)
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 }
 
-static void *CloudWaitForRFPRO(void *data)
+static void *CloudWaitForRFNOP(void *data)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
     OicSecDostype_t dos;
@@ -124,7 +124,7 @@ static void *CloudWaitForRFPRO(void *data)
 
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
 
-    while (DOS_RFPRO != dos.state && OC_CLOUD_EXIT != cloud->stat)
+    while (DOS_RFNOP != dos.state && OC_CLOUD_EXIT != cloud->stat)
     {
         VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
         sleep(1);
@@ -224,7 +224,7 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
     else
     {
         OCThreadResult_t res = OC_THREAD_SUCCESS;
-        res = oc_thread_new(&newCloud->pid, CloudWaitForRFPRO, newCloud);
+        res = oc_thread_new(&newCloud->pid, CloudWaitForRFNOP, newCloud);
         if (OC_THREAD_SUCCESS != res)
         {
             OIC_LOG_V(ERROR, TAG, "%s: create thread: %d", __func__, res);
