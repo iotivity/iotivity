@@ -246,12 +246,24 @@ OCRepPayload *CreateCloudGetPayload(const OicCloud_t *cloud)
     payload = OCRepPayloadCreate();
     VERIFY_NOT_NULL(TAG, payload, ERROR);
 
-    VERIFY_NOT_NULL_RETURN(TAG, cloud, WARNING, payload);
+    OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
+    OCRepPayloadAddResourceType(payload, OIC_RSRC_TYPE_SEC_CLOUDCONF);
 
-    OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, cloud->apn);
-    OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, cloud->cis);
-    OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_SID, cloud->sid);
-    OCRepPayloadSetPropInt(payload, OIC_JSON_CLOUD_CLEC, (int64_t)cloud->stat);
+    if (NULL == cloud)
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: Create empty payload", __func__);
+        OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, "");
+        OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, "");
+        OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_SID, "00000000-0000-0000-0000-000000000000");
+        OCRepPayloadSetPropInt(payload, OIC_JSON_CLOUD_CLEC, (int64_t)0);
+    }
+    else
+    {
+        OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, cloud->apn);
+        OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, cloud->cis);
+        OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_SID, cloud->sid);
+        OCRepPayloadSetPropInt(payload, OIC_JSON_CLOUD_CLEC, (int64_t)cloud->stat);
+    }
 
 exit:
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
@@ -269,7 +281,6 @@ static OCEntityHandlerResult HandleCloudGetRequest(OCEntityHandlerRequest *ehReq
     OCEntityHandlerResponse response;
 
     VERIFY_NOT_NULL(TAG, ehRequest, ERROR);
-    VERIFY_NOT_NULL(TAG, gCloud, ERROR);
 
     OCGetDeviceOwnedState(&isDeviceOwned);
 
@@ -277,6 +288,12 @@ static OCEntityHandlerResult HandleCloudGetRequest(OCEntityHandlerRequest *ehReq
     {
         OIC_LOG_V(ERROR, TAG, "%s: device is not owned", __func__);
         ehRet = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
+    }
+
+    if (NULL == gCloud)
+    {
+        ehRet = OC_EH_OK;
         goto exit;
     }
 
@@ -396,7 +413,10 @@ exit:
         ehRet = OC_EH_ERROR;
     }
 
-    FreeCloud(cloud);
+    if (cloud)
+    {
+        FreeCloud(cloud);
+    }
 
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 
