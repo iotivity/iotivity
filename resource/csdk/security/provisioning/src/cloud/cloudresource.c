@@ -175,8 +175,7 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
 
     if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_APN, &newCloud->apn))
     {
-        OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_APN);
-        goto exit;
+        OIC_LOG_V(WARNING, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_APN);
     }
     if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &newCloud->cis))
     {

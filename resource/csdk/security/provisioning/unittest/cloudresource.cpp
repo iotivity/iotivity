@@ -73,16 +73,14 @@ void sessionInit(session_t *ses)
     ses->uid = (char *)OICCalloc(STR_LEN, sizeof(char));
 #if !defined(__MANDATORY__)
     ses->redirectUri = (char *)OICCalloc(STR_LEN, sizeof(char));
+    snprintf(ses->redirectUri, STR_LEN, "coaps+tcp://127.0.0.1:80");
 #endif // __MANDATORY__
     for (int i = 0; i < STR_LEN; i++)
     {
         ses->accessToken[i] = sample[rand() % STR_LEN];
         ses->refreshToken[i] = sample[rand() % STR_LEN];
         ses->uid[i] = sample[rand() % STR_LEN];
-#if !defined(__MANDATORY__)
-        ses->redirectUri[i] = sample[rand() % STR_LEN];
-#endif // __MANDATORY__
-    }
+   }
 }
 
 OicCloud_t *getCloud()

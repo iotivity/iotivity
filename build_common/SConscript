@@ -194,8 +194,11 @@ help_vars.AddVariables(
                  validator=PathVariable.PathAccept),
     EnumVariable('OIC_SUPPORT_TIZEN_TRACE',
                  'Tizen Trace(T-trace) api availability',
-                 default='False',
+                 default=False,
                  allowed_values=('True', 'False')),
+    BoolVariable('MANDATORY',
+                 'Enable/disable(default) mandatory',
+                 default=False)
 )
 
 ######################################################################
@@ -326,6 +329,9 @@ if not env.get('VERBOSE'):
     env['SHLINKCOMSTR'] = "Linking shared object $TARGET"
     env['ARCOMSTR'] = "Archiving $TARGET"
     env['RANLIBCOMSTR'] = "Indexing Archive $TARGET"
+
+if env.get('MANDATORY'):
+    env.AppendUnique(CPPDEFINES=['__MANDATORY__'])
 
 tc_set_msg = '''
 ************************************ Warning **********************************
