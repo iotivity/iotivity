@@ -34,13 +34,16 @@
 #include <getopt.h>
 
 #include "ocstack.h"
-#include "experimental/logger.h"
 #include "occlientbasicops.h"
 #include "ocpayload.h"
-#include "experimental/payload_logging.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "common.h"
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/logger.h"
+#include "experimental/payload_logging.h"
 
 #define MAX_IP_ADDR_ST_SZ  16 //string size of "155.255.255.255" (15 + 1)
 #define MAX_PORT_ST_SZ  6     //string size of "65535" (5 + 1)

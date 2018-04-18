@@ -22,11 +22,9 @@
 #include <string.h>
 
 #include "ocstack.h"
-#include "experimental/logger.h"
 #include "octhread.h"
 #include "cathreadpool.h"
 #include "ocpayload.h"
-#include "experimental/payload_logging.h"
 #include "ocprovisioningmanager.h"
 
 #include "utils.h"
@@ -38,6 +36,12 @@
 #ifdef __unix__
 #include <unistd.h> //for unlink
 #endif
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+/// Here logging part is not critical.
+#include "experimental/logger.h"
+#include "experimental/payload_logging.h"
 
 #define TAG "cloudClient"
 using namespace OC;
