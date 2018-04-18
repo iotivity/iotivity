@@ -57,7 +57,6 @@ const char *OIC_JSON_CLOUD_SESSION_UID = "uid";
 
 #if !defined(__MANDATORY__)
 #define SESSION_CBOR_CLOUD_MAP_SIZE 4
-const char *OIC_JSON_CLOUD_SESSION_TOKEN_TYPE = "tokentype";
 const char *OIC_JSON_CLOUD_SESSION_REDIRECT_URL = "redirecturl";
 #else
 #define SESSION_CBOR_CLOUD_MAP_SIZE 3
@@ -204,9 +203,14 @@ OCStackResult CloudSessionToCBORPayload(const session_t *session, CborEncoder *m
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: uid");
 
 #if !defined(__MANDATORY__)
-    cbor_encode_text_string(map, OIC_JSON_CLOUD_SESSION_REDIRECT_URL,
+    if (session->redirectUri)
+    {
+        cbor_encode_text_string(map, OIC_JSON_CLOUD_SESSION_REDIRECT_URL,
                             sizeof(OIC_JSON_CLOUD_SESSION_REDIRECT_URL) + 1);
-    cbor_encode_text_string(map, session->redirectUri, strnlen(session->redirectUri, MAX_STR_LEN));
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: redirect uri");
+        cbor_encode_text_string(map, session->redirectUri, strnlen(session->redirectUri, MAX_STR_LEN));
+        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: redirect uri");
+    }
 #endif // __MANDATORY__
 
     ret = OC_STACK_OK;
@@ -514,9 +518,10 @@ OCStackResult CBORPayloadToCloud(const uint8_t *cborPayload, size_t size, OicClo
                     goto next;
                 }
 #if !defined(__MANDATORY__)
-                else if (strncmp(name, OIC_JSON_CLOUD_SESSION_REDIRECT_URL, len)  == 0 && cloud->session)
+                else if (strncmp(name, OIC_JSON_CLOUD_SESSION_REDIRECT_URL, len)  == 0)
                 {
-                    cbor_value_dup_text_string(&map, &cloud->session->redirectUri, &len, NULL);
+                    cborError = cbor_value_dup_text_string(&map, &cloud->session->redirectUri, &len, NULL);
+                    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed get redirect uri");
                     goto next;
                 }
 #endif // __MANDATORY__
@@ -1002,7 +1007,6 @@ OCStackResult OCCloudSignUp(OicCloud_t *cloud)
 
     VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cloud->cis, ERROR, OC_STACK_INVALID_PARAM);
-    VERIFY_NOT_NULL_RETURN(TAG, cloud->apn, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cloud->at, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cloud->sid, ERROR, OC_STACK_INVALID_PARAM);
 
@@ -1022,7 +1026,10 @@ OCStackResult OCCloudSignUp(OicCloud_t *cloud)
 
     OCRepPayloadSetPropString(payload, OC_RSRVD_DEVICE_ID, deviceId);
 #if !defined(__MANDATORY__)
-    OCRepPayloadSetPropString(payload, OC_RSRVD_AUTHPROVIDER, cloud->apn);
+    if (cloud->apn)
+    {
+        OCRepPayloadSetPropString(payload, OC_RSRVD_AUTHPROVIDER, cloud->apn);
+    }
 #endif // __MANDATORY__
     OCRepPayloadSetPropString(payload, OC_RSRVD_ACCESS_TOKEN, cloud->at);
     OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_ID, cloud->sid);
