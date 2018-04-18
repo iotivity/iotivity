@@ -29,7 +29,7 @@ topdir="${PWD}"
 package="tinycbor"
 packageUrl="https://github.com/intel/tinycbor"
 packageDir="./extlibs/tinycbor/tinycbor"
-packageRevision="v0.5.0"
+packageRevision="v0.5.1"
 
 
 do_()
