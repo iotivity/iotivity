@@ -157,6 +157,11 @@ namespace OC
                         memory = static_cast<char *>(malloc(1));
                     }
 
+                    ~_MemoryChunk()
+                    {
+                        free(memory);
+                    }
+
                     char *memory;
                     size_t size;
 
