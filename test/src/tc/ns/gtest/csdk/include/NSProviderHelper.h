@@ -50,9 +50,10 @@ private:
     static NSProviderHelper* s_nsHelperInstance;
     static std::mutex s_mutex;
     static NSConsumer *s_pConsumer;
-    void waitForConsumer(int time);
+
     NSProviderHelper();
     ~NSProviderHelper();
+    void waitForConsumer(int time);
 
 public:
     static bool s_isOnSubscribeRequest;
@@ -93,6 +94,10 @@ public:
      */
     NSConsumer* getConsumer();
 
+    /**
+     * @brief   Show List of Provider Topics
+     * @input  Topic List
+     */
     bool printProviderTopicList(NSTopicLL *topics);
 
 };

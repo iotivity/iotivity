@@ -54,7 +54,7 @@ protected:
  * @post_condition None
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerTest_btc, StartConsumer_SRC_P)
 {
     EXPECT_EQ(NSStartConsumer(m_pNSHelper->getConsumerConfig()), NS_OK);
@@ -72,7 +72,7 @@ TEST_F(NSConsumerTest_btc, StartConsumer_SRC_P)
  * @post_condition None
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerTest_btc, StopConsumer_SRC_P)
 {
     NSStartConsumer(m_pNSHelper->getConsumerConfig());
@@ -91,7 +91,7 @@ TEST_F(NSConsumerTest_btc, StopConsumer_SRC_P)
  * @post_condition None
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerTest_btc, RescanProvider_SRC_P)
 {
     NSStartConsumer(m_pNSHelper->getConsumerConfig());
@@ -116,7 +116,7 @@ TEST_F(NSConsumerTest_btc, RescanProvider_SRC_P)
  * @post_condition Stop Provider Simulator
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerTest_btc, Subscribe_SRC_P)
 {
     CommonUtil::launchApp(PROVIDER_SIMULATOR_ALLOW);
@@ -141,7 +141,7 @@ TEST_F(NSConsumerTest_btc, Subscribe_SRC_P)
  * @post_condition None
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerTest_btc, Subscribe_NV_N)
 {
     NSProvider *provider = nullptr;
@@ -164,7 +164,7 @@ TEST_F(NSConsumerTest_btc, Subscribe_NV_N)
  * @post_condition Stop Provider Simulator
  * @expected The API should return a valid provider
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerTest_btc, GetProvider_SRC_P)
 {
     CommonUtil::launchApp(PROVIDER_SIMULATOR_ALLOW);
@@ -189,7 +189,7 @@ TEST_F(NSConsumerTest_btc, GetProvider_SRC_P)
  * @post_condition None
  * @expected The API should return null provider
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerTest_btc, GetProvider_USV_N)
 {
     NSProvider *provider = nullptr;
@@ -212,7 +212,7 @@ TEST_F(NSConsumerTest_btc, GetProvider_USV_N)
  * @post_condition Stop Provider Simulator
  * @expected The API should return topic list
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerTest_btc, GetTopicList_SRC_P)
 {
     CommonUtil::launchApp(PROVIDER_SIMULATOR_ALLOW);
@@ -239,7 +239,7 @@ TEST_F(NSConsumerTest_btc, GetTopicList_SRC_P)
  * @post_condition None
  * @expected The API should return NULL
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerTest_btc, GetTopicList_USV_N)
 {
     NSProvider *provider = nullptr;
@@ -266,7 +266,7 @@ TEST_F(NSConsumerTest_btc, GetTopicList_USV_N)
  * @post_condition Stop Provider Simulator
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerTest_btc, UpdateTopicList_SRC_P)
 {
     CommonUtil::launchApp(PROVIDER_SIMULATOR_ALLOW);
@@ -299,7 +299,7 @@ TEST_F(NSConsumerTest_btc, UpdateTopicList_SRC_P)
  * @post_condition Stop Provider Simulator
  * @expected The API should not return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerTest_btc, UpdateTopicList_NV_N)
 {
     CommonUtil::launchApp(PROVIDER_SIMULATOR_ALLOW);

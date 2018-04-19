@@ -419,6 +419,7 @@ int userInputProcessing(int max, int min)
                 sleep(2);
                 break;
             }
+            CommonUtil::waitInSecond(WAIT_TIME_MIN);
         }
     }
     else
@@ -452,35 +453,27 @@ void enableSecure()
     OCRegisterPersistentStorageHandler(&ps);
 }
 
-int enablePipe()
+void enablePipe()
 {
     cout << "Running from TC......." << endl;
     g_IsTCRunning = true;
 
     sleep(2);
-    if(mkfifo(FIFO_WRITE_FILE, 0666)==-1)
-        return -1;
-    cout << "Opening Writer...." << endl;
-
-    g_WriteFile = open(FIFO_CONSUMER_FILE, O_WRONLY);
-    if(g_WriteFile==-1)
-        return -1;
-    cout << "Writer Opened...." << endl;
+    mkfifo(FIFO_CONSUMER_FILE, 0666);
 
     cout << "Reading from FIFO..." << endl;
     g_ReadFile = open(FIFO_READ_FILE, O_RDONLY);
-    if(g_WriteFile==-1)
-        return -1;
     cout << "Read File Opened" << endl;
-    return 0;
+
+    cout << "Opening Writer...." << endl;
+    g_WriteFile = open(FIFO_CONSUMER_FILE, O_WRONLY);
+    cout << "Writer Opened...." << endl;
 }
 
 void closePipe()
 {
-    if(g_WriteFile!=-1)
-        close(g_WriteFile);
-    if(g_ReadFile!=-1)
-        close(g_ReadFile);
+    close(g_WriteFile);
+    close(g_ReadFile);
 
     unlink(FIFO_CONSUMER_FILE);
 }
@@ -516,11 +509,7 @@ int main(int argc, char **argv)
 
     if (menu == 1)
     {
-        if(enablePipe()==-1)
-        {
-            cout << "Can't enable pipe..." << endl;
-            return 0;
-        }
+        enablePipe();
     }
 
     if (secured == 1)
@@ -554,10 +543,6 @@ int main(int argc, char **argv)
             showMainMenu();
 
             menuSelection(ProviderAppMenu(userInputProcessing(PROVIDER_TOPICS, PROVIDER_EXIT)));
-        }
-        catch (const std::runtime_error &e)
-        {
-            cout << "[ERROR] " << e.what() << endl;
         }
         catch (const exception &e)
         {

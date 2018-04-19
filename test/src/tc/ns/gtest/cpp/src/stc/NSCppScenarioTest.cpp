@@ -70,7 +70,7 @@ protected:
  * @post_condition Stop shared_ptr<OIC::Service::NSConsumer> Service
  * @expected Should get the STOPPED state.
  */
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSCppTest_stc, ProviderStateChanged_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -130,7 +130,7 @@ TEST_F(NSCppTest_stc, ProviderStateChanged_SRC_P)
  * @expected 1. No exception occurs
  *           2. Should get the Notification in consumer side
  */
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSCppTest_stc, SendMessage_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -188,7 +188,7 @@ TEST_F(NSCppTest_stc, SendMessage_SRC_P)
  *           2. Should get the Notification in consumer side
  *           3. Title, ContentText, SourceName and Topic should be same
  */
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSCppTest_stc, SendMessageAndVerifyMessage_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -255,7 +255,7 @@ TEST_F(NSCppTest_stc, SendMessageAndVerifyMessage_SRC_P)
  *           2. Should get the Notification in consumer side
  *           3. Should get syncInfo in Provider side
  */
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsRead_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -328,7 +328,7 @@ TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsRead_SRC_P)
  *           2. Should get the Notification in consumer side
  *           3. Should get syncInfo in Provider side
  */
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsDeleted_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -401,7 +401,7 @@ TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsDeleted_SRC_P)
  *           2. Should get the Notification in consumer side
  *           3. Should get syncInfo in Provider side
  */
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsUnread_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -473,7 +473,7 @@ TEST_F(NSCppTest_stc, ConsumerServiceSendSyncInfoAsUnread_SRC_P)
  *           2. Should get the Notification in consumer side
  *           3. Should get syncInfo in shared_ptr<OIC::Service::NSConsumer> side
  */
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsREAD_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -545,7 +545,7 @@ TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsREAD_SRC_P)
  *           2. Should get the Notification in consumer side
  *           3. Should not get syncInfo in shared_ptr<OIC::Service::NSConsumer> side
  */
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsUNREAD_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -616,7 +616,7 @@ TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsUNREAD_SRC_P)
  *           2. Should get the Notification in consumer side
  *           3. Should get syncInfo in shared_ptr<OIC::Service::NSConsumer> side
  */
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsDELETED_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, false);
@@ -681,7 +681,7 @@ TEST_F(NSCppTest_stc, ProviderServiceSendSyncInfoAsDELETED_SRC_P)
  * @expected 1. No exception occurs
  *           2. Topic state should be UNSUBSCRIBED at initial stage
  */
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSCppTest_stc, TopicState_SRC_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, true);
@@ -744,7 +744,7 @@ TEST_F(NSCppTest_stc, TopicState_SRC_P)
  *           2. Topic state should be SUBSCRIBED state after set
  *           3. Topic state should be UNSUBSCRIBED state after unset
  */
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSCppTest_stc, SetUnsetTopic_SQV_P)
 {
     shared_ptr< OIC::Service::NSConsumer > consumer = m_pNSHelper->getLocalConsumer(true, true);

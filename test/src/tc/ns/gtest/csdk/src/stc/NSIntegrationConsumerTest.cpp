@@ -74,7 +74,7 @@ protected:
  * @post_condition None
  * @expected Callback should be called and provider should be found in callback
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationConsumerTest_stc, StartConsumerAndDiscoverProvider_SQV_CV_P)
 {
     m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_2);
@@ -109,7 +109,7 @@ TEST_F(NSIntegrationConsumerTest_stc, StartConsumerAndDiscoverProvider_SQV_CV_P)
  * @expected        1. At step 2, callback should not be called
  *                  2. At step 5, callback should be called and provider should be found
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationConsumerTest_stc, StartConsumerAndRescanProvider_SQV_CV_P)
 {
     ASSERT_EQ(NSStartConsumer(m_pNSHelper->getConsumerConfig()), NS_OK)<< "NSStartConsumer did not return success";
@@ -149,7 +149,7 @@ TEST_F(NSIntegrationConsumerTest_stc, StartConsumerAndRescanProvider_SQV_CV_P)
  * @post_condition None
  * @expected onProviderChanged Callback should be called with NSProviderState NS_ALLOW
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationConsumerTest_stc, SubscribeProvider_SQV_CV_P)
 {
     m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_2);
@@ -199,7 +199,7 @@ TEST_F(NSIntegrationConsumerTest_stc, SubscribeProvider_SQV_CV_P)
  * @post_condition None
  * @expected NSConsumerSendSyncInfo() API will return OK and provider's syncInfoCallback callback is called
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationConsumerTest_stc, SendSyncInfo_SQV_CV_P)
 {
     m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_1);
@@ -268,7 +268,7 @@ TEST_F(NSIntegrationConsumerTest_stc, SendSyncInfo_SQV_CV_P)
  * @post_condition None
  * @expected The two IDs match
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationConsumerTest_stc, StartConsumerAndGetProvider_GSRV_P)
 {
     m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_2);
@@ -311,7 +311,7 @@ TEST_F(NSIntegrationConsumerTest_stc, StartConsumerAndGetProvider_GSRV_P)
  * @post_condition None
  * @expected Provider's added topic is found
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationConsumerTest_stc, AddTopicAndGetTopicList_GSRV_CV_P)
 {
     m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_2);
@@ -380,7 +380,7 @@ TEST_F(NSIntegrationConsumerTest_stc, AddTopicAndGetTopicList_GSRV_CV_P)
  * @post_condition None
  * @expected Provider's unregistered topic is not found in the list
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationConsumerTest_stc, DeleteTopicAndGetTopicListAfterUpdate_GSRV_CV_P)
 {
     m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_2);
@@ -463,7 +463,7 @@ TEST_F(NSIntegrationConsumerTest_stc, DeleteTopicAndGetTopicListAfterUpdate_GSRV
  * @post_condition None
  * @expected NSConsumerUpdateTopicList() returns NS_ERROR
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationConsumerTest_stc, DeleteTopicAndUpdateInTrueMode_DSCC_N)
 {
     m_pCommonHelper->inputMenu(PROVIDER_APP_MENU_1);

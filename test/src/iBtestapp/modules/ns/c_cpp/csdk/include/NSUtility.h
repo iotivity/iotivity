@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -39,7 +39,10 @@
 #include "NSConsumerInterface.h"
 #include "NSProviderInterface.h"
 
+#include "CommonUtil.h"
+
 #define MAX_BUF 1024
+#define WAIT_TIME_MIN 1
 
 using namespace std;
 

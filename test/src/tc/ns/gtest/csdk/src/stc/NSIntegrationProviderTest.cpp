@@ -80,7 +80,7 @@ protected:
  * @post_condition None
  * @expected Callback should be called and consumer should be found in callback
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationProviderTest_stc, StartProviderAndStartConsumer_SQV_CV_P)
 {
     NSProviderConfig config = m_pNSProviderHelper->getProviderConfig(true);
@@ -121,7 +121,7 @@ TEST_F(NSIntegrationProviderTest_stc, StartProviderAndStartConsumer_SQV_CV_P)
  * @post_condition None
  * @expected Callback should be called in consumer side
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationProviderTest_stc, AcceptSubscription_SQV_P)
 {
     NSProviderConfig config = m_pNSProviderHelper->getProviderConfig(true);
@@ -173,7 +173,7 @@ TEST_F(NSIntegrationProviderTest_stc, AcceptSubscription_SQV_P)
  * @post_condition None
  * @expected Callback should be called in consumer side
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationProviderTest_stc, StopProvider_SQV_P)
 {
     NSProviderConfig config = m_pNSProviderHelper->getProviderConfig(true);
@@ -237,7 +237,7 @@ TEST_F(NSIntegrationProviderTest_stc, StopProvider_SQV_P)
  * @post_condition None
  * @expected NSMessageReceivedCallback should be called in consumer side
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationProviderTest_stc, ProviderSendMessage_SQV_P)
 {
     NSProviderConfig config = m_pNSProviderHelper->getProviderConfig(true);
@@ -304,7 +304,7 @@ TEST_F(NSIntegrationProviderTest_stc, ProviderSendMessage_SQV_P)
  * @post_condition None
  * @expected Topic exists in the received list
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationProviderTest_stc, RegisterTopic_SQV_P)
 {
     NSProviderConfig config = m_pNSProviderHelper->getProviderConfig(false);
@@ -343,7 +343,7 @@ TEST_F(NSIntegrationProviderTest_stc, RegisterTopic_SQV_P)
  * @post_condition None
  * @expected Topic does not exist in the received list
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationProviderTest_stc, UnregisterTopic_SQV_P)
 {
     NSProviderConfig config = m_pNSProviderHelper->getProviderConfig(true);
@@ -396,7 +396,7 @@ TEST_F(NSIntegrationProviderTest_stc, UnregisterTopic_SQV_P)
  * @post_condition None
  * @expected Registered topic should exist in the returned list
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSIntegrationProviderTest_stc, GetConsumerTopics_SQV_P)
 {
     NSProviderConfig config = m_pNSProviderHelper->getProviderConfig(true);

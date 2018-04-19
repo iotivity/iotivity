@@ -57,7 +57,7 @@ public:
  * @post_condition None
  * @expected Constructor should return NSMediaContents instance
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMediaContentsProviderCppTest_btc, MediaContentsConstructor_SRC_P)
 {
     OIC::Service::NSMediaContents* nsMediaContents = nullptr;
@@ -78,7 +78,7 @@ TEST_F(NSMediaContentsProviderCppTest_btc, MediaContentsConstructor_SRC_P)
  * @post_condition None
  * @expected Exceptions should not occur
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMediaContentsProviderCppTest_btc, SetIconImage_SRC_P)
 {
     try
@@ -106,7 +106,7 @@ TEST_F(NSMediaContentsProviderCppTest_btc, SetIconImage_SRC_P)
  * @post_condition None
  * @expected Icon image should be returned and it should be same as set icon image
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMediaContentsProviderCppTest_btc, GetIconImage_SRC_P)
 {
     string iconImage = "";

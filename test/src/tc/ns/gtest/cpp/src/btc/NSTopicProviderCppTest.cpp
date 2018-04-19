@@ -57,7 +57,7 @@ public:
  * @post_condition None
  * @expected Constructor should return NSTopic instance
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSTopicProviderCppTest_btc, TopicConstructor_SRC_P)
 {
     OIC::Service::NSTopic* nsTopic = nullptr;
@@ -78,7 +78,7 @@ TEST_F(NSTopicProviderCppTest_btc, TopicConstructor_SRC_P)
  * @post_condition None
  * @expected Exceptions should not occur
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSTopicProviderCppTest_btc, SetTopicName_SRC_P)
 {
     try
@@ -106,7 +106,7 @@ TEST_F(NSTopicProviderCppTest_btc, SetTopicName_SRC_P)
  * @post_condition None
  * @expected Topic name should be returned
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSTopicProviderCppTest_btc, GetTopicName_SRC_P)
 {
     string topicName = "";
@@ -127,7 +127,7 @@ TEST_F(NSTopicProviderCppTest_btc, GetTopicName_SRC_P)
  * @post_condition None
  * @expected Exceptions should not occur
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSTopicProviderCppTest_btc, SetState_SRC_P)
 {
     try
@@ -155,7 +155,7 @@ TEST_F(NSTopicProviderCppTest_btc, SetState_SRC_P)
  * @post_condition None
  * @expected Set topic state should be returned
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSTopicProviderCppTest_btc, GetState_SRC_P)
 {
     OIC::Service::NSTopic::NSTopicState topicState;

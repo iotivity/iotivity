@@ -57,7 +57,7 @@ public:
  * @post_condition None
  * @expected Constructor should return NSTopicsList instance
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSTopicsListProviderCppTest_btc, TopicsListConstructor_SRC_P)
 {
     OIC::Service::NSTopicsList* nsTopicsList = nullptr;
@@ -79,7 +79,7 @@ TEST_F(NSTopicsListProviderCppTest_btc, TopicsListConstructor_SRC_P)
  * @post_condition None
  * @expected Exceptions should not occur
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSTopicsListProviderCppTest_btc, AddTopic_SRC_P)
 {
     try
@@ -106,7 +106,7 @@ TEST_F(NSTopicsListProviderCppTest_btc, AddTopic_SRC_P)
  * @post_condition None
  * @expected Exceptions should not occur
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSTopicsListProviderCppTest_btc, RemoveTopic_SRC_P)
 {
     string topicName = TOPIC_NAME_1;
@@ -144,7 +144,7 @@ TEST_F(NSTopicsListProviderCppTest_btc, RemoveTopic_SRC_P)
  * @post_condition None
  * @expected Returned list's size should not be zero
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSTopicsListProviderCppTest_btc, GetTopicsList_SRC_P)
 {
     m_pNSTopicsList->addTopic(TOPIC_NAME_1, OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED);

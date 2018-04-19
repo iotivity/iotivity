@@ -60,7 +60,7 @@ public:
  * @post_condition None
  * @expected Constructor should return NSSyncInfo instance
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSSyncInfoProviderCppTest_btc, SyncInfoConstructor_SRC_P)
 {
     OIC::Service::NSSyncInfo* nsSyncInfo = nullptr;
@@ -83,7 +83,7 @@ TEST_F(NSSyncInfoProviderCppTest_btc, SyncInfoConstructor_SRC_P)
  * @post_condition None
  * @expected Constructor should return NSSyncInfo instance
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSSyncInfoProviderCppTest_btc, SyncInfoConstructorWithParameters_SRC_P)
 {
     OIC::Service::NSSyncInfo* nsSyncInfo = nullptr;
@@ -105,7 +105,7 @@ TEST_F(NSSyncInfoProviderCppTest_btc, SyncInfoConstructorWithParameters_SRC_P)
  * @post_condition None
  * @expected API should return correct message ID
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSSyncInfoProviderCppTest_btc, GetMessageID_SRC_P)
 {
     ASSERT_EQ(m_messageID,m_pNSSyncInfo->getMessageId())
@@ -125,7 +125,7 @@ TEST_F(NSSyncInfoProviderCppTest_btc, GetMessageID_SRC_P)
  * @post_condition None
  * @expected API should return correct provider ID
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSSyncInfoProviderCppTest_btc, GetProviderID_SRC_P)
 {
     ASSERT_EQ(m_providerID,m_pNSSyncInfo->getProviderId())
@@ -145,7 +145,7 @@ TEST_F(NSSyncInfoProviderCppTest_btc, GetProviderID_SRC_P)
  * @post_condition None
  * @expected API should return correct state
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSSyncInfoProviderCppTest_btc, GetState_SRC_P)
 {
     ASSERT_EQ(m_state,m_pNSSyncInfo->getState())

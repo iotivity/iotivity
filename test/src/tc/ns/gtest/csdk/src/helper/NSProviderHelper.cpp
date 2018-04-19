@@ -63,6 +63,9 @@ NSProviderHelper* NSProviderHelper::getInstance(void)
         s_mutex.unlock();
     }
 
+    s_pConsumer = nullptr;
+    s_consumerID = "";
+
     return s_nsHelperInstance;
 }
 
@@ -96,9 +99,6 @@ NSProviderConfig NSProviderHelper::getProviderConfig(bool policy)
 
 NSConsumer* NSProviderHelper::getConsumer()
 {
-    NSProviderHelper::s_pConsumer = nullptr;
-    NSProviderHelper::s_consumerID = "";
-
     waitForConsumer(WAIT_TIME_MAX);
 
     return NSProviderHelper::s_pConsumer;
@@ -106,9 +106,6 @@ NSConsumer* NSProviderHelper::getConsumer()
 
 string NSProviderHelper::getConsumerID()
 {
-    NSProviderHelper::s_pConsumer = nullptr;
-    NSProviderHelper::s_consumerID = "";
-
     waitForConsumer(WAIT_TIME_MAX);
 
     return NSProviderHelper::s_consumerID;

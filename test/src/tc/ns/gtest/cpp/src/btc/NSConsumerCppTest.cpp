@@ -92,7 +92,7 @@ public:
  * @post_condition None
  * @expected The API should return NSConsumerService instance
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, ConsumerServiceGetInstance_SRC_P)
 {
     ASSERT_NE(nullptr,NSConsumerService::getInstance())<< "getInstance does not return success";
@@ -113,7 +113,7 @@ TEST_F(NSConsumerCppTest_btc, ConsumerServiceGetInstance_SRC_P)
  * @post_condition Perform stop() API using NSConsumerService instance
  * @expected The API should not throw any exceptions
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, ConsumerServiceStart_SRC_P)
 {
     try
@@ -143,7 +143,7 @@ TEST_F(NSConsumerCppTest_btc, ConsumerServiceStart_SRC_P)
  * @post_condition None
  * @expected The API should not throw any exceptions
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, ConsumerServiceStop_SRC_P)
 {
     try
@@ -182,7 +182,7 @@ TEST_F(NSConsumerCppTest_btc, ConsumerServiceStop_SRC_P)
  * @post_condition Perform stop() API using NSConsumerService instance
  * @expected The API should not throw any exceptions
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, RescanProvider_SRC_P)
 {
     try
@@ -218,7 +218,7 @@ TEST_F(NSConsumerCppTest_btc, RescanProvider_SRC_P)
  * @post_condition None
  * @expected The API should return NSProvider instance
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, ProviderConstructor_SRC_P)
 {
     OIC::Service::NSProvider* nsProvider = new OIC::Service::NSProvider();
@@ -252,7 +252,7 @@ TEST_F(NSConsumerCppTest_btc, ProviderConstructor_SRC_P)
  * @post_condition Perform stop() API using NSConsumerService instance
  * @expected Provider ID should be returned
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, GetProviderID_SRC_P)
 {
     m_pNSProvider = m_pNSHelper->getProvider(true);
@@ -290,7 +290,7 @@ TEST_F(NSConsumerCppTest_btc, GetProviderID_SRC_P)
  * @post_condition Perform stop() API using NSConsumerService instance
  * @expected Returned list should not be null
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, GetTopicList_SRC_P)
 {
     m_pNSProvider = m_pNSHelper->getProvider(true);
@@ -328,7 +328,7 @@ TEST_F(NSConsumerCppTest_btc, GetTopicList_SRC_P)
  * @post_condition Perform stop() API using NSConsumerService instance
  * @expected API should not return OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, UpdateTopicList_USV_N)
 {
     m_pNSProvider = m_pNSHelper->getProvider(true);
@@ -372,7 +372,7 @@ TEST_F(NSConsumerCppTest_btc, UpdateTopicList_USV_N)
  * @post_condition Perform stop() API using NSConsumerService instance
  * @expected API should not return OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, UpdateTopicList_NV_N)
 {
     m_pNSProvider = m_pNSHelper->getProvider(true);
@@ -414,7 +414,7 @@ TEST_F(NSConsumerCppTest_btc, UpdateTopicList_NV_N)
  * @post_condition Perform stop() API using NSConsumerService instance
  * @expected Returned state should not be STOPPED
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, GetProviderState_SRC_P)
 {
     m_pNSProvider = m_pNSHelper->getProvider(true);
@@ -454,7 +454,7 @@ TEST_F(NSConsumerCppTest_btc, GetProviderState_SRC_P)
  * @post_condition Perform stop() API using NSConsumerService instance
  * @expected Returned subscribed state should be SUBSCRIBED
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, GetProviderSubscribedState_SRC_P)
 {
     m_pNSProvider = m_pNSHelper->getProvider(true);
@@ -493,7 +493,7 @@ TEST_F(NSConsumerCppTest_btc, GetProviderSubscribedState_SRC_P)
  * @post_condition Perform stop() API using NSConsumerService instance
  * @expected Exception should not be thrown
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, Subscribe_SRC_P)
 {
     m_pNSProvider = m_pNSHelper->getProvider(false);
@@ -536,7 +536,7 @@ TEST_F(NSConsumerCppTest_btc, Subscribe_SRC_P)
  * @post_condition Perform stop() API using NSConsumerService instance
  * @expected True should be returned
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, IsSubscribed_SRC_P)
 {
     m_pNSProvider = m_pNSHelper->getProvider(true);
@@ -573,7 +573,7 @@ TEST_F(NSConsumerCppTest_btc, IsSubscribed_SRC_P)
  * @post_condition Perform stop() API using NSConsumerService instance
  * @expected Exception should not be thrown
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, SendSyncInfo_SRC_P)
 {
     m_pNSProvider = m_pNSHelper->getProvider(true);
@@ -623,7 +623,7 @@ TEST_F(NSConsumerCppTest_btc, SendSyncInfo_SRC_P)
  * @post_condition Perform stop() API using NSConsumerService instance
  * @expected Exception should not be thrown
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, SetListener_SRC_P)
 {
     m_pNSProvider = m_pNSHelper->getProvider(true);
@@ -670,7 +670,7 @@ TEST_F(NSConsumerCppTest_btc, SetListener_SRC_P)
  * @post_condition Perform stop() API using NSConsumerService instance
  * @expected Exception should not be thrown
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSConsumerCppTest_btc, SetListener_NV_P)
 {
     m_pNSProvider = m_pNSHelper->getProvider(true);

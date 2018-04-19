@@ -24,7 +24,7 @@
 class NSProviderTest_btc: public ::testing::Test
 {
 protected:
-    NSProviderHelper* m_pNSHelper;
+    NSProviderHelper* m_pNSHelper = nullptr;
     const string m_MsgTitle = "Test Title";
     const string m_MsgBody = "Test Message Body";
     const string m_SourceName = "OCF";
@@ -58,7 +58,7 @@ protected:
  * @post_condition None
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, StartProviderWithNSPolicyTrue_SRC_P)
 {
     NSProviderConfig config = m_pNSHelper->getProviderConfig(true);
@@ -83,7 +83,7 @@ TEST_F(NSProviderTest_btc, StartProviderWithNSPolicyTrue_SRC_P)
  * @post_condition None
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, StartProviderWithNSPolicyFalse_SRC_P)
 {
     EXPECT_EQ(NS_OK, NSStartProvider(m_pNSHelper->getProviderConfig(false)));
@@ -101,7 +101,7 @@ TEST_F(NSProviderTest_btc, StartProviderWithNSPolicyFalse_SRC_P)
  * @post_condition None
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, StopProvider_SRC_P)
 {
     EXPECT_EQ(NS_OK, NSStopProvider());
@@ -119,7 +119,7 @@ TEST_F(NSProviderTest_btc, StopProvider_SRC_P)
  * @post_condition None
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, StartProviderWithEmptyConfig_SRC_P)
 {
     NSProviderConfig config;
@@ -139,7 +139,7 @@ TEST_F(NSProviderTest_btc, StartProviderWithEmptyConfig_SRC_P)
  * @post_condition None
  * @expected The API should not return nullptr
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, CreateMessage_SRC_P)
 {
     NSMessage *msg = NSCreateMessage();
@@ -159,7 +159,7 @@ TEST_F(NSProviderTest_btc, CreateMessage_SRC_P)
  * @post_condition None
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, SendMessage_SRC_P)
 {
     NSMessage *msg = NSCreateMessage();
@@ -187,7 +187,7 @@ TEST_F(NSProviderTest_btc, SendMessage_SRC_P)
  * @post_condition None
  * @expected The API should not return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, SendMessage_NV_N)
 {
     NSMessage *msg = nullptr;
@@ -211,20 +211,19 @@ TEST_F(NSProviderTest_btc, SendMessage_NV_N)
  * @post_condition Stop Consumer
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, AcceptSubscriptionAllow_SRC_P)
 {
     bool isAccept = true;
     NSStartProvider(m_pNSHelper->getProviderConfig(isAccept));
 
     CommonUtil::launchApp(CONSUMER_SIMULATOR);
-    CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
     string consumerID = m_pNSHelper->getConsumerID();
 
-    CommonUtil::killApp(CONSUMER_SIMULATOR);
-
     EXPECT_EQ(NS_OK, NSAcceptSubscription(consumerID.c_str(), isAccept));
+
+    CommonUtil::killApp(CONSUMER_SIMULATOR);
 }
 #endif
 
@@ -243,7 +242,7 @@ TEST_F(NSProviderTest_btc, AcceptSubscriptionAllow_SRC_P)
  * @post_condition Stop Consumer
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, AcceptSubscriptionDeny_SRC_P)
 {
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
@@ -271,7 +270,7 @@ TEST_F(NSProviderTest_btc, AcceptSubscriptionDeny_SRC_P)
  * @post_condition None
  * @expected The API should not return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, AcceptSubscription_NV_N)
 {
     bool isAccept = true;
@@ -292,7 +291,7 @@ TEST_F(NSProviderTest_btc, AcceptSubscription_NV_N)
  * @post_condition None
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, SendSyncInfoAsUnread_SRC_P)
 {
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
@@ -311,7 +310,7 @@ TEST_F(NSProviderTest_btc, SendSyncInfoAsUnread_SRC_P)
  * @post_condition None
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, SendSyncInfoAsRead_SRC_P)
 {
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
@@ -330,7 +329,7 @@ TEST_F(NSProviderTest_btc, SendSyncInfoAsRead_SRC_P)
  * @post_condition None
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, SendSyncInfoAsDeleted_SRC_P)
 {
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
@@ -349,7 +348,7 @@ TEST_F(NSProviderTest_btc, SendSyncInfoAsDeleted_SRC_P)
  * @post_condition None
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, NSRegisterTopic_SRC_P)
 {
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
@@ -368,7 +367,7 @@ TEST_F(NSProviderTest_btc, NSRegisterTopic_SRC_P)
  * @post_condition None
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, NSUnregisterTopic_SRC_P)
 {
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
@@ -389,7 +388,7 @@ TEST_F(NSProviderTest_btc, NSUnregisterTopic_SRC_P)
  * @post_condition None
  * @expected The API should not return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, NSUnregisterTopic_USV_N)
 {
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
@@ -415,7 +414,7 @@ TEST_F(NSProviderTest_btc, NSUnregisterTopic_USV_N)
  * @post_condition Stop Consumer
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, NSSetConsumerTopic_SRC_P)
 {
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
@@ -448,7 +447,7 @@ TEST_F(NSProviderTest_btc, NSSetConsumerTopic_SRC_P)
  * @post_condition Stop Consumer
  * @expected The API should not return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, NSSetConsumerTopic_USV_N)
 {
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
@@ -475,7 +474,7 @@ TEST_F(NSProviderTest_btc, NSSetConsumerTopic_USV_N)
  * @post_condition Stop Consumer
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, NSSetConsumerTopic_NV_N)
 {
     NSConsumer *consumer = nullptr;
@@ -505,7 +504,7 @@ TEST_F(NSProviderTest_btc, NSSetConsumerTopic_NV_N)
  * @post_condition Stop Consumer
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, NSUnsetConsumerTopic_SRC_P)
 {
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
@@ -543,7 +542,7 @@ TEST_F(NSProviderTest_btc, NSUnsetConsumerTopic_SRC_P)
  * @post_condition Stop Consumer
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, NSUnsetConsumerTopic_USV_N)
 {
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
@@ -571,7 +570,7 @@ TEST_F(NSProviderTest_btc, NSUnsetConsumerTopic_USV_N)
  * @post_condition Stop Consumer
  * @expected The API should return NS_OK
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, NSUnsetConsumerTopic_NV_N)
 {
     NSConsumer *consumer = nullptr;
@@ -591,7 +590,7 @@ TEST_F(NSProviderTest_btc, NSUnsetConsumerTopic_NV_N)
  * @post_condition None
  * @expected The API should not return Topic list
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, NSGetConsumerTopics_NV_N)
 {
     NSConsumer *consumer = nullptr;
@@ -611,7 +610,7 @@ TEST_F(NSProviderTest_btc, NSGetConsumerTopics_NV_N)
  * @post_condition None
  * @expected The topic list should not be null
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, NSGetTopics_SRC_P)
 {
     NSProviderConfig config = m_pNSHelper->getProviderConfig(true);
@@ -634,7 +633,7 @@ TEST_F(NSProviderTest_btc, NSGetTopics_SRC_P)
  * @post_condition None
  * @expected The topic list should be null
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSProviderTest_btc, NSGetTopics_USV_N)
 {
     NSProviderConfig config = m_pNSHelper->getProviderConfig(true);

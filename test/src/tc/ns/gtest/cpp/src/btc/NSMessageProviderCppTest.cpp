@@ -56,7 +56,7 @@ public:
  * @post_condition None
  * @expected Constructor should return NSMessage instance
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, MessageConstructor_SRC_P)
 {
     OIC::Service::NSMessage* nsMessage = nullptr;
@@ -77,7 +77,7 @@ TEST_F(NSMessageProviderCppTest_btc, MessageConstructor_SRC_P)
  * @post_condition None
  * @expected API should return message ID
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, GetMessageID_SRC_P)
 {
     uint64_t id = 0;
@@ -97,7 +97,7 @@ TEST_F(NSMessageProviderCppTest_btc, GetMessageID_SRC_P)
  * @post_condition None
  * @expected API should return provider ID
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, GetProviderID_SRC_P)
 {
     string providerID = "";
@@ -117,7 +117,7 @@ TEST_F(NSMessageProviderCppTest_btc, GetProviderID_SRC_P)
  * @post_condition None
  * @expected Exception should not be thrown
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, SetSourceName_SRC_P)
 {
     try
@@ -145,7 +145,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetSourceName_SRC_P)
  * @post_condition None
  * @expected set source name should be returned
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, GetSourceName_SRC_P)
 {
     m_pNSMessage->setSourceName(SOURCE_NAME);
@@ -164,7 +164,7 @@ TEST_F(NSMessageProviderCppTest_btc, GetSourceName_SRC_P)
  * @post_condition None
  * @expected Exception should not be thrown
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, SetType_SRC_P)
 {
     try
@@ -191,7 +191,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetType_SRC_P)
  * @post_condition None
  * @expected Returned message type should be same as the set type
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, GetType_SRC_P)
 {
     m_pNSMessage->setType(MESSAGE_TYPE);
@@ -210,7 +210,7 @@ TEST_F(NSMessageProviderCppTest_btc, GetType_SRC_P)
  * @post_condition None
  * @expected Exception should not be thrown
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, SetTime_SRC_P)
 {
     try
@@ -237,7 +237,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetTime_SRC_P)
  * @post_condition None
  * @expected Time should be returned
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, GetTime_SRC_P)
 {
     string time = "";
@@ -258,7 +258,7 @@ TEST_F(NSMessageProviderCppTest_btc, GetTime_SRC_P)
  * @post_condition None
  * @expected Exception should not be thrown
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, SetTTL_SRC_P)
 {
     try
@@ -285,7 +285,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetTTL_SRC_P)
  * @post_condition None
  * @expected set ttl is returned
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, GetTTL_SRC_P)
 {
     m_pNSMessage->setTTL(TTL_TO_SET);
@@ -304,7 +304,7 @@ TEST_F(NSMessageProviderCppTest_btc, GetTTL_SRC_P)
  * @post_condition None
  * @expected Exception should not be thrown
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, SetTitle_SRC_P)
 {
     try
@@ -331,7 +331,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetTitle_SRC_P)
  * @post_condition None
  * @expected set title should be returned
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, GetTitle_SRC_P)
 {
     m_pNSMessage->setTitle(TITLE_TO_SET);
@@ -350,7 +350,7 @@ TEST_F(NSMessageProviderCppTest_btc, GetTitle_SRC_P)
  * @post_condition None
  * @expected Exception should not be thrown
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, SetContentText_SRC_P)
 {
     try
@@ -377,7 +377,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetContentText_SRC_P)
  * @post_condition None
  * @expected set Contenttext should be returned
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, GetContentText_SRC_P)
 {
     m_pNSMessage->setContentText(CONTENTTEXT_TO_SET);
@@ -396,7 +396,7 @@ TEST_F(NSMessageProviderCppTest_btc, GetContentText_SRC_P)
  * @post_condition None
  * @expected Exception should not be thrown
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, SetMediaContents_SRC_P)
 {
     OIC::Service::NSMediaContents* mediaContents = new OIC::Service::NSMediaContents();
@@ -425,7 +425,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetMediaContents_SRC_P)
  * @post_condition None
  * @expected set mediacontents should be returned
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, GetMediaContents_SRC_P)
 {
     OIC::Service::NSMediaContents* mediaContents = new OIC::Service::NSMediaContents();
@@ -445,7 +445,7 @@ TEST_F(NSMessageProviderCppTest_btc, GetMediaContents_SRC_P)
  * @post_condition None
  * @expected Exception should not be thrown
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, SetTopicFromMessage_SRC_P)
 {
     try
@@ -472,7 +472,7 @@ TEST_F(NSMessageProviderCppTest_btc, SetTopicFromMessage_SRC_P)
  * @post_condition None
  * @expected set topic should be returned
  **/
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(NSMessageProviderCppTest_btc, GetTopicFromMessage_SRC_P)
 {
     m_pNSMessage->setTopic(TEST_TOPIC_1);
