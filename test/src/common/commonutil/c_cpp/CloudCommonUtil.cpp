@@ -227,7 +227,7 @@ char* CloudCommonUtil::get_authenticity_token(const char* responseText)
 {
     char* authLast = NULL;
     char* auth_token = (char*) strstr(responseText,
-            "<input name=\"authenticity_token\" type=\"hidden\" value=\"");
+            "<input type=\"hidden\" name=\"authenticity_token\" value=\"");
     auth_token = strstr(auth_token, "value=\"");
     auth_token = &auth_token[strlen("value=\"")];
     authLast = strstr(auth_token, "\" />");
