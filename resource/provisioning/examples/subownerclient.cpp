@@ -28,7 +28,6 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "OCPlatform.h"
@@ -38,6 +37,11 @@
 #include "oxmrandompin.h"
 #include "aclresource.h"
 #include "utlist.h"
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+/// Here logging part is not critical.
+#include "experimental/logger.h"
 
 #define MAX_PERMISSION_LENGTH (5)
 #define ACL_RESRC_ARRAY_SIZE (3)

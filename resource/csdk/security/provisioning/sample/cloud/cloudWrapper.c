@@ -1,32 +1,32 @@
-//******************************************************************
-//
-// Copyright 2016 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
+/* *****************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * *****************************************************************/
 #include "occloudprovisioning.h"
-#include "OCCloudProvisioning.hpp"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "srmutility.h"
+#include "aclresource.h"
+#include "utlist.h"
 #include "utils.h"
 
 /// This example is using experimental API, so there is no guarantee of support for future release,
 /// nor any there any guarantee that breaking changes will not occur across releases.
-/// Here logging part is not critical.
 #include "experimental/logger.h"
 
 #define TAG "CLOUD-WRAPPER"
@@ -50,9 +50,16 @@
 #define INTERFACE_EXAMPLE "oic.if.baseline"
 
 //in case of optional parameters absence should be sent NULL
-#define OPTIONAL(str) (str[0] ? str : NULL)
+#define OPTIONAL_PARAM(str) (str[0] ? str : NULL)
 
-using namespace OC;
+/**
+ * Skip special characters from stdin
+ * */
+static void skipSpecialCharacters()
+{
+    for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                // '0x20<=code' is character region
+}
 
 static bool readOptional(const char* description)
 {
@@ -66,9 +73,9 @@ static bool readOptional(const char* description)
 
     while(1)
     {
-        if (scanf("%c", &choice))
+        if(scanf("%c", &choice))
         {
-            getchar();
+            skipSpecialCharacters();
 
             switch (choice)
             {
@@ -85,22 +92,14 @@ static bool readOptional(const char* description)
     return false;
 }
 
-/**
- * Read user input (expect string value)
- *
- * @param[out] item           string item to fill
- * @param[in] length          max allowed string length
- * @param[in] description     item description
- * @param[in] example         item example
- */
 void readString(char* item, int length, const char* description, const char* example)
 {
     printf("Enter %s (f.e. %s):\n", description, example);
-    char temp[8] = { 0 };
-    snprintf(temp, sizeof(temp), "%%%ds", length - 1);
-    if (scanf(temp, item) )
+    char template[8] = { 0 };
+    snprintf(template, sizeof(template), "%%%ds", length - 1);
+    if (scanf(template, item))
     {
-        getchar();
+        skipSpecialCharacters();
     }
 }
 
@@ -120,37 +119,23 @@ static void readOptionalString(char* item, int length, const char* description, 
     }
 }
 
-/**
- * Read user input (expect integer value)
- *
- * @param[out] item           integer item to fill
- * @param[in] description     item description
- * @param[in] example         item example
- */
 void readInteger(int* item, const char* description, const char* example)
 {
     printf("Enter %s (f.e. %s):\n", description, example);
-    if (scanf("%d", item))
+    if(scanf("%d", item))
     {
-        getchar();
-    }
-}
-/**
- * Read user input (expect integer value)
- *
- * @param[out] item           size_t item to fill
- * @param[in] description     item description
- * @param[in] example         item example
- */
-void readSize(size_t* item, const char* description, const char* example)
-{
-    printf("Enter %s (f.e. %s):\n", description, example);
-    if (scanf("%zd", item))
-    {
-        getchar();
+        skipSpecialCharacters();
     }
 }
 
+void readUInt16(uint16_t* item, const char* description, const char* example)
+{
+    printf("Enter %s (f.e. %s):\n", description, example);
+    if (scanf("%hu", item))
+    {
+        skipSpecialCharacters();
+    }
+}
 
 /**
  * Read user input (expect array of strings)
@@ -162,21 +147,21 @@ void readSize(size_t* item, const char* description, const char* example)
  */
 static void readStringArray(stringArray_t *list, int length, const char* description, const char* example)
 {
-    size_t i = 0;
-    size_t count = 0;
+    int i = 0;
+    int count = 0;
     char hint[MAX_STRING_LENGTH] = { 0 };
 
     snprintf(hint, sizeof(hint), "%s items count", description);
-    readSize(&count, hint, "2");
+    readInteger(&count, hint, "2");
 
     char **item = NULL;
 
-    if (0 == count || 10 * 1024 < count)
+    if (0 == count)
     {
         return;
     }
 
-    item = (char**)OICCalloc(count, sizeof(char*));
+    item = OICCalloc(count, sizeof(char*));
 
     if (NULL == item)
     {
@@ -185,14 +170,14 @@ static void readStringArray(stringArray_t *list, int length, const char* descrip
 
     for (i = 0; i < count; i++)
     {
-        item[i] = (char*)OICCalloc(length, sizeof(char));
+        item[i] = OICCalloc(length, sizeof(char));
 
         if (NULL == item[i])
         {
             goto no_memory;
         }
 
-        snprintf(hint, sizeof(hint), "%s %zd item", description, i + 1);
+        snprintf(hint, sizeof(hint), "%s %d item", description, i + 1);
         readString(item[i], length, hint, example);
     }
     list->array  = item;
@@ -201,7 +186,7 @@ static void readStringArray(stringArray_t *list, int length, const char* descrip
 
 no_memory:
     //free already allocated memory here
-    for (size_t k = 0; k < i; k++)
+    for (int k = 0; k < i; k++)
     {
         OICFree(item[k]);
     }
@@ -225,20 +210,63 @@ static void readOptionalStringArray(stringArray_t *list, int length, const char*
     }
 }
 
-/**
- * Copies whole binary file to crl variable
- *
- * @param[in] list           array of strings structure
- * @param[out] crl           byte array to fill
- * @return                   negative error code
- * */
-static int ReadFile(const char *name, OCByteString *crl)
+void printStringArray(stringArray_t *list)
+{
+    if (NULL == list)
+    {
+        OIC_LOG(INFO, TAG, "Received NULL list");
+        return;
+    }
+
+    OIC_LOG_V(INFO, TAG, "List contains %" PRIuPTR " items", list->length);
+
+    for (size_t i = 0; i < list->length; i++)
+    {
+        OIC_LOG_V(INFO, TAG, "item[%" PRIuPTR "] = %s", i, list->array[i]);
+    }
+}
+
+void printInviteResponse(inviteResponse_t *in)
+{
+    if (NULL == in)
+    {
+        OIC_LOG(INFO, TAG, "Received NULL invitation response");
+        return;
+    }
+
+    OIC_LOG(INFO, TAG, "Received next invite gid list:");
+    printStringArray(&in->invite.gidlist);
+
+    OIC_LOG(INFO, TAG, "Received next invite mid list:");
+    printStringArray(&in->invite.midlist);
+
+    OIC_LOG(INFO, TAG, "Received next invited gid list:");
+    printStringArray(&in->invited.gidlist);
+
+    OIC_LOG(INFO, TAG, "Received next invited mid list:");
+    printStringArray(&in->invited.midlist);
+}
+
+void clearInviteResponse(inviteResponse_t *in)
+{
+    if (NULL == in)
+    {
+        return;
+    }
+
+    clearStringArray(&in->invite.gidlist);
+    clearStringArray(&in->invite.midlist);
+
+    clearStringArray(&in->invited.gidlist);
+    clearStringArray(&in->invited.midlist);
+}
+
+bool readFile(const char *name, OCByteString *out)
 {
     FILE *file = NULL;
     int length = 0;
     uint8_t *buffer = NULL;
-    int result = 1;
-    size_t realLen = 0;
+    bool result = false;
 
     //Open file
     file = fopen(name, "rb");
@@ -249,8 +277,7 @@ static int ReadFile(const char *name, OCByteString *crl)
     }
 
     //Get file length
-    result = fseek(file, 0, SEEK_END);
-    if (result)
+    if (fseek(file, 0, SEEK_END))
     {
         OIC_LOG(ERROR, TAG, "Failed to SEEK_END");
         goto exit;
@@ -263,8 +290,7 @@ static int ReadFile(const char *name, OCByteString *crl)
         goto exit;
     }
 
-    result = fseek(file, 0, SEEK_SET);
-    if (result)
+    if (fseek(file, 0, SEEK_SET))
     {
         OIC_LOG(ERROR, TAG, "Failed to SEEK_SET");
         goto exit;
@@ -279,34 +305,71 @@ static int ReadFile(const char *name, OCByteString *crl)
     }
 
     //Read file contents into buffer
-    realLen = fread(buffer, length, 1, file);
-    if (realLen != (size_t)length)
+    size_t count = 1;
+    size_t realCount = fread(buffer, length, count, file);
+    if (realCount != count)
     {
-        OIC_LOG_V(ERROR, TAG, "Length mismatch: read %" PRIuPTR " instead of %d bytes", realLen, length);
+        OIC_LOG_V(ERROR, TAG, "Read %d bytes %" PRIuPTR " times instead of %" PRIuPTR, length, realCount, count);
         goto exit;
     }
 
-    crl->bytes = buffer;
-    crl->len   = (size_t)length;
+    out->bytes = buffer;
+    out->len   = length;
 
-    result = 0;
+    result = true;
 exit:
     fclose(file);
-    OICFree(buffer);
-    return 0;
+    return result;
 }
 
-OCStackResult OCWrapperCertificateIssueRequest(OCCloudProvisioning& ptr, ResponseCallBack callback)
+/**
+ * Frees particular cloudAce object
+ *
+ * @param[in] ace   ace object to free
+ * */
+static void freeCloudAce(cloudAce_t *ace)
 {
-    return ptr.requestCertificate(callback);
+    OICFree(ace->aceId);
+
+    //Clean Resources
+    OicSecRsrc_t* rsrc = NULL;
+    OicSecRsrc_t* tmpRsrc = NULL;
+    LL_FOREACH_SAFE(ace->resources, rsrc, tmpRsrc)
+    {
+        LL_DELETE(ace->resources, rsrc);
+        FreeRsrc(rsrc);
+    }
+
+    OICFree(ace);
 }
 
-OCStackResult OCWrapperGetCRL(OCCloudProvisioning& ptr, ResponseCallBack callback)
+/**
+ * Deletes cloudAce list
+ *
+ * @param[in] ace   aces list to delete
+ * */
+static void deleteCloudAceList(cloudAce_t *aces)
 {
-    return ptr.getCRL(callback);
+    cloudAce_t *ace = NULL;
+    cloudAce_t *tmpAce = NULL;
+    LL_FOREACH_SAFE(aces, ace, tmpAce)
+    {
+        LL_DELETE(aces, ace);
+        freeCloudAce(ace);
+    }
 }
 
-OCStackResult OCWrapperPostCRL(OCCloudProvisioning& ptr, ResponseCallBack callback)
+OCStackResult OCWrapperCertificateIssueRequest(const OCDevAddr *endPoint, OCCloudResponseCB callback)
+{
+    return OCCloudCertificateIssueRequest(NULL, endPoint, callback);
+}
+
+OCStackResult OCWrapperGetCRL(const OCDevAddr *endPoint, OCCloudResponseCB callback)
+{
+    return OCCloudGetCRL(NULL, endPoint, callback);
+}
+
+OCStackResult OCWrapperPostCRL(const OCDevAddr *endPoint, OCCloudResponseCB callback)
 {
     OCStackResult result = OC_STACK_ERROR;
     OCByteString crlData = {0, 0};
@@ -314,8 +377,6 @@ OCStackResult OCWrapperPostCRL(OCCloudProvisioning& ptr, ResponseCallBack callba
     char thisUpdate[16] = { 0 };
     char nextUpdate[16] = { 0 };
     stringArray_t serialNumbers = {0, 0};
-    stringArray_t *rcsn = 0;
-    OCByteString *crl = 0;
 
     readString(thisUpdate, sizeof(thisUpdate), "Crl's thisUpdate value", "20160727000000");
     readString(nextUpdate, sizeof(nextUpdate), "Crl's nextUpdate value", "20161027000000");
@@ -326,17 +387,17 @@ OCStackResult OCWrapperPostCRL(OCCloudProvisioning& ptr, ResponseCallBack callba
         readString(filename, sizeof(filename),
                    "filename from which binary Crl in DER format will be read", "crl");
 
-        if (ReadFile(filename, &crlData))
+        if (!readFile(filename, &crlData))
         {
             printf("Can't read crl from file %s\n", filename);
             goto exit;
         }
     }
-    rcsn = serialNumbers.array? &serialNumbers : NULL;
-    crl = crlData.bytes? &crlData : NULL;
+    stringArray_t *rcsn = serialNumbers.array? &serialNumbers : NULL;
+    OCByteString *crl = crlData.bytes? &crlData : NULL;
 
-    result = ptr.postCRL(thisUpdate, nextUpdate, crl, rcsn,
-                             callback);
+    result = OCCloudPostCRL(NULL, thisUpdate, nextUpdate, crl, rcsn,
+                            endPoint, callback);
 exit:
     clearStringArray(&serialNumbers);
     OICFree(crlData.bytes);
@@ -344,24 +405,13 @@ exit:
     return result;
 }
 
-OCStackResult OCWrapperAclIdGetByDevice(OCCloudProvisioning& ptr, AclIdResponseCallBack callback)
+OCStackResult OCWrapperAclIdGetByDevice(const OCDevAddr *endPoint, OCCloudResponseCB callback)
 {
     char di[MAX_ID_LENGTH] = { 0 };
 
     readString(di, sizeof(di), "device id", UUID_EXAMPLE_1);
 
-    return ptr.getAclIdByDevice(di, callback);
-}
-
-const char *getUri(const OCDevAddr *ep)
-{
-    char *uri = NULL;
-    uri = (char *)OICCalloc(1,1024);
-    if (uri)
-    {
-        snprintf(uri,1024,"%s:%d",ep->addr, ep->port);
-    }
-    return uri;
+    return OCCloudGetAclIdByDevice(NULL, di, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclIdCreate(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -372,7 +422,7 @@ OCStackResult OCWrapperAclIdCreate(const OCDevAddr *endPoint, OCCloudResponseCB 
     readString(oid, sizeof(oid), "owner id", UUID_EXAMPLE_2);
     readString(di, sizeof(di), "device id", UUID_EXAMPLE_1);
 
-    return OCCloudAclIdCreate(NULL, oid, di, getUri(endPoint), callback);
+    return OCCloudAclIdCreate(NULL, oid, di, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclIdDelete(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -381,76 +431,69 @@ OCStackResult OCWrapperAclIdDelete(const OCDevAddr *endPoint, OCCloudResponseCB 
 
     readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
 
-    return OCCloudAclIdDelete(NULL, aclid, getUri(endPoint), callback);
+    return OCCloudAclIdDelete(NULL, aclid, endPoint, callback);
 }
 
-OCStackResult OCWrapperAclIndividualGetInfo(OCCloudProvisioning& ptr, ResponseCallBack callback)
+OCStackResult OCWrapperAclIndividualGetInfo(const OCDevAddr *endPoint, OCCloudResponseCB callback)
 {
     char aclid[MAX_ID_LENGTH] = { 0 };
 
     readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
 
-    return ptr.getIndividualAclInfo(aclid, callback);
+    return OCCloudAclIndividualGetInfo(NULL, aclid, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloudResponseCB callback)
 {
     OCStackResult result = OC_STACK_NO_MEMORY;
-    int i = 0, j = 0;
-    cloudAce_t *aces = NULL;
 
     char aclid[MAX_ID_LENGTH] = { 0 };
-    readString(aclid, sizeof(aclid), "ace id", ACL_ID_EXAMPLE);
+    readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
 
     int acllist_count = 0;
     readInteger(&acllist_count, "acl list count", "1");
-    if (0 >= acllist_count || 1024 < acllist_count)
-    {
-        OIC_LOG(ERROR, TAG, "Wrong number of aclList");
-        goto exit;
-    }
 
-    aces = (cloudAce_t*)OICCalloc(acllist_count, sizeof(cloudAce_t));
-    if (!aces)
-    {
-        OIC_LOG(ERROR, TAG, "Can't allocate memory for aces");
-        goto exit;
-    }
+    cloudAce_t *aces = NULL;
 
-    for (i = 0; i < acllist_count; i++)
+    for (int i = 0; i < acllist_count; i++)
     {
-        cloudAce_t *ace = &aces[i];
-        if (i != acllist_count - 1) ace->next = &aces[i + 1];
+        cloudAce_t *ace = OICCalloc(1, sizeof(cloudAce_t));
+        if (!ace)
+        {
+            OIC_LOG(ERROR, TAG, "Can't allocate memory for ace");
+            goto exit;
+        }
+        LL_APPEND(aces, ace);
 
         char aceid[MAX_ID_LENGTH] = { 0 };
         char subjectuuid[MAX_ID_LENGTH] = { 0 };
-        int stype = 0;
-        int permission = 0;
+        uint16_t stype = 0;
+        uint16_t permission = 0;
 
-        readString(aceid, sizeof(aceid), "ace id", ACE_ID_EXAMPLE);
-        readString(subjectuuid, sizeof(subjectuuid), "subjectuuid", SUBJECT_ID_EXAMPLE);
-        readInteger(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
-        readInteger(&permission, "permission", "6");
+        do
+        {
+            readString(subjectuuid, sizeof(subjectuuid), "subjectuuid", SUBJECT_ID_EXAMPLE);
+        } while (OC_STACK_OK != ConvertStrToUuid(subjectuuid, &ace->subjectuuid));
+
+        readUInt16(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
+        readUInt16(&permission, "permission", "6");
 
         ace->aceId = OICStrdup(aceid);
         ace->stype = stype;
         ace->permission = permission;
-        memcpy(&ace->subjectuuid, subjectuuid, sizeof(OicUuid_t));
 
         int reslist_count = 0;
         readInteger(&reslist_count, "resources list count", "1");
 
-        ace->resources = (OicSecRsrc_t*)OICCalloc(reslist_count, sizeof(OicSecRsrc_t));
-        if (!ace->resources)
+        for (int j = 0; j < reslist_count; j++)
         {
-            OIC_LOG(ERROR, TAG, "Can't allocate memory for resources");
-            goto exit;
-        }
-
-        for (j = 0; j < reslist_count; j++)
-        {
-            OicSecRsrc_t *res = &ace->resources[j];
-            if (j != reslist_count - 1) res->next = &ace->resources[j + 1];
+            OicSecRsrc_t *res = OICCalloc(1, sizeof(OicSecRsrc_t));
+            if (!res)
+            {
+                OIC_LOG(ERROR, TAG, "Can't allocate memory for res");
+                goto exit;
+            }
+            LL_APPEND(ace->resources, res);
 
             char href[32] = { 0 };
             readString(href, sizeof(href), "href", RESOURCE_URI_EXAMPLE);
@@ -469,32 +512,75 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
         }
     }
 
-    result = OCCloudAclIndividualAclUpdate(NULL, aclid, aces, getUri(endPoint), callback);
+    result = OCCloudAclIndividualAclUpdate(NULL, aclid, aces, endPoint, callback);
 exit:
-    if (aces)
+    deleteCloudAceList(aces);
+    return result;
+}
+
+OCStackResult OCWrapperAclIndividualUpdate(const OCDevAddr *endPoint, OCCloudResponseCB callback)
+{
+    OCStackResult result = OC_STACK_NO_MEMORY;
+
+    char aclid[MAX_ID_LENGTH] = { 0 };
+    readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
+
+    cloudAce_t *ace = OICCalloc(1, sizeof(cloudAce_t));
+    if (!ace)
     {
-        for (int k = 0; k < i; k++)
-        {
-            cloudAce_t *ace = &aces[k];
-            OICFree(ace->aceId);
-
-            if (ace->resources)
-            {
-                for (int l = 0; l < j; l++)
-                {
-                    OicSecRsrc_t *res = &ace->resources[l];
-                    OICFree(res->href);
-
-                    stringArray_t rt {res->types, res->typeLen};
-                    clearStringArray(&rt);
-
-                    stringArray_t _if {res->interfaces, res->interfaceLen};
-                    clearStringArray(&_if);
-                }
-            }
-
-        }
+        OIC_LOG(ERROR, TAG, "Can't allocate memory for ace");
+        goto exit;
     }
+
+    char aceid[MAX_ID_LENGTH] = { 0 };
+    char subjectuuid[MAX_ID_LENGTH] = { 0 };
+    uint16_t stype = 0;
+    uint16_t permission = 0;
+
+    readString(aceid, sizeof(aceid), "ace id", ACE_ID_EXAMPLE);
+    do
+    {
+        readString(subjectuuid, sizeof(subjectuuid), "subjectuuid", SUBJECT_ID_EXAMPLE);
+    } while (OC_STACK_OK != ConvertStrToUuid(subjectuuid, &ace->subjectuuid));
+
+    readUInt16(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
+    readUInt16(&permission, "permission", "6");
+
+    ace->stype = stype;
+    ace->permission = permission;
+
+    int reslist_count = 0;
+    readInteger(&reslist_count, "resources list count", "1");
+
+    for (int i = 0; i < reslist_count; i++)
+    {
+        OicSecRsrc_t *res = OICCalloc(1, sizeof(OicSecRsrc_t));
+        if (!res)
+        {
+            OIC_LOG(ERROR, TAG, "Can't allocate memory for res");
+            goto exit;
+        }
+        LL_APPEND(ace->resources, res);
+
+        char href[32] = { 0 };
+        readString(href, sizeof(href), "href", RESOURCE_URI_EXAMPLE);
+
+        stringArray_t rt = {0, 0};
+        readStringArray(&rt, MAX_ID_LENGTH, "resource type", RESOURCE_TYPE_EXAMPLE);
+
+        stringArray_t _if = {0, 0};
+        readStringArray(&_if, MAX_ID_LENGTH, "interface", INTERFACE_EXAMPLE);
+
+        res->href = OICStrdup(href);
+        res->types = rt.array;
+        res->typeLen = rt.length;
+        res->interfaces = _if.array;
+        res->interfaceLen = _if.length;
+    }
+
+
+    result = OCCloudAclIndividualAceUpdate(NULL, aclid,aceid, ace, endPoint, callback);
+exit:
     return result;
 }
 
@@ -504,7 +590,18 @@ OCStackResult OCWrapperAclIndividualDelete(const OCDevAddr *endPoint, OCCloudRes
 
     readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
 
-    return OCCloudAclAcesDelete(NULL, aclid, getUri(endPoint), callback);
+    return OCCloudAclAcesDelete(NULL, aclid, endPoint, callback);
+}
+
+OCStackResult OCWrapperAclIndividualDeleteAce(const OCDevAddr *endPoint, OCCloudResponseCB callback)
+{
+    char aclid[MAX_ID_LENGTH] = { 0 };
+    char aceid[MAX_ID_LENGTH] = { 0 };
+
+    readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
+    readString(aceid, sizeof(aceid), "ace id", ACE_ID_EXAMPLE);
+
+    return OCCloudAclIndividualAceDelete(NULL, aclid, aceid, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclCreateGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -515,7 +612,7 @@ OCStackResult OCWrapperAclCreateGroup(const OCDevAddr *endPoint, OCCloudResponse
     readString(gtype, sizeof(gtype), "Group type value", "Public");
     readOptionalString(gmid, sizeof(gmid), "group member id value", UUID_EXAMPLE_2);
 
-    return OCCloudAclCreateGroup(NULL, gtype, OPTIONAL(gmid), getUri(endPoint), callback);
+    return OCCloudAclCreateGroup(NULL, gtype, OPTIONAL_PARAM(gmid), endPoint, callback);
 }
 
 OCStackResult OCWrapperAclFindMyGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -524,7 +621,7 @@ OCStackResult OCWrapperAclFindMyGroup(const OCDevAddr *endPoint, OCCloudResponse
 
     readOptionalString(mid, sizeof(mid), "member id value", UUID_EXAMPLE_2);
 
-    return OCCloudAclFindMyGroup(NULL, OPTIONAL(mid), getUri(endPoint), callback);
+    return OCCloudAclFindMyGroup(NULL, OPTIONAL_PARAM(mid), endPoint, callback);
 }
 
 OCStackResult OCWrapperAclDeleteGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -536,7 +633,7 @@ OCStackResult OCWrapperAclDeleteGroup(const OCDevAddr *endPoint, OCCloudResponse
 
     readOptionalString(gmid, sizeof(gmid), "group member id value", UUID_EXAMPLE_2);
 
-    return OCCloudAclDeleteGroup(NULL, gid, OPTIONAL(gmid), getUri(endPoint), callback);
+    return OCCloudAclDeleteGroup(NULL, gid, OPTIONAL_PARAM(gmid), endPoint, callback);
 }
 
 OCStackResult OCWrapperAclJoinToInvitedGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -545,7 +642,7 @@ OCStackResult OCWrapperAclJoinToInvitedGroup(const OCDevAddr *endPoint, OCCloudR
 
     readString(gid, sizeof(gid), "Group id value", ID_EXAMPLE_1);
 
-    return OCCloudAclJoinToInvitedGroup(NULL, gid, getUri(endPoint), callback);
+    return OCCloudAclJoinToInvitedGroup(NULL, gid, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclObserveGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -554,7 +651,7 @@ OCStackResult OCWrapperAclObserveGroup(const OCDevAddr *endPoint, OCCloudRespons
 
     readString(gid, sizeof(gid), "Group id value", ID_EXAMPLE_1);
 
-    return OCCloudAclObserveGroup(NULL, gid, getUri(endPoint), callback);
+    return OCCloudAclObserveGroup(NULL, gid, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclShareDeviceIntoGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -570,7 +667,7 @@ OCStackResult OCWrapperAclShareDeviceIntoGroup(const OCDevAddr *endPoint, OCClou
 
     readStringArray(&dilist, MAX_ID_LENGTH, "device list", UUID_EXAMPLE_1);
 
-    result = OCCloudAclShareDeviceIntoGroup(NULL, gid, &midlist, &dilist, getUri(endPoint), callback);
+    result = OCCloudAclShareDeviceIntoGroup(NULL, gid, &midlist, &dilist, endPoint, callback);
 
     clearStringArray(&midlist);
     clearStringArray(&dilist);
@@ -591,7 +688,7 @@ OCStackResult OCWrapperAclDeleteDeviceFromGroup(const OCDevAddr *endPoint, OCClo
 
     readStringArray(&dilist, MAX_ID_LENGTH, "device list", UUID_EXAMPLE_1);
 
-    result = OCCloudAclDeleteDeviceFromGroup(NULL, gid, &midlist, &dilist, getUri(endPoint), callback);
+    result = OCCloudAclDeleteDeviceFromGroup(NULL, gid, &midlist, &dilist, endPoint, callback);
 
     clearStringArray(&midlist);
     clearStringArray(&dilist);
@@ -608,7 +705,7 @@ OCStackResult OCWrapperAclGroupGetInfo(const OCDevAddr *endPoint, OCCloudRespons
 
     readOptionalString(mid, sizeof(mid), "member id value", UUID_EXAMPLE_2);
 
-    return OCCloudAclGroupGetInfo(NULL, gid, OPTIONAL(mid), getUri(endPoint), callback);
+    return OCCloudAclGroupGetInfo(NULL, gid, OPTIONAL_PARAM(mid), endPoint, callback);
 }
 
 OCStackResult OCWrapperAclInviteUser(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -624,7 +721,7 @@ OCStackResult OCWrapperAclInviteUser(const OCDevAddr *endPoint, OCCloudResponseC
 
     readStringArray(&midlist, MAX_ID_LENGTH, "member id list", UUID_EXAMPLE_2);
 
-    result = OCCloudAclInviteUser(NULL, OPTIONAL(uid), &gidlist, &midlist, getUri(endPoint), callback);
+    result = OCCloudAclInviteUser(NULL, OPTIONAL_PARAM(uid), &gidlist, &midlist, endPoint, callback);
 
     clearStringArray(&midlist);
     clearStringArray(&gidlist);
@@ -638,7 +735,7 @@ OCStackResult OCWrapperAclGetInvitation(const OCDevAddr *endPoint, OCCloudRespon
 
     readOptionalString(uid, sizeof(uid), "user uuid value", UUID_EXAMPLE_2);
 
-    return OCCloudAclGetInvitation(NULL, OPTIONAL(uid), getUri(endPoint), callback);
+    return OCCloudAclGetInvitation(NULL, OPTIONAL_PARAM(uid), endPoint, callback);
 }
 
 OCStackResult OCWrapperAclDeleteInvitation(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -649,7 +746,7 @@ OCStackResult OCWrapperAclDeleteInvitation(const OCDevAddr *endPoint, OCCloudRes
     readOptionalString(uid, sizeof(uid), "user uuid value", UUID_EXAMPLE_2);
     readString(gid, sizeof(gid), "Group id value", ID_EXAMPLE_1);
 
-    return OCCloudAclDeleteInvitation(NULL, OPTIONAL(uid), gid, getUri(endPoint), callback);
+    return OCCloudAclDeleteInvitation(NULL, OPTIONAL_PARAM(uid), gid, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclCancelInvitation(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -663,7 +760,7 @@ OCStackResult OCWrapperAclCancelInvitation(const OCDevAddr *endPoint, OCCloudRes
     readString(gid, sizeof(gid), "Group id value", ID_EXAMPLE_1);
     readString(mid, sizeof(mid), "member id value", ID_EXAMPLE_1);
 
-    return OCCloudAclCancelInvitation(NULL, OPTIONAL(uid), gid, mid, getUri(endPoint), callback);
+    return OCCloudAclCancelInvitation(NULL, OPTIONAL_PARAM(uid), gid, mid, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclPolicyCheck(const OCDevAddr *endPoint, OCCloudResponseCB callback)
@@ -678,5 +775,5 @@ OCStackResult OCWrapperAclPolicyCheck(const OCDevAddr *endPoint, OCCloudResponse
     readString(rm, sizeof(rm), "request method", "GET or POST or DELETE");
     readString(user_uri, sizeof(user_uri), "request uri", RESOURCE_URI_EXAMPLE);
 
-    return OCCloudAclPolicyCheck(NULL, sid, di, rm, user_uri, getUri(endPoint), callback);
+    return OCCloudAclPolicyCheck(NULL, sid, di, rm, user_uri, endPoint, callback);
 }
