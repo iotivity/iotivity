@@ -21,6 +21,10 @@
 #include <iostream>
 #include "octypes.h"
 #include "ocstack.h"
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+/// logging part is not critical
 #include "experimental/payload_logging.h"
 
 bool g_foundResource = true;

@@ -22,10 +22,13 @@
 #include "easysetup_x.h"
 #include "string.h"
 #include "oic_malloc.h"
-#include "experimental/logger.h"
 #include "ocpayload.h"
+
 #include <inttypes.h>
 
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/logger.h"
 /**
  * @var ESX_ENROLLEE_TAG
  * @brief Logging tag for module name.

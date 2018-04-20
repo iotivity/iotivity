@@ -20,14 +20,17 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "experimental/logger.h"
-
 #include <functional>
 #include <pthread.h>
 #include <mutex>
 #include <condition_variable>
 #include <iostream>
 #include <mutex>
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+/// Here logging part is not critical.
+#include "experimental/logger.h"
 
 #define DO_ACTION               "DoAction"
 #define GET_ACTIONSET           "GetActionSet"
