@@ -506,6 +506,7 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
     memset(response.sendVendorSpecificHeaderOptions, 0,
             sizeof response.sendVendorSpecificHeaderOptions);
     memset(response.resourceUri, 0, sizeof response.resourceUri);
+    response.payload = nullptr;
     OCRepPayload* payload = nullptr;
 
 
@@ -570,7 +571,11 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
         }
     }
 
-    OCPayloadDestroy(response.payload);
+
+    if (response.payload != nullptr)
+    {
+        OCPayloadDestroy(response.payload);
+    }
     return ehResult;
 }
 
