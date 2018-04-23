@@ -23,8 +23,10 @@
 #
 ##
 import os
+import sys
 import SCons
 print("Processing using SCons version " + SCons.__version__)
+print('Python '+ sys.version.replace('\n','') + ' on '+sys.platform)
 
 # Load common build config
 SConscript('build_common/SConscript')
