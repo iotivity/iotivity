@@ -736,6 +736,9 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_selectMOTMethod0
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
+    OC_UNUSED(thiz);
+    OC_UNUSED(oxmSelVal);
+    OC_UNUSED(jListener);
     ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
     return;
 #endif
@@ -779,6 +782,9 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_changeMOTMode0
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
+    OC_UNUSED(thiz);
+    OC_UNUSED(momType);
+    OC_UNUSED(jListener);
     ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
     return;
 #endif
@@ -823,6 +829,9 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_addPreConfigPIN0
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
+    OC_UNUSED(thiz);
+    OC_UNUSED(jPin);
+    OC_UNUSED(pinSize);
     ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
     return;
 #endif
@@ -873,6 +882,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionPreConfi
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
+    OC_UNUSED(thiz);
+    OC_UNUSED(jPin);
+    OC_UNUSED(pinSize);
+    OC_UNUSED(jListener);
     ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
     return;
 #endif
@@ -916,6 +929,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_doMultipleOwnersh
         ThrowOcException(e.code(), e.reason().c_str());
     }
 #else
+    OC_UNUSED(thiz);
+    OC_UNUSED(jListener);
     ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
     return;
 #endif
