@@ -66,7 +66,7 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?ROUTING: %define ROUTING EP}
 %{!?SECURED: %define SECURED 1}
 %{!?TARGET_OS: %define TARGET_OS linux}
-%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT ALL}
+%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
 %{!?VERBOSE: %define VERBOSE 1}
 %{!?WITH_CLOUD: %define WITH_CLOUD False}
 %{!?WITH_MQ: %define WITH_MQ OFF}
