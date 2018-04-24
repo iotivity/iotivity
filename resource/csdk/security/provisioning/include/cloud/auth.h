@@ -42,6 +42,11 @@ typedef enum
     OC_CLOUD_TOKEN_REFRESH3 = 8,
     OC_CLOUD_TOKEN_REFRESH4 = 9,
     /* Error codes */
+    OC_CLOUD_ERROR_REFRESHTOKEN = 244,
+    OC_CLOUD_ERROR_REDIRECT = 245,
+    OC_CLOUD_ERROR_TLS = 246,
+    OC_CLOUD_ERROR_INVALID_ACCESS_TOKEN = 247,
+    OC_CLOUD_ERROR_UNREACHABLE = 248,
     OC_CLOUD_ERROR_SIGNOUT = 249,
     OC_CLOUD_ERROR_SIGNIN = 250,
     OC_CLOUD_ERROR_CREATE_SESSION = 251,
@@ -58,9 +63,6 @@ typedef struct
     char        *refreshToken;
     long        expireSin;
     char        *uid;
-#if !defined(__MANDATORY__)
-    char        *redirectUri;
-#endif // __MANDATORY__
 } session_t;
 
 typedef struct OicCloud OicCloud_t;
@@ -75,6 +77,9 @@ struct OicCloud
     char        *cis;   // OCF Cloud URL
     char        *at;    // Access Token
     char        *sid;   // Cloud UUID
+#if !defined(__MANDATORY__)
+    char        *redirectUri;
+#endif // __MANDATORY__
     CloudStatus stat;
     oc_thread   pid;
     session_t   *session;
@@ -117,7 +122,7 @@ OCStackResult OCCloudSignOut(OicCloud_t *cloud);
  * @param[in] cloud
  * @return  OicCloud_t * pointer to next
  */
-OicCloud_t * FreeCloud(OicCloud_t *cloud);
+OicCloud_t *FreeCloud(OicCloud_t *cloud);
 
 /**
  * Cloud to CBOR
@@ -161,9 +166,9 @@ void *CloudStart(void *data);
  *
  * @param[in] cloud list
  * @param[in] cloud to find
- * @return  NULL
+ * @return  NULL if not find
  */
-bool CloudFind(OicCloud_t *list, const OicCloud_t *cloud);
+OicCloud_t *CloudFind(OicCloud_t *list, const OicCloud_t *cloud);
 
 /**
  * Cloud status
@@ -173,6 +178,30 @@ bool CloudFind(OicCloud_t *list, const OicCloud_t *cloud);
  */
 const char *GetCloudStatus(const OicCloud_t *cloud);
 
+/**
+ * Cloud validate
+ *
+ * @param[in] cloud
+ * @return bool true - Ok
+ */
+bool ValidCloud(OicCloud_t *cloud);
+
+/**
+ * Cloud delete
+ *
+ * @param[in] cloud
+ * @return  OCStackResult application result
+ */
+OCStackResult OCCloudDelete(OicCloud_t *cloud);
+
+/**
+ * Cloud copy
+ *
+ * @param[in] src cloud source
+ * @param[in] dst cloud destination
+ * @return bool true - Ok
+ */
+bool CloudCopy(const OicCloud_t *src, OicCloud_t *dst);
 
 #ifdef __cplusplus
 }

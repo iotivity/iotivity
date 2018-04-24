@@ -50,9 +50,11 @@ static oc_mutex     gCloudMutex;
 #define OC_CLOUD_PROVISIONING_CIS   "cis"
 #define OC_CLOUD_PROVISIONING_AT    "at"
 #define OC_CLOUD_PROVISIONING_SID   "sid"
+#define OC_CLOUD_PROVISIONING_CLEC  "clec"
 
 static OicCloud_t gDefaultCloud =
 {
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -63,53 +65,44 @@ static OicCloud_t gDefaultCloud =
     NULL
 };
 
-static bool ValidCloud(OicCloud_t *cloud)
-{
-    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
-    VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, false);
-
-    bool ret = true;
-
-    if (!cloud->apn)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: Authorization Provider Name validate: %s", __func__,
-                  cloud->apn ? cloud->apn : "NULL");
-        ret = false;
-    }
-    if (!cloud->cis || 0 != strncmp(cloud->cis, "coaps+tcp://", 11))
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: OCF Cloud URL validate: %s", __func__, cloud->cis ? cloud->cis : "NULL");
-        ret = false;
-    }
-    if (!cloud->at)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: Access token validate: %s", __func__, cloud->at ? cloud->at : "NULL");
-        ret = false;
-    }
-
-    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
-    return ret;
-}
-
 static void DeleteCloudList(OicCloud_t *clouds)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+
     if (!clouds)
     {
         OIC_LOG_V(WARNING, TAG, "%s: cloud is NULL", __func__);
+        return;
+    }
+
+    OicCloud_t *p1 = NULL, *p2 = NULL;
+    oc_mutex_lock(gCloudMutex);
+    LL_FOREACH_SAFE(clouds, p1, p2)
+    {
+        OCCloudSignOut(p1);
+        LL_DELETE(clouds, p1);
+        p1 = NULL;
+    }
+    oc_mutex_unlock(gCloudMutex);
+
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+}
+
+void StopClouds()
+{
+    DeleteCloudList(gCloud);
+}
+
+void DeleteCloudAccount()
+{
+    if ( OC_STACK_OK != OCCloudDelete(gCloud))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: cannot delete cloud", __func__);
     }
     else
     {
-        oc_mutex_lock(gCloudMutex);
-        OicCloud_t *p1 = clouds->next;
-        while(p1)
-        {
-            p1 = FreeCloud(p1);
-        }
-        FreeCloud(clouds);
-        oc_mutex_unlock(gCloudMutex);
+        OIC_LOG_V(ERROR, TAG, "%s: cloud is deleted", __func__);
     }
-    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 }
 
 static void *CloudWaitForRFNOP(void *data)
@@ -145,6 +138,7 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
     OicCloud_t *newCloud = NULL;
     OCRepPayload *payload = NULL;
     bool isDeviceOwned = false;
+    OicCloud_t *xcloud = NULL;
 
     VERIFY_NOT_NULL(TAG, ehRequest, ERROR);
     VERIFY_NOT_NULL(TAG, ehRequest->payload, ERROR);
@@ -199,9 +193,23 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
         goto exit;
     }
 
-    if (CloudFind(gCloud, newCloud))
+    xcloud = CloudFind(gCloud, newCloud);
+    if (xcloud)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: cloud: %s exist", __func__, newCloud->cis);
+        OIC_LOG_V(WARNING, TAG, "%s: cloud: %s exist", __func__, newCloud->cis);
+        if (OC_CLOUD_TOKEN_REFRESH0 < xcloud->stat)
+        {
+            if (!CloudCopy(newCloud, xcloud))
+            {
+                OIC_LOG_V(WARNING, TAG, "%s: cloud: cannot update: %s", __func__, xcloud->cis);
+            }
+        }
+        else
+        {
+            OIC_LOG_V(WARNING, TAG, "%s: cloud: cannot update: %s status: %s", __func__, xcloud->cis,
+                      GetCloudStatus(xcloud));
+        }
+        FreeCloud(newCloud);
         goto exit;
     }
 
@@ -238,6 +246,41 @@ exit:
     return ehRet;
 }
 
+static int64_t  GetClec(const OicCloud_t *cloud)
+{
+    switch (cloud->stat)
+    {
+        case OC_CLOUD_OK:
+        case OC_CLOUD_PROV:
+        case OC_CLOUD_SIGNUP:
+        case OC_CLOUD_SIGNIN:
+        case OC_CLOUD_SIGNOUT:
+        case OC_CLOUD_TOKEN_REFRESH0:
+        case OC_CLOUD_TOKEN_REFRESH1:
+        case OC_CLOUD_TOKEN_REFRESH2:
+        case OC_CLOUD_TOKEN_REFRESH3:
+        case OC_CLOUD_TOKEN_REFRESH4:
+            return 0;
+        case OC_CLOUD_ERROR_INVALID_ACCESS_TOKEN:
+            return 1;
+        case OC_CLOUD_ERROR_UNREACHABLE:
+        case OC_CLOUD_ERROR_TLS:
+        case OC_CLOUD_ERROR_REDIRECT:
+            return 2;
+        case OC_CLOUD_ERROR_REFRESHTOKEN:
+            return 3;
+        case OC_CLOUD_ERROR_SIGNOUT:
+        case OC_CLOUD_ERROR_SIGNIN:
+        case OC_CLOUD_ERROR_CREATE_SESSION:
+        case OC_CLOUD_ERROR_CHECK_SESSION:
+        case OC_CLOUD_ERROR_SIGNUP:
+        case OC_CLOUD_ERROR:
+        case OC_CLOUD_EXIT:
+            return 4;
+    }
+    return 0;
+}
+
 OCRepPayload *CreateCloudGetPayload(const OicCloud_t *cloud)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
@@ -259,12 +302,23 @@ OCRepPayload *CreateCloudGetPayload(const OicCloud_t *cloud)
     }
     else
     {
-        OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, cloud->apn);
-        OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, cloud->cis);
-        OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_SID, cloud->sid);
-        OCRepPayloadSetPropInt(payload, OIC_JSON_CLOUD_CLEC, (int64_t)cloud->stat);
+        if (OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, cloud->apn))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_APN);
+        }
+        if (OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, cloud->cis))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_CIS);
+        }
+        if (!OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_SID, cloud->sid))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_SID);
+        }
+        if (!OCRepPayloadSetPropInt(payload, OIC_JSON_CLOUD_CLEC, GetClec(cloud)))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_SID);
+        }
     }
-
 exit:
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
     return payload;
@@ -302,7 +356,7 @@ static OCEntityHandlerResult HandleCloudGetRequest(OCEntityHandlerRequest *ehReq
 
     payload = (OCRepPayload *)ehRequest->payload;
 
-    if (!payload || !cloud->cis || !OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &cloud->cis))
+    if (!payload || !OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &cloud->cis))
     {
         OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_CIS);
         p1 = gCloud;
@@ -339,7 +393,6 @@ exit:
         ehRet = OC_EH_ERROR;
     }
 
-    OCPayloadDestroy((OCPayload *)response.payload);
     FreeCloud(cloud);
 
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
@@ -394,8 +447,8 @@ static OCEntityHandlerResult HandleCloudDeleteRequest(OCEntityHandlerRequest *eh
         {
             OIC_LOG_V(INFO, TAG, "%s: delete cloud: %s", __func__, p1->cis);
             p1->stat = OC_CLOUD_EXIT;
+            OCCloudSignOut(p1);
             LL_DELETE(gCloud, p1);
-            FreeCloud(p1);
             ehRet = OC_EH_OK;
             break;
         }

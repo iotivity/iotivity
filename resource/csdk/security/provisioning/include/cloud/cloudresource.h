@@ -55,6 +55,15 @@ OCStackResult CreateCloudResource();
 */
 bool UpdateCloudPersistentStorage();
 
+/**
+* SignOut clouds
+*/
+void StopClouds();
+/**
+* Delete clouds acount
+*/
+void DeleteCloudAccount();
+
 #ifdef __cplusplus
 }
 #endif
