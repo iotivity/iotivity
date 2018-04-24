@@ -62,6 +62,7 @@ static OicCloud_t gDefaultCloud =
     OC_CLOUD_OK,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 
@@ -208,16 +209,23 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
         {
             OIC_LOG_V(WARNING, TAG, "%s: cloud: cannot update: %s status: %s", __func__, xcloud->cis,
                       GetCloudStatus(xcloud));
+
+            FreeCloud(newCloud);
+            goto exit;
         }
-        FreeCloud(newCloud);
-        goto exit;
     }
+
+    oc_mutex_lock(gCloudMutex);
+#ifdef _MULTIPLE_CNC_
+    LL_APPEND(gCloud, newCloud);
+#else
+    FreeCloud(gCloud);
+    gCloud = newCloud;
+#endif
+    oc_mutex_unlock(gCloudMutex);
 
     newCloud->stat = OC_CLOUD_PROV;
 
-    oc_mutex_lock(gCloudMutex);
-    LL_APPEND(gCloud, newCloud);
-    oc_mutex_unlock(gCloudMutex);
 
     if (DOS_RFNOP == dos.state)
     {
@@ -248,6 +256,8 @@ exit:
 
 static int64_t  GetClec(const OicCloud_t *cloud)
 {
+    OIC_LOG_V(DEBUG, TAG, "%s: %d", __func__, cloud->stat);
+
     switch (cloud->stat)
     {
         case OC_CLOUD_OK:
@@ -262,7 +272,7 @@ static int64_t  GetClec(const OicCloud_t *cloud)
         case OC_CLOUD_TOKEN_REFRESH4:
             return 0;
         case OC_CLOUD_ERROR_INVALID_ACCESS_TOKEN:
-            return 1;
+            return 3;
         case OC_CLOUD_ERROR_UNREACHABLE:
         case OC_CLOUD_ERROR_TLS:
         case OC_CLOUD_ERROR_REDIRECT:
@@ -276,7 +286,7 @@ static int64_t  GetClec(const OicCloud_t *cloud)
         case OC_CLOUD_ERROR_SIGNUP:
         case OC_CLOUD_ERROR:
         case OC_CLOUD_EXIT:
-            return 4;
+            return 1;
     }
     return 0;
 }
@@ -294,17 +304,33 @@ OCRepPayload *CreateCloudGetPayload(const OicCloud_t *cloud)
 
     if (NULL == cloud)
     {
-        OIC_LOG_V(DEBUG, TAG, "%s: Create empty payload", __func__);
-        OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, "");
-        OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, "");
-        OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_SID, "00000000-0000-0000-0000-000000000000");
-        OCRepPayloadSetPropInt(payload, OIC_JSON_CLOUD_CLEC, (int64_t)0);
+        OIC_LOG_V(DEBUG, TAG, "%s: Create empty filled payload", __func__);
+
+        if (OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, ""))
+        {
+                OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_APN);
+        }
+        if (OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, ""))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_CIS);
+        }
+        if (!OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_SID, "00000000-0000-0000-0000-000000000000"))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_SID);
+        }
+        if (!OCRepPayloadSetPropInt(payload, OIC_JSON_CLOUD_CLEC, (int64_t)0))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_CLEC);
+        }
     }
     else
     {
-        if (OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, cloud->apn))
+        if (cloud->apn)
         {
-            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_APN);
+            if (OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, cloud->apn))
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_APN);
+            }
         }
         if (OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, cloud->cis))
         {
@@ -316,7 +342,7 @@ OCRepPayload *CreateCloudGetPayload(const OicCloud_t *cloud)
         }
         if (!OCRepPayloadSetPropInt(payload, OIC_JSON_CLOUD_CLEC, GetClec(cloud)))
         {
-            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_SID);
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_CLEC);
         }
     }
 exit:
@@ -382,7 +408,6 @@ static OCEntityHandlerResult HandleCloudGetRequest(OCEntityHandlerRequest *ehReq
     }
 exit:
     response.requestHandle = ehRequest ? ehRequest->requestHandle : NULL;
-    response.ehResult = payload ? ehRet : OC_EH_INTERNAL_SERVER_ERROR;
     response.payload = (OCPayload *)CreateCloudGetPayload(p1);
     response.payload->type = PAYLOAD_TYPE_REPRESENTATION;
     response.persistentBufferFlag = 0;

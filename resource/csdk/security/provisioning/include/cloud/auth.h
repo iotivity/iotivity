@@ -81,6 +81,7 @@ struct OicCloud
     char        *redirectUri;
 #endif // __MANDATORY__
     CloudStatus stat;
+    char        *accessToken; //sign in access token
     oc_thread   pid;
     session_t   *session;
     OicCloud_t  *next;
