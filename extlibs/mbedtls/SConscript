@@ -220,12 +220,15 @@ mbeX509_src = [
 mbedcrypto_env = mbedtls_env.Clone()
 static_libmbedcrypto = mbedcrypto_env.StaticLibrary('mbedcrypto', mbedcrypto_src)
 mbedcrypto_env.InstallTarget(static_libmbedcrypto, 'mbedcrypto')
+mbedcrypto_env.UserInstallTargetLib(static_libmbedcrypto, 'mbedcrypto')
 
 mbex509_env = mbedtls_env.Clone()
 mbex509_env.AppendUnique(LIBS=['mbedcrypto'])
 static_libmbedx509 = mbex509_env.StaticLibrary('mbedx509', mbeX509_src)
 mbex509_env.InstallTarget(static_libmbedx509, 'mbedx509')
+mbex509_env.UserInstallTargetLib(static_libmbedx509, 'mbedx509')
 
 mbedtls_env.AppendUnique(LIBS=['mbedx509', 'mbedcrypto'])
 static_libmbedtls = mbedtls_env.StaticLibrary('mbedtls', mbedtls_src)
 mbedtls_env.InstallTarget(static_libmbedtls, 'mbedtls')
+mbedtls_env.UserInstallTargetLib(static_libmbedtls, 'mbedtls')
