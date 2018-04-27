@@ -95,8 +95,13 @@ public class DevicePresence extends Resource {
                                     + (mRequest.getUriQuery() != null
                                             ? (";" + mRequest.getUriQuery())
                                             : "");
-                            mRequest = MessageBuilder.modifyRequest(mRequest,
-                                    null, uriQuery, null, null);
+                            if(mRequest.getUriQueryMap() != null && mRequest.getUriQueryMap().containsKey(Constants.DEVICE_ID)){
+                                mRequest = MessageBuilder.modifyRequest(mRequest,
+                                        null, uriQuery, null, null);
+                            }else {
+                                mRequest = MessageBuilder.modifyRequest(mRequest,
+                                        null, null, null, null);
+                            }
                         }
                     }
 

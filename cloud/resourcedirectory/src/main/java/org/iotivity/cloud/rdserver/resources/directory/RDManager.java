@@ -44,9 +44,16 @@ public class RDManager {
 
     private ArrayList<HashMap<String, Object>> mResourcePresence = new ArrayList<>();
 
+    private static final RDManager INSTANCE = new RDManager();
+
+    public static RDManager getInstance(){
+        return INSTANCE;
+    }
+
+
     /**
      * API for handling resource-publish process
-     * 
+     *
      * @param requestPayload
      *            request payload
      * @return response payload

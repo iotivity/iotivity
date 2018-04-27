@@ -21,9 +21,7 @@
  */
 package org.iotivity.cloud.rdserver.resources.presence.device;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
@@ -80,9 +78,11 @@ public class DevicePresenceResource extends Resource {
             throws ServerException {
         HashMap<String, List<String>> queryMap = request.getUriQueryMap();
 
-        checkQueryException(Arrays.asList(Constants.DEVICE_ID), queryMap);
-
-        List<String> deviceList = queryMap.get(Constants.DEVICE_ID);
+//        checkQueryException(Arrays.asList(Constants.DEVICE_ID), queryMap);
+        List<String> deviceList = new LinkedList<>();
+        if(queryMap != null){
+            deviceList.addAll(queryMap.getOrDefault(Constants.DEVICE_ID,new ArrayList<>()));
+        }
 
         switch (request.getObserve()) {
             case SUBSCRIBE:
