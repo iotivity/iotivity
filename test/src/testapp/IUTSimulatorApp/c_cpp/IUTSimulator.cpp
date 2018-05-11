@@ -667,8 +667,8 @@ int main(int argc, char* argv[])
     }
 #endif
 
-    cout << "Conformance Simulator started successfully" << endl;
-    cout << endl
+    cout << "IUT Simulator started successfully" << endl;
+    cout << endl;
 
     for (int i = 4; i < argc; i++)
     {
@@ -679,7 +679,7 @@ int main(int argc, char* argv[])
     showMenu(argc, argv);
 
     cout << "Iotivity Server stopped successfully" << endl;
-    cout << "Quitting Conformance Simulator App.... Done!!" << endl;
+    cout << "Quitting IUT Simulator App.... Done!!" << endl;
 
     return 0;
 }
