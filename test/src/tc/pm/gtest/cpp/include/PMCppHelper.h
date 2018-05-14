@@ -27,13 +27,13 @@
 
 class PMCppHelper
 {
-    private:
-        std::string m_failureMessage;
+private:
+    std::string m_failureMessage;
 
-    public:
-        static OCPersistentStorage s_ps;
+public:
+    static OCPersistentStorage s_ps;
 
-        PMCppHelper();
+    PMCppHelper();
 
     static FILE* clientOpen(const char *UNUSED_PARAM, const char *mode);
 

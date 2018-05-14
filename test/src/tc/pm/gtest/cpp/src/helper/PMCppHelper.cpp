@@ -507,7 +507,8 @@ bool PMCppHelper::registerDisplayNumCallback(DisplayNumCB displayNumCB,
     IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] registerDisplayNumCallback IN");
 
     OCStackResult res = OC_STACK_OK;
-    res = OCSecure::registerDisplayNumCallback(displayNumCB);
+    OC::DisplayNumContext *displayNumContext = new OC::DisplayNumContext(displayNumCB);
+    res = OCSecure::registerDisplayNumCallback(displayNumContext);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] registerDisplayNumCallback returns : %s",
             CommonUtil::getOCStackResult(res));
 
@@ -546,7 +547,8 @@ bool PMCppHelper::registerUserConfirmCallback(UserConfirmNumCB userConfirmCB,
     IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] registerUserConfirmCallback IN");
 
     OCStackResult res = OC_STACK_OK;
-    res = OCSecure::registerUserConfirmCallback(userConfirmCB);
+    OC::UserConfirmNumContext* userConfirmNumContext = new OC::UserConfirmNumContext(userConfirmCB);
+    res = OCSecure::registerUserConfirmCallback(userConfirmNumContext);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] registerUserConfirmCallback returns : %s",
             CommonUtil::getOCStackResult(res));
 

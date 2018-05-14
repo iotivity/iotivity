@@ -443,9 +443,9 @@ bool PMCsdkCertHelper::generateCACertificate(const char *subject, const char *su
 {
     __FUNC_IN__
 
-    OCStackResult result = OCGenerateCACertificate(subject, subjectPublicKey, issuerCert,
+    OCStackResult result = OCGenerateRootCACertificate(subject, subjectPublicKey, issuerCert,
             issuerPrivateKey, serial, notValidBefore, notValidAfter, certificate, certificateLen);
-    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCGenerateCACertificate returns %s",
+    IOTIVITYTEST_LOG(INFO, "[Cloud Acl] OCGenerateRootCACertificate returns %s",
             CommonUtil::getOCStackResult(result));
 
     if (expectedResult != result)
@@ -454,7 +454,7 @@ bool PMCsdkCertHelper::generateCACertificate(const char *subject, const char *su
         return false;
     }
 
-    IOTIVITYTEST_LOG(DEBUG, "OCGenerateCACertificate OUT");
+    IOTIVITYTEST_LOG(DEBUG, "OCGenerateRootCACertificate OUT");
     return true;
 }
 

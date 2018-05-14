@@ -35,6 +35,7 @@ test_src_root = iotivity_test_root + '/' + variant_dir
 test = env_linux.get('TEST')
 sdk = env_linux.get('SDK')
 common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
+common_rpath = [iotivity_lib_path, '.', '/usr/local/lib']
 
 cert_enabled = 1
 mot_enabled = 0
@@ -120,8 +121,6 @@ client_simulator_include_paths = [
 
 
 lib_paths = [
-    '.',
-    '/usr/local/lib',
     iotivity_lib_path,
     iotivity_lib_path + '/resource/csdk/logger',
     iotivity_lib_path + '/resource/csdk/security',
@@ -157,7 +156,7 @@ cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -D__SECURED__ 
 
 cxxflags = ['-std=c++11', '-c', '-Os', '-Wextra', '-fPIC', '-pthread', '-ftest-coverage' , '-fprofile-arcs']
 
-csdk_lib_list = Split('boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction dl expat gcov gio-2.0 gobject-2.0 glib-2.0 m oc oc_logger logger octbstack ocpmapi ocprovision ocsrm octbstack pthread rt uuid resource_directory mbedtls mbedcrypto mbedx509 common_util')
+csdk_lib_list = Split('boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction dl expat gcov gio-2.0 gobject-2.0 glib-2.0 m oc oc_logger logger octbstack ocpmapi ocprovision ocsrm octbstack pthread rt uuid resource_directory mbedtls mbedcrypto mbedx509 common_util mbedtls')
 
 cpp_lib_list = Split('boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction dl expat gcov gio-2.0 gobject-2.0 glib-2.0 m logger oc oc_logger octbstack ocpmapi ocprovision ocsrm octbstack pthread rt uuid mbedtls mbedx509 mbedcrypto routingmanager resource_directory common_util')
 
@@ -179,8 +178,8 @@ if 'tc' in test:
                             target = 'iotivity_pm_csdk_test',
                             CPPPATH = iotivity_include_paths + cert_include_paths + csdk_tc_include_paths,
                             LIBS = csdk_lib_list + ['gtest', 'tc_util', 'dl'],
-                            LIBPATH = lib_paths,
-                            RPATH = iotivity_lib_path,
+                            LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                            RPATH = common_rpath,
                             CPPFLAGS = cppflags + common_linux_cppflags,
                             CXXFLAGS = cxxflags)
         install_targets += csdk_tc
@@ -190,8 +189,8 @@ if 'tc' in test:
                             target = 'iotivity_pm_cpp_test',
                             CPPPATH = iotivity_include_paths + cpp_tc_include_paths,
                             LIBS = csdk_lib_list + ['gtest', 'tc_util', 'dl'],
-                            LIBPATH = lib_paths,
-                            RPATH = iotivity_lib_path,
+                            LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                            RPATH = common_rpath,
                             CPPFLAGS = cppflags + common_linux_cppflags,
                             CXXFLAGS = cxxflags)
         install_targets += cpp_tc
@@ -201,8 +200,8 @@ if 'tc' in test or 'simulator' in test:
                     target = 'iotivity_pm_server',
                     CPPPATH = iotivity_include_paths + simulator_include_paths,
                     LIBS = csdk_lib_list,
-                    LIBPATH = lib_paths,
-                    RPATH = iotivity_lib_path,
+                    LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                    RPATH = common_rpath,
                     CPPFLAGS = cppflags + common_linux_cppflags,
                     CXXFLAGS = cxxflags)
     install_targets += pmserver_simulator
@@ -214,8 +213,8 @@ if 'tc' in test or 'simulator' in test:
                     target = 'iotivity_pm_client',
                     CPPPATH = iotivity_include_paths + simulator_include_paths,
                     LIBS = csdk_lib_list,
-                    LIBPATH = lib_paths,
-                    RPATH = iotivity_lib_path,
+                    LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                    RPATH = common_rpath,
                     CPPFLAGS = cppflags + common_linux_cppflags,
                     CXXFLAGS = cxxflags)
 
@@ -227,8 +226,8 @@ if 'app' in test:
                     target = 'iotivity_pm_csdk_app',
                     CPPPATH = iotivity_include_paths + cert_include_paths + csdk_tc_include_paths + csdk_testapp_include_paths,
                     LIBS = csdk_lib_list,
-                    LIBPATH = lib_paths,
-                    RPATH = iotivity_lib_path,
+                    LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                    RPATH = common_rpath,
                     CPPFLAGS = cppflags + common_linux_cppflags,
                     CXXFLAGS = cxxflags)
         install_targets += pm_test_app
@@ -238,8 +237,8 @@ if 'app' in test:
                     target = 'iotivity_pm_cpp_app',
                     CPPPATH = iotivity_include_paths + cert_include_paths + cpp_tc_include_paths + cpp_testapp_include_paths,
                     LIBS = csdk_lib_list,
-                    LIBPATH = lib_paths,
-                    RPATH = iotivity_lib_path,
+                    LIBPATH = lib_paths + ['.', '/usr/local/lib'],
+                    RPATH = common_rpath,
                     CPPFLAGS = cppflags + common_linux_cppflags,
                     CXXFLAGS = cxxflags)
         install_targets += pm_test_app

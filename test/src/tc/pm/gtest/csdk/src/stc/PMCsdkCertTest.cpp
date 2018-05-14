@@ -222,7 +222,7 @@ TEST_F(PMCsdkCertTest_stc, ProvisionTrustCertChainCb_NV_N)
  * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
  * @see             OCStackResult OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen, char **privateKey, size_t *privateKeyLen)
  * @see             OCStackResult OCGenerateRandomSerialNumber(char **serial, size_t *serialLen)
- * @see             OCStackResult OCGenerateCACertificate(const char *subject, const char *subjectPublicKey, const char *issuerCert, const char *issuerPrivateKey, const char *serial, const char *notValidBefore, const char *notValidAfter, char **certificate, size_t *certificateLen)
+ * @see             OCStackResult OCGenerateRootCACertificate(const char *subject, const char *subjectPublicKey, const char *issuerCert, const char *issuerPrivateKey, const char *serial, const char *notValidBefore, const char *notValidAfter, char **certificate, size_t *certificateLen)
  * @see             OCStackResult OCSaveTrustCertChain(const uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
  * @see             OCStackResult OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen, char **privateKey, size_t *privateKeyLen)
  * @see             OCStackResult OCGenerateRandomSerialNumber(char **serial, size_t *serialLen)
@@ -244,7 +244,7 @@ TEST_F(PMCsdkCertTest_stc, ProvisionTrustCertChainCb_NV_N)
  *                  4. call OCDiscoverOwnedDevices
  *                  5. call OCGenerateKeyPair
  *                  6. call OCGenerateRandomSerialNumber
- *                  7. call OCGenerateCACertificate
+ *                  7. call OCGenerateRootCACertificate
  *                  8. call OCSaveTrustCertChain
  *                  9. call OCGenerateKeyPair
  *                 10. call OCGenerateRandomSerialNumber
@@ -422,7 +422,7 @@ if(!m_PMCertHelper.provisionCertificate(NULL, device1, deviceCert, PMCsdkCallbac
  * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
  * @see             OCStackResult OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen, char **privateKey, size_t *privateKeyLen)
  * @see             OCStackResult OCGenerateRandomSerialNumber(char **serial, size_t *serialLen)
- * @see             OCStackResult OCGenerateCACertificate(const char *subject, const char *subjectPublicKey, const char *issuerCert, const char *issuerPrivateKey, const char *serial, const char *notValidBefore, const char *notValidAfter, char **certificate, size_t *certificateLen)
+ * @see             OCStackResult OCGenerateRootCACertificate(const char *subject, const char *subjectPublicKey, const char *issuerCert, const char *issuerPrivateKey, const char *serial, const char *notValidBefore, const char *notValidAfter, char **certificate, size_t *certificateLen)
  * @see             OCStackResult OCSaveTrustCertChain(const uint8_t *trustCertChain, size_t chainSize, OicEncodingType_t encodingType, uint16_t *credId)
  * @see             OCStackResult OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen, char **privateKey, size_t *privateKeyLen)
  * @see             OCStackResult OCGenerateRandomSerialNumber(char **serial, size_t *serialLen)
@@ -437,7 +437,7 @@ if(!m_PMCertHelper.provisionCertificate(NULL, device1, deviceCert, PMCsdkCallbac
  *                  4. call OCDiscoverOwnedDevices
  *                  5. call OCGenerateKeyPair
  *                  6. call OCGenerateRandomSerialNumber
- *                  7. call OCGenerateCACertificate
+ *                  7. call OCGenerateRootCACertificate
  *                  8. call OCSaveTrustCertChain
  *                  9. call OCGenerateKeyPair
  *                 10. call OCGenerateRandomSerialNumber

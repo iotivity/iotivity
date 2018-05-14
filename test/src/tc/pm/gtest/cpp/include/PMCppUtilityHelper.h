@@ -36,7 +36,7 @@
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "oxmverifycommon.h"
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #include "OCAccountManager.h"
 #include "OCApi.h"
 #include "OCCloudProvisioning.hpp"

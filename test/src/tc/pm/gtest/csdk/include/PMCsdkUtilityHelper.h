@@ -41,7 +41,7 @@
 #include "oxmrandompin.h"
 #include "oxmverifycommon.h"
 #ifdef MULTIPLE_OWNER
-#include "securevirtualresourcetypes.h"
+#include "experimental/securevirtualresourcetypes.h"
 #endif //MULTIPLE_OWNER
 #include "OCAccountManager.h"
 #include "OCApi.h"
