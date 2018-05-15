@@ -139,7 +139,7 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
     OicCloud_t *newCloud = NULL;
     OCRepPayload *payload = NULL;
     bool isDeviceOwned = false;
-    OicCloud_t *xcloud = NULL;
+    OicCloud_t *xCloud = NULL;
 
     VERIFY_NOT_NULL(TAG, ehRequest, ERROR);
     VERIFY_NOT_NULL(TAG, ehRequest->payload, ERROR);
@@ -194,21 +194,21 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
         goto exit;
     }
 
-    xcloud = CloudFind(gCloud, newCloud);
-    if (xcloud)
+    xCloud = CloudFind(gCloud, newCloud);
+    if (xCloud)
     {
         OIC_LOG_V(WARNING, TAG, "%s: cloud: %s exist", __func__, newCloud->cis);
-        if (OC_CLOUD_TOKEN_REFRESH0 < xcloud->stat)
+        if (OC_CLOUD_TOKEN_REFRESH0 < xCloud->stat)
         {
-            if (!CloudCopy(newCloud, xcloud))
+            if (!CloudCopy(newCloud, xCloud))
             {
-                OIC_LOG_V(WARNING, TAG, "%s: cloud: cannot update: %s", __func__, xcloud->cis);
+                OIC_LOG_V(WARNING, TAG, "%s: cloud: cannot update: %s", __func__, xCloud->cis);
             }
         }
         else
         {
-            OIC_LOG_V(WARNING, TAG, "%s: cloud: cannot update: %s status: %s", __func__, xcloud->cis,
-                      GetCloudStatus(xcloud));
+            OIC_LOG_V(WARNING, TAG, "%s: cloud: cannot update: %s status: %s", __func__, xCloud->cis,
+                      GetCloudStatus(xCloud));
 
             FreeCloud(newCloud);
             goto exit;
@@ -306,11 +306,11 @@ OCRepPayload *CreateCloudGetPayload(const OicCloud_t *cloud)
     {
         OIC_LOG_V(DEBUG, TAG, "%s: Create empty filled payload", __func__);
 
-        if (OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, ""))
+        if (!OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, ""))
         {
-                OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_APN);
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_APN);
         }
-        if (OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, ""))
+        if (!OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, ""))
         {
             OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_CIS);
         }
@@ -327,12 +327,12 @@ OCRepPayload *CreateCloudGetPayload(const OicCloud_t *cloud)
     {
         if (cloud->apn)
         {
-            if (OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, cloud->apn))
+            if (!OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, cloud->apn))
             {
                 OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_APN);
             }
         }
-        if (OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, cloud->cis))
+        if (!OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, cloud->cis))
         {
             OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_CIS);
         }

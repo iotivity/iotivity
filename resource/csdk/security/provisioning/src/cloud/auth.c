@@ -172,7 +172,7 @@ bool strCopy(const char *src, char **dst)
     *dst = (char *)OICCalloc(1, len);
     if (*dst)
     {
-        memcpy(*dst, src, len);
+        OICStrcpy(*dst, len, src);
         return true;
     }
     return false;
