@@ -77,8 +77,6 @@ public class FridgeClient extends Activity implements
                 this, // context
                 ServiceType.IN_PROC,
                 ModeType.CLIENT,
-                "0.0.0.0", // bind to all available interfaces
-                0,
                 QualityOfService.LOW);
 
         logMessage("Configuring platform");

@@ -30,8 +30,6 @@ import java.util.EnumSet;
 public class PlatformConfig {
     private ServiceType mServiceType;
     private ModeType mModeType;
-    private String mIpAddress;
-    private int mPort;
     private QualityOfService mQualityOfService;
     private String mSvrDbPath; //TODO: Instead of SVRDB file, it should be Persistent Storage.
                               //this is only for 0.9.2
@@ -41,81 +39,113 @@ public class PlatformConfig {
     /**
      * @param serviceType        indicate IN_PROC or OUT_OF_PROC
      * @param modeType           indicate whether we want to do server, client or both
-     * @param ipAddress          ip address of server
-     *                           if you specify 0.0.0.0 : it listens on any interface
-     * @param port               port of server
-     *                           if you specifiy 0 : next available random port is used
-     *                           if you specify 5683 : client discovery can work even if they don't
-     *                           specify port
+     * @param ipAddress          not used
+     * @param port               not used
      * @param qualityOfService   quality of service
-     * @param dbPath             Persistant storage file for SVR Database.
-     * @param introspectionPath  Persistant storage file for introspection data.
+     * @param dbPath             Persistent storage file for SVR Database.
+     * @param introspectionPath  Persistent storage file for introspection data.
+     *
+     * @deprecated ipAddress and port are no longer used
      */
-    public PlatformConfig(
-                          ServiceType serviceType,
+    @Deprecated
+    public PlatformConfig(ServiceType serviceType,
                           ModeType modeType,
                           String ipAddress,
                           int port,
                           QualityOfService qualityOfService,
                           String dbPath,
                           String introspectionPath) {
-        this.mServiceType = serviceType;
-        this.mModeType = modeType;
-        this.mIpAddress = ipAddress;
-        this.mPort = port;
-        this.mQualityOfService = qualityOfService;
-        this.mSvrDbPath = dbPath;
-        this.mIntrospectPath = introspectionPath;
-        this.mTransportType = 0;
+        mServiceType = serviceType;
+        mModeType = modeType;
+        mQualityOfService = qualityOfService;
+        mSvrDbPath = dbPath;
+        mIntrospectPath = introspectionPath;
     }
 
     /**
      * @param serviceType      indicate IN_PROC or OUT_OF_PROC
      * @param modeType         indicate whether we want to do server, client or both
-     * @param ipAddress        ip address of server
-     *                         if you specify 0.0.0.0 : it listens on any interface
-     * @param port             port of server
-     *                         if you specifiy 0 : next available random port is used
-     *                         if you specify 5683 : client discovery can work even if they don't
-     *                         specify port
+     * @param ipAddress        not used
+     * @param port             not used
      * @param qualityOfService quality of service
-     * @param dbPath           Persistant storage file for SVR Database.
+     * @param dbPath           Persistent storage file for SVR Database.
+     *
+     * @deprecated ipAddress and port are no longer used
      */
-    public PlatformConfig(
-                          ServiceType serviceType,
+    @Deprecated
+    public PlatformConfig(ServiceType serviceType,
                           ModeType modeType,
                           String ipAddress,
                           int port,
                           QualityOfService qualityOfService,
                           String dbPath) {
-        this.mServiceType = serviceType;
-        this.mModeType = modeType;
-        this.mIpAddress = ipAddress;
-        this.mPort = port;
-        this.mQualityOfService = qualityOfService;
-        this.mSvrDbPath = dbPath;
-        this.mTransportType = 0;
+        mServiceType = serviceType;
+        mModeType = modeType;
+        mQualityOfService = qualityOfService;
+        mSvrDbPath = dbPath;
     }
 
     /**
      * @param serviceType      indicate IN_PROC or OUT_OF_PROC
      * @param modeType         indicate whether we want to do server, client or both
-     * @param ipAddress        ip address of server
-     *                         if you specify 0.0.0.0 : it listens on any interface
-     * @param port             port of server
-     *                         if you specifiy 0 : next available random port is used
-     *                         if you specify 5683 : client discovery can work even if they don't
-     *                         specify port
+     * @param ipAddress        not used
+     * @param port             not used
      * @param qualityOfService quality of service
+     *
+     * @deprecated ipAddress and port are no longer used
      */
+    @Deprecated
     // Avoid breaking building java samples due to persistent storage SVR DB changes.
-    public PlatformConfig(
-                          ServiceType serviceType,
+    public PlatformConfig(ServiceType serviceType,
                           ModeType modeType,
                           String ipAddress,
                           int port,
                           QualityOfService qualityOfService) {
-        this(serviceType,modeType,ipAddress,port,qualityOfService, "");
+        this(serviceType, modeType, qualityOfService, "");
+    }
+
+
+    /**
+     * @param serviceType        indicate IN_PROC or OUT_OF_PROC
+     * @param modeType           indicate whether we want to do server, client or both
+     * @param qualityOfService   quality of service
+     */
+    public PlatformConfig(ServiceType serviceType,
+                          ModeType modeType,
+                          QualityOfService qualityOfService) {
+        this(serviceType, modeType, qualityOfService, "");
+    }
+
+    /**
+     * @param serviceType        indicate IN_PROC or OUT_OF_PROC
+     * @param modeType           indicate whether we want to do server, client or both
+     * @param qualityOfService   quality of service
+     * @param dbPath             Persistent storage file for SVR Database.
+     */
+    public PlatformConfig(ServiceType serviceType,
+                          ModeType modeType,
+                          QualityOfService qualityOfService,
+                          String dbPath) {
+        this(serviceType, modeType, qualityOfService, dbPath, null);
+    }
+
+    /**
+     * @param serviceType        indicate IN_PROC or OUT_OF_PROC
+     * @param modeType           indicate whether we want to do server, client or both
+     * @param qualityOfService   quality of service
+     * @param dbPath             Persistent storage file for SVR Database.
+     * @param introspectionPath  Persistent storage file for introspection data.
+     */
+    public PlatformConfig(ServiceType serviceType,
+                          ModeType modeType,
+                          QualityOfService qualityOfService,
+                          String dbPath,
+                          String introspectionPath) {
+        mServiceType = serviceType;
+        mModeType = modeType;
+        mQualityOfService = qualityOfService;
+        mSvrDbPath = dbPath;
+        mIntrospectPath = introspectionPath;
     }
 
     public ServiceType getServiceType() {
@@ -124,14 +154,6 @@ public class PlatformConfig {
 
     public ModeType getModeType() {
         return mModeType;
-    }
-
-    public String getIpAddress() {
-        return mIpAddress;
-    }
-
-    public int getPort() {
-        return mPort;
     }
 
     public QualityOfService getQualityOfService() {
@@ -145,7 +167,7 @@ public class PlatformConfig {
     public String getIntrospectionPath() {
         return mIntrospectPath;
     }
-    
+
     public void setAvailableTransportType(EnumSet<OcConnectivityType> type) {
         for (OcConnectivityType connType : OcConnectivityType.values()) {
             if (type.contains(connType))

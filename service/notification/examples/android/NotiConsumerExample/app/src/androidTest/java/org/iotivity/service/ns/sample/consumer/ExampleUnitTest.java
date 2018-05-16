@@ -194,10 +194,8 @@ public class ExampleUnitTest extends ApplicationTestCase<Application> {
 
     @BeforeClass
     public static void Initialize() {
-        String ipAddress = "0.0.0.0";
         PlatformConfig platformConfig = new PlatformConfig(mContext,
-                ServiceType.IN_PROC, ModeType.CLIENT_SERVER, ipAddress,
-                0, // Uses randomly available port
+                ServiceType.IN_PROC, ModeType.CLIENT_SERVER,
                 QualityOfService.LOW);
 
         OcPlatform.Configure(platformConfig);

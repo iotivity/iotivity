@@ -284,8 +284,6 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
                 this,
                 ServiceType.IN_PROC,
                 ModeType.CLIENT_SERVER,
-                "0.0.0.0", // bind to all available interfaces
-                0,
                 QualityOfService.LOW, filePath + StringConstants.OIC_CLIENT_CBOR_DB_FILE);
         OcPlatform.Configure(cfg);
 

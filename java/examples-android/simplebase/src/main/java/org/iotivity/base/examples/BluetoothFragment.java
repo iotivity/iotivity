@@ -131,8 +131,6 @@ public class BluetoothFragment extends Fragment implements
         PlatformConfig cfg = new PlatformConfig(mActivity, mContext,
                                                 ServiceType.IN_PROC,
                                                 ModeType.CLIENT,
-                                                Common.IP_ADDRESS,
-                                                Common.IP_PORT,
                                                 QualityOfService.LOW);
 
         OcPlatform.Configure(cfg);

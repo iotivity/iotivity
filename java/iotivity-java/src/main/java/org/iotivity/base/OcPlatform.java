@@ -93,8 +93,6 @@ public final class OcPlatform {
             OcPlatform.configure(
                     platformConfig.getServiceType().getValue(),
                     platformConfig.getModeType().getValue(),
-                    platformConfig.getIpAddress(),
-                    platformConfig.getPort(),
                     platformConfig.getQualityOfService().getValue(),
                     platformConfig.getSvrDbPath(),
                     platformConfig.getIntrospectionPath(),
@@ -113,8 +111,6 @@ public final class OcPlatform {
 
     private static native void configure(int serviceType,
                                          int modeType,
-                                         String ipAddress,
-                                         int port,
                                          int qualityOfService,
                                          String dbPath,
                                          String introspectionPath,

@@ -88,7 +88,7 @@ public class OcfLightServer {
             System.exit(-1);
         }
 
-        PlatformConfig platformConfig = new PlatformConfig(ServiceType.IN_PROC, ModeType.SERVER, "0.0.0.0", 0,
+        PlatformConfig platformConfig = new PlatformConfig(ServiceType.IN_PROC, ModeType.SERVER,
                 QualityOfService.LOW, securityFile.getAbsolutePath(), introspectionFile.getAbsolutePath());
 
         OcPlatform.Configure(platformConfig);
