@@ -78,7 +78,7 @@ if joule or raspberry_pi:
         elif not joule and raspberry_pi:
             cpp_defines.append('RASPBERRY')
         else:
-            print "ERROR: unknown board"
+            print("ERROR: unknown board")
     conf.Finish()
 samples_env.AppendUnique(RPATH=[build_dir])
 samples_env.AppendUnique(CPPDEFINES=cpp_defines)
