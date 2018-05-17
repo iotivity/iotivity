@@ -44,6 +44,7 @@ iotivity_include_paths = [
     iotivity_root + '/resource/csdk/security/include',
     iotivity_root + '/service/resource-encapsulation/include/',
     '/usr/include/dlog'
+    '/usr/include/iotivity/c_common'
 ]
 
 tc_include_paths = [
