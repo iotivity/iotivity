@@ -300,6 +300,7 @@ OCRepPayload *CreateCloudGetPayload(const OicCloud_t *cloud)
     VERIFY_NOT_NULL(TAG, payload, ERROR);
 
     OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
+    OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_READ_WRITE);
     OCRepPayloadAddResourceType(payload, OIC_RSRC_TYPE_SEC_CLOUDCONF);
 
     if (NULL == cloud)
@@ -551,14 +552,21 @@ OCStackResult CreateCloudResource()
                                          OIC_RSRC_CLOUDCONF_URI,
                                          CloudEntityHandler,
                                          NULL,
-                                         OC_SECURE | OC_NONSECURE |
-                                         OC_DISCOVERABLE);
+                                         OC_SECURE | OC_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
     {
         OIC_LOG (FATAL, TAG, "Unable to create cloud config resource");
         DeInitCloudResource();
     }
+
+    ret = OCBindResourceInterfaceToResource(gCloudHandle, OC_RSRVD_INTERFACE_READ_WRITE);
+    if (ret != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "Binding Resource interface with result: %d", ret);
+        return ret;
+    }
+
     return ret;
 }
 

@@ -26,8 +26,8 @@ extern "C" {
 #endif
 
 #define OIC_RSRC_TYPE_SEC_CLOUDCONF             "oic.r.coapcloudconf"
-#define OIC_RSRC_CLOUDCONF_URI                  "/oic/cloudconf"
-#define OIC_JSON_CLOUDCONF_NAME                 "cloudconf"
+#define OIC_RSRC_CLOUDCONF_URI                  "/CoapCloudConfResURI"
+#define OIC_JSON_CLOUDCONF_NAME                 "CoAPCloudConf"
 #define OIC_RSRC_CLOUDCONF_TOKEN_REFRESH        "/oic/sec/tokenrefresh"
 #define OC_RSRVD_ACCESS_TOKENTYPE               "tokentype"
 
