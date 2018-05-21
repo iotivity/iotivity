@@ -72,8 +72,8 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
     OcProvisioning.PinCallbackListener pinCallbackListener =
         new OcProvisioning.PinCallbackListener() {
             @Override
-                public String pinCallbackListener() {
-                    Log.d(TAG, "Inside Pin Callback ");
+                public String pinCallbackListener(String deviceUuid) {
+                    Log.d(TAG, "Inside Pin Callback -- deviceUuid = " + deviceUuid);
                     return "";
                 }
         };
@@ -582,7 +582,7 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
                                     deviceList.get(i).getDeviceID());
                         }
                         try {
-                            OcProvisioning.SetownershipTransferCBdata(OxmType.OIC_JUST_WORKS,
+                            OcProvisioning.setOwnershipTransferCBdata(OxmType.OIC_JUST_WORKS,
                                     pinCallbackListener);
                             for (int i = 0; i < deviceList.size(); i++) {
                                 publishProgress(TAG + "Doing Ownership Transfer for " +

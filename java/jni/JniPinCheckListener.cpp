@@ -20,7 +20,9 @@
 * -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
 #include "JniPinCheckListener.h"
+#include "oic_malloc.h"
 #include "oic_string.h"
+#include "srmutility.h"
 
 JniPinCheckListener::JniPinCheckListener(JNIEnv *env, jobject jListener)
 {
@@ -46,7 +48,7 @@ JniPinCheckListener::~JniPinCheckListener()
     }
 }
 
-void JniPinCheckListener::PinCallback(char *pinBuf, size_t bufSize)
+void JniPinCheckListener::PinCallback(OicUuid_t deviceId, char *pinBuf, size_t bufSize)
 {
     jint ret = JNI_ERR;
     JNIEnv *env = GetJNIEnv(ret);
@@ -66,7 +68,22 @@ void JniPinCheckListener::PinCallback(char *pinBuf, size_t bufSize)
         return;
     }
 
-    jmethodID midL = env->GetMethodID(clsL, "pinCallbackListener", "()Ljava/lang/String;");
+    char *deviceUuidStr = NULL;
+    if (OC_STACK_OK != ConvertUuidToStr(&deviceId, &deviceUuidStr))
+    {
+        deviceUuidStr = (char *)OICMalloc(1);
+        deviceUuidStr[0] = 0;
+    }
+    jstring jUuidStr = env->NewStringUTF(deviceUuidStr);
+    OICFree(deviceUuidStr);
+
+    if (!jUuidStr)
+    {
+        LOGE("JniPinCheckListener()::PinCallback() failed to create device uuid string");
+        return;
+    }
+
+    jmethodID midL = env->GetMethodID(clsL, "pinCallbackListener", "(Ljava/lang/String;)Ljava/lang/String;");
     if (!midL)
     {
         if (JNI_EDETACHED == ret)
@@ -75,7 +92,8 @@ void JniPinCheckListener::PinCallback(char *pinBuf, size_t bufSize)
         }
         return;
     }
-    jstring jpin = (jstring)env->CallObjectMethod(m_jListener, midL);
+    jstring jpin = (jstring)env->CallObjectMethod(m_jListener, midL, jUuidStr);
+    env->DeleteLocalRef(jUuidStr);
     if (env->ExceptionCheck())
     {
         LOGE("Java exception is thrown");

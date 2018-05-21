@@ -117,7 +117,7 @@ public class OcProvisioning {
     private  static native void ownershipTransferCBdata(int oxmType,  PinCallbackListener pinCallbackListener);
 
     public static interface PinCallbackListener {
-        public String pinCallbackListener();
+        public String pinCallbackListener(String deviceUuid);
     }
 
 
