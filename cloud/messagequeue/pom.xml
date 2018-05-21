@@ -11,6 +11,9 @@
 	<groupId>org.iotivity.cloud</groupId>
 	<artifactId>CloudMessageQueue</artifactId>
 
+	<properties>
+		<docker.image.name>iotivity/messagequeue</docker.image.name>
+	</properties>
 
 	<dependencies>
 		<dependency>
@@ -65,7 +68,24 @@
 					<overWriteIfNewer>true</overWriteIfNewer>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>io.fabric8</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>0.26.0</version>
+				<configuration>
+					<images>
+						<image>
+							<name>${docker.image.name}</name>
+							<build>
+								<dockerFileDir>${project.basedir}</dockerFileDir>
+								<tags>
+									<tag>${docker.image.version}</tag>
+								</tags>
+							</build>
+						</image>
+					</images>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
-
 </project>

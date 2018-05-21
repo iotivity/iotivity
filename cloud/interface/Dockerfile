@@ -29,4 +29,4 @@ ENV JAVA_JMX_OPTS "-Dcom.sun.management.jmxremote \
 
 EXPOSE 9001
 
-ENTRYPOINT exec java $JAVA_JMX_OPTS $JAVA_MEMOTY_OPTS -jar CloudInterface.jar
+ENTRYPOINT exec java $JAVA_JMX_OPTS $JAVA_MEMORY_OPTS -jar CloudInterface.jar
