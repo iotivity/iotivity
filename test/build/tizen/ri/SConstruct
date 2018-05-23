@@ -5,33 +5,37 @@ ENV_HOME = '.'
 sdk = ARGUMENTS.get('SDK')
 test = ARGUMENTS.get('TEST')
 
-iotivity_includes = [ 
-                        ENV_HOME + '/iotivity/resource/include', 
+iotivity_includes = [
+                        ENV_HOME + '/iotivity/resource/include',
                         ENV_HOME + '/iotivity/resource/csdk/stack/include',
                         ENV_HOME + '/iotivity/resource/c_common',
                         ENV_HOME + '/iotivity/resource/oc_logger/include',
                         ENV_HOME + '/test/include',
-                        ENV_HOME + '/iotivity/resource/c_common/oic_malloc/include', 
+                        ENV_HOME + '/iotivity/resource/csdk/logger/include/experimental',
+                        ENV_HOME + '/iotivity/resource/csdk/logger/include',
+                        ENV_HOME + '/iotivity/resource/csdk/include',
+                        ENV_HOME + '/iotivity/resource/csdk/resource-directory/include',
+                        ENV_HOME + '/iotivity/resource/c_common/oic_malloc/include',
                         ENV_HOME + '/iotivity/resource/c_common/oic_string/include'
                     ]
 
-interop_includes = [ 
+interop_includes = [
                             ENV_HOME + '/test/include'
                    ]
 
-csdk_includes = [ 
+csdk_includes = [
                     ENV_HOME + '/test/include',
                     ENV_HOME + '/test/src/tc/ri/gtest/csdk/include',
                     ENV_HOME + '/test/extlibs/gtest-1.7.0/include'
                 ]
 
-cpp_includes = [ 
+cpp_includes = [
                     ENV_HOME + '/test/include',
                     ENV_HOME + '/test/src/tc/ri/gtest/cpp/include',
                     ENV_HOME + '/test/extlibs/gtest-1.7.0/include'
                ]
 
-interop_src = [ 
+interop_src = [
                     Glob(ENV_HOME + '/test/src/iBtestapp/modules/ri/c_cpp/InterOpAppRI.cpp'), 
                     Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceHelper.cpp'), 
                     Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceServer.cpp'),
