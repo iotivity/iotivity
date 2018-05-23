@@ -40,6 +40,10 @@ target_os = sptest_env.get('TARGET_OS')
 rd_mode = sptest_env.get('RD_MODE')
 out_dir = sptest_env.get('BUILD_DIR')
 
+if target_os not in ['msys_nt', 'windows']:
+    if sptest_env.get('WITH_TCP') == True and sptest_env.get('WITH_CLOUD') == True:
+        sptest_env.PrependUnique(LIBS=['cloud'])
+
 unittest_dir = 'resource/csdk/security/provisioning/unittest/'
 sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sample/'
 unittest_build_dir = out_dir + unittest_dir

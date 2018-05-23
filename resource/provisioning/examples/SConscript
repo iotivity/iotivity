@@ -103,6 +103,10 @@ if target_os == 'tizen':
 if examples_env.get('MULTIPLE_OWNER') == '1':
     examples_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
+if target_os not in ['msys_nt', 'windows']:
+    if examples_env.get('WITH_TCP') == True and examples_env.get('WITH_CLOUD') == True:
+        examples_env.PrependUnique(LIBS=['cloud'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
