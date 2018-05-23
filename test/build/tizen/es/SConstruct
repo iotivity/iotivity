@@ -47,6 +47,8 @@ iotivity_include_paths = [
     iotivity_root + '/extlibs/tinycbor/tinycbor/src',
     iotivity_root + '/extlibs/timer/',
     iotivity_root + '/service/easy-setup/enrollee/inc',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
+    iotivity_root + '/service/easy-setup/inc',
     '/usr/include/dlog'
 ]
 
