@@ -109,20 +109,21 @@ void SampleCollection::handlePostRequest(QueryParamsMap &queryParamsMap,
     cout << "THe POST request comprises of the following representation:" << endl;
     p_resourceHelper->printRepresentation(incomingRepresentation);
 
+    vector< OCRepresentation > allChildren = incomingRepresentation.getChildren();
+    for(std::vector<OCRepresentation>::iterator it = allChildren.begin(); it != allChildren.end(); ++it)
+    {
+        p_resourceHelper->printRepresentation(*it);
+    }
+    allChildren.insert(allChildren.begin(), incomingRepresentation);
+
     // handle POST request
     string targetValue = "";
     string uriValue = "";
     OCRepresentation rep = getRepresentation();
 
-    cout << "Inside handlePostRequest... " << endl;
     bool shouldReturnError = false;
+    bool invalidRepUpdate = false;
     string responseInterface = DEFAULT_INTERFACE;
-    OCRepresentation interimRep;
-    OCRepresentation linkRep;
-
-    vector< OCRepresentation > allChild;
-    vector< OCRepresentation > allChildren;
-    OCRepresentation links;
 
     cout << "Current Resource Representation to send : " << endl;
 
@@ -178,26 +179,35 @@ void SampleCollection::handlePostRequest(QueryParamsMap &queryParamsMap,
                     bool isFirstTime = true;
                     bool isUpdated = false;
 
-                    for(OCRepresentation::iterator it = incomingRepresentation.begin(); it != incomingRepresentation.end(); it++)
-//                    for (auto repEntry : incomingRepresentation)
+                    for(std::vector<OCRepresentation>::iterator it = allChildren.begin(); it != allChildren.end(); ++it)
                     {
-                        string key = it->attrname();
-                        vector<SampleResource*> matchedChildren = getChildResourcesFromRepKey(key);
-                        for (SampleResource* child : matchedChildren)
+                        bool isError = false;
+                        OCRepPayloadValue *keyValues = it->getPayload()->values->obj->values;
+                        while(keyValues)
                         {
-                            isUpdated = child->updateRepresentation(key, incomingRepresentation);
-                            if (isUpdated && isFirstTime)
+                            vector<SampleResource*> matchedChildren = getChildResourcesFromRepKey(keyValues->name);
+                            for (SampleResource* child : matchedChildren)
                             {
-                                batchRep.setValue(URI_KEY, child->getUri());
-                                batchRep.setValue(REPRESENTATION_KEY, child->getRepresentation());
-                                isFirstTime = false;
+                                isUpdated = child->updateBatchRepresentation(keyValues->name, *it, isError);
+                                if (isError)
+                                {
+                                    invalidRepUpdate = true;
+                                    //break;
+                                }
+                                if (isUpdated && isFirstTime)
+                                {
+                                    batchRep.setValue(URI_KEY, it->getUri());
+                                    batchRep.setValue(REPRESENTATION_KEY, child->getRepresentation());
+                                    isFirstTime = false;
+                                }
+                                else if (isUpdated && !isFirstTime)
+                                {
+                                    tempRep.setValue(URI_KEY, it->getUri());
+                                    tempRep.setValue(REPRESENTATION_KEY, child->getRepresentation());
+                                    tempRepList.push_back(tempRep);
+                                }
                             }
-                            else if (isUpdated && !isFirstTime)
-                            {
-                                tempRep.setValue(URI_KEY, child->getUri());
-                                tempRep.setValue(REPRESENTATION_KEY, child->getRepresentation());
-                                tempRepList.push_back(tempRep);
-                            }
+                            keyValues = keyValues->next;
                         }
                     }
 
@@ -209,13 +219,13 @@ void SampleCollection::handlePostRequest(QueryParamsMap &queryParamsMap,
                     if (isFirstTime)
                     {
                         shouldReturnError = true;
+                        break;
                     }
                     else
                     {
                         response->setResourceRepresentation(batchRep,
                                 responseInterface);
                     }
-
                 }
                 else
                 {
@@ -240,6 +250,11 @@ void SampleCollection::handlePostRequest(QueryParamsMap &queryParamsMap,
         response->setResourceRepresentation(OCRepresentation(), responseInterface);
         response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
     }
+    else if (invalidRepUpdate)
+    {
+        cout << "sending forbidden POST response with payload" << endl;
+        response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
+    }
     else
     {
         cout << "sending normal POST response" << endl;
@@ -257,7 +272,7 @@ void SampleCollection::handlePostRequest(QueryParamsMap &queryParamsMap,
     }
     if (result != OC_STACK_OK)
     {
-        cerr << "Unable to send response for GET Request" << endl;
+        cerr << "Unable to send response for POST Request" << endl;
     }
 
 }
@@ -278,7 +293,7 @@ void SampleCollection::handleGetRequest(QueryParamsMap &queryParamsMap,
     OCRepresentation completeRep;
     OCRepresentation epRep;
     vector< OCRepresentation > epLiist;
-    string anchor = ANCHOR_DEFAULT_VALUE + m_di;
+    //string anchor = ANCHOR_DEFAULT_VALUE + m_di;
     string ep = EP_DEFAULT_VALUE;
     OCRepresentation pRep;
     vector< OCRepresentation > allChildren;
@@ -669,7 +684,7 @@ void SampleCollection::addIntoLinksArray(vector< OCRepresentation >& childrenLis
     OCRepresentation pRep;
     OCRepresentation epRep;
     vector< OCRepresentation > epLiist;
-    string anchor = ANCHOR_DEFAULT_VALUE + m_di;
+    //string anchor = ANCHOR_DEFAULT_VALUE + m_di;
     string ep = EP_DEFAULT_VALUE;
 
     uint8_t bm = 2;
@@ -698,7 +713,7 @@ void SampleCollection::addIntoLinksArray(vector< OCRepresentation >& childrenLis
 
     vector< OCRepresentation > allChildren;
     interimRep.setValue(URI_KEY, resource->getUri());
-    interimRep.setValue(ANCHOR_KEY, anchor);
+    //interimRep.setValue(ANCHOR_KEY, anchor);
     interimRep.setValue(RESOURCE_TYPE_KEY, resource->getResourceTypes());
     interimRep.setValue(INTERFACE_KEY, resource->getResourceInterfaces());
     interimRep.setValue(POLICY_KEY, pRep);

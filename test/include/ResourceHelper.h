@@ -77,10 +77,16 @@ namespace PH = std::placeholders;
 #define AC_SWING_URI_CHILD "/Vendor/AirConditioner/Swinger/Children"
 #define AC_CON_URI "/ConfigurationResURI"
 
+#define MN_MAINTENANCE_URI "/oic/mnt"
+
+#define NMON_NETWORK_MONITORING_URI "/nmonResURI"
+
 #define EXTRA_COLLECTION_URI "/bridge/root"
 #define EXTRA_LIGHT_URI "/bridge/light"
 #define EXTRA_SWITCH_URI "/bridge/binary-switch"
 #define EXTRA_BRIGHTNESS_URI "/bridge/light-brightness"
+
+#define EXAMPLE_COAP_CLOUD_CONF_URI "/example/CoAPCloudConfResURI"
 
 #define Device_TYPE_TV "oic.d.tv"
 #define Device_TYPE_LIGHT "oic.d.light"
@@ -88,6 +94,9 @@ namespace PH = std::placeholders;
 #define Device_TYPE_AP "oic.d.airpurifier"
 #define Device_TYPE_VENDOR "x.com.vendor.device.eco.power"
 #define SWITCH_RESOURCE_TYPE "oic.r.switch.binary"
+#define MAINTENANCE_RESOURCE_TYPE "oic.wk.mnt"
+#define NETWORK_MONITORING_RESOURCE_TYPE "oic.wk.nmon"
+#define COAP_CLOUD_CONF_RESOURCE_TYPE "oic.r.coapcloudconf"
 #define AUDIO_RESOURCE_TYPE "oic.r.audio"
 #define MEDIA_SOURCE_LIST_RESOURCE_TYPE "oic.r.mediasourcelist"
 #define TEMPERATURE_RESOURCE_TYPE "oic.r.temperature"
@@ -103,6 +112,9 @@ namespace PH = std::placeholders;
 #define TV_Device_INTERFACE "oic.if.a"
 #define AC_Device_INTERFACE "oic.if.a"
 #define SWITCH_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
+#define MAINTENANCE_RESOURCE_INTERFACE "oic.if.rw oic.if.baseline"
+#define NETWORK_MONITORING_RESOURCE_INTERFACE "oic.if.rw oic.if.baseline"
+#define COAP_CLOUD_CONF_RESOURCE_INTERFACE "oic.if.rw oic.if.baseline"
 #define AUDIO_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
 #define MEDIA_SOURCE_LIST_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
 #define TEMPERATURE_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
@@ -195,7 +207,23 @@ const int SUCCESS_RESPONSE = 0;
 #define LANGUAGE_KEY "ln"
 #define DEFAULT_LANGUAGE_KEY "dl"
 #define FACTORY_RESET_KEY "value"
+#define FACTORY_KEY "fr"
 #define REBOOT_KEY "rb"
+#define HTML_ERR_KEY "err"
+#define RESET_KEY "reset"
+#define COLLECTING_VALUES "col"
+#define IANA_NETWORK_CONNECTION_KEY "ianaifType"
+#define TRANSMITTED_KB_FROM_COL_KEY "tx"
+#define MAX_TRANSMITTED_MSG_BYTES_IN_COL_KEY "mmstx"
+#define AVG_TRANSMITTED_MSG_BYTES_IN_COL_KEY "amstx"
+#define RECEIVED_KB_FROM_COL_KEY "rx"
+#define MAX_RECEIVED_MSG_BYTES_IN_COL_KEY "mmsrx"
+#define AVG_RECEIVED_MSG_BYTES_IN_COL_KEY "amsrx"
+#define CIS_KEY "cis"
+#define SID_KEY "sid"
+#define AT_KEY "at"
+#define APN_KEY "apn"
+#define CLEC_KEY "clec"
 #define ACTIONSET_KEY "ActionSet"
 #define CANCEL_ACTIONSET_KEY "CancelAction"
 #define GET_ACTIONSET_KEY "GetActionSet"
@@ -232,10 +260,10 @@ const int SUCCESS_RESPONSE = 0;
 #define MANUFACTURER_NAME_KEY "dmn"
 #define UNITS_KEY "units"
 #define RANGE_KEY "range"
-#define HOUR_KEY "x.com.vendor.timer.hour"
-#define MINUTE_KEY "x.com.vendor.timer.minute"
-#define SECOND_KEY "x.com.vendor.timer.second"
-#define RESET_KEY "x.com.vendor.timer.reset"
+#define TIMER_HOUR_KEY "x.com.vendor.timer.hour"
+#define TIMER_MINUTE_KEY "x.com.vendor.timer.minute"
+#define TIMER_SECOND_KEY "x.com.vendor.timer.second"
+#define TIMER_RESET_KEY "x.com.vendor.timer.reset"
 #define DEFAULT_TIME_VALUE 10
 
 #define CHROMA_CSC_KEY "csc"
@@ -259,6 +287,8 @@ const int SUCCESS_RESPONSE = 0;
 #define SATURATION_VALUE 80
 #define DIMMING_VALUE 80
 #define PRI_DEFAULT_VALUE 1
+#define HTML_ERR_DEFAULT_VALUE 501
+#define IANA_NETWORK_CONNECTION_DEFAULT_VALUE 71
 #define SWING_STATE_KEY "x.com.vendor.swing.on"
 #define SWING_STATE_VALUE false
 #define SWING_MOVEMENT_KEY "x.com.vendor.swing.blade.পরিবর্তনের.দিক"

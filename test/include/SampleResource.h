@@ -29,7 +29,7 @@ namespace PH = std::placeholders;
 
 class SampleResource: public ResourceServer
 {
-private:
+protected:
     int m_recursiveDelay;
     int m_scheduledDelay;
     bool m_isCancelCalled;
@@ -40,10 +40,12 @@ private:
     map< string, string > m_accessmodifier;
     SampleResource* m_pSensorTwin;
 
+
+
 public:
     SampleResource(void);
 
-    ~SampleResource(void);
+    virtual ~SampleResource(void);
 
     void setAsReadOnly(string key);
 
@@ -69,6 +71,11 @@ public:
             std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
+    virtual void handleGetRequest(QueryParamsMap &queryParamsMap,
+            std::shared_ptr< OCResourceRequest > request,
+            std::shared_ptr< OCResourceResponse > response,
+            OCRepresentation rep);
+
     virtual void handlePutRequest(QueryParamsMap &queryParamsMap,
             OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
@@ -83,8 +90,9 @@ public:
 
     void notifyObservers(void *param);
     bool updateRepresentation(string key, OCRepresentation incomingRep);
+    bool updateBatchRepresentation(string key, OCRepresentation incomingRep, bool &isError);
 
-private:
+protected:
     void handleRecursiveActionSet();
 
     void handleScheduledActionSet();

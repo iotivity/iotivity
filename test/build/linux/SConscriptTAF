@@ -49,7 +49,7 @@ target_arch = env_linux.get('TARGET_ARCH')
 install_targets = []
 default_targets = []
 
-cppflags = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissive -DWITH_TCP')
+cppflags = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissive -DWITH_TCP -DTCP_ADAPTER')
 
 if secured == '1':
     cppflags.append('-D__SECURED__')

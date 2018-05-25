@@ -20,9 +20,11 @@
 
 #include <vector>
 #include <iostream>
+#include <sstream>
 #include <cstdlib>
 #include <cstdio>
 #include <fstream>
+#include <regex>
 
 #ifdef __LINUX__
 #include <execinfo.h>
@@ -39,8 +41,11 @@
 #include <chrono>
 
 #include "SampleResource.h"
+#include "MntResource.h"
+#include "NmonResource.h"
 #include "SampleCollection.h"
 #include "ResourceHelper.h"
+#include "cloudresource.h"
 #include "OCPlatform.h"
 #include "ocpayload.h"
 #include "OCApi.h"
@@ -98,6 +103,7 @@ OCResourceHandle g_extraCollectionHandle = NULL;
 SampleResource* g_manyResources[MAX_LIGHT_RESOURCE_COUNT];
 OCRepresentation g_resourceRepresentation;
 OCConnectivityType g_ipVer = CT_DEFAULT;
+string g_ocfVer = "ocf.1.0.0";
 
 SampleResource *g_tvDevice;
 SampleResource *g_acDevice;
@@ -123,8 +129,11 @@ SampleResource *g_extraLightResource;
 SampleResource *g_extraCollectionResource;
 SampleResource *g_extraSwitchResource;
 SampleResource *g_extraBrightnessResource;
+MntResource *g_mnMaintenanceResource;
+NmonResource *g_nmonNetworkMonitoring;
 SampleCollection *g_extraLightCollection;
 SampleCollection *g_vendorCollectionResource;
+SampleCollection *g_batchCollection;
 
 #define MAXLEN_STRING 100
 #define USERPROPERTY_KEY_INT "x.user.property.int"
@@ -139,6 +148,9 @@ bool g_isManyLightCreated = false;
 bool g_isInvisibleResourceCreated = false;
 bool g_isTvDeviceCreated = false;
 bool g_isAirConDeviceCreated = false;
+bool g_isMaintenanceResourceCreated = false;
+bool g_isNetworkMonitoringResourceCreated = false;
+bool g_isBatchCollectionCreated = false;
 bool g_isAirPurifierDeviceCreated = false;
 bool g_isExtraDeviceCreated = false;
 bool g_isSecuredClient = false;
@@ -166,7 +178,7 @@ UserProperties g_userProperties;
 static mutex s_mutex;
 static const char CRED_FILE_SERVER[] = "oic_svr_db_server.dat";
 static const char CRED_FILE_CLIENT[] = "oic_svr_db_client.dat";
-static const char INTROSPECTION_SWAGGER_FILE[] = "binary_switch_swagger.dat";
+static const char INTROSPECTION_SWAGGER_FILE[] = "introspection_swagger.dat";
 static const string JUST_WORKS_DI = "12345678-1234-1234-1234-123456789012";
 static const string RANDOM_PIN_DI = "87654321-4321-4321-4321-CBA987654321";
 static const string MFG_DI = "4d617566-6163-7475-7265-724365727430";
@@ -242,7 +254,9 @@ void joinResourceToLocalGroup(shared_ptr< OCResource >);
 bool joinGroup(OCResourceHandle, OCResourceHandle);
 void deleteGroup(void);
 int selectResource(void);
+int selectResource(string);
 int selectLocalResource(void);
+void selectEndpoint(shared_ptr< OCResource >);
 AttributeValue getAttributeValueFromUser(void);
 void updateGroup(void);
 void updateLocalResource(void);
@@ -261,7 +275,48 @@ FILE* client_fopen(const char*, const char*);
 void updateLec(void);
 void openRDPLogFile(void);
 void closeRDPLogFile(void);
+template <class T> void printInput(T);
 
+template <class T>
+void printInput(T input)
+{
+    time_t t = time(0);
+    struct tm *now = localtime(&t);
+
+    char time_str [150];
+    strftime(time_str, 150, "%Y-%m-%d-%H-%M-%S: ", now);
+    cout << time_str << "Recived input: " << input << endl;
+}
+
+template <class T>
+void getUserInput(T &input)
+{
+    string userInput = "";
+    getline(cin, userInput);
+    while(!(stringstream(userInput) >> input))
+    {
+        if (!userInput.empty())
+        {
+            printInput(userInput);
+            cout << "Wrong type of argument, should be number!" << endl;
+        }
+        userInput = "";
+        getline(cin, userInput);
+    }
+    printInput(input);
+}
+
+template <>
+void getUserInput(string &input)
+{
+    string userInput = "";
+    while (userInput.empty())
+    {
+        getline(cin, userInput);
+        input = userInput;
+    }
+    printInput(input);
+}
 
 void openRDPLogFile()
 {
@@ -617,6 +672,24 @@ int main(int argc, char* argv[])
         cout << "Security mode not specified. Using default: unsecured server & client" << endl;
     }
 
+    if (argc > 4)
+    {
+        string ocfArg = string(argv[4]);
+        if (std::regex_match(ocfArg, std::regex("\\d+\\.\\d+\\.\\d+")))
+        {
+            cout << "Using OCF version: " << ocfArg << endl;
+            g_ocfVer = "ocf." + ocfArg;
+        }
+        else
+        {
+            cout << "Invalid input argument. Using default: 1.0.0" << endl;
+        }
+    }
+    else
+    {
+        std::cout << "No OCF version supplied. Using default: 1.0.0" << std::endl;
+    }
+
     if (g_isSecuredClient)
     {
         vector<string> clientDeviceTypes;
@@ -627,7 +700,7 @@ int main(int argc, char* argv[])
         PlatformConfig cfg
         { OC::ServiceType::InProc, OC::ModeType::Both, g_ipVer, g_ipVer, g_qos, &ps };
         result = SampleResource::constructServer(cfg);
-        SampleResource::setDeviceInfo("Smart Home Client Device", clientDeviceTypes);
+        SampleResource::setDeviceInfo("Smart Home Client Device", clientDeviceTypes, g_ocfVer);
     }
     else if (g_isSecuredServer)
     {
@@ -670,7 +743,7 @@ int main(int argc, char* argv[])
     cout << "IUT Simulator started successfully" << endl;
     cout << endl;
 
-    for (int i = 4; i < argc; i++)
+    for (int i = 5; i < argc; i++)
     {
         int choice = atoi(argv[i]);
         selectMenu(choice);
@@ -1762,7 +1835,7 @@ void createTvDevice(bool isSecured)
         vector<string> tvDeviceTypes;
         tvDeviceTypes.push_back(Device_TYPE_TV);
 
-        SampleResource::setDeviceInfo("Vendor Smart Home TV Device", tvDeviceTypes);
+        SampleResource::setDeviceInfo("Vendor Smart Home TV Device", tvDeviceTypes, g_ocfVer);
 
         g_tvSwitchResource = new SampleResource();
         g_tvSwitchResource->setResourceProperties(TV_SWITCH_URI, SWITCH_RESOURCE_TYPE,
@@ -1851,6 +1924,163 @@ void createTvDevice(bool isSecured)
     }
 }
 
+void createCoAPCloudConfResource(bool isSecured)
+{
+    InitCloudResource();
+}
+
+/*
+    Currently cannot be used with any other resource
+*/
+void createCollectionWithBatch(bool isSecured)
+{
+    OCStackResult result = OC_STACK_ERROR;
+    cout << "Creating Batch Collection!!" << endl;
+    uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE;
+    if (isSecured)
+    {
+        resourceProperty = resourceProperty | OC_SECURE;
+    }
+    if (g_isBatchCollectionCreated == false)
+    {
+        vector<string> acDeviceTypes;
+        string value = "";
+        vector< int > range;
+        vector< double > rangeTemperature;
+        vector< double > chromaSpaceCoordinates;
+        acDeviceTypes.push_back(Device_TYPE_AC);
+        acDeviceTypes.push_back(Device_TYPE_VENDOR);
+        SampleResource::setDeviceInfo(ENGLISH_NAME_VALUE, acDeviceTypes, g_ocfVer);
+
+        g_acSwitchResource = new SampleResource();
+        g_acSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,
+                SWITCH_RESOURCE_INTERFACE);
+        OCRepresentation switchRep;
+        switchRep.setValue(ON_OFF_KEY, true);
+        g_acSwitchResource->setResourceRepresentation(switchRep);
+
+        result = g_acSwitchResource->startResource(resourceProperty);
+
+        g_createdResourceList.push_back(g_acSwitchResource);
+
+
+        g_extraBrightnessResource = new SampleResource();
+        g_extraBrightnessResource->setResourceProperties(EXTRA_BRIGHTNESS_URI,
+                BRIGHTNESS_RESOURCE_TYPE, BRIGHTNESS_RESOURCE_INTERFACE);
+
+        OCRepresentation brightnessRep;
+        int level = DEFAULT_BRIGHTNESS_VALUE;
+        brightnessRep.setValue(BRIGHTNESS_KEY, level);
+        g_extraBrightnessResource->setResourceRepresentation(brightnessRep);
+
+        result = g_extraBrightnessResource->startResource(resourceProperty);
+
+        g_createdResourceList.push_back(g_extraBrightnessResource);
+
+        OCRepresentation collectionRep;
+
+        g_batchCollection = new SampleCollection();
+        g_batchCollection->setResourceProperties(COLLECTION_RESOURCE_URI, GROUP_TYPE_DEFAULT,
+                LINK_INTERFACE);
+
+        g_batchCollection->setDI(g_di);
+        g_batchCollection->setIPVer(g_ipVer);
+        g_batchCollection->setSecured(true);
+        g_batchCollection->setName(ENGLISH_NAME_VALUE);
+
+        g_batchCollection->setResourceRepresentation(collectionRep);
+
+        result = g_batchCollection->startResource(resourceProperty);
+
+        g_batchCollection->addResourceInterface(DEFAULT_INTERFACE);
+        g_batchCollection->addResourceInterface(BATCH_INTERFACE);
+        if (result == OC_STACK_OK)
+        {
+            cout << "Batch collection created successfully" << endl;
+            g_batchCollection->addChild(g_extraBrightnessResource);
+            g_batchCollection->addChild(g_acSwitchResource);
+        }
+        else
+        {
+            cout << "Unable to create Batch Collection" << endl;
+        }
+    }
+    else
+    {
+        cout << "Already Batch Collection is created!!" << endl;
+    }
+}
+
+void createNetworkMonitoringAndMaintenanceResources(bool isSecured)
+{
+    OCStackResult result = OC_STACK_ERROR;
+    cout << "Creating Maintenance Resources!!" << endl;
+    uint8_t resourceProperty = OC_DISCOVERABLE;
+    if (isSecured)
+    {
+        resourceProperty = resourceProperty | OC_SECURE;
+    }
+    if (g_isMaintenanceResourceCreated == false)
+    {
+        g_mnMaintenanceResource = new MntResource();
+        g_mnMaintenanceResource->setResourceProperties(MN_MAINTENANCE_URI, MAINTENANCE_RESOURCE_TYPE,
+                MAINTENANCE_RESOURCE_INTERFACE);
+        OCRepresentation maintenanceRep;
+        maintenanceRep.setValue(FACTORY_KEY, false);
+        maintenanceRep.setValue(REBOOT_KEY, false);
+        maintenanceRep.setValue(HTML_ERR_KEY, HTML_ERR_DEFAULT_VALUE);
+        g_mnMaintenanceResource->setResourceRepresentation(maintenanceRep);
+
+        result = g_mnMaintenanceResource->startResource(resourceProperty);
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "Maintenance Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_mnMaintenanceResource);
+            g_isMaintenanceResourceCreated = true;
+        }
+        else
+        {
+            cout << "Unable to create Maintenance resource" << endl;
+        }
+    }
+    else
+    {
+        cout << "Already Maintenance Resources are created!!" << endl;
+    }
+
+    result = OC_STACK_ERROR;
+    cout << "Creating Network Monitoring Resources!!" << endl;
+    if (g_isNetworkMonitoringResourceCreated == false)
+    {
+        g_nmonNetworkMonitoring = new NmonResource();
+        g_nmonNetworkMonitoring->setResourceProperties(NMON_NETWORK_MONITORING_URI, NETWORK_MONITORING_RESOURCE_TYPE,
+                NETWORK_MONITORING_RESOURCE_INTERFACE);
+        OCRepresentation netmonRep;
+        netmonRep.setValue(RESET_KEY, false);
+        netmonRep.setValue(COLLECTING_VALUES, false);
+        netmonRep.setValue(IANA_NETWORK_CONNECTION_KEY, IANA_NETWORK_CONNECTION_DEFAULT_VALUE);
+        g_nmonNetworkMonitoring->setResourceRepresentation(netmonRep);
+
+        result = g_nmonNetworkMonitoring->startResource(resourceProperty);
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "Network Monitoring Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_nmonNetworkMonitoring);
+            g_isNetworkMonitoringResourceCreated = true;
+        }
+        else
+        {
+            cout << "Unable to create Network Monitoring resource" << endl;
+        }
+    }
+    else
+    {
+        cout << "Already Network Monitoring Resources are created!!" << endl;
+    }
+}
+
 void createAirPurifierDevice(bool isSecured)
 {
     OCStackResult result = OC_STACK_ERROR;
@@ -1865,7 +2095,7 @@ void createAirPurifierDevice(bool isSecured)
         vector<string> apDeviceTypes;
         apDeviceTypes.push_back(Device_TYPE_AP);
         apDeviceTypes.push_back(Device_TYPE_VENDOR);
-        SampleResource::setDeviceInfo(AP_ENGLISH_NAME_VALUE, apDeviceTypes);
+        SampleResource::setDeviceInfo(AP_ENGLISH_NAME_VALUE, apDeviceTypes, g_ocfVer);
 
         g_apSwitchResource = new SampleResource();
         g_apSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,
@@ -1889,7 +2119,7 @@ void createAirPurifierDevice(bool isSecured)
     }
     else
     {
-        cout << "Already Smart Home AirPurifier Device Resources are  created!!" << endl;
+        cout << "Already Smart Home AirPurifier Device Resources are created!!" << endl;
     }
 }
 
@@ -1907,7 +2137,7 @@ void createSingleAirConResource(bool isSecured)
         vector<string> acDeviceTypes;
         acDeviceTypes.push_back(Device_TYPE_LIGHT);
         acDeviceTypes.push_back(Device_TYPE_VENDOR);
-        SampleResource::setDeviceInfo(ENGLISH_NAME_VALUE, acDeviceTypes);
+        SampleResource::setDeviceInfo(ENGLISH_NAME_VALUE, acDeviceTypes, g_ocfVer);
 
         g_acSwitchResource = new SampleResource();
         g_acSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,
@@ -1953,7 +2183,7 @@ void createResourceForIntrospection(bool isSecured )
         vector< double > chromaSpaceCoordinates;
         acDeviceTypes.push_back(Device_TYPE_AC);
         acDeviceTypes.push_back(Device_TYPE_VENDOR);
-        SampleResource::setDeviceInfo(ENGLISH_NAME_VALUE, acDeviceTypes);
+        SampleResource::setDeviceInfo(ENGLISH_NAME_VALUE, acDeviceTypes, g_ocfVer);
 
         g_acSwitchResource = new SampleResource();
         g_acSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,
@@ -2085,7 +2315,7 @@ void createAirConDevice(bool isSecured)
         vector<string> acDeviceTypes;
         acDeviceTypes.push_back(Device_TYPE_AC);
         acDeviceTypes.push_back(Device_TYPE_VENDOR);
-        SampleResource::setDeviceInfo(ENGLISH_NAME_VALUE, acDeviceTypes);
+        SampleResource::setDeviceInfo(ENGLISH_NAME_VALUE, acDeviceTypes, g_ocfVer);
 
         g_acSwitchResource = new SampleResource();
         g_acSwitchResourceHidden = new SampleResource();
@@ -2204,11 +2434,11 @@ void createAirConDevice(bool isSecured)
 
         OCRepresentation clockRep;
         int time = DEFAULT_TIME_VALUE;
-        clockRep.setValue(HOUR_KEY, time);
+        clockRep.setValue(TIMER_HOUR_KEY, time);
         time = DEFAULT_TIME_VALUE + DEFAULT_TIME_VALUE + DEFAULT_TIME_VALUE;
-        clockRep.setValue(MINUTE_KEY, time);
-        clockRep.setValue(SECOND_KEY, time);
-        clockRep.setValue(RESET_KEY, false);
+        clockRep.setValue(TIMER_MINUTE_KEY, time);
+        clockRep.setValue(TIMER_SECOND_KEY, time);
+        clockRep.setValue(TIMER_RESET_KEY, false);
         string longLocation = VERY_BIG_VALUE;
         clockRep.setValue(TIMER_LOCATION_KEY, longLocation);
 
@@ -2464,7 +2694,7 @@ void createVendorDefinedDevice(bool isSecured)
     {
         vector<string> vendorDeviceTypes;
         vendorDeviceTypes.push_back(Device_TYPE_VENDOR);
-        SampleResource::setDeviceInfo("Vendor Defined System Server", vendorDeviceTypes);
+        SampleResource::setDeviceInfo("Vendor Defined System Server", vendorDeviceTypes, g_ocfVer);
 
         string value = "";
         vector< int > range;
@@ -3257,11 +3487,8 @@ void sendGetRequest()
     {
         QueryParamsMap qpMap;
         shared_ptr< OCResource > targetResource = g_foundResourceList.at(selection);
-        vector< std::string > allEndPoints = targetResource->getAllHosts();
-        if (g_isSecuredClient && allEndPoints.size() > 0)
-        {
-            targetResource->setHost(g_resourceHelper->getOnlySecuredHost(allEndPoints));
-        }
+
+        selectEndpoint(targetResource);
         cout << "Sending Get Request to the resource with: " << targetResource->host()
                 << targetResource->uri() << endl;
 
@@ -3439,7 +3666,6 @@ void updateLec()
 {
     int maxValue = 13,minValue=1;
     ESErrorCode errCode = ES_ERRCODE_NO_ERROR;
-    string userInput;
     bool validChoice= false;
     int choice;
     do
@@ -3459,10 +3685,9 @@ void updateLec()
         cout << "\t\t 12. Target user does not exist in cloud server" << endl;
         cout << "\t\t 13. Unsupported WiFi frequency" << endl;
 
-        cin >> userInput;
+        getUserInput(choice);
 
-        choice = strtol(userInput.c_str(), NULL, 10);
-	if (choice >= minValue && choice <= maxValue)
+        if (choice >= minValue && choice <= maxValue)
         {
             validChoice = true;
         }
@@ -3583,7 +3808,6 @@ AttributeValue getAttributeValueFromUser()
     float valueFloat = 0.0;
     double valueDouble = 0.0;
     string valueArray = "";
-    string userInput = "";
     char valueLine[MAX_ATTRIBUTE_VALUE_LENGTH];
     long int choice = 0;
     bool validChoice = false;
@@ -3598,9 +3822,8 @@ AttributeValue getAttributeValueFromUser()
         cout << "\t\t 5. String" << endl;
         cout << "\t\t 6. Array" << endl;
 
-        cin >> userInput;
+        getUserInput(choice);
 
-        choice = strtol(userInput.c_str(), NULL, 10);
         if (choice > 0 && choice < 6)
         {
             validChoice = true;
@@ -3608,7 +3831,7 @@ AttributeValue getAttributeValueFromUser()
         else
         {
             validChoice = false;
-            cout << "Invalid input for attribute data type. Please select between 1 and 5" << endl;
+            cout << "Invalid input for attribute data type. Please select between 1 and 6" << endl;
         }
 
     } while (!validChoice);
@@ -3617,34 +3840,35 @@ AttributeValue getAttributeValueFromUser()
     switch (choice)
     {
         case 1:
-            cin >> valueInt;
+            getUserInput(valueInt);
             value = valueInt;
             break;
         case 2:
-            cin >> valueFloat;
+            getUserInput(valueFloat);
             value = valueFloat;
             break;
         case 3:
-            cin >> valueDouble;
+            getUserInput(valueDouble);
             value = valueDouble;
             break;
         case 4:
             cout << "Please provide boolean value(O for False, 1 for True) : ";
-            cin >> valueBool;
+            getUserInput(valueBool);
             value = valueBool;
             break;
         case 5:
             cin.getline(valueLine, sizeof(value));
             getline(cin, valueString);
+            printInput(valueString);
             value = valueString;
             break;
         case 6:
             cin.getline(valueLine, sizeof(value));
             getline(cin, valueArray);
+            printInput(valueArray);
             value = valueArray;
             break;
     }
-
     return value;
 }
 
@@ -3657,7 +3881,7 @@ void updateLocalResource()
         AttributeValue value;
 
         cout << "Please input Attribute Key: ";
-        cin >> key;
+        getUserInput(key);
         value = getAttributeValueFromUser();
 
         OCRepresentation rep = g_createdResourceList.at(selection)->getRepresentation();
@@ -3757,15 +3981,11 @@ void sendPostRequestUpdateUserInput()
         AttributeValue value;
         shared_ptr< OCResource > targetResource = g_foundResourceList.at(selection);
 
-        vector< std::string > allEndPoints = targetResource->getAllHosts();
-        if (g_isSecuredClient && allEndPoints.size() > 0)
-        {
-            targetResource->setHost(g_resourceHelper->getOnlySecuredHost(allEndPoints));
-        }
+        selectEndpoint(targetResource);
 
         g_hasCallbackArrived = false;
         cout << "Please input Attribute Key: ";
-        cin >> key;
+        getUserInput(key);
         value = getAttributeValueFromUser();
         rep.setValue(key, value);
 
@@ -3889,6 +4109,22 @@ void sendSpecialPost()
     }
 }
 
+void sendPostCloudMediator()
+{
+    int selection = selectResource(EXAMPLE_COAP_CLOUD_CONF_URI);
+    if (selection != -1)
+    {
+        OCRepresentation cloudConfRep;
+        cloudConfRep.setValue(CIS_KEY, string("coaps+tcp://192.168.56.1:49160"));
+        cloudConfRep.setValue(SID_KEY, string("bd052d57-aa22-425f-9dc0-e18202f4b7a2"));
+        cloudConfRep.setValue(AT_KEY, string(""));
+        cloudConfRep.setValue(APN_KEY, string(""));
+        g_foundResourceList.at(selection)->post(cloudConfRep, QueryParamsMap(), &onPost, g_qos);
+        cout << "POST request sent!!" << endl;
+        waitForCallback();
+    }
+}
+
 void sendDeleteRequest()
 {
     int selection = selectResource();
@@ -3924,11 +4160,8 @@ void observeResource()
         cout << "Observing resource..." << endl;
 
         shared_ptr< OCResource > targetResource = g_foundResourceList.at(selection);
-        vector< std::string > allEndPoints = targetResource->getAllHosts();
-        if (g_isSecuredClient && allEndPoints.size() > 0)
-        {
-            targetResource->setHost(g_resourceHelper->getOnlySecuredHost(allEndPoints));
-        }
+
+        selectEndpoint(targetResource);
         cout << "Sending Get Request to the resource with: " << targetResource->host()
                 << targetResource->uri() << endl;
         targetResource->observe(ObserveType::Observe, QueryParamsMap(), &onObserve, g_qos);
@@ -3955,11 +4188,7 @@ void cancelObserveResource()
 
             shared_ptr< OCResource > targetResource = g_foundResourceList.at(selection);
 
-            vector< std::string > allEndPoints = targetResource->getAllHosts();
-            if (g_isSecuredClient && allEndPoints.size() > 0)
-            {
-                targetResource->setHost(g_resourceHelper->getOnlySecuredHost(allEndPoints));
-            }
+            selectEndpoint(targetResource);
             cout << "Sending Get Request to the resource with: " << targetResource->host()
                     << targetResource->uri() << endl;
 
@@ -4097,9 +4326,9 @@ string getHost()
     else
     {
         cout << "Please enter the IP of the Resource host, then press Enter: ";
-        cin >> ip;
+        getUserInput(ip);
         cout << "Please enter the port of the Resource host, then press Enter: ";
-        cin >> port;
+        getUserInput(port);
 
         host = ip + ":" + port;
     }
@@ -4123,18 +4352,34 @@ int selectResource()
                     << "    (" << g_foundResourceList.at(i - 1)->host() << ")" << endl;
         }
 
-        cin >> selection;
+        getUserInput(selection);
 
         while (selection < 0 || selection > totalResource)
         {
             cout << "Invalid selection of resource. Please select a resource no. between 1 & "
                     << totalResource << endl;
-            cin >> selection;
+            getUserInput(selection);
         }
         selection--;
     }
 
     return selection;
+}
+
+int selectResource(string resourceType)
+{
+    for (unsigned i = 0; i < g_foundResourceList.size(); i++)
+    {
+        std::ostringstream stream;
+        stream << g_foundResourceList.at(i)->uniqueIdentifier();
+        if (stream.str().find(resourceType) != std::string::npos)
+        {
+            return i;
+        }
+    }
+    cout << "Cloud not find Resource with such type!" << endl;
+
+    return -1;
 }
 
 int selectLocalResource()
@@ -4152,18 +4397,61 @@ int selectLocalResource()
             cout << "\t\t" << resourceCount++ << ". " << localResource->getUri() << endl;
         }
 
-        cin >> selection;
+        getUserInput(selection);
 
         while (selection < 1 || selection > totalResource)
         {
             cout << "Invalid selection of resource. Please select a resource no. between 1 & "
                     << totalResource << endl;
-            cin >> selection;
+            getUserInput(selection);
         }
         selection--;
     }
 
     return selection;
+}
+
+void selectEndpoint(shared_ptr< OCResource > resource)
+{
+    string key = "";
+    vector< std::string > allEndPoints = resource->getAllHosts();
+
+    cout << "Select default endpoint? (y/n)" << endl;
+    getUserInput(key);
+
+    while (key != "y" && key != "n")
+    {
+        cout << "Please select \"y\" for yes or \"n\" for no" << endl;
+        getUserInput(key);
+    }
+
+    if (key == "y")
+    {
+        if (g_isSecuredClient && allEndPoints.size() > 0)
+        {
+            resource->setHost(g_resourceHelper->getOnlySecuredHost(allEndPoints));
+        }
+    }
+    else
+    {
+        int selection = 0;
+        int totalEndPoints = allEndPoints.size();
+        cout << "\t" << "Select one of the endpoint:" << endl;
+        for (int i = 1; i <= totalEndPoints; i++) {
+            cout << "\t\t" << (i) << ". " << allEndPoints[i - 1] << endl;
+        }
+
+        getUserInput(selection);
+
+        while( selection < 1 || selection > totalEndPoints)
+        {
+            cout << "Invalid selection of endpoint. Please select a endpoint no. between 1 & " <<
+            totalEndPoints << endl;
+            getUserInput(selection);
+        }
+        selection = selection - 1;
+        resource->setHost(allEndPoints[selection]);
+    }
 }
 
 void showMenu(int argc, char* argv[])
@@ -4229,6 +4517,9 @@ void showMenu(int argc, char* argv[])
     cout << "\t\t " << setw(3) << "114" << ". Update Last Error Code" << endl;
     cout << "\t\t " << setw(3) << "115" << ". Create Complex Device For Introspection" << endl;
     cout << "\t\t " << setw(3) << "116" << ". Create Air Purifier Device" << endl;
+    cout << "\t\t " << setw(3) << "117" << ". Create Network Monitoring and Maintaince Resources" << endl;
+    cout << "\t\t " << setw(3) << "118" << ". Create Sample Batch collection" << endl;
+    cout << "\t\t " << setw(3) << "119" << ". Create Cloud Configuration Resource" << endl;
 
     g_hasCallbackArrived = false;
     handleMenu(argc, argv);
@@ -4286,7 +4577,7 @@ void selectMenu(int choice)
 
         case 10:
             cout << "Please type query(key=value), then press Enter: ";
-            cin >> userInterfaceType;
+            getUserInput(userInterfaceType);
             resourceHost = "";
             findAllResources(resourceHost, userInterfaceType);
             if (g_foundResourceList.size() == 0)
@@ -4297,7 +4588,7 @@ void selectMenu(int choice)
 
         case 11:
             cout << "Please type the Resource Type to find, then press Enter: ";
-            cin >> userResourceType;
+            getUserInput(userResourceType);
             userResourceType = "?rt=" + userResourceType;
             findResource(userResourceType);
             if (g_foundResourceList.size() == 0)
@@ -4326,7 +4617,7 @@ void selectMenu(int choice)
         case 14:
             resourceHost = getHost();
             cout << "Please type the Resource Type to find, then press Enter: ";
-            cin >> userResourceType;
+            getUserInput(userResourceType);
             userResourceType = "?rt=" + userResourceType;
             findResource(userResourceType, resourceHost);
             if (g_foundResourceList.size() == 0)
@@ -4353,9 +4644,9 @@ void selectMenu(int choice)
 
         case 18:
             cout << "Please type query key, then press Enter: ";
-            cin >> queryKey;
+            getUserInput(queryKey);
             cout << "Please type query value, then press Enter: ";
-            cin >> queryValue;
+            getUserInput(queryValue);
             sendGetRequestWithQuery(queryKey, queryValue);
             break;
 
@@ -4492,6 +4783,10 @@ void selectMenu(int choice)
             cout << "Replaced Secure Storage" << endl;
             break;
 
+        case 39:
+            sendPostCloudMediator();
+            break;
+
         case 101:
             createTvDevice();
             break;
@@ -4560,6 +4855,18 @@ void selectMenu(int choice)
             createAirPurifierDevice(g_isSecuredServer);
             break;
 
+        case 117:
+            createNetworkMonitoringAndMaintenanceResources(g_isSecuredServer);
+            break;
+
+        case 118:
+            createCollectionWithBatch(g_isSecuredServer);
+            break;
+
+        case 119:
+            createCoAPCloudConfResource(g_isSecuredServer);
+            break;
+
         case 0:
             if (g_createdResourceList.size() > 0)
             {
@@ -4586,9 +4893,8 @@ void selectMenu(int choice)
 
 void handleMenu(int argc, char* argv[])
 {
-    string userInput;
-    cin >> userInput;
-    long int choice = strtol(userInput.c_str(), NULL, 10);
+    int choice;
+    getUserInput(choice);
     selectMenu(choice);
     showMenu(0, NULL);
 }

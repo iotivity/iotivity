@@ -306,7 +306,7 @@ public:
       * @param[in] - deviceTypes - List of device types of the device(Optional)
       *
       */
-    static OCStackResult setDeviceInfo(string deviceName, vector<string> deviceTypes = vector<string>());
+    static OCStackResult setDeviceInfo(string deviceName, vector<string> deviceTypes = vector<string>(), string specVersion = CORE_SPEC_VERSION);
 
     /***
      * API to perform additional task for child

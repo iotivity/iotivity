@@ -330,7 +330,7 @@ void ResourceServer::setAsNormalResource()
     m_isSlowResource = false;
 }
 
-OCStackResult ResourceServer::setDeviceInfo(string deviceName, vector<string> deviceTypes)
+OCStackResult ResourceServer::setDeviceInfo(string deviceName, vector<string> deviceTypes, string specVersion)
 {
     p_resourceHelper->duplicateString(&s_deviceInfo.deviceName, deviceName);
     if (deviceTypes.size() > 0)
@@ -340,7 +340,7 @@ OCStackResult ResourceServer::setDeviceInfo(string deviceName, vector<string> de
             OCResourcePayloadAddStringLL(&s_deviceInfo.types, deviceType.c_str());
         }
 
-        p_resourceHelper->duplicateString(&s_deviceInfo.specVersion, CORE_SPEC_VERSION);
+        p_resourceHelper->duplicateString(&s_deviceInfo.specVersion, specVersion);
         OCResourcePayloadAddStringLL(&s_deviceInfo.dataModelVersions, RESOURCE_TYPE_SPEC_VERSION);
         if ((deviceName.find("Client") == string::npos)
                 && (deviceName.find("client") == string::npos)

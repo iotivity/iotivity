@@ -44,7 +44,7 @@ common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
 install_targets = []
 default_targets = []
 
-cppflags = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissive -DWITH_TCP -DRD_CLIENT')
+cppflags = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissive -DWITH_TCP -DTCP_ADAPTER -DRD_CLIENT')
 
 if secured == '1':
     cppflags.append('-D__SECURED__')
@@ -61,6 +61,7 @@ include_paths = [
     iotivity_root + '/resource/csdk/connectivity/api',
     iotivity_root + '/resource/csdk/stack/include',
     iotivity_root + '/resource/csdk/security/include',
+    iotivity_root + '/resource/csdk/security/provisioning/include/cloud',
     iotivity_root + '/resource/csdk/ocsocket/include',
     iotivity_root + '/resource/csdk/ocrandom/include',
     iotivity_root + '/resource/csdk/logger/include',
@@ -78,7 +79,7 @@ include_paths = [
     iotivity_lib_path + '/resource/c_common'
 ]
 
-libs = Split('libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap pthread libglib-2.0 gcov')
+libs = Split('libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap pthread libglib-2.0 gcov libocpmapi')
 enrolee_libs =  [ 'ESEnrolleeSDK' ]
 rd_libs = [ 'resource_directory' ]
 libs = libs + enrolee_libs + rd_libs
@@ -86,6 +87,8 @@ libs = libs + enrolee_libs + rd_libs
 src = [
     test_src_root + '/common/commonutil/c_cpp/ResourceServer.cpp',
     test_src_root + '/common/commonutil/c_cpp/SampleResource.cpp',
+    test_src_root + '/common/commonutil/c_cpp/MntResource.cpp',
+    test_src_root + '/common/commonutil/c_cpp/NmonResource.cpp',
     test_src_root + '/common/commonutil/c_cpp/SampleCollection.cpp',
     test_src_root + '/common/commonutil/c_cpp/ResourceHelper.cpp',
     test_src_root + '/testapp/IUTSimulatorApp/c_cpp/IUTSimulator.cpp',

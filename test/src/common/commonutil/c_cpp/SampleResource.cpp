@@ -455,12 +455,19 @@ void SampleResource::handleGetRequest(QueryParamsMap &queryParamsMap,
         std::shared_ptr< OCResourceRequest > request,
         std::shared_ptr< OCResourceResponse > response)
 {
+    SampleResource::handleGetRequest(queryParamsMap, request, response, m_representation);
+}
+
+void SampleResource::handleGetRequest(QueryParamsMap &queryParamsMap,
+        std::shared_ptr< OCResourceRequest > request,
+        std::shared_ptr< OCResourceResponse > response,
+        OCRepresentation rep)
+{
     cout << "Inside handleGetRequest... " << endl;
     OCStackResult result = OC_STACK_ERROR;
     bool shouldReturnError = false;
     string responseInterface = DEFAULT_INTERFACE;
 
-    OCRepresentation rep = m_representation;
     cout << "Current Resource Representation to send : " << endl;
     p_resourceHelper->printRepresentation(rep);
 
@@ -777,6 +784,80 @@ bool SampleResource::updateRepresentation(string key, OCRepresentation incomingR
         setResourceRepresentation(rep);
         result = true;
 
+    }
+    else
+    {
+        result = false;
+    }
+
+    return result;
+}
+
+bool SampleResource::updateBatchRepresentation(string key, OCRepresentation incomingRep, bool &isError)
+{
+    bool result = false;
+    OCRepresentation rep = getRepresentation();
+
+    int repType = 0;
+
+    OCRepPayloadValue *keyValues = rep.getPayload()->values;
+    while(keyValues)
+    {
+        if (key == string(keyValues->name))
+        {
+            repType = keyValues->type;
+        }
+        keyValues = keyValues->next;
+    }
+    keyValues = incomingRep.getPayload()->values->obj->values;
+    while(keyValues)
+    {
+        if (key == string(keyValues->name))
+        {
+            if (repType != keyValues->type)
+            {
+                isError =  true;
+                return false;
+            }
+
+            cout << "Updating Representation... " << endl;
+            switch(keyValues->type)
+            {
+                case OCRepPayloadPropType::OCREP_PROP_NULL:
+                    rep.setValue(key, nullptr);
+                    break;
+                case OCRepPayloadPropType::OCREP_PROP_INT:
+                    rep.setValue(key, (int)keyValues->i);
+                    break;
+                case OCRepPayloadPropType::OCREP_PROP_DOUBLE:
+                    rep.setValue(key, keyValues->d);
+                    break;
+                case OCRepPayloadPropType::OCREP_PROP_BOOL:
+                    rep.setValue(key, keyValues->b);
+                    break;
+                case OCRepPayloadPropType::OCREP_PROP_STRING:
+                    rep.setValue(key, keyValues->str);
+                    break;
+                case OCRepPayloadPropType::OCREP_PROP_BYTE_STRING:
+                    rep.setValue(key, keyValues->ocByteStr);
+                    break;
+                case OCRepPayloadPropType::OCREP_PROP_ARRAY:
+                    rep.setValue(key, keyValues->arr.objArray);
+                    break;
+                case OCRepPayloadPropType::OCREP_PROP_OBJECT:
+                    rep.setValue(key, keyValues->obj);
+                    break;
+            }
+            break;
+        }
+        keyValues = keyValues->next;
+    }
+
+    AttributeValue configurationValue;
+    if (rep.getAttributeValue(key, configurationValue))
+    {
+        setResourceRepresentation(rep);
+        result = true;
     }
     else
     {
