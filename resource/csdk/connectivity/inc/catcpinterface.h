@@ -81,6 +81,7 @@ typedef void (*CATCPConnectionHandleCallback)(const CAEndpoint_t *endpoint, bool
  */
 void CATCPSetErrorHandler(CATCPErrorHandleCallback errorHandleCallback);
 
+#ifdef TCP_ADAPTER
 /**
  * set keepalive callback to notify connection information in TCP adapter.
  *
@@ -88,6 +89,7 @@ void CATCPSetErrorHandler(CATCPErrorHandleCallback errorHandleCallback);
  * in the TCP adapter.
  */
 void CATCPSetKeepAliveCallback(CAKeepAliveConnectionCallback keepaliveHandler);
+#endif
 
 /**
  * Start TCP server.
@@ -201,6 +203,11 @@ CASocketFd_t CAGetSocketFDFromEndpoint(const CAEndpoint_t *endpoint);
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CASearchAndDeleteTCPSession(const CAEndpoint_t *endpoint);
+
+/**
+ * Abort TCP sessions which are in progress of connecting with servers.
+ */
+void CATCPCloseInProgressConnections();
 
 /**
  * Get total payload length from CoAP over TCP header.
