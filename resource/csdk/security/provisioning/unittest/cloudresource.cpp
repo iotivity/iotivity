@@ -71,16 +71,12 @@ void sessionInit(session_t *ses)
     ses->accessToken = (char *)OICCalloc(STR_LEN, sizeof(char));
     ses->refreshToken = (char *)OICCalloc(STR_LEN, sizeof(char));
     ses->uid = (char *)OICCalloc(STR_LEN, sizeof(char));
-#if !defined(__MANDATORY__)
-    ses->redirectUri = (char *)OICCalloc(STR_LEN, sizeof(char));
-    snprintf(ses->redirectUri, STR_LEN, "coaps+tcp://127.0.0.1:80");
-#endif // __MANDATORY__
     for (int i = 0; i < STR_LEN; i++)
     {
         ses->accessToken[i] = sample[rand() % STR_LEN];
         ses->refreshToken[i] = sample[rand() % STR_LEN];
         ses->uid[i] = sample[rand() % STR_LEN];
-   }
+    }
 }
 
 OicCloud_t *getCloud()
@@ -94,6 +90,10 @@ OicCloud_t *getCloud()
     cloud->cis = (char *)OICCalloc(STR_LEN, sizeof(char));
     cloud->at = (char *)OICCalloc(STR_LEN, sizeof(char));
     cloud->sid = (char *)OICCalloc(STR_LEN, sizeof(char));
+#if !defined(__MANDATORY__)
+    cloud->redirectUri = (char *)OICCalloc(STR_LEN, sizeof(char));
+    snprintf(cloud->redirectUri, STR_LEN, "coaps+tcp://127.0.0.1:80");
+#endif // __MANDATORY__
 
     for (int i = 0; i < STR_LEN; i++)
     {
@@ -231,13 +231,33 @@ TEST(CloudResourceTest, CBORPayloadToCloudFULL)
         ASSERT_STREQ(cloudX->session->refreshToken, cloud->session->refreshToken);
         ASSERT_STREQ(cloudX->session->uid, cloud->session->uid);
 #if !defined(__MANDATORY__)
-        ASSERT_STREQ(cloudX->session->redirectUri, cloud->session->redirectUri);
+        ASSERT_STREQ(cloudX->redirectUri, cloud->redirectUri);
 #endif // __MANDATORY__
     }
 
     FreeCloud(cloudX);
     FreeCloud(cloud);
     OCPayloadDestroy((OCPayload *)payload);
+}
+
+TEST(CloudResourceTest, strCopyFULL)
+{
+    EXPECT_FALSE(strCopy(NULL, NULL));
+    char *sample1 = (char *)OICCalloc(1, 1024);
+    EXPECT_TRUE(NULL != sample1);
+    snprintf(sample1, 1024, "sample1 test string");
+    char *dst = (char *)OICCalloc(1, 1024);
+    EXPECT_TRUE(strCopy(sample1, &dst));
+    EXPECT_TRUE(NULL != dst);
+    ASSERT_STREQ(sample1, dst);
+    OICFree(dst);
+    dst = NULL;
+    EXPECT_TRUE(strCopy(sample1, &dst));
+    EXPECT_TRUE(NULL != dst);
+    ASSERT_STREQ(sample1, dst);
+    OICFree(dst);
+
+    OICFree(sample1);
 }
 
 TEST(CloudResourceTest, CBORPayloadToCloudResourceFULL)
@@ -266,6 +286,7 @@ TEST(CloudResourceTest, ValidCloudFULL)
     OicCloud_t *cloud =  getCloud();
     ASSERT_TRUE(false == ValidCloud(cloud));
     sprintf(cloud->cis, "coaps+tcp://");
+    sprintf(cloud->redirectUri, "coaps+tcp://");
     ASSERT_TRUE(true == ValidCloud(cloud));
     OICFree(cloud->apn); cloud->apn = NULL;
     OICFree(cloud->at); cloud->at = NULL;
@@ -358,7 +379,8 @@ TEST(CloudResourceTest, HandleCloudPostRequestFULL)
     ASSERT_TRUE(NULL != payload);
     ehRequest->payload = (OCPayload *)payload;
 
-    sprintf(cloud->cis, "coaps+tcp://");
+    sprintf(cloud->cis, "coaps+tcp://192.168.1.1:90");
+    sprintf(cloud->redirectUri, "coaps+tcp://192.168.1.1:91");
     ASSERT_TRUE(OC_EH_ERROR == HandleCloudPostRequest(ehRequest));
     OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, cloud->apn);
     ASSERT_TRUE(OC_EH_ERROR == HandleCloudPostRequest(ehRequest));
@@ -376,6 +398,7 @@ TEST(CloudResourceTest, HandleCloudPostRequestFULL)
     ASSERT_TRUE(OC_STACK_OK == SetDosState(DOS_RFNOP));
     OCPayloadDestroy(ehRequest->payload);
     OICFree(ehRequest);
+    exit(0);
 }
 
 TEST(CloudResourceTest, HandleCloudGetRequestFULL)
@@ -761,7 +784,7 @@ TEST(CloudResourceTest, handleCloudSignUpResponseFULL)
     OCRepPayloadSetPropString((OCRepPayload *)response->payload, OC_RSRVD_USER_UUID,
                               cloud->session->uid);
     OCRepPayloadSetPropString((OCRepPayload *)response->payload, OC_RSRVD_REDIRECT_URI,
-                              cloud->session->redirectUri);
+                              cloud->redirectUri);
     SessionFree(cloud->session);
     cloud->session = NULL;
     ASSERT_TRUE(OC_STACK_DELETE_TRANSACTION == handleCloudSignUpResponse(ctx, handle, response));
@@ -814,7 +837,7 @@ TEST(CloudResourceTest, handleCloudSignInResponseFULL)
     OCRepPayloadSetPropString((OCRepPayload *)response->payload, OC_RSRVD_USER_UUID,
                               cloud->session->uid);
     OCRepPayloadSetPropString((OCRepPayload *)response->payload, OC_RSRVD_REDIRECT_URI,
-                              cloud->session->redirectUri);
+                              cloud->redirectUri);
 
     ASSERT_TRUE(OC_STACK_DELETE_TRANSACTION == handleCloudSignInResponse(ctx, handle, response));
 
@@ -837,51 +860,73 @@ TEST(CloudResourceTest, CloudSignFULL)
     FreeCloud(cloud);
 }
 
-
-TEST(CloudResourceTest, SessionParsePayloadFULL)
+TEST(CloudResourceTest, CloudSignUpParsePayloadFULL)
 {
-    OicCloud_t *cloud = getCloud();
-    session_t *session = NULL;
-    OCRepPayload *payload = OCRepPayloadCreate();
-    ASSERT_TRUE(!SessionParsePayload(payload, session));
-    session = (session_t *)OICCalloc(1, sizeof(session_t));
-    ASSERT_TRUE(NULL != session);
+    OicCloud_t *cloud = NULL;
+    OCRepPayload *payload = NULL;
 
-    ASSERT_TRUE(!SessionParsePayload(payload, session));
-    SessionFree(session);
-    session = (session_t *)OICCalloc(1, sizeof(session_t));
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ACCESS_TOKEN,
-                              cloud->session->accessToken);
-    ASSERT_TRUE(!SessionParsePayload(payload, session));
-    SessionFree(session);
-    session = (session_t *)OICCalloc(1, sizeof(session_t));
-    OCRepPayloadSetPropString(payload, OC_RSRVD_REFRESH_TOKEN,
-                              cloud->session->refreshToken);
-    ASSERT_TRUE(!SessionParsePayload(payload, session));
-    SessionFree(session);
-    session = (session_t *)OICCalloc(1, sizeof(session_t));
-    OCRepPayloadSetPropInt(payload, OC_RSRVD_EXPIRES_IN,
-                           cloud->session->expireSin);
-    ASSERT_TRUE(!SessionParsePayload(payload, session));
-    SessionFree(session);
-    session = (session_t *)OICCalloc(1, sizeof(session_t));
-    OCRepPayloadSetPropString(payload, OC_RSRVD_USER_UUID,
-                              cloud->session->uid);
-    ASSERT_TRUE(SessionParsePayload(payload, session));
-    SessionFree(session);
-    session = (session_t *)OICCalloc(1, sizeof(session_t));
+    ASSERT_FALSE(CloudSignUpParsePayload(NULL, NULL));
+
+    payload = OCRepPayloadCreate();
+    ASSERT_TRUE(NULL != payload);
+
+    cloud = (OicCloud_t *)OICCalloc(1, sizeof(OicCloud_t));
+    ASSERT_TRUE(NULL != cloud);
+    cloud->session = (session_t *)OICCalloc(1, sizeof(session_t));
+    ASSERT_TRUE(NULL != cloud->session);
+
+    ASSERT_FALSE(CloudSignUpParsePayload(payload, cloud));
+    FreeCloud(cloud);
+    cloud = (OicCloud_t *)OICCalloc(1, sizeof(OicCloud_t));
+    ASSERT_TRUE(NULL != cloud);
+    cloud->session = (session_t *)OICCalloc(1, sizeof(session_t));
+    ASSERT_TRUE(NULL != cloud->session);
+
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ACCESS_TOKEN, OC_RSRVD_ACCESS_TOKEN);
+    ASSERT_FALSE(CloudSignUpParsePayload(payload, cloud));
+    ASSERT_TRUE(NULL != cloud->session->accessToken);
+    FreeCloud(cloud);
+    cloud = (OicCloud_t *)OICCalloc(1, sizeof(OicCloud_t));
+    ASSERT_TRUE(NULL != cloud);
+    cloud->session = (session_t *)OICCalloc(1, sizeof(session_t));
+    ASSERT_TRUE(NULL != cloud->session);
+
+    OCRepPayloadSetPropString(payload, OC_RSRVD_REFRESH_TOKEN, OC_RSRVD_REFRESH_TOKEN);
+    ASSERT_FALSE(CloudSignUpParsePayload(payload, cloud));
+    ASSERT_TRUE(NULL != cloud);
+    FreeCloud(cloud);
+    cloud = (OicCloud_t *)OICCalloc(1, sizeof(OicCloud_t));
+    ASSERT_TRUE(NULL != cloud);
+    cloud->session = (session_t *)OICCalloc(1, sizeof(session_t));
+    ASSERT_TRUE(NULL != cloud->session);
+
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_EXPIRES_IN, 10);
+    ASSERT_FALSE(CloudSignUpParsePayload(payload, cloud));
+    ASSERT_TRUE(NULL != cloud);
+    FreeCloud(cloud);
+    cloud = (OicCloud_t *)OICCalloc(1, sizeof(OicCloud_t));
+    ASSERT_TRUE(NULL != cloud);
+    cloud->session = (session_t *)OICCalloc(1, sizeof(session_t));
+    ASSERT_TRUE(NULL != cloud->session);
+
+    OCRepPayloadSetPropString(payload, OC_RSRVD_USER_UUID, OC_RSRVD_USER_UUID);
+    ASSERT_TRUE(CloudSignUpParsePayload(payload, cloud));
+    ASSERT_TRUE(NULL != cloud);
+    FreeCloud(cloud);
+    cloud = (OicCloud_t *)OICCalloc(1, sizeof(OicCloud_t));
+    ASSERT_TRUE(NULL != cloud);
+    cloud->session = (session_t *)OICCalloc(1, sizeof(session_t));
+    ASSERT_TRUE(NULL != cloud->session);
+
+
     OCRepPayloadSetPropString(payload, OC_RSRVD_REDIRECT_URI,
-                              cloud->session->redirectUri);
+                              cloud->redirectUri);
+    ASSERT_TRUE(CloudSignUpParsePayload(payload, cloud));
+    ASSERT_TRUE(NULL != cloud);
 
-    ASSERT_TRUE(SessionParsePayload(payload, session));
-    SessionFree(session);
-    session = (session_t *)OICCalloc(1, sizeof(session_t));
-
-    SessionFree(session);
     OCPayloadDestroy((OCPayload *)payload);
     FreeCloud(cloud);
 }
-
 
 TEST(CloudResourceTest, handleCloudSignOutResponseFULL)
 {
@@ -901,7 +946,6 @@ TEST(CloudResourceTest, handleCloudSignOutResponseFULL)
 
     OCPayloadDestroy((OCPayload *)response->payload);
     OICFree(response);
-    FreeCloud(cloud);
 }
 
 TEST(CloudResourceTest, UpdateCloudPersistentStorageFULL)

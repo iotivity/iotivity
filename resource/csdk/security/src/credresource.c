@@ -3959,7 +3959,7 @@ void GetPrimaryCertKey(ByteArray_t * key)
     {
         size_t length = temp->privateData.len;
 
-        if ((SIGNED_ASYMMETRIC_KEY == temp->credType || ASYMMETRIC_KEY == temp->credType) &&
+        if ((SIGNED_ASYMMETRIC_KEY == temp->credType) &&
             (0 < length) &&
             (NULL != temp->credUsage) &&
             (0 == strcmp(temp->credUsage, PRIMARY_CERT)))

@@ -424,6 +424,35 @@ FILE* server_fopen(const char *path, const char *mode)
     }
 }
 
+static int keyEvent(int *key)
+{
+#if defined(WITH_POSIX)
+    struct timeval tv;
+    fd_set fd;
+
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+
+    FD_ZERO(&fd);
+    FD_SET(STDIN_FILENO, &fd);
+
+    select(STDIN_FILENO + 1, &fd, NULL, NULL, &tv);
+
+    if (FD_ISSET(STDIN_FILENO, &fd))
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: pressed key", __func__);
+        if (key != NULL)
+        {
+            *key = getchar();
+        }
+        return 1;
+    }
+#else
+    OC_UNUSED(key);
+#endif // WITH_POSIX
+    return 0;
+}
+
 int main(void)
 {
     struct timespec timeout;
@@ -466,6 +495,21 @@ int main(void)
             return 0;
         }
         nanosleep(&timeout, NULL);
+        int key = 0;
+        if (keyEvent(&key))
+        {
+            OIC_LOG_V(DEBUG, TAG, "pressed key: %d", key);
+#if defined(__WITH_TLS__) && defined(WITH_CLOUD)
+            if (111 == key)//o
+            {
+                StopClouds();
+            }
+            else if( 100 == key)//d
+            {
+                DeleteCloudAccount();
+            }
+#endif // __WITH_TLS__ && WITH_CLOUD
+        }
     }
 
     OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");

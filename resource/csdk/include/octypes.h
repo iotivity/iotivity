@@ -78,7 +78,7 @@ extern "C" {
 #define OC_RSRVD_KEEPALIVE_URI                "/oic/ping"
 
 /** Cloudconf URI.*/
-#define OC_RSRVD_CLOUDCONF_URI                "/oic/cloudconf"
+#define OC_RSRVD_CLOUDCONF_URI                "/CoapCloudConfResURI"
 
 /** Presence */
 
