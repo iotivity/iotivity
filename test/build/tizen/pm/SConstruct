@@ -61,7 +61,14 @@ IOTIVITY_INCLUDES = [
     iotivity_root + '/extlibs/base64',
     iotivity_root + '/extlibs/tinycbor/tinycbor/src',
     iotivity_root + '/extlibs/mbedtls/mbedtls/include',
-    iotivity_root + '/extlibs/mbedtls/mbedtls/include/mbedtls'
+    iotivity_root + '/extlibs/mbedtls/mbedtls/include/mbedtls',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/c_common/octhread/include',
+    iotivity_root + '/resource/csdk/stack/include/experimental',
+    '/usr/include/iotivity/c_common' 
+    
+    
 ]
 
 cert_include_paths = [
