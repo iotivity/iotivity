@@ -46,9 +46,7 @@
 
 #define LOGIN_OK 4
 
-static const int TIME_OUT_SHIFT = 3;
-
-#define CBOR_CLOUD_MAP_SIZE 4
+#define SESSION_CBOR_CLOUD_MAP_SIZE 3
 #define MAX_STR_LEN 2048
 
 const char *OIC_JSON_CLOUD_SESSION_ACCESS_TOKEN = "accesstoken";
@@ -56,10 +54,10 @@ const char *OIC_JSON_CLOUD_SESSION_REFRESH_TOKEN = "refreshtoken";
 const char *OIC_JSON_CLOUD_SESSION_UID = "uid";
 
 #if !defined(__MANDATORY__)
-#define SESSION_CBOR_CLOUD_MAP_SIZE 4
+#define CBOR_CLOUD_MAP_SIZE 5
 const char *OIC_JSON_CLOUD_SESSION_REDIRECT_URL = "redirecturl";
 #else
-#define SESSION_CBOR_CLOUD_MAP_SIZE 3
+#define CBOR_CLOUD_MAP_SIZE 4
 #endif // __MANDATORY__
 
 static const size_t CBOR_DEFAULT_SIZE = MAX_STR_LEN * (CBOR_CLOUD_MAP_SIZE +
@@ -88,10 +86,7 @@ void SessionFree(session_t *session)
     }
     OICFree(session->uid);
     session->uid = NULL;
-#if !defined(__MANDATORY__)
-    OICFree(session->redirectUri);
-    session->redirectUri = NULL;
-#endif // __MANDATORY__
+
     OICFree(session);
     session = NULL;
 }
@@ -100,9 +95,11 @@ OicCloud_t *FreeCloud(OicCloud_t *cloud)
 {
     if (!cloud)
     {
+        OIC_LOG_V(WARNING, TAG, "%s:Cloud is null", __func__);
         return NULL;
     }
-    cloud->stat = OC_CLOUD_PROV;
+    OIC_LOG_V(DEBUG, TAG, "%s: cloud (%s) state: %s", __func__, cloud->cis, GetCloudStatus(cloud));
+    cloud->stat = OC_CLOUD_EXIT;
 
     if (cloud->pid)
     {
@@ -126,16 +123,36 @@ OicCloud_t *FreeCloud(OicCloud_t *cloud)
 
     OicCloud_t *ret = cloud->next;
     cloud->next = NULL;
-    OICFree(cloud->apn);
-    cloud->apn = NULL;
-    OICFree(cloud->cis);
-    cloud->cis = NULL;
-    OICFree(cloud->at);
-    cloud->at = NULL;
-    OICFree(cloud->sid);
-    cloud->sid = NULL;
 
-    SessionFree(cloud->session);
+    if (cloud->apn)
+    {
+        OICFree(cloud->apn);
+        cloud->apn = NULL;
+    }
+    if (cloud->cis)
+    {
+        OICFree(cloud->cis);
+        cloud->cis = NULL;
+    }
+    if (cloud->at)
+    {
+        OICFree(cloud->at);
+        cloud->at = NULL;
+    }
+    if (cloud->sid)
+    {
+        OICFree(cloud->sid);
+        cloud->sid = NULL;
+    }
+    if (cloud->session)
+    {
+        SessionFree(cloud->session);
+        cloud->session = NULL;
+    }
+#if !defined(__MANDATORY__)
+    OICFree(cloud->redirectUri);
+    cloud->redirectUri = NULL;
+#endif // __MANDATORY__
 
     OICFree(cloud);
     cloud = NULL;
@@ -143,11 +160,42 @@ OicCloud_t *FreeCloud(OicCloud_t *cloud)
     return ret;
 }
 
-bool CloudFind(OicCloud_t *list, const OicCloud_t *cloud)
+bool strCopy(const char *src, char **dst)
+{
+    if (!src || !dst)
+    {
+        return false;
+    }
+    OICFree(*dst);
+
+    size_t len = strlen(src) + 1;
+    *dst = (char *)OICCalloc(1, len);
+    if (*dst)
+    {
+        OICStrcpy(*dst, len, src);
+        return true;
+    }
+    return false;
+}
+
+bool CloudCopy(const OicCloud_t *src, OicCloud_t *dst)
+{
+    if (!strCopy(src->apn, &dst->apn)
+        || !strCopy(src->cis, &dst->cis)
+        || !strCopy(src->at, &dst->at)
+        || !strCopy(src->sid, &dst->sid))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+OicCloud_t *CloudFind(OicCloud_t *list, const OicCloud_t *cloud)
 {
     if (!list || !cloud || !cloud->cis)
     {
-        return false;
+        return NULL;
     }
 
     OicCloud_t *p1 = NULL, *p2 = NULL;
@@ -155,10 +203,10 @@ bool CloudFind(OicCloud_t *list, const OicCloud_t *cloud)
     {
         if (p1 && p1->cis && 0 == strcmp(p1->cis, cloud->cis))
         {
-            return true;
+            return p1;
         }
     }
-    return false;
+    return NULL;
 }
 
 
@@ -170,6 +218,41 @@ static size_t CloudsCount(const OicCloud_t *clouds)
         size++;
     }
     return size;
+}
+
+bool ValidCloud(OicCloud_t *cloud)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, false);
+
+    bool ret = true;
+
+    if (!cloud->apn)
+    {
+        OIC_LOG_V(INFO, TAG, "%s: Authorization Provider Name validate: %s", __func__,
+                  cloud->apn ? cloud->apn : "NULL");
+    }
+    if (!cloud->cis || 0 != strncmp(cloud->cis, "coaps+tcp://", 11))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: OCF Cloud URL validate: %s", __func__, cloud->cis ? cloud->cis : "NULL");
+        ret = false;
+    }
+    if (!cloud->at)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Access token validate: %s", __func__, cloud->at ? cloud->at : "NULL");
+        ret = false;
+    }
+
+#if !defined(__MANDATORY__)
+    if (cloud->redirectUri && 0 != strncmp(cloud->redirectUri, "coaps+tcp://", 11))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: OCF Redirect URI validate: %s", __func__,
+                  cloud->redirectUri ? cloud->redirectUri : "NULL");
+        ret = false;
+    }
+#endif // __MANDATORY__
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+    return ret;
 }
 
 OCStackResult CloudSessionToCBORPayload(const session_t *session, CborEncoder *map)
@@ -201,17 +284,6 @@ OCStackResult CloudSessionToCBORPayload(const session_t *session, CborEncoder *m
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: uid");
     cborError = cbor_encode_text_string(map, session->uid, strnlen(session->uid, MAX_STR_LEN));
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: uid");
-
-#if !defined(__MANDATORY__)
-    if (session->redirectUri)
-    {
-        cbor_encode_text_string(map, OIC_JSON_CLOUD_SESSION_REDIRECT_URL,
-                            sizeof(OIC_JSON_CLOUD_SESSION_REDIRECT_URL) + 1);
-        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: redirect uri");
-        cbor_encode_text_string(map, session->redirectUri, strnlen(session->redirectUri, MAX_STR_LEN));
-        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: redirect uri");
-    }
-#endif // __MANDATORY__
 
     ret = OC_STACK_OK;
 exit:
@@ -279,15 +351,29 @@ static OCStackResult CloudToCBORPayloadInternal(const OicCloud_t *clouds, uint8_
         {
             mapSize += SESSION_CBOR_CLOUD_MAP_SIZE + 1;
         }
+
+        if (NULL == cloud->apn)
+        {
+            mapSize--;
+        }
+#if !defined(__MANDATORY__)
+        if (NULL == cloud->redirectUri)
+        {
+            mapSize--;
+        }
+#endif
+
         cborError = cbor_encoder_create_map(&cloudArray, &map, mapSize);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add map");
 
-        cborError = cbor_encode_text_string(&map, OIC_JSON_CLOUD_APN,
+        if (NULL != cloud->apn)
+        {
+            cborError = cbor_encode_text_string(&map, OIC_JSON_CLOUD_APN,
                                             sizeof(OIC_JSON_CLOUD_APN) + 1);
-        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: apn");
-        cborError = cbor_encode_text_string(&map, cloud->apn, strnlen(cloud->apn, MAX_STR_LEN));
-        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: apn");
-
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: apn");
+            cborError = cbor_encode_text_string(&map, cloud->apn, strnlen(cloud->apn, MAX_STR_LEN));
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: apn");
+        }
         cborError = cbor_encode_text_string(&map, OIC_JSON_CLOUD_CIS,
                                             sizeof(OIC_JSON_CLOUD_CIS) + 1);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: cis");
@@ -327,6 +413,17 @@ static OCStackResult CloudToCBORPayloadInternal(const OicCloud_t *clouds, uint8_
                 }
             }
         }
+
+#if !defined(__MANDATORY__)
+        if (NULL != cloud->redirectUri)
+        {
+            cbor_encode_text_string(&map, OIC_JSON_CLOUD_SESSION_REDIRECT_URL,
+                                    sizeof(OIC_JSON_CLOUD_SESSION_REDIRECT_URL) + 1);
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: redirect uri");
+            cbor_encode_text_string(&map, cloud->redirectUri, strnlen(cloud->redirectUri, MAX_STR_LEN));
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: redirect uri");
+        }
+#endif // __MANDATORY__
 
         cborError = cbor_encoder_close_container(&cloudArray, &map);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed close cloud map");
@@ -520,7 +617,7 @@ OCStackResult CBORPayloadToCloud(const uint8_t *cborPayload, size_t size, OicClo
 #if !defined(__MANDATORY__)
                 else if (strncmp(name, OIC_JSON_CLOUD_SESSION_REDIRECT_URL, len)  == 0)
                 {
-                    cborError = cbor_value_dup_text_string(&map, &cloud->session->redirectUri, &len, NULL);
+                    cborError = cbor_value_dup_text_string(&map, &cloud->redirectUri, &len, NULL);
                     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed get redirect uri");
                     goto next;
                 }
@@ -585,7 +682,7 @@ static OCStackApplicationResult handleCloudTokenRefreshResponse(void *ctx,
     OC_UNUSED(handle);
 
     VERIFY_NOT_NULL_RETURN(TAG, response, ERROR, OC_STACK_DELETE_TRANSACTION);
-    VERIFY_NOT_NULL_RETURN(TAG, response->payload, ERROR, OC_STACK_DELETE_TRANSACTION);
+
 #if !defined(NDEBUG)
     OIC_LOG_PAYLOAD(DEBUG, response->payload);
 #endif
@@ -593,15 +690,19 @@ static OCStackApplicationResult handleCloudTokenRefreshResponse(void *ctx,
     OicCloud_t *cloud = (OicCloud_t *)ctx;
     VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, OC_STACK_DELETE_TRANSACTION);
     VERIFY_NOT_NULL_RETURN(TAG, cloud->session, ERROR, OC_STACK_DELETE_TRANSACTION);
-//TODO clarify response result code from cloud
-    /*
-        if (response->result)
+
+    if (response->result)
+    {
+        OIC_LOG_V(INFO, TAG, "%s: result response: %d", __func__, response->result);
+        if (OC_STACK_RESOURCE_CHANGED < response->result)
         {
-            OIC_LOG_V(ERROR, TAG, "%s: result response: %d", __func__, response->result);
-            SessionFree(cloud->session);
-            cloud->session = NULL;
+            OIC_LOG_V(ERROR, TAG, "%s: refresh token error", __func__);
+            cloud->stat = OC_CLOUD_ERROR_REFRESHTOKEN;
         }
-    */
+    }
+
+    VERIFY_NOT_NULL_RETURN(TAG, response->payload, ERROR, OC_STACK_DELETE_TRANSACTION);
+
     if (!OCRepPayloadGetPropString((OCRepPayload *)response->payload, OC_RSRVD_REFRESH_TOKEN,
                                    &cloud->session->refreshToken))
     {
@@ -630,6 +731,11 @@ OCStackResult OCCloudTokenRefresh(OicCloud_t *cloud)
     OCStackResult ret = OC_STACK_OK;
 
     VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, OC_STACK_INVALID_PARAM);
+    if (OC_CLOUD_TOKEN_REFRESH4 < cloud->stat)
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: invalid cloud status: %s", __func__, GetCloudStatus(cloud));
+        return OC_STACK_INVALID_PARAM;
+    }
     VERIFY_NOT_NULL_RETURN(TAG, cloud->cis, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cloud->session, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cloud->session->uid, ERROR, OC_STACK_INVALID_PARAM);
@@ -675,29 +781,56 @@ static void *CloudTokenRefresh(void *data)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
+    long ts_sec_eta = 0L;
+
+    struct timespec second =
+    {
+        .tv_sec  = 1L,
+        .tv_nsec = 0L
+    };
+
     OicCloud_t *cloud = (OicCloud_t *)data;
     VERIFY_NOT_NULL(TAG, cloud, ERROR);
+    VERIFY_NOT_NULL(TAG, cloud->session, ERROR);
 
     OIC_LOG_V(INFO, TAG, "%s: cloud(%s) refresh start", __func__, cloud->cis);
 
+    ts_sec_eta = cloud->session->expireSin;
     cloud->stat = OC_CLOUD_TOKEN_REFRESH0;
 
     while (OC_CLOUD_TOKEN_REFRESH4 > cloud->stat)
     {
-
-        long ts_nsec = cloud->session->expireSin - TIME_OUT_SHIFT;
-        if (2 < ts_nsec)
+        long ts_sec = ts_sec_eta;;
+        while (ts_sec--)
         {
-            ts_nsec = 1;
-        }
-        struct timespec timeout = {ts_nsec / 1000000000, ts_nsec % 1000000000};
+            nanosleep(&second, NULL);
 
-        nanosleep(&timeout, NULL);
+            VERIFY_NOT_NULL(TAG, cloud->session, ERROR);
+
+            if (cloud->session->expireSin != ts_sec_eta)
+            {
+                if (-1 == cloud->session->expireSin)
+                {
+                    OIC_LOG_V(DEBUG, TAG, "%s: cloud(%s) expireSin: -1", __func__, cloud->cis);
+                    goto exit;
+                }
+                ts_sec = ts_sec_eta = cloud->session->expireSin;
+            }
+
+            if (OC_CLOUD_TOKEN_REFRESH4 < cloud->stat)
+            {
+                break;
+            }
+        }
 
         if (OC_STACK_OK != OCCloudTokenRefresh(cloud))
         {
             OIC_LOG_V(ERROR, TAG, "%s: token refresh", __func__);
-            cloud->stat = (CloudStatus)(cloud->stat + 1);
+
+            if (OC_CLOUD_TOKEN_REFRESH4 >= cloud->stat)
+            {
+                cloud->stat = (CloudStatus)(cloud->stat + 1);
+            }
         }
     }
 
@@ -727,12 +860,30 @@ static OCStackApplicationResult handleCloudSignInResponse(void *ctx,
 
     OC_UNUSED(handle);
 
+    OicCloud_t *cloud = (OicCloud_t *)ctx;
+
+    VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, OC_STACK_DELETE_TRANSACTION);
     VERIFY_NOT_NULL_RETURN(TAG, response, ERROR, OC_STACK_DELETE_TRANSACTION);
 
     if (LOGIN_OK != response->result)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: Sign In error: result: %d", __func__, response->result);
-        return OC_STACK_DELETE_TRANSACTION;
+        OIC_LOG_V(ERROR, TAG, "%s: Login error: %d", __func__, response->result);
+        if ( OC_STACK_COMM_ERROR == response->result || OC_STACK_TIMEOUT == response->result )
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Unreachable host or network time out", __func__);
+            cloud->stat = OC_CLOUD_ERROR_UNREACHABLE;
+        }
+        else if ( OC_STACK_ERROR == response->result )
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: TLS error or other network stack error", __func__);
+            cloud->stat = OC_CLOUD_ERROR_TLS;
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Authorization error", __func__);
+            cloud->stat = OC_CLOUD_ERROR_SIGNUP;
+        }
+        goto exit;
     }
 
     VERIFY_NOT_NULL_RETURN(TAG, response->payload, ERROR, OC_STACK_DELETE_TRANSACTION);
@@ -741,9 +892,6 @@ static OCStackApplicationResult handleCloudSignInResponse(void *ctx,
     OIC_LOG_PAYLOAD(DEBUG, response->payload);
 #endif
 
-    OicCloud_t *cloud = (OicCloud_t *)ctx;
-
-    VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, OC_STACK_DELETE_TRANSACTION);
     VERIFY_NOT_NULL_RETURN(TAG, cloud->session, ERROR, OC_STACK_DELETE_TRANSACTION);
 
     if (!OCRepPayloadGetPropInt((OCRepPayload *)response->payload, OC_RSRVD_EXPIRES_IN,
@@ -773,7 +921,7 @@ static OCStackApplicationResult handleCloudSignInResponse(void *ctx,
         cloud->stat = OC_CLOUD_ERROR_SIGNIN;
         OIC_LOG_V(ERROR, TAG, "%s: cloud status: %s", __func__, GetCloudStatus(cloud));
     }
-
+exit:
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -809,6 +957,10 @@ static OCStackApplicationResult handleCloudSignOutResponse(void *ctx,
         }
     */
     OIC_LOG(INFO, TAG, "Sign Out OK");
+
+    cloud->accessToken = (char*)OICCalloc(1, strlen(cloud->session->accessToken) + 1);
+    OICStrcpy(cloud->accessToken, strlen(cloud->session->accessToken) + 1, cloud->session->accessToken);
+
     SessionFree(cloud->session);
     cloud->session = NULL;
     cloud->stat = OC_CLOUD_PROV;
@@ -887,45 +1039,46 @@ OCStackResult OCCloudSignOut(OicCloud_t *cloud)
 }
 
 /**
- * Session parse payload
+ * SignUp parse payload
  *
  * @param[in] payload
- * @param[in] session session data
- * @return  OCStackResult application result
+ * @param[out] pointer to cloud
+ * @return  bool: true if Ok
  */
-static bool SessionParsePayload(const OCRepPayload *payload, session_t *session)
+static bool CloudSignUpParsePayload(const OCRepPayload *payload, OicCloud_t *cloud)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
     bool ret = true;
     VERIFY_NOT_NULL_RETURN(TAG, payload, ERROR, false);
-    VERIFY_NOT_NULL_RETURN(TAG, session, ERROR, false);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, false);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud->session, ERROR, false);
 
     if (!OCRepPayloadGetPropString(payload, OC_RSRVD_ACCESS_TOKEN,
-                                   &session->accessToken))
+                                   &cloud->session->accessToken))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_ACCESS_TOKEN);
         ret = false;
     }
     if (!OCRepPayloadGetPropString(payload, OC_RSRVD_REFRESH_TOKEN,
-                                   &session->refreshToken))
+                                   &cloud->session->refreshToken))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_REFRESH_TOKEN);
         ret = false;
     }
-    if (!OCRepPayloadGetPropInt(payload, OC_RSRVD_EXPIRES_IN, &session->expireSin))
+    if (!OCRepPayloadGetPropInt(payload, OC_RSRVD_EXPIRES_IN, &cloud->session->expireSin))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_EXPIRES_IN);
         ret = false;
     }
     if (!OCRepPayloadGetPropString(payload, OC_RSRVD_USER_UUID,
-                                   &session->uid))
+                                   &cloud->session->uid))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_USER_UUID);
         ret = false;
     }
 #if !defined(__MANDATORY__)
     if (!OCRepPayloadGetPropString(payload, OC_RSRVD_REDIRECT_URI,
-                                   &session->redirectUri))
+                                   &cloud->redirectUri))
     {
         OIC_LOG_V(WARNING, TAG, "Can't get: %s", OC_RSRVD_REDIRECT_URI);
     }
@@ -934,6 +1087,35 @@ static bool SessionParsePayload(const OCRepPayload *payload, session_t *session)
     return ret;
 }
 
+/**
+ * Sends Delete request to cloud
+ *
+ * @param[in] ctx                    context
+ * @param[in] handle                 handle
+ * @param[in] response               response from peer
+ * @return  OCStackApplicationResult application result
+ */
+static OCStackApplicationResult handleCloudDeleteResponse(void *ctx,
+        OCDoHandle handle,
+        OCClientResponse *response)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+
+    OC_UNUSED(handle);
+    OCStackApplicationResult ret = OC_STACK_DELETE_TRANSACTION;
+    OicCloud_t *cloud = (OicCloud_t *)ctx;
+
+    VERIFY_NOT_NULL_RETURN(TAG, response, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, cloud->session, ERROR, OC_STACK_DELETE_TRANSACTION);
+
+    OIC_LOG_V(ERROR, TAG, "%s: response result: %d", __func__, response->result);
+
+    cloud->stat = OC_CLOUD_EXIT;
+
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+    return ret;
+}
 /**
  * Sends Sign Up request to cloud
  *
@@ -958,7 +1140,21 @@ static OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
     if (LOGIN_OK != response->result)
     {
         OIC_LOG_V(ERROR, TAG, "%s: Login error: %d", __func__, response->result);
-        cloud->stat = OC_CLOUD_ERROR_SIGNUP;
+        if ( OC_STACK_COMM_ERROR == response->result || OC_STACK_TIMEOUT == response->result )
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Unreachable host or network time out", __func__);
+            cloud->stat = OC_CLOUD_ERROR_UNREACHABLE;
+        }
+        else if ( OC_STACK_ERROR == response->result )
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: TLS error or other network stack error", __func__);
+            cloud->stat = OC_CLOUD_ERROR_TLS;
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Authorization error", __func__);
+            cloud->stat = OC_CLOUD_ERROR_SIGNUP;
+        }
         goto exit;
     }
 
@@ -983,7 +1179,7 @@ static OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
 
     VERIFY_NOT_NULL_RETURN(TAG, cloud->session, ERROR, OC_STACK_DELETE_TRANSACTION);
 
-    if (!SessionParsePayload((OCRepPayload *)response->payload, cloud->session))
+    if (!CloudSignUpParsePayload((OCRepPayload *)response->payload, cloud))
     {
         OIC_LOG_V(ERROR, TAG, "%s: parse payload", __func__);
         SessionFree(cloud->session);
@@ -991,6 +1187,27 @@ static OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
         goto exit;
     }
 
+#if !defined(__MANDATORY__)
+    if (cloud->redirectUri)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: redirect to: %s", __func__, cloud->redirectUri);
+
+        if (ValidCloud(cloud))
+        {
+            if (!strCopy(cloud->redirectUri, &cloud->cis))
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: copy redirect uri", __func__);
+                goto exit;
+            }
+            OICFree(cloud->redirectUri);
+            cloud->redirectUri = NULL;
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: cannot redirect", __func__);
+        }
+    }
+#endif // __MANDATORY__
     OIC_LOG_V(INFO, TAG, "%s: Sign Up OK", __func__);
     OCCloudSignIn(cloud);
 exit:
@@ -998,11 +1215,11 @@ exit:
     return ret;
 }
 
-OCStackResult OCCloudSignUp(OicCloud_t *cloud)
+static OCStackResult OCCloudAccountResource(OicCloud_t *cloud, OCMethod method)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
-    char uri[MAX_URI_LENGTH] = { 0 };
+    char uri[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = { 0 };
     OCStackResult ret = OC_STACK_OK;
 
     VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, OC_STACK_INVALID_PARAM);
@@ -1016,34 +1233,54 @@ OCStackResult OCCloudSignUp(OicCloud_t *cloud)
         return OC_STACK_ERROR;
     }
 
+    if (OC_REST_POST != method && OC_REST_DELETE != method)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: unsupported method: %d", __func__, method);
+        return OC_STACK_ERROR;
+    }
+
     char *deviceId = getDeviceId();
     VERIFY_NON_NULL_RET(deviceId, TAG, "Can't get the device id", OC_STACK_ERROR);
-
-    snprintf(uri, MAX_URI_LENGTH, "%s%s", cloud->cis, OC_RSRVD_ACCOUNT_URI);
-
-    OCRepPayload *payload = OCRepPayloadCreate();
-    VERIFY_NON_NULL_RET(payload, TAG, "Failed to allocate payload", OC_STACK_NO_MEMORY);
-
-    OCRepPayloadSetPropString(payload, OC_RSRVD_DEVICE_ID, deviceId);
-#if !defined(__MANDATORY__)
-    if (cloud->apn)
-    {
-        OCRepPayloadSetPropString(payload, OC_RSRVD_AUTHPROVIDER, cloud->apn);
-    }
-#endif // __MANDATORY__
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ACCESS_TOKEN, cloud->at);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_ID, cloud->sid);
 
     OCCallbackData cbData =
     {
         .context = (void *)cloud,
-        .cb = handleCloudSignUpResponse,
+        .cb = NULL,
         .cd = NULL
     };
 
-    cloud->stat = OC_CLOUD_SIGNUP;
+    OCRepPayload *payload = OCRepPayloadCreate();
 
-    ret = OCDoResource(NULL, OC_REST_POST, uri, NULL, (OCPayload *)payload,
+    if (OC_REST_POST == method)
+    {
+        snprintf(uri, MAX_URI_LENGTH, "%s%s", cloud->cis, OC_RSRVD_ACCOUNT_URI);
+
+        VERIFY_NON_NULL_RET(payload, TAG, "Failed to allocate payload", OC_STACK_NO_MEMORY);
+
+        OCRepPayloadSetPropString(payload, OC_RSRVD_DEVICE_ID, deviceId);
+        OCRepPayloadSetPropString(payload, OC_RSRVD_ACCESS_TOKEN, cloud->at);
+
+#if !defined(__MANDATORY__)
+        if (cloud->apn)
+        {
+            VERIFY_NOT_NULL_RETURN(TAG, cloud->apn, ERROR, OC_STACK_INVALID_PARAM);
+            OCRepPayloadSetPropString(payload, OC_RSRVD_AUTHPROVIDER, cloud->apn);
+        }
+#endif // __MANDATORY__
+        OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_ID, cloud->sid);
+
+        cbData.cb = handleCloudSignUpResponse;
+
+        cloud->stat = OC_CLOUD_SIGNUP;
+    }
+    else
+    {
+        snprintf(uri, MAX_URI_LENGTH + MAX_QUERY_LENGTH, "%s%s%s%s%s%s", cloud->cis, OC_RSRVD_ACCOUNT_URI, "?di=", deviceId, "&accesstoken=", cloud->accessToken);
+        cloud->stat = OC_CLOUD_EXIT;
+        cbData.cb = handleCloudDeleteResponse;
+    }
+
+    ret = OCDoResource(NULL, method, uri, NULL, (OCPayload *)payload,
                        CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 
     OIC_LOG_V(INFO, TAG, "%s: cloud(%s) sign in", __func__, cloud->cis);
@@ -1052,6 +1289,26 @@ OCStackResult OCCloudSignUp(OicCloud_t *cloud)
 
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 
+    return ret;
+}
+
+OCStackResult OCCloudSignUp(OicCloud_t *cloud)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+
+    OCStackResult ret = OCCloudAccountResource(cloud, OC_REST_POST);
+
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+    return ret;
+}
+
+OCStackResult OCCloudDelete(OicCloud_t *cloud)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+
+    OCStackResult ret = OCCloudAccountResource(cloud, OC_REST_DELETE);
+
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
     return ret;
 }
 
