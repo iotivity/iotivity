@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* Copyright 2017 Samsung Electronics All Rights Reserved.
+* Copyright 2018 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -254,6 +254,7 @@ void joinResourceToLocalGroup(shared_ptr< OCResource >);
 bool joinGroup(OCResourceHandle, OCResourceHandle);
 void deleteGroup(void);
 int selectResource(void);
+void setHostEndpoint(shared_ptr<OCResource>);
 int selectResource(string);
 int selectLocalResource(void);
 void selectEndpoint(shared_ptr< OCResource >);
@@ -3869,6 +3870,7 @@ AttributeValue getAttributeValueFromUser()
             value = valueArray;
             break;
     }
+
     return value;
 }
 
@@ -4262,6 +4264,20 @@ void cancelObservePassively()
     }
 }
 
+void sendPingMessage()
+{
+    int selection = selectResource();
+    if (selection != -1)
+    {
+        shared_ptr< OCResource > resource = g_foundResourceList.at(selection);
+        OCSendPingMessage(&resource->getDeviceAddress(), true, NULL);
+    }
+    else
+    {
+        cout << "No resource to send Ping!!" << endl;
+    }
+}
+
 void setDeviceWESInfo()
 {
     cout << "SetDeviceInfo IN" << endl;
@@ -4364,6 +4380,40 @@ int selectResource()
     }
 
     return selection;
+}
+
+void setHostEndpoint(shared_ptr<OCResource> resource)
+{
+    vector< std::string > allEndPoints = resource->getAllHosts();
+    if (g_isSecuredClient && allEndPoints.size() > 0)
+    {
+        resource->setHost(g_resourceHelper->getOnlySecuredHost(allEndPoints));
+    }
+
+    unsigned int i = 1;
+    do
+    {
+        if (i != 1)
+        {
+            cout << "Invalid endpoint chosen. Please select an appropriate endpoint." << endl;
+            i = 1;
+        }
+        cout << "Please select an endpoint from below found endpoints : "  << endl;
+        cout << "0. Default Endpoint: " << resource->host() << endl;
+        for (string endPoint : allEndPoints)
+        {
+            cout << i << ". Endpoint  : " << endPoint << endl;
+            i++;
+        }
+
+       cin >> i;
+    }
+    while (i > allEndPoints.size());
+
+    if (i != 0)
+    {
+        resource->setHost(allEndPoints[i - 1]);
+    }
 }
 
 int selectResource(string resourceType)
@@ -4498,6 +4548,8 @@ void showMenu(int argc, char* argv[])
     cout << "\t\t " << setw(3) << "36" << ". Set Quality of Service - CON(Confirmable)" << endl;
     cout << "\t\t " << setw(3) << "37" << ". Set Quality of Service - NON(Non-Confirmable)" << endl;
     cout << "\t\t " << setw(3) << "38" << ". Reset Secure Storage" << endl;
+    cout << "\t\t " << setw(3) << "39" << ". Send POST to Cloud Mediator" << endl;
+    cout << "\t\t " << setw(3) << "40" << ". Send Ping Message" << endl;
     cout << "\t Smart Home Vertical Resource Creation:" << endl;
     cout << "\t\t " << setw(3) << "101" << ". Create Smart TV Device" << endl;
     cout << "\t\t " << setw(3) << "102" << ". Create Air Conditioner Device" << endl;
@@ -4787,6 +4839,11 @@ void selectMenu(int choice)
             sendPostCloudMediator();
             break;
 
+        case 40:
+            sendPingMessage();
+            cout << "Ping Message sent" << endl;
+            break;
+
         case 101:
             createTvDevice();
             break;
@@ -4898,3 +4955,4 @@ void handleMenu(int argc, char* argv[])
     selectMenu(choice);
     showMenu(0, NULL);
 }
+

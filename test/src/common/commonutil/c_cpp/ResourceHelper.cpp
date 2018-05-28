@@ -325,6 +325,11 @@ void ResourceHelper::printPayload(OCRepPayload* incomingPayload, OCRepresentatio
                 printPayload(repValue->obj, rep, level);
                 cout << "\t}" << endl;
             }
+            if (repValue->type == OCRepPayloadPropType::OCREP_PROP_NULL)
+            {
+                value = "[]";
+            }
+
             cout << value << endl;
             repValue = repValue->next;
         }
