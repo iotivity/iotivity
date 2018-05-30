@@ -95,7 +95,7 @@ public class MessageQueueServer {
         // configuration provided by docker env
         String tlsModeEnv = System.getenv("TLS_MODE");
         if (tlsModeEnv != null) {
-            coapServerPort = Constants.DEFAULT_COAP_PORT;
+            coapServerPort = Integer.parseInt(System.getenv("COAP_PORT"));
             tlsMode = Integer.parseInt(tlsModeEnv) == 1;
             zookeeperHost = System.getenv("ZOOKEEPER_ADDRESS") + ":"
                     + System.getenv("ZOOKEEPER_PORT");

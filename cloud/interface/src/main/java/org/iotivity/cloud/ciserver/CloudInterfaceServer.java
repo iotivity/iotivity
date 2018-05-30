@@ -47,6 +47,7 @@ import org.iotivity.cloud.util.Log;
 
 public class CloudInterfaceServer {
 
+    private static int[]   deviceKeepAliveMinutes = new int[] { 1, 2, 4, 8 };
     private static int     coapServerPort;
     private static boolean tlsMode;
     private static boolean keepAlive = false;
@@ -132,8 +133,7 @@ public class CloudInterfaceServer {
 
         deviceServer.addResource(crlHandler);
 
-        KeepAliveResource resKeepAlive = new KeepAliveResource(
-                new int[] { 1, 2, 4, 8 });
+        KeepAliveResource resKeepAlive = new KeepAliveResource(deviceKeepAliveMinutes);
 
         deviceServer.addResource(resKeepAlive);
 
@@ -197,20 +197,22 @@ public class CloudInterfaceServer {
         // configuration provided by docker env
         String tlsModeEnv = System.getenv("TLS_MODE");
         if (tlsModeEnv != null) {
-            coapServerPort = Constants.DEFAULT_COAP_PORT;
+            coapServerPort = Integer.parseInt(System.getenv("COAP_PORT"));
             resourceDirectoryAddress = System.getenv("RESOURCE_DIRECTORY_ADDRESS");
-            resourceDirectoryPort = Constants.DEFAULT_RESOURCE_DIRECTORY_PORT;
+            resourceDirectoryPort = Integer.parseInt(System.getenv("RESOURCE_DIRECTORY_PORT"));
             accountServerAddress = System.getenv("ACCOUNT_SERVER_ADDRESS");
-            accountServerPort = Constants.DEFAULT_ACCOUNT_SERVER_PORT;
+            accountServerPort = Integer.parseInt(System.getenv("ACCOUNT_SERVER_PORT"));
             messageQueueAddress = System.getenv("MESSAGE_QUEUE_ADDRESS");
-            messageQueuePort = Constants.DEFAULT_MESSAGE_QUEUE_PORT;
+            messageQueuePort = Integer.parseInt(System.getenv("MESSAGE_QUEUE_PORT"));
             hcProxyMode = Integer.parseInt(System.getenv("HC_PROXY_MODE")) == 1;
             hcProxyPort = Constants.DEFAULT_HC_PROXY_PORT;
             websocketMode = Integer.parseInt(System.getenv("WEBSOCKET_MODE")) == 1;
             websocketPort = Constants.DEFAULT_WEBSOCKET_PORT;
             keepAlive = Integer.parseInt(System.getenv("KEEPALIVE_CLOUD")) == 1;
             tlsMode = Integer.parseInt(tlsModeEnv) == 1;
-
+            String keepAliveEnv = System.getenv("DEVICE_KEEPALIVE_MINUTES");
+            if (keepAliveEnv != null && !keepAliveEnv.isEmpty())
+                deviceKeepAliveMinutes = new int[] { Integer.parseInt(keepAliveEnv) };
             return true;
         }
         return false;

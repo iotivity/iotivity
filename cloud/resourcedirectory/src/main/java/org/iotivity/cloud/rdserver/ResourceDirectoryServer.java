@@ -103,7 +103,7 @@ public class ResourceDirectoryServer {
         // configuration provided by docker env
         String tlsModeEnv = System.getenv("TLS_MODE");
         if (tlsModeEnv != null) {
-            coapServerPort = Constants.DEFAULT_COAP_PORT;
+            coapServerPort = Integer.parseInt(System.getenv("COAP_PORT"));
             databaseHost = System.getenv("MONGODB_ADDRESS") + ":"
                     + System.getenv("MONGODB_PORT");
             tlsMode = Integer.parseInt(tlsModeEnv) == 1;
