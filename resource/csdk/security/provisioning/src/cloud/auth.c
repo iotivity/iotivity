@@ -834,11 +834,6 @@ static void *CloudTokenRefresh(void *data)
         }
     }
 
-    if (cloud->session)
-    {
-        SessionFree(cloud->session);
-        cloud->session = NULL;
-    }
 exit:
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
     return NULL;

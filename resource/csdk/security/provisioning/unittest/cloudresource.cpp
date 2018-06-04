@@ -296,11 +296,11 @@ TEST(CloudResourceTest, ValidCloudFULL)
 
 TEST(CloudResourceTest, DeleteCloudListFULL)
 {
-    DeleteCloudList(NULL);
+    DeleteCloudList(NULL, true);
     OicCloud_t *cloud =  getCloud();
     cloud->next =  getCloud();
     cloud->next->next =  getCloud();
-    DeleteCloudList(cloud);
+    DeleteCloudList(cloud, true);
 }
 
 TEST(CloudResourceTest, CreateCloudGetPayloadFULL)
@@ -950,12 +950,12 @@ TEST(CloudResourceTest, handleCloudSignOutResponseFULL)
 
 TEST(CloudResourceTest, UpdateCloudPersistentStorageFULL)
 {
-    DeleteCloudList(gCloud);
+    DeleteCloudList(gCloud, true);
     ASSERT_TRUE(false == UpdateCloudPersistentStorage());
     OicCloud_t *cloud = getCloud();
     LL_APPEND(gCloud, cloud);
     ASSERT_TRUE(true == UpdateCloudPersistentStorage());
-    DeleteCloudList(gCloud);
+    DeleteCloudList(gCloud, true);
     gCloud = NULL;
 }
 

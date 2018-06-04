@@ -66,7 +66,7 @@ static OicCloud_t gDefaultCloud =
     NULL
 };
 
-static void DeleteCloudList(OicCloud_t *clouds)
+static void DeleteCloudList(OicCloud_t *clouds, bool signout)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
@@ -80,7 +80,11 @@ static void DeleteCloudList(OicCloud_t *clouds)
     oc_mutex_lock(gCloudMutex);
     LL_FOREACH_SAFE(clouds, p1, p2)
     {
-        OCCloudSignOut(p1);
+        if (signout)
+        {
+            OCCloudSignOut(p1);
+        }
+        FreeCloud(p1);
         LL_DELETE(clouds, p1);
         p1 = NULL;
     }
@@ -91,7 +95,12 @@ static void DeleteCloudList(OicCloud_t *clouds)
 
 void StopClouds()
 {
-    DeleteCloudList(gCloud);
+    DeleteCloudList(gCloud, true);
+}
+
+void ResetClouds()
+{
+    DeleteCloudList(gCloud, false);
 }
 
 void DeleteCloudAccount()
@@ -577,7 +586,7 @@ OCStackResult DeInitCloudResource()
     OCStackResult ret = OCDeleteResource(gCloudHandle);
     if (gCloud  != &gDefaultCloud)
     {
-        DeleteCloudList(gCloud);
+        DeleteCloudList(gCloud, true);
     }
 
     oc_mutex_free(gCloudMutex);
