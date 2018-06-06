@@ -84,8 +84,8 @@ static void DeleteCloudList(OicCloud_t *clouds, bool signout)
         {
             OCCloudSignOut(p1);
         }
-        FreeCloud(p1);
         LL_DELETE(clouds, p1);
+        FreeCloud(p1);
         p1 = NULL;
     }
     oc_mutex_unlock(gCloudMutex);
@@ -96,11 +96,13 @@ static void DeleteCloudList(OicCloud_t *clouds, bool signout)
 void StopClouds()
 {
     DeleteCloudList(gCloud, true);
+    gCloud = NULL;
 }
 
 void ResetClouds()
 {
     DeleteCloudList(gCloud, false);
+    gCloud = NULL;
 }
 
 void DeleteCloudAccount()

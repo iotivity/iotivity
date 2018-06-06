@@ -112,6 +112,7 @@ OicCloud_t *FreeCloud(OicCloud_t *cloud)
         }
 
         res = oc_thread_free(cloud->pid);
+        cloud->pid = NULL;
 
         if (OC_THREAD_SUCCESS != res)
         {
@@ -119,7 +120,6 @@ OicCloud_t *FreeCloud(OicCloud_t *cloud)
         }
         OIC_LOG_V(DEBUG, TAG, "thread for cloud %s/%s is stopped", cloud->cis, cloud->apn);
     }
-    cloud->pid = 0;
 
     OicCloud_t *ret = cloud->next;
     cloud->next = NULL;
