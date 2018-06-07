@@ -57,10 +57,10 @@ if secured == '1':
 
 include_paths = [
                             '/usr/include',
-            			    '/usr/include/libxml2',
+                            '/usr/include/libxml2',
                             iotivity_root + '/include',
                             iotivity_test_root + '/src/automation/ctt/include',
-                            iotivity_test_root + '/extlibs/taf/include',
+                            iotivity_test_root + '/extlibs/taf/include/libuv',
                             iotivity_root + '/resource/include',
                             iotivity_root + '/resource/csdk/connectivity/api',
                             iotivity_root + '/resource/csdk/stack/include',
@@ -70,6 +70,7 @@ include_paths = [
                             iotivity_root + '/resource/csdk/ocrandom/include',
                             iotivity_root + '/resource/csdk/logger/include',
                             iotivity_root + '/resource/c_common/',
+                            iotivity_root + '/resource/c_common/ocrandom/include',
                             iotivity_root + '/out/linux/' + target_arch + '/' + release_dir +'/resource/c_common/',
                             iotivity_root + '/resource/oc_logger/include',
                             iotivity_root + '/extlibs/cereal/include/',

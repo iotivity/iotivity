@@ -60,6 +60,9 @@ namespace PH = std::placeholders;
 #define TV_AUDIO_URI "/AudioResURI"
 #define TV_MEDIA_SOURCE_LIST_URI "/mediaSourceListResURI"
 
+#define COLLECTION_URI "/collection"
+#define COLLECTION_SWITCH_URI "/collectionBinarySwitchResURI"
+
 #define COLLECTION_RESOURCE_URI "/vendor/aircon/collection/extra"
 #define COLLECTION_RESOURCE_URI_VENDOR "/vendor/aircon/collection"
 
@@ -78,7 +81,9 @@ namespace PH = std::placeholders;
 #define AC_SWING_URI "/Vendor/AirConditioner/Swinger"
 #define AC_TIMER_URI_CHILD "/Vendor/AirConditioner/TimerClock/Children"
 #define AC_SWING_URI_CHILD "/Vendor/AirConditioner/Swinger/Children"
-#define AC_CON_URI "/ConfigurationResURI"
+#define AC_CON_URI "/Vendor/AirConditioner/ConfigurationResURI"
+
+#define CON_URI "/ConfigurationResURI"
 
 #define MN_MAINTENANCE_URI "/oic/mnt"
 
@@ -89,7 +94,7 @@ namespace PH = std::placeholders;
 #define EXTRA_SWITCH_URI "/bridge/binary-switch"
 #define EXTRA_BRIGHTNESS_URI "/bridge/light-brightness"
 
-#define EXAMPLE_COAP_CLOUD_CONF_URI "/example/CoAPCloudConfResURI"
+#define COAP_CLOUD_CONF_URI "/CoAPCloudConf"
 
 #define Device_TYPE_TV "oic.d.tv"
 #define Device_TYPE_LIGHT "oic.d.light"
@@ -197,6 +202,10 @@ const int SUCCESS_RESPONSE = 0;
 #define ENGLISH_NAME_VALUE "Vendor Smart Home AirCon Device"
 #define AP_ENGLISH_NAME_VALUE "Vendor Smart Home Air Purifier Device"
 #define LANGUAGE_VALUE "language"
+#define CIS_VALUE "coaps+tcp://192.168.56.1:49160"
+#define SID_VALUE "bd052d57-aa22-425f-9dc0-e18202f4b7a2"
+#define AT_VALUE "0f3d9f7fe5491d54077d"
+#define APN_VALUE ""
 
 #define REPRESENTATION_KEY "rep"
 #define URI_KEY "href"
@@ -479,3 +488,4 @@ public:
 };
 
 #endif // __RESOURCE_HELPER_H__
+

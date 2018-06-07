@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include <ctype.h>
 #include "ocstack.h"
@@ -40,6 +41,7 @@
 
 //#defines
 #define TAG                  "OCF_TAF_AGENT"
+#define CTT_TIMEOUT           600
 #define DEFAULT_CONTEXT_VALUE 0x99
 #define QOS_NON               0
 #define QOS_CON               1
@@ -68,8 +70,12 @@ int gReuseIUT = 0;
 char *gConfigPath = NULL;
 char *gConfigFilename = NULL;
 char *gConfigFileContent = NULL;
-char gIUTlog[100] = "IUTSimulator_";
+char gIUTlogDir[100] = "logs/IUT";
+char gIUTlog[100];
 OCDoHandle gObserveHandle;
+bool gCTTLogsStarted = false;
+bool gCTTLogsResetTimeout = false;
+bool gCTTLogsTimeout = false;
 bool gSecured = false;
 char gIp[25];
 char gLocalIp[50];
@@ -82,6 +88,26 @@ char gCommandsArray[10][255];
 
 //Function declaration
 void SendDiscovery();
+
+int addDir(char* path)
+{
+    char* folder = strtok(path, "/");
+    char currentPath[256] = "";
+    int errCode = 0;
+    struct stat st = {0};
+    while (folder != NULL)
+    {
+        printf("%s\n",folder);
+        strcat(currentPath, folder);
+        strcat(currentPath, "/");
+        if (stat(folder, &st) == -1)
+        {
+            errCode = mkdir(currentPath, 0700);
+        }
+        folder = strtok (NULL, "/");
+    }
+    return errCode;
+}
 
 /*Replace String*/
 char *replaceString(const char *str, const char *from, const char *to)
@@ -175,7 +201,7 @@ end_repl_str:
     return ret;
 }
 
-/*Function to get the ip address of the machine where TAF is running*/
+/*Function to get the IP address of the machine where TAF is running*/
 void getIP(int ipVersion)
 {
     switch (ipVersion)
@@ -188,7 +214,7 @@ void getIP(int ipVersion)
             {
                 OIC_LOG(ERROR, TAG, "Could not collect address of interfaces");
                 printf("Could not collect adress interfaces\n");
-                exit(1);
+                exit(EXIT_FAILURE);
             }
 
             do
@@ -223,7 +249,7 @@ void getIP(int ipVersion)
     {
         OIC_LOG(ERROR, TAG, "Could not get Ip address");
         printf("Could not get Ip address\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     OIC_LOG_V(INFO, TAG, "Local IP address: %s", gLocalIp);
@@ -347,7 +373,7 @@ void FindKey(char *searchString, char *key)
 void SendCommands(int commandLength)
 {
     OIC_LOG_V(DEBUG, TAG, "Inside SendCommand");
-    sleep(5 * SLEEP_TIME);
+    sleep(2 * SLEEP_TIME);
     for (int i = 0; i < commandLength; i++)
     {
         SendCommand(gCommandsArray[i]);
@@ -370,6 +396,12 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
     char val[8], value[128];
 
     const char *messageXml = docToString(doc);
+
+    if (strlen(messageXml) != 0)
+    {
+        gCTTLogsResetTimeout = true;
+        gCTTLogsStarted = true;
+    }
 
     if (strstr(messageXml, "<message>Waiting for CoAP response... ") == NULL &&
         strstr(messageXml, "<message>Please wait...") == NULL )
@@ -423,9 +455,9 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
                  gPinValue);
         OIC_LOG_V(DEBUG, TAG, "TAF==Send response %s", result);
     }
-    else if ( strstr(messageXml,
-                     "<message>Please initiate device to revert to \"ready for OTM\" state") != NULL ||
-              strstr(messageXml, "<message>Please reset DUT's ACL in order to have empty list.") != NULL)
+    else if ( strstr(messageXml, "<message>Please initiate device to revert to \"ready for OTM\" state") != NULL ||
+              strstr(messageXml, "<message>Please reset DUT's ACL in order to have empty list.") != NULL ||
+              strstr(messageXml, "<message>Please revert IUT to RFOTM / reset the device") != NULL)
     {
         // Reset the IUTSimulator
         gRestartFlag = 1;
@@ -453,27 +485,6 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
         asprintf(&result,
                  "<actionResult><userDialogResponse><answer>OK</answer></userDialogResponse></actionResult>");
     }
-    else if (strstr(messageXml, "<message>Please change some value in /BinarySwitchResURI resource") !=
-             NULL)
-    {
-        //asprintf(&result, "<actionResult><userDialogResponse><answer>Skip</answer></userDialogResponse></actionResult>");
-        if (strstr(messageXml, "and press OK") != NULL)
-        {
-            sleep(10);
-            asprintf(&result,
-                     "<actionResult><userDialogResponse><answer>OK</answer></userDialogResponse></actionResult>");
-        }
-        else
-        {
-
-            strcpy(gCommandsArray[0], "34");
-            strcpy(gCommandsArray[1], "1");
-            strcpy(gCommandsArray[2], "value");
-            strcpy(gCommandsArray[3], "4");
-            strcpy(gCommandsArray[4], "0");
-            SendCommands(5);
-        }
-    }
     else if (strstr(messageXml, "<message>Did IUT receive response:") != NULL)
     {
 
@@ -492,17 +503,31 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
                  "<actionResult><userDialogResponse><answer>Yes</answer></userDialogResponse></actionResult>");
 
     }
-    else if (strstr(messageXml, "<message>Please change some value in /AirFlowResURI resource") !=
-             NULL)
+    else if (strstr(messageXml, "<message>Please change some value in") != NULL)
     {
-        //asprintf(&result, "<actionResult><userDialogResponse><answer>Skip</answer></userDialogResponse></actionResult>");
         if (strstr(messageXml, "and press OK") != NULL)
         {
             sleep(10);
             asprintf(&result,
                      "<actionResult><userDialogResponse><answer>OK</answer></userDialogResponse></actionResult>");
         }
-        else
+        else if (strstr(messageXml, "/BinarySwitchResURI") != NULL)
+        {
+            strcpy(gCommandsArray[0], "34");
+            strcpy(gCommandsArray[1], "1");
+            strcpy(gCommandsArray[2], "value");
+            strcpy(gCommandsArray[3], "4");
+            strcpy(gCommandsArray[4], "0");
+            SendCommands(5);
+
+            strcpy(gCommandsArray[0], "34");
+            strcpy(gCommandsArray[1], "1");
+            strcpy(gCommandsArray[2], "value");
+            strcpy(gCommandsArray[3], "4");
+            strcpy(gCommandsArray[4], "0");
+            SendCommands(5);
+        }
+        else if (strstr(messageXml, "/AirFlowResURI") != NULL)
         {
             strcpy(gCommandsArray[0], "34");
             strcpy(gCommandsArray[1], "5");
@@ -510,22 +535,8 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
             strcpy(gCommandsArray[3], "1");
             strcpy(gCommandsArray[4], "25");
             SendCommands(5);
-
         }
-    }
-
-    else if (strstr(messageXml, "<message>Please change some value in /TemperatureResURI resource") !=
-             NULL)
-    {
-        //asprintf(&result, "<actionResult><userDialogResponse><answer>Skip</answer></userDialogResponse></actionResult>");
-        if (strstr(messageXml, "and press OK") != NULL)
-        {
-            OIC_LOG(INFO, TAG, "Temperature URI Ok");
-            sleep(10);
-            asprintf(&result,
-                     "<actionResult><userDialogResponse><answer>OK</answer></userDialogResponse></actionResult>");
-        }
-        else
+        else if (strstr(messageXml, "/TemperatureResURI") != NULL)
         {
             OIC_LOG(INFO, TAG, "Temperature URI");
             strcpy(gCommandsArray[0], "34");
@@ -535,11 +546,35 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
             strcpy(gCommandsArray[4], "25.5");
             SendCommands(5);
         }
+        else if (strstr(messageXml, "/myPulseRateResUR") != NULL)
+        {
+            printf("Resource handled automatically.\n");
+        }
+        else if (strstr(messageXml, "/BloodPressureMonitorAMResURI") != NULL)
+        {
+            printf("Resource handled automatically.\n");
+        }
+        else
+        {
+            sleep(2);
+            asprintf(&result, "<actionResult><userDialogResponse><answer>Skip</answer></userDialogResponse></actionResult>");
+        }
+    }
+    else if (strstr(messageXml, "<message>Are you sure you want to skip this step?") != NULL)
+    {
+        sleep(2);
+        asprintf(&result, "<actionResult><userDialogResponse><answer>Yes</answer></userDialogResponse></actionResult>");
     }
     else if (strstr(messageXml,
-                    "<message>Please send a multicast discovery request message (i.e. CoAP GET) to") != NULL ||
-             strstr(messageXml,
-                    "Please initiate the Endpoint discovery process") != NULL)
+                    "<message>Please send a multicast discovery request message (i.e. CoAP GET) to") != NULL)
+            //         ||
+            //  strstr(messageXml,
+            //         "Please initiate the Endpoint discovery process") != NULL)
+    {
+        SendCommand("12");
+        sleep(SLEEP_TIME);
+    }
+    else if ( strstr(messageXml, "Please initiate the Endpoint discovery process") != NULL)
     {
         SendCommand("12");
         sleep(SLEEP_TIME);
@@ -633,7 +668,7 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
                 SendCommand("y");
             }
             sleep(SLEEP_TIME);
-            FindValue("value", value);
+            FindValue("value : ", value);
             SendCommand("22");
             FindKey("/BinarySwitchResURI", val);
             SendCommand(val);
@@ -661,6 +696,11 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
             {
                 SendCommand("0");
 
+            }
+            else
+            {
+                printf("Sending \"true\", as acquired value: %s could not be interpreted as true or false\n", value);
+                SendCommand("0");
             }
             sleep(SLEEP_TIME);
         }
@@ -821,6 +861,30 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
         asprintf(&result,
                  "<actionResult><userDialogResponse><answer>Yes</answer></userDialogResponse></actionResult>");
     }
+    else if (strstr(messageXml, "Please trigger the IUT to log out of the CTT Cloud") != NULL)
+    {
+        SendCommand("121");
+    }
+    else if (strstr(messageXml, "Please trigger the IUT to deregister from the CTT Cloud") != NULL)
+    {
+        SendCommand("122");
+    }
+    else if (strstr(messageXml, "Please trigger the IUT to register with the CTT Cloud") != NULL)
+    {
+        sleep(2);
+        asprintf(&result,
+                 "<actionResult><userDialogResponse><answer>OK</answer></userDialogResponse></actionResult>");
+    }
+    /*Currently works only with IPv4*/
+    else if (strstr(messageXml, "Please send a CoAP Ping message to the CTT") != NULL)
+    {
+        char* address = strtok(strchr(messageXml, '('), "()");
+        SendCommand("124");
+        sleep(SLEEP_TIME);
+        SendCommand(strtok(address, ":"));
+        sleep(SLEEP_TIME);
+        SendCommand(strtok(NULL, ":"));
+    }
     else
     {
         OIC_LOG_V(DEBUG, TAG, "TAF==Received not handled POST /actions: %s", messageXml);
@@ -839,8 +903,16 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
 xmlDocPtr AbortSignalHandler(xmlDocPtr doc)
 {
     OIC_LOG_V(DEBUG, TAG, "TAF==Received GET /abortSignal:");
-    return stringToDoc("<abortSignal><abortTestcase>false</abortTestcase><abortTestRun>false</abortTestRun></abortSignal>");
-
+    if (gCTTLogsTimeout)
+    {
+        printf("Sending Abort Test Case Response.\n");
+        gCTTLogsTimeout = false;
+        return stringToDoc("<abortSignal><abortTestcase>true</abortTestcase><abortTestRun>false</abortTestRun></abortSignal>");
+    }
+    else
+    {
+        return stringToDoc("<abortSignal><abortTestcase>false</abortTestcase><abortTestRun>false</abortTestRun></abortSignal>");
+    }
 }
 
 /*Configuration handler*/
@@ -920,7 +992,7 @@ void initIUT(int qosArg, int ipVerArg, int securityArg, char *ocfVerArg, char in
         default:
             OIC_LOG_V(ERROR, TAG, "QoS argument \"%d\" is invalid\n", qosArg);
             printf("QoS argument \"%d\" is invalid\n", qosArg);
-            exit(1);
+            exit(EXIT_FAILURE);
     }
 
     switch (ipVerArg)
@@ -936,7 +1008,7 @@ void initIUT(int qosArg, int ipVerArg, int securityArg, char *ocfVerArg, char in
         default:
             OIC_LOG_V(ERROR, TAG, "IP version argument \"%d\" is invalid\n", ipVerArg);
             printf("IP version argument \"%d\" is invalid\n", ipVerArg);
-            exit(1);
+            exit(EXIT_FAILURE);
     }
 
     switch (securityArg/10)
@@ -960,7 +1032,7 @@ void initIUT(int qosArg, int ipVerArg, int securityArg, char *ocfVerArg, char in
         default:
             OIC_LOG_V(ERROR, TAG, "Security argument \"%d\" is invalid\n", securityArg);
             printf("Security argument \"%d\" is invalid\n", securityArg);
-            exit(1);
+            exit(EXIT_FAILURE);
     }
 
     switch (securityArg%10)
@@ -980,11 +1052,19 @@ void initIUT(int qosArg, int ipVerArg, int securityArg, char *ocfVerArg, char in
         default:
             OIC_LOG_V(ERROR, TAG, "Security argument \"%d\" is invalid\n", securityArg);
             printf("Security argument \"%d\" is invalid\n", securityArg);
-            exit(1);
+            exit(EXIT_FAILURE);
     }
 
     strcat(app, " ");
     strcat(app, ocfVerArg);
+
+    for(int i = 0; i < initActionsSize; i++)
+    {
+        strcat(app, " ");
+        strcat(app, initActions[i]);
+    }
+
+    addDir(gIUTlogDir);
 
     char parameters[255] = "result=1\nwhile [ $result -ne 0 ]; do \nxterm -title \"";
     strcat(parameters, gIUTSimulator);
@@ -998,7 +1078,7 @@ void initIUT(int qosArg, int ipVerArg, int securityArg, char *ocfVerArg, char in
     if ((gPid = fork()) < 0)
     {
         OIC_LOG(ERROR, TAG, "Fork failed");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     if (gPid == 0)
     {
@@ -1007,18 +1087,7 @@ void initIUT(int qosArg, int ipVerArg, int securityArg, char *ocfVerArg, char in
         printf("gPid == 0\n");
         execlp("/bin/sh", "/bin/sh", "-c", parameters, NULL);
         sleep(5);
-        exit(0);
-    }
-
-    sleep(3);
-    for(int i = 0; i < initActionsSize; i++)
-    {
-        printf("%d\n", i);
-        printf("Sending %s to IUTSimulator\n", initActions[i]);
-        OIC_LOG_V(DEBUG, TAG, "Sending %s to IUTSimulator\n", initActions[i]);
-
-        SendCommand(initActions[i]);
-        sleep(1);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -1102,7 +1171,7 @@ void discoverIUT(int ipVersion)
             if (OCInit1(OC_CLIENT, OC_IP_USE_V4 , OC_IP_USE_V4) != OC_STACK_OK)
             {
                 OIC_LOG(ERROR, TAG, "OCStack init error");
-                exit(0);
+                exit(EXIT_FAILURE);
             }
             break;
 
@@ -1110,7 +1179,7 @@ void discoverIUT(int ipVersion)
             if (OCInit1(OC_CLIENT, OC_IP_USE_V6 , OC_IP_USE_V6) != OC_STACK_OK)
             {
                 OIC_LOG(ERROR, TAG, "OCStack init error");
-                exit(0);
+                exit(EXIT_FAILURE);
             }
             break;
     }
@@ -1123,7 +1192,7 @@ void discoverIUT(int ipVersion)
         {
             fprintf(stdout, "OCStack process error\n");
             fflush(stdout);
-            exit(0);
+            exit(EXIT_FAILURE);
         }
     }
     while (!gIPDiscovered);
@@ -1174,6 +1243,8 @@ int main(int argc, char **argv)
     gConfigFilename = basename(tempConfigPath);
     gConfigFilename = strtok(gConfigFilename, ".");
 
+    strcat(gIUTlog, gIUTlogDir);
+    strcat(gIUTlog, "/IUTSimulator_");
     strcat(gIUTlog, gConfigFilename);
     strcat(gIUTlog, ".log");
 
@@ -1226,12 +1297,27 @@ int main(int argc, char **argv)
         printf("Entering TAF Agent main loop...\n");
         OIC_LOG(INFO, TAG, "Entering TAF Agent main loop...");
         clock_t prevClock = clock() - trigger;
+        time_t lastCTTLog = 0;
         while (!gRestartFlag)
         {
             gInsideMainLoop = 1;
             clock_t curClock = clock();
             if(curClock - prevClock >= trigger){
                 printf(".\n");
+                if (gCTTLogsStarted)
+                {
+                    if (gCTTLogsResetTimeout)
+                    {
+                        lastCTTLog = time(NULL);
+                        gCTTLogsResetTimeout = false;
+                    }
+                    if (time(NULL) > lastCTTLog + CTT_TIMEOUT)
+                    {
+                        printf("CTT logs timeout has been reached.\n");
+                        gCTTLogsTimeout = true;
+                        gCTTLogsStarted = false;
+                    }
+                }
                 prevClock = curClock;
             }
         }
@@ -1247,3 +1333,4 @@ int main(int argc, char **argv)
 
     return 0;
 }
+

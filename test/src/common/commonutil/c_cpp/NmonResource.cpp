@@ -1,22 +1,22 @@
 /******************************************************************
- *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
- *
- *
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- ******************************************************************/
+*
+* Copyright 2018 Open Connectivity Foundation All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
 
 #include "NmonResource.h"
 
@@ -87,7 +87,7 @@ void NmonResource::handlePostRequest(QueryParamsMap &queryParamsMap,
             if (incomingRepresentation.hasAttribute(INTERFACE_KEY))
             {
                 response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
-                cout << "\t\t" << "property 'if' is readOnly "<< endl;
+                cout << "\t\t" << "Property 'if' is readOnly "<< endl;
             }
         }
         catch (exception& e)
@@ -100,7 +100,7 @@ void NmonResource::handlePostRequest(QueryParamsMap &queryParamsMap,
             if (incomingRepresentation.hasAttribute(RESOURCE_TYPE_KEY))
             {
                 response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
-                cout << "\t\t" << "property 'rt' is readOnly "<< endl;
+                cout << "\t\t" << "Property 'rt' is readOnly "<< endl;
             }
         }
         catch (exception& e)
@@ -113,7 +113,7 @@ void NmonResource::handlePostRequest(QueryParamsMap &queryParamsMap,
             if (incomingRepresentation.hasAttribute(IANA_NETWORK_CONNECTION_KEY))
             {
                 response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
-                cout << "\t\t" << "property 'ianaifType' is readOnly "<< endl;
+                cout << "\t\t" << "Property 'ianaifType' is readOnly "<< endl;
             }
         }
         catch (exception& e)
@@ -126,7 +126,7 @@ void NmonResource::handlePostRequest(QueryParamsMap &queryParamsMap,
             if (incomingRepresentation.hasAttribute(TRANSMITTED_KB_FROM_COL_KEY))
             {
                 response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
-                cout << "\t\t" << "property 'tx' is readOnly "<< endl;
+                cout << "\t\t" << "Property 'tx' is readOnly "<< endl;
             }
         }
         catch (exception& e)
@@ -139,7 +139,7 @@ void NmonResource::handlePostRequest(QueryParamsMap &queryParamsMap,
             if (incomingRepresentation.hasAttribute(RECEIVED_KB_FROM_COL_KEY))
             {
                 response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
-                cout << "\t\t" << "property 'rx' is readOnly "<< endl;
+                cout << "\t\t" << "Property 'rx' is readOnly "<< endl;
             }
         }
         catch (exception& e)
@@ -152,7 +152,7 @@ void NmonResource::handlePostRequest(QueryParamsMap &queryParamsMap,
             if (incomingRepresentation.hasAttribute(MAX_TRANSMITTED_MSG_BYTES_IN_COL_KEY))
             {
                 response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
-                cout << "\t\t" << "property 'mmstx' is readOnly "<< endl;
+                cout << "\t\t" << "Property 'mmstx' is readOnly "<< endl;
             }
         }
         catch (exception& e)
@@ -165,7 +165,7 @@ void NmonResource::handlePostRequest(QueryParamsMap &queryParamsMap,
             if (incomingRepresentation.hasAttribute(AVG_TRANSMITTED_MSG_BYTES_IN_COL_KEY))
             {
                 response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
-                cout << "\t\t" << "property 'amstx' is readOnly "<< endl;
+                cout << "\t\t" << "Property 'amstx' is readOnly "<< endl;
             }
         }
         catch (exception& e)
@@ -178,7 +178,7 @@ void NmonResource::handlePostRequest(QueryParamsMap &queryParamsMap,
             if (incomingRepresentation.hasAttribute(MAX_RECEIVED_MSG_BYTES_IN_COL_KEY))
             {
                 response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
-                cout << "\t\t" << "property 'mmsrx' is readOnly "<< endl;
+                cout << "\t\t" << "Property 'mmsrx' is readOnly "<< endl;
             }
         }
         catch (exception& e)
@@ -191,7 +191,7 @@ void NmonResource::handlePostRequest(QueryParamsMap &queryParamsMap,
             if (incomingRepresentation.hasAttribute(AVG_RECEIVED_MSG_BYTES_IN_COL_KEY))
             {
                 response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
-                cout << "\t\t" << "property 'amsrx' is readOnly "<< endl;
+                cout << "\t\t" << "Property 'amsrx' is readOnly "<< endl;
             }
         }
         catch (exception& e)
@@ -199,12 +199,23 @@ void NmonResource::handlePostRequest(QueryParamsMap &queryParamsMap,
             cout << e.what() << endl;
         }
 
+
+
         try
         {
-            if (incomingRepresentation.hasAttribute(COLLECTING_VALUES))
+            if (incomingRepresentation.hasAttribute(COLLECTING_VALUES) &&
+                incomingRepresentation.hasAttribute(RESET_KEY))
             {
                 updateRepresentation(COLLECTING_VALUES, incomingRepresentation, response);
                 notifyObservers(this);
+                updateRepresentation(RESET_KEY, incomingRepresentation, response);
+                notifyObservers(this);
+            }
+            else if (incomingRepresentation.hasAttribute(COLLECTING_VALUES) ||
+                     incomingRepresentation.hasAttribute(RESET_KEY))
+            {
+                response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+                cout << "\t\t" << "Property 'reset' and 'col' have to be both inside POST request"<< endl;
             }
         }
         catch (exception& e)

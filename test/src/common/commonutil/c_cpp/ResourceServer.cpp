@@ -99,6 +99,11 @@ OCStackResult ResourceServer::constructServer(std::string ip, int port)
     return result;
 }
 
+OCDeviceInfo ResourceServer::getDeviceInfo()
+{
+    return s_deviceInfo;
+}
+
 OCEntityHandlerResult ResourceServer::entityHandler(std::shared_ptr< OCResourceRequest > request)
 {
 
@@ -156,7 +161,7 @@ OCStackResult ResourceServer::setResourceProperties(std::string resourceUri,
     return result;
 }
 
-OCStackResult ResourceServer::startResource(uint8_t resourceProperty)
+OCStackResult ResourceServer::startResource(uint8_t resourceProperty, bool useDefaultHandler)
 {
     OCStackResult result = OC_STACK_OK;
 
@@ -206,9 +211,19 @@ OCStackResult ResourceServer::startResource(uint8_t resourceProperty)
     }
 
     // This will internally create and register the resource.
-    result = OCPlatform::registerResource(m_resourceHandle, m_resourceURI, m_resourceTypeName,
+    if (useDefaultHandler)
+    {
+        result = OCPlatform::registerResource(m_resourceHandle, m_resourceURI, m_resourceTypeName,
+            m_resourceInterface, NULL,
+            m_resourceProperty);
+    }
+    else
+    {
+        result = OCPlatform::registerResource(m_resourceHandle, m_resourceURI, m_resourceTypeName,
             m_resourceInterface, bind(&ResourceServer::entityHandler, this, PH::_1),
             m_resourceProperty);
+    }
+
     if (m_resourceTypeNames.size() > 1)
     {
         for (unsigned int i = 1; i < m_resourceTypeNames.size(); i++)
@@ -478,4 +493,5 @@ void ResourceServer::addResourceInterface(string resourceInterface)
     OCPlatform::bindInterfaceToResource(getResourceHandle(), resourceInterface);
     m_resourceInterfaces.push_back(resourceInterface);
 }
+
 

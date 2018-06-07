@@ -18,28 +18,10 @@
 *
 ******************************************************************/
 
-#ifndef COMMON_TESTCASE_NMONRESOURCE_H_
-#define COMMON_TESTCASE_NMONRESOURCE_H_
+uint16_t getSystolic();
 
-#include "SampleResource.h"
+uint16_t getDiastolic();
 
-using namespace std;
-namespace PH = std::placeholders;
+uint16_t getPulseRate();
 
-class NmonResource : public SampleResource
-{
-public:
-    NmonResource(void);
-
-    virtual ~NmonResource(void);
-
-    virtual void handleGetRequest(QueryParamsMap &queryParamsMap,
-            std::shared_ptr< OCResourceRequest > request,
-            std::shared_ptr< OCResourceResponse > response);
-
-    virtual void handlePostRequest(QueryParamsMap &queryParamsMap,
-        OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
-        std::shared_ptr< OCResourceResponse > response);
-};
-
-#endif /* COMMON_TESTCASE_NMONRESOURCE_H_ */
+uint8_t startBloodPressure();

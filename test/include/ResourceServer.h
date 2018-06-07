@@ -106,6 +106,14 @@ public:
     static OCStackResult constructServer(std::string ip, int port);
 
     /**
+     * API for getting device info
+     *
+     * @return OCStackResult - returns s_deviceInfo
+     *
+     */
+    static OCDeviceInfo getDeviceInfo();
+
+    /**
      * API to set the basic properties of the resource
      *
      * @param resourceURI - uri of the resource
@@ -183,13 +191,17 @@ public:
     /**
      * API for starting the server.
      *
+     * @param useDefaultHandler - whenever resource request should be handled by
+     *                             default hanlder or one defined in this class
+     *
      * @return OCStackResult - returns OC_STACK_OK if successful to start server,
      *                          else OC_STACK_ERROR
      *
      * NOTE: The server will stop when the main program exits
      */
     OCStackResult startResource(
-            uint8_t resourceProperty = (uint8_t) OC_ACTIVE);
+            uint8_t resourceProperty = (uint8_t) OC_ACTIVE,
+            bool useDefaultHandler = false);
 
     /**
      * API for getting the uri of the resource
@@ -306,6 +318,7 @@ public:
       *
       * @param[in] - deviceName - Human readable name of the device
       * @param[in] - deviceTypes - List of device types of the device(Optional)
+      * @param[in] - specVersion - OCF version for device, with default ocf.1.0.0
       *
       */
     static OCStackResult setDeviceInfo(string deviceName, vector<string> deviceTypes = vector<string>(), string specVersion = CORE_SPEC_VERSION);
@@ -405,3 +418,4 @@ public:
 };
 
 #endif // _RESOURCE_SERVER_H_ end
+

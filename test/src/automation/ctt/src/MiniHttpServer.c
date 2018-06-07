@@ -23,7 +23,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <MiniHttpServer.h>
-#include <libuv/uv.h>
+#include <uv.h>
 
 /*Static resource start*/
 static uv_loop_t s_loopBasic;

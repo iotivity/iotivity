@@ -18,28 +18,23 @@
 *
 ******************************************************************/
 
-#ifndef COMMON_TESTCASE_NMONRESOURCE_H_
-#define COMMON_TESTCASE_NMONRESOURCE_H_
+#ifndef OCSAMPLE_COMMON_H_
+#define OCSAMPLE_COMMON_H_
 
-#include "SampleResource.h"
+#define USE_HW 0
+#define IS_SECURE_MODE 1
+#include "ocstack.h"
 
-using namespace std;
-namespace PH = std::placeholders;
 
-class NmonResource : public SampleResource
-{
-public:
-    NmonResource(void);
+/* Get the result in string format. */
+const char *getResult(OCStackResult result);
 
-    virtual ~NmonResource(void);
+/* Removes the new line character from a NULL terminated C string. */
+void StripNewLineChar(char* str);
 
-    virtual void handleGetRequest(QueryParamsMap &queryParamsMap,
-            std::shared_ptr< OCResourceRequest > request,
-            std::shared_ptr< OCResourceResponse > response);
+void getCurrentTime(char * buf);
+void setUserTime(char * buf);
 
-    virtual void handlePostRequest(QueryParamsMap &queryParamsMap,
-        OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
-        std::shared_ptr< OCResourceResponse > response);
-};
+#endif //OCSAMPLE_COMMON_H_
 
-#endif /* COMMON_TESTCASE_NMONRESOURCE_H_ */
+

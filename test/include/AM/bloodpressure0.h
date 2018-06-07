@@ -18,28 +18,17 @@
 *
 ******************************************************************/
 
-#ifndef COMMON_TESTCASE_NMONRESOURCE_H_
-#define COMMON_TESTCASE_NMONRESOURCE_H_
+#ifndef BLOODPRESSURE0_H
+#define BLOODPRESSURE0_H
 
-#include "SampleResource.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-using namespace std;
-namespace PH = std::placeholders;
+int createBP0Resource ();
 
-class NmonResource : public SampleResource
-{
-public:
-    NmonResource(void);
+#ifdef __cplusplus
+}
+#endif
 
-    virtual ~NmonResource(void);
-
-    virtual void handleGetRequest(QueryParamsMap &queryParamsMap,
-            std::shared_ptr< OCResourceRequest > request,
-            std::shared_ptr< OCResourceResponse > response);
-
-    virtual void handlePostRequest(QueryParamsMap &queryParamsMap,
-        OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
-        std::shared_ptr< OCResourceResponse > response);
-};
-
-#endif /* COMMON_TESTCASE_NMONRESOURCE_H_ */
+#endif

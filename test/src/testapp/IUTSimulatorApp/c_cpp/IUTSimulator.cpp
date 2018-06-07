@@ -28,6 +28,7 @@
 
 #ifdef __LINUX__
 #include <execinfo.h>
+#include <arpa/inet.h>
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -40,10 +41,16 @@
 #include <thread>
 #include <chrono>
 
+#include "ocstack.h"
+#include "octypes.h"
+
 #include "SampleResource.h"
 #include "MntResource.h"
 #include "NmonResource.h"
 #include "SampleCollection.h"
+#include "bloodpressure0.h"
+#include "bloodpressure1.h"
+#include "bloodpressure2.h"
 #include "ResourceHelper.h"
 #include "cloudresource.h"
 #include "OCPlatform.h"
@@ -112,6 +119,7 @@ SampleResource *g_tvAudioResource;
 SampleResource *g_tvMediaSourceListResource;
 SampleResource *g_acSwitchResource;
 SampleResource *g_apSwitchResource;
+SampleResource *g_apConfigurationResource;
 SampleResource *g_acAirFlowResource;
 SampleResource *g_acTemperatureResource;
 SampleResource *g_acTemperatureSensor;
@@ -129,13 +137,15 @@ SampleResource *g_extraLightResource;
 SampleResource *g_extraCollectionResource;
 SampleResource *g_extraSwitchResource;
 SampleResource *g_extraBrightnessResource;
+SampleResource *g_collectionSwitchResource;
 MntResource *g_mnMaintenanceResource;
 NmonResource *g_nmonNetworkMonitoring;
 SampleCollection *g_extraLightCollection;
 SampleCollection *g_vendorCollectionResource;
-SampleCollection *g_batchCollection;
+SampleCollection *g_sampleCollection;
 
 #define MAXLEN_STRING 100
+#define DEFAULT_HANDLER true
 #define USERPROPERTY_KEY_INT "x.user.property.int"
 #define USERPROPERTY_KEY_STR "x.user.property.str"
 
@@ -150,8 +160,9 @@ bool g_isTvDeviceCreated = false;
 bool g_isAirConDeviceCreated = false;
 bool g_isMaintenanceResourceCreated = false;
 bool g_isNetworkMonitoringResourceCreated = false;
-bool g_isBatchCollectionCreated = false;
+bool g_isSampleCollectionCreated = false;
 bool g_isAirPurifierDeviceCreated = false;
+bool g_isConfigurationResourceCreated = false;
 bool g_isExtraDeviceCreated = false;
 bool g_isSecuredClient = false;
 bool g_isSecuredServer = false;
@@ -296,7 +307,12 @@ void getUserInput(T &input)
     getline(cin, userInput);
     while(!(stringstream(userInput) >> input))
     {
-        if (!userInput.empty())
+        if (input <= std::numeric_limits<T>::min() || input >= std::numeric_limits<T>::max())
+        {
+            printInput(userInput);
+            cout << "This number is out of allowed scope!" << endl;
+        }
+        else if (!userInput.empty())
         {
             printInput(userInput);
             cout << "Wrong type of argument, should be number!" << endl;
@@ -317,6 +333,21 @@ void getUserInput(string &input)
         input = userInput;
     }
     printInput(input);
+}
+
+bool isValidIpAddress(string ipAddress)
+{
+    switch(g_ipVer)
+    {
+        case CT_IP_USE_V4:
+            struct sockaddr_in sa;
+            return  (inet_pton(AF_INET, ipAddress.c_str(), &(sa.sin_addr)) != 0);
+        case CT_IP_USE_V6:
+            struct sockaddr_in6 sa6;
+            return  (inet_pton(AF_INET6, ipAddress.c_str(), &(sa6.sin6_addr)) != 0);
+        default:
+            return false;
+    }
 }
 
 void openRDPLogFile()
@@ -1930,9 +1961,6 @@ void createCoAPCloudConfResource(bool isSecured)
     InitCloudResource();
 }
 
-/*
-    Currently cannot be used with any other resource
-*/
 void createCollectionWithBatch(bool isSecured)
 {
     OCStackResult result = OC_STACK_ERROR;
@@ -1942,64 +1970,36 @@ void createCollectionWithBatch(bool isSecured)
     {
         resourceProperty = resourceProperty | OC_SECURE;
     }
-    if (g_isBatchCollectionCreated == false)
+    if (g_isSampleCollectionCreated == false)
     {
-        vector<string> acDeviceTypes;
-        string value = "";
-        vector< int > range;
-        vector< double > rangeTemperature;
-        vector< double > chromaSpaceCoordinates;
-        acDeviceTypes.push_back(Device_TYPE_AC);
-        acDeviceTypes.push_back(Device_TYPE_VENDOR);
-        SampleResource::setDeviceInfo(ENGLISH_NAME_VALUE, acDeviceTypes, g_ocfVer);
-
-        g_acSwitchResource = new SampleResource();
-        g_acSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,
+        g_collectionSwitchResource = new SampleResource();
+        g_collectionSwitchResource->setResourceProperties(COLLECTION_SWITCH_URI, SWITCH_RESOURCE_TYPE,
                 SWITCH_RESOURCE_INTERFACE);
         OCRepresentation switchRep;
         switchRep.setValue(ON_OFF_KEY, true);
-        g_acSwitchResource->setResourceRepresentation(switchRep);
-
-        result = g_acSwitchResource->startResource(resourceProperty);
-
-        g_createdResourceList.push_back(g_acSwitchResource);
+        g_collectionSwitchResource->setResourceRepresentation(switchRep);
+        result = g_collectionSwitchResource->startResource(OC_ACTIVE | OC_DISCOVERABLE | OC_SECURE, DEFAULT_HANDLER);
+        g_createdResourceList.push_back(g_collectionSwitchResource);
 
 
-        g_extraBrightnessResource = new SampleResource();
-        g_extraBrightnessResource->setResourceProperties(EXTRA_BRIGHTNESS_URI,
-                BRIGHTNESS_RESOURCE_TYPE, BRIGHTNESS_RESOURCE_INTERFACE);
-
-        OCRepresentation brightnessRep;
-        int level = DEFAULT_BRIGHTNESS_VALUE;
-        brightnessRep.setValue(BRIGHTNESS_KEY, level);
-        g_extraBrightnessResource->setResourceRepresentation(brightnessRep);
-
-        result = g_extraBrightnessResource->startResource(resourceProperty);
-
-        g_createdResourceList.push_back(g_extraBrightnessResource);
-
-        OCRepresentation collectionRep;
-
-        g_batchCollection = new SampleCollection();
-        g_batchCollection->setResourceProperties(COLLECTION_RESOURCE_URI, GROUP_TYPE_DEFAULT,
+        g_sampleCollection = new SampleCollection();
+        g_sampleCollection->setResourceProperties(COLLECTION_URI, GROUP_TYPE_DEFAULT,
                 LINK_INTERFACE);
 
-        g_batchCollection->setDI(g_di);
-        g_batchCollection->setIPVer(g_ipVer);
-        g_batchCollection->setSecured(true);
-        g_batchCollection->setName(ENGLISH_NAME_VALUE);
+        g_sampleCollection->setDI(g_di);
+        g_sampleCollection->setIPVer(g_ipVer);
+        g_sampleCollection->setSecured(true);
+        g_sampleCollection->setName("Sample Collection Device");
 
-        g_batchCollection->setResourceRepresentation(collectionRep);
+        result = g_sampleCollection->startResource(resourceProperty, DEFAULT_HANDLER);
 
-        result = g_batchCollection->startResource(resourceProperty);
-
-        g_batchCollection->addResourceInterface(DEFAULT_INTERFACE);
-        g_batchCollection->addResourceInterface(BATCH_INTERFACE);
+        g_sampleCollection->addResourceInterface(DEFAULT_INTERFACE);
+        g_sampleCollection->addResourceInterface(BATCH_INTERFACE);
         if (result == OC_STACK_OK)
         {
             cout << "Batch collection created successfully" << endl;
-            g_batchCollection->addChild(g_extraBrightnessResource);
-            g_batchCollection->addChild(g_acSwitchResource);
+            g_sampleCollection->addChild(g_collectionSwitchResource);
+            g_isSampleCollectionCreated = true;
         }
         else
         {
@@ -2079,6 +2079,54 @@ void createNetworkMonitoringAndMaintenanceResources(bool isSecured)
     else
     {
         cout << "Already Network Monitoring Resources are created!!" << endl;
+    }
+}
+
+void createConfigurationResource(bool isSecured)
+{
+    OCStackResult result = OC_STACK_ERROR;
+    cout << "Creating Configuration Resource!!" << endl;
+    uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE;
+    if (isSecured)
+    {
+        resourceProperty = resourceProperty | OC_SECURE;
+    }
+    if (g_isConfigurationResourceCreated == false)
+    {
+        g_apConfigurationResource = new SampleResource();
+        g_apConfigurationResource->setResourceProperties(CON_URI, CON_RESOURCE_TYPE,
+        CON_RESOURCE_INTERFACE);
+
+        OCRepresentation conRep;
+        string value = SampleResource::getDeviceInfo().deviceName;
+        conRep.setValue(NAME_KEY, value);
+        vector<double> location;
+        location.push_back(LATTITUDE_VALUE);
+        location.push_back(LONGITUDE_VALUE);
+        conRep.setValue(LOCATION_KEY, location);
+        value = CURRENCY_VALUE;
+        conRep.setValue(CURRENCY_KEY, value);
+        value = DEFAULT_LANGUAGE_VALUE;
+        conRep.setValue(DEFAULT_LANGUAGE_KEY, value);
+
+        g_apConfigurationResource->setResourceRepresentation(conRep);
+
+        result = g_apConfigurationResource->startResource(resourceProperty);
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "Configuartion Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_apConfigurationResource);
+            g_isConfigurationResourceCreated = true;
+        }
+        else
+        {
+            cout << "Unable to create Configuration resource" << endl;
+        }
+    }
+    else
+    {
+        cout << "Already Configuration are created!!" << endl;
     }
 }
 
@@ -3665,13 +3713,14 @@ void updateGroup()
 
 void updateLec()
 {
-    int maxValue = 13,minValue=1;
+    int maxValue = 13,minValue=0;
     ESErrorCode errCode = ES_ERRCODE_NO_ERROR;
     bool validChoice= false;
     int choice;
     do
     {
         cout << "Please select ErrorCode as reported by Enrollee and press Enter: " << endl;
+        cout << "\t\t 0. Cancel update" << endl;
         cout << "\t\t 1. WiFi's SSID is not found" << endl;
         cout << "\t\t 2. WiFi's password is wrong" << endl;
         cout << "\t\t 3. IP Address not allocated" << endl;
@@ -3701,6 +3750,8 @@ void updateLec()
     } while (!validChoice);
     switch(choice)
     {
+        case 0:
+                return;
 
     /**
      * Error Code that given WiFi's SSID is not found
@@ -3870,7 +3921,6 @@ AttributeValue getAttributeValueFromUser()
             value = valueArray;
             break;
     }
-
     return value;
 }
 
@@ -4111,18 +4161,18 @@ void sendSpecialPost()
     }
 }
 
-void sendPostCloudMediator()
+void sendPostCloudConfiguration()
 {
-    int selection = selectResource(EXAMPLE_COAP_CLOUD_CONF_URI);
+    int selection = selectResource(COAP_CLOUD_CONF_URI);
     if (selection != -1)
     {
         OCRepresentation cloudConfRep;
-        cloudConfRep.setValue(CIS_KEY, string("coaps+tcp://192.168.56.1:49160"));
-        cloudConfRep.setValue(SID_KEY, string("bd052d57-aa22-425f-9dc0-e18202f4b7a2"));
-        cloudConfRep.setValue(AT_KEY, string(""));
-        cloudConfRep.setValue(APN_KEY, string(""));
+        cloudConfRep.setValue(CIS_KEY, string(CIS_VALUE));
+        cloudConfRep.setValue(SID_KEY, string(SID_VALUE));
+        cloudConfRep.setValue(AT_KEY, string(AT_VALUE));
+        cloudConfRep.setValue(APN_KEY, string(APN_VALUE));
         g_foundResourceList.at(selection)->post(cloudConfRep, QueryParamsMap(), &onPost, g_qos);
-        cout << "POST request sent!!" << endl;
+        cout << "POST Cloud Configuration request sent!!" << endl;
         waitForCallback();
     }
 }
@@ -4264,20 +4314,6 @@ void cancelObservePassively()
     }
 }
 
-void sendPingMessage()
-{
-    int selection = selectResource();
-    if (selection != -1)
-    {
-        shared_ptr< OCResource > resource = g_foundResourceList.at(selection);
-        OCSendPingMessage(&resource->getDeviceAddress(), true, NULL);
-    }
-    else
-    {
-        cout << "No resource to send Ping!!" << endl;
-    }
-}
-
 void setDeviceWESInfo()
 {
     cout << "SetDeviceInfo IN" << endl;
@@ -4326,6 +4362,44 @@ void prepareForWES()
         cout << "Device is now ready for Wifi Easy SetUp" << endl;
     }
 
+}
+
+/*Currently works only with IPv4*/
+void sendPingMessage()
+{
+    string address;
+    uint16_t port;
+    cout << "Please provide IP address to which send ping to." << endl;
+    getUserInput(address);
+    if (!isValidIpAddress(address))
+    {
+        cout << "Invalid IP address." << endl;
+        return;
+    }
+    cout << "Please provide port." << endl;
+    getUserInput(port);
+
+    OCDevAddr devAddr;
+    devAddr.adapter = OCTransportAdapter::OC_ADAPTER_TCP;
+    devAddr.flags = OC_IP_USE_V4;
+    if (g_ipVer == CT_IP_USE_V6)
+        devAddr.flags = OC_IP_USE_V6;
+    strncpy(devAddr.addr, address.c_str(), MAX_ADDR_STR_SIZE);
+    devAddr.port = port;
+    devAddr.ifindex = 0;
+    strncpy(devAddr.remoteId, JUST_WORKS_DI.c_str(), MAX_IDENTITY_SIZE);
+
+
+    OCCallbackData cbData;
+    cbData.context = NULL;
+    cbData.cb = [](void* ctx,OCDoHandle hd,OCClientResponse* clientResponse) -> OCStackApplicationResult {
+        std::cout << "Pong received! addr: " << clientResponse->devAddr.addr << std::endl;
+        return OC_STACK_DELETE_TRANSACTION;
+    };
+    cbData.cd = [](void* ctx) {};
+
+    std::cout << "Sending the ping message now to address: " << address << std::endl;
+    OCSendPingMessage(&devAddr, false, &cbData);
 }
 
 string getHost()
@@ -4548,8 +4622,8 @@ void showMenu(int argc, char* argv[])
     cout << "\t\t " << setw(3) << "36" << ". Set Quality of Service - CON(Confirmable)" << endl;
     cout << "\t\t " << setw(3) << "37" << ". Set Quality of Service - NON(Non-Confirmable)" << endl;
     cout << "\t\t " << setw(3) << "38" << ". Reset Secure Storage" << endl;
-    cout << "\t\t " << setw(3) << "39" << ". Send POST to Cloud Mediator" << endl;
-    cout << "\t\t " << setw(3) << "40" << ". Send Ping Message" << endl;
+    cout << "\t\t " << setw(3) << "39" << ". Send Post Request for Cloud Configuration" << endl;
+    cout << "\t\t " << setw(3) << "40" << ". Send Ping Message to Resource" << endl;
     cout << "\t Smart Home Vertical Resource Creation:" << endl;
     cout << "\t\t " << setw(3) << "101" << ". Create Smart TV Device" << endl;
     cout << "\t\t " << setw(3) << "102" << ". Create Air Conditioner Device" << endl;
@@ -4571,7 +4645,12 @@ void showMenu(int argc, char* argv[])
     cout << "\t\t " << setw(3) << "116" << ". Create Air Purifier Device" << endl;
     cout << "\t\t " << setw(3) << "117" << ". Create Network Monitoring and Maintaince Resources" << endl;
     cout << "\t\t " << setw(3) << "118" << ". Create Sample Batch collection" << endl;
-    cout << "\t\t " << setw(3) << "119" << ". Create Cloud Configuration Resource" << endl;
+    cout << "\t\t " << setw(3) << "119" << ". Create Atomic Measurement Resource - Blood Pressure" << endl;
+    cout << "\t\t " << setw(3) << "120" << ". Cloud Configuration - Initialize cloud configuration resource" << endl;
+    cout << "\t\t " << setw(3) << "121" << ". Cloud Configuration - Sign out" << endl;
+    cout << "\t\t " << setw(3) << "122" << ". Cloud Configuration - Deregister and reinitialize cloud configuration resource" << endl;
+    cout << "\t\t " << setw(3) << "123" << ". Create Configuration Resource" << endl;
+    cout << "\t\t " << setw(3) << "124" << ". Send Ping Message" << endl;
 
     g_hasCallbackArrived = false;
     handleMenu(argc, argv);
@@ -4836,12 +4915,7 @@ void selectMenu(int choice)
             break;
 
         case 39:
-            sendPostCloudMediator();
-            break;
-
-        case 40:
-            sendPingMessage();
-            cout << "Ping Message sent" << endl;
+            sendPostCloudConfiguration();
             break;
 
         case 101:
@@ -4921,7 +4995,31 @@ void selectMenu(int choice)
             break;
 
         case 119:
-            createCoAPCloudConfResource(g_isSecuredServer);
+            createBP0Resource();
+            createBP1Resource();
+            createBP2Resource();
+            break;
+
+        case 120:
+            InitCloudResource();
+            break;
+
+        case 121:
+            CloudsSignOut();
+            break;
+
+        case 122:
+            DeleteCloudAccount();
+            DeInitCloudResource();
+            InitCloudResource();
+            break;
+
+        case 123:
+            createConfigurationResource(g_isSecuredServer);
+            break;
+
+        case 124:
+            sendPingMessage();
             break;
 
         case 0:
@@ -4955,4 +5053,3 @@ void handleMenu(int argc, char* argv[])
     selectMenu(choice);
     showMenu(0, NULL);
 }
-

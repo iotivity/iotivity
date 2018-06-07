@@ -202,7 +202,6 @@ void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
 {
     OCStackResult result = OC_STACK_ERROR;
     bool isRepUpdated = false;
-    bool isSameAttributeValue = false;
     bool isAttributeReadOnly = false;
     bool shouldChange = true;
     cout << "Inside handlePostRequest... " << endl;
@@ -382,22 +381,14 @@ void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
                     repValueString = m_representation.getValueToString(key);
                     incomingValueString = incomingRepresentation.getValueToString(key);
 
-                    if (repValueString.compare(incomingValueString) != 0)
-                    {
-                        updateRepresentation(key, incomingRepresentation, response);
-                        isSameAttributeValue = false;
-                        isRepUpdated = true;
+                    updateRepresentation(key, incomingRepresentation, response);
+                    isRepUpdated = true;
 
-                        if (m_pSensorTwin != nullptr)
-                        {
-                            m_pSensorTwin->updateRepresentation(key, incomingRepresentation);
-                        }
-                    }
-                    else
+                    if (m_pSensorTwin != nullptr)
                     {
-                        isSameAttributeValue = true;
-                        isRepUpdated = false;
+                        m_pSensorTwin->updateRepresentation(key, incomingRepresentation);
                     }
+
                 }
                 else if (m_representation.hasAttribute(key) && (isReadonly(key) == true))
                 {
@@ -420,12 +411,6 @@ void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
                 {
                     cout << "Update is not possible, Attribute is read-only." << endl;
                 }
-                else if (isSameAttributeValue)
-                {
-                    cout
-                            << "Incoming representation value is same as resources representation value. No need to update!!"
-                            << endl;
-                }
                 else
                 {
                     cout << "Incoming Representation not supported by this resource!!" << endl;
@@ -433,7 +418,6 @@ void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
 
                 response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
             }
-
         }
     }
 
@@ -783,7 +767,6 @@ bool SampleResource::updateRepresentation(string key, OCRepresentation incomingR
     {
         setResourceRepresentation(rep);
         result = true;
-
     }
     else
     {

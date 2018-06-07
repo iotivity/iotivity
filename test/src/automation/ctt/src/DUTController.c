@@ -20,7 +20,7 @@
 
 #include <DUTController.h>
 #include <MiniHttpServer.h>
-#include <libuv/uv.h>
+#include <uv.h>
 
 /*Static resources Start*/
 static ResourceMap* s_resourceMapBasic = 0;

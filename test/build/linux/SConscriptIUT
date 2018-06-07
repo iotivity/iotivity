@@ -56,6 +56,8 @@ if WITH_RD == True:
 
 include_paths = [
     iotivity_test_root + '/include',
+    iotivity_test_root + '/include/AM',
+    iotivity_test_root + '/include/AM/dependencies',
     iotivity_root + '/resource/include',
     iotivity_root + '/resource/csdk/include',
     iotivity_root + '/resource/csdk/connectivity/api',
@@ -67,6 +69,7 @@ include_paths = [
     iotivity_root + '/resource/csdk/logger/include',
     iotivity_root + '/resource/csdk/resource-directory/include',
     iotivity_root + '/resource/c_common/',
+    iotivity_root + '/resource/c_common/ocrandom/include',
     iotivity_root + '/resource/c_common/oic_malloc/include',
     iotivity_root + '/resource/oc_logger/include',
     iotivity_root + '/service/easy-setup/inc',
@@ -90,6 +93,10 @@ src = [
     test_src_root + '/common/commonutil/c_cpp/MntResource.cpp',
     test_src_root + '/common/commonutil/c_cpp/NmonResource.cpp',
     test_src_root + '/common/commonutil/c_cpp/SampleCollection.cpp',
+    test_src_root + '/common/commonutil/c_cpp/AM/bloodpressure0.cpp',
+    test_src_root + '/common/commonutil/c_cpp/AM/bloodpressure1.cpp',
+    test_src_root + '/common/commonutil/c_cpp/AM/bloodpressure2.cpp',
+    test_src_root + '/common/commonutil/c_cpp/AM/dependencies/MySignals/bloodpressure.cpp',
     test_src_root + '/common/commonutil/c_cpp/ResourceHelper.cpp',
     test_src_root + '/testapp/IUTSimulatorApp/c_cpp/IUTSimulator.cpp',
 ]

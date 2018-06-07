@@ -1,27 +1,29 @@
 /******************************************************************
- *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
- *
- *
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- ******************************************************************/
+*
+* Copyright 2018 Open Connectivity Foundation All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
 
 #include "MntResource.h"
 
 MntResource::MntResource(void)
 {
+    numberOf503ErrorResponse = 0;
+    expect503ErrorRespond = false;
 }
 
 MntResource::~MntResource(void)
@@ -39,6 +41,18 @@ void MntResource::handleGetRequest(QueryParamsMap &queryParamsMap,
         cout << "resseting property 'rb' : " << rbValue << endl;
         rep.setValue(REBOOT_KEY, false);
     }
+
+    if (expect503ErrorRespond && numberOf503ErrorResponse < 2)
+    {
+        numberOf503ErrorResponse++;
+        rep.setValue(HTML_ERR_KEY, 503);
+    }
+    else if (numberOf503ErrorResponse >= 2)
+    {
+        numberOf503ErrorResponse = 0;
+        expect503ErrorRespond = false;
+    }
+
     SampleResource::handleGetRequest(queryParamsMap, request, response, rep);
 }
 
@@ -138,7 +152,7 @@ void MntResource::handlePostRequest(QueryParamsMap &queryParamsMap,
         {
             if (incomingRepresentation.hasAttribute(FACTORY_KEY))
             {
-
+                expect503ErrorRespond = true;
             }
         }
         catch (exception& e)
@@ -150,6 +164,7 @@ void MntResource::handlePostRequest(QueryParamsMap &queryParamsMap,
         {
             if (incomingRepresentation.hasAttribute(REBOOT_KEY))
             {
+                expect503ErrorRespond = true;
                 updateRepresentation(REBOOT_KEY, incomingRepresentation, response);
                 notifyObservers(this);
             }
