@@ -179,6 +179,17 @@ int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
               const unsigned char *desc, size_t desc_len,
               unsigned char *result, size_t result_length);
 
+/*
+ * This internal callback is used to retrieve UUIDs from CRED 
+ * entries that have matching publicData.
+ *
+ * @param ctx context holding UUID list
+ * @param p pointer to the DER-encoded certificate
+ * @param len length of the DER-encoded certificate
+ */
+
+void GetIdentityHandler(UuidContext_t* ctx, unsigned char* p, size_t len);
+
 /**
  * Add temporal PSK to PIN based OxM.
  *

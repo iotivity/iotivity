@@ -33,6 +33,7 @@
 #include "cacommon.h"
 #include "caipinterface.h"
 #include "oic_malloc.h"
+#include "utlist.h"
 #include "experimental/ocrandom.h"
 #include "experimental/byte_array.h"
 #include "octhread.h"
@@ -406,6 +407,12 @@ static CAgetCredentialTypesHandler g_getCredentialTypesCallback = NULL;
  * @brief callback to get X.509-based Public Key Infrastructure
  */
 static CAgetPkixInfoHandler g_getPkixInfoCallback = NULL;
+/**
+ * @var g_getIdentityCallback
+ *
+ * @brief callback to retrieve acceptable UUID list
+ */
+static CAgetIdentityHandler g_getIdentityCallback = NULL;
 
 /**
  * @var g_dtlsContextMutex
@@ -464,6 +471,13 @@ void CAsetPkixInfoCallback(CAgetPkixInfoHandler infoCallback)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     g_getPkixInfoCallback = infoCallback;
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+}
+
+void CAsetIdentityCallback(CAgetIdentityHandler identityCallback)
+{
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+    g_getIdentityCallback = identityCallback;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
 }
 
@@ -1322,6 +1336,67 @@ void CAcloseSslConnectionAll(CATransportAdapter_t transportType)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return;
 }
+
+const char UUID_WILDCARD[UUID_STRING_SIZE] = "2a000000-0000-0000-0000-000000000000"; // conversion result for '*' to UUID, possible collision with real UUID
+
+static int verifyIdentity( void *data, mbedtls_x509_crt *crt, int depth, uint32_t *flags ) {
+    OC_UNUSED(data); // no need to pass extra data
+    OC_UNUSED(flags); // we do not remove any flags
+    static UuidContext_t ctx = { NULL };
+    g_getIdentityCallback(&ctx, crt->raw.p, crt->raw.len);
+    if (0 == depth) // leaf certificate
+    {
+        const mbedtls_x509_name * name = NULL;
+        /* Find the CN component of the subject name. */
+        for (name = &crt->subject; NULL != name; name = name->next)
+        {
+            if (name->oid.p &&
+               (name->oid.len <= MBEDTLS_OID_SIZE(MBEDTLS_OID_AT_CN)) &&
+               (0 == memcmp(MBEDTLS_OID_AT_CN, name->oid.p, name->oid.len)))
+            {
+                break;
+            }
+        }
+
+        if (NULL == name)
+        {
+            OIC_LOG(ERROR, NET_SSL_TAG, "Could not retrieve identity information from leaf certificate");
+            return -1;
+        }
+        const size_t uuidBufLen = UUID_STRING_SIZE - 1;
+        const unsigned char * uuidPos = (const unsigned char*)memmem(name->val.p, name->val.len, UUID_PREFIX, sizeof(UUID_PREFIX) - 1);
+        /* If UUID_PREFIX is present, ensure there's enough data for the prefix plus an entire
+         * UUID, to make sure we don't read past the end of the buffer.
+         */
+        char uuid[UUID_STRING_SIZE] = { 0 };
+        if ((NULL != uuidPos) && (name->val.len >= ((uuidPos - name->val.p) + (sizeof(UUID_PREFIX) - 1) + uuidBufLen)))
+        {
+            memcpy(uuid, uuidPos + sizeof(UUID_PREFIX) - 1, uuidBufLen);
+        }
+        else
+        {
+            OIC_LOG(ERROR, NET_SSL_TAG, "Could not retrieve UUID from leaf certificate");
+            return -1;
+        }
+
+        bool isMatched = false;
+        UuidInfo_t* node = NULL;
+        UuidInfo_t* tmpNode = NULL;
+        LL_FOREACH(ctx.list, node)
+        {
+            isMatched = isMatched || (0 == memcmp(node->uuid, uuid, UUID_STRING_SIZE));
+            isMatched = isMatched || (0 == memcmp(node->uuid, UUID_WILDCARD, UUID_STRING_SIZE));
+        }
+        LL_FOREACH_SAFE(ctx.list, node, tmpNode)
+        {
+            free(node);
+        }
+        ctx.list = NULL;
+        return isMatched ? 0 : -1;
+    }
+    return 0;
+}
+
 /**
  * Creates session for endpoint.
  *
@@ -1348,6 +1423,10 @@ static SslEndPoint_t * NewSslEndPoint(const CAEndpoint_t * endpoint, mbedtls_ssl
     tep->sep.endpoint = *endpoint;
     tep->sep.endpoint.flags = (CATransportFlags_t)(tep->sep.endpoint.flags | CA_SECURE);
 
+    if (g_getIdentityCallback != NULL)
+    {
+        mbedtls_ssl_conf_verify(config, verifyIdentity, NULL);
+    }
     if(0 != mbedtls_ssl_setup(&tep->ssl, config))
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Setup failed");

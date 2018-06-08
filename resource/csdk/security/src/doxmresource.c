@@ -1518,6 +1518,7 @@ OCEntityHandlerResult HandleDoxmPostRequestMfg(OicSecDoxm_t *newDoxm,
         OIC_LOG(DEBUG, TAG, "No ciphersuite preferred");
 
         VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterPkixInfoHandler(GetManufacturerPkixInfo), ERROR);
+        VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterIdentityHandler(NULL), ERROR);
         VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterGetCredentialTypesHandler(
                            InitManufacturerCipherSuiteList), ERROR);
 exit:

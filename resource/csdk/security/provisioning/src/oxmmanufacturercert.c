@@ -116,6 +116,12 @@ OCStackResult PrepareMCertificateCallback(OTMContext_t *otmCtx)
         return OC_STACK_ERROR;
     }
 
+    if (CA_STATUS_OK != CAregisterIdentityHandler(NULL))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to register IdentityHandler");
+        return OC_STACK_ERROR;
+    }
+
     if (CA_STATUS_OK != CAregisterGetCredentialTypesHandler(InitManufacturerCipherSuiteList))
     {
         OIC_LOG(ERROR, TAG, "Failed to register CredentialTypesHandler");

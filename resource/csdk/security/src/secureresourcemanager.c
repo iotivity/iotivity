@@ -451,6 +451,7 @@ OCStackResult SRMInitSecureResources()
         ret = OC_STACK_ERROR;
     }
     CAregisterPkixInfoHandler(GetPkixInfo);
+    CAregisterIdentityHandler(GetIdentityHandler);
     CAregisterGetCredentialTypesHandler(InitCipherSuiteList);
 #endif // __WITH_DTLS__ or __WITH_TLS__
     return ret;
