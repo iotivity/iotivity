@@ -813,11 +813,20 @@ name##_RBL_REMOVE(struct name *head, struct type *elm)			\
 		elm = RB_REMOVE(name, head, elm);			\
 	}								\
 	return elm;							\
+}								\
+								\
+attr struct type *							\
+name##_RBL_FIND(struct name *head, struct type *elm)			\
+{									\
+	elm = RB_FIND(name, head, elm);			\
+	return elm;							\
 }
 
 #define RBL_INSERT(name, x, y)	name##_RBL_INSERT(x, y)
 
 #define RBL_REMOVE(name, x, y)	name##_RBL_REMOVE(x, y)
+
+#define RBL_FIND(name, x, y)	name##_RBL_FIND(x, y)
 
 #ifdef _KERNEL
 
