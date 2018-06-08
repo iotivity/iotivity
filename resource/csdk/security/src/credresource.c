@@ -3293,6 +3293,85 @@ static int ConvertDerCertToPem(const uint8_t* der, size_t derLen, uint8_t** pem)
     return 0;
 }
 
+
+void GetIdentityHandler(UuidContext_t* ctx, unsigned char* crt, size_t crtLen)
+{
+    UuidInfo_t* cur = ctx->list;
+    if (NULL != ctx->list)
+    {
+        while (NULL != cur->next)
+        {
+            cur = cur->next;
+        }
+    }
+
+    OicSecCred_t *cred = NULL;
+    LL_FOREACH(gCred, cred)
+    {
+        if (SIGNED_ASYMMETRIC_KEY != cred->credType)
+        {
+            continue;
+        }
+        if (0 == strcmp(cred->credUsage, TRUST_CA) && 0 == strcmp(cred->credUsage, MF_TRUST_CA))
+        {
+            continue;
+        }
+
+        uint8_t *der = NULL;
+        size_t derLen = 0;
+        if ((OIC_ENCODING_BASE64 == cred->publicData.encoding) ||
+            (OIC_ENCODING_PEM == cred->publicData.encoding))
+        {
+            int ret = ConvertPemCertToDer((const char*)cred->publicData.data, cred->publicData.len, &der, &derLen);
+            if (0 > ret)
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: Failed converting PEM cert to DER: %d", __func__, ret);
+                continue;
+            }
+        }
+        else
+        {
+            der = cred->publicData.data;
+            derLen = cred->publicData.len;
+        }
+
+        if (derLen != crtLen)
+        {
+            continue;
+        }
+
+        if (0 != memcmp(der, crt, crtLen))
+        {
+            continue;
+        }
+
+        UuidInfo_t* node = (UuidInfo_t*) malloc(sizeof(UuidInfo_t));
+        if (NULL == node)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Could not allocate new UUID node", __func__);
+            continue;
+        }
+        node->next = NULL;
+        if (OCConvertUuidToString(cred->subject.id, node->uuid))
+        {
+            if (NULL == ctx->list)
+            {
+                ctx->list = node;
+            }
+            else
+            {
+                cur->next = node;
+            }
+            cur = node;
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Failed to convert subjectuuid to string", __func__);
+            free(node);
+        }
+    }
+}
+
 #ifndef NDEBUG
 
 void LogCert(uint8_t *data, size_t len, OicEncodingType_t encoding, const char* tag)
