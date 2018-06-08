@@ -408,6 +408,11 @@ void DeleteServerRequest(OCServerRequest * serverRequest)
 {
     if (serverRequest)
     {
+        if (!RBL_FIND(ServerRequestTree, &g_serverRequestTree, serverRequest))
+        {
+            return;
+        }
+
         RBL_REMOVE(ServerRequestTree, &g_serverRequestTree, serverRequest);
         OICFree(serverRequest->requestToken);
         OICFree(serverRequest);
