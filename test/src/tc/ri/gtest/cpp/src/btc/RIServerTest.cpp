@@ -1117,3 +1117,40 @@ TEST_F(RIServerTest_btc, SendResponse_USV_N)
     EXPECT_ANY_THROW(OCPlatform::sendResponse(resourceResponse));
 }
 #endif
+
+/**
+* @since 2018-06-14
+* @see none
+* @objective Test getResourceHandleAtUri() positively
+* @target OCResourceHandle getResourceHandleAtUri(const std::string& uri);
+* @test_data OCResourceHandle
+* @pre-Condition None
+* @procedure Call getResourceHandleAtUri() API
+* @post_condition None
+* @@return resource handle
+*/
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RIServerTest_btc, GetResourceHandleAtUri_SRC_P)
+{
+    m_ResourceHandle = OCPlatform::getResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    EXPECT_NE(NULL, m_ResourceHandle);
+}
+#endif
+
+/**
+* @since 2018-06-14
+* @objective Test getResourceHandleAtUri() with negative way by passing empty string
+* @target OCResourceHandle getResourceHandleAtUri(const std::string& uri);
+* @test_data OCResourceHandle
+* @pre-Condition None
+* @procedure Call getResourceHandleAtUri() API
+* @post_condition None
+* @return NULL
+*/
+#if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
+TEST_F(RIServerTest_btc, GetResourceHandleAtUri_ESV_P)
+{
+    m_ResourceHandle = OCPlatform::getResourceHandleAtUri(m_EmptyStr);
+    EXPECT_EQ(NULL, m_ResourceHandle);
+}
+#endif
