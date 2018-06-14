@@ -63,12 +63,12 @@ RUN echo "#log: ${project}: Install Tizen tools" \
 ADD . /usr/local/src/${project}
 WORKDIR /usr/local/src/${project}
 RUN echo "#log: ${project}: Preparing sources" \
+  && [ ! -x prep.sh ] || EXEC_MODE=true ./prep.sh \
   && git config --global user.name "Nobody" \
   && git config --global user.email "nobody@localhost" \
   && git init \
   && git add -f . \
   && git commit -am 'WIP: Import ${project}' \
-  && [ ! -x prep.sh ] || EXEC_MODE=true ./prep.sh \
   && sync
 
 RUN echo "#log: ${project}: Building sources" \
