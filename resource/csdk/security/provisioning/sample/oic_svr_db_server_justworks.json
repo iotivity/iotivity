@@ -36,6 +36,7 @@
                 "resources": [
                     { "href": "/oic/sec/doxm" },
                     { "href": "/oic/sec/roles" },
+                    { "href": "/CoapCloudConfResURI" },
                     { "wc": "+" }
                 ],
                 "permission": 14

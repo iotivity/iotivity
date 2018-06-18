@@ -1197,8 +1197,7 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
                 char *proto = NULL;
 
                 // consider IP or TCP adapter for payload that is visible to the client
-                if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter) &&
-                    (info->ifindex == devAddr->ifindex))
+                if (((CA_ADAPTER_IP | CA_ADAPTER_TCP) & info->adapter))
                 {
                     OCTpsSchemeFlags matchedTps = OC_NO_TPS;
                     if (OC_STACK_OK != OCGetMatchedTpsFlags(info->adapter,

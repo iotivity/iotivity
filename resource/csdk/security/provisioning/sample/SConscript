@@ -19,20 +19,23 @@
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
 
-Import('env provisioning_env')
 import os.path
+Import('env provisioning_env')
 
 provisioning_sample_env = provisioning_env.Clone()
 target_os = provisioning_sample_env.get('TARGET_OS')
+
+#Build cloud library
+if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True:
+    SConscript('../src/cloud/SConscript', 'provisioning_env')
+    provisioning_sample_env.AppendUnique(LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk', 'security', 'provisioning', 'src', 'cloud')])
 
 ######################################################################
 # Build flags
 ######################################################################
 provisioning_sample_env.AppendUnique(CPPPATH=[
     '#/resource/csdk/include',
-    '#/extlibs/base64',
-    '#/resource/csdk/security/provisioning/sample/cloud',
-    '#resource/csdk/security/provisioning/include/cloud'
+    '#/extlibs/base64'
 ])
 
 target_os = env.get('TARGET_OS')
@@ -50,16 +53,18 @@ else:
     provisioning_sample_env.AppendUnique(
         LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk')])
 
-provisioning_sample_env.PrependUnique(LIBS=['coap'])
-
 if target_os not in ['msys_nt', 'windows']:
     provisioning_sample_env.PrependUnique(LIBS=['connectivity_abstraction'])
 
 provisioning_sample_env.PrependUnique(LIBS=['oc', 'octbstack'])
 
 if target_os not in ['msys_nt', 'windows']:
-    provisioning_sample_env.PrependUnique(
-        LIBS=['oc_logger', 'ocpmapi', 'ocsrm'])
+    if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True:
+        provisioning_sample_env.PrependUnique(
+            LIBS=['oc_logger', 'coap', 'cloud', 'ocpmapi', 'ocsrm'])
+    else:
+        provisioning_sample_env.PrependUnique(
+            LIBS=['oc_logger', 'coap', 'ocpmapi', 'ocsrm'])
 
 if env.get('SECURED') == '1':
     provisioning_sample_env.AppendUnique(
@@ -125,7 +130,7 @@ sampleapps = [
     autoprovisioningclient,
     sampleserver_justworks,
     sampleserver_randompin,
-    sampleserver_mfg,
+    sampleserver_mfg
 ]
 sampleapps += provisioning_sample_env.ScanJSON('resource/csdk/security/provisioning/sample')
 if target_os not in ['msys_nt', 'windows']:

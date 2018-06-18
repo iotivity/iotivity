@@ -29,6 +29,7 @@
 
 
 #include "cacommon.h"
+#include "experimental/ocrandom.h"
 #include "experimental/byte_array.h"
 
 #ifdef __cplusplus
@@ -125,6 +126,41 @@ typedef struct
 } PkiInfo_t;
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+
+/**
+ * Node structure for UUID linked list
+ */
+
+typedef struct UuidInfo_s
+{
+    char uuid[UUID_STRING_SIZE];
+    struct UuidInfo_s * next;
+} UuidInfo_t;
+
+/**
+ * Context with UUID linked list to populate
+ */
+
+typedef struct
+{
+    UuidInfo_t* list;
+} UuidContext_t;
+
+/**
+ * Populates UUID linked list in the context with all
+ * UUIDs retrieved from OCF Device /oic/sec/cred/ entries.
+ * This is done to match allowed UUIDs against presented
+ * UUID in the leaf certificate during TLS handshake
+ */
+
+typedef void (*CAgetIdentityHandler)(UuidContext_t* list, unsigned char* p, size_t len);
+
+/**
+ * Registers UUID population callback
+ */
+
+CAResult_t CAregisterIdentityHandler(CAgetIdentityHandler getIdentityHandler);
+
 /**
  * Callback is used by application layer to check peer's certificate CN field.
  * If set, this callback will be invoked during handshake after certificate verification.

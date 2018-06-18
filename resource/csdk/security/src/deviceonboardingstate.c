@@ -32,7 +32,9 @@
 #include "experimental/doxmresource.h"
 #include "pstatresource.h"
 #include "resourcemanager.h"
-
+#if defined(WITH_CLOUD)
+#include "cloud/cloudresource.h"
+#endif
 #define TAG "OIC_SRM_DOS"
 
 /**
@@ -404,6 +406,10 @@ static bool EnterRESET(void)
     OIC_LOG_V(INFO, TAG, "%s: Anon Ciphersuite %sENABLED.", __func__,
         isAnonEnabled ? "" : "NOT ");
 #endif // __WITH_DTLS__ or __WITH_TLS__
+
+#if defined(WITH_CLOUD)
+    ResetClouds();
+#endif
 
     ret = true;
 

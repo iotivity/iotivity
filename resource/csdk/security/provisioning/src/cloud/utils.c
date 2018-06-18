@@ -108,7 +108,7 @@ void fillCallbackData(OCCallbackData *cbData, void *ctx, OCCloudResponseCB cb,
 {
     memset(cbData, 0, sizeof(OCCallbackData));
 
-    ContextInfo_t *info = OICCalloc(1, sizeof(ContextInfo_t));
+    ContextInfo_t *info = (ContextInfo_t *)OICCalloc(1, sizeof(ContextInfo_t));
     if (!info)
     {
         OIC_LOG(ERROR, TAG, "Can't allocate memory for info");
