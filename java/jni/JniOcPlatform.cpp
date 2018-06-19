@@ -502,7 +502,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
     {
         port = static_cast<uint16_t>(jPort);
     }
-
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     PlatformConfig cfg{
         JniUtils::getServiceType(env, jServiceType),
         JniUtils::getModeType(env, jModeType),
@@ -512,6 +515,9 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
         JniUtils::getQOS(env, static_cast<int>(jQOS)),
         JniOcSecurity::getOCPersistentStorage()
     };
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     OCPlatform::Configure(cfg);
 }
 
@@ -1494,7 +1500,10 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_getResourceHandleAtU
     OCResourceHandle resourceHandle;
 
     resourceHandle = OCGetResourceHandleAtUri(resourceUri.c_str());
-
+    if (nullptr == resourceHandle)
+    {
+        return nullptr;
+    }
     JniOcResourceHandle* jniHandle = new JniOcResourceHandle(resourceHandle);
     jlong handle = reinterpret_cast<jlong>(jniHandle);
     jobject jResourceHandle;

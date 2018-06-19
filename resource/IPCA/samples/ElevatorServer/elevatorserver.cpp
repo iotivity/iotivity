@@ -17,8 +17,11 @@
  *
  ******************************************************************/
 
-#include "experimental/logger.h"
 #include "elevatorserver.h"
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/logger.h"
 
 using namespace OC;
 using namespace std::placeholders;
@@ -193,9 +196,7 @@ bool ElevatorServer::Start(const std::string& elevatorName)
         PlatformConfig Configuration {
                                 ServiceType::InProc,
                                 ModeType::Server,
-                                "0.0.0.0", // By setting to "0.0.0.0", it binds to all available
-                                           // interfaces
-                                0,         // Uses randomly available port
+                                OC_DEFAULT_ADAPTER,
                                 QualityOfService::NaQos,
                                 &ps
                             };

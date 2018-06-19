@@ -64,7 +64,7 @@ CAResult_t CAStartRA();
 /**
  * Sends data to the endpoint using the adapter connectivity.
  * @param[in]   endpoint    Remote Endpoint information (like ipaddress, port,
- *                           reference uri and transport type) to which
+ *                           reference URI and transport type) to which
  *                           the unicast data has to be sent.
  * @param[in]   data        Data which is required to be sent.
  * @param[in]   dataLen     Size of data to be sent.

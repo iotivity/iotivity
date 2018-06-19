@@ -43,14 +43,14 @@ typedef struct RoleCertChain {
  *
  * @return OC_STACK_OK if successful; error otherwise
  */
-OCStackResult InitRolesResource();
+OCStackResult InitRolesResource(void);
 
 /**
  * De-initialize the roles resource.
  *
  * @return OC_STACK_OK if successful; error otherwise
  */
-OCStackResult DeInitRolesResource();
+OCStackResult DeInitRolesResource(void);
 
 /**
  * Register the PSK credential being used for authentication. This is used by the cred resource

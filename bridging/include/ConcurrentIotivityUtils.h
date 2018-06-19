@@ -123,24 +123,24 @@ namespace OC
                 void stopWorkerThreads();
 
                 /**
-                 * Gets the string uri associated with an Iotivity handle.
+                 * Gets the string URI associated with an Iotivity handle.
                  * @warning This function is not thread safe and should only be called from entityHandler
                  *          specified when creating the resource. The entityhandler is called with the
                  *          Iotivity access mutex locked and this function does not modify anything
                  *          in the stack.
                  *
                  * @param[in]  handle    handle for the resource
-                 * @param[out] uri       uri associated with the handle
+                 * @param[out] uri       URI associated with the handle
                  *
-                 * @return true if the resource is found and uri will be populated, else false.
+                 * @return true if the resource is found and URI will be populated, else false.
                  */
                 bool static getUriFromHandle(OCResourceHandle handle, std::string &uri);
 
                 /**
-                 * Sends out OBSERVE notifications for the resource with the given uri.
+                 * Sends out OBSERVE notifications for the resource with the given URI.
                  * Notifications are sent out using OC_NA_QOS.
                  *
-                 * @param[in] resourceUri      resource uri for fetching handle and notifying
+                 * @param[in] resourceUri      resource URI for fetching handle and notifying
                  *
                  * @return OCStackResult OC_STACK_OK on success, some other value upon failure.
                  */
@@ -165,7 +165,7 @@ namespace OC
                                uint8_t resourceProperties);
 
                 /**
-                 * Delete the Iotivity resource given in the uri.
+                 * Delete the Iotivity resource given in the URI.
                  *
                  * @param[in] uri
                  *

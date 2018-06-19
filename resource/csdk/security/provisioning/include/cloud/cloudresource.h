@@ -26,8 +26,8 @@ extern "C" {
 #endif
 
 #define OIC_RSRC_TYPE_SEC_CLOUDCONF             "oic.r.coapcloudconf"
-#define OIC_RSRC_CLOUDCONF_URI                  "/oic/cloudconf"
-#define OIC_JSON_CLOUDCONF_NAME                 "cloudconf"
+#define OIC_RSRC_CLOUDCONF_URI                  "/CoapCloudConfResURI"
+#define OIC_JSON_CLOUDCONF_NAME                 "CoAPCloudConf"
 #define OIC_RSRC_CLOUDCONF_TOKEN_REFRESH        "/oic/sec/tokenrefresh"
 #define OC_RSRVD_ACCESS_TOKENTYPE               "tokentype"
 
@@ -56,14 +56,19 @@ OCStackResult CreateCloudResource();
 bool UpdateCloudPersistentStorage();
 
 /**
- * Parse GET cloudconf payload
- *
- * @param[in] cborPayload       payload to parse
- * @param[in] size              payload size
- * @param[out] cloudState       cloud state
- * @return ::OC_STACK_OK for Success, otherwise some error value.
- */
-OCStackResult CloudGetRequestPayloadParse(const uint8_t *cborPayload, size_t size, int *cloudState);
+* SignOut & release clouds
+*/
+void StopClouds();
+
+/**
+* Release cloud entries
+*/
+void ResetClouds();
+
+/**
+* Delete clouds acount
+*/
+void DeleteCloudAccount();
 
 #ifdef __cplusplus
 }

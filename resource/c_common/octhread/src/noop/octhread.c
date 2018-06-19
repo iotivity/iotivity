@@ -21,6 +21,8 @@
 //
 //*********************************************************************
 
+#include "c_common/platform_features.h"
+
 /**
  * @file
  * This file provides APIs related to mutex with no operation
@@ -51,26 +53,32 @@ typedef struct _tagThreadInfo_t
  * @var g_mutexInfo
  * @brief This is used to return a non NULL value for oc_mutex_new().
  */
-static oc_mutex_internal g_mutexInfo = { 0 };
+static oc_mutex_internal g_mutexInfo = {};
 
 /**
  * @var g_condInfo
  * @brief This is used to return a non NULL value for oc_cond_new().
  */
-static oc_cond_internal g_condInfo = { 0 };
+static oc_cond_internal g_condInfo = {};
 
 OCThreadResult_t oc_thread_new(oc_thread *t, void *(*start_routine)(void *), void *arg)
 {
+    OC_UNUSED(t);
+    OC_UNUSED(start_routine);
+    OC_UNUSED(arg);
+
     return OC_THREAD_CREATE_FAILURE;
 }
 
 OCThreadResult_t oc_thread_free(oc_thread t)
 {
+    OC_UNUSED(t);
     return OC_THREAD_INVALID;
 }
 
 OCThreadResult_t oc_thread_wait(oc_thread t)
 {
+    OC_UNUSED(t);
     return OC_THREAD_INVALID;
 }
 
@@ -86,16 +94,19 @@ oc_mutex oc_mutex_new_recursive(void)
 
 bool oc_mutex_free(oc_mutex mutex)
 {
+    OC_UNUSED(mutex);
     return true;
 }
 
 void oc_mutex_lock(oc_mutex mutex)
 {
+    OC_UNUSED(mutex);
     return;
 }
 
 void oc_mutex_unlock(oc_mutex mutex)
 {
+    OC_UNUSED(mutex);
     return;
 }
 
@@ -113,26 +124,34 @@ oc_cond oc_cond_new(void)
 
 void oc_cond_free(oc_cond cond)
 {
+    OC_UNUSED(cond);
     return;
 }
 
 void oc_cond_signal(oc_cond cond)
 {
+    OC_UNUSED(cond);
     return;
 }
 
 void oc_cond_broadcast(oc_cond cond)
 {
+    OC_UNUSED(cond);
     return;
 }
 
 void oc_cond_wait(oc_cond cond, oc_mutex mutex)
 {
+    OC_UNUSED(cond);
+    OC_UNUSED(mutex);
     return;
 }
 
 OCWaitResult_t oc_cond_wait_for(oc_cond cond, oc_mutex mutex, uint64_t microseconds)
 {
+    OC_UNUSED(cond);
+    OC_UNUSED(mutex);
+    OC_UNUSED(microseconds);
     return OC_WAIT_SUCCESS;
 }
 

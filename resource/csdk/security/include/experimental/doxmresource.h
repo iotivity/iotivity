@@ -52,21 +52,21 @@ typedef enum {
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult InitDoxmResource();
+OCStackResult InitDoxmResource(void);
 
 /**
  * Perform cleanup for DOXM resources.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult DeInitDoxmResource();
+OCStackResult DeInitDoxmResource(void);
 
 /**
  * This method is used by SRM to retrieve DOXM resource data.
  *
  * @return reference to @ref OicSecDoxm_t, binary format of Doxm resource data.
  */
-const OicSecDoxm_t* GetDoxmResourceData();
+const OicSecDoxm_t* GetDoxmResourceData(void);
 
 /**
  * This method converts CBOR DOXM into binary DOXM.

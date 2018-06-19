@@ -24,7 +24,7 @@
 #include "svrdbeditorcommon.h"
 #include "experimental/securevirtualresourcetypes.h"
 
-void RefreshCred();
+void RefreshCred(void);
 void PrintCredList(const OicSecCred_t *creds);
 void HandleCredOperation(SubOperationType_t cmd);
 

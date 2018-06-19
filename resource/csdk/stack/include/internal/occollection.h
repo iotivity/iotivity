@@ -31,7 +31,7 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
 
 /**
  * This function creates the RepPayloadArray for links parameter of collection resource.
- * @param[in] resourceUri Resource uri (this should be a collection resource)
+ * @param[in] resourceUri Resource URI (this should be a collection resource)
  * @param[in] devAddr Structure pointing to the address. (from OCEntityHandlerRequest)
  * @param[in] isOCFVer true if AcceptedVersion is OCF1.0 or higher
  *            otherwise false in case OIC1.1 (from OCEntityHandlerRequest)

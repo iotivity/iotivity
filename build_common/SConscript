@@ -8,7 +8,7 @@ import sys
 import platform
 import re
 
-project_version = '1.3.1'
+project_version = '1.4.0'
 
 # Map of build host to possible target os
 host_target_map = {
@@ -194,8 +194,11 @@ help_vars.AddVariables(
                  validator=PathVariable.PathAccept),
     EnumVariable('OIC_SUPPORT_TIZEN_TRACE',
                  'Tizen Trace(T-trace) api availability',
-                 default='False',
+                 default=False,
                  allowed_values=('True', 'False')),
+    BoolVariable('MANDATORY',
+                 'Enable/disable(default) mandatory',
+                 default=False)
 )
 
 ######################################################################
@@ -326,6 +329,9 @@ if not env.get('VERBOSE'):
     env['SHLINKCOMSTR'] = "Linking shared object $TARGET"
     env['ARCOMSTR'] = "Archiving $TARGET"
     env['RANLIBCOMSTR'] = "Indexing Archive $TARGET"
+
+if env.get('MANDATORY'):
+    env.AppendUnique(CPPDEFINES=['__MANDATORY__'])
 
 tc_set_msg = '''
 ************************************ Warning **********************************
@@ -667,10 +673,10 @@ elif (env.get('ROUTING') == 'EP'):
 if (('IP' in target_transport) or ('ALL' in target_transport)):
     env.AppendUnique(CPPDEFINES=['WITH_BWT'])
 
-if (target_os in ['linux', 'tizen', 'android'] and with_tcp):
+if (target_os in ['linux', 'tizen', 'android', 'yocto'] and with_tcp):
     env.AppendUnique(CPPDEFINES=['WITH_TCP'])
 
-if (target_os in ['linux', 'tizen', 'android', 'ios']):
+if (target_os in ['linux', 'tizen', 'android', 'ios', 'yocto']):
     if (('BLE' in target_transport) or ('BT' in target_transport) or
         ('ALL' in target_transport)):
         env.AppendUnique(CPPDEFINES=['WITH_TCP'])
@@ -695,7 +701,7 @@ if 'ALL' in target_transport:
             CPPDEFINES=['IP_ADAPTER', 'EDR_ADAPTER', 'LE_ADAPTER'])
 else:
     if ('BT' in target_transport):
-        if (target_os == 'linux'):
+        if target_os in ('linux', 'yocto'):
             msg = "CA Transport BT is not supported "
             Exit(msg)
         else:
@@ -715,7 +721,7 @@ else:
 
     if with_tcp:
         if (target_os in [
-                'linux', 'tizen', 'android', 'ios', 'windows'
+                'linux', 'tizen', 'android', 'ios', 'windows', 'yocto'
         ]):
             env.AppendUnique(CPPDEFINES=['TCP_ADAPTER', 'WITH_TCP'])
         else:

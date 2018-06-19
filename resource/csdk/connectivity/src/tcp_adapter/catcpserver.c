@@ -124,7 +124,7 @@ static CAResult_t CATCPCreateCond(void);
 static void CATCPDestroyCond(void);
 static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock);
 static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock);
-static void CAFindReadyMessage();
+static void CAFindReadyMessage(void);
 #if !defined(WSA_WAIT_EVENT_0)
 static void CASelectReturned(fd_set *readFds);
 #else
@@ -232,7 +232,7 @@ static void CAReceiveHandler(void *data)
 
 #if !defined(WSA_WAIT_EVENT_0)
 
-static void CAFindReadyMessage()
+static void CAFindReadyMessage(void)
 {
     fd_set readFds;
     struct timeval timeout = { .tv_sec = caglobals.tcp.selectTimeout };
@@ -364,7 +364,7 @@ static void CASelectReturned(fd_set *readFds)
  * @param[in] socketArray    Array in which to add socket
  * @param[in] event          Event to push
  * @param[in] eventArray     Array in which to add event
- * @param[in/out] eventIndex Current length of arrays
+ * @param[in,out] eventIndex Current length of arrays
  * @param[in] arraySize      Maximum length of arrays
  * @return true on success, false on failure
  */
@@ -388,7 +388,7 @@ static bool CAPushEvent(CASocketFd_t s, CASocketFd_t* socketArray,
  * @param[in] s              Socket to push
  * @param[in] socketArray    Array in which to add socket
  * @param[in] eventArray     Array in which to add event
- * @param[in/out] eventIndex Current length of arrays
+ * @param[in,out] eventIndex Current length of arrays
  * @param[in] arraySize      Maximum length of arrays
  * @return true on success, false on failure
  */
@@ -430,7 +430,7 @@ static bool CAPushSocket(CASocketFd_t s, CASocketFd_t* socketArray,
 /**
  * Process any message that is ready
  */
-static void CAFindReadyMessage()
+static void CAFindReadyMessage(void)
 {
     CASocketFd_t socketArray[EVENT_ARRAY_SIZE] = {0};
     HANDLE eventArray[_countof(socketArray)];
@@ -618,7 +618,7 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
 /**
  * Clean socket state data
  *
- * @param[in/out] item - socket state data
+ * @param[in,out] item - socket state data
  */
 void CACleanData(CATCPSessionInfo_t *svritem)
 {
@@ -637,8 +637,8 @@ void CACleanData(CATCPSessionInfo_t *svritem)
  * Construct CoAP header and payload from buffer
  *
  * @param[in] svritem - used socket, buffer, current received message length and protocol
- * @param[in/out]  data  - data buffer, this value is updated as data is copied to svritem
- * @param[in/out]  dataLength  - length of data, this value decreased as data is copied to svritem
+ * @param[in,out]  data  - data buffer, this value is updated as data is copied to svritem
+ * @param[in,out]  dataLength  - length of data, this value decreased as data is copied to svritem
  * @return             - CA_STATUS_OK or appropriate error code
  */
 CAResult_t CAConstructCoAP(CATCPSessionInfo_t *svritem, unsigned char **data,

@@ -101,12 +101,12 @@ CAResult_t CAcloseSslConnection(const CAEndpoint_t *endpoint);
  * @retval  ::CA_STATUS_FAILED Operation failed.
  *
  */
-CAResult_t CAinitSslAdapter();
+CAResult_t CAinitSslAdapter(void);
 
 /**
  * de-inits mbedTLS library and free the allocated memory.
  */
-void CAdeinitSslAdapter();
+void CAdeinitSslAdapter(void);
 
 /**
  * Performs TLS encryption of the CoAP PDU.

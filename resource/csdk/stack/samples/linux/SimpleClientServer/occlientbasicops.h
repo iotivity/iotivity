@@ -74,8 +74,8 @@ const char *getResult(OCStackResult result);
 /* Performs GET/PUT/POST query on most recently discovered resource*/
 void queryResource();
 
-/* Parses JSON payload received in the clientResponse to extract sid and resource uri information.
- * Populates uri_c array with uris of the resources discovered and assigns sid_c with the server
+/* Parses JSON payload received in the clientResponse to extract sid and resource URI information.
+ * Populates uri_c array with URIs of the resources discovered and assigns sid_c with the server
  * id received in the clientResponse.
  */
 int parseJSON(unsigned  const char * resJSONPayload, char ** sid_c,

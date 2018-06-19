@@ -153,6 +153,7 @@ CAResult_t CAAddLEServerInfoToList(LEServerInfoList **serverList,
     VERIFY_NON_NULL(serverList, TAG, "serverList");
     VERIFY_NON_NULL(leServerInfo, TAG, "leServerInfo");
 
+    // Initialize server info list
     LEServerInfoList *node = (LEServerInfoList *) OICCalloc(1, sizeof(LEServerInfoList));
     if (NULL == node)
     {

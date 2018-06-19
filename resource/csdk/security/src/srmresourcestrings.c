@@ -49,6 +49,11 @@ const char * OIC_RSRC_TYPE_SEC_PSTAT = "oic.r.pstat";
 const char * OIC_RSRC_PSTAT_URI =  "/oic/sec/pstat";
 const char * OIC_JSON_PSTAT_NAME = "pstat";
 
+//sp
+const char * OIC_RSRC_TYPE_SEC_SP = "oic.r.sp";
+const char * OIC_RSRC_SP_URI =  "/oic/sec/sp";
+const char * OIC_JSON_SP_NAME = "sp";
+
 //doxm
 const char * OIC_RSRC_TYPE_SEC_DOXM = "oic.r.doxm";
 const char * OIC_RSRC_DOXM_URI =  "/oic/sec/doxm";
@@ -122,6 +127,9 @@ const char * OIC_JSON_CM_NAME = "cm";
 const char * OIC_JSON_TM_NAME = "tm";
 const char * OIC_JSON_OM_NAME = "om";
 const char * OIC_JSON_SM_NAME = "sm";
+const char * OIC_JSON_SUPPORTED_SP_NAME = "supported_profiles";
+const char * OIC_JSON_ACTIVE_SP_NAME = "active_profile";
+const char * OIC_JSON_SP_CREDID_NAME = "credid";
 const char * OIC_JSON_CREDID_NAME = "credid";
 const char * OIC_JSON_SUBJECT_NAME = "subject";
 const char * OIC_JSON_SUBJECTID_NAME = "subjectuuid";

@@ -61,9 +61,13 @@ provisiontests_env.PrependUnique(CPPPATH=[
 if target_os in ['windows']:
     # Non-Windows platforms find the boost headers under /usr/include or similar path.
     provisiontests_env.AppendUnique(CPPPATH=['#/extlibs/boost/boost'])
+    # C4996 Using deprecated code warning. We still test deprecated functions. 
+    provisiontests_env.AppendUnique(CCFLAGS=['/wd4996'])
 
     provisiontests_env.AppendUnique(LIBS=['sqlite3', 'win_helper'])
 elif target_os in ['tizen', 'linux']:
+    # We still test deprecated functions.
+    provisiontests_env.AppendUnique(CCFLAGS=['-Wno-deprecated-declarations'])
     provisiontests_env.ParseConfig('pkg-config --cflags --libs sqlite3 gobject-2.0 gio-2.0 glib-2.0')
 
 # build fix: don't use _internal unless have to

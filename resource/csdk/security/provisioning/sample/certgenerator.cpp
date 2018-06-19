@@ -26,7 +26,6 @@
 
 #include "ocstack.h"
 #include "oic_malloc.h"
-#include "experimental/ocrandom.h"
 #include "occertutility.h"
 
 #ifdef HAVE_WINDOWS_H
@@ -36,6 +35,10 @@
 #undef ERROR
 #endif //ERROR
 #endif //HAVE_WINDOWS_H
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/ocrandom.h"
 
 static long GetFileSize(FILE *f)
 {
@@ -139,7 +142,7 @@ static void DoGenCertificate(CertType certType)
     }
     else
     {
-        strncpy(issKeyPairName, subjKeyPairName, sizeof(subjKeyPairName));
+        strncpy(issKeyPairName, subjKeyPairName, sizeof(subjKeyPairName) - 1);
     }
 
     // -- Load public key --
@@ -485,7 +488,7 @@ exit:
     }
 }
 
-int main()
+int main(void)
 {
     for (;;)
     {

@@ -48,7 +48,7 @@ extern "C" {
 //-----------------------------------------------------------------------------
 
 /** Version of IoTivity. */
-#define IOTIVITY_VERSION                      "1.3.1"
+#define IOTIVITY_VERSION                      "1.4.0"
 
 /**
  * OIC Virtual resources supported by every OIC device.
@@ -76,6 +76,9 @@ extern "C" {
 
 /** KeepAlive URI.*/
 #define OC_RSRVD_KEEPALIVE_URI                "/oic/ping"
+
+/** Cloudconf URI.*/
+#define OC_RSRVD_CLOUDCONF_URI                "/CoapCloudConfResURI"
 
 /** Presence */
 
@@ -1883,10 +1886,10 @@ typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
 /**
  * Callback function definition for Change in TrustCertChain
  *
- * @param[IN] ctx - user context returned in the callback.
- * @param[IN] credId - trustCertChain changed for this ID
- * @param[IN] trustCertChain - trustcertchain binary blob.
- * @param[IN] chainSize - size of trustchain
+ * @param[in] ctx - user context returned in the callback.
+ * @param[in] credId - trustCertChain changed for this ID
+ * @param[in] trustCertChain - trustcertchain binary blob.
+ * @param[in] chainSize - size of trustchain
  */
 typedef void (*TrustCertChainChangeCB)(void *ctx, uint16_t credId, uint8_t *trustCertChain,
         size_t chainSize);

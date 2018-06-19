@@ -118,7 +118,7 @@ void CAAddDataToReceiveThread(CAData_t *data)
 }
 #endif
 
-static bool CAIsSelectedNetworkAvailable()
+static bool CAIsSelectedNetworkAvailable(void)
 {
     u_arraylist_t *list = CAGetSelectedNetworkList();
     if (!list || u_arraylist_length(list) == 0)
@@ -903,7 +903,7 @@ exit:
     OIC_TRACE_END();
 }
 
-void CAHandleRequestResponseCallbacks()
+void CAHandleRequestResponseCallbacks(void)
 {
 #ifdef SINGLE_HANDLE
     // parse the data and call the callbacks.
@@ -1055,7 +1055,7 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
             if (!data)
             {
                 OIC_LOG(ERROR, TAG, "GenerateSignalingMessage failed");
-                return CA_MEMORY_ALLOC_FAILED;
+                return CA_STATUS_FAILED;
             }
             OICFree(csmOpts);
 
@@ -1215,7 +1215,7 @@ CAResult_t CAInitializeMessageHandler(CATransportAdapter_t transportType)
     return CA_STATUS_OK;
 }
 
-void CATerminateMessageHandler()
+void CATerminateMessageHandler(void)
 {
     // stop adapters
     CAStopAdapters();
@@ -1628,8 +1628,8 @@ CAData_t *CAGenerateSignalingMessageUsingToken(const CAEndpoint_t *endpoint, CAS
     OIC_LOG(DEBUG, TAG, "GenerateSignalingMessage - IN");
 
     // create token for signaling message.
-    CAToken_t token = (char *)OICCalloc(pingTokenLength + 1, sizeof(char));
-    OICStrcpy(token, pingTokenLength, pingToken);
+    CAToken_t token = (char *)OICCalloc(pingTokenLength, sizeof(char));
+    memcpy(token, pingToken, pingTokenLength);
 
     CAInfo_t signalingData = { .type = CA_MSG_NONCONFIRM,
                                .token = token,

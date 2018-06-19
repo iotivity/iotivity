@@ -94,7 +94,6 @@ if broker_test_env.get('TEST') == '1':
     if target_os in ['linux']:
         run_test(
             broker_test_env,
-            #'service_resource-encapsulation_src_resourceBroker_unittest_broker_test.memcheck',
-            '',  # TODO: fix this test on linux and enable previous line
+            'service_resource-encapsulation_src_resourceBroker_unittest_broker_test.memcheck',
             'service/resource-encapsulation/src/resourceBroker/unittest/broker_test',
             broker_test)

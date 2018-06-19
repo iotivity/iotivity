@@ -38,6 +38,9 @@
 #include "uarraylist.h"
 #include "org_iotivity_ca_CaLeClientInterface.h"
 
+/**
+ * Logging tag for module name.
+ */
 #define TAG PCF("OIC_CA_LE_CLIENT")
 
 #define MICROSECS_PER_SEC 1000000
@@ -72,7 +75,7 @@ static jobject g_leGattCallback = NULL;
 static jobject g_context = NULL;
 static jobjectArray g_uuidList = NULL;
 
-// it will be prevent to start send logic when adapter has stopped.
+// It will be prevent to start send logic when adapter has stopped.
 static bool g_isStartedLEClient = false;
 
 static jbyteArray g_sendBuffer = NULL;
@@ -146,7 +149,7 @@ static bool CALECheckConnectionStateValue(jint state)
 }
 
 /**
- * delete global reference for g_sendBuffer
+ * Delete global reference for g_sendBuffer
  * @param[in]   env                   JNI interface pointer.
  */
 static void CALEDeleteSendBuffer(JNIEnv *env)
@@ -218,7 +221,7 @@ static void CALEScanThread(void* object)
         OIC_LOG(DEBUG, TAG, "scan waiting time out");
         if (BLE_SCAN_ENABLE == g_curScanningStep)
         {
-            //stop scan
+            // stop scan
             CAResult_t ret = CALEClientStopScan();
             if (CA_STATUS_OK != ret)
             {
@@ -227,7 +230,7 @@ static void CALEScanThread(void* object)
         }
         else if (BLE_SCAN_DISABLE == g_curScanningStep)
         {
-            //start scan
+            // start scan
             CAResult_t ret = CALEClientStartScan();
             if (CA_STATUS_OK != ret)
             {
@@ -319,7 +322,7 @@ void CALEClientStopScanWithInterval()
     oc_cond_signal(g_threadScanIntervalCond);
 }
 
-//getting jvm
+//Getting jvm
 void CALEClientJniInit()
 {
     OIC_LOG(DEBUG, TAG, "CALEClientJniInit");
@@ -416,6 +419,9 @@ error_exit:
     return CA_STATUS_FAILED;
 }
 
+/**
+ * Initialize client for BLE.
+ */
 CAResult_t CALEClientInitialize()
 {
     OIC_LOG(DEBUG, TAG, "CALEClientInitialize");
@@ -515,6 +521,9 @@ CAResult_t CALEClientInitialize()
     return CA_STATUS_OK;
 }
 
+/**
+ * Terminate client for BLE.
+ */
 void CALEClientTerminate()
 {
     OIC_LOG(DEBUG, TAG, "CALEClientTerminate");
@@ -591,6 +600,7 @@ void CALEClientTerminate()
         OIC_LOG(ERROR, TAG, "CALEClientRemoveAllGattObjs has failed");
     }
 
+    // sets send finish flag
     CALEClientSetSendFinishFlag(true);
 
     CALEClientTerminateGattMutexVariables();
@@ -619,6 +629,9 @@ void CALEClientTerminate()
     }
 }
 
+/**
+ * Destroy interface object and terminate the interface.
+ */
 CAResult_t CALEClientDestroyJniInterface()
 {
     OIC_LOG(DEBUG, TAG, "CALEClientDestroyJniInterface");
@@ -689,6 +702,9 @@ detach_thread:
     return CA_STATUS_FAILED;
 }
 
+/**
+ * For destroy sending routine.
+ */
 void CALEClientSendFinish(JNIEnv *env, jobject gatt)
 {
     OIC_LOG(DEBUG, TAG, "CALEClientSendFinish");
@@ -705,6 +721,9 @@ void CALEClientSendFinish(JNIEnv *env, jobject gatt)
     CALEClientUpdateSendCnt(env);
 }
 
+/**
+ * Send negotiation message after gatt connection is done.
+ */
 CAResult_t CALEClientSendNegotiationMessage(const char* address)
 {
     VERIFY_NON_NULL(address, TAG, "address is null");
@@ -712,6 +731,9 @@ CAResult_t CALEClientSendNegotiationMessage(const char* address)
     return CALEClientSendUnicastMessageImpl(address, NULL, 0);
 }
 
+/**
+ * Send data for unicast (interface).
+ */
 CAResult_t CALEClientSendUnicastMessage(const char* address,
                                         const uint8_t* data,
                                         const uint32_t dataLen)
@@ -722,6 +744,9 @@ CAResult_t CALEClientSendUnicastMessage(const char* address,
     return CALEClientSendUnicastMessageImpl(address, data, dataLen);
 }
 
+/**
+ * Send data for multicast (interface).
+ */
 CAResult_t CALEClientSendMulticastMessage(const uint8_t* data,
                                           const uint32_t dataLen)
 {
@@ -763,6 +788,9 @@ CAResult_t CALEClientSendMulticastMessage(const uint8_t* data,
     return ret;
 }
 
+/**
+ * Start unicast server.
+ */
 CAResult_t CALEClientStartUnicastServer(const char* address)
 {
 #ifndef TB_LOG
@@ -773,6 +801,9 @@ CAResult_t CALEClientStartUnicastServer(const char* address)
     return CA_NOT_SUPPORTED;
 }
 
+/**
+ * Start multicast server (start discovery).
+ */
 CAResult_t CALEClientStartMulticastServer()
 {
     OIC_LOG(DEBUG, TAG, "it is not needed in this platform");
@@ -780,26 +811,41 @@ CAResult_t CALEClientStartMulticastServer()
     return CA_NOT_SUPPORTED;
 }
 
+/**
+ * Stop unicast server.
+ */
 void CALEClientStopUnicastServer()
 {
     OIC_LOG(DEBUG, TAG, "CALEClientStopUnicastServer");
 }
 
+/**
+ * Stop multicast server (stop discovery).
+ */
 void CALEClientStopMulticastServer()
 {
     OIC_LOG(DEBUG, TAG, "CALEClientStopMulticastServer");
 }
 
+/**
+ * Set this callback for receiving data packets from peer devices.
+ */
 void CALEClientSetCallback(CAPacketReceiveCallback callback)
 {
     g_packetReceiveCallback = callback;
 }
 
+/**
+ * Set this callback for handling error scenarios.
+ */
 void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback)
 {
     g_clientErrorCallback = callback;
 }
 
+/**
+ * Waiting to get scanned device from BT Platform.
+ */
 CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
 {
     VERIFY_NON_NULL(env, TAG, "env");
@@ -892,7 +938,9 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
     return CA_STATUS_OK;
 }
 
-
+/**
+ * Send data for unicast (implement).
+ */
 CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* data,
                                             const uint32_t dataLen)
 {
@@ -922,6 +970,7 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
 
     oc_mutex_lock(g_threadSendMutex);
 
+    // sets send finish flag as false so that next data packet should be after this is completed.
     CALEClientSetSendFinishFlag(false);
 
     CAResult_t ret = CALEClientIsThereScannedDevices(env, address);
@@ -1059,6 +1108,9 @@ error_exit:
     return CA_SEND_FAILED;
 }
 
+/**
+ * Send data for multicast (implement).
+ */
 CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
                                               const uint32_t dataLen)
 {
@@ -1071,7 +1123,7 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
         OIC_LOG(ERROR, TAG, "g_deviceList is null");
         return CA_STATUS_FAILED;
     }
-
+    // Locks this mutex so that no other thread can access g_deviceList and change it.
     oc_mutex_lock(g_threadSendMutex);
 
     CALEClientSetSendFinishFlag(false);
@@ -1079,6 +1131,7 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
     OIC_LOG(DEBUG, TAG, "set byteArray for data");
     CALEDeleteSendBuffer(env);
 
+    // checks for scanned devices.
     CAResult_t res = CALEClientIsThereScannedDevices(env, NULL);
     if (CA_STATUS_OK != res)
     {
@@ -1130,6 +1183,9 @@ error_exit:
     return CA_SEND_FAILED;
 }
 
+/**
+ * Send data to remote device.
+ */
 CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
 {
     OIC_LOG(DEBUG, TAG, "IN - CALEClientSendData");
@@ -1202,6 +1258,7 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
     }
     else
     {
+        // If it is already connected.
         if (CALEIsValidState(address, CA_LE_CONNECTION_STATE,
                              STATE_SERVICE_CONNECTED,
                              g_deviceStateList,
@@ -1217,6 +1274,7 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
                 return CA_STATUS_FAILED;
             }
 
+            //Write data
             CAResult_t ret = CALESetValueAndWriteCharacteristic(env, gatt);
             if (CA_STATUS_OK != ret)
             {
@@ -1274,6 +1332,9 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
     return CA_STATUS_OK;
 }
 
+/**
+ * Get address from bluetooth gatt object.
+ */
 jstring CALEClientGetAddressFromGattObj(JNIEnv *env, jobject gatt)
 {
     VERIFY_NON_NULL_RET(gatt, TAG, "gatt is null", NULL);
@@ -1338,6 +1399,9 @@ CAResult_t CALEClientGattClose(JNIEnv *env, jobject bluetoothGatt)
     return CA_STATUS_OK;
 }
 
+/**
+ * Start to scan bluetooth devices.
+ */
 CAResult_t CALEClientStartScan()
 {
     if (!g_isStartedLEClient)
@@ -1597,6 +1661,9 @@ error_exit:
     return res;
 }
 
+/**
+ * Start to scan target bluetooth devices for service uuid.
+ */
 CAResult_t CALEClientStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids, jobject callback)
 {
     OIC_LOG(DEBUG, TAG, "CALEClientStartScanWithUUIDImpl IN");
@@ -2045,6 +2112,9 @@ error_exit:
     return res;
 }
 
+/**
+ * Gets UUID Object
+ */
 jobject CALEClientGetUUIDObject(JNIEnv *env, const char* uuid)
 {
     VERIFY_NON_NULL_RET(uuid, TAG, "uuid is null", NULL);
@@ -2084,6 +2154,9 @@ error_exit:
     return NULL;
 }
 
+/**
+ * Stops scan
+ */
 CAResult_t CALEClientStopScan()
 {
     if (!g_jvm)
@@ -2110,6 +2183,7 @@ CAResult_t CALEClientStopScan()
 
     if (g_jniIntSdk >= BLE_SCAN_API_LEVEL)
     {
+        // new UUID scan for V21
         ret = CALEClientStopScanImplForV21(env, g_leScanCallback);
     }
     else
@@ -2316,6 +2390,9 @@ CAResult_t CALEClientStopScanImplForV21(JNIEnv *env, jobject callback)
     return CA_STATUS_OK;
 }
 
+/**
+ * Connect to GATT Server hosted by this device directly.
+ */
 CAResult_t CALEClientDirectConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect)
 {
     OIC_LOG(DEBUG, TAG, "CALEClientDirectConnect");
@@ -2347,6 +2424,7 @@ CAResult_t CALEClientDirectConnect(JNIEnv *env, jobject bluetoothDevice, jboolea
                         g_deviceStateList,
                         g_deviceStateListMutex))
     {
+        // request connect
         jobject newGatt = CALEClientConnect(env, bluetoothDevice, autoconnect);
         if (NULL == newGatt)
         {
@@ -2359,6 +2437,9 @@ CAResult_t CALEClientDirectConnect(JNIEnv *env, jobject bluetoothDevice, jboolea
     return res;
 }
 
+/**
+ * Connect to GATT server.
+ */
 jobject CALEClientConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect)
 {
     OIC_LOG(DEBUG, TAG, "CALEClientConnect");
@@ -2421,6 +2502,10 @@ jobject CALEClientConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autocon
     return newGatt;
 }
 
+/**
+ * Connect to GATT Server hosted by device.
+ * Autoconnect as soon as the device becomes available.
+ */
 jobject CALEClientGattConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect)
 {
     OIC_LOG(DEBUG, TAG, "GATT CONNECT");
@@ -2451,6 +2536,7 @@ jobject CALEClientGattConnect(JNIEnv *env, jobject bluetoothDevice, jboolean aut
     OIC_LOG_V(INFO, TAG, "API level is %d", jni_int_sdk);
     if (jni_int_sdk >= 23) // upper than API level 23
     {
+        // Fetch method ID for method Name and class
         jmethodID jni_mid_connectGatt = CAGetJNIMethodID(env, "android/bluetooth/BluetoothDevice",
                                                          "connectGatt",
                                                          "(Landroid/content/Context;ZLandroid/"
@@ -4531,7 +4617,7 @@ void CALEClientSetSendFinishFlag(bool flag)
  * adapter common
  */
 
-CAResult_t CAStartLEGattClient()
+CAResult_t CAStartLEGattClient(void)
 {
     // init mutex for send logic
     if (!g_deviceDescCond)
@@ -4565,7 +4651,7 @@ CAResult_t CAStartLEGattClient()
     return CA_STATUS_OK;
 }
 
-void CAStopLEGattClient()
+void CAStopLEGattClient(void)
 {
     OIC_LOG(DEBUG, TAG, "CAStopBLEGattClient");
 
@@ -4643,14 +4729,14 @@ void CAStopLEGattClient()
 
 }
 
-CAResult_t CAInitializeLEGattClient()
+CAResult_t CAInitializeLEGattClient(void)
 {
     OIC_LOG(DEBUG, TAG, "Initialize GATT Client");
     CALEClientInitialize();
     return CA_STATUS_OK;
 }
 
-void CATerminateLEGattClient()
+void CATerminateLEGattClient(void)
 {
     OIC_LOG(INFO, TAG, "IN - Terminate GATT Client");
     CAStopLEGattClient();

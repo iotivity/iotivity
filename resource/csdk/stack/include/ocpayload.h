@@ -48,10 +48,24 @@ extern "C"
 #endif
 
 /**
- * Macro to verify the validity of cbor operation.
+ * Macro to verify the validity of cbor operation or out of memory condition
  */
 #define VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(log_tag, err, log_message) \
     if ((CborNoError != (err)) && !(CborErrorOutOfMemory & (err))) \
+    { \
+        if ((log_tag) && (log_message)) \
+        { \
+            OIC_LOG_V(ERROR, (log_tag), "%s with cbor error: \'%s\'.", \
+                    (log_message), (cbor_error_string(err))); \
+        } \
+        goto exit; \
+    } \
+
+/**
+ * Macro to verify the validity of cbor operation
+ */
+#define VERIFY_CBOR_SUCCESS(log_tag, err, log_message) \
+    if (CborNoError != (err)) \
     { \
         if ((log_tag) && (log_message)) \
         { \
@@ -318,7 +332,7 @@ bool OC_CALL OCByteStringCopy(OCByteString *dest, const OCByteString *source);
 
 /**
  * This function creates the payloadArray for links parameter of collection resource.
- * @param[in] resourceUri Resource uri (this should be a collection resource)
+ * @param[in] resourceUri Resource URI (this should be a collection resource)
  * @param[in] ehRequest parameter received from Entity Handler for client request
  * @param[in] insertSelfLink flag to specify whether links array can contain a self link
  * @param[out] createdArraySize return value array size, Null is allowed if no need to know size

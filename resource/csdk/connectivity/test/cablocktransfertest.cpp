@@ -697,6 +697,7 @@ TEST_F(CABlockTransferTests, CAUpdatePayloadToCADataWithRequest)
     CAGenerateToken(&tempToken, CA_MAX_TOKEN_LEN);
 
     CAInfo_t requestData;
+    memset(&requestData, 0, sizeof(CAInfo_t));
     requestData.type = CA_MSG_NONCONFIRM;
     requestData.token = tempToken;
     requestData.tokenLength = CA_MAX_TOKEN_LEN;
@@ -705,11 +706,13 @@ TEST_F(CABlockTransferTests, CAUpdatePayloadToCADataWithRequest)
     requestData.payloadSize = 0;
 
     CARequestInfo_t requestInfo;
+    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
     requestInfo.method = CA_GET;
     requestInfo.info = requestData;
     requestInfo.isMulticast = false;
 
     CAData_t cadata;
+    memset(&cadata, 0, sizeof(CAData_t));
     cadata.type = SEND_TYPE_UNICAST;
     cadata.remoteEndpoint = tempRep;
     cadata.requestInfo = &requestInfo;
@@ -736,6 +739,7 @@ TEST_F(CABlockTransferTests, CAUpdatePayloadToCADataWithResponse)
     CAGenerateToken(&tempToken, CA_MAX_TOKEN_LEN);
 
     CAInfo_t responseData;
+    memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.token = tempToken;
     responseData.tokenLength = CA_MAX_TOKEN_LEN;
@@ -744,10 +748,12 @@ TEST_F(CABlockTransferTests, CAUpdatePayloadToCADataWithResponse)
     responseData.payloadSize = 0;
 
     CAResponseInfo_t responseInfo;
+    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
     responseInfo.result = CA_VALID;
     responseInfo.info = responseData;
 
     CAData_t cadata;
+    memset(&cadata, 0, sizeof(CAData_t));
     cadata.type = SEND_TYPE_UNICAST;
     cadata.remoteEndpoint = tempRep;
     cadata.responseInfo = &responseInfo;

@@ -243,6 +243,7 @@ bool SRMIsSecurityResourceURI(const char* uri)
         OIC_RSRC_AMACL_URI,
         OIC_RSRC_CRL_URI,
         OIC_RSRC_CRED_URI,
+        OIC_RSRC_SP_URI,
         OIC_RSRC_CSR_URI,
         OIC_RSRC_ACL_URI,
         OIC_RSRC_ACL2_URI,
@@ -281,7 +282,7 @@ bool SRMIsSecurityResourceURI(const char* uri)
 }
 
 /**
- * return true IFF the uri is for a DCR as defined by Security Specification.
+ * return true IFF the URI is for a DCR as defined by Security Specification.
  */
 bool IsDeviceConfigurationResourceUri(const char *uri)
 {
@@ -303,7 +304,8 @@ bool IsDeviceConfigurationResourceUri(const char *uri)
     const char *rsrcs[] = {
         OC_RSRVD_DEVICE_URI,
         OC_RSRVD_PLATFORM_URI,
-        OC_RSRVD_WELL_KNOWN_URI
+        OC_RSRVD_WELL_KNOWN_URI,
+        OC_RSRVD_CLOUDCONF_URI
         // TODO [IOT-3006]: add WES resources as needed to enable easy setup use cases
         // TODO [IOT-3006]: add CNC resources as needed to enable CNC use cases
     };

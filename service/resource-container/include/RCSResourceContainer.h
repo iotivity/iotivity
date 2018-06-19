@@ -92,7 +92,7 @@ namespace OIC
                  * API for adding the bundle to the Container
                  *
                  * @param bundleId Id of the Bundle
-                 * @param bundleUri Uri of the bundle
+                 * @param bundleUri URI of the bundle
                  * @param bundlePath Path of the bundle
                  * @param activator Activation prefix for .so bundles, or activator class name for .jar bundles
                  * @param params  key-value pairs in string form for other Bundle parameters

@@ -80,7 +80,7 @@ void OC_CALL SetDisplayNumCB(void * ptr, DisplayNumCallback displayNumCB);
 /**
  * Unset Callback for displaying verification PIN
  */
-void* OC_CALL UnsetDisplayNumCB();
+void* OC_CALL UnsetDisplayNumCB(void);
 
 /**
  * Set Callback for getting user confirmation
@@ -90,7 +90,7 @@ void OC_CALL SetUserConfirmCB(void * ptr, UserConfirmCallback userConfirmCB);
 /**
  * Unset Callback for getting user confirmation
  */
-void* OC_CALL UnsetUserConfirmCB();
+void* OC_CALL UnsetUserConfirmCB(void);
 
 /**
  * Set verification method option.

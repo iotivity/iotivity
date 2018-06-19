@@ -87,7 +87,7 @@ NSResult NSConsumerEnableRemoteService(const char * serverAddress);
 #ifdef WITH_MQ
 /**
  * Request to subscribe to remote MQ address as parameter.
- * @param[in] serverAddress server address combined with IP address and port number and MQ broker uri using delimiter :
+ * @param[in] serverAddress server address combined with IP address and port number and MQ broker URI using delimiter :
  * @param[in] topicName the interest MQ Topic name for subscription.
  * @return ::NS_OK or result code of NSResult
  */

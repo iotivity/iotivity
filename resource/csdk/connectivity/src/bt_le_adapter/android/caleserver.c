@@ -36,6 +36,9 @@
 #include "uarraylist.h"
 #include "org_iotivity_ca_CaLeServerInterface.h"
 
+/**
+ * Logging tag for module name
+ */
 #define TAG PCF("OIC_CA_LE_SERVER")
 
 #define WAIT_TIME_WRITE_CHARACTERISTIC 10000000
@@ -51,7 +54,14 @@ static jobject g_bluetoothManager = NULL;
 static CAPacketReceiveCallback g_packetReceiveCallback = NULL;
 static CABLEErrorHandleCallback g_serverErrorCallback;
 
+/**
+ * List for storing connected devices.
+ */
 static u_arraylist_t *g_connectedDeviceList = NULL;
+
+/**
+ * List for storing device states.
+ */
 static u_arraylist_t *g_deviceStateList = NULL;
 
 static bool g_isStartServer = false;
@@ -61,15 +71,42 @@ static jbyteArray g_sendBuffer = NULL;
 static jobject g_obj_bluetoothDevice = NULL;
 
 static CABLEDataReceivedCallback g_CABLEServerDataReceivedCallback = NULL;
+
+/**
+ * Mutex to synchronize access to the requestResponse callback to be called .
+ */
 static oc_mutex g_bleReqRespCbMutex = NULL;
+
+/**
+ * Mutex to synchronize access to remote device address
+ *When data is received.
+ */
 static oc_mutex g_bleClientBDAddressMutex = NULL;
+
+/**
+ * Mutex to synchronize access to connected device list.
+ */
 static oc_mutex g_connectedDeviceListMutex = NULL;
 
+/**
+ * Mutex to synchronize access when data sending is in progress.
+ */
 static oc_mutex g_threadSendMutex = NULL;
+
+/**
+ * Mutex to synchronize access to notify callback.
+ */
 static oc_mutex g_threadSendNotifyMutex = NULL;
+
+/**
+ * Condition for sending notification.
+ */
 static oc_cond g_threadSendNotifyCond = NULL;
 static bool g_isSignalSetFlag = false;
 
+/**
+ * Mutex to synchronize access to device state list.
+ */
 static oc_mutex g_deviceStateListMutex = NULL;
 
 static jint g_state_connected = INVALID_STATE;
@@ -202,6 +239,9 @@ static jint CALEServerGetConnectionState(JNIEnv *env, jobject device)
     return jni_state;
 }
 
+/**
+ * Set data in BluetoothGattCharacteristic.
+ */
 jobject CALEServerSetResponseData(JNIEnv *env, jbyteArray responseData)
 {
     OIC_LOG(DEBUG, TAG, "IN - CALEServerSetResponseData");
@@ -299,6 +339,9 @@ jobject CALEServerSetResponseData(JNIEnv *env, jbyteArray responseData)
     return jni_obj_bluetoothGattCharacteristic;
 }
 
+/**
+ * Send data through notifyCharacteristicChanged api of android.
+ */
 CAResult_t CALEServerSendResponseData(JNIEnv *env, jobject device, jobject responseData)
 {
     OIC_LOG(DEBUG, TAG, "CALEServerSendResponseData");
@@ -368,6 +411,9 @@ CAResult_t CALEServerSendResponseData(JNIEnv *env, jobject device, jobject respo
     return CA_STATUS_OK;
 }
 
+/**
+ * Send a response to a write request to a remote device.
+ */
 CAResult_t CALEServerSendResponse(JNIEnv *env, jobject device, jint requestId, jint status,
                                         jint offset, jbyteArray value)
 {
@@ -786,7 +832,7 @@ CAResult_t CALEServerStopAdvertise()
         }
         isAttached = true;
     }
-
+    // stop advertise
     CAResult_t ret = CALEServerStopAdvertiseImpl(env, g_leAdvertiseCallback);
     if (CA_STATUS_OK != ret)
     {
@@ -1066,6 +1112,7 @@ jobject CALEServerCreateGattService(JNIEnv *env)
     jfieldID jni_fid_writeProperties = NULL;
     if (g_setHighQoS)
     {
+        // setting read characterstics
         jni_fid_readProperties = (*env)->GetStaticFieldID(env,
                                                           jni_cid_bluetoothGattCharacteristic,
                                                           "PROPERTY_INDICATE", "I");
@@ -1074,7 +1121,7 @@ jobject CALEServerCreateGattService(JNIEnv *env)
             OIC_LOG(ERROR, TAG, "jni_fid_readProperties is null");
             goto error_exit;
         }
-
+        // setting write characterstics
         jni_fid_writeProperties = (*env)->GetStaticFieldID(env,
                                                            jni_cid_bluetoothGattCharacteristic,
                                                            "PROPERTY_WRITE", "I");
@@ -1130,6 +1177,7 @@ jobject CALEServerCreateGattService(JNIEnv *env)
         goto error_exit;
     }
 
+    // adding characterstics to gatt service
     jmethodID jni_mid_addCharacteristic = (*env)->GetMethodID(env, jni_cid_bluetoothGattService,
                                                               "addCharacteristic",
                                                               "(Landroid/bluetooth/"
@@ -1245,6 +1293,9 @@ error_exit:
     return NULL;
 }
 
+/**
+ * Add descriptor to the characteristic
+ */
 CAResult_t CALEServerAddDescriptor(JNIEnv *env, jobject characteristic)
 {
     OIC_LOG(DEBUG, TAG, "CALEServerAddDescriptor");
@@ -1338,6 +1389,9 @@ error_exit:
     return CA_STATUS_FAILED;
 }
 
+/**
+ * Add GATT service to GATT server handle
+ */
 CAResult_t CALEServerAddGattService(JNIEnv *env, jobject bluetoothGattServer,
                                           jobject bluetoothGattService)
 {
@@ -1377,6 +1431,9 @@ CAResult_t CALEServerAddGattService(JNIEnv *env, jobject bluetoothGattServer,
     return CA_STATUS_OK;
 }
 
+/**
+* Connect remote device
+*/
 CAResult_t CALEServerConnect(JNIEnv *env, jobject bluetoothDevice)
 {
     OIC_LOG(DEBUG, TAG, "IN - CALEServerConnect");
@@ -1412,6 +1469,9 @@ CAResult_t CALEServerConnect(JNIEnv *env, jobject bluetoothDevice)
     return CA_STATUS_OK;
 }
 
+/**
+* Disconnect all devices
+*/
 CAResult_t CALEServerDisconnectAllDevices(JNIEnv *env)
 {
     OIC_LOG(DEBUG, TAG, "IN - CALEServerDisconnectAllDevices");
@@ -1449,6 +1509,9 @@ CAResult_t CALEServerDisconnectAllDevices(JNIEnv *env)
     return CA_STATUS_OK;
 }
 
+/**
+ * Disconnect LE to remote device form gatt server.
+ */
 CAResult_t CALEServerDisconnect(JNIEnv *env, jobject bluetoothDevice)
 {
     OIC_LOG(DEBUG, TAG, "IN - CALEServerDisconnect");
@@ -1483,6 +1546,9 @@ CAResult_t CALEServerDisconnect(JNIEnv *env, jobject bluetoothDevice)
     return CA_STATUS_OK;
 }
 
+/**
+ * Close gatt server.
+ */
 CAResult_t CALEServerGattClose(JNIEnv *env, jobject bluetoothGattServer)
 {
     // GATT CLOSE
@@ -1513,6 +1579,9 @@ CAResult_t CALEServerGattClose(JNIEnv *env, jobject bluetoothGattServer)
     return CA_STATUS_OK;
 }
 
+/**
+ * Send data to gatt client.
+ */
 CAResult_t CALEServerSend(JNIEnv *env, jobject bluetoothDevice, jbyteArray responseData)
 {
     OIC_LOG(DEBUG, TAG, "IN - CALEServerSend");
@@ -1544,6 +1613,9 @@ CAResult_t CALEServerSend(JNIEnv *env, jobject bluetoothDevice, jbyteArray respo
     return result;
 }
 
+/**
+ * Initialize GATT server.
+ */
 CAResult_t CALEServerInitialize()
 {
     OIC_LOG(DEBUG, TAG, "IN - CALEServerInitialize");
@@ -2288,6 +2360,9 @@ CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address)
     return CA_STATUS_FAILED;
 }
 
+/**
+ * Registers GATT server callback .
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeServerInterface_caLeRegisterGattServerCallback(JNIEnv *env, jobject obj,
                                                                         jobject callback)
@@ -2301,6 +2376,9 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeRegisterGattServerCallback(JNIEnv *
     CACheckJNIException(env);
 }
 
+/**
+ * Registers callback for bluetooth advertising.
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeServerInterface_caLeRegisterBluetoothLeAdvertiseCallback(JNIEnv *env,
                                                                                   jobject obj,
@@ -2315,6 +2393,9 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeRegisterBluetoothLeAdvertiseCallbac
     CACheckJNIException(env);
 }
 
+/**
+ * Callback is trigerred when gatt server connection state changes(connect/disconnect).
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCallback(
         JNIEnv *env, jobject obj, jobject device, jint status, jint newState)
@@ -2407,6 +2488,9 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
     (*env)->DeleteLocalRef(env, jni_remoteAddress);
 }
 
+/**
+ * Callback is trigerred when service is added on gatt server successfully.
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerServiceAddedCallback(JNIEnv *env,
                                                                             jobject obj,
@@ -2433,6 +2517,9 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerCharacteristicReadRequest
     VERIFY_NON_NULL_VOID(data, TAG, "data");
 }
 
+/**
+ * Callback is trigerred when there is some data written on write characterstics.
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerCharacteristicWriteRequestCallback(
         JNIEnv *env, jobject obj, jobject device, jbyteArray data,
@@ -2502,6 +2589,10 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerCharacteristicWriteReques
     (*env)->ReleaseStringUTFChars(env, jni_address, address);
 }
 
+/**
+ * Callback is trigerred notifying that data write is successful .
+ * We can send next packet if any.
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNotificationSentCallback(JNIEnv *env,
                                                                                 jobject obj,
@@ -2584,6 +2675,9 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNotificationSentCallback(
 
 }
 
+/**
+ * Callback is trigerred when advertise is success.
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeServerInterface_caLeAdvertiseStartSuccessCallback(JNIEnv *env,
                                                                            jobject obj,
@@ -2596,6 +2690,9 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeAdvertiseStartSuccessCallback(JNIEn
     OIC_LOG(DEBUG, TAG, "LE Advertise Start Success Callback");
 }
 
+/**
+ * Callback is trigerred when advertise fails.
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeServerInterface_caLeAdvertiseStartFailureCallback(JNIEnv *env,
                                                                            jobject obj,
@@ -2621,6 +2718,9 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeAdvertiseStartFailureCallback(JNIEn
     }
 }
 
+/**
+ * Callback is trigerred when MTU is changed.
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerMtuChangedCallback(JNIEnv * env,
                                                                           jobject obj,
@@ -2673,7 +2773,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerMtuChangedCallback(JNIEnv
  * adapter common
  */
 
-CAResult_t CAStartLEGattServer()
+CAResult_t CAStartLEGattServer(void)
 {
     // start gatt service
     CALEServerStartMulticastServer();
@@ -2681,7 +2781,7 @@ CAResult_t CAStartLEGattServer()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStopLEGattServer()
+CAResult_t CAStopLEGattServer(void)
 {
     OIC_LOG(DEBUG, TAG, "CAStopLEGattServer");
 
@@ -2770,13 +2870,13 @@ CAResult_t CAStopLEGattServer()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAInitializeLEGattServer()
+CAResult_t CAInitializeLEGattServer(void)
 {
     OIC_LOG(DEBUG, TAG, "Initialize Gatt Server");
     return CALEServerInitialize();
 }
 
-void CATerminateLEGattServer()
+void CATerminateLEGattServer(void)
 {
     OIC_LOG(DEBUG, TAG, "Terminate Gatt Server");
     CALEServerTerminate();

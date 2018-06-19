@@ -34,6 +34,7 @@
 #include "caipinterface.h"
 #include "cacertprofile.h"
 #include "oic_malloc.h"
+#include "utlist.h"
 #include "experimental/ocrandom.h"
 #include "experimental/byte_array.h"
 #include "octhread.h"
@@ -48,6 +49,8 @@
 #include "mbedtls/ssl_internal.h"
 #include "mbedtls/net_sockets.h"
 #include "mbedtls/oid.h"
+#include "mbedtls/x509.h"
+#include "mbedtls/error.h"
 #ifdef __WITH_DTLS__
 #include "mbedtls/timing.h"
 #include "mbedtls/ssl_cookie.h"
@@ -407,6 +410,12 @@ static CAgetCredentialTypesHandler g_getCredentialTypesCallback = NULL;
  * @brief callback to get X.509-based Public Key Infrastructure
  */
 static CAgetPkixInfoHandler g_getPkixInfoCallback = NULL;
+/**
+ * @var g_getIdentityCallback
+ *
+ * @brief callback to retrieve acceptable UUID list
+ */
+static CAgetIdentityHandler g_getIdentityCallback = NULL;
 
 /**
  * @var g_dtlsContextMutex
@@ -465,6 +474,13 @@ void CAsetPkixInfoCallback(CAgetPkixInfoHandler infoCallback)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     g_getPkixInfoCallback = infoCallback;
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+}
+
+void CAsetIdentityCallback(CAgetIdentityHandler identityCallback)
+{
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+    g_getIdentityCallback = identityCallback;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
 }
 
@@ -1208,7 +1224,18 @@ static bool checkSslOperation(SslEndPoint_t*  peer,
         (MBEDTLS_SSL_ALERT_MSG_UNKNOWN_PSK_IDENTITY != ret) &&
         (MBEDTLS_SSL_ALERT_MSG_NO_APPLICATION_PROTOCOL != ret))
     {
-        OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: -0x%x", (str), -ret);
+        size_t bufSize = 1024;
+        char *bufMsg = (char*)OICCalloc(1, bufSize);
+        if (bufMsg)
+        {
+            mbedtls_strerror(ret, bufMsg, bufSize);
+            OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: 0x%X: %s", __func__, -ret, bufMsg);
+            OICFree(bufMsg);
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: -0x%x", (str), -ret);
+        }
 
         // Make a copy of the endpoint, because the callback might
         // free the peer object, during notifySubscriber() below.
@@ -1244,7 +1271,7 @@ static bool checkSslOperation(SslEndPoint_t*  peer,
 /**
  * Deletes session list.
  */
-static void DeletePeerList()
+static void DeletePeerList(void)
 {
     oc_mutex_assert_owner(g_sslContextMutex, true);
 
@@ -1354,6 +1381,67 @@ void CAcloseSslConnectionAll(CATransportAdapter_t transportType)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return;
 }
+
+const char UUID_WILDCARD[UUID_STRING_SIZE] = "2a000000-0000-0000-0000-000000000000"; // conversion result for '*' to UUID, possible collision with real UUID
+
+static int verifyIdentity( void *data, mbedtls_x509_crt *crt, int depth, uint32_t *flags ) {
+    OC_UNUSED(data); // no need to pass extra data
+    OC_UNUSED(flags); // we do not remove any flags
+    static UuidContext_t ctx = { NULL };
+    g_getIdentityCallback(&ctx, crt->raw.p, crt->raw.len);
+    if (0 == depth) // leaf certificate
+    {
+        const mbedtls_x509_name * name = NULL;
+        /* Find the CN component of the subject name. */
+        for (name = &crt->subject; NULL != name; name = name->next)
+        {
+            if (name->oid.p &&
+               (name->oid.len <= MBEDTLS_OID_SIZE(MBEDTLS_OID_AT_CN)) &&
+               (0 == memcmp(MBEDTLS_OID_AT_CN, name->oid.p, name->oid.len)))
+            {
+                break;
+            }
+        }
+
+        if (NULL == name)
+        {
+            OIC_LOG(ERROR, NET_SSL_TAG, "Could not retrieve identity information from leaf certificate");
+            return -1;
+        }
+        const size_t uuidBufLen = UUID_STRING_SIZE - 1;
+        const unsigned char * uuidPos = (const unsigned char*)memmem(name->val.p, name->val.len, UUID_PREFIX, sizeof(UUID_PREFIX) - 1);
+        /* If UUID_PREFIX is present, ensure there's enough data for the prefix plus an entire
+         * UUID, to make sure we don't read past the end of the buffer.
+         */
+        char uuid[UUID_STRING_SIZE] = { 0 };
+        if ((NULL != uuidPos) && (name->val.len >= ((uuidPos - name->val.p) + (sizeof(UUID_PREFIX) - 1) + uuidBufLen)))
+        {
+            memcpy(uuid, uuidPos + sizeof(UUID_PREFIX) - 1, uuidBufLen);
+        }
+        else
+        {
+            OIC_LOG(ERROR, NET_SSL_TAG, "Could not retrieve UUID from leaf certificate");
+            return -1;
+        }
+
+        bool isMatched = false;
+        UuidInfo_t* node = NULL;
+        UuidInfo_t* tmpNode = NULL;
+        LL_FOREACH(ctx.list, node)
+        {
+            isMatched = isMatched || (0 == memcmp(node->uuid, uuid, UUID_STRING_SIZE));
+            isMatched = isMatched || (0 == memcmp(node->uuid, UUID_WILDCARD, UUID_STRING_SIZE));
+        }
+        LL_FOREACH_SAFE(ctx.list, node, tmpNode)
+        {
+            free(node);
+        }
+        ctx.list = NULL;
+        return isMatched ? 0 : -1;
+    }
+    return 0;
+}
+
 /**
  * Creates session for endpoint.
  *
@@ -1380,6 +1468,7 @@ static SslEndPoint_t * NewSslEndPoint(const CAEndpoint_t * endpoint, mbedtls_ssl
     tep->sep.endpoint = *endpoint;
     tep->sep.endpoint.flags = (CATransportFlags_t)(tep->sep.endpoint.flags | CA_SECURE);
 
+    mbedtls_ssl_conf_verify(config, verifyIdentity, NULL);
     if(0 != mbedtls_ssl_setup(&tep->ssl, config))
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Setup failed");
@@ -1630,7 +1719,7 @@ static SslEndPoint_t * InitiateTlsHandshake(const CAEndpoint_t *endpoint)
 /**
  * Stops DTLS retransmission.
  */
-static void StopRetransmit()
+static void StopRetransmit(void)
 {
     if (g_caSslContext)
     {
@@ -1639,7 +1728,7 @@ static void StopRetransmit()
     }
 }
 #endif
-void CAdeinitSslAdapter()
+void CAdeinitSslAdapter(void)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
 
@@ -1781,7 +1870,7 @@ static void StartRetransmit(void *ctx)
 }
 #endif
 
-CAResult_t CAinitSslAdapter()
+CAResult_t CAinitSslAdapter(void)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     // Initialize mutex for tlsContext
@@ -2210,7 +2299,21 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
         uint32_t flags = mbedtls_ssl_get_verify_result(&peer->ssl);
         if (0 != flags)
         {
+            size_t bufSize = 1024;
+            char *bufMsg = (char*)OICCalloc(1, bufSize);
+            if (bufMsg)
+            {
+                mbedtls_x509_crt_verify_info(bufMsg, bufSize, "", flags);
+                OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: session verification(%X): %s", __func__, flags, bufMsg);
+                OICFree(bufMsg);
+            }
+            else
+            {
+                OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: session verification(%X)", __func__, flags);
+            }
+
             OIC_LOG_BUFFER(ERROR, NET_SSL_TAG, (const uint8_t *) &flags, sizeof(flags));
+
             if (!checkSslOperation(peer,
                                    (int)flags,
                                    "Cert verification failed",

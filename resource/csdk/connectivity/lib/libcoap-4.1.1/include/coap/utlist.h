@@ -45,7 +45,7 @@
  *
  * struct item *list = NULL:
  *
- * int main() {
+ * int main(void) {
  *      struct item *item;
  *      ... allocate and populate item ...
  *      DL_APPEND(list, item);

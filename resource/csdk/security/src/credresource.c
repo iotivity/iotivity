@@ -69,10 +69,12 @@
 #include <mbedtls/ssl_ciphersuites.h>
 #include <mbedtls/pk.h>
 #include <mbedtls/base64.h>
+#include <mbedtls/x509_crt.h>
 #include <mbedtls/pem.h>
 #endif
 
 #define TAG  "OIC_SRM_CREDL"
+#define TAG_LOG  "OIC_SRM_CREDL:LOG"
 
 #ifdef HAVE_WINDOWS_H
 #include <wincrypt.h>
@@ -86,7 +88,7 @@
 static const uint16_t CBOR_SIZE = 2048;
 
 /** CRED size - Number of mandatory items. */
-static const uint8_t CRED_ROOT_MAP_SIZE = 4;
+static const uint8_t CRED_ROOT_MAP_SIZE = 3;
 static const uint8_t CRED_MAP_SIZE = 3;
 static const uint8_t ROLEID_MAP_SIZE = 1;
 
@@ -606,7 +608,7 @@ CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value)
 }
 
 /* Produce debugging output for all credentials, output metadata. */
-static void logCredMetadata()
+static void logCredMetadata(void)
 {
 #if defined(TB_LOG)
     OicSecCred_t * temp = NULL;
@@ -656,8 +658,8 @@ static void logCredMetadata()
 #endif
 }
 
-OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUuid_t *rownerId, uint8_t **cborPayload,
-                                size_t *cborSize, int secureFlag)
+OCStackResult CredToCBORPayloadPartial(const OicSecCred_t *credS, const OicUuid_t *rownerId, uint8_t **cborPayload,
+                                size_t *cborSize, int secureFlag, const bool *propertiesToInclude)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s:", __func__);
     if (NULL == cborPayload || NULL != *cborPayload || NULL == cborSize)
@@ -689,6 +691,10 @@ OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUu
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     size_t credRootMapSize = CRED_ROOT_MAP_SIZE;
+    if (propertiesToInclude[CRED_ROWNERUUID])
+    {
+        credRootMapSize++;
+    }
 
     // Create CRED Root Map (creds, rownerid)
     cborEncoderResult = cbor_encoder_create_map(&encoder, &credRootMap, credRootMapSize);
@@ -886,6 +892,7 @@ OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUu
     cred = credS;
 
     // Rownerid
+    if(propertiesToInclude[CRED_ROWNERUUID])
     {
         char *rowner = NULL;
         cborEncoderResult = cbor_encode_text_string(&credRootMap, OIC_JSON_ROWNERID_NAME,
@@ -938,28 +945,28 @@ OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUu
 
     if (CborNoError == cborEncoderResult)
     {
-        OIC_LOG(DEBUG, TAG, "CredToCBORPayload Successed");
+        OIC_LOG(DEBUG, TAG, "CredToCBORPayloadPartial Successed");
         *cborPayload = outPayload;
         *cborSize = cbor_encoder_get_buffer_size(&encoder, outPayload);
         ret = OC_STACK_OK;
     }
-    OIC_LOG(DEBUG, TAG, "CredToCBORPayload OUT");
+    OIC_LOG(DEBUG, TAG, "CredToCBORPayloadPartial OUT");
 exit:
     if (CborErrorOutOfMemory == cborEncoderResult)
     {
-        OIC_LOG(DEBUG, TAG, "CredToCBORPayload:CborErrorOutOfMemory : retry with more memory");
+        OIC_LOG(DEBUG, TAG, "CredToCBORPayloadPartial:CborErrorOutOfMemory : retry with more memory");
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
         cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
-        ret = CredToCBORPayload(credS, cborPayload, &cborLen, secureFlag);
+        ret = CredToCBORPayloadPartial(credS, NULL, cborPayload, &cborLen, secureFlag, propertiesToInclude);
         *cborSize = cborLen;
     }
 
     if (CborNoError != cborEncoderResult)
     {
-        OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
+        OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayloadPartial");
         OICFree(outPayload);
         outPayload = NULL;
         *cborSize = 0;
@@ -978,6 +985,17 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
     return CredToCBORPayloadWithRowner(credS, &gRownerId, cborPayload, cborSize, secureFlag);
 }
 
+OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUuid_t *rownerId, uint8_t **cborPayload,
+                                size_t *cborSize, int secureFlag)
+{
+    bool allProps[CRED_PROPERTY_COUNT];
+
+    for (int i = 0; i < CRED_PROPERTY_COUNT; i++)
+    {
+        allProps[i] = true;
+    }
+    return CredToCBORPayloadPartial(credS, rownerId, cborPayload, cborSize, secureFlag, allProps);
+}
 
 OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 OicSecCred_t **secCred, OicUuid_t **rownerid)
@@ -1579,7 +1597,7 @@ static int CmpCredId(const OicSecCred_t * first, const OicSecCred_t *second)
  *
  * @return next available credId if successful, else 0 for error.
  */
-static uint16_t GetCredId()
+static uint16_t GetCredId(void)
 {
     //Sorts credential list in incremental order of credId
     /** @todo: Remove pragma for VS2013 warning; Investigate fixing LL_SORT macro */
@@ -1617,7 +1635,7 @@ exit:
  *
  * @return  NULL for now.
  */
-static OicSecCred_t* GetCredDefault()
+static OicSecCred_t* GetCredDefault(void)
 {
     // TODO:Update it when we finalize the default info.
     return NULL;
@@ -1923,7 +1941,7 @@ exit:
  *     OC_STACK_OK              - no errors
  *     OC_STACK_ERROR           - stack process error
  */
-static OCStackResult RemoveAllCredentials()
+static OCStackResult RemoveAllCredentials(void)
 {
     DeleteCredList(gCred);
     gCred = GetCredDefault();
@@ -2536,7 +2554,7 @@ OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
     return ret;
 }
 
-OCStackResult CreateCredResource()
+OCStackResult CreateCredResource(void)
 {
     OCStackResult ret = OCCreateResource(&gCredHandle,
                                          OIC_RSRC_TYPE_SEC_CRED,
@@ -2555,7 +2573,7 @@ OCStackResult CreateCredResource()
     return ret;
 }
 
-OCStackResult InitCredResource()
+OCStackResult InitCredResource(void)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecCred_t* cred = NULL;
@@ -2687,7 +2705,7 @@ exit:
     return ret;
 }
 
-OCStackResult DeInitCredResource()
+OCStackResult DeInitCredResource(void)
 {
     OCStackResult result = OCDeleteResource(gCredHandle);
     DeleteCredList(gCred);
@@ -2714,7 +2732,7 @@ OicSecCred_t* GetCredResourceData(const OicUuid_t* subject)
     return NULL;
 }
 
-const OicSecCred_t* GetCredList()
+const OicSecCred_t* GetCredList(void)
 {
     return gCred;
 }
@@ -3275,6 +3293,277 @@ static int ConvertDerCertToPem(const uint8_t* der, size_t derLen, uint8_t** pem)
     return 0;
 }
 
+
+void GetIdentityHandler(UuidContext_t* ctx, unsigned char* crt, size_t crtLen)
+{
+    UuidInfo_t* cur = ctx->list;
+    if (NULL != ctx->list)
+    {
+        while (NULL != cur->next)
+        {
+            cur = cur->next;
+        }
+    }
+
+    OicSecCred_t *cred = NULL;
+    LL_FOREACH(gCred, cred)
+    {
+        if (SIGNED_ASYMMETRIC_KEY != cred->credType)
+        {
+            continue;
+        }
+        if (0 == strcmp(cred->credUsage, TRUST_CA) && 0 == strcmp(cred->credUsage, MF_TRUST_CA))
+        {
+            continue;
+        }
+
+        uint8_t *der = NULL;
+        size_t derLen = 0;
+        if ((OIC_ENCODING_BASE64 == cred->publicData.encoding) ||
+            (OIC_ENCODING_PEM == cred->publicData.encoding))
+        {
+            int ret = ConvertPemCertToDer((const char*)cred->publicData.data, cred->publicData.len, &der, &derLen);
+            if (0 > ret)
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: Failed converting PEM cert to DER: %d", __func__, ret);
+                continue;
+            }
+        }
+        else
+        {
+            der = cred->publicData.data;
+            derLen = cred->publicData.len;
+        }
+
+        if (derLen != crtLen)
+        {
+            continue;
+        }
+
+        if (0 != memcmp(der, crt, crtLen))
+        {
+            continue;
+        }
+
+        UuidInfo_t* node = (UuidInfo_t*) malloc(sizeof(UuidInfo_t));
+        if (NULL == node)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Could not allocate new UUID node", __func__);
+            continue;
+        }
+        node->next = NULL;
+        if (OCConvertUuidToString(cred->subject.id, node->uuid))
+        {
+            if (NULL == ctx->list)
+            {
+                ctx->list = node;
+            }
+            else
+            {
+                cur->next = node;
+            }
+            cur = node;
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Failed to convert subjectuuid to string", __func__);
+            free(node);
+        }
+    }
+}
+
+#ifndef NDEBUG
+
+void LogCert(uint8_t *data, size_t len, OicEncodingType_t encoding, const char* tag)
+{
+#if defined (__WITH_TLS__) || defined(__WITH_DTLS__)
+
+#define CERT_INFO_BUF_LEN 4000
+
+    char infoBuf[CERT_INFO_BUF_LEN];
+    int mbedRet = 0;
+    OCStackResult ret = OC_STACK_OK;
+    size_t pemLen = 0;
+    uint8_t *pem = NULL;
+    mbedtls_x509_crt mbedCert;
+    bool needTofreePem = false;
+
+    if ((0 < len) && (NULL != data))
+    {
+        // extract PEM data
+        if (OIC_ENCODING_PEM == encoding)
+        {
+            pem = data;
+            pemLen = len;
+        }
+        else if (OIC_ENCODING_DER == encoding)
+        {
+            ret = ConvertDerCertToPem(data, len, &pem);
+            if (OC_STACK_OK == ret )
+            {
+                pemLen = strlen((char*)pem) + 1;
+                needTofreePem = true;
+            }
+            else
+            {
+                pemLen = 0;
+            }
+        }
+
+        if ((NULL != pem) && (0 < pemLen))
+        {
+            // cert dump
+            mbedtls_x509_crt_init(&mbedCert);
+            mbedRet = mbedtls_x509_crt_parse(&mbedCert, pem, pemLen);
+            if ( 0 <= mbedRet )
+            {
+                mbedRet = mbedtls_x509_crt_info(infoBuf, CERT_INFO_BUF_LEN, tag, &mbedCert);
+                if (0 < mbedRet)
+                {
+                    size_t pos = strlen(infoBuf)-1;
+                    if (infoBuf[pos] == '\n')
+                    {
+                        infoBuf[pos] = '\0';
+                    }
+                    OIC_LOG_V(DEBUG, tag, "%s", infoBuf);
+                }
+            }
+            mbedtls_x509_crt_free(&mbedCert);
+
+            // raw pem dump
+            size_t pos = strlen((char *)pem)-1;
+            if (pem[pos] == '\n')
+            {
+                pem[pos] = '\0';
+            }
+            snprintf(infoBuf, CERT_INFO_BUF_LEN, "\n%s", pem);
+            OIC_LOG_V(DEBUG, tag, "%s", infoBuf);
+        }
+        if ( true == needTofreePem )
+        {
+            OICFree(pem);
+            needTofreePem = false;
+        }
+    }
+
+#else
+    OC_UNUSED(data);
+    OC_UNUSED(len);
+    OC_UNUSED(encoding);
+    OC_UNUSED(tag);
+#endif // defined(__WITH_TLS__) || defined(__WITH_DTLS__)
+}
+
+void LogCred(OicSecCred_t *cred, const char* tag)
+{
+    OCStackResult ret = OC_STACK_OK;
+    char uuidString[UUID_STRING_SIZE];
+    char* uuid = NULL;
+    OicUuid_t ownUuid;
+
+    OIC_LOG_V(DEBUG, tag, "credId: %hu", cred->credId);
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    OIC_LOG_V(DEBUG, tag, "credusage: %s", cred->credUsage);
+#endif
+    OIC_LOG_V(DEBUG, tag, "credtype: %u", cred->credType);
+
+
+    uuid = NULL;
+    ret = GetDoxmDeviceID(&ownUuid);
+    if ( OC_STACK_OK == ret )
+    {
+        if (OCConvertUuidToString(ownUuid.id, uuidString))
+        {
+            uuid = uuidString;
+        }
+    }
+    OIC_LOG_V(DEBUG, tag, "own uuid:  %s", (NULL != uuid) ? uuid : "None or Error");
+
+    uuid = NULL;
+    if (OCConvertUuidToString(cred->subject.id, uuidString))
+    {
+        uuid = uuidString;
+    }
+    OIC_LOG_V(DEBUG, tag, "subj uuid: %s", (NULL != uuid) ? uuid : "None or Error");
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+
+    const char * encodingType[] = {
+        "Unknown",
+        "Raw",
+        "Base 64",
+        "PEM",
+        "DER"
+    };
+    // encodingType is only used in logging. With some build options it is unused.
+    OC_UNUSED(encodingType);
+
+    OIC_LOG(DEBUG, tag, "...............................................");
+    if ( (SIGNED_ASYMMETRIC_KEY == cred->credType) && (0 < cred->publicData.len) && (NULL != cred->publicData.data) )
+    {
+        OIC_LOG_V(DEBUG, tag, "publicData (encoding = %s)", encodingType[cred->publicData.encoding]);
+        LogCert (cred->publicData.data, cred->publicData.len, cred->publicData.encoding, tag );
+    }
+    else
+    {
+        OIC_LOG(DEBUG, tag, "publicData: none");
+    }
+
+    OIC_LOG(DEBUG, tag, "...............................................");
+    if ( (0 < cred->optionalData.len) && (NULL != cred->optionalData.data) )
+    {
+        OIC_LOG_V(DEBUG, tag, "optionalData (encoding = %s)", encodingType[cred->optionalData.encoding]);
+        OIC_LOG_BUFFER(DEBUG, tag,  (const unsigned char*)&(cred->optionalData.data), cred->optionalData.len);
+    }
+    else
+    {
+        OIC_LOG(DEBUG, tag, "optionalData: none");
+    }
+
+#endif // defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+
+}
+
+void LogCredResource(OicSecCred_t *cred, const char* tag, const char* label)
+{
+    // label is only used in logging. With some build options it is unused.
+    OC_UNUSED(label);
+    OicSecCred_t *curCred = NULL;
+    int curCredIdx = 0;
+    char uuidString[UUID_STRING_SIZE];
+    char* uuid = NULL;
+
+    OIC_LOG_V(DEBUG, tag, "=== %s ========================", (NULL != label) ? label : "cred" );
+    VERIFY_NOT_NULL(tag, cred, ERROR);
+
+    uuid = NULL;
+    if (OCConvertUuidToString(gRownerId.id, uuidString))
+    {
+        uuid = uuidString;
+    }
+    OIC_LOG_V(DEBUG, tag, "rowner uuid:  %s", (NULL != uuid) ? uuid : "None or Error");
+
+    LL_FOREACH(cred, curCred)
+    {
+        OIC_LOG_V(DEBUG, tag, "#### CRED ENTRY %d:", curCredIdx);
+        LogCred(curCred, tag);
+        curCredIdx++;
+    }
+
+    exit:
+        OIC_LOG(DEBUG, tag, "============================================================");
+
+    return;
+}
+
+#endif // NDEBUG
+
+void LogCurrrentCredResource(void) {
+#ifndef NDEBUG
+    LogCredResource(gCred, TAG_LOG, "Server cred Resource");
+#endif
+}
+
 static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodingType_t desiredEncoding)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
@@ -3418,6 +3707,11 @@ static OCStackResult GetCaCert(ByteArray_t * crt, const char * usage, OicEncodin
         }
     }
 
+#ifndef NDEBUG
+    OIC_LOG(DEBUG, TAG_LOG, "==== Cert being returned ===================================");
+    LogCert ( crt->data, crt->len, desiredEncoding, TAG_LOG );
+    OIC_LOG(DEBUG, TAG_LOG, "============================================================");
+#endif
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return OC_STACK_OK;
 }
@@ -3608,6 +3902,14 @@ void GetPemOwnCert(ByteArray_t * crt, const char * usage)
     {
         OIC_LOG_V(WARNING, TAG, "%s not found", usage);
     }
+#ifndef NDEBUG
+    if(0 < crt->len)
+    {
+        OIC_LOG(DEBUG, TAG_LOG, "==== Cert being returned ===================================");
+        LogCert ( crt->data, crt->len, OIC_ENCODING_PEM, TAG_LOG );
+        OIC_LOG(DEBUG, TAG_LOG, "============================================================");
+    }
+#endif
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return;
 }
@@ -3736,7 +4038,7 @@ void GetPrimaryCertKey(ByteArray_t * key)
     {
         size_t length = temp->privateData.len;
 
-        if ((SIGNED_ASYMMETRIC_KEY == temp->credType || ASYMMETRIC_KEY == temp->credType) &&
+        if ((SIGNED_ASYMMETRIC_KEY == temp->credType) &&
             (0 < length) &&
             (NULL != temp->credUsage) &&
             (0 == strcmp(temp->credUsage, PRIMARY_CERT)))
@@ -3867,3 +4169,4 @@ void InitCipherSuiteListInternal(bool * list, const char * usage, const char *de
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 #endif
+

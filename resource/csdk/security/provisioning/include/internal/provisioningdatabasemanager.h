@@ -175,7 +175,7 @@ OCStackResult PDMGetToBeUnlinkedDevices(OCPairList_t** staleDevList, size_t* num
  *
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult PDMClose();
+OCStackResult PDMClose(void);
 
 /**
  * This method is used by provisioning manager free memory allocated to OCUuidList_t lists.

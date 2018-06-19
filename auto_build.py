@@ -150,6 +150,7 @@ def build_linux_full(flag, extra_option_str):
                         'RELEASE':flag,
                         'SECURED':1,
                         'WITH_CLOUD':1,
+                        'WITH_PROXY':1,
                         'WITH_RA':1,
                         'WITH_RA_IBB':1,
                         'WITH_TCP':1,

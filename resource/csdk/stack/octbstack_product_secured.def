@@ -27,6 +27,7 @@ OCGetDevInfoFromNetwork
 OCGetLinkedStatus
 OCGetPublicKeyFromCSR
 OCGetRolesResource
+OCGetSpResource
 OCGetUuidFromCSR
 OCInitPM
 OCClosePM
@@ -36,6 +37,7 @@ OCSaveACL
 OCProvisionCertificate
 OCProvisionCredentials
 OCProvisionPairwiseDevices
+OCProvisionSecurityProfileInfo
 OCProvisionSymmetricRoleCredentials
 OCProvisionTrustCertChain
 OCReadTrustCertChain
@@ -76,3 +78,5 @@ SetUserConfirmCB
 UnsetUserConfirmCB
 SetVerifyOption
 VerifyOwnershipTransfer
+LogCurrrentCredResource
+LogSp

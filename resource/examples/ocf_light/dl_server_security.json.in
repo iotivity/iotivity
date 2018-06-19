@@ -1,0 +1,273 @@
+{
+    /*
+     * Access Control List: iotivity assumes that resources are hosted by a
+     * server and are made available to clients subject to access control and
+     * authorization mechanisms.
+     *
+     * In order to be successfully accessed by a client, a resource must have an
+     * Access Control Entry (ACE) which grants access. Lacking a matching ACE,
+     * requests for the resource will be denied.
+     *
+     * The following ACL is intended for onboarding purposes. Onboarding is the
+     * process where a device becomes operational and is able to interact with
+     * other devices. The following ACEs enable ownership transfer (i.e.
+     * a user claims ownership of the device). With the addition of wildcard
+     * entries to improve user and developer experience by giving intuitive
+     * access behavior after onboarding.
+     *
+     * Ownership transfer via Owner Transfer Methods (OTM) is the first step in
+     * the onboarding it is intended to be done with an OnBoarding Tool (OBT)
+     * that can then be used to provision the device by adding adding/removing
+     * ACEs.
+     */
+    "acl": {
+        /*
+         * aclist2 is an array of ACEs this is used by the server to apply
+         * access control to its local resources.
+         */
+        "aclist2": [
+            /*
+             * This ACE gives RETRIEVE access to all non-authenticated endpoints to
+             *
+             *  - `/oic/res` used for device discovery
+             *  - `/oic/d` used for device information
+             *  - `/oic/p` used for platform information
+             *  - wildcard `-` user resources created with OC_NONSECURE
+             */
+            {
+                /*
+                 * Each ACE is expected to have a unique number. This is used by
+                 * provisioning/onboarding tools to retrieve, update, and delete
+                 * entries.
+                 */
+                "aceid": 1,
+                /*
+                 * The subject determines which client(s) the ACE applies to.
+                 * In this case the ACE is using a subject that
+                 * matches based on connection or message protection type.
+                 *
+                 * - `"conntype": "anon-clear"` ACE will match the subject if
+                 *   the client is not authenticated and the data is not
+                 *   encrypted.
+                 * - `"conntype": ""auth-crypt"` ACE will match the subject if
+                 *   the client is authenticated and the data is encrypted.
+                 *
+                 * `subject` can be connection type (as shown), a role, or
+                 *  device id.
+                 *
+                 * The ACEs in this list are limited to connection type subjects.
+                 * Other subject types should be added using a separate tool,
+                 * after OTM has completed.
+                 */
+                "subject": { "conntype": "anon-clear" },
+                /*
+                 * The application's resources to which this ACE applies. See
+                 * list of resources and there meaning listed above.
+                 */
+                "resources": [
+                    { "href": "/oic/res" },
+                    { "href": "/oic/d" },
+                    { "href": "/oic/p" },
+                    { "wc": "-" }
+                ],
+                /*
+                 * Permission is a bitmask encoding of CRUDN permissions.
+                 * (CRUDN: CREATE, RETRIEVE, UPDATE, DELETE, NOTIFY)
+                 * The bitmask is CRUDN read in reverse or NDURC so a bit mask
+                 * bxxx0,0001 (1) would have CREATE permission. A bit mask of
+                 * bxxx0,0010 (2) would have RETRIEVE permission. A bit mask of
+                 * bxxx0,0011 (3) would have permission to CREATE and RETRIEVE.
+                 * A bit mask of bxxx1,1111 would have access to all CRUDN
+                 * permissions.
+                 */
+                "permission": 2
+            },
+            /*
+             * This ACE gives READ access to all authenticated endpoints to
+             *
+             *  - `/oic/res` used for device discovery
+             *  - `/oic/d` used for device information
+             *  - `/oic/p` used for platform information
+             *  - wildcard `+` user resources created with OC_SECURE
+             */
+            {
+                "aceid": 2,
+                "subject": { "conntype": "auth-crypt" },
+                "resources": [
+                    { "href": "/oic/res" },
+                    { "href": "/oic/d" },
+                    { "href": "/oic/p" },
+                    { "wc": "+" }
+                ],
+                "permission": 2
+            },
+            /*
+             * This ACE gives READ, UPDATE, and DELETE access to all
+             * non-authenticated endpoints to Device Ownership Transfer Method
+             * (doxm).
+             *
+             * **NOTE:** the OBT should remove this ACE after onboarding to
+             * prevent another client from subsequently re-onboarding the device.
+             *
+             *  - `/oic/sec/doxm` is used for device ownership transfer.
+             */
+            {
+                "aceid": 3,
+                "subject": { "conntype": "anon-clear" },
+                "resources": [
+                    { "href": "/oic/sec/doxm" }
+                ],
+                "permission": 14
+            },
+            /*
+             * This ACE gives READ, UPDATE, and DELETE access to all
+             * non-authenticated endpoints to Device Ownership Transfer Method
+             * (doxm).
+             *
+             *  - `/oic/sec/doxm` is used for device ownership transfer.
+             *  - `/oic/sec/roles` contains all roles that have been asserted to
+             *    the server. Roles assertion is beyond the scope of this
+             *    documentation please see OCF Security Specification v1.3.1
+             *    section 10.3.1 for more information.
+             */
+            {
+                "aceid": 4,
+                "subject": { "conntype": "auth-crypt" },
+                "resources": [
+                    { "href": "/oic/sec/doxm" },
+                    { "href": "/oic/sec/roles" }
+                ],
+                "permission": 14
+            }
+        ],
+        /*
+         * This is the Resource Owner Id it must be a nil uuid value. The device
+         * ownership transfer system (DOTS) will configure the rowneruuid when
+         * a successful owner transfer session is established.
+         */
+        "rowneruuid": "00000000-0000-0000-0000-000000000000"
+    },
+    /*
+     * The `/oic/sec/pstat` resource maintains the device provisioning status.
+     */
+    "pstat": {
+        /*
+         * Device onboarding state
+         * `s` is the onboarding state:
+         *   - 0: RESET (Reset)
+         *   - 1: RFOTM (Ready For Ownership Transfer Method)
+         *   - 2: RFPRO (Ready For Provisioning)
+         *   - 3: RFNOP (Ready For Normal Operation)
+         *   - 4: SRESET (Soft Reset)
+         * `p` is the device onboarding state pending.
+         */
+        "dos": { "s": 1, "p": false },
+        /*
+         * Is Device Operational. This is false except when the device enters
+         * the RFNOP state. So it is false when in the RFOTM state.
+         */
+        "isop": false,
+        /*
+         * Current Mode: a bitmask that is changed depending on the
+         * onboarding state. RFOTM state it should be set to 00xx,xx10. Meaning
+         * device paring mode is enabled. Allowing owner transfer operations.
+         */
+        "cm": 2,
+        /*
+         * Target Mode: another bitmask this should be 0. More
+         * information about the target mode can be found in the OCF Security
+         * Specification
+         */
+        "tm": 0,
+        /*
+         * Operational Mode: this bitmask specifies the operational mode.
+         *
+         * Mask bx0000,0100 (4) is Client-directed provisioning. More
+         * information about the operational mode can be found in the OCF
+         * Security Specification
+         */
+        "om": 4,
+        /*
+         * Supported Mode is a bitmask indicating supported provisioning service
+         * operation modes.
+         *
+         * Mask bx0000,0100 (4) is Client-directed provisioning. More
+         * information about the operational mode can be found in the OCF
+         * Security Specification
+         */
+        "sm": 4,
+        /*
+         * This is the Resource Owner Id it must be a nil uuid value. The device
+         * ownership transfer system (DOTS) will configure the rowneruuid when
+         * a successful owner transfer session is established.
+         */
+        "rowneruuid": "00000000-0000-0000-0000-000000000000"
+    },
+    /*
+     * Device Ownership Transfer Method
+     */
+    "doxm": {
+        /*
+         * Array of owner-transfer-methods.
+         *
+         * If the code supports multiple owner-transfer-methods multiple values
+         * can be listed. The entries appear in the order of preference.
+         *
+         * The Security Specification Defines the following OTM types
+         *  - `0` (`oic.sec.doxm.jw`) the just-works method. This relies on
+         *    anonymous Diffie-Hellman key agreement protocol to allow a DOTS
+         *    to add ownership The first DOTS to assert device ownership is the
+         *    device that gains ownership. Any subsequent attempts to take
+         *    ownership will fail unless the device is RESET first. Just-works
+         *    is very useful for ease of use but may be inappropriate in
+         *    situations where multiple individuals may be onboarding devices.
+         *  - `1` (`oic.sec.doxm.rdp`) the new device randomly generates a PIN that
+         *    that is communicated via an out-of-band channel to a DOTS. Random
+         *    PIN onboarding resembles pairing done with Bluetooth devices. It
+         *    helps ensure the device seen by the DOTS is indead the device
+         *    being onboarded.
+         *  - `2` (`oic.sec.doxm.mfgcert`) the new device is presumed to have been
+         *    manufactured with an embedded asymmetic private key that is used
+         *    during TLS handshake at device onboarding.
+         *  - 0xFF00~0FFFF are reserved for vendor specific OTM use. And must be
+         *    looked up.
+         */
+        "oxms": [0],
+        /*
+         * The selected owner-transfer-method.This may be change by the doxm if
+         * the DOTS wishes to use a different OTM listed in `oxms`. In other
+         * words, DOTS is free to choose a stronger or weaker OTM even if it
+         * supports all the OTMs.
+         */
+        "oxmsel": 0,
+        /*
+         * Supported Credential Types. This value should contain all the
+         * credential types implemented by the device, so the OBT can select
+         * only supported credentials to use with the device.
+         */
+        "sct": 1,
+        /*
+         * Device ownership status. The DOTS is responsible for setting this to
+         * true after an owner transfer session is established.
+         */
+        "owned": false,
+        /*
+         * This is the is a uuid that identifies the device. This value is
+         * reflected into the oic.wk.d device id (`di`). If the device is
+         * un-owned the framework may not share this deviceuuid, to protect
+         * identifying information.
+         */
+        "deviceuuid": "12345678-1234-1234-1234-123456789012",
+        /*
+         * The device owner uuid. This should be nil it will be updated by the
+         * DOTS.
+         */
+        "devowneruuid": "00000000-0000-0000-0000-000000000000",
+        /*
+         * This is the Resource Owner Id it must be a nil uuid value. The device
+         * ownership transfer system (DOTS) will configure the rowneruuid when
+         * a successful owner transfer session is established.
+         */
+        "rowneruuid": "00000000-0000-0000-0000-000000000000"
+    }
+}

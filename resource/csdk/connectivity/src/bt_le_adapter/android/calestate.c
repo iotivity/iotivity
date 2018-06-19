@@ -35,8 +35,14 @@
 #include "octhread.h"
 #include "uarraylist.h"
 
+/**
+ * Logging tag for module name
+ */
 #define TAG PCF("OIC_CA_LE_STATE")
 
+/**
+ * Update new state information.
+ */
 CAResult_t CALEUpdateDeviceState(const char* address,
                                  uint16_t state_type,
                                  uint16_t target_state,
@@ -48,6 +54,7 @@ CAResult_t CALEUpdateDeviceState(const char* address,
 
     oc_mutex_lock(deviceListMutex);
 
+    // checks whether address is already present in device list
     if (CALEIsDeviceInList(address, deviceList))
     {
         CALEState_t* curState = CALEGetStateInfo(address, deviceList);
@@ -116,6 +123,9 @@ CAResult_t CALEUpdateDeviceState(const char* address,
     return CA_STATUS_OK;
 }
 
+/**
+ * Check whether the remote address is existed or not.
+ */
 bool CALEIsDeviceInList(const char* remoteAddress,
                         u_arraylist_t *deviceList)
 {
@@ -146,6 +156,9 @@ bool CALEIsDeviceInList(const char* remoteAddress,
     return false;
 }
 
+/**
+ * Remove all device states.
+ */
 CAResult_t CALERemoveAllDeviceState(u_arraylist_t *deviceList,
                                     oc_mutex deviceListMutex)
 {
@@ -170,6 +183,9 @@ CAResult_t CALERemoveAllDeviceState(u_arraylist_t *deviceList,
     return CA_STATUS_OK;
 }
 
+/**
+ * Reset values of device state for all of devices.
+ */
 CAResult_t CALEResetDeviceStateForAll(u_arraylist_t *deviceList,
                                       oc_mutex deviceListMutex)
 {
@@ -197,6 +213,9 @@ CAResult_t CALEResetDeviceStateForAll(u_arraylist_t *deviceList,
     return CA_STATUS_OK;
 }
 
+/**
+ * Remove the device state for a remote device.
+ */
 CAResult_t CALERemoveDeviceState(const char* remoteAddress,
                                  u_arraylist_t *deviceList)
 {
@@ -233,6 +252,9 @@ CAResult_t CALERemoveDeviceState(const char* remoteAddress,
     return CA_STATUS_OK;
 }
 
+/**
+ * Get state information for a remote device.
+ */
 CALEState_t* CALEGetStateInfo(const char* remoteAddress,
                               u_arraylist_t *deviceList)
 {
@@ -261,6 +283,9 @@ CALEState_t* CALEGetStateInfo(const char* remoteAddress,
     return NULL;
 }
 
+/**
+ * Checks whether the remote address has same state with target state.
+ */
 bool CALEIsValidState(const char* remoteAddress,
                       uint16_t state_type,
                       uint16_t target_state,
@@ -309,7 +334,9 @@ bool CALEIsValidState(const char* remoteAddress,
     return false;
 }
 
-
+/**
+ * Set flag into State List.
+ */
 CAResult_t CALESetFlagToState(JNIEnv *env, jstring jni_address, jint state_idx, jboolean flag,
                               u_arraylist_t *deviceList, oc_mutex deviceListMutex)
 {
@@ -359,6 +386,9 @@ CAResult_t CALESetFlagToState(JNIEnv *env, jstring jni_address, jint state_idx, 
     return CA_STATUS_OK;
 }
 
+/**
+ * Get flag from State List.
+ */
 jboolean CALEGetFlagFromState(JNIEnv *env, jstring jni_address, jint state_idx,
                               u_arraylist_t *deviceList, oc_mutex deviceListMutex)
 {
@@ -406,6 +436,9 @@ jboolean CALEGetFlagFromState(JNIEnv *env, jstring jni_address, jint state_idx,
     return ret;
 }
 
+/**
+ * Set MTU size for device with address as passed in argument.
+ */
 CAResult_t CALESetMtuSize(const char* address, uint16_t mtuSize,
                           u_arraylist_t *deviceList, oc_mutex deviceListMutex)
 
@@ -435,7 +468,9 @@ CAResult_t CALESetMtuSize(const char* address, uint16_t mtuSize,
     oc_mutex_unlock(deviceListMutex);
     return CA_STATUS_OK;
 }
-
+/**
+ * Get MTU size for device with address as passed in argument.
+ */
 uint16_t CALEGetMtuSize(const char* address, u_arraylist_t *deviceList, oc_mutex deviceListMutex)
 {
     VERIFY_NON_NULL_RET(address, TAG, "address is null", CA_DEFAULT_BLE_MTU_SIZE);

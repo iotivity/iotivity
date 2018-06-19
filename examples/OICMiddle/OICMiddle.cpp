@@ -95,12 +95,8 @@ void Middle::run(int argc, char* argv[])
 
 void Middle::startPlatform()
 {
-    uint16_t port = 0;
-    //std::string ipaddr = INADDR_ANY;
-    std::string ipaddr = "0.0.0.0";
-
     PlatformConfig cfg { ServiceType::InProc, ModeType::Both,
-                  ipaddr, port, QualityOfService::LowQos};
+                         OC_DEFAULT_ADAPTER, QualityOfService::LowQos};
 
     OC::OCPlatform::Configure(cfg);
 }

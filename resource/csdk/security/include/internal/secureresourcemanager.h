@@ -69,7 +69,7 @@ typedef struct SRMRequestContext
 /**
  * Register Persistent storage callback.
  *
- * @param  persistentStorageHandler [IN] Pointers to open, read, write, close & unlink handlers.
+ * @param[in] persistentStorageHandler  Pointers to open, read, write, close & unlink handlers.
  *
  * @return ::OC_STACK_OK  is no errors and successful. ::OC_STACK_INVALID_PARAM for invalid parameter.
  */
@@ -80,7 +80,7 @@ OCStackResult SRMRegisterPersistentStorageHandler(OCPersistentStorage* persisten
  *
  * @return The pointer to Persistent Storage callback handler.
  */
-OCPersistentStorage* SRMGetPersistentStorageHandler();
+OCPersistentStorage* SRMGetPersistentStorageHandler(void);
 
 /**
  * Register request and response callbacks. Requests and responses are delivered in these callbacks.
@@ -99,12 +99,12 @@ OCStackResult SRMRegisterHandler(CARequestCallback reqHandler,
  * Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
  * @return  ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult SRMInitSecureResources();
+OCStackResult SRMInitSecureResources(void);
 
 /**
  * Perform cleanup for secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
  */
-void SRMDeInitSecureResources();
+void SRMDeInitSecureResources(void);
 
 /**
  * Provisioning API response callback.
@@ -118,7 +118,7 @@ typedef bool (*SPResponseCallback) (const CAEndpoint_t *object,
                                     const CAResponseInfo_t *responseInfo);
 /**
  * Get the resource type from the URI.
- * @param   uri [IN] Pointers to security resource URI.
+ * @param[in]   uri Pointers to security resource URI.
  * @return  SVR type (note that "NOT_A_SVR_RESOURCE" is returned if not a SVR)
  */
 OicSecSvrType_t GetSvrTypeFromUri(const char* uri);

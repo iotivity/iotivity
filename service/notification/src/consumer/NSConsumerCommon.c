@@ -55,10 +55,10 @@ void NSSetConsumerId(char * cId)
     NS_VERIFY_NOT_NULL_V(cId);
     char ** consumerId = NSGetConsumerId();
     NSOICFree(*consumerId);
-    *consumerId = (char *)OICMalloc(sizeof(char) * NS_DEVICE_ID_LENGTH);
+    *consumerId = (char *)OICMalloc(NS_DEVICE_ID_LENGTH);
     NS_VERIFY_NOT_NULL_V(*consumerId);
 
-    OICStrcpy(*consumerId, sizeof(char) * NS_DEVICE_ID_LENGTH, cId);
+    OICStrcpy(*consumerId, NS_DEVICE_ID_LENGTH, cId);
 }
 
 char * NSMakeRequestUriWithConsumerId(const char * uri)
@@ -276,7 +276,7 @@ static NSMessage * NSCreateMessage_internal(uint64_t id, const char * providerId
     NS_VERIFY_NOT_NULL(retMsg, NULL);
 
     retMsg->messageId = id;
-    OICStrcpy(retMsg->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, providerId);
+    OICStrcpy(retMsg->providerId, NS_DEVICE_ID_LENGTH, providerId);
     retMsg->title = NULL;
     retMsg->contentText = NULL;
     retMsg->sourceName = NULL;
@@ -543,7 +543,7 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newProvider, NULL,
           NSGetProviderPostClean(providerId, messageUri, syncUri, topicUri, connection));
 
-    OICStrcpy(newProvider->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, providerId);
+    OICStrcpy(newProvider->providerId, NS_DEVICE_ID_LENGTH, providerId);
     NSOICFree(providerId);
     newProvider->messageUri = messageUri;
     newProvider->syncUri = syncUri;

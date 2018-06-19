@@ -41,10 +41,10 @@ Build Procedure
 Procedure to Execute Sample App:
 ================================
     1) Copy generated rpms to tizen device (For example: /opt/usr/media/enrollee/)
-       a) iotivity-1.3.1-0.armv7l.rpm
-       b) iotivity-devel-1.3.1-0.armv7l.rpm
-       c) iotivity-service-1.3.1-0.armv7l.rpm
-       d) com-oic-es-sample-1.3.1-0.armv7l.rpm
+       a) iotivity-*.rpm
+       b) iotivity-devel-*.rpm
+       c) iotivity-service-*.rpm
+       d) com-oic-es-sample-*.rpm
 
     2) sdb shell
 
@@ -55,10 +55,10 @@ Procedure to Execute Sample App:
     5) change-booting-mode.sh --update
 
     6) Install the rpms using the following commands:
-        a) rpm -Uvh iotivity-1.3.1-0.armv7l.rpm --force --nodeps
-        b) rpm -Uvh iotivity-devel-1.3.1-0.armv7l.rpm --force --nodeps
-        c) rpm -Uvh iotivity-service-1.3.1-0.armv7l.rpm --force --nodeps
-        d) rpm -Uvh com-oic-es-sample-1.3.1-0.armv7l.rpm --force --nodeps
+        a) rpm -Uvh iotivity-*.rpm --force --nodeps
+        b) rpm -Uvh iotivity-devel-*.rpm --force --nodeps
+        c) rpm -Uvh iotivity-service-*.rpm --force --nodeps
+        d) rpm -Uvh com-oic-es-sample-*.rpm --force --nodeps
 
     7) For IP transport, apply net-config smack rules using below command:
         a) chsmack -a "net-config" /usr/apps/com.oic.es.sample/bin/*

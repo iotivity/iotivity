@@ -7,7 +7,8 @@
                 "resources": [
                     { "href": "/oic/res" },
                     { "href": "/oic/d" },
-                    { "href": "/oic/p"}
+                    { "href": "/oic/p" },
+                    { "wc": "-" }
                 ],
                 "permission": 2
             },
@@ -17,7 +18,8 @@
                 "resources": [
                     { "href": "/oic/res" },
                     { "href": "/oic/d" },
-                    { "href": "/oic/p"}
+                    { "href": "/oic/p" },
+                    { "wc": "+" }
                 ],
                 "permission": 2
             },
@@ -39,25 +41,24 @@
                 "permission": 14
             }
         ],
-        "rowneruuid" : "61646D69-6E44-6576-6963-655575696430"
+        "rowneruuid": "00000000-0000-0000-0000-000000000000"
     },
     "pstat": {
-        "dos": {"s": 3, "p": false},
-        "isop": true,
-        "cm": 0,
+        "dos": { "s": 1, "p": false },
+        "isop": false,
+        "cm": 2,
         "tm": 0,
         "om": 4,
         "sm": 4,
-        "deviceuuid": "61646D69-6E44-6576-6963-655575696430",
-        "rowneruuid": "61646D69-6E44-6576-6963-655575696430"
+        "rowneruuid": "00000000-0000-0000-0000-000000000000"
     },
     "doxm": {
         "oxms": [0],
         "oxmsel": 0,
-        "sct": 9,
-        "owned": true,
-        "deviceuuid": "61646D69-6E44-6576-6963-655575696430",
-        "devowneruuid": "61646D69-6E44-6576-6963-655575696430",
-        "rowneruuid": "61646D69-6E44-6576-6963-655575696430"
+        "sct": 1,
+        "owned": false,
+        "deviceuuid": "12345678-1234-1234-1234-123456789012",
+        "devowneruuid": "00000000-0000-0000-0000-000000000000",
+        "rowneruuid": "00000000-0000-0000-0000-000000000000"
     }
 }

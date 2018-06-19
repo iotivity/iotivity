@@ -154,7 +154,7 @@ CAResult_t CAIPUnSetNetworkMonitorCallback(CATransportAdapter_t adapter)
     return CA_STATUS_OK;
 }
 
-u_arraylist_t *CAFindInterfaceChange()
+u_arraylist_t *CAFindInterfaceChange(void)
 {
     u_arraylist_t *iflist = NULL;
     char buf[NETLINK_MESSAGE_LENGTH] = { 0 };

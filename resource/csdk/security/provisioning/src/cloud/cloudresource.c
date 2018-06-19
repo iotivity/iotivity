@@ -49,51 +49,24 @@ static oc_mutex     gCloudMutex;
 #define OC_CLOUD_PROVISIONING_APN   "apn"
 #define OC_CLOUD_PROVISIONING_CIS   "cis"
 #define OC_CLOUD_PROVISIONING_AT    "at"
-
-#define OIC_JSON_CLOUD_CLEC         "clec"
-
-static const size_t CBOR_DEFAULT_SIZE = 512;
+#define OC_CLOUD_PROVISIONING_SID   "sid"
+#define OC_CLOUD_PROVISIONING_CLEC  "clec"
 
 static OicCloud_t gDefaultCloud =
 {
     NULL,
     NULL,
     NULL,
+    NULL,
+    NULL,
     OC_CLOUD_OK,
+    NULL,
     NULL,
     NULL,
     NULL
 };
 
-static bool ValidCloud(OicCloud_t *cloud)
-{
-    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
-    VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, false);
-
-    bool ret = true;
-
-    if (!cloud->apn)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: Authorization Provider Name validate: %s", __func__,
-                  cloud->apn ? cloud->apn : "NULL");
-        ret = false;
-    }
-    if (!cloud->cis || 0 != strncmp(cloud->cis, "coaps+tcp://", 11))
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: OCF Cloud URL validate: %s", __func__, cloud->cis ? cloud->cis : "NULL");
-        ret = false;
-    }
-    if (!cloud->at)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: Access token validate: %s", __func__, cloud->at ? cloud->at : "NULL");
-        ret = false;
-    }
-
-    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
-    return ret;
-}
-
-static void DeleteCloudList(OicCloud_t *clouds)
+static void DeleteCloudList(OicCloud_t *clouds, bool signout)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
@@ -107,6 +80,10 @@ static void DeleteCloudList(OicCloud_t *clouds)
     oc_mutex_lock(gCloudMutex);
     LL_FOREACH_SAFE(clouds, p1, p2)
     {
+        if (signout)
+        {
+            OCCloudSignOut(p1);
+        }
         LL_DELETE(clouds, p1);
         FreeCloud(p1);
         p1 = NULL;
@@ -116,7 +93,31 @@ static void DeleteCloudList(OicCloud_t *clouds)
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 }
 
-static void *CloudWaitForRFPRO(void *data)
+void StopClouds()
+{
+    DeleteCloudList(gCloud, true);
+    gCloud = NULL;
+}
+
+void ResetClouds()
+{
+    DeleteCloudList(gCloud, false);
+    gCloud = NULL;
+}
+
+void DeleteCloudAccount()
+{
+    if ( OC_STACK_OK != OCCloudDelete(gCloud))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: cannot delete cloud", __func__);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: cloud is deleted", __func__);
+    }
+}
+
+static void *CloudWaitForRFNOP(void *data)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
     OicSecDostype_t dos;
@@ -126,7 +127,7 @@ static void *CloudWaitForRFPRO(void *data)
 
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
 
-    while (DOS_RFPRO != dos.state && OC_CLOUD_EXIT != cloud->stat)
+    while (DOS_RFNOP != dos.state && OC_CLOUD_EXIT != cloud->stat)
     {
         VERIFY_SUCCESS(TAG, OC_STACK_OK == GetDos(&dos), ERROR);
         sleep(1);
@@ -149,6 +150,7 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
     OicCloud_t *newCloud = NULL;
     OCRepPayload *payload = NULL;
     bool isDeviceOwned = false;
+    OicCloud_t *xCloud = NULL;
 
     VERIFY_NOT_NULL(TAG, ehRequest, ERROR);
     VERIFY_NOT_NULL(TAG, ehRequest->payload, ERROR);
@@ -179,8 +181,7 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
 
     if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_APN, &newCloud->apn))
     {
-        OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_APN);
-        goto exit;
+        OIC_LOG_V(WARNING, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_APN);
     }
     if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &newCloud->cis))
     {
@@ -192,6 +193,11 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
         OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_AT);
         goto exit;
     }
+    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_SID, &newCloud->sid))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_SID);
+        goto exit;
+    }
 
     if (!ValidCloud(newCloud))
     {
@@ -199,17 +205,38 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
         goto exit;
     }
 
-    if (CloudFind(gCloud, newCloud))
+    xCloud = CloudFind(gCloud, newCloud);
+    if (xCloud)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: cloud: %s exist", __func__, newCloud->cis);
-        goto exit;
+        OIC_LOG_V(WARNING, TAG, "%s: cloud: %s exist", __func__, newCloud->cis);
+        if (OC_CLOUD_TOKEN_REFRESH0 < xCloud->stat)
+        {
+            if (!CloudCopy(newCloud, xCloud))
+            {
+                OIC_LOG_V(WARNING, TAG, "%s: cloud: cannot update: %s", __func__, xCloud->cis);
+            }
+        }
+        else
+        {
+            OIC_LOG_V(WARNING, TAG, "%s: cloud: cannot update: %s status: %s", __func__, xCloud->cis,
+                      GetCloudStatus(xCloud));
+
+            FreeCloud(newCloud);
+            goto exit;
+        }
     }
+
+    oc_mutex_lock(gCloudMutex);
+#ifdef _MULTIPLE_CNC_
+    LL_APPEND(gCloud, newCloud);
+#else
+    FreeCloud(gCloud);
+    gCloud = newCloud;
+#endif
+    oc_mutex_unlock(gCloudMutex);
 
     newCloud->stat = OC_CLOUD_PROV;
 
-    oc_mutex_lock(gCloudMutex);
-    LL_APPEND(gCloud, newCloud);
-    oc_mutex_unlock(gCloudMutex);
 
     if (DOS_RFNOP == dos.state)
     {
@@ -221,7 +248,7 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
     else
     {
         OCThreadResult_t res = OC_THREAD_SUCCESS;
-        res = oc_thread_new(&newCloud->pid, CloudWaitForRFPRO, newCloud);
+        res = oc_thread_new(&newCloud->pid, CloudWaitForRFNOP, newCloud);
         if (OC_THREAD_SUCCESS != res)
         {
             OIC_LOG_V(ERROR, TAG, "%s: create thread: %d", __func__, res);
@@ -238,143 +265,114 @@ exit:
     return ehRet;
 }
 
-OCStackResult CloudGetRequestPayloadCreate(int cloudState, uint8_t **payload, size_t *size)
+static int64_t  GetClec(const OicCloud_t *cloud)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: %d", __func__, cloud->stat);
+
+    switch (cloud->stat)
+    {
+        case OC_CLOUD_OK:
+        case OC_CLOUD_PROV:
+        case OC_CLOUD_SIGNUP:
+        case OC_CLOUD_SIGNIN:
+        case OC_CLOUD_SIGNOUT:
+        case OC_CLOUD_TOKEN_REFRESH0:
+        case OC_CLOUD_TOKEN_REFRESH1:
+        case OC_CLOUD_TOKEN_REFRESH2:
+        case OC_CLOUD_TOKEN_REFRESH3:
+        case OC_CLOUD_TOKEN_REFRESH4:
+            return 0;
+        case OC_CLOUD_ERROR_INVALID_ACCESS_TOKEN:
+            return 3;
+        case OC_CLOUD_ERROR_UNREACHABLE:
+        case OC_CLOUD_ERROR_TLS:
+        case OC_CLOUD_ERROR_REDIRECT:
+            return 2;
+        case OC_CLOUD_ERROR_REFRESHTOKEN:
+            return 3;
+        case OC_CLOUD_ERROR_SIGNOUT:
+        case OC_CLOUD_ERROR_SIGNIN:
+        case OC_CLOUD_ERROR_CREATE_SESSION:
+        case OC_CLOUD_ERROR_CHECK_SESSION:
+        case OC_CLOUD_ERROR_SIGNUP:
+        case OC_CLOUD_ERROR:
+        case OC_CLOUD_EXIT:
+            return 1;
+    }
+    return 0;
+}
+
+OCRepPayload *CreateCloudGetPayload(const OicCloud_t *cloud)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
-    VERIFY_NOT_NULL_RETURN(TAG, size, ERROR, OC_STACK_INVALID_PARAM);
-    VERIFY_NOT_NULL_RETURN(TAG, payload, ERROR, OC_STACK_INVALID_PARAM);
+    OCRepPayload *payload = NULL;
+    payload = OCRepPayloadCreate();
+    VERIFY_NOT_NULL(TAG, payload, ERROR);
 
-    if ( NULL != *payload)
+    OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
+    OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_READ_WRITE);
+    OCRepPayloadAddResourceType(payload, OIC_RSRC_TYPE_SEC_CLOUDCONF);
+
+    if (NULL == cloud)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: *payload is not NULL", __func__);
-        return OC_STACK_INVALID_PARAM;
+        OIC_LOG_V(DEBUG, TAG, "%s: Create empty filled payload", __func__);
+
+        if (!OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, ""))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_APN);
+        }
+        if (!OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, ""))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_CIS);
+        }
+        if (!OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_SID, "00000000-0000-0000-0000-000000000000"))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_SID);
+        }
+        if (!OCRepPayloadSetPropInt(payload, OIC_JSON_CLOUD_CLEC, (int64_t)0))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_CLEC);
+        }
     }
-
-    size_t cborLen = *size;
-    if (0 == cborLen)
+    else
     {
-        cborLen = CBOR_DEFAULT_SIZE;
-    }
-    *payload = NULL;
-    *size = 0;
-
-    OCStackResult ret = OC_STACK_ERROR;
-
-    CborError cborError = CborNoError;
-
-    uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_ERROR);
-
-    CborEncoder encoder;
-    cbor_encoder_init(&encoder, outPayload, cborLen, 0);
-
-    CborEncoder rootMap;
-    cborError = cbor_encoder_create_map(&encoder, &rootMap, 1);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add root map");
-
-    cborError = cbor_encode_text_string(&rootMap, OIC_JSON_CLOUD_CLEC,
-                                        sizeof(OIC_JSON_CLOUD_CLEC) + 1);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: clec");
-
-    cborError = cbor_encode_int(&rootMap, cloudState);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: clec");
-
-    cborError = cbor_encoder_close_container(&encoder, &rootMap);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed close root map");
-
-    if (CborNoError == cborError)
-    {
-        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
-        *payload = outPayload;
-        ret = OC_STACK_OK;
+        if (cloud->apn)
+        {
+            if (!OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_APN, cloud->apn))
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_APN);
+            }
+        }
+        if (!OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, cloud->cis))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_CIS);
+        }
+        if (!OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_SID, cloud->sid))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_SID);
+        }
+        if (!OCRepPayloadSetPropInt(payload, OIC_JSON_CLOUD_CLEC, GetClec(cloud)))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_CLEC);
+        }
     }
 exit:
-    if ((CborNoError != cborError) || (OC_STACK_OK != ret))
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: Failed", __func__);
-        OICFree(outPayload);
-        outPayload = NULL;
-        *payload = NULL;
-        *size = 0;
-        ret = OC_STACK_ERROR;
-    }
-
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
-    return ret;
+    return payload;
 }
-
-OCStackResult CloudGetRequestPayloadParse(const uint8_t *cborPayload, size_t size, int *cloudState)
-{
-    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
-
-    VERIFY_NOT_NULL_RETURN(TAG, cborPayload, ERROR, OC_STACK_INVALID_PARAM);
-    VERIFY_NOT_NULL_RETURN(TAG, cloudState, ERROR, OC_STACK_INVALID_PARAM);
-
-    if (0 == size)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: zero size", __func__);
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    OCStackResult ret = OC_STACK_ERROR;
-    CborValue cloudCbor = { NULL, NULL, 0, 0, 0, 0};
-    CborParser parser = { NULL, 0 };
-    CborError cborError = CborNoError;
-    char *name = NULL;
-    size_t len = 0;
-
-    cbor_parser_init(cborPayload, size, 0, &parser, &cloudCbor);
-
-    if (!cbor_value_is_container(&cloudCbor))
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: it's not container", __func__);
-        return OC_STACK_ERROR;
-    }
-
-    CborValue map = { NULL, NULL, 0, 0, 0, 0 };
-    cborError = cbor_value_enter_container(&cloudCbor, &map);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Cant't find root map");
-
-    cborError = cbor_value_dup_text_string(&map, &name, &len, NULL);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed find name in map");
-
-    if (0 == len || NULL == name || 0 != strncmp(name, OIC_JSON_CLOUD_CLEC, len))
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: wrong name", __func__);
-        goto exit;
-    }
-
-    cborError = cbor_value_advance(&map);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed move");
-
-    cborError = cbor_value_get_int(&map, cloudState);
-    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed get cloud state");
-
-    ret = OC_STACK_OK;
-exit:
-    if ((CborNoError != cborError) || (OC_STACK_OK != ret))
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: Failed", __func__);
-    }
-    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
-    return ret;
-}
-
 
 static OCEntityHandlerResult HandleCloudGetRequest(OCEntityHandlerRequest *ehRequest)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
     OCEntityHandlerResult ehRet = OC_EH_INTERNAL_SERVER_ERROR;
-    OicCloud_t *newCloud = NULL;
+    OicCloud_t *cloud = NULL;
     OCRepPayload *payload = NULL;
     bool isDeviceOwned = false;
-    uint8_t *payloadResponse = NULL;
-    size_t sizeResponse = 0;
     OicCloud_t *p1 = NULL, *p2 = NULL;
+    OCEntityHandlerResponse response;
 
     VERIFY_NOT_NULL(TAG, ehRequest, ERROR);
-    VERIFY_NOT_NULL(TAG, ehRequest->payload, ERROR);
 
     OCGetDeviceOwnedState(&isDeviceOwned);
 
@@ -385,49 +383,54 @@ static OCEntityHandlerResult HandleCloudGetRequest(OCEntityHandlerRequest *ehReq
         goto exit;
     }
 
-    newCloud = (OicCloud_t *) OICCalloc(1, sizeof(OicCloud_t));
-    VERIFY_NOT_NULL(TAG, newCloud, ERROR);
+    if (NULL == gCloud)
+    {
+        ehRet = OC_EH_OK;
+        goto exit;
+    }
+
+    cloud = (OicCloud_t *) OICCalloc(1, sizeof(OicCloud_t));
+    VERIFY_NOT_NULL(TAG, cloud, ERROR);
 
     payload = (OCRepPayload *)ehRequest->payload;
 
-    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &newCloud->cis))
+    if (!payload || !OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &cloud->cis))
     {
         OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_CIS);
+        p1 = gCloud;
+        ehRet = OC_EH_OK;
         goto exit;
     }
-    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_APN, &newCloud->apn))
+    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_APN, &cloud->apn))
     {
         OIC_LOG_V(WARNING, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_APN);
     }
-    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_AT, &newCloud->at))
+    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_AT, &cloud->at))
     {
         OIC_LOG_V(WARNING, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_AT);
     }
 
     LL_FOREACH_SAFE(gCloud, p1, p2)
     {
-        if (0 == strcmp(p1->cis, newCloud->cis))
+        if (p1 && p1->cis && 0 == strcmp(p1->cis, cloud->cis))
         {
-            if (OC_STACK_OK != CloudGetRequestPayloadCreate(p1->stat, &payloadResponse, &sizeResponse))
-            {
-                OIC_LOG_V(ERROR, TAG, "%s: Error create cbor", __func__);
-                goto exit;
-            }
+            ehRet = OC_EH_OK;
             break;
         }
     }
-
-    if (0 == sizeResponse)
-    {
-        ehRet = OC_EH_RESOURCE_NOT_FOUND;
-    }
-    else
-    {
-        ehRet = OC_EH_OK;
-    }
 exit:
-    ehRet = ((SendSRMResponse(ehRequest, ehRet, payloadResponse, sizeResponse)) == OC_STACK_OK) ?
-            OC_EH_OK : OC_EH_ERROR;
+    response.requestHandle = ehRequest ? ehRequest->requestHandle : NULL;
+    response.payload = (OCPayload *)CreateCloudGetPayload(p1);
+    response.payload->type = PAYLOAD_TYPE_REPRESENTATION;
+    response.persistentBufferFlag = 0;
+
+    if (OC_STACK_OK != OCDoResponse(&response))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: send response", __func__);
+        ehRet = OC_EH_ERROR;
+    }
+
+    FreeCloud(cloud);
 
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 
@@ -438,10 +441,11 @@ static OCEntityHandlerResult HandleCloudDeleteRequest(OCEntityHandlerRequest *eh
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
     OCEntityHandlerResult ehRet = OC_EH_INTERNAL_SERVER_ERROR;
-    OicCloud_t *newCloud = NULL;
+    OicCloud_t *cloud = NULL;
     OCRepPayload *payload = NULL;
     bool isDeviceOwned = false;
     OicCloud_t *p1 = NULL, *p2 = NULL;
+    OCEntityHandlerResponse response;
 
     VERIFY_NOT_NULL(TAG, ehRequest, ERROR);
     VERIFY_NOT_NULL(TAG, ehRequest->payload, ERROR);
@@ -455,40 +459,54 @@ static OCEntityHandlerResult HandleCloudDeleteRequest(OCEntityHandlerRequest *eh
         goto exit;
     }
 
-    newCloud = (OicCloud_t *) OICCalloc(1, sizeof(OicCloud_t));
-    VERIFY_NOT_NULL(TAG, newCloud, ERROR);
+    cloud = (OicCloud_t *) OICCalloc(1, sizeof(OicCloud_t));
+    VERIFY_NOT_NULL(TAG, cloud, ERROR);
 
     payload = (OCRepPayload *)ehRequest->payload;
 
-    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &newCloud->cis))
+    if (!cloud->cis || !OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_CIS, &cloud->cis))
     {
         OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_CIS);
         goto exit;
     }
-    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_APN, &newCloud->apn))
+    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_APN, &cloud->apn))
     {
         OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_APN);
     }
-    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_AT, &newCloud->at))
+    if (!OCRepPayloadGetPropString(payload, OC_CLOUD_PROVISIONING_AT, &cloud->at))
     {
         OIC_LOG_V(ERROR, TAG, "%s: Can't get: %s", __func__, OC_CLOUD_PROVISIONING_AT);
     }
 
     LL_FOREACH_SAFE(gCloud, p1, p2)
     {
-        if (0 == strcmp(p1->cis, newCloud->cis))
+        if (p1 && p1->cis && 0 == strcmp(p1->cis, cloud->cis))
         {
             OIC_LOG_V(INFO, TAG, "%s: delete cloud: %s", __func__, p1->cis);
             p1->stat = OC_CLOUD_EXIT;
+            OCCloudSignOut(p1);
             LL_DELETE(gCloud, p1);
+            ehRet = OC_EH_OK;
             break;
         }
     }
-
-    ehRet = OC_EH_OK;
 exit:
-    ehRet = ((SendSRMResponse(ehRequest, ehRet, NULL, 0)) == OC_STACK_OK) ?
-            OC_EH_OK : OC_EH_ERROR;
+    response.requestHandle = ehRequest ? ehRequest->requestHandle : NULL;
+    response.ehResult = ehRet;
+    response.payload = (OCPayload *)OCRepPayloadCreate();
+    response.payload->type = PAYLOAD_TYPE_REPRESENTATION;
+    response.persistentBufferFlag = 0;
+
+    if (OC_STACK_OK != OCDoResponse(&response))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: send response", __func__);
+        ehRet = OC_EH_ERROR;
+    }
+
+    if (cloud)
+    {
+        FreeCloud(cloud);
+    }
 
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 
@@ -545,14 +563,21 @@ OCStackResult CreateCloudResource()
                                          OIC_RSRC_CLOUDCONF_URI,
                                          CloudEntityHandler,
                                          NULL,
-                                         OC_SECURE | OC_NONSECURE |
-                                         OC_DISCOVERABLE);
+                                         OC_SECURE | OC_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
     {
         OIC_LOG (FATAL, TAG, "Unable to create cloud config resource");
         DeInitCloudResource();
     }
+
+    ret = OCBindResourceInterfaceToResource(gCloudHandle, OC_RSRVD_INTERFACE_READ_WRITE);
+    if (ret != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "Binding Resource interface with result: %d", ret);
+        return ret;
+    }
+
     return ret;
 }
 
@@ -563,7 +588,7 @@ OCStackResult DeInitCloudResource()
     OCStackResult ret = OCDeleteResource(gCloudHandle);
     if (gCloud  != &gDefaultCloud)
     {
-        DeleteCloudList(gCloud);
+        DeleteCloudList(gCloud, true);
     }
 
     oc_mutex_free(gCloudMutex);

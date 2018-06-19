@@ -98,7 +98,7 @@ void CAStopAdapter(CATransportAdapter_t transportType);
 /**
  * Stop connectivity adapters all.
  */
-void CAStopAdapters();
+void CAStopAdapters(void);
 
 #ifdef RA_ADAPTER
 /**
@@ -146,19 +146,19 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data,
  * Start listening servers to receive search requests from clients.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAStartListeningServerAdapters();
+CAResult_t CAStartListeningServerAdapters(void);
 
 /**
  * Stop listening servers to receive search requests from clients.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAStopListeningServerAdapters();
+CAResult_t CAStopListeningServerAdapters(void);
 
 /**
  * Start discovery servers to receive advertisements from server.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAStartDiscoveryServerAdapters();
+CAResult_t CAStartDiscoveryServerAdapters(void);
 
 /**
  * Check whether the endpoint is my own or not.
@@ -169,7 +169,7 @@ bool CAIsLocalEndpoint(const CAEndpoint_t *ep);
 /**
  * Terminates the adapters which are initialized during the initialization.
  */
-void CATerminateAdapters();
+void CATerminateAdapters(void);
 
 
 #ifdef __cplusplus

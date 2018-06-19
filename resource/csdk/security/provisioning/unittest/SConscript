@@ -40,6 +40,10 @@ target_os = sptest_env.get('TARGET_OS')
 rd_mode = sptest_env.get('RD_MODE')
 out_dir = sptest_env.get('BUILD_DIR')
 
+if target_os not in ['msys_nt', 'windows']:
+    if sptest_env.get('WITH_TCP') == True and sptest_env.get('WITH_CLOUD') == True:
+        sptest_env.PrependUnique(LIBS=['cloud'])
+
 unittest_dir = 'resource/csdk/security/provisioning/unittest/'
 sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sample/'
 unittest_build_dir = out_dir + unittest_dir
@@ -104,13 +108,13 @@ def kill_all():
                 if not cmd_list[1].isdigit():
                     continue
                 try:
+                    print("killing:" + cmd_list[1])
                     pid = int(cmd_list[1])
-                    print("killing: " + pid)
                     kill(pid, SIGTERM)
                 except Exception as ex:
                     print(line)
                     print("Cannot kill: " + cmd_list[1])
-                    print("exception: " + ex.message)
+                    print("exception: " + str(ex))
     else:
         try:
             from psutil import process_iter
@@ -171,6 +175,8 @@ sptest_env.PrependUnique(CPPPATH=[
     '../../../connectivity/inc/pkix',
     '../../../connectivity/common/inc',
     '../../../connectivity/api',
+    '#resource/csdk/security/include',
+    '#resource/csdk/security/include/experimental',
     '#resource/csdk/security/provisioning/src/cloud',
     '#resource/csdk/security/provisioning/include/cloud/'
 ])

@@ -104,6 +104,9 @@ unittests_src = [
 
 # TODO: IOT-2039: Fix errors in the following Windows tests.
 if target_os in ['windows']:
+    # Ignore deprecated code warning in unit tests.
+    # We still test deprecated code till removal.
+    unittests_env.AppendUnique(CCFLAGS=['/wd4996'])
     if '12.0' == unittests_env['MSVC_VERSION']:
         unittests_src.remove('OCPlatformTest.cpp')
         unittests_src.remove('OCRepresentationEncodingTest.cpp')
@@ -116,16 +119,18 @@ if (('SUB' in with_mq) or ('PUB' in with_mq) or ('BROKER' in with_mq)):
 if unittests_env.get('WITH_CLOUD'):
     unittests_src = unittests_src + ['OCAccountManagerTest.cpp']
 
-unittests = unittests_env.Program('unittests', unittests_src)
+unittests = [unittests_env.Program('unittests', unittests_src)]
 
-Alias("unittests", [unittests])
+Alias("unittests", unittests)
 
 unittests_env.AppendTarget('unittests')
 if unittests_env.get('TEST') == '1':
     if target_os in ['windows']:
         unittests_env.AppendENVPath('PATH', unittests_env.get('BUILD_DIR'))
     if target_os in ['linux', 'windows']:
-        run_test(unittests_env, 
+        run_test(unittests_env,
                  'resource_unittests_unittests.memcheck',
-                 'resource/unittests/unittests', 
+                 'resource/unittests/unittests',
                  unittests)
+unittests_env.UserInstallTargetExtra(unittests, 'tests/resource/')
+

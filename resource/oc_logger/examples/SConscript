@@ -54,9 +54,10 @@ else:
 ######################################################################
 # Source files and Targets
 ######################################################################
-examples_c = examples_env.Program(
-    'examples_c', 'test_logging.c', OBJPREFIX='c_')
-examples_cpp = examples_env.Program('examples_cpp', 'test_logging.cpp')
+examples = []
+examples += examples_env.Program('test_logging_c', 'test_logging.c', OBJPREFIX='c_')
+examples += examples_env.Program('test_logging_cpp', 'test_logging.cpp')
 
-Alias('liboc_logger_examples', [examples_c, examples_cpp])
+Alias('liboc_logger_examples', examples)
 examples_env.AppendTarget('liboc_logger_examples')
+examples_env.UserInstallTargetExtra(examples)

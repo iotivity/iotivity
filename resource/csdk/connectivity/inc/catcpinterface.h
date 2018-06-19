@@ -186,7 +186,7 @@ uint32_t CAGetCodeFromHeader(const unsigned char *recvBuffer);
  * Get socket file descriptor from remote device information.
  *
  * @param[in]   endpoint    Remote Endpoint information (such as ipaddress,
- *                          port, reference uri and transport type) to
+ *                          port, reference URI and transport type) to
  *                          which the unicast data has to be sent.
  * @return  Created socket file descriptor.
  */
@@ -196,7 +196,7 @@ CASocketFd_t CAGetSocketFDFromEndpoint(const CAEndpoint_t *endpoint);
  * Find the session with endpoint info and remove it from list.
  *
  * @param[in]   endpoint    Remote Endpoint information (such as ipaddress,
- *                          port, reference uri and transport type) to
+ *                          port, reference URI and transport type) to
  *                          which the unicast data has to be sent.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
@@ -215,8 +215,8 @@ size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen);
  * Construct CoAP header and payload from buffer
  *
  * @param[in] svritem - used socket, buffer, current received message length and protocol
- * @param[in/out]  data  - data buffer, this value is updated as data is copied to svritem
- * @param[in/out]  dataLength  - length of data, this value decreased as data is copied to svritem
+ * @param[in,out]  data  - data buffer, this value is updated as data is copied to svritem
+ * @param[in,out]  dataLength  - length of data, this value decreased as data is copied to svritem
  * @return             - CA_STATUS_OK or appropriate error code
  */
 CAResult_t CAConstructCoAP(CATCPSessionInfo_t *svritem, unsigned char **data,
@@ -225,7 +225,7 @@ CAResult_t CAConstructCoAP(CATCPSessionInfo_t *svritem, unsigned char **data,
 /**
  * Clean socket state data
  *
- * @param[in/out] svritem - socket state data
+ * @param[in,out] svritem - socket state data
  */
 void CACleanData(CATCPSessionInfo_t *svritem);
 

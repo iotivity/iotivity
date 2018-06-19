@@ -184,6 +184,8 @@ typedef struct OicSecAmacl OicSecAmacl_t;
 
 typedef struct OicSecCred OicSecCred_t;
 
+typedef struct OicSecSp OicSecSp_t;
+
 /**
  * Aid for assigning/testing vals with OicSecCredType_t.
  * Example:
@@ -303,6 +305,7 @@ enum
     OIC_R_CSR_TYPE,
     OIC_R_ACL2_TYPE,
     OIC_R_ROLES_TYPE,
+    OIC_R_SP_TYPE,
     OIC_SEC_SVR_TYPE_COUNT, //define the value to number of SVR
     NOT_A_SVR_RESOURCE = 99
 };
@@ -627,6 +630,16 @@ struct OicSecPstat
     OicUuid_t           rownerID;       // 7:R:S:Y:oic.uuid
 };
 
+/**
+ * /oic/sec/sp (Security Profile) data type.
+ */
+struct OicSecSp
+{
+    size_t          supportedLen;       // the number of supported profiles
+    char          **supportedProfiles;  // Array of supported security profiles
+    char           *activeProfile;      // active security profile
+    uint16_t        credid;             // Cred supporting asserted support of active_profile
+};
 
 #if defined(__WITH_DTLS__) ||  defined(__WITH_TLS__)
 struct OicSecCrl

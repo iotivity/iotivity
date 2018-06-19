@@ -85,12 +85,12 @@ CAResult_t CAInitializeMessageHandler(CATransportAdapter_t transportType);
 /**
  * Terminate the message handler by stopping  the thread pool and destroying the queues.
  */
-void CATerminateMessageHandler();
+void CATerminateMessageHandler(void);
 
 /**
  * Handler for receiving request and response callback in single thread model.
  */
-void CAHandleRequestResponseCallbacks();
+void CAHandleRequestResponseCallbacks(void);
 
 /**
  * Setting the Callback funtion for network state change callback.
@@ -115,8 +115,8 @@ void CAAddDataToReceiveThread(CAData_t *data);
 #ifdef TCP_ADAPTER
 /**
  * Add a header option to the given header option array.
- * @param[in/out] hdrOpt            Pointer to existing options.
- * @param[in/out] numOptions        Number of existing options.
+ * @param[in,out] hdrOpt            Pointer to existing options.
+ * @param[in,out] numOptions        Number of existing options.
  * @param[in]     optionID          COAP option ID.
  * @param[in]     optionData        Option data value.
  * @param[in]     optionDataLength  Size of Option data value.

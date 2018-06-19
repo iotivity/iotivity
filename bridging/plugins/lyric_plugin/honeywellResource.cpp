@@ -296,7 +296,7 @@ MPMResult pluginDestroy(MPMPluginCtx *pluginSpecificCtx)
  * POST. Sensors resources end with /current. Actuators have uris ending with
  * /heater or /cooler.
  *
- * @param[in] uri           Resource Uri
+ * @param[in] uri           Resource URI
  * @param[in] operation     Operation to be checked.
  */
 OCEntityHandlerResult checkIfOperationIsAllowed(std::string uri, OCMethod operation)
@@ -331,7 +331,7 @@ OCEntityHandlerResult checkIfOperationIsAllowed(std::string uri, OCMethod operat
 /**
  * This method creates payload for response to GET/PUT/POST request.
  *
- * @param[in] uri           Resource Uri
+ * @param[in] uri           Resource URI
  * @param[in] data          Thermostat detials to be sent in response.
  */
 OCRepPayload *getPayload(const std::string uri, const THERMOSTAT &data)

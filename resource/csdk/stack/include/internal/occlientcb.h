@@ -64,7 +64,7 @@ typedef struct resourcetype_t OCResourceType;
 
 /**
  * Data structure for holding client's callback context, methods and Time to Live,
- * connectivity Types, presence and resource type, request uri etc.
+ * connectivity Types, presence and resource type, request URI etc.
  */
 typedef struct ClientCB {
     /** callback method defined in application address space. */
@@ -105,7 +105,7 @@ typedef struct ClientCB {
     /** This is the sequence identifier the server applies to the invocation tied to 'handle'.*/
     uint32_t sequenceNumber;
 
-    /** The canonical form of the request uri associated with the call back.*/
+    /** The canonical form of the request URI associated with the call back.*/
     char * requestUri;
 
     /** Remote address complete.*/
@@ -157,7 +157,7 @@ extern struct ClientCB *g_cbList;
  *                                 Used for callback management.
  * @param[in]  method              A method via which this client callback is expected to operate
  * @param[in]  devAddr             The Device address.
- * @param[in]  requestUri          The resource uri of the request.
+ * @param[in]  requestUri          The resource URI of the request.
  * @param[in]  resourceTypeName    The resource type associated with a presence request.
  * @param[in]  ttl                 time to live in coap_ticks for the callback.
  *
@@ -216,7 +216,7 @@ ClientCB* GetClientCBUsingHandle(const OCDoHandle handle);
 
 #ifdef WITH_PRESENCE
 /**
- * This method is used to search and retrieve a cb node in cbList using a uri.
+ * This method is used to search and retrieve a cb node in cbList using a URI.
  *
  * @param[in]  requestUri           Uri to search for.
  *

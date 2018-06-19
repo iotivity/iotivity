@@ -1096,8 +1096,8 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     else if(isProxyRequest && g_chproxyUri[0] != '\0')
     {
        /*
-        *   A request for Proxy will not have any uri element as per CoAP specs
-        *   and only COAP_OPTION_PROXY_URI will be present. Use preset proxy uri
+        *   A request for Proxy will not have any URI element as per CoAP specs
+        *   and only COAP_OPTION_PROXY_URI will be present. Use preset proxy URI
         *   for such requests.
         */
         outInfo->resourceUri = OICStrdup(g_chproxyUri);

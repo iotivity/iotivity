@@ -55,24 +55,30 @@ namespace OIC
                     const RCSResourceAttributes& attrs);
 
             /**
-             * Returns the uri.
+             * Gets the resource URI.
+             *
+             * @return Resource URI.
              */
             std::string getUri() const;
 
             /**
-             * Sets the uri of this representation.
+             * Sets the URI of this representation.
+             *
+             * @param uri Resource URI to be set.
              */
             void setUri(std::string uri);
 
             /**
-             * Returns all interfaces added.
+             * Gets all interfaces added.
+             *
+             * @return Vector containing resource interfaces.
              */
             const std::vector< std::string >& getInterfaces() const;
 
             /**
              * Adds an interface.
              *
-             * @param interface an interface to add
+             * @param interface an interface to add.
              */
             void addInterface(std::string interface);
 
@@ -82,13 +88,17 @@ namespace OIC
             void clearInterfaces();
 
             /**
-             * Returns all resource types added.
+             * Gets all resource types added.
+             *
+             * @return Vector containing resource types.
              */
             const std::vector< std::string >& getResourceTypes() const;
 
 
             /**
              * Adds a resource type.
+             *
+             * @param resourceType Resource type to add.
              */
             void addResourceType(std::string resourceType);
 
@@ -98,7 +108,11 @@ namespace OIC
             void clearResourceTypes();
 
             /**
-             * Returns attributes set in this representation.
+             * Gets attributes set in this representation.
+             *
+             * @return Resource attributes.
+             *
+             * @see RCSResourceAttributes
              */
             const RCSResourceAttributes& getAttributes() const;
 
@@ -120,21 +134,23 @@ namespace OIC
             void setAttributes(RCSResourceAttributes&& attrs);
 
             /**
-             * Returns children of this representation.
+             * Gets children of this representation.
+             *
+             * @return children of this representation.
              */
             const std::vector< RCSRepresentation >& getChildren() const;
 
             /**
              * Adds a child to this representation.
              *
-             * @param child a representation to be attached
+             * @param child a representation to be attached.
              */
             void addChild(RCSRepresentation child);
 
             /**
              * Sets children of this representation.
              *
-             * @param children new children
+             * @param children new children.
              */
             void setChildren(std::vector< RCSRepresentation > children);
 
@@ -146,6 +162,8 @@ namespace OIC
             /**
              * Converts OCRepresentation into RCSRepresentation.
              *
+             * @return Converted RCSRepresentation.
+             *
              * @see toOCRepresentation
              */
             static RCSRepresentation fromOCRepresentation(const OC::OCRepresentation&);
@@ -153,6 +171,8 @@ namespace OIC
 
             /**
              * Converts RCSRepresentation into OCRepresentation.
+             *
+             * @return Converted OCRepresentation.
              *
              * @see fromOCRepresentation
              */

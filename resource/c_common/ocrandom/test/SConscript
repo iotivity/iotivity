@@ -59,3 +59,5 @@ if randomtest_env.get('TEST') == '1':
     if target_os in ['linux', 'windows']:
         run_test(randomtest_env, 'resource_csdk_random_test.memcheck',
                  'resource/c_common/ocrandom/test/randomtests')
+randomtest_env.UserInstallTargetExtra(randomtests, 'tests/resource/c_common/ocrandom/')
+

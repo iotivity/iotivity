@@ -555,6 +555,15 @@ void CATerminateTCP()
 #endif
 }
 
+static bool CATCPIsSignalingData(const CATCPData *tcpData)
+{
+    // Check if the tcp data is a COAP signaling message as per RFC 8323
+    // by checking the code in the header
+    uint32_t code = CAGetCodeFromHeader(tcpData->data);
+    return code == CA_CSM || code == CA_PING ||
+           code == CA_PONG || code == CA_RELEASE || code == CA_ABORT;
+}
+
 void CATCPSendDataThread(void *threadData)
 {
     CATCPData *tcpData = (CATCPData *) threadData;
@@ -584,9 +593,11 @@ void CATCPSendDataThread(void *threadData)
         {
             // Check payload length from CoAP over TCP format header.
             size_t payloadLen = CACheckPayloadLengthFromHeader(tcpData->data, tcpData->dataLen);
-            if (!payloadLen)
+            if (!CATCPIsSignalingData(tcpData) && !payloadLen)
             {
-                // if payload length is zero, disconnect from remote device.
+                // if payload length is zero, and it is not a COAP signaling
+                // message(since such messages do not have a payload)
+                // then disconnect from remote device
                 OIC_LOG(DEBUG, TAG, "payload length is zero, disconnect from remote device");
 #ifdef __WITH_TLS__
                 if (CA_STATUS_OK != CAcloseSslConnection(tcpData->remoteEndpoint))

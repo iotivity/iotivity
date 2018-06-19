@@ -18,6 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to expiry timer.
+ */
+
 #ifndef _EXPIRY_TIMER_H_
 #define _EXPIRY_TIMER_H_
 
@@ -32,6 +38,10 @@ namespace OIC
 
         class TimerTask;
 
+        /**
+         * This is expiry timer class.
+         * This utility is being used by other RE modules.
+         */
         class ExpiryTimer
         {
         public:
@@ -40,6 +50,10 @@ namespace OIC
             typedef long long DelayInMilliSec;
 
         public:
+
+            /**
+             * Constructor for ExpiryTimer.
+             */
             ExpiryTimer();
             ~ExpiryTimer();
 
@@ -49,10 +63,37 @@ namespace OIC
             ExpiryTimer(const ExpiryTimer&) = delete;
             ExpiryTimer& operator=(const ExpiryTimer&) = delete;
 
-            Id post(DelayInMilliSec, Callback);
-            bool cancel(Id);
+            /**
+             * Post/Start a new task.
+             *
+             * @param delay Time in milli second.
+             * @param cb callback function.
+             *
+             * @return id of the task.
+             *
+             * @see Callback
+             */
+            Id post(DelayInMilliSec delay, Callback cb);
+
+            /**
+             * Cancel the task for the given id.
+             *
+             * @param id identifier of task to be cancelled.
+             *
+             * @return true for success case, otherwise false.
+             */
+            bool cancel(Id id);
+
+            /**
+             * Cancel all the tasks.
+             */
             void cancelAll();
 
+            /**
+             * Gets number of pending tasks.
+             *
+             * @return number of tasks.
+             */
             size_t getNumOfPending();
             size_t getNumOfPending() const;
 

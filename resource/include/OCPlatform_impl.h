@@ -119,7 +119,7 @@ namespace OC
          * API for Device Discovery
          *
          * @param host Host IP Address. If null or empty, Multicast is performed.
-         * @param deviceURI Uri containing address to the virtual device in C Stack
+         * @param deviceURI URI containing address to the virtual device in C Stack
          *                       ("/oic/d")
          * @param deviceInfoHandler device discovery callback
          * @param QualityOfService the quality of communication
@@ -135,7 +135,7 @@ namespace OC
          * API for Platform Discovery
          *
          * @param host Host IP Address. If null or empty, Multicast is performed.
-         * @param platformURI Uri containing address to the virtual platform in C Stack
+         * @param platformURI URI containing address to the virtual platform in C Stack
          *                       ("/oic/p")
          * @param platformInfoHandler platform discovery callback
          * @param QualityOfService the quality of communication

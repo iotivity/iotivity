@@ -75,10 +75,10 @@ static void OCAdapterStateChangedHandler(CATransportAdapter_t adapter, bool enab
 static void OCConnectionStateChangedHandler(const CAEndpoint_t *info, bool isConnected);
 
 /**
- * Check uri has device id.
+ * Check URI has device id.
  *
- * @param[in]  uri  uri of resource.
- * @return  true if uri has device id, or false.
+ * @param[in]  uri  URI of resource.
+ * @return  true if URI has device id, or false.
  */
 static bool OCCMHasDeviceId(const char *uri);
 

@@ -35,9 +35,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "experimental/payload_logging.h"
 #include "utlist.h"
-#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocprovisioningmanager.h"
@@ -50,7 +48,6 @@
 #include "ocsecurity.h"
 #include "ocstackinternal.h"
 #include "pmutility.h"
-#include "experimental/ocrandom.h"
 
 #ifdef _MSC_VER
 #include <io.h>
@@ -58,6 +55,12 @@
 #define F_OK 0
 #define access _access_s
 #endif
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/logger.h"
+#include "experimental/payload_logging.h"
+#include "experimental/ocrandom.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -347,7 +350,7 @@ static int initProvisionClient(void)
  * in order for the effect of the change to take effect. This function shuts
  * down the OC stack and restarts it.
  */
-static int closeAllSessions()
+static int closeAllSessions(void)
 {
     if (OC_STACK_OK != OCStop())
     {
@@ -1766,7 +1769,7 @@ static int waitCallbackRet(void)
     return 0;
 }
 
-void shutdownProvisionClient()
+void shutdownProvisionClient(void)
 {
     if(OC_STACK_OK != OCStop())
     {
@@ -1779,7 +1782,7 @@ void shutdownProvisionClient()
     OICFreeAndSetToNull((void**)&g_prvn_fname);
 }
 
-static int initDiscoverRegisterAllDevices()
+static int initDiscoverRegisterAllDevices(void)
 {
     if(initProvisionClient())
     {
@@ -1809,7 +1812,7 @@ static int initDiscoverRegisterAllDevices()
 
 }
 
-int TestTrustAnchorProvisioning()
+int TestTrustAnchorProvisioning(void)
 {
     int ret = -1;
 
@@ -1837,7 +1840,7 @@ exit:
     return ret;
 }
 
-int TestCSRResource()
+int TestCSRResource(void)
 {
     int ret = -1;
 
@@ -1865,7 +1868,7 @@ exit:
     return ret;
 }
 
-int TestCertUse()
+int TestCertUse(void)
 {
     int ret = -1;
 
@@ -1893,7 +1896,7 @@ exit:
     return ret;
 }
 
-int TestRoleProvisioning()
+int TestRoleProvisioning(void)
 {
     int ret = -1;
 
@@ -1921,7 +1924,7 @@ exit:
     return ret;
 }
 
-int TestRoleAssertion()
+int TestRoleAssertion(void)
 {
     int ret = -1;
 
@@ -1949,7 +1952,7 @@ exit:
     return ret;
 }
 
-int TestRoleAssertionAndUse()
+int TestRoleAssertionAndUse(void)
 {
     int ret = -1;
 
@@ -1977,7 +1980,7 @@ exit:
     return ret;
 }
 
-int TestSymmetricRoleUse()
+int TestSymmetricRoleUse(void)
 {
     int ret = -1;
 

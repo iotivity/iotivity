@@ -68,9 +68,9 @@ static oc_mutex g_bleConnectionStateChangedCbMutex = NULL;
 /**
 * This is the callback which will be called when the adapter state gets changed.
 *
-* @param result         [IN] Result of the query done to the platform.
-* @param adapter_state  [IN] State of the LE adapter.
-* @param user_data      [IN] User data passed by the caller when querying for the state changed cb.
+* @param[in] result         Result of the query done to the platform.
+* @param[in] adapter_state  State of the LE adapter.
+* @param[in] user_data      User data passed by the caller when querying for the state changed cb.
 *
 * @return  None.
 */
@@ -80,17 +80,17 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
 /**
 * This is the callback which will be called when the connection state gets changed.
 *
-* @param result         [IN] Result of the query done to the platform.
-* @param connected      [IN] State of connection.
-* @param remoteAddress  [IN] LE address of the device to be notified.
-* @param user_data      [IN] User data passed by the caller when querying for the state changed cb.
+* @param[in] result         Result of the query done to the platform.
+* @param[in] connected      State of connection.
+* @param[in] remoteAddress  LE address of the device to be notified.
+* @param[in] user_data      User data passed by the caller when querying for the state changed cb.
 *
 * @return  None.
 */
 void CALENWConnectionStateChangedCb(int result, bool connected,
                                     const char *remoteAddress, void *userData);
 
-CAResult_t CAInitializeLENetworkMonitor()
+CAResult_t CAInitializeLENetworkMonitor(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -120,7 +120,7 @@ CAResult_t CAInitializeLENetworkMonitor()
     return CA_STATUS_OK;
 }
 
-void CATerminateLENetworkMonitor()
+void CATerminateLENetworkMonitor(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -133,14 +133,14 @@ void CATerminateLENetworkMonitor()
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-CAResult_t CAInitializeLEAdapter()
+CAResult_t CAInitializeLEAdapter(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStartLEAdapter()
+CAResult_t CAStartLEAdapter(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -170,7 +170,7 @@ CAResult_t CAStartLEAdapter()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStopLEAdapter()
+CAResult_t CAStopLEAdapter(void)
 {
 
     int ret = bt_adapter_unset_state_changed_cb();
@@ -190,7 +190,7 @@ CAResult_t CAStopLEAdapter()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAGetLEAdapterState()
+CAResult_t CAGetLEAdapterState(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -250,7 +250,7 @@ CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAUnSetLEAdapterStateChangedCb()
+CAResult_t CAUnSetLEAdapterStateChangedCb(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     oc_mutex_lock(g_bleDeviceStateChangedCbMutex);

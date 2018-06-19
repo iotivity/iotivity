@@ -37,7 +37,7 @@ static CAPeripheralContext g_context = {
     .lock = NULL
 };
 
-static bool CAPeripheralCheckStarted()
+static bool CAPeripheralCheckStarted(void)
 {
     oc_mutex_lock(g_context.lock);
 
@@ -594,13 +594,13 @@ static void CAPeripheralStopEventLoop(CAPeripheralContext * context)
 
 // ------------------------------------------------------
 
-void CAPeripheralInitialize()
+void CAPeripheralInitialize(void)
 {
     g_context.lock      = oc_mutex_new();
     g_context.condition = oc_cond_new();
 }
 
-void CAPeripheralFinalize()
+void CAPeripheralFinalize(void)
 {
     oc_cond_free(g_context.condition);
     oc_mutex_free(g_context.lock);
@@ -697,7 +697,7 @@ CAResult_t CAPeripheralStart(CALEContext * context)
     return result;
 }
 
-CAResult_t CAPeripheralStop()
+CAResult_t CAPeripheralStop(void)
 {
     CAResult_t result = CA_STATUS_FAILED;
 

@@ -46,8 +46,11 @@
 #endif //ERROR
 #endif //HAVE_WINDOWS_H
 #include "platform_features.h"
-#include "experimental/logger.h"
 
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/logger.h"
+#include "credresource.h"
 
 #define TAG "SAMPLE_MANUFACTURER_CERT"
 
@@ -433,7 +436,7 @@ static CAResult_t peerCNVerifyCallback(const unsigned char *cn, size_t cnLen)
     }
 }
 
-int main()
+int main(void)
 {
     struct timespec timeout;
 
@@ -467,6 +470,10 @@ int main()
 
     timeout.tv_sec  = 0;
     timeout.tv_nsec = 100000000L;
+
+    // Log server credentials at startup
+    LogCurrrentCredResource();
+
 
     // Break from loop with Ctrl-C
     OIC_LOG(INFO, TAG, "Entering ocserver main loop...");

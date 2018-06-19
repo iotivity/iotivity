@@ -17,12 +17,17 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#include "experimental/logger.h"
+
 #include "occloudprovisioning.h"
 #include "OCCloudProvisioning.hpp"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "utils.h"
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+/// Here logging part is not critical.
+#include "experimental/logger.h"
 
 #define TAG "CLOUD-WRAPPER"
 
@@ -350,8 +355,12 @@ OCStackResult OCWrapperAclIdGetByDevice(OCCloudProvisioning& ptr, AclIdResponseC
 
 const char *getUri(const OCDevAddr *ep)
 {
-    char *uri = (char *)OICCalloc(1,1024);
-    snprintf(uri,1024,"%s:%d",ep->addr, ep->port);
+    char *uri = NULL;
+    uri = (char *)OICCalloc(1,1024);
+    if (uri)
+    {
+        snprintf(uri,1024,"%s:%d",ep->addr, ep->port);
+    }
     return uri;
 }
 

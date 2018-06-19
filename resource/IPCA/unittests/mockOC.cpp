@@ -97,7 +97,11 @@ struct PendingRequest
     DeleteCallback deleteCallback;
 };
 
-PlatformConfig g_platformConfig;
+PlatformConfig g_platformConfig(ServiceType::InProc,
+                                ModeType::Both,
+                                OC_DEFAULT_ADAPTER,
+                                QualityOfService::NaQos,
+                                nullptr);
 Mock_OCDeviceInfo g_deviceInfo; // C++ version of OCDeviceInfo.
 Mock_OCPlatformInfo g_platformInfo; // C++ version of OCPlatformInfo.
 

@@ -96,14 +96,16 @@ namespace OIC
             explicit RCSPlatformException(OCStackResult reason);
 
             /**
-             * Returns the reason.
+             * Gets the reason code associated with exception.
              *
+             * @return Reason code as OCStackResult.
              */
             OCStackResult getReasonCode() const;
 
             /**
-             * Returns the reason description.
+             * Gets the reason for exception.
              *
+             * @return Reason for exception as string.
              */
             std::string getReason() const;
 

@@ -34,10 +34,10 @@ extern "C" {
  * Callers must record used serial numbers and ensure serial numbers do not
  * get repeated!
  *
- * @param[OUT] serial      Pointer to a string that will be set to the location of the ASCII serial number.
+ * @param[out] serial      Pointer to a string that will be set to the location of the ASCII serial number.
  *                         Memory for this buffer will be allocated internally; caller must call OICFree on serial
  *                         when finished to free its memory.
- * @param[OUT] serialLen   Variable to receive size of serial, which will include the terminating NULL.
+ * @param[out] serialLen   Variable to receive size of serial, which will include the terminating NULL.
  *
  * @return OC_STACK_OK if generated successfully; error otherwise.
  */
@@ -47,14 +47,14 @@ OCStackResult OC_CALL OCGenerateRandomSerialNumber(char **serial, size_t *serial
  * Generate a new NIST P-256 elliptic curve key pair and return the public and private
  * keys as PEM encoded strings.
  *
- * @param[OUT] publicKey     Pointer to receive PEM encoded public key. Memory is allocated internally
+ * @param[out] publicKey     Pointer to receive PEM encoded public key. Memory is allocated internally
  *                           and must be freed by caller with OICFree.
- * @param[OUT] publicKeyLen  Variable to receive length of publicKey, which will include terminating NULL.
- * @param[OUT] privateKey    Pointer to receive PEM encoded private key. Memory is allocated internally
+ * @param[out] publicKeyLen  Variable to receive length of publicKey, which will include terminating NULL.
+ * @param[out] privateKey    Pointer to receive PEM encoded private key. Memory is allocated internally
  *                           and, when finished, caller should first call OICClearMemory to securely erase
  *                           its contents and then freed with OICFree. Caller is responsible for ensuring
  *                           this key remains protected and secret!
- * @param[OUT] privateKeyLen Variable to receive length of privateKey, which will include terminating NULL.
+ * @param[out] privateKeyLen Variable to receive length of privateKey, which will include terminating NULL.
  */
 OCStackResult OC_CALL OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen,
                                         char **privateKey, size_t *privateKeyLen);
@@ -79,10 +79,10 @@ OCStackResult OC_CALL OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen,
  *                              e.g., "20131231235959" for December 31st 2013 at 23:59:59
  * @param notValidAfter         The notValidAfter date in UTC for the certificate in the form YYYYMMDDhhmmss
  *                              e.g., "20140101010203" for January 1st 2014 at 01:02:03
- * @param[OUT] certificate      Pointer to a buffer that will receive the PEM-encoded certificate. Memory will be
+ * @param[out] certificate      Pointer to a buffer that will receive the PEM-encoded certificate. Memory will be
  *                              allocated internally; caller must call OICFree on certificate when finished to free
  *                              its memory.
- * @param[OUT] certificateLen   Variable to receive the size of certificate, which will include the terminating NULL.
+ * @param[out] certificateLen   Variable to receive the size of certificate, which will include the terminating NULL.
  *
  * @return OC_STACK_OK if successful, error code otherwise
  */
@@ -117,10 +117,10 @@ OCStackResult OC_CALL OCGenerateRootCACertificate(
  *                              e.g., "20131231235959" for December 31st 2013 at 23:59:59
  * @param notValidAfter         The notValidAfter date in UTC for the certificate in the form YYYYMMDDhhmmss
  *                              e.g., "20140101010203" for January 1st 2014 at 01:02:03
- * @param[OUT] certificate      Pointer to a buffer that will receive the PEM-encoded certificate. Memory will be
+ * @param[out] certificate      Pointer to a buffer that will receive the PEM-encoded certificate. Memory will be
  *                              allocated internally; caller must call OICFree on certificate when finished to free
  *                              its memory.
- * @param[OUT] certificateLen   Variable to receive the size of certificate, which will include the terminating NULL.
+ * @param[out] certificateLen   Variable to receive the size of certificate, which will include the terminating NULL.
  *
  * @return OC_STACK_OK if successful, error code otherwise
  */
@@ -151,10 +151,10 @@ OCStackResult OC_CALL OCGenerateIntermediateCACertificate(
  *                              e.g., "20131231235959" for December 31st 2013 at 23:59:59
  * @param notValidAfter         The notValidAfter date in UTC for the certificate in the form YYYYMMDDhhmmss
  *                              e.g., "20140101010203" for January 1st 2014 at 01:02:03
- * @param[OUT] certificate      Pointer to a buffer that will receive the PEM-encoded certificate. Memory will be
+ * @param[out] certificate      Pointer to a buffer that will receive the PEM-encoded certificate. Memory will be
  *                              allocated internally; caller must call OICFree on certificate when finished to free
  *                              its memory.
- * @param[OUT] certificateLen   Variable to receive the size of certificate, which will include the terminating NULL.
+ * @param[out] certificateLen   Variable to receive the size of certificate, which will include the terminating NULL.
  *
  * @return OC_STACK_OK if successful, error code otherwise
  */
@@ -188,10 +188,10 @@ OCStackResult OC_CALL OCGenerateIdentityCertificate(
  * @param role                  The role to encode in the certificate.
  * @param authority             The role authority to encode in the certificate. This field is optional;
  *                              to omit, use NULL, and authority is construed to be the certificate issuer.
- * @param[OUT] certificate      Pointer to a buffer that will receive the PEM-encoded certificate. Memory will be
+ * @param[out] certificate      Pointer to a buffer that will receive the PEM-encoded certificate. Memory will be
  *                              allocated internally; caller must call OICFree on certificate when finished to free
  *                              its memory.
- * @param[OUT] certificateLen   Variable to receive the size of certificate, which will include the terminating NULL.
+ * @param[out] certificateLen   Variable to receive the size of certificate, which will include the terminating NULL.
  *
  * @return OC_STACK_OK if successful, error code otherwise
  */

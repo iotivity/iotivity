@@ -154,7 +154,7 @@ int CAGetSocketFdForUnicastServer(const u_arraylist_t *serverInfoList,
 /**
  * Used to add the server information into serverinfo list.
  *
- * @param[in/out]   serverInfoList    server information list.
+ * @param[in,out]   serverInfoList    server information list.
  * @param[in]       info              server informations like ip, port.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
@@ -167,7 +167,7 @@ CAResult_t CAAddServerInfo(u_arraylist_t *serverInfoList, CAServerInfo_t *info);
 /**
  * Used to remove the server information based on socket fd from server info list.
  *
- * @param[in/out]   serverInfoList    server information list.
+ * @param[in,out]   serverInfoList    server information list.
  * @param[in]       sockFd            Socket descriptor.
  */
 void CARemoveServerInfo(u_arraylist_t *serverInfoList, int sockFd);

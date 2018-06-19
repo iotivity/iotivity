@@ -85,12 +85,12 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool);
 /**
  * Close IP socket.
  */
-void CADeInitializeIPGlobals();
+void CADeInitializeIPGlobals(void);
 
 /**
  * Stop IP server.
  */
-void CAIPStopServer();
+void CAIPStopServer(void);
 
 /**
  * Starts receiving the multicast traffic.
@@ -98,7 +98,7 @@ void CAIPStopServer();
  * This will be used in case sleepy device wants to start back receiving the multicast
  * traffic.
  */
-CAResult_t CAIPStartListenServer();
+CAResult_t CAIPStartListenServer(void);
 
 /**
  * Stops the multicast traffic.
@@ -107,7 +107,7 @@ CAResult_t CAIPStartListenServer();
  * Once this is set no multicast traffic will be received. Device can still receive
  * the unicast traffic.
  */
-CAResult_t CAIPStopListenServer();
+CAResult_t CAIPStopListenServer(void);
 
 /**
  * Set this callback for receiving data packets from peer devices.
@@ -141,12 +141,12 @@ void CAIPSendData(CAEndpoint_t *endpoint,
  *
  * @return  True if IP adapter is connected, otherwise false.
  */
-bool CAIPIsConnected();
+bool CAIPIsConnected(void);
 
 /**
  * Pull the Received Data.
  */
-void CAIPPullData();
+void CAIPPullData(void);
 
 #define CA_COAP        5683
 #define CA_SECURE_COAP 5684
@@ -162,7 +162,7 @@ int CAGetPollingInterval(int interval);
 /**
  * Tell the IP server an interface has been added.
  */
-void CAWakeUpForChange();
+void CAWakeUpForChange(void);
 
 /**
  * Set callback for error handling.

@@ -95,6 +95,13 @@ typedef struct OCPMGetCsrResult
     OicEncodingType_t   encoding; /* Determines contents of csr; either OIC_ENCODING_DER or OIC_ENCODING_PEM */
 } OCPMGetCsrResult_t;
 
+typedef struct OCPMGetSpResult
+{
+    OicUuid_t           deviceId;
+    OCStackResult       res;
+    OicSecSp_t         *sp;
+} OCPMGetSpResult_t;
+
 typedef struct OCPMRoleCertChain
 {
     uint64_t            credId;         /**< credential ID */
@@ -148,27 +155,40 @@ typedef void (*OCProvisionResultCB)(void* ctx, size_t nOfRes, OCProvisionResult_
 /**
  * Callback function definition of CSR retrieve API
  *
- * @param[OUT] ctx - If user set a context, it will be returned here.
- * @param[OUT] nOfRes - total number of results
- * @param[OUT] arr - Array of OCPMGetCsrResult_t, containing one entry for each target device. If an entry's res
+ * @param[out] ctx - If user set a context, it will be returned here.
+ * @param[out] nOfRes - total number of results
+ * @param[out] arr - Array of OCPMGetCsrResult_t, containing one entry for each target device. If an entry's res
  *                   member is OC_STACK_OK, then csr and csrLen are valid; otherwise they should not be used.
  *                   This memory is only valid while the callback is executing; callers must make copies if the data
  *                   needs to be kept longer.
- * @param[OUT] hasError - If all calls succeded, this will be false. One or more errors, and this will
+ * @param[out] hasError - If all calls succeded, this will be false. One or more errors, and this will
  *                        be true. Examine the elements of arr to discover which failed.
  */
 typedef void (*OCGetCSRResultCB)(void* ctx, size_t nOfRes, OCPMGetCsrResult_t *arr, bool hasError);
 
 /**
+ * Callback function definition of SP retrieve API
+ *
+ * @param[out] ctx - If user set a context, it will be returned here.
+ * @param[out] nOfRes - total number of results
+ * @param[out] arr - Array of OCPMGetSpResult_t, containing one entry for each target device. If an entry's res
+ *                   member is OC_STACK_OK, This memory is only valid while the callback is executing;
+ *                   callers must make copies if the data needs to be kept longer.
+ * @param[out] hasError - If all calls succeded, this will be false. One or more errors, and this will
+ *                        be true. Examine the elements of arr to discover which failed.
+ */
+typedef void (*OCGetSpResultCB)(void* ctx, size_t nOfRes, OCPMGetSpResult_t *arr, bool hasError);
+
+/**
  * Callback function definition of roles retrieve API
  *
- * @param[OUT] ctx - If user set a context, it will be returned here.
- * @param[OUT] nOfRes - total number of results
- * @param[OUT] arr - Array of OCPMGetRolesResult_t, containing one entry for each target device. If an entry's res
+ * @param[out] ctx - If user set a context, it will be returned here.
+ * @param[out] nOfRes - total number of results
+ * @param[out] arr - Array of OCPMGetRolesResult_t, containing one entry for each target device. If an entry's res
  *                   member is OC_STACK_OK, then chains and chainsLength are valid; otherwise they should not be used.
  *                   This memory is only valid while the callback is executing; callers must make copies if the data
  *                   needs to be kept longer.
- * @param[OUT] hasError - If all calls succeeded, this will be false. One or more errors, and this will
+ * @param[out] hasError - If all calls succeeded, this will be false. One or more errors, and this will
  *                        be true. Examine the elements of arr to discover which failed.
  */
 typedef void (*OCGetRolesResultCB)(void* ctx, size_t nOfRes, OCPMGetRolesResult_t *arr, bool hasError);

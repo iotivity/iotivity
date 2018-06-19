@@ -1059,7 +1059,7 @@ static OCEntityHandlerResult RolesEntityHandler(OCEntityHandlerFlag flag,
     return ehRet;
 }
 
-OCStackResult InitRolesResource()
+OCStackResult InitRolesResource(void)
 {
     OCStackResult res = OCCreateResource(&gRolesHandle,
         OIC_RSRC_TYPE_SEC_ROLES,
@@ -1078,7 +1078,7 @@ OCStackResult InitRolesResource()
     return res;
 }
 
-OCStackResult DeInitRolesResource()
+OCStackResult DeInitRolesResource(void)
 {
     OCStackResult res = OCDeleteResource(gRolesHandle);
 

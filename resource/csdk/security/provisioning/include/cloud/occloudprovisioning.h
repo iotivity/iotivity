@@ -58,6 +58,20 @@ typedef struct {
     stringArrayPair_t invited;
 }inviteResponse_t;
 
+typedef struct CloudData
+{
+    void *ctx;                                  /**< Pointer to user context.**/
+    OCProvisionDev_t *targetDev;          /**< Pointer to OCProvisionDev_t.**/
+    OicSecCred_t *credInfo;                     /**< Array of pointers to OicSecCred_t.**/
+    OCProvisionResultCB resultCallback;         /**< Pointer to result callback.**/
+    OCProvisionResult_t *resArr;                /**< Result array.**/
+    int numOfResults;                           /**< Number of results in result array.**/
+    char* cloudURI;                       /**< Cloud URI.**/
+    char* oauthProvider;                  /**< Authorisation provider name.**/
+    char* accessToken;                    /**< Access token that can be validated by the Cloud.**/
+    char* sid;                            /**< Cloud UUID.**/
+} CloudData_t;
+
 /**
  * Certificate-Issue request function
  *
@@ -423,7 +437,7 @@ OCStackResult OCCloudAclCancelInvitation(void* ctx,
  * @param[in] subjectId         mandatory parameter subject id
  * @param[in] deviceId          mandatory parameter device id
  * @param[in] method            mandatory parameter method
- * @param[in] uri               mandatory parameter uri
+ * @param[in] uri               mandatory parameter URI
  * @param[in] cloudUri          cloud host and port
  * @param[in] callback          optional result callback, can be NULL if not required
  * @return  OCStackResult application result
@@ -441,7 +455,7 @@ OCStackResult OCCloudAclPolicyCheck(void* ctx,
  *
  * @param[in] ctx               user-defined context
  * @param[in] pDev              provision device
- * @param[in] cloud             provisioned parameters
+ * @param[in] cloud             struct containing provisioned parameters
  * @param[in] resultCallback    optional result callback, can be NULL if not required
  * @return  OCStackResult application result
  */
@@ -449,6 +463,34 @@ OCStackResult OCProvisionCloudConfig(void *ctx,
                                      const OCProvisionDev_t *pDev,
                                      const OicCloud_t *cloud,
                                      OCClientResponseHandler resultCallback);
+
+/**
+ * Get cloud status of the selected device
+ *
+ * @param[in] ctx               user-defined context
+ * @param[in] pDev              provision device
+ * @param[in] cloud             struct containing cloud URL
+ * @param[in] resultCallback    optional result callback, can be NULL if not required
+ * @return  OCStackResult application result
+ */
+OCStackResult OCGetCloudStatusRequest(void *ctx,
+                                      const OCProvisionDev_t *pDev,
+                                      const OicCloud_t *cloud,
+                                      OCClientResponseHandler resultCallback);
+
+/**
+ * Delete CoAPCloudConf and cloud related ACLs from the selected device by cloud id
+ *
+ * @param[in] ctx               user-defined context
+ * @param[in] pDev              provision device
+ * @param[in] cloud             struct containing cloud UUID
+ * @param[in] resultCallback    optional result callback, can be NULL if not required
+ * @return  OCStackResult application result
+ */
+OCStackResult OCRemoveCloudConfig(void *ctx,
+                                  const OCProvisionDev_t *pDev,
+                                  const OicCloud_t *cloud,
+                                  OCProvisionResultCB resultCallback);
 
 #ifdef __cplusplus
 }

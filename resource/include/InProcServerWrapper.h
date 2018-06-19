@@ -54,8 +54,11 @@ namespace OC
                     OCTpsSchemeFlags resourceTpsTypes);
 
         // @deprecated: Use setPropertyValue instead.
+        OC_DEPRECATED_MSG(
         virtual OCStackResult registerDeviceInfo(
-                    const OCDeviceInfo deviceInfo);
+                    const OCDeviceInfo deviceInfo),
+                          "Use setPropertyValue instead.",
+                          2017.01);
 
         virtual OCStackResult registerPlatformInfo(
                     const OCPlatformInfo PlatformInfo);

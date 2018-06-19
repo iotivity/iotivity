@@ -145,18 +145,18 @@ CAResult_t CAInitializeBlockWiseTransfer(CASendThreadFunc blockSendMethod,
  * Terminate the block-wise transfer context.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CATerminateBlockWiseTransfer();
+CAResult_t CATerminateBlockWiseTransfer(void);
 
 /**
  * initialize mutex.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAInitBlockWiseMutexVariables();
+CAResult_t CAInitBlockWiseMutexVariables(void);
 
 /**
  * terminate mutex.
  */
-void CATerminateBlockWiseMutexVariables();
+void CATerminateBlockWiseMutexVariables(void);
 
 /**
  * Pass the bulk data. if block-wise transfer process need,
@@ -294,7 +294,7 @@ CAResult_t CAUpdateMessageId(coap_pdu_t *pdu, const CABlockDataID_t *blockID);
  * Update the block option items.
  * @param[in]   currData    stored block data information.
  * @param[in]   pdu received pdu binary data.
- * @param[in/out]   block   block option of current message.
+ * @param[in,out]   block   block option of current message.
  * @param[in]   blockType  block option type.
  * @param[in]   status  current flow status for block-wise transfer.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
@@ -362,7 +362,7 @@ CAResult_t CAAddOptionToPDU(coap_pdu_t *pdu, coap_list_t **options);
 
 /**
  * Add the size option in pdu data.
- * @param[in/out]   pdu    pdu object.
+ * @param[in,out]   pdu    pdu object.
  * @param[in]   sizeType    size option type.
  * @param[in]   dataLength the total payload length to be sent.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
@@ -403,7 +403,7 @@ CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint
 
 /**
  * Update the block option items.
- * @param[in/out]   blockblock option of current message.
+ * @param[in,out]   blockblock option of current message.
  * @param[in]   blockType   block option type.
  * @param[in]   responseResult  result code of pdu.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
@@ -413,7 +413,7 @@ CAResult_t CAHandleBlockErrorResponse(coap_block_t *block, uint16_t blockType,
 
 /**
  * Check the received payload and if an error happens, return error type.
- * @param[in/out]   currData    stored block data information.
+ * @param[in,out]   currData    stored block data information.
  * @param[in]   receivedBlock   received block option.
  * @param[in]   receivedData    message type of pdu.
  * @param[in]   blockType   block option type.
@@ -580,7 +580,7 @@ CAResult_t CARemoveBlockDataFromList(const CABlockDataID_t *blockID);
  * Remove all block data in block-wise transfer list.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CARemoveAllBlockDataFromList();
+CAResult_t CARemoveAllBlockDataFromList(void);
 
 /**
  * Find the block data with seed info and remove it from block-wise transfer list.
@@ -614,7 +614,7 @@ CABlockMulticastData_t *CAGetBlockMulticastDataFromListWithSeed(const CAToken_t 
  * Remove all block multicast data in list.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CARemoveAllBlockMulticastDataFromList();
+CAResult_t CARemoveAllBlockMulticastDataFromList(void);
 
 /**
  * Find the block data with seed info and remove it.

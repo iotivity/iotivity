@@ -171,7 +171,7 @@ static OCStackResult createDB(const char* path)
 /**
  * Function to begin any transaction
  */
-static OCStackResult begin()
+static OCStackResult begin(void)
 {
     int res = 0;
     res = sqlite3_exec(g_db, PDM_SQLITE_TRANSACTION_BEGIN, NULL, NULL, NULL);
@@ -182,7 +182,7 @@ static OCStackResult begin()
 /**
  * Function to commit any transaction
  */
-static OCStackResult commit()
+static OCStackResult commit(void)
 {
     int res = 0;
     res = sqlite3_exec(g_db, PDM_SQLITE_TRANSACTION_COMMIT, NULL, NULL, NULL);
@@ -193,7 +193,7 @@ static OCStackResult commit()
 /**
  * Function to rollback any transaction
  */
-static OCStackResult rollback()
+static OCStackResult rollback(void)
 {
     int res = 0;
     res = sqlite3_exec(g_db, PDM_SQLITE_TRANSACTION_ROLLBACK, NULL, NULL, NULL);
@@ -827,7 +827,7 @@ OCStackResult PDMGetToBeUnlinkedDevices(OCPairList_t **staleDevList, size_t *num
     return OC_STACK_OK;
 }
 
-OCStackResult PDMClose()
+OCStackResult PDMClose(void)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 

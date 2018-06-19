@@ -116,7 +116,7 @@ CAResult_t CAInitializeBlockWiseTransfer(CASendThreadFunc sendThreadFunc,
     return res;
 }
 
-CAResult_t CATerminateBlockWiseTransfer()
+CAResult_t CATerminateBlockWiseTransfer(void)
 {
     OIC_LOG(DEBUG, TAG, "CATerminateBlockWiseTransfer");
 
@@ -137,7 +137,7 @@ CAResult_t CATerminateBlockWiseTransfer()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAInitBlockWiseMutexVariables()
+CAResult_t CAInitBlockWiseMutexVariables(void)
 {
     if (!g_context.blockDataListMutex)
     {
@@ -173,7 +173,7 @@ CAResult_t CAInitBlockWiseMutexVariables()
     return CA_STATUS_OK;
 }
 
-void CATerminateBlockWiseMutexVariables()
+void CATerminateBlockWiseMutexVariables(void)
 {
     if (g_context.blockDataListMutex)
     {
@@ -2718,7 +2718,7 @@ CAResult_t CARemoveBlockDataFromList(const CABlockDataID_t *blockID)
     return CA_STATUS_OK;
 }
 
-CAResult_t CARemoveAllBlockDataFromList()
+CAResult_t CARemoveAllBlockDataFromList(void)
 {
     OIC_LOG(DEBUG, TAG, "CARemoveAllBlockDataFromList");
 
@@ -2945,7 +2945,7 @@ CABlockMulticastData_t *CAGetBlockMulticastDataFromListWithSeed(const CAToken_t 
     return NULL;
 }
 
-CAResult_t CARemoveAllBlockMulticastDataFromList()
+CAResult_t CARemoveAllBlockMulticastDataFromList(void)
 {
     OIC_LOG(DEBUG, TAG, "CARemoveAllBlockMulticastDataFromList");
 

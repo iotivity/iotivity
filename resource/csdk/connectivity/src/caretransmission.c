@@ -96,7 +96,7 @@ static const uint64_t MSECS_PER_SEC = 1000;
  *          DEFAULT_RANDOM_FACTOR       1.5 (CoAP)
  * @return  microseconds.
  */
-static uint64_t CAGetTimeoutValue()
+static uint64_t CAGetTimeoutValue(void)
 {
     uint8_t randomValue = 0;
     if (!OCGetRandomBytes(&randomValue, sizeof(randomValue)))
@@ -136,8 +136,8 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context)
 
 /**
  * @brief   check timeout routine
- * @param   currentTime     [IN]microseconds
- * @param   retData         [IN]retransmission data
+ * @param[in] currentTime  microseconds
+ * @param[in] retData      retransmission data
  * @return  true if the timeout period has elapsed, false otherwise
  */
 static bool CACheckTimeout(uint64_t currentTime, CARetransmissionData_t *retData)

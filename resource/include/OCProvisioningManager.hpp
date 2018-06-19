@@ -257,8 +257,11 @@ namespace OC
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              *
              */
+            OC_DEPRECATED_MSG(
             static OCStackResult setOwnerTransferCallbackData(OicSecOxm_t oxm,
-                    OTMCallbackData_t* callbackData, InputPinCallback inputPin);
+                    OTMCallbackData_t* callbackData, InputPinCallback inputPin),
+            "Use setInputPinCallback to set input pin callback value.",
+            2017.03);
 
             /**
              * API is responsible for discovery of devices in specified endpoint/deviceID.
@@ -336,7 +339,10 @@ namespace OC
              *         OC_STACK_INVALID_CALLBACK if inputPin is invalid.
              *         OC_STACK_DUPLICATE_REQUEST if an input pin callback has already been set.
              */
-            static OCStackResult setInputPinCallback(InputPinCallback inputPin);
+            OC_DEPRECATED_MSG(
+            static OCStackResult setInputPinCallback(InputPinCallback inputPin),
+            "Use registerInputPinCallback instead.",
+            2017.01);
 
             /**
              * API for de-registering a pin callback.
@@ -345,7 +351,10 @@ namespace OC
              *
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
-            static OCStackResult unsetInputPinCallback();
+            OC_DEPRECATED_MSG(
+            static OCStackResult unsetInputPinCallback(),
+            "Use deregisterInputPinCallback instead.",
+            2017.01);
 
             /**
              * API to register for a callback to input a pin. Only one input pin callback is allowed
@@ -381,7 +390,10 @@ namespace OC
              *         OC_STACK_INVALID_CALLBACK if displayPin is invalid.
              *         OC_STACK_DUPLICATE_REQUEST if a display pin callback has already been set.
              */
-            static OCStackResult setDisplayPinCB(GeneratePinCallback displayPin);
+            OC_DEPRECATED_MSG(
+            static OCStackResult setDisplayPinCB(GeneratePinCallback displayPin),
+            "Use registerDisplayPinCallback instead.",
+            2017.01);
 
             /**
              * API for de-registering the display pin callback.
@@ -390,7 +402,10 @@ namespace OC
              *
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
-            static OCStackResult unsetDisplayPinCB();
+            OC_DEPRECATED_MSG(
+            static OCStackResult unsetDisplayPinCB(),
+            "Use registerDisplayPinCallback instead.",
+            2017.01);
 
             /**
              * API to set Pin Type policy.

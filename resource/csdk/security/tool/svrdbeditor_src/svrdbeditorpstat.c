@@ -304,7 +304,7 @@ static unsigned int InputDpm(void)
     return dpm;
 }
 
-static unsigned int InputDpom()
+static unsigned int InputDpom(void)
 {
     unsigned int dpom = 0;
     unsigned int dpom_msk = 1;  //default mask

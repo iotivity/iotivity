@@ -110,7 +110,7 @@ static bool IsPropertyReadOnly(PstatProperty_t p,
  *
  * @return the gDefaultPstat pointer.
  */
-static OicSecPstat_t* GetPstatDefault()
+static OicSecPstat_t* GetPstatDefault(void)
 {
     return &gDefaultPstat;
 }
@@ -966,7 +966,7 @@ exit:
 /**
  * This internal method is used to create '/oic/sec/pstat' resource.
  */
- OCStackResult CreatePstatResource()
+ OCStackResult CreatePstatResource(void)
 {
     OCStackResult ret = OCCreateResource(&gPstatHandle,
                                          OIC_RSRC_TYPE_SEC_PSTAT,
@@ -985,7 +985,7 @@ exit:
     return ret;
 }
 
-OCStackResult InitPstatResource()
+OCStackResult InitPstatResource(void)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
@@ -1029,7 +1029,7 @@ exit:
     return ret;
 }
 
-OCStackResult InitPstatResourceToDefault()
+OCStackResult InitPstatResourceToDefault(void)
 {
     gPstat = GetPstatDefault();
     VERIFY_NOT_NULL(TAG, gPstat, FATAL);
@@ -1039,7 +1039,7 @@ exit:
     return OC_STACK_ERROR;
 }
 
-OCStackResult DeInitPstatResource()
+OCStackResult DeInitPstatResource(void)
 {
     if (gPstat != &gDefaultPstat)
     {
@@ -1059,7 +1059,7 @@ OCStackResult GetPstatRownerId(OicUuid_t *rowneruuid)
     return OC_STACK_ERROR;
 }
 
-bool IsPstatRowneruuidTheNilUuid()
+bool IsPstatRowneruuidTheNilUuid(void)
 {
     if (gPstat)
     {

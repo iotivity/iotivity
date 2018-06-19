@@ -125,11 +125,11 @@ namespace OC
                     QualityOfService QoS);
 
         /**
-        * Gets a resource handle by resource uri.
+        * Gets a resource handle by resource URI.
         *
-        * @param uri   Uri of Resource to get Resource handle.
+        * @param uri   URI of Resource to get Resource handle.
         *
-        * @return Found  resource handle or NULL if not found.
+        * @return Found resource handle or NULL if not found.
         */
         OCResourceHandle getResourceHandleAtUri(const std::string& uri);
 
@@ -226,7 +226,7 @@ namespace OC
          *
          *
          * @param host Host IP Address. If null or empty, Multicast is performed.
-         * @param deviceURI Uri containing address to the virtual device in C Stack
+         * @param deviceURI URI containing address to the virtual device in C Stack
                                 ("/oic/d")
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
          *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
@@ -242,7 +242,7 @@ namespace OC
          * @overload
          *
          * @param host Host IP Address. If null or empty, Multicast is performed.
-         * @param deviceURI Uri containing address to the virtual device in C Stack
+         * @param deviceURI URI containing address to the virtual device in C Stack
                                 ("/oic/d")
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
          *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
@@ -259,7 +259,7 @@ namespace OC
          *
          *
          * @param host Host IP Address. If null or empty, Multicast is performed.
-         * @param platformURI Uri containing address to the virtual platform in C Stack
+         * @param platformURI URI containing address to the virtual platform in C Stack
                                 ("/oic/p")
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
          *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
@@ -276,7 +276,7 @@ namespace OC
          * @overload
          *
          * @param host Host IP Address. If null or empty, Multicast is performed.
-         * @param platformURI Uri containing address to the virtual platform in C Stack
+         * @param platformURI URI containing address to the virtual platform in C Stack
                                 ("/oic/p")
          * @param connectivityType ::OCConnectivityType type of connectivity indicating the
          *                           interface. Example: CT_DEFAULT, CT_ADAPTER_IP, CT_ADAPTER_TCP.
@@ -689,7 +689,7 @@ namespace OC
          * to be a Client or Client/Server.  Otherwise, this will return an empty
          * shared ptr.
          *
-         * @param host a string containing a resolvable "coap(s)", "coap(s)+protocol" uri scheme
+         * @param host a string containing a resolvable "coap(s)", "coap(s)+protocol" URI scheme
          *        of the server holding the resource.
          *        Currently this should be in the format coap(s)://address:port or
          *        coap(s)+protocol://address:port, though in the future, we expect this to

@@ -98,3 +98,6 @@ if env.get('TEST') == '1':
             '',  # TODO: fix this test and enable previous line
             'service/easy-setup/mediator/richsdk/unittests/easysetup_mediator_test',
             easysetup_mediator_test)
+
+easysetup_mediator_test_env.UserInstallTargetExtra([easysetup_mediator_test],
+                                               'tests/service/easy-setup/mediator/richsdk/')

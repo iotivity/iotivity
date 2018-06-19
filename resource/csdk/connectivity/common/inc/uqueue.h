@@ -73,7 +73,7 @@ typedef struct u_queue_t
  * API to creates queue and initializes the elements.
  * @return  u_queue_t pointer if Success, NULL otherwise.
  */
-u_queue_t *u_queue_create();
+u_queue_t *u_queue_create(void);
 
 /**
  * Resets and deletes the queue.

@@ -175,7 +175,7 @@ OCStackResult OC_CALL ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid);
  * Is the URI for a Device Configuration Resource as defined
  * by Security Specification.
  *
- * @return true IFF the uri is for a DCR
+ * @return true IFF the URI is for a DCR
  */
 bool IsDeviceConfigurationResourceUri(const char *uri);
 
@@ -183,7 +183,7 @@ bool IsDeviceConfigurationResourceUri(const char *uri);
  * Is the URI for a Non0Configuration Resource as defined
  * by Security Specification.
  *
- * @return true IFF the uri is for a NCR
+ * @return true IFF the URI is for a NCR
  */
 bool IsNonConfigurationResourceUri(const char *uri);
 
@@ -220,7 +220,7 @@ OCStackResult OC_CALL SetDeviceIdSeed(const uint8_t* seed, size_t seedSize);
  * Is the URI for a Security Virtual Resource as defined
  * by Security Specification.
  *
- * @return true IFF the uri is for a SVR
+ * @return true IFF the URI is for a SVR
  */
 bool SRMIsSecurityResourceURI(const char* uri);
 

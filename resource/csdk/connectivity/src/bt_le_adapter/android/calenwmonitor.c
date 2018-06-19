@@ -85,21 +85,21 @@ void CALESetAdapterStateCallback(CALEDeviceStateChangedCallback callback)
     g_bleDeviceStateChangedCallback = callback;
 }
 
-CAResult_t CAInitializeLEAdapter()
+CAResult_t CAInitializeLEAdapter(void)
 {
     // Nothing to do.
 
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStartLEAdapter()
+CAResult_t CAStartLEAdapter(void)
 {
     // Nothing to do.
 
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStopLEAdapter()
+CAResult_t CAStopLEAdapter(void)
 {
     // Nothing to do.
 
@@ -141,7 +141,7 @@ void CATerminateLENwkMonitorMutexVaraibles()
     g_bleConnectionStateChangedCbMutex = NULL;
 }
 
-CAResult_t CAGetLEAdapterState()
+CAResult_t CAGetLEAdapterState(void)
 {
     if (!g_jvm)
     {
@@ -183,7 +183,7 @@ CAResult_t CAGetLEAdapterState()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAInitializeLENetworkMonitor()
+CAResult_t CAInitializeLENetworkMonitor(void)
 {
     CAResult_t res = CAInitLENwkMonitorMutexVaraibles();
     if (CA_STATUS_OK != res)
@@ -198,7 +198,7 @@ CAResult_t CAInitializeLENetworkMonitor()
     return CA_STATUS_OK;
 }
 
-void CATerminateLENetworkMonitor()
+void CATerminateLENetworkMonitor(void)
 {
     OIC_LOG(DEBUG, TAG, "CATerminateLENetworkMonitor");
 
@@ -216,7 +216,7 @@ CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAUnSetLEAdapterStateChangedCb()
+CAResult_t CAUnSetLEAdapterStateChangedCb(void)
 {
     OIC_LOG(DEBUG, TAG, "it is not required in this platform");
     return CA_STATUS_OK;

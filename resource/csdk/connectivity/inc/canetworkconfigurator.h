@@ -53,7 +53,7 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportAdapter);
  * Get selected network information.
  * @return array list having the connectivity types.
  */
-u_arraylist_t *CAGetSelectedNetworkList();
+u_arraylist_t *CAGetSelectedNetworkList(void);
 
 /**
  * Get network informations of the selected networks.
@@ -67,7 +67,7 @@ CAResult_t CAGetNetworkInformationInternal(CAEndpoint_t **info, size_t *size);
  * Terminate network type from selected configuration.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CATerminateNetworkType();
+CAResult_t CATerminateNetworkType(void);
 
 
 #ifdef __cplusplus

@@ -103,7 +103,7 @@ typedef void (*CAEDRNetworkStatusCallback)(CANetworkStatus_t status);
 /**
  * Callback to notify the error in the EDR adapter.
  * @param[in]  remoteAddress   Remote EDR Address.
- * @param[in]  data            data containing token, uri and coap data.
+ * @param[in]  data            data containing token, URI and coap data.
  * @param[in]  dataLength      length of data.
  * @param[in]  result          error code as defined in ::CAResult_t.
  * @pre Callback must be registered using CAEDRSetPacketReceivedCallback().

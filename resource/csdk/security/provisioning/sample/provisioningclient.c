@@ -25,15 +25,15 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "experimental/payload_logging.h"
+
 #include "utlist.h"
-#include "experimental/logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocprovisioningmanager.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "srmutility.h"
+#include "spresource.h"
 #include "pmtypes.h"
 #include "oxmverifycommon.h"
 #include "mbedtls/config.h"
@@ -43,13 +43,18 @@
 #include "pmutility.h"
 #include "occloudprovisioning.h"
 #include "auth.h"
+#include "credresource.h"
 
 #ifdef _MSC_VER
 #include <io.h>
-
 #define F_OK 0
 #define access _access_s
 #endif
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/payload_logging.h"
+#include "experimental/logger.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -75,7 +80,10 @@ extern "C"
 #define _35_PROVIS_CERT_            35
 #ifdef WITH_CLOUD
 #define _36_PROVIS_CLOUD_CONF_      36
+#define _37_GET_CLOUD_STAT_         37
+#define _38_REMOVE_CLOUD_CONF_      38
 #endif //WITH_CLOUD
+#define _39_PROVIS_SEC_PROFILE      39
 #define _40_UNLINK_PAIR_DEVS_       40
 #define _50_REMOVE_SELEC_DEV_       50
 #define _51_REMOVE_DEV_WITH_UUID_   51
@@ -84,6 +92,7 @@ extern "C"
 #define _60_GET_CRED_               60
 #define _61_GET_ACL_                61
 #define _62_GET_CSR_                62
+#define _63_GET_SP_                 63
 #ifdef MULTIPLE_OWNER
 #define _70_MOT_CHANGE_MOM_         70
 #define _71_MOT_PROV_PRECONF_PIN_   71
@@ -145,6 +154,25 @@ static void printUuid(const OicUuid_t*);
 static FILE* fopen_prvnMng(const char*, const char*);
 static int waitCallbackRet(void);
 static int selectTwoDiffNum(int*, int*, const int, const char*);
+
+char * gSupportedProfilesDefault[] = { "oic.sec.sp.baseline" };
+OicSecSp_t gSpDefault =
+{
+    1,                          // supportedLen
+    gSupportedProfilesDefault,  // supportedProfiles[0]
+    "oic.sec.sp.baseline",      // activeProfile
+    0                           // credid
+};
+
+char * gSupportedProfilesAll[] = { "oic.sec.sp.black", "oic.sec.sp.blue", "oic.sec.sp.baseline",  };
+OicSecSp_t gSpAll =
+{
+    3,                      // supportedLen
+    gSupportedProfilesAll,  // supportedProfiles[0]
+    "oic.sec.sp.black",     // activeProfile
+    1                       // credid (arbitrary for testing)
+};
+
 
 /* At a few places in this file, warning 4028 is incorrectly produced, disable it for the whole file. */
 #ifdef _MSC_VER
@@ -218,11 +246,39 @@ static void provisionCloudConfigCB(void* ctx, size_t nOfRes, OCProvisionResult_t
 {
     if(!hasError)
     {
-        OIC_LOG_V(INFO, TAG, "Provision Pairwise SUCCEEDED - ctx: %s", (char*) ctx);
+        OIC_LOG_V(INFO, TAG, "Provision cloud config SUCCEEDED - ctx: %s", (char*) ctx);
     }
     else
     {
-        OIC_LOG_V(ERROR, TAG, "Provision Pairwise FAILED - ctx: %s", (char*) ctx);
+        OIC_LOG_V(ERROR, TAG, "Provision cloud config FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+
+static void getCloudStatusCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "Get cloud status SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Get cloud status FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+
+static void removeCloudConfCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "Remove cloud ACL SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Remove cloud ACL FAILED - ctx: %s", (char*) ctx);
         printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
     g_doneCB = true;
@@ -348,6 +404,25 @@ static void getCsrCB(void* ctx, size_t nOfRes, OCPMGetCsrResult_t* arr, bool has
             }
             printf("\n");
         }
+    }
+    g_doneCB = true;
+}
+
+static void getSpCB(void* ctx, size_t nOfRes, OCPMGetSpResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "getSpCB SUCCEEDED - ctx: %s", (char*) ctx);
+        OIC_LOG(INFO, TAG, "Retrieved Security Profile(s)");
+        for (size_t i = 0; i < nOfRes; i++)
+        {
+            LogSp((arr[i]).sp, INFO, TAG, NULL);
+        }
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "getSpCB FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
     g_doneCB = true;
 }
@@ -944,7 +1019,7 @@ static int provisionCred(void)
  *
  *   The CA's key and cert are written to g_caKeyPem and g_caCertPem (resp.).
  */
-static int setupCA()
+static int setupCA(void)
 {
     char* publicKey = NULL;
     size_t publicKeyLen = 0;
@@ -1279,6 +1354,92 @@ static int provisionCert(void)
     return 0;
 }
 
+static int provisionSecurityProfileInfo(void)
+{
+    // make sure we own at least one device to provision
+    if (!g_own_list || g_own_cnt == 0)
+    {
+        printf("   > Owned Device List, to Provision Security Profile Info, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for provisioning security profile
+    int dev_num = 0;
+    if (g_own_cnt == 1)
+    {
+        dev_num = 1;
+    }
+    else
+    {
+        for (; ; )
+        {
+            printf("   > Enter Device Number, for security profile provisioning: ");
+            for (int ret = 0; 1 != ret; )
+            {
+                ret = scanf("%d", &dev_num);
+                for (; 0x20 <= getchar(); );  // for removing overflow garbages
+                                              // '0x20<=code' is character region
+            }
+            if (0<dev_num && g_own_cnt >= dev_num)
+            {
+                break;
+            }
+            printf("     Entered Wrong Number. Please Enter Again\n");
+        }
+    }
+
+    OCProvisionDev_t* targetDevice = getDevInst((const OCProvisionDev_t*)g_own_list, dev_num);
+    if (targetDevice == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Error, invalid device %d");
+        return -1;
+    }
+
+    int sp_selection = 0;
+    for (; ; )
+    {
+        printf("   > Enter (1) for SP defaults or (2) for SP containing all profiles: ");
+        for (int ret = 0; 1 != ret; )
+        {
+            ret = scanf("%d", &sp_selection);
+            for (; 0x20 <= getchar(); );  // for removing overflow garbages
+                                          // '0x20<=code' is character region
+        }
+        if ((1 == sp_selection) || (2 >= sp_selection))
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    printf("   > Posting new security profile info to device ...\n");
+    g_doneCB = false;
+
+    OicSecSp_t *sp = (sp_selection == 1) ? &gSpDefault : &gSpAll;
+    OCStackResult rst = OCProvisionSecurityProfileInfo(
+        (void*)g_ctx, sp, targetDevice, (OCProvisionResultCB)&provisionTrustChainCB);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "provisionSecurityProfileInfo returned error: %d", rst);
+        return -1;
+    }
+
+    if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "provisionSecurityProfileInfo callback error");
+        return -1;
+    }
+    if (!g_successCB)
+    {
+        return -1;
+    }
+
+    printf("   > Provisioned security profile info\n");
+
+    return 0;
+}
+
 #ifdef WITH_CLOUD
 static int provisionCloudConfig(void)
 {
@@ -1289,7 +1450,7 @@ static int provisionCloudConfig(void)
         printf("   > Please Register Unowned Devices first, with [20] Menu\n");
         return 0;  // normal case
     }
-
+    int ret = -1;
     // select device for provisioning certificate
     int dev_num = 0;
     if (g_own_cnt == 1)
@@ -1360,41 +1521,43 @@ static int provisionCloudConfig(void)
         return -1;
     }
 
-    OicCloud_t *cloud = OICCalloc(1,sizeof(OicCloud_t));
+    OicCloud_t *cloud = OICCalloc(1, sizeof(OicCloud_t));
     if (NULL == cloud)
     {
         OIC_LOG(ERROR, TAG, "Error, invalid cloud");
         return -1;
     }
-    cloud->apn = (char*)OICCalloc(1,1024);
+    cloud->apn = (char*)OICCalloc(1, 1024);
     if (NULL == cloud->apn)
     {
-        OICFree(cloud);
         OIC_LOG(ERROR, TAG, "Error, invalid cloud->apn");
-        return -1;
+        goto PCC_ERROR;
     }
-    cloud->cis = (char*)OICCalloc(1,1024);
+    cloud->cis = (char*)OICCalloc(1, 1024);
     if (NULL == cloud->cis)
     {
-        OICFree(cloud->apn);
-        OICFree(cloud);
         OIC_LOG(ERROR, TAG, "Error, invalid cloud->cis");
-        return -1;
+        goto PCC_ERROR;
     }
-    cloud->at = (char*)OICCalloc(1,1024);
+    cloud->at = (char*)OICCalloc(1, 1024);
     if (NULL == cloud->at)
     {
-        OICFree(cloud->cis);
-        OICFree(cloud->apn);
-        OICFree(cloud);
         OIC_LOG(ERROR, TAG, "Error, invalid cloud->at");
-        return -1;
+        goto PCC_ERROR;
+    }
+    cloud->sid = (char*)OICCalloc(1, 1024);
+    if (NULL == cloud->sid)
+    {
+        OIC_LOG(ERROR, TAG, "Error, invalid cloud->sid");
+        goto PCC_ERROR;
     }
 
-    printf("   > cloud uri (coaps+tcp://ip:port): ");
+    snprintf(cloud->cis,13,"coaps+tcp://");
+
+    printf("   > cloud uri (host(ip):port): ");
     for(int ret=0; 1!=ret; )
     {
-        ret = scanf("%32s", cloud->cis);
+        ret = scanf("%32s", cloud->cis + 12);
         for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                     // '0x20<=code' is character region
     }
@@ -1415,6 +1578,14 @@ static int provisionCloudConfig(void)
                                     // '0x20<=code' is character region
     }
 
+    printf("   > cloud id: ");
+    for(int ret=0; 1!=ret; )
+    {
+        ret = scanf("%32s", cloud->sid);
+        for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                    // '0x20<=code' is character region
+    }
+
     //Provision the new cert
     printf("   > Provisioning certificate credential to selected device..\n");
     g_doneCB = false;
@@ -1422,33 +1593,200 @@ static int provisionCloudConfig(void)
     if (OC_STACK_OK != rst)
     {
         OIC_LOG_V(ERROR, TAG, "OCProvisionCertificate returned error: %d", rst);
-        OICFree(cloud->at);
-        OICFree(cloud->cis);
-        OICFree(cloud->apn);
-        OICFree(cloud);
-        return -1;
+        goto PCC_ERROR;
     }
     if (waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
         OIC_LOG(ERROR, TAG, "OCProvisionCertificate callback error");
-        OICFree(cloud->at);
-        OICFree(cloud->cis);
-        OICFree(cloud->apn);
-        OICFree(cloud);
-        return -1;
+        goto PCC_ERROR;
     }
     if (!g_successCB)
     {
-        OICFree(cloud->at);
-        OICFree(cloud->cis);
-        OICFree(cloud->apn);
-        OICFree(cloud);
-        return -1;
+        goto PCC_ERROR;
     }
 
     printf("   > Provisioned cloud crendentials\n");
 
-    return 0;
+    ret = 0;
+
+PCC_ERROR:
+    FreeCloud(cloud);
+    return ret;
+}
+
+static int getCloudStatus(void)
+{
+    int ret = -1;
+    // make sure we own at least one device to provision
+    if (!g_own_list || g_own_cnt == 0)
+    {
+        printf("   > Owned Device List, to Provision Credentials, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for cloud state request
+    int dev_num = 0;
+    if (g_own_cnt == 1)
+    {
+        dev_num = 1;
+    }
+    else
+    {
+        for (; ; )
+        {
+            printf("   > Enter Device Number, for cloud state request: ");
+            for (int ret = 0; 1 != ret; )
+            {
+                ret = scanf("%d", &dev_num);
+                for (; 0x20 <= getchar(); );  // for removing overflow garbages
+                                          // '0x20<=code' is character region
+            }
+            if (0<dev_num && g_own_cnt >= dev_num)
+            {
+                break;
+            }
+            printf("     Entered Wrong Number. Please Enter Again\n");
+        }
+    }
+
+    OCProvisionDev_t* targetDevice = getDevInst((const OCProvisionDev_t*)g_own_list, dev_num);
+    if (targetDevice == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Error, invalid device %d");
+        return -1;
+    }
+
+    OicCloud_t *cloud = OICCalloc(1,sizeof(OicCloud_t));
+    cloud->cis = OICCalloc(1,1024);
+
+    snprintf(cloud->cis,13,"coaps+tcp://");
+
+    printf("   > cloud uri (host(ip):port): ");
+    for(int ret=0; 1!=ret; )
+    {
+        ret = scanf("%32s", cloud->cis + 12);
+        for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                    // '0x20<=code' is character region
+    }
+
+    //Provision the new cert
+    printf("   > Provisioning certificate credential to selected device..\n");
+    g_doneCB = false;
+    OCStackResult rst = OCGetCloudStatusRequest((void*)g_ctx, targetDevice, cloud, (OCClientResponseHandler)getCloudStatusCB);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCProvisionCertificate returned error: %d", rst);
+        goto exit;
+    }
+    if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionCertificate callback error");
+        goto exit;
+    }
+    if (!g_successCB)
+    {
+        ret = -1;
+        goto exit;
+    }
+    ret = 0;
+exit:
+    FreeCloud(cloud);
+
+    printf("   > Provisioned cloud crendentials\n");
+
+    return ret;
+}
+
+static int removeCloudConf(void)
+{
+    // make sure we own at least one device to provision
+    if (!g_own_list || g_own_cnt == 0)
+    {
+        printf("   > Owned Device List, to Provision Credentials, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    int res = -1;
+
+    // select device for provisioning certificate
+    int dev_num = 0;
+    if (g_own_cnt == 1)
+    {
+        dev_num = 1;
+    }
+    else
+    {
+        for (; ; )
+        {
+            printf("   > Enter Device Number, for certificate provisioning: ");
+            for (int ret = 0; 1 != ret; )
+            {
+                ret = scanf("%d", &dev_num);
+                for (; 0x20 <= getchar(); );  // for removing overflow garbages
+                                          // '0x20<=code' is character region
+            }
+            if (0<dev_num && g_own_cnt >= dev_num)
+            {
+                break;
+            }
+            printf("     Entered Wrong Number. Please Enter Again\n");
+        }
+    }
+
+    OCProvisionDev_t* targetDevice = getDevInst((const OCProvisionDev_t*)g_own_list, dev_num);
+    if (targetDevice == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Error, invalid device %d");
+        return res;
+    }
+
+    OicCloud_t *cloud = OICCalloc(1, sizeof(OicCloud_t));
+    if (NULL == cloud)
+    {
+        OIC_LOG(ERROR, TAG, "Error, invalid cloud");
+        return res;
+    }
+    cloud->sid = (char*)OICCalloc(1, 1024);
+    if (NULL == cloud->sid)
+    {
+        OIC_LOG(ERROR, TAG, "Error, invalid cloud->sid");
+        goto PCC_ERROR;
+    }
+    printf("   > cloud id: ");
+    for(int ret=0; 1!=ret; )
+    {
+        ret = scanf("%64s", cloud->sid);
+        for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                    // '0x20<=code' is character region
+    }
+
+    printf("   > Removing cloud related acl and coapcloudconf resource from the selected device..\n");
+    g_doneCB = false;
+    OCStackResult rst = OCRemoveCloudConfig((void*)g_ctx, targetDevice, cloud, removeCloudConfCB);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCRemoveCloudConfig returned error: %d", rst);
+        goto PCC_ERROR;
+    }
+    if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCRemoveCloudConfig callback error");
+        goto PCC_ERROR;
+    }
+    if (!g_successCB)
+    {
+        goto PCC_ERROR;
+    }
+
+    printf("   > Removed coapcloudconf and cloud acl\n");
+
+    res = 0;
+
+PCC_ERROR:
+    FreeCloud(cloud);
+    return res;
 }
 #endif //WITH_CLOUD
 
@@ -1845,6 +2183,67 @@ GETCSR_ERROR:
     return -1;
 }
 
+static int getSp(void)
+{
+    // check |own_list| for retrieving SP
+    if(!g_own_list || 1>g_own_cnt)
+    {
+        printf("   > Owned Device List, to retrieve SP, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for retrieving SP
+    int dev_num = 0;
+    for( ; ; )
+    {
+        printf("   > Enter Device Number, for retrieving SP: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0<dev_num && g_own_cnt>=dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    // call |getDevInst| API
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*) g_own_list, dev_num);
+    if(!dev)
+    {
+        OIC_LOG(ERROR, TAG, "getDevInst: device instance empty");
+        goto GETSP_ERROR;
+    }
+    OCStackResult rst = OCGetSpResource((void*) g_ctx, dev, getSpCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGetSpResource API error: %d", rst);
+
+        goto GETSP_ERROR;
+    }
+
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCGetSpResource callback error");
+        goto GETSP_ERROR;
+    }
+
+    // display the result of get credential
+    printf("   > Get SP SUCCEEDED\n");
+
+    return 0;
+
+GETSP_ERROR:
+    return -1;
+}
+
 static int unlinkPairwise(void)
 {
     // check |own_list| for unlinking pairwise devices
@@ -2172,7 +2571,7 @@ static int selectMultipleOwnershipTrnasferMethod(void)
     return 0;
 }
 
-static int provisionPreconfigPIN()
+static int provisionPreconfigPIN(void)
 {
     // check |own_list| for removing device
     if(!g_mot_enable_list || 1>g_mot_enable_cnt)
@@ -2889,7 +3288,7 @@ static void selectSecureProtocol(void)
 }
 #endif
 
-static void selectVerifMethod()
+static void selectVerifMethod(void)
 {
     int option;
     printf("   Select verification method for ownership transfer\n");
@@ -2941,8 +3340,11 @@ static void printMenu(void)
     printf("** 33. Check Linked Status of the Selected Device on PRVN DB\n");
     printf("** 34. Save the Selected Access Control List(ACL) into local SVR DB\n");
     printf("** 35. Provision certificate credential\n");
-    printf("** 36. Provision cloud credential\n\n");
+    printf("** 36. Provision cloud credential\n");
+    printf("** 37. Get cloud status request\n");
+    printf("** 38. Remove cloud credential\n\n");
 
+    printf("** 39. Provision security profile info\n\n");
 
     printf("** [D] UNLINK PAIRWISE THINGS\n");
     printf("** 40. Unlink Pairwise Things\n\n");
@@ -2956,7 +3358,8 @@ static void printMenu(void)
     printf("** [F] GET SECURITY RESOURCE FOR DEBUGGING ONLY\n");
     printf("** 60. Get the Credential resources of the Selected Device\n");
     printf("** 61. Get the ACL resources of the Selected Device\n");
-    printf("** 62. Get the CSR of the Selected Device\n\n");
+    printf("** 62. Get the CSR of the Selected Device\n");
+    printf("** 63. Get the SP of the Selected Device\n\n");
 
 #ifdef MULTIPLE_OWNER
     printf("** [G] UPDATE THE MULTIPLE OWNERSHIP TRANSFER RELATED VALUE\n");
@@ -3001,7 +3404,7 @@ static void printUsage(void)
 #endif
 
 // main function for provisioning client using C-level provisioning API
-int main()
+int main(void)
 {
     // initialize provisioning client
     if(initProvisionClient())
@@ -3026,6 +3429,9 @@ int main()
 #ifdef MULTIPLE_OWNER
     SetPreconfigPin("12341234", 8);
 #endif //MULTIPLE_OWNER
+
+    // Log the client cred at startup
+    LogCurrrentCredResource();
 
     // main loop for provisioning manager
     int mn_num = 0;
@@ -3108,19 +3514,19 @@ int main()
         case _33_CHECK_LINK_STATUS_:
             if(checkLinkedStatus())
             {
-                OIC_LOG(ERROR, TAG, "_34_CHECK_LINK_STATUS_: error");
+                OIC_LOG(ERROR, TAG, "_33_CHECK_LINK_STATUS_: error");
             }
             break;
         case _34_SAVE_ACL_:
             if(saveAcl())
             {
-                OIC_LOG(ERROR, TAG, "_35_SAVE_ACL_: error");
+                OIC_LOG(ERROR, TAG, "_34_SAVE_ACL_: error");
             }
             break;
         case _35_PROVIS_CERT_:
             if (provisionCert())
             {
-                OIC_LOG(ERROR, TAG, "_36_PROVIS_CERT_: error");
+                OIC_LOG(ERROR, TAG, "_35_PROVIS_CERT_: error");
             }
             break;
 #ifdef WITH_CLOUD
@@ -3130,7 +3536,25 @@ int main()
                 OIC_LOG(ERROR, TAG, "_36_PROVIS_CLOUD_CONF_: error");
             }
             break;
+        case _37_GET_CLOUD_STAT_:
+            if (getCloudStatus())
+            {
+                OIC_LOG(ERROR, TAG, "_37_GET_CLOUD_STAT_: error");
+            }
+            break;
+        case _38_REMOVE_CLOUD_CONF_:
+            if (removeCloudConf())
+            {
+                OIC_LOG(ERROR, TAG, "_38_REMOVE_CLOUD_CONF_: error");
+            }
+            break;
 #endif //WITH_CLOUD
+        case _39_PROVIS_SEC_PROFILE:
+            if (provisionSecurityProfileInfo())
+            {
+                OIC_LOG(ERROR, TAG, "_39_PROVIS_SEC_PROFILE: error");
+            }
+            break;
         case _40_UNLINK_PAIR_DEVS_:
             if(unlinkPairwise())
             {
@@ -3177,6 +3601,12 @@ int main()
             if(getCsr())
             {
                 OIC_LOG(ERROR, TAG, "_62_GET_CSR_: error");
+            }
+            break;
+        case _63_GET_SP_:
+            if(getSp())
+            {
+                OIC_LOG(ERROR, TAG, "_63_GET_SP_: error");
             }
             break;
 #ifdef MULTIPLE_OWNER

@@ -252,13 +252,13 @@ CAResult_t CAUtilStopLEScan(void);
  * start BLE advertising.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAUtilStartLEAdvertising();
+CAResult_t CAUtilStartLEAdvertising(void);
 
 /**
  * stop BLE advertising.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAUtilStopLEAdvertising();
+CAResult_t CAUtilStopLEAdvertising(void);
 
 /**
  * set CAUtil BT configure.

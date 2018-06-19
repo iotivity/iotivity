@@ -582,7 +582,7 @@ void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback)
     g_clientErrorCallback = callback;
 }
 
-CAResult_t CAStartLEGattClient()
+CAResult_t CAStartLEGattClient(void)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -669,7 +669,7 @@ void CAStartTimerThread(void *data)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-void CAStopLEGattClient()
+void CAStopLEGattClient(void)
 {
     OIC_LOG(DEBUG,  TAG, "IN");
 
@@ -734,7 +734,7 @@ void CAStopLEGattClient()
     OIC_LOG(DEBUG,  TAG, "OUT");
 }
 
-CAResult_t CAInitializeLEGattClient()
+CAResult_t CAInitializeLEGattClient(void)
 {
     OIC_LOG(DEBUG, TAG, "Initialize GATT Client");
     CAResult_t res = CAInitGattClientMutexVariables();
@@ -747,7 +747,7 @@ CAResult_t CAInitializeLEGattClient()
     return res;
 }
 
-void CATerminateLEGattClient()
+void CATerminateLEGattClient(void)
 {
     OIC_LOG(DEBUG,  TAG, "IN");
 

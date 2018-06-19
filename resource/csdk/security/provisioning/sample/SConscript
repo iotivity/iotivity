@@ -19,20 +19,23 @@
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
 
-Import('env provisioning_env')
 import os.path
+Import('env provisioning_env')
 
 provisioning_sample_env = provisioning_env.Clone()
 target_os = provisioning_sample_env.get('TARGET_OS')
+
+#Build cloud library
+if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True:
+    SConscript('../src/cloud/SConscript', 'provisioning_env')
+    provisioning_sample_env.AppendUnique(LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk', 'security', 'provisioning', 'src', 'cloud')])
 
 ######################################################################
 # Build flags
 ######################################################################
 provisioning_sample_env.AppendUnique(CPPPATH=[
     '#/resource/csdk/include',
-    '#/extlibs/base64',
-    '#/resource/csdk/security/provisioning/sample/cloud',
-    '#resource/csdk/security/provisioning/include/cloud'
+    '#/extlibs/base64'
 ])
 
 target_os = env.get('TARGET_OS')
@@ -50,16 +53,18 @@ else:
     provisioning_sample_env.AppendUnique(
         LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk')])
 
-provisioning_sample_env.PrependUnique(LIBS=['coap'])
-
 if target_os not in ['msys_nt', 'windows']:
     provisioning_sample_env.PrependUnique(LIBS=['connectivity_abstraction'])
 
 provisioning_sample_env.PrependUnique(LIBS=['oc', 'octbstack'])
 
 if target_os not in ['msys_nt', 'windows']:
-    provisioning_sample_env.PrependUnique(
-        LIBS=['oc_logger', 'ocpmapi', 'ocsrm'])
+    if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True:
+        provisioning_sample_env.PrependUnique(
+            LIBS=['oc_logger', 'coap', 'cloud', 'ocpmapi', 'ocsrm'])
+    else:
+        provisioning_sample_env.PrependUnique(
+            LIBS=['oc_logger', 'coap', 'ocpmapi', 'ocsrm'])
 
 if env.get('SECURED') == '1':
     provisioning_sample_env.AppendUnique(
@@ -104,22 +109,6 @@ if provisioning_sample_env.get('MULTIPLE_OWNER') == '1':
     sampleserver_preconfpin = provisioning_sample_env.Program(
         'sampleserver_preconfpin', 'sampleserver_preconfpin.cpp')
 
-if target_os not in ['msys_nt', 'windows']:
-    if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True:
-        cloud_src = [
-            'cloud/cloudCommon.c',
-            'cloud/cloudWrapper.c',
-            'cloud/cloudDiscovery.c'
-        ]
-        cloudClient = provisioning_sample_env.Program(
-            'cloudClient', cloud_src + ['cloudClient.c'])
-        cloudServer = provisioning_sample_env.Program(
-            'cloudServer',
-            cloud_src + [
-                'cloudServer.c',
-                'cloud/cloudResource.c'
-            ])
-
 src_dir = provisioning_sample_env.get('SRC_DIR')
 sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sample/'
 sec_provisioning_build_dir = env.get(
@@ -133,9 +122,7 @@ if target_os not in ['msys_nt', 'windows']:
             sec_provisioning_src_dir + 'rootca.crt')
         if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True:
             Alias("cloud", [
-                rootcert,
-                cloudClient,
-                cloudServer
+                rootcert
             ])
             provisioning_sample_env.AppendTarget("cloud")
 sampleapps = [
@@ -143,7 +130,7 @@ sampleapps = [
     autoprovisioningclient,
     sampleserver_justworks,
     sampleserver_randompin,
-    sampleserver_mfg,
+    sampleserver_mfg
 ]
 sampleapps += provisioning_sample_env.ScanJSON('resource/csdk/security/provisioning/sample')
 if target_os not in ['msys_nt', 'windows']:

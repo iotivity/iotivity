@@ -38,12 +38,12 @@ extern "C" {
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult InitAmaclResource();
+OCStackResult InitAmaclResource(void);
 
 /**
  * Perform cleanup for Amacl resources.
  */
-void DeInitAmaclResource();
+void DeInitAmaclResource(void);
 
 /**
  * This function converts Amacl data into CBOR format.

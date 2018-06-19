@@ -54,7 +54,7 @@ OCStackResult OC_CALL OCInitPM(const char* dbPath);
  *
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OC_CALL OCClosePM();
+OCStackResult OC_CALL OCClosePM(void);
 
 /**
  * API to cleanup PDM in case of timeout.
@@ -62,7 +62,7 @@ OCStackResult OC_CALL OCClosePM();
  *
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OC_CALL OCPDMCleanupForTimeout();
+OCStackResult OC_CALL OCPDMCleanupForTimeout(void);
 
 /**
  * The function is responsible for discovery of owned/unowned device is specified endpoint/deviceID.
@@ -310,6 +310,19 @@ OCStackResult OC_CALL OCGetACL2Resource(void* ctx, const OCProvisionDev_t *selec
 OCStackResult OC_CALL OCGetCSRResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
                                OCGetCSRResultCB resultCallback);
 
+
+/**
+ * This function requests the device provide its security profile (SP).
+ *
+ * @param[in] ctx Application context returned in the result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OC_CALL OCGetSpResource(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
+                               OCGetSpResultCB resultCallback);
+
 /**
  * This function requests the device provide its roles resource, listing the role certificates
  * it has for the local requestor.
@@ -361,7 +374,7 @@ OCStackResult OC_CALL OCProvisionCredentials(void *ctx, OicSecCredType_t type, s
  * @param[in] type Type of credentials to be provisioned to the device.
  * @param[in] keySize size of key
  * @param[in] pDev1 Pointer to OCProvisionDev_t instance, representing the resource to be provisioned.
- * @param[in] pDev2 Pointer to OCProvisionDev_t instance, representing the resource to be provisioned. 
+ * @param[in] pDev2 Pointer to OCProvisionDev_t instance, representing the resource to be provisioned.
  *                  Use NULL to indicate the local device.
  * @param[in] role1 The role which the device indicated by pDev1 will have when communicating with pDev2.
  *                  Use NULL to associate no role with this credential.
@@ -621,6 +634,21 @@ OCStackResult OC_CALL OCProvisionCRL(void* ctx, const OCProvisionDev_t *selected
 OCStackResult OC_CALL OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
                                       const OCProvisionDev_t *selectedDeviceInfo,
                                       OCProvisionResultCB resultCallback);
+
+/**
+ * function to provision a security profile resource to devices.
+ *
+ * @param[in] ctx Application context returned in the result callback.
+ * @param[in] sp security profile to be provisioned
+ * @param[in] selectedDeviceInfo Pointer to OCProvisionDev_t instance,respresenting resource to be provisioned.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from first resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OC_CALL OCProvisionSecurityProfileInfo(void *ctx, OicSecSp_t *sp,
+                                      const OCProvisionDev_t *selectedDeviceInfo,
+                                      OCProvisionResultCB resultCallback);
+
 /**
  * function to save Trust certificate chain into Cred of SVR.
  *

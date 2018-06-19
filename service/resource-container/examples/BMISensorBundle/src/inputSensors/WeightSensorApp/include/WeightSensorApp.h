@@ -29,8 +29,6 @@
 #include <string>
 #include <cstdlib>
 
-#define COAP_IP                 "0.0.0.0"
-#define COAP_PORT               0
 #define COAP_MODE               OC::ModeType::Server
 #define COAP_SRVTYPE            OC::ServiceType::InProc
 

@@ -60,7 +60,7 @@ struct linked_list_data
  * API to create link list and initializes the elements.
  * @return  u_linklist_t if Success, NULL otherwise.
  */
-u_linklist_t *u_linklist_create();
+u_linklist_t *u_linklist_create(void);
 
 /**
  * Resets and deletes the link list
@@ -73,7 +73,7 @@ CAResult_t u_linklist_free(u_linklist_t **list);
 
 /**
  * Add data to the head of the link list.
- * @param[in/out]  list      pointer of link list.
+ * @param[in,out]  list      pointer of link list.
  * @param[in]      data      pointer of data.
  * @return ::CA_STATUS_OK if Success, ::CA_MEMORY_ALLOC_FAILED if memory allocation fails.
  */
@@ -81,7 +81,7 @@ CAResult_t u_linklist_add_head(u_linklist_t *list, void *data);
 
 /**
  * Add data to the tail of the link list.
- * @param[in/out]  list      pointer of link list.
+ * @param[in,out]  list      pointer of link list.
  * @param[in]      data      pointer of data.
  * @return ::CA_STATUS_OK if Success, ::CA_MEMORY_ALLOC_FAILED if memory allocation fails.
  */
@@ -91,8 +91,8 @@ CAResult_t u_linklist_add(u_linklist_t *list, void *data);
 /**
  * This api deletes node pointed by iterator.
  * Advances iterator to next node in the list.
- * @param[in/out]   list         pointer of link list.
- * @param[in/out]   iter         pointer of iterator pointing to previous node.
+ * @param[in,out]   list         pointer of link list.
+ * @param[in,out]   iter         pointer of iterator pointing to previous node.
  * @return ::CA_STATUS_OK if Success, ::CA_STATUS_INVALID_PARAM if iterator is NULL.
  */
 CAResult_t u_linklist_remove(u_linklist_t *list, u_linklist_iterator_t **iter);

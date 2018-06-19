@@ -31,6 +31,9 @@
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #endif
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
 #include "experimental/logger.h"
 
 #define DEFAULT_CONTEXT_VALUE 0x99

@@ -34,7 +34,7 @@ CAResult_t CAGattClientInitialize(CALEContext * context);
 /**
  * Destroy the GATT client.
  */
-void CAGattClientDestroy();
+void CAGattClientDestroy(void);
 
 /**
  * Send request data through a single user-specified BLE connection.

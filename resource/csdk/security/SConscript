@@ -28,6 +28,10 @@ libocsrm_env = env.Clone()
 
 target_os = libocsrm_env.get('TARGET_OS')
 
+if target_os not in ['msys_nt', 'windows']:
+    if env.get('WITH_TCP') == True and env.get('WITH_CLOUD') == True:
+        env.PrependUnique(LIBS=['cloud'])
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -97,6 +101,7 @@ libocsrm_src = [
     OCSRM_SRC + 'aclresource.c',
     OCSRM_SRC + 'amaclresource.c',
     OCSRM_SRC + 'pstatresource.c',
+    OCSRM_SRC + 'spresource.c',
     OCSRM_SRC + 'doxmresource.c',
     OCSRM_SRC + 'credresource.c',
     OCSRM_SRC + 'policyengine.c',

@@ -113,7 +113,7 @@ class HueLight
         /**
          * Constructor initializes a light instance
          *
-         * @param[in] uri        is the uri for the light instance (e.g. <ip>/api/<user>/light/1)
+         * @param[in] uri        is the URI for the light instance (e.g. <ip>/api/<user>/light/1)
          * @param[in] json       is the initial JSON state for the  light. If empty,
          *                       the constructor will attempt to get the state directly
          *                       from the light.

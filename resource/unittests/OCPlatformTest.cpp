@@ -358,7 +358,7 @@ namespace OCPlatformTest
         uint8_t resourceProperty = 0;
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
                 gResourceHandle, uri, type,
-                gResourceInterface, entityHandler, resourceProperty, (OCTpsSchemeFlags)(OC_COAP || OC_COAP_TCP)));
+                gResourceInterface, entityHandler, resourceProperty, (OCTpsSchemeFlags)(OC_COAP | OC_COAP_TCP)));
     }
 #endif
 

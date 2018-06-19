@@ -37,12 +37,15 @@
 #include <sstream>
 #include <getopt.h>
 #include "ocstack.h"
-#include "experimental/logger.h"
 #include "occlientbasicops.h"
 #include "ocpayload.h"
-#include "experimental/payload_logging.h"
 #include "oic_string.h"
 #include "common.h"
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/logger.h"
+#include "experimental/payload_logging.h"
 
 #define TAG "occlientbasicops"
 static int UnicastDiscovery = 0;
@@ -501,7 +504,7 @@ int parseClientResponse(OCClientResponse *clientResponse)
 #ifdef __WITH_TLS__
                     if (WithTcp && 0 == strcmp(eps->tps, COAPS_TCP_STR))
                     {
-                        strncpy(endpoint->addr, eps->addr, sizeof(endpoint->addr));
+                        strncpy(endpoint->addr, eps->addr, sizeof(endpoint->addr) - 1);
                         endpoint->port = eps->port;
                         endpoint->flags = (OCTransportFlags)(eps->family | OC_SECURE);
                         endpoint->adapter = OC_ADAPTER_TCP;
@@ -512,7 +515,7 @@ int parseClientResponse(OCClientResponse *clientResponse)
 #endif
                     if (!WithTcp && 0 == strcmp(eps->tps, COAPS_STR))
                     {
-                        strncpy(endpoint->addr, eps->addr, sizeof(endpoint->addr));
+                        strncpy(endpoint->addr, eps->addr, sizeof(endpoint->addr) - 1);
                         endpoint->port = eps->port;
                         endpoint->flags = (OCTransportFlags)(eps->family | OC_SECURE);
                         endpoint->adapter = OC_ADAPTER_IP;

@@ -24,10 +24,12 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "OCProvisioningManager.hpp"
-#include "experimental/securevirtualresourcetypes.h"
-
 #include "EasySetup.hpp"
 #include "ESRichCommon.h"
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+#include "experimental/securevirtualresourcetypes.h"
 
 #define ES_SAMPLE_APP_TAG "ES_SAMPLE_APP_TAG"
 #define DECLARE_MENU(FUNC, ...) { #FUNC, FUNC }
@@ -562,7 +564,7 @@ int main(void)
 
     PlatformConfig config
     {
-        OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::HighQos, &ps
+        OC::ServiceType::InProc, ModeType::Both, OC_DEFAULT_ADAPTER, OC::QualityOfService::HighQos, &ps
     };
 
     OCPlatform::Configure(config);

@@ -100,7 +100,7 @@ TEST(DiscoveryManagerTest, ThrowIfDiscoverWithEmptyCallback)
 #ifdef SECURED
     static OCPersistentStorage gps {client_open, fread, fwrite, fclose, unlink };
     OC::PlatformConfig cfg
-    { OC::ServiceType::InProc, OC::ModeType::Both, "0.0.0.0", 0,
+    { OC::ServiceType::InProc, OC::ModeType::Both, OC_DEFAULT_ADAPTER,
             OC::QualityOfService::LowQos, &gps };
     OC::OCPlatform::Configure(cfg);
 #endif

@@ -161,7 +161,7 @@ namespace OIC
                 /**
                  * Constructs a Builder.
                  *
-                 * @param uri Resource uri
+                 * @param uri Resource URI
                  * @param type Resource type
                  * @param interface Resource interface
                  *
@@ -350,7 +350,7 @@ namespace OIC
             template< typename T >
             T getAttribute(const std::string& key) const
             {
-	        RCSResourceObject::WeakGuard lock(*this);
+                RCSResourceObject::WeakGuard lock(*this);
                 return m_resourceAttributes.at(key).get< T >();
             }
 
@@ -405,11 +405,15 @@ namespace OIC
 
             /**
              * Checks whether the resource is observable or not.
+             *
+             * @return True if resource is observable, otherwise false.
              */
             virtual bool isObservable() const;
 
             /**
              * Checks whether the resource is discoverable or not.
+             *
+             * @return True if resource is discoverable, otherwise false.
              */
             virtual bool isDiscoverable() const;
 
@@ -528,38 +532,52 @@ namespace OIC
             void unbindResource(const RCSResourceObject::Ptr& resource);
 
             /**
-             * Returns all bound resources to this resource.
+             * Gets all bounded resources to this resource.
+             *
+             * @return Bounded resources to this resource.
              */
             std::vector< RCSResourceObject::Ptr > getBoundResources() const;
 
             /**
-             * Returns the uri of the resource.
+             * Gets the URI of the resource.
+             *
+             * @return Resource URI.
              */
             std::string getUri() const;
 
             /**
-             * Returns the default interface of the resource
+             * Gets the default interface of the resource
+             *
+             * @return Default interface of the resource.
              *
              * @see Builder::setDefaultInterface
              */
             std::string getDefaultInterface() const;
 
             /**
-             * Returns all interfaces added for the resource.
+             * Gets all interfaces added for the resource.
+             *
+             * @return Vector containing all the interfaces.
              *
              * @see Builder::addInterface
              */
             std::vector< std::string > getInterfaces() const;
 
             /**
-             * Returns all types added for the resource.
+             * Gets all types added for the resource.
+             *
+             * @return Vector containing all the resource types.
              *
              * @see Builder::addType
              */
             std::vector< std::string > getTypes() const;
 
             /**
-             * Returns the resource handle of the resource.
+             * Gets the resource handle of the resource.
+             *
+             * @return OC resource handle.
+             *
+             * @see OCResourceHandle
              */
              OCResourceHandle getResourceHandle() const;
 

@@ -25,18 +25,24 @@
 extern "C" {
 #endif
 
+typedef enum {
+    ACL_ACELIST = 0,
+    ACL_ROWNERUUID,
+    ACL_PROPERTY_COUNT
+} ACLProperty_t;
+
 /**
  * Initialize ACL resource by loading data from persistent storage.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult InitACLResource();
+OCStackResult InitACLResource(void);
 
 /**
  * Perform cleanup for ACL resources.
  *
  */
-OCStackResult DeInitACLResource();
+OCStackResult DeInitACLResource(void);
 
 /**
  * This method is used by PolicyEngine to retrieve ACL for a Subject.
@@ -89,6 +95,22 @@ const OicSecAce_t* GetACLResourceDataByConntype(const OicSecConntype_t conntype,
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult AclToCBORPayload(const OicSecAcl_t *acl, OicSecAclVersion_t aclVersion, uint8_t **outPayload, size_t *size);
+
+/**
+ * This function converts ACL data into CBOR format, including only the
+ * Properties marked "true" in the propertiesToInclude array.
+ *
+ * @param acl instance of @ref OicSecAcl_t structure.
+ * @param aclVersion Version of ACL resource to produce; can be OIC_SEC_ACL_V1 or OIC_SEC_ACL_V2
+ * @param outPayload is the pointer to allocated memory for cbor payload.
+ * @param size of the cbor payload.
+ * @param propertyToInclude Array of bools, size "ACL_PROPERTY_COUNT",
+ * where "true" indicates the corresponding property should be
+ * included in the CBOR representation that is created.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult AclToCBORPayloadPartial(const OicSecAcl_t *acl, OicSecAclVersion_t aclVersion, uint8_t **outPayload, size_t *size, const bool *propertyToInclude);
 
 #ifdef MULTIPLE_OWNER
 /**
@@ -165,7 +187,7 @@ OCStackResult AppendACLObject(const OicSecAcl_t* acl);
  *
  * @retval OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult UpdateDefaultSecProvACE();
+OCStackResult UpdateDefaultSecProvACE(void);
 
 /**
  * Internal function to update resource owner

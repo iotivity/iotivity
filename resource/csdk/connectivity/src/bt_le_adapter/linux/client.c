@@ -577,7 +577,7 @@ CAResult_t CAGattClientInitialize(CALEContext * context)
     return CA_STATUS_OK;
 }
 
-void CAGattClientDestroy()
+void CAGattClientDestroy(void)
 {
     if (g_context.lock == NULL)
     {

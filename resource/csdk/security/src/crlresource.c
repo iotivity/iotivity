@@ -609,7 +609,7 @@ static OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
 /**
  * This internal method is used to create '/oic/sec/crl' resource.
  */
-static OCStackResult CreateCRLResource()
+static OCStackResult CreateCRLResource(void)
 {
     OCStackResult ret = OCCreateResource(&gCrlHandle,
                                          OIC_RSRC_TYPE_SEC_CRL,
@@ -632,7 +632,7 @@ static OCStackResult CreateCRLResource()
  * Get the default value.
  * @return defaultCrl for now.
  */
-static OicSecCrl_t *GetCrlDefault()
+static OicSecCrl_t *GetCrlDefault(void)
 {
     OicSecCrl_t *defaultCrl = (OicSecCrl_t *)OICCalloc(1, sizeof(OicSecCrl_t));
     if (NULL == defaultCrl)
@@ -669,7 +669,7 @@ static OicSecCrl_t *GetCrlDefault()
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack process error
  */
-OCStackResult InitCRLResource()
+OCStackResult InitCRLResource(void)
 {
     OCStackResult ret = OC_STACK_ERROR;
     // Read Crl resource from PS
@@ -705,7 +705,7 @@ OCStackResult InitCRLResource()
 /**
  * Perform cleanup for CRL resources.
  */
-OCStackResult DeInitCRLResource()
+OCStackResult DeInitCRLResource(void)
 {
     OCStackResult result = OCDeleteResource(gCrlHandle);
     gCrlHandle = NULL;
@@ -714,7 +714,7 @@ OCStackResult DeInitCRLResource()
     return result;
 }
 
-OicSecCrl_t *GetCRLResource()
+OicSecCrl_t *GetCRLResource(void)
 {
     OicSecCrl_t *crl =  NULL;
 
@@ -788,7 +788,7 @@ exit:
     return result;
 }
 
-uint8_t *GetCrl()
+uint8_t *GetCrl(void)
 {
     uint8_t *data = NULL;
     size_t size = 0;

@@ -151,8 +151,7 @@ namespace
         {
             OC::ServiceType::InProc,
             OC::ModeType::Both,
-            "0.0.0.0",
-            0,
+            OC_DEFAULT_ADAPTER,
             OC::QualityOfService::HighQos,
             &gps
         };
@@ -429,7 +428,7 @@ TEST(NotificationProviderTest, ExpectSuccessSendMessage)
 TEST(NotificationProviderTest, ExpectCopyConsumer)
 {
     auto consumer = (NSConsumer *)malloc(sizeof(NSConsumer));
-    strncpy(consumer->consumerId, g_consumerID, (size_t)NS_UUID_STRING_SIZE);
+    OICStrcpy(consumer->consumerId, NS_UUID_STRING_SIZE, g_consumerID);
 
     auto copied = NSDuplicateConsumer(consumer);
     EXPECT_EQ(0, strcmp(copied->consumerId, consumer->consumerId));

@@ -101,3 +101,6 @@ if env.get('TEST') == '1':
             '',  # TODO enable previous line when valigrind error resolved in resource layer
             'service/easy-setup/enrollee/unittests/easysetup_enrollee_test',
             easysetup_enrollee_test)
+
+easysetup_enrollee_test_env.UserInstallTargetExtra([easysetup_enrollee_test],
+                                                   'tests/service/easy-setup/enrollee/')

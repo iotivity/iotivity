@@ -31,13 +31,32 @@
 extern "C" {
 #endif
 
+typedef enum{
+    CRED_CREDS = 0,
+    CRED_ROWNERUUID,
+#ifdef MULTIPLE_OWNER
+    CRED_EOWNERID,
+#endif
+    CRED_CREDID,
+    CRED_SUBJECTUUID,
+    CRED_ROLEID,
+    CRED_CREDTYPE,
+    CRED_CREDUSAGE,
+    CRED_PUBLICDATA,
+    CRED_PRIVATEDATA,
+    CRED_OPTIONALDATA,
+    CRED_PERIOD,
+    CRED_CRMS,
+    CRED_PROPERTY_COUNT
+} CredProperty_t;
+
 /**
  * Initialize credential resource by loading data from persistent storage.
  *
  * @return ::OC_STACK_OK, if initialization is successful, else ::OC_STACK_ERROR if
  * initialization fails.
  */
-OCStackResult InitCredResource();
+OCStackResult InitCredResource(void);
 
 /**
  * Perform cleanup for credential resources.
@@ -46,7 +65,12 @@ OCStackResult InitCredResource();
  * ::OC_STACK_NO_RESOURCE, if resource not found.
  * ::OC_STACK_INVALID_PARAM, if invalid param.
  */
-OCStackResult DeInitCredResource();
+OCStackResult DeInitCredResource(void);
+
+/**
+ * Log current server cred resource
+ */
+void LogCurrrentCredResource(void);
 
 /**
  * This method is used by tinydtls/SRM to retrieve credential for given subject.
@@ -71,32 +95,38 @@ OicSecCred_t* GetCredResourceData(const OicUuid_t* subjectId);
 OicSecCred_t* GetCredEntryByCredId(const uint16_t credId);
 
 /**
- * This function converts credential data into CBOR format.
+ * This function converts credential data into CBOR format, including only the
+ * Properties marked "true" in the propertiesToInclude array.
  * Caller needs to invoke 'OICFree' when done using returned string.
- * Wrapper over the CredToCBORPayloadWithRowner.
  *
- * @param cred is the pointer to instance of OicSecCred_t structure.
+ * @param credS is the pointer to instance of OicSecCred_t structure.
+ * @param rownerId resource owner's UUID (set NULL for get value from global rowner)
  * @param cborPayload is the CBOR converted value.
  * @param cborSize is the size of the CBOR.
  * @param secureFlag shows fill or not private key.
- *
+ * @param propertiesToInclude Array of bools, size "CRED_PROPERTY_COUNT",
+ * where "true" indicates the corresponding property should be
+ * included in the CBOR representation that is created.
  * @return ::OC_STACK_OK if conversion is successful, else ::OC_STACK_ERROR if unsuccessful.
  */
-OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
-                                size_t *cborSize, int secureFlag);
+
+OCStackResult CredToCBORPayloadPartial(const OicSecCred_t *credS, const OicUuid_t *rownerId, uint8_t **cborPayload,
+                                size_t *cborSize, int secureFlag, const bool *propertiesToInclude);
 
 /**
- * This function converts credential data into CBOR format.
- * Caller needs to invoke 'OICFree' when done using returned string.
+ * Converts CRED into the cbor payload, including all Properties for a
+ * full representation.
  *
- * @param cred is the pointer to instance of OicSecCred_t structure.
- * @param rownerId resource owner's UUID
+ * @param credS is the pointer to instance of OicSecCred_t structure.
  * @param cborPayload is the CBOR converted value.
  * @param cborSize is the size of the CBOR.
  * @param secureFlag shows fill or not private key.
  *
- * @return ::OC_STACK_OK if conversion is successful, else ::OC_STACK_ERROR if unsuccessful.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
+
+OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload,
+                                size_t *cborSize, int secureFlag);
 
 OCStackResult CredToCBORPayloadWithRowner(const OicSecCred_t *credS, const OicUuid_t *rownerId, uint8_t **cborPayload,
                                 size_t *cborSize, int secureFlag);
@@ -179,6 +209,17 @@ int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
               const unsigned char *desc, size_t desc_len,
               unsigned char *result, size_t result_length);
 
+/*
+ * This internal callback is used to retrieve UUIDs from CRED 
+ * entries that have matching publicData.
+ *
+ * @param ctx context holding UUID list
+ * @param p pointer to the DER-encoded certificate
+ * @param len length of the DER-encoded certificate
+ */
+
+void GetIdentityHandler(UuidContext_t* ctx, unsigned char* p, size_t len);
+
 /**
  * Add temporal PSK to PIN based OxM.
  *
@@ -203,7 +244,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
  *
  * @return instance of @ref OicSecCred_t
  */
-const OicSecCred_t* GetCredList();
+const OicSecCred_t* GetCredList(void);
 
 /**
  * Function to deallocate allocated memory to OicSecCred_t.

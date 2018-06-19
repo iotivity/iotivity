@@ -19,22 +19,25 @@
  * *****************************************************************/
 
 #include "octypes.h"
-#include "experimental/logger.h"
-#include "experimental/payload_logging.h"
 #include "ocstack.h"
 #include "ocpayload.h"
 //#include "psinterface.h"
-#include "experimental/securevirtualresourcetypes.h"
-#include "experimental/doxmresource.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "srmutility.h"
 #include "pmutility.h"
 #include "credresource.h"
-#include "experimental/payload_logging.h"
-
 #include "utils.h"
 #include "cloudAuth.h"
+
+/// This example is using experimental API, so there is no guarantee of support for future release,
+/// nor any there any guarantee that breaking changes will not occur across releases.
+/// Here logging part is not critical.
+#include "experimental/logger.h"
+#include "experimental/payload_logging.h"
+#include "experimental/securevirtualresourcetypes.h"
+#include "experimental/doxmresource.h"
+
 
 #define TAG "cloudAuth"
 

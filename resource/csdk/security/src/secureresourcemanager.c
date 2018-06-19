@@ -460,18 +460,19 @@ OCStackResult SRMRegisterPersistentStorageHandler(OCPersistentStorage* persisten
     return OCRegisterPersistentStorageHandler(persistentStorageHandler);
 }
 
-OCPersistentStorage* SRMGetPersistentStorageHandler()
+OCPersistentStorage* SRMGetPersistentStorageHandler(void)
 {
     return OCGetPersistentStorageHandler();
 }
 
-OCStackResult SRMInitSecureResources()
+OCStackResult SRMInitSecureResources(void)
 {
     // TODO: temporarily returning OC_STACK_OK every time until default
     // behavior (for when SVR DB is missing) is settled.
     InitSecureResources();
     OCStackResult ret = OC_STACK_OK;
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    CAregisterIdentityHandler(GetIdentityHandler);
     if (CA_STATUS_OK != CAregisterPskCredentialsHandler(GetDtlsPskCredentials))
     {
         OIC_LOG(ERROR, TAG, "Failed to revert TLS credential handler.");
@@ -483,14 +484,14 @@ OCStackResult SRMInitSecureResources()
     return ret;
 }
 
-void SRMDeInitSecureResources()
+void SRMDeInitSecureResources(void)
 {
     DestroySecureResources();
 }
 
 /**
  * Get the Secure Virtual Resource (SVR) type from the URI.
- * @param   uri [IN] Pointer to URI in question.
+ * @param[in] uri  Pointer to URI in question.
  * @return  The OicSecSvrType_t of the URI passed (note: if not a Secure Virtual
             Resource, e.g. /a/light, will return "NOT_A_SVR_TYPE" enum value)
  */
@@ -563,6 +564,15 @@ OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
         if (0 == strncmp(uri, OIC_RSRC_CSR_URI, svrLen))
         {
             return OIC_R_CSR_TYPE;
+        }
+    }
+
+    svrLen = strlen(OIC_RSRC_SP_URI);
+    if (uriLen == svrLen)
+    {
+        if (0 == strncmp(uri, OIC_RSRC_SP_URI, svrLen))
+        {
+            return OIC_R_SP_TYPE;
         }
     }
 

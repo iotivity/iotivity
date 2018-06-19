@@ -3,7 +3,7 @@
 # get and install
 #
 
-import os, string, sys, subprocess
+import os, sys, subprocess
 import SCons.Errors
 
 Import('env')
@@ -22,7 +22,7 @@ boost_version = '1.60.0'
 if target_os in ['android']:
     boost_version = '1.58.0'
 
-boost_base_name = 'boost_' + string.replace(boost_version, '.', '_')
+boost_base_name = 'boost_' + boost_version.replace('.', '_')
 boost_arch_name = boost_base_name + '.zip'
 boost_b2_name = boost_base_name + os.sep + 'b2'
 boost_url = 'http://downloads.sourceforge.net/project/boost/boost/' + boost_version + '/' + boost_arch_name + '?r=&ts=1421801329&use_mirror=iweb'

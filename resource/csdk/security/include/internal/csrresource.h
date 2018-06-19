@@ -34,14 +34,14 @@ extern "C" {
  *
  * @return OC_STACK_OK if successful; error otherwise.
  */
-OCStackResult InitCSRResource();
+OCStackResult InitCSRResource(void);
 
 /**
  * De-initialize the CSR resource.
  *
  * @return OC_STACK_OK if successful; error otherwise.
  */
-OCStackResult DeInitCSRResource();
+OCStackResult DeInitCSRResource(void);
 
 /**
  * This function converts a CBOR payload into a CSR.
