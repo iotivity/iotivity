@@ -5,23 +5,23 @@ import React from 'react';
 
 import MainPanel from '../views/MainPanel';
 
-import css from './App.less';
-
-const App = kind({
-    name: 'App',
-
-    styles: {
-        css,
-        className: 'app'
-    },
-
-    render: (props) => (
-        <div {...props}>
-            <Panels>
-                <MainPanel />
-            </Panels>
-        </div>
-    )
-});
+class App extends React.Component {
+    constructor (props) {
+        super(props);
+   }
+   closeHandler() {
+       window.close();
+   }
+    render(props) {
+       const onClose = this.closeHandler.bind(this);
+       return (
+           <div {...props}>
+               <Panels onApplicationClose={onClose} >
+                   <MainPanel />
+               </Panels>
+           </div>
+       );
+   }
+}
 
 export default MoonstoneDecorator(App);

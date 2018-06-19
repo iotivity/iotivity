@@ -4,7 +4,7 @@
     "vendor": "LGE",
     "type": "web",
     "main": "index.html",
-    "title": "IOTIVITY SAMPLER",
+    "title": "IoTivity Sampler",
     "icon": "icon.png",
     "uiRevision": 2,
     "requiredPermissions": ["all"]

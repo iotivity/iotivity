@@ -66,14 +66,16 @@ module.exports.createResource = function(uri, types, q, a, observable, resourceC
 
     var sensor = require( "./mock-sensor" )()
         .on( "change", function( data ) {
-            iotivity.OCNotifyListOfObservers(
-                handleReceptacle.handle,
-                observerIds,
-                {
-                    type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
-                    values: data
-                },
-                iotivity.OCQualityOfService.OC_HIGH_QOS );
+            if(observerIds.length>0) {
+                iotivity.OCNotifyListOfObservers(
+                    handleReceptacle.handle,
+                    observerIds,
+                    {
+                        type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
+                        values: data
+                    },
+                    iotivity.OCQualityOfService.OC_HIGH_QOS );
+            }
         }
     );
 
