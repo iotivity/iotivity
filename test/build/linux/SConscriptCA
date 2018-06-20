@@ -61,6 +61,7 @@ iotivity_include_paths = [
     iotivity_root + '/resource/csdk/connectivity/external/inc',
     iotivity_root + '/resource/c_common/oic_malloc/include',
     iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/c_common/ocrandom/include',
     iotivity_root + '/extlibs/mbedtls/mbedtls/include',
     iotivity_root + '/extlibs/mbedtls/mbedtls/include/mbedtls',
     iotivity_root + '/resource/c_common',
