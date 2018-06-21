@@ -1191,3 +1191,79 @@ TEST_F(RIResourceTest_btc, DeleteResourceWithNaQos_SRC_P)
                   QualityOfService::NaQos));
 }
 #endif
+
+/**
+* @Since 2018-06-21
+* @see None
+* @Pre-condition None
+* @Objective Test getSupportedTransportsInfo() Positively
+* @Target OCStackResult getSupportedTransportsInfo(OCTpsSchemeFlags& supportedTps);
+* @Test_data 1. tpsSchemeFlags = OC_NO_TCPS (For Initialize)
+* @Post-condition None
+* @Expected should return OC_STACK_OK
+*/
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
+TEST_F(RIResourceTest_btc, GetSupportedTransportsInfoInitialize_SRC_P)
+{
+    OCTpsSchemeFlags tpsSchemeFlags = OC_NO_TPS;
+    OCStackResult result = OCPlatform::getSupportedTransportsInfo(tpsSchemeFlags);
+    EXPECT_EQ(OC_STACK_OK, result);
+}
+#endif
+
+/**
+* @Since 2018-06-21
+* @see None
+* @Pre-condition None
+* @Objective Test getSupportedTransportsInfo() Positively
+* @Target OCStackResult getSupportedTransportsInfo(OCTpsSchemeFlags& supportedTps);
+* @Test_data 1. tpsSchemeFlags = OC_COAP (coap + udp)
+* @Post-condition None
+* @Expected should return OC_STACK_OK
+*/
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
+TEST_F(RIResourceTest_btc, GetSupportedTransportsInfoWithCoap_SRC_P)
+{
+    OCTpsSchemeFlags tpsSchemeFlags = OC_COAP;
+    OCStackResult result = OCPlatform::getSupportedTransportsInfo(tpsSchemeFlags);
+    EXPECT_EQ(OC_STACK_OK, result);
+}
+#endif
+
+/**
+* @Since 2018-06-21
+* @see None
+* @Pre-condition None
+* @Objective Test getSupportedTransportsInfo() Positively
+* @Target OCStackResult getSupportedTransportsInfo(OCTpsSchemeFlags& supportedTps);
+* @Test_data 1. tpsSchemeFlags = OC_COAP (coaps + udp)
+* @Post-condition None
+* @Expected should return OC_STACK_OK
+*/
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
+TEST_F(RIResourceTest_btc, GetSupportedTransportsInfoWithCoaps_SRC_P)
+{
+    OCTpsSchemeFlags tpsSchemeFlags = OC_COAPS;
+    OCStackResult result = OCPlatform::getSupportedTransportsInfo(tpsSchemeFlags);
+    EXPECT_EQ(OC_STACK_OK, result);
+}
+#endif
+
+/**
+* @Since 2018-06-21
+* @see None
+* @Pre-condition None
+* @Objective Test getSupportedTransportsInfo() Positively
+* @Target OCStackResult getSupportedTransportsInfo(OCTpsSchemeFlags& supportedTps);
+* @Test_data 1. tpsSchemeFlags = OC_NO_TCPS (Allow all endpoints)
+* @Post-condition None
+* @Expected should return OC_STACK_OK
+*/
+#if defined(__LINUX__) || defined(__TIZEN__) || defined (__WINDOWS__)
+TEST_F(RIResourceTest_btc, GetSupportedTransportsInfoWithAllEndpoint_SRC_P)
+{
+    OCTpsSchemeFlags tpsSchemeFlags = OC_ALL;
+    OCStackResult result = OCPlatform::getSupportedTransportsInfo(tpsSchemeFlags);
+    EXPECT_EQ(OC_STACK_OK, result);
+}
+#endif
