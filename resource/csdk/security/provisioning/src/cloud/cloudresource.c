@@ -93,10 +93,27 @@ static void DeleteCloudList(OicCloud_t *clouds, bool signout)
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 }
 
-void StopClouds()
+void CloudsSignOut()
 {
-    DeleteCloudList(gCloud, true);
-    gCloud = NULL;
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+
+    if (!gCloud)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: cloud is NULL", __func__);
+        return;
+    }
+
+    OicCloud_t *p1 = NULL, *p2 = NULL;
+    oc_mutex_lock(gCloudMutex);
+    LL_FOREACH_SAFE(gCloud, p1, p2)
+    {
+        OCCloudSignOut(p1);
+        StopCloudRefresh(p1);
+        p1 = NULL;
+    }
+    oc_mutex_unlock(gCloudMutex);
+
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 }
 
 void ResetClouds()
