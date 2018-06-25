@@ -164,7 +164,7 @@ OicSecSp_t gSpDefault =
     0                           // credid
 };
 
-char * gSupportedProfilesAll[] = { "oic.sec.sp.black", "oic.sec.sp.blue", "oic.sec.sp.baseline",  };
+char * gSupportedProfilesAll[] = { "oic.sec.sp.black", "oic.sec.sp.blue", "oic.sec.sp.purple", "oic.sec.sp.baseline",  };
 OicSecSp_t gSpAll =
 {
     3,                      // supportedLen

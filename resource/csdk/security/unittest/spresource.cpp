@@ -42,6 +42,7 @@ static void TestInit(OicSecSp_t* testSp, bool* spProps);
 
 static char s_spBlackName[] = "oic.sec.sp.black";
 static char s_spBlueName[] = "oic.sec.sp.blue";
+static char s_spPurpleName[] = "oic.sec.sp.purple";
 static char s_spBaselineName[] = "oic.sec.sp.baseline";
 
 static char* s_profileArray[] = { NULL, NULL, NULL, NULL, NULL, };
@@ -65,10 +66,11 @@ TEST(SPResourceTest, CBORFullEncodingPositive)
     // all supported profiles
     TestInit(&s_testSp, propsToTest);
     SetAllSpProps(propsToTest, true);
-    s_testSp.supportedLen = 3;
+    s_testSp.supportedLen = 4;
     s_testSp.supportedProfiles[0] = s_spBlueName;
     s_testSp.supportedProfiles[1] = s_spBaselineName;
     s_testSp.supportedProfiles[2] = s_spBlackName;
+    s_testSp.supportedProfiles[3] = s_spPurpleName;
     s_testSp.activeProfile = s_spBlackName;
     s_testSp.credid = 1;
     TestEncodeDecode(&s_testSp, propsToTest, true);

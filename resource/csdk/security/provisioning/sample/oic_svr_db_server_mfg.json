@@ -1,6 +1,6 @@
 {
     "sp": {
-        "supported_profiles": [ "oic.sec.sp.black", "oic.sec.sp.blue", "oic.sec.sp.baseline" ],
+        "supported_profiles": [ "oic.sec.sp.black", "oic.sec.sp.blue", "oic.sec.sp.purple", "oic.sec.sp.baseline" ],
         "active_profile": "oic.sec.sp.black",
         "credid": 1,
         "rowneruuid": "00000000-0000-0000-0000-000000000000",

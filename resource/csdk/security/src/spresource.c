@@ -538,7 +538,8 @@ bool SpRequiresCred(char* spName)
     }
 
     if ( (0 == strcmp(spName, "oic.sec.sp.black")) ||
-         (0 == strcmp(spName, "oic.sec.sp.blue")))
+         (0 == strcmp(spName, "oic.sec.sp.blue")) ||
+         (0 == strcmp(spName, "oic.sec.sp.purple")))
     {
         return true;
     }
