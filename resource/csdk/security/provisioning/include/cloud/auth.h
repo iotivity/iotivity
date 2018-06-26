@@ -127,7 +127,13 @@ OCStackResult OCCloudSignOut(OicCloud_t *cloud);
 OicCloud_t *FreeCloud(OicCloud_t *cloud);
 
 /**
- * Convert Cloud to CBOR
+ * Stop update session
+ * @param[in] cloud
+ */
+void StopCloudRefresh(OicCloud_t *cloud);
+
+/**
+ * Cloud to CBOR
  *
  * @param[in] clouds  cloud list to convert
  * @param[out] payload  generated CBOR payload

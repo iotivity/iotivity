@@ -52,6 +52,7 @@ static uint64_t g_timeout = CA_DEFAULT_PING_TIMEOUT;
 static void CADestroyPingInfo(PingInfo* pingInfo)
 {
     pingInfo->cbData.cd(pingInfo->cbData.context);
+    OICFree(pingInfo->token);
     OICFree(pingInfo);
 }
 
@@ -147,7 +148,9 @@ CAResult_t CASendPingMessage(const CAEndpoint_t *endpoint, bool withCustody, CAP
     // according to the timestamp
     cur->endpoint = *endpoint;
     cur->withCustody = withCustody;
-    OICStrcpy(cur->token, data->signalingInfo->info.tokenLength, data->signalingInfo->info.token);
+    cur->token = (char *)OICCalloc(data->signalingInfo->info.tokenLength, sizeof(char));
+    memcpy(cur->token, data->signalingInfo->info.token, data->signalingInfo->info.tokenLength);
+    cur->tokenLength = data->signalingInfo->info.tokenLength;
     cur->timeStamp = OICGetCurrentTime(TIME_IN_MS);
     cur->cbData = *cbData;
     oc_mutex_lock(g_pingInfoListMutex);
