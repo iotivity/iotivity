@@ -211,6 +211,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
             {
 
                 OCRepPayloadSetUri(payload, gRoomResourceUri);
+                OCRepPayloadSetInterfaceType(payload, PAYLOAD_BATCH_INTERFACE);
 
                 OCRepPayload *tempPayload = OCRepPayloadCreate();
                 OCRepPayloadSetUri(tempPayload, gLightResourceUri);

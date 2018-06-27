@@ -83,6 +83,10 @@ namespace OC
             if (!root)
             {
                 root = r.getPayload();
+                if (r.getInterfaceType() == InterfaceType::BatchParent)
+                {
+                    root->ifType = PAYLOAD_BATCH_INTERFACE;
+                }
             }
             else
             {
@@ -387,6 +391,16 @@ namespace OC
         }
 
         return root;
+    }
+
+    void OCRepresentation::setInterfaceType(const InterfaceType& ift)
+    {
+        m_interfaceType = ift;
+    }
+
+    InterfaceType OCRepresentation::getInterfaceType() const
+    {
+        return m_interfaceType;
     }
 
     size_t calcArrayDepth(const size_t dimensions[MAX_REP_ARRAY_DEPTH])
