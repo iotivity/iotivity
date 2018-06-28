@@ -19,9 +19,7 @@
 ################################################################################
 
 ##
-# 'libcoap' script to check if LibCoAP library is installed.  If not,
-# get it and install it
-#
+# 'libcoap' script to make sure LibCoAP library is "installed"
 ##
 
 import os
@@ -43,62 +41,76 @@ libcoap_repo_url = 'https://github.com/dthaler/libcoap'
 #libcoap_repo_url    = 'https://github.com/obgm/libcoap'
 
 ######################################################################
-# Download libCoAP
+# Check for, and download or possibly update libcoap from git
 ######################################################################
-# Right now this script assumes the revision is a tag, and not a branch or
-# an arbitrary commit. If this changes, update the check below, or else
-# the script will always conclude the repo is not up to date because a tag
-# with that name doesn't exist.
-libcoap_version = 'IoTivity-1.2.1d'
+# The libcoap tag here must match the one in extlibs/libcoap/prep.sh.
+libcoap_version = 'IoTivity-1.4'
 libcoap_dir = os.path.join(src_dir, 'extlibs', 'libcoap', 'libcoap')
-libcoap_checkout_command = 'git clone ' + libcoap_repo_url + '.git extlibs/libcoap/libcoap -b ' + libcoap_version
-libcoap_update_command = 'git fetch --tags && git checkout -f ' + libcoap_version
-libcoap_change_dir_command = 'cd ' + libcoap_dir
-
-if with_upstream_libcoap == '1':
-    print('*** Checking for installation of libCoAP ***')
-    if not os.path.exists(libcoap_dir):
-        msg = '''
+libcoap_checkout_cmd = 'git clone ' + libcoap_repo_url + '.git extlibs/libcoap/libcoap -b ' + libcoap_version
+libcoap_update_cmd = 'git fetch --tags && git checkout -f ' + libcoap_version
+libcoap_chdir_cmd = 'cd ' + libcoap_dir
+# define msg strings here so code sequence is readable
+err_nocoap = '''
 *********************************** Error: ************************************
 * Please download libcoap using the following command:
 *     $ %s
 *******************************************************************************
-''' % libcoap_checkout_command
-        Exit(msg)
-
-    os.chdir(libcoap_dir)
-    out = subprocess.check_output('git log --format=%d -n 1', shell=True).rstrip()
-    if libcoap_version not in SCons.Util.to_String(out):
-        print('''
+''' % libcoap_checkout_cmd
+info_oldcoap = '''
 ******************************* Info: *****************************************
 * Your libCoAP repo is not up to date with the latest version we require (%s).
 *******************************************************************************
-''' % (libcoap_version))
-        if libcoap_env.get('AUTOMATIC_UPDATE'):
-            print('''
+''' % libcoap_version
+info_updatingcoap = '''
 ******************************* Info: *****************************************
 * Automatically updating libcoap to version %s.
 *******************************************************************************
-''' % (libcoap_version))
-            # TODO: we are not actually checking the output... fix
-            subprocess.check_output(libcoap_update_command, shell=True)
-        else:
-            msg = '''
+''' % libcoap_version
+info_updatecoap = '''
 ******************************* Info: *****************************************
 * Please update using the following commands:
 *   %s
 *   %s
 *******************************************************************************
-''' % (libcoap_change_dir_command, libcoap_update_command)
-            Exit(msg)
-
-else:
-    print('''
+''' % (libcoap_chdir_cmd, libcoap_update_cmd)
+info_forkedcoap = '''
 ******************************* Info: *****************************************
 * Using FORKED copy of libCoap located in:
 * resource/csdk/connectivity/lib/libcoap-4.1.1
 *******************************************************************************
-''')
+'''
+
+if with_upstream_libcoap == '1'  and os.path.exists(libcoap_dir + '/.git/HEAD'):
+    # If using the github libcoap, check for correctness here
+    # Right now this script assumes the revision is a tag; not a branch or
+    # an arbitrary commit. If this changes, update the check below, or else
+    # the script will always conclude the repo is not up to date because a tag
+    # with that name does not exist.
+    # Tizen uses its own process to prepare the libcoap repo in gbsbuild.sh
+    # and cannot use git during the build.  That process removes .git, 
+    # so we can safely proceed if it is present.
+    print('*** Checking for installation of libCoAP ***')
+    if not os.path.exists(libcoap_dir):
+        Exit(err_nocoap)
+
+    os.chdir(libcoap_dir)
+    out = subprocess.check_output('git tag -l ' + libcoap_version, shell=True).rstrip()
+
+    if libcoap_version not in SCons.Util.to_String(out):
+        print(info_oldcoap)
+        if libcoap_env.get('AUTOMATIC_UPDATE'):
+            print(info_updatingcoap)
+            try:
+                retcode = subprocess.call(libcoap_update_cmd, shell=True)
+                if retcode:
+                    Exit("libcoap: sync failed: " + str(retcode))
+            except OSError as e:
+                Exit("libcoap: execution failed: " + e)
+        else:
+            Exit(info_updatecoap)
+
+else:
+    print(info_forkedcoap)
 
 ######################################################################
 # Build libCoAP
@@ -120,7 +132,7 @@ if target_os == 'msys_nt':
 
 if target_os in ['linux', 'tizen', 'android', 'ios', 'windows']:
     if with_tcp == True:
-        libcoap_env.AppendUnique(CPPDEFINES=['WITH_TCP'])
+        libcoap_env.AppendUnique(CPPDEFINES=['WITH_TCP', 'WITH_WS'])
 
 if target_os in ['linux', 'tizen', 'android']:
     libcoap_env.AppendUnique(LIBS=['log'])
@@ -130,11 +142,16 @@ if target_os in ['linux', 'tizen', 'android']:
 # Remove -Werror build flag when building the 'coap' library  it
 # is external code. see IOT-2539
 while '-Werror' in libcoap_env['CCFLAGS']: libcoap_env['CCFLAGS'].remove('-Werror')
+if env['CC'] == 'cl':
+    # In external code, don't fail on warnings:
+    #  - warning C4267: conversion from size_t to unsigned short, possible loss of data
+    #  - warning C4244: '=' : conversion from 'size_t' to 'unsigned short', possible loss of data
+    # TODO: fix libcoap fork, we introduced this error, it isn't from upstream
+    libcoap_env.AppendUnique(CCFLAGS=['/wd4267', '/wd4244'])
 
 ######################################################################
 # Source files and Target(s)
 ######################################################################
-with_upstream_libcoap = libcoap_env.get('WITH_UPSTREAM_LIBCOAP')
 config_h_file_path = os.path.join(src_dir, 'extlibs', 'libcoap', 'libcoap', 'include', 'coap', 'coap_config.h')
 if with_upstream_libcoap == '1':
     libcoap_env.PrependUnique(CPPPATH=['libcoap/include/coap'])

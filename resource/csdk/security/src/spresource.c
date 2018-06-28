@@ -939,9 +939,13 @@ OCEntityHandlerResult SpEntityHandler(OCEntityHandlerFlag flag,
     return ehRet;
 }
 
+#define SP_RESOURCE_DISABLE
 OCStackResult CreateSpResource()
 {
-    OCStackResult ret = OCCreateResource(&gSpHandle,
+    OCStackResult ret = OC_STACK_OK;
+
+#ifndef SP_RESOURCE_DISABLE
+    ret = OCCreateResource(&gSpHandle,
                                          OIC_RSRC_TYPE_SEC_SP,
                                          OC_RSRVD_INTERFACE_DEFAULT,
                                          OIC_RSRC_SP_URI,
@@ -954,6 +958,10 @@ OCStackResult CreateSpResource()
         OIC_LOG(FATAL, TAG, "Unable to instantiate sp resource");
         DeInitSpResource();
     }
+#else
+    OIC_LOG_V(WARNING, TAG, "/sp Resource disabled in this build; not creating Resource.");
+#endif // SP_RESOURCE_DISABLE
+
     return ret;
 }
 

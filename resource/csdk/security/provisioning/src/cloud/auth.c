@@ -98,28 +98,8 @@ OicCloud_t *FreeCloud(OicCloud_t *cloud)
         OIC_LOG_V(WARNING, TAG, "%s:Cloud is null", __func__);
         return NULL;
     }
-    OIC_LOG_V(DEBUG, TAG, "%s: cloud (%s) state: %s", __func__, cloud->cis, GetCloudStatus(cloud));
-    cloud->stat = OC_CLOUD_EXIT;
 
-    if (cloud->pid)
-    {
-        OIC_LOG_V(DEBUG, TAG, "oc_thread_waiting for cloud %s/%s", cloud->cis, cloud->apn);
-        OCThreadResult_t res = oc_thread_wait(cloud->pid);
-
-        if (OC_THREAD_SUCCESS != res)
-        {
-            OIC_LOG_V(ERROR, TAG, "oc_thread_wait failed - error %u", res);
-        }
-
-        res = oc_thread_free(cloud->pid);
-        cloud->pid = NULL;
-
-        if (OC_THREAD_SUCCESS != res)
-        {
-            OIC_LOG_V(ERROR, TAG, "oc_thread_free failed - error %u", res);
-        }
-        OIC_LOG_V(DEBUG, TAG, "thread for cloud %s/%s is stopped", cloud->cis, cloud->apn);
-    }
+    StopCloudRefresh(cloud);
 
     OicCloud_t *ret = cloud->next;
     cloud->next = NULL;
@@ -837,6 +817,38 @@ static void *CloudTokenRefresh(void *data)
 exit:
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
     return NULL;
+}
+
+void StopCloudRefresh(OicCloud_t *cloud)
+{
+    if (!cloud)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s:Cloud is null", __func__);
+        return;
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "%s: cloud (%s) state: %s", __func__, cloud->cis, GetCloudStatus(cloud));
+    cloud->stat = OC_CLOUD_EXIT;
+
+    if (cloud->pid)
+    {
+        OIC_LOG_V(DEBUG, TAG, "oc_thread_waiting for cloud %s/%s", cloud->cis, cloud->apn);
+        OCThreadResult_t res = oc_thread_wait(cloud->pid);
+
+        if (OC_THREAD_SUCCESS != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "oc_thread_wait failed - error %u", res);
+        }
+
+        res = oc_thread_free(cloud->pid);
+        cloud->pid = NULL;
+
+        if (OC_THREAD_SUCCESS != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "oc_thread_free failed - error %u", res);
+        }
+        OIC_LOG_V(DEBUG, TAG, "thread for cloud %s/%s is stopped", cloud->cis, cloud->apn);
+    }
 }
 
 /**

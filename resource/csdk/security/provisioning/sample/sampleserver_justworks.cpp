@@ -502,7 +502,7 @@ int main(void)
 #if defined(__WITH_TLS__) && defined(WITH_CLOUD)
             if (111 == key)//o
             {
-                StopClouds();
+                CloudsSignOut();
             }
             else if( 100 == key)//d
             {
