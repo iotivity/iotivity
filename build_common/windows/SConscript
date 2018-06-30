@@ -251,6 +251,8 @@ if env['CC'] == 'cl':
         env.AppendUnique(CPPDEFINES=['UWP_APP', '__WRL_NO_DEFAULT_LIB__'])
         env.AppendUnique(LINKFLAGS=['/MANIFEST:NO', '/WINMD:NO', '/APPCONTAINER'])
         env.AppendUnique(LIBS=['WindowsApp', 'bcrypt', 'ws2_32', 'iphlpapi', 'crypt32'])
+        # save the required lib for config tests where LIBS is cleared first
+        env.AppendUnique(UWP_LIBS=['WindowsApp'])
 
 elif env['CC'] == 'gcc':
     msg = "\nError: gcc not supported on Windows.  Use Visual Studio!\n"
