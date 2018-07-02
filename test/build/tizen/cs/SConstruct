@@ -51,7 +51,7 @@ iotivity_include_paths = [
     iotivity_root + '/resource/csdk/security/provisioning/include/cloud',
     iotivity_root + '/resource/include',
     iotivity_root + '/resource/csdk/stack/include',
-    iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/c_common/ocrandom/include',
     iotivity_root + '/resource/csdk/logger/include',
     iotivity_root + '/resource/csdk/connectivity/inc',
     iotivity_root + '/resource/csdk/connectivity/inc/pkix',
@@ -61,7 +61,7 @@ iotivity_include_paths = [
     iotivity_root + '/resource/c_common/oic_malloc/include',
     iotivity_root + '/resource/c_common',
     iotivity_root + '/resource/c_common/oic_string/include',
-    iotivity_root + '/resource/c_common/oic_string/include', 
+    iotivity_root + '/resource/c_common/oic_string/include',
     iotivity_root + '/resource/oc_logger/include',
     iotivity_root + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include/',
     iotivity_root + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include/coap',
@@ -89,13 +89,13 @@ simulator_include_paths = [
     iotivity_test_root + '/include'
 ]
 
-common_src = [ 
+common_src = [
     iotivity_test_root + '/src/common/commonutil/c_cpp/CommonUtil.cpp',
     iotivity_test_root + '/src/common/commonutil/c_cpp/CloudCommonUtil.cpp',
     iotivity_test_root + '/src/common/commonutil/c_cpp/Configuration.cpp'
 ]
 
-tc_common_src = [ 
+tc_common_src = [
     iotivity_test_root + '/src/common/testcase/gtest/IotivitySECTestMain.cpp',
     iotivity_test_root + '/src/common/commonutil/c_cpp/CommonTestUtil.cpp',
 ]
@@ -105,7 +105,7 @@ csdk_include_paths = [ iotivity_test_root + '/src/tc/cs/gtest/csdk/include' ]
 cpp_include_paths = [ iotivity_test_root + '/src/tc/cs/gtest/cpp/include' ]
 
 csdk_test_src = [
-    Glob(iotivity_test_root + '/src/tc/cs/gtest/csdk/src/btc/*.cpp'), 
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/csdk/src/btc/*.cpp'),
     Glob(iotivity_test_root + '/src/tc/cs/gtest/csdk/src/stc/*.cpp'),
     Glob(iotivity_test_root + '/src/tc/cs/gtest/csdk/src/helper/*.cpp'),
     Glob(iotivity_test_root + '/src/common/commonutil/c_cpp/ResourceServer.cpp'),
@@ -114,7 +114,7 @@ csdk_test_src = [
 ]
 
 cpp_test_src = [
-    Glob(iotivity_test_root + '/src/tc/cs/gtest/cpp/src/btc/*.cpp'), 
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/cpp/src/btc/*.cpp'),
     Glob(iotivity_test_root + '/src/tc/cs/gtest/cpp/src/stc/*.cpp'),
     Glob(iotivity_test_root + '/src/tc/cs/gtest/cpp/src/helper/*.cpp')
 ]
@@ -162,23 +162,23 @@ if 'tc' in test:
         cpp_target_binary = 'iotivity_cs_cpp_tlson_test'
     else:
         print 'line 153'
-        
+
     if 'csdk' in sdk:
-        env.Program (source = csdk_test_src + tc_common_src + common_src, 
+        env.Program (source = csdk_test_src + tc_common_src + common_src,
                     target = csdk_target_binary,
-                    CPPPATH = iotivity_include_paths + tc_include_paths + csdk_include_paths, 
-                    LIBS = lib_list + ['gtest'], 
-                    LIBPATH = tc_lib_path, 
+                    CPPPATH = iotivity_include_paths + tc_include_paths + csdk_include_paths,
+                    LIBS = lib_list + ['gtest'],
+                    LIBPATH = tc_lib_path,
                     CPPFLAGS = cppflags,
                     CXXFLAGS = cxxflags,
                     CPPDEFINES = cppdefines)
 
     if 'cpp' in sdk:
-        env.Program (source = cpp_test_src + tc_common_src + common_src, 
-                    target = cpp_target_binary, 
-                    CPPPATH = iotivity_include_paths + tc_include_paths + cpp_include_paths, 
-                    LIBS = lib_list + ['gtest'], 
-                    LIBPATH = tc_lib_path, 
+        env.Program (source = cpp_test_src + tc_common_src + common_src,
+                    target = cpp_target_binary,
+                    CPPPATH = iotivity_include_paths + tc_include_paths + cpp_include_paths,
+                    LIBS = lib_list + ['gtest'],
+                    LIBPATH = tc_lib_path,
                     CPPFLAGS = cppflags,
                     CXXFLAGS = cxxflags,
                     CPPDEFINES = cppdefines)
