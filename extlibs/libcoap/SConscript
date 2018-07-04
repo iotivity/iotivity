@@ -28,12 +28,12 @@ import SCons.Util
 
 Import('env')
 
-libcoap_env = env.Clone()
-target_os = libcoap_env.get('TARGET_OS')
-src_dir = libcoap_env.get('SRC_DIR')
-ca_transport = libcoap_env.get('TARGET_TRANSPORT')
-with_tcp = libcoap_env.get('WITH_TCP')
-with_upstream_libcoap = libcoap_env.get('WITH_UPSTREAM_LIBCOAP')
+target_os = env.get('TARGET_OS')
+src_dir = env.get('SRC_DIR')
+build_dir = env.get('BUILD_DIR')
+ca_transport = env.get('TARGET_TRANSPORT')
+with_tcp = env.get('WITH_TCP')
+with_upstream_libcoap = env.get('WITH_UPSTREAM_LIBCOAP')
 
 # Temporary LibCoAP URL is a fork of the original.
 # Once a pull request is merged, change this back to the obgm original below.
@@ -89,6 +89,7 @@ info_forkedcoap = '''
 *******************************************************************************
 '''
 
+libcoap_env = env.Clone()
 if with_upstream_libcoap == '0':
     print(info_forkedcoap)
 else:
@@ -301,13 +302,11 @@ else:
         libcoap_src = [src for src in libcoap_src if 'coap_io_lwip.c' not in src.path]
 
 # finally ready to build:
-libcoap = libcoap_env.StaticLibrary('coap', libcoap_src, OBJPREFIX='libcoap_')
+libcoap = libcoap_env.StaticLibrary(build_dir + 'coap', libcoap_src, OBJPREFIX='libcoap_')
+libcoap_env.UserInstallTargetLib(libcoap)
 
 # set for use by other scripts:
 if with_upstream_libcoap == '1':
     env.AppendUnique(LIBCOAP_INC='#/extlibs/libcoap/libcoap/include')
 else:
     env.AppendUnique(LIBCOAP_INC='#/resource/csdk/connectivity/lib/libcoap-4.1.1/include')
-
-libcoap_env.InstallTarget([libcoap], 'coap')
-libcoap_env.UserInstallTargetLib(libcoap)

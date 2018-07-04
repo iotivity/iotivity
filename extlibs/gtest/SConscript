@@ -7,10 +7,9 @@
 
 import os
 Import('env')
-
-gtest_env = env.Clone()
-target_os = gtest_env.get('TARGET_OS')
-src_dir = gtest_env.get('SRC_DIR')
+target_os = env.get('TARGET_OS')
+src_dir = env.get('SRC_DIR')
+build_dir = env.get('BUILD_DIR')
 
 targets_need_gtest = ['darwin', 'linux', 'msys_nt', 'windows']
 
@@ -25,6 +24,7 @@ gtest_zip_file = 'release-' + GTEST_VERSION + '.zip'
 gtest_url = 'https://github.com/google/googletest/archive/' + gtest_zip_file
 gtest_zip_path = os.path.join(src_dir, 'extlibs', 'gtest', gtest_zip_file)
 
+gtest_env = env.Clone()
 # nothing to do if this target doesn't use gtest
 if target_os not in targets_need_gtest:
     Return("gtest_env")
@@ -98,12 +98,10 @@ elif target_os in ['windows'] and 'IOTIVITY_GTEST_HAS_BEEN_BUILT' not in env:
     gtest_build_env.AppendUnique(CPPPATH=[os.path.join(gtest_dir, 'include')])
     gtest_build_env.AppendUnique(CXXFLAGS=['/EHsc'])
     gtest_build_env.AppendUnique(CCFLAGS=['/W4', '/WX'])
-    gtest = gtest_build_env.StaticLibrary(
-        target='gtest', source=['%s/src/gtest-all.cc' % gtest_dir])
-    gtest_main = gtest_build_env.StaticLibrary(
-        target='gtest_main', source=['%s/src/gtest_main.cc' % gtest_dir])
-    gtest_env.InstallTarget(gtest, 'gtest')
-    gtest_env.InstallTarget(gtest_main, 'gtest_main')
+    gtest = gtest_build_env.StaticLibrary(target=build_dir + 'gtest',
+                           source=gtest_dir + '/src/gtest-all.cc')
+    gtest_main = gtest_build_env.StaticLibrary(target=build_dir + 'gtest_main',
+                           source=gtest_dir + '/src/gtest_main.cc')
 
     gtest_vars = Variables()
     gtest_vars.AddVariables(('IOTIVITY_GTEST_HAS_BEEN_BUILT', '', '1'))

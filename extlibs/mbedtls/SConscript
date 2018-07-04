@@ -28,8 +28,9 @@ import subprocess
 from shutil import copyfile
 
 target_os = env.get('TARGET_OS')
-root_dir = env.get('SRC_DIR')
-mbedtls_dir = os.path.join(root_dir, 'extlibs', 'mbedtls', 'mbedtls')
+src_dir = env.get('SRC_DIR')
+build_dir = env.get('BUILD_DIR')
+mbedtls_dir = os.path.join(src_dir, 'extlibs', 'mbedtls', 'mbedtls')
 start_dir = os.getcwd()
 mbedtls_config_file = 'config-iotivity.h' if target_os != 'windows' else 'config-iotivity_windows.h'
 
@@ -110,8 +111,8 @@ os.chdir(start_dir)
 # Copy IoTivity's version of the mbedtls build configuration file
 # from extlibs/mbedtls/iotivity-config.h
 # to extlibs/mbedtls/mbedtls/include/mbedtls/config.h
-iotivity_config = os.path.join(root_dir, 'extlibs', 'mbedtls', mbedtls_config_file)
-mbedtls_config = os.path.join(root_dir, 'extlibs', 'mbedtls', 'mbedtls',
+iotivity_config = os.path.join(src_dir, 'extlibs', 'mbedtls', mbedtls_config_file)
+mbedtls_config = os.path.join(src_dir, 'extlibs', 'mbedtls', 'mbedtls',
                               'include', 'mbedtls', 'config.h')
 
 try:
@@ -219,17 +220,14 @@ mbeX509_src = [
 ]
 
 mbedcrypto_env = mbedtls_env.Clone()
-static_libmbedcrypto = mbedcrypto_env.StaticLibrary('mbedcrypto', mbedcrypto_src)
-mbedcrypto_env.InstallTarget(static_libmbedcrypto, 'mbedcrypto')
+static_libmbedcrypto = mbedcrypto_env.StaticLibrary(build_dir + 'mbedcrypto', mbedcrypto_src)
 mbedcrypto_env.UserInstallTargetLib(static_libmbedcrypto, 'mbedcrypto')
 
 mbex509_env = mbedtls_env.Clone()
 mbex509_env.AppendUnique(LIBS=['mbedcrypto'])
-static_libmbedx509 = mbex509_env.StaticLibrary('mbedx509', mbeX509_src)
-mbex509_env.InstallTarget(static_libmbedx509, 'mbedx509')
+static_libmbedx509 = mbex509_env.StaticLibrary(build_dir + 'mbedx509', mbeX509_src)
 mbex509_env.UserInstallTargetLib(static_libmbedx509, 'mbedx509')
 
 mbedtls_env.AppendUnique(LIBS=['mbedx509', 'mbedcrypto'])
-static_libmbedtls = mbedtls_env.StaticLibrary('mbedtls', mbedtls_src)
-mbedtls_env.InstallTarget(static_libmbedtls, 'mbedtls')
+static_libmbedtls = mbedtls_env.StaticLibrary(build_dir + 'mbedtls', mbedtls_src)
 mbedtls_env.UserInstallTargetLib(static_libmbedtls, 'mbedtls')
