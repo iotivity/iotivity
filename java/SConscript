@@ -233,11 +233,11 @@ if target_os == 'android':
 
 jdk_env = None
 if target_os in ['android']:
-    # IOT-2559 Why does Gradle build require importing the os.environ
-    jdk_env = Environment(ENV=os.environ)
+    # Gradle needs some settings in the environment:
+    jdk_env = env.Clone(ENV={'JAVA_HOME':env['JAVA_HOME'],
+                             'ANDROID_HOME':env['ANDROID_HOME']})
 else:
     jdk_env = env.Clone()
-
 
 cmdBuildApi = []
 cmdBuildExamples = []
