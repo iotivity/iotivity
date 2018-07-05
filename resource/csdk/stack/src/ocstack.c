@@ -4201,10 +4201,11 @@ OCStackResult OC_CALL OCCreateResourceWithEp(OCResourceHandle *handle,
         goto exit;
     }
 
-    // Set resource to nonsecure if caller did not specify
+    // Set resource to secure if caller did not specify
     if ((resourceProperties & OC_MASK_RESOURCE_SECURE) == 0)
     {
-        resourceProperties |= OC_NONSECURE;
+        OIC_LOG_V(INFO, TAG, "%s: Creating Resource %s as OC_SECURE by default.", __func__, uri);
+        resourceProperties |= OC_SECURE;
     }
 
     // Set properties.  Set OC_ACTIVE
@@ -5114,7 +5115,7 @@ OCStackResult initResources(void)
             OC_RSRVD_PRESENCE_URI,
             NULL,
             NULL,
-            OC_OBSERVABLE);
+            OC_OBSERVABLE | OC_NONSECURE);
     //make resource inactive
     result = OCChangeResourceProperty(
             &(((OCResource *) presenceResource.handle)->resourceProperties),
@@ -5134,7 +5135,7 @@ OCStackResult initResources(void)
                                   OC_RSRVD_WELL_KNOWN_URI,
                                   NULL,
                                   NULL,
-                                  0);
+                                  OC_NONSECURE);
         if(result == OC_STACK_OK)
         {
             result = BindResourceInterfaceToResource((OCResource *)wellKnownResource,
@@ -5151,7 +5152,7 @@ OCStackResult initResources(void)
                                   OC_RSRVD_DEVICE_URI,
                                   NULL,
                                   NULL,
-                                  OC_DISCOVERABLE);
+                                  OC_DISCOVERABLE | OC_NONSECURE);
         if(result == OC_STACK_OK)
         {
             result = BindResourceInterfaceToResource((OCResource *)deviceResource,
@@ -5167,7 +5168,7 @@ OCStackResult initResources(void)
                                   OC_RSRVD_PLATFORM_URI,
                                   NULL,
                                   NULL,
-                                  OC_DISCOVERABLE);
+                                  OC_DISCOVERABLE | OC_NONSECURE);
         if(result == OC_STACK_OK)
         {
             result = BindResourceInterfaceToResource((OCResource *)platformResource,
@@ -5199,7 +5200,7 @@ OCStackResult initResources(void)
                                   OC_RSRVD_INTROSPECTION_PAYLOAD_URI_PATH,
                                   NULL,
                                   NULL,
-                                  0);
+                                  OC_NONSECURE);
         if (result == OC_STACK_OK)
         {
             result = BindResourceInterfaceToResource((OCResource *)introspectionPayloadResource,
