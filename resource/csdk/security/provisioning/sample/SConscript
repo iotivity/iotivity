@@ -25,11 +25,6 @@ Import('env provisioning_env')
 provisioning_sample_env = provisioning_env.Clone()
 target_os = provisioning_sample_env.get('TARGET_OS')
 
-#Build cloud library
-if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True:
-    SConscript('../src/cloud/SConscript', 'provisioning_env')
-    provisioning_sample_env.AppendUnique(LIBPATH=[os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk', 'security', 'provisioning', 'src', 'cloud')])
-
 ######################################################################
 # Build flags
 ######################################################################
