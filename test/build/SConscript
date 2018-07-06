@@ -77,10 +77,10 @@ error_msg =  """
 #   ERROR... If you Set TARGET_OS=all, You to have Set TARGET_ARCH=all or you can just          #
 #   avoid this Argument. In this case it will automatically assign TARGET_ARCH like following   #
 #                           linux = x86/x86_64(depending on host)                               #
-#                                   tizen = armv7l                                              # 
+#                                   tizen = armv7l                                              #
 #                                  android = armeabi                                            #
 #                                    arduino = avr                                              #
-#                                    windows = x86                                              #  
+#                                    windows = x86                                              #
 #################################################################################################
 
 """
@@ -217,6 +217,5 @@ if 'tc' in test:
 env.AppendUnique(PLATFORM="win")
 env.AppendUnique(PATH = os.environ['PATH'])
 Export('env')
-env.SConscript('external_libs.scons')
 
 print '---------------Finished Loading Common Config---------------'
