@@ -41,14 +41,19 @@ libcoap_repo_url = 'https://github.com/dthaler/libcoap'
 #libcoap_repo_url    = 'https://github.com/obgm/libcoap'
 
 ######################################################################
-# Check for, and download or possibly update libcoap from git
+# Check for, and possibly update libcoap from git
 ######################################################################
 # The libcoap tag here must match the one in extlibs/libcoap/prep.sh.
 libcoap_version = 'IoTivity-1.4'
 libcoap_dir = os.path.join(src_dir, 'extlibs', 'libcoap', 'libcoap')
+
+# git commands
 libcoap_checkout_cmd = 'git clone ' + libcoap_repo_url + '.git extlibs/libcoap/libcoap -b ' + libcoap_version
 libcoap_update_cmd = 'git fetch --tags && git checkout -f ' + libcoap_version
+libcoap_tag_cmd = 'git tag -l ' + libcoap_version
+libcoap_sync_cmd = 'git checkout -f ' + libcoap_version
 libcoap_chdir_cmd = 'cd ' + libcoap_dir
+
 # define msg strings here so code sequence is readable
 err_nocoap = '''
 *********************************** Error: ************************************
@@ -56,16 +61,19 @@ err_nocoap = '''
 *     $ %s
 *******************************************************************************
 ''' % libcoap_checkout_cmd
+
 info_oldcoap = '''
 ******************************* Info: *****************************************
 * Your libCoAP repo is not up to date with the latest version we require (%s).
 *******************************************************************************
 ''' % libcoap_version
+
 info_updatingcoap = '''
 ******************************* Info: *****************************************
 * Automatically updating libcoap to version %s.
 *******************************************************************************
 ''' % libcoap_version
+
 info_updatecoap = '''
 ******************************* Info: *****************************************
 * Please update using the following commands:
@@ -73,6 +81,7 @@ info_updatecoap = '''
 *   %s
 *******************************************************************************
 ''' % (libcoap_chdir_cmd, libcoap_update_cmd)
+
 info_forkedcoap = '''
 ******************************* Info: *****************************************
 * Using FORKED copy of libCoap located in:
@@ -80,37 +89,42 @@ info_forkedcoap = '''
 *******************************************************************************
 '''
 
-if with_upstream_libcoap == '1'  and os.path.exists(libcoap_dir + '/.git/HEAD'):
-    # If using the github libcoap, check for correctness here
-    # Right now this script assumes the revision is a tag; not a branch or
+if with_upstream_libcoap == '0':
+    print(info_forkedcoap)
+else:
+    # If using the github libcoap, check for correct version
+    # Right now this script assumes the revision is a tag, not a branch or
     # an arbitrary commit. If this changes, update the check below, or else
     # the script will always conclude the repo is not up to date because a tag
     # with that name does not exist.
-    # Tizen uses its own process to prepare the libcoap repo in gbsbuild.sh
-    # and cannot use git during the build.  That process removes .git, 
-    # so we can safely proceed if it is present.
-    print('*** Checking for installation of libCoAP ***')
+    print('*** Checking for installation of libCoAP %s ***' % libcoap_version)
     if not os.path.exists(libcoap_dir):
         Exit(err_nocoap)
 
-    os.chdir(libcoap_dir)
-    out = subprocess.check_output('git tag -l ' + libcoap_version, shell=True).rstrip()
-
-    if libcoap_version not in SCons.Util.to_String(out):
-        print(info_oldcoap)
-        if libcoap_env.get('AUTOMATIC_UPDATE'):
-            print(info_updatingcoap)
-            try:
-                retcode = subprocess.call(libcoap_update_cmd, shell=True)
-                if retcode:
-                    Exit("libcoap: sync failed: " + str(retcode))
-            except OSError as e:
-                Exit("libcoap: execution failed: " + e)
-        else:
-            Exit(info_updatecoap)
-
-else:
-    print(info_forkedcoap)
+    # Tizen uses its own process to prepare the libcoap repo in gbsbuild.sh
+    # and cannot use git during the build. That process removes .git.
+    # Do the git checks only if .git is present.
+    if os.path.exists(libcoap_dir + '/.git/HEAD'):
+        start_dir = os.getcwd()
+        os.chdir(libcoap_dir)
+        out = subprocess.check_output(libcoap_tag_cmd, shell=True).rstrip()
+        if libcoap_version not in SCons.Util.to_String(out):
+            print(info_oldcoap)
+            if libcoap_env.get('AUTOMATIC_UPDATE'):
+                print(info_updatingcoap)
+                try:
+                    retcode = subprocess.call(libcoap_update_cmd, shell=True)
+                    if retcode:
+                        Exit("libcoap: update failed: " + str(retcode))
+                except OSError as e:
+                    Exit("libcoap: execution failed: " + e)
+            else:
+                Exit(info_updatecoap)
+        # to be pedantic, always checkout to the tag
+        retcode = subprocess.call(libcoap_sync_cmd, shell=True)
+        if retcode:
+            Exit("libcoap: checkout failed: " + str(retcode))
+        os.chdir(start_dir)
 
 ######################################################################
 # Build libCoAP
@@ -152,21 +166,22 @@ if env['CC'] == 'cl':
 ######################################################################
 # Source files and Target(s)
 ######################################################################
-config_h_file_path = os.path.join(src_dir, 'extlibs', 'libcoap', 'libcoap', 'include', 'coap', 'coap_config.h')
-if with_upstream_libcoap == '1':
+if with_upstream_libcoap == '0':
+    # For bring up purposes only, the forked version will live here.
+    libcoap_src_root = '#/resource/csdk/connectivity/lib/libcoap-4.1.1/'
+    libcoap_src = Glob(libcoap_src_root + '*.c')
+else:
+    # We need to generate a pair of headers to describe our config
+    coap_h_pc_file = os.path.join(libcoap_dir, 'include', 'coap', 'coap.h.in')
+    config_h_file = os.path.join(libcoap_dir, 'include', 'coap', 'coap_config.h')
     libcoap_env.PrependUnique(CPPPATH=['libcoap/include/coap'])
     libcoap_env.AppendUnique(CPPDEFINES=['WITH_UPSTREAM_LIBCOAP'])
-    libcoap_src_root = os.path.join(libcoap_dir, 'src')
-
-    # We need to generate coap.h from coap.h.in
-    coap_h_pc_file = os.path.join(libcoap_dir, 'include', 'coap', 'coap.h.in')
-    coap_h_output = os.path.join(libcoap_dir, 'include', 'coap', 'coap.h')
 
     # Generate coap_config.h
     target_arch = env.get('TARGET_ARCH')
-    lib_prefix = '' + str(libcoap_env.get('PREFIX'))
+    lib_prefix = '' + str(libcoap_env.get('LIBPREFIX'))
 
-    if not os.path.isfile(config_h_file_path) and env.GetOption not in ('clean', 'help'):
+    if not os.path.isfile(config_h_file) and env.GetOption not in ('clean', 'help'):
         conf = Configure(libcoap_env.Clone(LIBS=[]))
 
         config_h_header = '''
@@ -288,20 +303,15 @@ if with_upstream_libcoap == '1':
 
             conf.Finish()
 
-        # Generate the file
-        if os.path.exists(config_h_file_path):
-            os.remove(config_h_file_path)
-        with open(config_h_file_path, "w") as config_h_file:
-            config_h_file.write(config_h_header + config_h_body + config_h_footer)
+        with open(config_h_file, "w") as configfile:
+            configfile.write(config_h_header + config_h_body + config_h_footer)
 
     # Sanity check to ensure that the above block created the file.
-    if not os.path.exists(config_h_file_path) and not env.GetOption('clean'):
+    if not os.path.exists(config_h_file) and not env.GetOption('clean'):
         msg = "Error: coap_config.h file not created!"
         Exit(msg)
 
-    # We also need to generate coap.h from coap.h.in
-    coap_h_pc_file = os.path.join(libcoap_dir, 'include', 'coap', 'coap.h.in')
-    # substitution table:
+    # Generate coap.h from coap.h.in by substitution
     pc_vars = {
         '@PACKAGE_NAME@': lib_prefix + 'coap',
         '@PACKAGE_STRING@': lib_prefix + 'coap-' + libcoap_version,
@@ -311,15 +321,15 @@ if with_upstream_libcoap == '1':
     }
     libcoap_env.Substfile(coap_h_pc_file, SUBST_DICT=pc_vars)
 
-    # redefine root to be relative to current dir for Glob check
     libcoap_src_root = 'libcoap/src/'
-    libcoap_src = Glob(libcoap_src_root + '*.c',
-                       exclude=libcoap_src_root + 'coap_io_lwip.c')
-else:
-    # For bring up purposes only, the forked version will live here.
-    libcoap_src_root = '#/resource/csdk/connectivity/lib/libcoap-4.1.1/'
-    libcoap_src = Glob(libcoap_src_root + '*.c')
+    try:
+        libcoap_src = Glob(libcoap_src_root + '*.c',
+                           exclude=libcoap_src_root + 'coap_io_lwip.c')
+    except TypeError:   # very old SCons doesn't have 'exclude' in Glob
+        libcoap_src = Glob(libcoap_src_root + '*.c')
+        libcoap_src = [src for src in libcoap_src if 'coap_io_lwip.c' not in src.path]
 
+# finally ready to build:
 libcoap = libcoap_env.StaticLibrary('coap', libcoap_src, OBJPREFIX='libcoap_')
 
 # set for use by other scripts:
@@ -328,6 +338,5 @@ if with_upstream_libcoap == '1':
 else:
     env.AppendUnique(LIBCOAP_INC='#/resource/csdk/connectivity/lib/libcoap-4.1.1/include')
 
-Clean(libcoap, config_h_file_path)
 libcoap_env.InstallTarget([libcoap], 'coap')
 libcoap_env.UserInstallTargetLib(libcoap)
