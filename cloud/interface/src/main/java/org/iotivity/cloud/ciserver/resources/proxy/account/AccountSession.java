@@ -33,6 +33,7 @@ import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
+import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
 
 /**
@@ -67,6 +68,7 @@ public class AccountSession extends Resource {
             request = MessageBuilder.modifyRequest(request, null, uriQuery,
                     ContentFormat.APPLICATION_CBOR,
                     mCbor.encodingPayloadToCbor(payloadData));
+            srcDevice.setParameter(DeviceServerSystem.LOGOUT_DEVICE,true);
         }
         if (!ConnectorPool.containConnection("rd")) {
             // connection is required for proper presence state configuration

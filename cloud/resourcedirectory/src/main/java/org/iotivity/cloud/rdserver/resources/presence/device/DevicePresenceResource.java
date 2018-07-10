@@ -116,7 +116,6 @@ public class DevicePresenceResource extends Resource {
                 Arrays.asList(Constants.DEVICE_ID, Constants.PRESENCE_STATE),
                 parsedPayload);
 
-        // store db
         PresenceManager.getInstance().updateDevicePresence(parsedPayload);
 
         // notification to observers

@@ -24,6 +24,7 @@ package org.iotivity.cloud.ciserver;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +71,8 @@ public class DeviceServerSystem extends ServerSystem {
     private final static Logger                           Log     = LoggerFactory.getLogger(DeviceServerSystem.class);
     private Cbor<HashMap<String, Object>>                 mCbor   = new Cbor<HashMap<String, Object>>();
     private HashMap<ChannelHandlerContext, CoapSignaling> mCsmMap = new HashMap<>();
+
+    public static final String LOGOUT_DEVICE = "LOGOUT_DEVICE";
 
     /**
      *
@@ -230,7 +233,10 @@ public class DeviceServerSystem extends ServerSystem {
 
                 switch (urlPath) {
                     case OICConstants.ACCOUNT_SESSION_FULL_URI:
-                        if (response.getStatus() != ResponseStatus.CHANGED) {
+                        final Device device = ctx.channel()
+                                .attr(keyDevice).get();
+                        if(device.existParameter(LOGOUT_DEVICE)){
+                            Log.debug("Device: {} was logout. ", device.getDeviceId());
                             bCloseConnection = true;
                         }
                         break;
@@ -243,9 +249,8 @@ public class DeviceServerSystem extends ServerSystem {
             }
 
             ctx.writeAndFlush(msg);
-
-            if (bCloseConnection == true) {
-                ctx.close();
+            if (bCloseConnection ) {
+                closeTcpConnection(ctx);
             }
         }
 
@@ -285,6 +290,20 @@ public class DeviceServerSystem extends ServerSystem {
                     ctx.channel().attr(keyDevice).remove();
                 }
             }
+        }
+
+        private void closeTcpConnection(final ChannelHandlerContext ctx){
+            CompletableFuture.runAsync(()->{
+                try {
+                    Thread.sleep(500);
+                    final Device device = ctx.channel()
+                            .attr(keyDevice).get();
+                    Log.info("After sign-out, close channel for device: {}",device.getDeviceId());
+                    ctx.close().awaitUninterruptibly();
+                } catch (InterruptedException e) {
+                    Log.error("Unable to sleep: ",e);
+                }
+            });
         }
 
         /**
