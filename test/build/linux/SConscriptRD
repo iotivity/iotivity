@@ -88,25 +88,25 @@ cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermis
 libs = Split('connectivity_abstraction oc octbstack coap resource_directory boost_system boost_filesystem boost_thread dl expat oc oc_logger oc_logger_core coap glib-2.0 gcov uuid scene_manager rcs_client rcs_server rcs_common common_util pthread')
 
 if 'tc' in test:
-    rd_tc = env_linux.Program(source = tc_src, 
-                target = 'iotivity_rd_test', 
-                CPPPATH = iotivity_include_paths + tc_include_paths, 
-                LIBS = libs + ['gtest', 'tc_util', 'pthread', 'octbstack', 'connectivity_abstraction', 'dl'], 
-                LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.'], 
-                CPPFLAGS = cppflags + common_linux_cppflags, 
+    rd_tc = env_linux.Program(source = tc_src,
+                target = 'iotivity_rd_test',
+                CPPPATH = iotivity_include_paths + tc_include_paths,
+                LIBS = libs + ['gtest', 'tc_util', 'pthread', 'octbstack', 'connectivity_abstraction', 'dl'],
+                LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.'],
+                CPPFLAGS = cppflags + common_linux_cppflags,
                 RPATH = iotivity_lib_path)
     install_targets += rd_tc
-
+'''
 if 'app' in test:
-    rd_testapp = env_linux.Program(source = testapp_src, 
-                    target = 'rd_testapp', 
-                    CPPPATH = iotivity_include_paths + testapp_include_paths, 
-                    LIBS = libs + ['octbstack', 'connectivity_abstraction', 'dl'], 
+    rd_testapp = env_linux.Program(source = testapp_src,
+                    target = 'rd_testapp',
+                    CPPPATH = iotivity_include_paths + testapp_include_paths,
+                    LIBS = libs + ['octbstack', 'connectivity_abstraction', 'dl'],
                     LIBPATH = [iotivity_lib_path, '.'],
-                    CPPFLAGS = cppflags + common_linux_cppflags, 
+                    CPPFLAGS = cppflags + common_linux_cppflags,
                     RPATH = iotivity_lib_path)
     install_targets += rd_testapp
-
+'''
 install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
 
 delete_bin = []
