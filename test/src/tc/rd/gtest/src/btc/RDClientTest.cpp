@@ -82,7 +82,7 @@ TEST_F(RDClientTest_btc, RDPublishPort_NV_N)
         OCStackResult actualResult = m_rdHelper->rdPublish(ipAddressOfRD,RD_UNIT16_PORT_NULL,RD_NUMBER_OF_REGISTER_RESOURCE_ZERO);
         CommonUtil::waitInSecond(RD_SLEEPTIME_MAX);
 
-        EXPECT_EQ(OC_STACK_NO_MEMORY,actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(actualResult);
+        EXPECT_EQ(OC_STACK_ERROR,actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(actualResult);
     }
     catch (std::exception &ex)
     {
@@ -121,7 +121,7 @@ TEST_F(RDClientTest_btc, RDPublishAddress_NV_N)
         OCStackResult actualResult = m_rdHelper->rdPublish(ipAddressOfRD,RD_UNIT16_PORT,RD_NUMBER_OF_REGISTER_RESOURCE_ZERO);
         CommonUtil::waitInSecond(RD_SLEEPTIME_MAX);
 
-        EXPECT_EQ(OC_STACK_INVALID_PARAM,actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(actualResult);
+        EXPECT_EQ(OC_STACK_INVALID_IP,actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(actualResult);
     }
     catch (std::exception &ex)
     {
@@ -140,7 +140,7 @@ TEST_F(RDClientTest_btc, RDPublishAddress_NV_N)
  *                                                   const std::string& resourceTypeName,const std::string& resourceInterface,
  *                                                    EntityHandler entityHandler,uint8_t resourceProperty)
  * @see                OCStackResult unregisterResource(const OCResourceHandle& resourceHandle)
- * @objective         Test publishing resource without registerResource that will return OC_STACK_NO_MEMORY
+ * @objective         Test publishing resource without registerResource that will return OC_STACK_INVALID_PARAM
  * @target             OCRDPublish();
  * @test_data         1. addr (addr The IP address of the RD, it could be either retrieved via OCRDDiscover())
  *                     2. port The port of the RD
@@ -150,7 +150,7 @@ TEST_F(RDClientTest_btc, RDPublishAddress_NV_N)
  *                     4. Call OCRDDiscover to find the RD server
  * @procedure         Call OCRDPublish
  * @post_condition     Call registerResource to registers a resource with the server that will be unregister in tear down
- * @expected         Publish will not succeed and will return OC_STACK_NO_MEMORY
+ * @expected         Publish will not succeed and will return OC_STACK_INVALID_PARAM
  */
 #if defined(__LINUX__) || defined(__WINDOWS__)
 TEST_F(RDClientTest_btc, RDPublishWithoutRegisterRD_NV_N)
@@ -161,7 +161,7 @@ TEST_F(RDClientTest_btc, RDPublishWithoutRegisterRD_NV_N)
         CommonUtil::waitInSecond(RD_SLEEPTIME_MAX);
 
         OCStackResult actualResultPublish = m_rdHelper->rdPublish();
-        EXPECT_EQ(OC_STACK_NO_MEMORY,actualResultPublish) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(actualResultPublish);
+        EXPECT_EQ(OC_STACK_INVALID_PARAM,actualResultPublish) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(actualResultPublish);
 
         m_rdHelper->registerLocalResources();
         CommonUtil::waitInSecond(RD_SLEEPTIME_MAX);

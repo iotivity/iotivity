@@ -82,13 +82,13 @@ TEST_F(RDServerTest_btc, StartRDServer_SRC_P)
  * @since             2015-08-26
  * @see                OCStackResult OCRDStop()
  * @objective         Test RD stop without calling OCRDStart and observed that
- *                     API will not crashed and will be return OC_STACK_ERROR
+ *                     API will not crashed and will be return OC_STACK_NO_RESOURCE
  * @target             OCStackResult OCRDStop();
  * @test_data         none
  * @pre_condition     none
  * @procedure         Call stop RD.
  * @post_condition     none
- * @expected         OCRDStop will be executed and will return OC_STACK_ERROR
+ * @expected         OCRDStop will be executed and will return OC_STACK_NO_RESOURCE
  */
 #if defined(__LINUX__) || defined(__WINDOWS__)
 TEST_F(RDServerTest_btc, StopRDServer_ETC_P)
@@ -96,7 +96,7 @@ TEST_F(RDServerTest_btc, StopRDServer_ETC_P)
     try
     {
         OCStackResult actualResult = m_rdHelper->rdStopServer();
-        ASSERT_EQ(OC_STACK_ERROR,actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(actualResult);
+        ASSERT_EQ(OC_STACK_NO_RESOURCE,actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(actualResult);
     }
     catch (std::exception &ex)
     {
