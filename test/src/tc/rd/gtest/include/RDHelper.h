@@ -146,16 +146,6 @@ public:
     OCStackResult rdPublish(char *addr,uint16_t port,int num);
 
     /**
-    * @brief   				Checks based on the resource type if the entity exists in the resource directory
-    * @param interfaceType 	A interface type that is being queried
-    * @param resourceType 	A resource type that is being queried
-    * @param payload 		A payload of the matching resource type or interface type or NULL
-    * @param addr 			A device address
-    * @return 				::OC_STACK_OK upon success, ::OC_STACK_ERROR is returned except the case that OC_STACK_SUCCESS is returned
-    */
-   // OCStackResult rdCheckPublishedResource(const char *interfaceType, const char *resourceType);
-
-    /**
     * @brief   				Publish resource on the RD
     * @returns 				::OC_STACK_OK when successful and OC_STACK_ERROR when query failed
     */

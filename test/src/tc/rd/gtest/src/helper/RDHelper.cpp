@@ -265,24 +265,6 @@ OCStackResult RDHelper::rdPublish(char *addr,uint16_t port,int num)
     }
 }
 
-#if defined(__WINDOWS__)
-OCStackResult RDHelper::rdCheckPublishedResource(const char *interfaceType, const char *resourceType)
-{
-    try
-    {
-        OCDiscoveryPayload *payload=NULL;
-        OCStackResult actualResult = OCRDCheckPublishedResource(interfaceType,resourceType,&payload);
-        IOTIVITYTEST_LOG(DEBUG, "OCRDCheckPublishedResource result is: %s \n",CommonUtil::s_OCStackResultString.at(actualResult).c_str());
-        return actualResult;
-    }
-    catch (std::exception &ex)
-    {
-        IOTIVITYTEST_LOG(INFO, "Exception: %s in rdCheckPublishedResource",ex.what());
-        return OC_STACK_ERROR;
-    }
-}
-#endif
-
 void RDHelper::startClient()
 {
     PlatformConfig config { OC::ServiceType::InProc, ModeType::Both, "0.0.0.0",0, OC::QualityOfService::LowQos };
