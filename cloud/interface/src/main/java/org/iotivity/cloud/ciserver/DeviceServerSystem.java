@@ -73,7 +73,7 @@ public class DeviceServerSystem extends ServerSystem {
     private HashMap<ChannelHandlerContext, CoapSignaling> mCsmMap = new HashMap<>();
 
     public static final String LOGOUT_DEVICE = "LOGOUT_DEVICE";
-
+    public static final String EMPTY_CHANNEL = "EMPTY_CHANNEL";
     /**
      *
      * This class provides a set of APIs to manage device pool.
@@ -280,7 +280,9 @@ public class DeviceServerSystem extends ServerSystem {
             if (device != null) {
                 Log.debug("Device: {} offline ", device.getDeviceId());
                 try {
-                    sendDevicePresence(device.getDeviceId(), "off");
+                    if(!device.existParameter(DeviceServerSystem.EMPTY_CHANNEL)){
+                        sendDevicePresence(device.getDeviceId(), "off");
+                    }
                 } catch (ServerException.ServiceUnavailableException e) {
                     Log.warn(e.getMessage());
                     ctx.close();

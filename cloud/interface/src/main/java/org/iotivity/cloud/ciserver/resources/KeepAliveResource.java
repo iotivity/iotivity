@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.stream.Collectors;
 
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
@@ -39,8 +40,12 @@ import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
+import org.iotivity.cloud.ciserver.CloudInterfaceServer;
 import org.iotivity.cloud.ciserver.Constants;
+import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -49,6 +54,7 @@ import org.iotivity.cloud.util.Cbor;
  *
  */
 public class KeepAliveResource extends Resource {
+    private final static Logger Log = LoggerFactory.getLogger(KeepAliveResource.class);
     private int[]                         mIntervals      = null;
     private Timer                         mTimer          = new Timer();
     private Cbor<HashMap<String, Object>> mCbor           = new Cbor<>();
@@ -142,6 +148,15 @@ public class KeepAliveResource extends Resource {
                     if (lifeTime != null && lifeTime < currentTime) {
                         deleteList.add(device);
                     }
+                }
+            }
+
+            for(final Device device : deleteList){
+                final List<Device> samedevice = map.keySet().stream().filter(d -> (d.getDeviceId().compareTo(device.getDeviceId()) == 0
+                        && d.getCtx().channel().id().asLongText().compareTo(device.getCtx().channel().id().asLongText()) != 0)).collect(Collectors.toList());
+                if(samedevice != null && samedevice.size() > 0){
+                    Log.info("Channel for device: {} is empty", device.getDeviceId());
+                    device.setParameter(DeviceServerSystem.EMPTY_CHANNEL,true);
                 }
             }
 
