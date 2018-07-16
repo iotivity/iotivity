@@ -58,7 +58,7 @@ bool UpdateCloudPersistentStorage();
 /**
 * SignOut & release clouds
 */
-void StopClouds();
+void CloudsSignOut();
 
 /**
 * Release cloud entries

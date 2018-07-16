@@ -523,6 +523,13 @@ CAResult_t CAStopTCP()
 {
     CAIPStopNetworkMonitor(CA_ADAPTER_TCP);
 
+    /* Some times send queue thread fails to terminate as it's worker
+       thread gets blocked at TCP session's socket connect operation.
+       So closing sockets which are in connect operation at the time
+       of termination of adapter would save send queue thread from
+       getting blocked. */
+    CATCPCloseInProgressConnections();
+
     if (g_sendQueueHandle && g_sendQueueHandle->threadMutex)
     {
         CAQueueingThreadStop(g_sendQueueHandle);

@@ -1,5 +1,5 @@
 Name: iotivity
-Version: %{!?version:1.4.0}%{?version}
+Version: %{!?version:2.0.0}%{?version}
 Release: %{!?release:0}%{?release}
 Summary: IoT Connectivity sponsored by OCF
 Group: Network & Connectivity / IoT Connectivity
@@ -212,10 +212,6 @@ rm -rf %{buildroot}
 CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
 SCONSFLAGS="%{SCONSFLAGS}" ; export SCONSFLAGS;
 scons --install-sandbox=%{buildroot} install
-
-
-find "%{buildroot}" -type f -perm u+x -exec chrpath -d "{}" \;
-find "%{buildroot}" -type f -iname "lib*.so" -exec chrpath -d "{}" \;
 
 # Support legacy path (transitional, use pkg-config)
 ln -fs iotivity/resource %{buildroot}%{_includedir}/

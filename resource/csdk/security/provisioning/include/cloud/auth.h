@@ -126,6 +126,12 @@ OCStackResult OCCloudSignOut(OicCloud_t *cloud);
 OicCloud_t *FreeCloud(OicCloud_t *cloud);
 
 /**
+ * Stop update session
+ * @param[in] cloud
+ */
+void StopCloudRefresh(OicCloud_t *cloud);
+
+/**
  * Cloud to CBOR
  *
  * @param[in] cloud

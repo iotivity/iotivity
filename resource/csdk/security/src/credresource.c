@@ -3312,7 +3312,8 @@ void GetIdentityHandler(UuidContext_t* ctx, unsigned char* crt, size_t crtLen)
         {
             continue;
         }
-        if (0 == strcmp(cred->credUsage, TRUST_CA) && 0 == strcmp(cred->credUsage, MF_TRUST_CA))
+
+        if (0 != strcmp(cred->credUsage, TRUST_CA))
         {
             continue;
         }
@@ -3335,17 +3336,20 @@ void GetIdentityHandler(UuidContext_t* ctx, unsigned char* crt, size_t crtLen)
             derLen = cred->publicData.len;
         }
 
-        if (derLen != crtLen)
+        if (derLen != crtLen || 0 != memcmp(der, crt, crtLen))
         {
+            if (der != cred->publicData.data)
+            {
+                OICFree(der);
+            }
             continue;
         }
-
-        if (0 != memcmp(der, crt, crtLen))
+        if (der != cred->publicData.data)
         {
-            continue;
+            OICFree(der);
         }
 
-        UuidInfo_t* node = (UuidInfo_t*) malloc(sizeof(UuidInfo_t));
+        UuidInfo_t* node = (UuidInfo_t*) OICMalloc(sizeof(UuidInfo_t));
         if (NULL == node)
         {
             OIC_LOG_V(ERROR, TAG, "%s: Could not allocate new UUID node", __func__);
@@ -3367,7 +3371,7 @@ void GetIdentityHandler(UuidContext_t* ctx, unsigned char* crt, size_t crtLen)
         else
         {
             OIC_LOG_V(ERROR, TAG, "%s: Failed to convert subjectuuid to string", __func__);
-            free(node);
+            OICFree(node);
         }
     }
 }

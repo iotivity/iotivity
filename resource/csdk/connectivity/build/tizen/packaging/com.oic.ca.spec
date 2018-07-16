@@ -4,7 +4,7 @@
 %define DEST_LIB_DIR  %{buildroot}/%{_libdir}
 
 Name: com-oic-ca
-Version:    1.4.0
+Version:    2.0.0
 Release:    0
 Summary: Tizen oicca application
 Group: Network & Connectivity / IoT Connectivity

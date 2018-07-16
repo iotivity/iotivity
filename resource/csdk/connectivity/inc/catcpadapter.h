@@ -206,12 +206,14 @@ CAResult_t CAStopTCP(void);
  */
 void CATerminateTCP(void);
 
+#ifdef TCP_ADAPTER
 /**
  * Set connection status changes callback to process KeepAlive.
  * connection informations are delivered these callbacks.
  * @param[in]   ConnHandler     Connection status changes callback.
  */
 void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectionCallback ConnHandler);
+#endif
 
 /**
  * Get Capability and Settings message(CSM) exchange state.

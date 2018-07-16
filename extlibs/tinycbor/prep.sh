@@ -61,7 +61,8 @@ For more support please refer to:
 https://wiki.iotivity.org/build
 EOF
         exit 2
-    elif [ -d "${packageDir}/.git" ]; then
+    fi
+    if [ -d "${packageDir}/.git" ]; then
         cd "${packageDir}"
         git reset --hard "${packageRevision}"
         cd -

@@ -1674,3 +1674,27 @@ void CAUpdateCSMState(const CAEndpoint_t *endpoint, CACSMExchangeState_t state)
     oc_mutex_unlock(g_mutexObjectList);
     return;
 }
+
+void CATCPCloseInProgressConnections()
+{
+    OIC_LOG(INFO, TAG, "IN - CATCPCloseInProgressConnections");
+
+#ifndef WSA_WAIT_EVENT_0
+    oc_mutex_lock(g_mutexObjectList);
+
+    CATCPSessionInfo_t *session = NULL;
+    LL_FOREACH(g_sessionList, session)
+    {
+        if (session && session->fd >= 0 && session->state == CONNECTING)
+        {
+            shutdown(session->fd, SHUT_RDWR);
+            close(session->fd);
+            session->fd = -1;
+            session->state = DISCONNECTED;
+        }
+    }
+
+    oc_mutex_unlock(g_mutexObjectList);
+#endif
+    OIC_LOG(INFO, TAG, "OUT - CATCPCloseInProgressConnections");
+}

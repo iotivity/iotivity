@@ -374,10 +374,25 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
         OIC_LOG_V(DEBUG, TAG, "token info token length: %d, token :", tokenLength);
         OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)info->token, tokenLength);
 
-        int32_t ret = coap_add_token2(pdu, tokenLength, (unsigned char *)info->token, *transport);
-        if (0 == ret)
+        if (info->payloadSize == 0 && (code == CA_CSM || code == CA_PING ||
+                                       code == CA_PONG || code == CA_RELEASE ||
+                                       code == CA_ABORT))
         {
-            OIC_LOG(ERROR, TAG, "can't add token");
+            int32_t ret = coap_add_token_to_empty_message(pdu, tokenLength,
+                            (unsigned char *)info->token, *transport);
+            if (0 == ret)
+            {
+                OIC_LOG(ERROR, TAG, "can't add token");
+            }
+        }
+        else
+        {
+            int32_t ret = coap_add_token2(pdu, tokenLength, (unsigned char *)info->token,
+                            *transport);
+            if (0 == ret)
+            {
+                OIC_LOG(ERROR, TAG, "can't add token");
+            }
         }
     }
 

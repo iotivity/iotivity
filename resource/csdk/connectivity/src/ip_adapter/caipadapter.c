@@ -31,6 +31,9 @@
 #ifdef __WITH_DTLS__
 #include "ca_adapter_net_ssl.h"
 #endif
+#ifdef WITH_TCP
+#include "catcpinterface.h"
+#endif
 #include "octhread.h"
 #include "uarraylist.h"
 #include "caremotehandler.h"
@@ -177,6 +180,9 @@ void CAIPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
     {
         OIC_LOG(DEBUG, TAG, "Network status for IP is down");
 #ifdef __WITH_DTLS__
+#ifdef TCP_ADAPTER
+        CATCPCloseInProgressConnections();
+#endif
         OIC_LOG(DEBUG, TAG, "close all ssl session");
         CAcloseSslConnectionAll(CA_ADAPTER_IP);
 #endif
