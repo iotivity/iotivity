@@ -53,7 +53,7 @@ if target_os not in ['windows']:
 if target_os in ['darwin', 'ios']:
     env.AppendUnique(CPPDEFINES=['_DARWIN_C_SOURCE'])
 
-env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
+env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra'])
 env.PrependUnique(LIBS=['telegesis_wrapper'])
 
 #####################################################################

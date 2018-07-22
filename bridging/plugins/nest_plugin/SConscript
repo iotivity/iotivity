@@ -70,7 +70,7 @@ if target_os in ['darwin', 'ios']:
 
 if 'g++' in nest_env.get('CXX'):
     nest_env.AppendUnique(
-        CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
+        CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra'])
 
 if nest_env.get('LOGGING'):
     nest_env.AppendUnique(CPPDEFINES=['TB_LOG'])
