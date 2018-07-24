@@ -133,10 +133,10 @@ task nsbuild (dependsOn:['assemble']){
             dependencies {
                 compile fileTree(dir: "${javaExtLibDir}", include: ['*.jar'])
                 compile(name:"${iotivityBaseAARFile}", ext:'aar')
-                compile(name: "iotivity-${arch}-service-${release}", ext:'aar')
-                compile(name:"iotivity-${architecture}-notification-service-${release}", ext:'aar')
+                compile(name: "iotivity-service-${release}", ext:'aar')
+                compile(name:"iotivity-notification-service-${release}", ext:'aar')
             }
-        }   
+        }
     }
 
     buildFatJar(src_type)

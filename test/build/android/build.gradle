@@ -35,7 +35,7 @@ import de.undercouch.gradle.tasks.download.Download
 
 ext.javaExtLibDir = ""
 ext.iotivityBaseAARFileDir = "${iotivity_root}/java/iotivity-android/build/outputs/aar"
-ext.iotivityBaseAARFile ="${iotivityBaseAARFileDir}/iotivity-base-armeabi-release"
+ext.iotivityBaseAARFile ="${iotivityBaseAARFileDir}/iotivity-base-release"
 
 def downLoadLinks=['https://github.com/downloads/jsankey/android-junit-report/android-junit-report-1.5.8.jar',
                    'https://repo1.maven.org/maven2/org/mockito/mockito-all/1.9.5/mockito-all-1.9.5.jar',
@@ -63,7 +63,7 @@ task checkCommonLibFiles(type:Download) {
 task checkBaseAARFile {
 
 	ext.iotivityBaseAARFileDir = "${iotivity_root}/java/iotivity-android/build/outputs/aar"
-	ext.iotivityBaseAARFile ="${iotivityBaseAARFileDir}/iotivity-base-armeabi-release"
+	ext.iotivityBaseAARFile ="${iotivityBaseAARFileDir}/iotivity-base-release"
 
     println iotivityBaseAARFileDir
     println iotivityBaseAARFile+".aar"
@@ -92,7 +92,7 @@ task install(type: GradleBuild, dependsOn: ['checkCommonLibFiles']) {
     startParameter.projectProperties["binDir"] = "${test_root}/bin/${src_type}/${module_name}"
 
     startParameter.projectProperties["iotivityBaseAARFileDir"] = "${test_root}/bin/${src_type}/${module_name}"
-    startParameter.projectProperties["iotivityBaseAARFile"] = "iotivity-base-${arch}-${release}"
+    startParameter.projectProperties["iotivityBaseAARFile"] = "iotivity-base-${release}"
 
     def junitJarFile = startParameter.projectProperties["javaExtLibDir"] + "/android-junit-report-1.5.8.jar"
     def mockitoallJarFile = startParameter.projectProperties["javaExtLibDir"] +  "/mockito-all-1.9.5.jar"
