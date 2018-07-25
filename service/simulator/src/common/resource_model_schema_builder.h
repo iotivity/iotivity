@@ -23,6 +23,7 @@
 
 #include "simulator_resource_model_schema.h"
 
+/** RAML namespace */
 namespace RAML
 {
     class RequestResponseBody;
@@ -31,9 +32,16 @@ namespace RAML
     enum class VariantType;
 }
 
+/**
+ * @class ResourceModelSchemaBuilder
+ */
 class ResourceModelSchemaBuilder
 {
     public:
+        /**
+         * resource model schema builder
+         * @param[in] ramlSchema   RAML schema
+         */
         ResourceModelSchemaBuilder(const std::shared_ptr<RAML::RequestResponseBody> &ramlSchema);
         std::shared_ptr<SimulatorResourceModelSchema> build();
 

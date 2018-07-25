@@ -26,21 +26,35 @@
 #include "attribute_generator.h"
 #include "request_sender.h"
 
+/**
+ * @class RequestModel
+ */
 class RequestModel;
 class POSTRequestGenerator : public RequestGeneration
 {
     public:
+        /**
+         * constructor
+         * @param[in] id            identity
+         * @param[in] ocResource    oc resource
+         * @param[in] requestSchema request schema
+         * @param[in] callback      callback function
+         */
         POSTRequestGenerator(int id, const std::shared_ptr<OC::OCResource> &ocResource,
                              const std::shared_ptr<RequestModel> &requestSchema,
                              ProgressStateCallback callback);
 
+        /** start sending requests */
         void startSending();
+        /** stop sending requests */
         void stopSending();
 
     private:
+        /** send all requests */
         void SendAllRequests();
         void onResponseReceived(SimulatorResult result,
                                 const SimulatorResourceModel &repModel, const RequestInfo &reqInfo);
+        /** completed event */
         void completed();
 
         bool m_stopRequested;

@@ -25,6 +25,9 @@
 #include <map>
 #include <string>
 
+/**
+ * @class JniQueryParameter
+ */
 class JniQueryParameter
 {
     public:

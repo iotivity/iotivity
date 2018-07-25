@@ -21,9 +21,13 @@
 #ifndef JNI_LISTENER_HOLDER_H_
 #define JNI_LISTENER_HOLDER_H_
 
+/**
+ * @class JniListenerHolder
+ */
 class JniListenerHolder
 {
     public:
+         /** constructor */
         ~JniListenerHolder()
         {
             JNIEnv *env = GetEnv();
@@ -35,11 +39,13 @@ class JniListenerHolder
             ReleaseEnv();
         }
 
+        /** This method is to get the listener object */
         jobject get()
         {
             return m_listener;
         }
 
+        /** This method is to create the new listener */
         static std::shared_ptr<JniListenerHolder> create(JNIEnv *env, jobject &listener)
         {
             return std::shared_ptr<JniListenerHolder>(new JniListenerHolder(env, listener));

@@ -24,6 +24,7 @@
 #include "request_model.h"
 #include "response_model.h"
 
+/** Raml namespace */
 namespace RAML
 {
     class Raml;
@@ -33,11 +34,27 @@ namespace RAML
     class RequestResponseBody;
 }
 
+/**
+ * @class RequestModelBuilder
+ * This class is to construct Request and Response Model from RAML
+ * get, put, post, delete are the all request and response actions
+ */
 class RequestModelBuilder
 {
     public:
+        /**
+         * build the request model for the given URI information
+         * @param[in] raml     RAML object
+         * @param[in] uri      resource URI
+         * @return class object
+         */
         std::unordered_map<std::string, RequestModelSP> build(
             const std::shared_ptr<RAML::Raml> &raml, const std::string &uri);
+        /**
+         * build the request model for the given resource information
+         * @param[in] resource   RAML resource
+         * @return class object
+         */
         std::unordered_map<std::string, RequestModelSP> build(
             const std::shared_ptr<RAML::RamlResource> &resource);
 

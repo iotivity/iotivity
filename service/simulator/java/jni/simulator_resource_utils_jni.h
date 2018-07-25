@@ -26,10 +26,39 @@
 #include "simulator_collection_resource.h"
 #include "simulator_remote_resource.h"
 
+/**
+ * API to create the single resource
+ *
+ * @return resource object
+ */
 jobject CreateSingleResource(JNIEnv *env, SimulatorResourceSP singleResource);
+
+/**
+ * API to create collection resource
+ *
+ * @return resource object
+ */
 jobject CreateCollectionResource(JNIEnv *env, SimulatorResourceSP collectionResource);
+
+/**
+ * API to create simulator resource
+ *
+ * @return resource object
+ */
 jobject CreateSimulatorResource(JNIEnv *env, SimulatorResourceSP resource);
+
+/**
+ * API to create simulator resource vector
+ *
+ * @return vector object
+ */
 jobject CreateSimulatorResourceVector(JNIEnv *env, std::vector<SimulatorResourceSP> &resources);
+
+/**
+ * API to create simulator remote resource
+ *
+ * @return resource object
+ */
 jobject CreateSimulatorRemoteResource(JNIEnv *env, SimulatorRemoteResourceSP &remoteResource);
 
 #endif

@@ -27,6 +27,9 @@
 #ifndef ACTION_TYPE_H
 #define ACTION_TYPE_H
 
+/**
+ * RAML namespace
+ */
 namespace RAML
 {
     /** ActionType - This class provides data Model for RAML ActionType. */

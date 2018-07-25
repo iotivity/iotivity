@@ -25,18 +25,27 @@
 #include <map>
 #include <vector>
 
+/**
+ * @class QPGenerator
+ */
 class QPGenerator
 {
     public:
+        /** query parameter detail structure */
         typedef struct
         {
-            std::string key;
-            std::vector<std::string> values;
-            std::size_t index;
+            std::string key;                 /**< identity of detail */
+            std::vector<std::string> values; /**< parameter value */
+            std::size_t index;               /**< index of detail */
         } QPDetail;
 
         QPGenerator() = default;
+        /**
+         * This method is for query parameter generator
+         * @param[in] queryParams    query parameter
+         */
         QPGenerator(const std::map<std::string, std::vector<std::string>> &queryParams);
+        /** check the next parameter from list */
         bool hasNext();
         std::map<std::string, std::string> next();
 

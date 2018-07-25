@@ -26,37 +26,136 @@
 #include "request_model.h"
 #include "RamlParser.h"
 
+/**
+ * @class SimulatorResourceFactory
+ */
 class SimulatorResourceFactory;
 class SimulatorCollectionResourceImpl : public SimulatorCollectionResource
 {
     public:
         friend class SimulatorResourceFactory;
 
+        /**
+         * check collection resource
+         * @return boolean value
+         */
         bool isCollection() const;
+        /**
+         * set the resource name
+         * @param[in] name   resource name
+         */
         void setName(const std::string &name);
+        /**
+         * set uri information
+         * @param[in] uri   resource uri
+         */
         void setURI(const std::string &uri);
+        /**
+         * set resource type
+         * @param[in] resourceType   resource type
+         */
         void setResourceType(const std::string &resourceType);
+        /**
+         * set interface type
+         * @param[in] interfaceType  interface type
+         */
         void setInterface(const std::string &interfaceType);
+        /**
+         * set interface type
+         * @param[in] interfaceTypes  interface types
+         */
         void setInterface(const std::vector<std::string> &interfaceTypes);
+        /**
+         * add the new interface
+         * @param[in] interfaceType  interface type
+         */
         void addInterface(const std::string &interfaceType);
+        /**
+         * set the observable state information
+         * @param[in] state   value to set
+         */
         void setObservable(bool state);
+        /**
+         * set discoverable state information
+         * @param[in] state   value to set
+         */
         void setDiscoverable(bool state);
+        /**
+         * set observer callback
+         * @param[in] callback   observer callback function
+         */
         void setObserverCallback(ObserverCallback callback);
+        /**
+         * set model change callback
+         * @param[in] callback   callback function
+         */
         void setModelChangeCallback(ResourceModelUpdateCallback callback);
+        /**
+         * check observable value
+         * @return boolean value
+         */
         bool isObservable() const;
+        /**
+         * check discoverable value
+         * @return boolean value
+         */
         bool isDiscoverable() const;
+        /**
+         * check resource observation started or not
+         * @return boolean value
+         */
         bool isStarted() const;
+        /**
+         * start resource
+         */
         void start();
+        /**
+         * stop resource
+         */
         void stop();
+        /**
+         * get resource model information
+         * @return resource model object
+         */
         SimulatorResourceModel getResourceModel();
+        /**
+         * get observers details
+         * @return observer object
+         */
         std::vector<ObserverInfo> getObservers() const;
+        /**
+         * notify to given Id
+         * @param[in] observerID   observer id
+         */
         void notify(int observerID);
+        /**
+         * notify to all
+         */
         void notifyAll();
-
+        /**
+         * get supported resources information
+         * @return supported resource object
+         */
         std::vector<std::string> getSupportedResources();
+        /**
+         * add child resource information
+         * @param[in] resource    simulator resource
+         */
         void addChildResource(const std::shared_ptr<SimulatorResource> &resource);
+        /**
+         * remove child resource information
+         * @param[in] resource    simulator resource
+         */
         void removeChildResource(const std::shared_ptr<SimulatorResource> &resource);
+        /**
+         * remove child resource
+         * @param[in] uri   resource URI
+         */
         void removeChildResource(const std::string &uri);
+        /**
+         * get child resources information
+         * @return resource object
+         */
         std::vector<SimulatorResourceSP> getChildResources();
 
     private:

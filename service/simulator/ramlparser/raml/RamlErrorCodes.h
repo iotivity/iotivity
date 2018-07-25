@@ -30,8 +30,8 @@
 /** RamlParserResult - This enum provides list of error codes from RamlParser*/
 typedef enum
 {
-    RAML_PARSER_OK = 0,
-    RAML_FILE_PATH_REQUIRED,
-    RAML_PARSER_ERROR = 255
+    RAML_PARSER_OK = 0,                /**< RAML parser success */
+    RAML_FILE_PATH_REQUIRED,           /**< RAML file path is required */
+    RAML_PARSER_ERROR = 255            /**< RAML parser error */
 } RamlParserResult;
 #endif

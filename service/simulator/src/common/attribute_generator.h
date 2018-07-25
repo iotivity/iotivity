@@ -25,16 +25,44 @@
 #include "simulator_resource_model.h"
 #include "attribute_value_generator.h"
 
+/**
+ * @class AttributeGenerator
+ */
 class AttributeGenerator
 {
     public:
+        /**
+         * This method is to generate the attribute
+         * @param[in] attribute  resource attribute
+         */
         AttributeGenerator(const SimulatorResourceAttribute &attribute);
+        /**
+         * This method is to generate the attribute
+         * @param[in] name       attribute name
+         * @param[in] property   attribute property
+         */
         AttributeGenerator(const std::string &name,
                            const std::shared_ptr<AttributeProperty> &property);
 
+        /**
+         * Check the attribute next value
+         * and return the value otherwise return the false
+         * @return boolean value
+         */
         bool hasNext();
+        /**
+         * This method is to generate the next attribute
+         * and set that name and property value.
+         * @param[in] attribute  resource attribute
+         * @return true or false
+         */
         bool next(SimulatorResourceAttribute &attribute);
+        /**
+         * This method is to get the current attribute value
+         * @return attribute object
+         */
         SimulatorResourceAttribute current();
+        /** This method is to reset the attribute value */
         void reset();
 
     private:
@@ -42,9 +70,16 @@ class AttributeGenerator
         std::unique_ptr<AttributeValueGen> m_valueGen;
 };
 
+/**
+ * @class AttributeCombinationGen
+ */
 class AttributeCombinationGen
 {
     public:
+        /**
+         * This method is to create the attribute with the different property value
+         * @param[in] attributes    resource attributes
+         */
         AttributeCombinationGen(const std::vector<SimulatorResourceAttribute> &attributes);
         bool next(SimulatorResourceModel &resModel);
 

@@ -25,15 +25,27 @@
 #include "query_param_generator.h"
 #include "request_sender.h"
 
+/**
+ * @class RequestModel
+ */
 class RequestModel;
 class GETRequestGenerator : public RequestGeneration
 {
     public:
+        /**
+         * get request generator
+         * @param[in] id             identity
+         * @param[in] ocResource     oc resource
+         * @param[in] requestSchema  request schema
+         * @param[in] callback       callback function
+         */
         GETRequestGenerator(int id, const std::shared_ptr<OC::OCResource> &ocResource,
                             const std::shared_ptr<RequestModel> &requestSchema,
                             ProgressStateCallback callback);
 
+        /** start sending requests */
         void startSending();
+        /** stop sending requests */
         void stopSending();
 
     private:

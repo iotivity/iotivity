@@ -27,51 +27,194 @@
 #include "resource_update_automation_mngr.h"
 #include "RamlParser.h"
 
+/**
+ * @class SimulatorResourceFactory
+ */
 class SimulatorResourceFactory;
 class SimulatorSingleResourceImpl : public SimulatorSingleResource,
     public std::enable_shared_from_this<SimulatorSingleResourceImpl>
 {
     public:
         friend class SimulatorResourceFactory;
-
+        /**
+         * set resource name
+         * @param[in] name  resource name
+         */
         void setName(const std::string &name);
+        /**
+         * set the given URI information
+         * @param[in] uri   resource uri
+         */
         void setURI(const std::string &uri);
+        /**
+         * set the resource type
+         * @param[in] resourceType  resource type
+         */
         void setResourceType(const std::string &resourceType);
+        /**
+         * set the interface detail
+         * @param[in] interfaceType  interface type
+         */
         void setInterface(const std::string &interfaceType);
+        /**
+         * set interface
+         * @param[in] interfaceType  interface types
+         */
         void setInterface(const std::vector<std::string> &interfaceTypes);
+        /**
+         * add new interface
+         * @param[in] interfaceType  interface type
+         */
         void addInterface(const std::string &interfaceType);
+        /**
+         * set observable state information
+         * @param[in] state   state to set
+         */
         void setObservable(bool state);
+        /**
+         * set discoverable state information
+         * @param[in] state   state to set
+         */
         void setDiscoverable(bool state);
+        /**
+         * set observer callback
+         * @param[in] callback   callback function
+         */
         void setObserverCallback(ObserverCallback callback);
+        /**
+         * set model change callback
+         * @param[in] callback   callback function
+         */
         void setModelChangeCallback(ResourceModelUpdateCallback callback);
+        /**
+         * check observable value
+         * @return boolean value
+         */
         bool isObservable() const;
+        /**
+         * check discoverable value
+         * @return boolean value
+         */
         bool isDiscoverable() const;
+        /**
+         * check resource is started or not
+         * @return boolean value
+         */
         bool isStarted() const;
+        /**
+         * start resource
+         */
         void start();
+        /**
+         * stop resource
+         */
         void stop();
+        /**
+         * get resource model information
+         * @return resource model object
+         */
         SimulatorResourceModel getResourceModel();
+        /**
+         * get observers details
+         * @return observers object
+         */
         std::vector<ObserverInfo> getObservers() const;
+        /**
+         * notify to given Id
+         * @param[in] observerID   observer id
+         */
         void notify(int observerID);
+        /**
+         * notify to all
+         */
         void notifyAll();
-
+        /**
+         * get attribute value
+         * @param[in] attrName   attribute name
+         * @param[out] attribute attribute
+         * @return boolean value
+         */
         bool getAttribute(const std::string &attrName, SimulatorResourceAttribute &attribute);
+        /**
+         * get attribute
+         * @return resource object
+         */
         std::map<std::string, SimulatorResourceAttribute> getAttributes();
+        /**
+         * add new attribute
+         * @param[in] attribute   resource attribute
+         * @param[in] notify      notify resource value
+         * @return boolean value
+         */
         bool addAttribute(const SimulatorResourceAttribute &attribute, bool notify = true);
+        /**
+         * update attribute value
+         * @param[in] attribute   resource attribute
+         * @param[in] notify      notify resource value
+         * @return boolean value
+         */
         bool updateAttributeValue(const SimulatorResourceAttribute &attribute,
                                   bool notify = true);
+        /**
+         * remove attribute with given information
+         * @param[in] attrName     attribute name
+         * @param[in] notify       notify resource value
+         * @return boolean value
+         */
         bool removeAttribute(const std::string &attrName, bool notify = true);
+        /**
+         * start resource updation
+         * @param[in] type            update type
+         * @param[in] updateInterval  update interval
+         * @param[in] callback        callback function
+         * return resource object
+         */
         int startResourceUpdation(AutoUpdateType type, int updateInterval,
                                   AutoUpdateCompleteCallback callback);
+        /**
+         * start attribute updation
+         * @param[in] attrName         attribute name
+         * @param[in] type             update type
+         * @param[in] updateInterval   update interval
+         * @param[in] callback         callback function
+         * @return attribute object
+         */
         int startAttributeUpdation(const std::string &attrName, AutoUpdateType type,
                                    int updateInterval, AutoUpdateCompleteCallback callback);
+        /**
+         * get resource updations
+         * @return resource object
+         */
         std::vector<int> getResourceUpdations();
+        /**
+         * get attribute updations
+         * @return attribute object
+         */
         std::vector<int> getAttributeUpdations();
+        /**
+         * set updation
+         * @param[in] id   id to update
+         */
         void stopUpdation(const int id);
-
+        /**
+         * update resource model
+         * @param[in] reqResModel      resource model
+         * @param[in] updatedResModel  resource model to update
+         * @param[in] overwrite        boolean value for overwrite
+         * @param[in] notify           boolean value for notify
+         * @return boolean value
+         */
         bool updateResourceModel(const SimulatorResourceModel &reqResModel,
                                  SimulatorResourceModel &updatedResModel, bool overwrite = false,
                                  bool notify = true);
+        /**
+         * notify app
+         */
         void notifyApp();
+        /**
+         * notify app
+         * @param[in] resModel   resource model
+         */
         void notifyApp(const SimulatorResourceModel &resModel);
 
     private:

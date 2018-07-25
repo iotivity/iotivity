@@ -107,16 +107,81 @@ class PlatformInfo
          */
         std::string getSystemTime() const;
 
+        /**
+         * This method is for set the platform ID
+         *
+         * @param platformId    platform identity
+         */
         void setPlatformID(const std::string &platformId);
+
+        /**
+         * This method is for set the platform version
+         *
+         * @param platformVersion    platform version information
+         */
         void setPlatformVersion(const std::string &platformVersion);
+
+        /**
+         * This method is for set the manufacturer name
+         *
+         * @param manufacturerName       detail of manufacturer name
+         */
         void setManufacturerName(const std::string &manufacturerName);
+
+        /**
+         * This method is for set the manufacturer URL details
+         *
+         * @param manufacturerUrl    manufacturer URL detail to set
+         */
         void setManufacturerUrl(const std::string &manufacturerUrl);
+
+        /**
+         * This method is for set model number
+         *
+         * @param modelNumber    model number information
+         */
         void setModelNumber(const std::string &modelNumber);
+
+        /**
+         * This method is for set date of manufacture
+         *
+         * @param dateOfManufacture    date of manufacture to set
+         */
         void setDateOfManfacture(const std::string &dateOfManufacture);
+
+        /**
+         * This method is for set the OS version
+         *
+         * @param osVersion    OS version information to set
+         */
         void setOSVersion(const std::string &osVersion);
+
+        /**
+         * This method is for set the hardware version
+         *
+         * @param hwVersion    hardware version information to set
+         */
         void setHardwareVersion(const std::string &hwVersion);
+
+        /**
+         * This method is for set the firmware version information
+         *
+         * @param firmwareVersion         firmware version to set
+         */
         void setFirmwareVersion(const std::string &firmwareVersion);
+
+        /**
+         * This method is for set the support URL detail
+         *
+         * @param supportUrl    support URL to set
+         */
         void setSupportUrl(const std::string &supportUrl);
+
+        /**
+         * This method is for set the system time information
+         *
+         * @param systemTime       system time to set
+         */
         void setSystemTime(const std::string &systemTime);
 
     private:

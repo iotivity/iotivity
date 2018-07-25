@@ -26,21 +26,35 @@
 #include "attribute_generator.h"
 #include "request_sender.h"
 
+/**
+ * @class RequestModel
+ */
 class RequestModel;
 class PUTRequestGenerator : public RequestGeneration
 {
     public:
+        /**
+         * constructor
+         * @param[in] id            identity
+         * @param[in] ocResource    oc resource
+         * @param[in] requestModel  request model
+         * @param[in] callback      callback function
+         */
         PUTRequestGenerator(int id, const std::shared_ptr<OC::OCResource> &ocResource,
                             const std::shared_ptr<RequestModel> &requestModel,
                             ProgressStateCallback callback);
 
+        /** start sending request */
         void startSending();
+        /** stop sending request */
         void stopSending();
 
     private:
+        /** send all requests */
         void SendAllRequests();
         void onResponseReceived(SimulatorResult result,
                                 const SimulatorResourceModel &repModel, const RequestInfo &reqInfo);
+        /** completed event */
         void completed();
 
         bool m_stopRequested;

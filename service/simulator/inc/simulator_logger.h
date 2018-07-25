@@ -30,17 +30,26 @@
 #include <iostream>
 #include <memory>
 
+/**
+ * @class ILogger
+ */
 class ILogger
 {
     public:
         enum Level
         {
-            INFO = 0,
-            DEBUG,
-            WARNING,
-            ERROR
+            INFO = 0,    /**< information level log message */
+            DEBUG,       /**< debug level log message */
+            WARNING,     /**< warning level log message */
+            ERROR        /**< error level log message */
         };
 
+        /**
+         * get the string value according to the level value
+         * @param[in] level    log level value
+         *
+         * @return string message
+         */
         static const char *getString(Level level)
         {
             switch (level)
@@ -56,12 +65,33 @@ class ILogger
         virtual void write(std::string, Level, std::string) = 0;
 };
 
+/**
+ * @class Logger
+ */
 class Logger
 {
     public:
+        /**
+         * set the log target to console
+         * @return true or false
+         */
         bool setDefaultConsoleTarget();
+        /**
+         * set the log target to file
+         * @param[in] path    file path
+         * @return true or false
+         */
         bool setDefaultFileTarget(const std::string &path);
+        /**
+         * set the log to custom target
+         * @param[in] target    log target
+         */
         void setCustomTarget(const std::shared_ptr<ILogger> &target);
+        /**
+         * write the log to given target
+         * @param[in] level   type of log
+         * @param[in] str     oc string stream
+         */
         void write(ILogger::Level level, std::ostringstream &str);
 
     private:

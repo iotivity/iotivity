@@ -24,13 +24,28 @@
 #include "simulator_resource_model_schema.h"
 #include "simulator_error_codes.h"
 
+/**
+ * @class RequestModelBuilder
+ */
 class RequestModelBuilder;
+/**
+ * @class ResponseModel
+ */
 class ResponseModel
 {
     public:
         friend class RequestModelBuilder;
 
+        /**
+         * get schema information
+         * @return schema
+         */
         std::shared_ptr<SimulatorResourceModelSchema> getSchema();
+        /**
+         * verify the response
+         * @param[in] resModel  resource model
+         * @return simulator result
+         */
         SimulatorResult verifyResponse(const SimulatorResourceModel &resModel);
 
     private:
