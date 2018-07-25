@@ -575,8 +575,10 @@ void createAirConDevice(bool isSecured)
     OCStackResult result = OC_STACK_ERROR;
     if (g_isAirConDeviceCreated == false)
     {
+        vector<string>temp;
+        temp.push_back(Device_TYPE_AC);
         cout << "Creating AirCon Device Resources!!" << endl;
-        SampleResource::setDeviceInfo("Vendor Smart Home AirCon Device", Device_TYPE_AC);
+        SampleResource::setDeviceInfo("Vendor Smart Home AirCon Device", temp);
 
         g_acSwitchResource = new SampleResource();
         g_acSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,

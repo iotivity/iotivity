@@ -48,6 +48,7 @@ iotivity_include_paths = [
     iotivity_root + '/resource/include',
     iotivity_root + '/resource/csdk/include',
     iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/resource-directory/include',
     iotivity_root + '/resource/csdk/ocsocket/include',
     iotivity_root + '/resource/csdk/ocrandom/include',
     iotivity_root + '/resource/csdk/logger/include',
@@ -91,7 +92,6 @@ cpp_src = [
 testapp_src = [
     test_src_root + '/common/commonutil/c_cpp/ResourceServer.cpp',
     test_src_root + '/common/commonutil/c_cpp/SampleResource.cpp',
-    test_src_root + '/common/commonutil/c_cpp/ResourceHelper.cpp',
     test_src_root + '/iBtestapp/modules/ri/c_cpp/InterOpAppRI.cpp',
 ]
 
