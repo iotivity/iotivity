@@ -1,4 +1,4 @@
-/* ****************************************************************
+/*****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -36,47 +36,47 @@
 
 typedef struct
 {
-    void *data;
-    uint32_t dataLength;
+    void *data;            /**< LE data */
+    uint32_t dataLength;   /**< length of data */
 } LEData;
 
 typedef struct _LEDataList
 {
-    LEData *data;
-    struct _LEDataList *next;
+    LEData *data;              /**< LE data */
+    struct _LEDataList *next ; /**< pointer to next */
 } LEDataList;
 
 typedef enum
 {
-    LE_STATUS_INVALID = 0,
-    LE_STATUS_UNICAST_PENDING,
-    LE_STATUS_DISCOVERED,
-    LE_STATUS_CONNECTION_INITIATED,
-    LE_STATUS_CONNECTED,
-    LE_STATUS_SERVICES_DISCOVERED
+    LE_STATUS_INVALID = 0,             /**< Invalid device status */
+    LE_STATUS_UNICAST_PENDING,         /**< Unicast pending */
+    LE_STATUS_DISCOVERED,              /**< device discovered */
+    LE_STATUS_CONNECTION_INITIATED,    /**< connection initiated */
+    LE_STATUS_CONNECTED,               /**< connected state */
+    LE_STATUS_SERVICES_DISCOVERED      /**< services discovered */
 } LEDeviceStatus;
 
 typedef struct
 {
-    bt_gatt_client_h clientHandle;
-    bt_gatt_h serviceHandle;
-    bt_gatt_h readChar;
-    bt_gatt_h writeChar;
-    char *remoteAddress;
-    LEDataList *pendingDataList;
-    LEDeviceStatus status;
+    bt_gatt_client_h clientHandle;   /**< client handle */
+    bt_gatt_h serviceHandle;         /**< service handle */
+    bt_gatt_h readChar;              /**< read char */
+    bt_gatt_h writeChar;             /**< write char */
+    char *remoteAddress;             /**< remote address */
+    LEDataList *pendingDataList;     /**< pointer to data list */
+    LEDeviceStatus status;           /**< device status */
 } LEServerInfo;
 
 typedef struct _LEServerInfoList
 {
-    LEServerInfo *serverInfo;
-    struct _LEServerInfoList *next;
+    LEServerInfo *serverInfo;       /**< server information */
+    struct _LEServerInfoList *next; /**< pointer to next node */
 } LEServerInfoList;
 
 typedef struct _LEClientInfoList
 {
-    char *remoteAddress;
-    struct _LEClientInfoList *next;
+    char *remoteAddress;             /**< remote address */
+    struct _LEClientInfoList *next;  /**< pointer to next node */
 } LEClientInfoList;
 
 /**

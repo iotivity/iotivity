@@ -1,4 +1,4 @@
-/* *****************************************************************
+/******************************************************************
  *
  * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
@@ -47,7 +47,15 @@ typedef struct {
     struct ifaddrmsg    ifaddrInfo;
 } CANetlintReq_t;
 
-
+/**
+ * send message.
+ *
+ * @param netlinkFd      netlink fd.
+ * @param data           data to send.
+ * @param len            length of data to send.
+ *
+ * @return true or false.
+ */
 static bool CASendNetlinkMessage(int netlinkFd, const void* data, size_t len)
 {
     ssize_t sentByteCount = 0;

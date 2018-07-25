@@ -1,4 +1,4 @@
-/* *****************************************************************
+/******************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -34,19 +34,19 @@ goto memory_error_exit;} }
 
 typedef enum
 {
-    SEND_TYPE_MULTICAST = 0,
-    SEND_TYPE_UNICAST
+    SEND_TYPE_MULTICAST = 0,  /**< multicast type */
+    SEND_TYPE_UNICAST         /**< unicast type */
 } CASendDataType_t;
 
 typedef struct
 {
-    CASendDataType_t type;
-    CAEndpoint_t *remoteEndpoint;
-    CARequestInfo_t *requestInfo;
-    CAResponseInfo_t *responseInfo;
-    CAErrorInfo_t *errorInfo;
-    CASignalingInfo_t *signalingInfo;
-    CADataType_t dataType;
+    CASendDataType_t type;            /**< data type */
+    CAEndpoint_t *remoteEndpoint;     /**< remote endpoint */
+    CARequestInfo_t *requestInfo;     /**< request information */
+    CAResponseInfo_t *responseInfo;   /**< response information */
+    CAErrorInfo_t *errorInfo;         /**< error information */
+    CASignalingInfo_t *signalingInfo; /**< signaling information */
+    CADataType_t dataType;            /**< data type */
 } CAData_t;
 
 #ifdef __cplusplus

@@ -1,4 +1,4 @@
-/* *****************************************************************
+/******************************************************************
  *
  * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
@@ -38,11 +38,11 @@ extern "C"
  */
 typedef struct
 {
-    CATransportAdapter_t adapter;
-    CATransportFlags_t flags;
-    char *addr;
-    uint16_t udpPort;
-    uint16_t tcpPort;
+    CATransportAdapter_t adapter; /**< transport adapter */
+    CATransportFlags_t flags;     /**< transport flag */
+    char *addr;                   /**< address */
+    uint16_t udpPort;             /**< udp port information */
+    uint16_t tcpPort;             /**< tcp port information */
 } CMIpInfo_t;
 
 /**
@@ -50,9 +50,9 @@ typedef struct
  */
 typedef struct
 {
-    char *deviceId;
-    CMIpInfo_t d2dInfo;
-    CMIpInfo_t d2sInfo;
+    char *deviceId;     /**< device Id */
+    CMIpInfo_t d2dInfo; /**< device to device information */
+    CMIpInfo_t d2sInfo; /**< device to server information */
 } CMDeviceInfo_t;
 
 /**
@@ -60,8 +60,8 @@ typedef struct
  */
 typedef struct CMDeviceInfoList
 {
-    CMDeviceInfo_t *deviceInfo;
-    struct CMDeviceInfoList *next;
+    CMDeviceInfo_t *deviceInfo;    /**< device information */
+    struct CMDeviceInfoList *next; /**< pointer to next node */
 } CMDeviceInfoList_t;
 
 /**

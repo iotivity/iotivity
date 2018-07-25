@@ -19,7 +19,7 @@
  ******************************************************************/
 
 #include <jni.h>
-/* Header for class org_iotivity_ca_CaIpInterface */
+/** Header for class org_iotivity_ca_CaIpInterface */
 
 #ifndef _Included_org_iotivity_ca_CaIpInterface
 #define _Included_org_iotivity_ca_CaIpInterface
@@ -27,18 +27,18 @@
 extern "C"
 {
 #endif
-/*
- * Class:     org_iotivity_ca_caIpInterface
- * Method:    CaIpStateEnabled
- * Signature: ()V
+/**
+ * @class:     org_iotivity_ca_caIpInterface
+ * Method:     CaIpStateEnabled
+ * Signature:  ()V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaIpInterface_caIpStateEnabled(JNIEnv *, jclass);
 
-/*
- * Class:     org_iotivity_ca_caIpInterface
- * Method:    CaIpStateDisabled
- * Signature: ()V
+/**
+ * @class:     org_iotivity_ca_caIpInterface
+ * Method:     CaIpStateDisabled
+ * Signature:  ()V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaIpInterface_caIpStateDisabled(JNIEnv *, jclass);

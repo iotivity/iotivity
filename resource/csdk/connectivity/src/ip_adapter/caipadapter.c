@@ -90,21 +90,47 @@ static ssize_t CAIPPacketSendCB(CAEndpoint_t *endpoint,
                                 const void *data, size_t dataLength);
 #endif
 
+/**
+ * update stored IP adapter information.
+ */
 static void CAUpdateStoredIPAddressInfo(CANetworkStatus_t status);
 
-
+/**
+ * Initialize send queue.
+ *
+ * @return OK if success, otherwise ERROR CODE.
+ */
 static CAResult_t CAIPInitializeQueueHandles(void);
 
+/**
+ * Deinitialize send queue.
+ */
 static void CAIPDeinitializeQueueHandles(void);
 
 static void CAIPSendDataThread(void *threadData);
 
+/**
+ * create IP data.
+ *
+ * @param remoteEndpoint    Remote Endpoint information.
+ * @param data              Data which is created.
+ * @param dataLength        Size of data to create.
+ * @param isMulticast       check for multicast value.
+ *
+ * @return Ip data.
+ */
 static CAIPData_t *CACreateIPData(const CAEndpoint_t *remoteEndpoint,
                                   const void *data, uint32_t dataLength,
                                   bool isMulticast);
 
 void CAFreeIPData(CAIPData_t *ipData);
 
+/**
+ * Destroy data.
+ *
+ * @param data    data to destroy.
+ * @param size    size of data to destroy.
+ */
 static void CADataDestroyer(void *data, uint32_t size);
 
 CAResult_t CAIPInitializeQueueHandles(void)
@@ -189,6 +215,11 @@ void CAIPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
     }
 }
 
+/**
+ * update stored IP adapter information
+ *
+ * @param status    update information according to status.
+ */
 static void CAUpdateStoredIPAddressInfo(CANetworkStatus_t status)
 {
     if (CA_INTERFACE_UP == status)
@@ -227,6 +258,15 @@ static void CAUpdateStoredIPAddressInfo(CANetworkStatus_t status)
 }
 
 #ifdef __WITH_DTLS__
+/**
+ * send Ip packet callback.
+ *
+ * @param endpoint      Remote Endpoint information
+ * @param data          data to send.
+ * @param dataLength    sizze of data to send.
+ *
+ * @return length of data.
+ */
 static ssize_t CAIPPacketSendCB(CAEndpoint_t *endpoint, const void *data, size_t dataLength)
 {
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", -1);
@@ -288,6 +328,9 @@ void CAIPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
     }
 }
 
+/**
+ * Initialize IP globals.
+ */
 static void CAInitializeIPGlobals(void)
 {
     caglobals.ip.u6.fd  = OC_INVALID_SOCKET;

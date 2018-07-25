@@ -19,7 +19,7 @@
  ******************************************************************/
 
 #include <jni.h>
-/* Header for class org_iotivity_ca_CaEdrInterface */
+/** Header for class org_iotivity_ca_CaEdrInterface */
 
 #ifndef Included_org_iotivity_ca_CaEdrInterface
 #define Included_org_iotivity_ca_CaEdrInterface
@@ -27,28 +27,28 @@
 extern "C"
 {
 #endif
-/*
- * Class:     org_iotivity_ca_CaEdrInterface
- * Method:    caEdrStateChangedCallback
- * Signature: (I)V
+/**
+ * @class:     org_iotivity_ca_CaEdrInterface
+ * Method:     caEdrStateChangedCallback
+ * Signature:  (I)V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaEdrInterface_caEdrStateChangedCallback
 (JNIEnv *, jobject, jint);
 
-/*
- * Class:     org_iotivity_ca_CaEdrInterface
- * Method:    caEdrBondStateChangedCallback
- * Signature: (java/lang/String)V
+/**
+ * @class:     org_iotivity_ca_CaEdrInterface
+ * Method:     caEdrBondStateChangedCallback
+ * Signature:  (java/lang/String)V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaEdrInterface_caEdrBondStateChangedCallback
 (JNIEnv *, jobject, jstring);
 
-/*
- * Class:     org_iotivity_ca_CaEdrInterface
- * Method:    caEdrConnectionStateChangedCallback
- * Signature: (java/lang/String;I)V
+/**
+ * @class:     org_iotivity_ca_CaEdrInterface
+ * Method:     caEdrConnectionStateChangedCallback
+ * Signature:  (java/lang/String;I)V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaEdrInterface_caEdrConnectionStateChangedCallback

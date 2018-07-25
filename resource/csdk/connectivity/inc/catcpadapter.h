@@ -1,4 +1,4 @@
-/* ****************************************************************
+/*****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -39,9 +39,9 @@ extern "C"
 
 typedef enum CAProtocol
 {
-    UNKNOWN = 0,
-    TLS,
-    COAP
+    UNKNOWN = 0,  /**< unknown protocol */
+    TLS,          /**< TLS protocol */
+    COAP          /**< COAP protocol */
 } CAProtocol_t;
 
 /**
@@ -49,9 +49,9 @@ typedef enum CAProtocol
  */
 typedef enum
 {
-    CONNECTING = 0,
-    CONNECTED,
-    DISCONNECTED
+    CONNECTING = 0,  /**< connecting state */
+    CONNECTED,       /**< connected state */
+    DISCONNECTED     /**< disconnected state */
 } CATCPConnectionState_t;
 
 /**
@@ -61,10 +61,10 @@ typedef enum
  */
 typedef enum
 {
-    NONE = 0,
-    SENT,
-    RECEIVED,
-    SENT_RECEIVED
+    NONE = 0,      /**< none state */
+    SENT,          /**< sent state */
+    RECEIVED,      /**< received state */
+    SENT_RECEIVED  /**< sent and received state */
 } CACSMExchangeState_t;
 
 /**

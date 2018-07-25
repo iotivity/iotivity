@@ -120,6 +120,11 @@ static void CAIPPassNetworkChangesToAdapter(CANetworkStatus_t status);
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
                                          const char *addr, int flags);
 
+/**
+ * Initialize network monitor list.
+ *
+ * @return OK if intialized success, otherwise FAIL.
+ */
 static CAResult_t CAIPInitializeNetworkMonitorList()
 {
     if (!g_networkMonitorContextMutex)
@@ -145,6 +150,9 @@ static CAResult_t CAIPInitializeNetworkMonitorList()
     return CA_STATUS_OK;
 }
 
+/**
+ * Destroy network monitor list.
+ */
 static void CAIPDestroyNetworkMonitorList()
 {
     if (g_netInterfaceList)
@@ -160,6 +168,13 @@ static void CAIPDestroyNetworkMonitorList()
     }
 }
 
+/**
+ * Compare network list.
+ *
+ * @param ifiindex  interface index.
+ *
+ * @return true if index found, otherwise false.
+ */
 static bool CACmpNetworkList(uint32_t ifiindex)
 {
 #if NETWORK_INTERFACE_CHANGED_LOGGING
@@ -189,6 +204,11 @@ static bool CACmpNetworkList(uint32_t ifiindex)
     return false;
 }
 
+/**
+ * Add to network monitor list.
+ *
+ * @return OK if success, otherwise FAIL.
+ */
 static CAResult_t CAAddNetworkMonitorList(CAInterface_t *ifitem)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
@@ -208,6 +228,11 @@ static CAResult_t CAAddNetworkMonitorList(CAInterface_t *ifitem)
     return CA_STATUS_OK;
 }
 
+/**
+ * Remove from network monitor list.
+ *
+ * @param ifiindex  interface index.
+ */
 static void CARemoveNetworkMonitorList(int ifiindex)
 {
     VERIFY_NON_NULL_VOID(g_netInterfaceList, TAG, "g_netInterfaceList is NULL");
@@ -234,6 +259,9 @@ static void CARemoveNetworkMonitorList(int ifiindex)
     return;
 }
 
+/**
+ * Get connection status callback.
+ */
 static bool get_connection_status_cb(LSHandle *sh, LSMessage *message, void *ctx)
 {
     OIC_LOG(DEBUG, TAG, "Callback for com.webos.service.connectionmanager/getstatus is invoked...");
