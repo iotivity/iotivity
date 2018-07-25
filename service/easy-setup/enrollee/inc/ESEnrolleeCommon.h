@@ -1,22 +1,22 @@
-//******************************************************************
-//
-// Copyright 2016 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #ifndef ES_ENROLLEE_COMMON_H_
 #define ES_ENROLLEE_COMMON_H_
@@ -34,8 +34,8 @@ extern "C"
  */
 typedef struct
 {
-    ES_CONNECT_TYPE connect[NUM_CONNECT_TYPE];
-    int numRequest;
+    ES_CONNECT_TYPE connect[NUM_CONNECT_TYPE]; /*!< connect type */
+    int numRequest;                            /*!< num of request */
 } ESConnectRequest;
 
 /**
@@ -43,11 +43,11 @@ typedef struct
  */
 typedef struct
 {
-    char ssid[OIC_STRING_MAX_VALUE];        /**< Ssid of the Enroller**/
-    char pwd[OIC_STRING_MAX_VALUE];         /**< Pwd of the Enroller**/
-    WIFI_AUTHTYPE authtype;                 /**< Auth type of the Enroller**/
-    WIFI_ENCTYPE enctype;                   /**< Encryption type of the Enroller**/
-    void *userdata;                         /**< Vender-specific data**/
+    char ssid[OIC_STRING_MAX_VALUE];        /*!< Ssid of the Enroller**/
+    char pwd[OIC_STRING_MAX_VALUE];         /*!< Pwd of the Enroller**/
+    WIFI_AUTHTYPE authtype;                 /*!< Auth type of the Enroller**/
+    WIFI_ENCTYPE enctype;                   /*!< Encryption type of the Enroller**/
+    void *userdata;                         /*!< Vender-specific data**/
 } ESWiFiConfData;
 
 /**
@@ -56,7 +56,7 @@ typedef struct
 typedef struct
 {
     // TODO: variables can be added when some properties in oic.r.devconf resource are specified.
-    void *userdata;                         /**< Vender-specific data**/
+    void *userdata;                         /*!< Vender-specific data**/
 } ESDevConfData;
 
 /**
@@ -64,11 +64,11 @@ typedef struct
  */
 typedef struct
 {
-    char accessToken[OIC_STRING_MAX_VALUE];     /**< Access token resolved with an auth code **/
-    OAUTH_TOKENTYPE accessTokenType;            /**< Access token type **/
-    char authProvider[OIC_STRING_MAX_VALUE];    /**< Auth provider ID **/
-    char ciServer[OIC_URI_STRING_MAX_VALUE];    /**< Cloud interface server URL which an Enrollee is going to registered **/
-    void *userdata;                             /**< Vender-specific data**/
+    char accessToken[OIC_STRING_MAX_VALUE];     /*!< Access token resolved with an auth code **/
+    OAUTH_TOKENTYPE accessTokenType;            /*!< Access token type **/
+    char authProvider[OIC_STRING_MAX_VALUE];    /*!< Auth provider ID **/
+    char ciServer[OIC_URI_STRING_MAX_VALUE];    /*!< Cloud interface server URL which an Enrollee is going to registered **/
+    void *userdata;                             /*!< Vender-specific data**/
 } ESCoapCloudConfData;
 
 /**
@@ -81,14 +81,14 @@ typedef struct
      */
     struct
     {
-        WIFI_MODE supportedMode[NUM_WIFIMODE];
-        uint8_t numSupportedMode;
-        WIFI_FREQ supportedFreq[NUM_WIFIFREQ];
-        uint8_t numSupportedFreq;
-        WIFI_AUTHTYPE supportedAuthType[NUM_WIFIAUTHTYPE];
-        uint8_t numSupportedAuthType;
-        WIFI_ENCTYPE supportedEncType[NUM_WIFIENCTYPE];
-        uint8_t numSupportedEncType;
+        WIFI_MODE supportedMode[NUM_WIFIMODE];              /*!< wifi supported mode **/
+        uint8_t numSupportedMode;                           /*!< number of supported mode **/
+        WIFI_FREQ supportedFreq[NUM_WIFIFREQ];              /*!< number of supported frequency **/
+        uint8_t numSupportedFreq;                           /*!< number of supported frequency **/
+        WIFI_AUTHTYPE supportedAuthType[NUM_WIFIAUTHTYPE];  /*!< wifi supported auth type **/
+        uint8_t numSupportedAuthType;                       /*!< number of supported enc type **/
+        WIFI_ENCTYPE supportedEncType[NUM_WIFIENCTYPE];     /*!< wifi supported enc type **/
+        uint8_t numSupportedEncType;                        /*!< number of supported enc type **/
     } WiFi;
 
     /**
@@ -96,7 +96,7 @@ typedef struct
      */
     struct
     {
-        char deviceName[OIC_STRING_MAX_VALUE];
+        char deviceName[OIC_STRING_MAX_VALUE];  /*!< device name */
     } DevConf;
 } ESDeviceProperty;
 
@@ -106,10 +106,10 @@ typedef struct
  */
 typedef struct
 {
-    void (*ConnectRequestCb) (ESConnectRequest *);
-    void (*WiFiConfProvCb) (ESWiFiConfData *);
-    void (*DevConfProvCb) (ESDevConfData *);
-    void (*CoapCloudConfProvCb) (ESCoapCloudConfData *);
+    void (*ConnectRequestCb) (ESConnectRequest *); /*!< connect request callback */
+    void (*WiFiConfProvCb) (ESWiFiConfData *);     /*!< wifi configuration provision callback */
+    void (*DevConfProvCb) (ESDevConfData *);       /*!< device configuration provision callback */
+    void (*CoapCloudConfProvCb) (ESCoapCloudConfData *); /*!< coap cloud config provision cb */
 } ESProvisioningCallbacks;
 
 
