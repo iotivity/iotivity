@@ -1,22 +1,22 @@
-//******************************************************************
-//
-// Copyright 2016 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #include "JniNotificationConsumer.h"
 #include "NSConsumerService.h"
@@ -43,6 +43,13 @@ jclass g_cls_TopicsList;
 jclass g_cls_OcRepresentation;
 jmethodID g_mid_OcRepresentation_N_ctor_bool = NULL;
 
+/**
+ * Get JNI environment.
+ *
+ * @param ret Initial environment value.
+ *
+ * @return return JNI envirinment value.
+ */
 static JNIEnv *GetJNIEnv(jint *ret)
 {
     JNIEnv *env = NULL;
@@ -71,6 +78,14 @@ static JNIEnv *GetJNIEnv(jint *ret)
     }
 }
 
+/**
+ * Get Native Provider.
+ *
+ * @param env          JNI interface pointer.
+ * @param jObj         java object.
+ *
+ * @return 1, exception return 0.
+ */
 static jlong getNativeProvider(JNIEnv *env, jobject jObj)
 {
 
@@ -89,6 +104,14 @@ static jlong getNativeProvider(JNIEnv *env, jobject jObj)
     return (env->GetLongField(jObj, nativeHandle));
 }
 
+/**
+ * Get java provider state.
+ *
+ * @param env          JNI interface pointer.
+ * @param state        provider state
+ *
+ * @return provider state.
+ */
 jobject getJavaProviderState(JNIEnv *env, OIC::Service::NSProviderState state)
 {
     NS_LOGD ("ConsumerService_getJavaProviderState - IN");
@@ -133,6 +156,14 @@ jobject getJavaProviderState(JNIEnv *env, OIC::Service::NSProviderState state)
     return providerState;
 }
 
+/**
+ * Get java sync type.
+ *
+ * @param env          JNI interface pointer.
+ * @param nsType       notification type.
+ *
+ * @return sync type.
+ */
 jobject getJavaSyncType(JNIEnv *env, OIC::Service::NSSyncInfo::NSSyncType nsType)
 {
     NS_LOGD ("ConsumerService_getJavaSyncType - IN");
@@ -179,6 +210,14 @@ jobject getJavaSyncType(JNIEnv *env, OIC::Service::NSSyncInfo::NSSyncType nsType
     return syncType;
 }
 
+/**
+ * Get java topic state.
+ *
+ * @param env          JNI interface pointer.
+ * @param nsState      notification state.
+ *
+ * @return topic state.
+ */
 jobject getJavaTopicState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsState)
 {
     NS_LOGD ("ConsumerService_getJavaTopicState - IN");
@@ -219,6 +258,14 @@ jobject getJavaTopicState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsSta
     return topicState;
 }
 
+/**
+ * Get java topics list.
+ *
+ * @param env          JNI interface pointer.
+ * @param topicList    topic list.
+ *
+ * @return topic list.
+ */
 jobject getJavaTopicsList(JNIEnv *env, std::shared_ptr<OIC::Service::NSTopicsList> topicList)
 {
     NS_LOGD ("ConsumerService_getJavaTopicsList - IN");
@@ -259,6 +306,15 @@ jobject getJavaTopicsList(JNIEnv *env, std::shared_ptr<OIC::Service::NSTopicsLis
     return obj_topicList;
 }
 
+/**
+ * Get Native topic state.
+ *
+ * @param env          JNI interface pointer.
+ * @param jTopic       topic object.
+ * @param state        topic state.
+ *
+ * @return true if state found, otherwise false.
+ */
 bool getNativeTopicState(JNIEnv *env,  jobject jTopic , OIC::Service::NSTopic::NSTopicState &state )
 {
     NS_LOGD ("ConsumerService_getNativeTopicState - IN");
@@ -292,6 +348,14 @@ bool getNativeTopicState(JNIEnv *env,  jobject jTopic , OIC::Service::NSTopic::N
 
 }
 
+/**
+ * Get Native topic name.
+ *
+ * @param env          JNI interface pointer.
+ * @param jTopic       topic object.
+ *
+ * @return  topic name.
+ */
 const char *getNativeTopicName(JNIEnv *env,  jobject jTopic)
 {
     NS_LOGD ("ConsumerService_getNativeTopicName - IN");
@@ -322,6 +386,14 @@ const char *getNativeTopicName(JNIEnv *env,  jobject jTopic)
 
 }
 
+/**
+ * Get Native topics list.
+ *
+ * @param env          JNI interface pointer.
+ * @param jTopicList   topic list.
+ *
+ * @return  topic list.
+ */
 std::shared_ptr<OIC::Service::NSTopicsList> getNativeTopicsList(JNIEnv *env, jobject jTopicList)
 {
     NS_LOGD ("ConsumerService_getNativeTopicsList - IN");
@@ -394,6 +466,14 @@ std::shared_ptr<OIC::Service::NSTopicsList> getNativeTopicsList(JNIEnv *env, job
     return nsTopicList;
 }
 
+/**
+ * Get java provider.
+ *
+ * @param env          JNI interface pointer.
+ * @param provider     notification provider.
+ *
+ * @return object of provider.
+ */
 jobject getJavaProvider(JNIEnv *env, std::shared_ptr<OIC::Service::NSProvider> provider)
 {
     NS_LOGD ("ConsumerService_getJavaProvider - IN");
@@ -445,6 +525,14 @@ jobject getJavaProvider(JNIEnv *env, std::shared_ptr<OIC::Service::NSProvider> p
     return obj_provider;
 }
 
+/**
+ * Get java message type.
+ *
+ * @param env          JNI interface pointer.
+ * @param type         message type.
+ *
+ * @return message type.
+ */
 jobject getJavaMessageType(JNIEnv *env, OIC::Service::NSMessage::NSMessageType type)
 {
     NS_LOGD ("ConsumerService_getJavaMessageType - IN");
@@ -489,6 +577,14 @@ jobject getJavaMessageType(JNIEnv *env, OIC::Service::NSMessage::NSMessageType t
     return messageType;
 }
 
+/**
+ * Get java message.
+ *
+ * @param env          JNI interface pointer.
+ * @param message      notification message.
+ *
+ * @return message object.
+ */
 jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage message)
 {
     NS_LOGD ("ConsumerService_getJavaMessage - IN");
@@ -648,6 +744,9 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage message)
     return obj_message;
 }
 
+/**
+ * On discover provider.
+ */
 void onDiscoverProvider(std::shared_ptr<OIC::Service::NSProvider> provider)
 {
     NS_LOGD ("ConsumerService_onDiscoverProvider - IN");
@@ -716,6 +815,9 @@ void onDiscoverProvider(std::shared_ptr<OIC::Service::NSProvider> provider)
     return ;
 }
 
+/**
+ * On provider state.
+ */
 void onProviderState( OIC::Service::NSProviderState state)
 {
     NS_LOGD ("ConsumerService_onProviderState -IN");
@@ -783,6 +885,9 @@ void onProviderState( OIC::Service::NSProviderState state)
 
 }
 
+/**
+ * On message posted.
+ */
 void onMessagePosted(OIC::Service::NSMessage message)
 {
     NS_LOGD ("ConsumerService_onMessagePosted -IN");
@@ -850,6 +955,9 @@ void onMessagePosted(OIC::Service::NSMessage message)
     return ;
 }
 
+/**
+ * On sync info received.
+ */
 void onSyncInfoReceived(OIC::Service::NSSyncInfo sync)
 {
     NS_LOGD ("ConsumerService_onSyncInfoReceived - IN");

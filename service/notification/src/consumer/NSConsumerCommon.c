@@ -1,22 +1,22 @@
-//******************************************************************
-//
-// Copyright 2016 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #include "NSConsumerCommon.h"
 #include "NSConstants.h"
@@ -31,6 +31,9 @@ static bool NSIsExtraValue(const char * name);
 static void NSCopyPayloadValueArray(OCRepPayloadValue* dest, OCRepPayloadValue* source);
 static OCRepPayloadValue * NSCopyPayloadValue(OCRepPayloadValue * value);
 
+/**
+ * Get stack mutex.
+ */
 pthread_mutex_t ** NSGetStackMutex(void)
 {
     static pthread_mutex_t * g_stackMutext = NULL;
@@ -270,6 +273,13 @@ NSTask * NSMakeTask(NSTaskType type, void * data)
     return retTask;
 }
 
+/**
+ * create the new message for the given id
+ * @param id            message id
+ * @param providerId    provider identity
+ *
+ * @return created message
+ */
 static NSMessage * NSCreateMessage_internal(uint64_t id, const char * providerId)
 {
     NSMessage * retMsg = (NSMessage *)OICMalloc(sizeof(NSMessage));
@@ -290,6 +300,11 @@ static NSMessage * NSCreateMessage_internal(uint64_t id, const char * providerId
     return retMsg;
 }
 
+/**
+ * get extra information from the payload
+ * @param[in] payload   oc payload
+ * @return required information
+ */
 static OCRepPayload * NSGetExtraInfo(OCRepPayload * payload)
 {
     NS_LOG(DEBUG, "get extra info");
