@@ -25,7 +25,14 @@
 
 class JNIEnvWrapper;
 
+/**
+ * Initialize rcs remote resource object
+ */
 void initRCSRemoteResourceObject(JNIEnvWrapper*);
+
+/**
+ * Clear rcs remote resource object
+ */
 void clearRCSRemoteResourceObject(JNIEnvWrapper*);
 
 jobject newRemoteResourceObject(JNIEnvWrapper*);
@@ -34,70 +41,138 @@ jobject newRemoteResourceObject(JNIEnvWrapper*);
 extern "C" {
 #endif
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeIsMonitoring
+ */
 JNIEXPORT jboolean JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeIsMonitoring
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeIsCaching
+ */
 JNIEXPORT jboolean JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeIsCaching
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeIsObservable
+ */
 JNIEXPORT jboolean JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeIsObservable
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeStartMonitoring
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeStartMonitoring
 (JNIEnv*, jobject, jobject);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeStopMonitoring
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeStopMonitoring
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeGetState
+ */
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeGetState
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeStartCaching
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeStartCaching
 (JNIEnv*, jobject, jobject cacheUpdateListener);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeStopCaching
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeStopCaching
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeGetCacheState
+ */
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeGetCacheState
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeIsCachedAvailable
+ */
 JNIEXPORT jboolean JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeIsCachedAvailable
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeGetCachedAttributes
+ */
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeGetCachedAttributes
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeGetRemoteAttributes
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeGetRemoteAttributes
 (JNIEnv*, jobject, jobject listener);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeSetRemoteAttributes
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeSetRemoteAttributes
 (JNIEnv*, jobject, jobject attrs, jobject listener);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeGetUri
+ */
 JNIEXPORT jstring JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeGetUri
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeGetAddress
+ */
 JNIEXPORT jstring JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeGetAddress
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeGetTypes
+ */
 JNIEXPORT jobjectArray JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeGetTypes
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_client_RcsRemoteResourceObject
+ * Method:     nativeGetInterfaces
+ */
 JNIEXPORT jobjectArray JNICALL
 Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeGetInterfaces
 (JNIEnv*, jobject);

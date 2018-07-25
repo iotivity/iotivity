@@ -23,8 +23,10 @@
 
 #include <jni.h>
 
+/** OIC namespace */
 namespace OIC
 {
+    /** service namespace */
     namespace Service
     {
         class RCSResourceAttributes;
@@ -33,7 +35,14 @@ namespace OIC
 
 class JNIEnvWrapper;
 
+/**
+ * Initialize rcs resource attributes
+ */
 void initRCSResourceAttributes(JNIEnvWrapper*);
+
+/**
+ * Clear rcs resource attributes
+ */
 void clearRCSResourceAttributes(JNIEnvWrapper*);
 
 jobject newAttributesObject(JNIEnv*, const OIC::Service::RCSResourceAttributes&);
@@ -51,27 +60,59 @@ void writeNativeAttributesFromMap(JNIEnvWrapper*, jobject mapObj,
 extern "C" {
 #endif
 
+/**
+ * @class:     org_iotivity_service_RcsResourceAttributes
+ * Method:     nativeIsEmpty
+ */
 JNIEXPORT jboolean JNICALL
 Java_org_iotivity_service_RcsResourceAttributes_nativeIsEmpty(JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_RcsResourceAttributes
+ * Method:     nativeSize
+ */
 JNIEXPORT jint JNICALL
 Java_org_iotivity_service_RcsResourceAttributes_nativeSize(JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_RcsResourceAttributes
+ * Method:     nativeRemove
+ */
 JNIEXPORT jboolean JNICALL
 Java_org_iotivity_service_RcsResourceAttributes_nativeRemove(JNIEnv*, jobject, jstring keyObj);
 
+/**
+ * @class:     org_iotivity_service_RcsResourceAttributes
+ * Method:     nativeClear
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_RcsResourceAttributes_nativeClear(JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_RcsResourceAttributes
+ * Method:     nativeContains
+ */
 JNIEXPORT jboolean JNICALL
 Java_org_iotivity_service_RcsResourceAttributes_nativeContains(JNIEnv*, jobject, jstring keyObj);
 
+/**
+ * @class:     org_iotivity_service_RcsResourceAttributes
+ * Method:     nativeAddKeys
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_RcsResourceAttributes_nativeAddKeys(JNIEnv*, jobject, jstring setObj);
 
+/**
+ * @class:     org_iotivity_service_RcsResourceAttributes
+ * Method:     nativeExtract
+ */
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_service_RcsResourceAttributes_nativeExtract(JNIEnv*, jobject, jstring keyObj);
 
+/**
+ * @class:     org_iotivity_service_RcsResourceAttributes
+ * Method:     nativeExtractAll
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_RcsResourceAttributes_nativeExtractAll(JNIEnv*, jobject, jobject);
 

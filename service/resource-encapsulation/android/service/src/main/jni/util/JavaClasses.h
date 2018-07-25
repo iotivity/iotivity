@@ -25,30 +25,30 @@
 
 #include <string>
 
-#define PACKAGE_NAME "org/iotivity/service"
+#define PACKAGE_NAME "org/iotivity/service"     /*!< package name */
 
-#define CLS_NAME_VALUE PACKAGE_NAME "/RcsValue"
+#define CLS_NAME_VALUE PACKAGE_NAME "/RcsValue" /*!< cls name value */
 
-#define CLS_NAME_RESOURCEATTRIBUTES PACKAGE_NAME "/RcsResourceAttributes"
-#define CLS_NAME_REMOTERESOURCEOBJECT PACKAGE_NAME "/client/RcsRemoteResourceObject"
-#define CLS_NAME_RESOURCEBYTESTRING PACKAGE_NAME "/RcsByteString"
+#define CLS_NAME_RESOURCEATTRIBUTES PACKAGE_NAME "/RcsResourceAttributes" /*!< resource attribute name */
+#define CLS_NAME_REMOTERESOURCEOBJECT PACKAGE_NAME "/client/RcsRemoteResourceObject" /*!< remote resource object name */
+#define CLS_NAME_RESOURCEBYTESTRING PACKAGE_NAME "/RcsByteString" /*!< resource byte string name */
 
-#define CLS_NAME_OBJECT "java/lang/Object"
-#define CLS_NAME_STRING "java/lang/String"
-#define CLS_NAME_INTEGER "java/lang/Integer"
-#define CLS_NAME_DOUBLE "java/lang/Double"
-#define CLS_NAME_BOOLEAN "java/lang/Boolean"
+#define CLS_NAME_OBJECT "java/lang/Object"   /*!< object name */
+#define CLS_NAME_STRING "java/lang/String"   /*!< string name */
+#define CLS_NAME_INTEGER "java/lang/Integer" /*!< Integer name */
+#define CLS_NAME_DOUBLE "java/lang/Double"   /*!< double name */
+#define CLS_NAME_BOOLEAN "java/lang/Boolean" /*!< boolean name */
 
-#define CLS_NAME_COLLECTION "java/util/Collection"
-#define CLS_NAME_ARRAY_LIST "java/util/ArrayList"
-#define CLS_NAME_SET "java/util/Set"
-#define CLS_NAME_MAP "java/util/Map"
-#define CLS_NAME_MAP_ENTRY "java/util/Map$Entry"
-#define CLS_NAME_ITERATOR "java/util/Iterator"
+#define CLS_NAME_COLLECTION "java/util/Collection" /*!< collection name */
+#define CLS_NAME_ARRAY_LIST "java/util/ArrayList"  /*!< array list */
+#define CLS_NAME_SET "java/util/Set"               /*!< set name */
+#define CLS_NAME_MAP "java/util/Map"               /*!< map name */
+#define CLS_NAME_MAP_ENTRY "java/util/Map$Entry"   /*!< map entry name */
+#define CLS_NAME_ITERATOR "java/util/Iterator"     /*!< iterator name */
 
-#define EXC_NAME_RCS PACKAGE_NAME "/RcsException"
-#define EXC_NAME_PLATFORM PACKAGE_NAME "/RcsPlatformException"
-#define EXC_NAME_ILLEGAL_STATE PACKAGE_NAME "/RcsIllegalStateException"
+#define EXC_NAME_RCS PACKAGE_NAME "/RcsException"              /*!< resource exception */
+#define EXC_NAME_PLATFORM PACKAGE_NAME "/RcsPlatformException" /*!< platform exception */
+#define EXC_NAME_ILLEGAL_STATE PACKAGE_NAME "/RcsIllegalStateException" /*!< illegal exception */
 
 #define AS_SIG(CLS_NAME) "L" CLS_NAME ";"
 
@@ -91,30 +91,45 @@ extern jmethodID g_ctor_ArrayList;
 void initJavaClasses(JNIEnvWrapper*);
 void clearJavaClasses(JNIEnvWrapper*);
 
+/**
+ * new boolean object
+ */
 template< typename ENV >
 inline jobject newBooleanObject(ENV* env, bool value)
 {
     return env->NewObject(g_cls_Boolean, g_ctor_Boolean, value);
 }
 
+/**
+ * new Integer object
+ */
 template< typename ENV >
 inline jobject newIntegerObject(ENV* env, int value)
 {
     return env->NewObject(g_cls_Integer, g_ctor_Integer, value);
 }
 
+/**
+ * new double object
+ */
 template< typename ENV >
 inline jobject newDoubleObject(ENV* env, double value)
 {
     return env->NewObject(g_cls_Double, g_ctor_Double, value);
 }
 
+/**
+ * new string object
+ */
 template< typename ENV >
 inline jstring newStringObject(ENV* env, const std::string& value)
 {
     return env->NewStringUTF(value.c_str());
 }
 
+/**
+ * new string object
+ */
 template< typename ENV >
 inline jstring newStringObjectCstr(ENV* env, const char* value)
 {
@@ -137,6 +152,9 @@ inline std::string toStdString(ENV* env, jstring obj)
     return result;
 }
 
+/**
+ * new array list
+ */
 template< typename ENV >
 inline jobject newArrayList(ENV* env)
 {

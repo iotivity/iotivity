@@ -1,22 +1,22 @@
-//******************************************************************
-//
-// Copyright 2015 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #ifndef RB_BROKERTYPES_H_
 #define RB_BROKERTYPES_H_
@@ -28,17 +28,18 @@
 #include "experimental/logger.h"
 #include "PrimitiveResource.h"
 
+/** namespace */
 namespace OIC
 {
     namespace Service
     {
-        #define BROKER_TAG "BROKER"
-        #define BROKER_DEVICE_PRESENCE_TIMEROUT (15000l)
-        #define BROKER_SAFE_SECOND (5l)
-        #define BROKER_SAFE_MILLISECOND (BROKER_SAFE_SECOND * (1000))
-        #define BROKER_TRANSPORT OCConnectivityType::CT_ADAPTER_IP
+        #define BROKER_TAG "BROKER"                      /*!< broker tag information */
+        #define BROKER_DEVICE_PRESENCE_TIMEROUT (15000l) /*!< broker device presence timeout value */
+        #define BROKER_SAFE_SECOND (5l)                  /*!< broker safe secons */
+        #define BROKER_SAFE_MILLISECOND (BROKER_SAFE_SECOND * (1000)) /*!< safe millisecons */
+        #define BROKER_TRANSPORT OCConnectivityType::CT_ADAPTER_IP    /*!< transport type */
 
-        /*
+        /**
          * @BROKER_STATE
          * brief : resourcePresence state
          * ALIVE       - It means that 'getCB' function receives 'OK' message
@@ -57,7 +58,7 @@ namespace OIC
             NONE
         };
 
-        /*
+        /**
          * @DEVICE_STATE
          * brief : devicePresence state
          * ALIVE       - It means that 'subscribeCB' function receives 'OK' message
@@ -66,25 +67,25 @@ namespace OIC
          */
         enum class DEVICE_STATE
         {
-            ALIVE = 0,
-            REQUESTED,
-            LOST_SIGNAL
+            ALIVE = 0,            /*!< alive state */
+            REQUESTED,            /*!< requested state */
+            LOST_SIGNAL           /*!< lost signal state */
         };
 
         enum class BROKER_MODE
         {
-            DEVICE_PRESENCE_MODE = 0,
-            NON_PRESENCE_MODE
+            DEVICE_PRESENCE_MODE = 0,  /*!< device presence mode */
+            NON_PRESENCE_MODE          /*!< none device presence mode */
         };
 
-        typedef unsigned int BrokerID;
+        typedef unsigned int BrokerID;  /*!< broker ID */
 
         typedef std::function<void(BROKER_STATE)> BrokerCB;
         struct BrokerRequesterInfo
         {
             BrokerRequesterInfo(BrokerID _id, BrokerCB _cb) : brokerId(_id), brokerCB(_cb){}
-            BrokerID brokerId;
-            BrokerCB brokerCB;
+            BrokerID brokerId;  /*!< broker Id */
+            BrokerCB brokerCB;  /*!< broker callback */
         };
         typedef std::shared_ptr<BrokerRequesterInfo> BrokerRequesterInfoPtr;
 
@@ -113,7 +114,7 @@ namespace OIC
 
         typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)> RequestGetCB;
         typedef std::function<void(long long)> TimerCB;
-    } // namespace Service
-} // namespace OIC
+    } /* namespace Service */
+} /* namespace OIC */
 
-#endif // RB_BROKERTYPES_H_
+#endif /* RB_BROKERTYPES_H_ */
