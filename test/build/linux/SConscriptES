@@ -132,6 +132,15 @@ else:
         Glob(test_src_root + '/tc/es/gtest/src/stc/mediator/*.cpp')
 ]
 
+simulator_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_root + '/service/easy-setup/sampleapp/enrollee/linux/'
+]
+
+simulator_tc_src = [
+    test_src_root + '/testapp/es/essim.c',
+    iotivity_root + '/service/easy-setup/sampleapp/enrollee/linux/easysetup_x.c'
+]
 cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermissive -DWITH_TCP')
 
 pkg_flags = Split('`pkg-config --cflags --libs uuid`')
@@ -148,23 +157,34 @@ if secured:
 env_linux.ParseConfig("pkg-config --cflags --libs uuid")
 env_linux.AppendUnique(CPPFLAGS = pkg_flags)
 
-enrollee_tc = env_linux.Program(source = enrollee_tc_src, 
-                        target = 'iotivity_es_enrollee_test', 
-                        CPPPATH = iotivity_include_paths + enrollee_tc_include_paths, 
-                        LIBS = libs + enrollee_libs, 
-                        RPATH = iotivity_lib_path,
-                        LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux/', '.'], 
-                        CPPFLAGS = cppflags + common_linux_cppflags)
-install_targets += enrollee_tc
+if 'tc' in test:
+    enrollee_tc = env_linux.Program(source = enrollee_tc_src, 
+                            target = 'iotivity_es_enrollee_test', 
+                            CPPPATH = iotivity_include_paths + enrollee_tc_include_paths, 
+                            LIBS = libs + enrollee_libs, 
+                            RPATH = iotivity_lib_path,
+                            LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux/', '.'], 
+                            CPPFLAGS = cppflags + common_linux_cppflags)
+    install_targets += enrollee_tc
 
-mediator_tc = env_linux.Program(source = mediator_tc_src, 
-                        target = 'iotivity_es_mediator_test', 
-                        CPPPATH = iotivity_include_paths + mediator_tc_include_paths,
-                        LIBS = libs + mediator_libs, 
-                        RPATH = iotivity_lib_path,
-                        LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux/', '.'], 
-                        CPPFLAGS = cppflags + common_linux_cppflags)
-install_targets += mediator_tc
+    mediator_tc = env_linux.Program(source = mediator_tc_src, 
+                            target = 'iotivity_es_mediator_test', 
+                            CPPPATH = iotivity_include_paths + mediator_tc_include_paths,
+                            LIBS = libs + mediator_libs, 
+                            RPATH = iotivity_lib_path,
+                            LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux/', '.'], 
+                            CPPFLAGS = cppflags + common_linux_cppflags)
+    install_targets += mediator_tc
+
+if 'tc' in test or 'simulator' in test:
+    es_simulator = env_linux.Program(source = simulator_tc_src,
+                            target = 'iotivity_es_simulator',
+                            CPPPATH = iotivity_include_paths + simulator_include_paths,
+                            LIBS = libs + mediator_libs + enrollee_libs,
+                            RPATH = iotivity_lib_path,
+                            LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux/', '.'], 
+                            CPPFLAGS = cppflags + common_linux_cppflags)
+    install_targets += es_simulator                            
 
 install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
 
