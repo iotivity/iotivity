@@ -4,9 +4,12 @@
 	Go to the top directory of 'iotivity' project
     (Note: should always run 'scons' command in this directory)
 
-    Install external libraries:
+    Install external libraries (on Debian based OS):
       $ sudo apt-get install libboost-dev libboost-program-options-dev libboost-thread-dev uuid-dev libssl-dev
-      $ sudo apt-get install libglib2.0-dev autoconf libtool
+      $ sudo apt-get install libglib2.0-dev autoconf libtool chrpath
+
+    Or check this page for more updated info:
+    https://wiki.iotivity.org/os
 
     Build release binaries:
       $ scons WITH_RA=1 WITH_RA_IBB=1

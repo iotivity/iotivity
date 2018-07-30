@@ -144,6 +144,8 @@ libocsrm_src.extend(env['cbor_files'])
 libocsrm = libocsrm_env.StaticLibrary('ocsrm', libocsrm_src)
 
 libocsrm_env.InstallTarget(libocsrm, 'ocsrm')
+libocsrm_env.UserInstallTargetLib(libocsrm, 'ocsrm')
+
 libocsrm_env.UserInstallTargetHeader(
     'include/experimental/securevirtualresourcetypes.h',
     'resource/stack/experimental', 'securevirtualresourcetypes.h')
