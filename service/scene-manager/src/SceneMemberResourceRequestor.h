@@ -24,8 +24,10 @@
 #include "SceneCommons.h"
 #include "RCSRemoteResourceObject.h"
 
+/** OIC namespace */
 namespace OIC
 {
+    /** service namespace */
     namespace Service
     {
 
@@ -39,12 +41,20 @@ namespace OIC
                 typedef std::function < void(int eCode) > InternalAddSceneActionCallback;
 
             public:
+                /**
+                 * constructor
+                 * @param memberResource   member resource
+                 * @param id               member id
+                 */
                 SceneMemberResourceRequestor(RCSRemoteResourceObject::Ptr memberResource,
                                              const std::string &id);
                 ~SceneMemberResourceRequestor() = default;
 
                 /**
                  * This method is for scene action creation request
+                 * @param sceneName  name of the scene
+                 * @param attr       resource attributes
+                 * @param InternalAddSceneActionCallback  callback for scene action
                  */
                 void requestSceneActionCreation(const std::string &sceneName,
                                                 const RCSResourceAttributes &attr,

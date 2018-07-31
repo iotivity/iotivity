@@ -35,21 +35,21 @@ extern "C"
 #include "uarraylist.h"
 #include "octypes.h"
 
-#define CHP_MAX_HF_DATA_LENGTH 1024
-#define CHP_MAX_HF_NAME_LENGTH 255
-#define JSON_CONTENT_TYPE "application/json"
-#define CBOR_CONTENT_TYPE "application/cbor"
-#define ACCEPT_MEDIA_TYPE (CBOR_CONTENT_TYPE "; q=1.0, " JSON_CONTENT_TYPE "; q=0.5")
+#define CHP_MAX_HF_DATA_LENGTH 1024 /**< maximum data length */
+#define CHP_MAX_HF_NAME_LENGTH 255  /**< maximum name length */
+#define JSON_CONTENT_TYPE "application/json" /**< type of json content */
+#define CBOR_CONTENT_TYPE "application/cbor" /**< type of cbor content */
+#define ACCEPT_MEDIA_TYPE (CBOR_CONTENT_TYPE "; q=1.0, " JSON_CONTENT_TYPE "; q=0.5") /**< media type */
 
 // HTTP Option types
-#define HTTP_OPTION_CACHE_CONTROL   "cache-control"
-#define HTTP_OPTION_ACCEPT          "accept"
-#define HTTP_OPTION_IF_MATCH        "if-match"
-#define HTTP_OPTION_IF_NONE_MATCH   "if-none-match"
-#define HTTP_OPTION_ETAG            "etag"
-#define HTTP_OPTION_CONTENT_TYPE    "content-type"
-#define HTTP_OPTION_CONTENT_LENGTH  "content-length"
-#define HTTP_OPTION_EXPIRES         "expires"
+#define HTTP_OPTION_CACHE_CONTROL   "cache-control"  /**< cache control option type */
+#define HTTP_OPTION_ACCEPT          "accept"         /**< accept option type */
+#define HTTP_OPTION_IF_MATCH        "if-match"       /**< match option type */
+#define HTTP_OPTION_IF_NONE_MATCH   "if-none-match"  /**< not match option type */
+#define HTTP_OPTION_ETAG            "etag"           /**< tag information */
+#define HTTP_OPTION_CONTENT_TYPE    "content-type"   /**< content type option */
+#define HTTP_OPTION_CONTENT_LENGTH  "content-length" /**< content length option */
+#define HTTP_OPTION_EXPIRES         "expires"        /**< expires option type */
 
 /**
  * @enum HttpResponseResult_t
@@ -94,6 +94,7 @@ typedef struct
     char optionData[CHP_MAX_HF_DATA_LENGTH];                /**< Option data values. **/
 } HttpHeaderOption_t;
 
+/** enum value for http method */
 typedef enum
 {
     CHP_GET = 1,   /**< GET */
@@ -103,6 +104,7 @@ typedef enum
     CHP_INVALID
 }HttpMethod_t;
 
+/** structure of http request */
 typedef struct HttpRequest_t
 {
     unsigned short httpMajor;
@@ -117,6 +119,7 @@ typedef struct HttpRequest_t
     char acceptFormat[CHP_MAX_HF_DATA_LENGTH];
 }HttpRequest_t;
 
+/** structure of http response */
 typedef struct HttpResponse_t
 {
     unsigned short httpMajor;
