@@ -31,7 +31,7 @@ namespace OIC
     /** service namespace */
     namespace Service
     {
-        typedef RCSRepresentation ResponseStatement;
+        typedef RCSRepresentation ResponseStatement;  /*!< typedef of the rcs representation */
     }
 }
 

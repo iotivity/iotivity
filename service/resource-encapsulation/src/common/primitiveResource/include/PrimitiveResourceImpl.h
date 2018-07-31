@@ -1,22 +1,22 @@
-//******************************************************************
-//
-// Copyright 2015 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #ifndef COMMON_INTERNAL_PRIMITIVERESOURCEIMPL_H
 #define COMMON_INTERNAL_PRIMITIVERESOURCEIMPL_H
@@ -26,8 +26,10 @@
 
 #include "ResourceAttributesConverter.h"
 
+/** OIC namespace */
 namespace OIC
 {
+    /** service namespace */
     namespace Service
     {
 
@@ -91,6 +93,10 @@ namespace OIC
             {
             }
 
+            /**
+             * This API is for the get request
+             * @param callback  get callback
+             */
             void requestGet(GetCallback callback)
             {
                 requestGetWith("", "", {}, std::move(callback));
@@ -112,6 +118,11 @@ namespace OIC
                                 std::move(callback), _1, _2, _3));
             }
 
+            /**
+             * This API is for the set request
+             * @param attrs     resource attributes
+             * @param callback  set callback
+             */
             void requestSet(const RCSResourceAttributes& attrs, SetCallback callback)
             {
                 requestSetWith("", "", {}, attrs, std::move(callback));
@@ -153,6 +164,11 @@ namespace OIC
                                 _1, _2, _3));
             }
 
+            /**
+             * This API is for the put request
+             * @param attrs     resource attributes
+             * @param callback  put callback
+             */
             void requestPut(const RCSResourceAttributes& attrs, PutCallback callback)
             {
                 using namespace std::placeholders;
@@ -181,6 +197,9 @@ namespace OIC
                                 std::move(callback), _1, _2, _3, _4));
             }
 
+            /**
+             * This API is to cancle the resource observe
+             */
             void cancelObserve()
             {
                 typedef OCStackResult (BaseResource::*CancelObserveFunc)();
@@ -189,36 +208,64 @@ namespace OIC
                         static_cast< CancelObserveFunc >(&BaseResource::cancelObserve));
             }
 
+            /**
+             * This API is to get the sid value of resource
+             * @return resource sid value
+             */
             std::string getSid() const
             {
                 return invokeOC(m_baseResource, &BaseResource::sid);
             }
 
+            /**
+             * API to get the resource URI
+             * @return resource uri
+             */
             std::string getUri() const
             {
                 return invokeOC(m_baseResource, &BaseResource::uri);
             }
 
+            /**
+             * API to get the host information
+             * @return host information
+             */
             std::string getHost() const
             {
                 return invokeOC(m_baseResource, &BaseResource::host);
             }
 
+            /**
+             * API to get the resource type
+             * @return resource type
+             */
             std::vector< std::string > getTypes() const
             {
                 return invokeOC(m_baseResource, &BaseResource::getResourceTypes);
             }
 
+            /**
+             * API is to get the resource interface details
+             * @return resource interface detail
+             */
             std::vector< std::string > getInterfaces() const
             {
                 return invokeOC(m_baseResource, &BaseResource::getResourceInterfaces);
             }
 
+            /**
+             * API is to get the resource connectivity type
+             * @return resource connectivity type
+             */
             OCConnectivityType getConnectivityType() const
             {
                 return invokeOC(m_baseResource, &BaseResource::connectivityType);
             }
 
+            /**
+             * API to get the observable state of resource
+             * @return true or false
+             */
             bool isObservable() const
             {
                 return invokeOC(m_baseResource, &BaseResource::isObservable);

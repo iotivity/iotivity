@@ -50,18 +50,25 @@ namespace OIC
             class ScopedLock
             {
             public:
+                /**
+                 * parameter constructor
+                 * @param flag   test the flag and set the value
+                 */
                 explicit ScopedLock(std::atomic_flag& flag) noexcept :
                         m_flag(flag)
                 {
                     while (m_flag.test_and_set(std::memory_order_acquire));
                 }
 
+                /** destructor of scopelock */
                 ~ScopedLock() noexcept
                 {
                     m_flag.clear(std::memory_order_release);
                 }
 
+                /** parameter constructor */
                 ScopedLock(const ScopedLock&) = delete;
+                /** operator overloading */
                 ScopedLock& operator=(const ScopedLock&) = delete;
 
             private:

@@ -30,6 +30,7 @@
 
 extern JavaVM* g_jvm;
 
+/** detail namespace */
 namespace Detail
 {
     inline std::pair<JNIEnv*, bool> getEnv()
@@ -37,6 +38,7 @@ namespace Detail
         JNIEnv* env{ };
         bool needToDetach{ };
 
+        /** get the environment information */
         auto ret = g_jvm->GetEnv((void**) &env, JNI_VERSION_1_6);
 
         switch (ret)
@@ -71,6 +73,9 @@ namespace Detail
     }
 }
 
+/**
+ * @class ScopedEnv
+ */
 class ScopedEnv
 {
 public:
@@ -115,6 +120,9 @@ private:
     bool m_needToDetach;
 };
 
+/**
+ * @class ScopedEnvWrapper
+ */
 class ScopedEnvWrapper
 {
 public:

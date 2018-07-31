@@ -33,6 +33,7 @@ extern jfieldID g_field_mNativeHandle;
 void initRCSObject(JNIEnvWrapper*);
 void clearRCSObject(JNIEnvWrapper*);
 
+/** detail namespace */
 namespace Detail
 {
     struct BaseHandleHolder
@@ -50,6 +51,11 @@ namespace Detail
         T* m_ptr;
     };
 
+    /**
+     * get the native method handle
+     * @param env       JNI interface pointer
+     * @param obj       object
+     */
     template< typename ENV >
     void* getNativeHandle(ENV* env, jobject obj)
     {
@@ -63,6 +69,11 @@ bool hasNativeHandle(ENV* env, jobject obj)
     return Detail::getNativeHandle(env, obj) != nullptr;
 }
 
+/**
+ * set the native method handle
+ * @param env       JNI interface pointer
+ * @param obj       object
+ */
 template< typename T, typename ENV, typename ...PARAMS >
 inline void setSafeNativeHandle(ENV* env, jobject obj, PARAMS&&... params)
 {
@@ -78,6 +89,11 @@ inline void setSafeNativeHandle(ENV* env, jobject obj, PARAMS&&... params)
     p.release();
 }
 
+/**
+ * release the native method handle
+ * @param env       JNI interface pointer
+ * @param obj       object
+ */
 template< typename ENV >
 void releaseNativeHandle(ENV* env, jobject obj)
 {
@@ -89,7 +105,11 @@ void releaseNativeHandle(ENV* env, jobject obj)
     env->SetLongField(obj, g_field_mNativeHandle, 0);
 }
 
-
+/**
+ * get the native method handle
+ * @param env       JNI interface pointer
+ * @param obj       object
+ */
 template< typename T >
 inline T& getNativeHandleAs(JNIEnv* env, jobject obj)
 {
@@ -103,6 +123,11 @@ inline T& getNativeHandleAs(JNIEnv* env, jobject obj)
    return *handleHolder->m_ptr;
 }
 
+/**
+ * get the native method handle
+ * @param env       JNI interface pointer
+ * @param obj       object
+ */
 template< typename T >
 inline T& getNativeHandleAs(JNIEnvWrapper* env, jobject obj)
 {
@@ -115,6 +140,10 @@ inline T& getNativeHandleAs(JNIEnvWrapper* env, jobject obj)
 extern "C" {
 #endif
 
+/**
+ * @class     org_iotivity_service_RcsObject
+ * Method     nativeDispose
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_RcsObject_nativeDispose(JNIEnv*, jobject);
 

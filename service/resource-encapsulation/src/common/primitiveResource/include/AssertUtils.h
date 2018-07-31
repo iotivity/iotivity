@@ -72,6 +72,10 @@ namespace OIC
                 }
 
             public:
+                /**
+                 * check the process is in termination state or not
+                 * @return boolean value
+                 */
                 static bool isInTermination()
                 {
                     static TerminationChecker once;

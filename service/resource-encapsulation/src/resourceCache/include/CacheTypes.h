@@ -31,8 +31,10 @@
 #include "PrimitiveResource.h"
 #include "RCSResourceAttributes.h"
 
+/** OIC namespace */
 namespace OIC
 {
+    /** service namespace */
     namespace Service
     {
 
@@ -45,42 +47,42 @@ namespace OIC
         /** enum for report frequency value */
         enum class REPORT_FREQUENCY
         {
-            NONE = 0,
-            UPTODATE,
-            PERIODICTY
+            NONE = 0,        /**< Initialize frequency */
+            UPTODATE,        /**< up to date frequency */
+            PERIODICTY       /**< periodicty frequency */
         };
 
         struct Report_Info
         {
             REPORT_FREQUENCY rf;
-            int reportID;               /*!< report id */
-            long repeatTime;            /*!< repeat time */
-            unsigned int timerID;       /*!< timer id */
+            int reportID;               /**< report id */
+            long repeatTime;            /**< repeat time */
+            unsigned int timerID;       /**< timer id */
         };
 
         /** enum for cache state */
         enum class CACHE_STATE
         {
-            READY = 0,
-            READY_YET,
-            LOST_SIGNAL,
-            DESTROYED,
-            UPDATING,
-            NONE
+            READY = 0,          /**< ready state */
+            READY_YET,          /**< ready yet state */
+            LOST_SIGNAL,        /**< lost signal state */
+            DESTROYED,          /**< destroyed state */
+            UPDATING,           /**< updating state */
+            NONE                /**< none state */
         };
 
         /** enum for cache mode */
         enum class CACHE_MODE
         {
-            OBSERVE = 0,
-            FREQUENCY
+            OBSERVE = 0,         /**< observe mode */
+            FREQUENCY            /**< frequency of mode */
         };
 
         /** enum for cache method */
         enum class CACHE_METHOD
         {
-            OBSERVE_ONLY,
-            ITERATED_GET
+            OBSERVE_ONLY,           /**< observe only method */
+            ITERATED_GET            /**< iterated get method */
         };
 
         typedef int CacheID;
