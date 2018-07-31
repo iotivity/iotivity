@@ -30,8 +30,10 @@
 
 using namespace OC;
 
+/** OIC namespace */
 namespace OIC
 {
+    /** service namespace */
     namespace Service
     {
         class OCResource;
@@ -46,11 +48,23 @@ namespace OIC
         class CloudResource : public std::enable_shared_from_this<CloudResource>
         {
         public:
+            /**
+             * constructor
+             * @param[in] resource   oc resource
+             */
             CloudResource(std::shared_ptr< OC::OCResource > resource);
             ~CloudResource() = default;
 
+            /**
+             * This method is to register the callback of cloud property provisioning status
+             * @param[in] callback   cloud property provisioning status callback
+             */
             void registerCloudPropProvisioningStatusCallback(
                     const CloudPropProvStatusCb callback);
+            /**
+             * This method is to provision the cloud properties
+             * @param[in] CloudProp   cloud properties
+             */
             void provisionProperties(const CloudProp& CloudProp);
 
         private:

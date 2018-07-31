@@ -63,15 +63,21 @@ class JniRemoteEnrollee
         ~JniRemoteEnrollee();
 
         // ***** JNI APIs internally call the APIs of this class ***** //
+        /** This method is to get the enrollee status */
         void getStatus(JNIEnv *env, jobject jListener);
+        /** This method is to get the device configurations */
         void getConfiguration(JNIEnv *env, jobject jListener);
+        /** This method is for security provisioning such as ownership tranfer to Enrollee */
         void provisionSecurity(JNIEnv *env, jobject jListener);
+        /** This method is for provisioning the device properties */
         void provisionDeviceProperties(JNIEnv *env, jobject jRepresentation, jobject jListener);
+        /** This method is to provision the cloud properties */
         void provisionCloudProperties(JNIEnv *env, jobject jRepresentation,
                                                             jstring jCloudID,
                                                             jint jCredID,
                                                             jobject jListener);
 
+        /** This method is to get the remote enrollee */
         static JniRemoteEnrollee *getJniRemoteEnrollee(JNIEnv *env, jobject thiz);
 
         template <class T>

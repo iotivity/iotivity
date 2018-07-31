@@ -30,8 +30,10 @@
 
 using namespace OC;
 
+/** OIC namespace */
 namespace OIC
 {
+    /** service namespace */
     namespace Service
     {
         class OCResource;
@@ -50,33 +52,37 @@ namespace OIC
             friend class EnrolleeSecurity;
 
         public:
+            /**
+             * constructor
+             * @param[in] resource   oc resource
+             */
             EnrolleeResource(std::shared_ptr< OC::OCResource > resource);
 
             ~EnrolleeResource() = default;
 
             /**
              * This method is for register the get status callback
-             * @param callback     enrolle status callback
+             * @param[in] callback     enrolle status callback
              */
             void registerGetStatusCallback(const GetStatusCb callback);
 
             /**
              * This method is for register get configuration status callback
-             * @param callback     enrollee configuration status callback
+             * @param[in] callback     enrollee configuration status callback
              */
             void registerGetConfigurationStatusCallback(
                 const GetConfigurationStatusCb callback);
 
             /**
              * This method is for register device property provision callback
-             * @param callback     Enrollee device property provisioning status callback
+             * @param[in] callback     Enrollee device property provisioning status callback
              */
             void registerDevicePropProvStatusCallback(
                 const DevicePropProvStatusCb callback);
 
             /**
              * This method is for register connect request status callback
-             * @param              connect request status callback
+             * @param[in] calback      connect request status callback
              */
             void registerConnectRequestStatusCallback(
                 const ConnectRequestStatusCb callback);
@@ -90,7 +96,15 @@ namespace OIC
              * This method is for get device status
              */
             void getStatus();
+            /**
+             * provision the device properties
+             * @param[in] deviceProp   device properties
+             */
             void provisionProperties(const DeviceProp& deviceProp);
+            /**
+             * This API is to request the enrollee to connect
+             * @param[in] connectTypes   connect type for enrollee
+             */
             void requestToConnect(const std::vector<ES_CONNECT_TYPE> &connectTypes);
 
         private:

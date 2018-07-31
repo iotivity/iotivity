@@ -32,11 +32,16 @@
 #include <string>
 #include <android/log.h>
 
+/** easy setup tag information */
 #define ESTAG "ES-JNI"
+/** current version of the JNI */
 #define JNI_CURRENT_VERSION JNI_VERSION_1_6
 
+/** easy setup information logs */
 #define ES_LOGI(...) __android_log_print(ANDROID_LOG_INFO, ESTAG, __VA_ARGS__)
+/** easy setup debug logs */
 #define ES_LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, ESTAG, __VA_ARGS__)
+/** easy setup error logs */
 #define ES_LOGE(...) __android_log_print(ANDROID_LOG_ERROR, ESTAG, __VA_ARGS__)
 
 extern JavaVM *g_jvm;
@@ -69,6 +74,10 @@ typedef void(*RemoveListenerCallback)(JNIEnv *env, jobject jListener);
 
 /**
  * @brief Get the native handle field
+ * @param[in] env    JNI interface pointer
+ * @param[in] jobj   java object
+ *
+ * @return field id
  */
 static jfieldID ESGetHandleField(JNIEnv *env, jobject jobj)
 {
@@ -78,6 +87,10 @@ static jfieldID ESGetHandleField(JNIEnv *env, jobject jobj)
 
 /**
  * @brief Get the native handle
+ * @param[in] env    JNI interface pointer
+ * @param[in] jobj   java object
+ *
+ * @return easy setup handle
  */
 template <typename T>
 static T *ESGetHandle(JNIEnv *env, jobject jobj)
@@ -88,6 +101,9 @@ static T *ESGetHandle(JNIEnv *env, jobject jobj)
 
 /**
  * @brief Set the native handle
+ * @param[in] env    JNI interface pointer
+ * @param[in] jobj   java object
+ * @param[in] type   type of data
  */
 template <typename T>
 static void ESSetHandle(JNIEnv *env, jobject jobj, T *type)
@@ -99,6 +115,7 @@ static void ESSetHandle(JNIEnv *env, jobject jobj, T *type)
 
 /**
  * @brief Get the JNI Environment
+ * @return JNI environment information
  */
 static JNIEnv *GetESJNIEnv(jint &ret)
 {
