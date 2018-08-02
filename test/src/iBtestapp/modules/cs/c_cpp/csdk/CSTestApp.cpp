@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2017 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -34,6 +34,7 @@ static OCDevAddr endPoint;
 static OCAccountManager::Ptr g_accountMgrControlee = nullptr;
 static OCAccountManager::Ptr g_accountMgrController = nullptr;
 cloudAce_t *aces;
+OicCloud_t* g_cloudServer = nullptr;
 
 /*
  * UI Related
@@ -252,99 +253,99 @@ static void doAction(Menu userInput)
          /************************************** CONTROLEE ACL **********************************/
         case Menu::OCCloudAclIdCreate:
             m_CloudAclHelper.cloudAclIdCreate((void*) CTX_CREATE_ACL, DEFAULT_OWNER_ID,
-            DEFAULT_DEV_ID_APP, &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
+            DEFAULT_DEV_ID_APP, g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudGetAclIdByDevice:
             m_CloudAclHelper.cloudGetAclIdByDevice((void*) CTX_GET_ACL_ID_BY_DEV,
-            DEFAULT_DEV_ID_APP, &endPoint, CSCsdkCloudHelper::aclResponseCB, m_aclId, OC_STACK_OK);
+            DEFAULT_DEV_ID_APP, g_cloudServer->cis, CSCsdkCloudHelper::aclResponseCB, m_aclId, OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclIndividualGetInfo:
             m_CloudAclHelper.cloudAclIndividualGetInfo((void*) CTX_INDIVIDUAL_GET_INFO,
-                    m_aclId.c_str(), &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
+                    m_aclId.c_str(), g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
 
         case Menu::OCCloudAclIndividualAclUpdate:
             m_CloudAclHelper.cloudAclIndividualAclUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE,
-                    m_aclId.c_str(), aces, &endPoint, CSCsdkCloudHelper::cloudResponseCB,
+                    m_aclId.c_str(), aces, g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB,
                     OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclIndividualAceUpdate:
             m_CloudAclHelper.cloudAclIndividualAceUpdate((void*) CTX_INDIVIDUAL_UPDATE_ACE,
-                    m_aclId.c_str(), aceId.c_str(), aces, &endPoint,
+                    m_aclId.c_str(), aceId.c_str(), aces, g_cloudServer->cis,
                     CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclIdDelete:
-            m_CloudAclHelper.cloudAclIdDelete((void*) CTX_DELETE_ACL, m_aclId.c_str(), &endPoint,
+            m_CloudAclHelper.cloudAclIdDelete((void*) CTX_DELETE_ACL, m_aclId.c_str(), g_cloudServer->cis,
                     CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclAcesDelete:
             m_CloudAclHelper.cloudAclAcesDelete((void*) CTX_INDIVIDUAL_UPDATE_ACE, m_aclId.c_str(),
-                    &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
+                    g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclIndividualAceDelete:
             m_CloudAclHelper.cloudAclIndividualAceDelete((void*) CTX_INDIVIDUAL_UPDATE_ACE,
-                    m_aclId.c_str(), aceId.c_str(), &endPoint, CSCsdkCloudHelper::cloudResponseCB,
+                    m_aclId.c_str(), aceId.c_str(), g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB,
                     OC_STACK_OK);
             break;
 
         /************************************** CONTROLEE GROUP **********************************/
         case Menu::OCCloudAclCreateGroup:
             m_CloudAclHelper.cloudAclCreateGroup((void*) CTX_CREATE_GROUP, GROUP_TYPE_PUBLIC,
-            GROUP_MASTER_ID, &endPoint, CSCsdkCloudHelper::createGroupResponseCB, m_groupId,
+            GROUP_MASTER_ID, g_cloudServer->cis, CSCsdkCloudHelper::createGroupResponseCB, m_groupId,
                     OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclFindMyGroup:
-            m_CloudAclHelper.cloudAclFindMyGroup((void*) CTX_FIND_GROUP, GROUP_MASTER_ID, &endPoint,
+            m_CloudAclHelper.cloudAclFindMyGroup((void*) CTX_FIND_GROUP, GROUP_MASTER_ID, g_cloudServer->cis,
                     CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclDeleteGroup:
             m_CloudAclHelper.cloudAclDeleteGroup((void*) CTX_DELETE_GROUP, m_groupId.c_str(),
-            GROUP_MASTER_ID, &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
+            GROUP_MASTER_ID, g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclGroupGetInfo:
             m_CloudAclHelper.cloudAclGroupGetInfo((void*) CTX_GET_GROUP_INFO, m_groupId.c_str(),
-            GROUP_MASTER_ID, &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
+            GROUP_MASTER_ID, g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclShareDeviceIntoGroup:
             m_CloudAclHelper.cloudAclShareDeviceIntoGroup((void*) CTX_SHARE_DEVICE,
-                    m_groupId.c_str(), memberArray, deviceArray, &endPoint,
+                    m_groupId.c_str(), memberArray, deviceArray, g_cloudServer->cis,
                     CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclDeleteDeviceFromGroup:
             m_CloudAclHelper.cloudAclDeleteDeviceFromGroup((void*) CTX_DELETE_SHARED_DEVICE,
-                    m_groupId.c_str(), memberArray, deviceArray, &endPoint,
+                    m_groupId.c_str(), memberArray, deviceArray, g_cloudServer->cis,
                     CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         /************************************** CONTROLEE INVITATION **********************************/
         case Menu::OCCloudAclInviteUser:
             m_CloudAclHelper.cloudAclInviteUser((void*) CTX_INVITE_USER, NULL, groupArray,
-                    memberArray, &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
+                    memberArray, g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclCancelInvitation:
             m_CloudAclHelper.cloudAclCancelInvitation((void*) CTX_INVITE_USER, NULL,
                     m_groupId.c_str(),
-                    GROUP_MEMBER_ID_01, &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
+                    GROUP_MEMBER_ID_01, g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclPolicyCheck:
             m_CloudAclHelper.cloudAclPolicyCheck((void*) CTX_INDIVIDUAL_GET_INFO,
                     CSCsdkCloudHelper::s_subjectuuid.c_str(), CSCsdkCloudHelper::s_deviceId.c_str(),
                     m_CloudAclHelper.GET_REQUEST.c_str(), CSCsdkCloudHelper::s_href.c_str(),
-                    &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
+                    g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         /************************************** CONTROLLER GROUP **********************************/
@@ -370,39 +371,39 @@ static void doAction(Menu userInput)
             break;
 
         case Menu::OCCloudCertificateIssueRequest:
-            m_CloudAclHelper.cloudCertificateIssueRequest((void*) CTX_CERT_REQ_ISSUE, &endPoint,
+            m_CloudAclHelper.cloudCertificateIssueRequest((void*) CTX_CERT_REQ_ISSUE, g_cloudServer->cis,
                     CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudGetCRL:
-            m_CloudAclHelper.cloudGetCRL((void*) CTX_GET_CRL, &endPoint,
+            m_CloudAclHelper.cloudGetCRL((void*) CTX_GET_CRL, g_cloudServer->cis,
                     CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudPostCRL:
             m_CloudAclHelper.cloudPostCRL((void*) CTX_POST_CRL, CRL_THIS_UPDATE.c_str(),
-                    CRL_NEXT_DATE.c_str(), crl, rcsn, &endPoint, CSCsdkCloudHelper::cloudResponseCB,
+                    CRL_NEXT_DATE.c_str(), crl, rcsn, g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB,
                     OC_STACK_INVALID_PARAM);
             break;
 
         case Menu::OCCloudAclGetInvitation:
             m_CloudAclHelper.cloudAclGetInvitation((void*) CTX_GET_GROUP_INVITATION, NULL,
-                    &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
+                    g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclJoinToInvitedGroup:
             m_CloudAclHelper.cloudAclJoinToInvitedGroup((void*) CTX_JOIN_GROUP, m_groupId.c_str(),
-                    &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
+                    g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclObserveGroup:
             m_CloudAclHelper.cloudAclObserveGroup((void*) CTX_OBSERVER_GROUP, m_groupId.c_str(),
-                    &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
+                    g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::OCCloudAclDeleteInvitation:
             m_CloudAclHelper.cloudAclDeleteInvitation((void*) CTX_DELETE_INVITATION, NULL,
-                    m_groupId.c_str(), &endPoint, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
+                    m_groupId.c_str(), g_cloudServer->cis, CSCsdkCloudHelper::cloudResponseCB, OC_STACK_OK);
             break;
 
         case Menu::DISCOVER_RESOURCE:
@@ -410,11 +411,11 @@ static void doAction(Menu userInput)
             break;
 
         case Menu::SEND_GET_REUQUEST:
-            sendGetRequest(ResourceSelectionType.VERTICAL_RESOURCE);
+            sendGetRequest(ResourceSelectionType::VERTICAL_RESOURCE);
             break;
 
         case Menu::SEND_POST_REQUEST:
-            sendPostRequest(ResourceSelectionType.VERTICAL_RESOURCE);
+            sendPostRequest(ResourceSelectionType::VERTICAL_RESOURCE);
             break;
 
         default:
@@ -428,6 +429,7 @@ void createEndPoint()
     memset(&endPoint, 0, sizeof(endPoint));
     strncpy(endPoint.addr, DEFAULT_HOST, sizeof(endPoint.addr));
     endPoint.port = OC_MULTICAST_PORT;
+    g_cloudServer = CloudCommonUtil::getCloudServer();
 }
 
 int main()
