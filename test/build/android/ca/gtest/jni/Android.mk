@@ -42,21 +42,25 @@ include $(BUILD_STATIC_LIBRARY)
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-IOTIVITY_INCLUDE := $(IOTIVITY_ROOT)/resource/csdk/connectivity/api 
-IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/csdk/connectivity/inc 
-IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/csdk/connectivity/external/inc 
-IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/c_common 
+IOTIVITY_INCLUDE := $(IOTIVITY_ROOT)/resource/csdk/connectivity/api
+IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/csdk/connectivity/inc
+IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/csdk/connectivity/external/inc
+IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/c_common
 IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/csdk/stack/include
 IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/csdk/include
+IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)resource/csdk/logger/include
+IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/c_common/ocrandom/include
+IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/csdk/logger/include/experimental
 IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/csdk/logger/include
-IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/c_common/oic_malloc/include 
+IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/c_common/oic_malloc/include
 IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/c_common/oic_string/include
 IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/csdk/connectivity/lib/libcoap-4.1.1/include
 IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/resource/csdk/connectivity/common/inc
 IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/extlibs/mbedtls/mbedtls/include/mbedtls
+IOTIVITY_INCLUDE += $(IOTIVITY_ROOT)/out/android/$(IOTIVITY_TARGET_ARCH)/${RELEASE_DIR}/resource/c_common
 
-COMMON_TC_INCLUDE := $(BOOST_PATH) $(GTEST_PATH) $(GTEST_PATH)/include 
-COMMON_TC_INCLUDE += $(IOTIVITY_INCLUDE) 
+COMMON_TC_INCLUDE := $(BOOST_PATH) $(GTEST_PATH) $(GTEST_PATH)/include
+COMMON_TC_INCLUDE += $(IOTIVITY_INCLUDE)
 COMMON_TC_INCLUDE += $(COMMON_UTIL_HEADER_PATH) $(EXTERNAL_PATH) $(HELPER_HEADER_PATH)
 
 LOCAL_PATH := $(call my-dir)
@@ -73,7 +77,7 @@ LOCAL_SHARED_LIBRARIES := connectivity_abstraction
 LOCAL_C_INCLUDES := $(COMMON_TC_INCLUDE)
 LOCAL_SRC_FILES := $(HELPER_SRC_PATH)/CAHelper.cpp $(COMMON_UTIL_SRC_PATH)/CommonUtil.cpp $(COMMON_UTIL_SRC_PATH)/CommonTestUtil.cpp
 LOCAL_LDLIBS := -llog
-LOCAL_CFLAGS := -std=gnu++11 -fpermissive -D__CA__ -D__WITH_DTLS__ -DTCP_ADAPTER -D__ANDROID_NATIVE__ 
+LOCAL_CFLAGS := -std=gnu++11 -fpermissive -D__CA__ -D__WITH_DTLS__ -DTCP_ADAPTER -D__ANDROID_NATIVE__
 LOCAL_CPPFLAGS := -pthread -frtti -fexceptions
 include $(BUILD_STATIC_LIBRARY)
 
@@ -85,7 +89,7 @@ LOCAL_MODULE := tcp_helper_interface
 LOCAL_STATIC_LIBRARIES := libgtest boostsystemModule boostfilesystemModule
 LOCAL_SHARED_LIBRARIES := connectivity_abstraction
 LOCAL_C_INCLUDES := $(COMMON_TC_INCLUDE)
-LOCAL_C_INCLUDES += $(COMMON_UTIL_HEADER_PATH) $(EXTERNAL_PATH) $(HELPER_HEADER_PATH) 
+LOCAL_C_INCLUDES += $(COMMON_UTIL_HEADER_PATH) $(EXTERNAL_PATH) $(HELPER_HEADER_PATH)
 LOCAL_SRC_FILES := $(HELPER_SRC_PATH)/CAHelper.cpp $(COMMON_UTIL_SRC_PATH)/CommonUtil.cpp
 LOCAL_LDLIBS := -llog
 LOCAL_CFLAGS := -std=gnu++11 -fpermissive -D__CA__ -DTCP_ADAPTER -D__ANDROID_NATIVE__ -D__WITH_DTLS__
@@ -101,7 +105,7 @@ LOCAL_SHARED_LIBRARIES := connectivity_abstraction
 LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -D__ANDROID__ -D__ANDROID_NATIVE__ -D__ALL_TRANSPORT__ -D__WITH_DTLS__
 LOCAL_CPPFLAGS := -pthread -frtti -fexceptions
 LOCAL_C_INCLUDES := $(COMMON_TC_INCLUDE)
-LOCAL_C_INCLUDES += $(COMMON_UTIL_HEADER_PATH) $(EXTERNAL_PATH) $(HELPER_HEADER_PATH) 
+LOCAL_C_INCLUDES += $(COMMON_UTIL_HEADER_PATH) $(EXTERNAL_PATH) $(HELPER_HEADER_PATH)
 LOCAL_SRC_FILES := $(HELPER_SRC_PATH)/CAAndroidGtestRunner.cpp \
                      $(ITC_PATH)/CACommonTest.cpp \
                      $(UTC_PATH)/CATest.cpp
@@ -116,7 +120,7 @@ LOCAL_SHARED_LIBRARIES := connectivity_abstraction
 LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -D__ANDROID__ -D__ANDROID_NATIVE__ -D__ALL_TRANSPORT__ -D__IP__ -D__WITH_DTLS__
 LOCAL_CPPFLAGS := -pthread -frtti -fexceptions
 LOCAL_C_INCLUDES := $(COMMON_TC_INCLUDE)
-LOCAL_C_INCLUDES += $(COMMON_UTIL_HEADER_PATH) $(EXTERNAL_PATH) $(HELPER_HEADER_PATH) 
+LOCAL_C_INCLUDES += $(COMMON_UTIL_HEADER_PATH) $(EXTERNAL_PATH) $(HELPER_HEADER_PATH)
 LOCAL_SRC_FILES := $(HELPER_SRC_PATH)/CAAndroidGtestRunner.cpp \
                      $(ITC_PATH)/CANetworkCommonTest.cpp  \
                      $(ITC_PATH)/CAClientTest.cpp \
@@ -133,7 +137,7 @@ LOCAL_SHARED_LIBRARIES := connectivity_abstraction
 LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -DTCP_ADAPTER -D__ANDROID__ -D__ANDROID_NATIVE__ -D__ALL_TRANSPORT__ -D__TCP__ -D__WITH_DTLS__
 LOCAL_CPPFLAGS := -pthread -frtti -fexceptions
 LOCAL_C_INCLUDES := $(COMMON_TC_INCLUDE)
-LOCAL_C_INCLUDES += $(COMMON_UTIL_HEADER_PATH) $(EXTERNAL_PATH) $(HELPER_HEADER_PATH) 
+LOCAL_C_INCLUDES += $(COMMON_UTIL_HEADER_PATH) $(EXTERNAL_PATH) $(HELPER_HEADER_PATH)
 LOCAL_SRC_FILES := $(HELPER_SRC_PATH)/CAAndroidGtestRunner.cpp \
                      $(ITC_PATH)/CANetworkCommonTest.cpp  \
                      $(ITC_PATH)/CAClientTest.cpp \
@@ -148,9 +152,9 @@ LOCAL_MODULE := iotivity_ca_simulator
 LOCAL_SHARED_LIBRARIES := connectivity_abstraction
 #LOCAL_STATIC_LIBRARIES := CA
 LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -D__WITH_DTLS__ -D__ANDROID_NATIVE__ -DTCP_ADAPTER
-LOCAL_CPPFLAGS := -pthread -frtti -fexceptions 
+LOCAL_CPPFLAGS := -pthread -frtti -fexceptions
 LOCAL_C_INCLUDES = $(IOTIVITY_INCLUDE)
-LOCAL_C_INCLUDES += $(SIMULATOR_INCLUDE_PATH) 
+LOCAL_C_INCLUDES += $(SIMULATOR_INCLUDE_PATH)
 LOCAL_SRC_FILES := $(SIMULATOR_SRC_PATH)/ca_simulator.c
 LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -llog
 LOCAL_LDFLAGS := -fPIE -pie
