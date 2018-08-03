@@ -26,7 +26,7 @@ extern "C" {
 
 typedef enum {
     SP_SUPPORTED_PROFILES = 0,
-    SP_ACTIVE_PROFILE,
+    SP_CURRENT_PROFILE,
     SP_CRED_ID,
     SP_PROPERTY_COUNT
 } SpProperty_t;
