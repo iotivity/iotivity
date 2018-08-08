@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2016 Samsung Electronics All Rights Reserved.
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -22,7 +22,7 @@ apply from: "../../../../../build/android/build.gradle"
 
 project.buildDir = "${binDirectory}/retestapp"
 def reAARFileDir = "${iotivityRootDirectoryFromModules}/service/resource-encapsulation/android/service/build/outputs/aar"
-def reAARFile = "iotivity-armeabi-service-${buildmode}"
+def reAARFile = "iotivity-service-${buildmode}"
 
 buildscript {
     repositories {
@@ -54,7 +54,7 @@ android {
               jni.srcDirs = [] //disable automatic ndk-build
         }
     }
-    
+
     packagingOptions {
         pickFirst 'lib/armeabi/libca-interface.so'
         pickFirst 'lib/armeabi-v7a/libca-interface.so'

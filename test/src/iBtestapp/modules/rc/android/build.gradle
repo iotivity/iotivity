@@ -25,11 +25,11 @@ project.buildDir = "${binDirectory}/rctestapp"
 def rcHueBandleJar = "${secTestRootDirectoryFromModules}/src/tc/rc/junit/assets/lib/"
 def rcAARFileDir = "${iotivityRootDirectoryFromModules}/service/resource-container/android/resource-container/build/outputs/aar"
 def reAARFileDir = "${iotivityRootDirectoryFromModules}/service/resource-encapsulation/android/service/build/outputs/aar"
-def rcAARFile = "iotivity-armeabi-resource-container-${buildmode}"
-def reAARFile = "iotivity-armeabi-service-${buildmode}"
+def rcAARFile = "iotivity-resource-container-${buildmode}"
+def reAARFile = "iotivity-service-${buildmode}"
 
 buildscript {
-    repositories { 
+    repositories {
         jcenter()
     }
     dependencies {
@@ -49,15 +49,15 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion  21
     buildToolsVersion "21.1.2"
-     
+
     sourceSets {
-      
+
         main {
               manifest.srcFile 'AndroidManifest.xml'
               java.srcDirs "${testAppFrameworkSrcDir}"
               java.srcDirs 'src'
               //jniLibs.srcDir "${relativeLibDir}/rc/jniLibs"
-              jni.srcDirs = [] //disable automatic ndk-build 
+              jni.srcDirs = [] //disable automatic ndk-build
               assets.srcDirs = ['assets']
         }
     }
@@ -86,7 +86,7 @@ dependencies {
     compile(name:"${baseAARFile}", ext:'aar')
     compile(name:"${rcAARFile}", ext:'aar')
     /*compile(name:"${reAARFile}", ext:'aar')*/
-    println ("\n$commonText Library Dependency Resolved")     
+    println ("\n$commonText Library Dependency Resolved")
 }
 
 task listJars << {
