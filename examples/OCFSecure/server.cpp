@@ -121,9 +121,9 @@ OCStackResult SetPlatformInfo()
         OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM,
                            OC_RSRVD_MFG_NAME,
                            (void **) &mn);
-        OIC_LOG_V(INFO, TAG, "[%s] Set manufacture name successfully to %s",
-            __func__,
-            mn);
+        OIC_LOG_V(INFO, TAG, "[%s] Set manufacturer name successfully to %s",
+                  __func__,
+                  mn);
     }
 
     return OC_STACK_OK;
@@ -324,10 +324,8 @@ OCEntityHandlerCallBack(OCEntityHandlerFlag flag,
                   __func__);
         return OC_EH_ERROR;
     }
-    OIC_LOG_V(INFO, TAG, "[%s] Flags: 0x%x: %s",
-               __func__,
-               flag,
-               decode_oc_eh_flag(flag));
+    OIC_LOG_V(INFO, TAG, "[%s] Flags: 0x%x: %s", __func__, flag,
+              decode_oc_eh_flag(flag));
 
 
     OCEntityHandlerResult eh_res = OC_EH_ERROR;
@@ -352,17 +350,16 @@ OCEntityHandlerCallBack(OCEntityHandlerFlag flag,
             }
             else if (OC_REST_POST == requestMethod)
             {
-                OIC_LOG_V(INFO, TAG, "[%s] Processing POST request",
-                           __func__);
+                OIC_LOG_V(INFO, TAG, "[%s] Processing POST request", __func__);
                 eh_res = ProcessPostRequest(ehRequest, &payload);
             }
             else
             {
                 OIC_LOG_V(INFO, TAG, "[%s] Received unsupported method (%d):"
-                           " %s",
-                           __func__,
-                           ehRequest->method,
-                           decode_oc_method(ehRequest->method));
+                          " %s",
+                          __func__,
+                          ehRequest->method,
+                          decode_oc_method(ehRequest->method));
                 eh_res = OC_EH_ERROR;
             }
 
@@ -449,7 +446,7 @@ ServerFOpen(const char *path,
                   __func__,
                   INTROSPECTION_FILE,
                   mode);
-      return fopen(INTROSPECTION_FILE, mode);
+        return fopen(INTROSPECTION_FILE, mode);
     }
     else
     {
@@ -474,7 +471,7 @@ main(void)
     GPIO = new mraa::Gpio(LED_PIN);
     if (!GPIO)
     {
-      OIC_LOG_V(ERROR, TAG, "Error instantiating gpio %d", LED_PIN);
+        OIC_LOG_V(ERROR, TAG, "Error instantiating gpio %d", LED_PIN);
     }
     GPIO->dir(mraa::DIR_OUT);
     #endif
@@ -511,8 +508,8 @@ main(void)
     stack_res = SetDeviceInfo();
     if (stack_res != OC_STACK_OK)
     {
-      OIC_LOG_V(ERROR, TAG, "[%s] Device Registration failed\n", __func__);
-      return stack_res;
+        OIC_LOG_V(ERROR, TAG, "[%s] Device Registration failed\n", __func__);
+        return stack_res;
     }
     else
     {
@@ -528,8 +525,8 @@ main(void)
                                  SWITCH.properties);
     if (stack_res != OC_STACK_OK)
     {
-      OIC_LOG_V(ERROR, TAG, "[%s] Failed to create resource\n", __func__);
-      return stack_res;
+        OIC_LOG_V(ERROR, TAG, "[%s] Failed to create resource\n", __func__);
+        return stack_res;
     }
     else
     {
