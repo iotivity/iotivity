@@ -2615,8 +2615,16 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
     memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
     propertiesToInclude[PSTAT_DOS] = true;
     propertiesToInclude[PSTAT_TM] = true;
-    propertiesToInclude[PSTAT_ROWNERUUID] = true;
-    ///pstat.rowneruuid set to the provisioningclient's /doxm.deviceuuid.
+
+    if (DOS_RFOTM != otmCtx->selectedDeviceInfo->pstat->dos.state)
+    {
+        propertiesToInclude[PSTAT_ROWNERUUID] = false;
+    }
+    else
+    {
+        propertiesToInclude[PSTAT_ROWNERUUID] = true;
+    }
+    //pstat.rowneruuid set to the provisioningclient's /doxm.deviceuuid.
     GetDoxmDeviceID(&otmCtx->selectedDeviceInfo->pstat->rownerID);
 
     if (IS_OIC(deviceInfo->specVer))
@@ -2923,8 +2931,16 @@ OCStackResult PostRownerUuid(OTMContext_t* otmCtx)
 
     bool propertiesToInclude[PSTAT_PROPERTY_COUNT];
     memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
-    propertiesToInclude[PSTAT_ROWNERUUID] = true;
-    ///pstat.rowneruuid set to the provisioningclient's /doxm.deviceuuid.
+
+    if (DOS_RFOTM != otmCtx->selectedDeviceInfo->pstat->dos.state)
+    {
+        propertiesToInclude[PSTAT_ROWNERUUID] = false;
+    }
+    else
+    {
+        propertiesToInclude[PSTAT_ROWNERUUID] = true;
+    }
+    //pstat.rowneruuid set to the provisioningclient's /doxm.deviceuuid.
     GetDoxmDeviceID(&deviceInfo->pstat->rownerID);
 
     if (OC_STACK_OK != PstatToCBORPayloadPartial(deviceInfo->pstat,

@@ -485,11 +485,11 @@ static OCStackApplicationResult MOTProvisionPreconfigPINCB(void *ctx, OCDoHandle
     VERIFY_NOT_NULL(TAG, data->ctx, ERROR);
     motCtx = (OTMContext_t *) (data->ctx);
 
-    //Generate the security payload using updated doxm
+    //Generate the security payload using updated cred
     secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
     VERIFY_NOT_NULL(TAG, secPayload, ERROR);
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    bool propertiesToInclude[CRED_PROPERTY_COUNT];
     memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
     propertiesToInclude[CRED_CREDS] = true;
     postCredRes = CredToCBORPayloadPartial(motCtx->cred, NULL, &secPayload->securityData, &secPayload->payloadSize,
