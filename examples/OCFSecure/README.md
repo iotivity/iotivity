@@ -4,14 +4,19 @@ There are 2 applications; server and client, which need to be running from 2
 different terminals regardless whether those 2 terminals are running within
 the same machine or not as long as they can discover each other.
 These 2 applications are verified on
-* a regular Ubuntu machine
+* Regular Ubuntu machine
 * Ubuntu running on Intel Joule
 * Raspbian running on Raspberry Pi 3 and Raspberry Pi Zero W
 
 These applications can be used to verify the build environment is setup
 properly. They can serve as a baseline and a reference for new developers to
 learn how to write simple server and client applications and implement OCF
-security and pass the OCF certification test tool.
+security and pass the OCF Conformance Test Tool (CTT).
+
+The client application does not know how to onboard, so the server is
+provisioned already onboarded and owned by the client (Ready for Normal
+Operation or RFNOP state). If the server application is to be used with a
+different client, it will need to be reset first.
 
 # Building the applications
 
@@ -32,7 +37,7 @@ to the scons command RELEASE=0
 # Running the applications
 
 To run the applications on a regular machine with Ubuntu, change the directory
-to out/linux/x86_64/release/examples/OCFSecure with the following command
+to `out/linux/x86_64/release/examples/OCFSecure` with the following command
 ```
 $ cd out/linux/x86_64/release/examples/OCFSecure/
 ```
@@ -241,6 +246,23 @@ think you connected the led on the wrong pin which may not be the case.
 You can also connect the Enviro pHat sensor board if you have it. Its LED is
 already connected to gpio 7.
 
+# Resetting the server app
+Sometimes it is necessary to reset the server application. For example, the
+server app needs to be reset during OCF conformance testing or to be
+onboarded by an OnBoarding tool.
+
+In order to reset the server app, make sure it is not running. If it is running,
+then kill it with Ctrl+C.
+Copy the `ocf_svr_db_server_RFOTM.dat` from the project directory to the project
+output directory and name it as `ocf_svr_db_server.dat` as shown
+in the following command
+From the output directory from which the server application can be exexuted,
+type
+ 
+```
+cp ~/iot/iotivity/examples/OCFSecure/ocf_svr_db_server_RFOTM.dat ocf_svr_db_server.dat
+```
+
 # Testing the server app against CTT
 You need to install the OCF Certification Test Tool 2.0 on a Windows machine
 and start it and if the windows machine on the same network as the server and
@@ -251,37 +273,33 @@ show the discovered devices and you should be able to see the server device
 as 12345678-1234-1234-1234-123456789012 and in the details section, you
 should be able to see the /switch uri. click on Next. Now, browse to select
 the PICS file which should be included in this example named
-PICS_server_OCF10_vprime.json then click on Next. From the Testing Profiles
+`PICS_server_OCF10_vprime.json` then click on Next. From the Testing Profiles
 uncheck everything and check OCF 1.0 Server. Next, click on
 Run All Test Cases button. Most likely, you will get a prompt saying
 "Please initiate device to revert to "ready for OTM" state" and there are
 2 options to click on; OK and Cancel because this sample is shipped in the
-"Ready for Normal Operation" state. In this case, kill the server with
-Ctrl+C and from the output directory where the server is running, copy the
-ocf_svr_db_server_RFOTM.dat from the project directory to the project output
-directory and name it as ocf_svr_db_server.dat as shown in the following
-command then re-run the server app then press OK on the prompt once the
-server is running again.
-```
-cp ~/iot/iotivity/examples/OCFSecure/ocf_svr_db_server_RFOTM.dat ocf_svr_db_server.dat
-```
-You might get this prompt again since the CTT does not un-onboard the device
-but now you know what to do!
-Also, you will be prompt to power cycle the device. In this case, you can
+"Ready for Normal Operation" state. In this case, reset the server as explained
+in the "Resetting the server app" section of this document. Then run the server
+application. You might get this prompt again since the CTT does not un-onboard
+the device but now you know what to do!
+Also, you will be prompted to power cycle the device. In this case, you can
 either kill the server app and restart it again or literally power cycle
 your device and re-run the server app once your device is back up and
 connected to the same network.
 Please note, you might see tests passing with warnings and CT1.7.8.11 test
-Case failing but that is OK.
+Case failing but that is OK. In order to know which tests are required for
+certification, refer to the Certification Requirements Status List (CRST) that
+is associated with the CTT version.
+This device is tested using CTT version 2.1, which is associated with CRSL 4.3.
 
 # Known issues
 
 1. Sometimes, the applications will not run because of not finding some library.
-In this case, you would need to export the LD_LIBRARY_PATH to the environment.
+In this case, you would need to export the `LD_LIBRARY_PATH` to the environment.
     ```
     export LD_LIBRARY_PATH=<output dir orwherever the library is>
     ```
-    Also, since you would need to run the server application in sudo mode, you
+    Also, since you need to run the server application in privileged mode, you
 would need to type this command
     ```
     $sudo ldconfig
@@ -298,66 +316,67 @@ and file a bug in JIRA and assign it to me (username: alshafi).
 eventually. In the meantime, there will be multiple /switch links and only one
 of them works and the user will need to issues GET requests to all of them
 until the good one is found. The wrong /switch links will result in
-Result: (255) - OC_STACK_ERROR.
-The correct /a/led link will result in Result: (0) - OC_STACK_OK
+Result: (255) - `OC_STACK_ERROR`.
+The correct /a/led link will result in Result: (0) - `OC_STACK_OK`
 
 # Example Directory
 
 There are 16 files in the example directory.
-* client.c
+* `client.c`
     * This is the client program
-* device_properties.dat
+* `device_properties.dat`
     * This is a file storing the device properties in cbor format which is
 generated automatically by the server application
-* ocf_svr_db_client.dat
+* `ocf_svr_db_client.dat`
     * This is the cbor format of the secure virtual resource database, defined
-by the human-readable version ocf_svr_db_client.json file, and it is used by
+by the human-readable version `ocf_svr_db_client.json` file, and it is used by
 the client application
-* ocf_svr_db_client.json
-    * This is the human-readable version of ocf_svr_db_client.dat
-* ocf_svr_db_server.dat
+* `ocf_svr_db_client.json`
+    * This is the human-readable version of `ocf_svr_db_client.dat`.
+* `ocf_svr_db_server.dat`
     * This is the cbor format of the secure virtual resource database and it is
-an exact copy from the ocf_svr_db_server_RFNOP.dat which is the cbor version of
-the human-readable version ocf_svr_db_server_RFNOP.json file. This is the case
-because the client application does not support the onboarding and provisioning
-process currently and we need to set the state in the "Ready For Normal
-Operation" manually.
+an exact copy from the `ocf_svr_db_server_RFNOP.dat` which is the cbor version
+of the human-readable version `ocf_svr_db_server_RFNOP.json` file. This is the
+case because the client application does not support the onboarding and
+provisioning process currently and we need to set the state in the "Ready For
+Normal Operation" manually.
+
 We also need to set the state in the "Ready For Ownership Method Transfer"
 when testing the application with the OCF Certification Test Tool (CTT).
-In this case, you would need to copy ocf_svr_db_server_RFOTM.dat into
-ocf_svr_db_server.dat since that is the file that will be read by the server.
-* ocf_svr_db_server_RFNOP.dat
+In this case, you would need to copy `ocf_svr_db_server_RFOTM.dat` into
+`ocf_svr_db_server.dat` since that is the file that will be read by the server.
+* `ocf_svr_db_server_RFNOP.dat`
     * This is the cbor format of the secure virtual resource database, defined
-by the human-readable version ocf_svr_db_server_RFNOP.json file and it is *NOT*
-used by the server application. Rename it without the _RFNOP suffix to be read
-by the server
-* ocf_svr_db_server_RFNOP.json
-    * This is the human-readable version of ocf_svr_db_server_RFNOP.dat
-* ocf_svr_db_server_RFOTM.dat
+by the human-readable version `ocf_svr_db_server_RFNOP.json` file and it is
+*NOT* used by the server application. Rename it without the _RFNOP suffix to be
+read by the server
+* `ocf_svr_db_server_RFNOP.json`
+    * This is the human-readable version of `ocf_svr_db_server_RFNOP.dat`
+* `ocf_svr_db_server_RFOTM.dat`
     * This is the cbor format of the secure virtual resource database, defined
-by the human-readable version ocf_svr_db_server_RFOTM.json file and it is *NOT*
-used by the server application. Rename it without the _RFOTM suffix to be read
-by the server
-* ocf_svr_db_server_RFOTM.json
-    * This is the human-readable version of ocf_svr_db_server_RFOTM.dat
-* PICS_server_OCF10_vprime.json
+by the human-readable version `ocf_svr_db_server_RFOTM.json` file and it is
+*NOT* used by the server application. Rename it without the `_RFOTM` suffix to
+be read by the server
+* `ocf_svr_db_server_RFOTM.json`
+    * This is the human-readable version of `ocf_svr_db_server_RFOTM.dat`
+* `PICS_server_OCF10_vprime.json`
     * This is the file that was used as the input to the OCF Certification
 Test Tool.
-* README.md
+* `README.md`
     * This is this file :)
-* SConscript
+* `SConscript`
     * This is the script that is being used by the scons tool to know how
 to build the sample applications and what needs to be copied to the output
 directory.
-* server.cpp
+* `server.cpp`
     * This is the server program.
-* switch_introspection.dat
+* `switch_introspection.dat`
     * This is the cbor format of the introspection file (also known as
 Introspection Device Data IDD) the server needs to read to implement
 the introspection feature.
-* switch_introspection.json
-    * This is the human-readable version of switch_introspection.dat file
+* `switch_introspection.json`
+    * This is the human-readable version of `switch_introspection.dat` file
 which is also know as the "swagger" file.
-* utilities.c
+* `utilities.c`
     * this is a supplementary program containing custom utility c functions
 that help with reporting log messages mainly as of current.
