@@ -570,57 +570,6 @@ static void CASocketEventReturned(CASocketFd_t s, long networkEvents)
 
 #endif // WSA_WAIT_EVENT_0
 
-static CAResult_t CATCPConvertNameToAddr(int family, const char *host, uint16_t port,
-                                         struct sockaddr_storage *sockaddr)
-{
-    VERIFY_NON_NULL_RET(host, TAG, "host is null", CA_STATUS_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(sockaddr, TAG, "sockaddr is null", CA_STATUS_INVALID_PARAM);
-
-    struct addrinfo *addrs = NULL;
-    struct addrinfo hints = { .ai_family = family,
-                              .ai_protocol   = IPPROTO_TCP,
-                              .ai_socktype = SOCK_STREAM,
-                              .ai_flags = AI_NUMERICHOST };
-
-    int r = getaddrinfo(host, NULL, &hints, &addrs);
-    if (r)
-    {
-        if (NULL != addrs)
-        {
-            freeaddrinfo(addrs);
-        }
-#if defined(EAI_SYSTEM)
-        if (EAI_SYSTEM == r)
-        {
-            OIC_LOG_V(ERROR, TAG, "getaddrinfo failed: errno %s", strerror(errno));
-        }
-        else
-        {
-            OIC_LOG_V(ERROR, TAG, "getaddrinfo failed: %s", gai_strerror(r));
-        }
-#elif defined(_WIN32)
-        OIC_LOG_V(ERROR, TAG, "getaddrinfo failed: errno %i", WSAGetLastError());
-#else
-        OIC_LOG_V(ERROR, TAG, "getaddrinfo failed: %s", gai_strerror(r));
-#endif
-        return CA_STATUS_FAILED;
-    }
-    // assumption: in this case, getaddrinfo will only return one addrinfo
-    // or first is the one we want.
-    if (addrs[0].ai_family == AF_INET6)
-    {
-        memcpy(sockaddr, addrs[0].ai_addr, sizeof (struct sockaddr_in6));
-        ((struct sockaddr_in6 *)sockaddr)->sin6_port = htons(port);
-    }
-    else
-    {
-        memcpy(sockaddr, addrs[0].ai_addr, sizeof (struct sockaddr_in));
-        ((struct sockaddr_in *)sockaddr)->sin_port = htons(port);
-    }
-    freeaddrinfo(addrs);
-    return CA_STATUS_OK;
-}
-
 static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
 {
     VERIFY_NON_NULL_VOID(sock, TAG, "sock is NULL");
@@ -946,8 +895,8 @@ static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
 
     // #2. convert address from string to binary.
     struct sockaddr_storage sa = { .ss_family = (short)family };
-    CAResult_t res = CATCPConvertNameToAddr(family, svritem->sep.endpoint.addr,
-                                            svritem->sep.endpoint.port, &sa);
+    CAResult_t res = CAConvertNameToAddr(svritem->sep.endpoint.addr,
+                                         svritem->sep.endpoint.port, &sa);
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "convert name to sockaddr failed");
@@ -958,11 +907,6 @@ static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
     socklen_t socklen = 0;
     if (sa.ss_family == AF_INET6)
     {
-        struct sockaddr_in6 *sock6 = (struct sockaddr_in6 *)&sa;
-        if (!sock6->sin6_scope_id)
-        {
-            sock6->sin6_scope_id = svritem->sep.endpoint.ifindex;
-        }
         socklen = sizeof(struct sockaddr_in6);
     }
     else
