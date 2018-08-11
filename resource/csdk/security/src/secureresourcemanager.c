@@ -472,13 +472,13 @@ OCStackResult SRMInitSecureResources(void)
     InitSecureResources();
     OCStackResult ret = OC_STACK_OK;
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-    CAregisterIdentityHandler(GetIdentityHandler);
     if (CA_STATUS_OK != CAregisterPskCredentialsHandler(GetDtlsPskCredentials))
     {
         OIC_LOG(ERROR, TAG, "Failed to revert TLS credential handler.");
         ret = OC_STACK_ERROR;
     }
     CAregisterPkixInfoHandler(GetPkixInfo);
+    CAregisterIdentityHandler(GetIdentityHandler);
     CAregisterGetCredentialTypesHandler(InitCipherSuiteList);
 #endif // __WITH_DTLS__ or __WITH_TLS__
     return ret;

@@ -526,6 +526,10 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
         {
             OIC_LOG(WARNING, TAG, "Failed to revert PkixInfoHandler.");
         }
+        if(CA_STATUS_OK != CAregisterIdentityHandler(GetIdentityHandler))
+        {
+            OIC_LOG(WARNING, TAG, "Failed to set IdentityHandler.");
+        }
         if(CA_STATUS_OK != CAregisterGetCredentialTypesHandler(InitCipherSuiteList))
         {
             OIC_LOG(WARNING, TAG, "Failed to revert CredentialTypesHandler.");

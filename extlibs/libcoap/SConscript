@@ -274,7 +274,6 @@ else:
             config_h_body += "#define in_port_t uint16_t\n\n"
 
         conf.Finish()
-
         with open(config_h_file, "w") as configfile:
             configfile.write(config_h_header + config_h_body + config_h_footer)
 

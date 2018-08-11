@@ -3312,7 +3312,8 @@ void GetIdentityHandler(UuidContext_t* ctx, unsigned char* crt, size_t crtLen)
         {
             continue;
         }
-        if (0 == strcmp(cred->credUsage, TRUST_CA) && 0 == strcmp(cred->credUsage, MF_TRUST_CA))
+
+        if (0 != strcmp(cred->credUsage, TRUST_CA))
         {
             continue;
         }

@@ -8,7 +8,7 @@ import sys
 import platform
 import re
 
-project_version = '1.4.0'
+project_version = '2.0.0'
 
 # Map of build host to possible target os
 host_target_map = {

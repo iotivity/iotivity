@@ -64,8 +64,8 @@ dependencies {
 //otherwise remove the dependsOn part and run ./gradlew buildNative from the command line
 task copyNativeLibs(type: Copy, dependsOn: 'buildNative') {
     dependsOn 'buildNative'
-    from(new File('src/main/libs/armeabi')) { include '**/*.so' exclude '**/libgnustl_shared.so', '**/liboc.so', '**/libocstack-jni.so'}
-    into new File(buildDir, 'native-libs/armeabi')
+    from(new File('src/main/libs')) { include '**/*.so' exclude '**/libgnustl_shared.so', '**/liboc.so', '**/libocstack-jni.so'}
+    into new File(buildDir, 'native-libs')
 }
 
 tasks.withType(JavaCompile) { compileTask -> compileTask.dependsOn copyNativeLibs }
