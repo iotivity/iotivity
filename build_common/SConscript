@@ -228,7 +228,7 @@ if target_os in targets_support_valgrind:
     help_vars.Add(
         BoolVariable('VALGRIND_CHECKS',
                      'Build support for running code coverage checks',
-                      default=True))
+                      default=False))
 
 targets_support_gcov = ['linux', 'darwin']
 if target_os in targets_support_gcov:

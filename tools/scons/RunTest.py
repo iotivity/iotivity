@@ -20,19 +20,28 @@ import string
 
 def run_test(env, run_valgrind, test, test_targets=None):
     """
-    Run test using the given SCons environment.
+    Run a test using the given SCons construction environment.
 
-    Test results go to the test_out subdir of the build directory,
-    that path is passed to Googletest.
+    If `run_valgrind` is True, build a log filename from the test path
+    and run the test under valgrind control if the platform supports it
+    and valgrind testing is enabled.  Note as an artifact of an earlier
+    scheme, most callers build the pathname and pass it as run_valgrind;
+    this is ignored and only the truth value is used.
 
-    If run_valgrind is true, build a log filename from the test path
-    and run the test under valgrind (if the platform supports it).
-    Jenkins is configured to pick up valgrind output files ending in
-    .memcheck and include them in the build report.
+    `test` is the path relative to the top of the build directory of the
+    test binary. This function itself prepends BUILD_DIR.  Test results
+    go to BUILD_DIR/test_out - that path is passed to Googletest.
 
-    Note that the test path should not include the build directory
-    where binaries are placed.  The build directory will be prepended
-    to the test path automatically.
+    `test_targets` are targets to test as set up in the calling SConscript
+    - these are set as explicit dependencies so that the tests always
+    run rather than running only if computed dependencies have changed.
+    The default is the name 'test'
+
+    Note that because test results will be collected by Jenkins plugins
+    and reported on, the test run is configured not to "fail" in the
+    scons sense - see the hyphen added in the env.Command call. Jenkins
+    also picks up valgrind output files ending in .memcheck and include
+    them in the valgrind report.
     """
 
     build_dir = env.get('BUILD_DIR')
@@ -92,9 +101,10 @@ def run_test(env, run_valgrind, test, test_targets=None):
 
     if env.get('TARGET_OS') in ['linux']:
         env.Depends('ut' + test , os.path.join(build_dir, test))
-    # a hyphen in front of the action means ignore the result: let all tests run
-    # in a Jenkins run, results are collected at the end, so
-    # we don't have to decide anything here.
+
+    # A hyphen in front of the action means ignore the result.
+    # We want all the tests to run for Jenkins to report on the
+    # full results, don't "fail" here because a unit test did not pass.
     ut = env.Command('ut' + test, None, '-' + test_cmd)
     env.Depends(ut, test_targets)
     env.AlwaysBuild(ut)
