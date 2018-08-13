@@ -40,12 +40,6 @@
 static bool STOP = false;
 static char SVR_DB[] = "ocf_svr_db_server.dat";
 static char INTROSPECTION_FILE[] = "switch_introspection.dat";
-#ifdef JOULE
-int LED_PIN = 100; // built-in led on the intel joule board
-#endif
-#ifdef RASPBERRY
-int LED_PIN = 7;
-#endif
 #ifdef WITH_MRAA
 mraa::Gpio *GPIO;
 #endif
@@ -273,9 +267,9 @@ ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
     if (OCRepPayloadGetPropBool(requestPayload, "value", &value))
     {
         SWITCH.value = value;
-        #if defined(JOULE) || defined(RASPBERRY)
+#ifdef WITH_MRAA
         GPIO->write(value);
-        #endif
+#endif
     }
     else
     {
@@ -466,9 +460,12 @@ int
 main(void)
 {
     OCStackResult stack_res = OC_STACK_ERROR;
-    // enabling GPIO if running on the Intel Joule or the raspberry pi
-    #if (defined(JOULE) || defined(RASPBERRY)) && defined(WITH_MRAA)
+    #if defined(WITH_MRAA)
+    #if defined(RAW_GPIO)
+    GPIO = new mraa::Gpio(LED_PIN, true, true);
+    #else
     GPIO = new mraa::Gpio(LED_PIN);
+    #endif
     if (!GPIO)
     {
         OIC_LOG_V(ERROR, TAG, "Error instantiating gpio %d", LED_PIN);
