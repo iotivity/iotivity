@@ -52,9 +52,15 @@ joule = 'Linux' in platform_info and 'joule' in platform_info and \
 raspberry_pi = 'Linux' in platform_info and \
 ('armv7l' in platform_info or 'armv6l' in platform_info) and \
 'debian' in platform_info
-if joule or raspberry_pi:
+if os.path.exists("/proc/device-tree/model"):
+    with open("/proc/device-tree/model") as f:
+        model = f.read()
+        artik = 'artik' in model or 'compy' in model
+else:
+    artik = False
+if joule or raspberry_pi or artik:
     conf = Configure(env)
-    if not conf.CheckCXXHeader('mraa.hpp'):
+    if not conf.CheckLib('mraa'):
         print("required library mraa not installed! ")
         if joule and not raspberry_pi:
             print(" To install mraa\n\
@@ -62,7 +68,7 @@ if joule or raspberry_pi:
                 $sudo apt-get update\n\
                 $sudo apt-get install libmraa1 libmraa-dev\
                  mraa-tools python-mraa python3-mraa\n")
-        elif not joule and raspberry_pi:
+        elif not joule and (raspberry_pi or artik):
             print("to install mraa\n\
                 $git clone https://github.com/intel-iot-devkit/\
                 mraa.git ../mraa\n\
@@ -74,9 +80,12 @@ if joule or raspberry_pi:
         cpp_defines.append('WITH_MRAA')
         libraries.append('mraa')
         if joule and not raspberry_pi:
-            cpp_defines.append('JOULE')
+            cpp_defines.append('LED_PIN=100')
         elif not joule and raspberry_pi:
-            cpp_defines.append('RASPBERRY')
+            cpp_defines.append('LED_PIN=7')
+        elif artik:
+            cpp_defines.append('LED_PIN=38')
+            cpp_defines.append('RAW_GPIO')
         else:
             print "ERROR: unknown board"
     conf.Finish()
