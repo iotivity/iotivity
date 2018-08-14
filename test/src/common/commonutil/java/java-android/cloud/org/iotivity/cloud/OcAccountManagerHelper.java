@@ -53,8 +53,6 @@ public class OcAccountManagerHelper
     private static final String CONFIG_FILE_PATH    = "/data/local/tmp/";
     private static final String CLOUD_PROPERTY_FILE = "cloud.properties";
 
-    private static boolean      mIsCbInvoked        = CALLBACK_NOT_INVOKED;
-
     private enum CloudAuth
     {
         SIGNUP, SIGNIN, SIGNOUT
@@ -65,18 +63,24 @@ public class OcAccountManagerHelper
         INFO, ERROR, DEBUG
     };
 
+    private static boolean    s_mIsCbInvoked = CALLBACK_NOT_INVOKED;
     private static Properties s_mProps;
+    private static String     s_mFilePath;
+    private static String     s_mFileName;
+    private static File       s_mFile;
     public static CloudAuth   s_mMethodName;
     public static String      s_mCloudUid;
-    public static String      s_mCloudAccesstoken;
+    public static String      s_mCloudAccessToken;
     public static String      s_mAuthCode;
     public static String      s_mErrorMessage;
 
     public static void init(String fileDir) {
         s_mProps = new Properties();
         ReadConfigPropFile.readConfigFile(CONFIG_FILE_PATH);
-        file = new File(fileDir + CLOUD_PROPERTY_FILE);
-        if (!file.exists()) {
+        s_mFilePath = fileDir;
+        s_mFile = new File(s_mFilePath + CLOUD_PROPERTY_FILE);
+
+        if (!s_mFile.exists()) {
             getAuthCode();
         }
     }
@@ -107,12 +111,12 @@ public class OcAccountManagerHelper
             inputStream = new FileInputStream(file);
             s_mProps.load(inputStream);
             s_mCloudUid = "";
-            s_mCloudAccesstoken = "";
+            s_mCloudAccessToken = "";
             s_mCloudUid = s_mProps.getProperty("uId");
-            s_mCloudAccesstoken = s_mProps.getProperty("authToken");
+            s_mCloudAccessToken = s_mProps.getProperty("authToken");
             Log.d(TAG, "READ FILE : SIGNUP Successful");
             Log.d(TAG, "READ FILE : uid :" + s_mCloudUid);
-            Log.d(TAG, "READ FILE : accesstoken :" + s_mCloudAccesstoken);
+            Log.d(TAG, "READ FILE : accesstoken :" + s_mCloudAccessToken);
             Log.d(TAG, "READ FILE : refreshtoken : null");
 
         } catch (FileNotFoundException e) {
@@ -144,7 +148,7 @@ public class OcAccountManagerHelper
             outputStream = new FileOutputStream(file);
 
             s_mProps.setProperty("uId", s_mCloudUid);
-            s_mProps.setProperty("authToken", s_mCloudAccesstoken);
+            s_mProps.setProperty("authToken", s_mCloudAccessToken);
             s_mProps.store(outputStream, null);
         } catch (FileNotFoundException e) {
 
@@ -182,10 +186,10 @@ public class OcAccountManagerHelper
                 }
 
                 if (ocRepresentation.hasAttribute("accesstoken")) {
-                    s_mCloudAccesstoken = ocRepresentation
+                    s_mCloudAccessToken = ocRepresentation
                             .getValue("accesstoken");
                     showLog(LogLevel.DEBUG,
-                            "Obtained accesstoken : " + s_mCloudAccesstoken);
+                            "Obtained accesstoken : " + s_mCloudAccessToken);
                 }
 
                 if (ocRepresentation.hasAttribute("refreshtoken")) {
@@ -202,10 +206,10 @@ public class OcAccountManagerHelper
                 showLog(LogLevel.ERROR, "Error :" + e.getLocalizedMessage());
             }
 
-            writePropFile(s_mProps, file);
+            writePropFile(s_mProps, s_mFile);
         }
 
-        mIsCbInvoked = CALLBACK_INVOKED;
+        s_mIsCbInvoked = CALLBACK_INVOKED;
     }
 
     @Override
@@ -218,7 +222,6 @@ public class OcAccountManagerHelper
             showLog(LogLevel.ERROR, "Error code: " + errCode);
         }
 
-        // mIsCbInvoked = CALLBACK_INVOKED;
     }
 
     public static String getHostAddres(TLS type) {
@@ -258,18 +261,18 @@ public class OcAccountManagerHelper
 
         try {
             showLog(LogLevel.DEBUG, "SignUP IN");
-            if (!file.exists()) {
+            if (!s_mFile.exists()) {
                 s_mMethodName = CloudAuth.SIGNUP;
-                mIsCbInvoked = CALLBACK_NOT_INVOKED;
+                s_mIsCbInvoked = CALLBACK_NOT_INVOKED;
                 instance.signUp(authProvider, s_mAuthCode, onPostListener);
 
                 if (CALLBACK_NOT_INVOKED == waitTillCBInvoke()) {
-                    showLog(LogLevel.DEBUG, CALLBACK_NOT_INVOKED);
-                    s_mErrorMessage = CALLBACK_NOT_INVOKED;
+                    showLog(LogLevel.DEBUG, CALLBACK_NOT_INVOKED_MSG);
+                    s_mErrorMessage = CALLBACK_NOT_INVOKED_MSG;
                     return false;
                 }
             } else {
-                readPropFile(s_mProps, file);
+                readPropFile(s_mProps, s_mFile);
             }
 
             showLog(LogLevel.DEBUG, "SignUP OUT");
@@ -289,7 +292,7 @@ public class OcAccountManagerHelper
         try {
             showLog(LogLevel.DEBUG, "SignIn IN");
             s_mMethodName = CloudAuth.SIGNIN;
-            mIsCbInvoked = CALLBACK_NOT_INVOKED;
+            s_mIsCbInvoked = CALLBACK_NOT_INVOKED;
 
             showLog(LogLevel.DEBUG, "uid:\t" + userUuid);
 
@@ -298,8 +301,8 @@ public class OcAccountManagerHelper
             instance.signIn(userUuid, accessToken, onPostListener);
 
             if (CALLBACK_NOT_INVOKED == waitTillCBInvoke()) {
-                showLog(LogLevel.DEBUG, CALLBACK_NOT_INVOKED);
-                s_mErrorMessage = CALLBACK_NOT_INVOKED;
+                showLog(LogLevel.DEBUG, CALLBACK_NOT_INVOKED_MSG);
+                s_mErrorMessage = CALLBACK_NOT_INVOKED_MSG;
                 return false;
             }
 
@@ -321,13 +324,13 @@ public class OcAccountManagerHelper
             showLog(LogLevel.DEBUG, "SignOut IN");
 
             s_mMethodName = CloudAuth.SIGNOUT;
-            mIsCbInvoked = CALLBACK_NOT_INVOKED;
+            s_mIsCbInvoked = CALLBACK_NOT_INVOKED;
 
             showLog(LogLevel.DEBUG, "accessToken : " + accessToken);
             instance.signOut(accessToken, onPostListener);
             if (CALLBACK_NOT_INVOKED == waitTillCBInvoke()) {
-                showLog(LogLevel.DEBUG, CALLBACK_NOT_INVOKED);
-                s_mErrorMessage = CALLBACK_NOT_INVOKED;
+                showLog(LogLevel.DEBUG, CALLBACK_NOT_INVOKED_MSG);
+                s_mErrorMessage = CALLBACK_NOT_INVOKED_MSG;
                 return false;
             }
 
@@ -345,7 +348,7 @@ public class OcAccountManagerHelper
         showLog(LogLevel.DEBUG, "Checking if Callback is Invoked or Not");
         int count = 0;
 
-        while (!mIsCbInvoked) {
+        while (!s_mIsCbInvoked) {
 
             try {
                 Thread.sleep(DELAY_SHORT);

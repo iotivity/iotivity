@@ -87,18 +87,18 @@ public class OcAccountManagerHelper
         IoTivityLog.d(COMMON_TAG, "getAuthCode IN");
         GetAuthCode getXML = new GetAuthCode();
 
-        OcAccountManagerHelper.s_mAuthCode = GetAuthCode.login();
+        OcAccountManagerHelper.s_mAuthCode = getXML.login();
         IoTivityLog.d(COMMON_TAG,
                 "Auth Code : " + OcAccountManagerHelper.s_mAuthCode);
 
         IoTivityLog.d(COMMON_TAG, "getAuthCode Out");
     }
 
-    public void readPropFile(Properties s_mProps, File s_mFile) {
+    public void readPropFile(Properties s_mProps, File file) {
         IoTivityLog.d(COMMON_TAG, "readPropFile IN");
         InputStream inputStream = null;
         try {
-            inputStream = new FileInputStream(s_mFile);
+            inputStream = new FileInputStream(file);
             s_mProps.load(inputStream);
             s_mCloudUid = "";
             s_mCloudAccessToken = "";
@@ -130,13 +130,13 @@ public class OcAccountManagerHelper
         IoTivityLog.d(COMMON_TAG, "readPropFile OUT");
     }
 
-    public void writePropFile(Properties s_mProps, File s_mFile) {
+    public void writePropFile(Properties s_mProps, File file) {
 
         IoTivityLog.d(COMMON_TAG, "writePropFile IN");
         OutputStream outputStream = null;
         try {
-            s_mFile.createNewFile();
-            outputStream = new FileOutputStream(s_mFile);
+            file.createNewFile();
+            outputStream = new FileOutputStream(file);
 
             s_mProps.setProperty("uId", s_mCloudUid);
             s_mProps.setProperty("authToken", s_mCloudAccessToken);
