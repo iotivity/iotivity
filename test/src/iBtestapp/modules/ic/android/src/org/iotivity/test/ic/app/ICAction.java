@@ -131,10 +131,10 @@ public class ICAction extends Base {
 
         try {
             Thread.sleep(1000);
-            OcAccountManagerHelper.init(MainActivity.sContext);
-            showOutPut("signUp Controlee with AuthCode "+OcAccountManagerHelper.authCode);
+            OcAccountManagerHelper.init(getContext().getFilesDir().getPath());
+            showOutPut("signUp Controlee with AuthCode "+OcAccountManagerHelper.s_mAuthCode);
             boolean mbool = mCloudHelper.singUp(mControllee,
-                    DEFAULT_AUTH_PROVIDER, OcAccountManagerHelper.authCode,
+                    DEFAULT_AUTH_PROVIDER, OcAccountManagerHelper.s_mAuthCode,
                     mCloudHelper);
             System.out.println("test for signUp");
             Thread.sleep(5000);
@@ -154,8 +154,8 @@ public class ICAction extends Base {
     public void signIntoCloud() {
         try {
             boolean mbool = mCloudHelper.singIn(mControllee,
-                    OcAccountManagerHelper.s_CloudUid,
-                    OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper);
+                    OcAccountManagerHelper.s_mCloudUid,
+                    OcAccountManagerHelper.s_mCloudAccessToken, mCloudHelper);
             Thread.sleep(10000);
             if (mbool) {
                 mIslogIn = true;
@@ -172,7 +172,7 @@ public class ICAction extends Base {
     public void signOutfromCloud() {
         try {
             if (mCloudHelper.singOut(mControllee,
-                    OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper)) {
+                    OcAccountManagerHelper.s_mCloudAccessToken, mCloudHelper)) {
                 mIslogIn = true;
                 showOutPut("Successfully SignOut from cloud.");
             } else {
@@ -310,10 +310,10 @@ public class ICAction extends Base {
     public void signUpWithController() {
         try {
             Thread.sleep(1000);
-            OcAccountManagerHelper.init(MainActivity.sContext);
-            showOutPut("signUp Controller with AuthCode "+OcAccountManagerHelper.authCode);
+            OcAccountManagerHelper.init(getContext().getFilesDir().getPath());
+            showOutPut("signUp Controller with AuthCode "+OcAccountManagerHelper.s_mAuthCode);
             boolean mbool = mCloudHelper.singUp(mController,
-                    DEFAULT_AUTH_PROVIDER, OcAccountManagerHelper.authCode,
+                    DEFAULT_AUTH_PROVIDER, OcAccountManagerHelper.s_mAuthCode,
                     mCloudHelper);
             Thread.sleep(5000);
             if (mbool) {
@@ -331,8 +331,8 @@ public class ICAction extends Base {
     public void signInWithController() {
         try {
             boolean mbool = mCloudHelper.singIn(mController,
-                    OcAccountManagerHelper.s_CloudUid,
-                    OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper);
+                    OcAccountManagerHelper.s_mCloudUid,
+                    OcAccountManagerHelper.s_mCloudAccessToken, mCloudHelper);
             Thread.sleep(5000);
             if (mbool) {
                 mIslogIn = true;
@@ -349,7 +349,7 @@ public class ICAction extends Base {
     public void signOutfromCloudController() {
         try {
             if (mCloudHelper.singOut(mController,
-                    OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper)) {
+                    OcAccountManagerHelper.s_mCloudAccessToken, mCloudHelper)) {
                 mIslogIn = false;
                 showOutPut("SignOut Success.");
             } else {
@@ -369,8 +369,8 @@ public class ICAction extends Base {
             try {
                 mICHelper.showLog(LogLevel.INFO,
                         "***map initialization start***", false);
-                mICHelper.showLog(LogLevel.INFO,"Uuid is "+ OcAccountManagerHelper.s_CloudUid, false);
-                MY_MAP.put("uid", OcAccountManagerHelper.s_CloudUid);
+                mICHelper.showLog(LogLevel.INFO,"Uuid is "+ OcAccountManagerHelper.s_mCloudUid, false);
+                MY_MAP.put("uid", OcAccountManagerHelper.s_mCloudUid);
                 mICHelper.showLog(LogLevel.INFO,
                         "***map initialization stop***", false);
                 mController.searchUser(MY_MAP, mOcAccountManagerAdapter);
@@ -437,8 +437,8 @@ public class ICAction extends Base {
         } else {
             try {
                 mController.deleteDevice(
-                        OcAccountManagerHelper.s_CloudAccesstoken,
-                        OcAccountManagerHelper.s_CloudUid,
+                        OcAccountManagerHelper.s_mCloudAccessToken,
+                        OcAccountManagerHelper.s_mCloudUid,
                         mOcAccountManagerAdapter);
             } catch (Exception e) {
                 mICHelper.showLog(LogLevel.ERROR,

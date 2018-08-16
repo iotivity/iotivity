@@ -72,25 +72,25 @@ public class Action extends Base implements IConfiguration {
         mAccountManager = OcAccountManagerHelper
                 .getAccountMangerInstance(TLS.DISABLED);
 
-        OcAccountManagerHelper.init(context);
+        OcAccountManagerHelper.init(OcCloudProvisioningHelper.mFilePath);
     }
 
     public void signUp() {
         showOutPut("signUp");
         mCloudHelper.singUp(mAccountManager, DEFAULT_AUTH_PROVIDER,
-                OcAccountManagerHelper.authCode, mCloudHelper);
+                OcAccountManagerHelper.s_mAuthCode, mCloudHelper);
     }
 
     public void signIn() {
         showOutPut("signIn");
-        mCloudHelper.singIn(mAccountManager, OcAccountManagerHelper.s_CloudUid,
-                OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper);
+        mCloudHelper.singIn(mAccountManager, OcAccountManagerHelper.s_mCloudUid,
+                OcAccountManagerHelper.s_mCloudAccessToken, mCloudHelper);
     }
 
     public void signOut() {
         showOutPut("signOut");
         mCloudHelper.singOut(mAccountManager,
-                OcAccountManagerHelper.s_CloudAccesstoken, mCloudHelper);
+                OcAccountManagerHelper.s_mCloudAccessToken, mCloudHelper);
     }
 
     public void cloudCertificateIssueRequest() {
