@@ -607,8 +607,8 @@ struct OicSecDoxm
     bool                dpc;            // 7:R:S:Y:Boolean
     OicUuid_t           owner;          // 8:R:S:Y:oic.uuid
 #ifdef MULTIPLE_OWNER
-    OicSecSubOwner_t* subOwners;        //9:R/W:M:N:oic.uuid
-    OicSecMom_t *mom;                   //10:R/W:S:N:oic.sec.mom
+    OicSecSubOwner_t* subOwners;        // 9:R/W:M:N:oic.uuid
+    OicSecMom_t *mom;                   // 10:R/W:S:N:oic.sec.mom
 #endif //MULTIPLE_OWNER
     OicUuid_t           rownerID;       // 11:R:S:Y:oic.uuid
 };
