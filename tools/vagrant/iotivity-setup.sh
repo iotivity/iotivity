@@ -38,7 +38,7 @@ then
     popd
 fi
 
-export cborRevision='v0.4.1'
+export cborRevision='v0.5.1'
 export TINYCBOR_DIR=iotivity/extlibs/tinycbor/tinycbor
 if [ ! -d ${TINYCBOR_DIR} ]
 then

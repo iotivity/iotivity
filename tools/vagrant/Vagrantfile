@@ -8,16 +8,18 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # We are not trying to provision multiple boxes at once, this
   # is just a trick to give a name other than "default" to the box.
   # Pick the stanza you want. Warning: non-LTS releases vanish fast!
+  # also check if config.vm.provision below needs updating,
+  # e.g. for JDK version.
+  #config.vm.define "iotivity1804" do |iotivity1804|
+  #  # Every Vagrant virtual environment requires a box to build off of.
+  #  iotivity1804.vm.box = "bento/ubuntu-18.04"
+  #  iotivity1804.vm.hostname = "iotivity1804"
+  #end
   config.vm.define "iotivity1604" do |iotivity1604|
     # Every Vagrant virtual environment requires a box to build off of.
     iotivity1604.vm.box = "bento/ubuntu-16.04"
     iotivity1604.vm.hostname = "iotivity1604"
   end
-  #config.vm.define "iotivity1704" do |iotivity1704|
-  #  # Every Vagrant virtual environment requires a box to build off of.
-  #  iotivity1704.vm.box = "bento/ubuntu-17.04"
-  #  iotivity1704.vm.hostname = "iotivity1704"
-  #end
   #config.vm.define "iotivity1710" do |iotivity1710|
   #  # Every Vagrant virtual environment requires a box to build off of.
   #  iotivity1710.vm.box = "bento/ubuntu-17.10"
@@ -64,20 +66,40 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision :file, source: "~/.ssh/config", destination: ".ssh/config"
 
   # Provision the needed distro packages
+  # These should be as version-free as possible. JDK is not.
   config.vm.provision :shell, inline: <<-SHELL
     apt-get update
-    apt-get -qy upgrade
+    DEBIAN_FRONTEND=noninteractive apt-get -yq upgrade
     # for C/C++ development:
-    apt-get -qy install \
+    DEBIAN_FRONTEND=noninteractive \
+    apt-get -yq --no-install-suggests --no-install-recommends install \
         build-essential git scons ssh unzip valgrind \
         doxygen libtool autoconf pkg-config gcovr \
         libboost-all-dev libsqlite3-dev \
         uuid-dev libglib2.0-dev libcurl4-gnutls-dev \
         libbz2-dev
-    # for Android/Java development:
-    apt-get -qy install openjdk-8-jdk icedtea-plugin
     apt-get clean
   SHELL
+
+  # for Android/Java development add these
+  # For 16.04
+  config.vm.provision :shell, inline: <<-SHELL
+    DEBIAN_FRONTEND=noninteractive \
+    apt-get -yq --no-install-suggests --no-install-recommends \
+        install openjdk-8-jdk icedtea-plugin
+  SHELL
+  # For 18.04, Java 1.8
+  #config.vm.provision :shell, inline: <<-SHELL
+  #  DEBIAN_FRONTEND=noninteractive \
+  #  apt-get -yq --no-install-suggests --no-install-recommends \
+  #      install openjdk-8-jdk
+  #SHELL
+  # For 18.04, Java 11
+  #config.vm.provision :shell, inline: <<-SHELL
+  #  DEBIAN_FRONTEND=noninteractive \
+  #  apt-get -yq --no-install-suggests --no-install-recommends \
+  #      install openjdk-11-jdk
+  #SHELL
 
   # run a script to provision iotivity project itself
   config.vm.provision :shell do |shell|
@@ -86,3 +108,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     shell.privileged = false
   end
 end
+
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
