@@ -41,7 +41,7 @@ if compiler != 'cl':
 target_os = env.get('TARGET_OS')
 
 if target_os not in ['msys_nt', 'windows']:
-    examples_env.AppendUnique(CFLAGS=Split('-Wall -std=c99 -Werror'))
+    examples_env.AppendUnique(CFLAGS=Split('-Wall -std=c99'))
     examples_env.AppendUnique(CXXFLAGS=Split('-Wall -std=c++0x'))
     examples_env.AppendUnique(LIBS=['oc_logger'])
 
