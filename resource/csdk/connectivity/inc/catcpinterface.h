@@ -32,6 +32,7 @@
 #include "catcpadapter.h"
 #include "cathreadpool.h"
 #include "uarraylist.h"
+#include "oc_refcounter.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -150,10 +151,10 @@ CASocketFd_t CAConnectTCPSession(const CAEndpoint_t *endpoint);
 /**
  * Disconnect from TCP Server.
  *
- * @param[in]   removedData       removed session information from list.
+ * @param[in]   session     remove session information from list.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *removedData);
+CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *session);
 
 /**
  * Disconnect all connection from TCP Server.
@@ -161,12 +162,13 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *removedData);
 void CATCPDisconnectAll(void);
 
 /**
- * Get TCP connection information from list.
+ * Get TCP connection information from list. After using, a reference count
+ * of information must be decremented by oc_refcounter_dec.
  *
  * @param[in]   endpoint    remote endpoint information.
- * @return  TCP Session Information structure.
+ * @return  refcounter of TCP Session Information reference(CATCPSessionInfo_t) .
  */
-CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint);
+oc_refcounter CAGetTCPSessionInfoRefCountedFromEndpoint(const CAEndpoint_t *endpoint);
 
 /**
  * Get total length from CoAP over TCP header.

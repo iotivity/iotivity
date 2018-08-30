@@ -83,7 +83,6 @@ typedef struct CATCPSessionInfo_t
     CATCPConnectionState_t state;       /**< current tcp session state */
     CACSMExchangeState_t CSMState;      /**< Capability and Setting Message shared status */
     bool isClient;                      /**< Host Mode of Operation. */
-    struct CATCPSessionInfo_t *next;    /**< Linked list; for multiple session list. */
 } CATCPSessionInfo_t;
 
 /**
