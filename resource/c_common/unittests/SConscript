@@ -38,6 +38,7 @@ SConscript(exports={'test_env': common_test_env},
                '../oic_time/test',
                '../ocrandom/test',
                '../ocevent/test',
+               '../oc_refcounter/test',
            ])
 if target_os == 'windows':
     SConscript('../windows/test/SConscript', exports={'test_env': common_test_env})

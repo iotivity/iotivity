@@ -135,7 +135,9 @@ INPUT                  = devdox \
                          ../../c_common/windows/include \
                          ../../c_common/windows/src \
                          ../../c_common/ocrandom/include \
-                         ../../c_common/ocrandom/src
+                         ../../c_common/ocrandom/src \
+                         ../../c_common/oc_refcounter/include \
+                         ../../c_common/oc_refcounter/src
 
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
