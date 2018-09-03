@@ -120,7 +120,7 @@ public class Resource implements IRequestEventHandler {
         for (String property : propertyList) {
             if (!payloadData.containsKey(property))
                 throw new PreconditionFailedException(
-                        "payload does not contain" + property + " property");
+                        "payload does not contain " + property + " property");
             if (payloadData.get(property) == null)
                 throw new PreconditionFailedException(
                         property + " param is null in the payload");

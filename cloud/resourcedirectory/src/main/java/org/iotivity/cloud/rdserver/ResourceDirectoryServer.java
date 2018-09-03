@@ -23,7 +23,11 @@ package org.iotivity.cloud.rdserver;
 
 import java.net.InetSocketAddress;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
+import org.iotivity.cloud.base.healthcheck.HealthHolder;
+import org.iotivity.cloud.base.healthcheck.SimpleHealthHolder;
+import org.iotivity.cloud.base.server.SimpleHttpServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.ServerSystem;
@@ -45,6 +49,7 @@ public class ResourceDirectoryServer {
     private static int              coapServerPort;
     private static boolean          tlsMode;
     private static String           databaseHost;
+    private static boolean healthCheckEnabled;
 
     public static void main(String[] args) throws Exception {
         Log.info("Starting Resource Directory Server");
@@ -57,10 +62,9 @@ public class ResourceDirectoryServer {
         }
 
         DBManager.createInstance(databaseHost);
-
+        HealthHolder healthHolder =  new SimpleHealthHolder(TimeUnit.SECONDS,100);
         ServerSystem serverSystem = new ServerSystem();
-
-        serverSystem.addResource(new CloudPingResource());
+        serverSystem.addResource(new CloudPingResource(healthHolder));
         serverSystem.addResource(new ResourceDirectoryResource());
         serverSystem.addResource(new DiscoveryResource());
         serverSystem.addResource(new DevicePresenceResource());
@@ -68,6 +72,10 @@ public class ResourceDirectoryServer {
 
         serverSystem.addServer(
                 new CoapServer(new InetSocketAddress(coapServerPort)));
+
+        if(healthCheckEnabled){
+            serverSystem.addServer(new SimpleHttpServer(new InetSocketAddress(80),healthHolder));
+        }
 
         serverSystem.startSystem(tlsMode);
 
@@ -92,6 +100,7 @@ public class ResourceDirectoryServer {
             coapServerPort = Integer.parseInt(args[0]);
             databaseHost = args[1] + ":" + args[2];
             tlsMode = Integer.parseInt(args[3]) == 1;
+            healthCheckEnabled = false;
             return true;
         }
         // configuration provided by docker env
@@ -101,6 +110,7 @@ public class ResourceDirectoryServer {
             databaseHost = System.getenv("MONGODB_ADDRESS") + ":"
                     + System.getenv("MONGODB_PORT");
             tlsMode = Integer.parseInt(tlsModeEnv) == 1;
+            healthCheckEnabled = Integer.parseInt(System.getenv("HEALTH_CHECK_ENABLED")) == 1;
             return true;
         }
         return false;

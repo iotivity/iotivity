@@ -1,5 +1,9 @@
 FROM openjdk:8-jre-alpine
 
+RUN apk add --update \
+    curl \
+    && rm -rf /var/cache/apk/*
+
 ADD ./target/CloudAccount-0.0.1-SNAPSHOT.jar iotivity/AccountServer.jar
 ADD ./target/lib/* iotivity/lib/
 ADD ./properties/* iotivity/properties/
@@ -7,6 +11,7 @@ ADD ./properties/* iotivity/properties/
 WORKDIR iotivity/
 
 ENV COAP_PORT 5685
+ENV HEALTH_CHECK_ENABLED 1
 ENV TLS_MODE 0
 ENV MONGODB_ADDRESS mongodb
 ENV MONGODB_PORT 27017
@@ -26,3 +31,4 @@ ENV JAVA_JMX_OPTS "-Dcom.sun.management.jmxremote \
 EXPOSE 9002
 
 ENTRYPOINT exec java $JAVA_JMX_OPTS $JAVA_MEMORY_OPTS -jar AccountServer.jar
+HEALTHCHECK --interval=30s --timeout=2s --retries=3	CMD curl -f http://localhost/api/healthcheck || exit 1

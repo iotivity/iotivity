@@ -23,7 +23,11 @@ package org.iotivity.cloud.accountserver;
 
 import java.net.InetSocketAddress;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
+import org.iotivity.cloud.base.healthcheck.HealthHolder;
+import org.iotivity.cloud.base.healthcheck.SimpleHealthHolder;
+import org.iotivity.cloud.base.server.SimpleHttpServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
@@ -51,6 +55,7 @@ public class AccountServer {
     private static boolean          tlsMode;
     private static String           databaseHost;
     private static String           webLogHost;
+    private static boolean          healthCheckEnabled;
 
     public static void main(String[] args) throws Exception {
         Log.info("Starting Account Server");
@@ -63,10 +68,9 @@ public class AccountServer {
         }
 
         AccountDBManager.createInstance(databaseHost);
-
+        HealthHolder healthHolder =  new SimpleHealthHolder(TimeUnit.SECONDS,100);
         ServerSystem serverSystem = new ServerSystem();
-
-        serverSystem.addResource(new CloudPingResource());
+        serverSystem.addResource(new CloudPingResource(healthHolder));
         serverSystem.addResource(new AccountResource());
         serverSystem.addResource(new SessionResource());
         serverSystem.addResource(new TokenRefreshResource());
@@ -80,6 +84,10 @@ public class AccountServer {
 
         serverSystem.addServer(
                 new CoapServer(new InetSocketAddress(coapServerPort)));
+
+        if(healthCheckEnabled){
+            serverSystem.addServer(new SimpleHttpServer(new InetSocketAddress(80),healthHolder));
+        }
 
         serverSystem.startSystem(tlsMode);
 
@@ -104,6 +112,7 @@ public class AccountServer {
             coapServerPort = Integer.parseInt(args[0]);
             databaseHost = args[1] + ":" + args[2];
             tlsMode = Integer.parseInt(args[3]) == 1;
+            healthCheckEnabled = false;
             return true;
         }
         // configuration provided by docker env
@@ -113,6 +122,7 @@ public class AccountServer {
             databaseHost = System.getenv("MONGODB_ADDRESS") + ":"
                     + System.getenv("MONGODB_PORT");
             tlsMode = Integer.parseInt(tlsModeEnv) == 1;
+            healthCheckEnabled = Integer.parseInt(System.getenv("HEALTH_CHECK_ENABLED")) == 1;
             return true;
         }
         return false;
