@@ -19,7 +19,7 @@
  ******************************************************************/
 
 apply plugin: 'com.android.application'
-project.buildDir = "${binDirectory}/${module_name}testapp"
+project.buildDir = "${binDirectory}/cstestapp"
 
 buildscript {
     repositories {
