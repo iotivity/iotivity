@@ -140,31 +140,43 @@ public class KeepAliveResource extends Resource {
                     .synchronizedMap(mConnectionPool);
 
             List<Device> deleteList = new ArrayList<>();
-
-            synchronized (map) {
-                Long currentTime = System.currentTimeMillis();
-                for (Device device : map.keySet()) {
-                    Long lifeTime = (Long) map.get(device);
-                    if (lifeTime != null && lifeTime < currentTime) {
-                        deleteList.add(device);
+            try {
+                synchronized (map) {
+                    Long currentTime = System.currentTimeMillis();
+                    for (Device device : map.keySet()) {
+                        Long lifeTime = (Long) map.get(device);
+                        if (lifeTime != null && lifeTime < currentTime) {
+                            deleteList.add(device);
+                        }
+                    }
+                    for(final Device device : deleteList){
+                        final List<Device> samedevice = map.keySet().stream().filter(d -> filter(d,device)).collect(Collectors.toList());
+                        if(device != null && samedevice != null && samedevice.size() > 0){
+                            Log.info("Channel for device: {} is empty", device.getDeviceId());
+                            device.setParameter(DeviceServerSystem.EMPTY_CHANNEL,true);
+                        }
                     }
                 }
-            }
 
-            for(final Device device : deleteList){
-                final List<Device> samedevice = map.keySet().stream().filter(d -> (d.getDeviceId().compareTo(device.getDeviceId()) == 0
-                        && d.getCtx().channel().id().asLongText().compareTo(device.getCtx().channel().id().asLongText()) != 0)).collect(Collectors.toList());
-                if(samedevice != null && samedevice.size() > 0){
-                    Log.info("Channel for device: {} is empty", device.getDeviceId());
-                    device.setParameter(DeviceServerSystem.EMPTY_CHANNEL,true);
+                for (Device device : deleteList) {
+                    mConnectionPool.remove(device);
+                    device.getCtx().fireChannelInactive();
+                    device.getCtx().close();
                 }
+            } catch (final Exception e){
+                Log.error("Unable to remove not responding device", e);
             }
-
-            for (Device device : deleteList) {
-                mConnectionPool.remove(device);
-                device.getCtx().fireChannelInactive();
-                device.getCtx().close();
+        }
+        
+        private boolean filter(final Device listDevice, final Device device){
+            if(listDevice == null || listDevice.getDeviceId() == null || device == null || device.getDeviceId() == null){
+                return false;
             }
+            if(listDevice.getCtx() == null && listDevice.getCtx().channel() == null && device.getCtx() == null && device.getCtx().channel() == null){
+                return false;
+            }
+            return listDevice.getDeviceId().compareTo(device.getDeviceId()) == 0
+                    && listDevice.getCtx().channel().id().asLongText().compareTo(device.getCtx().channel().id().asLongText()) != 0;
         }
     }
 }
