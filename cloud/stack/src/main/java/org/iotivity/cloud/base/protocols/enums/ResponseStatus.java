@@ -25,6 +25,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public enum ResponseStatus {
+    // Empty response
+    EMPTY,
     // Success 2.xx
     CREATED, DELETED, VALID, CHANGED, CONTENT,
     // Client Error 4.xx

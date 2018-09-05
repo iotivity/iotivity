@@ -110,7 +110,9 @@ public class CoapDecoder extends ByteToMessageDecoder {
 
                     case CODE_TOKEN_OPTION:
                         int code = in.readByte() & 0xFF;
-                        if (code <= 31) {
+                        if (code == 0) {
+                            partialMsg = new CoapResponse(code);
+                        } else if (code <= 31) {
                             partialMsg = new CoapRequest(code);
                         } else if (code > 224) {
                             partialMsg = new CoapSignaling(code);

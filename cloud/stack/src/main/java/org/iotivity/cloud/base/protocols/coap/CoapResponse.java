@@ -34,6 +34,9 @@ public class CoapResponse extends CoapMessage {
 
     public CoapResponse(int code) {
         switch (code) {
+            case 0:
+                mResponseStatus = ResponseStatus.EMPTY;
+                break;
             case 65:
                 mResponseStatus = ResponseStatus.CREATED;
                 break;
@@ -108,6 +111,8 @@ public class CoapResponse extends CoapMessage {
     public int getCode() {
         // TODO Auto-generated method stub
         switch (mResponseStatus) {
+            case EMPTY:
+                return 0;
             case BAD_GATEWAY:
                 return 162;
             case BAD_OPTION:
