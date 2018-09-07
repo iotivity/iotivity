@@ -21,19 +21,18 @@
  */
 package org.iotivity.cloud.rdserver.resources.directory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.rdserver.Constants;
 import org.iotivity.cloud.rdserver.db.DBManager;
 import org.iotivity.cloud.rdserver.resources.directory.rd.InsManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * 
+ *
  * This class provides a set of APIs handle requests about resource information
  *
  */
@@ -89,7 +88,7 @@ public class RDManager {
     }
 
     private void storeResource(ArrayList<HashMap<String, Object>> links,
-            HashMap<String, Object> deviceInfo) {
+                               HashMap<String, Object> deviceInfo) {
 
         ArrayList<HashMap<String, Object>> resourcePresence = new ArrayList<>();
 
@@ -124,7 +123,7 @@ public class RDManager {
     }
 
     private void setResourceIns(String di,
-            ArrayList<HashMap<String, Object>> links) {
+                                ArrayList<HashMap<String, Object>> links) {
 
         for (HashMap<String, Object> link : links) {
             String href = link.get(Constants.HREF).toString();
@@ -156,10 +155,10 @@ public class RDManager {
 
     /**
      * API for handling resource-delete process
-     * 
+     *
      * @param di
      *            device id
-     * @param ins
+     * @param insList
      *            unique id of resource
      */
     public void deleteResource(String di, List<String> insList) {
@@ -202,7 +201,7 @@ public class RDManager {
 
     /**
      * API for handling resource-discover process
-     * 
+     *
      * @param diList
      *            list of device id
      * @param rtList
@@ -212,9 +211,7 @@ public class RDManager {
      * @return response payload
      */
     public ArrayList<Object> discoverResource(List<String> diList,
-            List<String> rtList, List<String> ifList) {
-
-        HashMap<String, Object> condition = new HashMap<>();
+                                              List<String> rtList, List<String> ifList) {
 
         ArrayList<Object> response = new ArrayList<>();
 
@@ -222,62 +219,48 @@ public class RDManager {
             return response;
         }
 
-        if (rtList == null && ifList == null) {
-            readResource(diList, condition, response);
+        final List<String> diFiltered = filterDeviceByStatus(diList);
+        if(diFiltered == null || diFiltered.size() == 0){
+            return response;
+        }
+        final HashMap<String,Object> conditions = new HashMap<>();
+        conditions.put("di",buildInQuery(diFiltered));
+
+        if(rtList != null && rtList.size() > 0){
+            conditions.put("rt",buildInQuery(rtList));
         }
 
-        if (rtList != null) {
-            for (String rt : rtList) {
-                condition.put(Constants.RESOURCE_TYPE, rt);
-                readResource(diList, condition, response);
-            }
+        if(ifList != null && ifList.size() > 0){
+            conditions.put("if",buildInQuery(rtList));
         }
 
-        if (ifList != null) {
-            for (String itf : ifList) {
-                condition.put(Constants.INTERFACE, itf);
-                readResource(diList, condition, response);
-            }
-        }
+        readResource(conditions,response);
 
         Log.debug("discovery payload : " + response);
 
         return response;
     }
 
-    private void readResource(List<String> diList,
+    private void readResource(
             HashMap<String, Object> condition, ArrayList<Object> response) {
 
-        ArrayList<String> onDiList = getPresenceOnDevices(diList);
-
-        for (String di : onDiList) {
-            condition.put(Constants.DEVICE_ID, di);
-            ArrayList<HashMap<String, Object>> records = DBManager.getInstance()
-                    .selectRecord(Constants.RD_TABLE, condition);
-
-            if (!records.isEmpty()) {
-                response.add(makeDiscoverResponseSegment(records));
-            }
-
+        ArrayList<HashMap<String, Object>> records = DBManager.getInstance()
+                .selectRecord(Constants.RD_TABLE, condition);
+        if (!records.isEmpty()) {
+            response.add(makeDiscoverResponseSegment(records));
         }
     }
 
-    private ArrayList<String> getPresenceOnDevices(List<String> diList) {
-        ArrayList<String> onDiList = new ArrayList<>();
-        HashMap<String, Object> condition = new HashMap<>();
+    private List<String> filterDeviceByStatus(final List<String> diList){
 
-        for (String di : diList) {
-            condition.put(Constants.DEVICE_ID, di);
-            HashMap<String, Object> record = DBManager.getInstance()
-                    .selectOneRecord(Constants.PRESENCE_TABLE, condition);
-
-            if (!record.isEmpty() && record.get(Constants.PRESENCE_STATE)
-                    .equals(Constants.PRESENCE_ON)) {
-                onDiList.add(di);
-            }
-
+        final HashMap<String,Object> query = new HashMap<>();
+        if(diList != null && diList.size() > 0){
+            query.put("di",buildInQuery(diList));
         }
-        return onDiList;
+        query.put("state",Constants.PRESENCE_ON);
+        ArrayList<HashMap<String, Object>> records = DBManager.getInstance()
+                .selectRecord(Constants.PRESENCE_TABLE, query);
+        return records.stream().map(record -> (String)record.get("di")).collect(Collectors.toList());
     }
 
     private HashMap<String, Object> makeDiscoverResponseSegment(
@@ -311,11 +294,18 @@ public class RDManager {
 
     /**
      * API for getting resource information to notify
-     * 
+     *
      * @return resource information
      */
     public ArrayList<HashMap<String, Object>> getmResourcePresence() {
         return mResourcePresence;
+    }
+
+
+    private <T extends Object> HashMap<String,Object> buildInQuery(final Collection<T> items){
+        final HashMap<String,Object> query = new HashMap<>();
+        query.put("$in",items);
+        return query;
     }
 
 }
