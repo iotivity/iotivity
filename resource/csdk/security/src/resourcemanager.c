@@ -140,6 +140,7 @@ OCStackResult DestroySecureResources( )
     DeInitRolesResource();
 #endif // __WITH_DTLS__ || __WITH_TLS__
     DeInitAmaclResource();
+    DeInitSpResource();
 
     OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 
