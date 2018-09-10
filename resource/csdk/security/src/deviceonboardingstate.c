@@ -361,7 +361,8 @@ static bool EnterRESET()
     // SVRs (e.g. the hard-coded SVRs in IoTivity) or it could be a backup
     // copy of the initally-provisioned SVRs (e.g. the ResetSecureResourceInPS
     // function in IoTivity).
-    // TODO [IOT-2633]: VERIFY_SUCCESS(TAG, OC_STACK_OK == ResetSecureResources(), ERROR);
+    // TODO [IOT-2633]: 
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ResetSecureResources(), ERROR);
 
     // Set doxm.deviceuuid = Mfr Default (handled above)
     // Set doxm.sct = Mfr Default ("")
