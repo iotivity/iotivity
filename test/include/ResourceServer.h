@@ -33,7 +33,9 @@
 #include <memory>
 #include <string>
 #include <memory>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "ocstack.h"

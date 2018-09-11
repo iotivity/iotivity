@@ -95,7 +95,7 @@ protected:
 #if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkAutoProvision_btc, OCGetCSRResource_RV_SRC_P)
 {
-    if (!m_PMAutoProvisionHelper.getCSRResource(NULL, device1, PMCsdkCallbackHelper::provisionGetCB, OC_STACK_OK))
+    if (!m_PMAutoProvisionHelper.getCSRResource(NULL, device1, (OCGetCSRResultCB)PMCsdkCallbackHelper::provisionGetCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }
@@ -124,7 +124,7 @@ TEST_F(PMCsdkAutoProvision_btc, OCGetCSRResource_RV_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkAutoProvision_btc, OCGetRolesResource_RV_SRC_P)
 {
-    if (!m_PMAutoProvisionHelper.getRolesResource(NULL, device1, PMCsdkCallbackHelper::provisionGetCB, OC_STACK_OK))
+    if (!m_PMAutoProvisionHelper.getRolesResource(NULL, device1, (OCGetRolesResultCB)PMCsdkCallbackHelper::provisionGetCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }

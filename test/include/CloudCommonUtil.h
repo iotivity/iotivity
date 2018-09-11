@@ -23,7 +23,9 @@
 
 #include <stddef.h>
 #include <malloc.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <string>
 #include <fstream>
 #ifndef __ANDROID__

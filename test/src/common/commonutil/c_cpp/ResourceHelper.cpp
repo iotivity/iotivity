@@ -21,6 +21,7 @@
 #include <sstream>
 #include <ResourceHelper.h>
 #ifdef HAVE_WINDOWS_H
+#include "CommonUtil.h"
 #include <windows.h>
 #endif
 

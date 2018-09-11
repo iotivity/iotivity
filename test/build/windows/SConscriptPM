@@ -85,8 +85,11 @@ iotivity_include_paths = [
     iotivity_root + '/resource/csdk/security/provisioning/include/cloud',
     iotivity_root + '/resource/include',
     iotivity_root + '/resource/csdk/stack/include',
-    iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/csdk/stack/include/experimental',
+    iotivity_root + '/resource/c_common/ocrandom/include/experimental',
+    iotivity_root + '/resource/c_common/octhread/include',
     iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
     iotivity_root + '/resource/csdk/connectivity/inc',
     iotivity_root + '/resource/csdk/connectivity/inc/pkix',
     iotivity_root + '/resource/csdk/connectivity/common/inc',
@@ -94,7 +97,6 @@ iotivity_include_paths = [
     iotivity_root + '/resource/csdk/connectivity/api',
     iotivity_root + '/resource/c_common/oic_malloc/include',
     iotivity_root + '/resource/c_common',
-    iotivity_root + '/resource/c_common/oic_string/include',
     iotivity_root + '/resource/c_common/oic_string/include',
     iotivity_root + '/resource/oc_logger/include',
     iotivity_root + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include/',
@@ -121,13 +123,13 @@ cert_include_paths = [
 csdk_tc_include_paths = [
     iotivity_test_root + '/include',
     test_src_root + '/tc/pm/gtest/csdk/include',
-    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+    iotivity_root + '/extlibs/gtest/googletest-release-1.7.0/include'
 ]
 
 cpp_tc_include_paths = [
     iotivity_test_root + '/include',
     test_src_root + '/tc/pm/gtest/cpp/include',
-    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+    iotivity_root + '/extlibs/gtest/googletest-release-1.7.0/include'
 ]
 
 tc_util = [
@@ -195,7 +197,7 @@ csdk_lib_list = Split('bcrypt Ws2_32 advapi32 iphlpapi crypt32 boost_system boos
 
 cpp_lib_list = Split('bcrypt Ws2_32 advapi32 iphlpapi crypt32 boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction_internal oc oc_logger_internal ocsrm octbstack ocprovision ocsrm octbstack mbedtls mbedcrypto mbedx509 routingmanager resource_directory sqlite3 common_util win_helper')
 
-cppdefines = ['-DWITH_CLOUD', '-DRD_CLIENT', '-DWITH_CLOUD', '-DNDEBUG', '-DTCP_ADAPTER', '-DIP_ADAPTER', '-DNO_EDR_ADAPTER', '-DLE_ADAPTER', '-DMQ_SUBSCRIBER', '-DWITH_MQ', '-DMQ_PUBLISHER', '-DSHA2_USE_INTTYPES_H', '-D__WITH_DTLS__', '-D__WITH_TLS__', '-D_ENABLE_MULTIPLE_OWNER_', '-DROUTING_EP', '-DWITH_BWT', '-DCA_DBUS_GATT_SERVICE_NAME', '-DGLIB_VERSION_MIN_REQUIRED', '-DGLIB_VERSION_2_32', '-DWITH_TCP'] 
+cppdefines = ['-D__SECURED__', '-DWITH_CLOUD', '-DRD_CLIENT', '-DWITH_CLOUD', '-DNDEBUG', '-DTCP_ADAPTER', '-DIP_ADAPTER', '-DNO_EDR_ADAPTER', '-DLE_ADAPTER', '-DMQ_SUBSCRIBER', '-DWITH_MQ', '-DMQ_PUBLISHER', '-DSHA2_USE_INTTYPES_H', '-D__WITH_DTLS__', '-D__WITH_TLS__', '-D_ENABLE_MULTIPLE_OWNER_', '-DROUTING_EP', '-DWITH_BWT', '-DCA_DBUS_GATT_SERVICE_NAME', '-DGLIB_VERSION_MIN_REQUIRED', '-DGLIB_VERSION_2_32', '-DWITH_TCP'] 
 
 if cert_enabled == 1:
     cppflags.append('-D__CERT__')

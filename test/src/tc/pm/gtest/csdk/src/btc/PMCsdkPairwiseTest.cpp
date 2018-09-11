@@ -1268,7 +1268,7 @@ TEST_F(PMCsdkPairwiseTest_btc, OCDeleteACLList_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCsdkPairwiseTest_btc, OCGetCSRResource_RV_SRC_P)
 {
-    if (!m_PMHelper.getCSRResource(NULL, m_Device1, PMCsdkCallbackHelper::provisionGetCB, OC_STACK_OK))
+    if (!m_PMHelper.getCSRResource(NULL, m_Device1, (OCGetCSRResultCB)PMCsdkCallbackHelper::provisionGetCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
     }

@@ -31,9 +31,13 @@
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <signal.h>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include "casecurityinterface.h"
 #include "cathreadpool.h"
 #include "occloudprovisioning.h"

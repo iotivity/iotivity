@@ -29,8 +29,11 @@
 
 #ifdef __LINUX__
 #include <execinfo.h>
-#include <unistd.h>
 #include "time.h"
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
 #endif
 
 #include <iostream>
