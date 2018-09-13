@@ -85,6 +85,7 @@ cache_test_src = cache_test_env.Glob('./*.cpp')
 cache_test = cache_test_env.Program('cache_test', cache_test_src)
 Alias("cache_test", cache_test)
 cache_test_env.AppendTarget('cache_test')
+cache_test_env.UserInstallTargetExtra(cache_test,'tests/service/resource-encapsulation/src/resourceCache/')
 
 if cache_test_env.get('TEST') == '1':
     if target_os in ['linux']:

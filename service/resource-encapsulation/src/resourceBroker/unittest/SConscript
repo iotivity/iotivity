@@ -89,6 +89,8 @@ broker_test_src = broker_test_env.Glob('./*.cpp')
 broker_test = broker_test_env.Program('broker_test', broker_test_src)
 Alias("broker_test", broker_test)
 broker_test_env.AppendTarget('broker_test')
+broker_test_env.UserInstallTargetExtra(broker_test,'tests/service/resource-encapsulation/src/resourceBroker/')
+
 
 if broker_test_env.get('TEST') == '1':
     if target_os in ['linux']:

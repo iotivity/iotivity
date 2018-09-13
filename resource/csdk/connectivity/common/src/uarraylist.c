@@ -242,3 +242,15 @@ void u_arraylist_destroy(u_arraylist_t *list)
     }
     (void)u_arraylist_free(&list);
 }
+
+bool u_arraylist_swap(u_arraylist_t *list, size_t index1, size_t index2)
+{
+    if (!list || index1 >= list->length || index2 >= list->length)
+    {
+        return false;
+    }
+    void* tmp = list->data[index1];
+    list->data[index1] = list->data[index2];
+    list->data[index2] = tmp;
+    return true;
+}

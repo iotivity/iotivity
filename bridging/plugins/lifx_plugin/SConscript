@@ -63,7 +63,7 @@ lifx_env.AppendUnique(CPPPATH=[
 
 if 'g++' in lifx_env.get('CXX'):
     lifx_env.AppendUnique(
-        CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
+        CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra'])
 
 libmpm = lifx_env.get('BUILD_DIR') + 'libmpmcommon.a'
 lifx_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])

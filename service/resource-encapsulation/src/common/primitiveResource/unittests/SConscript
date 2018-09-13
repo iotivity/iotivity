@@ -51,6 +51,8 @@ rcs_common_test_src = [
 ]
 
 rcs_common_test = rcs_common_test_env.Program('rcs_common_test', rcs_common_test_src)
+rcs_common_test_env.UserInstallTargetExtra(rcs_common_test, 'tests/service/resource-encapsulation/src/common/primitiveResource')
+
 Alias("rcs_common_test", rcs_common_test)
 rcs_common_test_env.AppendTarget('rcs_common_test')
 

@@ -65,7 +65,7 @@ lyric_env.AppendUnique(CPPPATH=[
 
 if 'g++' in lyric_env.get('CXX'):
     lyric_env.AppendUnique(
-        CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
+        CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra'])
 
 libmpm = lyric_env.get('BUILD_DIR') + 'libmpmcommon.a'
 lyric_env['LINKFLAGS'] = maskFlags(env['LINKFLAGS'])

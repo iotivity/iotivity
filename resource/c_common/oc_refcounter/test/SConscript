@@ -1,0 +1,56 @@
+#******************************************************************
+#
+# Copyright 2018 Kistler Group All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+import os
+import os.path
+from tools.scons.RunTest import run_test
+
+Import('test_env')
+
+# SConscript file for Local PKI google tests
+refcountertest_env = test_env.Clone()
+target_os = refcountertest_env.get('TARGET_OS')
+
+######################################################################
+# Build flags
+######################################################################
+refcountertest_env.PrependUnique(CPPPATH=['../include'])
+
+refcountertest_env.AppendUnique(LIBPATH=[
+    os.path.join(refcountertest_env.get('BUILD_DIR'), 'resource', 'c_common')
+])
+refcountertest_env.PrependUnique(LIBS=['c_common'])
+
+if refcountertest_env.get('LOGGING'):
+    refcountertest_env.AppendUnique(CPPDEFINES=['TB_LOG'])
+#
+######################################################################
+# Source files and Targets
+######################################################################
+refcountertests = refcountertest_env.Program('refcountertests',
+                                     ['linux/oc_refcounter_tests.cpp'])
+
+Alias("test", [refcountertests])
+
+refcountertest_env.AppendTarget('test')
+if refcountertest_env.get('TEST') == '1':
+    if target_os in ['linux', 'windows']:
+        run_test(refcountertest_env, 'resource_ccommon_refcounter_test.memcheck',
+                 'resource/c_common/oc_refcounter/test/refcountertests')

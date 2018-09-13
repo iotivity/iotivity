@@ -114,6 +114,15 @@ bool u_arraylist_add(u_arraylist_t *list, void *data);
 void *u_arraylist_remove(u_arraylist_t *list, size_t index);
 
 /**
+ * Swap elements in the array list.
+ * @param[in] list        pointer of array list.
+ * @param[in] index1      first index of array list.
+ * @param[in] index2      second index of array list.
+ * @return true if success, false otherwise.
+ */
+bool u_arraylist_swap(u_arraylist_t *list, size_t index1, size_t index2);
+
+/**
  * Returns the length of the array list.
  * @param[in] list       pointer of array list.
  * @return length of the array list.
