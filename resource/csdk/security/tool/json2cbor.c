@@ -1192,7 +1192,6 @@ static OicSecSp_t *JSONToSpBin(const char *jsonStr)
     cJSON *jsonCurrentProfileName = NULL;
     cJSON *jsonSupportedProfilesArray = NULL;
     cJSON *jsonProfileName = NULL;
-    cJSON *jsonCredid = NULL;
 
     OicSecSp_t *sp = NULL;
 
@@ -1234,27 +1233,6 @@ static OicSecSp_t *JSONToSpBin(const char *jsonStr)
     {
         OIC_LOG_V(ERROR, TAG, "sp current profile %s not contained in supported profile list", sp->currentProfile);
         goto exit;
-    }
-
-    // credid
-
-    jsonCredid = cJSON_GetObjectItem(jsonSp, OIC_JSON_SP_CREDID_NAME);
-    if (NULL == jsonCredid)
-    {
-        if (true == SpRequiresCred(sp->currentProfile))
-        {
-            OIC_LOG(ERROR, TAG, "sp current profile requires cred, but credid not present in json");
-            goto exit;
-        }
-        else
-        {
-            sp->credid = 0;
-        }
-    }
-    else
-    {
-        VERIFY_SUCCESS(TAG, (cJSON_Number == jsonCredid->type), ERROR);
-        sp->credid = (uint16_t)jsonCredid->valueint;
     }
 
     ret = OC_STACK_OK;

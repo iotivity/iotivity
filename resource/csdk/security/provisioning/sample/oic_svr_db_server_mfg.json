@@ -1,8 +1,7 @@
 {
     "sp": {
-        "supportedprofiles": [ "oic.sec.sp.baseline", "oic.sec.sp.black", "oic.sec.sp.blue", "oic.sec.sp.purple" ],
+        "supportedprofiles": [ "oic.sec.sp.baseline" ],
         "currentprofile": "oic.sec.sp.baseline",
-        "credid": 1,
         "rowneruuid": "00000000-0000-0000-0000-000000000000",
         "rt": ["oic.r.ps"],
         "if": ["oic.if.baseline"]

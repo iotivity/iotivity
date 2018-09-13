@@ -459,13 +459,14 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
     EXPECT_EQ(OC_STACK_OK, SetDefaultACL(defaultAcl));
 
     //Populate ACL
-    OicSecAcl_t acl = OicSecAcl_t();
-    EXPECT_EQ(OC_STACK_OK, populateAcl(&acl, 1));
+    OicSecAcl_t *acl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
+    ASSERT_TRUE(NULL != acl);
+    EXPECT_EQ(OC_STACK_OK, populateAcl(acl, 1));
 
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t  *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V2, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(acl, OIC_SEC_ACL_V2, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
@@ -480,7 +481,7 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 
     // Verify if SRM contains ACE for the subject
     OicSecAce_t* savePtr = NULL;
-    const OicSecAce_t* subjectAce1 = GetACLResourceData(&acl.aces->subjectuuid, &savePtr);
+    const OicSecAce_t* subjectAce1 = GetACLResourceData(&(acl->aces->subjectuuid), &savePtr);
     ASSERT_TRUE(NULL != subjectAce1);
 
     // Create Entity Handler DELETE request
@@ -493,12 +494,12 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 
     // Verify if SRM has deleted ACE for the subject
     savePtr = NULL;
-    const OicSecAce_t* subjectAce2 = GetACLResourceData(&acl.aces->subjectuuid, &savePtr);
+    const OicSecAce_t* subjectAce2 = GetACLResourceData(&(acl->aces->subjectuuid), &savePtr);
     ASSERT_TRUE(NULL == subjectAce2);
 
     // Perform cleanup
     DeInitACLResource();
-    DeleteACLList(&acl);
+    DeleteACLList(acl);
     OICFree(ehReq.query);
     OCPayloadDestroy((OCPayload *)securityPayload);
     OICFree(payload);
@@ -520,13 +521,14 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     EXPECT_EQ(OC_STACK_OK, SetDefaultACL(defaultAcl));
 
     //Populate ACL
-    OicSecAcl_t acl = OicSecAcl_t();
-    EXPECT_EQ(OC_STACK_OK, populateAcl(&acl, 2));
+    OicSecAcl_t *acl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
+    ASSERT_TRUE(NULL != acl);
+    EXPECT_EQ(OC_STACK_OK, populateAcl(acl, 2));
 
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V2, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(acl, OIC_SEC_ACL_V2, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
@@ -541,7 +543,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
 
     // Verify if SRM contains ACE for the subject with two resources
     OicSecAce_t* savePtr = NULL;
-    const OicSecAce_t* subjectAce1 = GetACLResourceData(&acl.aces->subjectuuid, &savePtr);
+    const OicSecAce_t* subjectAce1 = GetACLResourceData(&(acl->aces->subjectuuid), &savePtr);
     ASSERT_TRUE(NULL != subjectAce1);
     EXPECT_EQ(2u, GetNumberOfResource(subjectAce1));
 
@@ -564,14 +566,14 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
 
     // Verify if SRM contains ACL for the subject but only with one resource
     savePtr = NULL;
-    const OicSecAce_t* subjectAce2 = GetACLResourceData(&acl.aces->subjectuuid, &savePtr);
+    const OicSecAce_t* subjectAce2 = GetACLResourceData(&(acl->aces->subjectuuid), &savePtr);
     ASSERT_TRUE(NULL != subjectAce2);
     EXPECT_EQ(1u, GetNumberOfResource(subjectAce2));
 
     // Perform cleanup
     OCPayloadDestroy((OCPayload *)securityPayload);
     DeInitACLResource();
-    DeleteACLList(&acl);
+    DeleteACLList(acl);
     OICFree(ehReq.query);
     OICFree(payload);
 }
@@ -588,13 +590,14 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
     EXPECT_EQ(OC_STACK_OK, SetDefaultACL(defaultAcl));
 
     //Populate ACL
-    OicSecAcl_t acl = OicSecAcl_t();
-    EXPECT_EQ(OC_STACK_OK, populateAcl(&acl, 1));
+    OicSecAcl_t *acl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
+    ASSERT_TRUE(NULL != acl);
+    EXPECT_EQ(OC_STACK_OK, populateAcl(acl, 1));
 
     //GET CBOR POST payload
     size_t size = 0;
     uint8_t *payload = NULL;
-    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(&acl, OIC_SEC_ACL_V2, &payload, &size));
+    EXPECT_EQ(OC_STACK_OK, AclToCBORPayload(acl, OIC_SEC_ACL_V2, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
@@ -619,7 +622,7 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
     // Perform cleanup
     OCPayloadDestroy((OCPayload *)securityPayload);
     DeInitACLResource();
-    DeleteACLList(&acl);
+    DeleteACLList(acl);
     OICFree(ehReq.query);
     OICFree(payload);
 }

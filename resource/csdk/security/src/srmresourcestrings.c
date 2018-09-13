@@ -129,7 +129,6 @@ const char * OIC_JSON_OM_NAME = "om";
 const char * OIC_JSON_SM_NAME = "sm";
 const char * OIC_JSON_SUPPORTED_SP_NAME = "supportedprofiles";
 const char * OIC_JSON_CURRENT_SP_NAME = "currentprofile";
-const char * OIC_JSON_SP_CREDID_NAME = "credid";
 const char * OIC_JSON_CREDID_NAME = "credid";
 const char * OIC_JSON_SUBJECT_NAME = "subject";
 const char * OIC_JSON_SUBJECTID_NAME = "subjectuuid";

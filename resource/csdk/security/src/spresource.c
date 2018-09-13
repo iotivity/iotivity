@@ -32,6 +32,7 @@
 #include "psinterface.h"
 #include "resourcemanager.h"
 #include "spresource.h"
+#include "deviceonboardingstate.h"
 #include "srmutility.h"
 #include "srmresourcestrings.h"
 
@@ -43,20 +44,15 @@ static OCResourceHandle    gSpHandle  = NULL;
 static OicSecSp_t         *gSp        = NULL;
 
 // Default sp values
-char * gSupportedProfiles[] = { "oic.sec.sp.baseline",
-                                "oic.sec.sp.black",
-                                "oic.sec.sp.blue",
-                                "oic.sec.sp.purple"
-                                };
+char * gSupportedProfiles[] = { "oic.sec.sp.baseline" };
 OicSecSp_t gDefaultSp =
 {
     1,                     // supportedLen
     gSupportedProfiles,    // supportedProfiles[0]
     "oic.sec.sp.baseline", // currentProfile
-    0                      // credid
 };
 
-bool gAllProps[SP_PROPERTY_COUNT] = { true, true, true};
+bool gAllProps[SP_PROPERTY_COUNT] = { true, true };
 
 // Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
 // The value of payload size is increased until reaching below max cbor size.
@@ -72,11 +68,6 @@ OCStackResult SpToCBORPayload(const OicSecSp_t *sp, uint8_t **payload, size_t *s
 {
     bool allProps[SP_PROPERTY_COUNT];
     SetAllSpProps(allProps, true);
-
-    if (false == SpRequiresCred(sp->currentProfile))
-    {
-        allProps[SP_CRED_ID] = false;
-    }
 
     return SpToCBORPayloadPartial(sp, payload, size, allProps);
 }
@@ -163,19 +154,6 @@ OCStackResult SpToCBORPayloadPartial(const OicSecSp_t *sp,
             &spMap, sp->currentProfile, strlen(sp->currentProfile));
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding supportedprofiles Value.");
         OIC_LOG_V(DEBUG, TAG, "%s encoded sp currentprofile value %s.", __func__, sp->currentProfile);
-    }
-
-    // cred id
-    if (propertiesToInclude[SP_CRED_ID])
-    {
-        cborEncoderResult = cbor_encode_text_string(
-            &spMap, OIC_JSON_SP_CREDID_NAME, strlen(OIC_JSON_SP_CREDID_NAME));
-        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding credid Name Tag.");
-        OIC_LOG_V(DEBUG, TAG, "%s encoded sp %s tag.", __func__, OIC_JSON_SP_CREDID_NAME);
-
-        cborEncoderResult = cbor_encode_int(&spMap, sp->credid);
-        VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding sp credid Value.");
-        OIC_LOG_V(DEBUG, TAG, "%s encoded sp %d tag.", __func__, sp->credid);
     }
 
     // rt (mandatory)
@@ -351,34 +329,6 @@ exit:
     return ret;
 }
 
-/**
- * Static method to determine if a credid is required, and to extract it from spMap if so
- * corresponding index into the supportedProfiles array
- *
- * @param [i] spMap              sp map positioned at location where credit will be if present
- * @param [o] credid             credid extracted from spMap, if credid required
- *                               If credid not required, value of credid is undefined
- *
- * @return ::OC_STACK_OK for Success, otherwise error value.
- */
-static OCStackResult CredIdFromCBOR(CborValue *spMap,
-                                    uint16_t *credid)
-{
-    OCStackResult ret = OC_STACK_ERROR;
-    CborError cborResult = CborNoError;
-    *credid = 0;
-
-    uint64_t extractedCredid = 0;
-    cborResult = cbor_value_get_uint64(spMap, &extractedCredid);
-    VERIFY_CBOR_SUCCESS(TAG, cborResult, "Could not extract SP credid.");
-    *credid = (uint16_t)extractedCredid;
-
-    ret = OC_STACK_OK;
-
-exit:
-    return ret;
-}
-
 OCStackResult CBORPayloadToSp(const uint8_t *cborPayload,
                               const size_t size,
                               OicSecSp_t **secSp,
@@ -458,17 +408,6 @@ OCStackResult CBORPayloadToSp(const uint8_t *cborPayload,
                 }
             }
 
-            // credid
-            else if (strcmp(tagName, OIC_JSON_SP_CREDID_NAME) == 0)
-            {
-                ret = CredIdFromCBOR(&spMap, &sp->credid);
-                VERIFY_OR_LOG_AND_EXIT(TAG, (OC_STACK_OK == ret), "Failed to extract SP cred id", ERROR);
-                if (NULL != decodedProperties)
-                {
-                    decodedProperties[SP_CRED_ID] = true;
-                }
-            }
-
             // advance to the next tag
             if (cbor_value_is_valid(&spMap))
             {
@@ -529,25 +468,7 @@ void DeleteSpBinData(OicSecSp_t* sp)
             OICFree(sp->currentProfile);
         }
         sp->currentProfile = NULL;
-        sp->credid = 0;
     }
-}
-
-bool SpRequiresCred(char* spName)
-{
-    if (NULL == spName)
-    {
-        OIC_LOG(WARNING, TAG, "NULL profile name supplied for cred check");
-        return false;
-    }
-
-    if ( (0 == strcmp(spName, "oic.sec.sp.black")) ||
-         (0 == strcmp(spName, "oic.sec.sp.blue")) ||
-         (0 == strcmp(spName, "oic.sec.sp.purple")))
-    {
-        return true;
-    }
-    return false;
 }
 
 bool RequiredSpPropsPresentAndValid(OicSecSp_t* sp, bool *propertiesPresent)
@@ -568,10 +489,6 @@ bool RequiredSpPropsPresentAndValid(OicSecSp_t* sp, bool *propertiesPresent)
 
     VERIFY_OR_LOG_AND_EXIT(TAG, (0 <= ProfileIdx(sp->supportedLen, sp->supportedProfiles, sp->currentProfile)),
         "Currentprofile is not contained in supportedprofiles list", WARNING);
-
-    VERIFY_OR_LOG_AND_EXIT(TAG,
-        !((true == SpRequiresCred(sp->currentProfile)) &&  (false == propertiesPresent[SP_CRED_ID])),
-        "Current profile requires credential, but none is present", WARNING);
 
     requiredPropsPresentAndValid = true;
 
@@ -651,7 +568,7 @@ static OCEntityHandlerResult HandleSpGetRequest (const OCEntityHandlerRequest * 
     {
         if(OC_STACK_OK != SpToCBORPayload(gSp, &payload, &size))
         {
-            OIC_LOG_V(WARNING, TAG, "%s PstatToCBORPayload failed.", __func__);
+            OIC_LOG_V(WARNING, TAG, "%s SpToCBORPayload failed.", __func__);
         }
     }
 
@@ -738,7 +655,6 @@ static OicSecSp_t* SpDup(OicSecSp_t* spToDup)
     VERIFY_NOT_NULL(TAG, dupSp, ERROR);
 
     dupSp->supportedLen = spToDup->supportedLen;
-    dupSp->credid = spToDup->credid;
     dupSp->currentProfile = OICStrdup(spToDup->currentProfile);
     VERIFY_NOT_NULL(TAG, dupSp->currentProfile, ERROR);
 
@@ -800,10 +716,20 @@ static OCEntityHandlerResult HandleSpPostRequest(OCEntityHandlerRequest *ehReque
 
     bool newSupportedProfiles = false;
     bool newCurrentProfile = false;
-    bool newCredid = false;
 
     uint8_t *payload = NULL;
     size_t size = 0;
+    OicSecDostype_t dos;
+    ret = GetDos(&dos);
+    VERIFY_OR_LOG_AND_EXIT(TAG, (OC_STACK_OK == ret),
+        "Not able to get onboarding state (pstat.dos) for /sp POST request", ERROR);
+
+    OIC_LOG_V(DEBUG, TAG, "/sp POST request, pstat.dos state = %d", dos.state);
+    if ((DOS_RESET == dos.state) || (DOS_RFNOP == dos.state)) {
+        OIC_LOG(ERROR, TAG, "/sp resource is read-only in RESET and RFNOP");
+        ehRet = OC_EH_NOT_ACCEPTABLE;
+        goto exit;
+    }
 
     VERIFY_OR_LOG_AND_EXIT(TAG, (NULL != ehRequest->payload), "sp POST : no payload supplied ", ERROR);
     VERIFY_OR_LOG_AND_EXIT(TAG, (NULL != gSp), "sp POST : corrupt internal SP resource ", ERROR);
@@ -819,7 +745,6 @@ static OCEntityHandlerResult HandleSpPostRequest(OCEntityHandlerRequest *ehReque
 
     newSupportedProfiles = decodedProperties[SP_SUPPORTED_PROFILES];
     newCurrentProfile = decodedProperties[SP_CURRENT_PROFILE];
-    newCredid = decodedProperties[SP_CRED_ID];
 
     spUpdate = (OicSecSp_t *)OICCalloc(1, sizeof(OicSecSp_t));
     VERIFY_NOT_NULL(TAG, spUpdate, ERROR);
@@ -841,27 +766,17 @@ static OCEntityHandlerResult HandleSpPostRequest(OCEntityHandlerRequest *ehReque
         (0 <= ProfileIdx(spUpdate->supportedLen, spUpdate->supportedProfiles, spUpdate->currentProfile)),
         "sp POST : currentprofile is not contained in supportedprofiles list", ERROR);
 
-    // credid
-    if (true == SpRequiresCred(spUpdate->currentProfile))
-    {
-        spUpdate->credid = newCredid ? spIncoming->credid : gSp->credid;
-    }
-    else
-    {
-        spUpdate->credid = 0;
-    }
-
     // Before we update the sp, lets make sure everthing is valid
     VERIFY_OR_LOG_AND_EXIT(TAG,
         (true == RequiredSpPropsPresentAndValid(spUpdate, gAllProps)),
         "sp POST : update version of security profiles not valid, not updating", ERROR);
 
     // whew ...
-    ret = OC_STACK_OK;
+    ehRet = OC_EH_OK;
 
 exit:
 
-    if ((OC_STACK_OK == ret) && (NULL != spUpdate))
+    if ((OC_EH_OK == ehRet) && (NULL != spUpdate))
     {
         if( true != UpdatePersistentStorage(spUpdate))
         {
@@ -885,7 +800,7 @@ exit:
         ehRet = OC_EH_NOT_ACCEPTABLE;
     }
 
-    if ((OC_STACK_OK != ret) && (NULL != spUpdate))
+    if ((OC_EH_OK != ehRet) && (NULL != spUpdate))
     {
         DeleteSpBinData(spUpdate);
     }
@@ -944,7 +859,7 @@ OCEntityHandlerResult SpEntityHandler(OCEntityHandlerFlag flag,
     return ehRet;
 }
 
-//#define SP_RESOURCE_DISABLE
+#undef SP_RESOURCE_DISABLE
 OCStackResult CreateSpResource()
 {
     OCStackResult ret = OC_STACK_OK;
@@ -1077,14 +992,6 @@ bool IsSpSame(OicSecSp_t* sp1, OicSecSp_t* sp2, bool *propertiesToCheck)
         }
     }
 
-    if (true == propertiesToCheck[SP_CRED_ID] || (NULL == propertiesToCheck))
-    {
-        if (sp1->credid != sp2->credid)
-        {
-            return false;
-        }
-    }
-
     return true;
 }
 
@@ -1118,7 +1025,5 @@ void LogSp(OicSecSp_t* sp, int level, const char* tag, const char* msg)
         OIC_LOG_V(level, tag, "  %lu: %s", (unsigned long)i, sp->supportedProfiles[i]);
     }
     OIC_LOG_V(level, tag, "Current security profile: %s", sp->currentProfile);
-    OIC_LOG_V(level, tag, "Current profile requires cred: %s", (true == SpRequiresCred(sp->currentProfile) ? "yes" : "no"));
-    OIC_LOG_V(level, TAG, "credid: %hu", sp->credid);
     OIC_LOG(level, tag, "-------------------------------------------------");
 }

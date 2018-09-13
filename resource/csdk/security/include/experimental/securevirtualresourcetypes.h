@@ -638,7 +638,6 @@ struct OicSecSp
     size_t          supportedLen;       // the number of supported profiles
     char          **supportedProfiles;  // Array of supported security profiles
     char           *currentProfile;     // currently selected security profile
-    uint16_t        credid;             // Cred to accompany currentprofile
 };
 
 #if defined(__WITH_DTLS__) ||  defined(__WITH_TLS__)

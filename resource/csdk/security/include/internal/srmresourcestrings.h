@@ -152,7 +152,6 @@ extern const char * OIC_JSON_OM_NAME;
 extern const char * OIC_JSON_SM_NAME;
 extern const char * OIC_JSON_SUPPORTED_SP_NAME;
 extern const char * OIC_JSON_CURRENT_SP_NAME;
-extern const char * OIC_JSON_SP_CREDID_NAME;
 extern const char * OIC_JSON_SERVICE_DEVICE_ID;
 extern const char * OIC_JSON_SERVICE_TYPE;
 extern const char * OIC_JSON_SUPPORTED_CRED_TYPE_NAME;

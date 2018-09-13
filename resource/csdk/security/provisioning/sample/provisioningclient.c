@@ -161,16 +161,21 @@ OicSecSp_t gSpDefault =
     1,                          // supportedLen
     gSupportedProfilesDefault,  // supportedProfiles[0]
     "oic.sec.sp.baseline",      // activeProfile
-    0                           // credid
 };
 
 char * gSupportedProfilesAll[] = { "oic.sec.sp.black", "oic.sec.sp.blue", "oic.sec.sp.purple", "oic.sec.sp.baseline",  };
 OicSecSp_t gSpAll =
 {
-    3,                      // supportedLen
+    4,                      // supportedLen
     gSupportedProfilesAll,  // supportedProfiles[0]
     "oic.sec.sp.black",     // activeProfile
-    1                       // credid (arbitrary for testing)
+};
+char * gSupportedProfilesInvalid[] = { "oic.sec.sp.black", "oic.sec.sp.blue", "oic.sec.sp.purple", "oic.sec.sp.baseline",  };
+OicSecSp_t gSpInvalid =
+{
+    4,                         // supportedLen
+    gSupportedProfilesInvalid, // supportedProfiles
+    "oic.sec.sp.invalid",      // activeProfile
 };
 
 
@@ -1399,14 +1404,14 @@ static int provisionSecurityProfileInfo(void)
     int sp_selection = 0;
     for (; ; )
     {
-        printf("   > Enter (1) for SP defaults or (2) for SP containing all profiles: ");
+        printf("   > Enter (1) for SP defaults, (2) for SP containing all profiles, (3) for an invalid SP: ");
         for (int ret = 0; 1 != ret; )
         {
             ret = scanf("%d", &sp_selection);
             for (; 0x20 <= getchar(); );  // for removing overflow garbages
                                           // '0x20<=code' is character region
         }
-        if ((1 == sp_selection) || (2 >= sp_selection))
+        if ((1 <= sp_selection) && (3 >= sp_selection))
         {
             break;
         }
@@ -1416,7 +1421,13 @@ static int provisionSecurityProfileInfo(void)
     printf("   > Posting new security profile info to device ...\n");
     g_doneCB = false;
 
-    OicSecSp_t *sp = (sp_selection == 1) ? &gSpDefault : &gSpAll;
+    OicSecSp_t *sp = NULL;
+    switch (sp_selection) {
+        case 2 : sp = &gSpAll; break;
+        case 3 : sp = &gSpInvalid; break;
+        default: sp = &gSpDefault;
+    }
+
     OCStackResult rst = OCProvisionSecurityProfileInfo(
         (void*)g_ctx, sp, targetDevice, (OCProvisionResultCB)&provisionTrustChainCB);
     if (OC_STACK_OK != rst)

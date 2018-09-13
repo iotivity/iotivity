@@ -51,7 +51,6 @@ static OicSecSp_t s_testSp =
     0,                      // supportedLen
     s_profileArray,         // supportedProfiles[0]
     NULL,                   // currentProfile
-    0                       // credid
 };
 
 
@@ -72,7 +71,6 @@ TEST(SPResourceTest, CBORFullEncodingPositive)
     s_testSp.supportedProfiles[2] = s_spBlackName;
     s_testSp.supportedProfiles[3] = s_spPurpleName;
     s_testSp.currentProfile = s_spBlackName;
-    s_testSp.credid = 1;
     TestEncodeDecode(&s_testSp, propsToTest, true);
 
     // default configuration
@@ -90,7 +88,6 @@ TEST(SPResourceTest, CBORFullEncodingPositive)
     s_testSp.supportedProfiles[0] = s_spBaselineName;
     s_testSp.supportedProfiles[1] = s_spBlackName;
     s_testSp.currentProfile = s_spBlackName;
-    s_testSp.credid = 22;
     TestEncodeDecode(&s_testSp, propsToTest, true);
 }
 
@@ -111,12 +108,6 @@ TEST(SPResourceTest, CBORPartialEncodingPositive)
     s_testSp.currentProfile = s_spBlueName;
     TestEncodeDecode(&s_testSp, propsToTest, false);
 
-    // cred profile only
-    TestInit(&s_testSp, propsToTest);
-    propsToTest[SP_CRED_ID] = true;
-    s_testSp.credid = 11;
-    TestEncodeDecode(&s_testSp, propsToTest, false);
-
     // supported profiles and current profile
     TestInit(&s_testSp, propsToTest);
     propsToTest[SP_SUPPORTED_PROFILES] = true;
@@ -125,24 +116,6 @@ TEST(SPResourceTest, CBORPartialEncodingPositive)
     s_testSp.supportedProfiles[0] = s_spBaselineName;
     s_testSp.supportedProfiles[1] = s_spBlueName;
     s_testSp.currentProfile = s_spBlueName;
-    TestEncodeDecode(&s_testSp, propsToTest, false);
-
-    // supported profiles and credid
-    TestInit(&s_testSp, propsToTest);
-    propsToTest[SP_SUPPORTED_PROFILES] = true;
-    propsToTest[SP_CRED_ID] = true;
-    s_testSp.supportedLen = 2;
-    s_testSp.supportedProfiles[0] = s_spBaselineName;
-    s_testSp.supportedProfiles[1] = s_spBlackName;
-    s_testSp.credid = 88;
-    TestEncodeDecode(&s_testSp, propsToTest, false);
-
-    // current profiles and credid
-    TestInit(&s_testSp, propsToTest);
-    propsToTest[SP_CURRENT_PROFILE] = true;
-    propsToTest[SP_CRED_ID] = true;
-    s_testSp.currentProfile = s_spBaselineName;
-    s_testSp.credid = 22;
     TestEncodeDecode(&s_testSp, propsToTest, false);
 }
 
@@ -197,7 +170,6 @@ static void TestInit(OicSecSp_t* testSp, bool* spProps)
 {
     testSp->supportedLen = 0;
     testSp->currentProfile = NULL;
-    testSp->credid = 0;
 
     for (size_t i = 0; i < sizeof(s_profileArray)/sizeof(s_profileArray[0]); i++)
     {
