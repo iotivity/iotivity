@@ -55,7 +55,7 @@ mpmcommon_env.PrependUnique(CPPPATH=[
 
 if target_os not in ['windows']:
     mpmcommon_env.AppendUnique(
-        CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror', '-fpic'])
+        CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-fpic'])
 
 mpmcommon_env['LINKFLAGS'] = maskFlags(mpmcommon_env['LINKFLAGS'])
 
