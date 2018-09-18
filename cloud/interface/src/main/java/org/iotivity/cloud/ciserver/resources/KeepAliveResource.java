@@ -21,14 +21,7 @@
  */
 package org.iotivity.cloud.ciserver.resources;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.iotivity.cloud.base.device.Device;
@@ -53,7 +46,7 @@ import org.slf4j.LoggerFactory;
  * connection.
  *
  */
-public class KeepAliveResource extends Resource {
+public class KeepAliveResource extends Resource  implements DevicePresenter {
     private final static Logger Log = LoggerFactory.getLogger(KeepAliveResource.class);
     private int[]                         mIntervals      = null;
     private Timer                         mTimer          = new Timer();
@@ -127,6 +120,16 @@ public class KeepAliveResource extends Resource {
         mConnectionPool.put(srcDevice, connectionTime);
 
         return MessageBuilder.createResponse(request, ResponseStatus.VALID);
+    }
+
+
+    @Override
+    public Set<String> getDeviceIds() {
+        Map<Device, Long> map = Collections
+                .synchronizedMap(mConnectionPool);
+        synchronized (map){
+            return new HashSet<>(map.keySet().stream().map(device -> device.getDeviceId()).collect(Collectors.toSet()));
+        }
     }
 
     /**

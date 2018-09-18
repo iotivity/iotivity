@@ -40,7 +40,12 @@ public class ConnectorPool {
 
     public static void requestConnection(String connectionName, InetSocketAddress inetAddr,
          boolean tlsMode, boolean keepAlive) throws InterruptedException {
-        mConnector.connect(connectionName, inetAddr, tlsMode, keepAlive);
+        mConnector.connect(connectionName, inetAddr, tlsMode, keepAlive, null);
+    }
+
+    public static void requestConnection(final String connectionName, final InetSocketAddress inetAddr,
+               final boolean tlsMode, final boolean keepAlive, final ConnectionEstablishedListener listener) throws InterruptedException {
+        mConnector.connect(connectionName, inetAddr, tlsMode, keepAlive, listener);
     }
 
     public static IRequestChannel getConnection(String name) {

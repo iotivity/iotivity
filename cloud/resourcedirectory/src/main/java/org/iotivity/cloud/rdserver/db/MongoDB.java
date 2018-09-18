@@ -88,6 +88,20 @@ public class MongoDB {
             db.getCollection(tableName).drop();
     }
 
+    public boolean updateMany(final String tableName, final Document filter, final Document update){
+
+        if (tableName == null || filter == null || update == null)
+            return false;
+        final MongoCollection<Document> collection = db.getCollection(tableName);
+        try {
+            collection.updateMany(filter,update);
+            return true;
+        } catch (Exception e) {
+            Log.error("Error update many record", e);
+            return false;
+        }
+    }
+
     /**
      * API for creating index
      *

@@ -24,6 +24,7 @@ package org.iotivity.cloud.ciserver;
 import java.net.InetSocketAddress;
 import java.util.Scanner;
 
+import org.iotivity.cloud.ciserver.resources.UpdateDeviceStateListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.connector.ConnectorPool;
@@ -79,9 +80,11 @@ public class CloudInterfaceServer {
             return;
         }
 
+        final KeepAliveResource resKeepAlive = new KeepAliveResource(deviceKeepAliveMinutes);
+        final UpdateDeviceStateListener updatePresenceState = new UpdateDeviceStateListener(resKeepAlive);
         ConnectorPool.requestConnection("rd",
                 new InetSocketAddress(resourceDirectoryAddress, resourceDirectoryPort),
-                tlsMode, keepAlive);
+                tlsMode, keepAlive, updatePresenceState);
         ConnectorPool.requestConnection("account",
                 new InetSocketAddress(accountServerAddress, accountServerPort),
                 tlsMode, keepAlive);
@@ -131,8 +134,6 @@ public class CloudInterfaceServer {
         deviceServer.addResource(aclInviteHandler);
 
         deviceServer.addResource(crlHandler);
-
-        KeepAliveResource resKeepAlive = new KeepAliveResource(deviceKeepAliveMinutes);
 
         deviceServer.addResource(resKeepAlive);
 

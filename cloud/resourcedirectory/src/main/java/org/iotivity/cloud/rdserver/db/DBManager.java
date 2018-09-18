@@ -31,6 +31,8 @@ import java.util.Set;
 import org.bson.Document;
 import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.rdserver.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -38,6 +40,8 @@ import org.iotivity.cloud.rdserver.Constants;
  *
  */
 public class DBManager {
+
+    private final static Logger Log             = LoggerFactory.getLogger(DBManager.class);
 
     private static DBManager                   mDBManager;
     private MongoDB                            mMongoDB   = null;
@@ -82,10 +86,8 @@ public class DBManager {
 
     private void createTables() {
         mMongoDB.createTable(Constants.RD_TABLE);
-
-        // TODO cannot be drop in case of component scaling
-        mMongoDB.dropTable(Constants.PRESENCE_TABLE);
         mMongoDB.createTable(Constants.PRESENCE_TABLE);
+        updatePresenceTable();
     }
 
     private void createIndexes() {
@@ -103,6 +105,30 @@ public class DBManager {
         mMongoDB.createIndex(Constants.PRESENCE_TABLE, keys);
         mKeyField.put(Constants.PRESENCE_TABLE, keys);
 
+    }
+
+    private void updatePresenceTable(){
+        Log.debug("Start update presence table. Update all devices to offline state");
+        final HashMap<String,Object> emptyCondition = new HashMap<>();
+        final HashMap<String,Object> updateEntry = new HashMap<>();
+        final HashMap<String,Object> stateUpdate = new HashMap<>();
+        stateUpdate.put(Constants.PRESENCE_STATE, Constants.PRESENCE_OFF);
+        updateEntry.put("$set",stateUpdate);
+        selectAndUpdate(Constants.PRESENCE_TABLE, emptyCondition, updateEntry);
+        Log.debug("Presence table was successfully updated");
+    }
+
+    /**
+     * API for selecting specific record and update in one operation
+     *
+     * @param tableName - table name to be updated
+     * @param condition - condition to match record
+     * @param update - data to be updated
+     */
+    public void selectAndUpdate(final String tableName, final HashMap<String, Object> condition, final HashMap<String, Object> update){
+        if (!_selectAndUpdate(tableName, condition, update))
+            throw new InternalServerErrorException(
+                    "Database record insert failed");
     }
 
     /**
@@ -214,6 +240,13 @@ public class DBManager {
             throw new InternalServerErrorException(
                     "Database record update failed");
 
+    }
+
+    private Boolean _selectAndUpdate(final String tableName, final HashMap<String, Object> condition, final HashMap<String, Object> update) {
+
+        final Document updateDoc = createDocument(update);
+        final Document filterDoc = createDocument(condition);
+        return mMongoDB.updateMany(tableName, filterDoc, updateDoc);
     }
 
     private Boolean _insertRecord(String tableName,

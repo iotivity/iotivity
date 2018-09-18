@@ -33,8 +33,11 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.rdserver.Constants;
+import org.iotivity.cloud.rdserver.resources.directory.rd.ResourceDirectoryResource;
 import org.iotivity.cloud.rdserver.resources.presence.PresenceManager;
 import org.iotivity.cloud.util.Cbor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -43,6 +46,7 @@ import org.iotivity.cloud.util.Cbor;
  */
 public class DevicePresenceResource extends Resource {
 
+    private final static Logger Log                  = LoggerFactory.getLogger(DevicePresenceResource.class);
     private Cbor<HashMap<String, Object>> mCbor = new Cbor<>();
 
     public DevicePresenceResource() {
@@ -64,6 +68,10 @@ public class DevicePresenceResource extends Resource {
 
             case POST:
                 response = handlePostRequest(request);
+                break;
+
+            case PUT:
+                response = handlePutRequest(request);
                 break;
 
             default:
@@ -125,4 +133,29 @@ public class DevicePresenceResource extends Resource {
         return MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
 
     }
+
+    private IResponse handlePutRequest(IRequest request)
+            throws ServerException {
+        // check payload
+        byte[] payload = request.getPayload();
+        Log.debug("Update presence table");
+        HashMap<String, Object> parsedPayload = mCbor
+                .parsePayloadFromCbor(payload, HashMap.class);
+
+        checkPayloadException(
+                Arrays.asList(Constants.PRESENCE_LIST),
+                parsedPayload);
+        ArrayList<HashMap<String, String>> prsList = (ArrayList<HashMap<String, String>>) parsedPayload
+                .get(Constants.PRESENCE_LIST);
+
+        for(final Map<String,String> record: prsList) {
+            // store db
+            Log.debug("Update device presence state: {}", record);
+            PresenceManager.getInstance().updateDevicePresence(new HashMap<>(record));
+        }
+
+        return MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
+
+    }
+
 }
