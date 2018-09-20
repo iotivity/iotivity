@@ -364,6 +364,10 @@ static bool EnterRESET()
     // TODO [IOT-2633]: 
     VERIFY_SUCCESS(TAG, OC_STACK_OK == ResetSecureResources(), ERROR);
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterPskCredentialsHandler(GetDtlsPskCredentials), ERROR);
+#endif // __WITH_DTLS__ or __WITH_TLS__
+
     // Set doxm.deviceuuid = Mfr Default (handled above)
     // Set doxm.sct = Mfr Default ("")
     // Set doxm.oxmsel = Mfr Default ("")
