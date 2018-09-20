@@ -1093,6 +1093,7 @@ OCStackResult DeInitRolesResource(void)
     FreeSymmetricRolesList(gSymmetricRoles);
 
     gRoles = NULL;
+    gSymmetricRoles = NULL;
 
     return res;
 }
