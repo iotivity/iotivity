@@ -474,6 +474,8 @@ static void CATriggerCreateLSServiceName()
 
 static void CAStartLSMainLoop(void * data)
 {
+    (void)data;
+
     OIC_LOG(DEBUG, CA_ADAPTER_UTILS_TAG, "CAStartLSMainLoop");
 
     LSError lserror;
