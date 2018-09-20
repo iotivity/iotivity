@@ -40,6 +40,7 @@
 #include "caremotehandler.h"
 #include "experimental/logger.h"
 #include "oic_malloc.h"
+#include "oc_refcounter.h"
 #ifdef __WITH_TLS__
 #include "ca_adapter_net_ssl.h"
 #endif
@@ -173,7 +174,8 @@ void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
     size_t bufferLen = dataLength;
 
     //get remote device information from file descriptor.
-    CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(&sep->endpoint);
+    oc_refcounter ref = CAGetTCPSessionInfoRefCountedFromEndpoint(&sep->endpoint);
+    CATCPSessionInfo_t *svritem =  (CATCPSessionInfo_t *) oc_refcounter_get_data(ref);
     if (!svritem)
     {
         OIC_LOG(ERROR, TAG, "there is no connection information in list");
@@ -181,6 +183,7 @@ void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
     }
     if (UNKNOWN == svritem->protocol)
     {
+        oc_refcounter_dec(ref);
         OIC_LOG(ERROR, TAG, "invalid protocol type");
         return;
     }
@@ -192,6 +195,7 @@ void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
         if (CA_STATUS_OK != res)
         {
             OIC_LOG_V(ERROR, TAG, "CAConstructCoAP return error : %d", res);
+            oc_refcounter_dec(ref);
             return;
         }
 
@@ -210,6 +214,7 @@ void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
                                 svritem->totalLen - svritem->len);
         }
     }
+    oc_refcounter_dec(ref);
 }
 
 #ifdef __WITH_TLS__

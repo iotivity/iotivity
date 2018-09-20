@@ -277,3 +277,34 @@ TEST_F(UArrayListF, Thrash)
         ASSERT_EQ(PAD_SIZE, u_arraylist_length(list));
     }
 }
+
+TEST_F(UArrayListF, Swap)
+{
+    ASSERT_EQ(static_cast<size_t>(0), u_arraylist_length(list));
+
+    int dummy = 0;
+    bool rc = u_arraylist_add(list, &dummy);
+    ASSERT_TRUE(rc);
+
+    ASSERT_EQ(static_cast<size_t>(1), u_arraylist_length(list));
+
+    int dumm2 = 1;
+    rc = u_arraylist_add(list, &dumm2);
+    ASSERT_TRUE(rc);
+
+    ASSERT_EQ(static_cast<size_t>(2), u_arraylist_length(list));
+
+    rc = u_arraylist_swap(list, 0, 1);
+    ASSERT_TRUE(rc);
+
+    void *value1 = u_arraylist_get(list, 0);
+    ASSERT_TRUE(value1 != NULL);
+    ASSERT_EQ(&dumm2, value1);
+
+    void *value2 = u_arraylist_get(list, 1);
+    ASSERT_TRUE(value2 != NULL);
+    ASSERT_EQ(&dummy, value2);
+
+    rc = u_arraylist_swap(list, 1, 2);
+    ASSERT_FALSE(rc);
+}
