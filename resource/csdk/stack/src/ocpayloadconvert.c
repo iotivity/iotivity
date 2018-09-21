@@ -942,13 +942,19 @@ static int64_t OCConvertRepPayload(OCRepPayload *payload, uint8_t *outPayload, s
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
 
+    int isBatch = 0;
+    if (payload != NULL && payload->ifType == PAYLOAD_BATCH_INTERFACE)
+    {
+        isBatch = 1;
+    }
+
     size_t arrayCount = 0;
     for (OCRepPayload *temp = payload; temp; temp = temp->next)
     {
         arrayCount++;
     }
     CborEncoder rootArray;
-    if (arrayCount > 1)
+    if (arrayCount > 1 || isBatch)
     {
         err |= cbor_encoder_create_array(&encoder, &rootArray, arrayCount);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Failed adding rep root map");
@@ -957,7 +963,7 @@ static int64_t OCConvertRepPayload(OCRepPayload *payload, uint8_t *outPayload, s
     while (payload != NULL && (err == CborNoError))
     {
         CborEncoder rootMap;
-        err |= cbor_encoder_create_map(((arrayCount == 1)? &encoder: &rootArray),
+        err |= cbor_encoder_create_map(((arrayCount == 1 && !isBatch)? &encoder: &rootArray),
                                             &rootMap, CborIndefiniteLength);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Failed creating root map");
 
@@ -965,12 +971,12 @@ static int64_t OCConvertRepPayload(OCRepPayload *payload, uint8_t *outPayload, s
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Failed setting rep payload");
 
         // Close main array
-        err |= cbor_encoder_close_container(((arrayCount == 1) ? &encoder: &rootArray),
+        err |= cbor_encoder_close_container(((arrayCount == 1 && !isBatch) ? &encoder: &rootArray),
                 &rootMap);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Failed closing root map");
         payload = payload->next;
     }
-    if (arrayCount > 1)
+    if (arrayCount > 1 || isBatch)
     {
         err |= cbor_encoder_close_container(&encoder, &rootArray);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Failed closing root array");

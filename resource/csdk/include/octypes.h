@@ -1447,6 +1447,13 @@ typedef enum
     PAYLOAD_TYPE_INTROSPECTION
 } OCPayloadType;
 
+/** Enum to describe payload interface interface.*/
+typedef enum
+{
+    PAYLOAD_NON_BATCH_INTERFACE,
+    PAYLOAD_BATCH_INTERFACE
+} OCPayloadInterfaceType;
+
 /**
  * A generic struct representing a payload returned from a resource operation
  *
@@ -1526,6 +1533,7 @@ typedef struct OCRepPayloadValue
 typedef struct OCRepPayload
 {
     OCPayload base;
+    OCPayloadInterfaceType ifType;
     char* uri;
     OCStringLL* types;
     OCStringLL* interfaces;

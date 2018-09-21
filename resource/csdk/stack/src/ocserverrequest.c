@@ -877,6 +877,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
 
         if(!serverResponse->payload)
         {
+            OCRepPayloadSetInterfaceType(newPayload, PAYLOAD_BATCH_INTERFACE);
             serverResponse->payload = (OCPayload *)newPayload;
         }
         else

@@ -36,11 +36,11 @@ OCStackApplicationResult foundResource(void* ctx,
                 OCClientResponse *clientResponse)
 {
     (void)handle;
-    (void) ctx;
+    (void)ctx;
     if (clientResponse == NULL)
     {
         std::cout << "foundResource received NULL clientResponse" << std::endl;
-        return   OC_STACK_DELETE_TRANSACTION;
+        return OC_STACK_DELETE_TRANSACTION;
     }
 
     std::cout << "Found resource response." << std::endl;
@@ -101,6 +101,11 @@ int main(void)
                 std::cout << "Exception finding resources : " << std::endl;
                 sendRequest = true;
             }
+        }
+        if (OCProcess() != OC_STACK_OK)
+        {
+            std::cout << "OCStack process error" << std::endl;
+            return -1;
         }
     }
 }
