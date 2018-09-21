@@ -44,12 +44,12 @@ static OCResourceHandle    gSpHandle  = NULL;
 static OicSecSp_t         *gSp        = NULL;
 
 // Default sp values
-char * gSupportedProfiles[] = { "oic.sec.sp.baseline" };
+char * gSupportedProfiles[] = { "1.3.6.1.4.1.51414.0.1.0" };
 OicSecSp_t gDefaultSp =
 {
     1,                     // supportedLen
     gSupportedProfiles,    // supportedProfiles[0]
-    "oic.sec.sp.baseline", // currentProfile
+    "1.3.6.1.4.1.51414.0.1.0", // currentProfile
 };
 
 bool gAllProps[SP_PROPERTY_COUNT] = { true, true };
@@ -717,6 +717,9 @@ static OCEntityHandlerResult HandleSpPostRequest(OCEntityHandlerRequest *ehReque
     bool newSupportedProfiles = false;
     bool newCurrentProfile = false;
 
+    const char * dosNames[] = { "RESET", "RFOTM", "RFPRO", "RFNOP", "SRESET" };
+    (void) dosNames; // to avoid compiler warnings (some compilers don't recognize use in macros)
+
     uint8_t *payload = NULL;
     size_t size = 0;
     OicSecDostype_t dos;
@@ -724,7 +727,7 @@ static OCEntityHandlerResult HandleSpPostRequest(OCEntityHandlerRequest *ehReque
     VERIFY_OR_LOG_AND_EXIT(TAG, (OC_STACK_OK == ret),
         "Not able to get onboarding state (pstat.dos) for /sp POST request", ERROR);
 
-    OIC_LOG_V(DEBUG, TAG, "/sp POST request, pstat.dos state = %d", dos.state);
+    OIC_LOG_V(DEBUG, TAG, "/sp POST request, pstat.dos state = %s (%d)", dosNames[dos.state], dos.state);
     if ((DOS_RESET == dos.state) || (DOS_RFNOP == dos.state)) {
         OIC_LOG(ERROR, TAG, "/sp resource is read-only in RESET and RFNOP");
         ehRet = OC_EH_NOT_ACCEPTABLE;
@@ -756,10 +759,22 @@ static OCEntityHandlerResult HandleSpPostRequest(OCEntityHandlerRequest *ehReque
     VERIFY_OR_LOG_AND_EXIT(TAG, (NULL != spUpdate),
         "Problems duplicating supported profiles list for sp POST", WARNING);
 
+    // log the impact of the post on supported profiles
+    OIC_LOG_V(DEBUG, TAG, "Supported security profiles to be applied as a result of update (%lu entries, %s by POST)",
+             (unsigned long)spUpdate->supportedLen, newSupportedProfiles ? "changed" : "unchanged");
+    for (size_t i = 0; i < spUpdate->supportedLen; i++)
+    {
+        OIC_LOG_V(DEBUG, TAG, "  %lu: %s", (unsigned long)i, spUpdate->supportedProfiles[i]);
+    }
+
     // current profile
     currentProfileSrc = newCurrentProfile ? spIncoming->currentProfile : gSp->currentProfile;
     spUpdate->currentProfile = OICStrdup(currentProfileSrc);
     VERIFY_NOT_NULL(TAG, spUpdate->currentProfile, ERROR);
+
+    // log the impact of the post on current profile
+    OIC_LOG_V(DEBUG, TAG, "Active profile to be applied as a result of update (%s by POST): %s",
+              newCurrentProfile ? "changed" : "unchanged", spUpdate->currentProfile);
 
     // make sure current profile is in supported profiles list
     VERIFY_OR_LOG_AND_EXIT(TAG,

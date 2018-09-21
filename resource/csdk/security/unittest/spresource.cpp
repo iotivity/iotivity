@@ -40,10 +40,10 @@ static void TestInit(OicSecSp_t* testSp, bool* spProps);
 // Test data
 //*****************************************************************************
 
-static char s_spBlackName[] = "oic.sec.sp.black";
-static char s_spBlueName[] = "oic.sec.sp.blue";
-static char s_spPurpleName[] = "oic.sec.sp.purple";
-static char s_spBaselineName[] = "oic.sec.sp.baseline";
+static char s_spBlackName[] = "1.3.6.1.4.1.51414.0.2.0";
+static char s_spBlueName[] = "1.3.6.1.4.1.51414.0.3.0";
+static char s_spPurpleName[] = "1.3.6.1.4.1.51414.0.4.0";
+static char s_spBaselineName[] = "1.3.6.1.4.1.51414.0.1.0";
 
 static char* s_profileArray[] = { NULL, NULL, NULL, NULL, NULL, };
 static OicSecSp_t s_testSp =
