@@ -23,7 +23,7 @@ apply from: "../../../../../build/android/build.gradle"
 project.buildDir = "${binDirectory}/pmtestapp"
 
 buildscript {
-    repositories { 
+    repositories {
         jcenter()
     }
     dependencies {
@@ -33,7 +33,7 @@ buildscript {
 
 repositories {
         flatDir{
-               dirs "${baseAARFileDirFromModules}"
+               dirs "${iotivity_root}"
         }
 }
 
@@ -42,15 +42,15 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion  21
     buildToolsVersion "21.1.2"
-     
+
     sourceSets {
-      
+
         main {
               manifest.srcFile 'AndroidManifest.xml'
-              java.srcDirs "${testAppFrameworkSrcDir}"
+              java.srcDirs "${testRoot}"
               java.srcDirs 'src'
               jni.srcDirs = [] //disable automatic ndk-build
-              assets.srcDirs = ['./assets'] 
+              assets.srcDirs = ['./assets']
         }
     }
 
@@ -64,7 +64,7 @@ android {
         targetSdkVersion 21
         resValue 'string', 'app_name', 'PM TestApp'
     }
-    println ("\nConfigured $commonText android properties")
+    //println ("\nConfigured $commonText android properties")
 }
 
 android.applicationVariants.all{ variant ->
@@ -75,12 +75,12 @@ android.applicationVariants.all{ variant ->
 }
 
 dependencies {
-    compile(name:"${baseAARFile}", ext:'aar')
-    println ("\n$commonText Library Dependency Resolved")     
+    //compile(name:"${baseAARFile}", ext:'aar')
+   // println ("\n$commonText Library Dependency Resolved")
 }
 
 task pmbuild (dependsOn:['deleteBuildDirectory', 'installDebug']) << {
-   println ("\n############# Finished $commonText #############\n")
+   println ("\n############# Finished  #############\n")
 }
 
 task deleteBuildDirectory(type: Delete) {

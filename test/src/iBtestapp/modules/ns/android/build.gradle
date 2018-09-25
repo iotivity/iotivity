@@ -21,8 +21,8 @@
 apply from: "../../../../../build/android/build.gradle"
 
 project.buildDir = "${binDirectory}/nstestapp"
-def nsAARFileDir = "${iotivityRootDirectoryFromModules}/service/notification/android/notification-service/build/outputs/aar"
-def nsAARFile = "iotivity-notification-service-${buildmode}"
+def nsAARFileDir = "${iotivity_root}/service/notification/android/notification-service/build/outputs/aar"
+def nsAARFile = "iotivity-notification-service-release"
 
 buildscript {
     repositories {
@@ -35,7 +35,7 @@ buildscript {
 
 repositories {
         flatDir{
-                dirs "$baseAARFileDirFromModules", "${nsAARFileDir}"
+                dirs "$iotivity_root", "${nsAARFileDir}"
         }
 }
 
@@ -63,7 +63,7 @@ android {
 
         main {
               manifest.srcFile 'AndroidManifest.xml'
-              java.srcDirs "${testAppFrameworkSrcDir}"
+              java.srcDirs "${testRoot}"
               java.srcDirs 'src'
               jni.srcDirs = [] //disable automatic ndk-build
         }
@@ -80,7 +80,7 @@ android {
       resValue 'string', 'app_name', 'NS TestApp'
     }
 
-    println ("\nConfigured $commonText android properties")
+   // println ("\nConfigured $commonText android properties")
 }
 
 android.applicationVariants.all{ variant ->
@@ -91,13 +91,13 @@ android.applicationVariants.all{ variant ->
 }
 
 dependencies {
-    compile(name:"${baseAARFile}", ext:'aar')
+   //compile(name:"${iotivitybaseAARFile}", ext:'aar')
     compile(name:"${nsAARFile}", ext:'aar')
-    println ("\n$commonText Library Dependency Resolved")
+   // println ("\n$commonText Library Dependency Resolved")
 }
 
 task nsbuild (dependsOn:['deleteBuildDirectory', 'installDebug']) << {
-   println ("\n############# Finished $commonText #############\n")
+  // println ("\n############# Finished $commonText #############\n")
 }
 
 task deleteBuildDirectory(type: Delete) {

@@ -33,7 +33,7 @@ buildscript {
 
 repositories {
         flatDir{
-                dirs "${baseAARFileDirFromModules}"
+                dirs "${iotivity_root}"
         }
 }
 
@@ -42,15 +42,15 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion  21
     buildToolsVersion "21.1.2"
-     
+
     sourceSets {
-      
+
         main {
               manifest.srcFile 'AndroidManifest.xml'
               java.srcDirs 'src'
               java.srcDirs "${testCommonUtilSrcDirectory}/resource"
-			  java.srcDirs "${testAppFrameworkSrcDir}"
-              jni.srcDirs = [] //disable automatic ndk-build 
+              // java.srcDirs "${testAppFrameworkSrcDir}"
+              jni.srcDirs = [] //disable automatic ndk-build
         }
     }
 
@@ -68,9 +68,9 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: "${androidLibFileDirFromModules}", include: ['*.jar'])
-    compile(name:"${baseAARFile}", ext:'aar')    
-    println ("\n$commonText Library Dependency Resolved")     
+    //compile fileTree(dir: "${androidLibFileDirFromModules}", include: ['*.jar'])
+  // compile(name:"${baseAARFile}", ext:'aar')
+   // println ("\n$commonText Library Dependency Resolved")
 }
 
 task ribuild (dependsOn:['deleteBuildDirectory', 'installDebug']) << {
