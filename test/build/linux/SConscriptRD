@@ -81,6 +81,8 @@ testapp_include_paths = [
     test_src_root + '/iBtestapp/modules/rd/c_cpp/include'
 ]
 
+iotivity_sample_apps = []
+
 testapp_src = [ test_src_root + '/iBtestapp/modules/rd/c_cpp/src/RDTestApp.cpp' ]
 
 cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermissive -D RD_SERVER -D RD_CLIENT -D __WITH_DTLS__ -DWITH_TCP -O2 -g -Wall -fmessage-length=0 -std=c++0x -Os -Wall -Wextra -fPIC -pthread -DNDEBUG -DWITH_POSIX -D__linux__ -DIP_ADAPTER -DNO_EDR_ADAPTER -DLE_ADAPTER -DROUTING_EP -DWITH_BWT -DCA_DBUS_GATT_SERVICE_NAME='"org.iotivity.gatt.service"' -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_32')
@@ -96,6 +98,9 @@ if 'tc' in test:
                 CPPFLAGS = cppflags + common_linux_cppflags,
                 RPATH = iotivity_lib_path)
     install_targets += rd_tc
+
+    iotivity_sample_apps += env_linux.Command('fanserver', [], Copy(iotivity_test_root + '/' + install_dir, iotivity_lib_path + '/resource/csdk/resource-directory/samples/rd_server'))
+
 '''
 if 'app' in test:
     rd_testapp = env_linux.Program(source = testapp_src,

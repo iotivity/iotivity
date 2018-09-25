@@ -27,13 +27,16 @@ OCResourceHandle g_curResource_l = NULL;
 bool g_flag=false;
 char g_rdAddress[MAX_ADDR_STR_SIZE];
 int g_quitFlag=0;
+std::string rdAddress;
 uint16_t g_rdPort=0;
 bool g_foundRDResource = false;
-
+OCHeaderOption options[1];
+size_t numOptions = 0;;
+OCResourceHandle handles[2];
 #define TTL_TIMEOUT 30
 #define NUM_HANDLES 10
 using namespace OC;
-
+#define DEFAULT_CONTEXT_VALUE 0x99
 RDHelper::RDHelper()
 {
     IOTIVITYTEST_LOG(DEBUG, "[RDHelper] IN");
@@ -157,17 +160,39 @@ void RDHelper::unregisterLocalResources()
     }
 }
 
-int RDHelper::biasFactorCB(char addr[MAX_ADDR_STR_SIZE], uint16_t port)
+int RDHelper::biasFactorCB(void *ctx, OCDoHandle handle,OCClientResponse *clientResponse)
 {
-    IOTIVITYTEST_LOG(INFO, "biasFactorCB Callback called");
-    OICStrcpy(g_rdAddress, MAX_ADDR_STR_SIZE, addr);
-    g_rdPort = port;
+    std::ostringstream oss;
+    oss << clientResponse->devAddr.addr << ":" << clientResponse->devAddr.port;
+    rdAddress = oss.str();
+    std::cout << "RD Address and Port is : "<<rdAddress<< std::endl;
+    try
+    {
+        size_t pos = rdAddress.find(':');
+        if (pos!=std::string::npos)
+        {
+            std::string rd_ipaddr = rdAddress.substr(0,pos);
+            std::string rd_port = rdAddress.substr(pos+1);
+            strcpy(g_rdAddress,rd_ipaddr.c_str());
+            for (int i=0; i<MAX_ADDR_STR_SIZE; i++)
+                std::cout << g_rdAddress[i];
+            OICStrcpy(g_rdAddress, MAX_ADDR_STR_SIZE, g_rdAddress);
+            int temp(std::stoi(rd_port));
+            if (temp<=static_cast<int>(UINT16_MAX) && temp>=0)
+            {
+                temp = static_cast<uint16_t>(temp);
+                g_rdPort = temp;
+            }
+        }
+    }
+    catch (std::exception &ex)
+    {
+        IOTIVITYTEST_LOG(INFO,"Invalid Port and Address");
+    }
     return 0;
 }
-
 OCStackResult RDHelper::rdDiscover(bool isCheckedWithParam,bool isCheckedCallback)
 {
-    g_rdPort=0;
     OCStackResult actualResult =  OC_STACK_ERROR;
     OCDoHandle *handle = NULL;
     OCConnectivityType connectivityType = (OCConnectivityType)CT_ADAPTER_IP;
@@ -176,8 +201,11 @@ OCStackResult RDHelper::rdDiscover(bool isCheckedWithParam,bool isCheckedCallbac
     {
         if(isCheckedWithParam)
         {
-            actualResult = OCRDDiscover(handle, connectivityType,
-                           (OCCallbackData *)RDHelper::biasFactorCB, (OCQualityOfService)OC::QualityOfService::LowQos);
+            OCCallbackData cbData;
+            cbData.cb = &RDHelper::biasFactorCB;
+            cbData.cd = NULL;
+            cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
+            actualResult = OCRDDiscover(handle, CT_ADAPTER_IP, &cbData, OC_LOW_QOS);
         }
         else
         {
@@ -224,11 +252,13 @@ OCStackResult RDHelper::rdPublish()
 {
     try
     {
-
+        OCCallbackData cbData;
+        cbData.cb = &RDHelper::biasFactorCB;
+        cbData.cd = NULL;
+        cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
         OCStackResult actualResult =  OC_STACK_ERROR;
         OCDoHandle *handle = (OCDoHandle *) NULL;
-        actualResult = OCRDPublish(handle,g_rdAddress,(OCConnectivityType)2, &g_curResource_t, NUM_HANDLES, TTL_TIMEOUT, (OCCallbackData*)&g_curResource_l,(OCQualityOfService)OC::QualityOfService::LowQos);
-        IOTIVITYTEST_LOG(INFO, "RdPublished called..\n");
+        actualResult = OCRDPublish(handle,rdAddress.c_str(),CT_ADAPTER_IP, &g_curResource_t, NUM_HANDLES, TTL_TIMEOUT, &cbData,(OCQualityOfService)OC::QualityOfService::LowQos);
         return actualResult;
     }
     catch (std::exception &ex)
@@ -242,19 +272,23 @@ OCStackResult RDHelper::rdPublish(char *addr,uint16_t port,int num)
 {
     try
     {
+        OCCallbackData cbData;
+        cbData.cb = &RDHelper::biasFactorCB;
+        cbData.cd = NULL;
+        cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
         OCStackResult actualResult;
         OCDoHandle *handle = (OCDoHandle *) NULL;
 
         if(addr=="default")
         {
-            addr=g_rdAddress;
+            addr=rdAddress.c_str();
         }
         if(port==1)
         {
             port=g_rdPort;
         }
 
-        actualResult = OCRDPublish(handle,addr,(OCConnectivityType)2, &g_curResource_t, num, TTL_TIMEOUT, (OCCallbackData*)&g_curResource_l,(OCQualityOfService)OC::QualityOfService::LowQos);
+        actualResult = OCRDPublish(handle,addr,(OCConnectivityType)2, &g_curResource_t, num, TTL_TIMEOUT, &cbData,(OCQualityOfService)OC::QualityOfService::LowQos);
 
         return actualResult;
     }
@@ -289,7 +323,7 @@ void RDHelper::runThread(RDHelper *arg)
 
     OCStackResult expectedResult = OC_STACK_OK;
 
-    if(expectedResult!=arg->rdDiscover(RD_DISCOVER_WITH_PARAM,RD_DISCOVER_WITH_CALLBACK))
+    if(expectedResult!=arg->rdDiscover(RD_DISCOVER_WITH_PARAM, RD_DISCOVER_WITH_CALLBACK))
         IOTIVITYTEST_LOG(DEBUG, "Failed To Discover Resource Directory");
 
     if(expectedResult!=arg->rdPublish())
@@ -299,39 +333,39 @@ void RDHelper::runThread(RDHelper *arg)
     IOTIVITYTEST_LOG(DEBUG, "New quitFlag value %d",g_quitFlag);
 
 }
-
 void RDHelper::rdFoundResourceCB(std::shared_ptr< OC::OCResource > resource)
 {
     try
     {
-         IOTIVITYTEST_LOG(INFO, "Found resource response.rdFoundResource callback is invoked.");
-         if (resource)
-         {
-             if (resource->uri() == RD_RESOURCE_URL_LIGHT)
-             {
-                 IOTIVITYTEST_LOG(INFO, "Light Resource Found at @ URI: %s \tHost Address: %s",resource->uri().c_str(),resource->host().c_str());
-                 g_foundRDResource = true;
-             }
+        IOTIVITYTEST_LOG(INFO, "Found resource response.rdFoundResource callback is invoked.");
+        if (resource)
+        {
+            if (resource->uri() == RD_RESOURCE_URL_LIGHT)
+            {
+                IOTIVITYTEST_LOG(INFO, "Light Resource Found at @ URI: %s \tHost Address: %s",resource->uri().c_str(),resource->host().c_str());
+                g_foundRDResource = true;
+            }
 
-             if (resource->uri() == RD_RESOURCE_URL_THERMOSTAT)
-             {
-                 IOTIVITYTEST_LOG(INFO, "Thermostat Resource Found at @ URI: %s \tHost Address: %s",resource->uri().c_str(),resource->host().c_str());
-                 g_foundRDResource = true;
-             }
-         }
-         else
-         {
-             IOTIVITYTEST_LOG(INFO, "Resource is invalid: %s",resource->uri().c_str());
-             g_foundRDResource = false;
-         }
-     }
-     catch (std::exception &ex)
-     {
-         IOTIVITYTEST_LOG(INFO, "Exception: %s in rdFoundResource",ex.what());
-     }
+            if (resource->uri() == RD_RESOURCE_URL_THERMOSTAT)
+            {
+                IOTIVITYTEST_LOG(INFO, "Thermostat Resource Found at @ URI: %s \tHost Address: %s",resource->uri().c_str(),resource->host().c_str());
+                g_foundRDResource = true;
+            }
+        }
+        else
+        {
+            IOTIVITYTEST_LOG(INFO, "Resource is invalid: %s",resource->uri().c_str());
+            g_foundRDResource = false;
+        }
+    }
+    catch (std::exception &ex)
+    {
+        IOTIVITYTEST_LOG(INFO, "Exception: %s in rdFoundResource",ex.what());
+    }
+    return g_foundRDResource;
 }
 
-OCStackResult RDHelper::rdFindResourcesChecked(const std::string& host, const std::string& resourceURI,OCConnectivityType connectivityType)
+OCStackResult RDHelper::rdFindResourcesChecked(const std::string& host, const std::string& resourceURI, OCConnectivityType connectivityType)
 {
     OCStackResult actualResult =  OC_STACK_ERROR;
     bool sendRequest = true;
@@ -346,7 +380,8 @@ OCStackResult RDHelper::rdFindResourcesChecked(const std::string& host, const st
                 sendRequest = false;
                 IOTIVITYTEST_LOG(INFO, "Finding Resource : %s .....",resourceURI.c_str());
 
-                actualResult = OCPlatform::findResource(host,  resourceURI, connectivityType, &rdFoundResourceCB);
+                actualResult = OCPlatform::findResource(host, resourceURI, connectivityType, &rdFoundResourceCB);
+                return actualResult;
             }
         }
         catch (OC::OCException &ex)

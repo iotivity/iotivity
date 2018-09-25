@@ -82,7 +82,7 @@ public:
 	 * @return	helper instance
 	 */
 	static RDHelper* getInstance(void);
-	
+
 	/**
 	* @brief 				This function will be registered resources that will be published by RD client
 	*/
@@ -96,7 +96,7 @@ public:
 	/**
 	* @brief 				cbBiasFactor callback function invoked when bias factor is returned by the Resource Directory Server
 	*/
-    static int biasFactorCB(char addr[MAX_ADDR_STR_SIZE], uint16_t port);
+    static int biasFactorCB(void *ctx, OCDoHandle handle,OCClientResponse *clientResponse);
 
 	/**
 	* @brief   				This function will create a client process by thread which will perform discover and publish client
