@@ -20,15 +20,14 @@
 
 apply from: "../../../../build/android/build.gradle"
 project.buildDir = "${binDirectory}/es"
-def esAARFileDir = "${iotivityRootDirectoryFromModules}/service/easy-setup/mediator/richsdk/android/EasySetupCore/build/outputs/aar"
-def esAARFile = "EasySetupCore-${buildmode}"
-//def esSoFileDir = "${iotivityRootDirectoryFromModules}/android/android_api/base/libs/armeabi"
-//println("So fille dir : "+esSoFileDir)
+def esAARFileDir = "${iotivity_root}/service/easy-setup/mediator/richsdk/android/EasySetupCore/build/outputs/aar"
+def esAARFile = "EasySetupCore-release"
+def baseAARFile="iotivity-base-release"
 def esSoFileDir = "/home/sk/gittest/oictest_repo/IotivityOrgSource/target/iotivity/service/easy-setup/mediator/richsdk/android/EasySetupCore/src/main/libs/armeabi"
-//def esSoFileDir = "/home/sk/gittest/oictest_repo/IotivityOrgSource/target/iotivity/android/android_api/base/libs/armeabi"
+
 
 buildscript {
-    repositories { 
+    repositories {
         jcenter()
     }
     dependencies {
@@ -38,25 +37,24 @@ buildscript {
 
 repositories {
         flatDir{
-                dirs "${baseAARFileDirFromModules}", "${esAARFileDir}"
+                dirs "${iotivityBaseAARFileDir}", "${esAARFileDir}"
         }
 }
 
-print("${baseAARFileDirFromModules}")
 apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion  21
     buildToolsVersion "21.1.2"
-     
+
     sourceSets {
-      
+
         main {
               manifest.srcFile 'AndroidManifest.xml'
               java.srcDirs 'src'
              // jniLibs.srcDir "${esSoFileDir}"
-              jni.srcDirs = [] //disable automatic ndk-build 
-              assets.srcDirs = ['./assets'] 
+              jni.srcDirs = [] //disable automatic ndk-build
+              assets.srcDirs = ['./assets']
         }
     }
 
@@ -70,7 +68,6 @@ android {
       targetSdkVersion 21
       resValue 'string', 'app_name', 'EasySetupTest'
     }
-    println ("\nConfigured $commonText android properties")
 }
 
 /*
@@ -82,16 +79,13 @@ android.applicationVariants.all{ variant ->
 }
 */
 
-
 dependencies {
-    compile fileTree(dir: "${androidLibFileDirFromModules}", include: ['*.jar'])
     compile(name:"${baseAARFile}", ext:'aar')
     compile(name:"${esAARFile}", ext:'aar')
-    println ("\n$commonText Library Dependency Resolved")
 }
 
 task esbuild (dependsOn:['deleteBuildDirectory', 'installDebug']) << {
-   println ("\n############# Finished $commonText #############\n")
+   println ("\n############# Finished commonText #############\n")
 }
 
 task deleteBuildDirectory(type: Delete) {
