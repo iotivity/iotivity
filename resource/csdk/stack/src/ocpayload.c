@@ -85,6 +85,7 @@ OCRepPayload* OC_CALL OCRepPayloadCreate(void)
         return NULL;
     }
 
+    payload->ifType = PAYLOAD_NON_BATCH_INTERFACE;
     payload->base.type = PAYLOAD_TYPE_REPRESENTATION;
 
     return payload;
@@ -493,6 +494,17 @@ bool OC_CALL OCRepPayloadSetUri(OCRepPayload* payload, const char*  uri)
     OICFree(payload->uri);
     payload->uri = OICStrdup(uri);
     return payload->uri != NULL;
+}
+
+bool OC_CALL OCRepPayloadSetInterfaceType(OCRepPayload* payload, OCPayloadInterfaceType type)
+{
+    if (!payload)
+    {
+        return false;
+    }
+
+    payload->ifType = type;
+    return true;
 }
 
 bool OC_CALL OCRepPayloadIsNull(const OCRepPayload* payload, const char* name)
@@ -1622,6 +1634,7 @@ OCRepPayload* OC_CALL OCRepPayloadBatchClone(const OCRepPayload* repPayload)
     }
 
     clone->types  = CloneOCStringLL(repPayload->types);
+    clone->ifType = repPayload->ifType;
     clone->interfaces  = CloneOCStringLL(repPayload->interfaces);
     clone->values = OCRepPayloadValueClone(repPayload->values);
     OCRepPayloadSetPropObjectAsOwner(newPayload, OC_RSRVD_REPRESENTATION, clone);

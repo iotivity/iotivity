@@ -102,6 +102,10 @@ namespace OC
 
             OCRepPayload* getPayload() const;
 
+            void setInterfaceType(const InterfaceType&);
+
+            InterfaceType getInterfaceType() const;
+
             void addChild(const OCRepresentation&);
 
             void clearChildren();
@@ -448,10 +452,6 @@ namespace OC
             // based on the interface type configured in ResourceResponse.
             // This allows ResourceResponse to set it, so that the save function
             // doesn't serialize things that it isn't supposed to serialize.
-            void setInterfaceType(InterfaceType ift)
-            {
-                m_interfaceType = ift;
-            }
 
             // class used to wrap the 'prop' feature of the save/load
             class Prop
