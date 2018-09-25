@@ -35,11 +35,9 @@ protected:
         CommonTestUtil::runCommonTCSetUpPart();
         CommonUtil::killApp(KILL_SERVERS);
         PMCppUtilityHelper::removeAllResFile();
-        CommonUtil::copyFile(JUSTWORKS_SERVER_CBOR_O1_OWNED_BACKUP, JUSTWORKS_SERVER_CBOR_O1);
-        CommonUtil::copyFile(JUSTWORKS_SERVER_CBOR_O2_OWNED_BACKUP, JUSTWORKS_SERVER_CBOR_O2);
-        CommonUtil::copyFile(CLIENT_CBOR_01_OWNED_BACKUP, CLIENT_CBOR_01);
-        CommonUtil::copyFile(DEVICE_PROP_CBOR_01_OWNED_BACKUP, DEVICE_PROP_CBOR_01);
-        CommonUtil::copyFile(CLIENT_DB_01_OWNED_BACKUP, CLIENT_DB_01);
+        CommonUtil::copyFile(JUSTWORKS_SERVER_CBOR_O1_UNOWNED_BACKUP, JUSTWORKS_SERVER_CBOR_O1);
+        CommonUtil::copyFile(JUSTWORKS_SERVER_CBOR_O2_UNOWNED_BACKUP, JUSTWORKS_SERVER_CBOR_O2);
+        CommonUtil::copyFile(CLIENT_CBOR_01_UNOWNED_BACKUP, CLIENT_CBOR_01);
         CommonUtil::waitInSecond(DELAY_MEDIUM);
         CommonUtil::launchApp(JUSTWORKS_SERVER1);
         CommonUtil::launchApp(JUSTWORKS_SERVER2);
@@ -54,6 +52,17 @@ protected:
         {
             SET_FAILURE(m_PMCppHelper.getFailureMessage());
             return;
+        }
+
+        if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+        {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+        }
+
+        if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppCallbackHelper::provisionPostCB, OC_STACK_OK))
+        {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
         }
 
         if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
