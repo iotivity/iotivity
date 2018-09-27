@@ -856,7 +856,7 @@ static int registerDevices(int fSelect)
     }
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        OIC_LOG(ERROR, TAG, "OCDoOwnershipTransfer callback error");
         return -1;
     }
 
@@ -915,7 +915,7 @@ static int provisionPairwise(void)
     }
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        OIC_LOG(ERROR, TAG, "OCProvisionPairwiseDevices callback error");
         goto PVPWS_ERROR;
     }
     OCDeleteACLList(acl[0]);
@@ -1857,7 +1857,7 @@ static int provisionAcl(void)
     }
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        OIC_LOG(ERROR, TAG, "OCProvisionACL callback error");
         goto PVACL_ERROR;
     }
     OCDeleteACLList(acl);  // after here |acl| points nothing
@@ -2290,7 +2290,7 @@ static int unlinkPairwise(void)
     }
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        OIC_LOG(ERROR, TAG, "OCUnlinkDevices callback error");
         return -1;
     }
 
@@ -2344,7 +2344,7 @@ static int removeDevice(void)
     }
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        OIC_LOG(ERROR, TAG, "OCRemoveDevice callback error");
         return -1;
     }
 
@@ -2681,7 +2681,7 @@ static int resetDevice(void)
 
     if (waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        OIC_LOG(ERROR, TAG, "OCResetDevice callback error");
         return -1;
     }
 
