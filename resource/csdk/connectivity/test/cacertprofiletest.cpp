@@ -30,6 +30,7 @@
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/oid.h>
 #include <mbedtls/pem.h>
+#include <mbedtls/asn1write.h>
 
 #include "oic_platform.h"
 #include "oic_malloc.h"
@@ -55,6 +56,7 @@ static void FreeTestCert(mbedtls_x509_crt *cert);
 static void removeCertChaining(mbedtls_x509_crt* rootCert, mbedtls_x509_crt* intCert, mbedtls_x509_crt* eeCert);
 static CertProfileResult SetNotBefore(ValidityTime notBefore, bool invalid);
 static CertProfileResult SetNotAfter(ValidityTime notAfter, bool invalid);
+static int OCWriteBasicConstraints( mbedtls_x509write_cert *ctx, int is_ca, int max_pathlen, int critical);
 
 class CACertProfileTests : public testing::Test {
     protected:
@@ -100,6 +102,63 @@ static const OCByteString s_ekuServerAuthOid = { s_ekuServerAuthOidBytes, sizeof
 static const OCByteString s_ekuClientAuthOid = { s_ekuClientAuthOidBytes, sizeof(s_ekuClientAuthOidBytes) };
 static const OCByteString s_ekuOcfIdentityOid = { s_ekuOcfIdentityOidBytes, sizeof(s_ekuOcfIdentityOidBytes) };
 static const OCByteString s_ekuAnyOid = { s_ekuAnyOidBytes, sizeof(s_ekuAnyOidBytes) };
+
+
+static const char s_ComplianceExtOid[] = MBEDTLS_OID_ISO_IDENTIFIED_ORG MBEDTLS_OID_ORG_DOD "\x01\x04\x01\x83\x91\x56\x01\x00"; // 1.3.6.1.4.1.51414.1.0
+static const uint8_t s_ComplianceExtBytes[] = {
+
+  0x30, 0x81, 0x8C, // compliance extension sequence
+
+  0x30, 0x09, // version sequence (9 bytes)
+  0x02, 0x01, 0x02, 0x02, 0x01, 0x00, 0x02, 0x01, 0x00, // [2, 0, 0]
+
+  0x30, 0x64, // security profile sequence (100 bytes)
+
+    0x0C, 0x17, // utf8_string, 23 bytes long, '1.3.6.1.4.1.51414.0.1.0' (baseline)
+    0x31, 0x2E, 0x33, 0x2E, 0x36, 0x2E, 0x31, 0x2E, 0x34, 0x2E,
+    0x31, 0x2E, 0x35, 0x31, 0x34, 0x31, 0x34, 0x2E, 0x30, 0x2E, 0x31, 0x2E, 0x30,
+
+    0x0C, 0x17, // utf8_string, 23 bytes long, '1.3.6.1.4.1.51414.0.2.0' (black)
+    0x31, 0x2E, 0x33, 0x2E, 0x36, 0x2E, 0x31, 0x2E, 0x34, 0x2E,
+    0x31, 0x2E, 0x35, 0x31, 0x34, 0x31, 0x34, 0x2E, 0x30, 0x2E, 0x32, 0x2E, 0x30,
+
+    0x0C, 0x17, // utf8_string, 23 bytes long, '1.3.6.1.4.1.51414.0.3.0' (blue)
+    0x31, 0x2E, 0x33, 0x2E, 0x36, 0x2E, 0x31, 0x2E, 0x34, 0x2E,
+    0x31, 0x2E, 0x35, 0x31, 0x34, 0x31, 0x34, 0x2E, 0x30, 0x2E, 0x33, 0x2E, 0x30,
+
+    0x0C, 0x17, // utf8_string, 23 bytes long, '1.3.6.1.4.1.51414.0.4.0' (purple)
+    0x31, 0x2E, 0x33, 0x2E, 0x36, 0x2E, 0x31, 0x2E, 0x34, 0x2E,
+    0x31, 0x2E, 0x35, 0x31, 0x34, 0x31, 0x34, 0x2E, 0x30, 0x2E, 0x34, 0x2E, 0x30,
+
+    0x0C, 0x0F, // urf8_string 15 bytes long (device name)
+    0x49, 0x6F, 0x54, 0x69, 0x76, 0x69, 0x74, 0x79, 0x20, 0x53, // 'IoTivity Server'
+    0x65, 0x72, 0x76, 0x65, 0x72,
+
+    0x0C, 0x08, // urf8_string 8 bytes long (device manufacturer)
+    0x49, 0x6F, 0x54, 0x69, 0x76, 0x69, 0x74, 0x79 // 'IoTivity'
+};
+
+
+static const char s_cplSecurityClaimsExtOid[] = MBEDTLS_OID_ISO_IDENTIFIED_ORG MBEDTLS_OID_ORG_DOD "\x01\x04\x01\x83\x91\x56\x01\x01"; // 1.3.6.1.4.1.51414.1.1
+static const uint8_t s_cplSecurityClaimsExtBytes[] = {
+    0x30, 0x1A, // sequence of length 26
+    0x06, 0x0B, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x83, 0x91, 0x56, 0x01, 0x01, 0x00, // OID 1.3.6.1.4.1.51414.1.1.0 (claim secure boot)
+    0x06, 0x0B, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x83, 0x91, 0x56, 0x01, 0x01, 0x01  // OID 1.3.6.1.4.1.51414.1.1.1 (claim hw backed credential)
+};
+
+static const char s_cplAttributesExtOid[] = MBEDTLS_OID_ISO_IDENTIFIED_ORG MBEDTLS_OID_ORG_DOD "\x01\x04\x01\x83\x91\x56\x01\x02"; // 1.3.6.1.4.1.51414.1.2
+static const uint8_t s_cplAttributesExtBytes[] = {
+    0x30, 0x20, // sequence of length 32
+
+    0x0C, 0x0E, // utf8_string, 14 bytes long
+    0X31, 0X2E, 0X33, 0X2E, 0X36, 0X2E, 0X31, 0X2E, 0X34, 0X2E, 0X31, 0X2E, 0X37, 0X31,  // '1.3.6.1.4.1.71'
+
+    0x0C, 0x09, // utf8_string, 9 bytes long
+    0X44, 0X69, 0X73, 0X63, 0X6F, 0X76, 0X65, 0X72, 0X79, // 'Discovery'
+
+    0x0C, 0x03, // utf8_string, 3 bytes long
+    0X31, 0X2E, 0X30 // '1.0'
+};
 
 
 // The key pairs below are OCF compliant ellliptic curve key pairs
@@ -744,6 +803,7 @@ static CertProfileResult GenerateTestCert(CertType certType, CertProfileViolatio
 
     int isCa = 0;
     int maxPathLen = 0;
+    int critical = 0;
     unsigned int usage = 0;
     bool makeDateInvalid = false;
 
@@ -893,18 +953,21 @@ static CertProfileResult GenerateTestCert(CertType certType, CertProfileViolatio
     case CERT_CA_ROOT:
         isCa = (violations & CP_INVALID_BASIC_CONSTRAINTS_CA) ? 0 : 1;
         maxPathLen = (violations & CP_INVALID_BASIC_CONSTRAINTS_PATH_LEN) ? 2 :-1;
+        critical = 1;
         break;
     case CERT_CA_INT:
         isCa = (violations & CP_INVALID_BASIC_CONSTRAINTS_CA) ? 0 : 1;
         maxPathLen = (violations & CP_INVALID_BASIC_CONSTRAINTS_PATH_LEN) ? -1 : 0;
+        critical = 1;
         break;
     case CERT_EE:
         isCa = (violations & CP_INVALID_BASIC_CONSTRAINTS_CA) ? 1 : 0;
         maxPathLen = (violations & CP_INVALID_BASIC_CONSTRAINTS_PATH_LEN) ? 10 : -1;
+        critical = 0;
         break;
     };
 
-    mbedRet = mbedtls_x509write_crt_set_basic_constraints(&outCertCtx, isCa, maxPathLen);
+    mbedRet = OCWriteBasicConstraints(&outCertCtx, isCa, maxPathLen, critical  );
     CP_LOG_MBED_ERROR(TAG, mbedRet, mbedErrBuf, sizeof(mbedErrBuf), ERROR);
     cpResult = (0 == mbedRet) ? CP_STATUS_OK : CP_STATUS_FAILED;
     VERIFY_SUCCESS_OR_EXIT(TAG, 0 == mbedRet, "Problem writing basic constraints", ERROR);
@@ -994,6 +1057,51 @@ static CertProfileResult GenerateTestCert(CertType certType, CertProfileViolatio
             cpResult = (0 == mbedRet) ? CP_STATUS_OK : CP_STATUS_FAILED;
             VERIFY_SUCCESS_OR_EXIT(TAG, (0 == mbedRet), "Problem writing eku OCF OID", ERROR);
         }
+    }
+
+    // Optional extensions
+
+    if (CERT_EE == certType)
+    {
+
+        // FILE *fp = fopen("./cpl.der", "wb");
+        // fwrite(s_cplAttributesExtBytes, sizeof(s_cplAttributesExtBytes), 1, fp );
+        // fclose(fp);
+
+        mbedRet = mbedtls_x509write_crt_set_extension(
+                    &outCertCtx,
+                    s_cplAttributesExtOid,
+                    MBEDTLS_OID_SIZE(s_cplAttributesExtOid), 0,
+                    (const unsigned char*)s_cplAttributesExtBytes, sizeof(s_cplAttributesExtBytes));
+        CP_LOG_MBED_ERROR(TAG, mbedRet, mbedErrBuf, sizeof(mbedErrBuf), ERROR);
+        cpResult = (0 == mbedRet) ? CP_STATUS_OK : CP_STATUS_FAILED;
+        VERIFY_SUCCESS_OR_EXIT(TAG, (0 == mbedRet), "Problem writing certified product list extension", ERROR);
+
+        // fp = fopen("./claims.der", "wb");
+        // fwrite(s_cplSecurityClaimsExtBytes, sizeof(s_cplSecurityClaimsExtBytes), 1, fp );
+        // fclose(fp);
+
+        mbedRet = mbedtls_x509write_crt_set_extension(
+                    &outCertCtx,
+                    s_cplSecurityClaimsExtOid,
+                    MBEDTLS_OID_SIZE(s_cplSecurityClaimsExtOid), 0,
+                    (const unsigned char*)s_cplSecurityClaimsExtBytes, sizeof(s_cplSecurityClaimsExtBytes));
+        CP_LOG_MBED_ERROR(TAG, mbedRet, mbedErrBuf, sizeof(mbedErrBuf), ERROR);
+        cpResult = (0 == mbedRet) ? CP_STATUS_OK : CP_STATUS_FAILED;
+        VERIFY_SUCCESS_OR_EXIT(TAG, (0 == mbedRet), "Problem writing certified product list extension", ERROR);
+
+        // fp = fopen("./compliance.der", "wb");
+        // fwrite(s_ComplianceExtBytes, sizeof(s_ComplianceExtBytes), 1, fp );
+        // fclose(fp);
+
+        mbedRet = mbedtls_x509write_crt_set_extension(
+                    &outCertCtx,
+                    s_ComplianceExtOid,
+                    MBEDTLS_OID_SIZE(s_ComplianceExtOid), 0,
+                    (const unsigned char*)s_ComplianceExtBytes, sizeof(s_ComplianceExtBytes));
+        CP_LOG_MBED_ERROR(TAG, mbedRet, mbedErrBuf, sizeof(mbedErrBuf), ERROR);
+        cpResult = (0 == mbedRet) ? CP_STATUS_OK : CP_STATUS_FAILED;
+        VERIFY_SUCCESS_OR_EXIT(TAG, (0 == mbedRet), "Problem writing certified product list extension", ERROR);
     }
 
     // Create the cert
@@ -1145,6 +1253,42 @@ static void InitTestCert(mbedtls_x509_crt *cert)
 {
     mbedtls_x509_crt_init(cert);
 }
+
+
+// write basic constraints to a cert
+// Same as mbedtls_x509write_crt_set_basic_constraints, with the added ability to set `critical` flag
+// returns mbedtls error
+static int OCWriteBasicConstraints( mbedtls_x509write_cert *ctx, int is_ca, int max_pathlen, int critical)
+{
+
+    int ret;
+    unsigned char buf[9];
+    unsigned char *c = buf + sizeof(buf);
+    size_t len = 0;
+
+    memset( buf, 0, sizeof(buf) );
+
+    if( is_ca && max_pathlen > 127 )
+        return( MBEDTLS_ERR_X509_BAD_INPUT_DATA );
+
+    if( is_ca )
+    {
+        if( max_pathlen >= 0 )
+        {
+            MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_int( &c, buf, max_pathlen ) );
+        }
+        MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_bool( &c, buf, 1 ) );
+    }
+
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( &c, buf, len ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( &c, buf, MBEDTLS_ASN1_CONSTRUCTED |
+                                                       MBEDTLS_ASN1_SEQUENCE ) );
+
+    return mbedtls_x509write_crt_set_extension( ctx, MBEDTLS_OID_BASIC_CONSTRAINTS,
+                                                 MBEDTLS_OID_SIZE( MBEDTLS_OID_BASIC_CONSTRAINTS ),
+                                                   critical, buf + sizeof(buf) - len, len );
+}
+
 
 
 static void FreeTestCert(mbedtls_x509_crt *cert)
