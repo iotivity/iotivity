@@ -36,19 +36,31 @@ protected:
         CommonUtil::killApp(KILL_SERVERS);
         CommonUtil::waitInSecond(DELAY_MEDIUM);
         PMCsdkUtilityHelper::removeAllResFile();
-        CommonUtil::copyFile(JUSTWORKS_SERVER_CBOR_O1_OWNED_BACKUP, JUSTWORKS_SERVER_CBOR_O1);
-        CommonUtil::copyFile(JUSTWORKS_SERVER_CBOR_O2_OWNED_BACKUP, JUSTWORKS_SERVER_CBOR_O2);
-        CommonUtil::copyFile(CLIENT_CBOR_01_OWNED_BACKUP, CLIENT_CBOR_01);
-        CommonUtil::copyFile(DEVICE_PROP_CBOR_01_OWNED_BACKUP, DEVICE_PROP_CBOR_01);
-        CommonUtil::copyFile(CLIENT_DB_01_OWNED_BACKUP, CLIENT_DB_01);
+        CommonUtil::copyFile(JUSTWORKS_SERVER_CBOR_O1_UNOWNED_BACKUP, JUSTWORKS_SERVER_CBOR_O1);
+        CommonUtil::copyFile(JUSTWORKS_SERVER_CBOR_O2_UNOWNED_BACKUP, JUSTWORKS_SERVER_CBOR_O2);
+        CommonUtil::copyFile(CLIENT_CBOR_01_UNOWNED_BACKUP, CLIENT_CBOR_01);
         CommonUtil::waitInSecond(DELAY_MEDIUM);
         CommonUtil::launchApp(JUSTWORKS_SERVER1);
         CommonUtil::launchApp(JUSTWORKS_SERVER2);
         CommonUtil::waitInSecond(DELAY_LONG);
+        m_UnownList = NULL;
         m_OwnList = NULL;
         m_Acl = NULL;
 
         if (!m_PMHelper.initProvisionClient(OTM_JUSTWORK, (char*) CLIENT_DB_01))
+        {
+            SET_FAILURE(m_PMHelper.getFailureMessage());
+            return;
+        }
+
+        if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
+                    &m_UnownList, OC_STACK_OK))
+        {
+            SET_FAILURE(m_PMHelper.getFailureMessage());
+            return;
+        }
+
+        if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList, PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
         {
             SET_FAILURE(m_PMHelper.getFailureMessage());
             return;
