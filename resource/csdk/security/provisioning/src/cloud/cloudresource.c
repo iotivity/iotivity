@@ -511,12 +511,19 @@ exit:
     response.requestHandle = ehRequest ? ehRequest->requestHandle : NULL;
     response.ehResult = ehRet;
     response.payload = (OCPayload *)OCRepPayloadCreate();
-    response.payload->type = PAYLOAD_TYPE_REPRESENTATION;
-    response.persistentBufferFlag = 0;
-
-    if (OC_STACK_OK != OCDoResponse(&response))
+    if (NULL != response.payload)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: send response", __func__);
+        response.payload->type = PAYLOAD_TYPE_REPRESENTATION;
+        response.persistentBufferFlag = 0;
+        if (OC_STACK_OK != OCDoResponse(&response))
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: send response", __func__);
+            ehRet = OC_EH_ERROR;
+        }
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: response payload is NULL", __func__);
         ehRet = OC_EH_ERROR;
     }
 

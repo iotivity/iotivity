@@ -397,10 +397,10 @@ static OCStackResult CloudToCBORPayloadInternal(const OicCloud_t *clouds, uint8_
 #if !defined(__MANDATORY__)
         if (NULL != cloud->redirectUri)
         {
-            cbor_encode_text_string(&map, OIC_JSON_CLOUD_SESSION_REDIRECT_URL,
+            cborError = cbor_encode_text_string(&map, OIC_JSON_CLOUD_SESSION_REDIRECT_URL,
                                     sizeof(OIC_JSON_CLOUD_SESSION_REDIRECT_URL) + 1);
             VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: redirect uri");
-            cbor_encode_text_string(&map, cloud->redirectUri, strnlen(cloud->redirectUri, MAX_STR_LEN));
+            cborError = cbor_encode_text_string(&map, cloud->redirectUri, strnlen(cloud->redirectUri, MAX_STR_LEN));
             VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: redirect uri");
         }
 #endif // __MANDATORY__

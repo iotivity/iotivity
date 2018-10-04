@@ -1723,22 +1723,25 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
         return OC_STACK_DELETE_TRANSACTION;
     }
 
-    static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
+static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
+{
+    OIC_LOG(DEBUG, TAG, "IN PostOwnerCredential");
+    OCStackResult res = OC_STACK_ERROR;
+    OCHeaderOption *options = NULL;
+    uint8_t numOptions = 0;
+
+    if (!otmCtx || !otmCtx->selectedDeviceInfo)
     {
-        OIC_LOG(DEBUG, TAG, "IN PostOwnerCredential");
+        OIC_LOG(ERROR, TAG, "Invalid parameters");
+        return OC_STACK_INVALID_PARAM;
+    }
 
-        if(!otmCtx || !otmCtx->selectedDeviceInfo)
-        {
-            OIC_LOG(ERROR, TAG, "Invalid parameters");
-            return OC_STACK_INVALID_PARAM;
-        }
+    OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    assert(deviceInfo->connType & CT_FLAG_SECURE);
 
-        OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
-        char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
-        assert(deviceInfo->connType & CT_FLAG_SECURE);
-
-        if(!PMGenerateQuery(true,
-                            deviceInfo->endpoint.addr, getSecurePort(deviceInfo),
+    if (!PMGenerateQuery(true,
+                        deviceInfo->endpoint.addr, getSecurePort(deviceInfo),
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_CRED_URI))
     {
@@ -1747,7 +1750,7 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if(!secPayload)
+    if (NULL == secPayload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
@@ -1756,14 +1759,15 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
     //Generate owner credential for new device
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     const OicSecCred_t* ownerCredential = GetCredResourceData(&(deviceInfo->doxm->deviceID));
-    if(!ownerCredential)
+    if (NULL == ownerCredential)
     {
         OIC_LOG(ERROR, TAG, "Can not find OwnerPSK.");
-        return OC_STACK_NO_RESOURCE;
+        res = OC_STACK_NO_RESOURCE;
+        goto exit;
     }
 
     OicUuid_t credSubjectId = {.id={0}};
-    if(OC_STACK_OK == GetDoxmDeviceID(&credSubjectId))
+    if (OC_STACK_OK == GetDoxmDeviceID(&credSubjectId))
     {
         OicSecCred_t newCredential;
         memcpy(&newCredential, ownerCredential, sizeof(OicSecCred_t));
@@ -1772,12 +1776,16 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
         //Set subject ID as PT's ID
         memcpy(&(newCredential.subject), &credSubjectId, sizeof(OicUuid_t));
 
-        OCHeaderOption *options = NULL;
-        uint8_t numOptions = 0;
-
         if (IS_OIC(deviceInfo->specVer))
         {
             options = (OCHeaderOption*) OICCalloc(1, sizeof(OCHeaderOption));
+            if (NULL == options)
+            {
+                OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+                res = OC_STACK_NO_MEMORY;
+                goto exit;
+            }
+
             SetCBORFormat(options, &numOptions);
             OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
         }
@@ -1796,9 +1804,9 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
         if (OC_STACK_OK != CredToCBORPayloadWithRowner(&newCredential, &credSubjectId, &secPayload->securityData,
                                         &secPayload->payloadSize, secureFlag))
         {
-            OICFree(secPayload);
             OIC_LOG(ERROR, TAG, "Error while converting bin to cbor.");
-            return OC_STACK_ERROR;
+            res = OC_STACK_ERROR;
+            goto exit;
         }
         OIC_LOG(DEBUG, TAG, "Cred Payload:");
         OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
@@ -1807,10 +1815,9 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
         cbData.cb = &OwnerCredentialHandler;
         cbData.context = (void *)otmCtx;
         cbData.cd = NULL;
-        OCStackResult res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query,
+        res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query,
                                          &deviceInfo->endpoint, (OCPayload*)secPayload,
                                          deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
-        OICFree(options);
         if (res != OC_STACK_OK)
         {
             OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -1819,12 +1826,15 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
     else
     {
         OIC_LOG(ERROR, TAG, "Failed to read DOXM device ID.");
-        return OC_STACK_NO_RESOURCE;
+        res = OC_STACK_NO_RESOURCE;
     }
 
+exit:
+    OICFree(options);
+    OCPayloadDestroy((OCPayload *)secPayload);
     OIC_LOG(DEBUG, TAG, "OUT PostOwnerCredential");
 
-    return OC_STACK_OK;
+    return res;
 }
 
 static OicSecAcl_t* GenerateOwnerAcl(const OicUuid_t* owner)
@@ -1832,7 +1842,7 @@ static OicSecAcl_t* GenerateOwnerAcl(const OicUuid_t* owner)
     OicSecAcl_t* ownerAcl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
     OicSecAce_t* ownerAce = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
     OicSecRsrc_t* wildcardRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t)); // TODO IOT-2192
-    if(NULL == ownerAcl || NULL == ownerAce || NULL == wildcardRsrc)
+    if (NULL == ownerAcl || NULL == ownerAce || NULL == wildcardRsrc)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         goto error;
@@ -1851,31 +1861,31 @@ static OicSecAcl_t* GenerateOwnerAcl(const OicUuid_t* owner)
     memcpy(ownerAce->subjectuuid.id, owner->id, sizeof(owner->id));
 
     wildcardRsrc->href = OICStrdup(WILDCARD_RESOURCE_URI);
-    if(NULL == wildcardRsrc->href)
+    if (NULL == wildcardRsrc->href)
     {
         goto error;
     }
 
     wildcardRsrc->interfaceLen = 1;
     wildcardRsrc->interfaces = (char**)OICMalloc(wildcardRsrc->interfaceLen * sizeof(char*));
-    if(NULL == wildcardRsrc->interfaces)
+    if (NULL == wildcardRsrc->interfaces)
     {
         goto error;
     }
     wildcardRsrc->interfaces[0] = OICStrdup(WILDCARD_RESOURCE_URI);
-    if(NULL == wildcardRsrc->interfaces[0])
+    if (NULL == wildcardRsrc->interfaces[0])
     {
         goto error;
     }
 
     wildcardRsrc->typeLen = 1;
     wildcardRsrc->types = (char**)OICMalloc(wildcardRsrc->typeLen * sizeof(char*));
-    if(NULL == wildcardRsrc->types)
+    if (NULL == wildcardRsrc->types)
     {
         goto error;
     }
     wildcardRsrc->types[0] = OICStrdup(WILDCARD_RESOURCE_URI);
-    if(NULL == wildcardRsrc->types[0])
+    if (NULL == wildcardRsrc->types[0])
     {
         goto error;
     }
@@ -1884,7 +1894,7 @@ static OicSecAcl_t* GenerateOwnerAcl(const OicUuid_t* owner)
 
 error:
     //in case of memory allocation failed, each resource should be removed individually.
-    if(NULL == ownerAcl || NULL == ownerAce || NULL == wildcardRsrc)
+    if (NULL == ownerAcl || NULL == ownerAce || NULL == wildcardRsrc)
     {
         OICFree(ownerAcl);
         OICFree(ownerAce);
@@ -1907,10 +1917,12 @@ error:
 static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx, OicSecAclVersion_t aclVer)
 {
     OCStackResult res = OC_STACK_ERROR;
+    OCHeaderOption *options = NULL;
+    uint8_t numOptions = 0;
 
     OIC_LOG(DEBUG, TAG, "IN PostOwnerAcl");
 
-    if(!otmCtx || !otmCtx->selectedDeviceInfo)
+    if (!otmCtx || !otmCtx->selectedDeviceInfo)
     {
         OIC_LOG(ERROR, TAG, "Invalid parameters");
         return OC_STACK_INVALID_PARAM;
@@ -1921,7 +1933,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx, OicSecAclVersion_t aclVe
     OicSecAcl_t* ownerAcl = NULL;
     assert(deviceInfo->connType & CT_FLAG_SECURE);
 
-    if(!PMGenerateQuery(true,
+    if (!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr, getSecurePort(deviceInfo),
                         deviceInfo->connType,
                         query, sizeof(query), aclUri))
@@ -1933,7 +1945,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx, OicSecAclVersion_t aclVe
 
     OicUuid_t ownerID;
     res = GetDoxmDeviceID(&ownerID);
-    if(OC_STACK_OK != res)
+    if (OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to generate owner ACL");
         return res;
@@ -1941,7 +1953,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx, OicSecAclVersion_t aclVe
 
     //Generate owner ACL for new device
     ownerAcl = GenerateOwnerAcl(&ownerID);
-    if(NULL == ownerAcl)
+    if (NULL == ownerAcl)
     {
         OIC_LOG(ERROR, TAG, "Failed to generate owner ACL");
         return OC_STACK_NO_MEMORY;
@@ -1949,35 +1961,37 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx, OicSecAclVersion_t aclVe
 
     //Generate ACL payload
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if(!secPayload)
+    if (NULL == secPayload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         res = OC_STACK_NO_MEMORY;
-        goto error;
+        goto exit;
     }
 
     res = AclToCBORPayload(ownerAcl, aclVer, &secPayload->securityData, &secPayload->payloadSize);
     if (OC_STACK_OK != res)
     {
-        OICFree(secPayload);
         OIC_LOG(ERROR, TAG, "Error while converting bin to cbor.");
-        goto error;
+        goto exit;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
 
     OIC_LOG(DEBUG, TAG, "Owner ACL Payload:");
     OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
-    OCHeaderOption *options = NULL;
-    uint8_t numOptions = 0;
-
     if (IS_OIC(deviceInfo->specVer))
     {
         options = (OCHeaderOption*) OICCalloc(1, sizeof(OCHeaderOption));
+        if (NULL == options)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+            res = OC_STACK_NO_MEMORY;
+            goto exit;
+        }
+
         SetCBORFormat(options, &numOptions);
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
     }
-
 
     //Send owner ACL to new device : POST /oic/sec/cred [ owner credential ]
     OCCallbackData cbData;
@@ -1987,26 +2001,28 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx, OicSecAclVersion_t aclVe
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query,
                                      &deviceInfo->endpoint, (OCPayload*)secPayload,
                                      deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
-    OICFree(options);
-    if (res != OC_STACK_OK)
+    if (OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
-        goto error;
     }
 
     OIC_LOG(DEBUG, TAG, "OUT PostOwnerAcl");
 
-error:
+exit:
+    OICFree(options);
     DeleteACLList(ownerAcl);
 
-    return OC_STACK_OK;
+    return res;
 }
 
 static OCStackResult PostOwnerTransferModeToResource(OTMContext_t* otmCtx)
 {
     OIC_LOG(DEBUG, TAG, "IN PostOwnerTransferModeToResource");
+    OCStackResult res = OC_STACK_ERROR;
+    OCHeaderOption *options = NULL;
+    uint8_t numOptions = 0;
 
-    if(!otmCtx || !otmCtx->selectedDeviceInfo)
+    if (!otmCtx || !otmCtx->selectedDeviceInfo)
     {
         OIC_LOG(ERROR, TAG, "Invalid parameters");
         return OC_STACK_INVALID_PARAM;
@@ -2015,7 +2031,7 @@ static OCStackResult PostOwnerTransferModeToResource(OTMContext_t* otmCtx)
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
 
-    if(!PMGenerateQuery(false,
+    if (!PMGenerateQuery(false,
                         deviceInfo->endpoint.addr, deviceInfo->endpoint.port,
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_DOXM_URI))
@@ -2026,32 +2042,35 @@ static OCStackResult PostOwnerTransferModeToResource(OTMContext_t* otmCtx)
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if(!secPayload)
+    if (NULL == secPayload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
     }
 
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res = otmCtx->otmCallback.createSelectOxmPayloadCB(otmCtx,
+    res = otmCtx->otmCallback.createSelectOxmPayloadCB(otmCtx,
             &secPayload->securityData, &secPayload->payloadSize);
     if (OC_STACK_OK != res && NULL == secPayload->securityData)
     {
-        OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Error while converting bin to cbor");
-        return OC_STACK_ERROR;
+        res = OC_STACK_ERROR;
+        goto exit;
     }
-
-    OCHeaderOption *options = NULL;
-    uint8_t numOptions = 0;
 
     if (IS_OIC(deviceInfo->specVer))
     {
         options = (OCHeaderOption*) OICCalloc(1, sizeof(OCHeaderOption));
+        if (NULL == options)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+            res = OC_STACK_NO_MEMORY;
+            goto exit;
+        }
+
         SetCBORFormat(options, &numOptions);
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
     }
-
 
     OCCallbackData cbData;
     cbData.cb = &OwnerTransferModeHandler;
@@ -2060,12 +2079,14 @@ static OCStackResult PostOwnerTransferModeToResource(OTMContext_t* otmCtx)
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query,
                        &deviceInfo->endpoint, (OCPayload *)secPayload,
                        deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
-    OICFree(options);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
+exit:
+    OICFree(options);
+    OCPayloadDestroy((OCPayload *)secPayload);
     OIC_LOG(DEBUG, TAG, "OUT PostOwnerTransferModeToResource");
 
     return res;
@@ -2101,6 +2122,7 @@ static OCStackResult GetProvisioningStatusResource(OTMContext_t* otmCtx)
     if (IS_OIC(deviceInfo->specVer))
     {
         options = (OCHeaderOption*) OICCalloc(1, sizeof(OCHeaderOption));
+        VERIFY_NOT_NULL_RETURN(TAG, options, ERROR, OC_STACK_NO_MEMORY);
         SetCBORFormat(options, &numOptions);
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
     }
@@ -2126,6 +2148,9 @@ static OCStackResult GetProvisioningStatusResource(OTMContext_t* otmCtx)
 static OCStackResult PostOwnerUuid(OTMContext_t* otmCtx)
 {
     OIC_LOG(DEBUG, TAG, "IN PostOwnerUuid");
+    OCStackResult res = OC_STACK_ERROR;
+    OCHeaderOption *options = NULL;
+    uint8_t numOptions = 0;
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -2149,28 +2174,32 @@ static OCStackResult PostOwnerUuid(OTMContext_t* otmCtx)
 
     //Post PT's uuid to new device
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if(!secPayload)
+    if (NULL == secPayload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res = otmCtx->otmCallback.createOwnerTransferPayloadCB(
+    res = otmCtx->otmCallback.createOwnerTransferPayloadCB(
             otmCtx, &secPayload->securityData, &secPayload->payloadSize);
     if (OC_STACK_OK != res && NULL == secPayload->securityData)
     {
-        OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Error while converting doxm bin to cbor.");
-        return OC_STACK_INVALID_PARAM;
+        res = OC_STACK_INVALID_PARAM;
+        goto exit;
     }
     OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
-
-    OCHeaderOption *options = NULL;
-    uint8_t numOptions = 0;
 
     if (IS_OIC(deviceInfo->specVer))
     {
         options = (OCHeaderOption*) OICCalloc(1, sizeof(OCHeaderOption));
+        if (NULL == options)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+            res = OC_STACK_NO_MEMORY;
+            goto exit;
+        }
+
         SetCBORFormat(options, &numOptions);
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
     }
@@ -2182,11 +2211,14 @@ static OCStackResult PostOwnerUuid(OTMContext_t* otmCtx)
 
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload *)secPayload,
             deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
-    OICFree(options);
     if (OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
+
+exit:
+    OICFree(options);
+    OCPayloadDestroy((OCPayload *)secPayload);
 
     OIC_LOG(DEBUG, TAG, "OUT PostOwnerUuid");
 
@@ -2196,6 +2228,7 @@ static OCStackResult PostOwnerUuid(OTMContext_t* otmCtx)
 static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+    OCStackResult res = OC_STACK_ERROR;
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -2219,7 +2252,7 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
 
     //OwnershipInformationHandler
     OCSecurityPayload *secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if (!secPayload)
+    if (NULL == secPayload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
@@ -2230,18 +2263,29 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     OCHeaderOption *options = NULL;
     uint8_t numOptions = 0;
-    OCStackResult res = OC_STACK_OK;
     bool propertiesToInclude[DOXM_PROPERTY_COUNT];
     memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
     propertiesToInclude[DOXM_OWNED] = true;
     //include rowner uuid
     propertiesToInclude[DOXM_ROWNERUUID] = true;
     //doxm.rowneruuid set to the provisioningclient's /doxm.deviceuuid.
-    GetDoxmDeviceID(&otmCtx->selectedDeviceInfo->doxm->rownerID);
+    if (OC_STACK_OK != GetDoxmDeviceID(&deviceInfo->pstat->rownerID))
+    {
+        OIC_LOG (ERROR, TAG, "Unable to retrieve doxm Device ID");
+        res = OC_STACK_ERROR;
+        goto exit;
+    }
 
     if (IS_OIC(deviceInfo->specVer))
     {
         options = (OCHeaderOption*) OICCalloc(1, sizeof(OCHeaderOption));
+        if (NULL == options)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+            res = OC_STACK_NO_MEMORY;
+            goto exit;
+        }
+
         SetCBORFormat(options, &numOptions);
 
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
@@ -2252,9 +2296,9 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
             propertiesToInclude);
     if (OC_STACK_OK != res && NULL == secPayload->securityData)
     {
-        OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Error while converting doxm bin to json");
-        return OC_STACK_INVALID_PARAM;
+        res = OC_STACK_INVALID_PARAM;
+        goto exit;
     }
 
     OCCallbackData cbData;
@@ -2264,12 +2308,14 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
 
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
                        deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
-    OICFree(options);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
+exit:
+    OICFree(options);
+    OCPayloadDestroy((OCPayload *)secPayload);
     OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 
     return res;
@@ -2278,8 +2324,9 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
 static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+    OCStackResult res = OC_STACK_ERROR;
 
-    if(!otmCtx || !otmCtx->selectedDeviceInfo)
+    if (!otmCtx || !otmCtx->selectedDeviceInfo)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -2288,7 +2335,7 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     assert(deviceInfo->connType & CT_FLAG_SECURE);
 
-    if(!PMGenerateQuery(true,
+    if (!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr, getSecurePort(deviceInfo),
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
@@ -2299,7 +2346,7 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if(!secPayload)
+    if (NULL == secPayload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
@@ -2308,7 +2355,6 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     OCHeaderOption *options = NULL;
     uint8_t numOptions = 0;
-    OCStackResult res = OC_STACK_OK;
     bool propertiesToInclude[PSTAT_PROPERTY_COUNT];
     memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
     propertiesToInclude[PSTAT_OM] = true;
@@ -2316,6 +2362,13 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
     if (IS_OIC(deviceInfo->specVer))
     {
         options = (OCHeaderOption*) OICCalloc(1, sizeof(OCHeaderOption));
+        if (NULL == options)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+            res = OC_STACK_NO_MEMORY;
+            goto exit;
+        }
+
         SetCBORFormat(options, &numOptions);
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
         propertiesToInclude[PSTAT_ISOP] = true;
@@ -2328,9 +2381,9 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
 
     if (OC_STACK_OK != res)
     {
-        OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Error while converting pstat to cbor.");
-        return OC_STACK_INVALID_PARAM;
+        res = OC_STACK_INVALID_PARAM;
+        goto exit;
     }
 
     OCCallbackData cbData;
@@ -2339,12 +2392,14 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
     cbData.cd = NULL;
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload *)secPayload,
                        deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
-    OICFree(options);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
+exit:
+    OICFree(options);
+    OCPayloadDestroy((OCPayload *)secPayload);
     OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
 
     return res;
@@ -2380,6 +2435,7 @@ static OCStackResult GetAndVerifyDoxmResource(OTMContext_t* otmCtx)
     if (IS_OIC(deviceInfo->specVer))
     {
         options = (OCHeaderOption*) OICCalloc(1, sizeof(OCHeaderOption));
+        VERIFY_NOT_NULL_RETURN(TAG, options, ERROR, OC_STACK_NO_MEMORY);
         SetCBORFormat(options, &numOptions);
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
     }
@@ -2431,6 +2487,7 @@ static OCStackResult GetRealUuid(OTMContext_t* otmCtx)
     if (IS_OIC(deviceInfo->specVer))
     {
         options = (OCHeaderOption*) OICCalloc(1, sizeof(OCHeaderOption));
+        VERIFY_NOT_NULL_RETURN(TAG, options, ERROR, OC_STACK_NO_MEMORY);
         SetCBORFormat(options, &numOptions);
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
     }
@@ -2729,6 +2786,7 @@ OCStackResult OTMSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus
 OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
 {
     OIC_LOG_V(INFO, TAG, "IN %s", __func__);
+    OCStackResult res = OC_STACK_ERROR;
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -2747,7 +2805,7 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
     // in pstatresource.c which sets all rowneruuids can be removed.
 
     OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
-    if (!secPayload)
+    if (NULL == secPayload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
@@ -2774,11 +2832,23 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
         propertiesToInclude[PSTAT_ROWNERUUID] = true;
     }
     //pstat.rowneruuid set to the provisioningclient's /doxm.deviceuuid.
-    GetDoxmDeviceID(&otmCtx->selectedDeviceInfo->pstat->rownerID);
+    if (OC_STACK_OK != GetDoxmDeviceID(&deviceInfo->pstat->rownerID))
+    {
+        OIC_LOG (ERROR, TAG, "Unable to retrieve doxm Device ID");
+        res = OC_STACK_ERROR;
+        goto exit;
+    }
 
     if (IS_OIC(deviceInfo->specVer))
     {
         options = (OCHeaderOption*) OICCalloc(1, sizeof(OCHeaderOption));
+        if (NULL == options)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+            res = OC_STACK_NO_MEMORY;
+            goto exit;
+        }
+
         SetCBORFormat(options, &numOptions);
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
         propertiesToInclude[PSTAT_ISOP] = true;
@@ -2788,8 +2858,8 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
     if (OC_STACK_OK != PstatToCBORPayloadPartial(otmCtx->selectedDeviceInfo->pstat,
             &secPayload->securityData, &secPayload->payloadSize, propertiesToInclude, false))
     {
-        OCPayloadDestroy((OCPayload *)secPayload);
-        return OC_STACK_INVALID_JSON;
+        res = OC_STACK_INVALID_JSON;
+        goto exit;
     }
     OIC_LOG(DEBUG, TAG, "Created payload for chage to Provisiong state");
     OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
@@ -2804,7 +2874,8 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
     {
         OIC_LOG_V(ERROR, TAG, "%s : Failed to generate query", __func__);
-        return OC_STACK_ERROR;
+        res = OC_STACK_ERROR;
+        goto exit;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
@@ -2813,23 +2884,26 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
     cbData.cb = &ProvisioningStatusHandler;
     cbData.context = (void*)otmCtx;
     cbData.cd = NULL;
-    OCStackResult ret = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
+    res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
             otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
-    OIC_LOG_V(INFO, TAG, "OCDoResource returned: %d",ret);
-    OICFree(options);
-    if (ret != OC_STACK_OK)
+    OIC_LOG_V(INFO, TAG, "OCDoResource returned: %d",res);
+    if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
+exit:
+    OICFree(options);
+    OCPayloadDestroy((OCPayload *)secPayload);
     OIC_LOG_V(INFO, TAG, "OUT %s", __func__);
 
-    return ret;
+    return res;
 }
 
 OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
 {
     OIC_LOG(INFO, TAG, "IN PostNormalOperationStatus");
+    OCStackResult res = OC_STACK_ERROR;
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -2841,7 +2915,7 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
     otmCtx->selectedDeviceInfo->pstat->dos.state = DOS_RFNOP;
 
     OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
-    if (!secPayload)
+    if (NULL == secPayload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
@@ -2849,7 +2923,6 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     OCHeaderOption *options = NULL;
     uint8_t numOptions = 0;
-    OCStackResult res = OC_STACK_OK;
 
     bool propertiesToInclude[PSTAT_PROPERTY_COUNT];
     memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
@@ -2857,6 +2930,12 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
     if (IS_OIC(deviceInfo->specVer))
     {
         options = (OCHeaderOption*) OICCalloc(1, sizeof(OCHeaderOption));
+        if (NULL == options)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+            res = OC_STACK_NO_MEMORY;
+            goto exit;
+        }
         SetCBORFormat(options, &numOptions);
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
         //Set isop to true.
@@ -2877,8 +2956,8 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
 
     if (OC_STACK_OK != res)
     {
-        OCPayloadDestroy((OCPayload *)secPayload);
-        return OC_STACK_INVALID_JSON;
+        res = OC_STACK_INVALID_JSON;
+        goto exit;
     }
     OIC_LOG(DEBUG, TAG, "Created payload for chage to Provisiong state");
     OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
@@ -2893,7 +2972,8 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
     {
         OIC_LOG(ERROR, TAG, "PostNormalOperationStatus : Failed to generate query");
-        return OC_STACK_ERROR;
+        res = OC_STACK_ERROR;
+        goto exit;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
@@ -2902,18 +2982,20 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
     cbData.cb = &ReadyForNomalStatusHandler;
     cbData.context = (void*)otmCtx;
     cbData.cd = NULL;
-    OCStackResult ret = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
+    res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
             otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
-    OIC_LOG_V(INFO, TAG, "OCDoResource returned: %d",ret);
-    OICFree(options);
-    if (ret != OC_STACK_OK)
+    OIC_LOG_V(INFO, TAG, "OCDoResource returned: %d",res);
+    if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
+exit:
+    OICFree(options);
+    OCPayloadDestroy((OCPayload *)secPayload);
     OIC_LOG(INFO, TAG, "OUT PostNormalOperationStatus");
 
-    return ret;
+    return res;
 }
 
 OCStackResult ConfigSelfOwnership(void)
@@ -3062,8 +3144,11 @@ exit:
 OCStackResult PostRownerUuid(OTMContext_t* otmCtx)
 {
     OIC_LOG_V(INFO, TAG, "%s IN", __func__);
+    OCStackResult res = OC_STACK_ERROR;
+    OCHeaderOption *options = NULL;
+    uint8_t numOptions = 0;
 
-    if(!otmCtx || !otmCtx->selectedDeviceInfo)
+    if (!otmCtx || !otmCtx->selectedDeviceInfo)
     {
         OIC_LOG_V(ERROR, TAG, "%s: %s is NULL", __func__, !otmCtx ? "OTMContext" : "selectedDeviceInfo" );
         return OC_STACK_INVALID_PARAM;
@@ -3071,7 +3156,7 @@ OCStackResult PostRownerUuid(OTMContext_t* otmCtx)
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
-    if (!secPayload)
+    if (NULL == secPayload)
     {
         OIC_LOG_V(ERROR, TAG, "%s: Failed to memory allocation", __func__);
         return OC_STACK_NO_MEMORY;
@@ -3090,13 +3175,18 @@ OCStackResult PostRownerUuid(OTMContext_t* otmCtx)
         propertiesToInclude[PSTAT_ROWNERUUID] = true;
     }
     //pstat.rowneruuid set to the provisioningclient's /doxm.deviceuuid.
-    GetDoxmDeviceID(&deviceInfo->pstat->rownerID);
+    if (OC_STACK_OK != GetDoxmDeviceID(&deviceInfo->pstat->rownerID))
+    {
+        OIC_LOG (ERROR, TAG, "Unable to retrieve doxm Device ID");
+        res = OC_STACK_ERROR;
+        goto exit;
+    }
 
     if (OC_STACK_OK != PstatToCBORPayloadPartial(deviceInfo->pstat,
             &secPayload->securityData, &secPayload->payloadSize, propertiesToInclude, false))
     {
-        OCPayloadDestroy((OCPayload *)secPayload);
-        return OC_STACK_INVALID_JSON;
+        res = OC_STACK_INVALID_JSON;
+        goto exit;
     }
     OIC_LOG(DEBUG, TAG, "Created payload for set rowner uuid");
     OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
@@ -3104,23 +3194,28 @@ OCStackResult PostRownerUuid(OTMContext_t* otmCtx)
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     assert(deviceInfo->connType & CT_FLAG_SECURE);
 
-    if(!PMGenerateQuery(true,
+    if (!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr,
                         getSecurePort(deviceInfo),
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
     {
         OIC_LOG_V(ERROR, TAG, "%s : Failed to generate query", __func__);
-        return OC_STACK_ERROR;
+        res = OC_STACK_ERROR;
+        goto exit;
     }
     OIC_LOG_V(DEBUG, TAG, "%s: Query=%s", __func__, query);
-
-    OCHeaderOption *options = NULL;
-    uint8_t numOptions = 0;
 
     if (IS_OIC(deviceInfo->specVer))
     {
         options = (OCHeaderOption*) OICCalloc(1, sizeof(OCHeaderOption));
+        if (NULL == options)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+            res = OC_STACK_NO_MEMORY;
+            goto exit;
+        }
+
         SetCBORFormat(options, &numOptions);
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
     }
@@ -3130,15 +3225,18 @@ OCStackResult PostRownerUuid(OTMContext_t* otmCtx)
     cbData.cb = &RownerUuidHandler;
     cbData.context = (void*)otmCtx;
     cbData.cd = NULL;
-    OCStackResult ret = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
+    res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
             deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
-    OIC_LOG_V(INFO, TAG, "%s: OCDoResource returned: %d", __func__, ret);
-    OICFree(options);
-    if (ret != OC_STACK_OK)
+    OIC_LOG_V(INFO, TAG, "%s: OCDoResource returned: %d", __func__, res);
+    if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
+
+exit:
+    OICFree(options);
+    OCPayloadDestroy((OCPayload *)secPayload);
     OIC_LOG_V(INFO, TAG, "%s OUT", __func__);
 
-    return ret;
+    return res;
 }

@@ -1497,7 +1497,11 @@ static int provisionCloudConfig(void)
     // Install the CA trust anchor
     FILE *F;
     F = fopen("rootca.crt", "rb");
-    fseek (F , 0 , SEEK_END);
+    if(0 != fseek (F , 0 , SEEK_END))
+    {
+        printf("     Failed to operate with CA\n");
+        return -1;
+    }
     int certsize = ftell (F);
     rewind (F);
     uint8_t* cert = (uint8_t*) malloc (sizeof(char)*certsize);
@@ -1669,7 +1673,18 @@ static int getCloudStatus(void)
     }
 
     OicCloud_t *cloud = OICCalloc(1,sizeof(OicCloud_t));
+    if(NULL == cloud)
+    {
+        OIC_LOG(ERROR, TAG, "Error, invalid cloud");
+        return -1;
+    }
     cloud->cis = OICCalloc(1,1024);
+    if(NULL == cloud->cis)
+    {
+        OIC_LOG(ERROR, TAG, "Error, invalid cloud->cis");
+        ret = -1;
+        goto exit;
+    }
 
     snprintf(cloud->cis,13,"coaps+tcp://");
 
