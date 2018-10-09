@@ -687,3 +687,6 @@ int main (int argc, char* agrv[])
     printf("Enter to terminate Simualtor\n");
     scanf("%c", &terminate);
 }
+#ifdef __cplusplus
+}
+#endif
