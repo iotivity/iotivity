@@ -1818,6 +1818,7 @@ static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
         res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query,
                                          &deviceInfo->endpoint, (OCPayload*)secPayload,
                                          deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
+        secPayload = NULL;
         if (res != OC_STACK_OK)
         {
             OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -2001,6 +2002,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx, OicSecAclVersion_t aclVe
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query,
                                      &deviceInfo->endpoint, (OCPayload*)secPayload,
                                      deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
+    secPayload = NULL;
     if (OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -2010,6 +2012,7 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx, OicSecAclVersion_t aclVe
 
 exit:
     OICFree(options);
+    OCPayloadDestroy((OCPayload *)secPayload);
     DeleteACLList(ownerAcl);
 
     return res;
@@ -2079,6 +2082,7 @@ static OCStackResult PostOwnerTransferModeToResource(OTMContext_t* otmCtx)
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query,
                        &deviceInfo->endpoint, (OCPayload *)secPayload,
                        deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
+    secPayload = NULL;
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -2211,6 +2215,7 @@ static OCStackResult PostOwnerUuid(OTMContext_t* otmCtx)
 
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload *)secPayload,
             deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
+    secPayload = NULL;
     if (OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -2269,7 +2274,7 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
     //include rowner uuid
     propertiesToInclude[DOXM_ROWNERUUID] = true;
     //doxm.rowneruuid set to the provisioningclient's /doxm.deviceuuid.
-    if (OC_STACK_OK != GetDoxmDeviceID(&deviceInfo->pstat->rownerID))
+    if (OC_STACK_OK != GetDoxmDeviceID(&otmCtx->selectedDeviceInfo->doxm->rownerID))
     {
         OIC_LOG (ERROR, TAG, "Unable to retrieve doxm Device ID");
         res = OC_STACK_ERROR;
@@ -2308,6 +2313,7 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
 
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
                        deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
+    secPayload = NULL;
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -2392,6 +2398,7 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
     cbData.cd = NULL;
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload *)secPayload,
                        deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
+    secPayload = NULL;
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -2886,6 +2893,7 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
     cbData.cd = NULL;
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
             otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
+    secPayload = NULL;
     OIC_LOG_V(INFO, TAG, "OCDoResource returned: %d",res);
     if (res != OC_STACK_OK)
     {
@@ -2984,6 +2992,7 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
     cbData.cd = NULL;
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
             otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
+    secPayload = NULL;
     OIC_LOG_V(INFO, TAG, "OCDoResource returned: %d",res);
     if (res != OC_STACK_OK)
     {
@@ -3227,6 +3236,7 @@ OCStackResult PostRownerUuid(OTMContext_t* otmCtx)
     cbData.cd = NULL;
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
             deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
+    secPayload = NULL;
     OIC_LOG_V(INFO, TAG, "%s: OCDoResource returned: %d", __func__, res);
     if (res != OC_STACK_OK)
     {
