@@ -21,11 +21,12 @@
 apply from: "../../../../build/android/build.gradle"
 
 project.buildDir = "${binDirectory}/re"
-def reAARFileDir = "${iotivityRootDirectoryFromModules}/service/resource-encapsulation/android/service/build/outputs/aar"
-def reAARFile = "iotivity-${architecture}-service-${buildmode}"
+def reAARFileDir = "${iotivity_root}/service/resource-encapsulation/android/service/build/outputs/aar"
+def reAARFile = "iotivity-service-${release}"
+def baseAARFile="iotivity-base-${release}"
 
 buildscript {
-    repositories { 
+    repositories {
         jcenter()
     }
     dependencies {
@@ -35,7 +36,7 @@ buildscript {
 
 repositories {
         flatDir{
-                dirs "$baseAARFileDirFromModules", "${reAARFileDir}"
+                dirs "$iotivityBaseAARFileDir", "${reAARFileDir}"
         }
 }
 
@@ -55,11 +56,11 @@ android {
     }
 
     sourceSets {
-      
+
         main {
               manifest.srcFile 'AndroidManifest.xml'
               java.srcDirs 'src'
-              jni.srcDirs = [] //disable automatic ndk-build 
+              jni.srcDirs = [] //disable automatic ndk-build
         }
     }
 
@@ -74,18 +75,15 @@ android {
     }
 
 
-    println ("\nConfigured $commonText android properties")
+
 }
 
 dependencies {
-    compile fileTree(dir: "${androidLibFileDirFromModules}", include: ['*.jar'])
     compile(name:"${baseAARFile}", ext:'aar')
     compile(name:"${reAARFile}", ext:'aar')
-    println ("\n$commonText Library Dependency Resolved")     
 }
 
 task rebuild (dependsOn:['deleteBuildDirectory', 'installDebug']) << {
-   println ("\n############# Finished $commonText #############\n")
 }
 
 task deleteBuildDirectory(type: Delete) {
