@@ -393,3 +393,46 @@ OCStackResult RDHelper::rdFindResourcesChecked(const std::string& host, const st
 
     return actualResult;
 }
+
+OCStackResult RDHelper::rdBindResourceInsToResource(bool isResourcehandle, int64_t ins)
+{
+    OCStackResult actualResult =  OC_STACK_ERROR;
+    try
+    {
+        if(isResourcehandle)
+            actualResult = OCBindResourceInsToResource(g_curResource_t, ins);
+        else
+            actualResult = OCBindResourceInsToResource(NULL, ins);
+        return actualResult;
+    }
+    catch (std::exception &ex)
+    {
+        IOTIVITYTEST_LOG(INFO, "Exception: %s in OCBindResourceInsToResource",ex.what());
+        return OC_STACK_ERROR;
+    }
+}
+
+OCStackResult RDHelper::rdGetResourceIns(bool isResourcehandle,int64_t ins)
+{
+    OCStackResult actualResult =  OC_STACK_ERROR;
+    try
+    {
+        if(isResourcehandle)
+            actualResult = OCGetResourceIns(g_curResource_t, &ins);
+        else
+            actualResult = OCGetResourceIns(NULL, &ins);
+        return actualResult;
+    }
+    catch (std::exception &ex)
+    {
+        IOTIVITYTEST_LOG(INFO, "Exception: %s in OCBindResourceInsToResource",ex.what());
+        return OC_STACK_ERROR;
+    }
+}
+
+OCStackResult RDHelper::rdDatabaseSetStorageFilename(const char *databaseFilename)
+{
+    OCStackResult actualResult =  OC_STACK_ERROR;
+    actualResult = OCRDDatabaseSetStorageFilename(databaseFilename);
+    return actualResult;
+}

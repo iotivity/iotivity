@@ -106,3 +106,115 @@ TEST_F(RDServerTest_btc, StopRDServer_ETC_P)
     SUCCEED();
 }
 #endif
+
+/**
+ * @since             2015-10-15
+ * @see               OCStackResult OCRDDatabaseGetStorageFilename()
+ * @objective         Test OCRDDatabaseGetStorageFilename function positively
+ * @target            OCStackResult OCRDDatabaseGetStorageFilename();
+ * @test_data         none
+ * @pre_condition     none
+ * @post_condition    none
+ * @expected          OCRDDatabaseGetStorageFilename will be executed and will not return NULL
+ */
+#if defined(__LINUX__) || defined(__WINDOWS__)
+TEST_F(RDServerTest_btc, RDDatabaseGetStorageFilename_SRC_P)
+{
+    try
+    {
+        const char *receivedStorageFilename;
+        receivedStorageFilename = OCRDDatabaseGetStorageFilename();
+        ASSERT_NE((const char *)NULL ,&receivedStorageFilename) << "OCRDDatabaseGetStorageFilename failed.";
+    }
+    catch (std::exception &ex)
+    {
+        FAIL() << "Exception occurred : " << ex.what();
+    }
+
+    SUCCEED();
+}
+#endif
+
+/**
+ * @since             2015-10-15
+ * @see               OCStackResult OCRDDatabaseGetStorageFilename()
+ * @objective         Test OCRDDatabaseGetStorageFilename function positively
+ * @target            OCStackResult OCRDDatabaseGetStorageFilename();
+ * @test_data         none
+ * @pre_condition     none
+ * @post_condition    none
+ * @expected          OCRDDatabaseGetStorageFilename will be executed and will not return emtpy String
+ */
+#if defined(__LINUX__) || defined(__WINDOWS__)
+TEST_F(RDServerTest_btc, RDDatabaseGetStorageFilename_ESV_P)
+{
+    try
+    {
+        const char *receivedStorageFilename;
+        receivedStorageFilename = OCRDDatabaseGetStorageFilename();
+        ASSERT_NE((const char *)" " ,&receivedStorageFilename) << "OCGetServerInstanceIDString failed.";
+    }
+    catch (std::exception &ex)
+    {
+        FAIL() << "Exception occurred : " << ex.what();
+    }
+
+    SUCCEED();
+}
+#endif
+
+/**
+ * @since             2015-10-15
+ * @see               OCStackResult OCRDDatabaseSetStorageFilename()
+ * @objective         Test OCRDDatabaseSetStorageFilename function positively
+ *                    Sets the filename to be used for database persistent storage
+ * @target            OCStackResult OCRDDatabaseSetStorageFilename(const char *filename);
+ * @test_data         filename, the name of database persistent storage
+ * @pre_condition     none
+ * @post_condition    none
+ * @expected          OCRDDatabaseSetStorageFilename will be executed and return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__WINDOWS__)
+TEST_F(RDServerTest_btc, RDDatabaseSetStorageFilename_SRC_P)
+{
+    try
+    {
+        OCStackResult actualResult = m_rdHelper->rdDatabaseSetStorageFilename(RD_PERSISTENT_STORAGE);
+        ASSERT_EQ(OC_STACK_OK ,actualResult) << "OCRDDatabaseSetStorageFilename failed.";
+    }
+    catch (std::exception &ex)
+    {
+        FAIL() << "Exception occurred : " << ex.what();
+    }
+
+    SUCCEED();
+}
+#endif
+
+/**
+ * @since             2015-10-15
+ * @see               OCStackResult OCRDDatabaseSetStorageFilename()
+ * @objective         Test OCRDDatabaseSetStorageFilename function Negatively
+ *                    Sets the filename to be used for database persistent storage
+ * @target            OCStackResult OCRDDatabaseSetStorageFilename(const char *filename);
+ * @test_data         filename passed as NULL
+ * @pre_condition     none
+ * @post_condition    none
+ * @expected          OCRDDatabaseSetStorageFilename will be executed and return some other value should not return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__WINDOWS__)
+TEST_F(RDServerTest_btc, RDDatabaseSetStorageFilename_NV_N)
+{
+    try
+    {
+        OCStackResult actualResult = m_rdHelper->rdDatabaseSetStorageFilename(NULL);
+        ASSERT_NE(OC_STACK_OK ,actualResult) << "OCRDDatabaseSetStorageFilename failed.";
+    }
+    catch (std::exception &ex)
+    {
+        FAIL() << "Exception occurred : " << ex.what();
+    }
+
+    SUCCEED();
+}
+#endif

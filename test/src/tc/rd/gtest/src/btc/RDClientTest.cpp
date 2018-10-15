@@ -209,3 +209,150 @@ TEST_F(RDClientTest_btc, RDDiscover_USV_N)
     SUCCEED();
 }
 #endif
+
+/**
+ * @since             2015-10-15
+ * @see               void Configure(const PlatformConfig& config)
+ * @see               OCStackResult registerResource(OCResourceHandle& resourceHandle,std::string& resourceURI,
+ *                                                   const std::string& resourceTypeName,const std::string& resourceInterface,
+ *                                                    EntityHandler entityHandler,uint8_t resourceProperty)
+ * @see               OCStackResult OCBindResourceInsToResource(resourceHandle, ins);
+ * @objective         Test OCBindResourceInsToResource function positively
+ * @test_data         OCResourceHandle handle (It's a resource handle that the contained resource is to be bound
+ *                    ins is the Unique ID for resource
+ * @pre_condition     1. Call OCPlatform::Configure to overwrite the default configuration of the OCPlatform object
+ *                    2. Call registerResource to registers a resource with the server
+ * @procedure         Call rdBindResourceInsToResource with Resource handle and Unique ID
+ * @post_condition    Call unregisterResource to unregisters a resource with the server
+ * @expected          OCBindResourceInsToResource will succeed and will return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__WINDOWS__)
+TEST_F(RDClientTest_btc, RDBindResourceInsToResource_SRC_P)
+{
+    try
+    {
+
+        OCStackResult actualResult = m_rdHelper->rdBindResourceInsToResource(1, OC_RSRVD_INS);
+        CommonUtil::waitInSecond(RD_SLEEPTIME_MIN);
+        ASSERT_EQ(OC_STACK_OK,actualResult)<< "Actual result string : " << CommonUtil::s_OCStackResultString.at(actualResult);
+
+        m_rdHelper->rdStopServer();
+    }
+    catch (std::exception &ex)
+    {
+        FAIL() << "Exception occurred : " << ex.what();
+    }
+
+    SUCCEED();
+}
+#endif
+#if defined(__LINUX__) || defined(__WINDOWS__)
+
+/**
+ * @since             2015-10-15
+ * @see               void Configure(const PlatformConfig& config)
+ * @see               OCStackResult registerResource(OCResourceHandle& resourceHandle,std::string& resourceURI,
+ *                                                   const std::string& resourceTypeName,const std::string& resourceInterface,
+ *                                                    EntityHandler entityHandler,uint8_t resourceProperty)
+ * @see               OCStackResult OCBindResourceInsToResource(resourceHandle, ins);
+ * @objective         Test OCBindResourceInsToResource function Negatively
+ * @test_data         OCResourceHandle handle (It's a resource handle that the contained resource is to be bound
+ *                    ins is the Unique ID for resource
+ * @pre_condition     1. Call OCPlatform::Configure to overwrite the default configuration of the OCPlatform object
+ *                    2. Call registerResource to registers a resource with the server
+ * @procedure         Call rdBindResourceInsToResource with Resource handle and Unique ID
+ * @post_condition    Call unregisterResource to unregisters a resource with the server
+ * @expected          OCBindResourceInsToResource will succeed and will not return OC_STACK_OK
+ */
+TEST_F(RDClientTest_btc, RDBindResourceInsToResource_NV_N)
+{
+    try
+    {
+        OCStackResult actualResult = m_rdHelper->rdBindResourceInsToResource(0, OC_RSRVD_INS);
+        CommonUtil::waitInSecond(RD_SLEEPTIME_MIN);
+        ASSERT_NE(OC_STACK_OK,actualResult)<< "Actual result string : " << CommonUtil::s_OCStackResultString.at(actualResult);
+
+        m_rdHelper->rdStopServer();
+    }
+    catch (std::exception &ex)
+    {
+        FAIL() << "Exception occurred : " << ex.what();
+    }
+
+    SUCCEED();
+}
+#endif
+
+/**
+ * @since             2015-10-15
+ * @see               void Configure(const PlatformConfig& config)
+ * @see               OCStackResult registerResource(OCResourceHandle& resourceHandle,std::string& resourceURI,
+ *                                                   const std::string& resourceTypeName,const std::string& resourceInterface,
+ *                                                    EntityHandler entityHandler,uint8_t resourceProperty)
+ * @see               OCStackResult OCGetResourceIns(OCResourceHandle handle, int64_t *ins);;
+ * @objective         Test OCGetResourceIns function positively
+ * @test_data         OCResourceHandle handle (It's a resource handle that the contained resource is to be bound
+ *                    ins is the Unique ID for resource
+ * @pre_condition     1. Call OCPlatform::Configure to overwrite the default configuration of the OCPlatform object
+ *                    2. Call registerResource to registers a resource with the server
+ * @procedure         Call rdBindResourceInsToResource with Resource handle and Unique ID
+ * @post_condition    Call unregisterResource to unregisters a resource with the server
+ * @expected          OCGetResourceIns will succeed and will return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__WINDOWS__)
+TEST_F(RDClientTest_btc, RDGetResourceIns_SRC_P)
+{
+    try
+    {
+        int64_t rdresIns = 0;
+        OCStackResult actualResult = m_rdHelper->rdGetResourceIns(1, &rdresIns);
+        CommonUtil::waitInSecond(RD_SLEEPTIME_MIN);
+        ASSERT_EQ(OC_STACK_OK,actualResult)<< "Actual result string : " << CommonUtil::s_OCStackResultString.at(actualResult);
+
+        m_rdHelper->rdStopServer();
+    }
+    catch (std::exception &ex)
+    {
+        FAIL() << "Exception occurred : " << ex.what();
+    }
+
+    SUCCEED();
+}
+#endif
+
+/**
+ * @since             2015-10-15
+ * @see               void Configure(const PlatformConfig& config)
+ * @see               OCStackResult registerResource(OCResourceHandle& resourceHandle,std::string& resourceURI,
+ *                                                   const std::string& resourceTypeName,const std::string& resourceInterface,
+ *                                                    EntityHandler entityHandler,uint8_t resourceProperty)
+ * @see               OCStackResult OCGetResourceIns(OCResourceHandle handle, int64_t *ins);;
+ * @objective         Test OCGetResourceIns function Negatively
+ * @test_data         OCResourceHandle handle (It's a resource handle that the contained resource is to be bound
+ *                    ins is the Unique ID for resource
+ * @pre_condition     1. Call OCPlatform::Configure to overwrite the default configuration of the OCPlatform object
+ *                    2. Call registerResource to registers a resource with the server
+ * @procedure         Call rdBindResourceInsToResource with Resource handle and Unique ID
+ * @post_condition    Call unregisterResource to unregisters a resource with the server
+ * @expected          OCGetResourceIns will succeed and not will return OC_STACK_OK
+ */
+#if defined(__LINUX__) || defined(__WINDOWS__)
+TEST_F(RDClientTest_btc, RDGetResourceIns_NV_N)
+{
+    try
+    {
+        int64_t rdresIns;
+        OCStackResult actualResult = m_rdHelper->rdGetResourceIns(0, &rdresIns);
+        CommonUtil::waitInSecond(RD_SLEEPTIME_MIN);
+        ASSERT_NE(OC_STACK_OK,actualResult)<< "Actual result string : " << CommonUtil::s_OCStackResultString.at(actualResult);
+
+        m_rdHelper->rdStopServer();
+    }
+    catch (std::exception &ex)
+    {
+        FAIL() << "Exception occurred : " << ex.what();
+    }
+
+    SUCCEED();
+}
+#endif
