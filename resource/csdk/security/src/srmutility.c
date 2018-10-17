@@ -26,6 +26,7 @@
 #include "oic_malloc.h"
 #include "experimental/ocrandom.h"
 #include "experimental/doxmresource.h"
+#include "escommon.h"
 
 #define TAG  "OIC_SRM_UTILITY"
 
@@ -305,9 +306,11 @@ bool IsDeviceConfigurationResourceUri(const char *uri)
         OC_RSRVD_DEVICE_URI,
         OC_RSRVD_PLATFORM_URI,
         OC_RSRVD_WELL_KNOWN_URI,
-        OC_RSRVD_CLOUDCONF_URI
-        // TODO [IOT-3006]: add WES resources as needed to enable easy setup use cases
-        // TODO [IOT-3006]: add CNC resources as needed to enable CNC use cases
+        OC_RSRVD_CLOUDCONF_URI,
+        OC_RSRVD_ES_URI_EASYSETUP,
+        OC_RSRVD_ES_URI_WIFICONF,
+        OC_RSRVD_ES_URI_COAPCLOUDCONF,
+        OC_RSRVD_ES_URI_DEVCONF
     };
 
 #ifdef _MSC_VER

@@ -56,7 +56,8 @@ libocsrm_env.PrependUnique(CPPPATH=[
     '#/resource/csdk/security/include',
     '#/resource/csdk/security/include/internal',
     '#/resource/csdk/security/provisioning/include',
-    '#/extlibs/mbedtls/mbedtls/include'
+    '#/extlibs/mbedtls/mbedtls/include',
+    '#/service/easy-setup/inc'
 ])
 
 if target_os in ['windows', 'msys_nt']:
