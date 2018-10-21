@@ -32,6 +32,7 @@ Allowed values for <target_build>:
     android_armeabi_with_rm_and_ip android_armeabi_with_rm_and_bt
     android_armeabi_with_rm_and_ble
     windows msys simulator darwin tizen tizen_unsecured tizen_secured
+    tizen_extra tizen_extra_unsecured tizen_extra_secured
     unit_tests unit_tests_secured unit_tests_unsecured
     unit_tests_memcheck_secured unit_tests_memcheck_unsecured
 
@@ -489,7 +490,11 @@ def build_tizen(flag, scons_options):
         if exit_code != 0:
             sys.exit(exit_code)
 
+
+def build_tizen_extra(flag, scons_options):
     print ("*********** Build for Tizen octbstack lib and sample *************")
+    # make sure the following file as been updated for these builds:
+    # resource/csdk/stack/samples/tizen/build/gbsbuild.sh
     build_extra_options = "-f resource/csdk/stack/samples/tizen/build/SConscript " + scons_options
     build_options = {
         'TARGET_OS': 'tizen',
@@ -503,11 +508,15 @@ def build_tizen(flag, scons_options):
     build_options['ROUTING'] = 'GW'
     call_scons(build_options, build_extra_options)
 
-    print ("*********** Build for Tizen Easy-Setup  sample *************")
+    print ("*********** Build for Tizen Easy-Setup sample *************")
+    # make sure the following file has been updated for these builds:
+    # service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/gbsbuild.sh
     build_options['ROUTING'] = 'EP'
     build_options['ES_TARGET_ENROLLEE'] = 'tizen'
     build_extra_options = "-f service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/SConscript " + scons_options
     call_scons(build_options, build_extra_options)
+
+    print ("*********** Build for Tizen Easy-Setup sample with multiple owner *************")
     build_options['MULTIPLE_OWNER'] = 1
     call_scons(build_options, build_extra_options)
 
@@ -518,6 +527,14 @@ def build_tizen_secured(flag, scons_options):
 
 def build_tizen_unsecured(flag, scons_options):
     build_tizen(flag, scons_options + " SECURED=0")
+
+
+def build_tizen_extra_secured(flag, scons_options):
+    build_tizen_extra(flag, scons_options + " SECURED=1")
+
+
+def build_tizen__extraunsecured(flag, scons_options):
+    build_tizen_extra(flag, scons_options + " SECURED=0")
 
 
 # Mac OS and iOS
@@ -816,6 +833,10 @@ elif arg_num == 2:
         build_tizen("true", "")
         build_tizen("false", "")
 
+    elif str(sys.argv[1]) == "tizen_extra":
+        build_tizen_extra("true", "")
+        build_tizen_extra("false", "")
+
     elif str(sys.argv[1]) == "tizen_unsecured":
         build_tizen_unsecured("true", "")
         build_tizen_unsecured("false", "")
@@ -823,6 +844,14 @@ elif arg_num == 2:
     elif str(sys.argv[1]) == "tizen_secured":
         build_tizen_secured("true", "")
         build_tizen_secured("false", "")
+
+    elif str(sys.argv[1]) == "tizen_extra_unsecured":
+        build_tizen_extra_unsecured("true", "")
+        build_tizen_extra_unsecured("false", "")
+
+    elif str(sys.argv[1]) == "tizen_extra_secured":
+        build_tizen_extra_secured("true", "")
+        build_tizen_extra_secured("false", "")
 
     elif str(sys.argv[1]) == "simulator":
         build_simulator("true", "")
