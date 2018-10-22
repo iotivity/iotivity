@@ -38,6 +38,7 @@
 #include "resourcemanager.h"
 #include "cloud/cloudresource.h"
 #include "cloud/auth.h"
+#include "oic_string.h"
 
 #define TAG  "OIC_CLOUD_RESOURCE"
 
@@ -168,6 +169,10 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
     OCRepPayload *payload = NULL;
     bool isDeviceOwned = false;
     OicCloud_t *xCloud = NULL;
+    char *ipv6End = NULL;
+    char *percentChar = NULL;
+    char *cis = NULL;
+    char *ipv6Intf = NULL;
 
     VERIFY_NOT_NULL(TAG, ehRequest, ERROR);
     VERIFY_NOT_NULL(TAG, ehRequest->payload, ERROR);
@@ -220,6 +225,31 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
     {
         OIC_LOG_V(ERROR, TAG, "%s: Error validate the new cloud", __func__);
         goto exit;
+    }
+
+    // find the IPv6 address end bracket
+    ipv6End = strchr(newCloud->cis, ']');
+    if (NULL != ipv6End)
+    {
+        ipv6Intf = strchr(newCloud->cis, '%');
+        if (ipv6Intf == NULL)
+        {
+            // find the interface name from UDP address of sender
+            percentChar = strchr(ehRequest->devAddr.addr, '%');
+            size_t ifLen = strlen(percentChar);
+            size_t addrLen = strlen(newCloud->cis);
+            size_t cisLen = addrLen + ifLen + 3;
+
+            // fill the cloud uri with interface name inserted
+            cis = (char *)OICMalloc(sizeof(char) * cisLen);
+            OICStrcpy(cis, ipv6End - newCloud->cis + 1, newCloud->cis);
+            OICStrcat(cis, cisLen, "%25");
+            OICStrcat(cis, cisLen, percentChar + 1);
+            OICStrcat(cis, cisLen, ipv6End);
+
+            OICFree(newCloud->cis);
+            newCloud->cis = cis;
+        }
     }
 
     xCloud = CloudFind(gCloud, newCloud);
