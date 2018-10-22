@@ -106,6 +106,10 @@ namespace OC
 
             InterfaceType getInterfaceType() const;
 
+            void setIsCollectionResource(bool isColResource);
+
+            bool isCollectionResource() const;
+
             void addChild(const OCRepresentation&);
 
             void clearChildren();
@@ -480,6 +484,7 @@ namespace OC
             std::vector<std::string> m_dataModelVersions;
 
             InterfaceType m_interfaceType;
+            bool m_isCollectionResource;
     };
 
     std::ostream& operator <<(std::ostream& os, const OCRepresentation::AttributeItem& ai);

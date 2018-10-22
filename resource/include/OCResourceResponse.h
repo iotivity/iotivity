@@ -52,7 +52,8 @@ namespace OC
             m_representation{},
             m_requestHandle{nullptr},
             m_resourceHandle{nullptr},
-            m_responseResult{}
+            m_responseResult{},
+            m_isCollectionResource{}
         {
         }
 
@@ -64,7 +65,8 @@ namespace OC
             m_representation(std::move(o.m_representation)),
             m_requestHandle(std::move(o.m_requestHandle)),
             m_resourceHandle(std::move(o.m_resourceHandle)),
-            m_responseResult(std::move(o.m_responseResult))
+            m_responseResult(std::move(o.m_responseResult)),
+            m_isCollectionResource(std::move(o.m_isCollectionResource))
         {
         }
         OCResourceResponse& operator=(OCResourceResponse&& o)
@@ -76,6 +78,7 @@ namespace OC
             m_requestHandle = std::move(o.m_requestHandle);
             m_resourceHandle = std::move(o.m_resourceHandle);
             m_responseResult = std::move(o.m_responseResult);
+            m_isCollectionResource = std::move(o.m_isCollectionResource);
         }
 #else
         OCResourceResponse(OCResourceResponse&&) = default;
@@ -145,9 +148,33 @@ namespace OC
         *  @param rep reference to the resource's representation
         *  @param iface specifies the interface
         */
+        void setResourceRepresentation(OCRepresentation& rep, std::string iface,
+                                       bool isCollectionResource)
+        {
+            m_interface = iface;
+            m_representation = rep;
+            m_isCollectionResource = isCollectionResource;
+        }
+
+        /**
+        *  API to set the entire resource attribute representation
+        *  @param rep rvalue reference to the resource's representation
+        *  @param iface specifies the interface
+        */
+        void setResourceRepresentation(OCRepresentation&& rep, std::string iface,
+                                       bool isCollectionResource) {
+            setResourceRepresentation(rep, iface, isCollectionResource);
+        }
+
+        /**
+        *  API to set the entire resource attribute representation
+        *  @param rep reference to the resource's representation
+        *  @param iface specifies the interface
+        */
         void setResourceRepresentation(OCRepresentation& rep, std::string iface) {
             m_interface = iface;
             m_representation = rep;
+            m_isCollectionResource = false;
         }
 
         /**
@@ -167,6 +194,7 @@ namespace OC
             // Call the default
             m_interface = DEFAULT_INTERFACE;
             m_representation = rep;
+            m_isCollectionResource = false;
         }
 
         /**
@@ -185,6 +213,7 @@ namespace OC
         OCRequestHandle m_requestHandle;
         OCResourceHandle m_resourceHandle;
         OCEntityHandlerResult m_responseResult;
+        bool m_isCollectionResource;
 
     private:
         friend class InProcServerWrapper;
@@ -206,6 +235,8 @@ namespace OC
             {
                 first.setInterfaceType(InterfaceType::DefaultParent);
             }
+
+            first.setIsCollectionResource(m_isCollectionResource);
 
             inf.addRepresentation(first);
 
@@ -247,6 +278,14 @@ namespace OC
         const HeaderOptions& getHeaderOptions() const
         {
             return m_headerOptions;
+        }
+
+        /**
+         * Get the resource type collection/non-collection
+         */
+        bool isCollectionResource() const
+        {
+            return m_isCollectionResource;
         }
 
         /**

@@ -198,6 +198,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
             else if(query.find(OC_RSRVD_INTERFACE_LL) != std::string::npos)
             {
                 OCRepPayloadSetUri(payload, gRoomResourceUri);
+                OCRepPayloadSetPayloadRepType(payload, PAYLOAD_REP_ARRAY);
 
                 OCRepPayload *tempPayload = OCRepPayloadCreate();
                 OCRepPayloadSetUri(tempPayload, gLightResourceUri);
@@ -211,7 +212,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
             {
 
                 OCRepPayloadSetUri(payload, gRoomResourceUri);
-                OCRepPayloadSetInterfaceType(payload, PAYLOAD_BATCH_INTERFACE);
+                OCRepPayloadSetPayloadRepType(payload, PAYLOAD_REP_ARRAY);
 
                 OCRepPayload *tempPayload = OCRepPayloadCreate();
                 OCRepPayloadSetUri(tempPayload, gLightResourceUri);

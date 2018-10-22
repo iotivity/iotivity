@@ -190,6 +190,15 @@ static OCStackResult HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest
         ret = OC_STACK_OK;
     }
 exit:
+    if (0 == strcmp(ifQueryParam, OC_RSRVD_INTERFACE_LL))
+    {
+        OCRepPayloadSetPayloadRepType(colPayload, PAYLOAD_REP_ARRAY);
+    }
+    else
+    {
+        OCRepPayloadSetPayloadRepType(colPayload, PAYLOAD_REP_OBJECT_ARRAY);
+    }
+
     if (ret == OC_STACK_OK)
     {
         ehResult = OC_EH_OK;
@@ -583,7 +592,7 @@ OCRepPayload** BuildCollectionLinksPayloadArray(const char* resourceUri,
                 OIC_LOG(ERROR, TAG, "Failed setting rel property");
                 result = false;
                 goto exit;
-            } 
+            }
         }
         result = true;
     }

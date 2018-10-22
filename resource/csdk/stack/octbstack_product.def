@@ -120,7 +120,7 @@ OCRepPayloadSetPropStringAsOwner
 OCRepPayloadSetStringArray
 OCRepPayloadSetStringArrayAsOwner
 OCRepPayloadSetUri
-OCRepPayloadSetInterfaceType
+OCRepPayloadSetPayloadRepType
 OCResourcePayloadAddNewEndpoint
 OCResourcePayloadAddStringLL
 OCSecurityPayloadCreate

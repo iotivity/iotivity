@@ -1447,12 +1447,23 @@ typedef enum
     PAYLOAD_TYPE_INTROSPECTION
 } OCPayloadType;
 
-/** Enum to describe payload interface interface.*/
+/** Enum to describe payload representation for collection and non collection resources.*/
 typedef enum
 {
-    PAYLOAD_NON_BATCH_INTERFACE,
-    PAYLOAD_BATCH_INTERFACE
-} OCPayloadInterfaceType;
+    /** Used for collection resource when the payload to be created for representation
+     *  with one or more resource representations should be created as an array of object/ objects
+     *  1. Collection resource with Link list and Batch interface etc.
+     */
+    PAYLOAD_REP_ARRAY,
+
+    /** Used for Non Collection resources when payload to be created for the representation with
+     *  zero or one child representation should be created as an Object and the payload with more
+     *  than one representation should be created as an Array of Objects.
+     *  1. Non Collection resource with Link list, Default interfaces etc.
+     *  2. Collection resource with Default interface.
+     */
+    PAYLOAD_REP_OBJECT_ARRAY
+} OCPayloadRepresentationType;
 
 /**
  * A generic struct representing a payload returned from a resource operation
@@ -1533,11 +1544,11 @@ typedef struct OCRepPayloadValue
 typedef struct OCRepPayload
 {
     OCPayload base;
-    OCPayloadInterfaceType ifType;
     char* uri;
     OCStringLL* types;
     OCStringLL* interfaces;
     OCRepPayloadValue* values;
+    OCPayloadRepresentationType repType;
     struct OCRepPayload* next;
 } OCRepPayload;
 

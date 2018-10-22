@@ -3544,6 +3544,44 @@ OCStackResult OC_CALL OCDoRequest(OCDoHandle *handle,
         }
         requestInfo.info.payloadVersion = payloadVersion;
 
+        // for fixing collection resource POST/PUT requests
+        if (payload->type == PAYLOAD_TYPE_REPRESENTATION)
+        {
+            OCRepPayload *repPayload = (OCRepPayload *)payload;
+
+            // PAYLOAD_REP_ARRAY is set only for case of collection resource
+            // Here we are differentiating DEFAULT with LL and BATCH interface
+            // For DEFAULT interface repType will be PAYLOAD_REP_OBJECT_ARRAY
+            if (requestUri && repPayload->repType == PAYLOAD_REP_ARRAY)
+            {
+                char *interfaceName = NULL;
+                char *rtTypeName = NULL;
+                char *uriQuery = NULL;
+                char *uriWithoutQuery = NULL;
+                if (OC_STACK_OK == getQueryFromUri(requestUri, &uriQuery, &uriWithoutQuery))
+                {
+                    if (OC_STACK_OK == ExtractFiltersFromQuery(uriQuery, &interfaceName,
+                        &rtTypeName))
+                    {
+                        if (interfaceName &&
+                            (0 == strcmp(OC_RSRVD_INTERFACE_DEFAULT, interfaceName)))
+                        {
+                            repPayload->repType = PAYLOAD_REP_OBJECT_ARRAY;
+                        }
+                    }
+                    else if (NULL == uriQuery)
+                    {
+                        repPayload->repType = PAYLOAD_REP_OBJECT_ARRAY;
+                    }
+                }
+
+                OICFree(interfaceName);
+                OICFree(rtTypeName);
+                OICFree(uriQuery);
+                OICFree(uriWithoutQuery);
+            }
+        }
+
         if ((result =
             OCConvertPayload(payload, CAToOCPayloadFormat(requestInfo.info.payloadFormat),
                             &requestInfo.info.payload, &requestInfo.info.payloadSize))

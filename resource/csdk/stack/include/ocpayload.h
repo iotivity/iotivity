@@ -114,7 +114,8 @@ void OC_CALL OCRepPayloadAppend(OCRepPayload* parent, OCRepPayload* child);
 
 bool OC_CALL OCRepPayloadSetUri(OCRepPayload* payload, const char* uri);
 
-bool OC_CALL OCRepPayloadSetInterfaceType(OCRepPayload* payload, OCPayloadInterfaceType type);
+bool OC_CALL OCRepPayloadSetPayloadRepType(OCRepPayload* payload,
+                                           OCPayloadRepresentationType type);
 
 bool OC_CALL OCRepPayloadAddResourceType(OCRepPayload* payload, const char* resourceType);
 bool OC_CALL OCRepPayloadAddInterface(OCRepPayload* payload, const char* iface);

@@ -942,28 +942,36 @@ static int64_t OCConvertRepPayload(OCRepPayload *payload, uint8_t *outPayload, s
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
 
-    int isBatch = 0;
-    if (payload != NULL && payload->ifType == PAYLOAD_BATCH_INTERFACE)
-    {
-        isBatch = 1;
-    }
-
-    size_t arrayCount = 0;
+    size_t objectCount = 0;
     for (OCRepPayload *temp = payload; temp; temp = temp->next)
     {
-        arrayCount++;
+        objectCount++;
     }
-    CborEncoder rootArray;
-    if (arrayCount > 1 || isBatch)
+
+    int isColResource = 0;
+    if (payload != NULL && (payload->repType == PAYLOAD_REP_ARRAY))
     {
-        err |= cbor_encoder_create_array(&encoder, &rootArray, arrayCount);
+        isColResource = 1;
+    }
+
+    // As per OCF spec
+    // 1. Create an array of objects for collection resource payload when 0 <=objectCount <=1
+    //    for ll and batch interfaces.
+    // 2. Create single object for non collection resource payload when 0 <= objectCount <= 1
+    //    for non batch interfaces.
+    // 3. Create an array of objects for any kind of resource when objectCount > 1 and for any
+    //    interfaces.
+    CborEncoder rootArray;
+    if ((objectCount > 1) ||(objectCount <= 1 && isColResource))
+    {
+        err |= cbor_encoder_create_array(&encoder, &rootArray, objectCount);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Failed adding rep root map");
     }
 
     while (payload != NULL && (err == CborNoError))
     {
         CborEncoder rootMap;
-        err |= cbor_encoder_create_map(((arrayCount == 1 && !isBatch)? &encoder: &rootArray),
+        err |= cbor_encoder_create_map(((objectCount == 1 && !isColResource)? &encoder: &rootArray),
                                             &rootMap, CborIndefiniteLength);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Failed creating root map");
 
@@ -971,12 +979,13 @@ static int64_t OCConvertRepPayload(OCRepPayload *payload, uint8_t *outPayload, s
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Failed setting rep payload");
 
         // Close main array
-        err |= cbor_encoder_close_container(((arrayCount == 1 && !isBatch) ? &encoder: &rootArray),
+        err |= cbor_encoder_close_container(((objectCount == 1 && !isColResource) ? &encoder: &rootArray),
                 &rootMap);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Failed closing root map");
         payload = payload->next;
     }
-    if (arrayCount > 1 || isBatch)
+
+    if (objectCount > 1 || (objectCount <= 1 && isColResource))
     {
         err |= cbor_encoder_close_container(&encoder, &rootArray);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Failed closing root array");

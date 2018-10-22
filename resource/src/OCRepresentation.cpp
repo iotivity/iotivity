@@ -83,9 +83,13 @@ namespace OC
             if (!root)
             {
                 root = r.getPayload();
-                if (r.getInterfaceType() == InterfaceType::BatchParent)
+                if (r.isCollectionResource())
                 {
-                    root->ifType = PAYLOAD_BATCH_INTERFACE;
+                    root->repType = PAYLOAD_REP_ARRAY;
+                }
+                else
+                {
+                    root->repType = PAYLOAD_REP_OBJECT_ARRAY;
                 }
             }
             else
@@ -401,6 +405,16 @@ namespace OC
     InterfaceType OCRepresentation::getInterfaceType() const
     {
         return m_interfaceType;
+    }
+
+    void OCRepresentation::setIsCollectionResource(bool isColResource)
+    {
+        m_isCollectionResource = isColResource;
+    }
+
+    bool OCRepresentation::isCollectionResource() const
+    {
+        return m_isCollectionResource;
     }
 
     size_t calcArrayDepth(const size_t dimensions[MAX_REP_ARRAY_DEPTH])
