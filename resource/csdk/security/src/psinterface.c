@@ -687,7 +687,7 @@ OCStackResult ResetSecureResourceInPS(void)
     }
 
     SRMDeInitSecureResources();
-    InitSecureResources();
+    SRMInitSecureResources();
     OIC_LOG(DEBUG, TAG, "ResetSecureResourceINPS OUT");
 
 exit:
