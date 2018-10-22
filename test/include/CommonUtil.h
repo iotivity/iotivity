@@ -34,6 +34,8 @@
 #include <arpa/inet.h>
 #endif
 #ifdef HAVE_WINDOWS_H
+#undef _WINSOCKAPI_
+#define _WINSOCKAPI_
 #include <windows.h>
 #include <direct.h>
 #include <process.h>

@@ -1133,7 +1133,7 @@ TEST_F(RIServerTest_btc, SendResponse_USV_N)
 TEST_F(RIServerTest_btc, GetResourceHandleAtUri_SRC_P)
 {
     m_ResourceHandle = OCPlatform::getResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
-    EXPECT_NE(NULL, m_ResourceHandle);
+    EXPECT_NE((OCResourceHandle)NULL, m_ResourceHandle);
 }
 #endif
 
@@ -1151,6 +1151,6 @@ TEST_F(RIServerTest_btc, GetResourceHandleAtUri_SRC_P)
 TEST_F(RIServerTest_btc, GetResourceHandleAtUri_ESV_P)
 {
     m_ResourceHandle = OCPlatform::getResourceHandleAtUri(m_EmptyStr);
-    EXPECT_EQ(NULL, m_ResourceHandle);
+    EXPECT_EQ((OCResourceHandle)NULL, m_ResourceHandle);
 }
 #endif

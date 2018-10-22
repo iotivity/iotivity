@@ -22,6 +22,10 @@
 #include "IotivityTest_Logger.h"
 #include "SecurityCommonUtil.h"
 
+#ifdef __WINDOWS__
+std::string g_appName;
+#endif
+
 #define CTX_OWNERSHIP "Ownership Transfer"
 #define CTX_PAIRWISE_DEVICE "Pairwise Provisioning"
 

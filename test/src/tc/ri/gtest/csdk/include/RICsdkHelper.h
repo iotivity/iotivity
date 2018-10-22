@@ -77,7 +77,7 @@ namespace PH = std::placeholders;
 #define DATA_MODEL_VERSION "myDeviceModelVersions"
 #define TEMPERATURE_TYPE "oic.r.temperature"
 #define TEMPERATURE_URI "/test/ri/csdk/temperature"
-
+#define RESOURCE_TYPE "%s/oic/res?rt="
 //Context value set
 #define DEFAULT_CONTEXT_VALUE 0x99
 
@@ -88,8 +88,14 @@ constexpr char PLATFORM_DISCOVERY_QUERY[]
 { "%s/oic/p" };
 constexpr char ALL_RESOURCE_DISCOVERY_QUERY[]
 { "%s/oic/res" };
+#ifdef __WINDOWS__
+constexpr char TEMPERATURE_RESOURCE_DISCOVERY_QUERY[]
+{ RESOURCE_TYPE TEMPERATURE_TYPE };
+#endif
+#ifndef __WINDOWS__
 constexpr char TEMPERATURE_RESOURCE_DISCOVERY_QUERY[]
 { "%s/oic/res?rt="TEMPERATURE_TYPE };
+#endif
 constexpr char LIGHT_RESOURCE_DISCOVERY_QUERY[]
 { "%s/oic/res?rt=core.light" };
 constexpr char INTERFACE_DISCOVERY_QUERY[]

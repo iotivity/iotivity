@@ -1,7 +1,7 @@
 '''
 /******************************************************************
 *
-* Copyright 2016 Samsung Electronics All Rights Reserved.
+* Copyright 2017 Granite River Labs All Rights Reserved.
 *
 *
 *
@@ -24,7 +24,7 @@
 #
 ##
 
-print '\n---------------Started Building RI for Windows---------------\n'
+print '\n---------------Started Building CA for Windows---------------\n'
 
 Import('env_windows')
 import os

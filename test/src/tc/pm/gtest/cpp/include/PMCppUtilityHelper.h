@@ -70,7 +70,7 @@ using namespace OC;
 #define DP_PIN_LENGTH 8
 #define CRED_ID_ONE 1
 
-#ifdef __LINUX__
++#if defined (__LINUX__) || defined(__WINDOWS__)
 #define ALLOWED_NETWORK "eth0"
 #elif __TIZEN__
 #define ALLOWED_NETWORK "wlan"

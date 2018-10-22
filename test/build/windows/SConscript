@@ -62,6 +62,7 @@ iotivity_common_includes_paths = [
     iotivity_root + '/resource/include',
     iotivity_root + '/resource/csdk/include',
     iotivity_root + '/resource/csdk/resource-directory/include',
+    iotivity_root + '/out/windows/win32/' + target_arch + '/' + release_dir + '/resource/c_common'
 ]
 
 iotivity_test_include_paths = [ iotivity_test_root + '/include' ]

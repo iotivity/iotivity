@@ -87,6 +87,7 @@ include_paths = [
     iotivity_root + '/resource/csdk/security/include',
     iotivity_root + '/resource/csdk/ocsocket/include',
     iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/csdk/resource-directory/include'
     iotivity_root + '/resource/csdk/logger/include',
     iotivity_root + '/resource/c_common/',
     iotivity_root + '/resource/oc_logger/include',
@@ -95,7 +96,8 @@ include_paths = [
     iotivity_root + '/extlibs/timer/',
     iotivity_root + '/extlibs/tinycbor/tinycbor/src/',
     iotivity_root + '/extlibs/mbedtls/mbedtls/include',
-    iotivity_root + '/extlibs/timer/' 
+    iotivity_root + '/extlibs/timer/',
+    iotivity_lib_path + '/resource/c_common'
 ]
 
 libs = Split('Ws2_32 common_util boost_filesystem boost_thread boost_system c_common oc octbstack oc_logger_internal connectivity_abstraction_internal coap')

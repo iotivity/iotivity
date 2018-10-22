@@ -20,6 +20,8 @@
 
 #include "CommonUtil.h"
 #ifdef HAVE_WINDOWS_H
+#undef _WINSOCKAPI_
+#define _WINSOCKAPI_
 #include <windows.h>
 #endif
 

@@ -594,11 +594,11 @@ bool filterDevicesByIp(std::string ip) {
 
     printf("Device IP: %s \n\n",ip.c_str());
 
-    ipv4Eth0=CommonUtil::getLocalIPAll(0,"eth0")+"%eth0";
-    ipv4Wlan0=CommonUtil::getLocalIPAll(0,"wlan0")+"%wlan0";
+    ipv4Eth0=CommonUtil::getLocalIPAll((InternetProtocolVersion)0,"eth0")+"%eth0";
+    ipv4Wlan0=CommonUtil::getLocalIPAll((InternetProtocolVersion)0,"wlan0")+"%wlan0";
 
-    ipv6Eth0=CommonUtil::getLocalIPAll(1,"eth0")+"%eth0";
-    ipv6Wlan0=CommonUtil::getLocalIPAll(1,"wlan0")+"%wlan0";
+    ipv6Eth0=CommonUtil::getLocalIPAll((InternetProtocolVersion)1,"eth0")+"%eth0";
+    ipv6Wlan0=CommonUtil::getLocalIPAll((InternetProtocolVersion)1,"wlan0")+"%wlan0";
 
 #if defined(__TIZEN__)
 

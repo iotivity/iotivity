@@ -332,13 +332,13 @@ TEST_F(PMCppTest_stc, ProvisionPairwiseDevicesMultipleTimes_EG_N)
 #if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppTest_stc, setInputPinCallback_ALVC_N)
 {
-    if(!m_PMCppHelper.setInputPinCallback(PMCppHelper::inputPinCB, OC_STACK_OK))
+    if(!m_PMCppHelper.setInputPinCallback((InputPinCallback)PMCppHelper::inputPinCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.setInputPinCallback(PMCppHelper::inputPinCB, OC_STACK_DUPLICATE_REQUEST))
+    if(!m_PMCppHelper.setInputPinCallback((InputPinCallback)PMCppHelper::inputPinCB, OC_STACK_DUPLICATE_REQUEST))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
@@ -392,13 +392,13 @@ TEST_F(PMCppTest_stc, registerInputPinCallback_ALVC_N)
 #if defined(__LINUX__) || defined(__TIZEN__) || defined(__WINDOWS__)
 TEST_F(PMCppTest_stc, SetDisplayPinCB_ALVC_N)
 {
-    if(!m_PMCppHelper.setDisplayPinCB(PMCppHelper::inputPinCB, OC_STACK_OK))
+    if(!m_PMCppHelper.setDisplayPinCB((GeneratePinCallback)PMCppHelper::inputPinCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
 
-    if(!m_PMCppHelper.setDisplayPinCB(PMCppHelper::inputPinCB, OC_STACK_DUPLICATE_REQUEST))
+    if(!m_PMCppHelper.setDisplayPinCB((GeneratePinCallback)PMCppHelper::inputPinCB, OC_STACK_DUPLICATE_REQUEST))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
