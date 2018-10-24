@@ -1388,6 +1388,10 @@ static int verifyIdentity( void *data, mbedtls_x509_crt *crt, int depth, uint32_
     OC_UNUSED(data); // no need to pass extra data
     OC_UNUSED(flags); // we do not remove any flags
     static UuidContext_t ctx = { NULL };
+    if (NULL == g_getIdentityCallback)
+    {
+        return MBEDTLS_ERR_X509_FEATURE_UNAVAILABLE;
+    }
     g_getIdentityCallback(&ctx, crt->raw.p, crt->raw.len);
     if (0 == depth) // leaf certificate
     {
