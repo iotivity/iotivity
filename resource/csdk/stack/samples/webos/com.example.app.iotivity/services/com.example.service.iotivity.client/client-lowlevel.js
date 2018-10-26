@@ -18,164 +18,204 @@
  *
  *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
-var intervalId, handleReceptacle = {}, iotivity = require("iotivity-node/lowlevel");
-var StorageHandler = require("iotivity-node/lib/CustomStorageHandler");
+var intervalId, handleReceptacle = {}, iotivity = require('iotivity-node/lowlevel');
+var StorageHandler = require('iotivity-node/lib/CustomStorageHandler');
 var observeHandles = [];
 var observeCount = 0;
+const SVR_CLIENT = 'oic_svr_db_client.dat';
+var discoverTimer;
+var discoverHandle = {};
 
-returnNoResponse = function(callback) {
-    setTimeout(function() {
-        console.log("No response");
-        callback({});
-        clearInterval( intervalId );
-        iotivity.OCStop();
-    }, 5000, null);
+var discoveredDevices = [];
+
+function setDiscoveryTimeOut(callback, time) {
+    discoverTimer = setTimeout(function () {
+        if (discoveredDevices.length === 0)
+            console.log('Resource not found');
+        callback(discoveredDevices);
+        discoveredDevices = [];
+        if (discoverHandle.handle)
+            iotivity.OCCancel(discoverHandle.handle, iotivity.OCQualityOfService.OC_HIGH_QOS, null);
+        discoverHandle = {};
+    }, time, null);
 };
 
-function assembleRequestUrl( eps, path ) {
+var isActive = false;
+module.exports.startClient = function () {
+    if (!isActive) {
+        isActive = true;
+        iotivity.OCRegisterPersistentStorageHandler(StorageHandler(SVR_CLIENT));
+        iotivity.OCInit(null, 0, iotivity.OCMode.OC_CLIENT_SERVER);
+
+        intervalId = setInterval(function () {
+            iotivity.OCProcess();
+        }, 1000);
+    }
+};
+
+function stopClient() {
+    if (isActive) {
+        console.log('stopClient called');
+        if (discoverHandle.handle)
+            iotivity.OCCancel(discoverHandle.handle, iotivity.OCQualityOfService.OC_HIGH_QOS, null);
+        discoverHandle = {};
+        if (observeCount > 0) {
+            for (var index = 0; index < observeHandles.size(); index++) {
+                console.log('Cancel observation');
+                iotivity.OCCancel(observeHandles[index].handle, iotivity.OCQualityOfService.OC_HIGH_QOS, null);
+            }
+            observeHandles.length = 0;
+            observeCount = 0;
+        }
+        clearInterval(intervalId);
+        iotivity.OCStop();
+        isActive = false;
+    }
+}
+
+function assembleRequestUrl(eps, path) {
     var endpoint;
     var endpointIndex;
     var result;
-    for ( endpointIndex in eps ) {
-        endpoint = eps[ endpointIndex ];
-        if ( endpoint.tps  === "coaps" ) {
-            result = ( endpoint.tps + "://" +
-            ( endpoint.family & iotivity.OCTransportFlags.OC_IP_USE_V6 ? "[" : "" ) +
-            endpoint.addr.replace( /[%].*$/, "" ) +
-            ( endpoint.family & iotivity.OCTransportFlags.OC_IP_USE_V6 ? "]" : "" ) +
-            ":" + endpoint.port ) + path;
-            console.log( "GET request to " + result );
+    for (endpointIndex in eps) {
+        endpoint = eps[endpointIndex];
+        if (endpoint.tps === 'coaps') {
+            result = (endpoint.tps + '://' +
+                (endpoint.family & iotivity.OCTransportFlags.OC_IP_USE_V6 ? '[' : '') +
+                endpoint.addr.replace(/[%].*$/, '') +
+                (endpoint.family & iotivity.OCTransportFlags.OC_IP_USE_V6 ? ']' : '') +
+                ':' + endpoint.port) + path;
+            console.log('GET request to ' + result);
             return result;
         }
     }
-    throw new Error( "No secure endpoint found!" );
+    throw new Error('No secure endpoint found!');
 }
 
-module.exports.startDiscovery = function(callback) {
-
-    console.log("Issuing discovery request");
-
-    iotivity.OCInit(null, 0, iotivity.OCMode.OC_CLIENT );
-    clearInterval( intervalId );
-    intervalId = setInterval(function() {
-        iotivity.OCProcess();
-    }, 1000);
-
+module.exports.startDiscovery = function (callback) {
+    console.log('Issuing discovery request');
     // Discover resources and list them
+
+    if (discoverHandle.handle) {
+        console.log('reset discovery');
+        discoveredDevices = [];
+        iotivity.OCCancel(discoverHandle.handle, iotivity.OCQualityOfService.OC_HIGH_QOS, null);
+    }
+
     iotivity.OCDoResource(
-
-        // The bindings fill in this object
-        handleReceptacle,
-
+        discoverHandle,
         iotivity.OCMethod.OC_REST_DISCOVER,
-
-        // Standard path for discovering resources
         iotivity.OC_MULTICAST_DISCOVERY_URI,
-
-        // There is no destination
         null,
-
-        // There is no payload
         null,
         iotivity.OCConnectivityType.CT_DEFAULT,
         iotivity.OCQualityOfService.OC_HIGH_QOS,
-        function(handle, response) {
-            console.log("Discovery response: "+ JSON.stringify(response, null, 4));
-            callback(response);
+        function (handle, response) {
+            console.log('Discovery response: ' + JSON.stringify(response, null, 4));
+            discoveredDevices.push(response);
             return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
         },
-
         // There are no header options
         null
     );
 
-    returnNoResponse(callback);
+    setDiscoveryTimeOut(callback, 5000);
 };
 
-module.exports.getResource = function(uri, destination, question, callback) {
-
-    console.log("Sending GET request");
+module.exports.getResource = function (uri, eps, destination, callback) {
+    console.log('Sending GET request');
     var getHandleReceptacle = {};
-    var payload = {
-        "type":iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
-        "values":{"question":question}
-    };
-
-    var getResourceHandler = function( handle, response ) {
-        var resources = response && response.payload && response.payload.resources,
-            resourceCount = resources ? resources.length : 0;
-
-        for (var index = 0; index < resourceCount; index++ ) {
-            if ( resources[ index ].uri === uri ) {
-                iotivity.OCDoResource(
-                    getHandleReceptacle,
-                    iotivity.OCMethod.OC_REST_GET,
-                    assembleRequestUrl( resources[ index ].eps, uri),
-                    destination,
-                    payload,
-                    iotivity.OCConnectivityType.CT_DEFAULT,
-                    iotivity.OCQualityOfService.OC_HIGH_QOS,
-                    function( handle, response ){
-                        console.log( "Received response to GET request:" );
-                        console.log( JSON.stringify( response, null, 4 ) );
-                        callback( response );
-                        setTimeout(function() {
-                            clearInterval( intervalId );
-                            iotivity.OCStop();
-                        }, 1000, null);
-                        return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
-                    },
-                    null
-                );
-            }
-        }
+    var getResourceHandler = function (handle, response) {
+        console.log('Received response to GET request:');
+        console.log(JSON.stringify(response, null, 4));
+        callback(response);
         return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
     };
 
-    iotivity.OCRegisterPersistentStorageHandler(StorageHandler("oic_svr_db_client.dat"));
-    iotivity.OCInit(null, 0, iotivity.OCMode.OC_CLIENT_SERVER );
-    clearInterval( intervalId );
-    intervalId = setInterval(function() {
-        iotivity.OCProcess();
-    }, 1000);
-
     iotivity.OCDoResource(
         getHandleReceptacle,
-        iotivity.OCMethod.OC_REST_DISCOVER,
-        iotivity.OC_MULTICAST_DISCOVERY_URI,
-        null,
+        iotivity.OCMethod.OC_REST_GET,
+        eps && eps[0].tps === 'coaps' ? assembleRequestUrl(eps, uri) : uri,
+        destination,
         null,
         iotivity.OCConnectivityType.CT_DEFAULT,
         iotivity.OCQualityOfService.OC_HIGH_QOS,
         getResourceHandler,
-        null
-    );
-
-    returnNoResponse(callback);
+        null);
 };
 
-module.exports.deleteResource = function(uri, destination, callback) {
-
-    console.log("Sending DELETE request");
-    var deleteHandleReceptacle = {};
-    var deleteResponseHandler = function( handle, response ) {
-        console.log( "Received response to DELETE request:" );
-        console.log( JSON.stringify( response, null, 4 ) );
-        callback( response );
+module.exports.putResource = function (uri, eps, destination, key, value, callback) {
+    console.log('Sending PUT request');
+    console.log('uri: ' + uri);
+    var getHandleReceptacle = {};
+    var payload = {};
+    var values = {};
+    values[key] = value;
+    payload['values'] = values;
+    payload['type'] = iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION;
+    var putResourceHandler = function (handle, response) {
+        console.log('Received response to PUT request:');
+        console.log(JSON.stringify(response, null, 4));
+        callback(response);
         return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
     };
 
-    iotivity.OCRegisterPersistentStorageHandler(StorageHandler("oic_svr_db_client.dat"));
-    iotivity.OCInit(null, 0, iotivity.OCMode.OC_CLIENT_SERVER );
-    clearInterval( intervalId );
-    intervalId = setInterval(function() {
-        iotivity.OCProcess();
-    }, 1000);
+    iotivity.OCDoResource(
+        getHandleReceptacle,
+        iotivity.OCMethod.OC_REST_PUT,
+        eps && eps[0].tps === 'coaps' ? assembleRequestUrl(eps, uri) : uri,
+        destination,
+        payload,
+        iotivity.OCConnectivityType.CT_DEFAULT,
+        iotivity.OCQualityOfService.OC_HIGH_QOS,
+        putResourceHandler,
+        null
+    );
+};
+
+module.exports.postResource = function (uri, eps, destination, key, value, callback) {
+    console.log('Sending POST request');
+    console.log('uri: ' + uri);
+    var getHandleReceptacle = {};
+    var payload = {};
+    var values = {};
+    values[key] = value;
+    payload['values'] = values;
+    payload['type'] = iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION;
+    var putResourceHandler = function (handle, response) {
+        console.log('Received response to POST request:');
+        console.log(JSON.stringify(response, null, 4));
+        callback(response);
+        return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
+    };
+
+    iotivity.OCDoResource(
+        getHandleReceptacle,
+        iotivity.OCMethod.OC_REST_POST,
+        eps && eps[0].tps === 'coaps' ? assembleRequestUrl(eps, uri) : uri,
+        destination,
+        payload,
+        iotivity.OCConnectivityType.CT_DEFAULT,
+        iotivity.OCQualityOfService.OC_HIGH_QOS,
+        putResourceHandler,
+        null
+    );
+};
+
+module.exports.deleteResource = function (uri, eps, destination, callback) {
+    console.log('Sending DELETE request');
+    var deleteHandleReceptacle = {};
+    var deleteResponseHandler = function (handle, response) {
+        console.log('Received response to DELETE request:');
+        console.log(JSON.stringify(response, null, 4));
+        callback(response);
+        return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
+    };
 
     iotivity.OCDoResource(
         deleteHandleReceptacle,
         iotivity.OCMethod.OC_REST_DELETE,
-        uri,
+        eps && eps[0].tps === 'coaps' ? assembleRequestUrl(eps, uri) : uri,
         destination,
         null,
         iotivity.OCConnectivityType.CT_DEFAULT,
@@ -183,32 +223,28 @@ module.exports.deleteResource = function(uri, destination, callback) {
         deleteResponseHandler,
         null
     );
-
-    returnNoResponse(callback);
 };
 
-module.exports.observeResource = function(uri, destination, callback) {
-
-    console.log( "Observing " + uri );
+module.exports.observeResource = function (uri, eps, destination, token, callback) {
+    console.log('Observing ' + uri);
     var observeHandleReceptacle = {};
-    var observeResponseHandler = function( handle, response ) {
-        console.log( "Received response to OBSERVE request:" );
-        console.log( JSON.stringify( response, null, 4 ) );
-        callback(response);
+    var observeResponseHandler = function (handle, response) {
+        console.log('Received response to OBSERVE request:');
+        console.log(JSON.stringify(response, null, 4));
+
+        for (var index = 0; index < observeHandles.length; index++) {
+            if (observeHandles[index].handle === handle) {
+                observeHandles[index].callback(response);
+            }
+        }
+
         return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
     };
-
-    iotivity.OCRegisterPersistentStorageHandler(StorageHandler("oic_svr_db_client.dat"));
-    iotivity.OCInit(null, 0, iotivity.OCMode.OC_CLIENT_SERVER );
-    clearInterval( intervalId );
-    intervalId = setInterval(function() {
-        iotivity.OCProcess();
-    }, 1000);
 
     iotivity.OCDoResource(
         observeHandleReceptacle,
         iotivity.OCMethod.OC_REST_OBSERVE,
-        uri,
+        eps && eps[0].tps === 'coaps' ? assembleRequestUrl(eps, uri) : uri,
         destination,
         null,
         iotivity.OCConnectivityType.CT_DEFAULT,
@@ -218,32 +254,28 @@ module.exports.observeResource = function(uri, destination, callback) {
     );
 
     observeHandles[observeCount] = {
-        uri: uri,
-        handle: observeHandleReceptacle.handle
+        handle: observeHandleReceptacle.handle,
+        callback: callback,
+        messageToken: token
     };
     observeCount++;
 };
 
-module.exports.cancelObservation = function(uri) {
-    console.log( "Cancel observation " + uri );
-
-    for (var index = 0; index < observeCount; index++){
-        if (observeHandles[index].uri === uri){
-            iotivity.OCCancel(observeHandles[index].handle, iotivity.OCQualityOfService.OC_HIGH_QOS, null );
+module.exports.cancelObservation = function (token) {
+    console.log('Cancel observation start');
+    for (var index = 0; index < observeCount; index++) {
+        if (observeHandles[index].messageToken === token) {
+            iotivity.OCCancel(observeHandles[index].handle, iotivity.OCQualityOfService.OC_HIGH_QOS, null);
             observeCount--;
             observeHandles.splice(index, 1);
             break;
         }
     }
-
-    clearInterval( intervalId );
-    iotivity.OCStop();
 };
 
 //Exit gracefully when node service is killed
-process.on( "exit", function() {
+process.on('exit', function () {
     // Tear down the processing loop and stop iotivity
-    clearInterval( intervalId );
-    iotivity.OCStop();
-    console.log("=== client teardown ===");
-} );
+    stopClient();
+    console.log('=== client teardown ===');
+});

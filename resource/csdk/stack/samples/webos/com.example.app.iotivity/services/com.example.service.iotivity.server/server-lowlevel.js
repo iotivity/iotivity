@@ -21,27 +21,28 @@
 var intervalId, initialResourceCount;
 var iotivity = require("iotivity-node/lowlevel");
 var StorageHandler = require("iotivity-node/lib/CustomStorageHandler");
+const SVR_SERVER = 'oic_svr_db_server.dat';
 
-module.exports.startServer = function(resourceCallback) {
+module.exports.startServer = function (resourceCallback) {
     console.log("Starting OCF stack in server mode");
 
-    iotivity.OCRegisterPersistentStorageHandler(StorageHandler("oic_svr_db_server.dat"));
+    iotivity.OCRegisterPersistentStorageHandler(StorageHandler(SVR_SERVER));
 
     // Start iotivity and set up the processing loop
     iotivity.OCInit(null, 0, iotivity.OCMode.OC_SERVER);
 
-    intervalId = setInterval(function() {
+    intervalId = setInterval(function () {
         iotivity.OCProcess();
     }, 1000);
 
     iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
-                    iotivity.OC_RSRVD_SPEC_VERSION, "res.1.3.0");
+        iotivity.OC_RSRVD_SPEC_VERSION, "res.1.3.0");
     iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
-                    iotivity.OC_RSRVD_DATA_MODEL_VERSION, "webosose.1.0.0");
+        iotivity.OC_RSRVD_DATA_MODEL_VERSION, "webosose.1.0.0");
     iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
-                    iotivity.OC_RSRVD_DEVICE_NAME, "server.example");
+        iotivity.OC_RSRVD_DEVICE_NAME, "server.example");
     iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
-                    iotivity.OC_RSRVD_MFG_NAME, "lge-iotivity-node");
+        iotivity.OC_RSRVD_MFG_NAME, "lge-iotivity-node");
 
     console.log("Server ready");
 
@@ -52,7 +53,7 @@ module.exports.startServer = function(resourceCallback) {
 
 };
 
-module.exports.createResource = function(uri, types, q, a, observable, resourceCallback) {
+module.exports.createResource = function (uri, types, q, a, observable, resourceCallback) {
     console.log("Registering resources");
 
     var handleReceptacle = {};
@@ -60,24 +61,22 @@ module.exports.createResource = function(uri, types, q, a, observable, resourceC
     var properties = iotivity.OCResourceProperty.OC_DISCOVERABLE
         | iotivity.OCResourceProperty.OC_SECURE;
 
-    if(observable){
-        properties= properties|iotivity.OCResourceProperty.OC_OBSERVABLE;
+    if (observable) {
+        properties = properties | iotivity.OCResourceProperty.OC_OBSERVABLE;
     }
 
-    var sensor = require( "./mock-sensor" )()
-        .on( "change", function( data ) {
-            if(observerIds.length>0) {
-                iotivity.OCNotifyListOfObservers(
-                    handleReceptacle.handle,
-                    observerIds,
-                    {
-                        type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
-                        values: data
-                    },
-                    iotivity.OCQualityOfService.OC_HIGH_QOS );
-            }
+    var sensor = require("./mock-sensor")()
+        .on("change", function (data) {
+            iotivity.OCNotifyListOfObservers(
+                handleReceptacle.handle,
+                observerIds,
+                {
+                    type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
+                    values: data
+                },
+                iotivity.OCQualityOfService.OC_HIGH_QOS);
         }
-    );
+        );
 
     iotivity.OCCreateResource(
 
@@ -86,36 +85,17 @@ module.exports.createResource = function(uri, types, q, a, observable, resourceC
         types,
         iotivity.OC_RSRVD_INTERFACE_DEFAULT,
         uri,
-        function( flag, request ) {
-            console.log( "Entity handler called with flag = " + flag + " and the following request:" );
-            console.log( JSON.stringify( request, null, 4 ) );
+        function (flag, request) {
+            console.log("Entity handler called with flag = " + flag + " and the following request:");
+            console.log(JSON.stringify(request, null, 4));
 
-            // If we find the magic question in the request, we return the magic answer
-            if ( request && request.payload && request.payload.values &&
-                request.payload.values.question===q) {
-                iotivity.OCDoResponse( {
-                    requestHandle: request.requestHandle,
-                    resourceHandle: request.resource,
-                    ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
-                    payload: {
-                        type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
-                        values: {
-                            "answer": a
-                        }
-                    },
-                    resourceUri: uri,
-                    sendVendorSpecificHeaderOptions: []
-                } );
+            if (request && request.method === iotivity.OCMethod.OC_REST_DELETE) {
 
-                return iotivity.OCEntityHandlerResult.OC_EH_OK;
-            }
-            if ( request && request.method === iotivity.OCMethod.OC_REST_DELETE ) {
+                var result = iotivity.OCDeleteResource(handleReceptacle.handle);
 
-                var result = iotivity.OCDeleteResource( handleReceptacle.handle );
+                console.log("OCDeleteResource() has resulted in " + result);
 
-                console.log( "OCDeleteResource() has resulted in " + result );
-
-                iotivity.OCDoResponse( {
+                iotivity.OCDoResponse({
                     requestHandle: request.requestHandle,
                     resourceHandle: null,
                     ehResult: result ?
@@ -124,29 +104,29 @@ module.exports.createResource = function(uri, types, q, a, observable, resourceC
                     payload: null,
                     resourceUri: uri,
                     sendVendorSpecificHeaderOptions: []
-                } );
+                });
 
                 return iotivity.OCEntityHandlerResult.OC_EH_OK;
             }
-            if ( flag & iotivity.OCEntityHandlerFlag.OC_OBSERVE_FLAG ) {
-                if ( request.obsInfo.obsId !== 0 ) {
-                    if ( request.obsInfo.action === iotivity.OCObserveAction.OC_OBSERVE_REGISTER ) {
+            if (flag & iotivity.OCEntityHandlerFlag.OC_OBSERVE_FLAG) {
+                if (request.obsInfo.obsId !== 0) {
+                    if (request.obsInfo.action === iotivity.OCObserveAction.OC_OBSERVE_REGISTER) {
 
                         // Add new observer to list.
-                        observerIds.push( request.obsInfo.obsId );
-                    } else if ( request.obsInfo.action ===
-                            iotivity.OCObserveAction.OC_OBSERVE_DEREGISTER ) {
+                        observerIds.push(request.obsInfo.obsId);
+                    } else if (request.obsInfo.action ===
+                        iotivity.OCObserveAction.OC_OBSERVE_DEREGISTER) {
 
                         // Remove requested observer from list.
-                        observerIdIndex = observerIds.indexOf( request.obsInfo.obsId );
-                        if ( observerIdIndex >= 0 ) {
-                            observerIds.splice( observerIdIndex, 1 );
+                        observerIdIndex = observerIds.indexOf(request.obsInfo.obsId);
+                        if (observerIdIndex >= 0) {
+                            observerIds.splice(observerIdIndex, 1);
                         }
                     }
                 }
             }
-            if ( request.requestHandle ) {
-                iotivity.OCDoResponse( {
+            if (request.requestHandle && request.method === iotivity.OCMethod.OC_REST_GET) {
+                iotivity.OCDoResponse({
                     requestHandle: request.requestHandle,
                     resourceHandle: request.resource,
                     ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
@@ -156,12 +136,26 @@ module.exports.createResource = function(uri, types, q, a, observable, resourceC
                     },
                     resourceUri: uri,
                     sendVendorSpecificHeaderOptions: []
-                } );
+                });
             }
 
-        // By default we error out
-        return iotivity.OCEntityHandlerResult.OC_EH_OK;
-    }, properties);
+            if (request.requestHandle && request.method === iotivity.OCMethod.OC_REST_PUT) {
+                iotivity.OCDoResponse({
+                    requestHandle: request.requestHandle,
+                    resourceHandle: request.resource,
+                    ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
+                    payload: {
+                        type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
+                        values: sensor.setData(request.payload.values)
+                    },
+                    resourceUri: uri,
+                    sendVendorSpecificHeaderOptions: []
+                });
+            }
+
+            // By default we error out
+            return iotivity.OCEntityHandlerResult.OC_EH_OK;
+        }, properties);
 
     console.log(uri + " resource ready");
 
@@ -196,14 +190,14 @@ function updateServerStatus(resourceCallback) {
     resourceCallback(resources);
 };
 
-module.exports.stopServer = function() {
+module.exports.stopServer = function () {
     // Tear down the processing loop and stop iotivity
     clearInterval(intervalId);
     iotivity.OCStop();
     console.log("=== server teardown ===");
 };
 
-module.exports.deleteResource = function(uri, resourceCallback) {
+module.exports.deleteResource = function (uri, resourceCallback) {
     var countReceptacle = {};
     var handle;
 

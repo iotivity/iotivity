@@ -26,7 +26,7 @@ var subscriptions = {};
 var server = require('./server-lowlevel');
 
 function isEmpty(obj) {
-    for ( var key in obj) {
+    for (var key in obj) {
         if (obj.hasOwnProperty(key))
             return false;
     }
@@ -34,21 +34,21 @@ function isEmpty(obj) {
 };
 
 function subscriptionCallback(response) {
-    for (var i in subscriptions){
+    for (var i in subscriptions) {
         if (subscriptions.hasOwnProperty(i)) {
             var s = subscriptions[i];
             s.respond({
-                response : response,
-                returnValue : true,
-                subscribed : true
+                response: response,
+                returnValue: true,
+                subscribed: true
             });
         }
     }
 };
 
-function validateUri(_uri){
-    if(_uri.charAt(0)!="/")
-        return "/"+_uri;
+function validateUri(_uri) {
+    if (_uri.charAt(0) != "/")
+        return "/" + _uri;
     else return _uri;
 }
 
@@ -118,9 +118,9 @@ function validateUri(_uri){
     @endcode
 */
 var serverDiscoverable = service.register("startServer");
-serverDiscoverable.on("request", function(message) {
+serverDiscoverable.on("request", function (message) {
     if (message.isSubscription) {
-        if (isEmpty(subscriptions)){
+        if (isEmpty(subscriptions)) {
             subscriptions[message.uniqueToken] = message;
             server.startServer(subscriptionCallback);
         } else {
@@ -128,16 +128,16 @@ serverDiscoverable.on("request", function(message) {
         }
     } else {
         message.respond({
-            returnValue : false,
-            subscribed : false
+            returnValue: false,
+            subscribed: false
         });
     }
 });
-serverDiscoverable.on("cancel", function(message) {
+serverDiscoverable.on("cancel", function (message) {
     delete subscriptions[message.uniqueToken];
     if (isEmpty(subscriptions))
         server.stopServer();
-    message.respond({returnValue : true});
+    message.respond({ returnValue: true });
 });
 
 /*
@@ -189,7 +189,7 @@ serverDiscoverable.on("cancel", function(message) {
     }
     @endcode
 */
-service.register("createResource", function(message){
+service.register("createResource", function (message) {
     var uri = message.payload.uri;
     var types = message.payload.types;
     var interfaces = message.payload.interfaces;
@@ -197,16 +197,16 @@ service.register("createResource", function(message){
     var q = message.payload.question;
     var a = message.payload.answer;
 
-    if( !uri || !types || !q || !a ){
+    if (!uri || !types || !q || !a) {
         message.respond({
-            errorText : "invalid destination formats",
-            returnValue : false,
-            subscribed : false
+            errorText: "invalid destination formats",
+            returnValue: false,
+            subscribed: false
         });
     }
-    else{
+    else {
         server.createResource(validateUri(uri), types, q, a, observable, subscriptionCallback);
-        message.respond({ returnValue : true });
+        message.respond({ returnValue: true });
     }
 });
 
@@ -256,18 +256,17 @@ service.register("createResource", function(message){
     }
     @endcode
 */
-service.register("deleteResource", function(message){
+service.register("deleteResource", function (message) {
     var uri = message.payload.uri;
-    if(!uri){
+    if (!uri) {
         message.respond({
-            errorText : "invalid uri",
-            returnValue : false,
-            subscribed : false
+            errorText: "invalid uri",
+            returnValue: false
         });
         return;
     }
-    else{
+    else {
         server.deleteResource(validateUri(uri), subscriptionCallback);
-        message.respond({ returnValue : true });
+        message.respond({ returnValue: true });
     }
 });
