@@ -62,20 +62,20 @@ public class MainActivity extends Base {
                 "discoverResource"));
         menuMap.put("5", new MenuInfo("Discover Resource with Resource Type",
                 "discoverResourceByType"));
-        menuMap.put("7", new MenuInfo("Discover Non-Discoverable Resource",
+        menuMap.put("6", new MenuInfo("Discover Non-Discoverable Resource",
                 "discoverNonDiscoverableResource"));
-        menuMap.put("8", new MenuInfo("Start Monitoring", "startMonitoring"));
-        menuMap.put("9", new MenuInfo("Stop Monitoring", "stopMonitoring"));
-        menuMap.put("10", new MenuInfo("Get State", "getState"));
-        menuMap.put("11", new MenuInfo("Set Remote Attributes",
+        menuMap.put("7", new MenuInfo("Start Monitoring", "startMonitoring"));
+        menuMap.put("8", new MenuInfo("Stop Monitoring", "stopMonitoring"));
+        menuMap.put("9", new MenuInfo("Get State", "getState"));
+        menuMap.put("10", new MenuInfo("Set Remote Attributes",
                 "setRemoteAttributes"));
-        menuMap.put("12", new MenuInfo("Get Remote Attributes",
+        menuMap.put("11", new MenuInfo("Get Remote Attributes",
                 "getRemoteAttributes"));
-        menuMap.put("13", new MenuInfo("Start Caching", "startCaching"));
-        menuMap.put("14", new MenuInfo("Stop Caching", "stopCaching"));
-        menuMap.put("15", new MenuInfo("Get Cached Attributes",
+        menuMap.put("12", new MenuInfo("Start Caching", "startCaching"));
+        menuMap.put("13", new MenuInfo("Stop Caching", "stopCaching"));
+        menuMap.put("14", new MenuInfo("Get Cached Attributes",
                 "getCachedAttributes"));
-        menuMap.put("16", new MenuInfo("Get Cached State", "getCachedState"));
+        menuMap.put("15", new MenuInfo("Get Cached State", "getCachedState"));
         menuMap.put("0", new MenuInfo("Exit", "exitApplication"));
 
         RegisterApp("Resource Encapsulation", menuMap, new RETestAppAction());
