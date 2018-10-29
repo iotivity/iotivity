@@ -66,6 +66,8 @@
 #endif
 
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+#include "pkix_interface.h"
+
 #include <mbedtls/ssl_ciphersuites.h>
 #include <mbedtls/pk.h>
 #include <mbedtls/base64.h>
@@ -2235,6 +2237,20 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
                         if(CA_STATUS_OK != CAregisterPskCredentialsHandler(GetDtlsPskCredentials))
                         {
                             OIC_LOG(ERROR, TAG, "Failed to revert TLS credential handler.");
+                            ret = OC_EH_ERROR;
+                            break;
+                        }
+#endif // __WITH_DTLS__ or __WITH_TLS__
+                    }
+
+                    if(OIC_MANUFACTURER_CERTIFICATE== doxm->oxmSel)
+                    {
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+                        if(CA_STATUS_OK != CAregisterPkixInfoHandler(GetPkixInfo)
+                            || CA_STATUS_OK != CAregisterIdentityHandler(GetIdentityHandler)
+                            || CA_STATUS_OK != CAregisterGetCredentialTypesHandler(InitCipherSuiteList))
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to revert TLS default handlers.");
                             ret = OC_EH_ERROR;
                             break;
                         }
