@@ -47,13 +47,14 @@ public class MainActivity extends Base {
         menuMap.put("105", new MenuInfo("OCCloudGetCRL", "cloudGetCRL"));
         menuMap.put("106", new MenuInfo("OCCloudPostCRL", "cloudPostCRL"));
 
-        menuMap.put("108", new MenuInfo("OCCloudGetAclIdByDevice",
+        menuMap.put("107", new MenuInfo("OCCloudGetAclIdByDevice",
                 "cloudGetAclIdByDevice"));
-        menuMap.put("109", new MenuInfo("OCCloudAclIndividualGetInfo",
+        menuMap.put("108", new MenuInfo("OCCloudAclIndividualGetInfo",
                 "cloudAclIndividualGetInfo"));
 
         RegisterApp("Cloud Provisioning Manager", menuMap,
                 new Action(getApplicationContext()));
+
         showOutPut("Test");
 
     }
