@@ -2377,8 +2377,6 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
 
         SetCBORFormat(options, &numOptions);
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
-        propertiesToInclude[PSTAT_ISOP] = true;
-        propertiesToInclude[PSTAT_CM] = true;
         propertiesToInclude[PSTAT_TM] = true;
     }
 
