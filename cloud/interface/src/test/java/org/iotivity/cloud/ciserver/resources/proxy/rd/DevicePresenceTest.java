@@ -136,9 +136,6 @@ public class DevicePresenceTest {
         EntireDeviceHandler.onResponseReceived(response);
         HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
         assertTrue(mReq.getMethod() == RequestMethod.GET);
-        assertTrue(queryMap.get("di").contains("device1"));
-        assertTrue(queryMap.get("di").contains("device2"));
-        assertTrue(queryMap.get("di").contains("device3"));
         assertTrue(mReq.getObserve() == Observe.SUBSCRIBE);
     }
 

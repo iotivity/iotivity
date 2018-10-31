@@ -54,6 +54,7 @@ public class ResourceDirectoryResourceTest {
 
     @Before
     public void setUp() throws Exception {
+        RDServerTestUtils.createRDDatabase();
         mResponse = null;
         mockDevice = mock(CoapDevice.class);
         mLatch = new CountDownLatch(1);
@@ -73,7 +74,7 @@ public class ResourceDirectoryResourceTest {
 
     @After
     public void tearDown() throws Exception {
-        RDServerTestUtils.resetRDDatabase();
+        RDServerTestUtils.dropRDDatabase();
     }
 
     @Test

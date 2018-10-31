@@ -47,9 +47,15 @@ public class RDServerTestUtils {
         return request;
     }
 
-    public static void resetRDDatabase() throws Exception {
+    public static void createRDDatabase() throws Exception {
         MongoDB mongoDB = new MongoDB("127.0.0.1", Constants.RD_DB_NAME);
         mongoDB.createTable(Constants.RD_TABLE);
         mongoDB.createTable(Constants.PRESENCE_TABLE);
+    }
+
+    public static void dropRDDatabase() throws Exception {
+        MongoDB mongoDB = new MongoDB("127.0.0.1", Constants.RD_DB_NAME);
+        mongoDB.dropTable(Constants.RD_TABLE);
+        mongoDB.dropTable(Constants.PRESENCE_TABLE);
     }
 }

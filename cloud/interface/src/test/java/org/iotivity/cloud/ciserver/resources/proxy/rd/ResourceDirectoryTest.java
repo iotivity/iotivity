@@ -157,7 +157,7 @@ public class ResourceDirectoryTest {
     @Test
     public void testRDResourcePublishOnResponseReceived() throws Exception {
 
-        ResourceDirectory.AccountReceiveHandler accountReceiveHandler = mRdHandler.new AccountReceiveHandler(
+        ResourceDirectory.AccountReceiveHandler accountReceiveHandler = mRdHandler.new AccountReceiveHandler(ConnectorPool.getConnection("rd"),
                 rdPublishRequest, mMockDevice);
 
         IRequest request = makeResourcePublishRequest();
@@ -171,7 +171,7 @@ public class ResourceDirectoryTest {
     @Test
     public void testRDResourcePublishPayloadConverted() throws Exception {
 
-        ResourceDirectory.AccountReceiveHandler accountReceiveHandler = mRdHandler.new AccountReceiveHandler(
+        ResourceDirectory.AccountReceiveHandler accountReceiveHandler = mRdHandler.new AccountReceiveHandler(ConnectorPool.getConnection("rd"),
                 rdPublishRequest, mMockDevice);
 
         IRequest request = makeResourcePublishRequest();

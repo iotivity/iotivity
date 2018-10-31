@@ -52,6 +52,7 @@ public class ResourcePresenceResourceTest {
 
     @Before
     public void setUp() throws Exception {
+        RDServerTestUtils.createRDDatabase();
         mRDResource = new ResourceDirectoryResource();
         mResPresenceResource = new ResPresenceResource();
         mResponse = null;
@@ -72,7 +73,7 @@ public class ResourcePresenceResourceTest {
 
     @After
     public void tearDown() throws Exception {
-        RDServerTestUtils.resetRDDatabase();
+        RDServerTestUtils.dropRDDatabase();
     }
 
     @Test
