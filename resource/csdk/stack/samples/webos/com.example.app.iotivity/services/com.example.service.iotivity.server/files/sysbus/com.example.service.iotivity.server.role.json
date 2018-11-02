@@ -5,7 +5,6 @@
     "permissions" : [
 	{
         "service" : "com.example.service.iotivity.server*",
-        "inbound" : ["*"],
-        "outbound" : ["*"]
+        "outbound" : ["com.webos.service.activitymanager"]
     }]
 }

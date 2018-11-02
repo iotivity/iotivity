@@ -21,6 +21,9 @@
 var intervalId, initialResourceCount;
 var iotivity = require("iotivity-node/lowlevel");
 var StorageHandler = require("iotivity-node/lib/CustomStorageHandler");
+var state = false;
+var handleReceptacle = {};
+var observerIds = [];
 const SVR_SERVER = 'oic_svr_db_server.dat';
 
 module.exports.startServer = function (resourceCallback) {
@@ -35,14 +38,18 @@ module.exports.startServer = function (resourceCallback) {
         iotivity.OCProcess();
     }, 1000);
 
+    var handle = iotivity.OCGetResourceHandleAtUri("/oic/d");
+    iotivity.OCBindResourceTypeToResource(handle, "oic.d.light");
+
     iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
-        iotivity.OC_RSRVD_SPEC_VERSION, "res.1.3.0");
+        iotivity.OC_RSRVD_SPEC_VERSION, "ocf.1.0.0");
     iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
-        iotivity.OC_RSRVD_DATA_MODEL_VERSION, "webosose.1.0.0");
+        iotivity.OC_RSRVD_DATA_MODEL_VERSION, "ocf.res.1.3.0,ocf.sh.1.3.0");
     iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
-        iotivity.OC_RSRVD_DEVICE_NAME, "server.example");
+        iotivity.OC_RSRVD_DEVICE_NAME, "Binary Switch");
+
     iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
-        iotivity.OC_RSRVD_MFG_NAME, "lge-iotivity-node");
+        iotivity.OC_RSRVD_MFG_NAME, "iotivity-node");
 
     console.log("Server ready");
 
@@ -53,30 +60,15 @@ module.exports.startServer = function (resourceCallback) {
 
 };
 
-module.exports.createResource = function (uri, types, q, a, observable, resourceCallback) {
+module.exports.createResource = function (uri, types, observable, resourceCallback) {
     console.log("Registering resources");
 
-    var handleReceptacle = {};
-    var observerIds = [];
     var properties = iotivity.OCResourceProperty.OC_DISCOVERABLE
         | iotivity.OCResourceProperty.OC_SECURE;
 
     if (observable) {
         properties = properties | iotivity.OCResourceProperty.OC_OBSERVABLE;
     }
-
-    var sensor = require("./mock-sensor")()
-        .on("change", function (data) {
-            iotivity.OCNotifyListOfObservers(
-                handleReceptacle.handle,
-                observerIds,
-                {
-                    type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
-                    values: data
-                },
-                iotivity.OCQualityOfService.OC_HIGH_QOS);
-        }
-        );
 
     iotivity.OCCreateResource(
 
@@ -132,21 +124,31 @@ module.exports.createResource = function (uri, types, q, a, observable, resource
                     ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
                     payload: {
                         type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
-                        values: sensor.currentData()
+                        values: {
+                            "value": state,
+                            "rt": ["oic.r.switch.binary"],
+                            "if": ["oic.if.baseline", "oic.if.a"]
+                        }
                     },
                     resourceUri: uri,
                     sendVendorSpecificHeaderOptions: []
                 });
             }
 
-            if (request.requestHandle && request.method === iotivity.OCMethod.OC_REST_PUT) {
+            if (request.requestHandle &&
+                (request.method === iotivity.OCMethod.OC_REST_PUT)) {
+                state = request.payload.values.value;
                 iotivity.OCDoResponse({
                     requestHandle: request.requestHandle,
                     resourceHandle: request.resource,
                     ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
                     payload: {
                         type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
-                        values: sensor.setData(request.payload.values)
+                        values: {
+                            "value": state,
+                            "rt": ["oic.r.switch.binary"],
+                            "if": ["oic.if.baseline", "oic.if.a"]
+                        }
                     },
                     resourceUri: uri,
                     sendVendorSpecificHeaderOptions: []
@@ -157,7 +159,8 @@ module.exports.createResource = function (uri, types, q, a, observable, resource
             return iotivity.OCEntityHandlerResult.OC_EH_OK;
         }, properties);
 
-    console.log(uri + " resource ready");
+    iotivity.OCBindResourceInterfaceToResource(handleReceptacle.handle, "oic.if.a");
+    console.log("/binaryswitch" + " resource ready");
 
     updateServerStatus(resourceCallback);
 };
@@ -194,6 +197,7 @@ module.exports.stopServer = function () {
     // Tear down the processing loop and stop iotivity
     clearInterval(intervalId);
     iotivity.OCStop();
+    state = false;
     console.log("=== server teardown ===");
 };
 
@@ -219,4 +223,28 @@ module.exports.deleteResource = function (uri, resourceCallback) {
     }
 
     updateServerStatus(resourceCallback);
+};
+
+function notifyObservers() {
+    if (observerIds.length > 0) {
+        iotivity.OCNotifyListOfObservers(
+            handleReceptacle.handle,
+            observerIds,
+            {
+                type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
+                values: {
+                    "value": state,
+                    "rt": ["oic.r.switch.binary"],
+                    "if": ["oic.if.baseline", "oic.if.a"]
+                }
+            },
+            iotivity.OCQualityOfService.OC_HIGH_QOS);
+    }
+};
+
+module.exports.setBinarySwitchValue = function (value) {
+    console.log("updateResourceValue value:" + value);
+    state = value;
+    console.log("      state:" + state);
+    notifyObservers();
 };

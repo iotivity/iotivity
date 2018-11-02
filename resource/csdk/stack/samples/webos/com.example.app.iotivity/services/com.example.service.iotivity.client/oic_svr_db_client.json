@@ -24,38 +24,37 @@
                 "permission": 2
             }
         ],
-        "rowneruuid" : "31393139-3139-3139-3139-313931393139"
+        "rowneruuid": "32323232-3232-3232-3232-323232323232"
     },
     "pstat": {
-        "dos": {"s": 3, "p": false},
+        "dos": { "s": 3, "p": false },
         "isop": true,
-        "rowneruuid": "31393139-3139-3139-3139-313931393139",
         "cm": 0,
         "tm": 0,
         "om": 4,
-        "sm": 4
-        },
+        "sm": 4,
+        "rowneruuid": "32323232-3232-3232-3232-323232323232"
+    },
     "doxm": {
         "oxms": [0],
         "oxmsel": 0,
-        "sct": 9,
+        "sct": 1,
         "owned": true,
-        "deviceuuid": "31393139-3139-3139-3139-313931393139",
-        "devowneruuid": "31393139-3139-3139-3139-313931393139",
-        "rowneruuid": "31393139-3139-3139-3139-313931393139"
+        "deviceuuid": "32323232-3232-3232-3232-323232323232",
+        "devowneruuid": "32323232-3232-3232-3232-323232323232",
+        "rowneruuid": "32323232-3232-3232-3232-323232323232"
     },
-    "cred": {
+    "cred":{
         "creds": [
             {
                 "credid": 1,
-                "subjectuuid": "31313131-3131-3131-3131-313131313131",
+                "subjectuuid": "12345678-1234-1234-1234-123456789012",
                 "credtype": 1,
-                "privatedata": {
-                    "data": "BBBBBBBBBBBBBBBB",
+                "privatedata":{
+                    "data":"AAAAAAAAAAAAAAAA",
                     "encoding": "oic.sec.encoding.raw"
                 }
-            }
-        ],
-        "rowneruuid": "31393139-3139-3139-3139-313931393139"
+            }],
+        "rowneruuid": "32323232-3232-3232-3232-323232323232"
     }
 }

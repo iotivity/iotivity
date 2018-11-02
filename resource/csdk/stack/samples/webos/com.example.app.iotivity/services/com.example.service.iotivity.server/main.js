@@ -270,3 +270,16 @@ service.register("deleteResource", function (message) {
         message.respond({ returnValue: true });
     }
 });
+
+service.register("setBinarySwitchValue", function (message) {
+    var value = message.payload.value;
+    if (value === null) {
+        message.respond({
+            errorText: "invalid value",
+            returnValue: false
+        });
+        return;
+    }
+    server.setBinarySwitchValue(value);
+    message.respond({ returnValue: true });
+});
