@@ -441,7 +441,7 @@ OCStackResult UpdateResourceInPS(const char *databaseName, const char *resourceN
                     cborEncoderResult |= cbor_encode_byte_string(&resource, crlCbor, crlCborLen);
                     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Crl Value.");
                 }
-                if (strcmp(OIC_JSON_SP_NAME, resourceName) && crlCborLen)
+                if (strcmp(OIC_JSON_SP_NAME, resourceName) && spCborLen)
                 {
                     cborEncoderResult |= cbor_encode_text_string(&resource, OIC_JSON_SP_NAME, strlen(OIC_JSON_SP_NAME));
                     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding SP Name.");
