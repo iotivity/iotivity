@@ -36,8 +36,8 @@ void GetPkixInfo(PkiInfo_t * inf)
         return;
     }
 
-    GetPemOwnCert(&inf->crt, PRIMARY_CERT);
-    if (inf->crt.len == 0)
+    GetOwnCert(&inf->crt, PRIMARY_CERT);
+    if (NULL == inf->crt.cert || 0 == inf->crt.cert->len)
     {
         OIC_LOG_V(WARNING, TAG, "%s: empty certificate", __func__);
     }
@@ -48,8 +48,8 @@ void GetPkixInfo(PkiInfo_t * inf)
         OIC_LOG_V(WARNING, TAG, "%s: empty key", __func__);
     }
 
-    (void)GetPemCaCert(&inf->ca, TRUST_CA);
-    if (inf->ca.len == 0)
+    GetCaCert(&inf->ca, TRUST_CA);
+    if (NULL == inf->ca.cert || 0 == inf->ca.cert->len)
     {
         OIC_LOG_V(WARNING, TAG, "%s: empty CA cert", __func__);
     }
@@ -67,9 +67,17 @@ void GetManufacturerPkixInfo(PkiInfo_t * inf)
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
-    GetPemOwnCert(&inf->crt, MF_PRIMARY_CERT);
+    GetOwnCert(&inf->crt, MF_PRIMARY_CERT);
+    if (NULL == inf->crt.cert || 0 == inf->crt.cert->len)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: empty certificate", __func__);
+    }
     GetDerKey(&inf->key, MF_PRIMARY_CERT);
-    (void)GetPemCaCert(&inf->ca, MF_TRUST_CA);
+    GetCaCert(&inf->ca, MF_TRUST_CA);
+    if (NULL == inf->ca.cert || 0 == inf->ca.cert->len)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: empty CA cert", __func__);
+    }
     // CRL not provided
     inf->crl.data = NULL;
     inf->crl.len = 0;

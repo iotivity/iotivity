@@ -27,4 +27,7 @@ ca_common_src = [File(src) for src in (
 if connectivity_env['POSIX_SUPPORTED'] or target_os in ('windows'):
     ca_common_src.append(File('src/cathreadpool_pthreads.c'))
 
+if connectivity_env.get('SECURED') == '1':
+    ca_common_src.append(File('src/parsechain.c'))
+
 connectivity_env.AppendUnique(CA_SRC=ca_common_src)
