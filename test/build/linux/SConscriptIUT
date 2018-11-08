@@ -98,7 +98,7 @@ src = [
     test_src_root + '/common/commonutil/c_cpp/AM/bloodpressure2.cpp',
     test_src_root + '/common/commonutil/c_cpp/AM/dependencies/MySignals/bloodpressure.cpp',
     test_src_root + '/common/commonutil/c_cpp/ResourceHelper.cpp',
-    test_src_root + '/testapp/IUTSimulatorApp/c_cpp/IUTSimulator.cpp',
+    test_src_root + '/testapp/IUTSimulatorApp/c_cpp/src/IUTSimulator.cpp',
 ]
 
 iut_app = env_linux.Program(source = src, target = 'IUTSimulator', CPPPATH = include_paths,
