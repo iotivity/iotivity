@@ -57,8 +57,32 @@ SampleResource::SampleResource(void)
     m_pSensorTwin = nullptr;
 
     cout << "Current resource info: " << m_representation.getPayload()->values->str << endl;
-
 }
+
+SampleResource::SampleResource(std::string resourceUri,
+        std::string resourceTypeName,
+        std::string resourceInterface,
+        uint8_t resourceProperty) : SampleResource()
+{
+    m_resourceURI = resourceUri;
+    m_resourceTypeName = resourceTypeName;
+    m_resourceInterface = resourceInterface;
+    m_resourceProperty = resourceProperty;
+}
+
+SampleResource::SampleResource(std::string resourceUri,
+        std::string resourceTypeName,
+        std::string resourceInterface,
+        uint8_t resourceProperty,
+        OCRepresentation resourceRepresentation) : SampleResource()
+{
+    m_resourceURI = resourceUri;
+    m_resourceTypeName = resourceTypeName;
+    m_resourceInterface = resourceInterface;
+    m_resourceProperty = resourceProperty;
+    m_representation = resourceRepresentation;
+}
+
 
 SampleResource::~SampleResource(void)
 {
@@ -672,7 +696,11 @@ void SampleResource::handleScheduledActionSet()
     string toShow = "Scheduled ActionSet Executed!! Current Value : " + targetKey + " = "
             + targetValue;
     cout << toShow << endl;
+}
 
+void SampleResource::notifyObservers()
+{
+    this->notifyObservers(this);
 }
 
 void SampleResource::notifyObservers(void *param)
@@ -774,6 +802,20 @@ bool SampleResource::updateRepresentation(string key, OCRepresentation incomingR
     }
 
     return result;
+}
+
+bool SampleResource::updateRepresentation(string key, AttributeValue value)
+{
+    OCRepresentation representation = getRepresentation();
+
+    representation.setValue(key, value);
+    if (representation.getAttributeValue(key, value))
+    {
+        setResourceRepresentation(representation);
+        return true;
+    }
+
+    return false;
 }
 
 bool SampleResource::updateBatchRepresentation(string key, OCRepresentation incomingRep, bool &isError)
@@ -1144,7 +1186,16 @@ void SampleResource::supportCreateAndOthersForPUT(QueryParamsMap &queryParamsMap
     }
 }
 
-void SampleResource::setSensorTwin(SampleResource* p_sensorResource)
+void SampleResource::setSensorTwin(std::shared_ptr< SampleResource > sensorResource)
 {
-    m_pSensorTwin = p_sensorResource;
+    cout << "Setting " << sensorResource->getUri() << " as sensor" << endl;
+
+    if(sensorResource)
+    {
+        m_pSensorTwin = sensorResource;
+    }
+    else
+    {
+        cout << "Could not set sensor!" << endl;
+    }
 }

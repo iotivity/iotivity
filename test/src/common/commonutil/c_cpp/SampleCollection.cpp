@@ -185,8 +185,8 @@ void SampleCollection::handlePostRequest(QueryParamsMap &queryParamsMap,
                         OCRepPayloadValue *keyValues = it->getPayload()->values->obj->values;
                         while(keyValues)
                         {
-                            vector<SampleResource*> matchedChildren = getChildResourcesFromRepKey(keyValues->name);
-                            for (SampleResource* child : matchedChildren)
+                            vector< shared_ptr< SampleResource > > matchedChildren = getChildResourcesFromRepKey(keyValues->name);
+                            for (shared_ptr< SampleResource > child : matchedChildren)
                             {
                                 isUpdated = child->updateBatchRepresentation(keyValues->name, *it, isError);
                                 if (isError)
@@ -223,8 +223,7 @@ void SampleCollection::handlePostRequest(QueryParamsMap &queryParamsMap,
                     }
                     else
                     {
-                        response->setResourceRepresentation(batchRep,
-                                responseInterface);
+                        response->setResourceRepresentation(batchRep, BATCH_INTERFACE);
                     }
                 }
                 else
@@ -351,7 +350,7 @@ void SampleCollection::handleGetRequest(QueryParamsMap &queryParamsMap,
                 {
                     cout << "Found baseline/readonly query, adding rt & if into response payload" << endl;
 
-                    setBaselineResponse(allChildren, response);
+                    setBaselineResponse(response);
 
                 }
                 else if (queryValue.compare(LINK_INTERFACE) == 0)
@@ -379,9 +378,7 @@ void SampleCollection::handleGetRequest(QueryParamsMap &queryParamsMap,
                     }
 
                     batchRep.setChildren(tempRepList);
-                    responseInterface = BATCH_INTERFACE;
-
-                    response->setResourceRepresentation(batchRep, responseInterface);
+                    response->setResourceRepresentation(batchRep, BATCH_INTERFACE);
                 }
                 else
                 {
@@ -397,13 +394,13 @@ void SampleCollection::handleGetRequest(QueryParamsMap &queryParamsMap,
             else if (key.compare(RESOURCE_TYPE_KEY) == 0)
             {
                 vector< string > resourceTypeList;
-                vector < SampleResource* > matchedChildren = getChildResourcesFromType(queryValue);
+                vector < shared_ptr< SampleResource > > matchedChildren = getChildResourcesFromType(queryValue);
 
                 if (matchedChildren.size() > 0)
                 {
                     vector< OCRepresentation > requiredChild;
                     OCRepresentation requiredResponse;
-                    for (SampleResource* child : matchedChildren)
+                    for (shared_ptr< SampleResource > child : matchedChildren)
                     {
                         addIntoLinksArray(requiredChild, child);
                         cout << "The resource type  used in query is " << queryValue << endl;
@@ -424,7 +421,7 @@ void SampleCollection::handleGetRequest(QueryParamsMap &queryParamsMap,
     else if (m_resourceTypeNames.size() > 1)
     {
         cout << "No query found. As collection has mnulti value rt, responding as baseline:" << endl;
-        setBaselineResponse(allChildren, response);
+        setBaselineResponse(response);
     }
     else
     {
@@ -461,13 +458,27 @@ void SampleCollection::handleGetRequest(QueryParamsMap &queryParamsMap,
 
 }
 
-void SampleCollection::setBaselineResponse(vector<OCRepresentation> allChildren, shared_ptr<OCResourceResponse> response)
+void SampleCollection::setBaselineResponse(shared_ptr<OCResourceResponse> response)
 {
+    vector< OCRepresentation > allLinks;
+    for (unsigned int i = 0; i <  m_childResourceList.size(); i++)
+    {
+        addIntoLinksArray(allLinks, m_childResourceList[i]);
+    }
     OCRepresentation completeRep = m_representation;
-    completeRep.setValue(LINKS_KEY, allChildren);
+    completeRep.setValue(LINKS_KEY, allLinks);
     completeRep.setValue(NAME_KEY, m_collectionName);
     completeRep.setResourceInterfaces(m_resourceInterfaces);
     completeRep.setResourceTypes(m_resourceTypeNames);
+
+    vector<string> allResourceTypes = m_childResourceList[0]->getResourceTypes();
+    for (unsigned int i = 1; i <  m_childResourceList.size(); i++)
+    {
+        vector<string> childResourceTypes = m_childResourceList[i]->getResourceTypes();
+        allResourceTypes.insert(allResourceTypes.end(), childResourceTypes.begin(), childResourceTypes.end());
+    }
+    completeRep.setValue("rts", allResourceTypes);
+    completeRep.setValue("rts-m", allResourceTypes);
 
     response->setResourceRepresentation(completeRep, DEFAULT_INTERFACE);
 }
@@ -566,8 +577,14 @@ void SampleCollection::setIPVer(OCConnectivityType ipVer)
     m_ipVer = ipVer;
 }
 
-void SampleCollection::addChild(SampleResource* childResource)
+void SampleCollection::addChild(shared_ptr< SampleResource > childResource)
 {
+    if(!childResource)
+    {
+        cout << "No resource given to join to group!" << endl;
+        return;
+    }
+
     try
     {
         OCStackResult expectedResult = OCPlatform::bindResource(m_resourceHandle, childResource->getResourceHandle());
@@ -678,7 +695,7 @@ bool SampleCollection::isReadonly(string key)
     return readOnly;
 }
 
-void SampleCollection::addIntoLinksArray(vector< OCRepresentation >& childrenList, SampleResource* resource)
+void SampleCollection::addIntoLinksArray(vector< OCRepresentation >& childrenList, shared_ptr< SampleResource > resource)
 {
     OCRepresentation interimRep;
     OCRepresentation pRep;
@@ -721,10 +738,10 @@ void SampleCollection::addIntoLinksArray(vector< OCRepresentation >& childrenLis
     childrenList.push_back(interimRep);
 }
 
-vector< SampleResource* > SampleCollection::getChildResourcesFromType(string resourceType)
+vector< shared_ptr< SampleResource > > SampleCollection::getChildResourcesFromType(string resourceType)
 {
-    vector<SampleResource*> matchedChildren;
-    for (SampleResource* child : m_childResourceList )
+    vector< shared_ptr< SampleResource > > matchedChildren;
+    for (shared_ptr< SampleResource > child : m_childResourceList )
     {
         for (string currentResourceType : child->getResourceTypes())
         {
@@ -740,10 +757,10 @@ vector< SampleResource* > SampleCollection::getChildResourcesFromType(string res
     return matchedChildren;
 }
 
-vector< SampleResource* > SampleCollection::getChildResourcesFromRepKey(string key)
+vector< shared_ptr< SampleResource > > SampleCollection::getChildResourcesFromRepKey(string key)
 {
-    vector<SampleResource*> matchedChildren;
-    for (SampleResource* child : m_childResourceList )
+    vector< shared_ptr< SampleResource > > matchedChildren;
+    for (shared_ptr< SampleResource > child : m_childResourceList )
     {
         OCRepresentation rep = child->getRepresentation();
         if (rep.hasAttribute(key))

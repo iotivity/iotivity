@@ -40,21 +40,23 @@
 #include <arpa/inet.h>
 
 //#defines
-#define TAG                  "OCF_TAF_AGENT"
-#define CTT_TIMEOUT           600
-#define DEFAULT_CONTEXT_VALUE 0x99
-#define QOS_NON               0
-#define QOS_CON               1
-#define IPv4                  4
-#define IPv6                  6
-#define SLEEP_TIME            2
-#define JUSTWORKS             1
-#define RANDOMPIN             2
-#define MFG_CERT              3
-#define FRESH_CLIENT          1
-#define REUSE_CLIENT          3
-#define FRESH_SERVER          2
-#define REUSE_SERVER          4
+#define TAG                    "OCF_TAF_AGENT"
+#define URI_SIZE               255
+#define IP_WITH_INTERFACE_SIZE 302
+#define CTT_TIMEOUT            600
+#define DEFAULT_CONTEXT_VALUE  0x99
+#define QOS_NON                0
+#define QOS_CON                1
+#define IPv4                   4
+#define IPv6                   6
+#define SLEEP_TIME             2
+#define JUSTWORKS              1
+#define RANDOMPIN              2
+#define MFG_CERT               3
+#define FRESH_CLIENT           1
+#define REUSE_CLIENT           3
+#define FRESH_SERVER           2
+#define REUSE_SERVER           4
 
 //macros
 #define FREE(x)           if(x){free(x);x=NULL;}
@@ -77,8 +79,10 @@ bool gCTTLogsStarted = false;
 bool gCTTLogsResetTimeout = false;
 bool gCTTLogsTimeout = false;
 bool gSecured = false;
-char gIp[25];
-char gLocalIp[50];
+char gIp[45];
+int glocalIpVersion;
+char gLocalIp[IP_WITH_INTERFACE_SIZE];
+char gLocalNetworkInterface[256];
 char gPort[25];
 char gUuid[50];
 int gFd;
@@ -97,7 +101,6 @@ int addDir(char* path)
     struct stat st = {0};
     while (folder != NULL)
     {
-        printf("%s\n",folder);
         strcat(currentPath, folder);
         strcat(currentPath, "/");
         if (stat(folder, &st) == -1)
@@ -107,6 +110,23 @@ int addDir(char* path)
         folder = strtok (NULL, "/");
     }
     return errCode;
+}
+
+// Get first string between delimiters
+char* getStringBetween(const char *base, const char *delim_1, const char *delim_2)
+{
+    char *base_copy = strdup(base);
+    char *p1, *p2;
+    char *ret = NULL;
+    p1 = strstr(base_copy, delim_1);
+    if (p1)
+    {
+        p1 = p1 + strlen(delim_1);
+        p2 = strstr(p1, delim_2);
+        if (p2) {p2[0] = '\0'; ret = p1;}
+    }
+    free(base_copy);
+    return ret;
 }
 
 /*Replace String*/
@@ -164,7 +184,7 @@ char *replaceString(const char *str, const char *from, const char *to)
         retLen = orgLen + (toLen - fromLen) * count;
     }
     else    retLen = orgLen;
-    ret = malloc(retLen + 1);
+    ret = (char*) malloc(retLen + 1);
     if (ret == NULL)
     {
         goto end_repl_str;
@@ -201,8 +221,7 @@ end_repl_str:
     return ret;
 }
 
-/*Function to get the IP address of the machine where TAF is running*/
-void getIP(int ipVersion)
+void setLocalIPAddress(int ipVersion)
 {
     switch (ipVersion)
     {
@@ -213,7 +232,6 @@ void getIP(int ipVersion)
             if (getifaddrs(&ifAddress) == -1)
             {
                 OIC_LOG(ERROR, TAG, "Could not collect address of interfaces");
-                printf("Could not collect adress interfaces\n");
                 exit(EXIT_FAILURE);
             }
 
@@ -232,12 +250,15 @@ void getIP(int ipVersion)
                 }
             } while (ifAddress = ifAddress->ifa_next);
 
+            glocalIpVersion = 6;
             strcat(gLocalIp, ipv6Address);
             strcat(gLocalIp, "%");
             strcat(gLocalIp, ifAddress->ifa_name);
+            strcat(gLocalNetworkInterface, ifAddress->ifa_name);
             break;
 
         case IPv4:
+            glocalIpVersion = 4;
             //Works only on ubuntu
             FILE *fp = popen("hostname -I", "r");
             fscanf(fp, "%s", gLocalIp);
@@ -248,7 +269,6 @@ void getIP(int ipVersion)
     if(gLocalIp[0] == '\0')
     {
         OIC_LOG(ERROR, TAG, "Could not get Ip address");
-        printf("Could not get Ip address\n");
         exit(EXIT_FAILURE);
     }
 
@@ -256,7 +276,7 @@ void getIP(int ipVersion)
 }
 
 /*Send command to the IUT simulator*/
-void SendCommand(char *cmd)
+void SendCommand(const char *cmd)
 {
 
     if (cmd != NULL)
@@ -282,25 +302,24 @@ void SendCommand(char *cmd)
 }
 
 /*Find the value of the string in the log file*/
-void FindValue(char *searchString, char *value)
+void FindValue(const char *searchString, char *value)
 {
     FILE *fp1 = fopen(gIUTlog, "r");
-    char *line = NULL;
+    char line[MAX_LOG_V_BUFFER_SIZE];
     int i, j;
     size_t len = 0;
     ssize_t read;
     int lineNo = 0;
     if (fp1)
     {
-        OIC_LOG(DEBUG,TAG, "Inside File");
-        while ((read = getline(&line, &len, fp1)) != -1)
+        OIC_LOG(DEBUG, TAG, "Inside File");
+        while (fgets(line, MAX_LOG_V_BUFFER_SIZE - 1, fp1))
         {
             ++lineNo;
             if ( (strstr(line, searchString) != NULL) &&
                  (strstr(line , ":") != NULL)
                )
             {
-                OIC_LOG_V(INFO, TAG, "%s", line);
                 char *pos = strstr(line, ":");
                 char data;
                 for (i = 1, j = 0; * (pos + i) != '\0'; i++)
@@ -308,7 +327,6 @@ void FindValue(char *searchString, char *value)
                     data = *(pos + i);
                     if (!isspace(data))
                     {
-                        OIC_LOG_V(INFO, TAG, "data=%c",data);
                         *(value + j) = data;
                         j++;
                     }
@@ -325,10 +343,10 @@ void FindValue(char *searchString, char *value)
 }
 
 /*Find the key in the string*/
-void FindKey(char *searchString, char *key)
+void FindKey(const char *searchString, char *key)
 {
     FILE *fp1 = fopen(gIUTlog, "r");
-    char *line = NULL;
+    char line[MAX_LOG_V_BUFFER_SIZE];
     int i, j;
     size_t len = 0;
     ssize_t read;
@@ -336,14 +354,13 @@ void FindKey(char *searchString, char *key)
     if (fp1)
     {
         OIC_LOG(DEBUG,TAG, "Inside File");
-        while ((read = getline(&line, &len, fp1)) != -1)
+        while (fgets(line, MAX_LOG_V_BUFFER_SIZE - 1, fp1))
         {
             ++lineNo;
             if ( (strstr(line, ". ") != NULL) &&
                  //(strstr(line , "-") != NULL) &&
                  (strstr(line , searchString) != NULL))
             {
-                OIC_LOG_V(INFO, TAG, "%s", line);
                 char *pos = strstr(line, ".");
                 char data;
                 for (i = 0, j = 0; (i < 8) && (line[i] != *pos); i++)
@@ -351,7 +368,6 @@ void FindKey(char *searchString, char *key)
                     data = *(line + i);
                     if (!isspace(data))
                     {
-                        OIC_LOG_V(INFO, TAG, "data=%c",data);
                         *(key + j) = data;
                         j++;
                     }
@@ -360,7 +376,6 @@ void FindKey(char *searchString, char *key)
 
                 OIC_LOG_V(INFO, TAG, "value=%s", key);
             }
-            OIC_LOG_V(DEBUG, TAG, "line=%d",lineNo);
 
         }
         fclose(fp1);
@@ -406,23 +421,20 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
     if (strstr(messageXml, "<message>Waiting for CoAP response... ") == NULL &&
         strstr(messageXml, "<message>Please wait...") == NULL )
     {
-        OIC_LOG_V(INFO, TAG, "%s", messageXml);
-        printf("%s\n", messageXml);
+        OIC_LOG_V(INFO, TAG, "Received: \n%s", messageXml);
     }
 
     if (strstr(messageXml, "<message>Waiting for CoAP response... ") != NULL)
     {
         //SKIP
     }
-    else if ( strstr(messageXml , "<message>If IUT uses an OCF Rooted Certificate Chain") != NULL)
+    else if ( strstr(messageXml , "<message>If the device uses an OCF Rooted Certificate Chain") != NULL)
     {
         asprintf(&result,
                  "<actionResult><userDialogResponse><answer>Skip</answer></userDialogResponse></actionResult>");
     }
     else if ( strstr(messageXml , "<message>Please provide (paste) public key of CA (PEM type)") != NULL)
     {
-        OIC_LOG(INFO, TAG, "Please provide (paste) public key of CA (PEM type)");
-
         const char *publicKey =
             "-----BEGIN CERTIFICATE-----\n"
             "MIICBDCCAaugAwIBAgIIZ0QY0VJs8zIwCgYIKoZIzj0EAwIwSjELMAkGA1UEBhMC\n"
@@ -441,7 +453,6 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
         asprintf(&result,
                  "<actionResult><userDialogResponse><answer>Set_Value</answer><data>%s</data></userDialogResponse></actionResult>",
                  publicKey);
-        OIC_LOG_V(DEBUG, TAG, "TAF==Send response %s", result);
     }
     else if ( strstr(messageXml , "<message>Please enter PIN:") != NULL)
     {
@@ -453,7 +464,6 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
         asprintf(&result,
                  "<actionResult><userDialogResponse><answer>Set_Value</answer><data>%s</data></userDialogResponse></actionResult>",
                  gPinValue);
-        OIC_LOG_V(DEBUG, TAG, "TAF==Send response %s", result);
     }
     else if ( strstr(messageXml, "<message>Please initiate device to revert to \"ready for OTM\" state") != NULL ||
               strstr(messageXml, "<message>Please reset DUT's ACL in order to have empty list.") != NULL ||
@@ -465,25 +475,28 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
 	while(gInsideMainLoop == 0){
 	    sleep(1);
 	}
-        asprintf(&result,
-                 "<actionResult><userDialogResponse><answer>OK</answer></userDialogResponse></actionResult>");
+        asprintf(&result, "<actionResult><userDialogResponse><answer>OK</answer></userDialogResponse></actionResult>");
     }
     else if ( strstr(messageXml, "<message>Please cycle power on the IUT") != NULL)
     {
         /* Reset the IUTSimulator */
         gRestartFlag = 1;
         gReuseIUT = 1;
-        gIPDiscovered = 0
+        gIPDiscovered = 0;
         OIC_LOG(INFO, TAG, "Wait for TAF to discover IUT after reset");
         do {sleep(1);} while (!gIPDiscovered);
-        asprintf(&result,
-                 "<actionResult><userDialogResponse><answer>OK</answer></userDialogResponse></actionResult>");
+        asprintf(&result, "<actionResult><userDialogResponse><answer>OK</answer></userDialogResponse></actionResult>");
     }
     else if ( strstr(messageXml, "<message>Please reset the IUT") != NULL)
     {
         /* Reset the IUTSimulator */
         asprintf(&result,
                  "<actionResult><userDialogResponse><answer>OK</answer></userDialogResponse></actionResult>");
+    }
+    else if (strstr(messageXml, "<message>Does the Vendor Attestation Document have the following item checked:") != NULL)
+    {
+        asprintf(&result,
+                 "<actionResult><userDialogResponse><answer>Yes</answer></userDialogResponse></actionResult>");
     }
     else if (strstr(messageXml, "<message>Did IUT receive response:") != NULL)
     {
@@ -513,6 +526,7 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
         }
         else if (strstr(messageXml, "/BinarySwitchResURI") != NULL)
         {
+            OIC_LOG(INFO, TAG, "Changing value in /BinarySwitchResURI");
             strcpy(gCommandsArray[0], "34");
             strcpy(gCommandsArray[1], "1");
             strcpy(gCommandsArray[2], "value");
@@ -529,6 +543,7 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
         }
         else if (strstr(messageXml, "/AirFlowResURI") != NULL)
         {
+            OIC_LOG(INFO, TAG, "Changing value in /AirFlowResURI");
             strcpy(gCommandsArray[0], "34");
             strcpy(gCommandsArray[1], "5");
             strcpy(gCommandsArray[2], "speed");
@@ -538,7 +553,7 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
         }
         else if (strstr(messageXml, "/TemperatureResURI") != NULL)
         {
-            OIC_LOG(INFO, TAG, "Temperature URI");
+            OIC_LOG(INFO, TAG, "Changing value in /TemperatureResURI");
             strcpy(gCommandsArray[0], "34");
             strcpy(gCommandsArray[1], "3");
             strcpy(gCommandsArray[2], "temperature");
@@ -548,14 +563,15 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
         }
         else if (strstr(messageXml, "/myPulseRateResUR") != NULL)
         {
-            printf("Resource handled automatically.\n");
+            OIC_LOG(INFO, TAG, "Resource /myPulseRateResUR handled automatically.\n");
         }
         else if (strstr(messageXml, "/BloodPressureMonitorAMResURI") != NULL)
         {
-            printf("Resource handled automatically.\n");
+            OIC_LOG(INFO, TAG, "Resource /BloodPressureMonitorAMResURI handled automatically.\n");
         }
         else
         {
+            OIC_LOG(ERROR, TAG, "Unknow resource, cannot be handled");
             sleep(2);
             asprintf(&result, "<actionResult><userDialogResponse><answer>Skip</answer></userDialogResponse></actionResult>");
         }
@@ -581,13 +597,13 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
     }
     else if (strstr(messageXml, "<message>Please have the IUT establish a TCP connection") != NULL)
     {
+        OIC_LOG(INFO, TAG, "IUT establishing TCP connection");
             SendCommand("12");
             sleep(2 * SLEEP_TIME);
             SendCommand("17");
             FindKey("/BinarySwitchResURI", val);
             SendCommand(val);
             sleep(SLEEP_TIME);
-            SendCommand("n");
             FindKey("coaps+tcp", val);
             SendCommand(val);
             sleep(SLEEP_TIME);
@@ -597,53 +613,26 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
     }
     else if (strstr(messageXml, " send a unicast RETRIEVE request (i.e. CoAP GET) to ") != NULL)
     {
-        if (strstr(messageXml, "/BinarySwitchResURI") != NULL)
+        char resourceUri[URI_SIZE] = "/";
+        strcat(resourceUri, getStringBetween(messageXml, "\"/", "\""));
+        OIC_LOG_V(INFO, TAG, "Sending RETRIVE request to %s", resourceUri);
+
+        SendCommand("12");
+        sleep(2 * SLEEP_TIME);
+        SendCommand("17");
+        FindKey(resourceUri, val);
+        SendCommand(val);
+        sleep(SLEEP_TIME);
+        if (strstr(messageXml, "over TCP") != NULL)
         {
-            OIC_LOG(INFO, TAG, "Inside /BinarySwitchResURI");
-            SendCommand("12");
-            sleep(2 * SLEEP_TIME);
-            SendCommand("17");
-            FindKey("/BinarySwitchResURI", val);
+            FindKey("coaps+tcp", val);
             SendCommand(val);
-            sleep(SLEEP_TIME);
-            if (strstr(messageXml, "over TCP") != NULL)
-            {
-                SendCommand("n");
-                FindKey("coaps+tcp", val);
-                SendCommand(val);
-            }
-            else
-            {
-                SendCommand("y");
-            }
-            sleep(SLEEP_TIME);
-        }
-        else if (strstr(messageXml, "/TemperatureResURI") != NULL)
-        {
-            OIC_LOG(INFO, TAG, "Inside /TemperatureResURI");
-            SendCommand("12");
-            sleep(2 * SLEEP_TIME);
-            SendCommand("17");
-            FindKey("/TemperatureResURI", val);
-            SendCommand(val);
-            sleep(SLEEP_TIME);
-            if (strstr(messageXml, "over TCP") != NULL)
-            {
-                SendCommand("n");
-                FindKey("coaps+tcp", val);
-                SendCommand(val);
-            }
-            else
-            {
-                SendCommand("y");
-            }
-            sleep(SLEEP_TIME);
         }
         else
         {
-            asprintf(&result,
-                     "<actionResult><userDialogResponse><answer>CANCEL</answer></userDialogResponse></actionResult>");
+             SendCommand("0");
         }
+        sleep(SLEEP_TIME);
     }
     else if (strstr(messageXml, "send a unicast partial UPDATE request") != NULL)
     {
@@ -659,13 +648,12 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
             sleep(SLEEP_TIME);
             if (strstr(messageXml, "over TCP") != NULL)
             {
-                SendCommand("n");
                 FindKey("coaps+tcp", val);
                 SendCommand(val);
             }
             else
             {
-                SendCommand("y");
+                SendCommand("0");
             }
             sleep(SLEEP_TIME);
             FindValue("value : ", value);
@@ -675,13 +663,12 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
             sleep(SLEEP_TIME);
             if (strstr(messageXml, "over TCP") != NULL)
             {
-                SendCommand("n");
                 FindKey("coaps+tcp", val);
                 SendCommand(val);
             }
             else
             {
-                SendCommand("y");
+                SendCommand("0");
             }
             sleep(SLEEP_TIME);
             SendCommand("value");
@@ -699,7 +686,7 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
             }
             else
             {
-                printf("Sending \"true\", as acquired value: %s could not be interpreted as true or false\n", value);
+                OIC_LOG_V(WARNING, TAG, "Sending \"true\", as acquired value: %s could not be interpreted as true or false\n", value);
                 SendCommand("0");
             }
             sleep(SLEEP_TIME);
@@ -715,13 +702,12 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
             sleep(SLEEP_TIME);
             if (strstr(messageXml, "over TCP") != NULL)
             {
-                SendCommand("n");
                 FindKey("coaps+tcp", val);
                 SendCommand(val);
             }
             else
             {
-                SendCommand("y");
+                SendCommand("0");
             }
             sleep(SLEEP_TIME);
             SendCommand("temperature");
@@ -741,76 +727,38 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
     else if (strstr(messageXml, " send a unicast request message (") != NULL)
     {
         OIC_LOG(INFO, TAG, "Inside unicast request");
-        if (strstr(messageXml, "/BinarySwitchResURI") != NULL)
+        char resourceUri[URI_SIZE] = "/";
+        strcat(resourceUri, getStringBetween(messageXml, "'/", "'"));
+
+        sleep(SLEEP_TIME);
+        SendCommand("12");
+        sleep(2 * SLEEP_TIME);
+        if (strstr(messageXml, "with observe option = 0") != NULL)
         {
-            sleep(SLEEP_TIME);
-            SendCommand("12");
-            sleep(2 * SLEEP_TIME);
-            if (strstr(messageXml, "with observe option = 0") != NULL)
-            {
-                SendCommand("25");
-            }
-            else if (strstr(messageXml, "with observe option = 1") != NULL)
-            {
-                SendCommand("25");
-                FindKey("/BinarySwitchResURI", val);
-                SendCommand(val);
-                sleep(SLEEP_TIME);
-                if (strstr(messageXml, "over TCP") != NULL)
-                {
-                    SendCommand("n");
-                    FindKey("coaps+tcp", val);
-                    SendCommand(val);
-                }
-                else
-                {
-                    SendCommand("y");
-                }
-                sleep(SLEEP_TIME);
-                SendCommand("26");
-            }
-            FindKey("/BinarySwitchResURI", val);
-            SendCommand(val);
-            sleep(SLEEP_TIME);
-            if (strstr(messageXml, "over TCP") != NULL)
-            {
-                SendCommand("n");
-                FindKey("coaps+tcp", val);
-                SendCommand(val);
-            }
-            else
-            {
-                SendCommand("y");
-            }
-            sleep(SLEEP_TIME);
+            SendCommand("25");
         }
-        else if (strstr(messageXml, "/TemperatureResURI") != NULL)
+        else if (strstr(messageXml, "with observe option = 1") != NULL)
         {
-            SendCommand("12");
-            sleep(2 * SLEEP_TIME);
-            if (strstr(messageXml, "with observe option = 0") != NULL)
-            {
-                SendCommand("25");
-            }
-            else if (strstr(messageXml, "with observe option = 1") != NULL)
-            {
-                SendCommand("26");
-            }
-            FindKey("/TemperatureResURI", val);
-            SendCommand(val);
-            sleep(SLEEP_TIME);
-            if (strstr(messageXml, "over TCP") != NULL)
-            {
-                SendCommand("n");
-                FindKey("coaps+tcp", val);
-                SendCommand(val);
-            }
-            else
-            {
-                SendCommand("y");
-            }
-            sleep(SLEEP_TIME);
+            SendCommand("26");
         }
+        else
+        {
+            OIC_LOG(WARNING, TAG, "Cannot find information about observe option, sending with option = 0");
+            SendCommand("25");
+        }
+        FindKey(resourceUri, val);
+        SendCommand(val);
+        sleep(SLEEP_TIME);
+        if (strstr(messageXml, "over TCP") != NULL)
+        {
+            FindKey("coaps+tcp", val);
+            SendCommand(val);
+        }
+        else
+        {
+            SendCommand("0");
+        }
+        sleep(SLEEP_TIME);
     }
     else if (strstr(messageXml, "send UPDATE to /oic/rd") != NULL)
     {
@@ -878,22 +826,38 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
     /*Currently works only with IPv4*/
     else if (strstr(messageXml, "Please send a CoAP Ping message to the CTT") != NULL)
     {
-        char* address = strtok(strchr(messageXml, '('), "()");
+        char* address = getStringBetween(messageXml, "(", ")");
+        char ip[IP_WITH_INTERFACE_SIZE] = "";
+        char* port;
+
+        if (glocalIpVersion == IPv4)
+        {
+            strcat(ip, strtok(address, ":"));
+            port = strtok(NULL, ":");
+        }
+        else if (glocalIpVersion == IPv6)
+        {
+            strcat(ip, strtok(address, "[]"));
+            strcat(ip, "%");
+            strcat(ip, gLocalNetworkInterface);
+            port =  strtok(NULL, ":");
+        }
+
+        OIC_LOG_V(INFO, TAG, "Sending Ping message to %s:%s", ip, port);
         SendCommand("124");
         sleep(SLEEP_TIME);
-        SendCommand(strtok(address, ":"));
+        SendCommand(ip);
         sleep(SLEEP_TIME);
-        SendCommand(strtok(NULL, ":"));
+        SendCommand(port);
     }
     else
     {
         OIC_LOG_V(DEBUG, TAG, "TAF==Received not handled POST /actions: %s", messageXml);
     }
 
-    if (result != "")
+    if (result[0] != '\0')
     {
-        OIC_LOG_V(INFO, TAG, "%s", result);
-        printf("%s\n", result);
+        OIC_LOG_V(INFO, TAG, "Sending: \n%s", result);
     }
 
     return stringToDoc(result);
@@ -902,10 +866,9 @@ xmlDocPtr ActionHandler(xmlDocPtr doc)
 /*Abort Signal Handler*/
 xmlDocPtr AbortSignalHandler(xmlDocPtr doc)
 {
-    OIC_LOG_V(DEBUG, TAG, "TAF==Received GET /abortSignal:");
     if (gCTTLogsTimeout)
     {
-        printf("Sending Abort Test Case Response.\n");
+        OIC_LOG(INFO, TAG, "Sending Abort Test Case to CTT.\n");
         gCTTLogsTimeout = false;
         return stringToDoc("<abortSignal><abortTestcase>true</abortTestcase><abortTestRun>false</abortTestRun></abortSignal>");
     }
@@ -929,7 +892,7 @@ xmlDocPtr ConfigurationHandler(xmlDocPtr doc)
             fseek (f, 0, SEEK_END);
             length = ftell (f);
             fseek (f, 0, SEEK_SET);
-            gConfigFileContent = malloc (length + 1);
+            gConfigFileContent = (char*) malloc (length + 1);
 
             if (gConfigFileContent )
             {
@@ -944,7 +907,6 @@ xmlDocPtr ConfigurationHandler(xmlDocPtr doc)
             return stringToDoc("");
         }
     }
-    uint32_t tempSize = 0;
     char *result = gConfigFileContent;
     char *tmp = replaceString(gConfigFileContent, "%IP%", gIp);
     tmp = replaceString(tmp, "%UUID%", gUuid);
@@ -955,8 +917,7 @@ xmlDocPtr ConfigurationHandler(xmlDocPtr doc)
 /*Init TAF Agent*/
 void  InitTAF()
 {
-
-    OIC_LOG(INFO, TAG, "TAF Init Start");
+    OIC_LOG(INFO, TAG, "Start TAF server");
 
     initDutControllers();
     addRouteBasic("POST", "/actions", ActionHandler, CleanXmlDocPtr);
@@ -969,17 +930,18 @@ void  InitTAF()
     startDutControllerExtended("0.0.0.0", 32001);
     startDutControllerSetup("0.0.0.0", 32002);
 
-    OIC_LOG(INFO, TAG, "TAF Init Done");
+    OIC_LOG(INFO, TAG, "TAF server started");
 }
 
 
 /*Init the IUT Simulator*/
-void initIUT(int qosArg, int ipVerArg, int securityArg, char *ocfVerArg, char initActions[][5], int initActionsSize)
+void initIUT(int qos, int ipVer, int security, char *ocfVer, char initialCommands[][5], int initialCommandsSize)
 {
-    printf("IUT options: %d %d %d\n", qosArg, ipVerArg, securityArg);
+    OIC_LOG(INFO, TAG, "Start IUT\n");
+    OIC_LOG_V(INFO, TAG, "IUT options: %d %d %d %s\n", qos, ipVer, security, ocfVer);
     char app[255] = "IUTSimulator";
 
-    switch (qosArg)
+    switch (qos)
     {
         case QOS_NON:
             strcat(app, " 0");
@@ -990,12 +952,11 @@ void initIUT(int qosArg, int ipVerArg, int securityArg, char *ocfVerArg, char in
             break;
 
         default:
-            OIC_LOG_V(ERROR, TAG, "QoS argument \"%d\" is invalid\n", qosArg);
-            printf("QoS argument \"%d\" is invalid\n", qosArg);
+            OIC_LOG_V(ERROR, TAG, "QoS argument \"%d\" is invalid\n", qos);
             exit(EXIT_FAILURE);
     }
 
-    switch (ipVerArg)
+    switch (ipVer)
     {
         case IPv4:
             strcat(app, " 4");
@@ -1006,12 +967,11 @@ void initIUT(int qosArg, int ipVerArg, int securityArg, char *ocfVerArg, char in
             break;
 
         default:
-            OIC_LOG_V(ERROR, TAG, "IP version argument \"%d\" is invalid\n", ipVerArg);
-            printf("IP version argument \"%d\" is invalid\n", ipVerArg);
+            OIC_LOG_V(ERROR, TAG, "IP version argument \"%d\" is invalid\n", ipVer);
             exit(EXIT_FAILURE);
     }
 
-    switch (securityArg/10)
+    switch (security/10)
     {
         case FRESH_CLIENT:
             strcat(app, " 1");
@@ -1030,12 +990,11 @@ void initIUT(int qosArg, int ipVerArg, int securityArg, char *ocfVerArg, char in
             break;
 
         default:
-            OIC_LOG_V(ERROR, TAG, "Security argument \"%d\" is invalid\n", securityArg);
-            printf("Security argument \"%d\" is invalid\n", securityArg);
+            OIC_LOG_V(ERROR, TAG, "Security argument \"%d\" is invalid\n", security);
             exit(EXIT_FAILURE);
     }
 
-    switch (securityArg%10)
+    switch (security%10)
     {
         case JUSTWORKS:
             strcat(app, "1");
@@ -1050,18 +1009,17 @@ void initIUT(int qosArg, int ipVerArg, int securityArg, char *ocfVerArg, char in
             break;
 
         default:
-            OIC_LOG_V(ERROR, TAG, "Security argument \"%d\" is invalid\n", securityArg);
-            printf("Security argument \"%d\" is invalid\n", securityArg);
+            OIC_LOG_V(ERROR, TAG, "Security argument \"%d\" is invalid\n", security);
             exit(EXIT_FAILURE);
     }
 
     strcat(app, " ");
-    strcat(app, ocfVerArg);
+    strcat(app, ocfVer);
 
-    for(int i = 0; i < initActionsSize; i++)
+    for(int i = 0; i < initialCommandsSize; i++)
     {
         strcat(app, " ");
-        strcat(app, initActions[i]);
+        strcat(app, initialCommands[i]);
     }
 
     addDir(gIUTlogDir);
@@ -1073,7 +1031,6 @@ void initIUT(int qosArg, int ipVerArg, int securityArg, char *ocfVerArg, char in
     strcat(parameters, " | tee ");
     strcat(parameters, gIUTlog);
     strcat(parameters, "\"\n result=$?\ndone");
-    printf("Command Executed:%s\n", parameters);
     OIC_LOG_V(DEBUG, TAG, "Command Executed:%s", parameters);
     if ((gPid = fork()) < 0)
     {
@@ -1084,7 +1041,7 @@ void initIUT(int qosArg, int ipVerArg, int securityArg, char *ocfVerArg, char in
     {
         system("pkill --signal SIGKILL IUTSimulator");
         sleep(1);
-        printf("gPid == 0\n");
+        OIC_LOG(INFO, TAG, "gPid == 0\n");
         execlp("/bin/sh", "/bin/sh", "-c", parameters, NULL);
         sleep(5);
         exit(EXIT_FAILURE);
@@ -1158,13 +1115,15 @@ void SendDiscovery()
 void stopIUT()
 {
     char value[255] = "0";
-    printf("Sending %s to IUTSimulator\n", value);
+    OIC_LOG_V(INFO, TAG, "Sending %s to IUTSimulator\n", value);
     SendCommand(value);
 }
 
 /*Discovery the IUT Simulator port */
 void discoverIUT(int ipVersion)
 {
+    OIC_LOG(INFO, TAG, "Discover IUT");
+
     switch (ipVersion)
     {
         case IPv4:
@@ -1188,15 +1147,17 @@ void discoverIUT(int ipVersion)
 
     do
     {
+        OIC_LOG(INFO, TAG, "Waiting for IUT discovery...");
         if (OCProcess() != OC_STACK_OK)
         {
             fprintf(stdout, "OCStack process error\n");
             fflush(stdout);
             exit(EXIT_FAILURE);
         }
-    }
-    while (!gIPDiscovered);
+        sleep(1);
+    } while (!gIPDiscovered);
 
+    OIC_LOG(INFO, TAG, "Stopping OC Stack");
     if (OCStop() != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack process error");
@@ -1215,86 +1176,119 @@ void HandleSigInt(int signum)
     {
         gQuitFlag = 1;
         gRestartFlag = 1;
-        stopIUT();
+        //stopIUT();
     }
 
 }
 
-/*Main Entry point of the code*/
-int main(int argc, char **argv)
+void startIUTfromArguments(int argc, char **argv)
 {
-    printf("Started\n");
-
-    int qosArg = 1;
-    int ipVerArg = 4;
-    int securityArg = 25;
-    char* ocfVerArg = NULL;
-
-    if (argc < 6)
+    int qosArg = atoi(argv[2]);
+    int ipVerArg = atoi(argv[3]);
+    int securityArg = atoi(argv[4]);
+    char* ocfVerArg = argv[5];
+    int initialCommandsSize = argc - 6;
+    char initialCommands[initialCommandsSize][5];
+    for(int i = 0; i < initialCommandsSize; i++)
     {
-        printf("Error: Wrong amount of arguments, shoule be:\n./TAFAgent conf_path QoS ipVersion security ocfVersion\n");
-        return -1;
+        strcpy(initialCommands[i], argv[6 + i]);
     }
 
-    /* get the configuration file path */
-    gConfigPath = argv[1];
+    if (gReuseIUT)
+    {
+        initIUT(qosArg, ipVerArg, securityArg + 20, ocfVerArg, initialCommands, initialCommandsSize);
+        gReuseIUT = 0;
+    }
+    else
+    {
+        initIUT(qosArg, ipVerArg, securityArg, ocfVerArg, initialCommands, initialCommandsSize);
+    }
+}
 
-    char* tempConfigPath = strdup(gConfigPath);
-    gConfigFilename = basename(tempConfigPath);
-    gConfigFilename = strtok(gConfigFilename, ".");
+void setConfigurationFilePath(char *path)
+{
+    gConfigPath = path;
 
-    strcat(gIUTlog, gIUTlogDir);
-    strcat(gIUTlog, "/IUTSimulator_");
-    strcat(gIUTlog, gConfigFilename);
-    strcat(gIUTlog, ".log");
-
-    printf("Start to open file %s\n", gConfigPath);
+    OIC_LOG_V(INFO, TAG, "Start to open file %s", gConfigPath);
     FILE *fp;
 
     fp = fopen(gConfigPath, "r");
     if (fp == NULL)
     {
         OIC_LOG_V(ERROR, TAG, "Could not find file %s", gConfigPath);
-        printf("Error: Could not find file %s", gConfigPath);
-        return -1;
+        exit(EXIT_FAILURE);
     }
     fclose(fp);
+}
 
+void setIUTlogPath(char *filename) {
+    gConfigFilename = filename;
+    strcat(gIUTlog, gIUTlogDir);
+    strcat(gIUTlog, "/IUTSimulator_");
+    strcat(gIUTlog, gConfigFilename);
+    strcat(gIUTlog, ".log");
+}
 
-    /* get the options to start IUT Simulator */
-    qosArg = atoi(argv[2]);
-    ipVerArg = atoi(argv[3]);
-    securityArg = atoi(argv[4]);
-    ocfVerArg = argv[5];
-
-    int initActionsSize = argc - 6;
-    char initActions[initActionsSize][5];
-    for(int i = 0; i < initActionsSize; i++)
+void checkForCTTtimeout(time_t *lastCTTLog)
+{
+    if (gCTTLogsStarted)
     {
-        strcpy(initActions[i], argv[6 + i]);
+        if (gCTTLogsResetTimeout)
+        {
+            *lastCTTLog = time(NULL);
+            gCTTLogsResetTimeout = false;
+        }
+        if (time(NULL) > *lastCTTLog + CTT_TIMEOUT)
+        {
+            OIC_LOG(INFO, TAG, "CTT logs timeout has been reached.\n");
+            gCTTLogsTimeout = true;
+            gCTTLogsStarted = false;
+        }
+    }
+}
+
+/*Main Entry point of the code*/
+/*
+    Arguments:
+    1 - TAF configuration xml file path
+    2 - QoS option for IUT (first IUT argument)
+    3 - Ip version for TAF and IUT (second IUT argument)
+    4 - Security option for IUT (third IUT argument)
+    5 - OCF version for IUT (4-th IUT argument)
+    ... - IUT initial commands (5-th and more IUT arguments)
+*/
+int main(int argc, char **argv)
+{
+    if (argc < 6)
+    {
+        OIC_LOG(ERROR, TAG, "Error: Wrong amount of arguments, arguments are:\n./TAFAgent conf_path QoS ipVersion security ocfVersion\n");
+        return -1;
     }
 
-    getIP(ipVerArg);
+    OIC_LOG(INFO, TAG, "Started");
 
     signal(SIGINT, HandleSigInt);
-    const int trigger = CLOCKS_PER_SEC;
+
+    setConfigurationFilePath(argv[1]);
+    setIUTlogPath(replaceString(basename(argv[1]), ".xml", ""));
+    setLocalIPAddress(atoi(argv[3]));
+
+    startIUTfromArguments(argc, argv);
+
+    sleep(3);
+
+    discoverIUT(atoi(argv[3]));
+
     InitTAF();
+
+    const int trigger = CLOCKS_PER_SEC;
     while (!gQuitFlag)
     {
-        printf("InitIUT\n");
-        if (gReuseIUT)
+        if (!gIPDiscovered)
         {
-            initIUT(qosArg, ipVerArg, securityArg + 20, ocfVerArg, initActions, initActionsSize);
-            gReuseIUT = 0;
+            startIUTfromArguments(argc, argv);
+            discoverIUT(atoi(argv[3]));
         }
-        else
-        {
-            initIUT(qosArg, ipVerArg, securityArg, ocfVerArg, initActions, initActionsSize);
-        }
-
-        printf("DiscoverIUT\n");
-        discoverIUT(ipVerArg);
-        printf("Entering TAF Agent main loop...\n");
         OIC_LOG(INFO, TAG, "Entering TAF Agent main loop...");
         clock_t prevClock = clock() - trigger;
         time_t lastCTTLog = 0;
@@ -1304,20 +1298,7 @@ int main(int argc, char **argv)
             clock_t curClock = clock();
             if(curClock - prevClock >= trigger){
                 printf(".\n");
-                if (gCTTLogsStarted)
-                {
-                    if (gCTTLogsResetTimeout)
-                    {
-                        lastCTTLog = time(NULL);
-                        gCTTLogsResetTimeout = false;
-                    }
-                    if (time(NULL) > lastCTTLog + CTT_TIMEOUT)
-                    {
-                        printf("CTT logs timeout has been reached.\n");
-                        gCTTLogsTimeout = true;
-                        gCTTLogsStarted = false;
-                    }
-                }
+                checkForCTTtimeout(&lastCTTLog);
                 prevClock = curClock;
             }
         }
@@ -1333,4 +1314,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-

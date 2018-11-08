@@ -44,7 +44,7 @@ private:
 
     ObservationIds m_listOfObservers;
     shared_ptr< OCResourceResponse > m_pResponse;
-    vector< SampleResource* > m_childResourceList;
+    vector< shared_ptr< SampleResource >  > m_childResourceList;
     map< string, string > m_accessmodifier;
 
 public:
@@ -92,21 +92,20 @@ public:
     void setIPVer(OCConnectivityType ipVer);
     void setSecured(bool isSecured);
 
-    void addChild(SampleResource* childResource);
+    void addChild(shared_ptr< SampleResource > childResource);
 
 
 private:
-    void setBaselineResponse(vector<OCRepresentation> allChildren, shared_ptr<OCResourceResponse> response);
+    void setBaselineResponse(shared_ptr<OCResourceResponse> response);
 
-    void addIntoLinksArray(vector< OCRepresentation >& childrenList, SampleResource* resource);
+    void addIntoLinksArray(vector< OCRepresentation >& childrenList, shared_ptr< SampleResource > resource);
 
     OCStackResult addArrayAttribute(string, OCRepresentation);
 
-    bool updateRepresentation(string key, OCRepresentation incomingRep,
-            shared_ptr< OCResourceResponse > response);
+    bool updateRepresentation(string key, OCRepresentation incomingRep, shared_ptr< OCResourceResponse > response);
 
-    vector<SampleResource*> getChildResourcesFromType(string resourceType);
-    vector<SampleResource*> getChildResourcesFromRepKey(string key);
+    vector< shared_ptr< SampleResource > > getChildResourcesFromType(string resourceType);
+    vector< shared_ptr< SampleResource > > getChildResourcesFromRepKey(string key);
 
 };
 

@@ -100,6 +100,7 @@ namespace PH = std::placeholders;
 #define Device_TYPE_LIGHT "oic.d.light"
 #define Device_TYPE_AC "oic.d.airconditioner"
 #define Device_TYPE_AP "oic.d.airpurifier"
+#define Device_TYPE_BPM "oic.d.bloodpressuremonitor"
 #define Device_TYPE_VENDOR "x.com.vendor.device.eco.power"
 #define SWITCH_RESOURCE_TYPE "oic.r.switch.binary"
 #define MAINTENANCE_RESOURCE_TYPE "oic.wk.mnt"
@@ -207,6 +208,13 @@ const int SUCCESS_RESPONSE = 0;
 #define AT_VALUE "0f3d9f7fe5491d54077d"
 #define APN_VALUE ""
 
+#define VOLUME_KEY "volume"
+#define MUTE_KEY "mute"
+#define SOURCE_KEY "source"
+#define SOURCE_NAME_KEY "sourceName"
+#define SOURCE_NUMBER_KEY "sourceNumber"
+#define SOURCE_TYPE_KEY "sourceType"
+#define STATUS_KEY "status"
 #define REPRESENTATION_KEY "rep"
 #define URI_KEY "href"
 #define POWER_KEY "power"
@@ -475,7 +483,7 @@ public:
      * @param [in] allHosts - list of all resource endpoints
      *
      */
-    string getOnlySecuredHost(vector<string> allHosts);
+    static string getOnlySecuredHost(vector<string> allHosts);
 
     /**
      * API to execute specific linux command line instruction
@@ -488,4 +496,3 @@ public:
 };
 
 #endif // __RESOURCE_HELPER_H__
-

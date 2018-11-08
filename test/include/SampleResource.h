@@ -38,12 +38,23 @@ protected:
     shared_ptr< OCResourceResponse > m_pResponse;
     vector< string > m_resourceList;
     map< string, string > m_accessmodifier;
-    SampleResource* m_pSensorTwin;
+    std::shared_ptr< SampleResource > m_pSensorTwin;
 
 
 
 public:
     SampleResource(void);
+
+    SampleResource(std::string resourceUri,
+            std::string resourceTypeName,
+            std::string resourceInterface,
+            uint8_t resourceProperty = OC_ACTIVE);
+
+    SampleResource(std::string resourceUri,
+            std::string resourceTypeName,
+            std::string resourceInterface,
+            uint8_t resourceProperty,
+            OCRepresentation resourceRepresentation);
 
     virtual ~SampleResource(void);
 
@@ -51,7 +62,7 @@ public:
 
     bool isReadonly(string key);
 
-    void setSensorTwin(SampleResource* p_sensorResource);
+    void setSensorTwin(std::shared_ptr< SampleResource > p_sensorResource);
 
     virtual void onResourceServerStarted(bool &isRegisteredForPresence, int &presenceInterval);
 
@@ -88,7 +99,9 @@ public:
 
     OCStackResult addArrayAttribute(string key, OCRepresentation arrayRep);
 
+    void notifyObservers();
     void notifyObservers(void *param);
+    bool updateRepresentation(string key, AttributeValue value);
     bool updateRepresentation(string key, OCRepresentation incomingRep);
     bool updateBatchRepresentation(string key, OCRepresentation incomingRep, bool &isError);
 

@@ -55,6 +55,7 @@ if WITH_RD == True:
     cppflags.append('-DRD_SERVER')
 
 include_paths = [
+    iotivity_test_root + '/src/testapp/IUTSimulatorApp/c_cpp/include',
     iotivity_test_root + '/include',
     iotivity_test_root + '/include/AM',
     iotivity_test_root + '/include/AM/dependencies',
@@ -98,6 +99,8 @@ src = [
     test_src_root + '/common/commonutil/c_cpp/AM/bloodpressure2.cpp',
     test_src_root + '/common/commonutil/c_cpp/AM/dependencies/MySignals/bloodpressure.cpp',
     test_src_root + '/common/commonutil/c_cpp/ResourceHelper.cpp',
+    test_src_root + '/testapp/IUTSimulatorApp/c_cpp/src/IUTSimulatorUtils.cpp',
+    test_src_root + '/testapp/IUTSimulatorApp/c_cpp/src/SampleResourceFactory.cpp',
     test_src_root + '/testapp/IUTSimulatorApp/c_cpp/src/IUTSimulator.cpp',
 ]
 

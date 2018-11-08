@@ -42,6 +42,27 @@
 
 using namespace OC;
 
+    /**
+     * Types of handlers for Sample Resource
+     *
+     */
+    enum class HandlerType
+    {
+        DEFAULT,
+        SAMPLE
+    };
+
+    /**
+     * Types of Sample Resource handler response time
+     *
+     * NOTE: This will matter only when using SAMPLE resource handler
+     */
+    enum class ResponseTimeType
+    {
+        SLOW,
+        NORMAL
+    };
+
 /**
  *   @brief  To use a sample server, ResourceServer class must
  *           be instantiated. then it should be constructed and run
@@ -58,9 +79,9 @@ protected:
     std::vector<ResourceServer*> m_childResourceList;
     OCResourceHandle m_resourceHandle;
     PlatformConfig m_platformConfig;
+    ResponseTimeType m_responseTimeType;
     bool m_isRegisteredForPresence;
     bool m_isServerRunning;
-    bool m_isSlowResource;
     uint8_t m_resourceProperty;
     static bool s_isServerConstructed;
     static OCPlatformInfo s_platformInfo;
@@ -191,17 +212,14 @@ public:
     /**
      * API for starting the server.
      *
-     * @param useDefaultHandler - whenever resource request should be handled by
-     *                             default hanlder or one defined in this class
+     * @param handlerType - type of handler to use by created resource
      *
      * @return OCStackResult - returns OC_STACK_OK if successful to start server,
      *                          else OC_STACK_ERROR
      *
      * NOTE: The server will stop when the main program exits
      */
-    OCStackResult startResource(
-            uint8_t resourceProperty = (uint8_t) OC_ACTIVE,
-            bool useDefaultHandler = false);
+    OCStackResult startResource(uint8_t resourceProperty = OC_ACTIVE, HandlerType handlerType = HandlerType::SAMPLE);
 
     /**
      * API for getting the uri of the resource
@@ -228,6 +246,14 @@ public:
      *
      */
     void setAsObservableResource(void);
+
+    /**
+     * API for setting the resource response
+     *
+     * @param responseTimeType - resource response time type to set
+     *
+     */
+    void setResponseTimeType(ResponseTimeType responseTimeType);
 
     /**
      * API for setting the resource response as slow
@@ -322,6 +348,16 @@ public:
       *
       */
     static OCStackResult setDeviceInfo(string deviceName, vector<string> deviceTypes = vector<string>(), string specVersion = CORE_SPEC_VERSION);
+
+    /**
+      * API to set Device info of the current device
+      *
+      * @param[in] - deviceName - Human readable name of the device
+      * @param[in] - deviceTypes - Device type of the device(Optional)
+      * @param[in] - specVersion - OCF version for device, with default ocf.1.0.0
+      *
+      */
+    static OCStackResult setDeviceInfo(string deviceName, string deviceTypes, string specVersion = CORE_SPEC_VERSION);
 
     /***
      * API to perform additional task for child
@@ -418,4 +454,3 @@ public:
 };
 
 #endif // _RESOURCE_SERVER_H_ end
-

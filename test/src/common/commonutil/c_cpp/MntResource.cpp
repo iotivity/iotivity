@@ -26,6 +26,27 @@ MntResource::MntResource(void)
     expect503ErrorRespond = false;
 }
 
+MntResource::MntResource(std::string resourceUri,
+        std::string resourceTypeName,
+        std::string resourceInterface,
+        uint8_t resourceProperty)
+         : SampleResource(resourceUri, resourceTypeName, resourceInterface, resourceProperty)
+{
+    numberOf503ErrorResponse = 0;
+    expect503ErrorRespond = false;
+}
+
+MntResource::MntResource(std::string resourceUri,
+        std::string resourceTypeName,
+        std::string resourceInterface,
+        uint8_t resourceProperty,
+        OCRepresentation resourceRepresentation)
+         : SampleResource(resourceUri, resourceTypeName, resourceInterface, resourceProperty, resourceRepresentation)
+{
+    numberOf503ErrorResponse = 0;
+    expect503ErrorRespond = false;
+}
+
 MntResource::~MntResource(void)
 {
 }

@@ -49,7 +49,7 @@ target_arch = env_linux.get('TARGET_ARCH')
 install_targets = []
 default_targets = []
 
-cppflags = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissive -DWITH_TCP -DTCP_ADAPTER')
+cppflags = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissive -DWITH_TCP -DTCP_ADAPTER -DTB_LOG')
 
 if secured == '1':
     cppflags.append('-D__SECURED__')
@@ -76,10 +76,9 @@ include_paths = [
                             iotivity_root + '/extlibs/cereal/include/',
                             iotivity_root + '/extlibs/timer/',
                             iotivity_root + '/extlibs/tinycbor/tinycbor/src/',
-                            iotivity_root + '/extlibs/timer/'
               ]
 
-libs = Split('uv util xml2 libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap pthread libglib-2.0 gcov')
+libs = Split('uv xml2 liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap')
 
 
 src = [

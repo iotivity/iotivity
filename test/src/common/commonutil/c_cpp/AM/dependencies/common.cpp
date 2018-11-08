@@ -122,4 +122,3 @@ void setUserTime(char * buf) {
 
     _user_set_time = now - user_time;
 }
-

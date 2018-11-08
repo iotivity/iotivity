@@ -31,6 +31,17 @@ class NmonResource : public SampleResource
 public:
     NmonResource(void);
 
+    NmonResource(std::string resourceUri,
+            std::string resourceTypeName,
+            std::string resourceInterface,
+            uint8_t resourceProperty = OC_ACTIVE);
+
+    NmonResource(std::string resourceUri,
+            std::string resourceTypeName,
+            std::string resourceInterface,
+            uint8_t resourceProperty,
+            OCRepresentation resourceRepresentation);
+
     virtual ~NmonResource(void);
 
     virtual void handleGetRequest(QueryParamsMap &queryParamsMap,

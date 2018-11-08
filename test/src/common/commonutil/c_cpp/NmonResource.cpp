@@ -24,6 +24,23 @@ NmonResource::NmonResource(void)
 {
 }
 
+NmonResource::NmonResource(std::string resourceUri,
+        std::string resourceTypeName,
+        std::string resourceInterface,
+        uint8_t resourceProperty)
+         : SampleResource(resourceUri, resourceTypeName, resourceInterface, resourceProperty)
+{
+}
+
+NmonResource::NmonResource(std::string resourceUri,
+        std::string resourceTypeName,
+        std::string resourceInterface,
+        uint8_t resourceProperty,
+        OCRepresentation resourceRepresentation)
+         : SampleResource(resourceUri, resourceTypeName, resourceInterface, resourceProperty, resourceRepresentation)
+{
+}
+
 NmonResource::~NmonResource(void)
 {
 }

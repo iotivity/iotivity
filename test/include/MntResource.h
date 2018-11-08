@@ -35,6 +35,17 @@ protected:
 public:
     MntResource(void);
 
+    MntResource(std::string resourceUri,
+            std::string resourceTypeName,
+            std::string resourceInterface,
+            uint8_t resourceProperty = OC_ACTIVE);
+
+    MntResource(std::string resourceUri,
+            std::string resourceTypeName,
+            std::string resourceInterface,
+            uint8_t resourceProperty,
+            OCRepresentation resourceRepresentation);
+
     virtual ~MntResource(void);
 
     virtual void handleGetRequest(QueryParamsMap &queryParamsMap,

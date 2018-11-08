@@ -40,7 +40,7 @@ ResourceServer::ResourceServer(void) :
     m_isServerRunning = false;
     s_isServerConstructed = false;
     m_isRegisteredForPresence = false;
-    m_isSlowResource = false;
+    m_responseTimeType = ResponseTimeType::NORMAL;
     m_resourceProperty = OC_ACTIVE;
     m_resourceTypeNames.clear();
     m_resourceInterfaces.clear();
@@ -113,7 +113,7 @@ OCEntityHandlerResult ResourceServer::entityHandler(std::shared_ptr< OCResourceR
 
     if (request)
     {
-        if (m_isSlowResource)
+        if (m_responseTimeType == ResponseTimeType::SLOW)
         {
             thread t(bind(&ResourceServer::handleSlowResponse, this, PH::_1), request);
             t.detach();
@@ -161,7 +161,7 @@ OCStackResult ResourceServer::setResourceProperties(std::string resourceUri,
     return result;
 }
 
-OCStackResult ResourceServer::startResource(uint8_t resourceProperty, bool useDefaultHandler)
+OCStackResult ResourceServer::startResource(uint8_t resourceProperty , HandlerType handlerType)
 {
     OCStackResult result = OC_STACK_OK;
 
@@ -211,7 +211,7 @@ OCStackResult ResourceServer::startResource(uint8_t resourceProperty, bool useDe
     }
 
     // This will internally create and register the resource.
-    if (useDefaultHandler)
+    if (handlerType == HandlerType::DEFAULT)
     {
         result = OCPlatform::registerResource(m_resourceHandle, m_resourceURI, m_resourceTypeName,
             m_resourceInterface, NULL,
@@ -335,16 +335,6 @@ OCStackResult ResourceServer::setPlatformInfo(string platformID, string manufact
     return OC_STACK_OK;
 }
 
-void ResourceServer::setAsSlowResource()
-{
-    m_isSlowResource = true;
-}
-
-void ResourceServer::setAsNormalResource()
-{
-    m_isSlowResource = false;
-}
-
 OCStackResult ResourceServer::setDeviceInfo(string deviceName, vector<string> deviceTypes, string specVersion)
 {
     p_resourceHelper->duplicateString(&s_deviceInfo.deviceName, deviceName);
@@ -369,6 +359,11 @@ OCStackResult ResourceServer::setDeviceInfo(string deviceName, vector<string> de
 
     OCSetDeviceInfo(s_deviceInfo);
     return OC_STACK_OK;
+}
+
+OCStackResult ResourceServer::setDeviceInfo(string deviceName, string deviceTypes, string specVersion)
+{
+    return setDeviceInfo(deviceName, vector<string>{deviceTypes}, specVersion);
 }
 
 void ResourceServer::handleResponse(std::shared_ptr< OCResourceRequest > request)
@@ -442,6 +437,21 @@ void ResourceServer::handleSlowResponse(std::shared_ptr< OCResourceRequest > req
     handleResponse(request);
 }
 
+void ResourceServer::setResponseTimeType(ResponseTimeType responseTimeType)
+{
+    m_responseTimeType = responseTimeType;
+}
+
+void ResourceServer::setAsSlowResource()
+{
+    m_responseTimeType = ResponseTimeType::SLOW;
+}
+
+void ResourceServer::setAsNormalResource()
+{
+    m_responseTimeType = ResponseTimeType::NORMAL;
+}
+
 bool ResourceServer::isObservableResource(void)
 {
     return m_resourceProperty & OC_OBSERVABLE;
@@ -493,5 +503,3 @@ void ResourceServer::addResourceInterface(string resourceInterface)
     OCPlatform::bindInterfaceToResource(getResourceHandle(), resourceInterface);
     m_resourceInterfaces.push_back(resourceInterface);
 }
-
-

@@ -18,21 +18,26 @@
 *
 ******************************************************************/
 
-#ifndef OCSAMPLE_COMMON_H_
-#define OCSAMPLE_COMMON_H_
+#include <vector>
+#include <string>
 
-#define USE_HW 0
-#define IS_SECURE_MODE 1
-#include "ocstack.h"
+#include "ResourceHelper.h"
+#include "SampleResource.h"
+#include "MntResource.h"
+#include "NmonResource.h"
 
+class SampleResourceFactory
+{
+public:
+    static std::shared_ptr< SampleResource > createResource(
+        const std::string& resourceUri,
+        const std::string& resourceType,
+        const std::string& resourceInterface = "",
+        const uint8_t& resourceProperty = OC_ACTIVE);
 
-/* Get the result in string format. */
-const char *getResult(OCStackResult result);
+    static std::shared_ptr< SampleResource > createResource(
+        const std::string& resourceUri,
+        const std::string& resourceType,
+        const uint8_t& resourceProperty = OC_ACTIVE);
 
-/* Removes the new line character from a NULL terminated C string. */
-void StripNewLineChar(char* str);
-
-void getCurrentTime(char * buf);
-void setUserTime(char * buf);
-
-#endif //OCSAMPLE_COMMON_H_
+};

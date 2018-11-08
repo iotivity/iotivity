@@ -406,4 +406,3 @@ string ResourceHelper::executeCommand(string cmd) {
     }
     return result;
 }
-
