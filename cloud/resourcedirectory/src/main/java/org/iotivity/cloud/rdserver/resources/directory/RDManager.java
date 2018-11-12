@@ -247,7 +247,7 @@ public class RDManager {
         ArrayList<HashMap<String, Object>> records = DBManager.getInstance()
                 .selectRecord(Constants.RD_TABLE, condition);
         if (!records.isEmpty()) {
-            response.add(makeDiscoverResponseSegment(records));
+            response.addAll(makeDiscoverResponseSegment(records));
         }
     }
 
@@ -263,28 +263,32 @@ public class RDManager {
         return records.stream().map(record -> (String)record.get("di")).collect(Collectors.toList());
     }
 
-    private HashMap<String, Object> makeDiscoverResponseSegment(
+    private Collection<HashMap<String, Object>> makeDiscoverResponseSegment(
             ArrayList<HashMap<String, Object>> records) {
 
-        HashMap<String, Object> responseSegment = new HashMap<>();
-
-        // make Tags
-        HashMap<String, Object> discoverTag = mPayloadManager
-                .setPayloadData(records.get(0), mPayloadManager.discoverTagKey);
-        responseSegment.putAll(discoverTag);
-
-        ArrayList<Object> links = new ArrayList<>();
-        // make links
-        for (HashMap<String, Object> record : records) {
-            HashMap<String, Object> link = mPayloadManager
+        final Map<String, HashMap<String, Object>> result = new HashMap<>();
+        for (final HashMap<String, Object> record : records) {
+            final String di = (String) record.get(Constants.DEVICE_ID);
+            ArrayList<Object> links;
+            if (!result.containsKey(record.get(Constants.DEVICE_ID))) {
+                final HashMap<String, Object> discovered = createDevice(record);
+                result.put(di, discovered);
+                links = (ArrayList<Object>) discovered.get(Constants.LINKS);
+            } else {
+                links = (ArrayList<Object>) result.get(di).get(Constants.LINKS);
+            }
+            HashMap<String, Object> discoveredLinks = mPayloadManager
                     .setPayloadData(record, mPayloadManager.discoverLinkKey);
-            mPayloadManager.changePolicyTypeToDiscover(link);
-            links.add(link);
+            mPayloadManager.changePolicyTypeToDiscover(discoveredLinks);
+            links.add(discoveredLinks);
         }
-        responseSegment.put(Constants.LINKS, links);
+        return result.values();
+    }
 
-        return responseSegment;
-
+    private HashMap<String,Object> createDevice(final  HashMap<String, Object> record){
+        HashMap<String, Object> discoverTag = mPayloadManager.setPayloadData(record, mPayloadManager.discoverTagKey);
+        discoverTag.put(Constants.LINKS, new ArrayList<>());
+        return discoverTag;
     }
 
     private void setmResourcePresence(
