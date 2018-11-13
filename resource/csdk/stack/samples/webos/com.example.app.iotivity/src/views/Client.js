@@ -1,7 +1,8 @@
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
+import { MarqueeText } from '@enact/moonstone/Marquee';
 import Button from '@enact/moonstone/Button';
 import Divider from '@enact/moonstone/Divider';
 import CheckboxItem from '@enact/moonstone/CheckboxItem';
@@ -12,163 +13,234 @@ import ExpandableInput from '@enact/moonstone/ExpandableInput';
 import * as ActionCreators from '../actions/ActionCreators';
 
 import Changeable from '@enact/ui/Changeable';
-import {Group} from '@enact/ui/Group';
-import {Layout} from '@enact/ui/Layout';
+import { Group } from '@enact/ui/Group';
+import { Layout } from '@enact/ui/Layout';
 
-const SelectableGroup = Changeable({mutable: true}, Group);
-let discoveredItems=[];
+const SelectableGroup = Changeable({ mutable: true }, Group);
+let discoveredItems = [];
+let discoveredItemDatas = [];
 
 class Client extends React.Component {
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = {
-            isSelectDiscoveredItem:false,
-            selectedDiscoveredItemIndex:null,
-            resourceUri:null,
-            resourceQuestion:null,
-            requestResourceCompleted:true,
+            selectedDiscoveredItemIndex: null,
+            resourceUri: null,
+            eps: null,
+            resourceKey: null,
+            resourceValue: null,
+            requestResourceCompleted: true,
+            isPostable: false,
         };
+        this.onToggleHandler = this.onSelectedResource.bind(this);
+        this.onToggleData = this.onSelectedData.bind(this);
+        this.onResourceKeyChanged = this.resourceKeyChanged.bind(this);
+        this.onResourceValueChanged = this.resourceValueChanged.bind(this);
+        this.onGetResourceTapped = this.getResource.bind(this);
+        this.onPostResourceTapped = this.postResource.bind(this);
+        this.onDeleteResourceTapped = this.requestDeleteResource.bind(this);
+        this.onObserveResourceTapped = this.requestObserveResource.bind(this);
+        this.onCancelObserveResourceTapped = this.requestCancelObserveResource.bind(this);
+        this.onEnablePostResourceTapped = this.setPostResourceButton.bind(this);
     }
-    componentWillReceiveProps (props) {
+    componentWillReceiveProps(props) {
         console.log(props);
-        if(props.discoveredResources&&props.discoveredResources.length>0){
-            discoveredItems=[];
-            for(let i=0; i<props.discoveredResources.length; i++){
+        if (props.discoveredResources && props.discoveredResources.length > 0) {
+            discoveredItems = [];
+            for (let i = 0; i < props.discoveredResources.length; i++) {
                 discoveredItems.push({
-                    value:props.discoveredResources[i],
-                    children:props.discoveredResources[i].addr.addr+" (port:"+props.discoveredResources[i].addr.port+")",
+                    value: props.discoveredResources[i],
+                    children: props.discoveredResources[i].addr.addr + " (port:" + props.discoveredResources[i].addr.port + ")",
                 });
             }
         }
         else {
-            discoveredItems=[];
+            discoveredItems = [];
+            discoveredItemDatas = [];
+            if (this.props.isObserving) {
+                this.props.stopObserveResource();
+            }
             this.setState({
-                isSelectDiscoveredItem:false,
+                resourceUri: null,
+                eps: null,
+                resourceKey: null,
+                resourceValue: null,
+                resourceCompleted: true,
+                selectedDiscoveredItemIndex: null,
+                isPostable: false,
             });
         }
     }
-    resourceUriChanged(ev){
+    resourceUriChanged(ev) {
         this.setState({
             resourceUri: ev.value,
-            requestResourceCompleted:false,
+            eps: ev.eps,
+            requestResourceCompleted: false,
         });
-        console.log(this.state.resourceUri);
     }
-    resourceQuestionChanged(ev){
+    resourceKeyChanged(ev) {
         this.setState({
-            resourceQuestion: ev.value,
-            requestResourceCompleted:false,
+            resourceKey: ev.value,
+            requestResourceCompleted: false,
         });
-        console.log(this.state.resourceQuestion);
     }
-    getResource(){
-        let param={
-            uri:this.state.resourceUri,
-            question:this.state.resourceQuestion,
-            destination:this.state.selectedDiscoveredItemIndex.addr
+    resourceValueChanged(ev) {
+        this.setState({
+            resourceValue: ev.value,
+            requestResourceCompleted: false,
+        });
+    }
+    getResource() {
+        let param = {
+            uri: this.state.resourceUri,
+            eps: this.state.eps,
+            destination: this.state.selectedDiscoveredItemIndex.addr
         }
-        this.props.actionDisableClientResourceControlUI();
         this.props.getResource(param);
         this.setState({
-            resourceUri: null,
-            resourceQuestion: null,
-            requestResourceCompleted:true,
-            isSelectDiscoveredItem:false,
-            selectedDiscoveredItemIndex: null,
+            requestResourceCompleted: true
         });
     }
-    requestDeleteResource(){
-        let param={
-            uri:this.state.resourceUri,
-            destination:this.state.selectedDiscoveredItemIndex.addr
+    postResource() {
+        let tempValue = (this.state.resourceValue === "true" || this.state.resourceValue === "false") ?
+            this.state.resourceValue === "true" : this.state.resourceValue;
+
+        let param = {
+            uri: this.state.resourceUri,
+            eps: this.state.eps,
+            destination: this.state.selectedDiscoveredItemIndex.addr,
+            key: this.state.resourceKey,
+            value: tempValue
         }
-        this.props.actionDisableClientResourceControlUI();
+        this.props.postResource(param);
+        this.setState({
+            requestResourceCompleted: true,
+            isPostable: false
+        });
+    }
+    requestDeleteResource() {
+        let param = {
+            uri: this.state.resourceUri,
+            eps: this.state.eps,
+            destination: this.state.selectedDiscoveredItemIndex.addr
+        }
         this.props.requestDeleteResource(param);
         this.setState({
             resourceUri: null,
-            resourceQuestion: null,
-            resourceCompleted:true,
-            isSelectDiscoveredItem:false,
-            selectedDiscoveredItemIndex: null,
+            resourceKey: null,
+            resourceValue: null,
+            resourceCompleted: true,
         });
-    }
-    requestObserveResource(){
-        let param={
-            uri:this.state.resourceUri,
-            destination:this.state.selectedDiscoveredItemIndex.addr,
-        }
         this.props.actionDisableClientResourceControlUI();
+    }
+    requestObserveResource() {
+        let param = {
+            uri: this.state.resourceUri,
+            eps: this.state.eps,
+            destination: this.state.selectedDiscoveredItemIndex.addr,
+        }
         this.props.requestObserveResource(param);
         this.setState({
-            resourceUri: null,
-            resourceQuestion: null,
-            resourceCompleted:true,
-            isSelectDiscoveredItem:false,
-            selectedDiscoveredItemIndex: null,
+            resourceCompleted: true,
         });
     }
-    onSelectedResource (ev){
+    requestCancelObserveResource() {
+        this.props.stopObserveResource();
+        this.setState({
+            resourceCompleted: true,
+        });
+    }
+    onSelectedResource(ev) {
         console.log(ev);
-        for(let i=0 ; i<this.props.discoveredResources.length; i++){
-            if(JSON.stringify(this.props.discoveredResources[i]).indexOf(ev.data.slice(0,30))>0){
-                console.log(this.props.discoveredResources[i]);
-                this.setState({
-                    isSelectDiscoveredItem:true,
-                    selectedDiscoveredItemIndex:this.props.discoveredResources[i]
-                });
-                console.log(this.state.selectedDiscoveredItemIndex);
-            }
+        discoveredItemDatas = [];
+        for (let j = 0; j < this.props.discoveredResources[ev.selected].payload.resources.length; j++) {
+            discoveredItemDatas.push({
+                value: this.props.discoveredResources[ev.selected].payload.resources[j].uri,
+                eps: this.props.discoveredResources[ev.selected].payload.resources[j].eps,
+                children: "uri: " + this.props.discoveredResources[ev.selected].payload.resources[j].uri +
+                    " (if:" + this.props.discoveredResources[ev.selected].payload.resources[j].interfaces + ")",
+            });
         }
+        this.setState({
+            selectedDiscoveredItemIndex: this.props.discoveredResources[ev.selected],
+        });
         this.props.actionEnableClientResourceControlUI();
     }
+    onSelectedData(ev) {
+        this.setState({
+            resourceUri: discoveredItemDatas[ev.selected].value,
+            eps: discoveredItemDatas[ev.selected].eps,
+            requestResourceCompleted: false,
+        });
+    }
+    setPostResourceButton() {
+        this.setState((prevState) => ({
+            isPostable: !prevState.isPostable,
+        }));
+    }
     render() {
-        const {discoveredResources,showDiscoveredResources,enableClientResourceControlUI,detailResourceInfo,...rest} = this.props;
-        const onToggleHandler=this.onSelectedResource.bind(this);
-        const onResourceUriChanged = this.resourceUriChanged.bind(this);
-        const onResourceQuestionChanged = this.resourceQuestionChanged.bind(this);
-        const onGetResourceTapped = this.getResource.bind(this);
-        const onDeleteResourceTapped = this.requestDeleteResource.bind(this);
-        const onObserveResourceTapped = this.requestObserveResource.bind(this);
-        return(
+        const { showDiscoveredResources, detailResourceInfo, isObserving } = this.props;
+        return (
             <div>
                 <Layout align="start">
-                    {showDiscoveredResources?
-                    <SpotlightContainerDecorator focusableScrollbar style={{"height":210+"px"}} direction="both" horizontalScrollbar="auto" verticalScrollbar="auto">
-                        <SelectableGroup
-                            childComponent={CheckboxItem}
-                            onSelect={onToggleHandler}
-                            selectedProp="selected"
-                            select="radio"
-                        >
-                        {discoveredItems}
-                        </SelectableGroup>
-                        <div style={{"paddingTop": 9+"px"}} >
-                            <Button small onClick={this.props.resetDiscoveredList}>OK</Button>
-                        </div>
+                    {showDiscoveredResources ?
+                        <SpotlightContainerDecorator focusableScrollbar style={{ "height": 210 + "px" }} direction="both" horizontalScrollbar="auto" verticalScrollbar="auto">
+                            <SelectableGroup
+                                childComponent={CheckboxItem}
+                                onSelect={this.onToggleHandler}
+                                selectedProp="selected"
+                                select="radio">
+                                {discoveredItems}
+                            </SelectableGroup>
+                            <div style={{ "paddingTop": 9 + "px" }} >
+                                <Button small onClick={this.props.resetDiscoveredList}>OK</Button>
+                            </div>
 
-                    </SpotlightContainerDecorator>
-                    :<Button small onClick={this.props.discoverResources}>Discover Resources</Button>
+                        </SpotlightContainerDecorator>
+                        : <Button small onClick={this.props.discoverResources}>Discover Resources</Button>
                     }
                 </Layout>
                 <Divider />
                 <Layout align="start">
-                    {this.state.isSelectDiscoveredItem&&enableClientResourceControlUI?
-                    <SpotlightContainerDecorator focusableScrollbar style={{"height":600+"px"}} direction="both" horizontalScrollbar="auto" verticalScrollbar="auto">
-                        <div>{JSON.stringify(this.state.selectedDiscoveredItemIndex.payload,null,4)}</div>
-                        <ExpandableInput title="uri" onChange={onResourceUriChanged} />
-                        <ExpandableInput title="question" onChange={onResourceQuestionChanged} />
-                        <div style={{"paddingTop": 9+"px"}}>
-                            <Button disabled={this.state.resourceUri&&this.state.resourceQuestion?false:true} small onClick={onGetResourceTapped}>get resource</Button>
-                            <Button disabled={this.state.resourceUri?false:true} small onClick={onDeleteResourceTapped}>delete resource</Button>
-                            <Button disabled={this.state.resourceUri?false:true} small onClick={onObserveResourceTapped}>observe resource</Button>
+                    <SpotlightContainerDecorator focusableScrollbar style={{ "height": 200 + "px" }} direction="both" horizontalScrollbar="auto" verticalScrollbar="auto">
+                        {discoveredItemDatas ?
+                            <SelectableGroup
+                                childComponent={CheckboxItem}
+                                onSelect={this.onToggleData}
+                                selectedProp="selected"
+                                select="radio">
+                                {discoveredItemDatas}
+                            </SelectableGroup>
+                            : null}
+                    </SpotlightContainerDecorator>
+                </Layout>
+                <Layout align="start">
+                    <SpotlightContainerDecorator focusableScrollbar style={{ "height": 400 + "px" }} direction="both" horizontalScrollbar="auto" verticalScrollbar="auto">
+                        <div style={{ "paddingTop": 9 + "px" }}>
+                            <Button style={{ lineHeight: 25 + "px" }} disabled={!this.state.resourceUri} small onClick={this.onGetResourceTapped}>get<br />resource</Button>
+                            <Button style={{ lineHeight: 25 + "px" }} disabled={!this.state.resourceUri} small onClick={this.onDeleteResourceTapped}>delete<br />resource</Button>
+                            {isObserving ?
+                                <Button style={{ lineHeight: 25 + "px" }} disabled={!this.state.resourceUri} small onClick={this.onCancelObserveResourceTapped}>cancel<br />observe</Button> :
+                                <Button style={{ lineHeight: 25 + "px" }} disabled={!this.state.resourceUri} small onClick={this.onObserveResourceTapped}>observe<br />resource</Button>
+                            }
                         </div>
+                        <div style={{ "paddingTop": 9 + "px" }}>
+                            <Button style={{ lineHeight: 25 + "px" }} disabled={!this.state.resourceUri} small onClick={this.onEnablePostResourceTapped}>post<br />resource</Button>
+                        </div>
+                        {this.state.isPostable ?
+                            <div style={{ "paddingTop": 9 + "px" }}>
+                                <ExpandableInput title="key" onChange={this.onResourceKeyChanged} />
+                                <ExpandableInput title="value" onChange={this.onResourceValueChanged} />
+                                <Button style={{ lineHeight: 25 + "px" }} disabled={!this.state.resourceUri || !this.state.resourceKey || !this.state.resourceValue} small onClick={this.onPostResourceTapped}>send</Button>
+                            </div> : null}
+                        {detailResourceInfo ?
+                            <div>
+                                <MarqueeText marqueeOn="render">return</MarqueeText>
+                                <SpotlightContainerDecorator focusableScrollbar style={{ "height": 400 + "px" }} direction="both" horizontalScrollbar="auto" verticalScrollbar="auto">
+                                    <BodyText>{JSON.stringify(detailResourceInfo, null, 4)}</BodyText>
+                                </SpotlightContainerDecorator>
+                            </div> : null}
                     </SpotlightContainerDecorator>
-                    :null}
-                    {detailResourceInfo?
-                    <SpotlightContainerDecorator focusableScrollbar style={{"height":600+"px"}} direction="both" horizontalScrollbar="auto" verticalScrollbar="auto">
-                        <BodyText>{JSON.stringify(detailResourceInfo,null,4)}</BodyText>
-                    </SpotlightContainerDecorator>
-                    :null}
                 </Layout>
             </div>
         )
@@ -178,6 +250,7 @@ Client.propTypes = {
     getResource: PropTypes.func,
     requestDeleteResource: PropTypes.func,
     requestObserveResource: PropTypes.func,
+    stopObserveResource: PropTypes.func,
     discoverResources: PropTypes.func,
     resetDiscoveredList: PropTypes.func,
     actionDisableCreateResourceUI: PropTypes.func,
@@ -185,20 +258,24 @@ Client.propTypes = {
 const mapDispatchToProps = (dispatch) => {
     return {
         getResource: (params) => dispatch(ActionCreators.getResource(params)),
+        postResource: (params) => dispatch(ActionCreators.postResource(params)),
         requestDeleteResource: (params) => dispatch(ActionCreators.requestDeleteResource(params)),
         requestObserveResource: (params) => dispatch(ActionCreators.observeResource(params)),
+        stopObserveResource: () => ActionCreators.stopObserveResource(dispatch),
         discoverResources: () => ActionCreators.discoverResources(dispatch),
         resetDiscoveredList: () => ActionCreators.resetDiscoveredList(dispatch),
-        actionDisableClientResourceControlUI: () => dispatch(ActionCreators.actionDisableClientResourceControlUI()),
         actionEnableClientResourceControlUI: () => dispatch(ActionCreators.actionEnableClientResourceControlUI()),
+        actionDisableClientResourceControlUI: () => dispatch(ActionCreators.actionDisableClientResourceControlUI()),
+        copyClientCBORFile: (params) => dispatch(ActionCreators.copyClientCBORFile(params)),
     };
 };
 let mapStateToProps = (state) => {
     return {
-        discoveredResources:state.discoveredResources,
-        showDiscoveredResources:state.showDiscoveredResources,
-        detailResourceInfo:state.detailResourceInfo,
-        enableClientResourceControlUI:state.enableClientResourceControlUI,
+        discoveredResources: state.discoveredResources,
+        showDiscoveredResources: state.showDiscoveredResources,
+        detailResourceInfo: state.detailResourceInfo,
+        enableClientResourceControlUI: state.enableClientResourceControlUI,
+        isObserving: state.isObservingResource
     };
 };
 export default connect(mapStateToProps, mapDispatchToProps)(Client);

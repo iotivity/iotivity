@@ -1,158 +1,108 @@
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
-import {MarqueeText} from '@enact/moonstone/Marquee';
+import { MarqueeText } from '@enact/moonstone/Marquee';
 import Button from '@enact/moonstone/Button';
 import Divider from '@enact/moonstone/Divider';
-import ExpandableList from '@enact/moonstone/ExpandableList';
-import ExpandableInput from '@enact/moonstone/ExpandableInput';
-import SwitchItem from '@enact/moonstone/SwitchItem';
 
 import * as ActionCreators from '../actions/ActionCreators';
 
-import {Layout, Cell} from '@enact/ui/Layout';
+import { Layout, Cell } from '@enact/ui/Layout';
 
 class Server extends React.Component {
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = {
-            resourceUri: null,
-            resourceType: null,
-            resourceQuestion: null,
-            resourceAnswer:null,
-            resourceUpdateCompleted:true,
-            resourceObservable:false,
+            resourceUri: "/binaryswitch",
+            resourceType: "oic.r.switch.binary",
+            resourceUpdateCompleted: true,
+            resourceObservable: true,
         };
+
+        this.onCreateResourceTapped = this.createResource.bind(this);
+        this.onResourceValueTapped = this.setBinarySwitchValue.bind(this);
+        this.onStopServerTapped = this.stopServer.bind(this);
     }
-    resourceTypeChanged(ev){
-        this.setState({
-            resourceType: ev.data,
-            resourceUpdateCompleted:false,
-        });
-        console.log(this.state.resourceType);
+    componentWillUnmount() {
+        this.props.stopServer();
     }
-    resourceUriChanged(ev){
-        this.setState({
-            resourceUri: ev.value,
-            resourceUpdateCompleted:false,
-        });
-        console.log(this.state.resourceUri);
-    }
-    resourceQuestionChanged(ev){
-        this.setState({
-            resourceQuestion: ev.value,
-            resourceUpdateCompleted:false,
-        });
-        console.log(this.state.resourceQuestion);
-    }
-    resourceAnswerChanged(ev){
-        this.setState({
-            resourceAnswer: ev.value,
-            resourceUpdateCompleted:false,
-        });
-        console.log(this.state.resourceAnswer);
-    }
-    resourceObservableChanged(ev){
-        //console.log(ev);
-        this.setState({
-            resourceObservable: ev.selected,
-            resourceUpdateCompleted:false,
-        });
-        console.log(this.state.resourceObservable);
-    }
-    createResource(){
-        let param={
-            uri:this.state.resourceUri,
-            question:this.state.resourceQuestion,
-            answer:this.state.resourceAnswer,
-            types:this.state.resourceType,
-            observable:this.state.resourceObservable
+    createResource() {
+        this.props.startServer();
+        let param = {
+            uri: this.state.resourceUri,
+            types: this.state.resourceType,
+            observable: this.state.resourceObservable
         }
         this.props.actionDisableServerResourceControlUI();
         this.props.createResource(param);
         this.setState({
-            resourceUri: null,
-            resourceType: null,
-            resourceQuestion: null,
-            resourceAnswer:null,
-            resourceObservable:false,
-            resourceUpdateCompleted:true,
+            resourceUri: "/binaryswitch",
+            resourceType: "oic.r.switch.binary",
+            resourceObservable: true,
+            resourceUpdateCompleted: true,
         });
     }
-    deleteResource(){
-        let param={
-            uri:this.state.resourceUri,
+    deleteResource() {
+        let param = {
+            uri: this.state.resourceUri,
         }
         this.props.actionDisableServerResourceControlUI();
         this.props.deleteResource(param);
         this.setState({
-            resourceUri: null,
-            resourceType: null,
-            resourceQuestion: null,
-            resourceAnswer:null,
-            resourceUpdateCompleted:true,
+            resourceUri: "/binaryswitch",
+            resourceType: "oic.r.switch.binary",
+            resourceObservable: true,
+            resourceUpdateCompleted: true,
         });
     }
+    setBinarySwitchValue() {
+        let param = {
+            value: !this.props.resourceValue,
+        };
+        this.props.setBinarySwitchValue(param);
+    }
+    stopServer() {
+        this.props.stopServer();
+    }
     render() {
-        const {serverEnabled, enableServerResourceControlUI} = this.props;
-        const onResourceUriChanged = this.resourceUriChanged.bind(this);
-        const onResourceQuestionChanged = this.resourceQuestionChanged.bind(this);
-        const onResourceAnswerChanged = this.resourceAnswerChanged.bind(this);
-        const onResourceTypeChanged = this.resourceTypeChanged.bind(this);
-        const onObservableResourceChanged = this.resourceObservableChanged.bind(this);
-        const onCreateResourceTapped = this.createResource.bind(this);
-        const onDeleteResourceTapped = this.deleteResource.bind(this);
-        return(
+        const { serverEnabled, enableServerResourceControlUI, resourceValue } = this.props;
+        return (
             <div>
                 <Layout align="start">
                     <Cell shrink>
-                        {serverEnabled?
-                            <Button small onClick={this.props.stopServer}>stop server</Button>
-                            :<Button small onClick={this.props.startServer}>start server</Button>
+                        {serverEnabled ?
+                            <Button small onClick={this.onStopServerTapped}>stop server</Button>
+                            : <Button small onClick={this.onCreateResourceTapped}>start server</Button>
                         }
                     </Cell>
                     <Cell>
-                        {serverEnabled?
-                            <div style={{"lineHeight":60+"px"}}>
+                        {serverEnabled ?
+                            <div style={{ "lineHeight": 60 + "px" }}>
                                 <MarqueeText marqueeOn="render">Server is running</MarqueeText>
                             </div>
-                            :null
+                            : null
                         }
                     </Cell>
                 </Layout>
                 <Layout align="start">
                     <Cell>
-                    <Divider />
-                    {(serverEnabled&&enableServerResourceControlUI)?
-                        <div>
-                            <ExpandableInput title="uri" onChange={onResourceUriChanged} />
-                            <ExpandableList
-                                closeOnSelect
-                                onSelect={onResourceTypeChanged}
-                                select={'radio'}
-                                title={'type'}
-                            >
-                            {[
-                                {disabled:false, children: 'core.fan'},
-                                {disabled:false, children: 'core.light'},
-                            ]}
-                            </ExpandableList>
-                            <ExpandableInput title="question" noneText="ex) How many angels can dance on the head of a pin?" onChange={onResourceQuestionChanged} />
-                            <ExpandableInput title="answer" noneText="ex) As many as wanting." onChange={onResourceAnswerChanged} />
-                            <SwitchItem disabled={false} onToggle={onObservableResourceChanged}>observable</SwitchItem>
-                            <div style={{"paddingTop": 9+"px"}}>
-                                <Button
-                                    disabled={this.state.resourceQuestion&&this.state.resourceAnswer&&this.state.resourceUri&&this.state.resourceType?false:true}
-                                    small
-                                    onClick={onCreateResourceTapped}>
-                                    create resource
-                                </Button>
-                                <Button disabled={this.state.resourceUri?false:true} small onClick={onDeleteResourceTapped}>delete resource</Button>
+                        <Divider />
+                        {(serverEnabled && enableServerResourceControlUI) ?
+                            <div>
+                                <div style={{ "paddingLeft": 20 + "px" }}>
+                                    <MarqueeText marqueeOn="render">Resource: binarySwitch</MarqueeText>
+                                    <MarqueeText marqueeOn="render">Type: oic.r.switch.binary</MarqueeText>
+                                    <MarqueeText marqueeOn="render">Observable: true</MarqueeText>
+                                </div>
+                                <div style={{ "paddingLeft": 20 + "px", "paddingTop": 9 + "px" }}>
+                                    <div style={{ "width": 600 + "px", "display": "inline-block", "verticalAlign": "middle" }}>
+                                        <MarqueeText marqueeOn="render">value</MarqueeText>
+                                    </div>
+                                    <Button small onClick={this.onResourceValueTapped}>{resourceValue ? "true" : "false"}</Button>
+                                </div>
                             </div>
-                        </div>
-                        :null
-                    }
+                            : null}
                     </Cell>
                 </Layout>
             </div>
@@ -165,6 +115,7 @@ Server.propTypes = {
     createResource: PropTypes.func,
     deleteResource: PropTypes.func,
     actionDisableServerResourceControlUI: PropTypes.func,
+    setBinarySwitchValue: PropTypes.func,
 };
 const mapDispatchToProps = (dispatch) => {
     return {
@@ -173,14 +124,16 @@ const mapDispatchToProps = (dispatch) => {
         createResource: (params) => dispatch(ActionCreators.createResource(params)),
         deleteResource: (params) => dispatch(ActionCreators.deleteResource(params)),
         actionDisableServerResourceControlUI: () => dispatch(ActionCreators.actionDisableServerResourceControlUI()),
+        setBinarySwitchValue: (params) => dispatch(ActionCreators.setBinarySwitchValue(params)),
     };
 };
 let mapStateToProps = (state) => {
     return {
-        serverEnabled:state.serverEnabled,
-        discoveredResources:state.discoveredResources,
-        showDiscoveredResources:state.showDiscoveredResources,
-        enableServerResourceControlUI:state.enableServerResourceControlUI,
+        serverEnabled: state.serverEnabled,
+        discoveredResources: state.discoveredResources,
+        showDiscoveredResources: state.showDiscoveredResources,
+        enableServerResourceControlUI: state.enableServerResourceControlUI,
+        resourceValue: state.resourceValue
     };
 };
 export default connect(mapStateToProps, mapDispatchToProps)(Server);

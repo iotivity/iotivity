@@ -17,16 +17,23 @@ export const LS2RequestSingleton = {
     }
 };
 
-export function actionUpdateServerState (tf) {
+export function actionUpdateServerState(tf) {
     return {
         type: actions.UPDATE_SERVER,
-        payload: {"enabled":tf}
+        payload: { "enabled": tf }
     };
 }
 
-export function actionUpdateDiscoveredList (res) {
-    if(!res.addr){
-        setTimeout(function() {
+export function actionUpdateResourceValue(result) {
+    return {
+        type: actions.RESOURCE_CONTROL_UI,
+        payload: { "state": result.value }
+    };
+}
+
+export function actionUpdateDiscoveredList(res) {
+    if (!res) {
+        setTimeout(function () {
             const ls = LS2RequestSingleton.instance('discoverResources');
             if (ls) {
                 ls.cancel();
@@ -38,7 +45,7 @@ export function actionUpdateDiscoveredList (res) {
             payload: res
         };
     }
-    else{
+    else {
         return {
             type: actions.UPDATE_DISCOVERED_RESOURCES,
             payload: res
@@ -46,56 +53,61 @@ export function actionUpdateDiscoveredList (res) {
     }
 }
 
-export function actionResetDiscoveredList () {
+export function actionResetDiscoveredList() {
     return {
         type: actions.RESET_DISCOVERED_RESOURCES,
     };
 }
 
-export function actionEnableServerResourceControlUI(){
+export function actionEnableServerResourceControlUI() {
     return {
         type: actions.SHOW_SERVER_RESOURCE_CONTROL_UI,
     };
 }
 
-export function actionDisableServerResourceControlUI(){
+export function actionDisableServerResourceControlUI() {
     return {
         type: actions.HIDE_SERVER_RESOURCE_CONTROL_UI,
     };
 }
 
-export function actionEnableClientResourceControlUI(){
+export function actionEnableClientResourceControlUI() {
     return {
         type: actions.SHOW_CLIENT_RESOURCE_CONTROL_UI,
     };
 }
 
-export function actionDisableClientResourceControlUI(){
+export function actionDisableClientResourceControlUI() {
     return {
         type: actions.HIDE_CLIENT_RESOURCE_CONTROL_UI,
     };
 }
 
-export function actionUpdateGetResourceResults(result){
+export function actionUpdateGetResourceResults(result) {
     return {
         type: actions.UPDATE_GET_RESOURCE_RESULTS,
         payload: result
     };
 }
 
-export function actionUpdateObserveResourceResults(result){
+export function actionUpdateObserveResourceResults(result) {
     return {
         type: actions.UPDATE_OBSERVE_RESOURCE_RESULTS,
         payload: result
     };
 }
 
+export function actionCancelObserveResourceResults() {
+    return {
+        type: actions.CANCEL_OBSERVE_RESOURCE,
+    };
+}
+
 export const createToast = params => {
-    console.log('createToast');
     return new LS2Request().send({
         service: 'luna://com.webos.notification/',
         method: 'createToast',
-        parameters:{noaction:true, message:params},
+        parameters: { noaction: true, message: params },
         onComplete: (res) => {
             console.log(res);
             return;
@@ -103,7 +115,7 @@ export const createToast = params => {
     });
 };
 
-export const startServer = (dispatch) =>  {
+export const startServer = (dispatch) => {
     const ls = LS2RequestSingleton.instance('startServer', true);
     if (ls) {
         ls.send({
@@ -122,33 +134,39 @@ export const startServer = (dispatch) =>  {
     }
 };
 
-export const stopServer = (dispatch) =>  {
+export const stopServer = (dispatch) => {
     const ls = LS2RequestSingleton.instance('startServer');
     if (ls) {
         ls.cancel();
         dispatch(actionUpdateServerState(false));
         dispatch(actionResetDiscoveredList([]));
+        let param = { "value": false };
+        dispatch(actionUpdateResourceValue(param));
         LS2RequestSingleton.deleteInstance('startServer');
+        createToast("Server stopped.");
     }
 };
 
-export const discoverResources = (dispatch) =>  {
+export const discoverResources = (dispatch) => {
     const ls = LS2RequestSingleton.instance('discoverResources', true);
+    console.log('discoverResources');
     if (ls) {
         ls.send({
             service: 'luna://com.example.service.iotivity.client/',
             method: 'discoverResources',
-            parameters: {
-                subscribe: true
-            },
+            parameters: {},
             onComplete: (res) => {
+                console.log(res.discoveryResponse);
                 dispatch(actionUpdateDiscoveredList(res.discoveryResponse));
+                if (res.discoveryResponse.length === 0) {
+                    createToast("Resource not found.");
+                }
             },
         });
     }
 };
 
-export const resetDiscoveredList = (dispatch) =>  {
+export const resetDiscoveredList = (dispatch) => {
     const ls = LS2RequestSingleton.instance('discoverResources');
     const ls2 = LS2RequestSingleton.instance('observeResource');
     if (ls) {
@@ -168,13 +186,13 @@ export const createResource = params => dispatch => {
     return new LS2Request().send({
         service: 'luna://com.example.service.iotivity.server/',
         method: 'createResource',
-        parameters:params,
+        parameters: params,
         onComplete: (res) => {
-            if(res.returnValue){
-                createToast(params.uri +" resource is ready");
+            if (res.returnValue) {
+                createToast(params.uri + " resource is ready");
                 console.log(res);
                 dispatch(actionEnableServerResourceControlUI());
-				return;
+                return;
             }
         }
     });
@@ -185,10 +203,10 @@ export const deleteResource = params => dispatch => {
     return new LS2Request().send({
         service: 'luna://com.example.service.iotivity.server/',
         method: 'deleteResource',
-        parameters:params,
+        parameters: params,
         onComplete: (res) => {
-            if(res.returnValue){
-                createToast(params.uri +" resource is deleted");
+            if (res.returnValue) {
+                createToast(params.uri + " resource is deleted");
                 console.log(res);
                 dispatch(actionEnableServerResourceControlUI());
                 return;
@@ -202,14 +220,58 @@ export const getResource = params => dispatch => {
     return new LS2Request().send({
         service: 'luna://com.example.service.iotivity.client/',
         method: 'getResource',
-        parameters:params,
+        parameters: params,
         onComplete: (res) => {
             console.log(res);
-            if(res.response.payload){
+            if (res.response.payload) {
+                createToast("Success to get resource");
                 dispatch(actionUpdateGetResourceResults(res.response));
             }
-            else{
+            else {
                 createToast("Fail to get resource");
+                dispatch(actionEnableClientResourceControlUI());
+            }
+            return;
+        }
+    });
+};
+
+export const putResource = params => dispatch => {
+    console.log('putResource');
+	dispatch(actionUpdateResourceValue(params));
+    return new LS2Request().send({
+        service: 'luna://com.example.service.iotivity.client/',
+        method: 'putResource',
+        parameters: params,
+        onComplete: (res) => {
+            console.log(res);
+            if (res.returnValue && res.response.payload) {
+                createToast("Success to put resource");
+                dispatch(actionUpdateGetResourceResults(res.response));
+            }
+            else {
+                createToast("Fail to put resource");
+                dispatch(actionEnableClientResourceControlUI());
+            }
+            return;
+        }
+    });
+};
+
+export const postResource = params => dispatch => {
+    console.log('postResource');
+    return new LS2Request().send({
+        service: 'luna://com.example.service.iotivity.client/',
+        method: 'postResource',
+        parameters: params,
+        onComplete: (res) => {
+            console.log(res);
+            if (res.returnValue && res.response.payload) {
+                createToast("Success to post resource");
+                dispatch(actionUpdateGetResourceResults(res.response));
+            }
+            else {
+                createToast("Fail to post resource");
                 dispatch(actionEnableClientResourceControlUI());
             }
             return;
@@ -222,10 +284,10 @@ export const requestDeleteResource = params => dispatch => {
     return new LS2Request().send({
         service: 'luna://com.example.service.iotivity.client/',
         method: 'deleteResource',
-        parameters:params,
+        parameters: params,
         onComplete: (res) => {
-            if(res.returnValue){
-                createToast(params.uri +" resource is deleted");
+            if (res.returnValue) {
+                createToast(params.uri + " resource is deleted");
                 console.log(res);
                 dispatch(actionDisableClientResourceControlUI());
                 return;
@@ -241,16 +303,18 @@ export const observeResource = params => dispatch => {
             service: 'luna://com.example.service.iotivity.client/',
             method: 'observeResource',
             parameters: {
-                subscribe:true,
-                uri:params.uri,
-                destination:params.destination
+                subscribe: true,
+                uri: params.uri,
+                eps: params.eps,
+                destination: params.destination
             },
             onComplete: (res) => {
                 console.log(res);
-                if(res.response.payload){
-                    dispatch(actionUpdateGetResourceResults(res.response));
+                if (res.response.payload) {
+                    createToast("Observe resource value changed");
+                    dispatch(actionUpdateObserveResourceResults(res.response));
                 }
-                else{
+                else {
                     createToast("Fail to observe resource");
                     dispatch(actionEnableClientResourceControlUI());
                 }
@@ -260,10 +324,29 @@ export const observeResource = params => dispatch => {
     }
 };
 
-export const stopObserveResource = () =>  {
+export const stopObserveResource = (dispatch) => {
     const ls = LS2RequestSingleton.instance('observeResource');
     if (ls) {
         ls.cancel();
+        dispatch(actionCancelObserveResourceResults());
+        createToast("Cancel observe resource");
         LS2RequestSingleton.deleteInstance('observeResource');
     }
+};
+
+export const setBinarySwitchValue = params => dispatch => {
+    console.log('setBinarySwitchValue');
+    createToast("/binarySwitch value changed to " + params.value);
+    dispatch(actionUpdateResourceValue(params));
+    return new LS2Request().send({
+        service: 'luna://com.example.service.iotivity.server/',
+        method: 'setBinarySwitchValue',
+        parameters: {
+            value: params.value
+        },
+        onComplete: (res) => {
+            console.log(res);
+            return;
+        }
+    });
 };

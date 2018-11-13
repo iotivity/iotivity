@@ -192,20 +192,22 @@ serverDiscoverable.on("cancel", function (message) {
 service.register("createResource", function (message) {
     var uri = message.payload.uri;
     var types = message.payload.types;
-    var interfaces = message.payload.interfaces;
     var observable = message.payload.observable;
-    var q = message.payload.question;
-    var a = message.payload.answer;
 
-    if (!uri || !types || !q || !a) {
+    if (!uri) {
         message.respond({
-            errorText: "invalid destination formats",
-            returnValue: false,
-            subscribed: false
+            errorText: "invalid uri",
+            returnValue: false
+        });
+    }
+    else if (!types) {
+        message.respond({
+            errorText: "invalid types",
+            returnValue: false
         });
     }
     else {
-        server.createResource(validateUri(uri), types, q, a, observable, subscriptionCallback);
+        server.createResource(validateUri(uri), types, observable, subscriptionCallback);
         message.respond({ returnValue: true });
     }
 });
