@@ -285,3 +285,20 @@ service.register("setBinarySwitchValue", function (message) {
     server.setBinarySwitchValue(value);
     message.respond({ returnValue: true });
 });
+
+var binarySwitchObserver = service.register("observeBinarySwitchValue");
+binarySwitchObserver.on("request", function (message) {
+    if (message.isSubscription) {
+        subscriptions[message.uniqueToken] = message;
+        server.observeBinarySwitchValue(subscriptionCallback);
+    } else {
+        message.respond({
+            returnValue: false,
+            subscribed: false
+        });
+    }
+});
+binarySwitchObserver.on("cancel", function (message) {
+    delete subscriptions[message.uniqueToken];
+    message.respond({ returnValue: true });
+});

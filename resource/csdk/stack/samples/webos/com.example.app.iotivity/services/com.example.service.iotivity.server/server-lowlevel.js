@@ -25,6 +25,7 @@ var state = false;
 var handleReceptacle = {};
 var observerIds = [];
 const SVR_SERVER = 'oic_svr_db_server.dat';
+var subscriptionCallback;
 
 module.exports.startServer = function (resourceCallback) {
     console.log("Starting OCF stack in server mode");
@@ -136,7 +137,7 @@ module.exports.createResource = function (uri, types, observable, resourceCallba
             }
 
             if (request.requestHandle &&
-                (request.method === iotivity.OCMethod.OC_REST_PUT)) {
+                (request.method === iotivity.OCMethod.OC_REST_PUT || request.method === iotivity.OCMethod.OC_REST_POST)) {
                 state = request.payload.values.value;
                 iotivity.OCDoResponse({
                     requestHandle: request.requestHandle,
@@ -153,6 +154,7 @@ module.exports.createResource = function (uri, types, observable, resourceCallba
                     resourceUri: uri,
                     sendVendorSpecificHeaderOptions: []
                 });
+                notifyObservers();
             }
 
             // By default we error out
@@ -226,6 +228,7 @@ module.exports.deleteResource = function (uri, resourceCallback) {
 };
 
 function notifyObservers() {
+    subscriptionCallback({ "value": state });
     if (observerIds.length > 0) {
         iotivity.OCNotifyListOfObservers(
             handleReceptacle.handle,
@@ -247,4 +250,9 @@ module.exports.setBinarySwitchValue = function (value) {
     state = value;
     console.log("      state:" + state);
     notifyObservers();
+};
+
+module.exports.observeBinarySwitchValue = function (resourceCallback) {
+    console.log("observeBinarySwitchValue");
+    subscriptionCallback = resourceCallback;
 };

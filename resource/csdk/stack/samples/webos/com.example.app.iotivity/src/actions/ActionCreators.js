@@ -238,7 +238,6 @@ export const getResource = params => dispatch => {
 
 export const putResource = params => dispatch => {
     console.log('putResource');
-	dispatch(actionUpdateResourceValue(params));
     return new LS2Request().send({
         service: 'luna://com.example.service.iotivity.client/',
         method: 'putResource',
@@ -349,4 +348,35 @@ export const setBinarySwitchValue = params => dispatch => {
             return;
         }
     });
+};
+
+export const observeBinarySwitchValue = (dispatch) => {
+    console.log("observeBinarySwitchValue");
+    const ls = LS2RequestSingleton.instance('observeBinarySwitchValue', true);
+    if (ls) {
+        ls.send({
+            service: 'luna://com.example.service.iotivity.server/',
+            method: 'observeBinarySwitchValue',
+            parameters: {
+                subscribe: true
+            },
+            onComplete: (res) => {
+                if (res) {
+                    dispatch(actionUpdateResourceValue(res.response));
+                }
+                return;
+            }
+        });
+    }
+};
+
+export const stopObserveBinarySwitchValue = (dispatch) => {
+    console.log("stopObserveBinarySwitchValue");
+    const ls = LS2RequestSingleton.instance('observeBinarySwitchValue');
+    if (ls) {
+        ls.cancel();
+        LS2RequestSingleton.deleteInstance('observeBinarySwitchValue');
+        let param = { "value": false };
+        dispatch(actionUpdateResourceValue(param));
+    }
 };

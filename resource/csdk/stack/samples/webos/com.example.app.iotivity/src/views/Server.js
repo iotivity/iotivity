@@ -25,6 +25,7 @@ class Server extends React.Component {
         this.onStopServerTapped = this.stopServer.bind(this);
     }
     componentWillUnmount() {
+        this.props.stopObserveBinarySwitchValue();
         this.props.stopServer();
     }
     createResource() {
@@ -42,6 +43,7 @@ class Server extends React.Component {
             resourceObservable: true,
             resourceUpdateCompleted: true,
         });
+        this.props.observeBinarySwitchValue();
     }
     deleteResource() {
         let param = {
@@ -63,6 +65,7 @@ class Server extends React.Component {
         this.props.setBinarySwitchValue(param);
     }
     stopServer() {
+        this.props.stopObserveBinarySwitchValue();
         this.props.stopServer();
     }
     render() {
@@ -102,7 +105,8 @@ class Server extends React.Component {
                                     <Button small onClick={this.onResourceValueTapped}>{resourceValue ? "true" : "false"}</Button>
                                 </div>
                             </div>
-                            : null}
+                            : null
+                        }
                     </Cell>
                 </Layout>
             </div>
@@ -125,6 +129,8 @@ const mapDispatchToProps = (dispatch) => {
         deleteResource: (params) => dispatch(ActionCreators.deleteResource(params)),
         actionDisableServerResourceControlUI: () => dispatch(ActionCreators.actionDisableServerResourceControlUI()),
         setBinarySwitchValue: (params) => dispatch(ActionCreators.setBinarySwitchValue(params)),
+        observeBinarySwitchValue: () => ActionCreators.observeBinarySwitchValue(dispatch),
+        stopObserveBinarySwitchValue: () => ActionCreators.stopObserveBinarySwitchValue(dispatch),
     };
 };
 let mapStateToProps = (state) => {

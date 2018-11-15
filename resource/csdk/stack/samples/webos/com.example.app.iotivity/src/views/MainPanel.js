@@ -1,13 +1,13 @@
 import React from 'react';
 import kind from '@enact/core/kind';
 
-import {Panel, Header} from '@enact/moonstone/Panels';
+import { Panel, Header } from '@enact/moonstone/Panels';
 import Divider from '@enact/moonstone/Divider';
 
 import Server from './Server';
 import Client from './Client';
 
-import {Layout, Cell} from '@enact/ui/Layout';
+import { Layout, Cell } from '@enact/ui/Layout';
 
 const MainPanel = kind({
     name: 'MainPanel',
