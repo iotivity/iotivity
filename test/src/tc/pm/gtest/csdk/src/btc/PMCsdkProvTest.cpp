@@ -26,7 +26,7 @@ class PMCsdkProvTest_btc: public ::testing::Test
 {
 protected:
 
-    OCProvisionDev_t *m_OwnList;
+    OCProvisionDev_t *m_OwnList, *m_UnownList;
     OicSecAcl_t *m_Acl;
     PMCsdkHelper m_PMHelper;
 

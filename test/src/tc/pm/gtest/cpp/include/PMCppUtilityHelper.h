@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -70,7 +70,7 @@ using namespace OC;
 #define DP_PIN_LENGTH 8
 #define CRED_ID_ONE 1
 
-+#if defined (__LINUX__) || defined(__WINDOWS__)
+#if defined (__LINUX__) || defined(__WINDOWS__)
 #define ALLOWED_NETWORK "eth0"
 #elif __TIZEN__
 #define ALLOWED_NETWORK "wlan"

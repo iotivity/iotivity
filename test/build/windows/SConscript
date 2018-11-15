@@ -57,6 +57,7 @@ iotivity_common_includes_paths = [
     iotivity_root + '/resource/c_common',
     iotivity_root + '/resource/c_common/oic_malloc/include',
     iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
     iotivity_root + '/resource/oc_logger/include',
     iotivity_root + '/extlibs/tinycbor/tinycbor/src',
     iotivity_root + '/resource/include',
@@ -65,12 +66,30 @@ iotivity_common_includes_paths = [
     iotivity_root + '/out/windows/win32/' + target_arch + '/' + release_dir + '/resource/c_common'
 ]
 
+if env_windows.get('SECURED') == '1':
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/c_common/octhread/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/connectivity/inc')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/connectivity/api')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/connectivity/common/inc')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/provisioning/include/internal')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/provisioning/include/cloud')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/provisioning/include/oxm')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/provisioning/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/extlibs/mbedtls/mbedtls/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/extlibs/tinydtls')
+    iotivity_common_includes_paths.append(iotivity_root + '/extlibs/mbedtls/mbedtls/include/mbedtls')
+
+
 iotivity_test_include_paths = [ iotivity_test_root + '/include' ]
 extlibs_include_paths = [ iotivity_root + '/extlibs/gtest/googletest-release-1.7.0/include/' ]
 
 common_windows_cppflags = ['-DWINDOWS', '-D__WINDOWS__']
-
 cppflags = Split('')
+
+if env_windows.get('SECURED') == '1':
+    cppflags.append('-D__SECURED__ ')
 
 if env_windows.get('COVERAGE'):
     common_windows_cppflags.append('-finstrument-functions')
@@ -96,19 +115,24 @@ if 'tc' in test:
                             test_src_root + '/common/commonutil/c_cpp/CommonTestUtil.cpp',
                         ],
                 CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
+                LIBS = ['boost_system', 'boost_filesystem', 'boost_thread'],
+                LIBPATH = ['/usr/local/lib'],
                 CPPFLAGS = cppflags + common_windows_cppflags)
 
-    if 'ic' in module or 'cs' in module:
-        if tls_mode == 1:
-            cppflags.append(['-D__TLS_ON__'])
-        cloud_util = env_windows.StaticLibrary('cloud_util',
-                        source = [test_src_root + '/src/common/commonutil/c_cpp/CloudCommonUtil.cpp'],
-                        CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
-                        LIBS = ['curl', 'common_util'],
-                        CPPFLAGS = cppflags + common_windows_cppflags)
+if 'ic' in module or 'cs' in module:
+    if tls_mode == 1:
+        cppflags.append(['-D__TLS_ON__'])
+    cloud_util = env_linux.StaticLibrary('cloud_util',
+                    source = [test_src_root + '/common/commonutil/c_cpp/CloudCommonUtil.cpp'],
+                    CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
+                    LIBS = ['curl', 'boost_system', 'boost_filesystem', 'boost_thread', 'common_util' ],
+                    CPPFLAGS = cppflags + common_windows_cppflags)
 
-if 'pm' in module:
+if 'pm' in module or 'ri' in module:
+    print ('calling SConscriptSK')
     SConscript('SConscriptSK', exports = 'env_windows')
+else:
+    print ('no call to SConscriptSK')
 
 for temp in all_modules:
     if temp in module:
@@ -123,6 +147,13 @@ if 'tc' in test:
 install_bin = env_windows.Install(iotivity_test_root + '/' + install_dir, install_targets)
 
 delete_bin = []
+
+i = 0
+for delete_target in install_targets:
+    #delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
+
+Depends(delete_bin, install_bin)
 
 default_targets = install_bin + delete_bin
 
