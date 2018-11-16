@@ -75,15 +75,16 @@ namespace OCResourceResponseTest
 
     TEST(RequestHandleTest, SetGetRequestHandleValidHandle)
     {
-        char query[] = "?rt=core.light";
-        char address[] = "127.0.0.1";
+        const char query[] = "?rt=core.light";
+        const char address[] = "127.0.0.1";
         OCResourceResponse response;
         OCServerRequest request;
+
         request.method = OC_REST_GET;
-        strncpy(request.query, query, sizeof(query));
+        strncpy(request.query, query, sizeof(request.query));
         request.devAddr.flags = OC_DEFAULT_FLAGS;
         request.devAddr.adapter = OC_DEFAULT_ADAPTER;
-        strncpy(request.devAddr.addr, address, sizeof(query));
+        strncpy(request.devAddr.addr, address, sizeof(request.devAddr.addr));
         request.devAddr.port = 5364;
         request.qos = OC_LOW_QOS;
         request.coapID = 0;
