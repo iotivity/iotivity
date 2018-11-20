@@ -1421,10 +1421,8 @@ static SslEndPoint_t * NewSslEndPoint(const CAEndpoint_t * endpoint, mbedtls_ssl
     tep->sep.endpoint = *endpoint;
     tep->sep.endpoint.flags = (CATransportFlags_t)(tep->sep.endpoint.flags | CA_SECURE);
 
-    if (g_getIdentityCallback != NULL)
-    {
-        mbedtls_ssl_conf_verify(config, verifyIdentity, NULL);
-    }
+    mbedtls_ssl_conf_verify(config, g_getIdentityCallback ? verifyIdentity : NULL, NULL);
+
     if(0 != mbedtls_ssl_setup(&tep->ssl, config))
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Setup failed");
