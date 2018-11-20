@@ -11,7 +11,7 @@ target_os = connectivity_env.get('TARGET_OS')
 common_files = [File('catcpadapter.c')]
 
 # Target-specific sources
-if target_os in ['linux', 'tizen', 'android', 'ios', 'windows']:
+if target_os in ['linux', 'tizen', 'android', 'ios', 'windows', 'webos']:
     common_files.append(File('catcpserver.c'))
 
 connectivity_env.AppendUnique(CA_SRC=common_files)

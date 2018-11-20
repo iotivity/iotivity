@@ -52,7 +52,7 @@ enrollee_env.PrependUnique(CPPPATH=[
     '#/service/easy-setup/enrollee/src'
 ])
 
-if target_os not in ['linux', 'tizen']:
+if target_os not in ['linux', 'tizen', 'webos']:
     enrollee_env.PrependUnique(CPPPATH=['#extlibs/sqlite3'])
 
 if enrollee_env.get('SECURED') == '1':
@@ -69,7 +69,7 @@ if target_os not in ['windows']:
 ######################################################################
 # Linux Enrollee
 ######################################################################
-if target_os in ['linux']:
+if target_os in ['linux', 'webos']:
     enrollee_env.AddPthreadIfNeeded()
     enrollee_env.AppendUnique(LIBS=['dl'])
     enrollee_env.PrependUnique(LIBS=[
@@ -100,7 +100,7 @@ if target_os == 'tizen':
 ######################################################################
 es_enrollee_src = None
 
-if target_os in ['linux', 'tizen']:
+if target_os in ['linux', 'tizen', 'webos']:
     es_enrollee_common_src = ['./src/easysetup.c', './src/resourcehandler.c', './src/es_util.c']
     enrollee_sdk_shared = enrollee_env.SharedLibrary('ESEnrolleeSDK',
                                                      es_enrollee_common_src)

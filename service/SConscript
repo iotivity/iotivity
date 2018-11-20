@@ -50,5 +50,5 @@ if target_os not in ['darwin', 'windows']:
         SConscript('coap-http-proxy/SConscript')
 
 # Build EasySetup module
-if target_os in ['android', 'ios', 'linux', 'tizen']:
+if target_os in ['android', 'ios', 'linux', 'tizen', 'webos']:
     SConscript('easy-setup/SConscript')
