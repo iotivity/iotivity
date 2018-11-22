@@ -80,6 +80,7 @@ android.applicationVariants.all{ variant ->
 */
 
 dependencies {
+    compile fileTree(dir: "${javaExtLibDir}", include: ['*.jar'])
     compile(name:"${baseAARFile}", ext:'aar')
     compile(name:"${esAARFile}", ext:'aar')
 }

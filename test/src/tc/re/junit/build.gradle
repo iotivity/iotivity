@@ -79,6 +79,7 @@ android {
 }
 
 dependencies {
+    compile fileTree(dir: "${javaExtLibDir}", include: ['*.jar' ])
     compile(name:"${baseAARFile}", ext:'aar')
     compile(name:"${reAARFile}", ext:'aar')
 }
