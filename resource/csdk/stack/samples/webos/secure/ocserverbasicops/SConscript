@@ -83,9 +83,9 @@ Alias("samples", ocsamples)
 samples_env.AppendTarget('samples')
 
 src_dir = samples_env.get('SRC_DIR')
-sec_samples_src_dir = src_dir + '/resource/csdk/stack/samples/linux/secure/'
+sec_samples_src_dir = src_dir + '/resource/csdk/stack/samples/webos/secure/ocserverbasicops/'
 sec_samples_build_dir = samples_env.get(
-    'BUILD_DIR') + '/resource/csdk/stack/samples/linux/secure'
+    'BUILD_DIR') + '/resource/csdk/stack/samples/webos/secure/ocserverbasicops'
 
 samples_env.Alias(
     "install",
@@ -96,3 +96,13 @@ samples_env.Alias(
     "install",
     samples_env.Install(sec_samples_build_dir,
                         sec_samples_src_dir + 'oic_svr_db_server.dat'))
+
+samples_env.Alias(
+    "install",
+    samples_env.Install(sec_samples_build_dir,
+                        sec_samples_src_dir + 'oic_svr_db_server_rfotm.json'))
+
+samples_env.Alias(
+    "install",
+    samples_env.Install(sec_samples_build_dir,
+                        sec_samples_src_dir + 'oic_svr_db_server_rfotm.dat'))

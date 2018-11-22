@@ -32,13 +32,13 @@
             {
                 "aceid": 4,
                 "subject": { "uuid": "31393139-3139-3139-3139-313931393139" },
-                "resources": [{ "href": "/a/led" }],
+                "resources": [{ "href": "/binaryswitch" }],
                 "permission": 7
             },
             {
                 "aceid": 5,
                 "subject": { "uuid": "37373737-3737-3737-3737-373737373737" },
-                "resources": [{ "href": "/a/led" }],
+                "resources": [{ "href": "/binaryswitch" }],
                 "permission": 6
             }
         ],
