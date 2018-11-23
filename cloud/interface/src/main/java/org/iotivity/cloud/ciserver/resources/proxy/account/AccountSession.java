@@ -23,6 +23,7 @@ package org.iotivity.cloud.ciserver.resources.proxy.account;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.Device;
@@ -48,6 +49,10 @@ public class AccountSession extends Resource {
     public AccountSession() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI,
                 Constants.SESSION_URI));
+    }
+
+    public AccountSession(List<String> pathSegments) {
+        super(pathSegments);
     }
 
     @Override

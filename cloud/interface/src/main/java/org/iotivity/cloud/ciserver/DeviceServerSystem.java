@@ -233,6 +233,7 @@ public class DeviceServerSystem extends ServerSystem {
 
                 switch (urlPath) {
                     case OICConstants.ACCOUNT_SESSION_FULL_URI:
+                    case OICConstants.SEC_ACCOUNT_SESSION_FULL_URI:
                         final Device device = ctx.channel()
                                 .attr(keyDevice).get();
                         if(device.existParameter(LOGOUT_DEVICE)){
@@ -241,6 +242,7 @@ public class DeviceServerSystem extends ServerSystem {
                         }
                         break;
                     case OICConstants.ACCOUNT_FULL_URI:
+                    case OICConstants.SEC_ACCOUNT_FULL_URI:
                         if (response.getStatus() == ResponseStatus.DELETED) {
                             bCloseConnection = true;
                         }
@@ -377,6 +379,7 @@ public class DeviceServerSystem extends ServerSystem {
                      */
 
                     case OICConstants.ACCOUNT_SESSION_FULL_URI:
+                    case OICConstants.SEC_ACCOUNT_SESSION_FULL_URI:
                         HashMap<String, Object> payloadData = mCbor
                                 .parsePayloadFromCbor(response.getPayload(),
                                         HashMap.class);
@@ -435,8 +438,10 @@ public class DeviceServerSystem extends ServerSystem {
                 switch (urlPath) {
                     // Check whether request is about account
                     case OICConstants.ACCOUNT_FULL_URI:
-                    case OICConstants.ACCOUNT_TOKENREFRESH_FULL_URI:
+                    case OICConstants.SEC_ACCOUNT_FULL_URI:
 
+                    case OICConstants.ACCOUNT_TOKENREFRESH_FULL_URI:
+                    case OICConstants.SEC_ACCOUNT_TOKENREFRESH_FULL_URI:
                         if (ctx.channel().attr(keyDevice).get() == null) {
                             // Create device first and pass to upperlayer
                             Device device = new CoapDevice(ctx);
@@ -446,7 +451,7 @@ public class DeviceServerSystem extends ServerSystem {
                         break;
 
                     case OICConstants.ACCOUNT_SESSION_FULL_URI:
-
+                    case OICConstants.SEC_ACCOUNT_SESSION_FULL_URI:
                         HashMap<String, Object> authPayload = mCbor
                                 .parsePayloadFromCbor(request.getPayload(),
                                         HashMap.class);

@@ -25,6 +25,7 @@ import java.net.InetSocketAddress;
 import java.util.Scanner;
 
 import org.iotivity.cloud.ciserver.resources.UpdateDeviceStateListener;
+import org.iotivity.cloud.ciserver.resources.proxy.account.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.connector.ConnectorPool;
@@ -34,13 +35,6 @@ import org.iotivity.cloud.base.server.WebSocketServer;
 import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapDevicePool;
 import org.iotivity.cloud.ciserver.resources.KeepAliveResource;
 import org.iotivity.cloud.ciserver.resources.RouteResource;
-import org.iotivity.cloud.ciserver.resources.proxy.account.Account;
-import org.iotivity.cloud.ciserver.resources.proxy.account.AccountSession;
-import org.iotivity.cloud.ciserver.resources.proxy.account.Acl;
-import org.iotivity.cloud.ciserver.resources.proxy.account.AclGroup;
-import org.iotivity.cloud.ciserver.resources.proxy.account.AclInvite;
-import org.iotivity.cloud.ciserver.resources.proxy.account.Certificate;
-import org.iotivity.cloud.ciserver.resources.proxy.account.Crl;
 import org.iotivity.cloud.ciserver.resources.proxy.mq.MessageQueue;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.DevicePresence;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceDirectory;
@@ -110,6 +104,13 @@ public class CloudInterfaceServer {
         AclInvite aclInviteHandler = new AclInvite();
         Crl crlHandler = new Crl();
         CoapDevicePool devicePool = deviceServer.getDevicePool();
+
+        //version 2.0.0
+        SecAccount secAcHandler = new SecAccount();
+        SecAccountSession secAcSessionHandler = new SecAccountSession();
+        deviceServer.addResource(secAcHandler);
+        deviceServer.addResource(secAcSessionHandler);
+
 
         deviceServer.addResource(acHandler);
 

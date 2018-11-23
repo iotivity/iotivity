@@ -23,6 +23,7 @@ package org.iotivity.cloud.accountserver.resources.account.tokenrefresh;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.resources.account.AccountManager;
@@ -52,6 +53,10 @@ public class TokenRefreshResource extends Resource {
     public TokenRefreshResource() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI,
                 Constants.TOKEN_REFRESH_URI));
+    }
+
+    public TokenRefreshResource(List<String> pathSegments) {
+        super(pathSegments);
     }
 
     @Override

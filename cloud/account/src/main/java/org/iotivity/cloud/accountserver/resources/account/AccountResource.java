@@ -56,7 +56,10 @@ public class AccountResource extends Resource {
 
     public AccountResource() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI));
+    }
 
+    public AccountResource(final List<String> pathSegments) {
+        super(pathSegments);
     }
 
     @Override

@@ -25,6 +25,9 @@ import java.net.InetSocketAddress;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
+import org.iotivity.cloud.accountserver.resources.account.SecAccountResource;
+import org.iotivity.cloud.accountserver.resources.account.session.SecSessionResource;
+import org.iotivity.cloud.accountserver.resources.account.tokenrefresh.SecTokenRefreshResource;
 import org.iotivity.cloud.base.healthcheck.HealthHolder;
 import org.iotivity.cloud.base.healthcheck.SimpleHealthHolder;
 import org.iotivity.cloud.base.server.SimpleHttpServer;
@@ -81,6 +84,11 @@ public class AccountServer {
         serverSystem.addResource(new CrlResource());
         serverSystem.addResource(new AclResource());
         serverSystem.addResource(new InviteResource());
+
+        //change in version 2.0.0
+        serverSystem.addResource(new SecAccountResource());
+        serverSystem.addResource(new SecTokenRefreshResource());
+        serverSystem.addResource(new SecSessionResource());
 
         serverSystem.addServer(
                 new CoapServer(new InetSocketAddress(coapServerPort)));
