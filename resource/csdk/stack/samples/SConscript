@@ -39,5 +39,3 @@ elif target_os == 'msys_nt':
 elif target_os == 'webos':
     if stacksamples_env.get('SECURED') == '1':
         SConscript('webos/secure/SConscript', 'stacksamples_env')
-    else:
-        SConscript('webos/unsecure/SConscript', 'stacksamples_env')
