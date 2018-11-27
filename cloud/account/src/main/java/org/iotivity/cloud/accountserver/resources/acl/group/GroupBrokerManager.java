@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.ListIterator;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.GroupTable;
@@ -18,13 +20,13 @@ import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
 /**
  * This class provides a set of APIs manage a group broker
  */
 public class GroupBrokerManager {
 
+    private final static Logger                         Log                = LoggerFactory.getLogger(GroupBrokerManager.class);
     private static GroupBrokerManager                   mGroupBrokerMgr    = new GroupBrokerManager();
     private TypeCastingManager<GroupTable>              mTypeGroup         = new TypeCastingManager<>();
     private HashMap<String, Object>                     mGroupResourceInfo = new HashMap<>();
@@ -108,7 +110,7 @@ public class GroupBrokerManager {
             response.put(Constants.RESP_GROUPS, records);
         }
 
-        Log.d("Group get response : " + response.toString());
+        Log.debug("Group get response : " + response.toString());
         return response;
     }
 
@@ -182,7 +184,7 @@ public class GroupBrokerManager {
             response.put(Constants.KEYFIELD_GROUP_PARENT, parent);
         }
 
-        Log.d("Group post response : " + response.toString());
+        Log.debug("Group post response : " + response.toString());
 
         return response;
     }
@@ -258,7 +260,7 @@ public class GroupBrokerManager {
                         && coapRequest.getTokenString().equals(
                                 ((CoapRequest) request).getTokenString())) {
                     iterator.remove();
-                    Log.d("subscriber removed, "
+                    Log.debug("subscriber removed, "
                             + ((CoapRequest) request).getTokenString());
                 }
             }
@@ -291,7 +293,7 @@ public class GroupBrokerManager {
                                     mCbor.encodingPayloadToCbor(
                                             makeGetResponse(uid))));
                 }
-                Log.d("subscriber : " + uid
+                Log.debug("subscriber : " + uid
                         + " , subscriber internal Token list : "
                         + subscriberTokenList);
             }

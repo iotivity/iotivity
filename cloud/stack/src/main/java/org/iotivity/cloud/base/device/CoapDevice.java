@@ -23,9 +23,12 @@ package org.iotivity.cloud.base.device;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.connector.CoapClient;
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.exception.ClientException;
@@ -37,11 +40,11 @@ import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.enums.Observe;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.util.Bytes;
-import org.iotivity.cloud.util.Log;
 
 import io.netty.channel.ChannelHandlerContext;
 
 public class CoapDevice extends Device {
+    private final static Logger        Log                 = LoggerFactory.getLogger(CoapDevice.class);
     private CoapClient                 mCoapClient         = null;
     private String                     mUserId             = null;
     private String                     mDeviceId           = null;
@@ -49,7 +52,7 @@ public class CoapDevice extends Device {
     private Date                       mIssuedTime         = null;
     private int                        mExpiredPolicy      = 0;
     private ArrayList<IRequestChannel> mObserveChannelList = new ArrayList<>();
-    private HashMap<Long, IRequest>    mObserveRequestList = new HashMap<>();
+    private ConcurrentMap<Long, IRequest>    mObserveRequestList = new ConcurrentHashMap<>();
 
     private static final int           INFINITE_TIME       = -1;
 
@@ -112,7 +115,6 @@ public class CoapDevice extends Device {
                 Long token = iterator.next();
                 CoapClient coapClient = (CoapClient) channel;
                 if (coapClient.isObserveRequest(token) != null) {
-                    coapClient.removeObserve(token);
                     CoapRequest coapRequest = (CoapRequest) mObserveRequestList
                             .get(token);
                     coapRequest.setObserve(Observe.UNSUBSCRIBE);
@@ -173,7 +175,7 @@ public class CoapDevice extends Device {
 
         if (remainTime < 0) {
 
-            Log.w("accessToken is expired..");
+            Log.warn("accessToken is expired..");
             return true;
         }
 

@@ -66,8 +66,9 @@ public class AccountSessionTest {
     private ConnectorPool        mConnectorPool      = null;
     private DeviceServerSystem   mDeviceServerSystem = new DeviceServerSystem();
     private final CountDownLatch mLatch              = new CountDownLatch(1);
-    @Mock
-    private IRequestChannel      mRequestChannel;
+
+    @Mock(name = "mASServer")
+    IRequestChannel             mRequestChannelASServer;
 
     @InjectMocks
     private AccountSession       mAcSessionHandler   = new AccountSession();
@@ -98,11 +99,12 @@ public class AccountSessionTest {
                         "\t---------uriquery : " + request.getUriQuery());
                 return null;
             }
-        }).when(mRequestChannel).sendRequest(Mockito.any(IRequest.class),
+        }).when(mRequestChannelASServer).sendRequest(Mockito.any(IRequest.class),
                 Mockito.any(CoapDevice.class));
 
         PowerMockito.mockStatic(ConnectorPool.class);
-        PowerMockito.when(ConnectorPool.getConnection(Mockito.anyString())).thenReturn(mRequestChannel);
+        PowerMockito.when(ConnectorPool.getConnection("account")).thenReturn(mRequestChannelASServer);
+        PowerMockito.when(ConnectorPool.containConnection(Mockito.anyString())).thenReturn(true);
     }
 
     @Test

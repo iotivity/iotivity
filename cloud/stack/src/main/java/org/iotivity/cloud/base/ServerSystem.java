@@ -29,6 +29,8 @@ import io.netty.util.AttributeKey;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.connector.CoapClient;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.Device;
@@ -47,16 +49,11 @@ import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.base.server.HttpServer;
 import org.iotivity.cloud.base.server.Server;
 import org.iotivity.cloud.base.server.WebSocketServer;
-import org.iotivity.cloud.util.Log;
-
-import io.netty.channel.ChannelHandler.Sharable;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.util.AttributeKey;
 
 public class ServerSystem extends ResourceManager {
-    private List<Server>               mServerList = new ArrayList<>();
-    public static AttributeKey<Device> keyDevice   = AttributeKey
+    private final static Logger         Log          = LoggerFactory.getLogger(ServerSystem.class);
+    private List<Server>                mServerList  = new ArrayList<>();
+    public static AttributeKey<Device>  keyDevice    = AttributeKey
             .newInstance("device");
 
     @Sharable
@@ -101,16 +98,17 @@ public class ServerSystem extends ResourceManager {
                 }
 
             } catch (ServerException e) {
-                ctx.writeAndFlush(MessageBuilder.createResponse(msg,
-                        e.getErrorResponse()));
-                Log.f(ctx.channel(), e);
+                ctx.writeAndFlush(MessageBuilder.createResponse(msg, e.getErrorResponse()));
+                if (e instanceof ServerException.ServiceUnavailableException)
+                    Log.warn(e.getMessage());
+                else
+                    Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), e);
             } catch (ClientException e) {
-                Log.f(ctx.channel(), e);
+                Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), e);
             } catch (Throwable t) {
-                Log.f(ctx.channel(), t);
+                Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), t);
                 if (msg instanceof CoapRequest) {
-                    ctx.writeAndFlush(MessageBuilder.createResponse(msg,
-                            ResponseStatus.INTERNAL_SERVER_ERROR));
+                    ctx.writeAndFlush(MessageBuilder.createResponse(msg, ResponseStatus.INTERNAL_SERVER_ERROR));
                 }
             }
         }
@@ -140,11 +138,11 @@ public class ServerSystem extends ResourceManager {
                 onRequestReceived(targetDevice, msg);
 
             } catch (ServerException e) {
-                Log.f(ctx.channel(), e);
+                Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), e);
                 ctx.writeAndFlush(MessageBuilder.createResponse(msg,
                         e.getErrorResponse()));
             } catch (Throwable t) {
-                Log.f(ctx.channel(), t);
+                Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), t);
                 ctx.writeAndFlush(MessageBuilder.createResponse(msg,
                         ResponseStatus.INTERNAL_SERVER_ERROR));
             }

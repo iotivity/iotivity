@@ -21,7 +21,12 @@
  */
 package org.iotivity.cloud.base.protocols.enums;
 
+import java.util.Arrays;
+import java.util.List;
+
 public enum ResponseStatus {
+    // Empty response
+    EMPTY,
     // Success 2.xx
     CREATED, DELETED, VALID, CHANGED, CONTENT,
     // Client Error 4.xx
@@ -36,4 +41,10 @@ public enum ResponseStatus {
     INTERNAL_SERVER_ERROR, NOT_IMPLEMENTED, BAD_GATEWAY,
     //
     SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT, PROXY_NOT_SUPPORTED;
+
+    private static final List<ResponseStatus> successResponseStatuses = Arrays.asList(ResponseStatus.CREATED, ResponseStatus.DELETED, ResponseStatus.VALID, ResponseStatus.CHANGED, ResponseStatus.CONTENT);
+
+    public boolean isSuccess() {
+        return successResponseStatuses.contains(this);
+    }
 }

@@ -32,9 +32,10 @@ import java.util.concurrent.Executors;
 
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.ZkConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.mqserver.Constants;
 import org.iotivity.cloud.mqserver.topic.Topic;
-import org.iotivity.cloud.util.Log;
 
 import kafka.admin.AdminUtils;
 import kafka.api.FetchRequest;
@@ -61,21 +62,21 @@ import kafka.utils.ZkUtils;
  *
  */
 public class KafkaConsumerWrapper {
+    private final static Logger     Log                = LoggerFactory.getLogger(KafkaConsumerWrapper.class);
+    private String                  mTopicName         = null;
 
-    private String            mTopicName         = null;
+    private String                  mZookeeper         = null;
+    private String                  mBroker            = null;
 
-    private String            mZookeeper         = null;
-    private String            mBroker            = null;
+    private ZkClient                mZkClient          = null;
+    private ZkUtils                 mZkUtils           = null;
 
-    private ZkClient          mZkClient          = null;
-    private ZkUtils           mZkUtils           = null;
+    private ConsumerConnector       mConsumerConnector = null;
+    private ExecutorService         mConsumerExecutor  = null;
 
-    private ConsumerConnector mConsumerConnector = null;
-    private ExecutorService   mConsumerExecutor  = null;
+    private Topic                   mInternalConsumer  = null;
 
-    private Topic             mInternalConsumer  = null;
-
-    private boolean           mConsumerStarted   = false;
+    private boolean                 mConsumerStarted   = false;
 
     public KafkaConsumerWrapper(String zookeeperAddress, String brokerAddress,
             Topic consumer) {
@@ -111,7 +112,7 @@ public class KafkaConsumerWrapper {
      */
     public boolean subscribeTopic() {
 
-        Log.d("kafka subscribeTopic - " + mTopicName);
+        Log.debug("kafka subscribeTopic - " + mTopicName);
 
         if (mConsumerStarted == true) {
             return true;
@@ -144,7 +145,7 @@ public class KafkaConsumerWrapper {
 
         for (final KafkaStream<byte[], byte[]> stream : streams) {
 
-            Log.d("kafka subscribe complete");
+            Log.debug("kafka subscribe complete");
 
             mConsumerExecutor.execute(new Runnable() {
 
@@ -172,7 +173,7 @@ public class KafkaConsumerWrapper {
      */
     public boolean unsubscribeTopic() {
 
-        Log.d("kafka unsubscribeTopic - " + mTopicName);
+        Log.debug("kafka unsubscribeTopic - " + mTopicName);
 
         // remove consumer group info in zookeeper
         List<String> subscribers = mZkClient
@@ -210,13 +211,13 @@ public class KafkaConsumerWrapper {
      */
     public ArrayList<byte[]> getMessages() {
 
-        Log.d("kafka get all messages - " + mTopicName);
+        Log.debug("kafka get all messages - " + mTopicName);
 
         String brokerHost = mBroker.substring(0, mBroker.indexOf(':'));
         int brokerPort = Integer
                 .parseInt(mBroker.substring(mBroker.indexOf(':') + 1));
 
-        Log.d("host " + brokerHost + ", port " + brokerPort);
+        Log.debug("host " + brokerHost + ", port " + brokerPort);
 
         // TODO check options - Timeout: Int, bufferSize: Int
         SimpleConsumer simpleConsumer = new SimpleConsumer(brokerHost,
@@ -233,7 +234,7 @@ public class KafkaConsumerWrapper {
 
         if (fetchResponse == null || fetchResponse.hasError()) {
 
-            Log.e("Error fetching data from the Broker");
+            Log.error("Error fetching data from the Broker");
             return null;
         }
 
@@ -247,7 +248,7 @@ public class KafkaConsumerWrapper {
 
                 long currentOffset = messageAndOffset.offset();
                 if (currentOffset < lastOffset) {
-                    Log.e("Found an old offset: " + currentOffset
+                    Log.error("Found an old offset: " + currentOffset
                             + " Expecting: " + lastOffset);
                     continue;
                 }
@@ -266,7 +267,7 @@ public class KafkaConsumerWrapper {
 
         simpleConsumer.close();
 
-        Log.d("kafka get all messages complete");
+        Log.debug("kafka get all messages complete");
 
         return initialData;
     }
@@ -301,7 +302,7 @@ public class KafkaConsumerWrapper {
         OffsetResponse response = consumer.getOffsetsBefore(request);
 
         if (response == null || response.hasError()) {
-            Log.e("Error fetching data Offset Data the Broker");
+            Log.error("Error fetching data Offset Data the Broker");
             return 0;
         }
 

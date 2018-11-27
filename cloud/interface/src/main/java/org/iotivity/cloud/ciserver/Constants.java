@@ -35,7 +35,6 @@ public class Constants extends OICConstants {
 
     public static final String USER_ID                         = "uid";
     public static final String DEVICE_ID                       = "di";
-    public static final String PRESENCE_STATE                  = "state";
 
     public static final String REQ_LOGIN                       = "login";
 
@@ -67,4 +66,11 @@ public class Constants extends OICConstants {
     public static final String REQ_LINKS                       = "links";
     public static final String REQ_HREF                        = "href";
     public static final String REQ_CRL                         = "crl";
+
+
+    /** '/oic/prs' resource property */
+    public static final String PRESENCE_STATE          = "state";
+    public static final String PRESENCE_ON             = "on";
+    public static final String PRESENCE_LIST           = "prslist";
+
 }

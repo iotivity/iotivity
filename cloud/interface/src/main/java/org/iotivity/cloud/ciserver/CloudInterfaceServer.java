@@ -24,6 +24,10 @@ package org.iotivity.cloud.ciserver;
 import java.net.InetSocketAddress;
 import java.util.Scanner;
 
+import org.iotivity.cloud.ciserver.resources.UpdateDeviceStateListener;
+import org.iotivity.cloud.ciserver.resources.proxy.account.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.base.server.HttpServer;
@@ -31,46 +35,36 @@ import org.iotivity.cloud.base.server.WebSocketServer;
 import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapDevicePool;
 import org.iotivity.cloud.ciserver.resources.KeepAliveResource;
 import org.iotivity.cloud.ciserver.resources.RouteResource;
-import org.iotivity.cloud.ciserver.resources.proxy.account.Account;
-import org.iotivity.cloud.ciserver.resources.proxy.account.AccountSession;
-import org.iotivity.cloud.ciserver.resources.proxy.account.Acl;
-import org.iotivity.cloud.ciserver.resources.proxy.account.AclGroup;
-import org.iotivity.cloud.ciserver.resources.proxy.account.AclInvite;
-import org.iotivity.cloud.ciserver.resources.proxy.account.Certificate;
-import org.iotivity.cloud.ciserver.resources.proxy.account.Crl;
 import org.iotivity.cloud.ciserver.resources.proxy.mq.MessageQueue;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.DevicePresence;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceDirectory;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceFind;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourcePresence;
-import org.iotivity.cloud.util.Log;
 
 public class CloudInterfaceServer {
-
-    private static int[]   deviceKeepAliveMinutes = new int[] { 1, 2, 4, 8 };
-    private static int     coapServerPort;
-    private static boolean tlsMode;
-    private static boolean keepAlive = false;
-    private static boolean hcProxyMode;
-    private static int     hcProxyPort;
-    private static boolean websocketMode;
-    private static int     websocketPort;
-    private static String  resourceDirectoryAddress;
-    private static int     resourceDirectoryPort;
-    private static String  accountServerAddress;
-    private static int     accountServerPort;
-    private static String  messageQueueAddress;
-    private static int     messageQueuePort;
-    private static String  webLogHost;
+    private final static Logger Log = LoggerFactory.getLogger(CloudInterfaceServer.class);
+    private static int[]        deviceKeepAliveMinutes = new int[] { 1, 2, 4, 8 };
+    private static int          coapServerPort;
+    private static boolean      tlsMode;
+    private static boolean      keepAlive = false;
+    private static boolean      hcProxyMode;
+    private static int          hcProxyPort;
+    private static boolean      websocketMode;
+    private static int          websocketPort;
+    private static String       resourceDirectoryAddress;
+    private static int          resourceDirectoryPort;
+    private static String       accountServerAddress;
+    private static int          accountServerPort;
+    private static boolean      messageQueueEnabled;
+    private static String       messageQueueAddress;
+    private static int          messageQueuePort;
 
     public static void main(String[] args) throws Exception {
-        System.out.println("-----CI SERVER-------");
-        Log.Init();
+        Log.info("Starting Cloud Interface Server");
 
         if (!parseConfiguration(args)) {
-            Log.e("\nCoAP-server <Port> RD-server <Address> <Port> Account-server <Address> <Port> MQ-broker <Address> <Port> HC-proxy [HTTP-port] "
-                    + "Websocket-server <Port> and TLS-mode <0|1> are required. WebSocketLog-Server <Addres> <Port> "
-                    + "and KeepAlive for cloud components <0|1> are optional.\n"
+            Log.error("\nCoAP-server <Port> RD-server <Address> <Port> Account-server <Address> <Port> MQ-broker <Address> <Port> HC-proxy [HTTP-port] "
+                    + "Websocket-server <Port> and TLS-mode <0|1> are required.\n"
                     + "ex) " + Constants.DEFAULT_COAP_PORT
                     + " 127.0.0.1 " + Constants.DEFAULT_RESOURCE_DIRECTORY_PORT
                     + " 127.0.0.1 " + Constants.DEFAULT_ACCOUNT_SERVER_PORT
@@ -79,19 +73,21 @@ public class CloudInterfaceServer {
                     + " " + Constants.DEFAULT_WEBSOCKET_PORT + " 0\n");
             return;
         }
-        if (webLogHost != null)
-            Log.InitWebLog(webLogHost,
-                    CloudInterfaceServer.class.getSimpleName().toString());
 
+        final KeepAliveResource resKeepAlive = new KeepAliveResource(deviceKeepAliveMinutes);
+        final UpdateDeviceStateListener updatePresenceState = new UpdateDeviceStateListener(resKeepAlive);
         ConnectorPool.requestConnection("rd",
                 new InetSocketAddress(resourceDirectoryAddress, resourceDirectoryPort),
-                tlsMode, keepAlive);
+                tlsMode, keepAlive, updatePresenceState);
         ConnectorPool.requestConnection("account",
                 new InetSocketAddress(accountServerAddress, accountServerPort),
                 tlsMode, keepAlive);
-        ConnectorPool.requestConnection("mq",
-                new InetSocketAddress(messageQueueAddress, messageQueuePort),
-                tlsMode, keepAlive);
+
+        if(messageQueueEnabled) {
+            ConnectorPool.requestConnection("mq",
+                    new InetSocketAddress(messageQueueAddress, messageQueuePort),
+                    tlsMode, keepAlive);
+        }
 
         DeviceServerSystem deviceServer = new DeviceServerSystem();
 
@@ -108,6 +104,13 @@ public class CloudInterfaceServer {
         AclInvite aclInviteHandler = new AclInvite();
         Crl crlHandler = new Crl();
         CoapDevicePool devicePool = deviceServer.getDevicePool();
+
+        //version 2.0.0
+        SecAccount secAcHandler = new SecAccount();
+        SecAccountSession secAcSessionHandler = new SecAccountSession();
+        deviceServer.addResource(secAcHandler);
+        deviceServer.addResource(secAcSessionHandler);
+
 
         deviceServer.addResource(acHandler);
 
@@ -132,8 +135,6 @@ public class CloudInterfaceServer {
         deviceServer.addResource(aclInviteHandler);
 
         deviceServer.addResource(crlHandler);
-
-        KeepAliveResource resKeepAlive = new KeepAliveResource(deviceKeepAliveMinutes);
 
         deviceServer.addResource(resKeepAlive);
 
@@ -173,7 +174,7 @@ public class CloudInterfaceServer {
 
     private static boolean parseConfiguration(String[] args) {
         // configuration provided by arguments
-        if (args.length == 10 || args.length == 13) {
+        if (args.length == 10) {
             coapServerPort = Integer.parseInt(args[0]);
             resourceDirectoryAddress = args[1];
             resourceDirectoryPort = Integer.parseInt(args[2]);
@@ -186,10 +187,6 @@ public class CloudInterfaceServer {
             websocketPort = Integer.parseInt(args[8]);
             websocketMode = websocketPort != 0;
             tlsMode = Integer.parseInt(args[9]) == 1;
-            if (args.length == 13) {
-                webLogHost = args[10] + ":" + args[11];
-                keepAlive = Integer.parseInt(args[12]) == 1;
-            }
 
             return true;
         }
@@ -202,10 +199,8 @@ public class CloudInterfaceServer {
             resourceDirectoryPort = Integer.parseInt(System.getenv("RESOURCE_DIRECTORY_PORT"));
             accountServerAddress = System.getenv("ACCOUNT_SERVER_ADDRESS");
             accountServerPort = Integer.parseInt(System.getenv("ACCOUNT_SERVER_PORT"));
-            messageQueueAddress = System.getenv("MESSAGE_QUEUE_ADDRESS");
-            messageQueuePort = Integer.parseInt(System.getenv("MESSAGE_QUEUE_PORT"));
-            hcProxyMode = Integer.parseInt(System.getenv("HC_PROXY_MODE")) == 1;
-            hcProxyPort = Constants.DEFAULT_HC_PROXY_PORT;
+            hcProxyMode = Integer.parseInt(System.getenv("HTTP_PROXY_MODE")) == 1;
+            hcProxyPort = Integer.parseInt(System.getenv("HTTP_PROXY_PORT"));
             websocketMode = Integer.parseInt(System.getenv("WEBSOCKET_MODE")) == 1;
             websocketPort = Constants.DEFAULT_WEBSOCKET_PORT;
             keepAlive = Integer.parseInt(System.getenv("KEEPALIVE_CLOUD")) == 1;
@@ -213,6 +208,14 @@ public class CloudInterfaceServer {
             String keepAliveEnv = System.getenv("DEVICE_KEEPALIVE_MINUTES");
             if (keepAliveEnv != null && !keepAliveEnv.isEmpty())
                 deviceKeepAliveMinutes = new int[] { Integer.parseInt(keepAliveEnv) };
+
+            String messageQueueEnv = System.getenv("MESSAGE_QUEUE_ADDRESS");
+            if(messageQueueEnv != null)
+            {
+                messageQueueAddress = System.getenv("MESSAGE_QUEUE_ADDRESS");
+                messageQueuePort = Integer.parseInt(System.getenv("MESSAGE_QUEUE_PORT"));
+                messageQueueEnabled = true;
+            }
             return true;
         }
         return false;

@@ -28,6 +28,8 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.HttpDevice;
@@ -40,7 +42,6 @@ import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.server.HttpServer;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -66,7 +67,7 @@ import io.netty.util.AttributeKey;
  * described in https://tools.ietf.org/html/draft-ietf-core-http-mapping-13.
  */
 public class HCProxyProcessor {
-
+    private final static Logger Log             = LoggerFactory.getLogger(HCProxyProcessor.class);
     public final static String COAP_FORMAT_TYPE = "application/coap-payload;cf=";
     public final static String APPLICATION_JSON = "application/json";
     public final static String APPLICATION_CBOR = "application/cbor";
@@ -283,7 +284,7 @@ public class HCProxyProcessor {
             if (mContentType.equalsIgnoreCase(APPLICATION_JSON)) {
                 byte[] cborData = null;
                 try { // Cbor: JSON string to Map
-                    Log.v("Cbor encoding using HashMap.class");
+                    Log.trace("Cbor encoding using HashMap.class");
                     ObjectMapper cborMapper = new ObjectMapper();
                     HashMap<String, Object> cborMap
                     = cborMapper.readValue(content,
@@ -497,14 +498,14 @@ public class HCProxyProcessor {
                 try { // Cbor: Map to JSON string
 
                     if (getTargetCoapPath().contains(DISCOVER_URI)) {
-                        Log.v("Cbor decoding using ArrayList.class");
+                        Log.trace("Cbor decoding using ArrayList.class");
                         ArrayList<Object> cborMap = mStackCborArray
                                 .parsePayloadFromCbor(coapPayload, ArrayList.class);
                         ObjectMapper cborMapper = new ObjectMapper();
                         payloadString = cborMapper.writerWithDefaultPrettyPrinter()
                                 .writeValueAsString(cborMap);
                     } else {
-                        Log.v("Cbor decoding using HashMap.class");
+                        Log.trace("Cbor decoding using HashMap.class");
                         HashMap<String, Object> cborMap = mStackCborMap
                                 .parsePayloadFromCbor(coapPayload, HashMap.class);
                         ObjectMapper cborMapper = new ObjectMapper();

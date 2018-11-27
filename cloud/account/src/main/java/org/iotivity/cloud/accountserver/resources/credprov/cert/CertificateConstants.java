@@ -21,11 +21,12 @@
  */
 package org.iotivity.cloud.accountserver.resources.credprov.cert;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.x509.cert.Utility;
-import org.iotivity.cloud.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,11 +45,12 @@ import static java.security.cert.CertificateFactory.getInstance;
  * This utility class is used for getting all properties from properties file.
  */
 public final class CertificateConstants {
+    private final static Logger     Log         = LoggerFactory.getLogger(CertificateConstants.class);
 
     /**
      * Properties object is used for loading pre-defined configurations: algorithm names and so on.
      */
-    public static final Properties PROPERTIES = new Properties();
+    public static final Properties  PROPERTIES  = new Properties();
 
     /**
      * Load properties from specified properties file.
@@ -57,7 +59,7 @@ public final class CertificateConstants {
         try (FileInputStream inputStream = new FileInputStream(Constants.PROPERTIES_FILE_NAME)) {
             PROPERTIES.load(inputStream);
         } catch (IOException e) {
-            Log.e(e.getMessage());
+            Log.error(e.getMessage());
         }
     }
 
@@ -141,7 +143,7 @@ public final class CertificateConstants {
         try {
             CERTIFICATE_FACTORY = getInstance("X509");
         } catch (CertificateException e) {
-            Log.e(e.getMessage());
+            Log.error(e.getMessage());
         }
     }
 
@@ -162,7 +164,7 @@ public final class CertificateConstants {
         try (FileOutputStream outputStream = new FileOutputStream(Constants.PROPERTIES_FILE_NAME)) {
             PROPERTIES.store(outputStream, "New Serial number");
         } catch (IOException e) {
-            Log.e(e.getMessage());
+            Log.error(e.getMessage());
         }
     }
 

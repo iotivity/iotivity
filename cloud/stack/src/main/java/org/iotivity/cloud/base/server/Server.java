@@ -29,8 +29,9 @@ import java.util.List;
 
 import javax.net.ssl.SSLException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.OICConstants;
-import org.iotivity.cloud.util.Log;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelHandler;
@@ -46,6 +47,7 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 
 public abstract class Server {
+    Logger            Log                = LoggerFactory.getLogger(Server.class);
 
     EventLoopGroup    acceptorGroup      = new NioEventLoopGroup(1);
 
@@ -92,7 +94,7 @@ public abstract class Server {
 
         try {
             if (tlsMode)
-                Log.i("Server starts with TLS!");
+                Log.info("Server starts with TLS!");
 
             if (tlsMode == true) {
 

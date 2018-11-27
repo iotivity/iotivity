@@ -58,6 +58,7 @@ public class DevicePresenceResourceTest {
 
     @Before
     public void setUp() throws Exception {
+        RDServerTestUtils.createRDDatabase();
         mResponse = null;
         mMockDevice = mock(CoapDevice.class);
         mLatch = new CountDownLatch(1);
@@ -77,7 +78,7 @@ public class DevicePresenceResourceTest {
 
     @After
     public void tearDown() throws Exception {
-        RDServerTestUtils.resetRDDatabase();
+        RDServerTestUtils.dropRDDatabase();
     }
 
     private IRequest makePresenceGetRequest(Observe obs) {

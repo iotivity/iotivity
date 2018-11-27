@@ -24,7 +24,10 @@ package org.iotivity.cloud.ciserver;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.connector.ConnectorPool;
@@ -51,7 +54,6 @@ import org.iotivity.cloud.base.server.Server;
 import org.iotivity.cloud.base.server.WebSocketServer;
 import org.iotivity.cloud.util.Bytes;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -66,10 +68,12 @@ import io.netty.channel.ChannelPromise;
  */
 
 public class DeviceServerSystem extends ServerSystem {
-
+    private final static Logger                           Log     = LoggerFactory.getLogger(DeviceServerSystem.class);
     private Cbor<HashMap<String, Object>>                 mCbor   = new Cbor<HashMap<String, Object>>();
     private HashMap<ChannelHandlerContext, CoapSignaling> mCsmMap = new HashMap<>();
 
+    public static final String LOGOUT_DEVICE = "LOGOUT_DEVICE";
+    public static final String EMPTY_CHANNEL = "EMPTY_CHANNEL";
     /**
      *
      * This class provides a set of APIs to manage device pool.
@@ -194,7 +198,7 @@ public class DeviceServerSystem extends ServerSystem {
                         }
                     }
                 } catch (Throwable t) {
-                    Log.f(ctx.channel(), t);
+                    Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), t);
                     ResponseStatus responseStatus = t instanceof ServerException
                             ? ((ServerException) t).getErrorResponse()
                             : ResponseStatus.INTERNAL_SERVER_ERROR;
@@ -216,9 +220,12 @@ public class DeviceServerSystem extends ServerSystem {
                 // This is CoapResponse
                 // Once the response is valid, add this to deviceList
                 CoapResponse response = (CoapResponse) msg;
+                if (!response.getStatus().isSuccess()) {
+                    ctx.writeAndFlush(msg);
+                    return;
+                }
 
                 String urlPath = response.getUriPath();
-
                 if (urlPath == null) {
                     throw new InternalServerErrorException(
                             "request uriPath is null");
@@ -226,11 +233,16 @@ public class DeviceServerSystem extends ServerSystem {
 
                 switch (urlPath) {
                     case OICConstants.ACCOUNT_SESSION_FULL_URI:
-                        if (response.getStatus() != ResponseStatus.CHANGED) {
+                    case OICConstants.SEC_ACCOUNT_SESSION_FULL_URI:
+                        final Device device = ctx.channel()
+                                .attr(keyDevice).get();
+                        if(device.existParameter(LOGOUT_DEVICE)){
+                            Log.debug("Device: {} was logout. ", device.getDeviceId());
                             bCloseConnection = true;
                         }
                         break;
                     case OICConstants.ACCOUNT_FULL_URI:
+                    case OICConstants.SEC_ACCOUNT_FULL_URI:
                         if (response.getStatus() == ResponseStatus.DELETED) {
                             bCloseConnection = true;
                         }
@@ -239,9 +251,8 @@ public class DeviceServerSystem extends ServerSystem {
             }
 
             ctx.writeAndFlush(msg);
-
-            if (bCloseConnection == true) {
-                ctx.close();
+            if (bCloseConnection ) {
+                closeTcpConnection(ctx);
             }
         }
 
@@ -249,10 +260,14 @@ public class DeviceServerSystem extends ServerSystem {
         public void channelActive(ChannelHandlerContext ctx) {
             Device device = ctx.channel().attr(keyDevice).get();
             // Authenticated device connected
-
-            sendDevicePresence(device.getDeviceId(), "on");
+            Log.debug("Device: {} online", device.getDeviceId());
+            try {
+                sendDevicePresence(device.getDeviceId(), "on");
+            } catch (ServerException.ServiceUnavailableException e) {
+                Log.warn(e.getMessage());
+                ctx.close();
+            }
             mDevicePool.addDevice(device);
-
             device.onConnected();
         }
 
@@ -265,14 +280,34 @@ public class DeviceServerSystem extends ServerSystem {
             // same di.
             // So compare actual value, and remove if same.
             if (device != null) {
-                sendDevicePresence(device.getDeviceId(), "off");
-
-                device.onDisconnected();
-
-                mDevicePool.removeDevice(device);
-                ctx.channel().attr(keyDevice).remove();
-
+                Log.debug("Device: {} offline ", device.getDeviceId());
+                try {
+                    if(!device.existParameter(DeviceServerSystem.EMPTY_CHANNEL)){
+                        sendDevicePresence(device.getDeviceId(), "off");
+                    }
+                } catch (ServerException.ServiceUnavailableException e) {
+                    Log.warn(e.getMessage());
+                    ctx.close();
+                } finally {
+                    device.onDisconnected();
+                    mDevicePool.removeDevice(device);
+                    ctx.channel().attr(keyDevice).remove();
+                }
             }
+        }
+
+        private void closeTcpConnection(final ChannelHandlerContext ctx){
+            CompletableFuture.runAsync(()->{
+                try {
+                    Thread.sleep(500);
+                    final Device device = ctx.channel()
+                            .attr(keyDevice).get();
+                    Log.info("After sign-out, close channel for device: {}",device.getDeviceId());
+                    ctx.close().awaitUninterruptibly();
+                } catch (InterruptedException e) {
+                    Log.error("Unable to sleep: ",e);
+                }
+            });
         }
 
         /**
@@ -327,14 +362,16 @@ public class DeviceServerSystem extends ServerSystem {
                 // Once the response is valid, add this to deviceList
 
                 CoapResponse response = (CoapResponse) msg;
+                if (!response.getStatus().isSuccess()) {
+                    ctx.writeAndFlush(msg);
+                    return;
+                }
 
                 String urlPath = response.getUriPath();
-
                 if (urlPath == null) {
                     throw new InternalServerErrorException(
                             "request uriPath is null");
                 }
-
                 switch (urlPath) {
                     /*
                      * case OICConstants.ACCOUNT_FULL_URI:
@@ -342,6 +379,7 @@ public class DeviceServerSystem extends ServerSystem {
                      */
 
                     case OICConstants.ACCOUNT_SESSION_FULL_URI:
+                    case OICConstants.SEC_ACCOUNT_SESSION_FULL_URI:
                         HashMap<String, Object> payloadData = mCbor
                                 .parsePayloadFromCbor(response.getPayload(),
                                         HashMap.class);
@@ -373,7 +411,7 @@ public class DeviceServerSystem extends ServerSystem {
                 ctx.writeAndFlush(msg);
 
             } catch (Throwable t) {
-                Log.f(ctx.channel(), t);
+                Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), t);
                 ctx.writeAndFlush(msg);
                 ctx.close();
             }
@@ -400,8 +438,10 @@ public class DeviceServerSystem extends ServerSystem {
                 switch (urlPath) {
                     // Check whether request is about account
                     case OICConstants.ACCOUNT_FULL_URI:
-                    case OICConstants.ACCOUNT_TOKENREFRESH_FULL_URI:
+                    case OICConstants.SEC_ACCOUNT_FULL_URI:
 
+                    case OICConstants.ACCOUNT_TOKENREFRESH_FULL_URI:
+                    case OICConstants.SEC_ACCOUNT_TOKENREFRESH_FULL_URI:
                         if (ctx.channel().attr(keyDevice).get() == null) {
                             // Create device first and pass to upperlayer
                             Device device = new CoapDevice(ctx);
@@ -411,7 +451,7 @@ public class DeviceServerSystem extends ServerSystem {
                         break;
 
                     case OICConstants.ACCOUNT_SESSION_FULL_URI:
-
+                    case OICConstants.SEC_ACCOUNT_SESSION_FULL_URI:
                         HashMap<String, Object> authPayload = mCbor
                                 .parsePayloadFromCbor(request.getPayload(),
                                         HashMap.class);
@@ -452,7 +492,7 @@ public class DeviceServerSystem extends ServerSystem {
                         : ResponseStatus.UNAUTHORIZED;
                 ctx.writeAndFlush(MessageBuilder
                         .createResponse((CoapRequest) msg, responseStatus));
-                Log.f(ctx.channel(), t);
+                Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), t);
             }
         }
     }
@@ -552,7 +592,7 @@ public class DeviceServerSystem extends ServerSystem {
                     ctx.writeAndFlush(MessageBuilder.createSignalingResponse(
                             (CoapSignaling) msg, responseStatus));
                 }
-                Log.f(ctx.channel(), t);
+                Log.error("[{}] channel error", ctx.channel().id().asLongText().substring(26), t);
             }
         }
 

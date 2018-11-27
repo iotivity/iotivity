@@ -21,14 +21,8 @@
  */
 package org.iotivity.cloud.ciserver.resources;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
@@ -39,8 +33,12 @@ import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
+import org.iotivity.cloud.ciserver.CloudInterfaceServer;
 import org.iotivity.cloud.ciserver.Constants;
+import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -48,7 +46,8 @@ import org.iotivity.cloud.util.Cbor;
  * connection.
  *
  */
-public class KeepAliveResource extends Resource {
+public class KeepAliveResource extends Resource  implements DevicePresenter {
+    private final static Logger Log = LoggerFactory.getLogger(KeepAliveResource.class);
     private int[]                         mIntervals      = null;
     private Timer                         mTimer          = new Timer();
     private Cbor<HashMap<String, Object>> mCbor           = new Cbor<>();
@@ -123,6 +122,16 @@ public class KeepAliveResource extends Resource {
         return MessageBuilder.createResponse(request, ResponseStatus.VALID);
     }
 
+
+    @Override
+    public Set<String> getDeviceIds() {
+        Map<Device, Long> map = Collections
+                .synchronizedMap(mConnectionPool);
+        synchronized (map){
+            return new HashSet<>(map.keySet().stream().map(device -> device.getDeviceId()).collect(Collectors.toSet()));
+        }
+    }
+
     /**
      * API for managing session
      */
@@ -134,22 +143,43 @@ public class KeepAliveResource extends Resource {
                     .synchronizedMap(mConnectionPool);
 
             List<Device> deleteList = new ArrayList<>();
-
-            synchronized (map) {
-                Long currentTime = System.currentTimeMillis();
-                for (Device device : map.keySet()) {
-                    Long lifeTime = (Long) map.get(device);
-                    if (lifeTime != null && lifeTime < currentTime) {
-                        deleteList.add(device);
+            try {
+                synchronized (map) {
+                    Long currentTime = System.currentTimeMillis();
+                    for (Device device : map.keySet()) {
+                        Long lifeTime = (Long) map.get(device);
+                        if (lifeTime != null && lifeTime < currentTime) {
+                            deleteList.add(device);
+                        }
+                    }
+                    for(final Device device : deleteList){
+                        final List<Device> samedevice = map.keySet().stream().filter(d -> filter(d,device)).collect(Collectors.toList());
+                        if(device != null && samedevice != null && samedevice.size() > 0){
+                            Log.info("Channel for device: {} is empty", device.getDeviceId());
+                            device.setParameter(DeviceServerSystem.EMPTY_CHANNEL,true);
+                        }
                     }
                 }
-            }
 
-            for (Device device : deleteList) {
-                mConnectionPool.remove(device);
-                device.getCtx().fireChannelInactive();
-                device.getCtx().close();
+                for (Device device : deleteList) {
+                    mConnectionPool.remove(device);
+                    device.getCtx().fireChannelInactive();
+                    device.getCtx().close();
+                }
+            } catch (final Exception e){
+                Log.error("Unable to remove not responding device", e);
             }
+        }
+        
+        private boolean filter(final Device listDevice, final Device device){
+            if(listDevice == null || listDevice.getDeviceId() == null || device == null || device.getDeviceId() == null){
+                return false;
+            }
+            if(listDevice.getCtx() == null && listDevice.getCtx().channel() == null && device.getCtx() == null && device.getCtx().channel() == null){
+                return false;
+            }
+            return listDevice.getDeviceId().compareTo(device.getDeviceId()) == 0
+                    && listDevice.getCtx().channel().id().asLongText().compareTo(device.getCtx().channel().id().asLongText()) != 0;
         }
     }
 }

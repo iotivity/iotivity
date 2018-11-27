@@ -21,8 +21,6 @@
  */
 package org.iotivity.cloud.base.protocols.http;
 
-import org.iotivity.cloud.util.Log;
-
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.handler.codec.http.HttpContent;
@@ -34,6 +32,8 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.CharsetUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class provides a set of APIs to print out logs
@@ -41,21 +41,20 @@ import io.netty.channel.ChannelPromise;
  */
 @Sharable
 public class HttpLogHandler extends ChannelDuplexHandler {
+    private final static Logger Log             = LoggerFactory.getLogger(HttpLogHandler.class);
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        Log.v(ctx.channel().id().asLongText().substring(26)
-                + " HTTP Connected, Address: "
-                + ctx.channel().remoteAddress().toString());
+        Log.trace("[{}] HTTP Connected, Address: {}", ctx.channel().id().asLongText().substring(26),
+                ctx.channel().remoteAddress().toString());
 
         ctx.fireChannelActive();
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        Log.v(ctx.channel().id().asLongText().substring(26)
-                + " HTTP Disconnected, Address: "
-                + ctx.channel().remoteAddress().toString());
+        Log.trace("[{}] HTTP Disconnected, Address: {}", ctx.channel().id().asLongText().substring(26),
+                ctx.channel().remoteAddress().toString());
 
         ctx.fireChannelInactive();
     }
@@ -65,7 +64,7 @@ public class HttpLogHandler extends ChannelDuplexHandler {
             throws Exception {
 
         if (!(msg instanceof HttpObject)) {
-            Log.v("Non-HTTP message has been received to the HC proxy:\n"
+            Log.trace("Non-HTTP message has been received to the HC proxy:\n"
                     + msg.toString());
         }
 
@@ -77,12 +76,12 @@ public class HttpLogHandler extends ChannelDuplexHandler {
 
             HttpRequest httpRequest = (HttpRequest) msg;
 
-            Log.v(httpRequest.toString());
+            Log.trace(httpRequest.toString());
 
             if (HttpUtil.isTransferEncodingChunked(httpRequest)) {
-                Log.v("BEGINNING OF HTTP CHUNKED CONTENT");
+                Log.trace("BEGINNING OF HTTP CHUNKED CONTENT");
             } else {
-                Log.v("BEGINNING OF HTTP CONTENT");
+                Log.trace("BEGINNING OF HTTP CONTENT");
             }
         }
 
@@ -97,9 +96,9 @@ public class HttpLogHandler extends ChannelDuplexHandler {
 
             if (content instanceof LastHttpContent) {
 
-                Log.v(contentStrBuilder.toString());
+                Log.trace(contentStrBuilder.toString());
 
-                Log.v("END OF HTTP CONTENT");
+                Log.trace("END OF HTTP CONTENT");
 
                 contentStrBuilder.setLength(0);
             }
@@ -113,7 +112,7 @@ public class HttpLogHandler extends ChannelDuplexHandler {
             ChannelPromise promise) {
 
         if (!(msg instanceof HttpObject)) {
-            Log.v("Non-HTTP message has been sent from the HC proxy:\n"
+            Log.trace("Non-HTTP message has been sent from the HC proxy:\n"
                     + msg.toString());
         }
 
@@ -125,10 +124,10 @@ public class HttpLogHandler extends ChannelDuplexHandler {
             HttpResponse httpResponse = (HttpResponse) msg;
 
             if (contentStrBuilder.length() > 0) {
-                Log.v(httpResponse.toString() + "\n\n"
+                Log.trace(httpResponse.toString() + "\n\n"
                         + contentStrBuilder.toString());
             } else {
-                Log.v(httpResponse.toString());
+                Log.trace(httpResponse.toString());
             }
         }
 

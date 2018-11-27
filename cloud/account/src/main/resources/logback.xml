@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!-- To log coap message payload, include variable %X{coappayload} into pattern -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} | %-5level | %class{0}.%method:%L | %msg%n</pattern>
+        </encoder>
+    </appender>
+    <root level="trace">
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>

@@ -35,10 +35,7 @@ import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.protocols.IRequest;
 
-import org.iotivity.cloud.util.Log;
-
 public class AclManager {
-    public HashMap<String, Acl>          mAcls    = new HashMap<>();
     private TypeCastingManager<AclTable> mTypeAcl = new TypeCastingManager<AclTable>();
 
     public HashMap<String, Object> createAcl(String oid, String di) {
@@ -50,13 +47,15 @@ public class AclManager {
 
         AccountDBManager.getInstance().insertRecord(Constants.ACL_TABLE,
                 mTypeAcl.convertObjectToMap(newAclTable));
-        mAcls.put(aclid, new Acl(aclid));
         responsePayload.put(Constants.REQ_ACL_ID, aclid);
         return responsePayload;
     }
 
     public Acl getAcl(String aclid) {
-        return mAcls.get(aclid);
+        HashMap<String, Object> condition = new HashMap<>();
+        condition.put(Constants.REQ_ACL_ID, aclid);
+        HashMap<String, Object> result = AccountDBManager.getInstance().selectOneRecord(Constants.ACL_TABLE, condition);
+        return Acl.convertMaptoAcl(result);
     }
 
     public HashMap<String, Object> getAclid(String di) {
@@ -70,7 +69,7 @@ public class AclManager {
         {
             for (HashMap<String, Object> element : result) {
                 AclTable getAclTable = new AclTable();
-                getAclTable = Acl.convertMaptoAclObject(element);
+                getAclTable = Acl.convertMaptoAclTable(element);
                 aclid = getAclTable.getAclid();
                 responsePayload.put(Constants.KEYFIELD_ACLID, aclid);
                 return responsePayload;
@@ -84,7 +83,6 @@ public class AclManager {
         condition.put(Constants.REQ_ACL_ID, aclid);
         AccountDBManager.getInstance().deleteRecord(Constants.ACL_TABLE,
             condition);
-        mAcls.remove(aclid);
     }
 
     public List<HashMap<String, Object>> addAclACE(String aclid, List<HashMap<String, Object>> aclist) {

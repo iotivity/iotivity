@@ -16,6 +16,10 @@
   </modules>
 
   <properties>
+
+    <!-- docker image version . In case of changes use mvn -Ddocker.image.version=1.3-20 -->
+    <docker.image.version>latest</docker.image.version>
+
     <!-- Common configuration properties -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.source>1.8</java.source>
@@ -120,7 +124,7 @@
       <dependency>
         <groupId>org.mongodb</groupId>
         <artifactId>mongo-java-driver</artifactId>
-        <version>3.2.0</version>
+        <version>3.6.2</version>
       </dependency>
 
 
@@ -199,13 +203,6 @@
         <version>1.0.1</version>
       </dependency>
 
-      <!-- Logging -->
-      <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>log4j</artifactId>
-        <version>1.2.17</version>
-      </dependency>
-
       <!-- Testing -->
       <dependency>
         <groupId>junit</groupId>
@@ -244,18 +241,6 @@
         <scope>test</scope>
       </dependency>
 
-      <!-- Plugins -->
-      <!-- Not necessary -->
-      <!--<dependency>-->
-        <!--<groupId>org.apache.maven.plugins</groupId>-->
-        <!--<artifactId>maven-resources-plugin</artifactId>-->
-        <!--<version>2.4.3</version>-->
-      <!--</dependency>-->
-      <!--<dependency>-->
-        <!--<groupId>org.apache.maven.plugins</groupId>-->
-        <!--<artifactId>maven-compiler-plugin</artifactId>-->
-        <!--<version>3.1</version>-->
-      <!--</dependency>-->
     </dependencies>
   </dependencyManagement>
 

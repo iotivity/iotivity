@@ -33,18 +33,21 @@ import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.protocols.coap.*;
 import org.iotivity.cloud.base.protocols.coap.PingMessage;
-import org.iotivity.cloud.util.Log;
 
 import javax.net.ssl.SSLException;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class CoapConnector {
-
+    private final static Logger Log             = LoggerFactory.getLogger(CoapConnector.class);
     public CoapConnector() {
 
         mBootstrap.group(mConnectorGroup);
@@ -72,10 +75,10 @@ public class CoapConnector {
             if (evt instanceof IdleStateEvent) {
                 IdleStateEvent event = (IdleStateEvent) evt;
                 if (event.state() == IdleState.WRITER_IDLE) {
-                    ctx.writeAndFlush(PingMessage.build());
+                    mChannelMap.get(ctx.channel()).sendRequest(PingMessage.build(),null);
                 }
                 if (event.state() == IdleState.READER_IDLE) {
-                    Log.d("Connection with" +  ctx.channel().remoteAddress().toString() + "is idle. Closing connection.");
+                    Log.debug("Connection with" +  ctx.channel().remoteAddress().toString() + "is idle. Closing connection.");
                     ctx.close();
                 }
             }
@@ -151,13 +154,13 @@ public class CoapConnector {
         }
     }
 
-    HashMap<Channel, CoapClient> mChannelMap     = new HashMap<>();
+    private static ConcurrentMap<Channel, CoapClient> mChannelMap     = new ConcurrentHashMap<>();
     Bootstrap                    mBootstrap      = new Bootstrap();
     EventLoopGroup               mConnectorGroup = new NioEventLoopGroup();
     Timer                        mTimer          = new Timer();
 
     public void connect(final String connectionName, final InetSocketAddress inetSocketAddress,
-            boolean tlsMode, boolean keepAlive) {
+            boolean tlsMode, boolean keepAlive, final ConnectionEstablishedListener listener) {
 
         CoapConnectorInitializer initializer = new CoapConnectorInitializer();
 
@@ -170,44 +173,50 @@ public class CoapConnector {
         initializer.setKeepAlive(keepAlive);
         initializer.addHandler(new CoapPacketHandler());
         mBootstrap.handler(initializer);
-        doConnect(connectionName, inetSocketAddress, tlsMode);
+        doConnect(connectionName, inetSocketAddress, tlsMode, listener);
     }
 
-    private void doConnect(final String connectionName, final InetSocketAddress inetSocketAddress, final boolean tlsMode) {
+    private void doConnect(final String connectionName, final InetSocketAddress inetSocketAddress, final boolean tlsMode,
+                           final ConnectionEstablishedListener listener) {
         mBootstrap.connect(inetSocketAddress).addListener(new ChannelFutureListener() {
                 @Override public void operationComplete(ChannelFuture future) throws Exception {
                     if(!future.isSuccess()) {
-                        Log.d("Connection to " + inetSocketAddress.getHostString() + " was not successful. Retrying...");
+                        Log.debug("Connection to " + inetSocketAddress.getHostString() + " was not successful. Retrying...");
                         future.channel().close();
-                        scheduleConnect(connectionName, inetSocketAddress, tlsMode, 5000);
+                        scheduleConnect(connectionName, inetSocketAddress, tlsMode, 5000, listener);
                     } else {
-                        connectionEstablished(connectionName, future.channel());
+                        connectionEstablished(connectionName, future.channel(), listener);
                         addCloseDetectListener(future.channel());
                     }
                 }
 
             private void addCloseDetectListener(Channel channel) {
                 channel.closeFuture().addListener((ChannelFutureListener) future -> {
-                    Log.d("Connection to " + inetSocketAddress.getHostString() + " was lost. Retrying...");
-                    scheduleConnect(connectionName, inetSocketAddress, tlsMode, 5);
+                    ConnectorPool.removeConnection(connectionName);
+                    Log.debug("Connection to " + inetSocketAddress.getHostString() + " was lost. Retrying...");
+                    scheduleConnect(connectionName, inetSocketAddress, tlsMode, 5, listener);
                 });
             }
         });
     }
 
-    private void scheduleConnect(String connectionName, InetSocketAddress inetSocketAddress, boolean tlsMode, long millis) {
+    private void scheduleConnect(String connectionName, InetSocketAddress inetSocketAddress, boolean tlsMode, long millis,
+                                 final ConnectionEstablishedListener listener) {
         mTimer.schedule( new TimerTask() {
             @Override
             public void run() {
-                doConnect(connectionName, inetSocketAddress, tlsMode);
+                doConnect(connectionName, inetSocketAddress, tlsMode, listener);
             }
         }, millis );
     }
 
-    public void connectionEstablished(String connectionName, Channel channel) {
+    public void connectionEstablished(String connectionName, Channel channel, final ConnectionEstablishedListener listener) {
         CoapClient coapClient = new CoapClient(channel);
         mChannelMap.put(channel, coapClient);
         ConnectorPool.addConnection(connectionName, coapClient);
+        if(listener != null){
+            listener.onConnectionEstablished(coapClient);
+        }
     }
 
     public void disconenct() throws Exception {
