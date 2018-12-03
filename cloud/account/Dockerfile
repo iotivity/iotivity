@@ -2,11 +2,16 @@ FROM openjdk:8-jre-alpine
 
 RUN apk add --update \
     curl \
+    shadow \
     && rm -rf /var/cache/apk/*
 
-ADD ./target/CloudAccount-0.0.1-SNAPSHOT.jar iotivity/AccountServer.jar
-ADD ./target/lib/* iotivity/lib/
-ADD ./properties/* iotivity/properties/
+RUN groupadd -r iotivity && useradd --no-log-init --system  -g iotivity iotivity
+
+COPY --chown=iotivity:iotivity ./target/CloudAccount-0.0.1-SNAPSHOT.jar iotivity/AccountServer.jar
+COPY --chown=iotivity:iotivity ./target/lib/* iotivity/lib/
+COPY --chown=iotivity:iotivity ./properties/* iotivity/properties/
+COPY --chown=iotivity:iotivity  ./start.sh iotivity/
+RUN chmod +x iotivity/start.sh
 
 WORKDIR iotivity/
 
@@ -18,17 +23,11 @@ ENV MONGODB_PORT 27017
 
 
 ENV JMX_PORT 9002
-ENV JAVA_JMX_OPTS "-Dcom.sun.management.jmxremote \
-               -Dcom.sun.management.jmxremote.port=${JMX_PORT} \
-               -Dcom.sun.management.jmxremote.rmi.port=${JMX_PORT} \
-               -Dcom.sun.management.jmxremote.local.only=false \
-               -Dcom.sun.management.jmxremote.authenticate=false \
-               -Dcom.sun.management.jmxremote.ssl=false \
-               -Djava.rmi.server.hostname= \
-               -XX:MetaspaceSize=30m -XX:MaxMetaspaceSize=40m \
-               -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -server "
+ENV JMX_HOSTNAME ""
+ENV JAVA_MEMORY_OPTS ""
 
 EXPOSE 9002
 
-ENTRYPOINT exec java $JAVA_JMX_OPTS $JAVA_MEMORY_OPTS -jar AccountServer.jar
-HEALTHCHECK --interval=30s --timeout=2s --retries=3	CMD curl -f http://localhost/api/healthcheck || exit 1
+USER iotivity
+ENTRYPOINT [ "./start.sh" ]
+HEALTHCHECK --interval=30s --timeout=2s --retries=3	CMD curl -f http://localhost:8000/api/healthcheck || exit 1

@@ -1,7 +1,14 @@
 FROM openjdk:8-jre-alpine
 
-ADD ./target/CloudMessageQueue-0.0.1-SNAPSHOT.jar iotivity/MessageQueue.jar
-ADD ./target/lib/* iotivity/lib/
+RUN apk add --update \
+    shadow \
+    && rm -rf /var/cache/apk/*
+
+RUN groupadd -r iotivity && useradd --no-log-init --system  -g iotivity iotivity
+
+COPY --chown=iotivity:iotivity  ./target/CloudMessageQueue-0.0.1-SNAPSHOT.jar iotivity/MessageQueue.jar
+COPY --chown=iotivity:iotivity  ./target/lib/* iotivity/lib/
+COPY --chown=iotivity:iotivity  ./start.sh iotivity/
 
 WORKDIR iotivity/
 
@@ -13,16 +20,11 @@ ENV KAFKA_ADDRESS kafka-zookeeper
 ENV KAFKA_PORT 9092
 
 ENV JMX_PORT 9003
-ENV JAVA_JMX_OPTS "-Dcom.sun.management.jmxremote \
-               -Dcom.sun.management.jmxremote.port=${JMX_PORT} \
-               -Dcom.sun.management.jmxremote.rmi.port=${JMX_PORT} \
-               -Dcom.sun.management.jmxremote.local.only=false \
-               -Dcom.sun.management.jmxremote.authenticate=false \
-               -Dcom.sun.management.jmxremote.ssl=false \
-               -Djava.rmi.server.hostname= \
-               -XX:MetaspaceSize=20m -XX:MaxMetaspaceSize=25m \
-               -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -server "
+ENV JMX_HOSTNAME ""
+ENV JAVA_MEMORY_OPTS ""
 
 EXPOSE 9003
 
-ENTRYPOINT exec java $JAVA_JMX_OPTS $JAVA_MEMORY_OPTS -jar MessageQueue.jar
+USER iotivity
+ENTRYPOINT [ "./start.sh" ]
+

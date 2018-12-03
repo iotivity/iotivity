@@ -74,7 +74,7 @@ public class ResourceDirectoryServer {
                 new CoapServer(new InetSocketAddress(coapServerPort)));
 
         if(healthCheckEnabled){
-            serverSystem.addServer(new SimpleHttpServer(new InetSocketAddress(80),healthHolder));
+            serverSystem.addServer(new SimpleHttpServer(new InetSocketAddress(8000),healthHolder));
         }
 
         serverSystem.startSystem(tlsMode);
