@@ -77,7 +77,7 @@ static oc_log_ctx_t *logCtx = 0;
 static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
 #endif //defined(_MSC_VER)
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(__webos__)
 #elif defined __linux__ || defined __APPLE__ || defined _WIN32
 static oc_log_level LEVEL_XTABLE[] = {OC_LOG_DEBUG, OC_LOG_INFO,
                                       OC_LOG_WARNING, OC_LOG_ERROR, OC_LOG_FATAL};
@@ -159,62 +159,11 @@ static bool AdjustAndVerifyLogLevel(int* level)
 }
 
 #ifdef __webos__
-char *replaceValue(char *strInput, const char *strTarget, const char *strChange)
-{
-    char* strResult;
-    char* strTemp;
-    int i = 0;
-    int nCount = 0;
-    int nTargetLength = strlen(strTarget);
-
-    if (nTargetLength < 1)
-        return strInput;
-
-    int nChangeLength = strlen(strChange);
-
-    if (nChangeLength != nTargetLength)
-    {
-        for (i = 0; strInput[i] != '\0';)
-        {
-            if (memcmp(&strInput[i], strTarget, nTargetLength) == 0)
-            {
-                nCount++;
-                i += nTargetLength;
-            }
-            else i++;
-        }
-    }
-    else
-    {
-        i = strlen(strInput);
-    }
-    strResult = (char *) malloc(i + 1 + nCount * (nChangeLength - nTargetLength));
-    if (strResult == NULL) return NULL;
-
-    strTemp = strResult;
-    while (*strInput)
-    {
-        if (memcmp(strInput, strTarget, nTargetLength) == 0)
-        {
-            memcpy(strTemp, strChange, nChangeLength);
-            strTemp += nChangeLength;
-            strInput  += nTargetLength;
-        }
-        else
-        {
-            *strTemp++ = *strInput++;
-        }
-    }
-
-    *strTemp = '\0';
-
-    return strResult;
-}
-
 static void webos_log_write(PmLogContext context, int level, const char *tag, const char *logStr)
 {
     char *strResult = NULL;
-    strResult = replaceValue(logStr, "\t", "    ");
+    char **split = g_strsplit(logStr, "\t", -1);
+    strResult = g_strjoinv("    ", split);
 
     if (!g_strcmp0(LEVEL[level], "DEBUG"))
         PmLogDebug(context, "%s: %s", tag, strResult);
@@ -226,7 +175,9 @@ static void webos_log_write(PmLogContext context, int level, const char *tag, co
         PmLogError(context, "ERROR", 0, "%s: %s", tag, strResult);
     else if (!g_strcmp0(LEVEL[level], "FATAL"))
         PmLogCritical(context, "CRITICAL", 0, "%s: %s", tag, strResult);
-    free(strResult);
+
+    g_free(strResult);
+    g_strfreev(split);
 }
 #endif // __webos__
 
@@ -363,11 +314,6 @@ void OCLog(int level, const char * tag, const char * logStr)
             break;
     }
 
-   #ifdef __webos__
-    PmLogGetContext("IoTivity", &gLogLibContext);
-    webos_log_write(gLogLibContext, level, tag, logStr);
-   #endif // __webos__
-
    #ifdef __ANDROID__
 
    #ifdef ADB_SHELL
@@ -375,6 +321,11 @@ void OCLog(int level, const char * tag, const char * logStr)
    #else
        __android_log_write(LEVEL[level], tag, logStr);
    #endif
+
+   #elif defined __webos__
+    PmLogGetContext("IoTivity", &gLogLibContext);
+    webos_log_write(gLogLibContext, level, tag, logStr);
+
    #else
        if (logCtx && logCtx->write_level)
        {
@@ -413,10 +364,7 @@ void OCLog(int level, const char * tag, const char * logStr)
                ms = now.tv_usec * 1000;
            }
    #endif
-   #ifdef __webos__
-   #else
            printf("%02d:%02d.%03d %s: %s: %s\n", min, sec, ms, LEVEL[level], tag, logStr);
-   #endif // __webos__
     }
    #endif // __ANDROID__
 }

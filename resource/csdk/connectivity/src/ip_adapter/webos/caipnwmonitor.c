@@ -266,6 +266,9 @@ static bool get_connection_status_cb(LSHandle *sh, LSMessage *message, void *ctx
 {
     OIC_LOG(DEBUG, TAG, "Callback for com.webos.service.connectionmanager/getstatus is invoked...");
 
+    OC_UNUSED(sh);
+    OC_UNUSED(ctx);
+
     jvalue_ref parsedObj = {0};
     jschema_ref input_schema = jschema_parse(j_cstr_to_buffer("{}"), DOMOPT_NOOPT, NULL);
 
@@ -377,7 +380,6 @@ CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
 
 CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter)
 {
-    gboolean ret = false;
     LSError lserror;
     LSErrorInit(&lserror);
 
