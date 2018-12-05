@@ -42,9 +42,33 @@ class Client extends React.Component {
         this.onObserveResourceTapped = this.requestObserveResource.bind(this);
         this.onCancelObserveResourceTapped = this.requestCancelObserveResource.bind(this);
         this.onEnablePostResourceTapped = this.setPostResourceButton.bind(this);
+        this.onRFOTMTapped = this.onRFOTMChanged.bind(this);
+        this.onRFNOPTapped = this.onRFNOPChanged.bind(this);
     }
     componentWillReceiveProps(props) {
         console.log(props);
+        if (props.clientRestarted) {
+            this.props.stopRestartClient();
+            discoveredItems = [];
+            discoveredItemDatas = [];
+            if (this.props.isObserving) {
+                this.props.stopObserveResource();
+            }
+            this.setState({
+                resourceUri: null,
+                eps: null,
+                resourceKey: null,
+                resourceValue: null,
+                resourceCompleted: true,
+                selectedDiscoveredItemIndex: null,
+                isPostable: false,
+            });
+            this.props.resetDiscoveredList();
+            setTimeout(() => {
+                this.props.startClient();
+                this.props.discoverResources();
+            }, 5000);
+        }
         if (props.discoveredResources && props.discoveredResources.length > 0) {
             discoveredItems = [];
             for (let i = 0; i < props.discoveredResources.length; i++) {
@@ -178,10 +202,59 @@ class Client extends React.Component {
             isPostable: !prevState.isPostable,
         }));
     }
+    onRFOTMChanged() {
+        let param = {
+            mode: "RFOTM"
+        }
+        this.props.copyClientCBORFile(param);
+        this.props.stopClient();
+        discoveredItems = [];
+        discoveredItemDatas = [];
+        if (this.props.isObserving) {
+            this.props.stopObserveResource();
+        }
+        this.setState({
+            resourceUri: null,
+            resourceKey: null,
+            resourceValue: null,
+            resourceCompleted: true,
+            selectedDiscoveredItemIndex: null,
+            isPostable: false,
+        });
+        this.props.resetDiscoveredList();
+    }
+    onRFNOPChanged() {
+        let param = {
+            mode: "RFNOP"
+        }
+        this.props.copyClientCBORFile(param);
+        this.props.stopClient();
+        discoveredItems = [];
+        discoveredItemDatas = [];
+        if (this.props.isObserving) {
+            this.props.stopObserveResource();
+        }
+        this.setState({
+            resourceUri: null,
+            resourceKey: null,
+            resourceValue: null,
+            resourceCompleted: true,
+            selectedDiscoveredItemIndex: null,
+            isPostable: false,
+        });
+        this.props.resetDiscoveredList();
+    }
     render() {
         const { showDiscoveredResources, detailResourceInfo, isObserving } = this.props;
         return (
             <div>
+                <div style={{ "paddingLeft": 20 + "px", "paddingTop": 9 + "px" }}>
+                    <div style={{ "width": 600 + "px", "display": "inline-block", "verticalAlign": "middle" }}>
+                        <MarqueeText marqueeOn="render">Change mode</MarqueeText>
+                    </div>
+                    <Button small onClick={this.onRFOTMTapped}>RFOTM</Button>
+                    <Button small onClick={this.onRFNOPTapped}>RFNOP</Button>
+                </div>
                 <Layout align="start">
                     {showDiscoveredResources ?
                         <SpotlightContainerDecorator focusableScrollbar style={{ "height": 210 + "px" }} direction="both" horizontalScrollbar="auto" verticalScrollbar="auto">
@@ -267,6 +340,9 @@ const mapDispatchToProps = (dispatch) => {
         actionEnableClientResourceControlUI: () => dispatch(ActionCreators.actionEnableClientResourceControlUI()),
         actionDisableClientResourceControlUI: () => dispatch(ActionCreators.actionDisableClientResourceControlUI()),
         copyClientCBORFile: (params) => dispatch(ActionCreators.copyClientCBORFile(params)),
+        stopRestartClient: () => ActionCreators.stopRestartClient(dispatch),
+        startClient: () => ActionCreators.startClient(dispatch),
+        stopClient: () => ActionCreators.stopClient(dispatch),
     };
 };
 let mapStateToProps = (state) => {
@@ -275,7 +351,8 @@ let mapStateToProps = (state) => {
         showDiscoveredResources: state.showDiscoveredResources,
         detailResourceInfo: state.detailResourceInfo,
         enableClientResourceControlUI: state.enableClientResourceControlUI,
-        isObserving: state.isObservingResource
+        isObserving: state.isObservingResource,
+        clientRestarted: state.clientRestarted
     };
 };
 export default connect(mapStateToProps, mapDispatchToProps)(Client);

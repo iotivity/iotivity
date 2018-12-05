@@ -51,6 +51,28 @@ function validateUri(_uri) {
     else return _uri;
 }
 
+var startClient = service.register("startClient");
+startClient.on("request", function (message) {
+    if (message.isSubscription) {
+        if (isEmpty(subscriptions)) {
+            subscriptions[message.uniqueToken] = message;
+            client.startClient();
+        } else {
+            subscriptions[message.uniqueToken] = message;
+        }
+    } else {
+        message.respond({
+            returnValue: false,
+            subscribed: false
+        });
+    }
+});
+startClient.on("cancel", function (message) {
+    delete subscriptions[message.uniqueToken];
+    if (isEmpty(subscriptions))
+        client.stopClient();
+    message.respond({ returnValue: true });
+});
 /*
     Discovering available resources from all devices.
 
@@ -738,5 +760,13 @@ clientObserve.on("cancel", function (message) {
     message.respond({
         returnValue: true,
         subscribed: false
+    });
+});
+
+service.register("copyFile", function (message) {
+    var mode = message.payload.mode;
+    client.copyFile(mode);
+    message.respond({
+        returnValue: true
     });
 });

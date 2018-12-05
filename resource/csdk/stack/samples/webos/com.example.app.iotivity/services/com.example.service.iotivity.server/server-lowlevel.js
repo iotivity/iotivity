@@ -200,6 +200,30 @@ module.exports.stopServer = function () {
     clearInterval(intervalId);
     iotivity.OCStop();
     state = false;
+
+    if (serverModeChange) {
+        serverModeChange = false;
+        var fs = require('fs');
+        console.log('serverMode:' + serverMode);
+        if (serverMode == 'RFOTM') {
+            fs.exists('oic_svr_db_server_rfotm.dat', function (exists) {
+                if (exists) {
+                    console.log('oic_svr_db_server_rfotm.dat exist!');
+                    fs.createReadStream('oic_svr_db_server_rfotm.dat').pipe(fs.createWriteStream('oic_svr_db_server.dat'));
+                    console.log('renamed complete');
+                }
+            });
+        }
+        else if (serverMode == 'RFNOP') {
+            fs.exists('oic_svr_db_server_rfnop.dat', function (exists) {
+                if (exists) {
+                    console.log('oic_svr_db_server_rfnop.dat exist!');
+                    fs.createReadStream('oic_svr_db_server_rfnop.dat').pipe(fs.createWriteStream('oic_svr_db_server.dat'));
+                    console.log('renamed complete');
+                }
+            });
+        }
+    }
     console.log("=== server teardown ===");
 };
 
@@ -255,4 +279,11 @@ module.exports.setBinarySwitchValue = function (value) {
 module.exports.observeBinarySwitchValue = function (resourceCallback) {
     console.log("observeBinarySwitchValue");
     subscriptionCallback = resourceCallback;
+};
+
+var serverModeChange = false;
+var serverMode;
+module.exports.copyFile = function (mode) {
+    serverModeChange = true;
+    serverMode = mode;
 };

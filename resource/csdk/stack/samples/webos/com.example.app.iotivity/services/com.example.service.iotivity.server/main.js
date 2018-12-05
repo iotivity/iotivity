@@ -302,3 +302,11 @@ binarySwitchObserver.on("cancel", function (message) {
     delete subscriptions[message.uniqueToken];
     message.respond({ returnValue: true });
 });
+
+service.register("copyFile", function (message) {
+    var mode = message.payload.mode;
+    server.copyFile(mode);
+    message.respond({
+        returnValue: true
+    });
+});

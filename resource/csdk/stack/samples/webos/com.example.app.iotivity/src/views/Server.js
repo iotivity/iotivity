@@ -23,6 +23,8 @@ class Server extends React.Component {
         this.onCreateResourceTapped = this.createResource.bind(this);
         this.onResourceValueTapped = this.setBinarySwitchValue.bind(this);
         this.onStopServerTapped = this.stopServer.bind(this);
+        this.onRFOTMTapped = this.onRFOTMChanged.bind(this);
+        this.onRFNOPTapped = this.onRFNOPChanged.bind(this);
     }
     componentWillUnmount() {
         this.props.stopObserveBinarySwitchValue();
@@ -45,6 +47,12 @@ class Server extends React.Component {
         });
         this.props.observeBinarySwitchValue();
     }
+    componentWillReceiveProps(props) {
+        if (props.serverRestarted) {
+            this.props.stopRestartServer();
+            setTimeout(() => { this.createResource(); }, 5000);
+        }
+    }
     deleteResource() {
         let param = {
             uri: this.state.resourceUri,
@@ -65,6 +73,22 @@ class Server extends React.Component {
         this.props.setBinarySwitchValue(param);
     }
     stopServer() {
+        this.props.stopObserveBinarySwitchValue();
+        this.props.stopServer();
+    }
+    onRFOTMChanged() {
+        let param = {
+            mode: "RFOTM"
+        }
+        this.props.copyServerCBORFile(param);
+        this.props.stopObserveBinarySwitchValue();
+        this.props.stopServer();
+    }
+    onRFNOPChanged() {
+        let param = {
+            mode: "RFNOP"
+        }
+        this.props.copyServerCBORFile(param);
         this.props.stopObserveBinarySwitchValue();
         this.props.stopServer();
     }
@@ -104,6 +128,13 @@ class Server extends React.Component {
                                     </div>
                                     <Button small onClick={this.onResourceValueTapped}>{resourceValue ? "true" : "false"}</Button>
                                 </div>
+                                <div style={{ "paddingLeft": 20 + "px", "paddingTop": 9 + "px" }}>
+                                    <div style={{ "width": 600 + "px", "display": "inline-block", "verticalAlign": "middle" }}>
+                                        <MarqueeText marqueeOn="render">Change mode</MarqueeText>
+                                    </div>
+                                    <Button small onClick={this.onRFOTMTapped}>RFOTM</Button>
+                                    <Button small onClick={this.onRFNOPTapped}>RFNOP</Button>
+                                </div>
                             </div>
                             : null
                         }
@@ -131,6 +162,8 @@ const mapDispatchToProps = (dispatch) => {
         setBinarySwitchValue: (params) => dispatch(ActionCreators.setBinarySwitchValue(params)),
         observeBinarySwitchValue: () => ActionCreators.observeBinarySwitchValue(dispatch),
         stopObserveBinarySwitchValue: () => ActionCreators.stopObserveBinarySwitchValue(dispatch),
+        copyServerCBORFile: (params) => dispatch(ActionCreators.copyServerCBORFile(params)),
+        stopRestartServer: () => ActionCreators.stopRestartServer(dispatch),
     };
 };
 let mapStateToProps = (state) => {
@@ -139,7 +172,8 @@ let mapStateToProps = (state) => {
         discoveredResources: state.discoveredResources,
         showDiscoveredResources: state.showDiscoveredResources,
         enableServerResourceControlUI: state.enableServerResourceControlUI,
-        resourceValue: state.resourceValue
+        resourceValue: state.resourceValue,
+        serverRestarted: state.serverRestarted,
     };
 };
 export default connect(mapStateToProps, mapDispatchToProps)(Server);

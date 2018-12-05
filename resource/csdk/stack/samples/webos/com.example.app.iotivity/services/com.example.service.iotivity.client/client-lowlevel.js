@@ -73,6 +73,33 @@ function stopClient() {
     }
 }
 
+module.exports.stopClient = function () {
+    console.log('stopClient start');
+    stopClient();
+
+    var fs = require('fs');
+    if (restartMode === 'RFOTM') {
+        console.log("mode: " + restartMode);
+        fs.exists('oic_svr_db_client_rfotm.dat', function (exists) {
+            if (exists) {
+                console.log('oic_svr_db_client_rfotm.dat exist!');
+                fs.createReadStream('oic_svr_db_client_rfotm.dat').pipe(fs.createWriteStream('oic_svr_db_client.dat'));
+                console.log('renamed complete');
+            }
+        });
+    }
+    else if (restartMode === 'RFNOP') {
+        console.log("mode: " + restartMode);
+        fs.exists('oic_svr_db_client_rfnop.dat', function (exists) {
+            if (exists) {
+                console.log('oic_svr_db_client_rfnop.dat exist!');
+                fs.createReadStream('oic_svr_db_client_rfnop.dat').pipe(fs.createWriteStream('oic_svr_db_client.dat'));
+                console.log('renamed complete');
+            }
+        });
+    }
+};
+
 function assembleRequestUrl(eps, path) {
     var endpoint;
     var endpointIndex;
@@ -269,6 +296,52 @@ module.exports.cancelObservation = function (token) {
             observeCount--;
             observeHandles.splice(index, 1);
             break;
+        }
+    }
+};
+
+var restartMode = '';
+module.exports.copyFile = function (mode) {
+    console.log("copyFile");
+    if (isActive) {
+        if (discoverHandle.handle)
+            iotivity.OCCancel(discoverHandle.handle, iotivity.OCQualityOfService.OC_HIGH_QOS, null);
+        discoverHandle = {};
+        if (observeCount > 0) {
+            for (var index = 0; index < observeHandles.size(); index++) {
+                console.log('Cancel observation');
+                iotivity.OCCancel(observeHandles[index].handle, iotivity.OCQualityOfService.OC_HIGH_QOS, null);
+            }
+            observeHandles.length = 0;
+            observeCount = 0;
+        }
+
+        clearInterval(intervalId);
+        iotivity.OCStop();
+        isActive = false;
+        restartMode = mode;
+    }
+    else {
+        var fs = require('fs');
+        if (mode === 'RFOTM') {
+            console.log("mode: " + mode);
+            fs.exists('oic_svr_db_client_rfotm.dat', function (exists) {
+                if (exists) {
+                    console.log('oic_svr_db_client_rfotm.dat exist!');
+                    fs.createReadStream('oic_svr_db_client_rfotm.dat').pipe(fs.createWriteStream('oic_svr_db_client.dat'));
+                    console.log('renamed complete');
+                }
+            });
+        }
+        else if (mode === 'RFNOP') {
+            console.log("mode: " + mode);
+            fs.exists('oic_svr_db_client_rfnop.dat', function (exists) {
+                if (exists) {
+                    console.log('oic_svr_db_client_rfnop.dat exist!');
+                    fs.createReadStream('oic_svr_db_client_rfnop.dat').pipe(fs.createWriteStream('oic_svr_db_client.dat'));
+                    console.log('renamed complete');
+                }
+            });
         }
     }
 };

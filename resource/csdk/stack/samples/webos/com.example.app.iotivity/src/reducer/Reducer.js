@@ -9,6 +9,8 @@ const initialState = {
     detailResourceInfo: null,
     resourceValue: false,
     isObservingResource: false,
+    serverRestarted: false,
+    clientRestarted: false,
 };
 
 let arr = [];
@@ -41,6 +43,14 @@ export function reducer(state = initialState, action) {
             return Object.assign({}, state, { isObservingResource: false });
         case actions.RESOURCE_CONTROL_UI:
             return Object.assign({}, state, { resourceValue: action.payload.state });
+        case actions.RESTART_SERVER:
+            return Object.assign({}, state, { serverRestarted: true });
+        case actions.STOP_RESTART_SERVER:
+            return Object.assign({}, state, { serverRestarted: false });
+        case actions.RESTART_CLIENT:
+            return Object.assign({}, state, { clientRestarted: true });
+        case actions.STOP_RESTART_CLIENT:
+            return Object.assign({}, state, { clientRestarted: false });
         default:
             return state;
     }

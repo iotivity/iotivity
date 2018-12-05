@@ -25,60 +25,60 @@
             },
             {
                 "aceid": 3,
-                "subject": { "conntype": "anon-clear" },
-                "resources": [
-                    { "href":"/binarySwitch" }
-                ],
-                "permission": 31
+                "subject": { "uuid": "32323232-3232-3232-3232-323232323232" },
+                "resources": [{ "wc": "*" }],
+                "permission": 7
             },
             {
                 "aceid": 4,
-                "subject": { "conntype": "auth-crypt" },
-                "resources": [
-                    { "href":"/binarySwitch" }
-                ],
+                "subject": { "uuid": "31393139-3139-3139-3139-313931393139" },
+                "resources": [{ "href": "/binaryswitch" }],
                 "permission": 31
             }
         ],
-        "rowneruuid": "32323232-3232-3232-3232-323232323232",
-        "rt": ["oic.r.acl"],
-        "if": ["oic.if.baseline"]
+        "rowneruuid" : "31313131-3131-3131-3131-313131313131"
     },
     "pstat": {
-        "dos": { "s": 1, "p": false },
-        "isop": false,
-        "cm": 2,
+        "dos": {"s": 3, "p": false},
+        "isop": true,
+        "rowneruuid": "31313131-3131-3131-3131-313131313131",
+        "cm": 0,
         "tm": 0,
         "om": 4,
-        "sm": 4,
-        "rowneruuid": "32323232-3232-3232-3232-323232323232",
-        "rt": ["oic.r.pstat"],
-        "if": ["oic.if.baseline"]
-    },
+        "sm": 4
+        },
     "doxm": {
         "oxms": [0],
         "oxmsel": 0,
-        "sct": 1,
-        "owned": false,
-        "deviceuuid": "12345678-1234-1234-1234-123456789012",
+        "sct": 9,
+        "owned": true,
+        "deviceuuid": "31313131-3131-3131-3131-313131313131",
         "devowneruuid": "32323232-3232-3232-3232-323232323232",
-        "rowneruuid": "32323232-3232-3232-3232-323232323232",
-        "rt": ["oic.r.doxm"],
-        "if": ["oic.if.baseline"]
+        "rowneruuid": "31313131-3131-3131-3131-313131313131"
     },
-    "cred":{
+    "cred": {
         "creds": [
             {
                 "credid": 1,
                 "subjectuuid": "32323232-3232-3232-3232-323232323232",
                 "credtype": 1,
-                "privatedata":{
-                    "data":"AAAAAAAAAAAAAAAA",
+                "period": "20150630T060000/20990920T220000",
+                "privatedata": {
+                    "data": "AAAAAAAAAAAAAAAA",
                     "encoding": "oic.sec.encoding.raw"
                 }
-            }],
-        "rowneruuid": "32323232-3232-3232-3232-323232323232",
-        "rt": ["oic.r.cred"],
-        "if": ["oic.if.baseline"]
+            },
+            {
+                "credid": 2,
+                "subjectuuid": "31393139-3139-3139-3139-313931393139",
+                "credtype": 1,
+                "period": "20150630T060000/20990920T220000",
+                "privatedata": {
+                    "data": "BBBBBBBBBBBBBBBB",
+                    "encoding": "oic.sec.encoding.raw"
+                }
+            }
+        ],
+        "rowneruuid": "32323232-3232-3232-3232-323232323232"
     }
 }

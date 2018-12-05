@@ -103,6 +103,30 @@ export function actionCancelObserveResourceResults() {
     };
 }
 
+export function actionRestartServer() {
+    return {
+        type: actions.RESTART_SERVER
+    };
+}
+
+export function actionStopRestartServer() {
+    return {
+        type: actions.STOP_RESTART_SERVER
+    };
+}
+
+export function actionRestartClient() {
+    return {
+        type: actions.RESTART_CLIENT
+    };
+}
+
+export function actionStopRestartClient() {
+    return {
+        type: actions.STOP_RESTART_CLIENT
+    };
+}
+
 export const createToast = params => {
     return new LS2Request().send({
         service: 'luna://com.webos.notification/',
@@ -145,6 +169,35 @@ export const stopServer = (dispatch) => {
         LS2RequestSingleton.deleteInstance('startServer');
         createToast("Server stopped.");
     }
+};
+
+export const startClient = (dispatch) => {
+    const ls = LS2RequestSingleton.instance('startClient', true);
+    if (ls) {
+        ls.send({
+            service: 'luna://com.example.service.iotivity.client/',
+            method: 'startClient',
+            parameters: {
+                subscribe: true
+            },
+            onComplete: (res) => {
+                if (res.subscribed) {
+                    dispatch(actionEnableClientResourceControlUI());
+                    return;
+                }
+            },
+        });
+    }
+};
+
+export const stopClient = (dispatch) => {
+    const ls = LS2RequestSingleton.instance('startClient');
+    if (ls) {
+        ls.cancel();
+        LS2RequestSingleton.deleteInstance('startClient');
+        createToast("Client stopped.");
+    }
+    dispatch(actionEnableClientResourceControlUI());
 };
 
 export const discoverResources = (dispatch) => {
@@ -379,4 +432,44 @@ export const stopObserveBinarySwitchValue = (dispatch) => {
         let param = { "value": false };
         dispatch(actionUpdateResourceValue(param));
     }
+};
+
+export const copyServerCBORFile = params => (dispatch) => {
+    console.log("copyServerCBORFile");
+    console.log(params);
+    return new LS2Request().send({
+        service: 'luna://com.example.service.iotivity.server/',
+        method: 'copyFile',
+        parameters: params,
+        onComplete: (res) => {
+            console.log(res);
+            dispatch(actionRestartServer());
+            return;
+        }
+    });
+};
+
+export const stopRestartServer = (dispatch) => {
+    console.log("stopRestartServer");
+    dispatch(actionStopRestartServer());
+};
+
+export const copyClientCBORFile = params => (dispatch) => {
+    console.log("copyClientCBORFile");
+    console.log(params);
+    return new LS2Request().send({
+        service: 'luna://com.example.service.iotivity.client/',
+        method: 'copyFile',
+        parameters: params,
+        onComplete: (res) => {
+            console.log(res);
+            dispatch(actionRestartClient());
+            return;
+        }
+    });
+};
+
+export const stopRestartClient = (dispatch) => {
+    console.log("stopRestartClient");
+    dispatch(actionStopRestartClient());
 };
