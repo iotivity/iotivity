@@ -31,6 +31,8 @@ from ite.util import *
 
 class TestResultCollector:
 
+    LOG_START_PATTERN = re.compile(r'\n.*\[\s*RUN\s*\]\s*(?P<testsuite>\w+)\.(?P<testcase>\w+).*')
+    LOG_END_PATTERN = re.compile(r'\n.*\[\s*(?P<result>(OK|FAILED))\s*\]\s*(?P<testsuite>\w+)\.(?P<testcase>\w+).*')
 
     def __init__(self):
         self.result = TestResult()
@@ -153,6 +155,47 @@ class TestResultCollector:
         except ParseError:
             print("There is a XML Parse Error on " + path)
 
+    def parse_log_pattern(self, path):
+        source = read_file(path);
+        if source == '':
+            return
+
+        search_pos = 0
+        while(True):
+            start_match = self.LOG_START_PATTERN.search(source, search_pos)
+            if (start_match == None):
+                break;
+
+            start_data = (start_match.group('testsuite'), start_match.group('testcase'))
+
+            end_match = self.LOG_END_PATTERN.search(source, search_pos)
+            if (end_match == None):
+                test_result = GT_LOG.CRASHED
+                if GT_HANG_LOG in source:
+                    test_result = GT_LOG.HANG
+
+                yield start_data + (test_result, start_match.end(), start_match.endpos)
+                break;
+
+            search_pos = end_match.end()
+
+            end_data = (end_match.group('testsuite'), end_match.group('testcase'))
+
+
+            if (start_data != end_data):
+                print("Start(%s.%s) and End(%s.%s) Test Name is not matched! - %s" % (start_data[0], start_data[1], end_data[0], end_data[1], path))
+                #continue
+
+            yield start_data + (end_match.group('result'), start_match.end(), end_match.start())
+
+    def analyze_result_log(self, path):
+        infolist = list()
+
+        for info in self.parse_log_pattern(path):
+            infolist.append(info)
+
+        return infolist
+
     def collect_results(self, path):
         if (not os.path.isdir(path)):
             return
@@ -237,14 +280,9 @@ class TestCaseResult:
 
 class TestRunResult:
 
-
     def __init(self):
         self.result = ''
         self.runtype = ''
         self.runtime = 0.0
         self.fail_msg = ' '
         self.test_log = ' '
-
-
-
-
