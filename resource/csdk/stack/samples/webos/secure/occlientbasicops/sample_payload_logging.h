@@ -71,6 +71,7 @@ INLINE_API void OCPayloadLogRepValues(LogLevel level, OCRepPayloadValue* val)
                 break;
             case OCREP_PROP_BOOL:
                 OCSAMPLE_LOG_INFO(PL_TAG, 0, "        %s(bool):%s", val->name, val->b ? "true" : "false");
+                printf("%s is %s\n", val->name, val->b ? "true" : "false");
                 break;
             case OCREP_PROP_STRING:
                 OCSAMPLE_LOG_INFO(PL_TAG, 0, "        %s(string):%s", val->name, val->str);

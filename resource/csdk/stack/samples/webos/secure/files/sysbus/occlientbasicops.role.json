@@ -1,5 +1,5 @@
 {
-    "exeName":"/usr/palm/services/org.ocf.webossample.occlientbasicops//occlientbasicops",
+    "exeName":"/usr/palm/services/org.ocf.webossample.occlientbasicops/occlientbasicops",
     "type":"regular",
     "allowedNames":["org.ocf.webossample.occlientbasicops*"],
     "permissions": [

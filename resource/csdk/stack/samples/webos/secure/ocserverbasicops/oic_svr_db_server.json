@@ -33,7 +33,7 @@
                 "aceid": 4,
                 "subject": { "uuid": "31393139-3139-3139-3139-313931393139" },
                 "resources": [{ "href": "/binaryswitch" }],
-                "permission": 7
+                "permission": 31
             },
             {
                 "aceid": 5,
