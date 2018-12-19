@@ -281,6 +281,12 @@ namespace OC
         OCStackResult bindResources(const OCResourceHandle collectionHandle,
                     const std::vector<OCResourceHandle>& addedResourceHandleList);
 
+        OCStackResult bindResourceAM(const OCResourceHandle amColHandle,
+                    const OCResourceHandle resourceHandle, bool isAtomicMeasurement);
+
+        OCStackResult bindResourcesAM(const OCResourceHandle amColHandle,
+                    const std::vector<OCResourceHandle>& addedResourceHandleList, bool isAtomicMeasurement);
+
         OCStackResult unbindResource(const OCResourceHandle collectionHandle,
                     const OCResourceHandle resourceHandle);
 
@@ -288,6 +294,9 @@ namespace OC
                         const std::vector<OCResourceHandle>& resourceHandleList);
 
         OCStackResult bindTypeToResource(const OCResourceHandle& resourceHandle,
+                        const std::string& resourceTypeName) const;
+
+        OCStackResult bindRtsMToResource(const OCResourceHandle& resourceHandle,
                         const std::string& resourceTypeName) const;
 
         OCStackResult bindInterfaceToResource(const OCResourceHandle& resourceHandle,
@@ -320,6 +329,8 @@ namespace OC
 
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
         std::weak_ptr<std::recursive_mutex> csdkLock();
+
+        OCStackResult notifyNewAMAvailable(const OCResourceHandle resourceHandle);
 
 #ifdef WITH_CLOUD
         OCAccountManager::Ptr constructAccountManagerObject(const std::string& host,

@@ -216,15 +216,6 @@ OCStackResult SendStopNotification(void);
 OCStackResult BindResourceInterfaceToResource(OCResource* resource,
                                             const char *resourceInterfaceName);
 /**
- * Bind a resource type to a resource.
- *
- * @param resource Target resource.
- * @param resourceTypeName Name of resource type.
- * @return ::OC_STACK_OK on success, some other value upon failure.
- */
-OCStackResult BindResourceTypeToResource(OCResource *resource,
-                                            const char *resourceTypeName);
-/**
  * Bind a Transport Protocol Suites type to a resource.
  *
  * @param resource Target resource.

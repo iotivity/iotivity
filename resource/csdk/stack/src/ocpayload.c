@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include "ocpayload.h"
 #include "occollection.h"
+#include "ocatomicmeasurement.h"
 #include "octypes.h"
 #include <string.h>
 #include "oic_malloc.h"
@@ -1619,13 +1620,17 @@ OCRepPayload* OC_CALL OCRepPayloadClone (const OCRepPayload* payload)
 
 OCRepPayload* OC_CALL OCRepPayloadBatchClone(const OCRepPayload* repPayload)
 {
+    OIC_LOG(DEBUG, TAG, "Entering OCRepPayloadBatchClone...");
+
     OCRepPayload *newPayload = OCRepPayloadCreate();
     if (!newPayload)
     {
         return NULL;
     }
 
-    newPayload->uri = OICStrdup(repPayload->uri);
+    OCRepPayloadSetPropString(newPayload, OC_RSRVD_HREF, OICStrdup(repPayload->uri));
+    OIC_LOG_V(DEBUG, TAG, "OCRepPayloadBatchClone: URI of the payload is %s!", repPayload->uri);
+
     OCRepPayload *clone = OCRepPayloadCreate();
     if (!clone)
     {
@@ -1637,6 +1642,7 @@ OCRepPayload* OC_CALL OCRepPayloadBatchClone(const OCRepPayload* repPayload)
     clone->repType = repPayload->repType;
     clone->interfaces  = CloneOCStringLL(repPayload->interfaces);
     clone->values = OCRepPayloadValueClone(repPayload->values);
+
     OCRepPayloadSetPropObjectAsOwner(newPayload, OC_RSRVD_REPRESENTATION, clone);
 
     return newPayload;
@@ -2269,7 +2275,7 @@ void OC_CALL OCEndpointPayloadDestroy(OCEndpointPayload* payload)
 OCRepPayload** OC_CALL OCLinksPayloadArrayCreate(const char* resourceUri,
                        OCEntityHandlerRequest *ehRequest, bool insertSelfLink, size_t* createdArraySize)
 {
-    OIC_LOG(DEBUG, TAG, "OCLinksPayloadValueCreate");
+    OIC_LOG(DEBUG, TAG, "OCLinksPayloadArrayCreate");
     OCRepPayload** linksRepPayloadArray = NULL;
     if ((resourceUri != NULL) && (ehRequest != NULL))
     {
@@ -2282,6 +2288,27 @@ OCRepPayload** OC_CALL OCLinksPayloadArrayCreate(const char* resourceUri,
             insertSelfLink, createdArraySize);
 
         OIC_LOG_V(DEBUG, TAG, "return value of BuildCollectionLinksPayloadArray() = %s",
+                 (linksRepPayloadArray != NULL) ? "true" : "false");
+    }
+    return linksRepPayloadArray;
+}
+
+OCRepPayload** OC_CALL OCLinksPayloadArrayCreateAM(const char* resourceUri,
+                       OCEntityHandlerRequest *ehRequest, bool insertSelfLink, size_t* createdArraySize)
+{
+    OIC_LOG(DEBUG, TAG, "OCLinksPayloadArrayCreateAM");
+    OCRepPayload** linksRepPayloadArray = NULL;
+    if ((resourceUri != NULL) && (ehRequest != NULL))
+    {
+        OCPayloadFormat contentFormat = OC_FORMAT_UNDEFINED;
+        if ((OC_STACK_OK != OCGetRequestPayloadVersion(ehRequest, &contentFormat, NULL)) &&
+            (contentFormat == OC_FORMAT_VND_OCF_CBOR || contentFormat == OC_FORMAT_CBOR))
+            return NULL;
+
+        linksRepPayloadArray = BuildAtomicMeasurementLinksPayloadArray(resourceUri, contentFormat, &ehRequest->devAddr,
+            insertSelfLink, createdArraySize);
+
+        OIC_LOG_V(DEBUG, TAG, "return value of BuildAtomicMeasurementLinksPayloadArray() = %s",
                  (linksRepPayloadArray != NULL) ? "true" : "false");
     }
     return linksRepPayloadArray;

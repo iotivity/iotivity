@@ -128,6 +128,8 @@ typedef enum
     OC_RESOURCE_NOT_COLLECTION_DEFAULT_ENTITYHANDLER,
     OC_RESOURCE_COLLECTION_WITH_ENTITYHANDLER,
     OC_RESOURCE_COLLECTION_DEFAULT_ENTITYHANDLER,
+    OC_RESOURCE_AM_WITH_ENTITYHANDLER,
+    OC_RESOURCE_AM_DEFAULT_ENTITYHANDLER,
     OC_RESOURCE_DEFAULT_DEVICE_ENTITYHANDLER,
     OC_RESOURCE_NOT_SPECIFIED
 } ResourceHandling;
@@ -224,6 +226,12 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
  * @ref OCStackResult type.
  */
 OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult);
+
+/**
+ * A helper function that Maps an @ref OCStackResult type to an
+ * @ref OCEntityHandlerResult type.
+ */
+OCEntityHandlerResult OCStackCodeToEntityHandlerCode(OCStackResult result);
 
 /**
  * Data structure for holding enhanced device information

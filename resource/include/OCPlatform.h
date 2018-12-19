@@ -492,6 +492,62 @@ namespace OC
                 const std::vector<OCResourceHandle>& addedResourceHandleList);
 
         /**
+        * Add a resource to a collection / atomic measurement resource.
+        *
+        * @param amColHandle handle to the collection / atomic measurement resource
+        * @param resourceHandle handle to resource to be added to the collection / atomic measurement resource
+        * @param isAtomicMeasurement boolean indicating if this is a collection or an atomic measurement
+        *
+        * @return Returns ::OC_STACK_OK if success.
+        * @note OCStackResult is defined in ocstack.h.
+        * @note bindResourceAM must be used only after the both collection / atomic measurement resource and
+        * resource to add under a collection / atomic measurement are created and respective handles obtained
+        *
+        * @par Example:
+        * -# registerResource(homeResourceHandle, "a/home", "home", Link_Interface,
+        *   entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);
+        * -# registerResource(kitchenResourceHandle, "a/kitchen", "kitchen", Link_Interface,
+        *   entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);
+        * -# bindResourceAM(homeResourceHandle, kitchenResourceHandle, true);
+        * @par
+        * At the end of Step 3, resource "a/home" will contain a reference to "a/kitchen", and will be
+        * an atomic measurement.
+        */
+        OCStackResult bindResourceAM(const OCResourceHandle amColHandle,
+                const OCResourceHandle resourceHandle, bool isAtomicMeasurement);
+
+        /**
+        * Add multiple resources to a collection / atomic measurement resource.
+        *
+        * @param amColHandle handle to the collection / atomic measurement resource
+        * @param addedResourceHandleList reference to list of resource handles to be added to the
+        *   collection / atomic measurement resource
+        * @param isAtomicMeasurement boolean indicating if this is a collection or an atomic measurement
+        *
+        * @return Returns ::OC_STACK_OK if success.
+        * @note OCStackResult is defined in ocstack.h.
+        * @note bindResourcesAM must be used only after the both collection / atomic measurement resource and
+        * list of resources to add under a collection / atomic measurement are created and respective handles
+        * obtained.
+        *
+        * @par Example:
+        * -# registerResource(homeResourceHandle, "a/home", "home", Link_Interface,
+        *   homeEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);
+        * -# registerResource(kitchenResourceHandle, "a/kitchen", "kitchen", Link_Interface,
+        *   kitchenEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);
+        * -# registerResource(roomResourceHandle, "a/room", "room", Link_Interface,
+        *   roomEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);
+        * -# std::vector<OCResourceHandle> rList; rList.push_back(kitchenResourceHandle);
+        *   rList.push_back(roomResourceHandle);
+        * -# bindResourcesAM(homeResourceHandle, rList, true);
+        * @par
+        * At the end of Step 5, resource "a/home" will contain a references to "a/kitchen" and
+        *   "a/room", and will be an atomic measurement
+        */
+        OCStackResult bindResourcesAM(const OCResourceHandle amColHandle,
+                const std::vector<OCResourceHandle>& addedResourceHandleList, bool isAtomicMeasurement);
+
+        /**
         * Unbind a resource from a collection resource.
         *
         * @param collectionHandle handle to the collection resource
@@ -554,6 +610,16 @@ namespace OC
         * @return Returns ::OC_STACK_OK if success.
         */
         OCStackResult bindTypeToResource(const OCResourceHandle& resourceHandle,
+                        const std::string& resourceTypeName);
+
+        /**
+        * Adds a type to the rts-m of a resource
+        * @param resourceHandle handle to the resource
+        * @param resourceTypeName new typename to add to the rts-m of the resource
+        *
+        * @return Returns ::OC_STACK_OK if success.
+        */
+        OCStackResult bindRtsMToResource(const OCResourceHandle& resourceHandle,
                         const std::string& resourceTypeName);
 
         /**
@@ -728,6 +794,8 @@ namespace OC
          * @return Returns ::OC_STACK_OK if success.
          */
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
+
+        OCStackResult notifyNewAMAvailable(const OCResourceHandle resourceHandle);
 
 #ifdef WITH_CLOUD
         /**

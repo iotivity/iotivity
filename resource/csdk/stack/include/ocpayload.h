@@ -359,6 +359,28 @@ bool OC_CALL OCByteStringCopy(OCByteString *dest, const OCByteString *source);
 OCRepPayload** OC_CALL OCLinksPayloadArrayCreate(const char *resourceUri,
                        OCEntityHandlerRequest *ehRequest, bool insertSelfLink, size_t* createdArraySize);
 
+/**
+ * Creates a payloadArray for the links parameter of an atomic measurement resource.
+ * @param[in] resourceUri Resource URI (this should be a collection resource)
+ * @param[in] ehRequest parameter received from Entity Handler for client request
+ * @param[in] insertSelfLink flag to specify whether links array can contain a self link
+ * @param[out] createdArraySize return value array size, Null is allowed if no need to know size
+ *
+ * @note: API usage
+ *   OCRepPayload **linkArr = OCLinksPayloadArrayCreateAM(uri, ehRequest, false, &ArraySize);
+ *   For links parameter setting  (baseline interface response)
+ *    OCRepPayloadSetPropObjectArrayAsOwner(payload, OC_RSRVD_LINKS, linkArr, {ArraySize, 0,0});
+ *   For arrayPayload setting (linklist interface response)
+ *     payload = linkArr[0]; payload->next = linkArr[1]; ....
+ *     OICFree(linkArr)
+ * @note: The destroy of OCRepPayloadArray is not supported. Instead, use
+ *        OCRepPayloadDestroy(...) to destroy RepPayload of the collection Resource
+ *
+ * @return linksRepPayloadArray The *RepPayload Array pointer for links parameter of the atomic measurement.
+ **/
+OCRepPayload** OC_CALL OCLinksPayloadArrayCreateAM(const char *resourceUri,
+                       OCEntityHandlerRequest *ehRequest, bool insertSelfLink, size_t* createdArraySize);
+
 #ifdef __cplusplus
 }
 #endif

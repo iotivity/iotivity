@@ -846,16 +846,18 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
     }
 
     OIC_LOG(INFO, TAG, "Inside HandleAggregateResponse");
+    OIC_LOG_V(DEBUG, TAG, "HandleAggregateResponse: resource uri is %s!", ehResponse->resourceUri);
 
     OCServerRequest *serverRequest = (OCServerRequest *)ehResponse->requestHandle;
     OCServerResponse *serverResponse = GetServerResponseUsingHandle((OCServerRequest *)
                                                                     ehResponse->requestHandle);
-
     OCStackResult stackRet = OC_STACK_ERROR;
     if(serverRequest)
     {
         if(!serverResponse)
         {
+            OIC_LOG_V(DEBUG, TAG, "HandleAggregateResponse: resource uri (serverRequest) is %s!", serverRequest->resourceUrl);
+
             OIC_LOG(INFO, TAG, "This is the first response fragment");
             stackRet = AddServerResponse(&serverResponse, ehResponse->requestHandle);
             if (OC_STACK_OK != stackRet)
@@ -873,7 +875,14 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
             goto exit;
         }
 
+        if (ehResponse->payload)
+            ((OCRepPayload *)ehResponse->payload)->uri = OICStrdup(ehResponse->resourceUri);
         OCRepPayload *newPayload = OCRepPayloadBatchClone((OCRepPayload *)ehResponse->payload);
+        if (ehResponse->payload)
+        {
+            OICFree(((OCRepPayload *)ehResponse->payload)->uri);
+            ((OCRepPayload *)ehResponse->payload)->uri = NULL;
+        }
 
         OCRepPayloadSetPayloadRepType(newPayload, PAYLOAD_REP_ARRAY);
 

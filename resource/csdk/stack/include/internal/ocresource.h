@@ -199,6 +199,9 @@ typedef struct OCResource {
     /** Resource type(s); linked list.*/
     OCResourceType *rsrcType;
 
+    /** Mandatory Resource type(s) in the links [collection / atomic measurement only]; linked list.*/
+    OCResourceType *rsrcTypeM;
+
     /** Resource interface(s); linked list.*/
     OCResourceInterface *rsrcInterface;
 
@@ -211,12 +214,22 @@ typedef struct OCResource {
     /** Child resource(s); linked list.*/
     OCChildResource *rsrcChildResourcesHead;
 
+    /** Is this an Atomic Measurement; boolean.*/
+    bool rsrcIsAtomicMeasurement;
+
     /** Pointer to function that handles the entity bound to the resource.
      *  This handler has to be explicitly defined by the programmer.*/
     OCEntityHandler entityHandler;
 
     /** Callback parameter.*/
     void * entityHandlerCallbackParam;
+
+    /** Pointer to function that handles the entity bound to the resource in case of atomic measurement.
+     * In case of an atomic measurement, the entity handler will be saved here, and the atomic measurement
+     * default handler will be set as the new entity handler, to prevent individual access to resources in
+     * the atomic measurement.
+     * This handler is internal, used ONLY by atomic measurement code.*/
+    OCEntityHandler amEntityHandler;
 
     /** Properties on the resource – defines meta information on the resource.
      * (ACTIVE, DISCOVERABLE etc ). */

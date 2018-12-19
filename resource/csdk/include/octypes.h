@@ -168,6 +168,9 @@ extern "C" {
 /** To represent resource type with collection.*/
 #define OC_RSRVD_RESOURCE_TYPE_COLLECTION "oic.wk.col"
 
+/** To represent resource type with atomic measurement.*/
+#define OC_RSRVD_RESOURCE_TYPE_AM "oic.wk.atomicmeasurement"
+
 /** To represent resource type with RES.*/
 #define OC_RSRVD_RESOURCE_TYPE_RES      "oic.wk.res"
 
@@ -443,6 +446,9 @@ extern "C" {
 
 /** Allowable resource types in the links. */
 #define OC_RSRVD_RTS                     "rts"
+
+/** Mandatory resource types in the links [shall be a subset of rts]. */
+#define OC_RSRVD_RTSM                    "rts-m"
 
 /** Default relationship. */
 #define OC_RSRVD_DREL                    "drel"

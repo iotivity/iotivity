@@ -539,6 +539,28 @@ namespace OC
         return result;
     }
 
+    OCStackResult InProcServerWrapper::bindRtsMToResource(const OCResourceHandle& resourceHandle,
+                     const std::string& resourceTypeName)
+    {
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result;
+        if(cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCBindRtsMToResource(resourceHandle, resourceTypeName.c_str());
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
+        }
+
+        if (result != OC_STACK_OK)
+        {
+            throw OCException(OC::Exception::BIND_TYPE_FAILED, result);
+        }
+        return result;
+    }
+
     OCStackResult InProcServerWrapper::bindInterfaceToResource(
                      const OCResourceHandle& resourceHandle,
                      const std::string& resourceInterfaceName)

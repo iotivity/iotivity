@@ -13,9 +13,11 @@ convertTriggerEnumToString
 
 FindResourceByUri
 OCBindResource
+OCBindResourceAM
 OCBindResourceHandler
 OCBindResourceInterfaceToResource
 OCBindResourceTypeToResource
+OCBindRtsMToResource
 OCByteStringCopy
 OCCancel
 OCClearResourceProperties
@@ -67,8 +69,10 @@ OCInit
 OCInit1
 OCInit2
 OCLinksPayloadArrayCreate
+OCLinksPayloadArrayCreateAM
 OCNotifyAllObservers
 OCNotifyListOfObservers
+OCNotifyNewAMAvailable
 OCPayloadDestroy
 OCPresencePayloadCreate
 OCPresencePayloadDestroy
