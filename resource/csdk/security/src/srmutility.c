@@ -305,6 +305,7 @@ bool IsDeviceConfigurationResourceUri(const char *uri)
     const char *rsrcs[] = {
         OC_RSRVD_DEVICE_URI,
         OC_RSRVD_PLATFORM_URI,
+        OC_RSRVD_MAINTENANCE_URI,
         OC_RSRVD_WELL_KNOWN_URI,
         OC_RSRVD_CLOUDCONF_URI,
         OC_RSRVD_ES_URI_EASYSETUP,
