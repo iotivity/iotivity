@@ -65,6 +65,9 @@ extern "C" {
 /** Platform URI.*/
 #define OC_RSRVD_PLATFORM_URI                 "/oic/p"
 
+/** Maintenance URI.*/
+#define OC_RSRVD_MAINTENANCE_URI              "/oic/mnt"
+
 /** Resource Type.*/
 #define OC_RSRVD_RESOURCE_TYPES_URI           "/oic/res/types/d"
 
