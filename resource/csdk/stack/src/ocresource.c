@@ -43,6 +43,7 @@
 #include "ocresourcehandler.h"
 #include "ocobserve.h"
 #include "occollection.h"
+#include "ocatomicmeasurement.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "experimental/logger.h"
@@ -1424,16 +1425,32 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
 
         if (resourcePtr && resourcePtr->rsrcChildResourcesHead != NULL)
         {
-            // Collection resource
-            if (resourcePtr->entityHandler != defaultResourceEHandler)
+            // Collection or AM resource
+            if (resourcePtr->rsrcIsAtomicMeasurement)
             {
-                *handling = OC_RESOURCE_COLLECTION_WITH_ENTITYHANDLER;
-                return OC_STACK_OK;
+                if (resourcePtr->entityHandler != defaultResourceEHandler)
+                {
+                    *handling = OC_RESOURCE_AM_WITH_ENTITYHANDLER;
+                    return OC_STACK_OK;
+                }
+                else
+                {
+                    *handling = OC_RESOURCE_AM_DEFAULT_ENTITYHANDLER;
+                    return OC_STACK_OK;
+                }
             }
             else
             {
-                *handling = OC_RESOURCE_COLLECTION_DEFAULT_ENTITYHANDLER;
-                return OC_STACK_OK;
+                if (resourcePtr->entityHandler != defaultResourceEHandler)
+                {
+                    *handling = OC_RESOURCE_COLLECTION_WITH_ENTITYHANDLER;
+                    return OC_STACK_OK;
+                }
+                else
+                {
+                    *handling = OC_RESOURCE_COLLECTION_DEFAULT_ENTITYHANDLER;
+                    return OC_STACK_OK;
+                }
             }
         }
         else
@@ -1517,6 +1534,70 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
     }
 
     return result;
+}
+
+OCEntityHandlerResult OCStackCodeToEntityHandlerCode(OCStackResult result)
+{
+    OCStackResult ehResult;
+
+    switch (result)
+    {
+        case OC_STACK_OK:
+            ehResult = OC_EH_OK;
+            break;
+        case OC_STACK_SLOW_RESOURCE:
+            ehResult = OC_EH_SLOW;
+            break;
+        case OC_STACK_ERROR:
+            ehResult = OC_EH_ERROR;
+            break;
+        case OC_STACK_FORBIDDEN_REQ:
+            ehResult = OC_EH_FORBIDDEN;
+            break;
+        case OC_STACK_INTERNAL_SERVER_ERROR:
+            ehResult = OC_EH_INTERNAL_SERVER_ERROR;
+            break;
+        case OC_STACK_RESOURCE_CREATED:
+            ehResult = OC_EH_RESOURCE_CREATED;
+            break;
+        case OC_STACK_RESOURCE_DELETED:
+            ehResult = OC_EH_RESOURCE_DELETED;
+            break;
+        case OC_STACK_RESOURCE_CHANGED:
+            ehResult = OC_EH_CHANGED;
+            break;
+        case OC_STACK_NO_RESOURCE:
+            ehResult = OC_EH_RESOURCE_NOT_FOUND;
+            break;
+        case OC_STACK_INVALID_QUERY:
+            ehResult = OC_EH_BAD_REQ;
+            break;
+        case OC_STACK_UNAUTHORIZED_REQ:
+            ehResult = OC_EH_UNAUTHORIZED_REQ;
+            break;
+        case OC_STACK_INVALID_OPTION:
+            ehResult = OC_EH_BAD_OPT;
+            break;
+        case OC_STACK_INVALID_METHOD:
+            ehResult = OC_EH_METHOD_NOT_ALLOWED;
+            break;
+        case OC_STACK_NOT_ACCEPTABLE:
+            ehResult = OC_EH_NOT_ACCEPTABLE;
+            break;
+        case OC_STACK_TOO_LARGE_REQ:
+            ehResult = OC_EH_TOO_LARGE;
+            break;
+        case OC_STACK_SERVICE_UNAVAILABLE:
+            ehResult = OC_EH_SERVICE_UNAVAILABLE;
+            break;
+        case OC_STACK_COMM_ERROR:
+            ehResult = OC_EH_RETRANSMIT_TIMEOUT;
+            break;
+        default:
+            ehResult = OC_EH_ERROR;
+    }
+
+    return ehResult;
 }
 
 static bool resourceMatchesRTFilter(OCResource *resource, char *resourceTypeFilter)
@@ -2349,6 +2430,134 @@ static OCStackResult HandleCollectionResourceDefaultEntityHandler(OCServerReques
     return result;
 }
 
+static OCStackResult HandleAMResourceDefaultEntityHandler(OCServerRequest *request,
+                                                          OCResource *resource)
+{
+    OCStackResult result = OC_STACK_ERROR;
+    OCEntityHandlerFlag ehFlag = OC_REQUEST_FLAG;
+    ResourceObserver *resObs = NULL;
+    OCEntityHandlerRequest ehRequest = {0};
+
+    if (!request || !resource)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    result = EHRequest(&ehRequest, PAYLOAD_TYPE_REPRESENTATION, request, resource);
+    VERIFY_SUCCESS(result);
+
+    if(ehRequest.obsInfo.action == OC_OBSERVE_NO_OPTION)
+    {
+        OIC_LOG(INFO, TAG, "HandleAMResourceDefaultEntityHandler: no observation requested");
+        ehFlag = OC_REQUEST_FLAG;
+    }
+    else if(ehRequest.obsInfo.action == OC_OBSERVE_REGISTER)
+    {
+        OIC_LOG(INFO, TAG, "HandleAMResourceDefaultEntityHandler: observation registration requested");
+
+        ResourceObserver *obs = GetObserverUsingToken(resource,
+                                                      request->requestToken, request->tokenLength);
+
+        if (obs)
+        {
+            OIC_LOG (INFO, TAG, "Observer with this token already present");
+            OIC_LOG (INFO, TAG, "Possibly re-transmitted CON OBS request");
+            OIC_LOG (INFO, TAG, "Not adding observer. Not responding to client");
+            OIC_LOG (INFO, TAG, "The first request for this token is already ACKED.");
+
+            // server requests are usually free'd when the response is sent out
+            // for the request in ocserverrequest.c : HandleSingleResponse()
+            // Since we are making an early return and not responding, the server request
+            // needs to be deleted.
+            DeleteServerRequest (request);
+            return OC_STACK_OK;
+        }
+
+        result = GenerateObserverId(&ehRequest.obsInfo.obsId);
+        VERIFY_SUCCESS(result);
+
+        result = AddObserver ((const char*)(request->resourceUrl),
+                (const char *)(request->query),
+                ehRequest.obsInfo.obsId, request->requestToken, request->tokenLength,
+                resource, request->qos, request->acceptFormat,
+                request->acceptVersion, &request->devAddr);
+
+        if(result == OC_STACK_OK)
+        {
+            OIC_LOG(INFO, TAG, "HandleAMResourceDefaultEntityHandler: added observer successfully");
+            request->observeResult = OC_STACK_OK;
+            ehFlag = (OCEntityHandlerFlag)(OC_REQUEST_FLAG | OC_OBSERVE_FLAG);
+        }
+        else if (result == OC_STACK_RESOURCE_ERROR)
+        {
+            OIC_LOG(INFO, TAG, "HandleAMResourceDefaultEntityHandler: the Resource is not active, discoverable or observable");
+            request->observeResult = OC_STACK_ERROR;
+            ehFlag = OC_REQUEST_FLAG;
+        }
+        else
+        {
+            // The error in observeResult for the request will be used when responding to this
+            // request by omitting the observation option/sequence number.
+            request->observeResult = OC_STACK_ERROR;
+            OIC_LOG(ERROR, TAG, "HandleAMResourceDefaultEntityHandler: observer Addition failed");
+            ehFlag = OC_REQUEST_FLAG;
+            DeleteServerRequest(request);
+            goto exit;
+        }
+    }
+    else if(ehRequest.obsInfo.action == OC_OBSERVE_DEREGISTER)
+    {
+        OIC_LOG(INFO, TAG, "HandleAMResourceDefaultEntityHandler: deregistering observation requested");
+
+        resObs = GetObserverUsingToken (resource,
+                                        request->requestToken, request->tokenLength);
+
+        if (NULL == resObs)
+        {
+            // Stack does not contain this observation request
+            // Either token is incorrect or observation list is corrupted
+            result = OC_STACK_ERROR;
+            goto exit;
+        }
+        ehRequest.obsInfo.obsId = resObs->observeId;
+        ehFlag = (OCEntityHandlerFlag)(ehFlag | OC_OBSERVE_FLAG);
+
+        result = DeleteObserverUsingToken (resource,
+                                           request->requestToken, request->tokenLength);
+
+        if(result == OC_STACK_OK)
+        {
+            OIC_LOG(INFO, TAG, "Removed observer successfully");
+            request->observeResult = OC_STACK_OK;
+            // There should be no observe option header for de-registration response.
+            // Set as an invalid value here so we can detect it later and remove the field in response.
+            request->observationOption = MAX_SEQUENCE_NUMBER + 1;
+        }
+        else
+        {
+            request->observeResult = OC_STACK_ERROR;
+            OIC_LOG(ERROR, TAG, "Observer Removal failed");
+            DeleteServerRequest(request);
+            goto exit;
+        }
+    }
+    else
+    {
+        result = OC_STACK_ERROR;
+        goto exit;
+    }
+
+    result = DefaultAtomicMeasurementEntityHandler(ehFlag, &ehRequest);
+    if(result == OC_STACK_ERROR)
+    {
+        DeleteServerRequest(request);
+    }
+
+exit:
+    OCPayloadDestroy(ehRequest.payload);
+    return result;
+}
+
 OCStackResult
 ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerRequest *request)
 {
@@ -2384,6 +2593,16 @@ ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerReque
         case OC_RESOURCE_COLLECTION_DEFAULT_ENTITYHANDLER:
         {
             ret = HandleCollectionResourceDefaultEntityHandler (request, resource);
+            break;
+        }
+        case OC_RESOURCE_AM_WITH_ENTITYHANDLER:
+        {
+            ret = HandleResourceWithEntityHandler (request, resource);
+            break;
+        }
+        case OC_RESOURCE_AM_DEFAULT_ENTITYHANDLER:
+        {
+            ret = HandleAMResourceDefaultEntityHandler (request, resource);
             break;
         }
         case OC_RESOURCE_NOT_SPECIFIED:

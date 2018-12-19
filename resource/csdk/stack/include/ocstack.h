@@ -420,7 +420,18 @@ OCTpsSchemeFlags OC_CALL OCGetSupportedEndpointTpsFlags(void);
 OCStackResult OC_CALL OCBindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle);
 
 /**
- * This function removes a resource from a collection resource.
+ * This function adds a resource to a collection or atomic measurement resource.
+ *
+ * @param collectionHandle    Handle to the collection resource.
+ * @param resourceHandle      Handle to resource to be added to the collection resource.
+ * @param isAM                Atomic measurement or regular collection.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OC_CALL OCBindResourceAM(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle, bool isAM);
+
+/**
+ * This function removes a resource from a collection or atomic measurement resource.
  *
  * @param collectionHandle   Handle to the collection resource.
  * @param resourceHandle     Handle to resource to be removed from the collection resource.
@@ -439,6 +450,18 @@ OCStackResult OC_CALL OCUnBindResource(OCResourceHandle collectionHandle, OCReso
  */
 OCStackResult OC_CALL OCBindResourceTypeToResource(OCResourceHandle handle,
                                            const char *resourceTypeName);
+
+/**
+ * This function binds a resource type to the rts-m in a resource.
+ * This function should be used only for collection or atomic measurement resources
+ *
+ * @param handle            Handle to the resource.
+ * @param resourceTypeName  Name of resource type.  Example: "core.led".
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OC_CALL OCBindRtsMToResource(OCResourceHandle handle,
+        const char *resourceTypeName);
 /**
  * This function binds a resource interface to a resource.
  *
@@ -609,6 +632,16 @@ OCResourceHandle OC_CALL OCGetResourceHandleFromCollection(OCResourceHandle coll
  * @return Entity handler if resource found or NULL resource not found.
  */
 OCEntityHandler OC_CALL OCGetResourceHandler(OCResourceHandle handle);
+
+/**
+ * This function notifies the atomic measurement that a new atomic measurement is available
+ * (because one or more of the values of the resources composing it have changed).
+ *
+ * @param handle            Handle of resource.
+ *
+ * @return OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OC_CALL OCNotifyNewAMAvailable(const OCResourceHandle handle);
 
 /**
  * This function notify all registered observers that the resource representation has

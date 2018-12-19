@@ -580,10 +580,39 @@ namespace OC
         return OC_STACK_OK;
     }
 
+    OCStackResult OCPlatform_impl::bindResourceAM(const OCResourceHandle amColHandle,
+                                            const OCResourceHandle resourceHandle, bool isAtomicMeasurement)
+    {
+        return result_guard(OCBindResourceAM(amColHandle, resourceHandle, isAtomicMeasurement));
+    }
+
+    OCStackResult OCPlatform_impl::bindResourcesAM(const OCResourceHandle amColHandle,
+                                            const std::vector<OCResourceHandle>& resourceHandles, bool isAtomicMeasurement)
+    {
+        for(const auto& h : resourceHandles)
+        {
+           OCStackResult r;
+
+           if (OC_STACK_OK != (r = result_guard(OCBindResourceAM(amColHandle, h, isAtomicMeasurement))))
+           {
+               return r;
+           }
+        }
+
+        return OC_STACK_OK;
+    }
+
     OCStackResult OCPlatform_impl::bindTypeToResource(const OCResourceHandle& resourceHandle,
                                              const std::string& resourceTypeName) const
     {
         return checked_guard(m_server, &IServerWrapper::bindTypeToResource,
+                             resourceHandle, resourceTypeName);
+    }
+
+    OCStackResult OCPlatform_impl::bindRtsMToResource(const OCResourceHandle& resourceHandle,
+                                             const std::string& resourceTypeName) const
+    {
+        return checked_guard(m_server, &IServerWrapper::bindRtsMToResource,
                              resourceHandle, resourceTypeName);
     }
 
@@ -651,6 +680,11 @@ namespace OC
     std::weak_ptr<std::recursive_mutex> OCPlatform_impl::csdkLock()
     {
         return m_csdkLock;
+    }
+
+    OCStackResult OCPlatform_impl::notifyNewAMAvailable(const OCResourceHandle resourceHandle)
+    {
+        return result_guard(OCNotifyNewAMAvailable(resourceHandle));
     }
 
 #ifdef WITH_CLOUD

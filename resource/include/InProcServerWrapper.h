@@ -70,6 +70,10 @@ namespace OC
                     const OCResourceHandle& resourceHandle,
                     const std::string& resourceTypeName);
 
+        virtual OCStackResult bindRtsMToResource(
+                    const OCResourceHandle& resourceHandle,
+                    const std::string& resourceTypeName);
+
         virtual OCStackResult bindInterfaceToResource(
                     const OCResourceHandle& resourceHandle,
                     const std::string& resourceInterface);

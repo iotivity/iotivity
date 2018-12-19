@@ -277,6 +277,22 @@ extern "C" {
 
     /*
     * Class:     org_iotivity_base_OcPlatform
+    * Method:    bindResourceAM0
+    * Signature: (Lorg/iotivity/base/OcResourceHandle;Lorg/iotivity/base/OcResourceHandle;Z)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResourceAM0
+        (JNIEnv *, jclass, jobject, jobject, jboolean);
+
+    /*
+    * Class:     org_iotivity_base_OcPlatform
+    * Method:    bindResourcesAM0
+    * Signature: (Lorg/iotivity/base/OcResourceHandle;[Lorg/iotivity/base/OcResourceHandle;Z)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResourcesAM0
+        (JNIEnv *, jclass, jobject, jobjectArray, jboolean);
+
+    /*
+    * Class:     org_iotivity_base_OcPlatform
     * Method:    unbindResource0
     * Signature: (Lorg/iotivity/base/OcResourceHandle;Lorg/iotivity/base/OcResourceHandle;)V
     */
@@ -297,6 +313,14 @@ extern "C" {
     * Signature: (Lorg/iotivity/base/OcResourceHandle;Ljava/lang/String;)V
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindTypeToResource0
+        (JNIEnv *, jclass, jobject, jstring);
+
+    /*
+    * Class:     org_iotivity_base_OcPlatform
+    * Method:    bindRtsMToResource0
+    * Signature: (Lorg/iotivity/base/OcResourceHandle;Ljava/lang/String;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindRtsMToResource0
         (JNIEnv *, jclass, jobject, jstring);
 
     /*
@@ -370,6 +394,14 @@ extern "C" {
     * Signature: (Lorg/iotivity/base/OcResourceResponse;)V
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_sendResponse0
+        (JNIEnv *, jclass, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcPlatform0
+    * Method:    notifyNewAMAvailable0
+    * Signature: (Lorg/iotivity/base/OcResourceHandle;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyNewAMAvailable0
         (JNIEnv *, jclass, jobject);
 
     /*

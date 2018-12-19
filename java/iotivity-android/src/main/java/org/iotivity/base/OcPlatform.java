@@ -854,6 +854,59 @@ public final class OcPlatform {
             OcResourceHandle[] ocResourceHandleArray) throws OcException;
 
     /**
+     * Add a resource to a collection / atomic measurement resource
+     *
+     * @param ocResourceAmColHandle handle to the collection / atomic measurement resource
+     * @param ocResourceHandle      handle to resource to be added to the collection / atomic measurement resource
+     * @param isAtomicMeasurement   boolean indicating if this is a collection or an atomic measurement
+     * @throws OcException if failure
+     */
+    public static void bindResourceAM(
+            OcResourceHandle ocResourceAmColHandle,
+            OcResourceHandle ocResourceHandle,
+            boolean isAtomicMeasurement) throws OcException {
+        OcPlatform.initCheck();
+        OcPlatform.bindResourceAM0(ocResourceAmColHandle, ocResourceHandle, isAtomicMeasurement);
+    }
+
+    private static native void bindResourceAM0(
+            OcResourceHandle ocResourceAmColHandle,
+            OcResourceHandle ocResourceHandle,
+            boolean isAtomicMeasurement) throws OcException;
+
+    /**
+     * Add multiple resources to a collection / atomic measurement resource.
+     *
+     * @param ocResourceAmColHandle handle to the collection / atomic measurement resource
+     * @param ocResourceHandleList  reference to list of resource handles to be added to the
+     *                              collection / atomic measurement resource
+     * @param isAtomicMeasurement   boolean indicating if this is a collection or an atomic measurement
+     * @throws OcException if failure
+     */
+    public static void bindResourcesAM(
+            OcResourceHandle ocResourceAmColHandle,
+            List<OcResourceHandle> ocResourceHandleList,
+            boolean isAtomicMeasurement) throws OcException {
+        OcPlatform.initCheck();
+
+        if (ocResourceHandleList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocResourceHandleList cannot be null");
+        }
+
+        OcPlatform.bindResourcesAM0(
+                ocResourceAmColHandle,
+                ocResourceHandleList.toArray(
+                        new OcResourceHandle[ocResourceHandleList.size()]),
+                isAtomicMeasurement
+        );
+    }
+
+    private static native void bindResourcesAM0(
+            OcResourceHandle ocResourceAmColHandle,
+            OcResourceHandle[] ocResourceHandleArray,
+            boolean isAtomicMeasurement) throws OcException;
+
+    /**
      * Unbind a resource from a collection resource.
      *
      * @param ocResourceCollectionHandle handle to the collection resource
@@ -914,6 +967,24 @@ public final class OcPlatform {
     }
 
     private static native void bindTypeToResource0(
+            OcResourceHandle ocResourceHandle,
+            String resourceTypeName) throws OcException;
+
+    /**
+     * Adds a type to the rts-m of a resource
+     *
+     * @param ocResourceHandle handle to the resource
+     * @param resourceTypeName new typename to add to the rts-m of the resource
+     * @throws OcException if failure
+     */
+    public static void bindRtsMToResource(
+            OcResourceHandle ocResourceHandle,
+            String resourceTypeName) throws OcException {
+        OcPlatform.initCheck();
+        OcPlatform.bindRtsMToResource0(ocResourceHandle, resourceTypeName);
+    }
+
+    private static native void bindRtsMToResource0(
             OcResourceHandle ocResourceHandle,
             String resourceTypeName) throws OcException;
 
@@ -1155,6 +1226,20 @@ public final class OcPlatform {
 
     private static native void sendResponse0(OcResourceResponse ocResourceResponse)
             throws OcException;
+
+    /**
+     * This function notifies the atomic measurement that a new atomic measurement is available
+     * (because one or more of the values of the resources composing it have changed).
+     *
+     * @param handle            Handle of resource.
+     *
+     */
+    public static void notifyNewAMAvailable(OcResourceHandle resourceHandle) throws OcException {
+        OcPlatform.initCheck();
+        OcPlatform.notifyNewAMAvailable0(resourceHandle);
+    }
+
+    private static native void notifyNewAMAvailable0(OcResourceHandle resourceHandle) throws OcException;
 
     /**
      * An OnResourceFoundListener can be registered via the OcPlatform.findResource call.

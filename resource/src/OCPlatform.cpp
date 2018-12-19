@@ -295,10 +295,29 @@ namespace OC
             return OCPlatform_impl::Instance().bindResources(collectionHandle, resourceHandles);
         }
 
+        OCStackResult bindResourceAM(const OCResourceHandle amColHandle,
+                                 const OCResourceHandle resourceHandle, bool isAtomicMeasurement)
+        {
+            return OCPlatform_impl::Instance().bindResourceAM(amColHandle, resourceHandle, isAtomicMeasurement);
+        }
+
+        OCStackResult bindResourcesAM(const OCResourceHandle amColHandle,
+                                 const std::vector<OCResourceHandle>& resourceHandles, bool isAtomicMeasurement
+                                 )
+        {
+            return OCPlatform_impl::Instance().bindResourcesAM(amColHandle, resourceHandles, isAtomicMeasurement);
+        }
+
         OCStackResult bindTypeToResource(const OCResourceHandle& resourceHandle,
                                  const std::string& resourceTypeName)
         {
             return OCPlatform_impl::Instance().bindTypeToResource(resourceHandle,resourceTypeName);
+        }
+
+        OCStackResult bindRtsMToResource(const OCResourceHandle& resourceHandle,
+                                 const std::string& resourceTypeName)
+        {
+            return OCPlatform_impl::Instance().bindRtsMToResource(resourceHandle, resourceTypeName);
         }
 
         OCStackResult bindInterfaceToResource(const OCResourceHandle& resourceHandle,
@@ -360,6 +379,11 @@ namespace OC
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse)
         {
             return OCPlatform_impl::Instance().sendResponse(pResponse);
+        }
+
+        OCStackResult notifyNewAMAvailable(const OCResourceHandle resourceHandle)
+        {
+            return OCPlatform_impl::Instance().notifyNewAMAvailable(resourceHandle);
         }
 
 #ifdef WITH_CLOUD

@@ -97,6 +97,15 @@ namespace OC
         return OC_STACK_OK;
     }
 
+    OCStackResult InProcServerWrapper::bindRtsMToResource(const OCResourceHandle& resourceHandle,
+                     const std::string& resourceTypeName)
+    {
+        OC_UNUSED(resourceHandle);
+        OC_UNUSED(resourceTypeName);
+
+        return OC_STACK_OK;
+    }
+
     OCStackResult InProcServerWrapper::bindInterfaceToResource(
                      const OCResourceHandle& resourceHandle,
                      const std::string& resourceInterfaceName)

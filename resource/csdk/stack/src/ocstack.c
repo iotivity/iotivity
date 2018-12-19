@@ -73,6 +73,7 @@
 #include "platform_features.h"
 #include "oic_platform.h"
 #include "caping.h"
+#include "ocatomicmeasurement.h"
 
 #ifdef UWP_APP
 #include "ocsqlite3helper.h"
@@ -228,7 +229,7 @@ static void insertResource(OCResource *resource);
 static OCResource *findResource(OCResource *resource);
 
 /**
- * Insert a resource type into a resource's resource type linked list.
+ * Insert a resource type into a resource's resource type or rts-m linked list.
  * If resource type already exists, it will not be inserted and the
  * resourceType will be free'd.
  * resourceType->next should be null to avoid memory leaks.
@@ -236,9 +237,11 @@ static OCResource *findResource(OCResource *resource);
  *
  * @param resource Resource where resource type is to be inserted.
  * @param resourceType Resource type to be inserted.
+ * @param isRtsM Resource type to be inserted in rts-m or resource type linked list.
  */
 static void insertResourceType(OCResource *resource,
-        OCResourceType *resourceType);
+        OCResourceType *resourceType,
+        bool isRtsM);
 
 /**
  * Get a resource type at the specified index within a resource.
@@ -481,6 +484,17 @@ static OCStackResult OCInitializeInternal(OCMode mode, OCTransportFlags serverFl
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 static OCStackResult OCDeInitializeInternal(void);
+
+/**
+ * Bind a resource type to a resource.
+ *
+ * @param resource Target resource.
+ * @param resourceTypeName Name of resource type.
+ * @param isRtsM Bind to rts-m or resource type linked list.
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+static OCStackResult BindResourceTypeToResource(OCResource* resource,
+    const char *resourceTypeName, bool isRtsM);
 
 //-----------------------------------------------------------------------------
 // Internal functions
@@ -4251,7 +4265,7 @@ OCStackResult OC_CALL OCCreateResourceWithEp(OCResourceHandle *handle,
             | OC_ACTIVE);
 
     // Add the resourcetype to the resource
-    result = BindResourceTypeToResource(pointer, resourceTypeName);
+    result = BindResourceTypeToResource(pointer, resourceTypeName, false);
     if (result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Error adding resourcetype");
@@ -4286,8 +4300,18 @@ OCStackResult OC_CALL OCCreateResourceWithEp(OCResourceHandle *handle,
         pointer->entityHandlerCallbackParam = NULL;
     }
 
-    // Initialize a pointer indicating child resources in case of collection
+    // Initialize an entity handler in case of atomic measurement, to store the entity handler of the resource
+    // when it's added to an atomic measurement
+    pointer->amEntityHandler = NULL;
+
+    // Initialize a pointer indicating child resources in case of collection or atomic measurement
     pointer->rsrcChildResourcesHead = NULL;
+
+    // Initialize a pointer indicating rts-m in case of collection or atomic measurement
+    pointer->rsrcTypeM = NULL;
+
+    // Initialize a boolean indicating if this resource is an atomic measurement
+    pointer->rsrcIsAtomicMeasurement = false;
 
     // Initialize a pointer indicating observers to this resource
     pointer->observersHead = NULL;
@@ -4314,34 +4338,64 @@ exit:
 OCStackResult OC_CALL OCBindResource(
         OCResourceHandle collectionHandle, OCResourceHandle resourceHandle)
 {
+    return OCBindResourceAM(collectionHandle, resourceHandle, false);
+}
+
+OCStackResult OC_CALL OCBindResourceAM(
+        OCResourceHandle amcolHandle, OCResourceHandle resourceHandle, bool isAM)
+{
     OCResource *resource = NULL;
     OCChildResource *tempChildResource = NULL;
     OCChildResource *newChildResource = NULL;
+    bool isFirstInAmCol;
+    OCStackResult result = OC_STACK_ERROR;
 
     OIC_LOG(INFO, TAG, "Entering OCBindResource");
 
     // Validate parameters
-    VERIFY_NON_NULL(collectionHandle, ERROR, OC_STACK_ERROR);
+    VERIFY_NON_NULL(amcolHandle, ERROR, OC_STACK_ERROR);
     VERIFY_NON_NULL(resourceHandle, ERROR, OC_STACK_ERROR);
     // Container cannot contain itself
-    if (collectionHandle == resourceHandle)
+    if (amcolHandle == resourceHandle)
     {
-        OIC_LOG(ERROR, TAG, "Added handle equals collection handle");
+        if (isAM)
+        {
+            OIC_LOG(ERROR, TAG, "Added handle equals atomic measurement handle");
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "Added handle equals collection handle");
+        }
         return OC_STACK_INVALID_PARAM;
     }
 
     // Use the handle to find the resource in the resource linked list
-    resource = findResource((OCResource *) collectionHandle);
+    resource = findResource((OCResource *) amcolHandle);
     if (!resource)
     {
-        OIC_LOG(ERROR, TAG, "Collection handle not found");
+        if (isAM)
+        {
+            OIC_LOG(ERROR, TAG, "atomic measurement handle not found");
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "Collection handle not found");
+        }
         return OC_STACK_INVALID_PARAM;
     }
 
-    // Look for an open slot to add add the child resource.
+    // Check if the resource exists already and is of the same type
+    if (resource->rsrcChildResourcesHead && resource->rsrcIsAtomicMeasurement != isAM)
+    {
+        OIC_LOG_V(ERROR, TAG, "atomic measurement / collection mismatch: created with isAM = %d, currently called with isAM = %d!",
+                  resource->rsrcIsAtomicMeasurement, isAM);
+    }
+
+    // Look for an open slot to add the child resource.
     // If found, add it and return success
 
     tempChildResource = resource->rsrcChildResourcesHead;
+    isFirstInAmCol = (tempChildResource == NULL);
 
     while(resource->rsrcChildResourcesHead && tempChildResource->next)
     {
@@ -4366,6 +4420,40 @@ OCStackResult OC_CALL OCBindResource(
     }
     else {
         tempChildResource->next = newChildResource;
+    }
+
+    resource->rsrcIsAtomicMeasurement = isAM;
+
+    // Add the oic.wk.col or oic.wk.atomicmeasurement to the rt of the resource
+    if (isFirstInAmCol)
+    {
+        if (isAM)
+        {
+            // Add the resourcetype to the resource
+            result = BindResourceTypeToResource(resource, OC_RSRVD_RESOURCE_TYPE_AM, false);
+        }
+        else
+        {
+            // Add the resourcetype to the resource
+            result = BindResourceTypeToResource(resource, OC_RSRVD_RESOURCE_TYPE_COLLECTION, false);
+        }
+        if (result != OC_STACK_OK)
+        {
+            OIC_LOG(ERROR, TAG, "OCBindResourceAM: error adding the resource type for collection/atomic measurement!");
+        }
+    }
+
+    // In case of atomic measurement, save the entity handler for the resource into amEntityHandler, and set the entity
+    // handler of the resource to the default entity handler of the atomic measurement
+    if (isAM)
+    {
+        newChildResource->rsrcResource->amEntityHandler = newChildResource->rsrcResource->entityHandler;
+        newChildResource->rsrcResource->entityHandler = DefaultAtomicMeasurementResourceEntityHandler;
+    }
+    else
+    {
+        
+        newChildResource->rsrcResource->amEntityHandler = NULL;
     }
 
     OIC_LOG(INFO, TAG, "resource bound");
@@ -4445,6 +4533,16 @@ OCStackResult OC_CALL OCUnBindResource(
                 }
             }
 
+            // Clean atomic measurement variables
+            if (resource->rsrcIsAtomicMeasurement)
+            {
+                tempChildResource->rsrcResource->entityHandler = tempChildResource->rsrcResource->amEntityHandler;
+                if (!resource->rsrcChildResourcesHead)
+                {
+                    resource->rsrcIsAtomicMeasurement = false;
+                }
+            }
+
             OIC_LOG(INFO, TAG, "resource unbound");
 
             // Send notification when resource is unbounded successfully.
@@ -4467,7 +4565,7 @@ OCStackResult OC_CALL OCUnBindResource(
         tempChildResource = tempChildResource->next;
     }
 
-    OIC_LOG(INFO, TAG, "resource not found in collection");
+    OIC_LOG(INFO, TAG, "resource not found in collection/atomic measurement");
 
     tempChildResource = NULL;
     tempLastChildResource = NULL;
@@ -4516,8 +4614,9 @@ static bool ValidateResourceTypeInterface(const char *resourceItemName)
     return true;
 }
 
-OCStackResult BindResourceTypeToResource(OCResource* resource,
-                                            const char *resourceTypeName)
+static OCStackResult BindResourceTypeToResource(OCResource* resource,
+                                                const char *resourceTypeName,
+                                                bool isRtsM)
 {
     OCResourceType *pointer = NULL;
     char *str = NULL;
@@ -4547,7 +4646,7 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
     pointer->resourcetypename = str;
     pointer->next = NULL;
 
-    insertResourceType(resource, pointer);
+    insertResourceType(resource, pointer, isRtsM);
     result = OC_STACK_OK;
 
 exit:
@@ -4652,7 +4751,43 @@ OCStackResult OC_CALL OCBindResourceTypeToResource(OCResourceHandle handle,
         return OC_STACK_ERROR;
     }
 
-    result = BindResourceTypeToResource(resource, resourceTypeName);
+    result = BindResourceTypeToResource(resource, resourceTypeName, false);
+
+#ifdef WITH_PRESENCE
+    if(presenceResource.handle)
+    {
+        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+        SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
+    }
+#endif
+
+    return result;
+}
+
+OCStackResult OC_CALL OCBindRtsMToResource(OCResourceHandle handle,
+        const char *resourceTypeName)
+{
+
+    OCStackResult result = OC_STACK_ERROR;
+    OCResource *resource = NULL;
+
+    OIC_LOG(INFO, TAG, "Entering OCBindRtsMToResource");
+
+    resource = findResource((OCResource *) handle);
+    if (!resource)
+    {
+        OIC_LOG(ERROR, TAG, "Resource not found");
+        return OC_STACK_ERROR;
+    }
+
+    // Check if the resource is a collection or an atomic measurement
+    if (!resource->rsrcChildResourcesHead)
+    {
+        OIC_LOG(ERROR, TAG, "Resource is not a collection or an atomic measurement!");
+        return OC_STACK_ERROR;
+    }
+
+    result = BindResourceTypeToResource(resource, resourceTypeName, true);
 
 #ifdef WITH_PRESENCE
     if(presenceResource.handle)
@@ -4939,6 +5074,21 @@ OCEntityHandler OC_CALL OCGetResourceHandler(OCResourceHandle handle)
 
     // Bind the handler
     return resource->entityHandler;
+}
+
+OCStackResult OC_CALL OCNotifyNewAMAvailable(const OCResourceHandle handle)
+{
+    OCResource *resource = NULL;
+
+    resource = findResource((OCResource *)handle);
+    if (!resource)
+    {
+        OIC_LOG(ERROR, TAG, "Resource not found");
+        return OC_STACK_NO_RESOURCE;
+    }
+
+    // Call the handler
+    return NewAtomicMeasurementReadyNotificationHandler(handle);
 }
 
 void incrementSequenceNumber(OCResource * resPtr)
@@ -5433,6 +5583,10 @@ void deleteResourceElements(OCResource *resource)
     {
         deleteResourceType(resource->rsrcType);
     }
+    if (resource->rsrcTypeM)
+    {
+        deleteResourceType(resource->rsrcTypeM);
+    }
     if (resource->rsrcInterface)
     {
         deleteResourceInterface(resource->rsrcInterface);
@@ -5502,22 +5656,27 @@ void OCDeleteResourceAttributes(OCAttribute *rsrcAttributes)
     }
 }
 
-void insertResourceType(OCResource *resource, OCResourceType *resourceType)
+static void insertResourceType(OCResource *resource, OCResourceType *resourceType, bool isRtsM)
 {
     OCResourceType *pointer = NULL;
+    OCResourceType **prsrcType = NULL;
     OCResourceType *previous = NULL;
     if (!resource || !resourceType)
     {
         return;
     }
+    if (isRtsM)
+        prsrcType = &(resource->rsrcTypeM);
+    else
+        prsrcType = &(resource->rsrcType);
     // resource type list is empty.
-    else if (!resource->rsrcType)
+    if (!(*prsrcType))
     {
-        resource->rsrcType = resourceType;
+        (*prsrcType) = resourceType;
     }
     else
     {
-        pointer = resource->rsrcType;
+        pointer = (*prsrcType);
 
         while (pointer)
         {
@@ -5539,7 +5698,14 @@ void insertResourceType(OCResource *resource, OCResourceType *resourceType)
     }
     resourceType->next = NULL;
 
-    OIC_LOG_V(INFO, TAG, "Added type %s to %s", resourceType->resourcetypename, resource->uri);
+    if (isRtsM)
+    {
+        OIC_LOG_V(INFO, TAG, "Added type %s to rts-m for resource %s", resourceType->resourcetypename, resource->uri);
+    }
+    else
+    {
+        OIC_LOG_V(INFO, TAG, "Added type %s to %s", resourceType->resourcetypename, resource->uri);
+    }
 }
 
 OCResourceType *findResourceTypeAtIndex(OCResourceHandle handle, uint8_t index)

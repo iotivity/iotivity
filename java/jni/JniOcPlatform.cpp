@@ -30,6 +30,9 @@
 #include "ocpayload.h"
 #include "RDClient.h"
 
+#include "JniOcRequestHandle.h"
+#include "JniOcRepresentation.h"
+
 #ifdef WITH_CLOUD
 #include "JniOcAccountManager.h"
 #endif
@@ -1985,6 +1988,135 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResources0(
 
 /*
 * Class:     org_iotivity_base_OcPlatform
+* Method:    bindResourceAM0
+* Signature: (Lorg/iotivity/base/OcResourceHandle;Lorg/iotivity/base/OcResourceHandle;Z)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResourceAM0
+(JNIEnv *env, jclass clazz, jobject jResourceAmColHandle, jobject jResourceHandle, jboolean jIsAtomicMeasurement)
+{
+    OC_UNUSED(clazz);
+    LOGI("OcPlatform_bindResourceAM");
+    if (!jResourceAmColHandle)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "resourceAmColHandle cannot be null");
+        return;
+    }
+    if (!jResourceHandle)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "resourceHandle cannot be null");
+        return;
+    }
+    JniOcResourceHandle* jniOcResourceAmColHandle =
+        JniOcResourceHandle::getJniOcResourceHandlePtr(env, jResourceAmColHandle);
+    if (!jniOcResourceAmColHandle)
+    {
+        return;
+    }
+
+    JniOcResourceHandle* jniOcResourceHandle = JniOcResourceHandle::getJniOcResourceHandlePtr(
+        env, jResourceHandle);
+    if (!jniOcResourceHandle)
+    {
+        return;
+    }
+
+    try
+    {
+        OCStackResult result = OCPlatform::bindResourceAM(
+            jniOcResourceAmColHandle->getOCResourceHandle(),
+            jniOcResourceHandle->getOCResourceHandle(),
+            jIsAtomicMeasurement
+            );
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to bind collection / atomic measurement resource");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    bindResourcesAM0
+* Signature: (Lorg/iotivity/base/OcResourceHandle;[Lorg/iotivity/base/OcResourceHandle;Z)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResourcesAM0(
+    JNIEnv *env,
+    jclass clazz,
+    jobject jResourceAmColHandle,
+    jobjectArray jResourceHandleArray,
+    jboolean jIsAtomicMeasurement)
+{
+    OC_UNUSED(clazz);
+    LOGI("OcPlatform_bindResourcesAM");
+
+    if (!jResourceAmColHandle)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "resourceAmColHandle cannot be null");
+        return;
+    }
+    if (!jResourceHandleArray)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "resourceHandleList cannot be null");
+        return;
+    }
+
+    JniOcResourceHandle* jniOcResourceAmColHandle =
+        JniOcResourceHandle::getJniOcResourceHandlePtr(env, jResourceAmColHandle);
+    if (!jniOcResourceAmColHandle)
+    {
+        return;
+    }
+
+    std::vector<OCResourceHandle> resourceHandleList;
+    int len = env->GetArrayLength(jResourceHandleArray);
+    for (int i = 0; i < len; ++i)
+    {
+        jobject jResourceHandle = env->GetObjectArrayElement(jResourceHandleArray, i);
+        if (!jResourceHandle)
+        {
+            ThrowOcException(JNI_EXCEPTION, "resource handle cannot be null");
+            return;
+        }
+
+        JniOcResourceHandle* jniOcResourceHandle =
+            JniOcResourceHandle::getJniOcResourceHandlePtr(env, jResourceHandle);
+        if (!jniOcResourceHandle)
+        {
+            return;
+        }
+
+        resourceHandleList.push_back(
+            jniOcResourceHandle->getOCResourceHandle());
+    }
+
+    try
+    {
+        OCStackResult result = OCPlatform::bindResourcesAM(
+            jniOcResourceAmColHandle->getOCResourceHandle(),
+            resourceHandleList,
+            jIsAtomicMeasurement
+            );
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to bind collection / atomic measurement resources");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
 * Method:    unbindResource0
 * Signature: (Lorg/iotivity/base/OcResourceHandle;Lorg/iotivity/base/OcResourceHandle;)V
 */
@@ -2152,6 +2284,56 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindTypeToResource0(
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Failed to bind type to resource");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    bindRtsMToResource0
+* Signature: (Lorg/iotivity/base/OcResourceHandle;Ljava/lang/String;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindRtsMToResource0(
+    JNIEnv *env,
+    jclass clazz,
+    jobject jResourceHandle,
+    jstring jResourceTypeName)
+{
+    OC_UNUSED(clazz);
+    LOGI("OcPlatform_bindRtsMToResource");
+    if (!jResourceHandle)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "resourceHandle cannot be null");
+        return;
+    }
+    std::string typeName;
+    if (jResourceTypeName)
+    {
+        typeName = env->GetStringUTFChars(jResourceTypeName, nullptr);
+    }
+
+    JniOcResourceHandle* jniOcResourceHandle =
+        JniOcResourceHandle::getJniOcResourceHandlePtr(env, jResourceHandle);
+    if (!jniOcResourceHandle)
+    {
+        return;
+    }
+
+    try
+    {
+        OCStackResult result = OCPlatform::bindRtsMToResource(
+            jniOcResourceHandle->getOCResourceHandle(),
+            typeName
+            );
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to add type to the rts-m of the resource");
         }
     }
     catch (OCException& e)
@@ -2654,6 +2836,46 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_sendResponse0(
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "failed to send response");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    notifyNewAMAvailable0
+* Signature: (Lorg/iotivity/base/OcResourceHandle;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyNewAMAvailable0
+    (JNIEnv *env, jclass clazz, jobject jResourceHandle)
+{
+    OC_UNUSED(clazz);
+    LOGD("OcPlatform_notifyNewAMAvailable");
+    if (!jResourceHandle)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "resourceHandle cannot be null");
+        return;
+    }
+
+    JniOcResourceHandle* jniOcResourceHandle =
+        JniOcResourceHandle::getJniOcResourceHandlePtr(env, jResourceHandle);
+    if (!jniOcResourceHandle)
+    {
+        return;
+    }
+
+    try
+    {
+        OCStackResult result =
+            OCPlatform::notifyNewAMAvailable(jniOcResourceHandle->getOCResourceHandle());
+
+        if ((OC_STACK_OK != result) && (OC_STACK_NO_OBSERVERS != result))
+        {
+            ThrowOcException(result, "failed to send new AM available notification");
         }
     }
     catch (OCException& e)

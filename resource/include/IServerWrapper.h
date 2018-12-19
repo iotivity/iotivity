@@ -69,7 +69,12 @@ namespace OC
 
         virtual OCStackResult unregisterResource(
                     const OCResourceHandle& resourceHandle) = 0;
+
         virtual OCStackResult bindTypeToResource(
+                    const OCResourceHandle& resourceHandle,
+                    const std::string& resourceTypeName) = 0;
+
+        virtual OCStackResult bindRtsMToResource(
                     const OCResourceHandle& resourceHandle,
                     const std::string& resourceTypeName) = 0;
 
