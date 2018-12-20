@@ -283,7 +283,7 @@ namespace OC
                 port(0),
                 QoS(QoS_),
                 ps(ps_),
-                useLegacyCleanup(true)
+                useLegacyCleanup(false)
         {}
             /// @deprecated this constructor is deprecated (since 2017.03).
             OC_DEPRECATED_MSG(
