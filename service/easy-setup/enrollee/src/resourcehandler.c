@@ -508,16 +508,19 @@ OCEntityHandlerResult updateEasySetupResource(OCEntityHandlerRequest* ehRequest,
     else if (!strcmp(iface_name, OC_RSRVD_INTERFACE_DEFAULT))
     {
         OIC_LOG(DEBUG, ES_RH_TAG, "Handling POST request on default interface");
-        // If payload has read-only properties, then the request is considered as a bad request.
-        if (!OCRepPayloadIsNull(input, OC_RSRVD_ES_PROVSTATUS) ||
-            !OCRepPayloadIsNull(input, OC_RSRVD_ES_LAST_ERRORCODE))
+
+        if (!OCRepPayloadIsNull(input, OC_RSRVD_ES_CONNECT))
         {
-            OIC_LOG(ERROR, ES_RH_TAG, "Read-only property cannot be updated.");
-            ehResult = OC_EH_BAD_REQ;
+            // Payload contains "cn" property, so update it.
+            updateEasySetupConnectProperty(input);
         }
         else
         {
-            updateEasySetupConnectProperty(input);
+            // Return error response for any property excluding writable
+            // property. e.g. readonly properties like "ps", "lec" or any
+            // links are not allowed in POST Request.
+            OIC_LOG(ERROR, ES_RH_TAG, "UPDATE for property not allowed!");
+            ehResult = OC_EH_BAD_REQ;
         }
     }
 
