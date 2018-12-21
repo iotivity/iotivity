@@ -38,6 +38,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.TokenTable;
@@ -51,7 +53,6 @@ import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.base.exception.ServerException.NotFoundException;
 import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
-import org.iotivity.cloud.util.Log;
 
 /**
  *
@@ -60,7 +61,7 @@ import org.iotivity.cloud.util.Log;
  *
  */
 public class AccountManager {
-
+    private final static Logger            Log                       = LoggerFactory.getLogger(AccountManager.class);
     private OAuthProviderFactory           mFactory                  = null;
     private TypeCastingManager<UserTable>  mUserTableCastingManager  = new TypeCastingManager<>();
     private TypeCastingManager<TokenTable> mTokenTableCastingManager = new TypeCastingManager<>();
@@ -241,7 +242,7 @@ public class AccountManager {
     private String checkAuthProviderName(String authProviderName) {
         String libraryFileName = getValidFileName(Constants.OAUTH_LIBRARIES_PATH, authProviderName + ".jar");
         if (libraryFileName == null) {
-            Log.w("OAuth 3rd party library " + authProviderName + " does not exist.");
+            Log.warn("OAuth 3rd party library " + authProviderName + " does not exist.");
             return authProviderName;
         }
         return libraryFileName.substring(0, libraryFileName.length() - 4);
@@ -349,16 +350,16 @@ public class AccountManager {
     private TokenTable requestAccessToken(String authCode, Object options) {
         TokenTable tokenInfo = mFactory.requestAccessTokenInfo(authCode,
                 options);
-        Log.d("access token : " + tokenInfo.getAccesstoken());
-        Log.d("refresh token : " + tokenInfo.getRefreshtoken());
-        Log.d("expired time : " + tokenInfo.getExpiredtime());
+        Log.debug("access token : " + tokenInfo.getAccesstoken());
+        Log.debug("refresh token : " + tokenInfo.getRefreshtoken());
+        Log.debug("expired time : " + tokenInfo.getExpiredtime());
 
         return tokenInfo;
     }
 
     private UserTable requestUserInfo(String accessToken, Object options) {
         UserTable userInfo = mFactory.requestGetUserInfo(accessToken, options);
-        Log.d("user id  : " + userInfo.getUserid());
+        Log.debug("user id  : " + userInfo.getUserid());
 
         return userInfo;
     }
@@ -366,7 +367,7 @@ public class AccountManager {
     private String generateUuid() {
         UUID uuid = UUID.randomUUID();
         String userUuid = uuid.toString();
-        Log.d("generated uuid : " + userUuid);
+        Log.debug("generated uuid : " + userUuid);
         return userUuid;
     }
 
@@ -415,10 +416,10 @@ public class AccountManager {
 
     private boolean checkRefreshTokenInDB(TokenTable tokenInfo, String token) {
         if (tokenInfo.getRefreshtoken() == null) {
-            Log.w("Refreshtoken doesn't exist");
+            Log.warn("Refreshtoken doesn't exist");
             return false;
         } else if (!tokenInfo.getRefreshtoken().equals(token)) {
-            Log.w("Refreshtoken is not correct");
+            Log.warn("Refreshtoken is not correct");
             return false;
         }
         return true;
@@ -426,10 +427,10 @@ public class AccountManager {
 
     private boolean checkAccessTokenInDB(TokenTable tokenInfo, String token) {
         if (tokenInfo.getAccesstoken() == null) {
-            Log.w("AccessToken doesn't exist");
+            Log.warn("AccessToken doesn't exist");
             return false;
         } else if (!tokenInfo.getAccesstoken().equals(token)) {
-            Log.w("AccessToken is not correct");
+            Log.warn("AccessToken is not correct");
             return false;
         }
         return true;
@@ -443,7 +444,7 @@ public class AccountManager {
         long remainTime = getElaspedSeconds(issuedTime);
 
         if (remainTime > expiredTime) {
-            Log.w("access token is expired");
+            Log.warn("access token is expired");
             return false;
         }
         return true;
@@ -463,7 +464,7 @@ public class AccountManager {
 
         long difference = currentTime.getTime() - issuedTimeDate.getTime();
         long elaspedSeconds = difference / 1000;
-        Log.d("accessToken elasped time: " + elaspedSeconds + "s");
+        Log.debug("accessToken elasped time: " + elaspedSeconds + "s");
 
         return elaspedSeconds;
     }
@@ -494,9 +495,9 @@ public class AccountManager {
 
         TokenTable tokenInfo = mFactory.requestRefreshTokenInfo(refreshToken);
 
-        Log.d("access token : " + tokenInfo.getAccesstoken());
-        Log.d("refresh token : " + tokenInfo.getRefreshtoken());
-        Log.d("expired time : " + tokenInfo.getExpiredtime());
+        Log.debug("access token : " + tokenInfo.getAccesstoken());
+        Log.debug("refresh token : " + tokenInfo.getRefreshtoken());
+        Log.debug("expired time : " + tokenInfo.getExpiredtime());
 
         return tokenInfo;
     }
@@ -516,7 +517,7 @@ public class AccountManager {
         }
 
         response.put(Constants.RESP_USER_LIST, ulist);
-        Log.d("User List " + response.toString());
+        Log.debug("User List " + response.toString());
 
         return response;
     }

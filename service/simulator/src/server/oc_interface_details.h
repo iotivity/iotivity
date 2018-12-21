@@ -33,6 +33,7 @@
 
 #include "OCApi.h"
 
+/** OC namespace */
 namespace OC
 {
     // Read-Only interface
@@ -48,11 +49,29 @@ namespace OC
     const std::string SENSOR_INTERFACE = "oic.if.s";
 }
 
+/**
+ * @class OCInterfaceDetails
+ */
 class OCInterfaceDetails
 {
     public:
+        /**
+         * get the instance detail
+         * @return class object
+         */
         static OCInterfaceDetails *getInstance();
+        /**
+         * check the interface with given type
+         * @param[in] interfaceType   type of interface
+         * @return boolean value
+         */
         bool isInterface(const std::string &interfaceType);
+        /**
+         * check request is supported or not
+         * @param[in] interfaceType   type of interface
+         * @param[in] requestType     type of request
+         * @return boolean value
+         */
         bool isRequestSupported(const std::string &interfaceType, const std::string &requestType);
 
     private:

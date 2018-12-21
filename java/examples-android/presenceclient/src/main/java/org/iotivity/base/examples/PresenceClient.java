@@ -64,8 +64,6 @@ public class PresenceClient extends Activity implements
                 context,
                 ServiceType.IN_PROC,
                 ModeType.CLIENT,
-                "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-                0,         // Uses randomly available port
                 QualityOfService.LOW
         );
 

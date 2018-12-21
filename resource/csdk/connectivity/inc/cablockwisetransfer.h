@@ -1,4 +1,4 @@
-/* *****************************************************************
+/******************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -97,7 +97,7 @@ typedef struct
     coap_block_t block1;                /**< block1 option. */
     coap_block_t block2;                /**< block2 option. */
     uint16_t type;                      /**< block option type. */
-    CABlockDataID_t* blockDataId;        /**< ID set of CABlockData. */
+    CABlockDataID_t* blockDataId;       /**< ID set of CABlockData. */
     CAData_t *sentData;                 /**< sent request or response data information. */
     CAPayload_t payload;                /**< payload buffer. */
     size_t payloadLength;               /**< the total payload length to be received. */
@@ -109,17 +109,17 @@ typedef struct
  */
 typedef enum
 {
-    CA_BLOCK_UNKNOWN = 0,
-    CA_OPTION1_RESPONSE,
-    CA_OPTION1_REQUEST_LAST_BLOCK,
-    CA_OPTION1_REQUEST_BLOCK,
-    CA_OPTION2_FIRST_BLOCK,
-    CA_OPTION2_LAST_BLOCK,
-    CA_OPTION2_RESPONSE,
-    CA_OPTION2_REQUEST,
-    CA_BLOCK_INCOMPLETE,
-    CA_BLOCK_TOO_LARGE,
-    CA_BLOCK_RECEIVED_ALREADY
+    CA_BLOCK_UNKNOWN = 0,          /**< unknow block */
+    CA_OPTION1_RESPONSE,           /**< option1 response */
+    CA_OPTION1_REQUEST_LAST_BLOCK, /**< option1 request last block */
+    CA_OPTION1_REQUEST_BLOCK,      /**< option1 request block */
+    CA_OPTION2_FIRST_BLOCK,        /**< option2 first block */
+    CA_OPTION2_LAST_BLOCK,         /**< option2 last block */
+    CA_OPTION2_RESPONSE,           /**< option2 response */
+    CA_OPTION2_REQUEST,            /**< option2 request */
+    CA_BLOCK_INCOMPLETE,           /**< incomplete block */
+    CA_BLOCK_TOO_LARGE,            /**< too large block */
+    CA_BLOCK_RECEIVED_ALREADY      /**< already received block */
 } CABlockState_t;
 
 /**

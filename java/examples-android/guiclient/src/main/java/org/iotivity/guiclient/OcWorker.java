@@ -452,8 +452,6 @@ public class OcWorker extends Thread
                 mContext,
                 ServiceType.IN_PROC,
                 ModeType.CLIENT_SERVER,
-                "0.0.0.0", // bind to all available interfaces
-                0,
                 QualityOfService.LOW);
 
         Log.d(TAG, "configurePlatform(): calling OcPlatform.Configure()");

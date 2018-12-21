@@ -69,7 +69,6 @@ public class GroupClient extends Activity implements
                 context,
                 ServiceType.IN_PROC,
                 ModeType.CLIENT,
-                "0.0.0.0", 0,
                 QualityOfService.LOW
         );
 

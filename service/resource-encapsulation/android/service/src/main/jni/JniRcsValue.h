@@ -27,7 +27,14 @@
 
 class JNIEnvWrapper;
 
+/**
+ * Initialize rcs value
+ */
 void initRCSValue(JNIEnvWrapper*);
+
+/**
+ * Clear rcs value
+ */
 void clearRCSValue(JNIEnvWrapper*);
 
 OIC::Service::RCSResourceAttributes::Value toNativeAttrsValue(JNIEnv*, jobject);

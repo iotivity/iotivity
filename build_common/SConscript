@@ -12,7 +12,7 @@ project_version = '2.0.0'
 
 # Map of build host to possible target os
 host_target_map = {
-    'linux': ['linux', 'android', 'yocto', 'tizen'],
+    'linux': ['linux', 'android', 'yocto', 'tizen', 'webos'],
     'windows': ['windows', 'android'],
     'darwin': ['darwin', 'ios', 'android'],
     'msys_nt': ['msys_nt'],
@@ -21,11 +21,12 @@ host_target_map = {
 # Map of target os to possible target architecture
 os_arch_map = {
     'linux': [
-        'x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64', 'mips',
+        'x86', 'x86_64', 'arm', 'armv7l', 'arm-v7a', 'armeabi-v7a', 'arm64', 'mips',
         'mipsel', 'mips64', 'mips64el', 'i386', 'powerpc', 'sparc', 'aarch64',
         'armv6l', 'armv7l'
     ],
-    'tizen': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64'],
+    'tizen': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64', 'armv7l'],
+    'webos': ['arm'],
     'android': [
         'x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard',
         'arm64-v8a'
@@ -66,11 +67,15 @@ if target_os not in host_target_map[host]:
 # work out a reasonable default for target_arch if not specified by user
 if target_os == 'android':
     default_arch = 'x86'
+elif target_os == 'webos':
+    default_arch = 'arm'
 else:
     default_arch = platform.machine()
     if target_os == 'windows':
         default_arch = default_arch.lower()
     if target_os == 'linux' and default_arch in ('i586', 'i686'):
+        default_arch = 'x86'
+    if target_os == 'tizen' and default_arch in ('i586', 'i686'):
         default_arch = 'x86'
 
 target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch)  # target arch
@@ -147,7 +152,7 @@ help_vars.AddVariables(
                  allowed_values=os_arch_map[target_os]),
     EnumVariable('MULTIPLE_OWNER',
                  'Enable multiple owner',
-                 default='1',
+                 default='0',
                  allowed_values=('0', '1')),
     EnumVariable('EXC_PROV_SUPPORT',
                  'Except OCPMAPI library(libocpmapi.so)',
@@ -223,7 +228,7 @@ if target_os in targets_support_valgrind:
     help_vars.Add(
         BoolVariable('VALGRIND_CHECKS',
                      'Build support for running code coverage checks',
-                      default=True))
+                      default=False))
 
 targets_support_gcov = ['linux', 'darwin']
 if target_os in targets_support_gcov:
@@ -361,7 +366,7 @@ if target_os in targets_support_cc:
         print(tc_set_msg)
 
 # Import env variables only if reproductibility is ensured
-if target_os in ['yocto']:
+if target_os in ['yocto', 'webos']:
     env['CONFIG_ENVIRONMENT_IMPORT'] = True
 else:
     env['CONFIG_ENVIRONMENT_IMPORT'] = False
@@ -379,7 +384,7 @@ if env['CONFIG_ENVIRONMENT_IMPORT']:
     if os.environ['LDFLAGS'] != None:
         env.AppendUnique(LINKFLAGS=Split(os.environ['LDFLAGS']))
 
-if target_os in ['windows']:
+if host in ['windows']:
     # UnpackAll.py needs access to system PATH components that SCons
     # does not include by default - e.g., the path to 7z.exe.
     env.AppendUnique(PATH=os.environ['PATH'])
@@ -703,6 +708,9 @@ if 'ALL' in target_transport:
         env.AppendUnique(CPPDEFINES=[
             'IP_ADAPTER', 'EDR_ADAPTER', 'LE_ADAPTER', 'NFC_ADAPTER'
         ])
+    elif (target_os in ['webos']):
+        env.AppendUnique(CPPDEFINES=[
+            'IP_ADAPTER', 'NO_EDR_ADAPTER', 'NO_LE_ADAPTER'])
     elif (target_os in ['darwin', 'ios', 'msys_nt', 'windows']):
         env.AppendUnique(
             CPPDEFINES=['IP_ADAPTER', 'NO_EDR_ADAPTER', 'NO_LE_ADAPTER'])
@@ -711,7 +719,7 @@ if 'ALL' in target_transport:
             CPPDEFINES=['IP_ADAPTER', 'EDR_ADAPTER', 'LE_ADAPTER'])
 else:
     if ('BT' in target_transport):
-        if target_os in ('linux', 'yocto'):
+        if target_os in ('linux', 'yocto', 'webos'):
             msg = "CA Transport BT is not supported "
             Exit(msg)
         else:
@@ -731,7 +739,7 @@ else:
 
     if with_tcp:
         if (target_os in [
-                'linux', 'tizen', 'android', 'ios', 'windows', 'yocto'
+                'linux', 'tizen', 'android', 'ios', 'windows', 'yocto', 'webos'
         ]):
             env.AppendUnique(CPPDEFINES=['TCP_ADAPTER', 'WITH_TCP'])
         else:
@@ -782,7 +790,7 @@ env.SConscript('external_builders.scons')
 ######################################################################
 # Link scons to Yocto cross-toolchain ONLY when target_os is yocto
 ######################################################################
-if target_os == "yocto":
+if target_os in ['yocto', 'webos']:
     '''
     This code injects Yocto cross-compilation tools+flags into the scons
     construction environment in order to invoke the relevant tools while

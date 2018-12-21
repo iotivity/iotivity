@@ -106,7 +106,7 @@ static OCRepPayload *CreateRDPublishPayload(const char *deviceId,
     EXPECT_TRUE(OCRepPayloadSetPropString(repPayload, OC_RSRVD_DEVICE_ID, deviceId));
     EXPECT_TRUE(OCRepPayloadSetPropInt(repPayload, OC_RSRVD_DEVICE_TTL, (ttl == 0 ? 86400: ttl)));
 
-    const OCRepPayload *linkArr[nresources];
+    const OCRepPayload *linkArr[nresources] = {0};
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = {nresources, 0, 0};
 
     for (size_t i = 0; i < nresources; ++i)

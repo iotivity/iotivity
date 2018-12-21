@@ -1,0 +1,14 @@
+{
+  "public": [
+	"com.example.service.iotivity.client/discoverResources",
+	"com.example.service.iotivity.client/getResource",
+	"com.example.service.iotivity.client/observeResource",
+	"com.example.service.iotivity.client/deleteResource",
+  ],
+  "private": [
+	"com.example.service.iotivity.client/discoverResources",
+	"com.example.service.iotivity.client/getResource",
+	"com.example.service.iotivity.client/observeResource",
+	"com.example.service.iotivity.client/deleteResource",
+  ]
+}

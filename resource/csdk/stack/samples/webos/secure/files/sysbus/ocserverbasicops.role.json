@@ -1,0 +1,11 @@
+{
+    "exeName":"/usr/palm/services/org.ocf.webossample.ocserverbasicops/ocserverbasicops",
+    "type":"regular",
+    "allowedNames":["org.ocf.webossample.ocserverbasicops*"],
+    "permissions": [
+        {
+            "service":"org.ocf.webossample.ocserverbasicops*",
+            "outbound":["com.webos.service.connectionmanager"]
+        }
+    ]
+}

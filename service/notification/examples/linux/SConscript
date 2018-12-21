@@ -31,7 +31,6 @@ notification_sample_env.PrependUnique(LIBS=[
     'octbstack',
     'connectivity_abstraction',
     'oc_logger',
-    'libcoap',
 ])
 
 if target_os not in ['windows', 'winrt']:

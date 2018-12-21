@@ -36,3 +36,8 @@ elif target_os == 'darwin':
 elif target_os == 'msys_nt':
     # Build secure samples. Using linux samples for now.
     SConscript('linux/secure/SConscript', 'stacksamples_env')
+elif target_os == 'webos':
+    if stacksamples_env.get('SECURED') == '1':
+        SConscript('webos/secure/SConscript', 'stacksamples_env')
+    else:
+        SConscript('webos/unsecure/SConscript', 'stacksamples_env')

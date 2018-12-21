@@ -26,13 +26,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.GroupTable;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
-import org.iotivity.cloud.util.Log;
 
 /**
  *
@@ -41,6 +42,8 @@ import org.iotivity.cloud.util.Log;
  */
 
 public class GroupManager {
+
+    private final static Logger            Log                 = LoggerFactory.getLogger(GroupManager.class);
     private static GroupManager            mGrManager          = new GroupManager();
     private TypeCastingManager<GroupTable> mTypeGroup          = new TypeCastingManager<GroupTable>();
     private GroupPolicyManager             mGroupPolicyManager = new GroupPolicyManager();
@@ -420,7 +423,7 @@ public class GroupManager {
      */
     private <T> void addProperties(String gid, String property,
             ArrayList<T> values) {
-        Log.d("added property name: " + property + ", values : " + values
+        Log.debug("added property name: " + property + ", values : " + values
                 + " , to group : " + gid);
         if (values == null || values.isEmpty()) {
             return;
@@ -450,7 +453,7 @@ public class GroupManager {
      */
     private <T> void deleteProperties(String gid, String property,
             ArrayList<T> values) {
-        Log.d("deleted property name: " + property + ", values : " + values
+        Log.debug("deleted property name: " + property + ", values : " + values
                 + " , from group : " + gid);
         GroupTable groupTable = getGroupTable(gid);
         if (groupTable == null || values == null || values.isEmpty()) {
@@ -486,7 +489,7 @@ public class GroupManager {
      *            value string
      */
     private void replaceProperties(String gid, String property, String value) {
-        Log.d("replaced property name: " + property + ", value : " + value
+        Log.debug("replaced property name: " + property + ", value : " + value
                 + ", to group : " + gid);
         if (value == null || value.isEmpty()) {
             return;

@@ -612,7 +612,7 @@ static OCStackResult provisionCredentials(OicSecCred_t *cred,
         }
         secPayload->base.type = PAYLOAD_TYPE_SECURITY;
         int secureFlag = 0;
-        bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+        bool propertiesToInclude[CRED_PROPERTY_COUNT];
         memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
         propertiesToInclude[CRED_CREDS] = true;
         res = CredToCBORPayloadPartial(cred, NULL, &secPayload->securityData, &secPayload->payloadSize, secureFlag, propertiesToInclude);
@@ -691,7 +691,7 @@ static OCStackResult ProvisionCredentialsDos(void *ctx, OicSecCred_t *cred,
         }
         secPayload->base.type = PAYLOAD_TYPE_SECURITY;
         int secureFlag = 0;
-        bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+        bool propertiesToInclude[CRED_PROPERTY_COUNT];
         memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
         propertiesToInclude[CRED_CREDS] = true;
         res = CredToCBORPayloadPartial(cred, NULL, &secPayload->securityData, &secPayload->payloadSize, secureFlag, propertiesToInclude);
@@ -1201,7 +1201,7 @@ static OCStackApplicationResult ProvisionTrustChainCB(void *ctx, OCDoHandle UNUS
         }
         secPayload->base.type = PAYLOAD_TYPE_SECURITY;
         int secureFlag = 1; /* Don't send the private key to the device, if it happens to be present */
-        bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+        bool propertiesToInclude[CRED_PROPERTY_COUNT];
         memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
         propertiesToInclude[CRED_CREDS] = true;
         if (OC_STACK_OK != CredToCBORPayloadPartial(trustCertChainCred, NULL, &secPayload->securityData,
@@ -1627,7 +1627,7 @@ static OCStackApplicationResult ProvisionCertificateCB(void *ctx, OCDoHandle han
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
 
     int secureFlag = 0;//don't send private data(key)
-    bool propertiesToInclude[DOXM_PROPERTY_COUNT];
+    bool propertiesToInclude[CRED_PROPERTY_COUNT];
     memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
     propertiesToInclude[CRED_CREDS] = true;
     VERIFY_SUCCESS(TAG, OC_STACK_OK == CredToCBORPayloadPartial(cred, NULL, &secPayload->securityData,

@@ -1,0 +1,134 @@
+{
+    "sp": {
+        "supportedprofiles": [ "1.3.6.1.4.1.51414.0.2.0", "1.3.6.1.4.1.51414.0.3.0", "1.3.6.1.4.1.51414.0.4.0", "1.3.6.1.4.1.51414.0.1.0" ],
+        "currentprofile": "1.3.6.1.4.1.51414.0.1.0",
+        "rowneruuid": "00000000-0000-0000-0000-000000000000",
+        "rt": ["oic.r.sp"],
+        "if": ["oic.if.baseline"]
+    },
+    "cred": {
+        "creds": [
+            {
+                "credid": 1,
+                "subjectuuid": "89898989-8989-8989-8989-898989898989",
+                "credtype": 8,
+                "publicdata": {
+                   "encoding": "oic.sec.encoding.der",
+                   "data": "$PUBLIC_EE_KEY"
+                },
+                "credusage": "oic.sec.cred.mfgcert",
+                "privatedata": {
+                   "encoding": "oic.sec.encoding.raw",
+                   "data": "$PRIVATE_EE_KEY"
+                }
+             },
+             {
+                "credid": 2,
+                "subjectuuid": "89898989-8989-8989-8989-898989898989",
+                "credtype": 8,
+                "publicdata": {
+                   "encoding": "oic.sec.encoding.der",
+                   "data": "$PUBLIC_SUBCA_KEY"
+                },
+                "credusage": "oic.sec.cred.mfgcert"
+             },
+            {
+                "credid": 3,
+                "subjectuuid": "*",
+                "credtype": 8,
+                "publicdata": {
+                   "encoding": "oic.sec.encoding.der",
+                   "data": "$PUBLIC_PEER_ROOT_KEY",
+                   "revstat": false
+                },
+                "credusage": "oic.sec.cred.mfgtrustca"
+             }
+        ],
+        "rowneruuid": "00000000-0000-0000-0000-000000000000",
+        "rt": ["oic.r.cred"],
+        "if": ["oic.if.baseline"]
+     },
+    "acl": {
+      "aclist2": [
+            {
+                "aceid": 1,
+                "subject": { "conntype": "anon-clear" },
+                "resources": [
+                    { "href": "/oic/res" },
+                    { "href": "/oic/d" },
+                    { "href": "/oic/p"}
+                ],
+                "permission": 2
+            },
+            {
+                "aceid": 2,
+                "subject": { "conntype": "auth-crypt" },
+                "resources": [
+                    { "href": "/oic/res" },
+                    { "href": "/oic/d" },
+                    { "href": "/oic/p"}
+                ],
+                "permission": 2
+            },
+            {
+                "aceid": 3,
+                "subject": { "conntype": "anon-clear" },
+                "resources": [
+                    { "href": "/oic/sec/doxm" }
+                ],
+                "permission": 14
+            },
+            {
+                "aceid": 4,
+                "subject": { "conntype": "auth-crypt" },
+                "resources": [
+                    { "href": "/oic/sec/doxm" },
+                    { "href": "/oic/sec/roles" }
+                ],
+                "permission": 14
+            },
+            {
+                "aceid": 5,
+                "subject": { "uuid": "11111111-1111-1111-1111-111111111111" },
+                "resources": [
+                    { "href": "/oic/sec/acl2" },
+                    { "href": "/oic/sec/cred" },
+                    { "href": "/oic/sec/doxm" },
+                    { "href": "/oic/sec/pstat" },
+                    { "href": "/oic/sec/csr" },
+                    { "href": "/oic/sec/sp" }
+                ],
+                "permission": 15
+            }
+
+        ],
+      "rowneruuid": "00000000-0000-0000-0000-000000000000",
+      "rt": ["oic.r.acl"],
+      "if": ["oic.if.baseline"]
+   },
+   "pstat": {
+      "dos": {
+         "s": 1,
+         "p": false
+      },
+      "isop": false,
+      "cm": 2,
+      "tm": 0,
+      "om": 4,
+      "sm": 4,
+      "rowneruuid": "00000000-0000-0000-0000-000000000000",
+      "rt": ["oic.r.pstat"],
+      "if": ["oic.if.baseline"]
+   },
+   "doxm": {
+      "oxms": [2],
+      "oxmsel": 2,
+      "sct": 9,
+      "owned": false,
+      "deviceuuid": "89898989-8989-8989-8989-898989898989",
+      "devowneruuid": "00000000-0000-0000-0000-000000000000",
+      "rowneruuid": "00000000-0000-0000-0000-000000000000",
+      "rt": ["oic.r.doxm"],
+      "if": ["oic.if.baseline"]
+   }
+}

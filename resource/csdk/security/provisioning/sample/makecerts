@@ -1,0 +1,114 @@
+#! /bin/bash
+
+if [ $# -ne 1 ]
+then
+    echo "makecerts output_dir"
+    exit
+fi
+
+#----------------------------------------------------------------------------
+function GEN_SEED_CERTS () {
+#----------------------------------------------------------------------------
+../certgenerator <<EOD
+1
+root
+1
+subca
+1
+$CLIENT
+1
+$SERVER
+2
+root
+C=US, O=Open Connectivity Foundation, CN=Root CA
+3
+subca
+root
+C=US, O=Open Connectivity Foundation, CN=Sub CA
+4
+$CLIENT
+subca
+12121212-1212-1212-1212-121212121212
+4
+$SERVER
+subca
+89898989-8989-8989-8989-898989898989
+0
+EOD
+}
+
+#----------------------------------------------------------------------------
+function PEM_2_DER () {
+#----------------------------------------------------------------------------
+  IN_PEM=$1
+  OUT_DER=$(basename $IN_PEM .pem).der
+  OUT_HEX=$OUT_DER.hex
+  openssl x509 -in $IN_PEM -out $OUT_DER -outform der
+  xxd  -ps $OUT_DER | tr -d \\n > $OUT_HEX
+}
+
+#----------------------------------------------------------------------------
+function ECKEY_PEM_2_DER () {
+#----------------------------------------------------------------------------
+  IN_PEM=$1
+  OUT=`basename $1`.der
+  OUT_DER=$(basename $IN_PEM .pem).der
+  OUT_HEX=$OUT_DER.hex
+  openssl ec -inform PEM -in $IN_PEM -outform DER -out $OUT_DER
+  cat $OUT_DER | xxd  -ps | tr -d \\n >> $OUT_HEX
+}
+
+#----------------------------------------------------------------------------
+function BUILD_CERT_PKG () {
+#----------------------------------------------------------------------------
+  CERT_NAME=$1
+  mkdir -p $CERT_NAME
+  cp "originals/${CERT_NAME}.crt" "${CERT_NAME}/${CERT_NAME}_cert.pem"
+  cp "originals/${CERT_NAME}.prv" "${CERT_NAME}/${CERT_NAME}_key.pem"
+  cd ./$CERT_NAME
+  PEM_2_DER "${CERT_NAME}_cert.pem"
+  ECKEY_PEM_2_DER "${CERT_NAME}_key.pem"
+  mkdir -p chain
+  cp ../originals/root.crt chain/0-root-cert.pem
+  cp ../originals/subca.crt chain/1-subca-cert.pem
+  cd chain
+  PEM_2_DER 0-root-cert.pem
+  PEM_2_DER 1-subca-cert.pem
+  cd ../..
+}
+
+#----------------------------------------------------------------------------
+function BUILD_CONFIG () {
+#----------------------------------------------------------------------------
+  MY_CERT_NAME=$1
+  PEER_CERT_NAME=$2
+  CONFIG_TEMPLATE=${3}.json
+  J2C=../../../tool/json2cbor
+  J2C_OUT=${3}.dat
+
+  sed -e "s/\$PUBLIC_EE_KEY/$(sed 's:/:\\/:g' ./${MY_CERT_NAME}/${MY_CERT_NAME}_cert.der.hex)/" ../config-templates/${CONFIG_TEMPLATE} > ${CONFIG_TEMPLATE}
+  sed -i "s/\$PRIVATE_EE_KEY/$(sed 's:/:\\/:g' ./${MY_CERT_NAME}/${MY_CERT_NAME}_key.der.hex)/" ${CONFIG_TEMPLATE}
+  sed -i "s/\$PUBLIC_SUBCA_KEY/$(sed 's:/:\\/:g' ./${MY_CERT_NAME}/chain/1-subca-cert.der.hex)/" ${CONFIG_TEMPLATE}
+  sed -i "s/\$PUBLIC_PEER_ROOT_KEY/$(sed 's:/:\\/:g' ./${PEER_CERT_NAME}/chain/0-root-cert.der.hex)/" ${CONFIG_TEMPLATE}
+
+  $J2C $CONFIG_TEMPLATE $J2C_OUT
+}
+
+#--------------------------------------------------------------------------------------
+
+OUT_DIR=$1
+CLIENT=client
+SERVER=server
+
+mkdir -p $OUT_DIR
+cd $OUT_DIR
+
+GEN_SEED_CERTS
+mkdir -p originals
+mv *.pub *.prv *.crt originals/.
+
+BUILD_CERT_PKG $CLIENT
+BUILD_CERT_PKG $SERVER
+BUILD_CONFIG $CLIENT $SERVER oic_svr_db_client
+BUILD_CONFIG $SERVER $CLIENT oic_svr_db_server_mfg
+

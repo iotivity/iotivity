@@ -21,6 +21,8 @@
  */
 package org.iotivity.cloud.accountserver.x509.cert;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.bouncycastle.asn1.x500.AttributeTypeAndValue;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.openssl.PEMException;
@@ -29,7 +31,6 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.pkcs.PKCSException;
-import org.iotivity.cloud.util.Log;
 
 import java.io.IOException;
 import java.security.PublicKey;
@@ -41,6 +42,7 @@ import static org.iotivity.cloud.accountserver.resources.credprov.cert.Certifica
  * Class is used for parsing CSR requests.
  */
 public class CSRParser {
+    private final static Logger Log = LoggerFactory.getLogger(CSRParser.class);
 
     /**
      * PKCS10CertificationRequest attribute.
@@ -71,7 +73,7 @@ public class CSRParser {
             publicKey = new JcaPEMKeyConverter().setProvider(SECURITY_PROVIDER).
                     getPublicKey(mCsr.getSubjectPublicKeyInfo());
         } catch (PEMException e) {
-            Log.e(e.getMessage());
+            Log.error(e.getMessage());
         }
         return publicKey;
     }
@@ -87,7 +89,7 @@ public class CSRParser {
             condition = mCsr.isSignatureValid(new JcaContentVerifierProviderBuilder()
                     .setProvider(SECURITY_PROVIDER).build(mCsr.getSubjectPublicKeyInfo()));
         } catch (OperatorCreationException | PKCSException e) {
-            Log.e(e.getMessage());
+            Log.error(e.getMessage());
         }
         return condition;
     }

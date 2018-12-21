@@ -153,8 +153,6 @@ public class CloudFragment extends Fragment implements
         PlatformConfig cfg = new PlatformConfig(mActivity, mContext,
                 ServiceType.IN_PROC,
                 type,
-                Common.IP_ADDRESS,
-                Common.IP_PORT,
                 mQos);
         OcPlatform.Configure(cfg);
     }

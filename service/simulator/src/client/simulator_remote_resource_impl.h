@@ -36,21 +36,67 @@
 
 #include <mutex>
 
+/**
+ * SimulatorRemoteResourceImpl
+ */
 class SimulatorRemoteResourceImpl : public SimulatorRemoteResource
 {
     public:
+        /**
+         * Implement the simulator remote resource
+         * @param[in] ocResource   oc resource
+         */
         SimulatorRemoteResourceImpl(const std::shared_ptr<OC::OCResource> &ocResource);
+        /**
+         * API to get the resource URI
+         * @return resource URI
+         */
         std::string getURI() const;
+        /**
+         * API to get the host information
+         * @return host information
+         */
         std::string getHost() const;
+        /**
+         * API to get the resource ID
+         * @return resource ID
+         */
         std::string getID() const;
+        /**
+         * API to get the connectivity type
+         * @return connectivity type
+         */
         SimulatorConnectivityType getConnectivityType() const;
+        /**
+         * API to get the resource types
+         * @return resource types
+         */
         std::vector < std::string > getResourceTypes() const;
+        /**
+         * API to get the interface information
+         * @return interface information
+         */
         std::vector < std::string > getInterface() const;
+        /**
+         * API to get the observable state of resource
+         * @return boolean value
+         */
         bool isObservable() const;
 
+        /**
+         * This method is to observe the resources
+         * @param[in] callback  notification callback function
+         */
         void observe(ObserveType type, ObserveNotificationCallback callback);
+        /**
+         * This method is to observe the resources
+         * @param[in] type         observe type
+         * @param[in] queryParams  query parameter
+         * @param[in] callback  notification callback function
+         */
         void observe(ObserveType type, const std::map<std::string, std::string> &queryParams,
                      ObserveNotificationCallback callback);
+        /** This method is to stop the observing of resource */
         void cancelObserve();
 
         void get(const GetResponseCallback &callback);
@@ -80,9 +126,23 @@ class SimulatorRemoteResourceImpl : public SimulatorRemoteResource
                   const SimulatorResourceModel &representation,
                   const PostResponseCallback &callback);
 
+        /**
+         * This method is to configure the path
+         * @param[in] path   config path
+         * @return class object
+         */
         std::map<RequestType, SimulatorRequestModel> configure(
             const std::string &path);
+        /**
+         * This method is to start the request
+         * @param[in] type      request type
+         * @param[in] callback  request id
+         */
         int startAutoRequesting(RequestType type, AutoRequestGenerationCallback callback);
+        /**
+         * This method is to stop the request for the given id
+         * @param[in] id   id to request
+         */
         void stopAutoRequesting(int id);
 
     private:

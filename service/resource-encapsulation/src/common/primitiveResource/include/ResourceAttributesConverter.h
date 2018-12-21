@@ -1,22 +1,22 @@
-//******************************************************************
-//
-// Copyright 2015 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #ifndef COMMON_RESOURCEATTRIBUTESCONVERTER_H
 #define COMMON_RESOURCEATTRIBUTESCONVERTER_H
@@ -25,10 +25,13 @@
 
 #include <OCRepresentation.h>
 
+/** OIC namespace */
 namespace OIC
 {
+    /** service namespace */
     namespace Service
     {
+        /** detail namespace */
         namespace Detail
         {
             template< int >
@@ -43,21 +46,27 @@ namespace OIC
             template< OC::AttributeType TYPE >
             struct OCBaseType;
 
+            /** Integer type attribute */
             template< >
             struct OCBaseType< OC::AttributeType::Integer > : TypeDef< int >{ };
 
+            /** double type attribute */
             template< >
             struct OCBaseType< OC::AttributeType::Double > : TypeDef< double > { };
 
+            /** boolean type attribute */
             template< >
             struct OCBaseType< OC::AttributeType::Boolean > : TypeDef< bool > { };
 
+            /** string type attribute */
             template< >
             struct OCBaseType< OC::AttributeType::String > : TypeDef< std::string > { };
 
+            /** binary type attribute */
             template< >
             struct OCBaseType< OC::AttributeType::Binary > : TypeDef< RCSByteString::DataType > { };
 
+            /** string type attribute */
             template< >
             struct OCBaseType< OC::AttributeType::OCByteString > : TypeDef< OCByteString > { };
 
@@ -221,6 +230,7 @@ namespace OIC
             public:
                 ResourceAttributesBuilder() = default;
 
+                /** insert items */
                 void insertItem(const OC::OCRepresentation::AttributeItem& item)
                 {
                     switch (item.depth())
@@ -239,6 +249,10 @@ namespace OIC
                     }
                 }
 
+                /**
+                 * extract the atribute value
+                 * @return resource attribute value
+                 */
                 RCSResourceAttributes&& extract()
                 {
                     return std::move(m_target);
@@ -258,6 +272,7 @@ namespace OIC
             class OCRepresentationBuilder
             {
             public:
+                /** constructor */
                 OCRepresentationBuilder() = default;
 
                 template< typename T, typename B = typename Detail::TypeInfo< T >::base_type >
@@ -291,6 +306,11 @@ namespace OIC
                     m_target.setNULL(key);
                 }
 
+                /**
+                 * convert the attribute to the oc representation formate
+                 * @param attrs   resource attributes
+                 * @return converted attributes value
+                 */
                 OC::OCRepresentation convertAttributes(Detail::Int2Type< 0 >,
                         const RCSResourceAttributes& attrs)
                 {
@@ -312,6 +332,11 @@ namespace OIC
                     return result;
                 }
 
+                /**
+                 * convert to byte string value
+                 * @param bytestring    byte string value
+                 * @return converted bytestring
+                 */
                 OCByteString convertByteString(Detail::Int2Type< 0 >,
                         const RCSByteString& byteString)
                 {
@@ -341,6 +366,10 @@ namespace OIC
                     return result;
                 }
 
+                /**
+                 * This method is to extract the value
+                 * @return extracted value
+                 */
                 OC::OCRepresentation&& extract()
                 {
                     return std::move(m_target);

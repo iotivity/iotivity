@@ -18,6 +18,13 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/** @file
+ */
+
+/** @addtogroup resource_directory
+ * @{
+ */
+
 #ifndef _RESOURCE_DIRECTORY_CLIENT_H_
 #define _RESOURCE_DIRECTORY_CLIENT_H_
 
@@ -171,5 +178,5 @@ OCStackResult OC_CALL OCRDDeleteWithDeviceId(OCDoHandle *handle, const char *hos
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-
+/// @}
 #endif //_RESOURCE_DIRECTORY_CLIENT_H_

@@ -89,13 +89,14 @@ if 'g++' in rcs_test_env.get('CXX'):
 # Build Test
 ######################################################################
 rcs_test_src = rcs_test_env.Glob('./*.cpp')
-
+unittests = []
 rcs_client_test = rcs_test_env.Program('rcs_client_test', rcs_test_src)
 Alias("rcs_client_test", rcs_client_test)
 rcs_test_env.AppendTarget('rcs_client_test')
-
-actions = rcs_test_env.ScanJSON('service/resource-encapsulation/unittests')
-rcs_test_env.Alias("install", actions)
+unittests += rcs_client_test;
+unittests += rcs_test_env.ScanJSON('service/resource-encapsulation/unittests')
+rcs_test_env.Alias("install", unittests)
+rcs_test_env.UserInstallTargetExtra(unittests,'tests/service/resource-encapsulation/')
 
 if rcs_test_env.get('TEST') == '1':
     if target_os in ['linux']:

@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.iotivity.cloud.base.device.IRequestChannel;
+import org.iotivity.cloud.base.exception.ServerException;
 
 public class ConnectorPool {
 
@@ -39,11 +40,26 @@ public class ConnectorPool {
 
     public static void requestConnection(String connectionName, InetSocketAddress inetAddr,
          boolean tlsMode, boolean keepAlive) throws InterruptedException {
-        mConnector.connect(connectionName, inetAddr, tlsMode, keepAlive);
+        mConnector.connect(connectionName, inetAddr, tlsMode, keepAlive, null);
+    }
+
+    public static void requestConnection(final String connectionName, final InetSocketAddress inetAddr,
+               final boolean tlsMode, final boolean keepAlive, final ConnectionEstablishedListener listener) throws InterruptedException {
+        mConnector.connect(connectionName, inetAddr, tlsMode, keepAlive, listener);
     }
 
     public static IRequestChannel getConnection(String name) {
-        return mConnection.get(name);
+        if (mConnection.containsKey(name))
+            return mConnection.get(name);
+        throw new ServerException.ServiceUnavailableException("Requested connection to service " + name + " is not available");
+    }
+
+    public static void removeConnection(String name) {
+        mConnection.remove(name);
+    }
+
+    public static boolean containConnection(String name) {
+        return mConnection.containsKey(name);
     }
 
     public static ArrayList<IRequestChannel> getConnectionList() {

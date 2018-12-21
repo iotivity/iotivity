@@ -39,6 +39,8 @@
 #include "experimental/byte_array.h"
 #include "octhread.h"
 #include "octimer.h"
+#include "utlist.h"
+#include "parsechain.h"
 
 // headers required for mbed TLS
 #include "mbedtls/platform.h"
@@ -651,57 +653,6 @@ static int RecvCallBack(void * tep, unsigned char * data, size_t dataLen)
 }
 
 /**
- * Parse chain of X.509 certificates.
- *
- * @param[out] crt     container for X.509 certificates
- * @param[in]  buf     buffer with X.509 certificates. Certificates must be in a single null-terminated
- *                     string, with each certificate in PEM encoding with headers.
- * @param[in]  bufLen  buffer length
- * @param[in]  errNum  number certificates that failed to parse
- *
- * @return  number of successfully parsed certificates or -1 on error
- */
-static int ParseChain(mbedtls_x509_crt * crt, unsigned char * buf, size_t bufLen, int * errNum)
-{
-    int ret;
-    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
-    VERIFY_NON_NULL_RET(crt, NET_SSL_TAG, "Param crt is NULL", -1);
-    VERIFY_NON_NULL_RET(buf, NET_SSL_TAG, "Param buf is NULL", -1);
-
-    if (NULL != errNum)
-    {
-        *errNum = 0;
-    }
-
-    if ((bufLen >= 2) && (buf[0] == 0x30) && (buf[1] == 0x82))
-    {
-        OIC_LOG_V(ERROR, NET_SSL_TAG, "DER-encoded certificate passed to ParseChain");
-        return -1;
-    }
-
-    ret = mbedtls_x509_crt_parse(crt, buf, bufLen);
-    if (0 > ret)
-    {
-        OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedtls_x509_crt_parse failed: -0x%04x", -(ret));
-        return -1;
-    }
-
-    if (NULL != errNum)
-    {
-        *errNum = ret;
-    }
-
-    ret = 0;
-    for (const mbedtls_x509_crt *cur = crt; cur != NULL; cur = cur->next)
-    {
-        ret++;
-    }
-
-    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-    return ret;
-}
-
-/**
  * Deinit Pki Info
  *
  * @param[out] inf structure with certificate, private key and crl to be free.
@@ -717,9 +668,9 @@ static void DeInitPkixInfo(PkiInfo_t * inf)
         return;
     }
 
-    DEINIT_BYTE_ARRAY(inf->crt);
+    FreeCertChain(&(inf->crt));
     DEINIT_BYTE_ARRAY(inf->key);
-    DEINIT_BYTE_ARRAY(inf->ca);
+    FreeCertChain(&(inf->ca));
     DEINIT_BYTE_ARRAY(inf->crl);
 
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
@@ -732,9 +683,9 @@ static int InitPKIX(CATransportAdapter_t adapter)
     VERIFY_NON_NULL_RET(g_getPkixInfoCallback, NET_SSL_TAG, "PKIX info callback is NULL", -1);
     // load pk key, cert, trust chain and crl
     PkiInfo_t pkiInfo = {
+        CERT_CHAIN_INITIALIZER,
         BYTE_ARRAY_INITIALIZER,
-        BYTE_ARRAY_INITIALIZER,
-        BYTE_ARRAY_INITIALIZER,
+        CERT_CHAIN_INITIALIZER,
         BYTE_ARRAY_INITIALIZER
     };
 
@@ -742,7 +693,6 @@ static int InitPKIX(CATransportAdapter_t adapter)
     {
         g_getPkixInfoCallback(&pkiInfo);
     }
-
     VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL", -1);
 
     mbedtls_x509_crt_free(&g_caSslContext->ca);
@@ -754,7 +704,6 @@ static int InitPKIX(CATransportAdapter_t adapter)
     mbedtls_x509_crt_init(&g_caSslContext->crt);
     mbedtls_pk_init(&g_caSslContext->pkey);
     mbedtls_x509_crl_init(&g_caSslContext->crl);
-
     mbedtls_ssl_config * serverConf = (adapter == CA_ADAPTER_IP ||
                                    adapter == CA_ADAPTER_GATT_BTLE ?
                                    &g_caSslContext->serverDtlsConf : &g_caSslContext->serverTlsConf);
@@ -764,7 +713,7 @@ static int InitPKIX(CATransportAdapter_t adapter)
     // optional
     int ret;
     int errNum;
-    int count = ParseChain(&g_caSslContext->crt, pkiInfo.crt.data, pkiInfo.crt.len, &errNum);
+    int count = ParseChain(&g_caSslContext->crt, &(pkiInfo.crt), &errNum);
     if (0 >= count)
     {
         OIC_LOG(WARNING, NET_SSL_TAG, "Own certificate chain parsing error");
@@ -826,7 +775,7 @@ static int InitPKIX(CATransportAdapter_t adapter)
     }
 
     required:
-    count = ParseChain(&g_caSslContext->ca, pkiInfo.ca.data, pkiInfo.ca.len, &errNum);
+    count = ParseChain(&g_caSslContext->ca, &(pkiInfo.ca), &errNum);
     if(0 >= count)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "CA chain parsing error");
@@ -1388,6 +1337,10 @@ static int verifyIdentity( void *data, mbedtls_x509_crt *crt, int depth, uint32_
     OC_UNUSED(data); // no need to pass extra data
     OC_UNUSED(flags); // we do not remove any flags
     static UuidContext_t ctx = { NULL };
+    if (NULL == g_getIdentityCallback)
+    {
+        return MBEDTLS_ERR_X509_FEATURE_UNAVAILABLE;
+    }
     g_getIdentityCallback(&ctx, crt->raw.p, crt->raw.len);
     if (0 == depth) // leaf certificate
     {
@@ -1468,10 +1421,8 @@ static SslEndPoint_t * NewSslEndPoint(const CAEndpoint_t * endpoint, mbedtls_ssl
     tep->sep.endpoint = *endpoint;
     tep->sep.endpoint.flags = (CATransportFlags_t)(tep->sep.endpoint.flags | CA_SECURE);
 
-    if (g_getIdentityCallback != NULL)
-    {
-        mbedtls_ssl_conf_verify(config, verifyIdentity, NULL);
-    }
+    mbedtls_ssl_conf_verify(config, g_getIdentityCallback ? verifyIdentity : NULL, NULL);
+
     if(0 != mbedtls_ssl_setup(&tep->ssl, config))
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Setup failed");

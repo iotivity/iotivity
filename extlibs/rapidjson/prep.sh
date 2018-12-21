@@ -23,7 +23,7 @@ set -e
 # Right now this script assumes packageRevision is a tag
 # comment out the second clause if packageRevision becomes a branch or a specific commit.
 package="rapidjson"
-packageRevision="v1.0.2"
+packageRevision="v1.1.0"
 packageUrl="https://github.com/miloyip/rapidjson"
 packageDir="extlibs/${package}/${package}"
 

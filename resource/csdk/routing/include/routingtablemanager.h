@@ -22,6 +22,11 @@
  * @file
  * This file contains the APIs for routing table manager.
  */
+
+/** @addtogroup routingmanager
+ * @{
+ */
+
 #ifndef ROUTING_TABLE_MANAGER_H_
 #define ROUTING_TABLE_MANAGER_H_
 
@@ -346,6 +351,5 @@ OCStackResult RTMUpdateEntryParameters(uint32_t gatewayId, uint32_t seqNum,
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-
-#endif /* ROUTING_TABLE_MANAGER_H_ */
-
+/// @}
+#endif // ROUTING_TABLE_MANAGER_H_

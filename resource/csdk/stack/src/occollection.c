@@ -37,23 +37,20 @@
 #include "cainterface.h"
 #define TAG "OIC_RI_COLLECTION"
 
-static bool AddRTSBaselinePayload(OCRepPayload **linkArray, int size, OCRepPayload **colPayload)
+static bool AddRTSBaselinePayload(const OCResource* collResource, OCRepPayload **colPayload)
 {
     size_t arraySize = 0;
-    for (int j = 0; j < size; j++)
+    for (OCChildResource *tempChildResource = collResource->rsrcChildResourcesHead;
+        tempChildResource; tempChildResource = tempChildResource->next)
     {
-        size_t rtDim[MAX_REP_ARRAY_DEPTH] = {0};
-        char **rt = NULL;
-        OCRepPayloadGetStringArray(linkArray[j], OC_RSRVD_RESOURCE_TYPE, &rt, rtDim);
-        arraySize += rtDim[0];
-        for (size_t l = 0; l < rtDim[0]; l++)
+        OCResource* currentResource = tempChildResource->rsrcResource;
+        OCResourceType* currentType = currentResource->rsrcType;
+        while(currentType)
         {
-            OICFree(rt[l]);
+            arraySize++;
+            currentType = currentType->next;
         }
-        OICFree(rt);
     }
-
-    for (OCStringLL *rsrcType = (*colPayload)->types; rsrcType; rsrcType = rsrcType->next, arraySize++);
 
     OIC_LOG_V(DEBUG, TAG, "Number of RTS elements : %zd", arraySize);
     size_t dim[MAX_REP_ARRAY_DEPTH] = {arraySize, 0, 0};
@@ -64,21 +61,16 @@ static bool AddRTSBaselinePayload(OCRepPayload **linkArray, int size, OCRepPaylo
         return OC_STACK_NO_MEMORY;
     }
     int k = 0;
-    for (int j = 0; j < size; j++)
+    for (OCChildResource *tempChildResource = collResource->rsrcChildResourcesHead;
+        tempChildResource; tempChildResource = tempChildResource->next)
     {
-        size_t rtDim[MAX_REP_ARRAY_DEPTH] = {0};
-        char **rt = NULL;
-        OCRepPayloadGetStringArray(linkArray[j], OC_RSRVD_RESOURCE_TYPE, &rt, rtDim);
-        for (size_t l = 0; l < rtDim[0]; l++)
+        OCResource* currentResource = tempChildResource->rsrcResource;
+        OCResourceType* currentType = currentResource->rsrcType;
+        while(currentType)
         {
-            rts[k++] = OICStrdup(rt[l]);
-            OICFree(rt[l]);
+            rts[k++] = OICStrdup(currentType->resourcetypename);
+            currentType = currentType->next;
         }
-        OICFree(rt);
-    }
-    for (OCStringLL *rsrcType = (*colPayload)->types; rsrcType; rsrcType = rsrcType->next, size++)
-    {
-        rts[k++] = OICStrdup(rsrcType->value);
     }
 
     bool b = OCRepPayloadSetStringArrayAsOwner(*colPayload, OC_RSRVD_RTS, rts, dim);
@@ -184,12 +176,21 @@ static OCStackResult HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest
             {
                 OCRepPayloadAddInterface(colPayload, itf->name);
             }
-            AddRTSBaselinePayload(linkArr, size, &colPayload);
+            AddRTSBaselinePayload(collResource, &colPayload);
         }
         OCRepPayloadSetPropObjectArrayAsOwner(colPayload, OC_RSRVD_LINKS, linkArr, dim);
         ret = OC_STACK_OK;
     }
 exit:
+    if (0 == strcmp(ifQueryParam, OC_RSRVD_INTERFACE_LL))
+    {
+        OCRepPayloadSetPayloadRepType(colPayload, PAYLOAD_REP_ARRAY);
+    }
+    else
+    {
+        OCRepPayloadSetPayloadRepType(colPayload, PAYLOAD_REP_OBJECT_ARRAY);
+    }
+
     if (ret == OC_STACK_OK)
     {
         ehResult = OC_EH_OK;
@@ -583,7 +584,7 @@ OCRepPayload** BuildCollectionLinksPayloadArray(const char* resourceUri,
                 OIC_LOG(ERROR, TAG, "Failed setting rel property");
                 result = false;
                 goto exit;
-            } 
+            }
         }
         result = true;
     }

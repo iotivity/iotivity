@@ -18,6 +18,13 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/** @file
+ */
+
+/** @addtogroup resource_directory
+ * @{
+ */
+
 #ifndef _RESOURCE_DIRECTORY_SERVER_H_
 #define _RESOURCE_DIRECTORY_SERVER_H_
 
@@ -60,10 +67,10 @@ OCStackResult OC_CALL OCRDStop();
 OCStackResult OC_CALL OCRDCheckPublishedResource(const char *interfaceType, const char *resourceType,
         OCDiscoveryPayload **payload);
 
-#endif
+#endif // RD_SERVER
 
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-
+// @}
 #endif //_RESOURCE_DIRECTORY_H_

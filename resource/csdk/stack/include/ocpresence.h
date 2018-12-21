@@ -18,9 +18,13 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
+/** @file
  *
+ * presence operations
+ */
+
+/** @addtogroup ocbtbstack
+ * @{
  */
 
 #ifndef OCPRESENCE_H_
@@ -45,6 +49,6 @@ typedef enum
     /** The deletion of a resource is associated with this invocation.*/
     OC_PRESENCE_TRIGGER_DELETE = 2
 } OCPresenceTrigger;
-#endif
-
-#endif
+#endif // WITH_PRESENCE
+/// @}
+#endif // OCPRESENCE_H_

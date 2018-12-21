@@ -1,4 +1,4 @@
-/* *****************************************************************
+/******************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -32,9 +32,23 @@
  */
 #define MAX_SUPPORTED_ADAPTERS 2
 
+/**
+ * function poiner to send data to upper layer.
+ *
+ * @param sep         secure endpoint
+ * @param data        data to send
+ * @param dataLength  length of data
+ */
 typedef void (*CAPacketReceivedCallback)(const CASecureEndpoint_t *sep,
                                          const void *data, size_t dataLength);
 
+/**
+ * function poiner to send data to socket layer.
+ *
+ * @param endpoint    endpoint
+ * @param data        data to send
+ * @param dataLength  length of data
+ */
 typedef void (*CAPacketSendCallback)(CAEndpoint_t *endpoint,
                                      const void *data, size_t dataLength);
 
@@ -68,8 +82,8 @@ typedef struct stCADtlsContext
  */
 typedef struct stPacketInfo
 {
-    uint8_t *dataAddress;
-    uint16_t dataLen;
+    uint8_t *dataAddress;    /**< hold decrypted data address */
+    uint16_t dataLen;        /**< length  of data */
 } stPacketInfo_t;
 
 /**
@@ -78,9 +92,9 @@ typedef struct stPacketInfo
  */
 typedef enum
 {
-    DTLS_OK = 0,
-    DTLS_FAIL,
-    DTLS_SESSION_INITIATED,
+    DTLS_OK = 0,             /**< success dtls result */
+    DTLS_FAIL,               /**< failure dtls result */
+    DTLS_SESSION_INITIATED,  /**< dtls session is initiated */
     DTLS_HS_MSG
 } eDtlsRet_t;
 
@@ -107,8 +121,8 @@ typedef struct
  */
 typedef struct CACacheMessage
 {
-    void *data;
-    uint32_t dataLen;
+    void *data;        /**< cache message information */
+    uint32_t dataLen;  /**< length of data */
     stCADtlsAddrInfo_t destSession;
 } stCACacheMessage_t;
 

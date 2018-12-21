@@ -116,7 +116,7 @@ public class AclVerifyResource extends Resource {
 
         for (HashMap<String, Object> eachAclMap : aclResult) {
 
-            AclTable aclTable = Acl.convertMaptoAclObject(eachAclMap);
+            AclTable aclTable = Acl.convertMaptoAclTable(eachAclMap);
             if (aclTable.getOid().equals(sid)) {
                 return true;
             }

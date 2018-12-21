@@ -75,7 +75,21 @@ if provisioning_lib_env.get('MULTIPLE_OWNER') == '1':
         'oxmpreconfpin.c'
     ]
 
-if target_os in ['linux', 'tizen']:
+if provisioning_lib_env.get('WITH_TCP') == True and provisioning_lib_env.get('WITH_CLOUD') == True:
+    provisioning_lib_env.AppendUnique(CPPDEFINES=['__WITH_TLS__'])
+    provisioning_src = provisioning_src + [
+        'cloud/utils.c',
+        'cloud/crl.c',
+        'cloud/aclgroup.c',
+        'cloud/aclinvite.c',
+        'cloud/aclid.c',
+        'cloud/csr.c',
+        'cloud/auth.c',
+        'cloud/cloudresource.c',
+        'cloud/config.c'
+    ]
+
+if target_os in ['linux', 'tizen', 'webos']:
     provisioning_lib_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 else:
     provisioning_lib_env.AppendUnique(CPPPATH=['#/extlibs/sqlite3'])

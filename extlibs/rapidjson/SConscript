@@ -15,6 +15,13 @@ target_arch = env.get('TARGET_ARCH')
 
 host_os = sys.platform
 
+# Previous fix to uplift rapidjson insufficient for gcc8
+# So remove -Werror build flag when building rapidjson
+# TODO: remove this when there is a release containing a fix to
+# https://github.com/Tencent/rapidjson/issues/1246 and
+# https://github.com/Tencent/rapidjson/issues/1205
+while '-Werror' in rapidjson_env['CCFLAGS']: rapidjson_env['CCFLAGS'].remove('-Werror')
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -25,7 +32,7 @@ path = os.path.join(src_dir, 'extlibs', 'rapidjson', 'rapidjson')
 if not os.path.exists(path):
     rapidjson_env = Environment(ENV=os.environ)
     rapidjson_zip = env.Download(
-        'v1.0.2.zip',
-        'https://github.com/miloyip/rapidjson/archive/v1.0.2.zip')
+        'v1.1.0.zip',
+        'https://github.com/Tencent/rapidjson/archive/v1.1.0.zip')
     rapidjson_dir = env.UnpackAll('rapidjson', rapidjson_zip)
-    os.rename("rapidjson-1.0.2", "rapidjson")
+    os.rename("rapidjson-1.1.0", "rapidjson")

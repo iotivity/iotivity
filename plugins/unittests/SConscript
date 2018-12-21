@@ -55,9 +55,9 @@ Alias("piunittests", piunittests)
 
 unittests_env.AppendTarget('piunittests')
 if unittests_env.get('TEST') == '1':
-    if target_os in ['linux']:
+    if target_os in ['linux', 'webos']:
         run_test(unittests_env, 'plugins_unittests.memcheck',
                  'plugins/unittests/piunittests', piunittests)
 
-unittests_env.UserInstallTargetExtra(piunittests,'tests/plugins/unittests/')
+unittests_env.UserInstallTargetExtra(piunittests,'tests/plugins/')
 

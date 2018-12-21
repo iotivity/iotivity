@@ -26,7 +26,8 @@ import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.iotivity.cloud.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -35,7 +36,7 @@ import org.iotivity.cloud.util.Log;
  *
  */
 public class KafkaProducerWrapper {
-
+    private final static Logger      Log        = LoggerFactory.getLogger(KafkaProducerWrapper.class);
     private String                   mTopicName = null;
     private String                   mBroker    = null;
 
@@ -61,7 +62,7 @@ public class KafkaProducerWrapper {
      */
     public boolean publishMessage(byte[] message) {
 
-        Log.d("kafka publishMessage - " + mTopicName);
+        Log.debug("kafka publishMessage - " + mTopicName);
 
         ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(
                 mTopicName, message);

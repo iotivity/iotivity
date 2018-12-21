@@ -23,6 +23,7 @@ package org.iotivity.cloud.accountserver.resources.account.session;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.resources.account.AccountManager;
@@ -52,6 +53,10 @@ public class SessionResource extends Resource {
     public SessionResource() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI,
                 Constants.SESSION_URI));
+    }
+
+    public SessionResource(List<String> pathSegments) {
+        super(pathSegments);
     }
 
     @Override

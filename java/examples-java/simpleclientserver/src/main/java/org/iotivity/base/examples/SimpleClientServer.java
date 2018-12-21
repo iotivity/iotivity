@@ -53,7 +53,7 @@ public class SimpleClientServer {
             msg(TAG, e.getMessage() + " unable to find local file path.");
         }
 
-        PlatformConfig platformConfig = new PlatformConfig(ServiceType.IN_PROC, ModeType.CLIENT_SERVER, "0.0.0.0", 0,
+        PlatformConfig platformConfig = new PlatformConfig(ServiceType.IN_PROC, ModeType.CLIENT_SERVER,
                 QualityOfService.LOW,
                 path + "/oic_svr_db_server.dat");
         msg(TAG, "Configuring platform.");

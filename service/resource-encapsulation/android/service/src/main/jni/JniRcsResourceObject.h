@@ -25,81 +25,160 @@
 
 class JNIEnvWrapper;
 
+/**
+ * Initialize rcs resource object
+ */
 void initRCSResourceObject(JNIEnvWrapper*);
+
+/**
+ * Clear rcs resource object
+ */
 void clearRCSResourceObject(JNIEnvWrapper*);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/**
+ * @class:     org_iotivity_service_server_RcsResponse
+ * Method:     nativeGetDefaultErrorCode
+ */
 JNIEXPORT jint JNICALL
 Java_org_iotivity_service_server_RcsResponse_nativeGetDefaultErrorCode
 (JNIEnv*, jclass);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeBuild
+ */
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeBuild
 (JNIEnv*, jclass, jstring uri, jstring type, jstring interface, jboolean isObservable,
         jboolean isDiscovervable, jobject attrs);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeSetAttribute
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeSetAttribute
 (JNIEnv*, jobject, jstring key, jobject value);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeGetAttributeValue
+ */
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeGetAttributeValue
 (JNIEnv*, jobject, jstring key);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeRemoveAttribute
+ */
 JNIEXPORT jboolean JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeRemoveAttribute
 (JNIEnv*, jobject, jstring key);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeContainsAttribute
+ */
 JNIEXPORT jboolean JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeContainsAttribute
 (JNIEnv*, jobject, jstring key);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeGetAttributes
+ */
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeGetAttributes
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeIsObservable
+ */
 JNIEXPORT jboolean JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeIsObservable
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeIsDiscoverable
+ */
 JNIEXPORT jboolean JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeIsDiscoverable
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeSetGetRequestHandler
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeSetGetRequestHandler
 (JNIEnv*, jobject, jobject handler);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeSetSetRequestHandler
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeSetSetRequestHandler
 (JNIEnv*, jobject, jobject handler);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeAddAttributeUpdatedListener
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeAddAttributeUpdatedListener
 (JNIEnv*, jobject, jstring key, jobject listenr);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeRemoveAttributeUpdatedListener
+ */
 JNIEXPORT jboolean JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeRemoveAttributeUpdatedListener
 (JNIEnv*, jobject, jstring key);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeNotify
+ */
 JNIEXPORT void JNICALL Java_org_iotivity_service_server_RcsResourceObject_nativeNotify
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeSetAutoNotifyPolicy
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeSetAutoNotifyPolicy
 (JNIEnv*, jobject, jobject policyObj);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeGetAutoNotifyPolicy
+ */
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeGetAutoNotifyPolicy
 (JNIEnv*, jobject);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeSetSetRequestHandlerPolicy
+ */
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeSetSetRequestHandlerPolicy
 (JNIEnv*, jobject, jobject policyObj);
 
+/**
+ * @class:     org_iotivity_service_server_RcsResourceObject
+ * Method:     nativeGetSetRequestHandlerPolicy
+ */
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_service_server_RcsResourceObject_nativeGetSetRequestHandlerPolicy
 (JNIEnv*, jobject);

@@ -155,22 +155,27 @@ static FILE* fopen_prvnMng(const char*, const char*);
 static int waitCallbackRet(void);
 static int selectTwoDiffNum(int*, int*, const int, const char*);
 
-char * gSupportedProfilesDefault[] = { "oic.sec.sp.baseline" };
+char * gSupportedProfilesDefault[] = { "1.3.6.1.4.1.51414.0.1.0" };
 OicSecSp_t gSpDefault =
 {
     1,                          // supportedLen
     gSupportedProfilesDefault,  // supportedProfiles[0]
-    "oic.sec.sp.baseline",      // activeProfile
-    0                           // credid
+    "1.3.6.1.4.1.51414.0.1.0",      // activeProfile
 };
 
-char * gSupportedProfilesAll[] = { "oic.sec.sp.black", "oic.sec.sp.blue", "oic.sec.sp.baseline",  };
+char * gSupportedProfilesAll[] = { "1.3.6.1.4.1.51414.0.2.0", "1.3.6.1.4.1.51414.0.3.0", "1.3.6.1.4.1.51414.0.4.0", "1.3.6.1.4.1.51414.0.1.0",  };
 OicSecSp_t gSpAll =
 {
-    3,                      // supportedLen
+    4,                      // supportedLen
     gSupportedProfilesAll,  // supportedProfiles[0]
-    "oic.sec.sp.black",     // activeProfile
-    1                       // credid (arbitrary for testing)
+    "1.3.6.1.4.1.51414.0.2.0",     // activeProfile
+};
+char * gSupportedProfilesInvalid[] = { "1.3.6.1.4.1.51414.0.2.0", "1.3.6.1.4.1.51414.0.3.0", "1.3.6.1.4.1.51414.0.4.0", "1.3.6.1.4.1.51414.0.1.0",  };
+OicSecSp_t gSpInvalid =
+{
+    4,                         // supportedLen
+    gSupportedProfilesInvalid, // supportedProfiles
+    "oic.sec.sp.invalid",      // activeProfile
 };
 
 
@@ -851,7 +856,7 @@ static int registerDevices(int fSelect)
     }
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        OIC_LOG(ERROR, TAG, "OCDoOwnershipTransfer callback error");
         return -1;
     }
 
@@ -910,7 +915,7 @@ static int provisionPairwise(void)
     }
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        OIC_LOG(ERROR, TAG, "OCProvisionPairwiseDevices callback error");
         goto PVPWS_ERROR;
     }
     OCDeleteACLList(acl[0]);
@@ -1399,14 +1404,14 @@ static int provisionSecurityProfileInfo(void)
     int sp_selection = 0;
     for (; ; )
     {
-        printf("   > Enter (1) for SP defaults or (2) for SP containing all profiles: ");
+        printf("   > Enter (1) for SP defaults, (2) for SP containing all profiles, (3) for an invalid SP: ");
         for (int ret = 0; 1 != ret; )
         {
             ret = scanf("%d", &sp_selection);
             for (; 0x20 <= getchar(); );  // for removing overflow garbages
                                           // '0x20<=code' is character region
         }
-        if ((1 == sp_selection) || (2 >= sp_selection))
+        if ((1 <= sp_selection) && (3 >= sp_selection))
         {
             break;
         }
@@ -1416,7 +1421,13 @@ static int provisionSecurityProfileInfo(void)
     printf("   > Posting new security profile info to device ...\n");
     g_doneCB = false;
 
-    OicSecSp_t *sp = (sp_selection == 1) ? &gSpDefault : &gSpAll;
+    OicSecSp_t *sp = NULL;
+    switch (sp_selection) {
+        case 2 : sp = &gSpAll; break;
+        case 3 : sp = &gSpInvalid; break;
+        default: sp = &gSpDefault;
+    }
+
     OCStackResult rst = OCProvisionSecurityProfileInfo(
         (void*)g_ctx, sp, targetDevice, (OCProvisionResultCB)&provisionTrustChainCB);
     if (OC_STACK_OK != rst)
@@ -1486,7 +1497,11 @@ static int provisionCloudConfig(void)
     // Install the CA trust anchor
     FILE *F;
     F = fopen("rootca.crt", "rb");
-    fseek (F , 0 , SEEK_END);
+    if(0 != fseek (F , 0 , SEEK_END))
+    {
+        printf("     Failed to operate with CA\n");
+        return -1;
+    }
     int certsize = ftell (F);
     rewind (F);
     uint8_t* cert = (uint8_t*) malloc (sizeof(char)*certsize);
@@ -1658,7 +1673,18 @@ static int getCloudStatus(void)
     }
 
     OicCloud_t *cloud = OICCalloc(1,sizeof(OicCloud_t));
+    if(NULL == cloud)
+    {
+        OIC_LOG(ERROR, TAG, "Error, invalid cloud");
+        return -1;
+    }
     cloud->cis = OICCalloc(1,1024);
+    if(NULL == cloud->cis)
+    {
+        OIC_LOG(ERROR, TAG, "Error, invalid cloud->cis");
+        ret = -1;
+        goto exit;
+    }
 
     snprintf(cloud->cis,13,"coaps+tcp://");
 
@@ -1846,7 +1872,7 @@ static int provisionAcl(void)
     }
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        OIC_LOG(ERROR, TAG, "OCProvisionACL callback error");
         goto PVACL_ERROR;
     }
     OCDeleteACLList(acl);  // after here |acl| points nothing
@@ -2279,7 +2305,7 @@ static int unlinkPairwise(void)
     }
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        OIC_LOG(ERROR, TAG, "OCUnlinkDevices callback error");
         return -1;
     }
 
@@ -2333,7 +2359,7 @@ static int removeDevice(void)
     }
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        OIC_LOG(ERROR, TAG, "OCRemoveDevice callback error");
         return -1;
     }
 
@@ -2670,7 +2696,7 @@ static int resetDevice(void)
 
     if (waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        OIC_LOG(ERROR, TAG, "OCResetDevice callback error");
         return -1;
     }
 

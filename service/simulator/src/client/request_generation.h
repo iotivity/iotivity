@@ -23,22 +23,41 @@
 
 #include "simulator_client_types.h"
 
+/**
+ * @class RequestGeneration
+ */
 class RequestGeneration
 {
     public:
         typedef std::function<void (int, OperationState)> ProgressStateCallback;
 
+        /**
+         * This method is to start the generation of the given type request
+         * @param[in] type     request type
+         * @param[in] id       request id
+         * @param[in] callback callback function
+         */
         RequestGeneration(RequestType type, int id,
                           ProgressStateCallback callback);
+        /**
+         * get the type of request
+         * @return request type
+         */
         RequestType type() const
         {
             return m_type;
         }
+        /**
+         * get the request id
+         * @return request id
+         */
         int id() const
         {
             return m_id;
         }
+        /** This method is to start the request */
         void start();
+        /** This method is to stop the request */
         void stop();
 
     protected:

@@ -1,0 +1,12 @@
+{
+    "appId" : "com.example.service.iotivity.client",
+    "allowedNames" : ["com.example.service.iotivity.client*"],
+    "type" : "regular",
+    "permissions" : [
+	{
+	    "service" : "com.example.service.iotivity.client*",
+	    "inbound" : ["*"],
+	    "outbound" : ["*"]
+	}
+    ]
+}

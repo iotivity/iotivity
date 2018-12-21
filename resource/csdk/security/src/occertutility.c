@@ -51,6 +51,7 @@
 #include "mbedtls/oid.h"
 #include "mbedtls/pem.h"
 #include "mbedtls/base64.h"
+#include "mbedtls/asn1write.h"
 
 #ifndef NDEBUG
 #include "mbedtls/debug.h"
@@ -90,6 +91,63 @@ static const unsigned char s_ekuRole[] = { 0x30, 0x0C, 0x06, 0x0A, 0x2B, 0x06, 0
 
 /* ASN.1 DER encoding of the EKU for both identity and roles (for use by CAs) */
 static const unsigned char s_ekuCA[] = { 0x30, 0x18, 0x06, 0x0A, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0xDE, 0x7C, 0x01, 0x06, 0x06, 0x0A, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0xDE, 0x7C, 0x01, 0x07 };
+
+static const char s_ComplianceExtOid[] = MBEDTLS_OID_ISO_IDENTIFIED_ORG MBEDTLS_OID_ORG_DOD "\x01\x04\x01\x83\x91\x56\x01\x00"; // 1.3.6.1.4.1.51414.1.0
+static const uint8_t s_ComplianceExtBytes[] = {
+
+  0x30, 0x81, 0x8C, // compliance extension sequence
+
+  0x30, 0x09, // version sequence (9 bytes)
+  0x02, 0x01, 0x02, 0x02, 0x01, 0x00, 0x02, 0x01, 0x00, // [2, 0, 0]
+
+  0x30, 0x64, // security profile sequence (100 bytes)
+
+    0x0C, 0x17, // utf8_string, 23 bytes long, '1.3.6.1.4.1.51414.0.1.0' (baseline)
+    0x31, 0x2E, 0x33, 0x2E, 0x36, 0x2E, 0x31, 0x2E, 0x34, 0x2E,
+    0x31, 0x2E, 0x35, 0x31, 0x34, 0x31, 0x34, 0x2E, 0x30, 0x2E, 0x31, 0x2E, 0x30,
+
+    0x0C, 0x17, // utf8_string, 23 bytes long, '1.3.6.1.4.1.51414.0.2.0' (black)
+    0x31, 0x2E, 0x33, 0x2E, 0x36, 0x2E, 0x31, 0x2E, 0x34, 0x2E,
+    0x31, 0x2E, 0x35, 0x31, 0x34, 0x31, 0x34, 0x2E, 0x30, 0x2E, 0x32, 0x2E, 0x30,
+
+    0x0C, 0x17, // utf8_string, 23 bytes long, '1.3.6.1.4.1.51414.0.3.0' (blue)
+    0x31, 0x2E, 0x33, 0x2E, 0x36, 0x2E, 0x31, 0x2E, 0x34, 0x2E,
+    0x31, 0x2E, 0x35, 0x31, 0x34, 0x31, 0x34, 0x2E, 0x30, 0x2E, 0x33, 0x2E, 0x30,
+
+    0x0C, 0x17, // utf8_string, 23 bytes long, '1.3.6.1.4.1.51414.0.4.0' (purple)
+    0x31, 0x2E, 0x33, 0x2E, 0x36, 0x2E, 0x31, 0x2E, 0x34, 0x2E,
+    0x31, 0x2E, 0x35, 0x31, 0x34, 0x31, 0x34, 0x2E, 0x30, 0x2E, 0x34, 0x2E, 0x30,
+
+    0x0C, 0x0F, // urf8_string 15 bytes long (device name)
+    0x49, 0x6F, 0x54, 0x69, 0x76, 0x69, 0x74, 0x79, 0x20, 0x53, // 'IoTivity Server'
+    0x65, 0x72, 0x76, 0x65, 0x72,
+
+    0x0C, 0x08, // urf8_string 8 bytes long (device manufacturer)
+    0x49, 0x6F, 0x54, 0x69, 0x76, 0x69, 0x74, 0x79 // 'IoTivity'
+};
+
+
+static const char s_cplSecurityClaimsExtOid[] = MBEDTLS_OID_ISO_IDENTIFIED_ORG MBEDTLS_OID_ORG_DOD "\x01\x04\x01\x83\x91\x56\x01\x01"; // 1.3.6.1.4.1.51414.1.1
+static const uint8_t s_cplSecurityClaimsExtBytes[] = {
+    0x30, 0x1A, // sequence of length 26
+    0x06, 0x0B, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x83, 0x91, 0x56, 0x01, 0x01, 0x00, // OID 1.3.6.1.4.1.51414.1.1.0 (claim secure boot)
+    0x06, 0x0B, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x83, 0x91, 0x56, 0x01, 0x01, 0x01  // OID 1.3.6.1.4.1.51414.1.1.1 (claim hw backed credential)
+};
+
+static const char s_cplAttributesExtOid[] = MBEDTLS_OID_ISO_IDENTIFIED_ORG MBEDTLS_OID_ORG_DOD "\x01\x04\x01\x83\x91\x56\x01\x02"; // 1.3.6.1.4.1.51414.1.2
+static const uint8_t s_cplAttributesExtBytes[] = {
+    0x30, 0x20, // sequence of length 32
+
+    0x0C, 0x0E, // utf8_string, 14 bytes long
+    0X31, 0X2E, 0X33, 0X2E, 0X36, 0X2E, 0X31, 0X2E, 0X34, 0X2E, 0X31, 0X2E, 0X37, 0X31,  // '1.3.6.1.4.1.71'
+
+    0x0C, 0x09, // utf8_string, 9 bytes long
+    0X44, 0X69, 0X73, 0X63, 0X6F, 0X76, 0X65, 0X72, 0X79, // 'Discovery'
+
+    0x0C, 0x03, // utf8_string, 3 bytes long
+    0X31, 0X2E, 0X30 // '1.0'
+};
+
 
 OCStackResult OC_CALL OCGenerateRandomSerialNumber(char **serial, size_t *serialLen)
 {
@@ -233,6 +291,44 @@ typedef enum {
     CERT_TYPE_ROLE
 } CertificateType_t;
 
+
+// write basic constraints to a cert
+// Same as mbedtls_x509write_crt_set_basic_constraints, with the added ability to set `critical` flag
+static OCStackResult OCWriteBasicConstraints( mbedtls_x509write_cert *ctx, int is_ca, int max_pathlen, int critical)
+{
+
+    int ret;
+    char mbedErrorBuf[256];
+    unsigned char buf[9];
+    unsigned char *c = buf + sizeof(buf);
+    size_t len = 0;
+
+    memset( buf, 0, sizeof(buf) );
+
+    if( is_ca && max_pathlen > 127 )
+        return( MBEDTLS_ERR_X509_BAD_INPUT_DATA );
+
+    if( is_ca )
+    {
+        if( max_pathlen >= 0 )
+        {
+            MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_int( &c, buf, max_pathlen ) );
+        }
+        MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_bool( &c, buf, 1 ) );
+    }
+
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( &c, buf, len ) );
+    MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( &c, buf, MBEDTLS_ASN1_CONSTRUCTED |
+                                                       MBEDTLS_ASN1_SEQUENCE ) );
+
+    ret = mbedtls_x509write_crt_set_extension( ctx, MBEDTLS_OID_BASIC_CONSTRAINTS,
+                                                   MBEDTLS_OID_SIZE( MBEDTLS_OID_BASIC_CONSTRAINTS ),
+                                                   critical, buf + sizeof(buf) - len, len );
+    LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(ret), ERROR);
+    return (0 == ret) ? OC_STACK_OK : OC_STACK_ERROR;
+}
+
+
 static OCStackResult GenerateCertificate(
     CertificateType_t certType,
     const char *subject,
@@ -349,9 +445,8 @@ static OCStackResult GenerateCertificate(
 
     if (CERT_TYPE_ROOT_CA == certType)
     {
-        ret = mbedtls_x509write_crt_set_basic_constraints(&outCertCtx, 1, -1);
-        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
-        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not write basic constraints for internal root ca cert generation",  ERROR);
+        res = OCWriteBasicConstraints(&outCertCtx, 1, -1, 1);
+        VERIFY_OR_LOG_AND_EXIT(TAG, OC_STACK_OK == res, "Could not write basic constraints for internal root ca cert generation",  ERROR);
         ret = mbedtls_x509write_crt_set_key_usage(&outCertCtx,
             MBEDTLS_X509_KU_KEY_CERT_SIGN | MBEDTLS_X509_KU_CRL_SIGN);
         LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
@@ -359,9 +454,8 @@ static OCStackResult GenerateCertificate(
     }
     else if (CERT_TYPE_INTERMEDIATE_CA == certType)
     {
-        ret = mbedtls_x509write_crt_set_basic_constraints(&outCertCtx, 1, 0);
-        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
-        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not write basic constraints for internal intermediate ca cert generation",  ERROR);
+        res = OCWriteBasicConstraints(&outCertCtx, 1, 0, 1);
+        VERIFY_OR_LOG_AND_EXIT(TAG, OC_STACK_OK == res, "Could not write basic constraints for internal intermediate ca cert generation",  ERROR);
         ret = mbedtls_x509write_crt_set_key_usage(&outCertCtx,
             MBEDTLS_X509_KU_KEY_CERT_SIGN | MBEDTLS_X509_KU_CRL_SIGN);
         LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
@@ -369,9 +463,8 @@ static OCStackResult GenerateCertificate(
     }
     else
     {
-        ret = mbedtls_x509write_crt_set_basic_constraints(&outCertCtx, 0, -1);
-        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
-        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Could not write basic constraints for internal root ee cert generation",  ERROR);
+        res = OCWriteBasicConstraints(&outCertCtx, 0, -1, 0);
+        VERIFY_OR_LOG_AND_EXIT(TAG, OC_STACK_OK == res, "Could not write basic constraints for internal root ee cert generation",  ERROR);
         ret = mbedtls_x509write_crt_set_key_usage(&outCertCtx,
             MBEDTLS_X509_KU_DIGITAL_SIGNATURE | MBEDTLS_X509_KU_KEY_AGREEMENT);
         LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
@@ -409,7 +502,46 @@ static OCStackResult GenerateCertificate(
             s_ekuIdentity, sizeof(s_ekuIdentity));
         LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
         VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret,  "Could not write eku for internal ee cert generation", ERROR);
+
+        // optional extensions
+
+        // FILE *fp = fopen("./cpl-ext.der", "wb");
+        // fwrite(s_cplAttributesExtBytes, sizeof(s_cplAttributesExtBytes), 1, fp );
+        // fclose(fp);
+
+        ret = mbedtls_x509write_crt_set_extension(
+                    &outCertCtx,
+                    s_cplAttributesExtOid,
+                    MBEDTLS_OID_SIZE(s_cplAttributesExtOid), 0,
+                    (const unsigned char*)s_cplAttributesExtBytes, sizeof(s_cplAttributesExtBytes));
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Problem writing certified product list extension", ERROR);
+
+        // fp = fopen("./claims-ext.der", "wb");
+        // fwrite(s_cplSecurityClaimsExtBytes, sizeof(s_cplSecurityClaimsExtBytes), 1, fp );
+        // fclose(fp);
+
+        ret = mbedtls_x509write_crt_set_extension(
+                    &outCertCtx,
+                    s_cplSecurityClaimsExtOid,
+                    MBEDTLS_OID_SIZE(s_cplSecurityClaimsExtOid), 0,
+                    (const unsigned char*)s_cplSecurityClaimsExtBytes, sizeof(s_cplSecurityClaimsExtBytes));
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Problem writing certified product list extension", ERROR);
+
+        // fp = fopen("./compliance-ext.der", "wb");
+        // fwrite(s_ComplianceExtBytes, sizeof(s_ComplianceExtBytes), 1, fp );
+        // fclose(fp);
+
+        ret = mbedtls_x509write_crt_set_extension(
+                    &outCertCtx,
+                    s_ComplianceExtOid,
+                    MBEDTLS_OID_SIZE(s_ComplianceExtOid), 0,
+                    (const unsigned char*)s_ComplianceExtBytes, sizeof(s_ComplianceExtBytes));
+        LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(mbedErrorBuf), ERROR);
+        VERIFY_OR_LOG_AND_EXIT(TAG, 0 == ret, "Problem writing certified product list extension", ERROR);
         break;
+
 
     case CERT_TYPE_ROOT_CA:
     case CERT_TYPE_INTERMEDIATE_CA:

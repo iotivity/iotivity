@@ -18,6 +18,13 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/** @file
+ */
+
+/** @addtogroup resource_directory
+ * @{
+ */
+
 #ifndef OC_RESOURCE_DIRECTORY_DATABASE_H_
 #define OC_RESOURCE_DIRECTORY_DATABASE_H_
 
@@ -73,10 +80,10 @@ OCStackResult OC_CALL OCRDDatabaseDeleteResources(const char *deviceId, const in
  */
 OCStackResult OC_CALL OCRDDatabaseClose();
 
-#endif
+#endif // RD_SERVER
 
 #ifdef __cplusplus
 }
-#endif
-
-#endif
+#endif // __cplusplus
+/// @}
+#endif // OC_RESOURCE_DIRECTORY_DATABASE_H_

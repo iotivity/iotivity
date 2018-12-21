@@ -23,6 +23,7 @@ package org.iotivity.cloud.ciserver.resources.proxy.account;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.Device;
@@ -33,6 +34,7 @@ import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
+import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
 
 /**
@@ -47,6 +49,10 @@ public class AccountSession extends Resource {
     public AccountSession() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI,
                 Constants.SESSION_URI));
+    }
+
+    public AccountSession(List<String> pathSegments) {
+        super(pathSegments);
     }
 
     @Override
@@ -67,6 +73,11 @@ public class AccountSession extends Resource {
             request = MessageBuilder.modifyRequest(request, null, uriQuery,
                     ContentFormat.APPLICATION_CBOR,
                     mCbor.encodingPayloadToCbor(payloadData));
+            srcDevice.setParameter(DeviceServerSystem.LOGOUT_DEVICE,true);
+        }
+        if (!ConnectorPool.containConnection("rd")) {
+            // connection is required for proper presence state configuration
+            throw new ServerException.ServiceUnavailableException("Required connection to resource directory is not available");
         }
         ConnectorPool.getConnection("account").sendRequest(request, srcDevice);
     }

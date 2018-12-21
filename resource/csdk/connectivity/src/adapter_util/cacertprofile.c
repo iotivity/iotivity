@@ -58,8 +58,7 @@ static const unsigned int s_eeNonKeyUsage = MBEDTLS_X509_KU_NON_REPUDIATION |
 static const unsigned int s_caKeyUsage = MBEDTLS_X509_KU_KEY_CERT_SIGN |
                                          MBEDTLS_X509_KU_CRL_SIGN;
 
-static const unsigned int s_caNonKeyUsage = MBEDTLS_X509_KU_DIGITAL_SIGNATURE |
-                                            MBEDTLS_X509_KU_NON_REPUDIATION  |
+static const unsigned int s_caNonKeyUsage = MBEDTLS_X509_KU_NON_REPUDIATION  |
                                             MBEDTLS_X509_KU_KEY_ENCIPHERMENT |
                                             MBEDTLS_X509_KU_DATA_ENCIPHERMENT |
                                             MBEDTLS_X509_KU_KEY_AGREEMENT |
@@ -200,7 +199,7 @@ CertProfileViolations ValidateEndEntityCertProfile(const mbedtls_x509_crt *cert)
 
     // OCF requirements exist for the following extensions, but w/o mbedTLS support
     // * check for certificate policies, if present must be 1.3.6.1.4.1.51414.0.1.1
-    // * cRL Distributiojn Points
+    // * cRL Distribution Points
 
     if (NULL == cert)
     {

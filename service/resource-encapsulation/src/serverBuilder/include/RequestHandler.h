@@ -1,22 +1,22 @@
-//******************************************************************
-//
-// Copyright 2015 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #ifndef SERVERBUILDER_REQUESTHANDLER_H
 #define SERVERBUILDER_REQUESTHANDLER_H
@@ -26,8 +26,10 @@
 
 #include "OCRepresentation.h"
 
+/** OIC namespace */
 namespace OIC
 {
+    /** service namespace */
     namespace Service
     {
 
@@ -48,15 +50,21 @@ namespace OIC
             RequestHandler(RCSResourceAttributes&&, int errorCode = DEFAULT_ERROR_CODE);
 
             virtual ~RequestHandler() { };
-
+            /**
+             * This method is for get the error code
+             */
             int getErrorCode() const;
 
+            /**
+             * This method is for check custom representation and return true or false value
+             */
             bool hasCustomRepresentation() const;
 
+            /** get the representation information */
             OC::OCRepresentation getRepresentation() const;
 
         public:
-            static constexpr int DEFAULT_ERROR_CODE = 200;
+            static constexpr int DEFAULT_ERROR_CODE = 200;  /*!< default error code */
 
         private:
             const int m_errorCode;
@@ -74,6 +82,7 @@ namespace OIC
             SetRequestHandler(const SetRequestHandler&) = delete;
             SetRequestHandler(SetRequestHandler&&) = default;
 
+            /** This method is for set request handler */
             SetRequestHandler();
 
             SetRequestHandler(int errorCode);

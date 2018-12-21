@@ -1,0 +1,16 @@
+{
+    "serviceFiles": [
+        "/usr/share/luna-service2/services.d/ocserverbasicops.service"
+    ],
+    "roleFiles": [
+        "/usr/share/luna-service2/roles.d/ocserverbasicops.role.json"
+    ],
+    "apiPermissionFiles": [
+        "/usr/share/luna-service2/api-permissions.d/ocserverbasicops.api.json"
+    ],
+    "version": "1.0.0",
+    "id": "ocserverbasicops",
+    "clientPermissionFiles": [
+        "/usr/share/luna-service2/client-permissions.d/ocserverbasicops.perm.json"
+    ]
+}

@@ -28,8 +28,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.bson.Document;
-import org.iotivity.cloud.util.Log;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -43,7 +44,7 @@ import com.mongodb.client.model.IndexOptions;
  *
  */
 public class MongoDB {
-
+    private final static Logger Log   = LoggerFactory.getLogger(MongoDB.class);
     private MongoClient   mongoClient = null;
     private MongoDatabase db          = null;
 
@@ -57,9 +58,7 @@ public class MongoDB {
      * @throws Exception
      */
     public MongoDB(String host, String dbname) throws Exception {
-
         mongoClient = new MongoClient(host);
-        mongoClient.dropDatabase(dbname);
         db = mongoClient.getDatabase(dbname);
     }
 
@@ -70,8 +69,37 @@ public class MongoDB {
      *            collection name
      */
     public void createTable(String tableName) {
+        if (!collectionExists(tableName))
+            db.createCollection(tableName);
+    }
 
-        db.createCollection(tableName);
+    private boolean collectionExists(String tableName ) {
+        return db.listCollectionNames().into(new ArrayList<>()).contains(tableName);
+    }
+
+    /**
+     * API for dropping collection
+     *
+     * @param tableName
+     *            collection name
+     */
+    public void dropTable(String tableName) {
+        if (collectionExists(tableName))
+            db.getCollection(tableName).drop();
+    }
+
+    public boolean updateMany(final String tableName, final Document filter, final Document update){
+
+        if (tableName == null || filter == null || update == null)
+            return false;
+        final MongoCollection<Document> collection = db.getCollection(tableName);
+        try {
+            collection.updateMany(filter,update);
+            return true;
+        } catch (Exception e) {
+            Log.error("Error update many record", e);
+            return false;
+        }
     }
 
     /**
@@ -141,7 +169,7 @@ public class MongoDB {
 
             } else {
 
-                Log.w("DB insert failed due to duplecated one.");
+                Log.warn("DB insert failed due to duplecated one.");
                 return false;
             }
 
@@ -150,8 +178,6 @@ public class MongoDB {
             e.printStackTrace();
             return false;
         }
-
-        showRecord(tableName);
 
         return true;
     }
@@ -190,8 +216,6 @@ public class MongoDB {
             return false;
         }
 
-        showRecord(tableName);
-
         return true;
     }
 
@@ -217,11 +241,9 @@ public class MongoDB {
 
         if (collection.findOneAndReplace(filter, record) == null) {
 
-            Log.w("DB update failed due to no matched record!");
+            Log.warn("DB update failed due to no matched record!");
             return false;
         }
-
-        showRecord(tableName);
 
         return true;
     }
@@ -252,8 +274,6 @@ public class MongoDB {
             e.printStackTrace();
             return false;
         }
-
-        showRecord(tableName);
 
         return true;
     }
@@ -314,26 +334,5 @@ public class MongoDB {
         }
 
         return resourceMap;
-    }
-
-    private void showRecord(String tableName) {
-
-        MongoCollection<Document> collection = db.getCollection(tableName);
-        MongoCursor<Document> cursor = collection.find().iterator();
-
-        Log.i("<" + tableName + ">");
-
-        HashMap<String, Object> records = null;
-        int index = 0;
-        while (cursor.hasNext()) {
-
-            Document doc = cursor.next();
-            records = convertDocumentToHashMap(doc);
-
-            Log.i("[" + index + "] " + records.toString());
-            index++;
-        }
-
-        cursor.close();
     }
 }

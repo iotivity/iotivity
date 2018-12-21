@@ -1,0 +1,3 @@
+{
+  "com.example.service.iotivity.client*" : ["activities.manage", "networking.internal"]
+}

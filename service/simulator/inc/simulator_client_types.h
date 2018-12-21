@@ -26,34 +26,39 @@
 #include <memory>
 #include "simulator_error_codes.h"
 
+/** enum for observe type value */
 enum class ObserveType
 {
     OBSERVE,
     OBSERVE_ALL
 };
 
+/** enum value for request type value */
 enum class RequestType
 {
-    RQ_TYPE_UNKNOWN,
-    RQ_TYPE_GET,
-    RQ_TYPE_PUT,
-    RQ_TYPE_POST,
-    RQ_TYPE_DELETE
+    RQ_TYPE_UNKNOWN,       /**< unknown type request */
+    RQ_TYPE_GET,           /**< get type request */
+    RQ_TYPE_PUT,           /**< put type request */
+    RQ_TYPE_POST,          /**< post type request */
+    RQ_TYPE_DELETE         /**< delete type request */
 };
 
+/** structure for validation status */
 typedef struct
 {
-    bool isVerified;
-    SimulatorResult errorCode;
+    bool isVerified;            /**< verified state value */
+    SimulatorResult errorCode;  /**< simulator result */
 } ValidationStatus;
 
+/** enum for operation state value */
 typedef enum
 {
-    OP_START,
-    OP_COMPLETE,
-    OP_ABORT
+    OP_START,         /**< start operation */
+    OP_COMPLETE,      /**< complete operation */
+    OP_ABORT          /**< abort the operation */
 } OperationState;
 
+/** enum for connectivity type value */
 typedef enum
 {
     /** use when defaults are ok. */

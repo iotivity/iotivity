@@ -37,7 +37,7 @@ samples_env.PrependUnique(CPPPATH=[
 ])
 
 samples_env.AppendUnique(
-    CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
+    CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra'])
 
 if target_os in ['darwin', 'ios']:
     samples_env.PrependUnique(LIBS=[

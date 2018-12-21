@@ -1,22 +1,22 @@
-//******************************************************************
-//
-// Copyright 2015 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #ifndef RCM_DATACACHE_H_
 #define RCM_DATACACHE_H_
@@ -29,8 +29,10 @@
 #include "CacheTypes.h"
 #include "ExpiryTimer.h"
 
+/** OIC namespace */
 namespace OIC
 {
+    /** service namespace */
     namespace Service
     {
         class DataCache : public std::enable_shared_from_this<DataCache>
@@ -48,17 +50,23 @@ namespace OIC
                 DataCache & operator = (const DataCache &) = default;
                 DataCache & operator = (DataCache &&) = default;
 
+                /// This method is for initialize the cache data
                 void initializeDataCache(PrimitiveResourcePtr pResource);
-
+                /// This method is for add the subscriber
                 CacheID addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime);
+                /// This method is for delete the subscriber
                 CacheID deleteSubscriber(CacheID id);
-
+                /// This method is for get the cache state
                 CACHE_STATE getCacheState() const;
+                /// This method is for get the cache data
                 const RCSResourceAttributes getCachedData() const;
+                /// This method is for get the primitive resource
                 const PrimitiveResourcePtr getPrimitiveResource() const;
-
+                /// This method is for get request
                 void requestGet();
+                /// This method is for check subscriber is empty or not
                 bool isEmptySubscriber() const;
+                /// This method is for check cache data is empty or not
                 bool isCachedData() const;
 
             private:
@@ -100,7 +108,7 @@ namespace OIC
                 SubscriberInfoPair findSubscriber(CacheID id);
                 void notifyObservers(const RCSResourceAttributes Att, int eCode);
         };
-    } // namespace Service
-} // namespace OIC
+    } /* namespace Service */
+} /* namespace OIC */
 
 #endif /* RCM_DATACACHE_H_ */

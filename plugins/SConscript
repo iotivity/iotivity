@@ -28,7 +28,7 @@ Import('env')
 target_os = env.get('TARGET_OS')
 build_sample = env.get('BUILD_SAMPLE')
 
-if target_os not in ['android', 'darwin', 'ios', 'tizen', 'msys_nt', 'windows']:
+if target_os not in ['android', 'darwin', 'ios', 'tizen', 'msys_nt', 'windows', 'webos']:
 
     SConscript('zigbee_wrapper/SConscript')
 

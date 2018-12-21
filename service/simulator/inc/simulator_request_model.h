@@ -24,17 +24,40 @@
 #include "simulator_client_types.h"
 #include "simulator_resource_model_schema.h"
 
+/**
+ * @class SimulatorRequestModel
+ */
 class SimulatorRequestModel
 {
     public:
         SimulatorRequestModel();
         SimulatorRequestModel(RequestType type);
 
+        /**
+         * Get the request type of topic
+         * @return request type
+         */
         RequestType getType() const;
+        /**
+         * Get the query parameters
+         * @return parameters
+         */
         std::map<std::string, std::vector<std::string>> getQueryParams() const;
+        /**
+         * Get the request body schema
+         * @return schema information
+         */
         std::shared_ptr<SimulatorResourceModelSchema> getRequestBodySchema() const;
 
+        /**
+         * Set the query parameters
+         * @param[in] queryParams   parameter to set
+         */
         void setQueryParams(const std::map<std::string, std::vector<std::string>> &queryParams);
+        /**
+         * Set the request body schema
+         * @param[in] repSchema   schema to set
+         */
         void setRequestBodySchema(const std::shared_ptr<SimulatorResourceModelSchema> &repSchema);
 
     private:

@@ -55,6 +55,13 @@
 #include "string.h"
 #include "experimental/logger_types.h"
 
+#ifdef __webos__
+#include <PmLogLib.h>
+#include <glib.h>
+
+PmLogContext gLogLibContext;
+#endif // __webos__
+
 // log level
 static int g_level = DEBUG;
 // private log messages are not logged unless they have been explicitly enabled by calling OCSetLogLevel().
@@ -86,9 +93,11 @@ static oc_log_level LEVEL_XTABLE[] = {OC_LOG_DEBUG, OC_LOG_INFO,
     static android_LogPriority LEVEL[] =
     {ANDROID_LOG_DEBUG, ANDROID_LOG_INFO, ANDROID_LOG_WARN, ANDROID_LOG_ERROR, ANDROID_LOG_FATAL};
 #endif
-#elif defined(__linux__) || defined(__APPLE__) || defined(__msys_nt__)
+#elif (defined(__linux__) && !defined(__webos__)) || defined(__APPLE__) || defined(__msys_nt__)
     static const char * LEVEL[] __attribute__ ((unused)) = {"\e[0;32mDEBUG\033[0m", "\e[0;33mINFO\033[0m", "\e[0;35mWARNING\033[0m", "\e[0;31mERROR\033[0m", "\e[0;31mFATAL\033[0m"};
 #elif defined(_MSC_VER)
+    static const char * LEVEL[] = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
+#elif defined (__linux__) && (__webos__)
     static const char * LEVEL[] = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
 #elif defined ARDUINO
 #include <stdarg.h>
@@ -148,6 +157,78 @@ static bool AdjustAndVerifyLogLevel(int* level)
     *level = localLevel;
     return true;
 }
+
+#ifdef __webos__
+char *replaceValue(char *strInput, const char *strTarget, const char *strChange)
+{
+    char* strResult;
+    char* strTemp;
+    int i = 0;
+    int nCount = 0;
+    int nTargetLength = strlen(strTarget);
+
+    if (nTargetLength < 1)
+        return strInput;
+
+    int nChangeLength = strlen(strChange);
+
+    if (nChangeLength != nTargetLength)
+    {
+        for (i = 0; strInput[i] != '\0';)
+        {
+            if (memcmp(&strInput[i], strTarget, nTargetLength) == 0)
+            {
+                nCount++;
+                i += nTargetLength;
+            }
+            else i++;
+        }
+    }
+    else
+    {
+        i = strlen(strInput);
+    }
+    strResult = (char *) malloc(i + 1 + nCount * (nChangeLength - nTargetLength));
+    if (strResult == NULL) return NULL;
+
+    strTemp = strResult;
+    while (*strInput)
+    {
+        if (memcmp(strInput, strTarget, nTargetLength) == 0)
+        {
+            memcpy(strTemp, strChange, nChangeLength);
+            strTemp += nChangeLength;
+            strInput  += nTargetLength;
+        }
+        else
+        {
+            *strTemp++ = *strInput++;
+        }
+    }
+
+    *strTemp = '\0';
+
+    return strResult;
+}
+
+static void webos_log_write(PmLogContext context, int level, const char *tag, const char *logStr)
+{
+    char *strResult = NULL;
+    strResult = replaceValue(logStr, "\t", "    ");
+
+    if (!g_strcmp0(LEVEL[level], "DEBUG"))
+        PmLogDebug(context, "%s: %s", tag, strResult);
+    else if (!g_strcmp0(LEVEL[level], "INFO"))
+        PmLogInfo(context, "INFO", 0, "%s: %s", tag, strResult);
+    else if (!g_strcmp0(LEVEL[level], "WARNING"))
+        PmLogWarning(context, "WARNING", 0, "%s: %s", tag, strResult);
+    else if (!g_strcmp0(LEVEL[level], "ERROR"))
+        PmLogError(context, "ERROR", 0, "%s: %s", tag, strResult);
+    else if (!g_strcmp0(LEVEL[level], "FATAL"))
+        PmLogCritical(context, "CRITICAL", 0, "%s: %s", tag, strResult);
+    free(strResult);
+}
+#endif // __webos__
 
 #ifndef ARDUINO
 
@@ -282,6 +363,11 @@ void OCLog(int level, const char * tag, const char * logStr)
             break;
     }
 
+   #ifdef __webos__
+    PmLogGetContext("IoTivity", &gLogLibContext);
+    webos_log_write(gLogLibContext, level, tag, logStr);
+   #endif // __webos__
+
    #ifdef __ANDROID__
 
    #ifdef ADB_SHELL
@@ -289,7 +375,6 @@ void OCLog(int level, const char * tag, const char * logStr)
    #else
        __android_log_write(LEVEL[level], tag, logStr);
    #endif
-
    #else
        if (logCtx && logCtx->write_level)
        {
@@ -328,10 +413,13 @@ void OCLog(int level, const char * tag, const char * logStr)
                ms = now.tv_usec * 1000;
            }
    #endif
+   #ifdef __webos__
+   #else
            printf("%02d:%02d.%03d %s: %s: %s\n", min, sec, ms, LEVEL[level], tag, logStr);
-       }
-   #endif
-   }
+   #endif // __webos__
+    }
+   #endif // __ANDROID__
+}
 #endif //__TIZEN__
 #endif //ARDUINO
 #ifdef ARDUINO

@@ -62,13 +62,13 @@ std::vector<std::vector<std::vector<SimulatorResourceModel>>>
 
 enum class AttributeValueType
 {
-    UNKNOWN,
-    INTEGER,
-    DOUBLE,
-    BOOLEAN,
-    STRING,
-    RESOURCE_MODEL,
-    VECTOR
+    UNKNOWN,         /**< unknown value type */
+    INTEGER,         /**< integer value type */
+    DOUBLE,          /**< double value type */
+    BOOLEAN,         /**< boolean value type */
+    STRING,          /**< string value type */
+    RESOURCE_MODEL,  /**< resource model type */
+    VECTOR           /**< vector type */
 };
 
 class OCRepresentationBuilder;
@@ -101,6 +101,12 @@ class SimulatorResourceModel
                 int m_depth;
         };
 
+        /**
+         * add the value
+         * @param[in] name   find the name
+         * @param[in] value  add the attribute value for the given name
+         * @return boolean value
+         */
         template <typename T>
         bool add(const std::string &name, T value)
         {
@@ -113,6 +119,11 @@ class SimulatorResourceModel
             return false;
         }
 
+        /**
+         * get the value
+         * @param[in] name get the value for given name
+         * @return value
+         */
         template <typename T>
         T get(const std::string &name) const
         {
@@ -132,6 +143,12 @@ class SimulatorResourceModel
             return val;
         }
 
+        /**
+         * update the value
+         * @param[in] name   name to find
+         * @param[in] value  update the value
+         * @return boolean value
+         */
         template <typename T>
         bool update(const std::string &name, T value)
         {
@@ -139,16 +156,35 @@ class SimulatorResourceModel
             return updateValue(name, newValue);
         }
 
+        /**
+         * remove the value
+         * @param[in] name    name to remove
+         * @return boolean value
+         */
         bool remove(const std::string &name);
 
         bool contains(const std::string &name) const;
 
         size_t size() const;
 
+        /**
+         * get the type
+         * @param[in] name   get the type of given name
+         * @return type of name
+         */
         TypeInfo getType(const std::string &name) const;
 
+        /**
+         * get attribute values
+         * @return attribute value
+         */
         std::map<std::string, AttributeValueVariant> getAttributeValues() const;
 
+        /**
+         * get attribute values using name value
+         * @param name   attribute name
+         * @return attribute value
+         */
         AttributeValueVariant getAttributeValue(const std::string &name) const;
 
         std::set<std::string> getAttributeNameSet() const;
@@ -166,6 +202,9 @@ class SimulatorResourceModel
         std::map<std::string, AttributeValueVariant> m_attributes;
 };
 
+/**
+ * @class SimulatorResourceAttribute
+ */
 class SimulatorResourceAttribute
 {
     public:
@@ -173,14 +212,42 @@ class SimulatorResourceAttribute
         SimulatorResourceAttribute(const std::string &name);
         SimulatorResourceAttribute(const std::string &name, const AttributeValueVariant &value);
 
+        /**
+         * get the resource name
+         * @return resource name
+         */
         std::string getName() const;
+        /**
+         * get the type
+         * @return resource type
+         */
         const SimulatorResourceModel::TypeInfo getType() const;
+        /**
+         * get the attribute property
+         * @return attribute property
+         */
         std::shared_ptr<AttributeProperty> getProperty() const;
+        /**
+         * get the attribute value
+         * @return attribute value
+         */
         AttributeValueVariant getValue() const;
 
+        /**
+         * set the atribute name
+         * @param[in] name   set the name
+         */
         void setName(const std::string &name);
+        /**
+         * set the attribute property
+         * @param[in] property   property to set
+         */
         void setProperty(const std::shared_ptr<AttributeProperty> &property);
 
+        /**
+         * set attribute value
+         * @param[in] value   value to set
+         */
         template <typename T>
         void setValue(const T &value)
         {

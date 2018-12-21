@@ -116,15 +116,15 @@ public class ServerException extends RuntimeException {
         }
     }
 
-    public static class NotImplementedException extends ServerException {
-        private static final long serialVersionUID = 5699911106834702025L;
+    public static class ServiceUnavailableException extends ServerException {
+        private static final long serialVersionUID = -112373218973982719L;
 
-        public NotImplementedException() {
-            super(ResponseStatus.NOT_IMPLEMENTED);
+        public ServiceUnavailableException() {
+            super(ResponseStatus.SERVICE_UNAVAILABLE);
         }
 
-        public NotImplementedException(String msg) {
-            super(ResponseStatus.NOT_IMPLEMENTED, msg);
+        public ServiceUnavailableException(String msg) {
+            super(ResponseStatus.SERVICE_UNAVAILABLE, msg);
         }
     }
 }

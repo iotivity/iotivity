@@ -190,7 +190,7 @@ namespace OC
                 ps(ps_),
                 useLegacyCleanup(false)
         {}
-            /* @deprecated: Use a non deprecated constructor. */
+            /// @deprecated this constructor is deprecated (since 2014.10).
             OC_DEPRECATED_MSG(
             PlatformConfig(),
             "Use a non deprecated constructor",
@@ -206,7 +206,7 @@ namespace OC
                 ps(nullptr),
                 useLegacyCleanup(true)
         {}
-            /* @deprecated: Use a non deprecated constructor. */
+            /// @deprecated this constructor is deprecated (since 2017.03).
             OC_DEPRECATED_MSG(
             PlatformConfig(const ServiceType serviceType_,
                            const ModeType mode_,
@@ -227,7 +227,7 @@ namespace OC
                 ps(ps_),
                 useLegacyCleanup(true)
         {}
-            /* @deprecated: Use a non deprecated constructor. */
+            /// @deprecated this constructor is deprecated (since 2017.03).
             OC_DEPRECATED_MSG(
             PlatformConfig(const ServiceType serviceType_,
                            const ModeType mode_,
@@ -248,7 +248,7 @@ namespace OC
                 ps(ps_),
                 useLegacyCleanup(true)
         {}
-            /* @deprecated: Use a non deprecated constructor. */
+            /// @deprecated this constructor is deprecated (since 2017.03).
             OC_DEPRECATED_MSG(
             PlatformConfig(const ServiceType serviceType_,
                            const ModeType mode_,
@@ -285,7 +285,7 @@ namespace OC
                 ps(ps_),
                 useLegacyCleanup(true)
         {}
-            /* @deprecated: Use a non deprecated constructor. */
+            /// @deprecated this constructor is deprecated (since 2017.03).
             OC_DEPRECATED_MSG(
             PlatformConfig(const ServiceType serviceType_,
                            const ModeType mode_,

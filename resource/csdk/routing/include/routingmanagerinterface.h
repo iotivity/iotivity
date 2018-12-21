@@ -20,8 +20,13 @@
 
 /**
  * @file
- * This file is an interface of routing manager and resource interospection layer.
+ * routing manager and resource introspection interfaces
  */
+
+/** @addtogroup routingmanager
+ * @{
+ */
+
 #ifndef ROUTING_MANAGER_INTERFACE_H_
 #define ROUTING_MANAGER_INTERFACE_H_
 
@@ -91,5 +96,5 @@ OCStackResult RMAddObserverToStack(const OCServerRequest *request, OCObservation
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-
-#endif /* ROUTING_MANAGER_INTERFACE_H_ */
+/// @}
+#endif // ROUTING_MANAGER_INTERFACE_H_

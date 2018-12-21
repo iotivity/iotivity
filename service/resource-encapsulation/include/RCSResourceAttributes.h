@@ -1,22 +1,22 @@
-//******************************************************************
-//
-// Copyright 2015 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 /**
  * @file
@@ -26,8 +26,8 @@
 #ifndef RES_ENCAPSULATION_RESOURCEATTRIBUTES_H
 #define RES_ENCAPSULATION_RESOURCEATTRIBUTES_H
 
-// To avoid conflict using different boost::variant configuration with OC.
-// It causes compile errors.
+/// To avoid conflict using different boost::variant configuration with OC.
+/// It causes compile errors.
 #define BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
 #define BOOST_MPL_LIMIT_LIST_SIZE 30
 #define BOOST_MPL_LIMIT_VECTOR_SIZE 30
@@ -45,6 +45,7 @@
 
 #include "RCSException.h"
 
+/** OIC namespace */
 namespace OIC
 {
     namespace Service
@@ -122,43 +123,81 @@ namespace OIC
                 return this->m_data[it];
             }
 
+            /** consturctor */
             RCSByteString()
             {
             }
+            /**
+             * consturctor with parameter
+             * @param rhs   byte string type data
+             */
             RCSByteString(DataType && rhs)
             : m_data {std::move(rhs)}
             {
             }
+            /**
+             * consturctor with const parameter
+             * @param rhs   const byte string type data
+             */
             RCSByteString(const DataType & rhs)
             : m_data {rhs}
             {
             }
+            /**
+             * consturctor with rcs byte string parameter
+             * @param rhs  byte string type data
+             */
             RCSByteString(RCSByteString && rhs)
             : m_data {DataType{rhs.getByteString()}}
             {
             }
+            /**
+             * consturctor with const rcs byte string parameter
+             * @param rhs   const byte string type data
+             */
             RCSByteString(const RCSByteString & rhs)
             : m_data {DataType{rhs.getByteString()}}
             {
             }
 
+            /**
+             * consturctor with oc byte string parameter
+             * @param rhs   byte string type data
+             */
             RCSByteString(::OCByteString && rhs)
             : m_data {DataType{rhs.bytes, rhs.bytes + rhs.len}}
             {
             }
+            /**
+             * consturctor with const oc byte string parameter
+             * @param rhs   const byte string type data
+             */
             RCSByteString(const ::OCByteString & rhs)
             : m_data {DataType{rhs.bytes, rhs.bytes + rhs.len}}
             {
             }
 
+            /**
+             * consturctor with bytes and size parameter
+             * @param bytes   bytes in data
+             * @param size    size of string
+             */
             RCSByteString(uint8_t* bytes, size_t size)
             : m_data {DataType{bytes, bytes + size}}
             {
             }
+            /**
+             * overloading method to copy assignment operator
+             * @param rhs   byte string type
+             */
             inline RCSByteString& operator=(RCSByteString&& rhs)
             {
                 return operator =(rhs);
             }
+            /**
+             * overloading method to copy assignment operator
+             * @param rhs   const byte string type
+             */
             inline RCSByteString& operator=(const RCSByteString& rhs)
             {
                 if(&rhs != this)
@@ -285,14 +324,14 @@ namespace OIC
              */
             enum class TypeId
             {
-                NULL_T, /**< nullptr_t */
-                INT, /**< int */
-                DOUBLE, /**< double */
-                BOOL, /**< bool */
-                STRING, /**< std::string */
-                BYTESTRING, /**< RCSByteString */
-                ATTRIBUTES, /**< RCSResourceAttributes */
-                VECTOR /**< std::vector */
+                NULL_T,     /*!< nullptr_t */
+                INT,        /*!< int */
+                DOUBLE,     /*!< double */
+                BOOL,       /*!< bool */
+                STRING,     /*!< std::string */
+                BYTESTRING, /*!< RCSByteString */
+                ATTRIBUTES, /*!< RCSResourceAttributes */
+                VECTOR      /*!< std::vector */
             };
 
             /**
@@ -305,9 +344,11 @@ namespace OIC
             class Type
             {
             public:
+                /** constructor */
                 Type(const Type&) = default;
                 Type(Type&&) = default;
 
+                /** overloading */
                 Type& operator=(const Type&) = default;
                 Type& operator=(Type&&) = default;
 
@@ -434,7 +475,9 @@ namespace OIC
             public:
                 class ComparisonHelper;
 
+                /** constructor */
                 Value();
+                /** constructor with const parameter */
                 Value(const Value&);
                 Value(Value&&) BOOST_NOEXCEPT;
 
@@ -448,8 +491,10 @@ namespace OIC
                 {
                 }
 
+                /** constructor with parameter */
                 Value(const char*);
 
+                /** operator overloading */
                 Value& operator=(const Value&);
                 Value& operator=(Value&&);
 
@@ -460,6 +505,7 @@ namespace OIC
                     return *this;
                 }
 
+                /** operator overloading */
                 Value& operator=(const char*);
                 Value& operator=(std::nullptr_t);
 
@@ -547,10 +593,12 @@ namespace OIC
             class const_iterator;
 
         public:
+            /** class constructor */
             RCSResourceAttributes() = default;
             RCSResourceAttributes(const RCSResourceAttributes&) = default;
             RCSResourceAttributes(RCSResourceAttributes&&) = default;
 
+            /** overloading */
             RCSResourceAttributes& operator=(const RCSResourceAttributes&) = default;
             RCSResourceAttributes& operator=(RCSResourceAttributes&&) = default;
 
@@ -758,11 +806,16 @@ namespace OIC
                 return m_valueRef.equals< T >(v);
             }
 
+            /**
+             * This method is to compare the values
+             * @param v value to compare
+             */
             bool equals(const std::string& v) const
             {
                 return m_valueRef.equals< std::string >(v);
             }
 
+            /** overloading */
             bool operator==(const ComparisonHelper&) const;
 
         private:
@@ -956,9 +1009,12 @@ namespace OIC
             typedef std::unordered_map< std::string, Value >::iterator base_iterator;
 
         public:
+            /** constructor */
             iterator();
+            /** constructor with const parameter */
             iterator(const iterator&);
 
+            /** operator overloading */
             iterator& operator=(const iterator&);
 
             reference operator*();
@@ -998,10 +1054,14 @@ namespace OIC
             typedef std::unordered_map< std::string, Value >::const_iterator base_iterator;
 
         public:
+            /** constructor */
             const_iterator();
+            /** constructor with const parameter */
             const_iterator(const const_iterator&);
+            /** constructor with const parameter */
             const_iterator(const RCSResourceAttributes::iterator&);
 
+            /** operator overloading */
             const_iterator& operator=(const const_iterator&);
             const_iterator& operator=(const RCSResourceAttributes::iterator&);
 

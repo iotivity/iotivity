@@ -25,8 +25,10 @@
 
 #include "JavaClasses.h"
 
+/** OIC namespace */
 namespace OIC
 {
+    /** service namespace */
     namespace Service
     {
         class RCSPlatformException;
@@ -35,9 +37,19 @@ namespace OIC
 
 class JNIEnvWrapper;
 
+/**
+ * initialize java exception
+ */
 void initJavaExceptions(JNIEnvWrapper*);
+
+/**
+ * clear java exception
+ */
 void clearJavaExceptions(JNIEnvWrapper*);
 
+/**
+ * throw platform exception
+ */
 void throwPlatformException(JNIEnv*, const OIC::Service::RCSPlatformException&);
 
 template < typename ENV >

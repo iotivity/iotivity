@@ -134,101 +134,51 @@ class DeviceResource : public Resource
         OCEntityHandlerResult ehResult = OC_EH_ERROR;
         if(request)
         {
-            // Get the header options from the request
-            HeaderOptions headerOptions = request->getHeaderOptions();
-            std::string clientAPIVersion;
-            std::string clientToken;
-
-            // Get the message ID from the request
-            std::cout << " MessageID: " << request->getMessageID() << std::endl;
-
-            // Search the header options map and look for API version and Client token
-            for (auto it = headerOptions.begin(); it != headerOptions.end(); ++it)
+            if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
             {
-                uint16_t optionID = it->getOptionID();
-                if(optionID == API_VERSION)
-                {
-                    clientAPIVersion = it->getOptionData();
-                    std::cout << " Client API version: " << clientAPIVersion << std::endl;
-                }
-                else if(optionID == TOKEN)
-                {
-                    clientToken = it->getOptionData();
-                    std::cout << " Client token: " << clientToken << std::endl;
-                }
-                else
-                {
-                    std::cout << " Invalid header option " << std::endl;
-                }
-            }
+                auto pResponse = std::make_shared<OC::OCResourceResponse>();
+                pResponse->setRequestHandle(request->getRequestHandle());
+                pResponse->setResourceHandle(request->getResourceHandle());
 
-            // In this case Server entity handler verifies API version
-            // and client token. If they are valid, client requests are handled.
-            if(clientAPIVersion == FRIDGE_CLIENT_API_VERSION && clientToken == FRIDGE_CLIENT_TOKEN)
-            {
-                HeaderOptions serverHeaderOptions;
-                try
+                if(request->getRequestType() == "GET")
                 {
-                    // Set API version from server side
-                    HeaderOption::OCHeaderOption apiVersion(API_VERSION, FRIDGE_CLIENT_API_VERSION);
-                    serverHeaderOptions.push_back(apiVersion);
-                }
-                catch(OCException& e)
-                {
-                    std::cout << "Error creating HeaderOption in server: " << e.what() << std::endl;
-                }
+                    std::cout<<"DeviceResource Get Request"<<std::endl;
 
-                if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
-                {
-                    auto pResponse = std::make_shared<OC::OCResourceResponse>();
-                    pResponse->setRequestHandle(request->getRequestHandle());
-                    pResponse->setResourceHandle(request->getResourceHandle());
-                    pResponse->setHeaderOptions(serverHeaderOptions);
-
-                    if(request->getRequestType() == "GET")
+                    pResponse->setResponseResult(OC_EH_OK);
+                    pResponse->setResourceRepresentation(get(), "");
+                    if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
-                        std::cout<<"DeviceResource Get Request"<<std::endl;
-
-                        pResponse->setResponseResult(OC_EH_OK);
-                        pResponse->setResourceRepresentation(get(), "");
-                        if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
-                        {
-                            ehResult = OC_EH_OK;
-                        }
+                        ehResult = OC_EH_OK;
                     }
-                    else if(request->getRequestType() == "DELETE")
+                }
+                else if(request->getRequestType() == "DELETE")
+                {
+                    std::cout<<"DeviceResource Delete Request"<<std::endl;
+                    if(deleteDeviceResource() == OC_STACK_OK)
                     {
-                        std::cout<<"DeviceResource Delete Request"<<std::endl;
-                        if(deleteDeviceResource() == OC_STACK_OK)
-                        {
 
-                            pResponse->setResponseResult(OC_EH_RESOURCE_DELETED);
-                            ehResult = OC_EH_OK;
-                        }
-                        else
-                        {
-                            pResponse->setResponseResult(OC_EH_ERROR);
-                            ehResult = OC_EH_ERROR;
-                        }
-                        OCPlatform::sendResponse(pResponse);
+                        pResponse->setResponseResult(OC_EH_RESOURCE_DELETED);
+                        ehResult = OC_EH_OK;
                     }
                     else
                     {
-                        std::cout <<"DeviceResource unsupported request type "
-                        << request->getRequestType() << std::endl;
                         pResponse->setResponseResult(OC_EH_ERROR);
-                        OCPlatform::sendResponse(pResponse);
                         ehResult = OC_EH_ERROR;
                     }
+                    OCPlatform::sendResponse(pResponse);
                 }
                 else
                 {
-                    std::cout << "DeviceResource unsupported request flag" <<std::endl;
+                    std::cout <<"DeviceResource unsupported request type "
+                    << request->getRequestType() << std::endl;
+                    pResponse->setResponseResult(OC_EH_ERROR);
+                    OCPlatform::sendResponse(pResponse);
+                    ehResult = OC_EH_ERROR;
                 }
             }
             else
             {
-                std::cout << "Unsupported/invalid header options/values" << std::endl;
+                std::cout << "DeviceResource unsupported request flag" <<std::endl;
             }
         }
 

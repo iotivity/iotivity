@@ -33,26 +33,58 @@
 
 #include "request_generation.h"
 
+/**
+ * OC namespace
+ */
 namespace OC
 {
     class OCResource;
 }
 
+/**
+ * @class RequestModel
+ */
 class RequestModel;
+/**
+ * @class RequestAutomationMngr
+ */
 class RequestAutomationMngr
 {
     public:
+        /**
+         * API to request automation manager
+         * @param[in] ocResource     oc resource
+         */
         RequestAutomationMngr(const std::shared_ptr<OC::OCResource> &ocResource);
 
+        /**
+         * API to start the get request
+         * @param[in] requestSchema   request schema
+         * @param[in] callback        callback function
+         */
         int startOnGET(const std::shared_ptr<RequestModel> &requestSchema,
                        RequestGeneration::ProgressStateCallback callback);
 
+        /**
+         * API to start the put request
+         * @param[in] requestSchema   request schema
+         * @param[in] callback        callback function
+         */
         int startOnPUT(const std::shared_ptr<RequestModel> &requestSchema,
                        RequestGeneration::ProgressStateCallback callback);
 
+        /**
+         * API to start the post request
+         * @param[in] requestSchema   request schema
+         * @param[in] callback        callback function
+         */
         int startOnPOST(const std::shared_ptr<RequestModel> &requestSchema,
                         RequestGeneration::ProgressStateCallback callback);
 
+        /**
+         * API to stop the request for the given id
+         * @param[in] id    request identity
+         */
         void stop(int id);
 
     private:

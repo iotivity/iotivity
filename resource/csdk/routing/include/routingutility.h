@@ -23,6 +23,10 @@
  * This file contains the utility functions used by Routing manager and RI
  */
 
+/** @addtogroup routingmanager
+ * @{
+ */
+
 #ifndef ROUTING_UTILITY_H_
 #define ROUTING_UTILITY_H_
 
@@ -166,5 +170,5 @@ OCStackResult RMParseRouteOption(const CAHeaderOption_t *options, RMRouteOption_
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-
-#endif /* ROUTING_MANAGER_H_ */
+/// @}
+#endif // ROUTING_MANAGER_H_

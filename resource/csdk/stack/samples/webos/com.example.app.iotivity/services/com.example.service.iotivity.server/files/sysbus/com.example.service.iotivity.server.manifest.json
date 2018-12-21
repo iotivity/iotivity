@@ -1,0 +1,13 @@
+{
+    "roleFiles": [
+        "/usr/share/luna-service2/roles.d/com.example.service.iotivity.server.role.json"
+    ],
+    "id": "com.example.service.iotivity.server",
+    "version": "1.0.0",
+    "clientPermissionFiles": [
+        "/usr/share/luna-service2/client-permissions.d/com.example.service.iotivity.server.perm.json"
+    ],
+    "serviceFiles": [
+        "/usr/share/luna-service2/services.d/com.example.service.iotivity.server.service"
+    ]
+}

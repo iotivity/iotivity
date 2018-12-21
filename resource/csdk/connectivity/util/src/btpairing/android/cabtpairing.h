@@ -19,7 +19,9 @@
  ******************************************************************/
 
 #include "jni.h"
-/* Header for class org_iotivity_ca_CaBtPairingInterface */
+/**
+ * Header for class org_iotivity_ca_CaBtPairingInterface
+ */
 
 #ifndef Included_org_iotivity_ca_CaBtPairingInterface
 #define Included_org_iotivity_ca_CaBtPairingInterface
@@ -28,28 +30,28 @@ extern "C"
 {
 #endif
 
-/*
- * Class:     org_iotivity_ca_CaBtPairingInterface
- * Method:    oicEdrStateChangedCallback
- * Signature: (I)V
+/**
+ * @class:     org_iotivity_ca_CaBtPairingInterface
+ * Method:     oicEdrStateChangedCallback
+ * Signature:  (I)V
  */
 JNIEXPORT void JNICALL
 org_iotivity_ca_CaBtPairingInterface_oicEdrStateChangedCallback
 (JNIEnv *, jobject, jint);
 
-/*
- * Class:     org_iotivity_ca_OicBtUtilClientInterface
- * Method:    oicEdrBondStateChangedCallback
- * Signature: (java/lang/String;)V
+/**
+ * @class:     org_iotivity_ca_OicBtUtilClientInterface
+ * Method:     oicEdrBondStateChangedCallback
+ * Signature:  (java/lang/String;)V
  */
 JNIEXPORT void JNICALL
 org_iotivity_ca_CaBtPairingInterface_oicEdrBondStateChangedCallback
 (JNIEnv *, jobject, jstring);
 
-/*
- * Class:     org_iotivity_ca_OicBtUtilClientInterface
- * Method:    oicEdrFoundDeviceCallback
- * Signature: (Landroid/bluetooth/BluetoothDevice;)V
+/**
+ * @class:     org_iotivity_ca_OicBtUtilClientInterface
+ * Method:     oicEdrFoundDeviceCallback
+ * Signature:  (Landroid/bluetooth/BluetoothDevice;)V
  */
 JNIEXPORT void JNICALL
 org_iotivity_ca_CaBtPairingInterface_oicEdrFoundDeviceCallback

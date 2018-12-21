@@ -225,6 +225,15 @@ if env['CC'] == 'cl':
     # See https://msdn.microsoft.com/en-us/library/ttcz0bys.aspx for more details.
     env.AppendUnique(CPPDEFINES=['_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_WARNINGS', '_SCL_SECURE_NO_WARNINGS'])
 
+    # The googletest code uses the now deprecated str::tr1 namespace for tuples
+    # see https://github.com/google/googletest/issues/1111 once a new version of
+    # googletest introduced we should remove this define. Since this is needed any
+    # time the googletest headers are included its simpler to place is in this one
+    # location than to spread it through out the scons files.
+    # TODO Removed, if possible, when updating to a version of googletest newer than
+    # version 1.8.0
+    env.AppendUnique(CPPDEFINES=['_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING'])
+
     if env.get('MSVC_UWP_APP') != '1':
         # Add Desktop specific libraries
         env.AppendUnique(LIBS=[
@@ -242,6 +251,8 @@ if env['CC'] == 'cl':
         env.AppendUnique(CPPDEFINES=['UWP_APP', '__WRL_NO_DEFAULT_LIB__'])
         env.AppendUnique(LINKFLAGS=['/MANIFEST:NO', '/WINMD:NO', '/APPCONTAINER'])
         env.AppendUnique(LIBS=['WindowsApp', 'bcrypt', 'ws2_32', 'iphlpapi', 'crypt32'])
+        # save the required lib for config tests where LIBS is cleared first
+        env.AppendUnique(UWP_LIBS=['WindowsApp'])
 
 elif env['CC'] == 'gcc':
     msg = "\nError: gcc not supported on Windows.  Use Visual Studio!\n"

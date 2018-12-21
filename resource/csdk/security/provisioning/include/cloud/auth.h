@@ -98,30 +98,31 @@ struct OicCloud
  * Sends Sign UP request to cloud
  *
  * @param[in] cloud
- * @return  OCStackResult application result
+ * @return ::OC_STACK_OK on success,  error indication otherwise
  */
 OCStackResult OCCloudSignUp(OicCloud_t *cloud);
 
 /**
  * Sends Sign IN request to cloud
  *
- * @param[in] cloud
- * @return  OCStackResult application result
+ * @param[in] cloud  cloud pointer
+ * @return ::OC_STACK_OK on success,  error indication otherwise
  */
 OCStackResult OCCloudSignIn(OicCloud_t *cloud);
 
 /**
  * Sends Sign OUT request to cloud
  *
- * @param[in] cloud
- * @return  OCStackResult application result
+ * @param[in] cloud  cloud pointer
+ * @return ::OC_STACK_OK on success,  error indication otherwise
  */
 OCStackResult OCCloudSignOut(OicCloud_t *cloud);
 
 /**
  * Session free function
- * @param[in] cloud
- * @return  OicCloud_t * pointer to next
+ *
+ * @param[in] cloud   cloud pointer
+ * @return  pointer to next cloud entry
  */
 OicCloud_t *FreeCloud(OicCloud_t *cloud);
 
@@ -134,54 +135,48 @@ void StopCloudRefresh(OicCloud_t *cloud);
 /**
  * Cloud to CBOR
  *
- * @param[in] cloud
- * @param[out] payload
- * @param[out] size
- * @return  OCStackResult application result
+ * @param[in] clouds  cloud list to convert
+ * @param[out] payload  generated CBOR payload
+ * @param[out] size  size of generated CBOR payload
+ * @return ::OC_STACK_OK on success,  error indication otherwise
  */
 OCStackResult CloudToCBORPayload(const OicCloud_t *clouds, uint8_t **payload, size_t *size);
 
 /**
- * Cloud to CBOR for resource
+ * Convert Cloud to CBOR for resource
  *
- * @param[in] cloud
- * @param[out] payload
- * @param[out] size
- * @return  OCStackResult application result
+ * @param[in] clouds  cloud list to convert
+ * @param[out] payload  generated CBOR payload
+ * @param[out] size  size of generated CBOR payload
+ * @return ::OC_STACK_OK on success,  error indication otherwise
  */
 OCStackResult CloudToCBORPayloadResource(const OicCloud_t *clouds, uint8_t **payload, size_t *size);
 
 /**
- * CBOR to Cloud
+ * Convert CBOR to Cloud
  *
- * @param[in] payload
- * @param[out] cloud
- * @return  OCStackResult application result
+ * @param[in] cborPayload  payload to convert
+ * @param[in] size  size of payload
+ * @param[out] clouds  cloud list to generate
+ * @return ::OC_STACK_OK on success,  error indication otherwise
  */
 OCStackResult CBORPayloadToCloud(const uint8_t *cborPayload, size_t size, OicCloud_t **clouds);
 
 /**
- * The Cloud thread
- *
- * @param[in] data      OicCloud_t
- * @return  NULL
- */
-void *CloudStart(void *data);
-
-/**
  * Cloud find
+ * Find if cloud is present in list
  *
- * @param[in] cloud list
- * @param[in] cloud to find
- * @return  NULL if not find
+ * @param[in] list  cloud list
+ * @param[in] cloud cloud to find
+ * @return  clout, or NULL if not found
  */
 OicCloud_t *CloudFind(OicCloud_t *list, const OicCloud_t *cloud);
 
 /**
- * Cloud status
+ * Format the status of a cloud into a string
  *
- * @param[in] cloud
- * @return const char * status
+ * @param[in] cloud cloud pointer
+ * @return string indicating status
  */
 const char *GetCloudStatus(const OicCloud_t *cloud);
 

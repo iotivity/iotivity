@@ -24,11 +24,16 @@
 #include <jni.h>
 #include <string>
 
+/**
+ * @class JniString
+ */
 class JniString
 {
     public:
+        /** constructor */
         JniString(JNIEnv *env, jstring &string);
         ~JniString();
+        /** This method is to get the string information */
         std::string get();
 
     private:

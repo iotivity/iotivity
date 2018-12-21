@@ -19,13 +19,14 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 Import('env')
+build_dir = env.get('BUILD_DIR')
 
 cjson_env = env.Clone()
-
 if cjson_env.get('TARGET_OS') in ['windows', 'msys_nt']:
     # Macro needed for Windows builds to avoid __declspec(dllexport)
     # and __declspec(dllimport) for cJSON APIs.
     cjson_env.AppendUnique(CPPDEFINES=['CJSON_HIDE_SYMBOLS'])
 
-libcjson = cjson_env.StaticLibrary('cjson', ['cJSON.c'], OBJPREFIX='libcjson_')
-cjson_env.InstallTarget(libcjson, 'cjson')
+libcjson = cjson_env.StaticLibrary(build_dir + 'cjson', ['cJSON.c'],
+                                   OBJPREFIX='libcjson_')
+cjson_env.UserInstallTargetLib(libcjson)

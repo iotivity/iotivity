@@ -21,6 +21,8 @@
  */
 package org.iotivity.cloud.accountserver.resources.credprov.cert;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x509.Extension;
@@ -45,7 +47,6 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -70,12 +71,13 @@ import static org.iotivity.cloud.accountserver.resources.credprov.cert.Certifica
  * personal certificate, issued by CA certificate and certificate chain.
  */
 public class CertificateResource extends Resource {
+    private final static Logger                     Log         = LoggerFactory.getLogger(CertificateResource.class);
 
     /**
      * This constant object is used for parsing cbor payload to Map object and to
      * encoding map object to cbor format.
      */
-    private static final Cbor<Map<String, Object>> MAP_CBOR = new Cbor<>();
+    private static final Cbor<Map<String, Object>>  MAP_CBOR    = new Cbor<>();
 
     /**
      * Inserts BouncyCastleProvider into 0 position in security provider list,
@@ -90,7 +92,7 @@ public class CertificateResource extends Resource {
                 CertificateStorage.load();
             }
         } catch (GeneralSecurityException | IOException | OperatorCreationException e) {
-            Log.e(e.getMessage());
+            Log.error(e.getMessage());
         }
     }
 
@@ -179,7 +181,7 @@ public class CertificateResource extends Resource {
                                     try {
                                         CrlManager.CRL_MANAGER.revoke(certificateTable.getSerialNumber());
                                     } catch (CRLException | OperatorCreationException e) {
-                                        Log.e(e.getMessage() + e.getClass());
+                                        Log.error(e.getMessage() + e.getClass());
                                     }
                                     certificateManager.update(certificateTable, true);
                                 }
@@ -208,12 +210,12 @@ public class CertificateResource extends Resource {
                                                 ContentFormat.APPLICATION_CBOR,
                                                 MAP_CBOR.encodingPayloadToCbor(certificateManager.getPayLoad()));
                                     } catch (GeneralSecurityException | OperatorCreationException | CertIOException e) {
-                                        Log.e(e.getMessage());
+                                        Log.error(e.getMessage());
                                     }
                                 }
                             }
                         } catch (IOException e) {
-                            Log.e(e.getMessage());
+                            Log.error(e.getMessage());
                         }
                     }
                 }

@@ -22,6 +22,11 @@
  * @file
  * This file contains the APIs for routing message parser.
  */
+
+/** @addtogroup routingmanager
+ * @{
+ */
+
 #ifndef ROUTING_MESSAGE_PARSER_H_
 #define ROUTING_MESSAGE_PARSER_H_
 
@@ -102,6 +107,5 @@ void RMPFreePayload(OCRepPayload *payload);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-
-#endif /* ROUTING_MESSAGE_PARSER_H_ */
-
+/// @}
+#endif // ROUTING_MESSAGE_PARSER_H_

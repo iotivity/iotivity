@@ -25,23 +25,24 @@ import java.net.InetSocketAddress;
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.device.HttpDevice;
 import org.iotivity.cloud.base.protocols.http.HCProxyHandler;
 import org.iotivity.cloud.base.protocols.http.HttpLogHandler;
-import org.iotivity.cloud.util.Log;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 
 public class HttpServer extends Server {
-
+    private final static Logger Log = LoggerFactory.getLogger(HttpServer.class);
     public static ConcurrentHashMap<String, HttpDevice> httpDeviceMap
     = new ConcurrentHashMap<String, HttpDevice>(); //Key=SID, Value=HttpDevice
 
     public HttpServer(InetSocketAddress inetSocketAddress) {
         super(inetSocketAddress);
-        Log.i("HTTP-to-CoAP Proxy is enabled.");
+        Log.info("HTTP-to-CoAP Proxy is enabled.");
 
         Thread sessionTimeoutCheckThread
         = new Thread(new SessionTimeoutCheck());
@@ -57,7 +58,7 @@ public class HttpServer extends Server {
         public void run() {
 
             while (true) {
-                Log.v("HTTP Session registry check is started");
+                Log.trace("HTTP Session registry check is started");
 
                 Enumeration<String> sessionIdList = httpDeviceMap.keys();
 
@@ -70,7 +71,7 @@ public class HttpServer extends Server {
                     }
                 }
 
-                Log.v("HTTP Session registry check is ended");
+                Log.trace("HTTP Session registry check is ended");
 
                 try { // Sleep for 1 day
                     Thread.sleep(1000L * 3600L * 24L);

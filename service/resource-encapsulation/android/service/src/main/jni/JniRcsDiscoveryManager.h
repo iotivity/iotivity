@@ -23,9 +23,19 @@
 
 #include <jni.h>
 
+/**
+ * @class JNIEnvWrapper
+ */
 class JNIEnvWrapper;
 
+/**
+ * Initialize rcs discovery manager
+ */
 void initRCSDiscoveryManager(JNIEnvWrapper*);
+
+/**
+ * clear rcs discovery manager
+ */
 void clearRCSDiscoveryManager(JNIEnvWrapper*);
 
 #ifdef __cplusplus

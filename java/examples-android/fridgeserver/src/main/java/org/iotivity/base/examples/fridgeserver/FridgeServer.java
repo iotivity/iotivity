@@ -60,8 +60,6 @@ public class FridgeServer extends Activity {
                 this, //context
                 ServiceType.IN_PROC,
                 ModeType.SERVER,
-                "0.0.0.0", // bind to all available interfaces
-                0,
                 QualityOfService.LOW);
         logMessage("Configuring platform");
         OcPlatform.Configure(cfg);

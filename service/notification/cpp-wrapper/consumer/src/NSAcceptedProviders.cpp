@@ -29,14 +29,18 @@ namespace OIC
     {
         NSAcceptedProviders::NSAcceptedProviders(const NSAcceptedProviders &providers)
         {
-            removeProviders();
-            m_providers.insert((providers.getProviders()).begin(), (providers.getProviders()).end());
+            std::lock_guard<std::mutex> lock(m_mutex);
+            std::lock_guard<std::mutex> lock2(providers.m_mutex);
+            m_providers.clear();
+            m_providers = providers.m_providers;
         }
 
         NSAcceptedProviders &NSAcceptedProviders::operator=(const NSAcceptedProviders &providers)
         {
-            removeProviders();
-            this->m_providers.insert((providers.getProviders()).begin(), (providers.getProviders()).end());
+            std::lock_guard<std::mutex> lock(m_mutex);
+            std::lock_guard<std::mutex> lock2(providers.m_mutex);
+            m_providers.clear();
+            m_providers = providers.m_providers;
             return *this;
         }
 

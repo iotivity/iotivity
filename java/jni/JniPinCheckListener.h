@@ -33,7 +33,7 @@ class JniPinCheckListener
         JniPinCheckListener(JNIEnv *, jobject);
         ~JniPinCheckListener();
 
-        void PinCallback(char*, size_t);
+        void PinCallback(OicUuid_t, char*, size_t);
     private:
         jobject m_jListener;
 };

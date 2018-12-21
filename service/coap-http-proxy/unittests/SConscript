@@ -103,7 +103,7 @@ CoAP_unit_test_src = CoAP_test_env.Glob('./CoAPHttpUnitTest.cpp')
 CoAP_unit_test = CoAP_test_env.Program('CoAP_unit_test', CoAP_unit_test_src)
 Alias("CoAP_unit_test", CoAP_unit_test)
 CoAP_test_env.AppendTarget('CoAP_unit_test')
-CoAP_test_env.UserInstallTargetExtra(CoAP_unit_test)
+CoAP_test_env.UserInstallTargetExtra(CoAP_unit_test, 'tests/service/coap-http-proxy')
 
 if CoAP_test_env.get('TEST') == '1':
     if target_os in ['linux']:

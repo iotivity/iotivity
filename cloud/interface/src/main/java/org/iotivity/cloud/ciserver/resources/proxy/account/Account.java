@@ -22,6 +22,7 @@
 package org.iotivity.cloud.ciserver.resources.proxy.account;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.Device;
@@ -47,6 +48,10 @@ public class Account extends Resource {
 
     public Account() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI));
+    }
+
+    public Account(List<String> pathSegments) {
+        super(pathSegments);
     }
 
     class RDReceiveHandler implements IResponseEventHandler {

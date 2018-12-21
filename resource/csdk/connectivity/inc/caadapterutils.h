@@ -52,6 +52,12 @@
 #include "uarraylist.h"
 #include "cacommonutil.h"
 
+#ifdef __webos__
+#include <luna-service2/lunaservice.h>
+#include <pbnjson.h>
+#include "cathreadpool.h"
+#endif // __webos__
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -314,6 +320,27 @@ void CALogAdapterTypeInfo(CATransportAdapter_t adapter);
  * @return      ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAGetIpv6AddrScopeInternal(const char *addr, CATransportFlags_t *scopeLevel);
+
+#ifdef __webos__
+/**
+ * Initialize Luna service.
+ * @param[in] handle The thread pool structure.
+ * @return CA_STATUS_OK on success, or an appropriate error code on failure.
+ *
+ */
+CAResult_t CAInitializeLS(ca_thread_pool_t handle);
+
+/**
+ * Terminate Luna service.
+ */
+void CATerminateLS();
+
+/**
+ * Get Luna service handle.
+ * @return Luna service handle.
+ */
+LSHandle* CAGetLSHandle();
+#endif // __webos__
 
 #ifdef __cplusplus
 } /* extern "C" */

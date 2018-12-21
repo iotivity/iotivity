@@ -1,0 +1,167 @@
+API Docs - com.exampel.service.iotivity.server
+
+
+startServer
+
+    To Start iotivity server with iotivity-node
+
+    @b Syntax \n
+    luna://com.example.service.iotivity.server/startServer
+
+    @code
+    {
+    }
+    @endcode
+    @param
+        Parameter   |Requirement    |Type    | Description
+        ----------------------------------------------------------
+        subscribe   |Required       |boolean |
+    @return
+    <b> For a call: </b>
+    @code
+    {
+        "returnValue"   : boolean,
+        "subscribed" : boolean,
+    }
+
+    @endcode
+    @param              returnValue
+    Indicates if the call was succesful or not.
+    @param              subscribed
+    Detailed information for removed resources.
+
+        Parameter         |Requirement    |Type   | Description
+        ----------------------------------------------------------
+        returnValue       |Required       |boolean| true means success, false means faild
+        subscribed        |Required       |boolean| value of requested resource
+    @remarks
+    The \e returnValue will be true as long as the syntax is correct, even if the process ID is not a valid one.
+
+    @b Examples:
+    @code
+    luna-send -i -f luna://com.example.service.iotivity.server/startServer '{"subscribe":true}'&
+    @endcode
+
+    Example response for a succesful call:
+    @code
+    {
+        "resources": [
+        ],
+        "subscribed": true,
+        "returnValue": true
+    }
+    {
+        "resources": [
+            {
+                "interfaces": [
+                    "oic.if.baseline"
+                ],
+                "types": [
+                    "core.fan"
+                ],
+                "uri": "a/fan"
+            }
+        ],
+        "subscribed": true,
+        "returnValue": true
+    }
+    @endcode
+
+
+createResource
+
+    To create resource
+
+    @b Syntax \n
+    luna://com.example.service.iotivity.server/createResource
+
+    @code
+    {
+    }
+    @endcode
+    @param
+        Parameter   |Requirement    |Type   | Description
+        ----------------------------------------------------------
+        uri         |Required       |string |
+        types       |Required       |string |
+        question    |Required       |string |
+        answer      |Required       |string |
+        observable  |Optional       |boolean|
+    @return
+    <b> For a call: </b>
+    @code
+    {
+        "returnValue"   : boolean,
+    }
+
+    @endcode
+    @param              returnValue
+    Indicates if the call was succesful or not.
+    @param              subscribed
+    Detailed information for removed resources.
+
+        Parameter         |Requirement    |Type   | Description
+        ----------------------------------------------------------
+        returnValue       |Required       |boolean| true means success, false means faild
+    @remarks
+    The \e returnValue will be true as long as the syntax is correct, even if the process ID is not a valid one.
+
+    @b Examples:
+    @code
+    luna-send -1 -f luna://com.example.service.iotivity.server/createResource '{"uri":"a/fan","question":"abc","answer":"123","observable":true,"types":"core.fan"}'
+    @endcode
+
+    Example response for a succesful call:
+    @code
+    {
+        "returnValue": true
+    }
+    @endcode
+
+
+deleteResource
+
+    To delete resource with specific URI
+
+    @b Syntax \n
+    luna://com.example.service.iotivity.server/deleteResource
+
+    @code
+    {
+    }
+    @endcode
+    @param
+        Parameter   |Requirement    |Type   | Description
+        ----------------------------------------------------------
+        uri         |Required       |string |
+
+    @return
+    <b> For a call: </b>
+    @code
+    {
+        "returnValue"   : boolean,
+    }
+
+    @endcode
+    @param              returnValue
+    Indicates if the call was succesful or not.
+    @param              subscribed
+    Detailed information for removed resources.
+
+        Parameter         |Requirement    |Type   | Description
+        ----------------------------------------------------------
+        returnValue       |Required       |boolean| true means success, false means faild
+    @remarks
+    The \e returnValue will be true as long as the syntax is correct, even if the process ID is not a valid one.
+
+    @b Examples:
+    @code
+    luna-send -1 -f luna://com.example.service.iotivity.server/deleteResource '{"uri":"/a/fan"}'
+    @endcode
+
+    Example response for a succesful call:
+    @code
+    {
+        "returnValue": true
+    }
+    @endcode

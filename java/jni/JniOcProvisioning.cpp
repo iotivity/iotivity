@@ -28,6 +28,7 @@
 #include "oxmverifycommon.h"
 #include "JniDisplayVerifyNumListener.h"
 #include "JniConfirmNumListener.h"
+#include "OCProvisioningManager.hpp"
 #include <climits>
 
 using namespace OC;
@@ -38,11 +39,14 @@ static JniDisplayPinListener *jniDisplayPinListener = nullptr;
 static JniDisplayVerifyNumListener *jniDisplayMutualVerifyNumListener = nullptr;
 static JniConfirmNumListener *jniConfirmMutualVerifyNumListener = nullptr;
 
-void JNICALL Callback(char *buf, size_t size)
+static InputPinCallbackHandle inputPinCallbackHandle = NULL;
+static DisplayPinCallbackHandle displayPinCallbackHandle = NULL;
+
+void JNICALL Callback(OicUuid_t deviceId, char *buf, size_t size)
 {
     if (jniPinListener)
     {
-        jniPinListener->PinCallback(buf, size);
+        jniPinListener->PinCallback(deviceId, buf, size);
     }
     else
     {
@@ -119,14 +123,11 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_ownershipTransferCB
             {
                 delete jniPinListener;
                 jniPinListener = new JniPinCheckListener(env, jListener);
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-                result = OCSecure::setInputPinCallback(Callback);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
+                if (inputPinCallbackHandle)
+                {
+                    OCSecure::deregisterInputPinCallback(inputPinCallbackHandle);
+                }
+                result = OCSecure::registerInputPinCallback(Callback, &inputPinCallbackHandle);
             }
             else
             {
@@ -507,19 +508,16 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
 
     try
     {
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-        OCStackResult result = OCSecure::setDisplayPinCB(displayPinCB);
+        if (displayPinCallbackHandle)
+        {
+            OCSecure::deregisterDisplayPinCallback(displayPinCallbackHandle);
+        }
+        OCStackResult result = OCSecure::registerDisplayPinCallback(displayPinCB, &displayPinCallbackHandle);
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Failed to set displayPinListener");
             return;
         }
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
     }
     catch (OCException& e)
     {

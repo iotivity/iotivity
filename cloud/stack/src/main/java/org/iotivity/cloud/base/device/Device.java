@@ -25,8 +25,13 @@ import org.iotivity.cloud.base.protocols.IResponse;
 
 import io.netty.channel.ChannelHandlerContext;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public abstract class Device implements IResponseEventHandler {
     protected ChannelHandlerContext ctx;
+
+    private Map<String,Object> params = new ConcurrentHashMap<>();
 
     public Device(ChannelHandlerContext ctx) {
         this.ctx = ctx;
@@ -54,4 +59,18 @@ public abstract class Device implements IResponseEventHandler {
     public abstract String getUserId();
 
     public abstract String getAccessToken();
+
+
+    public void setParameter(final String key, final Object value){
+        this.params.put(key,value);
+    }
+
+    public <T> T getParameter(final String key){
+        return (T)this.params.get(key);
+    }
+
+    public boolean existParameter(final String key){
+        return this.params.containsKey(key);
+    }
+
 }

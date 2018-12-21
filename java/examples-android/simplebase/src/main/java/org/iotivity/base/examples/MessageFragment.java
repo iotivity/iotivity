@@ -517,8 +517,6 @@ public class MessageFragment extends Fragment implements OcResource.OnGetListene
         PlatformConfig cfg = new PlatformConfig(mActivity, mContext,
                 ServiceType.IN_PROC,
                 type,
-                Common.IP_ADDRESS,
-                Common.IP_PORT,
                 mQos);
         OcPlatform.Configure(cfg);
     }

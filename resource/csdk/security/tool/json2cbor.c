@@ -1189,10 +1189,9 @@ static OicSecSp_t *JSONToSpBin(const char *jsonStr)
 
     cJSON *jsonRoot = NULL;
     cJSON *jsonSp = NULL;
-    cJSON *jsonActiveProfileName = NULL;
+    cJSON *jsonCurrentProfileName = NULL;
     cJSON *jsonSupportedProfilesArray = NULL;
     cJSON *jsonProfileName = NULL;
-    cJSON *jsonCredid = NULL;
 
     OicSecSp_t *sp = NULL;
 
@@ -1222,39 +1221,18 @@ static OicSecSp_t *JSONToSpBin(const char *jsonStr)
         VERIFY_NOT_NULL(TAG, (sp->supportedProfiles[i]), ERROR);
     }
 
-    // Active Profile
+    // Current Profile
 
-    jsonActiveProfileName = cJSON_GetObjectItem(jsonSp, OIC_JSON_ACTIVE_SP_NAME);
-    VERIFY_NOT_NULL(TAG, jsonActiveProfileName, ERROR);
-    VERIFY_SUCCESS(TAG, (cJSON_String == jsonActiveProfileName->type), ERROR);
-    sp->activeProfile = OICStrdup(jsonActiveProfileName->valuestring);
-    VERIFY_NOT_NULL(TAG, (sp->activeProfile), ERROR);
+    jsonCurrentProfileName = cJSON_GetObjectItem(jsonSp, OIC_JSON_CURRENT_SP_NAME);
+    VERIFY_NOT_NULL(TAG, jsonCurrentProfileName, ERROR);
+    VERIFY_SUCCESS(TAG, (cJSON_String == jsonCurrentProfileName->type), ERROR);
+    sp->currentProfile = OICStrdup(jsonCurrentProfileName->valuestring);
+    VERIFY_NOT_NULL(TAG, (sp->currentProfile), ERROR);
 
-    if (0 > ProfileIdx(sp->supportedLen, sp->supportedProfiles, sp->activeProfile))
+    if (0 > ProfileIdx(sp->supportedLen, sp->supportedProfiles, sp->currentProfile))
     {
-        OIC_LOG_V(ERROR, TAG, "sp active profile %s not contained in supported profile list", sp->activeProfile);
+        OIC_LOG_V(ERROR, TAG, "sp current profile %s not contained in supported profile list", sp->currentProfile);
         goto exit;
-    }
-
-    // credid
-
-    jsonCredid = cJSON_GetObjectItem(jsonSp, OIC_JSON_SP_CREDID_NAME);
-    if (NULL == jsonCredid)
-    {
-        if (true == SpRequiresCred(sp->activeProfile))
-        {
-            OIC_LOG(ERROR, TAG, "sp active profile requires cred, but credid not present in json");
-            goto exit;
-        }
-        else
-        {
-            sp->credid = 0;
-        }
-    }
-    else
-    {
-        VERIFY_SUCCESS(TAG, (cJSON_Number == jsonCredid->type), ERROR);
-        sp->credid = (uint16_t)jsonCredid->valueint;
     }
 
     ret = OC_STACK_OK;

@@ -49,8 +49,6 @@ public class SmokeTest extends InstrumentationTestCase {
                 getInstrumentation().getContext(),
                 ServiceType.IN_PROC,
                 ModeType.CLIENT_SERVER,
-                "0.0.0.0",
-                0,
                 QualityOfService.LOW);
 
         OcPlatform.Configure(cfg);

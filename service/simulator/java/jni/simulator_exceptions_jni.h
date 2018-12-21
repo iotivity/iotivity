@@ -19,10 +19,7 @@
  ******************************************************************/
 
 /**
- * @file   simulator_jni_util.h
- *
- * @brief  This file contains the utility functions for conversions from java to CPP
- * and viceversa
+ * @file   simulator_exceptions_jni.h
  */
 
 #ifndef SIMULATOR_EXCEPTIONS_JNI_H_
@@ -32,14 +29,39 @@
 
 #include "simulator_error_codes.h"
 
+/**
+ * throw the simulator exception
+ * @param env          JNI interface pointer
+ * @param code         simulator result value
+ */
 void ThrowSimulatorException(JNIEnv *env, SimulatorResult code, const char *message);
 
+/**
+ * throw the invalid argument exception
+ * @param env          JNI interface pointer
+ * @param code         simulator result value
+ */
 void ThrowInvalidArgsException(JNIEnv *env, SimulatorResult code, const char *message);
 
+/**
+ * throw the not supported exception
+ * @param env          JNI interface pointer
+ * @param code         simulator result value
+ */
 void ThrowNoSupportException(JNIEnv *env, const char *message);
 
+/**
+ * throw the operation in progress exception
+ * @param env          JNI interface pointer
+ * @param code         simulator result value
+ */
 void ThrowOperationInProgressException(JNIEnv *env, const char *message);
 
+/**
+ * throw the bad object exception
+ * @param env          JNI interface pointer
+ * @param code         simulator result value
+ */
 void ThrowBadObjectException(JNIEnv *env, const char *message);
 
 #endif

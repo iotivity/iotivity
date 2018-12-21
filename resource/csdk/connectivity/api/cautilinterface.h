@@ -23,9 +23,14 @@
  *
  * This file contains APIs to handle adapters of connectivity abstraction layer
  * for network operations.
- * Application can use functions including network callback, BLE scan/advertisements,
- * set configurations of the adapters,  set port number Etc.
+ * Applications can use functions including network callback, 
+ * BLE scan/advertisements, set configurations of the adapters,
+ * set port number and more.
  */
+
+/** @addtogroup connectivity_abstraction
+ */
+/// @{
 
 #ifndef CA_UTILS_INTERFACE_H_
 #define CA_UTILS_INTERFACE_H_
@@ -289,6 +294,6 @@ void CAUtilSetLogLevel(CAUtilLogLevel_t level, bool hidePrivateLogEntries);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif //__cplusplus
-
-#endif /* CA_UTILS_INTERFACE_H_ */
+/// @}
+#endif // CA_UTILS_INTERFACE_H_
 

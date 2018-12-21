@@ -68,7 +68,7 @@ if target_os == 'android':
         'log'
     ])
 
-if target_os in ['linux', 'tizen']:
+if target_os in ['linux', 'tizen', 'webos']:
     ocprovision_env.AppendUnique(LIBS=[
         'oc',
         'octbstack',
@@ -109,7 +109,7 @@ ocprovision_env.UserInstallTargetLib(ocprovision, 'libocprovision')
 ocprovision_env.UserInstallTargetHeader(
     '../include/OCProvisioningManager.hpp', 'resource', 'OCProvisioningManager.hpp')
 
-if target_os not in ['msys_nt', 'windows']:
+if target_os in ['linux', 'msys_nt', 'tizen', 'webos']:
     if ocprovision_env.get('WITH_TCP') == True and ocprovision_env.get('WITH_CLOUD') == True:
         ocprovision_env.PrependUnique(LIBS=['cloud'])
 

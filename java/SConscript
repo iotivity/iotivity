@@ -145,9 +145,9 @@ def find_scons_java_version(env):
     # SCons 2.1.0 Java 1.6 support (older versions of SCons were not investigated)
     # SCons 2.3.0 Java 1.7 support added
     # SCons 2.3.3 Java 1.8 support added
-    # Support for Java 1.9 not yet added. At this time JDK1.9 has not be released
-    # Until support for Java 1.9 is officially added to SCons this script will
-    # use the the 1.8 for the JAVAVERSION.
+    # Versions were renamed again, the successor releases are 9 and 10
+    # at scons 3.0, 1.8 is still the max version supported in scons,
+    # so use 1.8 (or the max for executing scons) for the JAVAVERSION for these.
     print('Trying to discover the version of Java used for compilation')
     javac_cmd = os.path.join(env['JAVA_HOME'], 'bin', 'javac')
     try:
@@ -163,23 +163,42 @@ def find_scons_java_version(env):
         return None
     for line in SCons.Util.to_String(java_ver).split('\n'):
         # handle building with versions of Java not supported by SCons
-        if ' 1.9' in line:
-            print('\tJava version 1.9 found.')
+        if ' 10' in line:
+            print('\tJava version 10 found.')
             if StrictVersion(scons_version) <= StrictVersion('2.2.0'):
-                print(('\tJava 1.9 not supported in SCons ' + scons_version + ', max supported Java 1.6.'))
+                print(('\tJava 10 not supported in SCons ' + scons_version + ', max supported Java 1.6.'))
                 print('\tSetting JAVAVERSION to 1.6')
                 return '1.6'
             if StrictVersion(scons_version) <= StrictVersion('2.3.2'):
-                print(('\tJava 1.9 not supported in SCons ' + scons_version + ', max supported Java 1.7.'))
+                print(('\tJava 10 not supported in SCons ' + scons_version + ', max supported Java 1.7.'))
                 print('\tSetting JAVAVERSION to 1.7')
                 return '1.7'
-            if StrictVersion(scons_version) > StrictVersion('2.5.1'):
-                # only printing this if Java 1.9 is found. Newer versions of
+            if StrictVersion(scons_version) > StrictVersion('3.0.1'):
+                # only printing this if Java 10 is found. Newer versions of
                 # scons should be able to handle older versions of Java
-                print('\t***** Unrecognized version of SCons found in java version Check. Build script may need to be updated *****')
+                print('\t***** Unrecognized version of SCons found in java version check. Build script may need to be updated *****')
                 # drop through to the next if statement.
             if StrictVersion(scons_version) > StrictVersion('2.3.2'):
-                print(('\tJava 1.9 not supported in SCons ' + scons_version + ', max supported Java 1.8.'))
+                print(('\tJava 10 not supported in SCons ' + scons_version + ', max supported Java 1.8.'))
+                print('\tSetting JAVAVERSION to 1.8')
+                return '1.8'
+        if ' 9' in line:
+            print('\tJava version 9 found.')
+            if StrictVersion(scons_version) <= StrictVersion('2.2.0'):
+                print(('\tJava 9 not supported in SCons ' + scons_version + ', max supported Java 1.6.'))
+                print('\tSetting JAVAVERSION to 1.6')
+                return '1.6'
+            if StrictVersion(scons_version) <= StrictVersion('2.3.2'):
+                print(('\tJava 9 not supported in SCons ' + scons_version + ', max supported Java 1.7.'))
+                print('\tSetting JAVAVERSION to 1.7')
+                return '1.7'
+            if StrictVersion(scons_version) > StrictVersion('3.0.1'):
+                # only printing this if Java 9 is found. Newer versions of
+                # scons should be able to handle older versions of Java
+                print('\t***** Unrecognized version of SCons found in java version check. Build script may need to be updated *****')
+                # drop through to the next if statement.
+            if StrictVersion(scons_version) > StrictVersion('2.3.2'):
+                print(('\tJava 9 not supported in SCons ' + scons_version + ', max supported Java 1.8.'))
                 print('\tSetting JAVAVERSION to 1.8')
                 return '1.8'
         if ' 1.8' in line:
@@ -214,11 +233,11 @@ if target_os == 'android':
 
 jdk_env = None
 if target_os in ['android']:
-    # IOT-2559 Why does Gradle build require importing the os.environ
-    jdk_env = Environment(ENV=os.environ)
+    # Gradle needs some settings in the environment:
+    jdk_env = env.Clone(ENV={'JAVA_HOME':env['JAVA_HOME'],
+                             'ANDROID_HOME':env['ANDROID_HOME']})
 else:
     jdk_env = env.Clone()
-
 
 cmdBuildApi = []
 cmdBuildExamples = []

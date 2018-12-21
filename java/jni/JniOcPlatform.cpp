@@ -474,19 +474,14 @@ void RemoveOnObserveListener(JNIEnv* env, jobject jListener)
 * Signature: (IILjava/lang/String;IILjava/lang/String;Ljava/lang/String;I)V
 */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
-(JNIEnv *env, jclass clazz, jint jServiceType, jint jModeType, jstring jIpAddress, jint jPort,
+(JNIEnv *env, jclass clazz, jint jServiceType, jint jModeType,
  jint jQOS, jstring jDbPath, jstring jIntrospectionPath, jint jTransport)
 {
     OC_UNUSED(clazz);
     LOGI("OcPlatform_configure");
 
-    std::string ipAddress;
     std::string dbfile;
     std::string introspectionfile;
-    if (jIpAddress)
-    {
-        ipAddress = env->GetStringUTFChars(jIpAddress, nullptr);
-    }
     if (jDbPath)
     {
         dbfile = env->GetStringUTFChars(jDbPath, nullptr);
@@ -497,27 +492,13 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
         introspectionfile = env->GetStringUTFChars(jIntrospectionPath, nullptr);
         JniOcSecurity::StoreIntrospection(introspectionfile);
     }
-    uint16_t port = 0;
-    if (jPort > 0)
-    {
-        port = static_cast<uint16_t>(jPort);
-    }
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
     PlatformConfig cfg{
         JniUtils::getServiceType(env, jServiceType),
         JniUtils::getModeType(env, jModeType),
-        ipAddress,
-        port,
         JniUtils::getOCTransportAdapter(jTransport),
         JniUtils::getQOS(env, static_cast<int>(jQOS)),
         JniOcSecurity::getOCPersistentStorage()
     };
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
     OCPlatform::Configure(cfg);
 }
 

@@ -659,26 +659,46 @@ namespace OIC
                 }
             }
 
+            /**
+             * This method is to get the selected OT method
+             * @return selected otm method
+             */
             OicSecOxm_t getSelectedOTMethod() const
             {
                 return m_selectedOTMethod;
             }
 
+            /**
+             * This method is to check if MOT is enabled or not
+             * @return boolean value
+             */
             bool isMOTEnabled() const
             {
                 return m_isMOTEnabled;
             }
 
+            /**
+             * This method is to check if the device is owned or not
+             * @return boolean value
+             */
             bool isOwnedDevice() const
             {
                 return m_isOwned;
             }
 
+            /**
+             * This method is to get the owner Id
+             * @return the owner id
+             */
             const std::string getOwnerID()
             {
                 return m_ownerID;
             }
 #endif
+            /**
+             * This method is to get the device UUID
+             * @return device UUID
+             */
             const std::string getDeviceUUID()
             {
                 return m_devUUID;
@@ -1345,6 +1365,12 @@ namespace OIC
             {
             }
 
+            /**
+             * This method is to set the MOT method
+             * @param[in] method     method to set
+             *
+             * @return ES_OK if success, othewise ES_ERROR
+             */
             ESResult setMOTMethod(OicSecOxm_t method)
             {
 #ifdef MULTIPLE_OWNER
@@ -1362,6 +1388,13 @@ namespace OIC
 #endif
             }
 
+            /**
+             * This method is to set the MOT method
+             * @param[in] method     method to set
+             * @param[in] pin        pin to set
+             *
+             * @return ES_OK if success, othewise ES_ERROR
+             */
             ESResult setMOTMethod(OicSecOxm_t method, const std::string& pin)
             {
 #ifdef MULTIPLE_OWNER
@@ -1381,11 +1414,19 @@ namespace OIC
 #endif
             }
 
+            /**
+             * This method is to get the MOT method
+             * @return MOT method
+             */
             OicSecOxm_t getMOTMethod() const
             {
                 return m_MOTMethod;
             }
 
+            /**
+             * This method is to get the configured pin information
+             * @return preconfigured pin detail
+             */
             std::string getPreConfiguredPin() const
             {
                 return m_preconfiguredPin;

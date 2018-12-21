@@ -84,9 +84,8 @@ public class MainActivity extends Activity {
     }
 
     private void configurePlatform() {
-        String ipAddress = "0.0.0.0";
         OcPlatform.Configure(new PlatformConfig(getApplicationContext(),
-                ServiceType.IN_PROC, ModeType.CLIENT_SERVER, ipAddress, 0,
+                ServiceType.IN_PROC, ModeType.CLIENT_SERVER,
                 QualityOfService.LOW));
 
         Log.i(LOG_TAG, "Configuration done Successfully");

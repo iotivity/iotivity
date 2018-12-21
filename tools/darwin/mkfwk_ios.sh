@@ -49,6 +49,8 @@ LIBRCS_SERVER=librcs_server
 LIBRESOURCE_DIRECTORY=libresource_directory
 LIBROUTINGMANAGER=libroutingmanager
 LIBSCENE_MANAGER=libscene_manager
+LIBOCPMAPI_INTERNAL=libocpmapi_internal
+LIBOCPMAPI=libocpmapi
 
 LIPO="xcrun -sdk iphoneos lipo"
 
@@ -126,20 +128,22 @@ lipolite $OUTDIR/objs/$ARCH "$OUTDIR/$ARCH/$BUILD/$LIBRCS_SERVER.a"
 lipolite $OUTDIR/objs/$ARCH "$OUTDIR/$ARCH/$BUILD/$LIBRESOURCE_DIRECTORY.a"
 lipolite $OUTDIR/objs/$ARCH "$OUTDIR/$ARCH/$BUILD/$LIBROUTINGMANAGER.a"
 lipolite $OUTDIR/objs/$ARCH "$OUTDIR/$ARCH/$BUILD/$LIBSCENE_MANAGER.a"
+lipolite $OUTDIR/objs/$ARCH "$OUTDIR/$ARCH/$BUILD/$LIBOCPMAPI_INTERNAL.a"
+lipolite $OUTDIR/objs/$ARCH "$OUTDIR/$ARCH/$BUILD/$LIBOCPMAPI.a"
 ar -r $OUTDIR/objs/$ARCH.a $OUTDIR/objs/$ARCH/*.o
 done
 
 
 echo "Lipoing library into $FRAMEWORK_INSTALL_NAME..."
 $LIPO \
-	-create \
-        -arch armv7 "$OUTDIR/objs/armv7.a" \
-        -arch armv7s "$OUTDIR/objs/armv7s.a" \
-        -arch arm64 "$OUTDIR/objs/arm64.a" \
-        -arch i386 "$OUTDIR/objs/i386.a" \
-        -arch x86_64  "$OUTDIR/objs/x86_64.a" \
-        -output "$FRAMEWORK_INSTALL_NAME" \
-    || abort "Lipo $1 failed"
+       -create \
+       -arch armv7 "$OUTDIR/objs/armv7.a" \
+       -arch armv7s "$OUTDIR/objs/armv7s.a" \
+       -arch arm64 "$OUTDIR/objs/arm64.a" \
+       -arch i386 "$OUTDIR/objs/i386.a" \
+       -arch x86_64  "$OUTDIR/objs/x86_64.a" \
+       -output "$FRAMEWORK_INSTALL_NAME" \
+  || abort "Lipo $1 failed"
 
 echo rm -rf objs
 find $OUTDIR/objs -name "*.o" | xargs rm
@@ -169,20 +173,20 @@ cat > $FRAMEWORK_BUNDLE/Resources/Info.plist <<EOF
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-        <key>CFBundleDevelopmentRegion</key>
-        <string>English</string>
-        <key>CFBundleExecutable</key>
-        <string>${FRAMEWORK_NAME}</string>
-        <key>CFBundleIdentifier</key>
-        <string>org.iotivity</string>
-        <key>CFBundleInfoDictionaryVersion</key>
-        <string>6.0</string>
-        <key>CFBundlePackageType</key>
-        <string>FMWK</string>
-        <key>CFBundleSignature</key>
-        <string>????</string>
-        <key>CFBundleVersion</key>
-        <string>${FRAMEWORK_CURRENT_VERSION}</string>
+      <key>CFBundleDevelopmentRegion</key>
+      <string>English</string>
+      <key>CFBundleExecutable</key>
+      <string>${FRAMEWORK_NAME}</string>
+      <key>CFBundleIdentifier</key>
+      <string>org.iotivity</string>
+      <key>CFBundleInfoDictionaryVersion</key>
+      <string>6.0</string>
+      <key>CFBundlePackageType</key>
+      <string>FMWK</string>
+      <key>CFBundleSignature</key>
+      <string>????</string>
+      <key>CFBundleVersion</key>
+      <string>${FRAMEWORK_CURRENT_VERSION}</string>
 </dict>
 </plist>
 EOF

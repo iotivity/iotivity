@@ -56,17 +56,38 @@ invokeocplatform(FnT fn, ArgsT &&...args)
     }
 }
 
+/** OC namespace */
 namespace OC
 {
     class OCRepresentation;
 }
 
-std::string getPayloadString(const OC::OCRepresentation &);
+/**
+ * This methosd is to get the payload string
+ * @param[in] rep    oc representation
+ * @return payload value
+ */
+std::string getPayloadString(const OC::OCRepresentation &rep);
+/**
+ * This method is to get the type of payload string
+ * @param[in] type   payload type
+ * @return payload type value
+ */
 std::string getPayloadTypeString(OCPayloadType type);
+/**
+ * This method is to get the request string
+ * @param[in] queryParams   query parameters
+ * @param[in] rep           oc representation
+ * @return request value
+ */
 std::string getRequestString(const std::map<std::string, std::string> &queryParams,
                              const OC::OCRepresentation &rep);
+/**
+ * This method is to get the request string
+ * @param[in] queryParams   query parameters
+ * @return request value
+ */
 std::string getRequestString(const std::map<std::string, std::string> &queryParams);
-
 
 #define VALIDATE_INPUT(CONDITION, MSG) if (CONDITION) {throw InvalidArgsException(SIMULATOR_INVALID_PARAM, MSG);}
 #define VALIDATE_CALLBACK(CALLBACK) if (!CALLBACK){throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");}

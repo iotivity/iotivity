@@ -115,7 +115,11 @@ public class MQBrokerResourceTest {
 
         String[] arr = { "--topic", topic };
         TopicCommandOptions opts = new TopicCommandOptions(arr);
-        TopicCommand.deleteTopic(zkUtils, opts);
+        try {
+            TopicCommand.deleteTopic(zkUtils, opts);
+        }catch (final Exception e){
+            e.printStackTrace();
+        }
 
         zkClient.close();
         zkUtils.close();

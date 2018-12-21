@@ -23,8 +23,10 @@
 #
 ##
 import os
+import sys
 import SCons
 print("Processing using SCons version " + SCons.__version__)
+print('Python '+ sys.version.replace('\n','') + ' on '+sys.platform)
 
 # Load common build config
 SConscript('build_common/SConscript')
@@ -65,6 +67,8 @@ SConscript(build_dir + 'resource/SConscript')
 
 if target_os not in ['darwin','ios', 'android', 'msys_nt', 'windows']:
     SConscript(build_dir + 'examples/OICMiddle/SConscript')
+    if env.get('SECURED') == '1':
+        SConscript(build_dir + 'examples/OCFSecure/SConscript')
 
 java_build = None
 if (env.get('BUILD_JAVA') and env.get('JAVA_HOME')) or target_os == 'android':

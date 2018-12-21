@@ -26,14 +26,13 @@ extern "C" {
 
 typedef enum {
     SP_SUPPORTED_PROFILES = 0,
-    SP_ACTIVE_PROFILE,
-    SP_CRED_ID,
+    SP_CURRENT_PROFILE,
     SP_PROPERTY_COUNT
 } SpProperty_t;
 
 
 /**
- * Initialize credentiaspl resource by loading data from persistent storage.
+ * Initialize sp resource by loading data from persistent storage.
  *
  * @return ::OC_STACK_OK, if initialization is successful, else ::OC_STACK_ERROR if
  * initialization fails.
@@ -104,16 +103,6 @@ OCStackResult CBORPayloadToSp(const uint8_t *cborPayload,
                               const size_t size,
                               OicSecSp_t **sp,
                               bool *decodedProperties);
-
-
-/**
- * Determine if a particular security profile requires a supporting credential
- *
- * @param [i] spName    securituy profile name
- *
- * @return          true if supporting cred required, otherwise false
- */
-bool SpRequiresCred(char* spName);
 
 /**
  * Return the index of a profile withing a list of supported profiles

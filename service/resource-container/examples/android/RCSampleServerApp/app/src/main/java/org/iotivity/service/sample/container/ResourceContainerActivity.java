@@ -461,7 +461,7 @@ public class ResourceContainerActivity extends Activity {
 
     private void configurePlatform() {
         OcPlatform.Configure(new PlatformConfig(getApplicationContext(),
-                ServiceType.IN_PROC, ModeType.CLIENT_SERVER, "0.0.0.0", 0,
+                ServiceType.IN_PROC, ModeType.CLIENT_SERVER,
                 QualityOfService.LOW));
         Log.i(LOG_TAG, "Configuration done successfully");
     }

@@ -83,6 +83,14 @@ namespace OC
             if (!root)
             {
                 root = r.getPayload();
+                if (r.isCollectionResource())
+                {
+                    root->repType = PAYLOAD_REP_ARRAY;
+                }
+                else
+                {
+                    root->repType = PAYLOAD_REP_OBJECT_ARRAY;
+                }
             }
             else
             {
@@ -387,6 +395,26 @@ namespace OC
         }
 
         return root;
+    }
+
+    void OCRepresentation::setInterfaceType(const InterfaceType& ift)
+    {
+        m_interfaceType = ift;
+    }
+
+    InterfaceType OCRepresentation::getInterfaceType() const
+    {
+        return m_interfaceType;
+    }
+
+    void OCRepresentation::setIsCollectionResource(bool isColResource)
+    {
+        m_isCollectionResource = isColResource;
+    }
+
+    bool OCRepresentation::isCollectionResource() const
+    {
+        return m_isCollectionResource;
     }
 
     size_t calcArrayDepth(const size_t dimensions[MAX_REP_ARRAY_DEPTH])
@@ -863,13 +891,13 @@ namespace OC
     OCRepresentation::AttributeItem OCRepresentation::operator[](const std::string& key)
     {
         OCRepresentation::AttributeItem attr{key, m_values};
-        return std::move(attr);
+        return attr;
     }
 
     const OCRepresentation::AttributeItem OCRepresentation::operator[](const std::string& key) const
     {
         OCRepresentation::AttributeItem attr{key, m_values};
-        return std::move(attr);
+        return attr;
     }
 
     const std::string& OCRepresentation::AttributeItem::attrname() const

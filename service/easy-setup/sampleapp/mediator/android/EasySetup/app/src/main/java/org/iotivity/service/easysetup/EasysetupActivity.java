@@ -350,8 +350,6 @@ public class EasysetupActivity extends Activity
                 this,
                 ServiceType.IN_PROC,
                 ModeType.CLIENT_SERVER,
-                "0.0.0.0", // bind to all available interfaces
-                0,
                 QualityOfService.HIGH, filePath + OIC_CLIENT_JSON_DB_FILE);
         try {
             /*

@@ -172,10 +172,6 @@ CLEANUP:
         curl_slist_free_all(headers);
     }
 
-    free(rsp_body.memory);
-
-    free(rsp_header.memory);
-
     if (NULL != curl)
     {
         curl_easy_cleanup(curl);

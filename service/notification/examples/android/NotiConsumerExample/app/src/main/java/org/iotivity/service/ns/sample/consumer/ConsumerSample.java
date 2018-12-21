@@ -70,10 +70,8 @@ public class ConsumerSample
     }
 
     private void configurePlatform() {
-        String ipAddress = "0.0.0.0";
         PlatformConfig platformConfig = new PlatformConfig(mContext,
-                ServiceType.IN_PROC, ModeType.CLIENT_SERVER, ipAddress,
-                0, // Uses randomly available port
+                ServiceType.IN_PROC, ModeType.CLIENT_SERVER,
                 QualityOfService.LOW);
 
         Log.i(TAG, "Configuring platform.");

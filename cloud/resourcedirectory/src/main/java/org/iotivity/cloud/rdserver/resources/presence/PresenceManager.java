@@ -22,11 +22,12 @@
 package org.iotivity.cloud.rdserver.resources.presence;
 
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
+import org.bson.Document;
+import org.iotivity.cloud.rdserver.resources.directory.RDManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.base.protocols.IRequest;
@@ -36,7 +37,6 @@ import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.rdserver.Constants;
 import org.iotivity.cloud.rdserver.db.DBManager;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -49,6 +49,7 @@ import com.fasterxml.jackson.dataformat.cbor.CBORGenerator;
  *
  */
 public class PresenceManager {
+    private final static Logger           Log              = LoggerFactory.getLogger(PresenceManager.class);
     private static PresenceManager        mPresenceManager = new PresenceManager();
 
     private Cbor<HashMap<String, Object>> mCbor            = new Cbor<>();
@@ -63,7 +64,7 @@ public class PresenceManager {
         public IRequest mRequest;
     }
 
-    private static class PresenceInfo {
+    private class PresenceInfo {
 
         PresenceInfo() {
             mSubscriber = new HashMap<>();
@@ -72,18 +73,117 @@ public class PresenceManager {
         }
 
         // di , token, Subscriber list
-        private HashMap<String, HashMap<String, PresenceSubscriber>> mSubscriber;
+        protected HashMap<String, HashMap<String, PresenceSubscriber>> mSubscriber;
         // token, di list
-        private HashMap<String, List<String>>                        mSubscribedDevices;
-        private HashMap<String, Long>                                mSequenceNumber;
+        protected HashMap<String, List<String>>                        mSubscribedDevices;
+        protected HashMap<String, Long>                                mSequenceNumber;
+
+
+        public void subscribe(Device srcDevice, IRequest request,
+                              List<String> deviceIdList){
+            for (String deviceId : deviceIdList) {
+                HashMap<String, PresenceSubscriber> subscribers = mSubscriber
+                        .get(deviceId);
+
+                if (subscribers == null) {
+                    subscribers = new HashMap<>();
+                    mSubscriber.put(deviceId, subscribers);
+                }
+
+                subscribers.put(request.getRequestId(),
+                        new PresenceSubscriber(srcDevice, request));
+            }
+
+            mSubscribedDevices.put(request.getRequestId(),
+                    deviceIdList);
+            mSequenceNumber.put(request.getRequestId(), (long) 1);
+        }
+
+        public void unSubscribe(IRequest request, List<String> deviceIdList) {
+
+            for (String deviceId : deviceIdList) {
+                HashMap<String, PresenceSubscriber> subscribers = mSubscriber
+                        .get(deviceId);
+
+                if (subscribers == null) {
+                    continue;
+                }
+
+                subscribers.remove(request.getRequestId());
+            }
+        }
+
+        public void notify(String deviceId) {
+
+            HashMap<String, PresenceSubscriber> tokenNSubscribers = mSubscriber
+                    .get(deviceId);
+
+            if (tokenNSubscribers != null) {
+                byte[] payload = makeResponsePayload(Arrays.asList(deviceId));
+
+                for (PresenceSubscriber subscriber : tokenNSubscribers.values()) {
+
+                    subscriber.mSubscriber.sendResponse(
+                            MessageBuilder.createResponse(subscriber.mRequest,
+                                    ResponseStatus.CONTENT,
+                                    ContentFormat.APPLICATION_CBOR, payload));
+                }
+            }
+        }
+
+    }
+
+    private class CompletePresenceInfo extends PresenceInfo {
+
+        // di , token, Subscriber list
+        private Map<String, PresenceSubscriber> mAllSubscribers;
+
+        public CompletePresenceInfo() {
+            super();
+            this.mAllSubscribers = new HashMap<>();
+        }
+
+        @Override
+        public void subscribe(Device srcDevice, IRequest request, List<String> deviceIdList) {
+            if(deviceIdList != null && deviceIdList.size() > 0){
+                super.subscribe(srcDevice,request,deviceIdList);
+            }else {
+                mAllSubscribers.put(request.getRequestId(),
+                        new PresenceSubscriber(srcDevice, request));
+                mSequenceNumber.put(request.getRequestId(), (long) 1);
+            }
+        }
+
+        @Override
+        public void unSubscribe(IRequest request, List<String> deviceIdList) {
+            if (deviceIdList != null && deviceIdList.size() > 0) {
+                super.unSubscribe(request, deviceIdList);
+            } else {
+                mAllSubscribers.remove(request.getRequestId());
+            }
+        }
+
+        @Override
+        public void notify(String deviceId) {
+
+            byte[] payload = makeResponsePayload(Arrays.asList(deviceId));
+            for (PresenceSubscriber subscriber : this.mAllSubscribers.values()) {
+                subscriber.mSubscriber.sendResponse(
+                        MessageBuilder.createResponse(subscriber.mRequest,
+                                ResponseStatus.CONTENT,
+                                ContentFormat.APPLICATION_CBOR, payload));
+            }
+        }
     }
 
     private PresenceInfo mDevicePresence   = null;
+    private PresenceInfo mAllDevicePresence = null;
     private PresenceInfo mResourcePresence = null;
 
     private PresenceManager() {
         mDevicePresence = new PresenceInfo();
         mResourcePresence = new PresenceInfo();
+        mAllDevicePresence = new CompletePresenceInfo();
     }
 
     /**
@@ -110,24 +210,8 @@ public class PresenceManager {
     public void subscribePresence(Device srcDevice, IRequest request,
             List<String> deviceIdList, String presenceType) {
 
-        PresenceInfo presenceInfo = getPresenceInfo(presenceType);
-
-        for (String deviceId : deviceIdList) {
-            HashMap<String, PresenceSubscriber> subscribers = presenceInfo.mSubscriber
-                    .get(deviceId);
-
-            if (subscribers == null) {
-                subscribers = new HashMap<>();
-                presenceInfo.mSubscriber.put(deviceId, subscribers);
-            }
-
-            subscribers.put(request.getRequestId(),
-                    new PresenceSubscriber(srcDevice, request));
-        }
-
-        presenceInfo.mSubscribedDevices.put(request.getRequestId(),
-                deviceIdList);
-        presenceInfo.mSequenceNumber.put(request.getRequestId(), (long) 1);
+        PresenceInfo presenceInfo = getPresenceInfo(presenceType,deviceIdList);
+        presenceInfo.subscribe(srcDevice,request,deviceIdList);
     }
 
     /**
@@ -143,18 +227,8 @@ public class PresenceManager {
     public void unsubscribePresence(IRequest request, List<String> deviceIdList,
             String presenceType) {
 
-        PresenceInfo presenceInfo = getPresenceInfo(presenceType);
-
-        for (String deviceId : deviceIdList) {
-            HashMap<String, PresenceSubscriber> subscribers = presenceInfo.mSubscriber
-                    .get(deviceId);
-
-            if (subscribers == null) {
-                continue;
-            }
-
-            subscribers.remove(request.getRequestId());
-        }
+        PresenceInfo presenceInfo = getPresenceInfo(presenceType,deviceIdList);
+        presenceInfo.unSubscribe(request,deviceIdList);
     }
 
     /**
@@ -164,21 +238,8 @@ public class PresenceManager {
      *            device id
      */
     public void notifyToObservers(String deviceId) {
-
-        HashMap<String, PresenceSubscriber> tokenNSubscribers = mDevicePresence.mSubscriber
-                .get(deviceId);
-
-        if (tokenNSubscribers != null) {
-            byte[] payload = makeResponsePayload(Arrays.asList(deviceId));
-
-            for (PresenceSubscriber subscriber : tokenNSubscribers.values()) {
-
-                subscriber.mSubscriber.sendResponse(
-                        MessageBuilder.createResponse(subscriber.mRequest,
-                                ResponseStatus.CONTENT,
-                                ContentFormat.APPLICATION_CBOR, payload));
-            }
-        }
+        this.mDevicePresence.notify(deviceId);
+        this.mAllDevicePresence.notify(deviceId);
     }
 
     /**
@@ -209,7 +270,7 @@ public class PresenceManager {
             prsList.add(payloadSegment);
         }
         getPayload.put(Constants.PRESENCE_LIST, prsList);
-        Log.i("Device presence observe response : " + getPayload.toString());
+        Log.info("Device presence observe response : " + getPayload.toString());
 
         return mCbor.encodingPayloadToCbor(getPayload);
 
@@ -233,12 +294,16 @@ public class PresenceManager {
         return state;
     }
 
-    private PresenceInfo getPresenceInfo(String presenceType) {
+    private PresenceInfo getPresenceInfo(String presenceType,final List<String> deviceIds) {
 
         PresenceInfo presenceInfo = null;
         switch (presenceType) {
             case Constants.DEVICE_PRESENCE:
-                presenceInfo = mDevicePresence;
+                if(deviceIds == null || deviceIds.size() == 0){
+                    presenceInfo = mAllDevicePresence;
+                }else {
+                    presenceInfo = mDevicePresence;
+                }
                 break;
             case Constants.RESOURCE_PRESENCE:
                 presenceInfo = mResourcePresence;

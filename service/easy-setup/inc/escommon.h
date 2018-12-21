@@ -1,22 +1,22 @@
-//******************************************************************
-//
-// Copyright 2015 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #ifndef ES_COMMON_H_
 #define ES_COMMON_H_
@@ -30,44 +30,44 @@ extern "C"
 #endif
 
 // Defines
-#define OC_RSRVD_ES_RES_TYPE_COL          "oic.wk.col"
-#define OC_RSRVD_ES_INTERFACE             "if"
-#define OC_RSRVD_ES_RES_TYPE              "rt"
+#define OC_RSRVD_ES_RES_TYPE_COL          "oic.wk.col"    /*!< Resource type value */
+#define OC_RSRVD_ES_INTERFACE             "if"            /*!< Interface */
+#define OC_RSRVD_ES_RES_TYPE              "rt"            /*!< Resource type */
 
-#define OIC_STRING_MAX_VALUE        64
-#define OIC_URI_STRING_MAX_VALUE    256
-#define MAX_WEBLINKLEN              3
-#define NUM_WIFIMODE                10
-#define NUM_WIFIFREQ                5
-#define NUM_CONNECT_TYPE            3
-#define NUM_WIFIAUTHTYPE            4
-#define NUM_WIFIENCTYPE             6
+#define OIC_STRING_MAX_VALUE        64                    /*!< OIC string max value */
+#define OIC_URI_STRING_MAX_VALUE    256                   /*!< OIC uri string max value */
+#define MAX_WEBLINKLEN              3                     /*!< Wenlink length */
+#define NUM_WIFIMODE                10                    /*!< Supported wifi mode */
+#define NUM_WIFIFREQ                5                     /*!< Supported wifi frequency */
+#define NUM_CONNECT_TYPE            3                     /*!< Num of connect type */
+#define NUM_WIFIAUTHTYPE            4                     /*!< Supported wifi auth type */
+#define NUM_WIFIENCTYPE             6                     /*!< Supported wifi enc type */
 
 /**
  * Attributes used to form a proper easysetup conforming JSON message.
  */
-#define OC_RSRVD_ES_PROVSTATUS             "ps"
-#define OC_RSRVD_ES_LAST_ERRORCODE         "lec"
-#define OC_RSRVD_ES_LINKS                  "links"
-#define OC_RSRVD_ES_SUPPORTEDWIFIMODE      "swmt"
-#define OC_RSRVD_ES_SUPPORTEDWIFIFREQ      "swf"
-#define OC_RSRVD_ES_SUPPORTEDWIFIAUTHTYPE  "swat"
-#define OC_RSRVD_ES_SUPPORTEDWIFIENCTYPE   "swet"
-#define OC_RSRVD_ES_SSID                   "tnn"
-#define OC_RSRVD_ES_CRED                   "cd"
-#define OC_RSRVD_ES_AUTHTYPE               "wat"
-#define OC_RSRVD_ES_ENCTYPE                "wet"
+#define OC_RSRVD_ES_PROVSTATUS             "ps"           /*!< Provision status */
+#define OC_RSRVD_ES_LAST_ERRORCODE         "lec"          /*!< Last error code */
+#define OC_RSRVD_ES_LINKS                  "links"        /*!< links */
+#define OC_RSRVD_ES_SUPPORTEDWIFIMODE      "swmt"         /*!< Supported wifi mode */
+#define OC_RSRVD_ES_SUPPORTEDWIFIFREQ      "swf"          /*!< Supported wifi frequency */
+#define OC_RSRVD_ES_SUPPORTEDWIFIAUTHTYPE  "swat"         /*!< Supported wifi auth type */
+#define OC_RSRVD_ES_SUPPORTEDWIFIENCTYPE   "swet"         /*!< Supported wifi enc type */
+#define OC_RSRVD_ES_SSID                   "tnn"          /*!< SSID */
+#define OC_RSRVD_ES_CRED                   "cd"           /*!< credential information */
+#define OC_RSRVD_ES_AUTHTYPE               "wat"          /*!< auth type */
+#define OC_RSRVD_ES_ENCTYPE                "wet"          /*!< enc type */
 
 // Auth Code is no longer supported as per OCF 1.4 CoAPCloudConf Resource schema.
-#define OC_RSRVD_ES_AUTHCODE               "ac"
-#define OC_RSRVD_ES_ACCESSTOKEN            "at"
-#define OC_RSRVD_ES_ACCESSTOKEN_TYPE       "att"
-#define OC_RSRVD_ES_AUTHPROVIDER           "apn"
+#define OC_RSRVD_ES_AUTHCODE               "ac"           /*!< Auth code */
+#define OC_RSRVD_ES_ACCESSTOKEN            "at"           /*!< Access token */
+#define OC_RSRVD_ES_ACCESSTOKEN_TYPE       "att"          /*!< Access token type */
+#define OC_RSRVD_ES_AUTHPROVIDER           "apn"          /*!< Auth provider */
 #define OC_RSRVD_ES_CISERVER               "cis"
-#define OC_RSRVD_ES_SERVERID               "sid"
-#define OC_RSRVD_ES_DEVNAME                "dn"
+#define OC_RSRVD_ES_SERVERID               "sid"          /*!< server Id */
+#define OC_RSRVD_ES_DEVNAME                "dn"           /*!< device name */
 #define OC_RSRVD_ES_HREF                   "href"
-#define OC_RSRVD_ES_CONNECT                "cn"
+#define OC_RSRVD_ES_CONNECT                "cn"           /*!< connect */
 
 /**
  * Easysetup defined resoruce types and uris.
@@ -88,10 +88,10 @@ extern "C"
 //TODO: Remove WIFI_BOTH & WIFI_FREQ_NONE, if they are not used anymore. Array should be used to specify multiple values.
 typedef enum
 {
-    WIFI_24G = 0,       /**< 2.4G **/
-    WIFI_5G,            /**< 5G **/
-    WIFI_BOTH,          /**< 2.4G and 5G **/
-    WIFI_FREQ_NONE      /**< EOF **/
+    WIFI_24G = 0,       /*!< 2.4G **/
+    WIFI_5G,            /*!< 5G **/
+    WIFI_BOTH,          /*!< 2.4G and 5G **/
+    WIFI_FREQ_NONE      /*!< EOF **/
 } WIFI_FREQ;
 
 /**
@@ -99,11 +99,11 @@ typedef enum
  */
 typedef enum
 {
-    WIFI_11A = 0,       /**< 802.11a **/
-    WIFI_11B,           /**< 802.11b **/
-    WIFI_11G,           /**< 802.11g **/
-    WIFI_11N,           /**< 802.11n **/
-    WIFI_11AC           /**< 802.11ac **/
+    WIFI_11A = 0,       /*!< 802.11a **/
+    WIFI_11B,           /*!< 802.11b **/
+    WIFI_11G,           /*!< 802.11g **/
+    WIFI_11N,           /*!< 802.11n **/
+    WIFI_11AC           /*!< 802.11ac **/
 } WIFI_MODE;
 
 /**
@@ -111,10 +111,10 @@ typedef enum
  */
 typedef enum
 {
-    NONE_AUTH = 0,      /**< NO authentication **/
-    WEP,                /**< WEP **/
-    WPA_PSK,            /**< WPA-PSK **/
-    WPA2_PSK            /**< WPA2-PSK **/
+    NONE_AUTH = 0,      /*!< NO authentication **/
+    WEP,                /*!< WEP **/
+    WPA_PSK,            /*!< WPA-PSK **/
+    WPA2_PSK            /*!< WPA2-PSK **/
 } WIFI_AUTHTYPE;
 
 /**
@@ -122,12 +122,12 @@ typedef enum
  */
 typedef enum
 {
-    NONE_ENC = 0,       /**< NO encryption **/
-    WEP_64,             /**< WEP-64 **/
-    WEP_128,            /**< WEP-128**/
-    TKIP,               /**< TKIP **/
-    AES,                /**< AES **/
-    TKIP_AES            /**< TKIP-AES **/
+    NONE_ENC = 0,       /*!< NO encryption **/
+    WEP_64,             /*!< WEP-64 **/
+    WEP_128,            /*!< WEP-128**/
+    TKIP,               /*!< TKIP **/
+    AES,                /*!< AES **/
+    TKIP_AES            /*!< TKIP-AES **/
 } WIFI_ENCTYPE;
 
 /**
@@ -135,9 +135,9 @@ typedef enum
  */
 typedef enum
 {
-    NONE_OAUTH_TOKENTYPE = 0,
-    OAUTH_TOKENTYPE_BEARER,
-    OAUTH_TOKENTYPE_MAC
+    NONE_OAUTH_TOKENTYPE = 0, /*!< no oauth tokentype **/
+    OAUTH_TOKENTYPE_BEARER,   /*!< oauth tokentype bearer **/
+    OAUTH_TOKENTYPE_MAC       /*!< oauth tokentype mac **/
 } OAUTH_TOKENTYPE;
 
 /**
@@ -145,9 +145,9 @@ typedef enum
  */
 typedef enum
 {
-    ES_CONNECT_NONE = 0,        /**< Init value **/
-    ES_CONNECT_WIFI = 1,        /**< WiFi Conf resource **/
-    ES_CONNECT_COAPCLOUD = 2    /**< Coap Cloud Conf resource **/
+    ES_CONNECT_NONE = 0,        /*!< Init value **/
+    ES_CONNECT_WIFI = 1,        /*!< WiFi Conf resource **/
+    ES_CONNECT_COAPCLOUD = 2    /*!< Coap Cloud Conf resource **/
 } ES_CONNECT_TYPE;
 
 /**

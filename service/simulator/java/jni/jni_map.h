@@ -23,11 +23,17 @@
 
 #include <jni.h>
 
+/**
+ * @class JniMap
+ */
 class JniMap
 {
     public:
+        /** constructor */
         JniMap(JNIEnv *env);
+        /** This method to add the key and value */
         void put(jobject jKey, jobject jValue);
+        /** This method is to get the java object */
         jobject get();
 
     private:

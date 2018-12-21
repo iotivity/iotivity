@@ -875,6 +875,8 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
 
         OCRepPayload *newPayload = OCRepPayloadBatchClone((OCRepPayload *)ehResponse->payload);
 
+        OCRepPayloadSetPayloadRepType(newPayload, PAYLOAD_REP_ARRAY);
+
         if(!serverResponse->payload)
         {
             serverResponse->payload = (OCPayload *)newPayload;

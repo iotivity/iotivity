@@ -28,17 +28,36 @@
 #include "attribute_generator.h"
 #include "simulator_single_resource.h"
 
+/**
+ * @class SimulatorSingleResourceImpl
+ */
 class SimulatorSingleResourceImpl;
+
+/**
+ * @class AttributeUpdateAutomation
+ */
 class AttributeUpdateAutomation
 {
     public:
+        /**
+         * update attribute automation
+         * @param[in] id                attribute identity
+         * @param[in] resource          simulator resource
+         * @param[in] name              attribute name
+         * @param[in] type              attribute type
+         * @param[in] interval          interval
+         * @param[in] callback          callback function
+         * @param[in] finishedCallback  callback function
+         */
         AttributeUpdateAutomation(int id, std::shared_ptr<SimulatorSingleResourceImpl> resource,
                                   const std::string &name, AutoUpdateType type, int interval,
                                   const SimulatorSingleResource::AutoUpdateCompleteCallback &callback,
                                   std::function<void (const int)> finishedCallback);
 
         ~AttributeUpdateAutomation();
+        /** start attribute update*/
         void start();
+        /** stop attribute update*/
         void stop();
 
     private:
@@ -60,16 +79,30 @@ class AttributeUpdateAutomation
 
 typedef std::shared_ptr<AttributeUpdateAutomation> AttributeUpdateAutomationSP;
 
+/**
+ * @class ResourceUpdateAutomation
+ */
 class ResourceUpdateAutomation
 {
     public:
+        /**
+         * update resource automation
+         * @param[in] id                resource identity
+         * @param[in] resource          simulator resource
+         * @param[in] type              resource type
+         * @param[in] interval          interval
+         * @param[in] callback          callback function
+         * @param[in] finishedCallback  callback function
+         */
         ResourceUpdateAutomation(int id, std::shared_ptr<SimulatorSingleResourceImpl> resource,
                                  AutoUpdateType type, int interval,
                                  const SimulatorSingleResource::AutoUpdateCompleteCallback &callback,
                                  std::function<void (const int)> finishedCallback);
 
         ~ResourceUpdateAutomation();
+        /** start resource automation update */
         void start();
+        /** stop resource automation update*/
         void stop();
 
     private:

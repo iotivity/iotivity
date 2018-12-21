@@ -23,10 +23,11 @@ package org.iotivity.cloud.base.protocols.coap;
 
 import java.util.ArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
 import com.google.gson.Gson;
 
@@ -34,6 +35,7 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import org.slf4j.MDC;
 
 /**
  *
@@ -43,26 +45,23 @@ import io.netty.channel.ChannelPromise;
  */
 @Sharable
 public class CoapLogHandler extends ChannelDuplexHandler {
-
-    private Cbor<Object> mCbor      = new Cbor<>();
-    private Gson         mGson      = new Gson();
-
-    static final int     MAX_LOGLEN = 100;
+    private final static Logger     Log                         = LoggerFactory.getLogger(CoapLogHandler.class);
+    public static final String      COAP_MESSAGE_PAYLOAD        = "coappayload";
+    private Cbor<Object>            mCbor                       = new Cbor<>();
+    private Gson                    mGson                       = new Gson();
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        Log.v(ctx.channel().id().asLongText().substring(26)
-                + " Connected, Address: "
-                + ctx.channel().remoteAddress().toString());
+        Log.trace("[{}] Connected, Address: {}", ctx.channel().id().asLongText().substring(26),
+                ctx.channel().remoteAddress().toString());
 
         ctx.fireChannelActive();
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        Log.v(ctx.channel().id().asLongText().substring(26)
-                + " Disconnected, Address: "
-                + ctx.channel().remoteAddress().toString());
+        Log.trace("[{}] Disconnected, Address: {}", ctx.channel().id().asLongText().substring(26),
+                ctx.channel().remoteAddress().toString());
 
         ctx.fireChannelInactive();
     }
@@ -83,7 +82,7 @@ public class CoapLogHandler extends ChannelDuplexHandler {
         }
 
         if (log != null) {
-            Log.v(log);
+            Log.trace(log);
         }
 
         ctx.writeAndFlush(msg);
@@ -105,7 +104,7 @@ public class CoapLogHandler extends ChannelDuplexHandler {
         }
 
         if (log != null) {
-            Log.v(log);
+            Log.trace(log);
         }
 
         ctx.fireChannelRead(msg);
@@ -114,31 +113,31 @@ public class CoapLogHandler extends ChannelDuplexHandler {
     private String composeCoapRequest(String channelId, CoapRequest request) {
         StringBuilder strBuilder = new StringBuilder();
 
-        strBuilder.append(channelId);
-        strBuilder.append(" " + request.getTokenString());
+        strBuilder.append("[" + channelId + "]");
+        strBuilder.append(" [" + request.getTokenString() + "]");
 
         switch (request.getMethod()) {
             case DELETE:
-                strBuilder.append(" DELETE ");
+                strBuilder.append(" [DELETE] ");
                 break;
             case GET:
                 switch (request.getObserve()) {
                     case SUBSCRIBE:
-                        strBuilder.append(" GET OBSERVE ");
+                        strBuilder.append(" [GET OBSERVE] ");
                         break;
                     case UNSUBSCRIBE:
-                        strBuilder.append(" GET OBSERVE CANCEL ");
+                        strBuilder.append(" [GET OBSERVE CANCEL] ");
                         break;
                     default:
-                        strBuilder.append(" GET ");
+                        strBuilder.append(" [GET] ");
                         break;
                 }
                 break;
             case POST:
-                strBuilder.append(" POST ");
+                strBuilder.append(" [POST] ");
                 break;
             case PUT:
-                strBuilder.append(" PUT ");
+                strBuilder.append(" [PUT] ");
                 break;
         }
 
@@ -150,8 +149,8 @@ public class CoapLogHandler extends ChannelDuplexHandler {
 
         if (request.getPayloadSize() > 0) {
             strBuilder.append(" CT:" + request.getContentFormat());
-            strBuilder.append(" SZ:" + request.getPayloadSize() + " P:"
-                    + getJsonPayloadString(request));
+            strBuilder.append(" SZ:" + request.getPayloadSize());
+            MDC.put(COAP_MESSAGE_PAYLOAD, "P: " + getJsonPayloadString(request));
         }
 
         return strBuilder.toString();
@@ -161,8 +160,8 @@ public class CoapLogHandler extends ChannelDuplexHandler {
             CoapResponse response) {
         StringBuilder strBuilder = new StringBuilder();
 
-        strBuilder.append(channelId);
-        strBuilder.append(" " + response.getTokenString());
+        strBuilder.append("[" + channelId + "]");
+        strBuilder.append(" [" + response.getTokenString() + "]");
 
         switch (response.getStatus()) {
             case BAD_GATEWAY:
@@ -249,8 +248,8 @@ public class CoapLogHandler extends ChannelDuplexHandler {
 
         if (response.getPayloadSize() > 0) {
             strBuilder.append(" CT:" + response.getContentFormat());
-            strBuilder.append(" SZ:" + response.getPayloadSize() + " P:"
-                    + getJsonPayloadString(response));
+            strBuilder.append(" SZ:" + response.getPayloadSize());
+            MDC.put(COAP_MESSAGE_PAYLOAD, "P: " + getJsonPayloadString(response));
         }
 
         return strBuilder.toString();
@@ -264,13 +263,9 @@ public class CoapLogHandler extends ChannelDuplexHandler {
                     coapMessage.getPayload(), Object.class);
             if (coapMessage.getUriPath()
                     .contains(OICConstants.WELL_KNOWN_FULL_URI)) {
-                jsonPayload = mGson.toJson((ArrayList<Object>) mapPayload);
-                return jsonPayload.length() <= MAX_LOGLEN ? jsonPayload
-                        : jsonPayload.substring(0, MAX_LOGLEN);
+                return mGson.toJson((ArrayList<Object>) mapPayload);
             }
-            jsonPayload = mGson.toJson(mapPayload);
-            return jsonPayload.length() <= MAX_LOGLEN ? jsonPayload
-                    : jsonPayload.substring(0, MAX_LOGLEN);
+            return mGson.toJson(mapPayload);
         }
         return jsonPayload;
     }

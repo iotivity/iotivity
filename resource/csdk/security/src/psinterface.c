@@ -248,6 +248,7 @@ OCStackResult UpdateResourceInPS(const char *databaseName, const char *resourceN
     uint8_t *resetPfCbor = NULL;
     uint8_t *crlCbor = NULL;
     uint8_t *dpCbor = NULL;
+    uint8_t *spCbor = NULL;
 
     int64_t cborEncoderResult = CborNoError;
     OCStackResult ret = ReadDatabaseFromPS(databaseName, NULL, &dbData, &dbSize);
@@ -263,6 +264,7 @@ OCStackResult UpdateResourceInPS(const char *databaseName, const char *resourceN
         size_t resetPfCborLen = 0;
         size_t crlCborLen = 0;
         size_t dpCborLen = 0;
+        size_t spCborLen = 0;
 
         // Determine which database we are working with so we can scope our operations
         if (0 == strcmp(OC_DEVICE_PROPS_FILE_NAME, databaseName))
@@ -332,6 +334,12 @@ OCStackResult UpdateResourceInPS(const char *databaseName, const char *resourceN
                         OIC_LOG(INFO, TAG, "Successfully Finding optional CRL Name Value.");
                     }
                 }
+                cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_SP_NAME, &curVal);
+                if ((CborNoError == cborFindResult) && cbor_value_is_byte_string(&curVal))
+                {
+                    cborFindResult = cbor_value_dup_byte_string(&curVal, &spCbor, &spCborLen, NULL);
+                    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding SP Name Value.");
+                }
             }
             else
             {
@@ -351,7 +359,7 @@ OCStackResult UpdateResourceInPS(const char *databaseName, const char *resourceN
             if (PS_DATABASE_SECURITY == database)
             {
                 allocSize = aclCborLen + pstatCborLen + doxmCborLen + amaclCborLen
-                          + credCborLen + /* pconfCborLen + */ resetPfCborLen + crlCborLen
+                          + credCborLen + /* pconfCborLen + */ resetPfCborLen + crlCborLen + spCborLen
                           + size + CBOR_ENCODING_SIZE_ADDITION;
             }
             else
@@ -433,6 +441,15 @@ OCStackResult UpdateResourceInPS(const char *databaseName, const char *resourceN
                     cborEncoderResult |= cbor_encode_byte_string(&resource, crlCbor, crlCborLen);
                     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Crl Value.");
                 }
+                if (strcmp(OIC_JSON_SP_NAME, resourceName) && spCborLen)
+                {
+                    cborEncoderResult |= cbor_encode_text_string(&resource, OIC_JSON_SP_NAME, strlen(OIC_JSON_SP_NAME));
+                    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding SP Name.");
+                    cborEncoderResult |= cbor_encode_byte_string(&resource, spCbor, spCborLen);
+                    VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding SP Value.");
+                }
+
+
             }
             else
             {
@@ -489,6 +506,7 @@ exit:
     OICFree(resetPfCbor);
     OICFree(crlCbor);
     OICFree(dpCbor);
+    OICFree(spCbor);
     return ret;
 }
 
@@ -544,6 +562,7 @@ OCStackResult ResetSecureResourceInPS(void)
     uint8_t *credCbor = NULL;
     uint8_t *pstatCbor = NULL;
     uint8_t *doxmCbor = NULL;
+    uint8_t *spCbor = NULL;
     uint8_t *resetPfCbor = NULL;
 
     int64_t cborEncoderResult = CborNoError;
@@ -554,6 +573,7 @@ OCStackResult ResetSecureResourceInPS(void)
         size_t credCborLen = 0;
         size_t pstatCborLen = 0;
         size_t doxmCborLen = 0;
+        size_t spCborLen = 0;
         size_t resetPfCborLen = 0;
 
         // Gets the reset profile from persistent storage
@@ -603,10 +623,19 @@ OCStackResult ResetSecureResourceInPS(void)
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &doxmCbor, &doxmCborLen, NULL);
                 VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding DOXM Name Value.");
             }
+            cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_SP_NAME, &curVal);
+            if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
+            {
+                cborFindResult = cbor_value_dup_byte_string(&curVal, &spCbor, &spCborLen, NULL);
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding SP Name Value.");
+            }
+
+
         }
 
         {
-            size_t size = aclCborLen + credCborLen + pstatCborLen + doxmCborLen + resetPfCborLen + CBOR_ENCODING_SIZE_ADDITION;
+            size_t size = aclCborLen + credCborLen + pstatCborLen + doxmCborLen + spCborLen
+                          + resetPfCborLen + CBOR_ENCODING_SIZE_ADDITION;
 
             outPayload = (uint8_t *) OICCalloc(1, size);
             VERIFY_NOT_NULL(TAG, outPayload, ERROR);
@@ -638,6 +667,11 @@ OCStackResult ResetSecureResourceInPS(void)
             cborEncoderResult |= cbor_encode_byte_string(&secRsrc, doxmCbor, doxmCborLen);
             VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding DOXM Value.");
 
+            cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_SP_NAME, strlen(OIC_JSON_SP_NAME));
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding SP Name.");
+            cborEncoderResult |= cbor_encode_byte_string(&secRsrc, spCbor, spCborLen);
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding SP Value.");
+
             cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_RESET_PF_NAME, strlen(OIC_JSON_RESET_PF_NAME));
             VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Reset Profile Name.");
             cborEncoderResult |= cbor_encode_byte_string(&secRsrc, resetPfCbor, resetPfCborLen);
@@ -653,7 +687,7 @@ OCStackResult ResetSecureResourceInPS(void)
     }
 
     SRMDeInitSecureResources();
-    InitSecureResources();
+    SRMInitSecureResources();
     OIC_LOG(DEBUG, TAG, "ResetSecureResourceINPS OUT");
 
 exit:
@@ -663,6 +697,7 @@ exit:
     OICFree(credCbor);
     OICFree(pstatCbor);
     OICFree(doxmCbor);
+    OICFree(spCbor);
     OICFree(resetPfCbor);
     return ret;
 }
@@ -686,6 +721,7 @@ OCStackResult CreateResetProfile(void)
     uint8_t *credCbor = NULL;
     uint8_t *pstatCbor = NULL;
     uint8_t *doxmCbor = NULL;
+    uint8_t *spCbor = NULL;
     uint8_t *resetPfCbor = NULL;
 
     OCStackResult ret = OC_STACK_ERROR;
@@ -697,6 +733,7 @@ OCStackResult CreateResetProfile(void)
         size_t credCborLen = 0;
         size_t pstatCborLen = 0;
         size_t doxmCborLen = 0;
+        size_t spCborLen = 0;
         size_t resetPfCborLen = 0;
 
         {
@@ -738,10 +775,16 @@ OCStackResult CreateResetProfile(void)
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &doxmCbor, &doxmCborLen, NULL);
                 VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult,  "Failed Finding DOXM Name Value.");
             }
+            cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_SP_NAME, &curVal);
+            if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
+            {
+                cborFindResult = cbor_value_dup_byte_string(&curVal, &spCbor, &spCborLen, NULL);
+                VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult,  "Failed Finding SP Name Value.");
+            }
         }
 
         {
-            size_t size = aclCborLen + credCborLen + pstatCborLen + doxmCborLen + CBOR_ENCODING_SIZE_ADDITION;
+            size_t size = aclCborLen + credCborLen + pstatCborLen + doxmCborLen + spCborLen + CBOR_ENCODING_SIZE_ADDITION;
             resetPfCbor = (uint8_t *) OICCalloc(1, size);
             VERIFY_NOT_NULL(TAG, resetPfCbor, ERROR);
             CborEncoder encoder;  // will be initialized in |cbor_parser_init|
@@ -772,6 +815,11 @@ OCStackResult CreateResetProfile(void)
             cborEncoderResult |= cbor_encode_byte_string(&secRsrc, doxmCbor, doxmCborLen);
             VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Doxm Value.");
 
+            cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_SP_NAME, strlen(OIC_JSON_SP_NAME));
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding SP Name.");
+            cborEncoderResult |= cbor_encode_byte_string(&secRsrc, spCbor, spCborLen);
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding SP Value.");
+
             cborEncoderResult |= cbor_encoder_close_container(&encoder, &secRsrc);
             VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Closing Array.");
             resetPfCborLen = cbor_encoder_get_buffer_size(&encoder, resetPfCbor);
@@ -788,6 +836,7 @@ exit:
     OICFree(credCbor);
     OICFree(pstatCbor);
     OICFree(doxmCbor);
+    OICFree(spCbor);
     OICFree(resetPfCbor);
     return ret;
 }

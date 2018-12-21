@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.AceTable;
@@ -25,6 +27,7 @@ import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorExce
  */
 
 public class GroupAclManager {
+    private final static Logger             Log              = LoggerFactory.getLogger(GroupAclManager.class);
     private static GroupAclManager          mGrAclManager    = new GroupAclManager();
     private TypeCastingManager<AceTable>    mTypeAceTable    = new TypeCastingManager<AceTable>();
     private TypeCastingManager<AceResource> mTypeAceResource = new TypeCastingManager<AceResource>();

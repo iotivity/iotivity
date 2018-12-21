@@ -49,10 +49,16 @@ connectivity_env.SConscript(root_dir + '/common/SConscript',
 connectivity_env.SConscript(root_dir + '/util/SConscript',
                             exports='connectivity_env')
 
-src_files = [File(src) for src in (
-    'adapter_util/caadapterutils.c',
-    'adapter_util/cacertprofile.c'
-)]
+if ca_os in ['webos']:
+    src_files = [File(src) for src in (
+        'adapter_util/webos/caadapterutils.c',
+        'adapter_util/cacertprofile.c'
+    )]
+else:
+    src_files = [File(src) for src in (
+        'adapter_util/caadapterutils.c',
+        'adapter_util/cacertprofile.c'
+    )]
 
 if (('BLE' in ca_transport) or ('ALL' in ca_transport)):
     src_files.append(File('adapter_util/cafragmentation.c'))
@@ -119,6 +125,8 @@ if 'ALL' in ca_transport:
         transports.add('bt_edr_adapter')
         transports.add('bt_le_adapter')
         transports.add('nfc_adapter')
+    elif ca_os in ['webos']:
+        transports.add('ip_adapter')
     elif ca_os in ['darwin', 'ios', 'msys_nt', 'windows']:
         transports.add('ip_adapter')
     else:
@@ -138,7 +146,7 @@ if 'BLE' in ca_transport:
 if 'NFC' in ca_transport:
     transports.add('nfc_adapter')
 
-if ca_os in ['linux', 'tizen', 'android', 'ios', 'windows'] and with_tcp:
+if ca_os in ['linux', 'tizen', 'android', 'ios', 'windows', 'webos'] and with_tcp:
     transports.add('tcp_adapter')
 
 SConscript(dirs=list(transports), exports='connectivity_env')
@@ -162,6 +170,11 @@ if connectivity_env.get('SECURED') == '1':
 if ca_os in ['tizen']:
     connectivity_env.AppendUnique(LIBS=['pthread'])
 
+if ca_os in ['webos']:
+    connectivity_env.ParseConfig("pkg-config --cflags --libs glib-2.0")
+    connectivity_env.ParseConfig("pkg-config --cflags --libs luna-service2")
+    connectivity_env.ParseConfig("pkg-config --cflags --libs pbnjson_c")
+
 # c_common calls into mbedcrypto.
 connectivity_env.AppendUnique(LIBS=['mbedcrypto'])
 
@@ -169,7 +182,7 @@ calib_internal = connectivity_env.StaticLibrary(
     'connectivity_abstraction_internal', connectivity_env.get('CA_SRC'))
 calib = Flatten(calib_internal)
 
-if ca_os in ['android', 'tizen', 'linux', 'yocto']:
+if ca_os in ['android', 'tizen', 'linux', 'yocto', 'webos']:
     connectivity_env.AppendUnique(LIBS=['coap'])
     if ca_os != 'android':
         connectivity_env.AppendUnique(LIBS=['rt'])

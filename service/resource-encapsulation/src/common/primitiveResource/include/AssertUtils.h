@@ -1,22 +1,22 @@
-//******************************************************************
-//
-// Copyright 2015 Samsung Electronics All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #ifndef COMMON_INTERNAL_ASSERTUTILS_H
 #define COMMON_INTERNAL_ASSERTUTILS_H
@@ -37,20 +37,21 @@ namespace OIC
     {
         namespace Detail
         {
-
-            // This is a helper class to avoid calling the base layer during terminating the process.
-            // The reason why you should not call the base layer in this situation is that
-            // OC apis are singletons or internally implemented as singleton.
-            // Singleton implemented with a static variable is initialized
-            // in the first call to the function.
-            // It means you can not guarantee the order of initialization of the singletons,
-            // which is the reverse order of destruction.
-            // Some of RE classes are also implemented as singletons.
-            // Now we have a problem if RE tries to call one of OC apis
-            // after OC classes are destroyed first.
-            // To solve this issue, it registers exit handler to catch the termination event.
-            // Keep this information with a bool flag dynamically allocated to
-            // make sure it is not destroyed during the destruction of the static objects.
+            /**
+             * This is a helper class to avoid calling the base layer during terminating the process.
+             * The reason why you should not call the base layer in this situation is that
+             * OC apis are singletons or internally implemented as singleton.
+             * Singleton implemented with a static variable is initialized
+             * in the first call to the function.
+             * It means you can not guarantee the order of initialization of the singletons,
+             * which is the reverse order of destruction.
+             * Some of RE classes are also implemented as singletons.
+             * Now we have a problem if RE tries to call one of OC apis
+             * after OC classes are destroyed first.
+             * To solve this issue, it registers exit handler to catch the termination event.
+             * Keep this information with a bool flag dynamically allocated to
+             * make sure it is not destroyed during the destruction of the static objects.
+             */
             class TerminationChecker
             {
             private:
@@ -71,6 +72,10 @@ namespace OIC
                 }
 
             public:
+                /**
+                 * check the process is in termination state or not
+                 * @return boolean value
+                 */
                 static bool isInTermination()
                 {
                     static TerminationChecker once;
@@ -298,4 +303,4 @@ namespace OIC
     }
 }
 
-#endif // COMMON_INTERNAL_ASSERTUTILS_H
+#endif /* COMMON_INTERNAL_ASSERTUTILS_H */

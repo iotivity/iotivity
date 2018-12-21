@@ -200,7 +200,6 @@ static void ocThread()
             }
             printHelp();
         }
-
         result = OCProcess();
         if (OC_STACK_OK != result)
         {
@@ -235,6 +234,7 @@ int main()
     }
 
     printHelp();
+
     std::thread t(ocThread);
 
     while (1)

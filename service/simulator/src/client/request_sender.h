@@ -27,17 +27,24 @@
 
 struct RequestInfo
 {
-    RequestType type;
-    std::map<std::string, std::string> queryParams;
-    SimulatorResourceModel payLoad;
+    RequestType type;   /**< type of request */
+    std::map<std::string, std::string> queryParams; /**< query parameters */
+    SimulatorResourceModel payLoad;                 /**< resource payload */
 };
 
+/**
+ * @class GETRequestSender
+ */
 class GETRequestSender
 {
     public:
         typedef std::function<void (SimulatorResult result, const SimulatorResourceModel &resModel,
                                     const RequestInfo &reqInfo)> ResponseCallback;
 
+        /**
+         * send the get request
+         * @param[in] ocResource   oc resource
+         */
         GETRequestSender(const std::shared_ptr<OC::OCResource> &ocResource);
 
         SimulatorResult send(const ResponseCallback &callback);
@@ -45,6 +52,14 @@ class GETRequestSender
         SimulatorResult send(const std::map<std::string, std::string> &queryParams,
                              const ResponseCallback &callback);
 
+        /**
+         * response of get request
+         * @param[in] headerOptions    header options
+         * @param[in] rep              oc representation
+         * @param[in] errorCode        error code
+         * @param[in] requestInfo      request information
+         * @param[in] callback         callback function
+         */
         void onResponseReceived(const OC::HeaderOptions &headerOptions,
                                 const OC::OCRepresentation &rep, const int errorCode, RequestInfo &requestInfo,
                                 ResponseCallback callback);
@@ -53,12 +68,19 @@ class GETRequestSender
         std::shared_ptr<OC::OCResource> m_ocResource;
 };
 
+/**
+ * @class PUTRequestSender
+ */
 class PUTRequestSender
 {
     public:
         typedef std::function<void (SimulatorResult result, const SimulatorResourceModel &resModel,
                                     const RequestInfo &reqInfo)> ResponseCallback;
 
+        /**
+         * send the put request
+         * @param[in] ocResource  oc resource
+         */
         PUTRequestSender(const std::shared_ptr<OC::OCResource> &ocResource);
 
         SimulatorResult send(const SimulatorResourceModel &representation,
@@ -68,6 +90,14 @@ class PUTRequestSender
                              const SimulatorResourceModel &representation,
                              const ResponseCallback &callback);
 
+        /**
+         * response of put request
+         * @param[in] headerOptions    header options
+         * @param[in] rep              oc representation
+         * @param[in] errorCode        error code
+         * @param[in] requestInfo      request information
+         * @param[in] callback         callback function
+         */
         void onResponseReceived(const OC::HeaderOptions &headerOptions,
                                 const OC::OCRepresentation &rep, const int errorCode, RequestInfo &requestInfo,
                                 ResponseCallback callback);
@@ -76,12 +106,19 @@ class PUTRequestSender
         std::shared_ptr<OC::OCResource> m_ocResource;
 };
 
+/**
+ * @class POSTRequestSender
+ */
 class POSTRequestSender
 {
     public:
         typedef std::function<void (SimulatorResult result, const SimulatorResourceModel &resModel,
                                     const RequestInfo &reqInfo)> ResponseCallback;
 
+        /**
+         * send the post request
+         * @param[in] ocResource  oc resource
+         */
         POSTRequestSender(const std::shared_ptr<OC::OCResource> &ocResource);
 
         SimulatorResult send(const SimulatorResourceModel &representation,
@@ -91,6 +128,14 @@ class POSTRequestSender
                              const SimulatorResourceModel &representation,
                              const ResponseCallback &callback);
 
+        /**
+         * response of post request
+         * @param[in] headerOptions    header options
+         * @param[in] rep              oc representation
+         * @param[in] errorCode        error code
+         * @param[in] requestInfo      request information
+         * @param[in] callback         callback function
+         */
         void onResponseReceived(const OC::HeaderOptions &headerOptions,
                                 const OC::OCRepresentation &rep, const int errorCode, RequestInfo &requestInfo,
                                 ResponseCallback callback);

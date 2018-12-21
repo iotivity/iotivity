@@ -102,7 +102,7 @@ if env.get('SECURED') == '1':
 # c_common calls into mbedcrypto.
 liboctbstack_env.AppendUnique(LIBS=['mbedcrypto'])
 
-if target_os in ['android', 'linux', 'tizen', 'msys_nt', 'windows']:
+if target_os in ['android', 'linux', 'tizen', 'msys_nt', 'windows', 'webos']:
     if target_os not in ['windows', 'msys_nt']:
         liboctbstack_env.PrependUnique(LIBS=['connectivity_abstraction'])
     else:
@@ -185,7 +185,7 @@ else:
             liboctbstack_env.Textfile(
                 target='octbstack.def', source=[File('octbstack_temp3.def')])
 
-if target_os in ['tizen', 'linux']:
+if target_os in ['tizen', 'linux', 'webos']:
     liboctbstack_env.ParseConfig("pkg-config --cflags --libs uuid")
     liboctbstack_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 
@@ -216,7 +216,7 @@ if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
 
     if 'SERVER' in rd_mode:
         liboctbstack_env.AppendUnique(CPPDEFINES=['RD_SERVER'])
-        if target_os not in ['tizen']:
+        if target_os not in ['tizen', 'webos']:
             # tizen added via pkg-config above
             liboctbstack_env.AppendUnique(CPPPATH=['#/extlibs/sqlite3'])
 
@@ -245,7 +245,7 @@ if with_tcp == True:
 
 if 'SERVER' in rd_mode:
     liboctbstack_src.append(OCTBSTACK_SRC + 'oicresourcedirectory.c')
-    if target_os not in ['linux', 'tizen', 'windows']:
+    if target_os not in ['linux', 'tizen', 'windows', 'webos']:
         liboctbstack_src.append('#extlibs/sqlite3/sqlite3.c')
 
 if ((target_os in ['windows']) and (liboctbstack_env.get('MSVC_UWP_APP') == '1')):

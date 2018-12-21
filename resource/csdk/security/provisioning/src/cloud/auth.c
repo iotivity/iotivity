@@ -397,10 +397,10 @@ static OCStackResult CloudToCBORPayloadInternal(const OicCloud_t *clouds, uint8_
 #if !defined(__MANDATORY__)
         if (NULL != cloud->redirectUri)
         {
-            cbor_encode_text_string(&map, OIC_JSON_CLOUD_SESSION_REDIRECT_URL,
+            cborError = cbor_encode_text_string(&map, OIC_JSON_CLOUD_SESSION_REDIRECT_URL,
                                     sizeof(OIC_JSON_CLOUD_SESSION_REDIRECT_URL) + 1);
             VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add tag: redirect uri");
-            cbor_encode_text_string(&map, cloud->redirectUri, strnlen(cloud->redirectUri, MAX_STR_LEN));
+            cborError = cbor_encode_text_string(&map, cloud->redirectUri, strnlen(cloud->redirectUri, MAX_STR_LEN));
             VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborError, "Failed add value: redirect uri");
         }
 #endif // __MANDATORY__
@@ -869,6 +869,11 @@ static OCStackApplicationResult handleCloudSignInResponse(void *ctx,
 
     OicCloud_t *cloud = (OicCloud_t *)ctx;
 
+    char *ipv6End = NULL;
+    char *percentChar = NULL;
+    char *cis = NULL;
+    char *ipv6Intf = NULL;
+
     VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, OC_STACK_DELETE_TRANSACTION);
     VERIFY_NOT_NULL_RETURN(TAG, response, ERROR, OC_STACK_DELETE_TRANSACTION);
 
@@ -916,6 +921,31 @@ static OCStackApplicationResult handleCloudSignInResponse(void *ctx,
 
     if (OC_CLOUD_SIGNIN == cloud->stat)
     {
+        // find the IPv6 address end bracket
+        ipv6End = strchr(cloud->cis, ']');
+        if (NULL != ipv6End)
+        {
+            ipv6Intf = strchr(cloud->cis, '%');
+            if (ipv6Intf == NULL)
+            {
+                // find the interface name from UDP address of sender
+                percentChar = strchr(response->devAddr.addr, '%');
+                size_t ifLen = strlen(percentChar);
+                size_t addrLen = strlen(cloud->cis);
+                size_t cisLen = addrLen + ifLen + 3;
+
+                // fill the cloud uri with interface name inserted
+                cis = (char *)OICMalloc(sizeof(char) * cisLen);
+                OICStrcpy(cis, ipv6End - cloud->cis + 1, cloud->cis);
+                OICStrcat(cis, cisLen, "%25");
+                OICStrcat(cis, cisLen, percentChar + 1);
+                OICStrcat(cis, cisLen, ipv6End);
+
+                OICFree(cloud->cis);
+                cloud->cis = cis;
+            }
+        }
+
         OCThreadResult_t res = OC_THREAD_SUCCESS;
         res = oc_thread_new(&cloud->pid, CloudTokenRefresh, cloud);
         if (OC_THREAD_SUCCESS != res)
@@ -1141,6 +1171,12 @@ static OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
     OCStackApplicationResult ret = OC_STACK_DELETE_TRANSACTION;
     OicCloud_t *cloud = (OicCloud_t *)ctx;
 
+    char *ipv6End = NULL;
+    char *percentChar = NULL;
+    char *redirectUri = NULL;
+    char *cis = NULL;
+    char *ipv6Intf = NULL;
+
     VERIFY_NOT_NULL_RETURN(TAG, response, ERROR, OC_STACK_DELETE_TRANSACTION);
     VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, OC_STACK_DELETE_TRANSACTION);
 
@@ -1201,6 +1237,31 @@ static OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
 
         if (ValidCloud(cloud))
         {
+            // find the IPv6 address end bracket
+            ipv6End = strchr(cloud->redirectUri, ']');
+            if (NULL != ipv6End)
+            {
+                ipv6Intf = strchr(cloud->redirectUri, '%');
+                if (ipv6Intf == NULL)
+                {
+                    // find the interface name from UDP address of sender
+                    percentChar = strchr(response->devAddr.addr, '%');
+                    size_t ifLen = strlen(percentChar);
+                    size_t addrLen = strlen(cloud->redirectUri);
+                    size_t uriLen = addrLen + ifLen + 3;
+
+                    // fill the cloud uri with interface name inserted
+                    redirectUri = (char *)OICMalloc(sizeof(char) * uriLen);
+                    OICStrcpy(redirectUri, ipv6End - cloud->redirectUri + 1, cloud->redirectUri);
+                    OICStrcat(redirectUri, uriLen, "%25");
+                    OICStrcat(redirectUri, uriLen, percentChar + 1);
+                    OICStrcat(redirectUri, uriLen, ipv6End);
+
+                    OICFree(cloud->redirectUri);
+                    cloud->redirectUri = redirectUri;
+                }
+            }
+
             if (!strCopy(cloud->redirectUri, &cloud->cis))
             {
                 OIC_LOG_V(ERROR, TAG, "%s: copy redirect uri", __func__);
@@ -1211,6 +1272,31 @@ static OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
         }
         else
         {
+            // find the IPv6 address end bracket
+            ipv6End = strchr(cloud->cis, ']');
+            if (NULL != ipv6End)
+            {
+                ipv6Intf = strchr(cloud->cis, '%');
+                if (ipv6Intf == NULL)
+                {
+                    // find the interface name from UDP address of sender
+                    percentChar = strchr(response->devAddr.addr, '%');
+                    size_t ifLen = strlen(percentChar);
+                    size_t addrLen = strlen(cloud->cis);
+                    size_t uriLen = addrLen + ifLen + 3;
+
+                    // fill the cloud uri with interface name inserted
+                    cis = (char *)OICMalloc(sizeof(char) * uriLen);
+                    OICStrcpy(cis, ipv6End - cloud->cis + 1, cloud->cis);
+                    OICStrcat(cis, uriLen, "%25");
+                    OICStrcat(cis, uriLen, percentChar + 1);
+                    OICStrcat(cis, uriLen, ipv6End);
+
+                    OICFree(cloud->cis);
+                    cloud->cis = cis;
+                }
+            }
+
             OIC_LOG_V(ERROR, TAG, "%s: cannot redirect", __func__);
         }
     }

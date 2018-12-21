@@ -63,9 +63,9 @@ typedef struct
 
 typedef struct CAIPCBData_t
 {
-    struct CAIPCBData_t *next;
-    CATransportAdapter_t adapter;
-    CAIPAdapterStateChangeCallback callback;
+    struct CAIPCBData_t *next;               /**< pointer to next node */
+    CATransportAdapter_t adapter;            /**< transport adapter */
+    CAIPAdapterStateChangeCallback callback; /**< adapter state change callback */
 } CAIPCBData_t;
 
 /**

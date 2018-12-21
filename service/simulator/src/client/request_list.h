@@ -24,12 +24,20 @@
 #include <map>
 #include <mutex>
 
+/**
+ * @class RequestList
+ */
 template <typename T>
 class RequestList
 {
     public:
         RequestList() : m_id(0) {}
 
+        /**
+         * add the request to the list
+         * @param request  request to add in list
+         * @return identity value
+         */
         int add(T request)
         {
             if (!request)
@@ -40,6 +48,11 @@ class RequestList
             return m_id - 1;
         }
 
+        /**
+         * get the request for the given id
+         * @param id  get the information using id
+         * @return request object
+         */
         T get(int id)
         {
             std::lock_guard<std::recursive_mutex> lock(m_listMutex);
@@ -49,6 +62,11 @@ class RequestList
             return nullptr;
         }
 
+        /**
+         * remove the request for the given id
+         * @param id   remove the request for given id
+         * @return request object
+         */
         T remove(int id)
         {
             std::lock_guard<std::recursive_mutex> lock(m_listMutex);
@@ -62,12 +80,19 @@ class RequestList
             return nullptr;
         }
 
+        /**
+         * get the size of request list
+         * @return the size of list
+         */
         int size()
         {
             std::lock_guard<std::recursive_mutex> lock(m_listMutex);
             return m_requestList.size();
         }
 
+        /**
+         * clear the list
+         */
         void clear()
         {
             std::lock_guard<std::recursive_mutex> lock(m_listMutex);

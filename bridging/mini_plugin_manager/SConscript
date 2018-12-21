@@ -43,7 +43,7 @@ manager_env.PrependUnique(CPPPATH=[
 ])
 
 if target_os not in ['windows']:
-    manager_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
+    manager_env.AppendUnique(CXXFLAGS=['-std=c++0x', '-Wall', '-Wextra'])
 
 manager_env.PrependUnique(LIBS=['mpmcommon'])
 

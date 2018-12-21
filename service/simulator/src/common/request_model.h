@@ -26,17 +26,40 @@
 
 typedef std::map<std::string, std::vector<std::string>> SupportedQueryParams;
 
+/**
+ * @class RequestModelBuilder
+ */
 class RequestModelBuilder;
 class RequestModel
 {
     public:
         friend class RequestModelBuilder;
-
+        /**
+         * This method is to get the request type
+         * @return request type
+         */
         std::string getType() const;
+        /**
+         * This method is get the query parameters
+         * @return query parameters object
+         */
         SupportedQueryParams getQueryParams();
+        /**
+         * This method is to get the query param with the given key value
+         * @return query parameters object
+         */
         std::vector<std::string> getQueryParams(const std::string &key);
+        /**
+         * This method is to get the request representation schema
+         * @return request representation schema object
+         */
         std::shared_ptr<SimulatorResourceModelSchema> getRequestRepSchema();
+        /**
+         * This method is to get the response model with the code value
+         * @param[in] code   code value
+         */
         ResponseModelSP getResponseModel(int code);
+        /** This method is to validate the response */
         SimulatorResult validateResponse(int code, const SimulatorResourceModel &resModel);
 
     private:

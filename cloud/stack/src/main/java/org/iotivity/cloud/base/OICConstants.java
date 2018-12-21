@@ -53,6 +53,7 @@ public class OICConstants {
 
     public static final String CERT_URI                      = "cert";
 
+    public static final String SEC_URI                       = "sec";
     /* resource url for acl */
     public static final String ACL_URI                       = "acl";
 
@@ -101,6 +102,9 @@ public class OICConstants {
     public static final String ACCOUNT_FULL_URI              = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACCOUNT_URI;
 
+    public static final String SEC_ACCOUNT_FULL_URI              = "/"
+            + OICConstants.PREFIX_OIC + "/" + OICConstants.SEC_URI + "/" + OICConstants.ACCOUNT_URI;
+
     public static final String ACCOUNT_SEARCH_FULL_URI       = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACCOUNT_URI + "/"
             + OICConstants.SEARCH_URI;
@@ -109,9 +113,15 @@ public class OICConstants {
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACCOUNT_URI + "/"
             + OICConstants.SESSION_URI;
 
+    public static final String SEC_ACCOUNT_SESSION_FULL_URI      = "/"
+            + OICConstants.PREFIX_OIC + "/" + OICConstants.SEC_URI + "/"
+            + OICConstants.SESSION_URI;
+
     public static final String ACCOUNT_TOKENREFRESH_FULL_URI = "/"
-            + OICConstants.PREFIX_OIC + "/" + OICConstants.ACCOUNT_URI + "/"
-            + OICConstants.TOKEN_REFRESH_URI;
+            + OICConstants.PREFIX_OIC + "/" + OICConstants.ACCOUNT_URI + "/" + OICConstants.TOKEN_REFRESH_URI;
+
+    public static final String SEC_ACCOUNT_TOKENREFRESH_FULL_URI = "/"
+            + OICConstants.PREFIX_OIC + "/" + OICConstants.SEC_URI + "/" + OICConstants.TOKEN_REFRESH_URI;
 
     public static final String ACL_ID_FULL_URI               = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"

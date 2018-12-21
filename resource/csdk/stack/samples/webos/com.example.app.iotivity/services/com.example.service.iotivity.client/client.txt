@@ -1,0 +1,310 @@
+API Docs - com.example.service.iotivity.client
+
+
+discoverResources
+
+    Discovering available resources from all devices.
+
+    @b Syntax
+    luna://com.example.service.iotivity.client/discoverResources
+
+    @code
+    {
+    }
+    @endcode
+    @param
+        Parameter   |Requirement    |Type   | Description
+        ----------------------------------------------------------
+        none
+    @return
+    <b> For a call: </b>
+    @code
+    {
+        "returnValue"   : boolean,
+        "discoveryResponse" : object,
+    }
+
+    @endcode
+    @param              returnValue
+    Indicates if the call was succesful.
+    @param              discoveryResponse
+    List of discoverd resources.
+
+        Parameter         |Requirement    |Type   | Description
+        ----------------------------------------------------------
+        returnValue       |Required       |boolean| true means success, false means faild
+        discoveryResponse |Required       |object | list of all resources from all devices
+
+    @b Examples:
+    @code
+    luna-send -n 5 -f luna://com.example.service.iotivity.client/discoverResources '{}'
+    @endcode
+
+    Example response for a succesful call:
+    @code
+    {
+        "discoveryResponse": {
+            ...
+        },
+        "returnValue": true
+    }
+    @endcode
+
+
+
+getResource
+
+    Fetch the value of resource from specified URI
+
+    @b Syntax \n
+    luna://com.example.service.iotivity.client/getResource
+
+    @code
+    {
+    }
+    @endcode
+    @param
+        Parameter   |Requirement    |Type   | Description
+        ----------------------------------------------------------
+        uri         |Required       |string |
+        destination |Required       |object | target device address include adapter, flags, ifindex, port and addr
+        question    |Required       |string | payload with specifiied question
+    @return
+    <b> For a call: </b>
+    @code
+    {
+        "returnValue"   : boolean,
+        "response" : object,
+        "errorText" : string
+    }
+
+    @endcode
+    @param              returnValue
+    Indicates if the call was succesful or not.
+    @param              response
+    Detailed information.
+    @param              errorText
+    Describes the error if call was not succesful.
+
+        Parameter         |Requirement    |Type   | Description
+        ----------------------------------------------------------
+        returnValue       |Required       |boolean| true means success, false means faild
+        response          |Optional       |object | value of requested resource
+        errorText         |Optional       |object | value of error text
+
+    @b Examples:
+    @code
+    luna-send -n 1 -f luna://com.example.service.iotivity.client/getResource '{"uri":"/a/fan", "question":"abc","destination": {"adapter": 1,"flags": 32,"ifindex": 2,"port": 54406,"addr": "fe80::ba27:ebff:fe04:f661%eth0"}}'
+    @endcode
+
+    Example response for a succesful call:
+    @code
+    {
+        "returnValue": true,
+        "response": {
+            "devAddr": {
+                "adapter": 1,
+                "flags": 82,
+                "ifindex": 0,
+                "port": 34711,
+                "addr": "10.177.242.177"
+            },
+            "connType": 65618,
+            "addr": {
+                "adapter": 1,
+                "flags": 82,
+                "ifindex": 0,
+                "port": 34711,
+                "addr": "10.177.242.177"
+            },
+            "sequenceNumber": 16777216,
+            "result": 0,
+            "identity": [
+                49,
+                49,
+                49,
+                49,
+                49,
+                49,
+                49,
+                49,
+                49,
+                49,
+                49,
+                49,
+                49,
+                49,
+                49,
+                49
+            ],
+            "payload": {
+                "type": 4,
+                "values": {
+                    "answer": "123"
+                }
+            },
+            "resourceUri": "/a/fan"
+        }
+    }
+    @endcode
+
+
+deleteResource
+
+    Delete resource from specified URI
+
+    @b Syntax
+    luna://com.example.service.iotivity.client/deleteResource
+
+    @code
+    {
+    }
+    @endcode
+    @param
+        Parameter   |Requirement    |Type   | Description
+        ----------------------------------------------------------
+        uri         |Required       |string | uri which is removed
+        destination |Required       |object | target device address include adapter, flags, ifindex, port and addr
+    @return
+    <b> For a call: </b>
+    @code
+    {
+        "returnValue"   : boolean,
+        "response" : object,
+        "errorText" : string
+    }
+
+    @endcode
+    @param              returnValue
+    Indicates if the call was succesful.
+    @param              response
+    Detailed information for removed resources.
+    @param              errorText
+    Describes the error if call was not succesful.
+
+        Parameter         |Requirement    |Type   | Description
+        ----------------------------------------------------------
+        returnValue       |Required       |boolean| true means success, false means faild
+        response          |Optional       |object | value of requested resource
+        errorText         |Optional       |string | value of error text
+    @remarks
+    The \e returnValue will be true as long as the syntax is correct, even if the process ID is not a valid one.
+
+    @b Examples:
+    @code
+    luna-send -n 1 -f luna://com.example.service.iotivity.client/deleteResource '{"uri":"/a/fan","destination":{"adapter":1,"flags":32,"ifindex":0,"port":35128,"addr":"fe80::ba27:ebff:fe04:f661%eth0"}}'
+    @endcode
+
+    Example response for a succesful call:
+    @code
+    {
+        "returnValue": true,
+        "response": {
+            "sequenceNumber": 16777216,
+            "identity": [
+            ],
+            "devAddr": {
+                "adapter": 1,
+                "flags": 32,
+                "ifindex": 2,
+                "port": 35128,
+                "addr": "fe80::ba27:ebff:fe04:f661%eth0"
+            },
+            "connType": 65568,
+            "result": 2,
+            "addr": {
+                "adapter": 1,
+                "flags": 32,
+                "ifindex": 2,
+                "port": 35128,
+                "addr": "fe80::ba27:ebff:fe04:f661%eth0"
+            },
+            "resourceUri": "/a/fan"
+        }
+    }
+    @endcode
+
+
+observeResource
+
+    Observe the value of resource from specified URI
+
+    @b Syntax \n
+    luna://com.example.service.iotivity.client/observeResource
+
+    @code
+    {
+    }
+    @endcode
+    @param
+        Parameter   |Requirement    |Type   | Description
+        ----------------------------------------------------------
+        subscribe   |Required       |boolean |
+        uri         |Required       |string |
+        destination |Required       |object | target device address include adapter, flags, ifindex, port and addr
+    @return
+    <b> For a call: </b>
+    @code
+    {
+        "returnValue"   : boolean,
+        "response" : object,
+        "errorText" : string
+    }
+
+    @endcode
+    @param              returnValue
+    Indicates if the call was succesful.
+    @param              response
+    Detailed information for removed resources.
+    @param              errorText
+    Describes the error if call was not succesful.
+
+        Parameter         |Requirement    |Type   | Description
+        ----------------------------------------------------------
+        returnValue       |Required       |boolean| true means success, false means faild
+        response          |Required       |object | value of requested resource
+        errorText         |Optional       |string | value of error text
+    @remarks
+    The \e returnValue will be true as long as the syntax is correct, even if the process ID is not a valid one.
+
+    @b Examples:
+    @code
+    luna-send -n 1 -f luna://com.example.service.iotivity.client/observeResource '{"uri":"/a/fan","destination":{"adapter":1,"flags":32,"ifindex":0,"port":58941,"addr":"fe80::ba27:ebff:fe04:f661%eth0"},"subscribe":true}'
+    @endcode
+
+    Example response for a succesful call:
+    @code
+    {
+        "subscribed": true,
+        "returnValue": true,
+        "response": {
+            "devAddr": {
+                "adapter": 1,
+                "flags": 32,
+                "ifindex": 2,
+                "port": 58941,
+                "addr": "fe80::ba27:ebff:fe04:f661%eth0"
+            },
+            "connType": 65568,
+            "addr": {
+                "adapter": 1,
+                "flags": 32,
+                "ifindex": 2,
+                "port": 58941,
+                "addr": "fe80::ba27:ebff:fe04:f661%eth0"
+            },
+            "sequenceNumber": 23,
+            "result": 0,
+            "identity": [
+            ],
+            "payload": {
+                "type": 4,
+                "values": {
+                    "someOtherValue": "Espoo",
+                    "someValue": 18
+                }
+            },
+            "resourceUri": "/a/fan"
+        }
+    }
+    @endcode

@@ -29,6 +29,7 @@
 #include "cacommon.h"
 #include "experimental/ocrandom.h"
 #include "cacommonutil.h"
+#include "parsechain.h"
 
 #include "ocpayload.h"
 #include "experimental/payload_logging.h"
@@ -440,9 +441,10 @@ static const mbedtls_x509_crt_profile s_certProfile = {
     0                                                   /* RSA minimum key length - not used because we only use EC key pairs */
 };
 
-OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificateChain, const uint8_t *trustedCaCerts,
-                                              size_t trustedCaCertsLength, OicSecRole_t **roles,
-                                              size_t *rolesLength, struct tm *notValidAfter)
+OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificateChain,
+                                              const ByteArrayLL_t *trustedCaCerts,
+                                              OicSecRole_t **roles, size_t *rolesLength,
+                                              struct tm *notValidAfter)
 {
     bool freeData = false;
     uint8_t *data = certificateChain->data;
@@ -502,10 +504,17 @@ OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificateChai
         goto exit;
     }
 
-    mbedRet = mbedtls_x509_crt_parse(&trustedCas, trustedCaCerts, trustedCaCertsLength);
-    if (0 > mbedRet)
+    int errNum;
+    int count = ParseChain(&trustedCas, trustedCaCerts, &errNum);
+    if (0 >= count)
     {
-        OIC_LOG_V(ERROR, TAG, "Could not parse trusted CA certs: %d", mbedRet);
+        OIC_LOG(WARNING, TAG, "Could not parse trusted CA certs");
+        res = OC_STACK_ERROR;
+        goto exit;
+    }
+    if (0 != errNum)
+    {
+        OIC_LOG_V(WARNING, TAG, "Trusted CA certs parsing error: %d certs failed to parse", errNum);
         res = OC_STACK_ERROR;
         goto exit;
     }
