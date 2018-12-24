@@ -587,6 +587,16 @@ OCEntityHandlerResult updateWiFiConfResource(OCRepPayload* input)
         return OC_EH_BAD_REQ;
     }
 
+    // If payload does not contain all required properties, then the request is
+    // considered as a bad request.
+    if (OCRepPayloadIsNull(input, OC_RSRVD_ES_SSID) ||
+        OCRepPayloadIsNull(input, OC_RSRVD_ES_AUTHTYPE) ||
+        OCRepPayloadIsNull(input, OC_RSRVD_ES_ENCTYPE))
+    {
+        OIC_LOG(ERROR, ES_RH_TAG, "Required property for Update is missing!");
+        return OC_EH_BAD_REQ;
+    }
+
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     ESWiFiConfData* wiFiData = (ESWiFiConfData*) OICMalloc(sizeof(ESWiFiConfData));
     if (wiFiData == NULL)
