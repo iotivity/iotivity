@@ -23,13 +23,12 @@ var StorageHandler = require('iotivity-node/lib/CustomStorageHandler');
 var observeHandles = [];
 var observeCount = 0;
 const SVR_CLIENT = 'oic_svr_db_client.dat';
-var discoverTimer;
 var discoverHandle = {};
-
 var discoveredDevices = [];
+var fs = require('fs');
 
 function setDiscoveryTimeOut(callback, time) {
-    discoverTimer = setTimeout(function () {
+    setTimeout(function () {
         if (discoveredDevices.length === 0)
             console.log('Resource not found');
         callback(discoveredDevices);
@@ -46,6 +45,49 @@ module.exports.startClient = function () {
         isActive = true;
         iotivity.OCRegisterPersistentStorageHandler(StorageHandler(SVR_CLIENT));
         iotivity.OCInit(null, 0, iotivity.OCMode.OC_CLIENT_SERVER);
+
+        var handle = iotivity.OCGetResourceHandleAtUri("/oic/d");
+        iotivity.OCBindResourceTypeToResource(handle, "oic.wk.d");
+
+        iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
+            iotivity.OC_RSRVD_SPEC_VERSION, "ocf.2.0.0");
+        iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
+            iotivity.OC_RSRVD_DATA_MODEL_VERSION, "ocf.res.1.3.0");
+        iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
+            iotivity.OC_RSRVD_DEVICE_NAME, "client");
+
+        iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
+            iotivity.OC_RSRVD_PLATFORM_ID, "0A3E0D6F-DBF5-404E-8719-D6880042463A");
+
+        iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
+            iotivity.OC_RSRVD_MFG_NAME, "myName");
+
+        iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
+            iotivity.OC_RSRVD_MFG_URL, "https://www.iotivity.org");
+
+        iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
+            iotivity.OC_RSRVD_MODEL_NUM, "myModelNumber");
+
+        iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
+            iotivity.OC_RSRVD_MFG_DATE, "2016-01-15");
+
+        iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
+            iotivity.OC_RSRVD_PLATFORM_VERSION, "myPlatformVersion");
+
+        iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
+            iotivity.OC_RSRVD_OS_VERSION, "myOS");
+
+        iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
+            iotivity.OC_RSRVD_HARDWARE_VERSION, "myHardwareVersion");
+
+        iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
+            iotivity.OC_RSRVD_FIRMWARE_VERSION, "myFirmwareVersion");
+
+        iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
+            iotivity.OC_RSRVD_SUPPORT_URL, "https://www.iotivity.org");
+
+        iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
+            iotivity.OC_RSRVD_SYSTEM_TIME, "2017-12-01T12:00:00.52Z");
 
         intervalId = setInterval(function () {
             iotivity.OCProcess();
@@ -76,28 +118,6 @@ function stopClient() {
 module.exports.stopClient = function () {
     console.log('stopClient start');
     stopClient();
-
-    var fs = require('fs');
-    if (restartMode === 'RFOTM') {
-        console.log("mode: " + restartMode);
-        fs.exists('oic_svr_db_client_rfotm.dat', function (exists) {
-            if (exists) {
-                console.log('oic_svr_db_client_rfotm.dat exist!');
-                fs.createReadStream('oic_svr_db_client_rfotm.dat').pipe(fs.createWriteStream('oic_svr_db_client.dat'));
-                console.log('renamed complete');
-            }
-        });
-    }
-    else if (restartMode === 'RFNOP') {
-        console.log("mode: " + restartMode);
-        fs.exists('oic_svr_db_client_rfnop.dat', function (exists) {
-            if (exists) {
-                console.log('oic_svr_db_client_rfnop.dat exist!');
-                fs.createReadStream('oic_svr_db_client_rfnop.dat').pipe(fs.createWriteStream('oic_svr_db_client.dat'));
-                console.log('renamed complete');
-            }
-        });
-    }
 };
 
 function assembleRequestUrl(eps, path) {
@@ -300,50 +320,37 @@ module.exports.cancelObservation = function (token) {
     }
 };
 
-var restartMode = '';
-module.exports.copyFile = function (mode) {
+module.exports.copyFile = function (mode, callback) {
     console.log("copyFile");
-    if (isActive) {
-        if (discoverHandle.handle)
-            iotivity.OCCancel(discoverHandle.handle, iotivity.OCQualityOfService.OC_HIGH_QOS, null);
-        discoverHandle = {};
-        if (observeCount > 0) {
-            for (var index = 0; index < observeHandles.size(); index++) {
-                console.log('Cancel observation');
-                iotivity.OCCancel(observeHandles[index].handle, iotivity.OCQualityOfService.OC_HIGH_QOS, null);
-            }
-            observeHandles.length = 0;
-            observeCount = 0;
-        }
-
-        clearInterval(intervalId);
-        iotivity.OCStop();
-        isActive = false;
-        restartMode = mode;
-    }
-    else {
-        var fs = require('fs');
-        if (mode === 'RFOTM') {
-            console.log("mode: " + mode);
+    setTimeout(function () {
+        if (mode == 'RFOTM') {
             fs.exists('oic_svr_db_client_rfotm.dat', function (exists) {
                 if (exists) {
                     console.log('oic_svr_db_client_rfotm.dat exist!');
-                    fs.createReadStream('oic_svr_db_client_rfotm.dat').pipe(fs.createWriteStream('oic_svr_db_client.dat'));
+                    fs.createReadStream('oic_svr_db_client_rfotm.dat').pipe(fs.createWriteStream(SVR_CLIENT));
                     console.log('renamed complete');
+                    callback({ 'returnValue': true });
+                } else {
+                    callback({ 'returnValue': false });
                 }
             });
         }
-        else if (mode === 'RFNOP') {
-            console.log("mode: " + mode);
+        else if (mode == 'RFNOP') {
             fs.exists('oic_svr_db_client_rfnop.dat', function (exists) {
                 if (exists) {
                     console.log('oic_svr_db_client_rfnop.dat exist!');
-                    fs.createReadStream('oic_svr_db_client_rfnop.dat').pipe(fs.createWriteStream('oic_svr_db_client.dat'));
+                    fs.createReadStream('oic_svr_db_client_rfnop.dat').pipe(fs.createWriteStream(SVR_CLIENT));
                     console.log('renamed complete');
+                    callback({ 'returnValue': true });
+                } else {
+                    callback({ 'returnValue': false });
                 }
             });
         }
-    }
+        else {
+            callback({ 'returnValue': false });
+        }
+    }, 3000, null);
 };
 
 //Exit gracefully when node service is killed

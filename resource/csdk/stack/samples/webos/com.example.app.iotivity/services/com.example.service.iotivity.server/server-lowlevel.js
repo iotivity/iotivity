@@ -26,6 +26,7 @@ var handleReceptacle = {};
 var observerIds = [];
 const SVR_SERVER = 'oic_svr_db_server.dat';
 var subscriptionCallback;
+var fs = require('fs');
 
 module.exports.startServer = function (resourceCallback) {
     console.log("Starting OCF stack in server mode");
@@ -43,7 +44,7 @@ module.exports.startServer = function (resourceCallback) {
     iotivity.OCBindResourceTypeToResource(handle, "oic.d.light");
 
     iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
-        iotivity.OC_RSRVD_SPEC_VERSION, "ocf.1.0.0");
+        iotivity.OC_RSRVD_SPEC_VERSION, "ocf.2.0.0");
     iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
         iotivity.OC_RSRVD_DATA_MODEL_VERSION, "ocf.res.1.3.0,ocf.sh.1.3.0");
     iotivity.OCSetPropertyValue(iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
@@ -200,30 +201,6 @@ module.exports.stopServer = function () {
     clearInterval(intervalId);
     iotivity.OCStop();
     state = false;
-
-    if (serverModeChange) {
-        serverModeChange = false;
-        var fs = require('fs');
-        console.log('serverMode:' + serverMode);
-        if (serverMode == 'RFOTM') {
-            fs.exists('oic_svr_db_server_rfotm.dat', function (exists) {
-                if (exists) {
-                    console.log('oic_svr_db_server_rfotm.dat exist!');
-                    fs.createReadStream('oic_svr_db_server_rfotm.dat').pipe(fs.createWriteStream('oic_svr_db_server.dat'));
-                    console.log('renamed complete');
-                }
-            });
-        }
-        else if (serverMode == 'RFNOP') {
-            fs.exists('oic_svr_db_server_rfnop.dat', function (exists) {
-                if (exists) {
-                    console.log('oic_svr_db_server_rfnop.dat exist!');
-                    fs.createReadStream('oic_svr_db_server_rfnop.dat').pipe(fs.createWriteStream('oic_svr_db_server.dat'));
-                    console.log('renamed complete');
-                }
-            });
-        }
-    }
     console.log("=== server teardown ===");
 };
 
@@ -281,9 +258,35 @@ module.exports.observeBinarySwitchValue = function (resourceCallback) {
     subscriptionCallback = resourceCallback;
 };
 
-var serverModeChange = false;
-var serverMode;
-module.exports.copyFile = function (mode) {
-    serverModeChange = true;
-    serverMode = mode;
+module.exports.copyFile = function (mode, callback) {
+    console.log("copyFile: " + mode);
+    setTimeout(function () {
+        if (mode == 'RFOTM') {
+            fs.exists('oic_svr_db_server_rfotm.dat', function (exists) {
+                if (exists) {
+                    console.log('oic_svr_db_server_rfotm.dat exist!');
+                    fs.createReadStream('oic_svr_db_server_rfotm.dat').pipe(fs.createWriteStream(SVR_SERVER));
+                    console.log('renamed complete');
+                    callback({ 'returnValue': true });
+                } else {
+                    callback({ 'returnValue': false });
+                }
+            });
+        }
+        else if (mode == 'RFNOP') {
+            fs.exists('oic_svr_db_server_rfnop.dat', function (exists) {
+                if (exists) {
+                    console.log('oic_svr_db_server_rfnop.dat exist!');
+                    fs.createReadStream('oic_svr_db_server_rfnop.dat').pipe(fs.createWriteStream(SVR_SERVER));
+                    console.log('renamed complete');
+                    callback({ 'returnValue': true });
+                } else {
+                    callback({ 'returnValue': false });
+                }
+            });
+        }
+        else {
+            callback({ 'returnValue': false });
+        }
+    }, 3000, null);
 };

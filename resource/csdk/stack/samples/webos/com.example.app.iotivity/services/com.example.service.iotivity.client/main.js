@@ -69,8 +69,7 @@ startClient.on("request", function (message) {
 });
 startClient.on("cancel", function (message) {
     delete subscriptions[message.uniqueToken];
-    if (isEmpty(subscriptions))
-        client.stopClient();
+    client.stopClient();
     message.respond({ returnValue: true });
 });
 /*
@@ -765,8 +764,7 @@ clientObserve.on("cancel", function (message) {
 
 service.register("copyFile", function (message) {
     var mode = message.payload.mode;
-    client.copyFile(mode);
-    message.respond({
-        returnValue: true
+    client.copyFile(mode, function (response) {
+        message.respond(response);
     });
 });

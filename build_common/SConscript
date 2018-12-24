@@ -26,7 +26,7 @@ os_arch_map = {
         'armv6l', 'armv7l'
     ],
     'tizen': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64', 'armv7l'],
-    'webos': ['i586', 'aarch64', 'arm'],
+    'webos': ['i586', 'i686', 'aarch64', 'arm'],
     'android': [
         'x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard',
         'arm64-v8a'

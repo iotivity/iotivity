@@ -15,11 +15,11 @@ import * as ActionCreators from '../actions/ActionCreators';
 import Changeable from '@enact/ui/Changeable';
 import { Group } from '@enact/ui/Group';
 import { Layout } from '@enact/ui/Layout';
+import SwitchItem from '@enact/moonstone/SwitchItem';
 
 const SelectableGroup = Changeable({ mutable: true }, Group);
 let discoveredItems = [];
 let discoveredItemDatas = [];
-
 class Client extends React.Component {
     constructor(props) {
         super(props);
@@ -31,11 +31,14 @@ class Client extends React.Component {
             resourceValue: null,
             requestResourceCompleted: true,
             isPostable: false,
+            clientStarted: false,
         };
         this.onToggleHandler = this.onSelectedResource.bind(this);
         this.onToggleData = this.onSelectedData.bind(this);
         this.onResourceKeyChanged = this.resourceKeyChanged.bind(this);
         this.onResourceValueChanged = this.resourceValueChanged.bind(this);
+        this.onStartClienTapped = this.startClient.bind(this);
+        this.onDiscoverTapped = this.discoverResources.bind(this);
         this.onGetResourceTapped = this.getResource.bind(this);
         this.onPostResourceTapped = this.postResource.bind(this);
         this.onDeleteResourceTapped = this.requestDeleteResource.bind(this);
@@ -45,37 +48,24 @@ class Client extends React.Component {
         this.onRFOTMTapped = this.onRFOTMChanged.bind(this);
         this.onRFNOPTapped = this.onRFNOPChanged.bind(this);
     }
+    componentWillUnmount() {
+        if (this.props.isObserving) {
+            this.props.stopObserveResource();
+        }
+        this.props.stopClient();
+    }
     componentWillReceiveProps(props) {
         console.log(props);
-        if (props.clientRestarted) {
-            this.props.stopRestartClient();
-            discoveredItems = [];
-            discoveredItemDatas = [];
-            if (this.props.isObserving) {
-                this.props.stopObserveResource();
-            }
-            this.setState({
-                resourceUri: null,
-                eps: null,
-                resourceKey: null,
-                resourceValue: null,
-                resourceCompleted: true,
-                selectedDiscoveredItemIndex: null,
-                isPostable: false,
-            });
-            this.props.resetDiscoveredList();
-            setTimeout(() => {
-                this.props.startClient();
-                this.props.discoverResources();
-            }, 5000);
-        }
         if (props.discoveredResources && props.discoveredResources.length > 0) {
             discoveredItems = [];
             for (let i = 0; i < props.discoveredResources.length; i++) {
-                discoveredItems.push({
-                    value: props.discoveredResources[i],
-                    children: props.discoveredResources[i].addr.addr + " (port:" + props.discoveredResources[i].addr.port + ")",
-                });
+                if (props.discoveredResources[i].result === 0) {
+                    console.log(props.discoveredResources[i]);
+                    discoveredItems.push({
+                        value: props.discoveredResources[i],
+                        children: props.discoveredResources[i].addr.addr + " (port:" + props.discoveredResources[i].addr.port + ")",
+                    });
+                }
             }
         }
         else {
@@ -113,6 +103,12 @@ class Client extends React.Component {
             resourceValue: ev.value,
             requestResourceCompleted: false,
         });
+    }
+    discoverResources() {
+        this.props.resetDiscoveredList();
+        setTimeout(() => {
+            this.props.discoverResources();
+        }, 1000);
     }
     getResource() {
         let param = {
@@ -175,12 +171,13 @@ class Client extends React.Component {
         });
     }
     onSelectedResource(ev) {
-        console.log(ev);
         discoveredItemDatas = [];
         for (let j = 0; j < this.props.discoveredResources[ev.selected].payload.resources.length; j++) {
             discoveredItemDatas.push({
-                value: this.props.discoveredResources[ev.selected].payload.resources[j].uri,
-                eps: this.props.discoveredResources[ev.selected].payload.resources[j].eps,
+                value: {
+                    "uri": this.props.discoveredResources[ev.selected].payload.resources[j].uri,
+                    "eps": this.props.discoveredResources[ev.selected].payload.resources[j].eps
+                },
                 children: "uri: " + this.props.discoveredResources[ev.selected].payload.resources[j].uri +
                     " (if:" + this.props.discoveredResources[ev.selected].payload.resources[j].interfaces + ")",
             });
@@ -192,8 +189,8 @@ class Client extends React.Component {
     }
     onSelectedData(ev) {
         this.setState({
-            resourceUri: discoveredItemDatas[ev.selected].value,
-            eps: discoveredItemDatas[ev.selected].eps,
+            resourceUri: discoveredItemDatas[ev.selected].value.uri,
+            eps: discoveredItemDatas[ev.selected].value.eps,
             requestResourceCompleted: false,
         });
     }
@@ -202,12 +199,26 @@ class Client extends React.Component {
             isPostable: !prevState.isPostable,
         }));
     }
+    startClient(ev) {
+        this.setState({
+            clientStartable: ev.selected,
+        });
+        if (ev.selected) {
+            this.props.startClient();
+        }
+        else {
+            this.props.resetDiscoveredList();
+            this.props.stopClient();
+        }
+    }
     onRFOTMChanged() {
         let param = {
             mode: "RFOTM"
         }
+        if (this.state.clientStartable) {
+            this.props.stopClient();
+        }
         this.props.copyClientCBORFile(param);
-        this.props.stopClient();
         discoveredItems = [];
         discoveredItemDatas = [];
         if (this.props.isObserving) {
@@ -220,6 +231,7 @@ class Client extends React.Component {
             resourceCompleted: true,
             selectedDiscoveredItemIndex: null,
             isPostable: false,
+            clientStartable: false,
         });
         this.props.resetDiscoveredList();
     }
@@ -227,8 +239,10 @@ class Client extends React.Component {
         let param = {
             mode: "RFNOP"
         }
+        if (this.state.clientStartable) {
+            this.props.stopClient();
+        }
         this.props.copyClientCBORFile(param);
-        this.props.stopClient();
         discoveredItems = [];
         discoveredItemDatas = [];
         if (this.props.isObserving) {
@@ -241,13 +255,17 @@ class Client extends React.Component {
             resourceCompleted: true,
             selectedDiscoveredItemIndex: null,
             isPostable: false,
+            clientStartable: false,
         });
         this.props.resetDiscoveredList();
     }
     render() {
-        const { showDiscoveredResources, detailResourceInfo, isObserving } = this.props;
+        const { showDiscoveredResources, detailResourceInfo, isObserving, clientStartable } = this.props;
         return (
             <div>
+                <div style={{ "paddingLeft": 10 + "px", "paddingTop": 9 + "px" }}>
+                    <SwitchItem disabled={!clientStartable} onToggle={this.onStartClienTapped} selected={this.state.clientStartable}>Client service always on</SwitchItem>
+                </div>
                 <div style={{ "paddingLeft": 20 + "px", "paddingTop": 9 + "px" }}>
                     <div style={{ "width": 600 + "px", "display": "inline-block", "verticalAlign": "middle" }}>
                         <MarqueeText marqueeOn="render">Change mode</MarqueeText>
@@ -256,8 +274,9 @@ class Client extends React.Component {
                     <Button small onClick={this.onRFNOPTapped}>RFNOP</Button>
                 </div>
                 <Layout align="start">
-                    {showDiscoveredResources ?
-                        <SpotlightContainerDecorator focusableScrollbar style={{ "height": 210 + "px" }} direction="both" horizontalScrollbar="auto" verticalScrollbar="auto">
+
+                    <SpotlightContainerDecorator focusableScrollbar style={{ "height": 210 + "px" }} direction="both" horizontalScrollbar="auto" verticalScrollbar="auto">
+                        {showDiscoveredResources ?
                             <SelectableGroup
                                 childComponent={CheckboxItem}
                                 onSelect={this.onToggleHandler}
@@ -265,13 +284,11 @@ class Client extends React.Component {
                                 select="radio">
                                 {discoveredItems}
                             </SelectableGroup>
-                            <div style={{ "paddingTop": 9 + "px" }} >
-                                <Button small onClick={this.props.resetDiscoveredList}>OK</Button>
-                            </div>
-
-                        </SpotlightContainerDecorator>
-                        : <Button small onClick={this.props.discoverResources}>Discover Resources</Button>
-                    }
+                            : null}
+                        <div style={{ "paddingTop": 9 + "px" }} >
+                            <Button disabled={!clientStartable} small onClick={this.onDiscoverTapped}>Discover Resources</Button>
+                        </div>
+                    </SpotlightContainerDecorator>
                 </Layout>
                 <Divider />
                 <Layout align="start">
@@ -288,7 +305,7 @@ class Client extends React.Component {
                     </SpotlightContainerDecorator>
                 </Layout>
                 <Layout align="start">
-                    <SpotlightContainerDecorator focusableScrollbar style={{ "height": 400 + "px" }} direction="both" horizontalScrollbar="auto" verticalScrollbar="auto">
+                    <SpotlightContainerDecorator focusableScrollbar style={{ "height": 350 + "px" }} direction="both" horizontalScrollbar="auto" verticalScrollbar="auto">
                         <div style={{ "paddingTop": 9 + "px" }}>
                             <Button style={{ lineHeight: 25 + "px" }} disabled={!this.state.resourceUri} small onClick={this.onGetResourceTapped}>get<br />resource</Button>
                             <Button style={{ lineHeight: 25 + "px" }} disabled={!this.state.resourceUri} small onClick={this.onDeleteResourceTapped}>delete<br />resource</Button>
@@ -340,7 +357,6 @@ const mapDispatchToProps = (dispatch) => {
         actionEnableClientResourceControlUI: () => dispatch(ActionCreators.actionEnableClientResourceControlUI()),
         actionDisableClientResourceControlUI: () => dispatch(ActionCreators.actionDisableClientResourceControlUI()),
         copyClientCBORFile: (params) => dispatch(ActionCreators.copyClientCBORFile(params)),
-        stopRestartClient: () => ActionCreators.stopRestartClient(dispatch),
         startClient: () => ActionCreators.startClient(dispatch),
         stopClient: () => ActionCreators.stopClient(dispatch),
     };
@@ -352,7 +368,7 @@ let mapStateToProps = (state) => {
         detailResourceInfo: state.detailResourceInfo,
         enableClientResourceControlUI: state.enableClientResourceControlUI,
         isObserving: state.isObservingResource,
-        clientRestarted: state.clientRestarted
+        clientStartable: state.clientStartable
     };
 };
 export default connect(mapStateToProps, mapDispatchToProps)(Client);

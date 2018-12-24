@@ -103,27 +103,18 @@ export function actionCancelObserveResourceResults() {
     };
 }
 
-export function actionRestartServer() {
+export function actionRestartServer(value) {
     return {
-        type: actions.RESTART_SERVER
+        type: actions.RESTART_SERVER,
+        payload: { state: value }
     };
 }
 
-export function actionStopRestartServer() {
-    return {
-        type: actions.STOP_RESTART_SERVER
-    };
-}
 
-export function actionRestartClient() {
+export function actionRestartClient(value) {
     return {
-        type: actions.RESTART_CLIENT
-    };
-}
-
-export function actionStopRestartClient() {
-    return {
-        type: actions.STOP_RESTART_CLIENT
+        type: actions.RESTART_CLIENT,
+        payload: { state: value }
     };
 }
 
@@ -163,7 +154,6 @@ export const stopServer = (dispatch) => {
     if (ls) {
         ls.cancel();
         dispatch(actionUpdateServerState(false));
-        dispatch(actionResetDiscoveredList([]));
         let param = { "value": false };
         dispatch(actionUpdateResourceValue(param));
         LS2RequestSingleton.deleteInstance('startServer');
@@ -363,11 +353,15 @@ export const observeResource = params => dispatch => {
             onComplete: (res) => {
                 console.log(res);
                 if (res.response.payload) {
-                    createToast("Observe resource value changed");
                     dispatch(actionUpdateObserveResourceResults(res.response));
                 }
                 else {
                     createToast("Fail to observe resource");
+                    const ls2 = LS2RequestSingleton.instance('observeResource');
+                    if (ls2) {
+                        ls2.cancel();
+                        LS2RequestSingleton.deleteInstance('observeResource');
+                    }
                     dispatch(actionEnableClientResourceControlUI());
                 }
                 return;
@@ -437,39 +431,43 @@ export const stopObserveBinarySwitchValue = (dispatch) => {
 export const copyServerCBORFile = params => (dispatch) => {
     console.log("copyServerCBORFile");
     console.log(params);
+    dispatch(actionRestartServer(false));
     return new LS2Request().send({
         service: 'luna://com.example.service.iotivity.server/',
         method: 'copyFile',
         parameters: params,
         onComplete: (res) => {
             console.log(res);
-            dispatch(actionRestartServer());
+            if (res.returnValue === true) {
+                createToast("File copy completed");
+            }
+            else {
+                createToast("File copy failed");
+            }
+            dispatch(actionRestartServer(true));
             return;
         }
     });
 };
 
-export const stopRestartServer = (dispatch) => {
-    console.log("stopRestartServer");
-    dispatch(actionStopRestartServer());
-};
-
 export const copyClientCBORFile = params => (dispatch) => {
     console.log("copyClientCBORFile");
     console.log(params);
+    dispatch(actionRestartClient(false));
     return new LS2Request().send({
         service: 'luna://com.example.service.iotivity.client/',
         method: 'copyFile',
         parameters: params,
         onComplete: (res) => {
             console.log(res);
-            dispatch(actionRestartClient());
+            if (res.returnValue === true) {
+                createToast("File copy completed");
+            }
+            else {
+                createToast("File copy failed");
+            }
+            dispatch(actionRestartClient(true));
             return;
         }
     });
-};
-
-export const stopRestartClient = (dispatch) => {
-    console.log("stopRestartClient");
-    dispatch(actionStopRestartClient());
 };

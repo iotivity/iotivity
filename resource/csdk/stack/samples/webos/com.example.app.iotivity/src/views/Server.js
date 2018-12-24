@@ -47,12 +47,6 @@ class Server extends React.Component {
         });
         this.props.observeBinarySwitchValue();
     }
-    componentWillReceiveProps(props) {
-        if (props.serverRestarted) {
-            this.props.stopRestartServer();
-            setTimeout(() => { this.createResource(); }, 5000);
-        }
-    }
     deleteResource() {
         let param = {
             uri: this.state.resourceUri,
@@ -80,27 +74,34 @@ class Server extends React.Component {
         let param = {
             mode: "RFOTM"
         }
-        this.props.copyServerCBORFile(param);
         this.props.stopObserveBinarySwitchValue();
         this.props.stopServer();
+        this.props.copyServerCBORFile(param);
     }
     onRFNOPChanged() {
         let param = {
             mode: "RFNOP"
         }
-        this.props.copyServerCBORFile(param);
         this.props.stopObserveBinarySwitchValue();
         this.props.stopServer();
+        this.props.copyServerCBORFile(param);
     }
     render() {
-        const { serverEnabled, enableServerResourceControlUI, resourceValue } = this.props;
+        const { serverEnabled, enableServerResourceControlUI, resourceValue, serverStartable } = this.props;
         return (
             <div>
+                <div style={{ "paddingLeft": 20 + "px", "paddingTop": 9 + "px" }}>
+                    <div style={{ "width": 600 + "px", "display": "inline-block", "verticalAlign": "middle" }}>
+                        <p>Change mode</p>
+                    </div>
+                    <Button small onClick={this.onRFOTMTapped}>RFOTM</Button>
+                    <Button small onClick={this.onRFNOPTapped}>RFNOP</Button>
+                </div>
                 <Layout align="start">
                     <Cell shrink>
                         {serverEnabled ?
                             <Button small onClick={this.onStopServerTapped}>stop server</Button>
-                            : <Button small onClick={this.onCreateResourceTapped}>start server</Button>
+                            : <Button disabled={!serverStartable} small onClick={this.onCreateResourceTapped}>start server</Button>
                         }
                     </Cell>
                     <Cell>
@@ -127,13 +128,6 @@ class Server extends React.Component {
                                         <MarqueeText marqueeOn="render">value</MarqueeText>
                                     </div>
                                     <Button small onClick={this.onResourceValueTapped}>{resourceValue ? "true" : "false"}</Button>
-                                </div>
-                                <div style={{ "paddingLeft": 20 + "px", "paddingTop": 9 + "px" }}>
-                                    <div style={{ "width": 600 + "px", "display": "inline-block", "verticalAlign": "middle" }}>
-                                        <MarqueeText marqueeOn="render">Change mode</MarqueeText>
-                                    </div>
-                                    <Button small onClick={this.onRFOTMTapped}>RFOTM</Button>
-                                    <Button small onClick={this.onRFNOPTapped}>RFNOP</Button>
                                 </div>
                             </div>
                             : null
@@ -162,8 +156,7 @@ const mapDispatchToProps = (dispatch) => {
         setBinarySwitchValue: (params) => dispatch(ActionCreators.setBinarySwitchValue(params)),
         observeBinarySwitchValue: () => ActionCreators.observeBinarySwitchValue(dispatch),
         stopObserveBinarySwitchValue: () => ActionCreators.stopObserveBinarySwitchValue(dispatch),
-        copyServerCBORFile: (params) => dispatch(ActionCreators.copyServerCBORFile(params)),
-        stopRestartServer: () => ActionCreators.stopRestartServer(dispatch),
+        copyServerCBORFile: (params) => dispatch(ActionCreators.copyServerCBORFile(params))
     };
 };
 let mapStateToProps = (state) => {
@@ -173,7 +166,7 @@ let mapStateToProps = (state) => {
         showDiscoveredResources: state.showDiscoveredResources,
         enableServerResourceControlUI: state.enableServerResourceControlUI,
         resourceValue: state.resourceValue,
-        serverRestarted: state.serverRestarted,
+        serverStartable: state.serverStartable
     };
 };
 export default connect(mapStateToProps, mapDispatchToProps)(Server);

@@ -101,9 +101,29 @@ samples_env.Alias(
 samples_env.Alias(
     "install",
     samples_env.Install(sec_samples_build_dir,
+                        sec_samples_src_dir + 'oic_svr_db_client_rfnop.json'))
+
+samples_env.Alias(
+    "install",
+    samples_env.Install(sec_samples_build_dir,
+                        sec_samples_src_dir + 'oic_svr_db_client_rfnop.dat'))
+
+samples_env.Alias(
+    "install",
+    samples_env.Install(sec_samples_build_dir,
                         sec_samples_src_dir + 'oic_svr_db_client_rfotm.json'))
 
 samples_env.Alias(
     "install",
     samples_env.Install(sec_samples_build_dir,
                         sec_samples_src_dir + 'oic_svr_db_client_rfotm.dat'))
+
+samples_env.Alias(
+    "install",
+    samples_env.Install(sec_samples_build_dir,
+                        sec_samples_src_dir + 'introspection_swagger.json'))
+
+samples_env.Alias(
+    "install",
+    samples_env.Install(sec_samples_build_dir,
+                        sec_samples_src_dir + 'introspection_swagger.dat'))

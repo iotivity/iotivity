@@ -135,8 +135,7 @@ serverDiscoverable.on("request", function (message) {
 });
 serverDiscoverable.on("cancel", function (message) {
     delete subscriptions[message.uniqueToken];
-    if (isEmpty(subscriptions))
-        server.stopServer();
+    server.stopServer();
     message.respond({ returnValue: true });
 });
 
@@ -305,8 +304,7 @@ binarySwitchObserver.on("cancel", function (message) {
 
 service.register("copyFile", function (message) {
     var mode = message.payload.mode;
-    server.copyFile(mode);
-    message.respond({
-        returnValue: true
+    server.copyFile(mode, function (response) {
+        message.respond(response);
     });
 });
