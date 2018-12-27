@@ -1,0 +1,95 @@
+<configuration>
+  <endpoint>
+    <ip>%IP%</ip>
+    <port>%PORT%</port>
+  </endpoint>
+  <deviceClass>OCFClient</deviceClass>
+  <profiles>
+    <profile>OCF Client</profile>
+  </profiles>
+  <testCases>
+
+    <testCase>CT1.1.1</testCase>
+    <testCase>CT1.1.2</testCase>
+    <testCase>CT1.1.3</testCase>
+    <testCase>CT1.1.4</testCase>
+    <testCase>CT1.1.5</testCase>
+    <testCase>CT1.2.2</testCase>
+    <testCase>CT1.2.3</testCase>
+    <testCase>CT1.2.6</testCase>
+    <testCase>CT1.3.1</testCase>
+    <testCase>CT1.3.2-1</testCase>
+    <testCase>CT1.3.2-2</testCase>
+
+    <testCase>CT2.1.2</testCase>
+    <testCase>CT2.1.1</testCase>
+
+    <testCase>CT2.2.2</testCase>
+    <testCase>CT2.2.3</testCase>
+    <testCase>CT2.2.4</testCase>
+    <testCase>CT2.2.6</testCase>
+
+    <testCase>CT2.3.1</testCase> <!-- PASS, but not sure if config is correct -->
+    <testCase>CT2.3.2</testCase> <!-- FAIL, not sure if config is correct -->
+    <testCase>CT2.3.3</testCase> <!-- PASS, but not sure if config is correct -->
+
+    <testCase>CT1.7.2.1-1</testCase>
+    <testCase>CT1.7.2.1-2</testCase>
+    <testCase>CT1.7.2.2-1</testCase>
+    <testCase>CT1.7.2.2-2</testCase>
+    <testCase>CT1.7.2.3-1</testCase>
+    <testCase>CT1.7.2.3-2</testCase>
+    <testCase>CT1.7.3.1</testCase>
+    <testCase>CT1.7.3.2</testCase>
+    <testCase>CT1.7.4.1</testCase>
+    <testCase>CT1.7.4.2</testCase>
+    <testCase>CT1.7.4.3</testCase>
+    <testCase>CT1.7.4.4</testCase>
+    <testCase>CT1.7.4.5</testCase>
+    <testCase>CT1.7.5.1</testCase>
+    <testCase>CT1.7.7.1</testCase>
+    <testCase>CT1.7.8.1</testCase>
+    <testCase>CT1.7.8.2</testCase>
+    <testCase>CT1.7.8.3</testCase>
+    <testCase>CT1.7.8.4</testCase>
+    <testCase>CT1.7.8.5</testCase>
+    <testCase>CT1.7.8.7</testCase>
+    <testCase>CT1.7.8.9</testCase>
+    <testCase>CT1.7.8.11</testCase>
+    <testCase>CT1.7.9.1</testCase>
+    <testCase>CT1.7.9.2</testCase>
+    <testCase>CT1.7.9.3</testCase>
+    <testCase>CT1.7.9.4</testCase>
+    <testCase>CT1.7.10.3</testCase>
+    <testCase>CT1.7.10.4</testCase>
+    <testCase>CT1.7.10.5</testCase>
+    <testCase>CT1.7.11.1</testCase>
+    <testCase>CT1.7.11.2</testCase>
+    <testCase>CT1.7.12.1</testCase>
+    <testCase>CT1.7.12.2</testCase>
+    <testCase>CT1.7.12.3</testCase>
+    <testCase>CT1.7.12.4</testCase>
+    <testCase>CT1.7.12.5</testCase>
+
+  </testCases>
+  <pics>{
+    "device": "CTT_Test",
+    "company": "Comarch",
+    "role": "Client",
+    "supportedVerticalProfile": ["Smart Home"],
+    "supportedDeviceTypes": ["oic.d.airpurifier"],
+    "icv": "ocf.1.0.0",
+    "dmv": "ocf.res.1.0.0",
+    "acceptVersion": ["1.0.0"],
+    "resources": ["oic.r.crl", "oic.r.csr", "oic.r.roles", "oic.r.doxm", "oic.r.pstat", "oic.wk.rd"],
+    "OTM": ["oic.sec.doxm.jw"],
+    "contentFormatVersion": ["1.0.0"],
+    "multiValueQuerySupport": false,
+	"implementsWKCON": false,
+    "sct": 9,
+    "RDPublishCapability": true,
+    "observableOICRES": false,
+    "persistentDeviceuuid": false
+}</pics>
+</configuration>
+

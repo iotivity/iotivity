@@ -1,0 +1,29 @@
+{
+  "id": "http://openinterconnect.org/schemas/oic.r.light#",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "OIC Light",
+  "$ref": "#/definitions/oic.r.light",
+  "definitions": {
+    "oic.r.light": {
+      "type": "object",
+      "properties": {
+		"rt": {
+          "type": "string",
+          "description": "Description about resource type",
+          "default": "oic.r.light"
+        },
+		"if": {
+          "type": "string",
+          "description": "Interface supported",
+          "default": "oic.if.baseline"
+        },
+        "intensity":  {
+          "type": "integer",
+          "description": "ReadOnly, Comma separated min,max values for intensity on this device",
+          "default": "10,20"
+        }
+      }
+    }
+  },
+   "required": ["rt","if"]
+}

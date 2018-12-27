@@ -1,0 +1,146 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Settings ***
+Documentation     BAT Test Android platform
+Variables         ../../helper/variable.py
+#Library           Remote    ${REMOTE_IP}:${REMOTE_PORT}    WITH NAME    Local
+Resource    ../../helper/Iotivity_Test_Helper.txt
+Suite Setup    Do Suite Init Task
+
+*** Variables ***
+${iotivity_out_dir}    ${IOTIVITY_ROOT}/out/linux/${x86}/${RELEASE_DIR}
+
+*** Test Cases ***
+Build Iotivity Source For Android
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-15 |
+    ...    |see | |
+    ...    |objective | Build Iotivity Source |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    ${ANDROID_PATHS}    Set Variable    ${PARAM_ANDROID_HOME} ${PARAM_ANDROID_NDK} ${PARAM_ANDROID_GRADLE}
+    ${iotivity_build_command}    Set Variable    scons TARGET_OS=android TARGET_ARCH=${ANDROID_TARGET_ARCH} RELEASE=${RELEASE} ${ANDROID_PATHS} -j ${J}
+    Run Terminal    ${IOTIVITY_ROOT}    ${iotivity_build_command}    scons: done building targets.
+
+Launch Android App SimpleBase
+    [Documentation]    |Item |Description |
+    ...    |author |razib.deb@samsung.com |
+    ...    |reviewer | |
+    ...    |since |2016-07-19 |
+    ...    |see | |
+    ...    |objective | Install and Run Android sample app |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Uninstall Application    org.iotivity.base.examples.simpleclient
+    Install Android Application    ${IOTIVITY_ROOT}/java/examples-android/simplebase/build/outputs/apk    simplebase-debug.apk
+    Run Android Application    org.iotivity.base.examples.simpleserver    org.iotivity.base.examples.SimpleServer
+
+Launch Android App SimpleClient
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-15 |
+    ...    |see | |
+    ...    |objective | Install and Run Android sample app |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Uninstall Application    org.iotivity.base.examples.simpleclient
+    Install Android Application    ${IOTIVITY_ROOT}/java/examples-android/simpleclient/build/outputs/apk    simpleclient-debug.apk
+    Run Android Application    org.iotivity.base.examples.simpleclient    org.iotivity.base.examples.SimpleClient
+
+Launch Android App SimpleServer
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-15 |
+    ...    |see | |
+    ...    |objective | Install and Run Android sample app |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Uninstall Application    org.iotivity.base.examples.simpleserver
+    Install Android Application    ${IOTIVITY_ROOT}/java/examples-android/simpleserver/build/outputs/apk    simpleserver-debug.apk
+    Run Android Application    org.iotivity.base.examples.simpleserver    org.iotivity.base.examples.SimpleServer
+
+*** Keywords ***
+Run Android Application
+    [Arguments]    ${package_name}    ${activity_name}
+    Add Specific Device    Linux    Terminal_Device    Terminal Device
+    Execute Application    Terminal_Device    terminal    adb -s ${ANDROID_DEVICE_ID} shell am start -n ${package_name}/${activity_name}
+    Start Application Log    Terminal_Device    terminal
+    BuiltIn.Sleep    2
+    ${log} =    Get Application Log    Terminal_Device    terminal
+    BuiltIn.Log    ${log}
+    ${check}    Check Keyword    Error    ${log}
+    Terminate Application    Terminal_Device    terminal
+    Remove Device    Terminal_Device
+    Should Not Be True    ${check}
+
+Install Android Application
+    [Arguments]    ${path}    ${apk_name}
+    Add Specific Device    Linux    Terminal_Device    Terminal Device
+    ${original_path}    Get Working Directory Path    Terminal_Device
+    Change Working Directory    Terminal_Device    ${path}
+    Execute Application    Terminal_Device    terminal    adb -s ${ANDROID_DEVICE_ID} install ${apk_name}
+    Start Application Log    Terminal_Device    terminal
+    Wait Until Application Exit    Terminal_Device    terminal
+    BuiltIn.Sleep    2
+    ${log} =    Get Application Log    Terminal_Device    terminal
+    BuiltIn.Log    ${log}
+    ${check}    Check Keyword    Success    ${log}
+    Terminate Application    Terminal_Device    terminal
+    Change Working Directory    Terminal_Device    ${original_path}
+    Remove Device    Terminal_Device
+    Should Be True    ${check}
+
+Get Initial Working Directory
+    Add Specific Device    Linux    Terminal_Device    Terminal Device
+    ${original_path}    Get Working Directory Path    Terminal_Device
+    Set Suite Variable    ${work_path}    ${original_path}
+    Remove Device    Terminal_Device
+
+Set Working Directory
+    Add Specific Device    Linux    Terminal_Device    Terminal Device
+    Change Working Directory    Terminal_Device    ${work_path}
+    Remove Device    Terminal_Device
+
+Uninstall Application
+    [Arguments]    ${package_name}
+    Add Specific Device    Linux    Terminal_Device    Terminal Device
+    Execute Application    Terminal_Device    terminal    adb -s ${ANDROID_DEVICE_ID} uninstall ${package_name}
+    Wait Until Application Exit    Terminal_Device    terminal
+    Remove Device    Terminal_Device

@@ -1,0 +1,114 @@
+/******************************************************************
+ *
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
+
+println "-----------------------------------------------------------------------"
+println "--------------------------Gradle Android Main--------------------------"
+println "-----------------------------------------------------------------------"
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'de.undercouch:gradle-download-task:1.0'
+    }
+}
+
+import de.undercouch.gradle.tasks.download.Download
+
+ext.javaExtLibDir = ""
+ext.iotivityBaseAARFileDir = "${iotivity_root}/java/iotivity-android/build/outputs/aar"
+ext.iotivityBaseAARFile ="${iotivityBaseAARFileDir}/iotivity-base-release"
+
+def downLoadLinks=['https://github.com/downloads/jsankey/android-junit-report/android-junit-report-1.5.8.jar',
+                   'https://repo1.maven.org/maven2/org/mockito/mockito-all/1.9.5/mockito-all-1.9.5.jar',
+                   'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/dexmaker/dexmaker-1.0.jar',
+                   'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/dexmaker/dexmaker-mockito-1.0.jar'
+                   ]
+
+/*
+ *task to download junit library
+ *if not exist download
+*/
+task checkCommonLibFiles(type:Download) {
+    doFirst {
+        mkdir(javaExtLibDir)
+        src (downLoadLinks)
+        overwrite false
+        dest javaExtLibDir
+    }
+}
+
+
+/*
+ * task to check iotivity base library file
+*/
+task checkBaseAARFile {
+
+	ext.iotivityBaseAARFileDir = "${iotivity_root}/java/iotivity-android/build/outputs/aar"
+	ext.iotivityBaseAARFile ="${iotivityBaseAARFileDir}/iotivity-base-release"
+
+    println iotivityBaseAARFileDir
+    println iotivityBaseAARFile+".aar"
+
+    if( !file("${iotivityBaseAARFile}.aar").exists() ) {
+        throw new GradleException("${baseAARFileFromMainBuild}.aar File  Doesn't Exist")
+    }
+}
+
+/*
+ * task to build module
+*/
+task install(type: GradleBuild, dependsOn: ['checkCommonLibFiles']) {
+    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
+    startParameter.projectProperties["buildType"] = "java"
+    startParameter.projectProperties["iotivityRoot"]= "${iotivity_root}"
+    startParameter.projectProperties["testRoot"] = "${test_root}"
+    startParameter.projectProperties["moduleName"] = "${module_name}"
+    startParameter.projectProperties["architecture"] = "${arch}"
+    startParameter.projectProperties["tcModuleDir"] = "${test_root}/src/tc/modules"
+    startParameter.projectProperties["tcModuleRoot"] = "${test_root}/src/tc/${module_name}/junit/build.gradle"
+    startParameter.projectProperties["appModuleRoot"] = "${test_root}/src/iBtestapp/modules/${module_name}/${src_type}/build.gradle"
+    startParameter.projectProperties["binDirectory"] ="${test_root}/bin/${src_type}"
+    startParameter.projectProperties["testCommonUtilSrcDirectory"] = "${test_root}/src/common/commonutil/${src_type}"
+    startParameter.projectProperties["javaExtLibDir"]="${test_root}/extlibs/java/common/"
+    startParameter.projectProperties["binDir"] = "${test_root}/bin/${src_type}/${module_name}"
+
+    startParameter.projectProperties["iotivityBaseAARFileDir"] = "${test_root}/bin/${src_type}/${module_name}"
+    startParameter.projectProperties["iotivityBaseAARFile"] = "iotivity-base-${release}"
+
+    def junitJarFile = startParameter.projectProperties["javaExtLibDir"] + "/android-junit-report-1.5.8.jar"
+    def mockitoallJarFile = startParameter.projectProperties["javaExtLibDir"] +  "/mockito-all-1.9.5.jar"
+    def dexmakerJarFile = startParameter.projectProperties["javaExtLibDir"] +  "/dexmaker-1.0.jar"
+    def dexmakermockitoJarFile = startParameter.projectProperties["javaExtLibDir"] +  "/dexmaker-mockito-1.0.jar"
+    def moduleBuildFileDir = "${test_root}/src/tc"
+    javaExtLibDir = startParameter.projectProperties["javaExtLibDir"]
+
+    if(test == 'tc') { 
+        buildFile = startParameter.projectProperties["tcModuleRoot"]
+    } else if (test == 'app') {
+         buildFile = startParameter.projectProperties["appModuleRoot"]
+    }
+
+    println "------------------------\nJava Project Properties\n------------------------"
+    startParameter.projectProperties.each{ key, value -> println "    ${key} : ${value}" }
+
+    tasks = ["${module_name}build".toString()]
+}

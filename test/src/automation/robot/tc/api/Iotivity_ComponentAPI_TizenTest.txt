@@ -1,0 +1,260 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Settings ***
+Documentation     Test API Test for Tizen platform
+Variables         ../../helper/variable.py
+#Library           Remote    ${REMOTE_IP}:${REMOTE_PORT}    WITH NAME    Local
+Resource    ../../helper/Iotivity_Test_Helper.txt
+Suite Setup    Do Suite Init Task
+Test Teardown    Common API TC Teardown
+
+*** Test Cases ***
+Run RI API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-10 |
+    ...    |reviewer | |
+    ...    |since |2017-01-10 |
+    ...    |see | |
+    ...    |objective |Run RI Tizen API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for tizen platform |
+    ...    |procedure | 2. Build RI gtest testcases tizen platform |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    RI
+    [Timeout]    300 minutes
+    ${iotivity_build}    Set Variable   ./gbsbuild.sh SECURED=0
+    ${iotivity_binary}    Set Variable   ${GBS_ROOT_PARENT}/GBS-ROOT-OIC/local/repos/tizen/${TIZEN_TARGET_ARCH}/RPMS/iotivity-${RPM_VERSION}.${TIZEN_TARGET_ARCH}.rpm
+    Run TIZEN API TC    ${GBS_ROOT_PARENT}/GBS-ROOT-OIC        ${iotivity_build}    ${iotivity_binary}
+
+Run RE API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-10 |
+    ...    |reviewer | |
+    ...    |since |2017-01-10 |
+    ...    |see | |
+    ...    |objective |Run RE Tizen API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for tizen platform |
+    ...    |procedure | 2. Build RE gtest testcases tizen platform |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    RE
+    [Timeout]    300 minutes
+    ${iotivity_build}    Set Variable   ./gbsbuild.sh SECURED=0
+    ${iotivity_binary}    Set Variable   ${GBS_ROOT_PARENT}/GBS-ROOT-OIC/local/repos/tizen/${TIZEN_TARGET_ARCH}/RPMS/iotivity-${RPM_VERSION}.${TIZEN_TARGET_ARCH}.rpm
+    Run TIZEN API TC    ${GBS_ROOT_PARENT}/GBS-ROOT-OIC        ${iotivity_build}    ${iotivity_binary}
+
+Run RC API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-10 |
+    ...    |reviewer | |
+    ...    |since |2017-01-10 |
+    ...    |see | |
+    ...    |objective |Run RC Tizen API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for tizen platform |
+    ...    |procedure | 2. Build RC gtest testcases tizen platform |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    RC
+    [Timeout]    120 minutes
+    ${iotivity_build}    Set Variable   ./gbsbuild.sh SECURED=0
+    ${iotivity_binary}    Set Variable   ${GBS_ROOT_PARENT}/GBS-ROOT-OIC/local/repos/tizen/${TIZEN_TARGET_ARCH}/RPMS/iotivity-${RPM_VERSION}.${TIZEN_TARGET_ARCH}.rpm
+    Run TIZEN API TC    ${GBS_ROOT_PARENT}/GBS-ROOT-OIC    ${iotivity_build}    ${iotivity_binary}
+
+Run IC API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-10 |
+    ...    |reviewer | |
+    ...    |since |2017-01-10 |
+    ...    |see | |
+    ...    |objective |Run IC Tizen API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for tizen platform |
+    ...    |procedure | 2. Build IC gtest testcases tizen platform |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    IC
+    [Timeout]    300 minutes
+    ${iotivity_build_command}    Set Variable   ./gbsbuild.sh SECURED=0 WITH_TCP=1 WITH_CLOUD=1 WITH_MQ=PUB,SUB
+    #${iotivity_build_command}    Set Variable   ./gbsbuild.sh SECURED WITH_TCP WITH_CLOUD WITH_MQ
+    ${iotivity_binary}    Set Variable   ${GBS_ROOT_PARENT}/GBS-ROOT-OIC/local/repos/tizen/${TIZEN_TARGET_ARCH}/RPMS/iotivity-${RPM_VERSION}.${TIZEN_TARGET_ARCH}.rpm
+    ${cloud_services}    Get Cloud Services    0
+    ${ic_server}    Get Concatenated String    ${DLM}    ${EMPTY}    ${SDB} -s ${TIZEN_DEVICE_ID} shell /opt/usr/media/bin/tizen_runner.sh /opt/usr/media/bin iotivity_ic_server    Cloud Initialization Successful    1s    ${True}
+    @{simulator_run}    Get List    ${cloud_services}    ${ic_server}
+    Execute Terminal Command    ${TEST_ROOT}/res/cloud_resource/cloud_run.sh kill ${KAFKA_ROOT}
+    Run Tizen TC With Linux Simulator    ${GBS_ROOT_PARENT}/GBS-ROOT-OIC    ${iotivity_build_command}    ${iotivity_binary}    CLOUD_SERVICE=1 KAFKA_ROOT=${KAFKA_ROOT}    ${False}    ${False}    ${EMPTY}    @{simulator_run}
+    [Teardown]    Cloud API TC Teardown
+
+Run CA API Test
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com |
+    ...    |reviewer | |
+    ...    |since |2016-06-22 |
+    ...    |see | |
+    ...    |objective | Execute CA Test Suite |
+    ...    |target | CA Test Suite |
+    ...    |test_data | |
+    ...    |pre_condition | 1. Build iotivity library for CA module |
+    ...    |pre_condition | 2. Build testcase for CA module |
+    ...    |procedure | Execute test_runner to run Test Suite |
+    ...    |post_condition | Run result reporter create excel report |
+    ...    |expected | All the testcase from suite all be run and excel test report will be generated |
+    [Tags]    CA
+    [Timeout]    300 minutes
+    ${tc_build_command}    Set Variable    scons MODULE=ca IOTIVITY_ROOT=${IOTIVITY_ROOT} RELEASE=${RELEASE} SECURED=1 GBS_ROOT=${GBS_ROOT_PARENT}/GBS-ROOT-OIC TIZEN_HOME=${TIZEN_HOME} PUSH=all TARGET_OS=${OS} TARGET_ARCH=${TIZEN_TARGET_ARCH}
+    ${iotivity_build_command}    Set Variable    ./gbsbuild.sh RELEASE=${RELEASE} TARGET_TRANSPORT=IP,BT,BLE SECURED=1 WITH_TCP=1
+    Add Specific Device    Linux    Linux1    Linux1
+    ${iotivity_build_success_text}    Get Tizen Build Success Text    ${iotivity_build_command}
+    Build Iotivity    ${IOTIVITY_ROOT}    ${iotivity_build_command}    ${iotivity_build_success_text}
+    Build Iotivity TEST    ${TEST_ROOT}    ${tc_build_command}    done building targets
+    Add Specific Device    Linux    Linux2    Linux2
+    ${tc_run_command}    Set Variable    ./common_test_runner.py -p tizen -m ca -f ${MODULE}_test -d ${TIZEN_DEVICE_ID} -r ../TestReport/Result/__${MODULE}_${OS}__
+    Execute Common Runner    ${tc_run_command}
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run CA Suite With Simulator    ip    0    ${TIZEN_DEVICE_ID}
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run CA Suite With Simulator    tcp    4    ${TIZEN_DEVICE_ID}
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run CA Suite With Simulator    bt    2    ${PEER_TIZEN_DEVICE_ID}    CANetworkTest_btc
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run CA Suite With Simulator    bt    2    ${PEER_TIZEN_DEVICE_ID}    CANetworkCommonTest_stc
+    #Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run CA Suite With Simulator    ble    1    ${PEER_TIZEN_DEVICE_ID}
+    Run Linux Command    Linux1    cmd_terminal    ${TEST_MANAGER_ROOT}    ./result_reporter.py ../TestReport/Result/__${MODULE}_${OS}__ ${MODULE}_${OS}    Making Test Result Report is Done!!
+    Remove All Devices
+
+Run ES API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-25 |
+    ...    |reviewer | |
+    ...    |since |2017-01-25 |
+    ...    |see | |
+    ...    |objective |Run ES Tizen API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for tizen platform |
+    ...    |procedure | 2. Build ES gtest testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    ES
+    [Timeout]    150 minutes
+    ${iotivity_build}    Set Variable   scons -f service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP ROUTING=EP RELEASE=${RELEASE} LOGGING=true ES_TARGET_ENROLLEE=tizen SECURED=1 WITH_TCP=1 WITH_CLOUD=1
+    ${iotivity_binary}    Set Variable   ${GBS_ROOT_PARENT}/GBS-ROOT-OIC/local/repos/tizen/${TIZEN_TARGET_ARCH}/RPMS/iotivity-${RPM_VERSION}.${TIZEN_TARGET_ARCH}.rpm
+    ${mediator}    Get Concatenated String    ${DLM}    ${IOTIVITY_ROOT}/out/linux/${x86}/${RELEASE_DIR}    stdbuf -oL ./mediator    Discover Enrollee Resource    1s    ${False}    ${EMPTY}    i
+    @{simulator_run}    Create List    ${mediator}
+    Run Tizen TC With Linux Simulator    ${GBS_ROOT_PARENT}/GBS-ROOT-OIC    ${iotivity_build}    ${iotivity_binary}    SECURED=0    SECURED=0 WITH_CLOUD=1 WITH_TCP=1    ${False}    ${EMPTY}    @{simulator_run}
+
+Run CS API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-10 |
+    ...    |reviewer | |
+    ...    |since |2017-01-10 |
+    ...    |see | |
+    ...    |objective |Run CS Tizen API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for tizen platform |
+    ...    |procedure | 2. Build CS gtest testcases tizen platform |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    CS
+    [Timeout]    300 minutes
+    @{binary_strings}    Create List    csdk_tlsoff    cpp_tlsoff    csdk_tlson    cpp_tlson
+    @{build_types}    Create List    non-tls    non-tls    tls    tls
+    : FOR  ${index}  IN RANGE    0    4
+    \    Clear Simulator List
+    \    ${tls_mode}    Evaluate    ${index}/2
+    \    ${iotivity_build_command}    Set Variable   ./gbsbuild.sh SECURED=1 WITH_TCP=1 WITH_CLOUD=1 WITH_MQ=PUB,SUB
+    \    ${iotivity_binary}    Set Variable   ${GBS_ROOT_PARENT}/GBS-ROOT-OIC/local/repos/tizen/${TIZEN_TARGET_ARCH}/RPMS/iotivity-${RPM_VERSION}.${TIZEN_TARGET_ARCH}.rpm
+    \    ${cloud_services}    Get Cloud Services    ${tls_mode}
+    \    ${cs_server}    Get Concatenated String    ${DLM}    ${EMPTY}    ${SDB} -s ${TIZEN_DEVICE_ID} shell /opt/usr/media/bin/tizen_runner.sh /opt/usr/media/bin iotivity_cs_server    Cloud Initialization Successful    1s    ${True}
+    \    @{simulator_run}    Get List    ${cloud_services}    ${cs_server}
+    \    ${runner_params}    Set Variable    -f @{binary_strings}[${index}] -b @{build_types}[${index}]
+    \    Execute Terminal Command    ${TEST_ROOT}/res/cloud_resource/cloud_run.sh kill
+    \    Run Tizen TC With Linux Simulator    ${GBS_ROOT_PARENT}/GBS-ROOT-OIC    ${iotivity_build_command}    ${iotivity_binary}    TLS_MODE=${index} CLOUD_SERVICE=1 KAFKA_ROOT=${KAFKA_ROOT}    ${False}    ${False}    ${runner_params}    @{simulator_run}
+    \    Stop Simulators
+    \    Execute Terminal Command    ${TEST_ROOT}/res/cloud_resource/cloud_run.sh kill
+    [Teardown]    Cloud API TC Teardown
+
+Run PM API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-10 |
+    ...    |reviewer | |
+    ...    |since |2017-01-10 |
+    ...    |see | |
+    ...    |objective |Run PM Tizen API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for tizen platform |
+    ...    |procedure | 2. Build PM gtest testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    PM
+    [Timeout]    660 minutes
+    ${iotivity_build}    Set Variable   ./gbsbuild.sh SECURED=1 MULTIPLE_OWNER=1
+    ${iotivity_binary}    Set Variable   ${GBS_ROOT_PARENT}/GBS-ROOT-OIC/local/repos/tizen/${TIZEN_TARGET_ARCH}/RPMS/iotivity-${RPM_VERSION}.${TIZEN_TARGET_ARCH}.rpm
+    ${pm_client}    Get Concatenated String    ${DLM}    ${TEST_ROOT}    ${SDB} -s ${TIZEN_DEVICE_ID} shell /opt/usr/media/bin/tizen_runner.sh /opt/usr/media/bin iotivity_pm_client    PM Initialization Successful    5s    ${True}
+    @{simulators}    Get List    ${pm_client}
+    Run Tizen TC With Linux Simulator    ${GBS_ROOT_PARENT}/GBS-ROOT-OIC    ${iotivity_build}    ${iotivity_binary}    ${EMPTY}    ${False}    ${False}    ${EMPTY}    @{simulators}
+
+*** Keywords ***
+Run CA Suite With Simulator
+    [Arguments]    ${transport}    ${menu_network}    ${simulator_device_id}    ${suite_name}=${EMPTY}
+    Run Linux Command    Linux2    cmd_terminal    ${TEST_MANAGER_ROOT}    ${SDB} -s ${simulator_device_id} shell /opt/usr/media/bin/iotivity_ca_simulator ${menu_network}    ${EMPTY}    5s    ${False}
+    ${sim_result}    Get Application Log    Linux2    cmd_terminal
+    BuiltIn.Log    ${sim_result}
+    BuiltIn.Sleep    2s
+    ${tc_run_command}    Set Variable    ./common_test_runner.py -p tizen -m ca -f ${MODULE}_${transport}_test -x ${transport} -d ${TIZEN_DEVICE_ID} -r ../TestReport/Result/__${MODULE}_${OS}__
+    ${tc_run_command}    Set Variable If    '${suite_name}' != '${EMPTY}'    ${tc_run_command} -u ${suite_name}    ${tc_run_command}
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run Linux Command    Linux1    cmd_terminal    ${TEST_MANAGER_ROOT}    ${tc_run_command}     Test Is Done!!
+    Execute Common Runner    ${tc_run_command}
+    ${sim_result}    Get Application Log    Linux2    cmd_terminal
+    BuiltIn.Log    ${sim_result}
+    Terminate Application    Linux2    cmd_terminal
+    
+Push Cloud Resource
+    [Arguments]    ${tls_mode}
+    ${ip}    Get Ip Address    wlan0
+    Update Common Config File    ${TEST_ROOT}/res/common/config.properties    ${AUTH_USERNAME}    ${AUTH_PASSWORD}    ${ip}
+    Execute Terminal Command    ${SDB} -s ${TIZEN_DEVICE_ID} push ${TEST_ROOT}/res/common/config.properties /data/local/tmp/

@@ -1,0 +1,173 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+
+Import('env_linux')
+import os
+
+env_linux['CC'] = 'g++'
+
+iotivity_root = env_linux.get('IOTIVITY_ROOT')
+iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
+iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_linux.get('VARIANT_DIR')
+install_dir = env_linux.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
+test = env_linux.get('TEST')
+cloud_service_build = env_linux.get('CLOUD_SERVICE')
+kafka_root = env_linux.get('KAFKA_ROOT')
+common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
+common_rpath = [iotivity_lib_path, '.', '/usr/local/lib']
+
+install_targets = []
+default_targets = []
+
+iotivity_include_paths = [
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/c_common',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/ocsocket/include',
+    iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/resource/csdk/resource-directory/include',
+    iotivity_root + '/extlibs/cereal/include',
+    iotivity_root + '/extlibs/timer',
+    iotivity_root + '/extlibs/timer/',
+    iotivity_root + '/resource/c_common/octhread/include',
+    iotivity_root + '/resource/c_common/oic_malloc/include',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/stack/include/experimental',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src',
+    iotivity_lib_path + '/resource/c_common',
+    iotivity_lib_path + '/deploy/include/c_common',
+    iotivity_lib_path + '/deploy/include/c_common/experimental',
+    iotivity_lib_path + '/deploy/include/resource/stack/experimental'
+]
+
+tc_include_paths = [
+    iotivity_test_root + '/include',
+    test_src_root + '/tc/ic/gtest/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+]
+
+testapp_include_paths = [
+    iotivity_test_root + '/include',
+    test_src_root + '/iBtestapp/modules/ic/c_cpp/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+]
+
+simulator_include_paths = [
+    iotivity_test_root + '/include'
+]
+
+tc_src = [
+    Glob(test_src_root + '/tc/ic/gtest/src/btc/*.cpp'),
+    Glob(test_src_root + '/tc/ic/gtest/src/stc/*.cpp'),
+    Glob(test_src_root + '/tc/ic/gtest/src/helper/*.cpp')
+]
+
+testapp_src = [
+    Glob(test_src_root + '/iBtestapp/modules/ic/c_cpp/src/*.cpp'),
+] 
+
+simulator_src = [
+    test_src_root + '/testapp/ic/iotivity_ic_server.cpp'
+]
+
+PKG_FLAGS = Split('`pkg-config --cflags --libs uuid`')
+env_linux.AppendUnique(CPPFLAGS = PKG_FLAGS)
+
+cloud_defines = ['WITH_CLOUD', 'MQ_BROKER', 'WITH_MQ','RD_CLIENT', 'MQ_PUBLISHER', 'MQ_SUBSCRIBER']
+
+cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermissive')
+
+libs = Split('connectivity_abstraction octbstack coap boost_system boost_filesystem boost_thread dl expat oc oc_logger resource_directory glib-2.0 uuid gcov cloud_util curl common_util connectivity_abstraction octbstack pthread')
+
+if 'tc' in test:
+    ic_tc = env_linux.Program(source = tc_src, 
+                target = 'iotivity_ic_test', 
+                CPPPATH = iotivity_include_paths + tc_include_paths, 
+                LIBS = libs + ['gtest', 'tc_util', 'pthread', 'dl'], 
+                RPATH = common_rpath,
+                LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.', '/usr/local/lib'],
+                CPPDEFINES = cloud_defines,
+                CPPFLAGS = cppflags + common_linux_cppflags)
+    install_targets += ic_tc
+  
+if 'app' in test:
+    ic_testapp = env_linux.Program(source = testapp_src, 
+                    target = 'iotivity_ic_app', 
+                    CPPPATH = iotivity_include_paths + testapp_include_paths, 
+                    LIBS = libs + ['gtest', 'pthread', 'dl'], 
+                    RPATH = common_rpath,
+                    LIBPATH = [iotivity_lib_path, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux', '.', '/usr/local/lib'],
+                    CPPDEFINES = cloud_defines, 
+                    CPPFLAGS = cppflags + common_linux_cppflags)
+    install_targets += ic_testapp
+
+if 'tc' in test or 'simulator' in test:
+    cloud_simulator = env_linux.Program(source= simulator_src,
+                          target='iotivity_ic_server',
+                          CPPPATH= iotivity_include_paths + simulator_include_paths,
+                          LIBS=libs,
+                          LIBPATH = [iotivity_lib_path, '.', '/usr/local/lib'],
+                          RPATH = common_rpath,
+                          CPPDEFINES = cloud_defines,
+                          CPPFLAGS = cppflags + common_linux_cppflags)
+    install_targets += cloud_simulator
+
+if 'tc' in test or 'app' in test:
+    print "copy starting..."
+    ic_resource_path = iotivity_test_root + '/res/cloud_resource'
+    ic_resource_list = Glob(ic_resource_path + '/*.*')
+    for item in ic_resource_list:
+        print item
+    common_resource_list = Glob(iotivity_test_root + '/res/common/*.*')
+    ic_dat_file = iotivity_root + '/resource/csdk/security/provisioning/sample/cloud.dat'
+    ic_crt_file = iotivity_root + '/resource/csdk/security/provisioning/sample/rootca.crt'
+
+install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
+install_res = env_linux.Install(iotivity_test_root + '/' + install_dir, ic_dat_file)
+install_res += env_linux.Install(iotivity_test_root + '/bin/', ic_dat_file)
+install_res += env_linux.Install(iotivity_test_root + '/' + install_dir + '/rootca.crt', ic_crt_file)
+install_res += env_linux.Install(iotivity_test_root + '/bin/rootca.crt', ic_crt_file)
+install_res = env_linux.Install(iotivity_test_root + '/' + install_dir, ic_resource_list)
+install_res += env_linux.Install(iotivity_test_root + '/bin/', ic_resource_list)
+install_res += env_linux.Install(iotivity_test_root + '/' + install_dir, common_resource_list)
+install_res += env_linux.Install(iotivity_test_root + '/bin/', common_resource_list)
+
+if cloud_service_build:
+    build_command = 'bash ' + iotivity_test_root + '/res/cloud_resource/cloud_build.sh ' + kafka_root + ' ' + iotivity_root
+    cloud_build = env_linux.Command('cloud_build', None, build_command)
+    default_targets += [cloud_build]
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
+
+default_targets += install_bin + install_res + delete_bin
+
+env_linux.Default(default_targets)

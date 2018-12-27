@@ -1,0 +1,98 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+
+print '\n---------------Started Building IotivitySecTest for Tizen---------------\n'
+
+env = Environment(CC='g++')
+
+test = ARGUMENTS.get('TEST')
+
+iotivity_root = 'iotivity'
+iotivity_test_root = 'test'
+
+iotivity_include_paths = [
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/ocsocket/include',
+    iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/resource/csdk/resource-directory/include',
+    iotivity_root + '/extlibs/cereal/include',
+    iotivity_root + '/extlibs/timer',
+    iotivity_root + '/resource/c_common/oic_malloc/include',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src',
+    iotivity_root + '/service/resource-container/include',
+    iotivity_root + '/service/resource-encapsulation/include',
+    '/usr/include/dlog'
+]
+
+tc_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/tc/rc/gtest/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+]
+
+app_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/iBtestapp/modules/rc/c_cpp/include',
+    iotivity_test_root + '/src/iBtestapp/common/include'
+]
+
+common_src = [ 
+    iotivity_test_root + '/src/common/commonutil/c_cpp/CommonUtil.cpp'
+]
+
+tc_src = [
+    Glob(iotivity_test_root + '/src/tc/rc/gtest/src/btc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/rc/gtest/src/stc/*.cpp'),
+    iotivity_test_root + '/src/common/testcase/gtest/IotivitySECTestMain.cpp',
+    iotivity_test_root + '/src/common/commonutil/c_cpp/CommonTestUtil.cpp',
+    Glob(iotivity_test_root + '/src/tc/rc/gtest/src/helper/*.cpp')
+]
+
+app_src = [
+    Glob(iotivity_test_root + '/src/iBtestapp/modules/rc/c_cpp/src/*.cpp'),
+    iotivity_test_root + '/src/iBtestapp/common/src/IBtestappCommonUtil.cpp'
+]
+
+cppflags = Split('-s -pthread -std=gnu++0x -pthread -Wall -DTIZEN -fpermissive -D__TIZEN__')
+
+common_libs = Split('boost_system boost_filesystem boost_thread dl expat oc octbstack oc_logger connectivity_abstraction pthread glib-2.0 dlog')
+rc_libs = Split('-lHueBundle -lDISensorBundle -lBMISensorBundle -lrcs_common -lrcs_container -lrcs_server -lrcs_client')
+
+if 'tc' in test:
+    env.Program(source = tc_src + common_src, 
+                target = 'iotivity_rc_test', 
+                CPPPATH = iotivity_include_paths + tc_include_paths, 
+                LIBS = ['gtest'] + rc_libs + common_libs,
+                LIBPATH = [iotivity_test_root + '/extlibs/gtest-1.7.0/bin/tizen'],
+                CPPFLAGS = cppflags)
+  
+if 'app' in test:
+    env.Program(source = app_src + common_src, 
+                target = 'iotivity_rc_app', 
+                CPPPATH = iotivity_include_paths + app_include_paths, 
+                LIBS = rc_libs + common_libs,
+                CPPFLAGS = cppflags)

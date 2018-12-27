@@ -1,0 +1,258 @@
+'''
+/******************************************************************
+*
+* Copyright 2017 Granite River Labs All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Windows
+#
+##
+
+print '\n---------------Started Building CA for Windows---------------\n'
+
+Import('env_windows')
+import os
+
+env_windows['CC'] = 'cl'
+
+# TODO: re-enable warnings, especially: 4244, 4267, 4365
+env_windows.AppendUnique(CXXFLAGS=[
+    '/wd4244',   # C4244 conversion from one type to another type results in a possible loss of data.
+    '/wd4267',   # C4267 conversion from size_t to a smaller type.
+    '/wd4355',   # C4355 'this' used in base member initializer list.
+    '/wd4800',   # C4800 forcing value to bool 'true' or 'false'.
+    '/wd4996',   # C4996 deprecated declaration.
+    '/wd4820',   # C4820 added padding to the end of a struct.
+    '/wd4514',   # C4514 unreferenced inline function has been removed
+    '/wd4365',   # C4365 signed/unsigned mismatch
+    '/wd4503'])  # C4503 decorated name length exceeded, name was truncated
+
+env_windows.AppendUnique(CCFLAGS=['/EHsc'])
+
+vs_version = env_windows['MSVC_VERSION']
+
+# Set release/debug flags
+if env_windows.get('RELEASE'):
+    env_windows.AppendUnique(CCFLAGS = ['/MD', '/O2', '/GF'])
+    env_windows.AppendUnique(CPPDEFINES = ['NDEBUG'])
+elif env_windows.get('TARGET_ARCH') in ['x86', 'x86_64'] or "14.0" in vs_version:
+    env_windows.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/ZI', '/RTC1', '/Gm'])
+    env_windows.AppendUnique(LINKFLAGS = ['/debug'])
+else:
+    env_windows.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/Zi', '/RTC1', '/Gm'])
+    env_windows.AppendUnique(LINKFLAGS = ['/debug'])
+    env_windows.AppendUnique(LIBPATH = [env_windows.get('BUILD_DIR')])
+    env_windows.AppendUnique(PATH = os.environ['PATH'])
+
+iotivity_root = env_windows.get('IOTIVITY_ROOT')
+iotivity_lib_path = env_windows.get('IOTIVITY_LIB_PATH')
+iotivity_test_root = env_windows.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_windows.get('VARIANT_DIR')
+install_dir = env_windows.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
+target_transport = env_windows.get('TARGET_TRANSPORT')
+test = env_windows.get('TEST')
+common_windows_cppflags = env_windows.get('COMMON_WINDOWS_CPPFLAGS')
+
+if env_windows.get('SECURED') == '1':
+    secured = True
+else:
+    secured = False
+
+install_targets = []
+default_targets = []
+
+transport_list = [ '', 'IP', 'TCP' ]
+transport_bin_name = [ 'iotivity_ca_test', 'iotivity_ca_ip_test', 'iotivity_ca_tcp_test' ]
+
+transport_cppdefines = [
+    [''],
+    ['__IP__', '__ALL_TRANSPORT__'],
+    ['__TCP__', '__ALL_TRANSPORT__', 'TCP_ADAPTER']
+]
+
+iotivity_include_paths = [
+    iotivity_root + '/extlibs/boost/boost/',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/connectivity/api',
+    iotivity_root + '/resource/csdk/connectivity/inc',
+    iotivity_root + '/resource/csdk/connectivity/common/inc',
+    iotivity_root + '/resource/csdk/connectivity/external/inc',
+    iotivity_root + '/resource/c_common/oic_malloc/include',
+    iotivity_root + '/resource/c_common/ocrandom/include',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/extlibs/mbedtls/mbedtls/include',
+    iotivity_root + '/extlibs/mbedtls/mbedtls/include/mbedtls',
+    iotivity_root + '/resource/c_common',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
+    iotivity_root + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include',
+    iotivity_root + '/extlibs/gtest/googletest-release-1.7.0/include',
+    iotivity_lib_path + '/resource/c_common'
+]
+
+tc_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/tc/ca/gtest/include',
+    iotivity_test_root + '/src/tc/ca/gtest/include/testcase/ca'
+]
+simulator_include_paths = [ iotivity_test_root + '/src/testapp/ca/c_cpp/include' ]
+
+lib_paths = [
+    iotivity_lib_path,
+    iotivity_lib_path + '/resource/csdk/logger',
+    iotivity_lib_path + '/resource/c_common/',
+    iotivity_lib_path + '/resource/csdk/routing/',
+    iotivity_root + '/extlibs/gtest'
+]
+
+common_cppflags = Split('') + common_windows_cppflags
+
+common_cppdefines = []
+
+gtest_unspecified_network_src = [
+    iotivity_test_root + '/src/tc/ca/gtest/src/btc/CATest.cpp',
+    iotivity_test_root + '/src/tc/ca/gtest/src/stc/CACommonTest.cpp'
+]
+
+gtest_ip_network_src = [
+    iotivity_test_root + '/src/tc/ca/gtest/src/btc/CANetworkTest.cpp',
+    iotivity_test_root + '/src/tc/ca/gtest/src/stc/CANetworkCommonTest.cpp',
+    iotivity_test_root + '/src/tc/ca/gtest/src/stc/CAClientTest.cpp',
+    iotivity_test_root + '/src/tc/ca/gtest/src/stc/CAMulticastTest.cpp'
+]
+
+gtest_tcp_network_src = [
+    iotivity_test_root + '/src/tc/ca/gtest/src/btc/CANetworkTest.cpp',
+    iotivity_test_root + '/src/tc/ca/gtest/src/stc/CANetworkCommonTest.cpp',
+    iotivity_test_root + '/src/tc/ca/gtest/src/stc/CAClientTest.cpp'
+]
+
+gtest_src = [ gtest_unspecified_network_src, gtest_ip_network_src, gtest_tcp_network_src ]
+
+tc_common_src = [ iotivity_test_root + '/src/tc/ca/gtest/src/helper/CAHelper.cpp' ]
+
+lib_list = Split('boost_system boost_filesystem boost_thread coap octbstack connectivity_abstraction_internal ocsrm c_common win_helper logger bcrypt Ws2_32 advapi32 iphlpapi crypt32 kernel32')
+
+if secured:
+    lib_list.append('mbedtls')
+    lib_list.append('mbedx509')
+    lib_list.append('mbedcrypto')
+    common_cppdefines.append('__WITH_DTLS__')
+
+if 'tc' in test:
+    i = -1
+
+    for transport in transport_list:
+
+        i = i + 1
+        if transport and transport not in target_transport:
+            continue
+
+        temp_source_list = []
+
+        cpp_defines = common_cppdefines + transport_cppdefines[i]
+
+        for single_cpp in tc_common_src + gtest_src[i]:
+            s=""
+            temp_single_cpp = str(single_cpp)
+	    temp = os.path.splitext(os.path.basename(temp_single_cpp))
+            temp_single_cpp = s.join(temp)
+
+            if not (temp_single_cpp.endswith('.cpp') or temp_single_cpp.endswith('.c') ):
+                continue
+
+            single_object = temp_single_cpp.replace('.cpp', '.o').replace('.c', '.o').replace('\\', '_').replace('..', '')
+            single_object = 'ca' + '\\' + transport_list[i] + '\\' + single_object
+
+            temp_object = env_windows.Object(source = single_cpp,
+                            target = single_object,
+                            CPPPATH = iotivity_include_paths + tc_include_paths,
+                            LIBS = lib_list,
+                            LIBPATH = lib_paths + ['.'],
+                            CPPFLAGS = common_cppflags,
+                            CPPDEFINES = cpp_defines,
+                            RPATH = iotivity_lib_path)
+            temp_source_list.append(single_object)
+
+        ca_tc = env_windows.Program(source = temp_source_list,
+                            target = transport_bin_name[i],
+                            CPPPATH = iotivity_include_paths + tc_include_paths,
+                            LIBS = ['common_util', 'tc_util', 'gtest'] + lib_list,
+                            LIBPATH = lib_paths + ['.'],
+                            CPPFLAGS = common_cppflags,
+                            CPPDEFINES = cpp_defines,
+                            RPATH = iotivity_lib_path)
+        install_targets += ca_tc
+
+
+if 'simulator' in test or 'tc' in test:
+    simulator_cpp_defines = common_cppdefines
+
+    if 'TCP' in target_transport:
+        simulator_cpp_defines.append('WITH_TCP')
+        simulator_cpp_defines.append('TCP_ADAPTER')
+
+    ca_simulator = env_windows.Program(source = [iotivity_test_root + '/src/testapp/ca/c_cpp/src/ca_simulator.c'],
+                        target = 'iotivity_ca_simulator',
+                        CPPPATH = iotivity_include_paths + simulator_include_paths,
+                        LIBS = lib_list,
+                        LIBPATH = lib_paths,
+                        CPPFLAGS = common_cppflags,
+                        CPPDEFINES = simulator_cpp_defines,
+                        RPATH = iotivity_lib_path
+                        )
+    install_targets += ca_simulator
+
+    ca_server = env_windows.Program(source = [iotivity_test_root + '/src/testapp/ca/c_cpp/src/sample_server.c'],
+                        target = 'iotivity_ca_server',
+                        CPPPATH = iotivity_include_paths + simulator_include_paths,
+                        LIBS = lib_list,
+                        LIBPATH = lib_paths,
+                        CPPFLAGS = common_cppflags,
+                        CPPDEFINES = simulator_cpp_defines,
+                        RPATH = iotivity_lib_path
+                        )
+    install_targets += ca_server
+
+    ca_client = env_windows.Program(source = [iotivity_test_root + '/src/testapp/ca/c_cpp/src/sample_client.c'],
+                        target = 'iotivity_ca_client',
+                        CPPPATH = iotivity_include_paths + simulator_include_paths,
+                        LIBS = lib_list,
+                        LIBPATH = lib_paths,
+                        CPPFLAGS = common_cppflags,
+                        CPPDEFINES = simulator_cpp_defines,
+                        RPATH = iotivity_lib_path
+                        )
+    install_targets += ca_client
+
+    default_targets += env_windows.Command('config_file', [], Copy(iotivity_test_root + '/' + variant_dir, iotivity_test_root + '/res/ca_resource/config.ini'))
+
+install_bin = env_windows.Install(iotivity_test_root + '/' + install_dir, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
+
+default_targets = install_bin + delete_bin
+
+env_windows.Default(default_targets)

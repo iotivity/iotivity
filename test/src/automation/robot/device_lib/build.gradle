@@ -1,0 +1,37 @@
+repositories {
+    mavenCentral()
+}
+
+
+apply plugin: 'java'
+
+sourceSets {
+   main {
+      java {
+        srcDir 'src'
+      }
+   }
+}
+
+dependencies {
+    compile group: 'com.android.tools.ddms', name: 'ddmlib', version: '22.0'
+    compile group: 'com.google.guava', name: 'guava', version: '16.0.1'
+    compile fileTree(dir: './libs', include: '*.jar')
+}
+
+jar {
+  archiveName 'DeviceLib.jar'
+}
+
+task install(type: Copy) {
+    from 'build/libs/DeviceLib.jar'
+    into '../helper/'
+}
+
+task copyDeps(type: Copy) {
+  from configurations.runtime
+  into 'build/lib'
+}
+
+install.dependsOn copyDeps
+install.dependsOn assemble

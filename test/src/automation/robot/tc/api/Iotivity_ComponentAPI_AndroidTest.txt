@@ -1,0 +1,317 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Settings ***
+Documentation     Test API Test for Android platform
+Variables         ../../helper/variable.py
+Resource    ../../helper/Iotivity_Test_Helper.txt
+Suite Setup    Do Suite Init Task
+Test Teardown    Common API TC Teardown
+
+*** Test Cases ***
+Run RI API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-06 |
+    ...    |reviewer | |
+    ...    |since |2017-01-06 |
+    ...    |see | |
+    ...    |objective |Run RI Android API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for android platform |
+    ...    |procedure | 2. Build RI junit testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    RI
+    [Timeout]    240 minutes
+    Run Android API TC    SECURED=0 TARGET_TRANSPORT=IP
+
+Run RE API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-25 |
+    ...    |reviewer | |
+    ...    |since |2017-01-06 |
+    ...    |see | |
+    ...    |objective |Run RE Android API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for android platform |
+    ...    |procedure | 2. Build RE junit testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    re
+    [Timeout]    300 minutes
+    Run TC Using Tcp Server Client    ${EMPTY}    ${EMPTY}
+
+Run RC API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-25 |
+    ...    |reviewer | |
+    ...    |since |2017-01-06 |
+    ...    |see | |
+    ...    |objective |Run RC Android API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for android platform |
+    ...    |procedure | 2. Build RC junit testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    rc
+    [Timeout]    120 minutes
+    Run Android API TC    SECURED=0 TARGET_TRANSPORT=IP
+
+Run NS API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-06 |
+    ...    |reviewer | |
+    ...    |since |2017-01-06 |
+    ...    |see | |
+    ...    |objective |Run NS Android API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for android platform |
+    ...    |procedure | 2. Build NS junit testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    NS
+    [Timeout]    300 minutes
+    Run Android API TC    SECURED=0 TARGET_TRANSPORT=IP
+
+Run CA API Test
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com |
+    ...    |reviewer | |
+    ...    |since |2016-06-22 |
+    ...    |see | |
+    ...    |objective | Execute CA Test Suite |
+    ...    |target | CA Test Suite |
+    ...    |test_data | |
+    ...    |pre_condition | 1. Build iotivity library for CA module |
+    ...    |pre_condition | 2. Build testcase for CA module |
+    ...    |procedure | Execute test_runner to run Test Suite |
+    ...    |post_condition | Run result reporter create excel report |
+    ...    |expected | All the testcase from suite all be run and excel test report will be generated |
+    [Tags]    CA
+    [Timeout]    300 minutes
+    ${build_prefix}    Set Variable    TARGET_TRANSPORT=IP SECURED=1 WITH_TCP=1
+    ${native_simulator_start}    Set Variable    ${ADB} -s ${ANDROID_DEVICE_ID} shell /data/local/tmp/android_runner.sh /data/local/tmp iotivity_ca_simulator
+    ${android_simulator_start}    Set Variable    ${ADB} -s ${PEER_ANDROID_DEVICE_ID} shell am start -a android.intent.action.VIEW -n org.iotivity.ca.simulator/.MainActivity -e transport
+    Add Specific Device    Linux    Linux2    Linux2
+    Run CA Suite With Simulator    TARGET_TRANSPORT=IP SECURED=1 WITH_TCP=1    gtest    ${native_simulator_start}    ip    0    tcp    4
+    ${tc_run_command}    Set Variable    ./common_test_runner.py -p android -f ${MODULE}_test -d ${ANDROID_DEVICE_ID} -w gtest -r ../TestReport/Result/__${MODULE}_${OS}__
+    Execute Common Runner    ${tc_run_command}
+    Run CA Suite With Simulator    TARGET_TRANSPORT=BT,BLE    junit    ${android_simulator_start}    ble    1   bt   2
+    ${tc_run_command}    Set Variable    ./common_test_runner.py -p android -m ca -u CATest -d ${ANDROID_DEVICE_ID} -w junit -r ../TestReport/Result/__${MODULE}_${OS}__
+    Execute Common Runner    ${tc_run_command}
+    Run Keyword If    '${ENABLE_TC_RUN}'!='0'    Run Linux Command    Linux1    cmd_terminal    ${TEST_MANAGER_ROOT}    ./result_reporter.py ../TestReport/Result/__${MODULE}_${OS}__ ${MODULE}_${OS}    Making Test Result Report is Done!!
+    Remove All Devices
+
+Run ES API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-25 |
+    ...    |reviewer | |
+    ...    |since |2017-01-25 |
+    ...    |see | |
+    ...    |objective |Run ES Android API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for android platform |
+    ...    |procedure | 2. Build ES junit testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    ES
+    [Timeout]    150 minutes
+    ${enrollee_run}    Get Concatenated String    ${DLM}    ${IOTIVITY_ROOT}/out/linux/${x86}/${RELEASE_DIR}    stdbuf -oL ./enrollee    EasySetup Enrollee SAMPLE    5s    ${False}    s    i
+    @{simulator_run}    Create List    ${enrollee_run}
+    Run Android TC With Linux Simulator    SECURED=0 WITH_TCP=1 WITH_CLOUD=1 TARGET_TRANSPORT=IP    ${EMPTY}    SECURED=0    ${FALSE}    @{simulator_run}
+
+Run IC API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-03-06 |
+    ...    |reviewer | |
+    ...    |since |2017-03-06 |
+    ...    |see | |
+    ...    |objective |Run IC Android API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for android platform |
+    ...    |procedure | 2. Build IC junit testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    IC
+    [Timeout]    330 minutes
+    @{cloud_services}    Get Cloud Services    0
+    Execute Terminal Command    ${TEST_ROOT}/res/cloud_resource/cloud_run.sh kill ${KAFKA_ROOT}
+    Run Android TC With Linux Simulator    SECURED=0 WITH_TCP=1 WITH_CLOUD=1 WITH_MQ=PUB,SUB TARGET_TRANSPORT=IP    CLOUD_SERVICE=1 KAFKA_ROOT=${KAFKA_ROOT}    ${FALSE}    ${FALSE}    ${EMPTY}    @{cloud_services}
+    [Teardown]    Cloud API TC Teardown
+
+Run CS API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-03-06 |
+    ...    |reviewer | |
+    ...    |since |2017-03-06 |
+    ...    |see | |
+    ...    |objective |Run IC Android API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for android platform |
+    ...    |procedure | 2. Build IC junit testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    CS
+    [Timeout]    330 minutes
+    @{build_types}    Create List    non-tls    tls
+    : FOR  ${index}  IN RANGE    0    2
+    \    Clear Simulator List
+    \    @{cloud_services}    Get Cloud Services    ${index}
+    \    ${runner_params}    Set Variable    -b @{build_types}[${index}]
+    \    Execute Terminal Command    ${TEST_ROOT}/res/cloud_resource/cloud_run.sh kill
+    \    BuiltIn.Sleep    10s
+    \    Run Android TC With Linux Simulator    SECURED=1 WITH_TCP=1 WITH_CLOUD=1 WITH_MQ=PUB,SUB TARGET_TRANSPORT=IP    CLOUD_SERVICE=1 KAFKA_ROOT=${KAFKA_ROOT}    ${FALSE}    ${FALSE}    ${runner_params}    @{cloud_services}
+    \    Stop Simulators
+    \    Execute Terminal Command    ${TEST_ROOT}/res/cloud_resource/cloud_run.sh kill
+    [Teardown]    Cloud API TC Teardown
+
+Run PM API TC
+    [Documentation]    |Item |Description |
+    ...    |author |m.parves@samsung.com, last updated: 2017-01-30 |
+    ...    |reviewer | |
+    ...    |since |2017-01-30 |
+    ...    |see | |
+    ...    |objective |Run PM Android API testcase |
+    ...    |target | |
+    ...    |test_data | |
+    ...    |pre_condition | |
+    ...    |procedure | 1. Build iotivity for android platform |
+    ...    |procedure | 2. Build PM junit testcases |
+    ...    |procedure | 3. Run TEST Manger's script to execute testcases |
+    ...    |procedure | 4. Gererate excel report by runner result_repoerter |
+    ...    |post_condition | |
+    ...    |expected | Every steps should run successfully |
+    [Tags]    PM
+    [Timeout]    300 minutes
+    Run TC Using Tcp Server Client    ${EMPTY}    resource
+
+*** Keywords ***
+Run CA Suite With Simulator
+    [Arguments]    ${build_prefix}    ${framework}    ${simulator_run}    @{params}
+    ${ANDROID_PATHS}    Set Variable    ${PARAM_ANDROID_HOME} ${PARAM_ANDROID_NDK} ${PARAM_ANDROID_GRADLE}
+    ${iotivity_build_command}    Set Variable    scons ${build_prefix} TARGET_OS=android ${ANDROID_PATHS} TARGET_ARCH=${ANDROID_TARGET_ARCH} RELEASE=${RELEASE} -j ${J}
+    ${tc_build_command}    Set Variable    scons TARGET_OS=android ${ANDROID_PATHS} TARGET_ARCH=${ANDROID_TARGET_ARCH} MODULE=ca IOTIVITY_ROOT=${IOTIVITY_ROOT} RELEASE=${RELEASE} SECURED=1 PUSH=all FRAMEWORK=${framework}
+    ${android_simulator_stop}    Set Variable    ${ADB} -s ${PEER_ANDROID_DEVICE_ID} shell am force-stop org.iotivity.ca.simulator
+    Build Iotivity    ${IOTIVITY_ROOT}    ${iotivity_build_command}    done building targets
+    Build Iotivity TEST    ${TEST_ROOT}    ${tc_build_command}    done building targets
+    : FOR    ${index}    IN RANGE    0    2
+    \    ${temp}    Evaluate    ${index}*2+1
+    \    Run Linux Command    Linux2    cmd_terminal    ${TEST_MANAGER_ROOT}    ${simulator_run} @{params}[${temp}]   ${EMPTY}    5s    ${False}
+    \    ${sim_result}    Get Application Log    Linux2    cmd_terminal
+    \    BuiltIn.Log    ${sim_result}
+    \    BuiltIn.Sleep    2s
+    \    ${temp}    Evaluate    ${index}*2
+    \    ${transport}    Set Variable    @{params}[${temp}]
+    \    ${suit_names}    Set Variable If    '${transport}' == 'bt'    CABtTest,CANetworkTest,CANetworkCommonTest,CAClientTest,CAMulticastTest
+    \    ${suit_names}    Set Variable If    '${transport}' == 'ble'    CABleTest,CANetworkTest,CANetworkCommonTest,CAClientTest,CAMulticastTest    ${suit_names}
+    \    ${gtest_run_command}    Set Variable    ./common_test_runner.py -p android -m ca -f ca_${transport}_test -x ${transport} -d ${ANDROID_DEVICE_ID} -w ${framework} -r ../TestReport/Result/__${MODULE}_${OS}__
+    \    ${junit_run_command}    Set Variable    ./common_test_runner.py -p android -m ca -u ${suit_names} -x ${transport} -d ${ANDROID_DEVICE_ID} -w ${framework} -r ../TestReport/Result/__${MODULE}_${OS}__
+    \    ${tc_run_command}    Set Variable If    '${framework}' == 'gtest'    ${gtest_run_command}    ${junit_run_command}
+    \    Run Keyword If    '${framework}' == 'junit'    Update CA Config File    ${transport}
+    \    Execute Common Runner    ${tc_run_command}
+    \    ${sim_result}    Get Application Log    Linux2    cmd_terminal
+    \    BuiltIn.Log    ${sim_result}
+    \    Run Keyword If    '${framework}'=='junit'    Run Linux Command    Linux2    cmd_terminal    ${TEST_MANAGER_ROOT}    ${android_simulator_stop}    ${EMPTY}
+
+Push Cloud Resource
+    [Arguments]    ${tls_mode}
+    ${net_interface}    Set Variable If    '${OS}'=='linux'    l0    wlan0
+    ${ip}    Get Ip Address    ${net_interface}
+    ${ip_key}    Set Variable If    '${OS}'=='linux'    ${CI_SERVER_ETHERNET_IP_KEY}    ${CI_SERVER_WIFI_IP_KEY}
+    Update Common Config File    ${TEST_ROOT}/bin/${OS}/config.properties    ${GITHUB_USER_KEY}    ${AUTH_USERNAME}    ${GITHUB_PASSWORD_KEY}    ${AUTH_PASSWORD}    ${ip_key}    ${ip}
+    Execute Terminal Command    ${ADB} -s ${ANDROID_DEVICE_ID} push ${TEST_ROOT}/bin/${OS}/config.properties /data/local/tmp/
+
+Update CA Config File
+    [Arguments]    ${transport}
+    ${bt}    Set Variable If    '${transport}' == 'bt'    1    0
+    ${ble}    Set Variable If    '${transport}' == 'ble'    1    0
+    ${text}    Set Variable    [SIMULATOR]\nIP = 0.0.0.0\nOTHER_IP_LIST = \nPORT = 0\nSECURE_PORT = 0\nCA_IP = 0\nCA_LE = ${bt}\nCA_EDR = ${ble}\nCA_TCP = 0\n
+    Write File    ${TEST_ROOT}/res/ca_resource/config.ini    ${text}
+    Execute Terminal Command    ${ADB} -s ${ANDROID_DEVICE_ID} push ${TEST_ROOT}/res/ca_resource/config.ini /data/local/tmp/config.ini
+
+Run TC Using Tcp Server Client
+    [Arguments]    ${iotivity_android_build_param}    ${iotivity_linux_build_param}
+    ${tcp_server_port}    Set Variable    7200
+    ${network_interface}    Set Variable    wlan0
+    ${tcp_client_package_name}    Set Variable    org.iotivity.tcpandroidclient
+    ${config_file_path}    Set Variable    ${TEST_ROOT}/bin/${OS}/config.properties
+    ${ANDROID_PATHS}    Set Variable    ${PARAM_ANDROID_HOME} ${PARAM_ANDROID_NDK} ${PARAM_ANDROID_GRADLE}
+    ${tcp_client_uninstall}    Set Variable    ${ADB} -s ${ANDROID_DEVICE_ID} uninstall ${tcp_client_package_name}
+    ${tcp_client_stop}    Set Variable    ${ADB} -s ${ANDROID_DEVICE_ID} shell am force-stop ${tcp_client_package_name}
+    ${tcp_client_start}    Set Variable    ${ADB} -s ${ANDROID_DEVICE_ID} shell monkey -p ${tcp_client_package_name} -c android.intent.category.LAUNCHER 1
+    Execute Terminal Command    ${tcp_client_stop}
+    Execute Terminal Command    ${tcp_client_uninstall}
+    Build Iotivity    ${IOTIVITY_ROOT}    scons ${iotivity_android_build_param} SECURED=${SECURED} TARGET_OS=android TARGET_ARCH=${ANDROID_TARGET_ARCH} RELEASE=${RELEASE} ${ANDROID_PATHS} TARGET_TRANSPORT=IP -j ${J}    done building targets
+    Build Iotivity TEST    ${TEST_ROOT}    scons SECURED=${SECURED} RELEASE=${RELEASE} IOTIVITY_ROOT=${IOTIVITY_ROOT} TARGET_OS=android ${ANDROID_PATHS} TARGET_ARCH=${ANDROID_TARGET_ARCH} MODULE=${MODULE}    done building targets
+    Build Iotivity    ${IOTIVITY_ROOT}    scons ${iotivity_linux_build_param} SECURED=${SECURED} TARGET_OS=linux RELEASE=${RELEASE} -j ${J}    done building targets
+    Build Iotivity TEST    ${TEST_ROOT}    scons SECURED=${SECURED} RELEASE=${RELEASE} IOTIVITY_ROOT=${IOTIVITY_ROOT} TARGET_OS=linux MODULE=${MODULE} TEST=simulator    done building targets
+    Return From Keyword If    '${ENABLE_TC_RUN}'=='0'
+    Run Keyword If    '${MODULE}'=='PM'    Run Linux Command    Linux1    kill_iotivity_server    ${TEST_ROOT}/bin/linux    ./SerialKiller    ${EMPTY}    10s    ${True}
+    Execute Terminal Command    fuser -k -n tcp ${tcp_server_port}
+    BuiltIn.Sleep    2s
+    Run Linux Command    Linux2    tcp_server    ${TEST_ROOT}/bin/linux    java -jar TcpTestServer.jar    Server Started    5s    ${False}
+    ${ip}    Get Ip Address    ${network_interface}
+    ${ipv6}    Get Ipv6 Address    ${network_interface}
+    Execute Terminal Command    cp ${TEST_ROOT}/res/common/config.properties ${config_file_path}
+    Update Common Config File    ${config_file_path}    ${CI_SERVER_WIFI_IP_KEY}    ${ip}
+    Update Common Config File    ${config_file_path}    ${CI_SERVER_WIFI_IPv6_KEY}    ${ipv6}
+    Execute Terminal Command    ${ADB} -s ${ANDROID_DEVICE_ID} push ${config_file_path} /data/local/tmp/
+    Execute Terminal Command    ${tcp_client_start}
+    BuiltIn.Sleep    5s
+    ${expected_log}    Set Variable    Server connected with Android Client now you can chat with socket server.
+    ${log}    Get Application Log    Linux2    tcp_server
+    BuiltIn.Log    ${log}
+    Execute Common Runner    ./common_test_runner.py -p android -d ${ANDROID_DEVICE_ID} -m ${MODULE} -r ../TestReport/Result/__${MODULE}_${OS}__
+    Run Linux Command    Linux1    cmd_terminal    ${TEST_MANAGER_ROOT}    ./result_reporter.py ../TestReport/Result/__${MODULE}_${OS}__ ${MODULE}_${OS}    Making Test Result Report is Done!!
+    ${log}    Get Application Log    Linux2    tcp_server
+    BuiltIn.Log    ${log}
+    Terminate Application    Linux2    tcp_server
+    Execute Terminal Command    ${tcp_client_stop}
+    Execute Terminal Command    ${tcp_client_uninstall}
+

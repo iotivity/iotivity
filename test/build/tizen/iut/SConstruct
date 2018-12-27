@@ -1,0 +1,30 @@
+env = Environment(CC='g++')
+
+ENV_HOME = '.'
+
+INCLUDE_LIST = [ 
+                ENV_HOME + '/iotivity/resource/include', 
+                ENV_HOME + '/iotivity/resource/csdk/stack/include',
+                ENV_HOME + '/iotivity/resource/c_common',
+                ENV_HOME + '/iotivity/resource/oc_logger/include',
+                ENV_HOME + '/test/include'
+               ]
+
+SRC_LIST = [ 
+            Glob(ENV_HOME + '/test/src/testapp/IUTSimulatorApp/c_cpp/IUTSimulator.cpp'), 
+            Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceHelper.cpp'), 
+            Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceServer.cpp'),
+            Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/SampleResource.cpp')
+           ]
+           
+print ('SRC_LIST: ' + str(SRC_LIST))           
+
+BIN_PATH = 'ConformanceSimulator'
+
+LIB_LIST = Split('-lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog -lconnectivity_abstraction -loc -loc_logger -loc_logger_core -loctbstack -lexpat -lboost_system -lboost_filesystem -lboost_thread -ldl')
+
+LIB_LOCATION_LIST = []
+
+CPPFLAGS_LIST = Split('-s -pthread -Wall -DTIZEN -finstrument-functions -finstrument-functions -fpermissive -fPIC -DWITH_POSIX -DSLP_SDK_LOG -g -D_GNU_SOURCE -DTIZEN_DEBUG_ENABLE -DTB_LOG -std=gnu++0x `pkg-config --cflags --libs dlog capi-network-wifi gobject-2.0 glib-2.0` -lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog -D__WITH_DTLS__ -D__TIZEN__')	
+
+conformance_simulator = env.Program(source = SRC_LIST, target = BIN_PATH, CPPPATH = INCLUDE_LIST, LIBS = LIB_LIST, LIBPATH = LIB_LOCATION_LIST, CPPFLAGS = CPPFLAGS_LIST)

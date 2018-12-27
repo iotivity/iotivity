@@ -1,0 +1,95 @@
+'''
+/******************************************************************
+*
+* Copyright 2018 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+
+print '-----------------------------------------------------------------------'
+print '---------------Started Building test for Java---------------'
+print '-----------------------------------------------------------------------'
+
+import os
+import SCons.Errors
+Import('env_java')
+
+iotivity_root = env_java.get('IOTIVITY_ROOT')
+
+if not env_java.get('ANDROID_GRADLE'):
+    if os.path.isfile(iotivity_root + '/extlibs/android/gradle/gradle-2.2.1/bin/gradle'):
+        env_java.Replace(ANDROID_GRADLE = iotivity_root + '/extlibs/android/gradle/gradle-2.2.1/bin/gradle')
+    else:
+        env_java.Replace(ANDROID_GRADLE = os.environ.get('ANDROID_GRADLE'))
+
+target_os = env_java.get('TARGET_OS')
+iotivity_root = env_java.get('IOTIVITY_ROOT')
+iotivity_test_root = env_java.get('IOTIVITY_TEST_ROOT')
+
+target_arch = env_java.get('TARGET_ARCH')
+module = env_java.get('MODULE')
+test = env_java.get('test')
+target_transport = ARGUMENTS.get('TARGET_TRANSPORT')
+secured = env_java.get('SECURED')
+
+release_dir=env_java.get('RELEASE_DIR')
+all_modules = env_java.get('ALL_MODULES')
+test = env_java.get('TEST')
+gradle_bin = env_java.get('ANDROID_GRADLE')
+push = env_java.get('PUSH')
+push = ",".join(push)
+
+framework = env_java.get('FRAMEWORK')
+cloud_service_build = env_java.get('CLOUD_SERVICE')
+kafka_root = env_java.get('KAFKA_ROOT')
+
+if not os.path.isfile(gradle_bin):
+    print 'No valid GRADLE found'
+    exit(-1)
+
+default_targets = []
+
+if cloud_service_build:
+    if 'ic' in module or 'cs' in module:
+        build_command = 'bash ' + iotivity_test_root + '/res/cloud_resource/cloud_build.sh ' + kafka_root + ' ' + iotivity_root
+        cloud_build = env_java.Command('cloud_build', None, build_command)
+        default_targets += [cloud_build]
+
+for temp in list(set(all_modules) - set(['iut', 'ca'])):
+    if temp in module:
+        jdk_env = Environment(ENV=os.environ)
+        build_command = gradle_bin + ' ' + 'install' + ' -b ' + iotivity_test_root \
+        + '/build/java/build.gradle -Pmodule_name=%s -Pos=%s -Parch=%s -Prelease=%s -Piotivity_root=%s -Ptest_root=%s -Psrc_type=%s -Ptest=%s'\
+         %(temp, target_os, target_arch, release_dir, iotivity_root, iotivity_test_root, "java", test)
+
+        print '-----------------------------------------------------------------------'
+        print "\nBuild Command :\n" + build_command
+        print '-----------------------------------------------------------------------'
+
+        if 'tc' in test:
+            jdk_env['BUILDERS']['Gradle'] = Builder(action = build_command)
+            source_list = Glob(iotivity_test_root + '/src/tc/' + temp + '/junit/*.java')
+            junit_tc = jdk_env.Gradle(target='junit_tc', source=source_list)
+            default_targets += junit_tc
+
+unsupported_modules = ['ca', 're', 'rc', 'es', 'ns', 'chp', 'rd', 'sm']
+for target_module in module:
+    if target_module in unsupported_modules:
+        print target_module + ' Module not supported in Java'
+        Exit(1)
+
+env_java.Default(default_targets)

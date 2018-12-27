@@ -1,0 +1,174 @@
+'''
+/******************************************************************
+*
+* Copyright 2018 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+print '\n---------------Started Building Test for Linux---------------\n'
+
+Import('env_linux')
+import os
+
+iotivity_root = env_linux.get('IOTIVITY_ROOT')
+iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_linux.get('VARIANT_DIR')
+install_dir = env_linux.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
+target_arch = env_linux.get('TARGET_ARCH')
+release_dir = env_linux.get('RELEASE_DIR')
+test = env_linux.get('TEST')
+module = env_linux.get('MODULE')
+all_modules = env_linux.get('ALL_MODULES')
+tls_mode = env_linux.get('TLS_MODE')
+
+print 'IOTIVITY ROOT: ' + iotivity_root
+print 'IOTIVITY TEST ROOT: ' + iotivity_test_root
+print 'RELEASE DIR: ' + release_dir
+print 'MODULE: ' + str(module)
+print 'TEST: ' + str(test)
+
+env_linux.Append(IOTIVITY_LIB_PATH = iotivity_root + '/out/linux/' + target_arch + '/' + release_dir)
+
+if target_arch in ['x86']:
+    env_linux.AppendUnique(CCFLAGS = ['-m32'])
+    env_linux.AppendUnique(LINKFLAGS = ['-m32'])
+elif target_arch in ['x86_64']:
+    env_linux.AppendUnique(CCFLAGS = ['-m64'])
+    env_linux.AppendUnique(LINKFLAGS = ['-m64'])
+
+env_linux.ParseConfig("pkg-config --cflags --libs uuid")
+
+create_target_dir = env_linux.Command('target.out', [], Mkdir(variant_dir))
+pre_job = [create_target_dir]
+default_targets = [pre_job]
+install_targets = []
+
+SConscript(iotivity_test_root + '/extlibs/gtest-1.7.0/SConscript')
+
+iotivity_common_includes_paths = [
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/c_common',
+    iotivity_root + '/resource/c_common/oic_malloc/include',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/c_common/ocrandom/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
+    iotivity_root + '/resource/csdk/stack/include/experimental',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src',
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/csdk/resource-directory/include',
+    iotivity_root + '/out/linux/' + target_arch + '/' + release_dir + '/resource/c_common'
+]
+
+if env_linux.get('SECURED') == '1':
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/c_common/octhread/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/connectivity/inc')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/connectivity/api')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/connectivity/common/inc')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/provisioning/include/internal')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/provisioning/include/cloud')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/provisioning/include/oxm')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/security/provisioning/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/extlibs/mbedtls/mbedtls/include')
+    iotivity_common_includes_paths.append(iotivity_root + '/extlibs/tinydtls')
+    iotivity_common_includes_paths.append(iotivity_root + '/extlibs/mbedtls/mbedtls/include/mbedtls')
+
+
+iotivity_test_include_paths = [ iotivity_test_root + '/include' ]
+extlibs_include_paths = [ iotivity_test_root + '/extlibs/gtest-1.7.0/include' ]
+
+common_linux_cppflags = ['-DLINUX', '-D__LINUX__']
+
+cppflags = Split('-s -pthread -march=native -std=gnu++0x -Wall')
+
+if env_linux.get('SECURED') == '1':
+    cppflags.append('-D__SECURED__ ')
+
+if env_linux.get('COVERAGE'):
+    common_linux_cppflags.append('-finstrument-functions')
+    common_linux_cppflags.append('-ftest-coverage')
+    common_linux_cppflags.append('-fprofile-arcs')
+    #common_linux_cppflags.append('-D__COVERAGE__')
+
+env_linux.Append(COMMON_LINUX_CPPFLAGS = common_linux_cppflags)
+
+install_targets += env_linux.StaticLibrary('common_util',
+                    source = [test_src_root + '/common/commonutil/c_cpp/CommonUtil.cpp',
+                        test_src_root + '/common/commonutil/c_cpp/Configuration.cpp'
+                    ],
+                    CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
+                    LIBS = ['boost_system', 'boost_filesystem', 'boost_thread'],
+                    LIBPATH = ['/usr/local/lib'],
+                    CPPFLAGS = cppflags + common_linux_cppflags)
+
+if 'tc' in test:
+    tc_util = env_linux.StaticLibrary('tc_util',
+                source = [
+                            test_src_root + '/common/commonutil/c_cpp/trace.c',
+                            test_src_root + '/common/testcase/gtest/IotivitySECTestMain.cpp',
+                            test_src_root + '/common/commonutil/c_cpp/CommonTestUtil.cpp',
+                        ],
+                CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
+                LIBS = ['boost_system', 'boost_filesystem', 'boost_thread'],
+                LIBPATH = ['/usr/local/lib'],
+                CPPFLAGS = cppflags + common_linux_cppflags)
+
+if 'ic' in module or 'cs' in module:
+    if tls_mode == 1:
+        cppflags.append(['-D__TLS_ON__'])
+    cloud_util = env_linux.StaticLibrary('cloud_util',
+                    source = [test_src_root + '/common/commonutil/c_cpp/CloudCommonUtil.cpp'],
+                    CPPPATH = iotivity_common_includes_paths + iotivity_test_include_paths + extlibs_include_paths,
+                    LIBS = ['curl', 'boost_system', 'boost_filesystem', 'boost_thread', 'common_util' ],
+                    LIBPATH = ['.', '/usr/local/lib'],
+                    CPPFLAGS = cppflags + common_linux_cppflags)
+
+if 'pm' in module or 'ri' in module:
+    print ('calling SConscriptSK')
+    SConscript('SConscriptSK', exports = 'env_linux')
+else:
+    print ('no call to SConscriptSK')
+
+for temp in all_modules:
+    if temp in module:
+        SConscript('SConscript' + temp.upper(), exports = 'env_linux')
+
+if 'tc' in test:
+    install_targets += tc_util
+
+    if 'ic' in module or 'cs' in module:
+        install_targets += cloud_util
+
+install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    #delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
+
+Depends(delete_bin, install_bin)
+
+default_targets = install_bin + delete_bin
+
+env_linux.Default(default_targets)

@@ -1,0 +1,184 @@
+'''
+******************************************************************
+*
+* Copyright 2017 Granite River Labs All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Windows
+#
+##
+
+print '\n---------------Started Building RI for Windows---------------\n'
+
+Import('env_windows')
+import os
+
+env_windows['CC'] = 'cl'
+
+# TODO: re-enable warnings, especially: 4244, 4267, 4365
+env_windows.AppendUnique(CXXFLAGS=[
+    '/wd4244',   # C4244 conversion from one type to another type results in a possible loss of data.
+    '/wd4267',   # C4267 conversion from size_t to a smaller type.
+    '/wd4355',   # C4355 'this' used in base member initializer list.
+    '/wd4800',   # C4800 forcing value to bool 'true' or 'false'.
+    '/wd4996',   # C4996 deprecated declaration.
+    '/wd4820',   # C4820 added padding to the end of a struct.
+    '/wd4514',   # C4514 unreferenced inline function has been removed
+    '/wd4365',   # C4365 signed/unsigned mismatch
+    '/wd4503'])  # C4503 decorated name length exceeded, name was truncated
+
+env_windows.AppendUnique(CCFLAGS=['/EHsc'])
+
+vs_version = env_windows['MSVC_VERSION']
+
+# Set release/debug flags
+if env_windows.get('RELEASE'):
+    env_windows.AppendUnique(CCFLAGS = ['/MD', '/O2', '/GF'])
+    env_windows.AppendUnique(CPPDEFINES = ['NDEBUG'])
+elif env_windows.get('TARGET_ARCH') in ['x86', 'x86_64'] or "14.0" in vs_version:
+    env_windows.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/ZI', '/RTC1', '/Gm'])
+    env_windows.AppendUnique(LINKFLAGS = ['/debug'])
+else:
+    env_windows.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/Zi', '/RTC1', '/Gm'])
+    env_windows.AppendUnique(LINKFLAGS = ['/debug'])
+    env_windows.AppendUnique(LIBPATH = [env_windows.get('BUILD_DIR')])
+    env_windows.AppendUnique(PATH = os.environ['PATH'])
+
+iotivity_root = env_windows.get('IOTIVITY_ROOT')
+iotivity_lib_path = env_windows.get('IOTIVITY_LIB_PATH')
+iotivity_test_root = env_windows.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_windows.get('VARIANT_DIR')
+test = env_windows.get('TEST')
+sdk = env_windows.get('SDK')
+common_windows_cppflags = env_windows.get('COMMON_WINDOWS_CPPFLAGS')
+
+install_targets = []
+
+iotivity_include_paths = [
+    iotivity_root + '/extlibs/boost/boost',
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/ocsocket/include',
+    iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
+    iotivity_root + '/resource/csdk/security/include',
+    iotivity_root + '/resource/c_common',
+    iotivity_root + '/resource/c_common/oic_malloc/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/extlibs/cereal/include/',
+    iotivity_root + '/extlibs/timer/',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src/',
+    iotivity_root + '/extlibs/gtest/googletest-release-1.7.0/include',
+    iotivity_lib_path + '/resource/c_common',
+    iotivity_lib_path + '/deploy/include/c_common/experimental'
+]
+
+testapp_include_paths = [ iotivity_test_root + '/include' ]
+
+csdk_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/tc/ri/gtest/csdk/include',
+    iotivity_root + '/extlibs/gtest/googletest-release-1.7.0/include'
+]
+
+cpp_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/tc/ri/gtest/cpp/include',
+    iotivity_root + '/extlibs/gtest/googletest-release-1.7.0/include'
+]
+
+csdk_src = [
+    Glob(iotivity_test_root + '/src/tc/ri/gtest/csdk/src/btc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ri/gtest/csdk/src/stc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ri/gtest/csdk/src/helper/*.cpp')
+]
+
+cpp_src = [
+    Glob(iotivity_test_root + '/src/tc/ri/gtest/cpp/src/btc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ri/gtest/cpp/src/stc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/ri/gtest/cpp/src/helper/*.cpp')
+]
+
+testapp_src = [
+    iotivity_test_root + '/src/common/commonutil/c_cpp/ResourceServer.cpp',
+    iotivity_test_root + '/src/common/commonutil/c_cpp/SampleResource.cpp',
+    iotivity_test_root + '/src/common/commonutil/c_cpp/ResourceHelper.cpp',
+    iotivity_test_root + '/src/iBtestapp/modules/ri/c_cpp/InterOpAppRI.cpp',
+]
+
+common_defines = Split('WITH_TCP IP_ADAPTER NO_EDR_ADAPTER LE_ADAPTER ROUTING_EP WITH_BWT')
+
+common_flags = Split('')
+
+testapp_shared_libs = Split('oc octbstack oc_logger mbedx509 mbedtls mbedcrypto connectivity_abstraction coap c_common win_helper')
+
+csdk_shared_libs = Split('connectivity_abstraction_internal octbstack ocsrm coap boost_system boost_filesystem boost_thread routingmanager c_common win_helper logger gtest')
+cpp_shared_libs = Split('bcrypt Ws2_32 advapi32 iphlpapi crypt32 kernel32 connectivity_abstraction_internal mbedx509 mbedtls mbedcrypto c_common octbstack octbstack coap resource_directory boost_system boost_filesystem boost_thread oc oc_logger_internal logger win_helper gtest')
+
+if 'tc' in test:
+    if 'csdk' in sdk:
+        csdk_tc = env_windows.Program(
+                    source = csdk_src,
+                    target = 'iotivity_ri_csdk_test',
+                    CPPPATH = iotivity_include_paths + csdk_include_paths,
+                    LIBS = csdk_shared_libs + ['common_util', 'tc_util'],
+                    LIBPATH = [iotivity_lib_path, iotivity_root + '/extlibs/gtest', '.'],
+                    RPATH = [iotivity_lib_path],
+                    CPPFLAGS = common_flags + common_windows_cppflags,
+                    CPPDEFINES = common_defines)
+        install_targets += [csdk_tc]
+
+    if 'cpp' in sdk:
+        cpp_tc = env_windows.Program(
+                    source = cpp_src,
+                    target = 'iotivity_ri_cpp_test',
+                    CPPPATH = iotivity_include_paths + cpp_include_paths,
+                    LIBS = cpp_shared_libs + ['common_util', 'tc_util'],
+                    LIBPATH = [iotivity_lib_path, iotivity_root + '/extlibs/gtest', '.'],
+                    RPATH = [iotivity_lib_path],
+                    CPPFLAGS = common_flags + common_windows_cppflags,
+                    CPPDEFINES = common_defines)
+        install_targets += [cpp_tc]
+
+if 'app' in test:
+    ri_interop_app = env_windows.Program(
+                        source = testapp_src,
+                        target = 'InterOpAppRI',
+                        CPPPATH = iotivity_include_paths + testapp_include_paths,
+                        LIBS = testapp_shared_libs,
+                        LIBPATH = iotivity_lib_path,
+                        RPATH = iotivity_lib_path,
+                        CPPFLAGS = common_flags + common_windows_cppflags,
+                        CPPDEFINES = common_defines)
+    install_targets += [ri_interop_app]
+
+install = env_windows.Install(iotivity_test_root + '/' + variant_dir, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin += '0'
+    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    i = i + 1
+
+default_targets = install_targets + install + delete_bin
+
+env_windows.Default(default_targets)

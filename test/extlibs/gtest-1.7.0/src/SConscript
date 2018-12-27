@@ -1,0 +1,8 @@
+#-----------------------------------------------------
+# build script for gtest
+#-----------------------------------------------------
+
+Import('env_gtest')
+
+env_gtest.StaticLibrary(target = 'gtest', source = 'gtest-all.cc')
+

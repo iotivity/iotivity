@@ -1,0 +1,128 @@
+'''
+/******************************************************************
+*
+* Copyright 2018 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+print '\n---------------Started Building Resource Encapsulation for Linux---------------\n'
+
+Import('env_linux')
+import os
+
+env_linux['CC'] = 'g++'
+
+iotivity_root = env_linux.get('IOTIVITY_ROOT')
+iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
+iotivity_lib_paths = [iotivity_lib_path, '.', '/usr/local/lib']
+iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_linux.get('VARIANT_DIR')
+install_dir = env_linux.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
+test = env_linux.get('TEST')
+common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
+
+install_targets = []
+default_targets = []
+
+iotivity_include_paths = [
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/c_common',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/csdk/ocsocket/include',
+    iotivity_root + '/resource/csdk/ocrandom/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/extlibs/cereal/include',
+    iotivity_root + '/extlibs/timer',
+    iotivity_root + '/extlibs/timer/',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src',
+    iotivity_root + '/resource/csdk/security/include',
+    iotivity_root + '/service/resource-encapsulation/include/',
+    iotivity_lib_path + '/resource/c_common'
+]
+
+tc_include_paths = [
+    iotivity_test_root + '/include',
+    test_src_root + '/tc/re/gtest/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+]
+
+tc_src = [
+    Glob(test_src_root + '/tc/re/gtest/src/btc/*.cpp'),
+    Glob(test_src_root + '/tc/re/gtest/src/stc/*.cpp'),
+    Glob(test_src_root + '/tc/re/gtest/src/helper/*.cpp')
+]
+
+server_src = [
+    Glob(test_src_root + '/testapp/re/c_cpp/src/retestservers.cpp'),
+    Glob(test_src_root + '/tc/re/gtest/src/helper/*.cpp')
+]
+
+testapp_include_paths = [
+    iotivity_test_root + '/include',
+    test_src_root + '/iBtestapp/modules/re/c_cpp/include'
+]
+
+testapp_src = Glob(test_src_root + '/iBtestapp/modules/re/c_cpp/src/*.cpp')
+
+cppflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -fpermissive -D __WITH_DTLS__ -DWITH_TCP -finstrument-functions -O2 -g -Wall -fmessage-length=0 -std=c++0x -Os -Wall -Wextra -fPIC -pthread -DNDEBUG -DWITH_POSIX -D__linux__ -DIP_ADAPTER -DNO_EDR_ADAPTER -DLE_ADAPTER -DROUTING_EP -DWITH_BWT -DCA_DBUS_GATT_SERVICE_NAME='"org.iotivity.gatt.service"' -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_32')
+
+libs = Split('connectivity_abstraction oc octbstack coap resource_directory boost_system boost_filesystem boost_thread dl expat oc oc_logger oc_logger_core coap glib-2.0 gcov uuid scene_manager rcs_client rcs_server rcs_common common_util pthread')
+
+if 'tc' in test:
+    re_tc = env_linux.Program(source = tc_src, 
+                target = 'iotivity_re_test', 
+                CPPPATH = iotivity_include_paths + tc_include_paths, 
+                LIBS = libs + ['gtest', 'tc_util', 'pthread', 'octbstack', 'connectivity_abstraction', 'dl'], 
+                LIBPATH = [iotivity_lib_paths, iotivity_test_root + '/extlibs/gtest-1.7.0/bin/linux'], 
+                CPPFLAGS = cppflags + common_linux_cppflags, 
+                RPATH = iotivity_lib_paths)
+    install_targets += re_tc
+
+    re_server = env_linux.Program(source = server_src, 
+                target = 'iotivity_re_server', 
+                CPPPATH = iotivity_include_paths + tc_include_paths, 
+                LIBS = libs + ['tc_util', 'pthread', 'octbstack', 'connectivity_abstraction', 'dl'], 
+                LIBPATH = iotivity_lib_paths, 
+                CPPFLAGS = cppflags + common_linux_cppflags, 
+                RPATH = iotivity_lib_paths)
+    install_targets += re_server
+
+if 'app' in test:
+    re_testapp = env_linux.Program(source = testapp_src, 
+                    target = 'iotivity_re_app', 
+                    CPPPATH = iotivity_include_paths + testapp_include_paths, 
+                    LIBS = libs + ['octbstack', 'connectivity_abstraction', 'dl'], 
+                    LIBPATH = iotivity_lib_paths,
+                    CPPFLAGS = cppflags + common_linux_cppflags, 
+                    RPATH = iotivity_lib_paths)
+    install_targets += re_testapp
+
+install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i +1
+
+default_targets = install_bin + delete_bin
+
+env_linux.Default(default_targets)

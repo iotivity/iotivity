@@ -1,0 +1,144 @@
+/******************************************************************
+ *
+ * Copyright 2018 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.5.0'
+    }
+}
+
+task icbuild (dependsOn:['assemble']){
+
+    project.buildDir =  binDir
+
+    repositories {
+        mavenCentral()
+
+        flatDir{
+            if("${src_type}" == "java") {
+                dirs "${iotivity_root}/java/iotivity-java/build/libs"
+            } else {
+                dirs "${iotivity_root}/java/iotivity-android/build/outputs/aar"
+            }
+        }
+    }
+
+    def javaType = 'generic'
+
+    if(src_type == 'android') {
+        javaType = 'android'
+    }
+
+    def commonSrcDir = ['./src/org/iotivity/test/' + module_name + '/tc',
+                        '../../../../src/common/commonutil/java/java-' + javaType + '/iotivityhelpers/ri',
+                        '../../../../src/common/commonutil/java/java-' + javaType + '/cloud',
+                        '../../../../src/common/commonutil/java/java-' + javaType + '/logger',
+                        '../../../../src/common/commonutil/java/java-' + javaType + '/testcase',
+                        '../../../../src/common/commonutil/java/common/resource',
+                        '../../../../src/common/commonutil/java/common/util'
+    ]
+
+    def printSrcDir = { listParam ->
+         println '------------------\nSource Directories\n------------------'
+         listParam.eachWithIndex { item, index ->
+             println "    " + item
+         }
+    }
+
+    def buildFatJar = { isJava ->
+
+        if(isJava == "java") {
+            apply plugin: 'java'
+            sourceSets {
+                main {
+                    java {
+                        srcDirs += commonSrcDir
+                        srcDirs '../../../../src/common/testcase/junit/'
+                        printSrcDir(srcDirs)
+                    }
+                }
+            }
+
+            dependencies {
+                compile fileTree(dir: "${iotivityRoot}/out/${os}/${architecture}/${logLevel}/java", include: ['*.jar'])
+                compile group: 'commons-collections', name: 'commons-collections', version: '3.2'
+                compile group: 'junit', name: 'junit', version: '4.12'
+            }
+
+            jar {
+                archiveName module_name + '_test.jar'
+                from {
+                (configurations.runtime).collect { it.isDirectory() ? it : zipTree(it)}
+                }
+
+                manifest {
+                    attributes('Main-Class': 'org.iotivity.test.IotivityJunitRunner')
+                }
+            }
+
+            copy {
+                from testRoot + '/res/cs_resource/'
+                into testRoot + '/bin/java/cs/libs/'
+            }
+
+            copy {
+                from testRoot + '/res/common/'
+                into testRoot + '/bin/java/cs/libs/'
+            }
+        } else {
+            apply plugin: 'com.android.application'
+            android {
+                compileSdkVersion  21
+                buildToolsVersion "21.1.2"
+
+                sourceSets {
+                    main {
+                        java {
+                            manifest.srcFile 'AndroidManifest.xml'
+                            srcDirs += commonSrcDir
+                            srcDirs '../../../../src/common/commonutil/java/java-android/broadcast/'
+                            printSrcDir(srcDirs)
+                       }
+                    }
+                }
+
+                lintOptions {
+                    abortOnError false
+                }
+
+                defaultConfig {
+                    applicationId 'org.iotivity.test.' + module_name + '.tc'
+                    minSdkVersion 21
+                    targetSdkVersion 21
+                }
+            }
+
+            dependencies {
+                compile fileTree(dir: "${javaExtLibDir}", include: ['*.jar'])
+                compile(name:"${iotivityBaseAARFile}", ext:'aar')
+            }
+        }
+    }
+
+    buildFatJar(src_type)
+}

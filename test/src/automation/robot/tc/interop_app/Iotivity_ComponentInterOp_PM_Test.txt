@@ -1,0 +1,632 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Settings ***
+Documentation     Test PM Interoperability for all supported platform
+Suite Setup       Do Suite Setup
+Suite Teardown    Do Suite Teardown
+Test Setup        Do Test Setup
+Test Teardown     Do Test Teardown
+Variables         ../../helper/variable.py
+Library           Remote    ${REMOTE_IP}:${REMOTE_PORT}    WITH NAME    Local
+Resource          ../../helper/Iotivity_Interop_Test_Helper.txt
+Resource          ../../helper/Iotivity_Test_Helper.txt
+
+*** Test Cases ***
+PM Single Device Discovery
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-30 |
+    ...    |see | |
+    ...    |objective | Test the features - Single Device DiscoverySingle Device Discovery |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11 |
+    ...    |test_data | 2. Menu option: 20 |
+    ...    |test_data | 3. Menu option: 21 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start Justworks Server : input 11|
+    ...    |procedure | 2. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 3. [Client] Discover Single Device : input 21|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Discover Single Device and print Success Message |
+    [Tags]    all
+    ${expected_log}    Set Variable    SingleDevice API returns: OC_STACK_OK
+    ${log}    Provide Input    ${first_app}    11    30s
+    ${log}    Provide Input    ${second_app}    20    30s
+    ${log}    Provide Input    ${second_app}    21    30s
+    Search Expected Log    ${log}    ${expected_log}
+
+PM JustWork Ownership Transfer
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Ownership Transfer for JustWork Devices |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11 |
+    ...    |test_data | 2. Menu option: 20 |
+    ...    |test_data | 3. Menu option: 22 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start Justworks Server : input 11|
+    ...    |procedure | 2. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 3. [Client] Justworks Ownership Transfer : input 22|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Callback for Justworks Ownership Transfer will Provide Success Message |
+    [Tags]    all
+    ${expected_log}    Set Variable    Ownership Transfer SUCCEEDED
+    ${log}    Provide Input    ${first_app}    11    30s
+    ${log}    Provide Input    ${second_app}    20    30s
+    ${log}    Provide Input    ${second_app}    22    60s
+    Search Expected Log    ${log}    ${expected_log}
+
+PM RandomPin Ownership Transfer
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Ownership Transfer for RandomPin Devices |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 13 |
+    ...    |test_data | 2. Menu option: 20 |
+    ...    |test_data | 3. Menu option: 23 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start RandomPin Server : input 13|
+    ...    |procedure | 2. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 3. [Client] RandomPin Ownership Transfer : input 23|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Callback for RandomPin Ownership Transfer Transfer will Provide Success Message |
+    [Tags]    all
+    ${expected_log}    Set Variable    Ownership Transfer SUCCEEDED
+    ${log}    Provide Input    ${first_app}    13    30s
+    ${log}    Provide Input    ${second_app}    20    30s
+    ${log}    Provide Input    ${second_app}    23    60s
+    ${log}    Get Output    ${first_app}
+    ${pin}    Get Text    PIN CODE : [    ]    ${log}
+    Builtin.Log    ${pin}
+    ${log}    Provide Input    ${second_app}    ${pin}    30s
+    Search Expected Log    ${log}    ${expected_log}
+
+PM PreConfigPin Ownership Transfer
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Ownership Transfer for PreConfigPin Devices |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 14 |
+    ...    |test_data | 2. Menu option: 20 |
+    ...    |test_data | 3. Menu option: 22 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start PreConfigPin Server : input 14|
+    ...    |procedure | 2. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 3. [Client] Justworks Ownership Transfer : input 22|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Callback for PreConfigPin Ownership Transfer will Provide Success Message |
+    [Tags]    all
+    ${expected_log}    Set Variable    Ownership Transfer SUCCEEDED
+    ${log}    Provide Input    ${first_app}    14    30s
+    ${log}    Provide Input    ${second_app}    20    30s
+    ${log}    Provide Input    ${second_app}    22    60s
+    Search Expected Log    ${log}    ${expected_log}
+
+PM Provision ACL
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Provision Access Control List (ACL) |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11 |
+    ...    |test_data | 2. Menu option: 12 |
+    ...    |test_data | 3. Menu option: 20 |
+    ...    |test_data | 4. Menu option: 22 |
+    ...    |test_data | 5. Menu option: 25 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 2. [Server] Start Justworks Server Without DP Support : input 12|
+    ...    |procedure | 2. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 3. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 4. [Client] Provision Access Control List (ACL) : input 25|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Callback for Provision ACL will Provide Success Message |
+    [Tags]    all
+    [Setup]    Do Custom Test Setup
+    ${expected_log}    Set Variable    Provision ACL SUCCEEDED
+    ${log}    Provide Input    ${first_app}    11    30s
+    ${log}    Provide Input    ${third_app}    12    30s
+    ${log}    Provide Input    ${second_app}    20    20s
+    ${log}    Provide Input    ${second_app}    22    20s
+    ${log}    Provide Input    ${second_app}    25    20s
+    Search Expected Log    ${log}    ${expected_log}
+    [Teardown]    Do Custom Test Teardown
+
+PM Provision Credential
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-30 |
+    ...    |see | |
+    ...    |objective | Test the features - Provision Credential |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11 |
+    ...    |test_data | 2. Menu option: 12 |
+    ...    |test_data | 3. Menu option: 20 |
+    ...    |test_data | 4. Menu option: 22 |
+    ...    |test_data | 5. Menu option: 26 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 2. [Server] Start Justworks Server Without DP Support : input 12|
+    ...    |procedure | 2. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 3. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 4. [Client] Provision Credential : input 26|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Callback for Provision Credential will Provide Success Message |
+    [Tags]    all
+    [Setup]    Do Custom Test Setup
+    ${expected_log}    Set Variable    Provision Credential SUCCEEDED
+    ${log}    Provide Input    ${first_app}    11    30s
+    ${log}    Provide Input    ${third_app}    12    30s
+    ${log}    Provide Input    ${second_app}    20    20s
+    ${log}    Provide Input    ${second_app}    22    20s
+    ${log}    Provide Input    ${second_app}    26    20s
+    Search Expected Log    ${log}    ${expected_log}
+    [Teardown]    Do Custom Test Teardown
+
+PM Provision PairwiseDevices
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-30 |
+    ...    |see | |
+    ...    |objective | Test the features - Provision PairwiseDevices |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11 |
+    ...    |test_data | 2. Menu option: 12 |
+    ...    |test_data | 3. Menu option: 20 |
+    ...    |test_data | 4. Menu option: 22 |
+    ...    |test_data | 5. Menu option: 27 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 2. [Server] Start Justworks Server Without DP Support : input 12|
+    ...    |procedure | 2. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 3. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 4. [Client] Provision PairwiseDevices : input 27|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Callback for Provision PairwiseDevices will Provide Success Message |
+    [Tags]    all
+    [Setup]    Do Custom Test Setup
+    ${expected_log}    Set Variable    Provision Pairwise SUCCEEDED
+    ${log}    Provide Input    ${first_app}    11    30s
+    ${log}    Provide Input    ${third_app}    12    30s
+    ${log}    Provide Input    ${second_app}    20    30s
+    ${log}    Provide Input    ${second_app}    22    30s
+    ${log}    Provide Input    ${second_app}    27    30s
+    Search Expected Log    ${log}    ${expected_log}
+    [Teardown]    Do Custom Test Teardown
+
+PM Get Linked Devices
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-30 |
+    ...    |see | |
+    ...    |objective | Test the features - Get Linked Devices |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11 |
+    ...    |test_data | 2. Menu option: 12 |
+    ...    |test_data | 3. Menu option: 20 |
+    ...    |test_data | 4. Menu option: 22 |
+    ...    |test_data | 5. Menu option: 27 |
+    ...    |test_data | 6. Menu option: 28 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 2. [Server] Start Justworks Server Without DP Support : input 12|
+    ...    |procedure | 2. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 3. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 4. [Client] Provision PairwiseDevices : input 27|
+    ...    |procedure | 5. [Client] Get Linked Devices : input 28|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Get Linked Devices will Provide Success Message |
+    [Tags]    all
+    [Setup]    Do Custom Test Setup
+    ${expected_log}    Set Variable    GetLinkedStatus API returns: OC_STACK_OK
+    ${log}    Provide Input    ${first_app}    11    30s
+    ${log}    Provide Input    ${third_app}    12    30s
+    ${log}    Provide Input    ${second_app}    20    30s
+    ${log}    Provide Input    ${second_app}    22    30s
+    ${log}    Provide Input    ${second_app}    27    30s
+    ${log}    Provide Input    ${second_app}    28    30s
+    Search Expected Log    ${log}    ${expected_log}
+    [Teardown]    Do Custom Test Teardown
+
+PM Save ACL
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Save ACL |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11 |
+    ...    |test_data | 2. Menu option: 20 |
+    ...    |test_data | 3. Menu option: 22 |
+    ...    |test_data | 4. Menu option: 29 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 3. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 4. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 5. [Client] Save the Selected Access Control List(ACL) into local SVR DB : input 29|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Callback for Save Acl will Provide Success Message |
+    [Tags]    all
+    ${expected_log}    Set Variable    SaveACL API returns: OC_STACK_OK
+    ${log}    Provide Input    ${first_app}    11    30s
+    ${log}    Provide Input    ${second_app}    20    30s
+    ${log}    Provide Input    ${second_app}    22    60s
+    ${log}    Provide Input    ${second_app}    29    60s
+    Search Expected Log    ${log}    ${expected_log}
+
+PM Unlink Devices
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-30 |
+    ...    |see | |
+    ...    |objective | Test the features - Unlink Devices |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11 |
+    ...    |test_data | 2. Menu option: 12 |
+    ...    |test_data | 3. Menu option: 20 |
+    ...    |test_data | 4. Menu option: 22 |
+    ...    |test_data | 5. Menu option: 27 |
+    ...    |test_data | 6. Menu option: 28 |
+    ...    |test_data | 7. Menu option: 30 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 2. [Server] Start Justworks Server Without DP Support : input 12|
+    ...    |procedure | 3. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 4. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 5. [Client] Provision PairwiseDevices : input 27|
+    ...    |procedure | 6. [Client] Get Linked Devices : input 28|
+    ...    |procedure | 7. [Client] Unlink Devices : input 30|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Unlink Devices will Provide Success Message |
+    [Tags]    all
+    [Setup]    Do Custom Test Setup
+    ${expected_log}    Set Variable    Unlink Devices SUCCEEDED
+    ${log}    Provide Input    ${first_app}    11    30s
+    ${log}    Provide Input    ${third_app}    12    30s
+    ${log}    Provide Input    ${second_app}    20    30s
+    ${log}    Provide Input    ${second_app}    22    30s
+    ${log}    Provide Input    ${second_app}    27    30s
+    ${log}    Provide Input    ${second_app}    28    30s
+    ${log}    Provide Input    ${second_app}    30    30s
+    Search Expected Log    ${log}    ${expected_log}
+    [Teardown]    Do Custom Test Teardown
+
+PM Remove Devices
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-30 |
+    ...    |see | |
+    ...    |objective | Test the features - Remove Devices |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11 |
+    ...    |test_data | 2. Menu option: 12 |
+    ...    |test_data | 3. Menu option: 20 |
+    ...    |test_data | 4. Menu option: 22 |
+    ...    |test_data | 5. Menu option: 27 |
+    ...    |test_data | 6. Menu option: 28 |
+    ...    |test_data | 7. Menu option: 31 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 2. [Server] Start Justworks Server Without DP Support : input 12|
+    ...    |procedure | 3. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 4. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 5. [Client] Provision PairwiseDevices : input 27|
+    ...    |procedure | 6. [Client] Get Linked Devices : input 28|
+    ...    |procedure | 7. [Client] Remove Devices : input 31|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Remove Devices will Provide Success Message |
+    [Tags]    all
+    [Setup]    Do Custom Test Setup
+    ${expected_log}    Set Variable    Remove Devices SUCCEEDED
+    ${log}    Provide Input    ${first_app}    11    20s
+    ${log}    Provide Input    ${third_app}    12    20s
+    ${log}    Provide Input    ${second_app}    20    30s
+    ${log}    Provide Input    ${second_app}    22    30s
+    ${log}    Provide Input    ${second_app}    27    30s
+    ${log}    Provide Input    ${second_app}    28    30s
+    ${log}    Provide Input    ${second_app}    31    30s
+    Search Expected Log    ${log}    ${expected_log}
+    [Teardown]    Do Custom Test Teardown
+
+PM Remove Devices With Uuid
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-30 |
+    ...    |see | |
+    ...    |objective | Test the features - Remove Devices With Uuid |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11 |
+    ...    |test_data | 2. Menu option: 12 |
+    ...    |test_data | 3. Menu option: 20 |
+    ...    |test_data | 4. Menu option: 22 |
+    ...    |test_data | 5. Menu option: 27 |
+    ...    |test_data | 6. Menu option: 28 |
+    ...    |test_data | 7. Menu option: 32 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 2. [Server] Start Justworks Server Without DP Support : input 12|
+    ...    |procedure | 3. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 4. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 5. [Client] Provision PairwiseDevices : input 27|
+    ...    |procedure | 6. [Client] Get Linked Devices : input 28|
+    ...    |procedure | 7. [Client] Remove Devices With Uuid : input 32|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Remove Devices With Uuid will Provide Success Message |
+    [Tags]    all
+    [Setup]    Do Custom Test Setup
+    ${expected_log}    Set Variable    Remove Devices SUCCEEDED
+    ${log}    Provide Input    ${first_app}    11    30s
+    ${log}    Provide Input    ${third_app}    12    30s
+    ${log}    Provide Input    ${second_app}    20    30s
+    ${log}    Provide Input    ${second_app}    22    30s
+    ${log}    Provide Input    ${second_app}    27    20s
+    ${log}    Provide Input    ${second_app}    28    30s
+    ${log}    Provide Input    ${second_app}    32    30s
+    Search Expected Log    ${log}    ${expected_log}
+    [Teardown]    Do Custom Test Teardown
+
+PM Reset Devices
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-30 |
+    ...    |see | |
+    ...    |objective | Test the features - Reset Devices |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11 |
+    ...    |test_data | 2. Menu option: 12 |
+    ...    |test_data | 3. Menu option: 20 |
+    ...    |test_data | 4. Menu option: 22 |
+    ...    |test_data | 5. Menu option: 33 |
+    ...    |test_data | 6. Menu option: 22 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 2. [Server] Start Justworks Server Without DP Support : input 12|
+    ...    |procedure | 3. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 4. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 5. [Client] Reset Devices : input 33|
+    ...    |procedure | 6. [Client] Justworks Ownership Transfer : input 22|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Reset Devices will Provide Success Message |
+    [Tags]    all
+    [Setup]    Do Custom Test Setup
+    ${expected_log}    Set Variable    Sync Device SUCCEEDED - ctx: ctxResetDevice
+    ${log}    Provide Input    ${first_app}    11    30s
+    ${log}    Provide Input    ${third_app}    12    30s
+    ${log}    Provide Input    ${second_app}    20    30s
+    ${log}    Provide Input    ${second_app}    22    20s
+    ${log}    Provide Input    ${second_app}    33    20s
+    ${log}    Provide Input    ${second_app}    22    30s
+    Search Expected Log    ${log}    ${expected_log}
+    [Teardown]    Do Custom Test Teardown
+
+PM Reset SVRDB
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Reset SVRDB |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11 |
+    ...    |test_data | 2. Menu option: 20 |
+    ...    |test_data | 3. Menu option: 22 |
+    ...    |test_data | 4. Menu option: 29 |
+    ...    |test_data | 4. Menu option: 34 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 3. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 4. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 5. [Client] Save the Selected Access Control List(ACL) into local SVR DB : input 29|
+    ...    |procedure | 6. [Client] Reset SVRDB : input 34|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | OCReset SVRDB will Provide Success Message |
+    [Tags]    all
+    ${expected_log}    Set Variable    OCResetSVRDB API returns: OC_STACK_OK
+    ${log}    Provide Input    ${first_app}    11    30s
+    ${log}    Provide Input    ${second_app}    20    30s
+    ${log}    Provide Input    ${second_app}    22    60s
+    ${log}    Provide Input    ${second_app}    29    60s
+    ${log}    Provide Input    ${second_app}    34    60s
+    Search Expected Log    ${log}    ${expected_log}
+
+PM Get Device Status
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Get Device Status |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11 |
+    ...    |test_data | 2. Menu option: 20 |
+    ...    |test_data | 3. Menu option: 22 |
+    ...    |test_data | 4. Menu option: 36 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 3. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 4. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 5. [Client] Get Device Status : input 36|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Get Device Status will Provide Success Message |
+    [Tags]    all
+    ${expected_log}    Set Variable    SVRDB will return OC_STACK_OK
+    ${log}    Provide Input    ${first_app}    11    30s
+    ${log}    Provide Input    ${second_app}    20    30s
+    ${log}    Provide Input    ${second_app}    22    60s
+    ${log}    Provide Input    ${second_app}    36    60s
+    Search Expected Log    ${log}    ${expected_log}
+
+PM Multiple Ownership Transfer
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Multiple Ownership Transfer |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 14 |
+    ...    |test_data | 2. Menu option: 20 |
+    ...    |test_data | 3. Menu option: 22 |
+    ...    |test_data | 4. Menu option: 35 |
+    ...    |test_data | 5. Menu option: 61 |
+    ...    |test_data | 6. Menu option: 63 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 2. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 3. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 4. [Client] ENABLE MOT DEV : input 35|
+    ...    |procedure | 5. [MOT Client] Start MOT CLIENT : input 61|
+    ...    |procedure | 6. [MOT Client] Do Multiple Ownership Transfer : input 63|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Multiple Ownership Transfer will Provide Success Message |
+    [Tags]    all
+    [Setup]    Do Custom Test Setup
+    ${expected_log}    Set Variable    Multiple Ownership Transfer SUCCEEDED
+    Do MOT
+    ${log}    Provide Input    ${third_app}    61    30s
+    ${log}    Provide Input    ${third_app}    63    30s
+    Search Expected Log    ${log}    ${expected_log}
+    [Teardown]    Do Custom Test Teardown
+
+PM Provision ACL for Led Resource
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Provision ACL for Led Resource |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 14 |
+    ...    |test_data | 2. Menu option: 20 |
+    ...    |test_data | 3. Menu option: 22 |
+    ...    |test_data | 4. Menu option: 35 |
+    ...    |test_data | 5. Menu option: 61 |
+    ...    |test_data | 6. Menu option: 63 |
+    ...    |test_data | 7. Menu option: 67 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 2. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 3. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 4. [Client] ENABLE MOT DEV : input 35|
+    ...    |procedure | 5. [MOT Client] Start MOT CLIENT : input 61|
+    ...    |procedure | 6. [MOT Client] Do Multiple Ownership Transfer : input 63|
+    ...    |procedure | 7. [MOT Client] Provision ACL for LED Resource : input 67|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Provision ACL for Led Resource will Provide Success Message |
+    [Tags]    all
+    [Setup]    Do Custom Test Setup
+    ${expected_log}    Set Variable    Provision ACL SUCCEEDED - ctx: SubOwner Client
+    Do MOT
+    ${log}    Provide Input    ${third_app}    61    30s
+    ${log}    Provide Input    ${third_app}    63    30s
+    ${log}    Provide Input    ${third_app}    67    30s
+    Search Expected Log    ${log}    ${expected_log}
+    [Teardown]    Do Custom Test Teardown
+
+PM Get LED Resource
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Get LED Resource |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 14 |
+    ...    |test_data | 2. Menu option: 20 |
+    ...    |test_data | 3. Menu option: 22 |
+    ...    |test_data | 4. Menu option: 35 |
+    ...    |test_data | 5. Menu option: 61 |
+    ...    |test_data | 6. Menu option: 63 |
+    ...    |test_data | 7. Menu option: 65 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 2. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 3. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 4. [Client] ENABLE MOT DEV : input 35|
+    ...    |procedure | 5. [MOT Client] Start MOT CLIENT : input 61|
+    ...    |procedure | 6. [MOT Client] Do Multiple Ownership Transfer : input 63|
+    ...    |procedure | 7. [MOT Client] Get LED Resource : input 65|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Get LED ResourceGet LED Resource will Provide Success Message |
+    [Tags]    all
+    [Setup]    Do Custom Test Setup
+    ${expected_log}    Set Variable    Received OC_STACK_OK from server
+    Do MOT
+    ${log}    Provide Input    ${third_app}    61    30s
+    ${log}    Provide Input    ${third_app}    63    30s
+    ${log}    Provide Input    ${third_app}    65    30s
+    Search Expected Log    ${log}    ${expected_log}
+    [Teardown]    Do Custom Test Teardown
+
+PM Put LED Resource
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the features - Put LED Resource |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 14 |
+    ...    |test_data | 2. Menu option: 20 |
+    ...    |test_data | 3. Menu option: 22 |
+    ...    |test_data | 4. Menu option: 35 |
+    ...    |test_data | 5. Menu option: 61 |
+    ...    |test_data | 6. Menu option: 63 |
+    ...    |test_data | 7. Menu option: 66 |
+    ...    |pre_condition | |
+    ...    |procedure | 1. [Server] Start JustWork Server : input 11|
+    ...    |procedure | 2. [Client] Start Provisioning Client : input 20|
+    ...    |procedure | 3. [Client] Justworks Ownership Transfer : input 22|
+    ...    |procedure | 4. [Client] ENABLE MOT DEV : input 35|
+    ...    |procedure | 5. [MOT Client] Start MOT CLIENT : input 61|
+    ...    |procedure | 6. [MOT Client] Do Multiple Ownership Transfer : input 63|
+    ...    |procedure | 7. [MOT Client] Put LED Resource : input 66|
+    ...    |post_condition | Terminate Server/s and Client/s and repelace CBOR files and delete .db Files |
+    ...    |expected | Put LED ResourceGet LED Resource will Provide Success Message |
+    [Tags]    all
+    [Setup]    Do Custom Test Setup
+    ${expected_log}    Set Variable    Received OC_STACK_RESOURCE_CHANGED from server
+    Do MOT
+    ${log}    Provide Input    ${third_app}    61    30s
+    ${log}    Provide Input    ${third_app}    63    30s
+    ${log}    Provide Input    ${third_app}    66    30s
+    Search Expected Log    ${log}    ${expected_log}
+    [Teardown]    Do Custom Test Teardown
+
+*** Keywords ***
+Do Suite Setup
+    ${iotivity_build_parmeters}    Set Variable    resource SECURED=1 MULTIPLE_OWNER=1
+    ${tc_build_parmeters}    Set Variable    SECURED=1 SDK=${SDK}
+    BuiltIn.Log    ${OS}->${OS2}
+    Load Default Settings    ${iotivity_build_parmeters}    ${tc_build_parmeters}
+    Get Test Environment Details
+    Build Iotivity and Test App
+
+Do Suite Teardown
+    Remove All Devices
+
+Do Test Setup
+    Execute Interop Apps
+
+Do Test Teardown
+    ${log}    Get Output From First App
+    BuiltIn.Log    ${log}
+    ${log}    Get Output From Second App
+    BuiltIn.Log    ${log}
+    Terminate Interop Apps
+
+Do Custom Test Teardown
+    Terminate Interop Apps
+    Terminate Interop App    ${third_app}
+
+Do Custom Test Setup
+    Execute Interop Apps
+    Execute More Interop App    ${os}
+    BuiltIn.Sleep    30s
+
+Do MOT
+    ${log}    Provide Input    ${first_app}    14    30s
+    ${log}    Provide Input    ${second_app}    20    30s
+    ${log}    Provide Input    ${second_app}    22    30s
+    ${log}    Provide Input    ${second_app}    35    60s

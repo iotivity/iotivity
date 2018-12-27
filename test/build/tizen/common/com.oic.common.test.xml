@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns="http://tizen.org/ns/packages" package="com.oic.common.test" version="1.2.0" install-location="internal-only">
+    <label>com_oic_common_test</label>
+    <author email="oic" href="www.iotivity.org">OIC</author>
+    <description>com_oic_common_test</description>
+    <ui-application appid="com.oic.common.test" exec="/usr/apps/com.oic.common.test/bin" nodisplay="false" multiple="false" type="capp" taskmanage="true">s
+        <label>com_oic_common_test</label>
+        <label xml:lang="en-us">com_oic_common_test</label>
+        <label xml:lang="nl-nl">com_oic_common_test</label>
+    </ui-application>
+    <privileges>
+             <privilege>http://tizen.org/privilege/socket</privilege>
+    </privileges>
+
+</manifest>
+

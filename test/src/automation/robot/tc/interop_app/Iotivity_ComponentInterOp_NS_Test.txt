@@ -1,0 +1,600 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Settings ***
+Documentation     Test RE Interoperability for all supported platform
+Variables         ../../helper/variable.py
+Library           Remote    ${REMOTE_IP}:${REMOTE_PORT}    WITH NAME    Local
+Resource    ../../helper/Iotivity_Interop_Test_Helper.txt
+Resource    ../../helper/Iotivity_Test_Helper.txt
+Suite Setup    Do Suite Setup
+Suite Teardown    Do Suite Teardown
+Test Setup       Do Test Setup
+Test Teardown    Do Test Teardown
+
+*** Test Cases ***
+NS_Start Provider_Start Consumer_Provider Acceptor
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Start provider & discovery |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 101 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 101 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    101    10s
+    Check Substring Count    ${log}    1    ${GE}    Provider started successfully
+    ${log}    Provide Input    ${second_app}    201    10s
+    Check Substring Count    ${log}    1    ${GE}    Consumer Starts Successfully
+    ${log}    Get Output    ${first_app}
+    Check Substring Count    ${log}    1    ${GE}    subRequestCallback Called
+
+NS_Start Provider_Start Consumer_Consumer Acceptor
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Start provider & discovery |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 102 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 102 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    102    10s
+    Check Substring Count    ${log}    1    ${GE}    Provider started successfully
+    ${log}    Provide Input    ${second_app}    201    10s
+    Check Substring Count    ${log}    1    ${GE}    Consumer Starts Successfully
+    ${log}    Get Output    ${second_app}
+    Check Substring Count    ${log}    1    ${GE}    NSProviderStateCallback called
+
+NS_Stop Provider_Provider Acceptor_
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Stop Provider |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 101 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [SERVER] Menu option: 103 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 101 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [SERVER] Stop Provider with menu 103 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    101    10s
+    ${log}    Provide Input    ${second_app}    201    10s
+    ${log}    Provide Input    ${first_app}    103    10s
+    Check Substring Count    ${log}    1    ${GE}    Provider stopped successfully
+    ${log}    Get Output    ${second_app}
+    Check Substring Count    ${log}    1    ${GE}    Provider changed to NS_STOPPED State
+
+NS_Stop Provider_Consumer Acceptor_
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Stop Provider |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 102 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [SERVER] Menu option: 103 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 102 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [SERVER] Stop Provider with menu 103 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    102    10s
+    ${log}    Provide Input    ${second_app}    201    10s
+    ${log}    Provide Input    ${first_app}    103    10s
+    Check Substring Count    ${log}    1    ${GE}    Provider stopped successfully
+    ${log}    Get Output    ${second_app}
+    Check Substring Count    ${log}    1    ${GE}    Provider changed to NS_STOPPED State
+
+NS_Subcribe Consumer__
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Subscribe Consumer |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 102 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [CLIENT] Menu option: 203 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 102 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [CLIENT] Subscribe Consumer with menu 203 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    102    10s
+    ${log}    Provide Input    ${second_app}    201    10s
+    ${log}    Provide Input    ${second_app}    203    10s
+    Check Substring Count    ${log}    1    ${GE}    Notification Resource Discovered
+    Check Substring Count    ${log}    1    ${GE}    Provider changed to NS_ALLOW State
+
+NS_Accept Subcription__
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Accept Subcription |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 101 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [SERVER] Menu option: 104 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 101 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [SERVER] Accept Subscrition with menu 104 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    101    10s
+    ${log}    Provide Input    ${second_app}    201    10s
+    ${log}    Provide Input    ${first_app}    104    10s
+    ${log}    Get Output    ${second_app}
+    Check Substring Count    ${log}    1    ${GE}    Provider changed to NS_ALLOW State
+
+NS_Reject Subcription__
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Reject Subcription |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 101 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [SERVER] Menu option: 105 |
+    ...    |test_data | 4. [SERVER] Menu option: 108 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 101 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [SERVER] Reject Subscrition with menu 105 |
+    ...    |procedure | 4. [SERVER] Add Topic with menu 108 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    101    10s
+    ${log}    Provide Input    ${second_app}    201    10s
+    ${log}    Provide Input    ${first_app}    105    10s
+    ${log}    Provide Input    ${first_app}    108    10s
+    ${log}    Get Output    ${second_app}
+    Check Substring Count    ${log}    1    ${GE}    Provider changed to NS_DENY State
+    Check Substring Count    ${log}    0    ${GE}    Provider changed to NS_TOPIC State
+
+NS_Add Topic__
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Add TopicTest the features - Add Topic |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 101 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [SERVER] Menu option: 104 |
+    ...    |test_data | 4. [SERVER] Menu option: 108 |
+    ...    |test_data | 5. [SERVER] Menu option: 108 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 101 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [SERVER] Accept Subscrition with menu 104 |
+    ...    |procedure | 4. [SERVER] Add Topic with menu 108 |
+    ...    |procedure | 5. [SERVER] Add Topic with menu 108 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    101    10s
+    ${log}    Provide Input    ${second_app}    201    10s
+    ${log}    Provide Input    ${first_app}    104    10s
+    ${log}    Provide Input    ${first_app}    108    10s
+    ${log}    Provide Input    ${first_app}    108    10s
+    ${log}    Get Output    ${second_app}
+    Check Substring Count    ${log}    2    ${GE}    Provider changed to NS_TOPIC State
+
+NS_Add Topic_Delete Topic_
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Add and Delete Topic |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 101 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [SERVER] Menu option: 104 |
+    ...    |test_data | 4. [SERVER] Menu option: 108 |
+    ...    |test_data | 5. [SERVER] Menu option: 113 |
+    ...    |test_data | 6. [SERVER] Menu option: 109 |
+    ...    |test_data | 7. [SERVER] Menu option: 113 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 101 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [SERVER] Accept Subscrition with menu 104 |
+    ...    |procedure | 4. [SERVER] Add Topic with menu 108 |
+    ...    |procedure | 5. [SERVER] Show Topic with menu 113 |
+    ...    |procedure | 6. [SERVER] Delete Topic with menu 109 |
+    ...    |procedure | 7. [SERVER] Show Topic with menu 113 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    101    10s
+    ${log}    Provide Input    ${second_app}    201    10s
+    ${log}    Provide Input    ${first_app}    104    10s
+    ${log}    Provide Input    ${first_app}    108    10s
+    ${log}    Provide Input    ${first_app}    113    10s
+    ${log}    Provide Input    ${first_app}    109    10s
+    ${log}    Provide Input    ${first_app}    113    10s
+    Check Substring Count    ${log}    1    ${GE}    Topics is null
+
+NS_Add Topic_Set Topic_
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Add and Set Topic |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 101 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [SERVER] Menu option: 104 |
+    ...    |test_data | 4. [SERVER] Menu option: 108 |
+    ...    |test_data | 5. [SERVER] Menu option: 110 |
+    ...    |test_data | 6. [SERVER] Menu option: 112 |
+    ...    |test_data | 7. [CLIENT] Menu option: 206 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 101 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [SERVER] Accept Subscrition with menu 104 |
+    ...    |procedure | 4. [SERVER] Add Topic with menu 108 |
+    ...    |procedure | 5. [SERVER] Set Topic with menu 110 |
+    ...    |procedure | 6. [SERVER] Show Consumer Topic with menu 112 |
+    ...    |procedure | 7. [CLIENT] Get Topics with menu 206 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    101    10s
+    ${log}    Provide Input    ${second_app}    201    10s
+    ${log}    Provide Input    ${first_app}    104    10s
+    ${log}    Provide Input    ${first_app}    108    10s
+    ${log}    Provide Input    ${first_app}    110    10s
+    ${log}    Provide Input    ${first_app}    112    10s
+    ${log}    Provide Input    ${second_app}    206    10s
+    Check Substring Count    ${log}    1    ${GE}    Topic State: NS_TOPIC_SUBSCRIBED
+    ${log}    Get Output    ${first_app}
+    Check Substring Count    ${log}    1    ${GE}    State: SUBSCRIBED
+
+NS_Add Topic_Unset Topic_
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Add and Unset TopicTest the features - Add and Unset Topic |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 101 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [SERVER] Menu option: 104 |
+    ...    |test_data | 4. [SERVER] Menu option: 108 |
+    ...    |test_data | 5. [SERVER] Menu option: 110 |
+    ...    |test_data | 6. [SERVER] Menu option: 112 |
+    ...    |test_data | 7. [SERVER] Menu option: 111 |
+    ...    |test_data | 8. [SERVER] Menu option: 112 |
+    ...    |test_data | 9. [CLIENT] Menu option: 206 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 101 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [SERVER] Accept Subscrition with menu 104 |
+    ...    |procedure | 4. [SERVER] Add Topic with menu 108 |
+    ...    |procedure | 5. [SERVER] Set Topic with menu 110 |
+    ...    |procedure | 6. [SERVER] Show Consumer Topic with menu 112 |
+    ...    |procedure | 7. [SERVER] Unset Topic with menu 111 |
+    ...    |procedure | 8. [SERVER] Show Consumer Topic with menu 112 |
+    ...    |procedure | 9. [CLIENT] Get Topics with menu 206 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    101    10s
+    ${log}    Provide Input    ${second_app}    201    10s
+    ${log}    Provide Input    ${first_app}    104    10s
+    ${log}    Provide Input    ${first_app}    108    10s
+    ${log}    Provide Input    ${first_app}    110    10s
+    ${log}    Provide Input    ${first_app}    112    10s
+    ${log}    Provide Input    ${first_app}    111    10s
+    ${log}    Provide Input    ${first_app}    112    10s
+    ${log}    Provide Input    ${second_app}    206    10s
+    Check Substring Count    ${log}    1    ${GE}    Topic State: NS_TOPIC_UNSUBSCRIBED
+    ${log}    Get Output    ${first_app}
+    Check Substring Count    ${log}    1    ${GE}    State: UNSUBSCRIBED
+
+NS_Delete Topic_Update Topic_Provider Acceptor
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Delete and Update Topic |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 101 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [SERVER] Menu option: 104 |
+    ...    |test_data | 4. [SERVER] Menu option: 108 |
+    ...    |test_data | 5. [SERVER] Menu option: 108 |
+    ...    |test_data | 6. [SERVER] Menu option: 109 |
+    ...    |test_data | 7. [SERVER] Menu option: 113 |
+    ...    |test_data | 8. [CLIENT] Menu option: 206 |
+    ...    |test_data | 9. [CLIENT] Menu option: 207 |
+    ...    |test_data | 10. [CLIENT] Menu option: 206 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 101 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [SERVER] Accept Subscrition with menu 104 |
+    ...    |procedure | 4. [SERVER] Add Topic with menu 108 |
+    ...    |procedure | 5. [SERVER] Add Topic with menu 108 |
+    ...    |procedure | 6. [SERVER] Delete Topic with menu 109 |
+    ...    |procedure | 7. [SERVER] Show Topic with menu 113 |
+    ...    |procedure | 8. [CLIENT] Get Topics with menu 206 |
+    ...    |procedure | 9. [CLIENT] Update Topics with menu 207 |
+    ...    |procedure | 10. [CLIENT] Get Topics with menu 206 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    101    10s
+    ${log}    Provide Input    ${second_app}    201    10s
+    ${log}    Provide Input    ${first_app}    104    10s
+    ${log}    Provide Input    ${first_app}    108    10s
+    ${log}    Provide Input    ${first_app}    108    10s
+    ${log}    Provide Input    ${first_app}    109    10s
+    ${log}    Provide Input    ${first_app}    113    10s
+    ${log}    Provide Input    ${second_app}    206    10s
+    ${log}    Provide Input    ${second_app}    207    10s
+    ${log}    Provide Input    ${second_app}    206    10s
+    Check Substring Count    ${log}    1    ${GE}    Fail to update topic
+
+NS_Delete Topic_Update Topic_Consumer Acceptor
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Delete and Update Topic |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 102 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [CLIENT] Menu option: 203 |
+    ...    |test_data | 4. [SERVER] Menu option: 108 |
+    ...    |test_data | 5. [SERVER] Menu option: 108 |
+    ...    |test_data | 6. [SERVER] Menu option: 109 |
+    ...    |test_data | 7. [SERVER] Menu option: 113 |
+    ...    |test_data | 8. [CLIENT] Menu option: 206 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 102 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [CLIENT] Send Subcribe req. with menu 203 |
+    ...    |procedure | 4. [SERVER] Add Topic with menu 108 |
+    ...    |procedure | 5. [SERVER] Add Topic with menu 108 |
+    ...    |procedure | 6. [SERVER] Delete Topic with menu 109 |
+    ...    |procedure | 7. [SERVER] Show Topic with menu 113 |
+    ...    |procedure | 8. [CLIENT] Get Topics with menu 206 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    102    5s
+    ${log}    Provide Input    ${second_app}    201    5s
+    ${log}    Provide Input    ${second_app}    203    5s
+    ${log}    Provide Input    ${first_app}    108    5s
+    ${log}    Provide Input    ${first_app}    108    5s
+    ${log}    Provide Input    ${first_app}    109    5s
+    ${log}    Provide Input    ${first_app}    113    5s
+    ${log}    Provide Input    ${second_app}    206    5s
+    Check Substring Count    ${log}    0    ${EQ}    Topic Name: TESTAPP_Topic_2
+
+NS_Send Notification__
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Delete and Update Topic |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 101 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [SERVER] Menu option: 104 |
+    ...    |test_data | 4. [SERVER] Menu option: 108 |
+    ...    |test_data | 5. [SERVER] Menu option: 110 |
+    ...    |test_data | 6. [SERVER] Menu option: 106 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 101 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [SERVER] Accept Subscrition with menu 104 |
+    ...    |procedure | 4. [SERVER] Add Topic with menu 108 |
+    ...    |procedure | 5. [SERVER] Set Topic with menu 110 |
+    ...    |procedure | 6. [SERVER] Send Notification with menu 106 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    101    5s
+    ${log}    Provide Input    ${second_app}    201    5s
+    ${log}    Provide Input    ${first_app}    104    5s
+    ${log}    Provide Input    ${first_app}    108    5s
+    ${log}    Provide Input    ${first_app}    110    5s
+    ${log}    Provide Input    ${first_app}    106    5s
+    ${log}    Get Output    ${second_app}
+    Check Substring Count    ${log}    1    ${GE}    NSMessageReceivedCallback called
+
+NS_Send Notification_Send Consumer SyncInfo_
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Delete and Update Topic |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 101 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [SERVER] Menu option: 104 |
+    ...    |test_data | 4. [SERVER] Menu option: 108 |
+    ...    |test_data | 5. [SERVER] Menu option: 110 |
+    ...    |test_data | 6. [SERVER] Menu option: 106 |
+    ...    |test_data | 7. [CLIENT] Menu option: 205 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 101 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [SERVER] Accept Subscrition with menu 104 |
+    ...    |procedure | 4. [SERVER] Add Topic with menu 108 |
+    ...    |procedure | 5. [SERVER] Set Topic with menu 110 |
+    ...    |procedure | 6. [SERVER] Send Notification with menu 106 |
+    ...    |procedure | 7. [CLIENT] Send Sync Info with menu 205 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    101    5s
+    ${log}    Provide Input    ${second_app}    201    5s
+    ${log}    Provide Input    ${first_app}    104    5s
+    ${log}    Provide Input    ${first_app}    108    5s
+    ${log}    Provide Input    ${first_app}    110    5s
+    ${log}    Provide Input    ${first_app}    106    5s
+    ${log}    Provide Input    ${second_app}    205    5s
+    Check Substring Count    ${log}    1    ${GE}    NSMessageReceivedCallback called
+    ${log}    Get Output    ${first_app}
+    Check Substring Count    ${log}    1    ${GE}    syncInfoCallback Called
+
+NS_Send Notification_Send Provider SyncInfo_
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Delete and Update Topic |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 101 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [SERVER] Menu option: 104 |
+    ...    |test_data | 4. [SERVER] Menu option: 108 |
+    ...    |test_data | 5. [SERVER] Menu option: 110 |
+    ...    |test_data | 6. [SERVER] Menu option: 106 |
+    ...    |test_data | 7. [CLIENT] Menu option: 205 |
+    ...    |test_data | 8. [SERVER] Menu option: 107 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 101 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [SERVER] Accept Subscrition with menu 104 |
+    ...    |procedure | 4. [SERVER] Add Topic with menu 108 |
+    ...    |procedure | 5. [SERVER] Set Topic with menu 110 |
+    ...    |procedure | 6. [SERVER] Send Notification with menu 106 |
+    ...    |procedure | 7. [CLIENT] Send Sync Info with menu 205 |
+    ...    |procedure | 8. [SERVER] Send Sync Info with menu 107 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    101    10s
+    ${log}    Provide Input    ${second_app}    201    10s
+    ${log}    Provide Input    ${first_app}    104    10s
+    ${log}    Provide Input    ${first_app}    108    10s
+    ${log}    Provide Input    ${first_app}    110    10s
+    ${log}    Provide Input    ${first_app}    106    10s
+    ${log}    Provide Input    ${second_app}    205    10s
+    ${log}    Provide Input    ${first_app}    107    10s
+    Check Substring Count    ${log}    1    ${GE}    syncInfoCallback Called
+    ${log}    Get Output    ${second_app}
+    Check Substring Count    ${log}    1    ${GE}    NSSyncInfoReceivedCallback called
+
+NS_Reject Subcription_Send Notification_
+    [Documentation]    |Item |Description |
+    ...    |since |2017-06-07 |
+    ...    |see | |
+    ...    |objective | Test the features - Delete and Update Topic |
+    ...    |target | |
+    ...    |test_data | 1. [SERVER] Menu option: 101 |
+    ...    |test_data | 2. [CLIENT] Menu option: 201 |
+    ...    |test_data | 3. [SERVER] Menu option: 105 |
+    ...    |test_data | 4. [SERVER] Menu option: 108 |
+    ...    |test_data | 5. [SERVER] Menu option: 110 |
+    ...    |test_data | 6. [SERVER] Menu option: 106 |
+    ...    |pre_condition | 1. Run ns_provider_testapp [SERVER] |
+    ...    |pre_condition | 2. Run ns_consumer_testap [CLIENT] |
+    ...    |procedure | 1. [SERVER] Start Provider with menu 101 |
+    ...    |procedure | 2. [CLIENT] Start Consumer with menu 201 |
+    ...    |procedure | 3. [SERVER] Reject Subscrition with menu 105 |
+    ...    |procedure | 4. [SERVER] Add Topic with menu 108 |
+    ...    |procedure | 5. [SERVER] Set Topic with menu 110 |
+    ...    |procedure | 6. [SERVER] Send Notification with menu 106 |
+    ...    |post_condition | Terminate 1. Run ns_provider_testapp |
+    ...    |post_condition | Terminate 2. Run ns_consumer_testapp |
+    ...    |expected | Success to find all resources |
+    [Tags]    all
+    ${log}    Provide Input    ${first_app}    101    5s
+    ${log}    Provide Input    ${second_app}    201    5s
+    ${log}    Provide Input    ${first_app}    105    5s
+    ${log}    Provide Input    ${first_app}    108    5s
+    ${log}    Provide Input    ${first_app}    110    5s
+    ${log}    Provide Input    ${first_app}    106    5s
+    ${log}    Get Output    ${second_app}
+    Check Substring Count    ${log}    0    ${GE}    NSSyncInfoReceivedCallback called
+
+*** Keywords ***
+Do Suite Setup
+    [Arguments]    
+    ${iotivity_build_parmeters}    Set Variable   SECURED=0
+    ${tc_build_parmeters}    Set Variable   SECURED=0
+    BuiltIn.Log    ${OS}->${OS2}
+    Load Default Settings    ${iotivity_build_parmeters}    ${tc_build_parmeters}
+    Get Test Environment Details
+    Build Iotivity and Test App
+
+Do Suite Teardown
+    [Arguments]    
+    Remove All Devices
+
+Do Test Setup
+    [Arguments]    
+    Execute Interop Apps
+
+Do Test Teardown
+    [Arguments]
+    ${log}    Get Output From First App
+    BuiltIn.Log    ${log}
+    ${log}    Get Output From Second App
+    BuiltIn.Log    ${log}     
+    Terminate Interop Apps

@@ -1,0 +1,213 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+print '\n---------------Started Building IotivitySecTest CS for Tizen---------------\n'
+
+env = Environment(CC='g++')
+
+test = ARGUMENTS.get('TEST')
+sdk = ARGUMENTS.get('SDK')
+tls_mode = ARGUMENTS.get('TLS_MODE')
+
+print 'test: ' + test
+print 'sdk: ' + sdk
+print 'tls_mode: ' + tls_mode
+
+if tls_mode == 'True':
+    tls_mode = True
+else:
+    tls_mode = False
+
+
+iotivity_test_root = 'test'
+iotivity_root = 'iotivity'
+
+
+iotivity_include_paths = [
+    iotivity_root + '/resource/csdk',
+    iotivity_root + '/resource/csdk/security/include',
+    iotivity_root + '/resource/csdk/security/include/internal',
+    iotivity_root + '/resource/csdk/security/provisioning/include',
+    iotivity_root + '/resource/csdk/security/provisioning/include/internal',
+    iotivity_root + '/resource/csdk/security/provisioning/include/oxm',
+    iotivity_root + '/resource/csdk/security/provisioning/include/cloud',
+    iotivity_root + '/resource/include',
+    iotivity_root + '/resource/csdk/stack/include',
+    iotivity_root + '/resource/c_common/ocrandom/include',
+    iotivity_root + '/resource/csdk/logger/include',
+    iotivity_root + '/resource/csdk/connectivity/inc',
+    iotivity_root + '/resource/csdk/connectivity/inc/pkix',
+    iotivity_root + '/resource/csdk/connectivity/common/inc',
+    iotivity_root + '/resource/csdk/connectivity/lib/libcoap-4.1.1',
+    iotivity_root + '/resource/csdk/connectivity/api',
+    iotivity_root + '/resource/c_common/oic_malloc/include',
+    iotivity_root + '/resource/c_common',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/c_common/oic_string/include',
+    iotivity_root + '/resource/oc_logger/include',
+    iotivity_root + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include/',
+    iotivity_root + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include/coap',
+    iotivity_root + '/resource/csdk/resource-directory/include',
+    iotivity_root + '/extlibs/cjson',
+    iotivity_root + '/extlibs/base64',
+    iotivity_root + '/extlibs/tinycbor/tinycbor/src',
+    iotivity_root + '/extlibs/mbedtls/mbedtls/include',
+    iotivity_root + '/extlibs/mbedtls/mbedtls/include/mbedtls',
+    iotivity_root + '/resource/csdk/include',
+    iotivity_root + '/resource/c_common/octhread/include',
+    iotivity_root + '/resource/csdk/stack/include/experimental',
+    iotivity_root + '/resource/csdk/logger/include/experimental',
+    '/usr/include/iotivity/c_common'
+    '/usr/include/dlog'
+]
+
+tc_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/tc/ic/gtest/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include'
+]
+
+simulator_include_paths = [
+    iotivity_test_root + '/include'
+]
+
+common_src = [
+    iotivity_test_root + '/src/common/commonutil/c_cpp/CommonUtil.cpp',
+    iotivity_test_root + '/src/common/commonutil/c_cpp/CloudCommonUtil.cpp',
+    iotivity_test_root + '/src/common/commonutil/c_cpp/Configuration.cpp'
+]
+
+tc_common_src = [
+    iotivity_test_root + '/src/common/testcase/gtest/IotivitySECTestMain.cpp',
+    iotivity_test_root + '/src/common/commonutil/c_cpp/CommonTestUtil.cpp',
+]
+
+csdk_include_paths = [ iotivity_test_root + '/src/tc/cs/gtest/csdk/include' ]
+
+cpp_include_paths = [ iotivity_test_root + '/src/tc/cs/gtest/cpp/include' ]
+
+csdk_test_src = [
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/csdk/src/btc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/csdk/src/stc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/csdk/src/helper/*.cpp'),
+    Glob(iotivity_test_root + '/src/common/commonutil/c_cpp/ResourceServer.cpp'),
+    Glob(iotivity_test_root + '/src/common/commonutil/c_cpp/SampleResource.cpp'),
+    Glob(iotivity_test_root + '/src/common/commonutil/c_cpp/ResourceHelper.cpp')
+]
+
+cpp_test_src = [
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/cpp/src/btc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/cpp/src/stc/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/cpp/src/helper/*.cpp')
+]
+
+csdk_app_include_paths = [
+    iotivity_test_root + '/include',
+    iotivity_test_root + '/src/tc/cs/gtest/csdk/include',
+    iotivity_test_root + '/extlibs/gtest-1.7.0/include',
+]
+
+csdk_app_src = [
+    Glob(iotivity_test_root + '/src/iBtestapp/modules/cs/c_cpp/csdk/*.cpp'),
+    Glob(iotivity_test_root + '/src/tc/cs/gtest/csdk/src/helper/*.cpp'),
+    Glob(iotivity_test_root + '/src/common/commonutil/c_cpp/ResourceServer.cpp'),
+    Glob(iotivity_test_root + '/src/common/commonutil/c_cpp/SampleResource.cpp'),
+    Glob(iotivity_test_root + '/src/common/commonutil/c_cpp/ResourceHelper.cpp')
+]
+
+simulator_include_paths = [
+    iotivity_test_root + '/include'
+]
+
+simulator_src = [
+    iotivity_test_root + '/src/testapp/cs/iotivity_cs_server.cpp'
+]
+
+lib_list = Split('m pthread rt dl stdc++ gobject-2.0 gio-2.0 glib-2.0 dlog capi-network-wifi capi-network-bluetooth  boost_system boost_filesystem boost_thread connectivity_abstraction dl expat gcov oc oc_logger ocpmapi ocprovision octbstack uuid mbedtls resource_directory curl')
+
+cppdefines = Split('__SECURED__ __CLOUD__ WITH_CLOUD WITH_POSIX SLP_SDK_LOG _GNU_SOURCE TIZEN_DEBUG_ENABLE TB_LOG TIZEN __TIZEN__ __CLOUD__ CA_DBUS_GATT_SERVICE_NAME GLIB_VERSION_MIN_REQUIRED NO_EDR_ADAPTER RD_CLIENT _ENABLE_MULTIPLE_OWNER_ ROUTING_EP GLIB_VERSION_2_32 WITH_BWT IP_ADAPTER LE_ADAPTER HAVE_SYS_TIME_H DTLSV12 NDEBUG TCP_ADAPTER __WITH_DTLS__ __WITH_TLS__ WITH_TCP WITH_SHA256 SHA2_USE_INTTYPES_H DTLS_CHECK_CONTENTTYPE WITH_CLOUD')
+
+cppflags = ['-std=c++0x', '-std=gnu++0x', '-s', '-w', '-fPIC', '-Wall', '-g', '`pkg-config', '--cflags', '--libs','dlog', 'capi-network-wifi', 'gobject-2.0','glib-2.0`', '-fpermissive']
+
+cxxflags = ['-std=c++11','-c','-std=gnu99', '-std=c99','-Os','-Wall','-Wextra','-fPIC', '-DCA_DBUS_GATT_SERVICE_NAME="org.iotivity.gatt.service"','-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_32', '-ftest-coverage' , '-fprofile-arcs']
+
+tc_lib_path = [ iotivity_test_root + '/extlibs/gtest-1.7.0/bin/tizen' ]
+
+if 'tc' in test:
+
+    csdk_target_binary = 'iotivity_cs_csdk_tlsoff_test'
+    cpp_target_binary = 'iotivity_cs_cpp_tlsoff_test'
+    if tls_mode:
+        print 'line 148'
+        cppflags.append(['-D__TLS_ON__'])
+        csdk_target_binary = 'iotivity_cs_csdk_tlson_test'
+        cpp_target_binary = 'iotivity_cs_cpp_tlson_test'
+    else:
+        print 'line 153'
+
+    if 'csdk' in sdk:
+        env.Program (source = csdk_test_src + tc_common_src + common_src,
+                    target = csdk_target_binary,
+                    CPPPATH = iotivity_include_paths + tc_include_paths + csdk_include_paths,
+                    LIBS = lib_list + ['gtest'],
+                    LIBPATH = tc_lib_path,
+                    CPPFLAGS = cppflags,
+                    CXXFLAGS = cxxflags,
+                    CPPDEFINES = cppdefines)
+
+    if 'cpp' in sdk:
+        env.Program (source = cpp_test_src + tc_common_src + common_src,
+                    target = cpp_target_binary,
+                    CPPPATH = iotivity_include_paths + tc_include_paths + cpp_include_paths,
+                    LIBS = lib_list + ['gtest'],
+                    LIBPATH = tc_lib_path,
+                    CPPFLAGS = cppflags,
+                    CXXFLAGS = cxxflags,
+                    CPPDEFINES = cppdefines)
+
+if 'app' in test:
+
+    csdk_target_binary = 'iotivity_cs_csdk_tlsoff_app'
+    cpp_target_binary = 'iotivity_cs_cpp_tlsoff_app'
+    if tls_mode:
+        cppflags.append(['-D__TLS_ON__'])
+        csdk_target_binary = 'iotivity_cs_csdk_tlson_app'
+        cpp_target_binary = 'iotivity_cs_cpp_tlson_app'
+
+    if 'csdk' in sdk:
+        csdk_tc = env_linux.Program(source=csdk_app_src,
+                                 target=csdk_target_binary,
+                                 CPPPATH=iotivity_include_paths + csdk_app_include_paths,
+                                 LIBS=lib_list,
+                                 LIBPATH=lib_paths,
+                                 CPPFLAGS=cppflags,
+                                 CXXFLAGS=cxxflags,
+                                 CPPDEFINES = cppdefines)
+
+if 'tc' in test or 'simulator' in test:
+    env.Program(source= simulator_src + common_src,
+              target='iotivity_cs_server',
+              CPPPATH= iotivity_include_paths + simulator_include_paths,
+              LIBS=lib_list,
+              CPPFLAGS=cppflags,
+              CXXFLAGS=cxxflags,
+              CPPDEFINES = cppdefines)
+

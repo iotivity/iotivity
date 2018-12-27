@@ -1,0 +1,375 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Settings ***
+Documentation    BAT Test for Linux platform
+Variables        ../../helper/variable.py
+#Library           Remote    ${REMOTE_IP}:${REMOTE_PORT}    WITH NAME    Local
+Resource    ../../helper/Iotivity_Test_Helper.txt
+Suite Setup    Do Suite Init Task
+
+*** Variables ***
+${device_type}    Linux
+${device_tc}     Linux1
+${iotivity_out_dir}    ${IOTIVITY_ROOT}/out/linux/${x86}/${RELEASE_DIR}
+${resource_directory_out_dir}    ${iotivity_out_dir}/service/resource-directory/samples
+${sleep_time}    1
+
+*** Test Cases ***
+Build And Launch SampleApp ES
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-14 |
+    ...    |see | |
+    ...    |objective | Test ES |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Run Terminal    ${IOTIVITY_ROOT}    scons SECURED=0 WITH_CLOUD=1 WITH_TCP=1 RELEASE=${RELEASE} TARGET_ARCH=${LINUX_TARGET_ARCH} -j ${J}    scons: done building targets.
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App Until Stop    ${iotivity_out_dir}    ./enrollee    EasySetup Enrollee SAMPLE    q
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${iotivity_out_dir}    ./mediator_rich    Discovery Enrollee Resource
+
+Build And Launch SampleApp IC
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-14 |
+    ...    |see | |
+    ...    |objective | Test ES |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Run Terminal    ${IOTIVITY_ROOT}    scons SECURED=0 WITH_CLOUD=1 WITH_TCP=1 WITH_MQ=PUB,SUB RELEASE=${RELEASE} TARGET_ARCH=${LINUX_TARGET_ARCH} -j ${J}    scons: done building targets.
+    ${cmd_dir}    Set Variable    ./helper/cloud_authenticator
+    Run Terminal    ./helper/cloud_authenticator    scons    done building targets
+    ${AUTH_PROVIDER}    Set Variable    github
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App    ${TEST_ROOT}/res/cloud_resource    ./cloud_run.sh start 0 ${KAFKA_ROOT} ${IOTIVITY_ROOT}   60s    ${EMPTY}
+    ${ic_out_dir}    Set Variable    ${iotivity_out_dir}/cloud/samples/client
+    ${auth_code}    Get Auth Code    ${cmd_dir}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${ic_out_dir}    ./aircon_controlee 127.0.0.1:5683 ${AUTH_PROVIDER} ${auth_code} 0    Publish resource response received
+    ${auth_code}    Get Auth Code    ${cmd_dir}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${ic_out_dir}    ./group_invite_sample 127.0.0.1:5683 ${AUTH_PROVIDER} ${auth_code} 0    Auth response received code: 4
+    ${auth_code}    Get Auth Code    ${cmd_dir}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${ic_out_dir}    ./mq_subscriber 127.0.0.1:5683 ${AUTH_PROVIDER} ${auth_code} 0    Auth response received code: 4
+    ${auth_code}    Get Auth Code    ${cmd_dir}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${ic_out_dir}    ./mq_publisher 127.0.0.1:5683 ${AUTH_PROVIDER} ${auth_code} 0    Auth response received code: 4
+    ${auth_code}    Get Auth Code    ${cmd_dir}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${ic_out_dir}    ./thin_room_light 127.0.0.1:5683 ${AUTH_PROVIDER} ${auth_code} 0    Login/out response received code: 4
+    ${auth_code}    Get Auth Code    ${cmd_dir}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${ic_out_dir}    ./aircon_controller 127.0.0.1:5683 ${AUTH_PROVIDER} ${auth_code} 0   Observe registration action is successful
+    [Teardown]    Execute Terminal Command    ${TEST_ROOT}/res/cloud_resource/cloud_run.sh kill
+
+Build And Launch SampleApp NS
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-14 |
+    ...    |see | |
+    ...    |objective | |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Run Terminal    ${IOTIVITY_ROOT}    scons SECURED=0 RELEASE=${RELEASE} TARGET_ARCH=${LINUX_TARGET_ARCH} -j ${J}    scons: done building targets.
+    ${notification_service_out_dir}    Set Variable    ${iotivity_out_dir}/service/notification/examples/linux
+    ${notification_service_cpp_out_dir}    Set Variable    ${iotivity_out_dir}/service/notification/cpp-wrapper/examples/linux
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${notification_service_out_dir}    ./notificationprovider    NSStartProvider    5
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${notification_service_out_dir}    ./notificationconsumer    Start Consumer    0
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${notification_service_cpp_out_dir}    ./notificationconsumerwrapper    Start Consumer    6
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${notification_service_cpp_out_dir}    ./notificationproviderwrapper    Start the Notification Provider    0
+
+Build And Launch SampleApp RC
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-14 |
+    ...    |see | |
+    ...    |objective | |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Run Terminal    ${IOTIVITY_ROOT}    scons SECURED=0 RELEASE=${RELEASE} TARGET_ARCH=${LINUX_TARGET_ARCH} -j ${J}    scons: done building targets.
+    ${resource_container_out_dir}    Set Variable    ${iotivity_out_dir}/service/resource-container
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${resource_container_out_dir}    ./ContainerSample    IoTivity Resource Container Test Application    11
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${resource_container_out_dir}    ./ContainerSampleClient    Usage : ContainerSampleClient <ObserveType>    11
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App Until Stop    ${resource_container_out_dir}    ./HeightSensorApp    Running thing as /Thing_HeightSensor    q
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App Until Stop    ${resource_container_out_dir}    ./THSensorApp    Running thing as /Thing_TempHumSensor    q
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App Until Stop    ${resource_container_out_dir}    ./THSensorApp1    Running thing as /Thing_TempHumSensor1    q
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App Until Stop    ${resource_container_out_dir}    ./WeightSensorApp    Running thing as /Thing_WeightSensor    q
+
+Build And Launch SampleApp RE
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-14 |
+    ...    |see | |
+    ...    |objective | |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Run Terminal    ${IOTIVITY_ROOT}    scons SECURED=0 RELEASE=${RELEASE} TARGET_ARCH=${LINUX_TARGET_ARCH} -j ${J}    scons: done building targets.
+    ${resource_encapsulation_out_dir}    Set Variable    ${iotivity_out_dir}/service/resource-encapsulation/examples/linux
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${resource_encapsulation_out_dir}    ./nestedAttributesClient    Wait 2 seconds until discovered
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${resource_encapsulation_out_dir}    ./nestedAttributesServer    Creation of Resource    3
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${resource_encapsulation_out_dir}    ./sampleResourceClient    1. discoverResource    2
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${resource_encapsulation_out_dir}    ./sampleResourceServer    Presence On    3
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${resource_encapsulation_out_dir}    ./separateResponseServer    Select Resource Type
+
+Build And Launch SampleApp RI
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-14 |
+    ...    |see | |
+    ...    |objective | Test RI |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Run Terminal    ${IOTIVITY_ROOT}    scons SECURED=0 RELEASE=${RELEASE} TARGET_ARCH=${LINUX_TARGET_ARCH} -j ${J}    scons: done building targets.
+    ${csdk_out_dir}    Set Variable    ${iotivity_out_dir}/resource/csdk/stack/samples/linux/SimpleClientServer
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${csdk_out_dir}    ./occlient    occlient: Usage
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${csdk_out_dir}    ./occlientbasicops    occlientbasicops: Usage
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${csdk_out_dir}    ./occlientcoll    Usage : occlientcoll
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${csdk_out_dir}    ./occlientslow    occlientslow: Usage
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${csdk_out_dir}    ./ocserver    Usage : ocserver
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${csdk_out_dir}    ./ocservercoll    Usage : ocservercoll
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${csdk_out_dir}    ./ocserverslow    OCServer is starting
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${csdk_out_dir}    ./ocserverbasicops    ocserverbasicops: OCServer is starting
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${csdk_out_dir}    ./occlientbasicops    ocserverbasicops: OCServer is starting
+    ${cpp_out_dir}    Set Variable    ${iotivity_out_dir}/resource/examples
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./devicediscoveryserver    ${EMPTY}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./devicediscoveryclient    ${EMPTY}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./directpairingclient    ${EMPTY}    9
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./fridgeserver    ${EMPTY}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./fridgeclient    ${EMPTY}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./garageserver    ${EMPTY}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./garageclient    ${EMPTY}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./groupclient    ${EMPTY}    0
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./groupserver    ${EMPTY}    0
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./presenceserver    ${EMPTY}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./presenceclient    ${EMPTY}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./roomserver    ${EMPTY}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./roomclient    ${EMPTY}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./simpleserver    ${EMPTY}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./simpleclient    ${EMPTY}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./simpleserverHQ    ${EMPTY}
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cpp_out_dir}    ./simpleclientHQ    ${EMPTY}
+
+Build And Launch SampleApp SM
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-14 |
+    ...    |see | |
+    ...    |objective | Test fanserver |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Run Terminal    ${IOTIVITY_ROOT}    scons SECURED=0 RELEASE=${RELEASE} TARGET_ARCH=${LINUX_TARGET_ARCH} -j ${J}    scons: done building targets.
+    ${scene_manager_out_dir}    Set Variable    ${iotivity_out_dir}/service/scene-manager/sampleapp/linux
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${scene_manager_out_dir}    ./fanserver    Resource URI : /a/fan
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${scene_manager_out_dir}    ./lightserver    Resource URI : /a/light
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${scene_manager_out_dir}    ./sceneclient    seconds until discovered.
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${scene_manager_out_dir}    ./sceneserver    seconds until discovered.
+
+Build And Launch SampleApp CHP
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-14 |
+    ...    |see | |
+    ...    |objective | Test fanserver |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Run Terminal    ${IOTIVITY_ROOT}    scons WITH_PROXY=1 SECURED=0 RELEASE=${RELEASE} TARGET_ARCH=${LINUX_TARGET_ARCH} LOGGING=1 -j ${J}    scons: done building targets.
+    ${chp_out_dir}    Set Variable    ${iotivity_out_dir}/service/coap-http-proxy/samples
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${chp_out_dir}    stdbuf -oL ./proxy_main    Proxy started successfully.
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${chp_out_dir}    stdbuf -oL ./proxy_client    Usage : proxy_client
+
+Build CA
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-14 |
+    ...    |see | |
+    ...    |objective | Test ES |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Run Terminal    ${IOTIVITY_ROOT}    scons SECURED=1 WITH_TCP=1 RELEASE=${RELEASE} TARGET_ARCH=${LINUX_TARGET_ARCH} -j ${J}    scons: done building targets.
+
+Build And Launch SampleApp PM
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-14 |
+    ...    |see | |
+    ...    |objective | |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Run Terminal    ${IOTIVITY_ROOT}    scons SECURED=1 MULTIPLE_OWNERSHIP=1 RELEASE=${RELEASE} TARGET_ARCH=${LINUX_TARGET_ARCH} -j ${J}    scons: done building targets.
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${iotivity_out_dir}/resource/csdk/security/provisioning/sample    ./provisioningclient    DISCOVER DEVICES    99
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${iotivity_out_dir}/resource/csdk/security/provisioning/sample    ./sampleserver_justworks    OCServer is starting
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${iotivity_out_dir}/resource/csdk/security/provisioning/sample    ./sampleserver_randompin    OCServer is starting
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${iotivity_out_dir}/resource/csdk/security/provisioning/sample    ./subownerclient    Discover Multiple Ownership Transfer Enabled Devices on Network
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${iotivity_out_dir}/resource/csdk/security/provisioning/sample    ./sampleserver_preconfpin    SAMPLE_PRECONF_PIN: Entering ocserver main loop
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${iotivity_out_dir}/resource/provisioning/examples    ./provisioningclient    Choose an option    13
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${iotivity_out_dir}/resource/provisioning/examples    ./subownerclient    1. Discover Multiple Ownership Transfer Enabled Devices
+
+Build And Launch SampleApp CS
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-14 |
+    ...    |see | |
+    ...    |objective | directpairingclient |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    build
+    [Timeout]    60 minutes
+    Run Terminal    ${IOTIVITY_ROOT}    scons SECURED=1 WITH_CLOUD=1 WITH_TCP=1 WITH_MQ=PUB,SUB RELEASE=${RELEASE} TARGET_ARCH=${LINUX_TARGET_ARCH} -j ${J}    scons: done building targets.
+    ${cs_out_dir}    Set Variable    ${iotivity_out_dir}/resource/csdk/security/provisioning/sample
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cs_out_dir}    ./cloudClient    Enter Menu number
+    Run Keyword If    '${ENABLE_SAMPLE_APP_RUN}'!='0'    Run Console App For Specified Time    ${cs_out_dir}    ./cloudServer    Enter Menu number
+
+Perform Iotivity Dev Unittest For Secure
+    [Documentation]    |Item |Description |
+    ...    |since |2016-07-16 |
+    ...    |see | |
+    ...    |objective | Download Iotivity Source |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    unittest
+    [Timeout]    300 minutes
+    Run Terminal    ${TEST_MANAGER_ROOT}    ./devunittest_runner.py --iotivity_root ${IOTIVITY_ROOT} --b ${BIT} --a sbuild    scons: done building targets.
+
+Clean Source
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-14 |
+    ...    |see | |
+    ...    |objective |  |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    unittest
+    [Timeout]    300 minutes
+    Run Terminal    ${TEST_MANAGER_ROOT}    ./devunittest_runner.py --iotivity_root ${IOTIVITY_ROOT} --b ${BIT} --a clean    scons: done building targets.
+
+Perform Iotivity Dev Unittest For Non Secure
+    [Documentation]    |Item |Description |
+    ...    |since |2016-07-16 |
+    ...    |see | |
+    ...    |objective | Download Iotivity Source |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    unittest
+    [Timeout]    300 minutes
+    Run Terminal    ${TEST_MANAGER_ROOT}    ./devunittest_runner.py --iotivity_root ${IOTIVITY_ROOT} --b ${BIT} --a nsbuild    scons: done building targets.
+
+Generate Dev Unit Test Report
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-14 |
+    ...    |see | |
+    ...    |objective | Download Iotivity Source |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    unittest
+    [Timeout]    200 minutes
+    Run Terminal    ${TEST_MANAGER_ROOT}    ./devunittest_runner.py --iotivity_root ${IOTIVITY_ROOT} --b ${BIT} --a report
+
+Generate Coverage Test Report
+    [Documentation]    |Item |Description |
+    ...    |since |2017-02-14 |
+    ...    |see | |
+    ...    |objective | Download Iotivity Source |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    coverage
+    [Timeout]    200 minutes
+    Run Terminal    ${TEST_MANAGER_ROOT}    ./devunittest_runner.py --iotivity_root ${IOTIVITY_ROOT} --b ${BIT} --a coverage
+
+Perform Iotivity Dev Junittest
+    [Documentation]    |Item |Description |
+    ...    |since |2016-07-16 |
+    ...    |see | |
+    ...    |objective | Download Iotivity Source |
+    ...    |target | None |
+    ...    |test_data | |
+    ...    |pre_condition | 1. None |
+    ...    |procedure | 1. None |
+    ...    |expected | None |
+    [Tags]    unittest
+    [Timeout]    300 minutes
+    Run Terminal    ${TEST_MANAGER_ROOT}    ./devjunittest_runner.py --iotivity_root ${IOTIVITY_ROOT} --b ${BIT}    scons: done building targets.
+
+*** Keywords ***
+Get Auth Code
+    [Return]    ${auth_code}
+    [Arguments]    ${cmd_dir}
+    Add Specific Device    Linux    Linux1    Linux1
+    ${orginal_path}    Get Working Directory Path    Linux1
+    Change Working Directory    Linux1    ${cmd_dir}
+    BuiltIn.Log    ${orginal_path}
+    BuiltIn.Log    ${cmd_dir}
+    BuiltIn.Log    ./cloud_authenticator ${AUTH_USERNAME} ${AUTH_PASSWORD}
+    Execute Application    Linux1    cmd_terminal    ./cloud_authenticator ${AUTH_USERNAME} ${AUTH_PASSWORD}
+    Start Application Log    Linux1    cmd_terminal
+    Change Working Directory    Linux1    ${orginal_path}
+    BuiltIn.Sleep    10s
+    ${auth_code}    Get Application Log    Linux1    cmd_terminal
+    ${auth_code}    Trim String    ${auth_code}

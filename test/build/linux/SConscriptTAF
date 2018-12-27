@@ -1,0 +1,112 @@
+'''
+******************************************************************
+*
+* Copyright 2017 Granite River Labs All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Linux
+#
+##
+
+print '\n---------------Started Building TAF Agent for Linux---------------\n'
+
+Import('env_linux')
+import os
+
+env_linux['CC'] = 'g++'
+
+iotivity_root = env_linux.get('IOTIVITY_ROOT')
+iotivity_lib_path = env_linux.get('IOTIVITY_LIB_PATH')
+iotivity_test_root = env_linux.get('IOTIVITY_TEST_ROOT')
+variant_dir = env_linux.get('VARIANT_DIR')
+install_dir = env_linux.get('INSTALL_DIR')
+test_src_root = iotivity_test_root + '/' + variant_dir
+secured = env_linux.get('SECURED')
+common_linux_cppflags = env_linux.get('COMMON_LINUX_CPPFLAGS')
+if env_linux.get('RELEASE'):
+   release_dir = 'release'
+else:
+   release_dir = 'debug'
+
+target_arch = env_linux.get('TARGET_ARCH')
+
+install_targets = []
+default_targets = []
+
+cppflags = Split('-s -pthread -march=native -std=gnu++0x -Wall -fpermissive -DWITH_TCP -DTCP_ADAPTER -DTB_LOG')
+
+if secured == '1':
+    cppflags.append('-D__SECURED__')
+    cppflags.append('-D__WITH_DTLS__')
+
+include_paths = [
+                            '/usr/include',
+                            '/usr/include/libxml2',
+                            iotivity_root + '/include',
+                            iotivity_test_root + '/src/automation/ctt/include',
+                            iotivity_test_root + '/extlibs/taf/include/libuv',
+                            iotivity_root + '/resource/include',
+                            iotivity_root + '/resource/csdk/connectivity/api',
+                            iotivity_root + '/resource/csdk/stack/include',
+                            iotivity_root + '/resource/csdk/include',
+                            iotivity_root + '/resource/csdk/security/include',
+                            iotivity_root + '/resource/csdk/ocsocket/include',
+                            iotivity_root + '/resource/csdk/ocrandom/include',
+                            iotivity_root + '/resource/csdk/logger/include',
+                            iotivity_root + '/resource/c_common/',
+                            iotivity_root + '/resource/c_common/ocrandom/include',
+                            iotivity_root + '/out/linux/' + target_arch + '/' + release_dir +'/resource/c_common/',
+                            iotivity_root + '/resource/oc_logger/include',
+                            iotivity_root + '/extlibs/cereal/include/',
+                            iotivity_root + '/extlibs/timer/',
+                            iotivity_root + '/extlibs/tinycbor/tinycbor/src/',
+              ]
+
+libs = Split('uv xml2 liboc liboctbstack liboc_logger libconnectivity_abstraction libcoap')
+
+
+src = [
+    test_src_root + '/automation/ctt/src/DUTController.c',
+    test_src_root + '/automation/ctt/src/MiniHttpServer.c',
+    test_src_root + '/automation/ctt/src/ResourceMap.c',
+    test_src_root + '/automation/ctt/src/TAFAgent.c',
+]
+
+taf_app = env_linux.Program(source = src, target = 'TAFAgent', CPPPATH = include_paths,
+                LIBS = libs, LIBPATH = iotivity_lib_path, RPATH = iotivity_lib_path, CPPFLAGS = cppflags + common_linux_cppflags)
+install_targets += [taf_app]
+
+default_targets += env_linux.Command('copy_justworks_dat_file', [], Copy('.', iotivity_root + '/resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat'))
+default_targets += env_linux.Command('copy_randompin_dat_file', [], Copy('.', iotivity_root + '/resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat'))
+default_targets += env_linux.Command('copy_mfg_dat_file', [], Copy('.', iotivity_root + '/resource/csdk/security/provisioning/sample/oic_svr_db_server_mfg.dat'))
+default_targets += env_linux.Command('copy_swagger_file', [], Copy(iotivity_test_root + '/' + install_dir, iotivity_test_root + '/res/descriptor/airconditioner-swagger.json'))
+
+install_bin = env_linux.Install(iotivity_test_root + '/' + install_dir, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin.append(Command(str(i), [], Delete(delete_target)))
+    i = i + 1
+
+default_targets = install_bin + delete_bin + default_targets
+
+env_linux.Default(default_targets)
+
+print '\n---------------TAF Agent for Linux Build Finished---------------\n'

@@ -1,0 +1,280 @@
+#####################################################################
+#
+# Copyright 2018 Samsung Electronics All Rights Reserved.
+#
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#####################################################################
+
+*** Settings ***
+Documentation     Test RE Interoperability for all supported platform
+Variables         ../../helper/variable.py
+Library           Remote    ${REMOTE_IP}:${REMOTE_PORT}    WITH NAME    Local
+Resource    ../../helper/Iotivity_Interop_Test_Helper.txt
+Resource    ../../helper/Iotivity_Test_Helper.txt
+Suite Setup    Do Suite Setup
+Suite Teardown    Do Suite Teardown
+Test Setup       Do Test Setup
+Test Teardown    Do Test Teardown
+
+*** Test Cases ***
+1 RC STARTED WITH DEFAULT CONFIG
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the feature resource discovery after starting container with default resource |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11, 1, 0, 8, 14 |
+    ...    |pre_condition | [Client & Server] Start RC Interop app |
+    ...    |procedure | 1. [Server] Press 11 to clear log |
+    ...    |procedure | 2. [Server] Press 1 to start start container |
+    ...    |procedure | 3. [Server] Press 0 to start container with default configuration(For Linux app) |
+    ...    |procedure | 4. [Server] Press 8 to see default bundle id |
+    ...    |procedure | 5. [Server] Press 14 from Client  to observe added resources |
+    ...    |procedure | 6. [Client] Press 14 from Client  to observe added resources |
+    ...    |post_condition | 1. [Server] Press 10 to stop container |
+    ...    |post_condition | 2. [Client & Server] Stop RC Interop app |
+    ...    |expected | default resource will be found |
+    [Tags]    all
+    ${expected_log}    Set Variable    Found resource operation has been completed successfully...
+    @{inputs}    Create List     11    1    0    8    14
+    Verify Second App After Processing First App Inputs    14    15s    ${expected_log}    3s     @{inputs}
+
+2 RC DISCOVERY MULTICAST CONFIGURED RESOURCE
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the feature resource discovery after adding single resource in Resource container |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11, 1, 2, 3, 4, 12, 8, 14 |
+    ...    |pre_condition | [Client & Server] Start RC Interop app |
+    ...    |procedure | 1. [Server] Press 11 to clear log |
+    ...    |procedure | 2. [Server] Press 1 to start start container |
+    ...    |procedure | 3. [Server] Press 0 to start container with default configuration(For Linux app) |
+    ...    |procedure | 4. [Server] Press 2 to add bundle id |
+    ...    |procedure | 5. [Server] Press 3 to start bundle |
+    ...    |procedure | 6. [Server] Press 4 to add resource |
+    ...    |procedure | 7. [Server] Press 12 to register resources with multiple bundle(For android app) |
+    ...    |procedure | 8. [Server] Press 8 to see added bundle id |
+    ...    |procedure | 9. [Server] Press 9 to see added resource |
+    ...    |procedure | 10. [Client] Press 14 from Client terminal |
+    ...    |post_condition | 1. [Server] Press 10 to stop container |
+    ...    |post_condition | 2. [Client & Server] Stop RC Interop app |
+    ...    |expected | Added resource will be found |
+    [Tags]    all
+    ${var1_input}    Set Variable If    '${OS}' == '${android}'    ${EMPTY}    1
+    ${expected_log}    Set Variable    Found resource operation has been completed successfully...
+    @{inputs}    Create List     11    1    ${var1_input}    2    3    4    12    8    9
+    Verify Second App After Processing First App Inputs    14    15s    ${expected_log}    3s     @{inputs}
+
+3 RC DISCOVERY MULTICAST CONFIGURED MULTIPLE RESOURCE
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the feature resource discovery after adding multiple resource in Resource container |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11, 1, 1, 8, 9, 12, 14 |
+    ...    |pre_condition | [Client & Server] Start RC Interop app |
+    ...    |procedure | 1. [Server] Press 11 to clear log |
+    ...    |procedure | 2. [Server] Press 1 to start start container |
+    ...    |procedure | 3. [Server] Press 1 to start container without default configuration(For linux app) |
+    ...    |procedure | 4. [Server] Press 2 to add bundle id |
+    ...    |procedure | 5. [Server] Press 2 again to add multiple bundle |
+    ...    |procedure | 7. [Server] Press 3 two times to start multiple bundle |
+    ...    |procedure | 8. [Server] Press 4 two times to add resource with multiple bundle |
+    ...    |procedure | 9. [Server] Press 12 two times to register resources with multiple bundle(For android app) |
+    ...    |procedure | 10. [Server] Press 8 to see added bundle id |
+    ...    |procedure | 11. [Server] Press 9 to see added resource |
+    ...    |procedure | 12. [Client]  Press 14 from Client terminal |
+    ...    |post_condition | 1. [Server] Press 10 to stop container |
+    ...    |post_condition | 2. [Client & Server] Stop RC Interop app |
+    ...    |expected | Added multiple resource will be found |
+    [Tags]    all
+    Multicast Configured Multiple Resource
+
+4 RC DISCOVERY MULTICAST REMOVED CONFIGURED RESOURCE
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the remove resource feature  in Resource container |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11, 1, 1, 8, 14 |
+    ...    |pre_condition | [Client & Server] Start RC Interop app |
+    ...    |procedure | 1. Follow the procedure of test #3 |
+    ...    |procedure | 2. [Server] Press 5 to remove resource |
+    ...    |procedure | 3. [Client] Press 14 to observe from client that remove resource will not be found |
+    ...    |procedure | 4. [Server] Again Press 5 to remove resource |
+    ...    |procedure | 5. [Client] Again Press 14 to observe from client that remove resource will not be found |
+    ...    |post_condition | 1. [Server] Press 10 to stop container |
+    ...    |post_condition | 2. [Client & Server] Stop RC Interop app |
+    ...    |expected | Default resource (/softsensor/discomfortIndex/1) will be found by Client search |
+    [Tags]    all
+    Multicast Configured Multiple Resource
+    ${expected_log}    Set Variable    Timeout For Server Response!Please Try Again Sorry.No resource has been found...
+    @{items}    Create List    ${first_app}    5     5s    ${second_app}    14     15s    ${first_app}    5     5s    ${second_app}    14     15s
+    Verify Log After Processing Inputs    ${second_app}    ${expected_log}    @{items}
+
+5 RC DISCOVERY MULTICAST STOP CONFIGURED BUNDLE
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the Start and Stop bundle feature  in Resource container |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11, 1, 1, 8, 14 |
+    ...    |pre_condition | [Client & Server] Start RC Interop app |
+    ...    |procedure | 1. Follow the procedure of test #3 |
+    ...    |procedure | 2. [Server] Press 6 to stop bundle |
+    ...    |procedure | 3. [Client] Press 14 to observe from client that remove resource will not be found |
+    ...    |procedure | 4. [Server] Again Press 6 to stop bundle |
+    ...    |procedure | 5. [Client] Again Press 14 to observe from client that remove resource will not be found |
+    ...    |procedure | 6. [Server] Press 3 two times to start stopped bundles start again |
+    ...    |procedure | 7. [Client] Again Press  14 observe from client that started bunle's infor is showed properly |
+    ...    |post_condition | 1. [Server] Press 10 to stop container |
+    ...    |post_condition | 2. [Client & Server] Stop RC Interop app |
+    ...    |expected | related resources will be shown |
+    [Tags]    all
+    Multicast Configured Multiple Resource
+    ${expected_log}    Set Variable    Found resource operation has been completed successfully....
+    Provide Input    ${first_app}    6
+    Provide Input    ${second_app}    14    15s
+    Provide Input    ${first_app}    6
+    Provide Input    ${second_app}    14    15s
+    Provide Input    ${first_app}    3
+    Provide Input    ${first_app}    3
+    Provide Input    ${second_app}    14    15s
+    ${log}    Get Output From First App
+    BuiltIn.Log    ${log}
+    ${log}    Get Output From Second App
+    Search Expected Log    ${log}    ${expected_log}
+
+6 RC DISCOVERY MULTICAST REMOVED CONFIGURED BUNDLE
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the remove bundle feature  in Resource container |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11, 1, 1, 8, 14 |
+    ...    |pre_condition | [Client & Server] Start RC Interop app |
+    ...    |procedure | 1. Follow the procedure of test #3 |
+    ...    |procedure | 2. [Server] Press 7 to remove bundle |
+    ...    |procedure | 3. [Client] Press 14 to observe from client that removed bundle information will not be found |
+    ...    |procedure | 4. [Server] Again Press 7 to remove another bundle |
+    ...    |procedure | 5. [Client] Again Press  14 observe from client that removed bundle information will not be found |
+    ...    |post_condition | 1. [Server] Press 10 to stop container |
+    ...    |post_condition | 2. [Client & Server] Stop RC Interop app |
+    ...    |expected | default resource will be found |
+    [Tags]    all
+    Multicast Configured Multiple Resource
+    ${expected_log}    Set Variable    Found resource operation has been completed successfully...
+    Provide Input    ${first_app}    7
+    Provide Input    ${second_app}    14    15s
+    Provide Input    ${first_app}    7
+    Provide Input    ${second_app}    14    15s
+    Provide Input    ${first_app}    7
+    Provide Input    ${second_app}    14    15s
+    ${log}    Get Output From Second App
+    Search Expected Log    ${log}    ${expected_log}
+
+7 RC DISCOVERY MULTICAST STOP CONTAINER
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | est the stop container feature  in Resource container |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11, 1, 1, 8, 14 |
+    ...    |pre_condition | [Client & Server] Start RC Interop app |
+    ...    |procedure | 1. Follow the procedure of test #3 |
+    ...    |procedure | 2. [Server] Press 10 to stop container |
+    ...    |procedure | 3. [Client] Press  14 observe from client that removed bundle information will not be found |
+    ...    |post_condition | 1. [Server] Press 10 to stop container |
+    ...    |post_condition | 2. [Client & Server] Stop RC Interop app |
+    ...    |expected | default resource will be found |
+    [Tags]    all
+    Multicast Configured Multiple Resource
+    ${expected_log}    Set Variable    Found resource operation has been completed successfully...
+    Provide Input    ${first_app}    10
+    Provide Input    ${second_app}    14    15s
+    ${log}    Get Output From First App
+    BuiltIn.Log    ${log}
+    ${log}    Get Output From Second App
+    Search Expected Log    ${log}    ${expected_log}
+
+8 RC DISCOVERY MULTICAST REGISTERED CONFIGURED RESOURCE
+    [Documentation]    |Item |Description |
+    ...    |since |2017-03-22 |
+    ...    |see | |
+    ...    |objective | Test the register resource and unregister resource feature of a bundle resource |
+    ...    |target | |
+    ...    |test_data | 1. Menu option: 11, 1, 1, 8, 12, 14 |
+    ...    |pre_condition | [Client & Server] Start RC Interop app |
+    ...    |procedure | 1. [Server] Press 11 to clear log |
+    ...    |procedure | 2. [Server] Press 1 to start start container |
+    ...    |procedure | 3. [Server] Press 2 to add bundle id |
+    ...    |procedure | 4. [Server] Press 3 to start bundle |
+    ...    |procedure | 5. [Server] Press 4 to add resource |
+    ...    |procedure | 6. [Server] Press 12 to register resources with a bundle(For android app) |
+    ...    |procedure | 7. [Server] Press 8 to see added bundle id |
+    ...    |procedure | 8. [Server] Press 9 to see added resource |
+    ...    |procedure | 9. [Client]  Press  14 from Client terminal  that Registered resource will be found from the client side |
+    ...    |procedure | 10.[Server] Press 13 to unregister resources (For android app) |
+    ...    |procedure | 11. [Client]  Press  14 from Client terminal  that unregistered resource will  not be found from the client side |
+    ...    |procedure | 12 .[Server] Press 12 to register resources again(For android app) |
+    ...    |procedure | 13. [Client]  Press  14 from Client terminal  that Registered resource will be found from the client side |
+    ...    |post_condition | 1. [Server] Press 10 to stop container |
+    ...    |post_condition | 2. [Client & Server] Stop RC Interop app |
+    ...    |expected | default resource will be found |
+    [Tags]    all
+    ${expected_log}    Set Variable    Found resource operation has been completed successfully...
+    @{inputs}    Create List    11    1    2    3    4    12    8    9
+    Provide Inputs    ${first_app}    5s    @{inputs}
+    Provide Input    ${second_app}    14    15s
+    Provide Input    ${first_app}    13
+    Provide Input    ${first_app}    12
+    ${log}    Provide Input    ${second_app}    14    15s
+    Search Expected Log    ${log}    ${expected_log}
+
+*** Keywords ***
+Do Suite Setup
+    [Arguments]    
+    ${iotivity_build_parmeters}    Set Variable   SECURED=0
+    ${tc_build_parmeters}    Set Variable   SECURED=0
+    BuiltIn.Log    ${OS}->${OS2}
+    Load Default Settings    ${iotivity_build_parmeters}    ${tc_build_parmeters}
+    Get Test Environment Details
+    Build Iotivity and Test App
+
+Do Suite Teardown
+    [Arguments]    
+    Remove All Devices
+
+Do Test Setup
+    [Arguments]    
+    Execute Interop Apps
+
+Do Test Teardown
+    [Arguments]    
+    Provide Input    ${first_app}    10
+    ${log}    Get Output From First App
+    BuiltIn.Log    ${log}
+    ${log}    Get Output From Second App
+    BuiltIn.Log    ${log}
+    Terminate Interop Apps
+
+Multicast Configured Multiple Resource
+    ${expected_log}    Set Variable    Found resource operation has been completed successfully...
+    ${var_input}    Set Variable If    '${OS}' == '${android}'    ${EMPTY}    1
+    @{inputs}    Create List     11    1    ${var_input}    2    2    3    3    4    4    12    12    8    9
+    Verify Second App After Processing First App Inputs    14    15s    ${expected_log}    3s     @{inputs}

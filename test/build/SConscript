@@ -1,0 +1,221 @@
+'''
+/******************************************************************
+*
+* Copyright 2018 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+
+##
+# This script includes generic build options:
+#    target os, target arch, cross toolchain, build environment etc
+##
+import os
+import platform
+
+print '---------------Loading Common Config---------------'
+
+# Map of host os and allowed target os (host: allowed target os)
+host_target_map = {
+        'linux': ['linux', 'android', 'arduino', 'tizen', 'all'],
+        'windows': ['windows', 'winrt', 'android', 'arduino', 'all'],
+        'darwin': ['darwin', 'ios', 'android', 'arduino', 'all'],
+        }
+
+# Map of os and allowed archs (os: allowed archs)
+os_arch_map = {
+        'linux': ['x86', 'x86_64', 'arm', 'arm64'],
+        'tizen': ['armv7l', 'x86', 'x86_64', 'arm', 'arm64'],
+        'android': ['armeabi', 'x86', 'x86_64', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
+        'windows': ['x86', 'amd64', 'arm'],
+        'winrt': ['arm'],
+        'darwin': ['i386', 'x86_64'],
+        'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
+        'arduino': ['avr', 'arm'],
+        'yocto': ['x86', 'x86_64'],
+        'all': ['all']
+        }
+
+host = platform.system().lower()
+print '---------------Host OS : ' + host + '---------------'
+
+if not host_target_map.has_key(host):
+    print "\nError: Current system (%s) isn't supported\n" % host
+    Exit(1)
+
+######################################################################
+# Get build options (the options from command line)
+######################################################################
+target_os = ARGUMENTS.get('TARGET_OS', host).lower() # target os
+
+if target_os not in host_target_map[host] and target_os != 'all':
+    print "\nError: Unknown target os: %s (Allow values: %s)\n" % (target_os, host_target_map[host])
+    Exit(1)
+
+default_arch = platform.machine()
+
+if default_arch not in os_arch_map[target_os]:
+    default_arch = os_arch_map[target_os][0].lower()
+
+error_msg =  """
+
+#################################################################################################
+#   ERROR... If you Set TARGET_OS=all, You to have Set TARGET_ARCH=all or you can just          #
+#   avoid this Argument. In this case it will automatically assign TARGET_ARCH like following   #
+#                           linux = x86/x86_64(depending on host)                               #
+#                                   tizen = armv7l                                              #
+#                                  android = armeabi                                            #
+#                                    arduino = avr                                              #
+#                                    windows = x86                                              #
+#################################################################################################
+
+"""
+
+target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch)
+
+if target_os == 'all' and target_arch != 'all':
+    print error_msg
+    exit(1)
+
+all_modules=['ca', 'ri', 'iut', 'pm', 'cs', 'ic', 'rd',  're', 'rc', 'es', 'sm', 'ns', 'chp', 'taf']
+all_transports = ['BT', 'BLE', 'IP', 'ETH', 'WIFI', 'TCP']
+all_sdk = ['csdk', 'cpp', 'java']
+all_test_option = ['tc', 'btc', 'stc', 'simulator', 'app']
+all_push_options = ['exe', 'lib']
+all_frameworks = ['gtest', 'junit', 'arduinojunit']
+
+help_vars = Variables()
+help_vars.Add(BoolVariable('RELEASE', 'Build for release?', True))
+help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', False))
+help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))
+help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'all', all_transports))
+help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
+help_vars.Add(ListVariable('MODULE', 'Name of target module', 'all', all_modules))
+help_vars.Add(ListVariable('SDK', 'Name of programming platform', all_sdk, all_sdk))
+help_vars.Add(ListVariable('TEST', 'Type of the TEST', 'tc', all_test_option))
+help_vars.Add(EnumVariable('SECURED', 'Build with Security', '1', allowed_values=('0', '1')))
+help_vars.Add(BoolVariable('TLS_MODE', 'Build with TLS mode or not', False))
+help_vars.Add(BoolVariable('CLOUD_SERVICE', 'Build Cloud Service Dev Source', False))
+help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable.PathAccept))
+help_vars.Add(PathVariable('ANDROID_HOME', 'Android SDK path', None, PathVariable.PathAccept))
+help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
+help_vars.Add('PROJECT_VERSION', 'Set the version needed for RPMS', '')
+help_vars.Add(PathVariable('TIZEN_HOME', 'Root path of tizen SDK', None, PathVariable.PathAccept))
+help_vars.Add(PathVariable('GBS_ROOT', 'GBS Root Path', None, PathVariable.PathAccept))
+help_vars.Add(PathVariable('KAFKA_ROOT', 'KAFKA Root Path', None, PathVariable.PathAccept))
+help_vars.Add(PathVariable('IOTIVITY_ROOT', 'IOTIVITY Root Path', Dir('../..').srcnode().abspath, PathVariable.PathAccept))
+help_vars.Add(ListVariable('PUSH', 'To push binary to device', 'none', all_push_options))
+help_vars.Add(BoolVariable('OFFLINE', 'Build in offline mode', False))
+help_vars.Add(EnumVariable('ES_ROLE', 'Target ES Role', 'all', allowed_values=('all', 'mediator', 'enrollee')))
+help_vars.Add(ListVariable('FRAMEWORK', 'TC Framework Type', 'all', all_frameworks))
+help_vars.Add(BoolVariable('COVERAGE', 'Add Code coverage', False))
+help_vars.Add(BoolVariable('VERBOSE', 'Show compilation', False))
+
+help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_values=('ON', 'OFF')))
+help_vars.Add(EnumVariable('PREVENT', 'Build with sample', 'OFF', allowed_values=('ON', 'OFF')))
+help_vars.Add(BoolVariable('SRC_BUILD', 'Enable Dev Source Building?', False))
+help_vars.Add(BoolVariable('SRC_UPDATE', 'Enable Dev Source Updating?', False))
+help_vars.Add(BoolVariable('WITH_RD', 'Build with RD Server', False))
+
+targets_support_cc = ['linux', 'arduino', 'tizen', 'android']
+
+if target_os in targets_support_cc:
+    # Set cross compile toolchain
+    help_vars.Add('TC_PREFIX', "Toolchain prefix (Generally only be required for cross-compiling)", os.environ.get('TC_PREFIX'))
+
+if target_os in ['android', 'arduino']: # Android/Arduino always uses GNU compiler regardless of the host
+    env = Environment(variables = help_vars,
+            tools = ['gnulink', 'gcc', 'g++', 'ar', 'as'],
+            ENV = os.environ)
+else:
+    env = Environment(variables = help_vars, TARGET_ARCH = target_arch, TARGET_OS = target_os, ENV = os.environ)
+
+unknown = help_vars.UnknownVariables()
+if unknown:
+    print 'Unknown Parameters: ', unknown.keys()
+    Exit(1)
+
+Help(help_vars.GenerateHelpText(env))
+
+if env.get('RELEASE'):
+    release_dir = 'release'
+else:
+    release_dir = 'debug'
+
+env.Append(ALL_MODULES = all_modules)
+env.Append(RELEASE_DIR = release_dir)
+iotivity_root = Dir('..').srcnode().abspath
+
+env.Append(IOTIVITY_TEST_ROOT = Dir('..').srcnode().abspath)
+
+iotivity_root = env.get('IOTIVITY_ROOT')
+
+if not (os.path.exists(iotivity_root + '/resource') and os.path.exists(iotivity_root + '/service') and os.path.exists(iotivity_root + '/extlibs')):
+    print 'Invalid IOTIVITY_ROOT: ' + iotivity_root
+    exit(-1)
+
+iotivity_test_root = env.get('IOTIVITY_TEST_ROOT')
+
+target_os = env.get('TARGET_OS')
+module = env.get('MODULE')
+framework = env.get('FRAMEWORK')
+test = env.get('TEST')
+transport = env.get('TARGET_TRANSPORT')
+sdk = env.get('SDK')
+push = env.get('PUSH')
+
+if 'all' in str(module):
+    env.Replace(MODULE = all_modules)
+    module = all_modules
+
+if 'all' in str(framework):
+    env.Replace(FRAMEWORK = all_frameworks)
+    framework = all_frameworks
+
+if 'all' in str(test):
+    env.Replace(TEST = all_test_option)
+    test = all_test_option
+
+if 'all' in str(transport):
+    env.Replace(TARGET_TRANSPORT = all_transports)
+    transport = all_transports
+
+if 'all' in str(push):
+    env.Replace(PUSH = all_push_options)
+    push = all_push_options
+
+if 'all' in str(sdk):
+    env.Replace(SDK = ['csdk', 'cpp'])
+
+print target_os
+print module
+print framework
+print test
+print transport
+print sdk
+
+if 'tc' in test:
+    if 'linux' in target_os or 'tizen' in target_os:
+        SConscript(iotivity_test_root + '/extlibs/SConstruct')
+    elif 'android' in target_os and 'ca' in module and 'gtest' in framework:
+        SConscript(iotivity_test_root + '/extlibs/SConstruct')
+
+env.AppendUnique(PLATFORM="win")
+env.AppendUnique(PATH = os.environ['PATH'])
+Export('env')
+
+print '---------------Finished Loading Common Config---------------'

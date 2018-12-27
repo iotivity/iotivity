@@ -1,0 +1,101 @@
+env = Environment(CC='g++')
+
+ENV_HOME = '.'
+
+sdk = ARGUMENTS.get('SDK')
+test = ARGUMENTS.get('TEST')
+
+iotivity_includes = [
+                        ENV_HOME + '/iotivity/resource/include',
+                        ENV_HOME + '/iotivity/resource/csdk/stack/include',
+                        ENV_HOME + '/iotivity/resource/c_common',
+                        ENV_HOME + '/iotivity/resource/oc_logger/include',
+                        ENV_HOME + '/test/include',
+                        ENV_HOME + '/iotivity/resource/csdk/logger/include/experimental',
+                        ENV_HOME + '/iotivity/resource/csdk/logger/include',
+                        ENV_HOME + '/iotivity/resource/csdk/include',
+                        ENV_HOME + '/iotivity/resource/csdk/resource-directory/include',
+                        ENV_HOME + '/iotivity/resource/c_common/oic_malloc/include',
+                        ENV_HOME + '/iotivity/resource/c_common/oic_string/include'
+                    ]
+
+interop_includes = [
+                            ENV_HOME + '/test/include'
+                   ]
+
+csdk_includes = [
+                    ENV_HOME + '/test/include',
+                    ENV_HOME + '/test/src/tc/ri/gtest/csdk/include',
+                    ENV_HOME + '/test/extlibs/gtest-1.7.0/include'
+                ]
+
+cpp_includes = [
+                    ENV_HOME + '/test/include',
+                    ENV_HOME + '/test/src/tc/ri/gtest/cpp/include',
+                    ENV_HOME + '/test/extlibs/gtest-1.7.0/include'
+               ]
+
+interop_src = [
+                    Glob(ENV_HOME + '/test/src/iBtestapp/modules/ri/c_cpp/InterOpAppRI.cpp'), 
+                    Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceHelper.cpp'), 
+                    Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceServer.cpp'),
+                    Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/SampleResource.cpp')
+              ]
+
+csdk_src = [
+                Glob(ENV_HOME + '/test/src/common/testcase/gtest/IotivitySECTestMain.cpp'),
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/CommonUtil.cpp'),
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/CommonTestUtil.cpp'),
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceHelper.cpp'), 
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceServer.cpp'),
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/SampleResource.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/csdk/src/helper/*.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/csdk/src/btc/*.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/csdk/src/stc/*.cpp')
+           ]
+
+CPP_SRC = [
+                Glob(ENV_HOME + '/test/src/common/testcase/gtest/IotivitySECTestMain.cpp'),
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/CommonUtil.cpp'),
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/CommonTestUtil.cpp'),
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceHelper.cpp'), 
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/ResourceServer.cpp'),
+                Glob(ENV_HOME + '/test/src/common/commonutil/c_cpp/SampleResource.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/cpp/src/helper/*.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/cpp/src/btc/*.cpp'),
+                Glob(ENV_HOME + '/test/src/tc/ri/gtest/cpp/src/stc/*.cpp')
+          ]
+
+libs = Split('-lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog -lconnectivity_abstraction -loc -loc_logger -loc_logger_core -loctbstack -lexpat -lboost_system -lboost_filesystem -lboost_thread -ldl')
+
+lib_path = [ ENV_HOME + '/test/extlibs/gtest-1.7.0/bin/tizen' ]
+ 
+cppdefines = Split('WITH_POSIX SLP_SDK_LOG _GNU_SOURCE TIZEN_DEBUG_ENABLE TB_LOG TIZEN __TIZEN__')
+
+cppflags = Split('-s -pthread -Wall -finstrument-functions -finstrument-functions -fpermissive -fPIC -g -std=gnu++0x `pkg-config --cflags --libs dlog capi-network-wifi gobject-2.0 glib-2.0` -lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog')
+
+if 'tc' in test:
+    if 'csdk' in sdk:
+        env.Program(source = csdk_src, 
+                    target = 'iotivity_ri_csdk_test', 
+                    CPPPATH = iotivity_includes + csdk_includes, 
+                    LIBS = libs + ['gtest'], 
+                    LIBPATH = lib_path, 
+                    CPPFLAGS = cppflags, 
+                    CPPDEFINES = cppdefines)
+    if 'cpp' in sdk:
+        env.Program(source = CPP_SRC, 
+                    target = 'iotivity_ri_cpp_test', 
+                    CPPPATH = iotivity_includes + cpp_includes, 
+                    LIBS = libs + ['gtest'], 
+                    LIBPATH = lib_path, 
+                    CPPFLAGS = cppflags, 
+                    CPPDEFINES = cppdefines)
+
+if 'app' in test:
+    env.Program(source = interop_src, 
+                target = 'iotivity_ri_app', 
+                CPPPATH = iotivity_includes + cpp_includes, 
+                LIBS = libs, 
+                CPPFLAGS = cppflags, 
+                CPPDEFINES = cppdefines)
