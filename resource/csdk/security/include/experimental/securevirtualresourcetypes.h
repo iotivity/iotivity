@@ -708,6 +708,10 @@ struct OicSecPdAcl
                              OIC_SEC_ACL_V2 : OIC_SEC_ACL_V1)
 #define IS_OIC(specVer) ((specVer)[0] == 'c' && (specVer)[1] == 'o' && (specVer)[2] == 'r' && (specVer)[3] == 'e')
 
+#define IS_OCF(specVer) ((specVer)[0] == 'o' && (specVer)[1] == 'c' && (specVer)[2] == 'f')
+
+#define GET_OCF_MAJOR_VER(specVer) ((int)((specVer)[4] - '0'))
+
 #ifdef __cplusplus
 }
 #endif
