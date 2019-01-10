@@ -1,0 +1,55 @@
+#******************************************************************
+#
+# Copyright 2019 Open Connectivity Foundation
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+# put end-of-scan-phase debug stuff here
+# comment out when not using
+
+from __future__ import print_function
+
+Import("env")
+
+from pprint import pprint
+
+#pprint(env.Dump())
+
+#if COMMAND_LINE_TARGETS:
+#    print("COMMAND_LINE_TARGETS:")
+#    pprint(COMMAND_LINE_TARGETS)
+
+#if DEFAULT_TARGETS:
+#    print("DEFAULT_TARGETS:")
+#    pprint([str(t) for t in DEFAULT_TARGETS])
+
+#if BUILD_TARGETS:
+#    print("BUILD_TARGETS:")
+#    pprint([str(t) for t in BUILD_TARGETS])
+
+#print("Named targets for default building:")
+#pprint(sorted(env.get('DefaultBuild')))
+
+#if env.get("NoDefaultBuild"):
+#    print("Named targets not built by default:")
+#    pprint(sorted(env.get('NoDefaultBuild')))
+
+#from SCons.Script.SConscript import global_exports
+#print("Exports:")
+#pprint(list(global_exports.keys()))
+
+Return()

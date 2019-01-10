@@ -98,8 +98,12 @@ local_env.UserInstallTargetHeader(
 ######################################################################
 # Samples for the proxy
 ######################################################################
-if target_os in ['linux', 'tizen']:
+env.AppendTarget('coap_http_proxy_sample', default=False)
+if "coap_http_proxy_sample" in COMMAND_LINE_TARGETS and target_os in ['linux', 'tizen']:
     SConscript('samples/SConscript')
 
+######################################################################
+# Unit tests for the proxy
+######################################################################
 if local_env.get('WITH_TEST') and target_os in ('linux'):
     SConscript('unittests/SConscript')

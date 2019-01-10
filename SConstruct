@@ -92,12 +92,15 @@ SConscript(dirs=[
 # Append target information to the help information (if needed)
 # To see help info, execute:
 #     $ scons [options] -h
-# Note some help is option-dependent, e.g. java-related options are
-# not added to the help unless BUILD_JAVA is seen
+# Note some help is option or target dependent, e.g. java-related
+# options are not added to the help unless BUILD_JAVA is seen
 #
-# This is not really needed unless requesting help, consider adding check:
-#if env.GetOption('help'):
-env.PrintTargets()
+if env.GetOption('help'):
+    env.PrintTargets()
 
 # to install the generated pc file into custom prefix location
 env.UserInstallTargetPCFile('iotivity.pc', 'iotivity.pc')
+
+# If we need to extract some of what scons knows at the end of
+# the scan phase for debugging, can use debug.scons to print things
+SConscript('debug.scons')

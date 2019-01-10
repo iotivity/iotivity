@@ -71,5 +71,4 @@ actions = [proxy_server]
 actions += proxy_sample_app_env.ScanJSON('service/coap-http-proxy/samples')
 proxy_sample_app_env.UserInstallTargetExtra(actions)
 
-Alias("coap_http_proxy", actions)
-env.AppendTarget('coap_http_proxy')
+Alias("coap_http_proxy_sample", actions)
