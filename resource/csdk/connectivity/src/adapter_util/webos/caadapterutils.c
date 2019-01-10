@@ -428,7 +428,7 @@ static bool CACreateLSServiceName()
     char lunaServiceBuff[MAX_LS_NAME_SIZE];
     size_t readSize = 0;
     char *command = NULL;
-    command = g_strdup_printf("ls-monitor -l | grep %d | awk '{print $2}'", getpid());
+    command = g_strdup_printf("ps -p %d -f | sed -n '2p' | awk '{print $8}'", getpid());
 
     OIC_LOG_V(INFO, CA_ADAPTER_UTILS_TAG, "PID : %d", getpid());
 
@@ -436,7 +436,7 @@ static bool CACreateLSServiceName()
     fp = popen(command, "r");
     if (NULL == fp)
     {
-        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Failed to open ls-monitor");
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Failed to open ps");
         exit(1);
     }
 
