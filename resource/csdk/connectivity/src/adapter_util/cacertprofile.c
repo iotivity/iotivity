@@ -198,7 +198,7 @@ CertProfileViolations ValidateEndEntityCertProfile(const mbedtls_x509_crt *cert)
 {
 
     // OCF requirements exist for the following extensions, but w/o mbedTLS support
-    // * check for certificate policies, if present must be 1.3.6.1.4.1.51414.0.1.1
+    // * check for certificate policies, if present must be 1.3.6.1.4.1.51414.0.1.2
     // * cRL Distribution Points
 
     if (NULL == cert)

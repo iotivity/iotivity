@@ -155,22 +155,22 @@ static FILE* fopen_prvnMng(const char*, const char*);
 static int waitCallbackRet(void);
 static int selectTwoDiffNum(int*, int*, const int, const char*);
 
-char * gSupportedProfilesDefault[] = { "1.3.6.1.4.1.51414.0.1.0" };
+char * gSupportedProfilesDefault[] = { "1.3.6.1.4.1.51414.0.0.1.0" };
 OicSecSp_t gSpDefault =
 {
     1,                          // supportedLen
     gSupportedProfilesDefault,  // supportedProfiles[0]
-    "1.3.6.1.4.1.51414.0.1.0",      // activeProfile
+    "1.3.6.1.4.1.51414.0.0.1.0",      // activeProfile
 };
 
-char * gSupportedProfilesAll[] = { "1.3.6.1.4.1.51414.0.2.0", "1.3.6.1.4.1.51414.0.3.0", "1.3.6.1.4.1.51414.0.4.0", "1.3.6.1.4.1.51414.0.1.0",  };
+char * gSupportedProfilesAll[] = { "1.3.6.1.4.1.51414.0.0.2.0", "1.3.6.1.4.1.51414.0.0.3.0", "1.3.6.1.4.1.51414.0.0.4.0", "1.3.6.1.4.1.51414.0.0.1.0",  };
 OicSecSp_t gSpAll =
 {
     4,                      // supportedLen
     gSupportedProfilesAll,  // supportedProfiles[0]
-    "1.3.6.1.4.1.51414.0.2.0",     // activeProfile
+    "1.3.6.1.4.1.51414.0.0.2.0",     // activeProfile
 };
-char * gSupportedProfilesInvalid[] = { "1.3.6.1.4.1.51414.0.2.0", "1.3.6.1.4.1.51414.0.3.0", "1.3.6.1.4.1.51414.0.4.0", "1.3.6.1.4.1.51414.0.1.0",  };
+char * gSupportedProfilesInvalid[] = { "1.3.6.1.4.1.51414.0.0.2.0", "1.3.6.1.4.1.51414.0.0.3.0", "1.3.6.1.4.1.51414.0.0.4.0", "1.3.6.1.4.1.51414.0.0.1.0",  };
 OicSecSp_t gSpInvalid =
 {
     4,                         // supportedLen

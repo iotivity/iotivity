@@ -44,14 +44,14 @@ static OCResourceHandle    gSpHandle  = NULL;
 static OicSecSp_t         *gSp        = NULL;
 
 // Default sp values
-// char * gSupportedProfiles[] = { "1.3.6.1.4.1.51414.0.1.0", "1.3.6.1.4.1.51414.0.2.0", "1.3.6.1.4.1.51414.0.3.0", "1.3.6.1.4.1.51414.0.4.0" };
-char * gSupportedProfiles[] = { "1.3.6.1.4.1.51414.0.1.0" };
+// char * gSupportedProfiles[] = { "1.3.6.1.4.1.51414.0.0.1.0", "1.3.6.1.4.1.51414.0.0.2.0", "1.3.6.1.4.1.51414.0.0.3.0", "1.3.6.1.4.1.51414.0.0.4.0" };
+char * gSupportedProfiles[] = { "1.3.6.1.4.1.51414.0.0.1.0" };
 OicSecSp_t gDefaultSp =
 {
     // 4,                      // supportedLen
     1,
     gSupportedProfiles,        // supportedProfiles
-    "1.3.6.1.4.1.51414.0.1.0", // currentProfile
+    "1.3.6.1.4.1.51414.0.0.1.0", // currentProfile
 };
 
 bool gAllProps[SP_PROPERTY_COUNT] = { true, true };
