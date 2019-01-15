@@ -43,6 +43,8 @@ Import('env')
 
 if os.environ.get('TERM') is not None:
     env['ENV']['TERM'] = os.environ['TERM']
+else:
+    env['ENV']['TERM'] = 'xterm'
 
 # Load extra options
 SConscript('extra_options.scons')

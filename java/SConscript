@@ -235,7 +235,8 @@ jdk_env = None
 if target_os in ['android']:
     # Gradle needs some settings in the environment:
     jdk_env = env.Clone(ENV={'JAVA_HOME':env['JAVA_HOME'],
-                             'ANDROID_HOME':env['ANDROID_HOME']})
+                             'ANDROID_HOME':env['ANDROID_HOME'],
+                             'TERM':env['ENV']['TERM']})
 else:
     jdk_env = env.Clone()
 
