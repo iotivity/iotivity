@@ -89,7 +89,8 @@ else:
 # Source files and Targets
 ######################################################################
 unittests = []
-unittests += srmtest_env.Program('unittest', [
+unittests_src = []
+unittests_src += [
     'aclresourcetest.cpp',
     'amaclresourcetest.cpp',
     'pstatresource.cpp',
@@ -103,8 +104,17 @@ unittests += srmtest_env.Program('unittest', [
     'base64tests.cpp',
     'pbkdf2tests.cpp',
     'srmtestcommon.cpp',
-    'crlresourcetest.cpp'
-])
+    'crlresourcetest.cpp',
+    'ocsecurity.cpp'
+]
+
+if target_os not in ['msys_nt', 'windows']:
+    unittests_src += [
+        'oxmpincommon.cpp',
+        'oxmverifycommon.cpp'
+    ]
+
+unittests += srmtest_env.Program('unittest', unittests_src)
 
 # this path will be passed as a command-line parameter,
 # so needs encoding to avoid problems with escapes on Windows

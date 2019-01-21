@@ -233,3 +233,22 @@ TEST(OCSetOwnerTransferCallbackDataTest, InvalidOXMType)
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetOwnerTransferCallbackData(ownershipTransferMethod,
     &stOTMCallbackData));
 }
+
+TEST(OCResetDeviceTest, NULLCallback)
+{
+    unsigned short waitTime = 10;
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCResetDevice(NULL, waitTime, &pDev1, NULL));
+}
+
+TEST(OCResetDeviceTest, NullTargetDevice)
+{
+    unsigned short waitTime = 10;
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCResetDevice(NULL, waitTime, NULL, provisioningCB));
+}
+
+TEST(OCResetDeviceTest, ZeroWaitTime)
+{
+    unsigned short waitTime = 0;
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCResetDevice(NULL, waitTime, &pDev1, provisioningCB));
+}
+
