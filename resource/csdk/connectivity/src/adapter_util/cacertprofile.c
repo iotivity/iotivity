@@ -99,6 +99,42 @@ static CertProfileResult FindEndEntityCert(const mbedtls_x509_crt *certChain, mb
     return CP_STATUS_OK;
 }
 
+static CertProfileResult FindRootCACert(const mbedtls_x509_crt *certChain, mbedtls_x509_crt const **caCert)
+{
+    *caCert = NULL;
+
+    const mbedtls_x509_crt* curCert = certChain;
+    while (NULL != curCert)
+    {
+        if ((1 == curCert->ca_istrue) &&
+            (curCert->issuer_raw.len == curCert->subject_raw.len) &&
+            (0 == memcmp(curCert->issuer_raw.p, curCert->subject_raw.p, curCert->issuer_raw.len)))
+        {
+            // first CA
+            if (NULL == *caCert)
+            {
+                *caCert = curCert;
+            }
+            // more than 1 CA
+            else
+            {
+                *caCert = NULL;
+                OIC_LOG(ERROR, TAG, "More than 1 root CA cert in chain");
+                return CP_MUL_CA_CERTS;
+            }
+        }
+        curCert = curCert->next;
+    }
+
+    if (NULL == *caCert)
+    {
+        OIC_LOG(INFO, TAG, "No root CA cert in chain");
+        return CP_NO_CA_CERT;
+    }
+
+    return CP_STATUS_OK;
+}
+
 static CertProfileResult CheckMdAlgorithm(const mbedtls_x509_crt_profile *profile, mbedtls_md_type_t mdAlgorithm)
 {
     if ((MBEDTLS_X509_ID_FLAG(mdAlgorithm) & profile->allowed_mds) != 0)
@@ -412,12 +448,19 @@ int ValidateAuthCertChainProfiles(const mbedtls_x509_crt *certChain)
         return CP_INVALID_CERT_CHAIN;
     }
 
+    const mbedtls_x509_crt* caCert = NULL;
+    cpResult = FindRootCACert(certChain, &caCert);
+
     const mbedtls_x509_crt* curCert = certChain;
     while (NULL != curCert)
     {
         if (curCert == eeCert)
         {
             profileViolations = ValidateEndEntityCertProfile(curCert);
+        }
+        else if (curCert == caCert)
+        {
+            profileViolations = ValidateRootCACertProfile(curCert);
         }
         else
         {

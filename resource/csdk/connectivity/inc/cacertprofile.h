@@ -58,6 +58,8 @@ typedef enum
     CP_INVALID_CERT_INPUT,   /* Certificate input is invalid (or null) */
     CP_DATE_ERROR,           /* Problem setting or reading certificate validity dates */
     CP_BUF_TOO_SMALL,        /* Supplied buffer is not long enough for desired operation */
+    CP_MUL_CA_CERTS,         /* Multiple root CA certs in cert chain */
+    CP_NO_CA_CERT,           /* No root CA cert in cert chain */
     CP_STATUS_FAILED = 255   /* Failure */
 } CertProfileResult;
 
