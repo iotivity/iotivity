@@ -3847,7 +3847,7 @@ void GetOwnCert(ByteArrayLL_t * chain, const char * usage)
         OIC_LOG_V(WARNING, TAG, "%s not found", usage);
     }
 #ifndef NDEBUG
-    if(0 < chain->cert->len)
+    else if(0 < chain->cert->len)
     {
         OIC_LOG(DEBUG, TAG_LOG, "==== Cert being returned ===================================");
         LogCert ( chain->cert->data, chain->cert->len, OIC_ENCODING_PEM, TAG_LOG );
