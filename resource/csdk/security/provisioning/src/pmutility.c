@@ -503,10 +503,11 @@ OCProvisionDev_t* PMCloneOCProvisionDevList(const OCProvisionDev_t* src)
         return NULL;
     }
 
+    OCProvisionDev_t* current = NULL;
     OCProvisionDev_t* newDev = PMCloneOCProvisionDev(src);
     VERIFY_NOT_NULL(TAG, newDev, ERROR);
 
-    OCProvisionDev_t* current = newDev;
+    current = newDev;
     for (OCProvisionDev_t* next = src->next; NULL != next; next = next->next)
     {
         current->next = PMCloneOCProvisionDev(next);
@@ -567,12 +568,12 @@ bool OC_CALL PMGenerateQuery(bool isSecure,
     }
 
     int snRet = 0;
-    char* prefix = (isSecure == true) ? COAPS_PREFIX : COAP_PREFIX;
+    char* prefix = (char *)((isSecure == true) ? COAPS_PREFIX : COAP_PREFIX);
 
     switch(connType & CT_MASK_ADAPTER)
     {
         case CT_ADAPTER_TCP:
-            prefix = (isSecure == true) ? COAPS_TCP_PREFIX : COAP_TCP_PREFIX;
+            prefix = (char*)((isSecure == true) ? COAPS_TCP_PREFIX : COAP_TCP_PREFIX);
             /* fall through */
         case CT_ADAPTER_IP:
             switch(connType & CT_MASK_FLAGS & ~CT_FLAG_SECURE)
@@ -1044,7 +1045,7 @@ OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const OicUuid_t* 
     }
 
 
-    DiscoveryInfo *pDInfo = OICCalloc(1, sizeof(DiscoveryInfo));
+    DiscoveryInfo *pDInfo = (DiscoveryInfo *)OICCalloc(1, sizeof(DiscoveryInfo));
     if(NULL == pDInfo)
     {
         OIC_LOG(ERROR, TAG, "PMSingleDeviceDiscovery : Memory allocation failed.");
@@ -1140,7 +1141,7 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     const char DOXM_OWNED_FALSE_MULTICAST_QUERY[] = "/oic/sec/doxm?Owned=FALSE";
     const char DOXM_OWNED_TRUE_MULTICAST_QUERY[] = "/oic/sec/doxm?Owned=TRUE";
 
-    DiscoveryInfo *pDInfo = OICCalloc(1, sizeof(DiscoveryInfo));
+    DiscoveryInfo *pDInfo = (DiscoveryInfo *)OICCalloc(1, sizeof(DiscoveryInfo));
     if(NULL == pDInfo)
     {
         OIC_LOG(ERROR, TAG, "PMDeviceDiscovery : Memory allocation failed.");
@@ -1242,7 +1243,7 @@ OCStackResult PMSingleDeviceDiscoveryInUnicast(unsigned short waittime, const Oi
         hostAddress = "";
     }
     snprintf(query, MAX_URI_LENGTH + MAX_QUERY_LENGTH + 1, "%s/oic/sec/doxm", hostAddress);
-    connType = connType & CT_MASK_ADAPTER;
+    connType = (OCConnectivityType)(connType & CT_MASK_ADAPTER);
 
     OCDoHandle handle = NULL;
     res = OCDoResource(&handle, OC_REST_DISCOVER, query, 0, 0,

@@ -722,7 +722,7 @@ static CAResult_t OwnershipTransferSessionFailed(const CAEndpoint_t *endpoint,
         {
             if (WRONG_PIN_MAX_ATTEMP > otmCtx->attemptCnt)
             {
-                otmCtx->selectedDeviceInfo->connType &= ~CT_FLAG_SECURE;
+                otmCtx->selectedDeviceInfo->connType = (OCConnectivityType)(otmCtx->selectedDeviceInfo->connType & ~CT_FLAG_SECURE);
 
                 res = StartOwnershipTransfer(otmCtx, otmCtx->selectedDeviceInfo);
                 if (OC_STACK_OK != res)
@@ -763,6 +763,11 @@ CAResult_t DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *in
     OIC_LOG_V(DEBUG, TAG, "In %s(endpoint = %p, info = %p)", __func__, endpoint, info);
 
     CAResult_t result = CA_STATUS_OK;
+    bool emptyOwnerUuid = false;
+    OicUuid_t emptyUuid = {.id={0}};
+    bool matching = false;
+    OicSecDoxm_t* newDevDoxm = NULL;
+    OTMContext_t* otmCtx = NULL;
 
     if (NULL == endpoint || NULL == info)
     {
@@ -772,14 +777,14 @@ CAResult_t DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *in
     OIC_LOG_V(INFO, TAG, "Received status from remote device(%s:%d) : %d",
               endpoint->addr, endpoint->port, info->result);
 
-    OTMContext_t* otmCtx = GetOTMContext(endpoint->addr, endpoint->port);
+    otmCtx = GetOTMContext(endpoint->addr, endpoint->port);
     if (NULL == otmCtx)
     {
         OIC_LOG(ERROR, TAG, "OTM context not found!");
         goto exit;
     }
 
-    OicSecDoxm_t* newDevDoxm = otmCtx->selectedDeviceInfo->doxm;
+    newDevDoxm = otmCtx->selectedDeviceInfo->doxm;
     if (NULL == newDevDoxm)
     {
         OIC_LOG(ERROR, TAG, "New device doxm not found!");
@@ -787,7 +792,7 @@ CAResult_t DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *in
     }
 
     //Make sure the address matches.
-    bool matching = (0 == strncmp(otmCtx->selectedDeviceInfo->endpoint.addr,
+    matching = (0 == strncmp(otmCtx->selectedDeviceInfo->endpoint.addr,
                                   endpoint->addr, sizeof(endpoint->addr)));
     matching = (matching && (getSecurePort(otmCtx->selectedDeviceInfo) == endpoint->port));
 
@@ -798,8 +803,7 @@ CAResult_t DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *in
         goto exit;
     }
 
-    OicUuid_t emptyUuid = {.id={0}};
-    bool emptyOwnerUuid = (memcmp(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t)) == 0);
+    emptyOwnerUuid = (memcmp(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t)) == 0);
 
     //If temporal secure session established successfully
     if ((CA_STATUS_OK == info->result) && !newDevDoxm->owned && emptyOwnerUuid)
@@ -961,10 +965,11 @@ static OCStackApplicationResult OwnerTransferModeHandler(void *ctx, OCDoHandle U
 {
     OIC_LOG(DEBUG, TAG, "IN OwnerTransferModeHandler");
 
+    OTMContext_t* otmCtx = (OTMContext_t*)ctx;
+
     VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
     VERIFY_NOT_NULL(TAG, ctx, WARNING);
 
-    OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     otmCtx->ocDoHandle = NULL;
     (void)UNUSED;
     if (OC_STACK_RESOURCE_CHANGED == clientResponse->result)
@@ -1003,7 +1008,7 @@ static OCStackApplicationResult OwnerTransferModeHandler(void *ctx, OCDoHandle U
             }
 
             //This is a secure session.
-            otmCtx->selectedDeviceInfo->connType |= CT_FLAG_SECURE;
+            otmCtx->selectedDeviceInfo->connType = (OCConnectivityType)(otmCtx->selectedDeviceInfo->connType | CT_FLAG_SECURE);
 
             //Send request : GET /oic/sec/doxm. Then verify that the property values obtained this way
             //are the same as those already-stored in the otmCtx.
@@ -1042,10 +1047,11 @@ static OCStackApplicationResult ListMethodsHandler(void *ctx, OCDoHandle UNUSED,
 {
     OIC_LOG(DEBUG, TAG, "IN ListMethodsHandler");
 
+    OTMContext_t* otmCtx = (OTMContext_t*)ctx;
+
     VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
     VERIFY_NOT_NULL(TAG, ctx, WARNING);
 
-    OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     otmCtx->ocDoHandle = NULL;
     (void)UNUSED;
     if  (OC_STACK_OK == clientResponse->result)
@@ -1117,10 +1123,11 @@ exit:
 static OCStackApplicationResult DeviceUuidUpdateHandler(void *ctx, OCDoHandle handle,
                                 OCClientResponse *clientResponse)
 {
-    VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
-    VERIFY_NOT_NULL(TAG, ctx, WARNING);
-
     OIC_LOG(DEBUG, TAG, "IN DeviceUuidUpdateHandler");
+
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, WARNING, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, clientResponse, WARNING, OC_STACK_DELETE_TRANSACTION);
+
     OC_UNUSED(handle);
     OCStackResult res = OC_STACK_OK;
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
@@ -1130,7 +1137,7 @@ static OCStackApplicationResult DeviceUuidUpdateHandler(void *ctx, OCDoHandle ha
     {
         OIC_LOG_V(WARNING, TAG, "DeviceUuidUpdateHandler : Client response is incorrect : %d",
                 clientResponse->result);
-        goto exit;
+        return OC_STACK_DELETE_TRANSACTION;
     }
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
@@ -1179,7 +1186,7 @@ static OCStackApplicationResult DeviceUuidUpdateHandler(void *ctx, OCDoHandle ha
     {
         OIC_LOG_V(ERROR, TAG, "SetupPDM error : %d", res);
         SetResult(otmCtx, res);
-        return res;
+        return (OCStackApplicationResult)res;
     }
 
     res = SaveOwnerPSK(otmCtx->selectedDeviceInfo);
@@ -1202,9 +1209,6 @@ static OCStackApplicationResult DeviceUuidUpdateHandler(void *ctx, OCDoHandle ha
 
     OIC_LOG(DEBUG, TAG, "OUT DeviceUuidUpdateHandler");
     return OC_STACK_KEEP_TRANSACTION;
-
-exit:
-    return  OC_STACK_DELETE_TRANSACTION;
 }
 
 /**
@@ -1219,10 +1223,11 @@ exit:
 static OCStackApplicationResult OwnerUuidUpdateHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)
 {
-    VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
-    VERIFY_NOT_NULL(TAG, ctx, WARNING);
-
     OIC_LOG(DEBUG, TAG, "IN OwnerUuidUpdateHandler");
+
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, WARNING, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, clientResponse, WARNING, OC_STACK_DELETE_TRANSACTION);
+
     (void)UNUSED;
     OCStackResult res = OC_STACK_OK;
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
@@ -1275,7 +1280,6 @@ static OCStackApplicationResult OwnerUuidUpdateHandler(void *ctx, OCDoHandle UNU
 
     OIC_LOG(DEBUG, TAG, "OUT OwnerUuidUpdateHandler");
 
-exit:
     return  OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -1293,8 +1297,8 @@ static OCStackApplicationResult OperationModeUpdateHandler(void *ctx, OCDoHandle
 {
     OIC_LOG(DEBUG, TAG, "IN OperationModeUpdateHandler");
 
-    VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
-    VERIFY_NOT_NULL(TAG, ctx, WARNING);
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, WARNING, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, clientResponse, WARNING, OC_STACK_DELETE_TRANSACTION);
 
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     otmCtx->ocDoHandle = NULL;
@@ -1317,7 +1321,6 @@ static OCStackApplicationResult OperationModeUpdateHandler(void *ctx, OCDoHandle
 
     OIC_LOG(DEBUG, TAG, "OUT OperationModeUpdateHandler");
 
-exit:
     return  OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -1333,10 +1336,11 @@ exit:
 static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)
 {
-    VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
-    VERIFY_NOT_NULL(TAG, ctx, WARNING);
-
     OIC_LOG(DEBUG, TAG, "IN OwnerCredentialHandler");
+
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, WARNING, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, clientResponse, WARNING, OC_STACK_DELETE_TRANSACTION);
+
     (void)UNUSED;
     OCStackResult res = OC_STACK_OK;
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
@@ -1416,7 +1420,6 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
 
         OIC_LOG(DEBUG, TAG, "OUT OwnerCredentialHandler");
 
-    exit:
         return  OC_STACK_DELETE_TRANSACTION;
     }
 
@@ -1438,11 +1441,12 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
 
         OC_UNUSED(handle);
 
-        VERIFY_NOT_NULL(TAG, ctx, WARNING);
+        VERIFY_NOT_NULL_RETURN(TAG, ctx, WARNING, OC_STACK_DELETE_TRANSACTION);
+        VERIFY_NOT_NULL_RETURN(TAG, clientResponse, WARNING, OC_STACK_DELETE_TRANSACTION);
+
         OTMContext_t* otmCtx = (OTMContext_t*)ctx;
-        VERIFY_NOT_NULL(TAG, otmCtx->selectedDeviceInfo, WARNING);
         OCProvisionDev_t* selectedDeviceInfo = otmCtx->selectedDeviceInfo;
-        VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
+        VERIFY_NOT_NULL_RETURN(TAG, selectedDeviceInfo, WARNING, OC_STACK_DELETE_TRANSACTION);
 
         otmCtx->ocDoHandle = NULL;
 
@@ -1478,7 +1482,7 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
             OIC_LOG_V(ERROR, TAG, "OwnerAclHandler : Unexpected result %d", res);
             SetResult(otmCtx, res);
         }
-    exit:
+
         OIC_LOG(DEBUG, TAG, "OUT OwnerAclHandler");
         return  OC_STACK_DELETE_TRANSACTION;
     }
@@ -1495,13 +1499,14 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
     static OCStackApplicationResult OwnershipInformationHandler(void *ctx, OCDoHandle UNUSED,
                                     OCClientResponse *clientResponse)
     {
-        VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
-        VERIFY_NOT_NULL(TAG, ctx, WARNING);
-
         OIC_LOG(DEBUG, TAG, "IN OwnershipInformationHandler");
+
+        VERIFY_NOT_NULL_RETURN(TAG, ctx, WARNING, OC_STACK_DELETE_TRANSACTION);
+
         (void)UNUSED;
         OCStackResult res = OC_STACK_OK;
         OTMContext_t* otmCtx = (OTMContext_t*)ctx;
+        VERIFY_NOT_NULL_RETURN(TAG, otmCtx->selectedDeviceInfo, WARNING, OC_STACK_DELETE_TRANSACTION);
         otmCtx->ocDoHandle = NULL;
 
         if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
@@ -1527,9 +1532,7 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
         }
 
         OIC_LOG(DEBUG, TAG, "OUT OwnershipInformationHandler");
-
-    exit:
-        return  OC_STACK_DELETE_TRANSACTION;
+        return OC_STACK_DELETE_TRANSACTION;
     }
 
     /**
@@ -1546,10 +1549,10 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
     {
         OIC_LOG_V(INFO, TAG, "IN ProvisioningStatusHandler.");
 
-        VERIFY_NOT_NULL(TAG, clientResponse, ERROR);
-        VERIFY_NOT_NULL(TAG, ctx, ERROR);
+        VERIFY_NOT_NULL_RETURN(TAG, ctx, WARNING, OC_STACK_DELETE_TRANSACTION);
 
         OTMContext_t* otmCtx = (OTMContext_t*) ctx;
+        VERIFY_NOT_NULL_RETURN(TAG, otmCtx->selectedDeviceInfo, WARNING, OC_STACK_DELETE_TRANSACTION);
         otmCtx->ocDoHandle = NULL;
         (void)UNUSED;
         OCStackResult res = OC_STACK_OK;
@@ -1575,7 +1578,6 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
             SetResult(otmCtx, clientResponse->result);
         }
 
-    exit:
         OIC_LOG_V(INFO, TAG, "OUT ProvisioningStatusHandler.");
         return OC_STACK_DELETE_TRANSACTION;
     }
@@ -1594,10 +1596,10 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
     {
         OIC_LOG_V(INFO, TAG, "IN ReadyForNomalStatusHandler.");
 
-        VERIFY_NOT_NULL(TAG, clientResponse, ERROR);
-        VERIFY_NOT_NULL(TAG, ctx, ERROR);
+        VERIFY_NOT_NULL_RETURN(TAG, ctx, WARNING, OC_STACK_DELETE_TRANSACTION);
 
         OTMContext_t* otmCtx = (OTMContext_t*) ctx;
+        VERIFY_NOT_NULL_RETURN(TAG, otmCtx->selectedDeviceInfo, WARNING, OC_STACK_DELETE_TRANSACTION);
         otmCtx->ocDoHandle = NULL;
         (void)UNUSED;
 
@@ -1625,7 +1627,6 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
             SetResult(otmCtx, clientResponse->result);
         }
 
-    exit:
         OIC_LOG_V(INFO, TAG, "OUT ReadyForNomalStatusHandler.");
         return OC_STACK_DELETE_TRANSACTION;
     }
@@ -1644,10 +1645,10 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
     {
         OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 
-        VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
-        VERIFY_NOT_NULL(TAG, ctx, WARNING);
+        VERIFY_NOT_NULL_RETURN(TAG, ctx, WARNING, OC_STACK_DELETE_TRANSACTION);
 
         OTMContext_t* otmCtx = (OTMContext_t*)ctx;
+        VERIFY_NOT_NULL_RETURN(TAG, otmCtx->selectedDeviceInfo, WARNING, OC_STACK_DELETE_TRANSACTION);
         otmCtx->ocDoHandle = NULL;
         (void)UNUSED;
 
@@ -1719,7 +1720,6 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
         }
 
         OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
-    exit:
         return OC_STACK_DELETE_TRANSACTION;
     }
 
@@ -1730,11 +1730,8 @@ static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
     OCHeaderOption *options = NULL;
     uint8_t numOptions = 0;
 
-    if (!otmCtx || !otmCtx->selectedDeviceInfo)
-    {
-        OIC_LOG(ERROR, TAG, "Invalid parameters");
-        return OC_STACK_INVALID_PARAM;
-    }
+    VERIFY_NOT_NULL_RETURN(TAG, otmCtx, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, otmCtx->selectedDeviceInfo, ERROR, OC_STACK_INVALID_PARAM);
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
@@ -1757,6 +1754,7 @@ static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
     }
 
     //Generate owner credential for new device
+    OicUuid_t credSubjectId = {.id={0}};
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     const OicSecCred_t* ownerCredential = GetCredResourceData(&(deviceInfo->doxm->deviceID));
     if (NULL == ownerCredential)
@@ -1766,7 +1764,6 @@ static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
         goto exit;
     }
 
-    OicUuid_t credSubjectId = {.id={0}};
     if (OC_STACK_OK == GetDoxmDeviceID(&credSubjectId))
     {
         OicSecCred_t newCredential;
@@ -2518,11 +2515,12 @@ static OCStackResult SetupPDM(const OCProvisionDev_t* selectedDevice)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 
+    VERIFY_NOT_NULL_RETURN(TAG, selectedDevice, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, selectedDevice->doxm, ERROR, OC_STACK_INVALID_PARAM);
+
     char* strUuid = NULL;
     OCStackResult res = OC_STACK_INVALID_PARAM;
-
-    VERIFY_NOT_NULL(TAG, selectedDevice, ERROR);
-    VERIFY_NOT_NULL(TAG, selectedDevice->doxm, ERROR);
+    bool isDuplicate = true;
 
     PdmDeviceState_t pdmState = PDM_DEVICE_UNKNOWN;
     res = PDMGetDeviceState(&selectedDevice->doxm->deviceID, &pdmState);
@@ -2569,7 +2567,6 @@ static OCStackResult SetupPDM(const OCProvisionDev_t* selectedDevice)
     }
 
     //Checking duplication of Device ID.
-    bool isDuplicate = true;
     res = PDMIsDuplicateDevice(&selectedDevice->doxm->deviceID, &isDuplicate);
     if (OC_STACK_OK != res)
     {
@@ -2624,11 +2621,13 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
     OIC_LOG(INFO, TAG, "IN StartOwnershipTransfer");
     OCStackResult res = OC_STACK_INVALID_PARAM;
 
-    VERIFY_NOT_NULL(TAG, selectedDevice, ERROR);
-    VERIFY_NOT_NULL(TAG, selectedDevice->doxm, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_INVALID_PARAM);
 
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     otmCtx->selectedDeviceInfo = selectedDevice;
+
+    VERIFY_NOT_NULL_RETURN(TAG, selectedDevice, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, selectedDevice->doxm, ERROR, OC_STACK_INVALID_PARAM);
 
     //Select the OxM to performing ownership transfer
     res = OTMSelectOwnershipTransferMethod(selectedDevice->doxm->oxm,
@@ -2669,7 +2668,6 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
 
     OIC_LOG(INFO, TAG, "OUT StartOwnershipTransfer");
 
-exit:
     return res;
 }
 
@@ -2792,12 +2790,10 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
 {
     OIC_LOG_V(INFO, TAG, "IN %s", __func__);
     OCStackResult res = OC_STACK_ERROR;
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
 
-    if(!otmCtx || !otmCtx->selectedDeviceInfo)
-    {
-        OIC_LOG(ERROR, TAG, "OTMContext is NULL");
-        return OC_STACK_INVALID_PARAM;
-    }
+    VERIFY_NOT_NULL_RETURN(TAG, otmCtx, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, otmCtx->selectedDeviceInfo, ERROR, OC_STACK_INVALID_PARAM);
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     // Change the TAKE_OWNER bit of TM to 0 (optional in Client Directed)
@@ -2869,7 +2865,6 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
     OIC_LOG(DEBUG, TAG, "Created payload for chage to Provisiong state");
     OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
-    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     assert(otmCtx->selectedDeviceInfo->connType & CT_FLAG_SECURE);
 
     if(!PMGenerateQuery(true,
@@ -2910,22 +2905,17 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
 {
     OIC_LOG(INFO, TAG, "IN PostNormalOperationStatus");
     OCStackResult res = OC_STACK_ERROR;
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
 
-    if(!otmCtx || !otmCtx->selectedDeviceInfo)
-    {
-        OIC_LOG(ERROR, TAG, "OTMContext is NULL");
-        return OC_STACK_INVALID_PARAM;
-    }
+    VERIFY_NOT_NULL_RETURN(TAG, otmCtx, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, otmCtx->selectedDeviceInfo, ERROR, OC_STACK_INVALID_PARAM);
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     otmCtx->selectedDeviceInfo->pstat->dos.state = DOS_RFNOP;
 
     OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
-    if (NULL == secPayload)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
-        return OC_STACK_NO_MEMORY;
-    }
+    VERIFY_NOT_NULL_RETURN(TAG, secPayload, ERROR, OC_STACK_NO_MEMORY);
+
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     OCHeaderOption *options = NULL;
     uint8_t numOptions = 0;
@@ -2968,7 +2958,6 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
     OIC_LOG(DEBUG, TAG, "Created payload for chage to Provisiong state");
     OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
-    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     assert(otmCtx->selectedDeviceInfo->connType & CT_FLAG_SECURE);
 
     if(!PMGenerateQuery(true,
@@ -3105,8 +3094,8 @@ static OCStackApplicationResult RownerUuidHandler(void *ctx, OCDoHandle handle,
 {
     OIC_LOG_V(INFO, TAG, "%s IN", __func__);
 
-    VERIFY_NOT_NULL(TAG, clientResponse, ERROR);
-    VERIFY_NOT_NULL(TAG, ctx, ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, clientResponse, ERROR, OC_STACK_DELETE_TRANSACTION);
 
     OTMContext_t* otmCtx = (OTMContext_t*) ctx;
     OC_UNUSED(handle);
@@ -3143,7 +3132,7 @@ static OCStackApplicationResult RownerUuidHandler(void *ctx, OCDoHandle handle,
             SetResult(otmCtx, OC_STACK_ERROR);
         }
     }
-exit:
+
     OIC_LOG_V(INFO, TAG, "%s OUT", __func__);
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -3151,23 +3140,18 @@ exit:
 OCStackResult PostRownerUuid(OTMContext_t* otmCtx)
 {
     OIC_LOG_V(INFO, TAG, "%s IN", __func__);
+
+    VERIFY_NOT_NULL_RETURN(TAG, otmCtx, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, otmCtx->selectedDeviceInfo, ERROR, OC_STACK_INVALID_PARAM);
+
     OCStackResult res = OC_STACK_ERROR;
     OCHeaderOption *options = NULL;
     uint8_t numOptions = 0;
-
-    if (!otmCtx || !otmCtx->selectedDeviceInfo)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: %s is NULL", __func__, !otmCtx ? "OTMContext" : "selectedDeviceInfo" );
-        return OC_STACK_INVALID_PARAM;
-    }
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
-    if (NULL == secPayload)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: Failed to memory allocation", __func__);
-        return OC_STACK_NO_MEMORY;
-    }
+    VERIFY_NOT_NULL_RETURN(TAG, secPayload, ERROR, OC_STACK_NO_MEMORY);
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
 
     bool propertiesToInclude[PSTAT_PROPERTY_COUNT];
@@ -3198,7 +3182,6 @@ OCStackResult PostRownerUuid(OTMContext_t* otmCtx)
     OIC_LOG(DEBUG, TAG, "Created payload for set rowner uuid");
     OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
-    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     assert(deviceInfo->connType & CT_FLAG_SECURE);
 
     if (!PMGenerateQuery(true,

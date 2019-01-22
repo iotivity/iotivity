@@ -627,7 +627,7 @@ OCStackResult OC_CALL OCUnlinkDevices(void* ctx,
                                       OCProvisionResultCB resultCallback)
 {
     OIC_LOG(INFO, TAG, "IN OCUnlinkDevices");
-    OCUuidList_t* idList = NULL;
+    OCUuidList_t *idList = NULL, *curDev = NULL;
     size_t numOfDev = 0;
 
     if (!pTargetDev1 || !pTargetDev2 || !pTargetDev1->doxm || !pTargetDev2->doxm)
@@ -661,7 +661,7 @@ OCStackResult OC_CALL OCUnlinkDevices(void* ctx,
     }
 
     // Check the linked devices contains the second device. If yes send credential DELETE request.
-    OCUuidList_t* curDev = idList;
+    curDev = idList;
     while (NULL != curDev)
     {
         if (memcmp(pTargetDev2->doxm->deviceID.id, curDev->dev.id, sizeof(curDev->dev.id)) == 0)
@@ -699,7 +699,7 @@ static OCStackResult RemoveDeviceInfoFromLocal(const OCProvisionDev_t* pTargetDe
         if (res != OC_STACK_RESOURCE_DELETED)
         {
             OIC_LOG(ERROR, TAG, "RemoveDeviceInfoFromLocal : Failed to remove credential.");
-            goto error;
+            return OC_STACK_ERROR;
         }
     }
     /**
@@ -730,7 +730,6 @@ static OCStackResult RemoveDeviceInfoFromLocal(const OCProvisionDev_t* pTargetDe
     OICFree(endpoint);
     OIC_LOG(DEBUG, TAG, "OUT RemoveDeviceInfoFromLocal");
 
-error:
     return res;
 }
 
@@ -826,6 +825,8 @@ OCStackResult OC_CALL OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeF
     bool discoverdFlag = false;
     OCProvisionDev_t* pOwnedDevList = NULL;
     OCStackResult resReq = OC_STACK_CONTINUE;
+    OCUuidList_t* linkedDevices = NULL;
+    size_t numOfLinkedDevices = 0;
 
     if (!pTargetUuid || 0 == waitTimeForOwnedDeviceDiscovery)
     {
@@ -863,8 +864,6 @@ OCStackResult OC_CALL OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeF
     }
     memcpy(pTargetDev->doxm->deviceID.id, pTargetUuid->id, sizeof(pTargetUuid->id));
 
-    OCUuidList_t* linkedDevices = NULL;
-    size_t numOfLinkedDevices = 0;
     res = PDMGetLinkedDevices(pTargetUuid, &linkedDevices, &numOfLinkedDevices);
     if(OC_STACK_OK != res)
     {

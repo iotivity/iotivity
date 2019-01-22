@@ -154,7 +154,7 @@ OCStackResult CreateSecureSessionMCertificateCallback(OTMContext_t* otmCtx)
     OIC_LOG(INFO, TAG, "Anonymous cipher suite disabled.");
 
     caresult  = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
-                                    otmCtx->selectedDeviceInfo->endpoint.adapter);
+                                    (CATransportAdapter_t)otmCtx->selectedDeviceInfo->endpoint.adapter);
     if (CA_STATUS_OK != caresult)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to select MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8");
