@@ -150,7 +150,8 @@ static bool CheckSubjectOfCertificate(OicSecCred_t* cred, OicUuid_t deviceID)
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     const OicUuid_t emptyUuid = { .id = { 0 } };
 
-    if ( SIGNED_ASYMMETRIC_KEY == cred->credType)
+    if ( SIGNED_ASYMMETRIC_KEY == cred->credType
+        && 0 != strcmp(cred->credUsage, TRUST_CA) )
     {
         if((0 == memcmp(cred->subject.id, emptyUuid.id, sizeof(cred->subject.id))) ||
             (0 == memcmp(cred->subject.id, &WILDCARD_SUBJECT_ID, sizeof(cred->subject.id))))
