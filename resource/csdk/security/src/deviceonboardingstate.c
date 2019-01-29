@@ -32,7 +32,7 @@
 #include "experimental/doxmresource.h"
 #include "pstatresource.h"
 #include "resourcemanager.h"
-#if defined(WITH_CLOUD)
+#if defined(WITH_CLOUD) && defined(SECURED)
 #include "cloud/cloudresource.h"
 #endif
 #define TAG "OIC_SRM_DOS"
@@ -408,7 +408,7 @@ static bool EnterRESET(void)
         isAnonEnabled ? "" : "NOT ");
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
-#if defined(WITH_CLOUD)
+#if defined(WITH_CLOUD) && defined(SECURED)
     ResetClouds();
 #endif
 

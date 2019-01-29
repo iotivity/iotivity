@@ -104,7 +104,7 @@ if examples_env.get('MULTIPLE_OWNER') == '1':
     examples_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
 if target_os not in ['msys_nt', 'windows']:
-    if examples_env.get('WITH_TCP') == True and examples_env.get('WITH_CLOUD') == True:
+    if examples_env.get('WITH_TCP') == True and examples_env.get('WITH_CLOUD') == True and examples_env.get('SECURED') == '1':
         examples_env.PrependUnique(LIBS=['cloud'])
 
 ######################################################################
@@ -116,7 +116,7 @@ if examples_env.get('MULTIPLE_OWNER') == '1':
     subownerclient = examples_env.Program('subownerclient',
                                           'subownerclient.cpp')
 
-if examples_env.get('WITH_TCP') == True and examples_env.get('WITH_CLOUD') == True:
+if examples_env.get('WITH_TCP') == True and examples_env.get('WITH_CLOUD') == True and examples_env.get('SECURED') == '1':
     cloudClient = examples_env.Program('cloudClient', [
         'cloudClient.cpp', 'cloudAuth.cpp', 'cloudWrapper.cpp'
     ])
@@ -131,7 +131,7 @@ actions += examples_env.ScanJSON('resource/provisioning/examples')
 if examples_env.get('MULTIPLE_OWNER') != '1':
     Delete(svr_db_build_dir  + 'oic_svr_db_subowner_client.dat')
 
-if examples_env.get('WITH_TCP') == True and examples_env.get('WITH_CLOUD') == True:
+if examples_env.get('WITH_TCP') == True and examples_env.get('WITH_CLOUD') == True and examples_env.get('SECURED') == '1':
     actions += examples_env.Install(svr_db_build_dir, svr_db_src_dir + 'rootca.crt')
 else:
     Delete(svr_db_build_dir  + 'cloud.dat')

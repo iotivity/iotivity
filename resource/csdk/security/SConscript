@@ -29,7 +29,7 @@ libocsrm_env = env.Clone()
 target_os = libocsrm_env.get('TARGET_OS')
 
 if target_os not in ['msys_nt', 'windows']:
-    if env.get('WITH_TCP') == True and env.get('WITH_CLOUD') == True:
+    if env.get('WITH_TCP') == True and env.get('WITH_CLOUD') == True and env.get('SECURED') == '1':
         env.PrependUnique(LIBS=['cloud'])
 
 ######################################################################

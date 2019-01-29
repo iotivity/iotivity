@@ -110,7 +110,7 @@ ocprovision_env.UserInstallTargetHeader(
     '../include/OCProvisioningManager.hpp', 'resource', 'OCProvisioningManager.hpp')
 
 if target_os in ['linux', 'msys_nt', 'tizen', 'webos']:
-    if ocprovision_env.get('WITH_TCP') == True and ocprovision_env.get('WITH_CLOUD') == True:
+    if ocprovision_env.get('WITH_TCP') == True and ocprovision_env.get('WITH_CLOUD') == True and ocprovision_env.get('SECURED') == '1':
         ocprovision_env.PrependUnique(LIBS=['cloud'])
 
 if target_os in ['linux', 'tizen']:

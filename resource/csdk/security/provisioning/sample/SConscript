@@ -54,7 +54,7 @@ if target_os not in ['msys_nt', 'windows']:
 provisioning_sample_env.PrependUnique(LIBS=['oc', 'octbstack'])
 
 if target_os not in ['msys_nt', 'windows']:
-    if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True:
+    if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True and provisioning_sample_env.get('SECURED') == '1':
         provisioning_sample_env.PrependUnique(
             LIBS=['oc_logger', 'coap', 'cloud', 'ocpmapi', 'ocsrm'])
     else:
@@ -115,7 +115,7 @@ if target_os not in ['msys_nt', 'windows']:
         rootcert = provisioning_sample_env.Install(
             sec_provisioning_build_dir,
             sec_provisioning_src_dir + 'rootca.crt')
-        if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True:
+        if provisioning_sample_env.get('WITH_TCP') == True and provisioning_sample_env.get('WITH_CLOUD') == True and provisioning_sample_env.get('SECURED') == '1':
             Alias("cloud", [
                 rootcert
             ])
