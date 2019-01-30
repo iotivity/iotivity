@@ -159,6 +159,7 @@ def build_linux_unsecured_with_java(flag, scons_options):
         'RELEASE': flag,
         'BUILD_JAVA': 1,
         'TARGET_TRANSPORT': 'IP',
+        'SECURED': 0,
         'ERROR_ON_WARN': 1,
     }
     call_scons(build_options, scons_options)
