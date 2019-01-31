@@ -257,14 +257,14 @@ static bool IsEmptyCred(const OicSecCred_t* cred)
 {
     OicUuid_t emptyUuid = {.id={0}};
 
-    VERIFY_SUCCESS(TAG, (0 == memcmp(cred->subject.id, emptyUuid.id, sizeof(emptyUuid))), ERROR);
-    VERIFY_SUCCESS(TAG, !IsNonEmptyRole(&cred->roleId), ERROR);
-    VERIFY_SUCCESS(TAG, (0 == cred->credId), ERROR);
-    VERIFY_SUCCESS(TAG, (0 == cred->credType), ERROR);
-    VERIFY_SUCCESS(TAG, (NULL == cred->privateData.data), ERROR);
-    VERIFY_SUCCESS(TAG, (NULL == cred->publicData.data), ERROR);
-    VERIFY_SUCCESS(TAG, (NULL == cred->optionalData.data), ERROR);
-    VERIFY_SUCCESS(TAG, (NULL == cred->credUsage), ERROR);
+    VERIFY_SUCCESS(TAG, (0 == memcmp(cred->subject.id, emptyUuid.id, sizeof(emptyUuid))), DEBUG);
+    VERIFY_SUCCESS(TAG, !IsNonEmptyRole(&cred->roleId), DEBUG);
+    VERIFY_SUCCESS(TAG, (0 == cred->credId), DEBUG);
+    VERIFY_SUCCESS(TAG, (0 == cred->credType), DEBUG);
+    VERIFY_SUCCESS(TAG, (NULL == cred->privateData.data), DEBUG);
+    VERIFY_SUCCESS(TAG, (NULL == cred->publicData.data), DEBUG);
+    VERIFY_SUCCESS(TAG, (NULL == cred->optionalData.data), DEBUG);
+    VERIFY_SUCCESS(TAG, (NULL == cred->credUsage), DEBUG);
     return true;
 exit:
     return false;
