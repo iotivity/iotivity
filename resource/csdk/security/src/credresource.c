@@ -1731,6 +1731,53 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
         newCred->credId = GetCredId();
     }
 
+#if (defined(__WITH_DTLS__) || defined(__WITH_TLS__))
+    //[IOT-3259] Search for the corresponding private key among
+    //the ASYMMETRIC_KEY type credentials
+    if ( SIGNED_ASYMMETRIC_KEY == newCred->credType
+      && NULL == newCred->privateData.data)
+    {
+        mbedtls_x509_crt crt;
+
+        mbedtls_x509_crt_init(&crt);
+        if ( 0 == mbedtls_x509_crt_parse(&crt
+            , newCred->publicData.data
+            , newCred->publicData.len + (newCred->publicData.encoding == OIC_ENCODING_PEM ? 1 : 0) ) )
+        {
+            LL_FOREACH(gCred, cred)
+            {
+                if ( ASYMMETRIC_KEY == cred->credType )
+                {
+                    mbedtls_pk_context prv;
+                    mbedtls_pk_init(&prv);
+                    if ( 0 == mbedtls_pk_parse_key(&prv, cred->privateData.data, cred->privateData.len, NULL, 0)
+                      && 0 == mbedtls_pk_check_pair(&crt.pk, &prv) )
+                    {
+                        OIC_LOG(DEBUG, TAG, "AddCredential: private key is found for the SIGNED_ASYMMETRIC_KEY credential");
+
+                        newCred->privateData.data = (uint8_t *)OICCalloc(1, cred->privateData.len);
+                        VERIFY_NOT_NULL(TAG, (newCred->privateData.data), ERROR);
+
+                        memcpy(newCred->privateData.data, cred->privateData.data, cred->privateData.len);
+                        newCred->privateData.len = cred->privateData.len;
+                        newCred->privateData.encoding = cred->privateData.encoding;
+                        mbedtls_pk_free(&prv);
+
+                        break;
+                    }
+                    mbedtls_pk_free(&prv);
+                }
+            }
+        }
+        else
+        {
+            OIC_LOG(WARNING, TAG, "Certificate parsing error");
+        }
+
+        mbedtls_x509_crt_free(&crt);
+    }
+#endif
+
     OIC_LOG(DEBUG, TAG, "Adding New Cred");
     LL_APPEND(gCred, newCred);
 
