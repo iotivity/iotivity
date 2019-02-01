@@ -75,6 +75,7 @@ static PinOxmData_t g_PinOxmData = {
         .pinData={0},
         .pinSize = OXM_RANDOM_PIN_DEFAULT_SIZE,
         .pinType = (OicSecPinType_t)(OXM_RANDOM_PIN_DEFAULT_PIN_TYPE),
+        .newDevice = {.id={0}}
     };
 
 /**
