@@ -44,11 +44,10 @@
 #define PDM_BIND_INDEX_SECOND 2
 #define PDM_BIND_INDEX_THIRD 3
 
-#define PDM_CREATE_T_DEVICE_LIST "create table T_DEVICE_LIST(ID INTEGER PRIMARY KEY AUTOINCREMENT,\
-                                  UUID BLOB NOT NULL UNIQUE, STATE INT NOT NULL);"
-
-#define PDM_CREATE_T_DEVICE_LINK  "create table T_DEVICE_LINK_STATE(ID INT NOT NULL, ID2 INT NOT \
-                                   NULL,STATE INT NOT NULL, PRIMARY KEY (ID, ID2));"
+#define PDM_CREATE_DB "CREATE TABLE IF NOT EXISTS T_DEVICE_LIST(ID INTEGER PRIMARY KEY AUTOINCREMENT,\
+                                  UUID BLOB NOT NULL UNIQUE, STATE INT NOT NULL);\
+                       CREATE TABLE IF NOT EXISTS T_DEVICE_LINK_STATE(ID INT NOT NULL, ID2 INT NOT \
+                                    NULL,STATE INT NOT NULL, PRIMARY KEY (ID, ID2));"
 /**
  * Macro to verify sqlite success.
  * eg: VERIFY_NON_NULL(TAG, ptrData, ERROR,OC_STACK_ERROR);
@@ -142,39 +141,6 @@ static sqlite3 *g_db = NULL;
 static bool gInit = false;  /* Only if we can open sqlite db successfully, gInit is true. */
 
 /**
- * function to create DB in case DB doesn't exists
- */
-static OCStackResult createDB(const char* path)
-{
-    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
-
-    if (NULL != g_db)
-    {
-        OIC_LOG_V(DEBUG, TAG, "OUT %s: the database already has been created", __func__);
-        return OC_STACK_OK;
-    }
-
-    int result = 0;
-    result = sqlite3_open_v2(path, &g_db, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, result, ERROR, OC_STACK_ERROR);
-
-    result = sqlite3_exec(g_db, PDM_CREATE_T_DEVICE_LIST, NULL, NULL, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, result, ERROR, OC_STACK_ERROR);
-
-    OIC_LOG(INFO, TAG, "Created T_DEVICE_LIST");
-    result = sqlite3_exec(g_db, PDM_CREATE_T_DEVICE_LINK, NULL, NULL, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, result, ERROR, OC_STACK_ERROR);
-
-    OIC_LOG(INFO, TAG, "Created T_DEVICE_LINK_STATE");
-    gInit = true;
-
-    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
-
-    return OC_STACK_OK;
-}
-
-
-/**
  * Function to begin any transaction
  */
 static OCStackResult begin(void)
@@ -246,12 +212,20 @@ OCStackResult PDMInit(const char *path)
     {
         dbPath = path;
     }
-    rc = sqlite3_open_v2(dbPath, &g_db, SQLITE_OPEN_READWRITE, NULL);
+    rc = sqlite3_open_v2(dbPath, &g_db, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
     if (SQLITE_OK != rc)
     {
         OIC_LOG_V(INFO, TAG, "ERROR: Can't open database: %s", sqlite3_errmsg(g_db));
-        return createDB(dbPath);
+        return OC_STACK_ERROR;
     }
+    //create DB in case DB doesn't exists
+    rc = sqlite3_exec(g_db, PDM_CREATE_DB, NULL, NULL, NULL);
+    if (SQLITE_OK != rc)
+    {
+        OIC_LOG_V(INFO, TAG, "ERROR: Can't create the database: %s", sqlite3_errmsg(g_db));
+        return OC_STACK_ERROR;
+    }
+
     gInit = true;
 
     /*
@@ -870,14 +844,16 @@ OCStackResult PDMClose(void)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 
-    CHECK_PDM_INIT();
-    int res = 0;
+    gInit = false;
+
     if (g_db)
     {
+        int res = 0;
         res = sqlite3_close(g_db);
         g_db = NULL;
+        PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
     }
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+
     OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
     return OC_STACK_OK;
 }
