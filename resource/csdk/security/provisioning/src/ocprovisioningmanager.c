@@ -1036,14 +1036,30 @@ OCStackResult OC_CALL OCConfigSelfOwnership(void)
  */
 static void UpdateLinkResults(Linkdata_t *link, int device, OCStackResult stackresult)
 {
-
+    if (NULL == link)
+    {
+        OIC_LOG_V(INFO,TAG,"%s value of link is null",__func__);
+        return;
+    }
     OIC_LOG_V(INFO,TAG,"value of link->currentCountResults is %d",link->currentCountResults);
     if (1 == device)
     {
+        if (NULL == link->pDev1)
+        {
+            OIC_LOG_V(INFO,TAG,"%s value of pDev1 is null",__func__);
+            return;
+        }
+
         memcpy(link->resArr[(link->currentCountResults)].deviceId.id, link->pDev1->doxm->deviceID.id,UUID_LENGTH);
     }
     else
     {
+        if (NULL == link->pDev2)
+        {
+            OIC_LOG_V(INFO,TAG,"%s value of pDev2 is null",__func__);
+            return;
+        }
+
         memcpy(link->resArr[(link->currentCountResults)].deviceId.id, link->pDev2->doxm->deviceID.id,UUID_LENGTH);
     }
     link->resArr[(link->currentCountResults)].res = stackresult;
@@ -1114,7 +1130,7 @@ static void AclProv1CB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool 
         return;
     }
     UpdateLinkResults(link, 1, arr[0].res);
-    if (NULL != link->pDev2Acl)
+    if (NULL != link->pDev2Acl && NULL != link->pDev2)
     {
         OCStackResult res =  SRPProvisionACL(ctx, link->pDev2, link->pDev2Acl, GET_ACL_VER(link->pDev2->specVer), &AclProv2CB);
         if (OC_STACK_OK!=res)
@@ -1163,7 +1179,7 @@ static void ProvisionCredsCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr,
          OICFree(link);
          return;
     }
-    if (NULL != link->pDev1Acl)
+    if (NULL != link->pDev1Acl && NULL != link->pDev1)
     {
         OCStackResult res =  SRPProvisionACL(ctx, link->pDev1, link->pDev1Acl, GET_ACL_VER(link->pDev1->specVer), &AclProv1CB);
         if (OC_STACK_OK!=res)
@@ -1177,7 +1193,7 @@ static void ProvisionCredsCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr,
               OICFree(link);
         }
     }
-    else if (NULL!=link->pDev2Acl)
+    else if (NULL!=link->pDev2Acl && NULL != link->pDev2)
     {
         OIC_LOG(ERROR, TAG, "ACL for device 1 is NULL");
 
