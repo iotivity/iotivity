@@ -59,7 +59,6 @@ cfg_client = 'oic_svr_db_client.dat'
 server_bin = 'sample_server' + sptest_env.get('PROGSUFFIX')
 unittest_bin = 'unittest' + sptest_env.get('PROGSUFFIX')
 
-
 ######################################################################
 # Functions
 ######################################################################
@@ -74,10 +73,9 @@ def clean_config():
     safe_remove('oic_svr_db_server1.dat')
     safe_remove('oic_svr_db_server2.dat')
     safe_remove(cfg_client)
-    safe_remove('test.db')
-    safe_remove('PDM.db')
-    safe_remove('secureresourceprovider.dat')
     safe_remove('device_properties.dat')
+    safe_remove('LIB_UNITTEST.dat')
+    safe_remove('secureresourceprovider.dat')
 
 
 def start_srv(num):
@@ -85,7 +83,10 @@ def start_srv(num):
         print("no executable file")
         return
     cfg_srv = 'oic_svr_db_server' + num + '.dat'
-    copyfile(sec_provisioning_src_dir + 'oic_svr_db_server_justworks.dat', cfg_srv)
+    cfg = sec_provisioning_src_dir + 'oic_svr_db_server_justworks.dat'
+    if not path.exists(cfg):
+        raise Exception("cannot copy file: "+cfg)
+    copyfile(cfg, cfg_srv)
     if not sptest_env.get('RELEASE'):
         po = Popen(
             unittest_build_dir + server_bin + ' ' + num + ' ' + cfg_srv,
@@ -133,19 +134,19 @@ def kill_all():
 def run_test(target, source, env):
     kill_all()
     clean_config()
-    copyfile(sec_provisioning_src_dir + 'oic_svr_db_client.dat', cfg_client)
+    cfg = sec_provisioning_src_dir + 'oic_svr_db_client.dat'
+    if not path.exists(cfg):
+        raise Exception("cannot copy file: "+cfg)
+    copyfile(cfg, cfg_client)
     po_srv1 = start_srv(str(1))
     po_srv2 = start_srv(str(2))
     print("Waiting for servers start")
-    sleep(3)
     call([unittest_build_dir + unittest_bin])
     print("Servers are stopping")
-    sleep(3)
     po_srv1.terminate()
     po_srv2.terminate()
     clean_config()
     kill_all()
-
 
 ######################################################################
 # Build flags
@@ -178,7 +179,9 @@ sptest_env.PrependUnique(CPPPATH=[
     '#resource/csdk/security/include',
     '#resource/csdk/security/include/experimental',
     '#resource/csdk/security/provisioning/src/cloud',
-    '#resource/csdk/security/provisioning/include/cloud/'
+    '#resource/csdk/security/provisioning/include/cloud/',
+    '#resource/csdk/logger/include/experimental',
+    '#extlibs/sqlite3'
 ])
 
 sptest_env.PrependUnique(LIBS=[
@@ -216,26 +219,29 @@ else:
 # Source files and Targets
 ######################################################################
 
-unittest_src = [
-    'pmutilitytest.cpp',
-    'secureresourceprovider.cpp',
-    'provisioningdatabasemanager.cpp',
-    'ocprovisioningmanager.cpp',
-    'credentialgeneratortest.cpp',
-    'otmunittest.cpp',
-]
-
-if sptest_env.get('WITH_TCP') == True and sptest_env.get('WITH_CLOUD') == True:
-    unittest_src = unittest_src + [
-        'cloudresource.cpp',
+if target_os in ['linux']:
+    unittest_src = [
+        'tools.cpp',
+        'ocprovisioningmanager.cpp',
+        'pmutilitytest.cpp',
+        'secureresourceprovider.cpp',
+        'provisioningdatabasemanager.cpp',
+        'oxmjustworks.cpp',
+        'otmcontextlist.cpp',
+        'ownershiptransfermanager.cpp',
+        'oxmmanufacturercert.cpp',
+        'oxmrandompin.cpp',
+        'credentialgenerator.cpp',
+        'otmunittest.cpp'
     ]
+    if sptest_env.get('WITH_TCP') == True and sptest_env.get('WITH_CLOUD') == True:
+        unittest_src.append('cloudresource.cpp')
 
-tests = sptest_env.Program(unittest_bin, unittest_src)
-server = sptest_env.Program(server_bin, ['sampleserver.cpp'])
+    tests = sptest_env.Program(unittest_bin, unittest_src)
+    server = sptest_env.Program(server_bin, ['sampleserver.cpp'])
 
-Alias('build', [tests, server])
+    Alias('build', [tests, server])
 
-if sptest_env.get('TEST') == '1':
-    if target_os in ['linux', 'windows']:
+    if sptest_env.get('TEST') == '1':
         print("Start tests")
         sptest_env.Command('start', [server_bin, unittest_bin], Action(run_test))

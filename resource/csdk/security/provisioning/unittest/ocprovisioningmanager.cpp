@@ -19,49 +19,53 @@
  * *****************************************************************/
 #include <gtest/gtest.h>
 #include "ocprovisioningmanager.h"
+#include "experimental/logger.h"
 
-static OicSecAcl_t acl1;
-static OicSecAcl_t acl2;
-static OCProvisionDev_t pDev1;
-static OCProvisionDev_t pDev2;
-static OicSecCredType_t credType = SYMMETRIC_PAIR_WISE_KEY;
-static OicSecOxm_t oicSecDoxmJustWorks = OIC_JUST_WORKS;
-static OicSecOxm_t oicSecDoxmRandomPin = OIC_RANDOM_DEVICE_PIN;
-static OicSecDoxm_t defaultDoxm1 =
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "../src/ocprovisioningmanager.c"
+#include "tools.h"
+
+#ifdef __cplusplus
+}
+#endif
+
+#undef TAG
+#define TAG "OTM_OCPROVISIONINGMANAGER"
+
+#define SVR_DB_FILE_NAME TAG".dat"
+#define PM_DB_FILE_NAME TAG".db"
+
+static OCProvisionDev_t *pDev1 = NULL;
+static OCProvisionDev_t *pDev2 = NULL;
+
+class PM : public ::testing::Test
 {
-    &oicSecDoxmJustWorks,  /* uint16_t *oxm */
-    1,                      /* size_t oxmLen */
-    OIC_JUST_WORKS,         /* uint16_t oxmSel */
-    SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
-    false,                  /* bool owned */
-    {{0}},                  /* OicUuid_t deviceID */
-    false,                  /* bool dpc */
-    {{0}},                  /* OicUuid_t owner */
-#ifdef MULTIPLE_OWNER
-    NULL,                   /* OicSecSubOwner_t* subOwners */
-    NULL,                   /* OicSecMom_t *mom */
-#endif //MULTIPLE_OWNER
-    {{0}}                   /* rownerID */
+    public:
+
+        static void SetUpTestCase()
+        {
+            IOT_Init(PM_DB_FILE_NAME);
+
+            pDev1 = createProvisionDev();
+            pDev2 = createProvisionDev();
+            pDev2->endpoint.port = 9998;
+            ConvertStrToUuid("33333355-3333-3333-3333-111111111111", &pDev2->doxm->deviceID);
+        }
+
+        static void TearDownTestCase()
+        {
+            IOT_DeInit(PM_DB_FILE_NAME);
+        }
+
+        OicSecAcl_t acl1;
+        OicSecAcl_t acl2;
 };
 
-static OicSecDoxm_t defaultDoxm2 =
-{
-    &oicSecDoxmRandomPin,   /* uint16_t *oxm */
-    1,                      /* size_t oxmLen */
-    OIC_RANDOM_DEVICE_PIN,  /* uint16_t oxmSel */
-    SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
-    false,                  /* bool owned */
-    {{0}},                  /* OicUuid_t deviceID */
-    false,                  /* bool dpc */
-    {{0}},                  /* OicUuid_t owner */
-#ifdef MULTIPLE_OWNER
-    NULL,                   /* OicSecSubOwner_t* subOwners */
-    NULL,                   /* OicSecMom_t *mom */
-#endif //MULTIPLE_OWNER
-    {{0}}                   /* rownerID */
-};
-
-static void provisioningCB (void* UNUSED1, size_t UNUSED2, OCProvisionResult_t *UNUSED3, bool UNUSED4)
+static void provisioningCB (void *UNUSED1, size_t UNUSED2, OCProvisionResult_t *UNUSED3,
+                            bool UNUSED4)
 {
     //dummy callback
     (void) UNUSED1;
@@ -70,88 +74,112 @@ static void provisioningCB (void* UNUSED1, size_t UNUSED2, OCProvisionResult_t *
     (void) UNUSED4;
 }
 
-static OCStackResult OTMLoadSecretCallback(OTMContext_t* otmCtx)
+static OCStackResult OTMLoadSecretCallback(OTMContext_t *otmCtx)
 {
     //dummy callback
     (void) otmCtx;
     return OC_STACK_OK;
 }
 
-TEST(OCInitPMTest, NullPath)
+TEST_F(PM, OCProvisionPairwiseDevicesTestNullDevice1)
 {
-    EXPECT_EQ(OC_STACK_OK, OCInitPM(NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCProvisionPairwiseDevices(NULL, SYMMETRIC_PAIR_WISE_KEY,
+              OWNER_PSK_LENGTH_128, NULL, &acl1,
+              pDev2, &acl2, &provisioningCB));
 }
 
-TEST(OCProvisionPairwiseDevicesTest, NullDevice1)
+TEST_F(PM, OCProvisionPairwiseDevicesTestNullDevice2)
 {
-    pDev1.doxm = &defaultDoxm1;
-    uint8_t deviceId1[] = {0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x64};
-    memcpy(pDev1.doxm->deviceID.id, deviceId1, sizeof(deviceId1));
-
-    pDev2.doxm = &defaultDoxm2;
-    uint8_t deviceId2[] = {0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x63};
-    memcpy(pDev2.doxm->deviceID.id, deviceId2, sizeof(deviceId2));
-
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCProvisionPairwiseDevices(NULL, credType,
-                                                              OWNER_PSK_LENGTH_128, NULL, &acl1,
-                                                              &pDev2, &acl2, &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCProvisionPairwiseDevices(NULL, SYMMETRIC_PAIR_WISE_KEY,
+              OWNER_PSK_LENGTH_128, pDev1, &acl1,
+              NULL, &acl2, &provisioningCB));
 }
 
-TEST(OCProvisionPairwiseDevicesTest, NullDevice2)
+TEST_F(PM, OCProvisionPairwiseDevicesTestSamelDeviceId)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCProvisionPairwiseDevices(NULL, credType,
-                                                              OWNER_PSK_LENGTH_128, &pDev1, &acl1,
-                                                              NULL, &acl2, &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCProvisionPairwiseDevices(NULL, SYMMETRIC_PAIR_WISE_KEY,
+              OWNER_PSK_LENGTH_128, pDev1, &acl1,
+              pDev1, &acl2, &provisioningCB));
 }
 
-TEST(OCProvisionPairwiseDevicesTest, SamelDeviceId)
+TEST_F(PM, OCProvisionPairwiseDevicesTestNullCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCProvisionPairwiseDevices(NULL, credType,
-                                                              OWNER_PSK_LENGTH_128, &pDev1, &acl1,
-                                                              &pDev1, &acl2, &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCProvisionPairwiseDevices(NULL, SYMMETRIC_PAIR_WISE_KEY,
+              OWNER_PSK_LENGTH_128, pDev1, &acl1,
+              pDev2, &acl2, NULL));
 }
 
-TEST(OCProvisionPairwiseDevicesTest, NullCallback)
+TEST_F(PM, OCProvisionPairwiseDevicesTestInvalidKeySize)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCProvisionPairwiseDevices(NULL, credType,
-                                                              OWNER_PSK_LENGTH_128, &pDev1, &acl1,
-                                                              &pDev2, &acl2, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCProvisionPairwiseDevices(NULL, SYMMETRIC_PAIR_WISE_KEY,
+              0, pDev1, &acl1,
+              pDev2, &acl2, &provisioningCB));
 }
 
-TEST(OCProvisionPairwiseDevicesTest, InvalidKeySize)
+TEST_F(PM, OCProvisionPairwiseDevices)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCProvisionPairwiseDevices(NULL, credType,
-                                                              0, &pDev1, &acl1,
-                                                              &pDev2, &acl2 ,&provisioningCB));
+    PDMDeleteDevice(&pDev1->doxm->deviceID);
+    PDMDeleteDevice(&pDev2->doxm->deviceID);
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&pDev1->doxm->deviceID));
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&pDev2->doxm->deviceID));
+    EXPECT_EQ(OC_STACK_OK, PDMSetDeviceState(&pDev1->doxm->deviceID, PDM_DEVICE_ACTIVE));
+    EXPECT_EQ(OC_STACK_OK, PDMSetDeviceState(&pDev2->doxm->deviceID, PDM_DEVICE_ACTIVE));
+
+    EXPECT_EQ(OC_STACK_OK, OCProvisionPairwiseDevices(NULL, SYMMETRIC_PAIR_WISE_KEY,
+              OWNER_PSK_LENGTH_256, pDev1, &acl1,
+              pDev2, &acl2, &provisioningCB));
+    EXPECT_EQ(OC_STACK_OK, PDMLinkDevices(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCProvisionPairwiseDevices(NULL, SYMMETRIC_PAIR_WISE_KEY,
+              OWNER_PSK_LENGTH_256, pDev1, &acl1,
+              pDev2, &acl2, &provisioningCB));
 }
 
-TEST(OCUnlinkDevicesTest, NullDevice1)
+TEST_F(PM, OCGetDevInfoFromNetwork)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCUnlinkDevices(NULL, NULL, &pDev2, provisioningCB));
+    OCProvisionDev_t *pOwnedDevList = NULL;
+    OCProvisionDev_t *pUnownedDevList = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCGetDevInfoFromNetwork(4, &pOwnedDevList, &pUnownedDevList));
 }
 
-TEST(OCUnlinkDevicesTest, NullDevice2)
+TEST_F(PM, OCUnlinkDevicesTestNullDevice1)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCUnlinkDevices(NULL, &pDev1, NULL, provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCUnlinkDevices(NULL, NULL, pDev2, provisioningCB));
 }
 
-TEST(OCUnlinkDevicesTest, NullCallback)
+TEST_F(PM, OCUnlinkDevicesTestNullDevice2)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCUnlinkDevices(NULL, &pDev1, &pDev2, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCUnlinkDevices(NULL, pDev1, NULL, provisioningCB));
 }
 
-TEST(OCUnlinkDevicesTest, SamelDeviceId)
+TEST_F(PM, OCUnlinkDevicesTestNullCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCUnlinkDevices(NULL,&pDev1, &pDev1, &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCUnlinkDevices(NULL, pDev1, pDev2, NULL));
 }
 
-TEST(OCRemoveDeviceTest, NullTargetDevice)
+TEST_F(PM, OCUnlinkDevicesTestSamelDeviceId)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCUnlinkDevices(NULL, pDev1, pDev1, provisioningCB));
+}
+
+TEST_F(PM, OCUnlinkDevicesTest)
+{
+    PDMDeleteDevice(&pDev1->doxm->deviceID);
+    PDMDeleteDevice(&pDev2->doxm->deviceID);
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&pDev1->doxm->deviceID));
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&pDev2->doxm->deviceID));
+    EXPECT_EQ(OC_STACK_OK, PDMSetDeviceState(&pDev1->doxm->deviceID, PDM_DEVICE_ACTIVE));
+    EXPECT_EQ(OC_STACK_OK, PDMSetDeviceState(&pDev2->doxm->deviceID, PDM_DEVICE_ACTIVE));
+    EXPECT_EQ(OC_STACK_OK, PDMLinkDevices(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID));
+    EXPECT_EQ(OC_STACK_OK, OCUnlinkDevices(NULL, pDev1, pDev2, provisioningCB));
+}
+
+TEST_F(PM, OCRemoveDeviceTestNullTargetDevice)
 {
     unsigned short waitTime = 10 ;
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCRemoveDevice(NULL, waitTime, NULL, provisioningCB));
 }
 
-TEST(OCRemoveDeviceWithUuidTest, NullTargetDevice)
+TEST_F(PM, OCRemoveDeviceWithUuidTestNullTargetDevice)
 {
     unsigned short waitTime = 10 ;
     OicUuid_t uuid;
@@ -160,33 +188,33 @@ TEST(OCRemoveDeviceWithUuidTest, NullTargetDevice)
     EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCRemoveDeviceWithUuid(NULL, waitTime, &uuid, NULL));
 }
 
-TEST(OCRemoveDeviceTest, NullResultCallback)
+TEST_F(PM, OCRemoveDeviceTestNullResultCallback)
 {
     unsigned short waitTime = 10;
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCRemoveDevice(NULL, waitTime, &pDev1, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCRemoveDevice(NULL, waitTime, pDev1, NULL));
 }
 
-TEST(OCRemoveDeviceTest, ZeroWaitTime)
+TEST_F(PM, OCRemoveDeviceTestZeroWaitTime)
 {
     unsigned short waitTime = 0;
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCRemoveDevice(NULL, waitTime, &pDev1, provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCRemoveDevice(NULL, waitTime, pDev1, provisioningCB));
 }
 
-TEST(OCGetDevInfoFromNetworkTest, NullUnOwnedDeviceInfo)
+TEST_F(PM, OCGetDevInfoFromNetworkTestNullUnOwnedDeviceInfo)
 {
     unsigned short waitTime = 10;
     OCProvisionDev_t *ownedList = NULL;
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCGetDevInfoFromNetwork(waitTime, &ownedList, NULL));
 }
 
-TEST(OCGetDevInfoFromNetworkTest, NullOwnedDeviceInfo)
+TEST_F(PM, OCGetDevInfoFromNetworkTestNullOwnedDeviceInfo)
 {
     unsigned short waitTime = 10;
     OCProvisionDev_t *unownedList = NULL;
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCGetDevInfoFromNetwork(waitTime, NULL, &unownedList));
 }
 
-TEST(OCGetDevInfoFromNetworkTest, ZeroWaitTime)
+TEST_F(PM, OCGetDevInfoFromNetworkTestZeroWaitTime)
 {
     unsigned short waitTime = 0;
     OCProvisionDev_t *ownedList = NULL;
@@ -194,61 +222,205 @@ TEST(OCGetDevInfoFromNetworkTest, ZeroWaitTime)
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCGetDevInfoFromNetwork(waitTime, &ownedList, &unownedList));
 }
 
-TEST(OCGetLinkedStatusTest, NULLDeviceID)
+TEST_F(PM, OCGetLinkedStatusTestNULLDeviceID)
 {
     OCUuidList_t *list = NULL;
     size_t noOfDevices = 0;
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCGetLinkedStatus(NULL, &list, &noOfDevices));
 }
 
-TEST(OCDeleteUuidListTest, NullUuidList)
+TEST_F(PM, OCDeleteUuidListTestNullUuidList)
 {
     OCDeleteUuidList(NULL);
     EXPECT_EQ(1, 1);
 }
 
-TEST(OCDeleteACLListTest, NullACLList)
+TEST_F(PM, OCDeleteACLListTestNullACLList)
 {
     OCDeleteACLList(NULL);
     EXPECT_EQ(1, 1);
 }
 
-TEST(OCDeleteDiscoveredDevicesTest, NullProvisionDevList)
+TEST_F(PM, OCDeleteDiscoveredDevicesTestNullProvisionDevList)
 {
     OCDeleteDiscoveredDevices(NULL);
     EXPECT_EQ(1, 1);
 }
 
-TEST(OCSetOwnerTransferCallbackDataTest, NULLCallback)
+TEST_F(PM, OCSetOwnerTransferCallbackDataTestNULLCallback)
 {
     OicSecOxm_t ownershipTransferMethod = OIC_JUST_WORKS;
     EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCSetOwnerTransferCallbackData(ownershipTransferMethod,
-    NULL));
+              NULL));
 }
 
-TEST(OCSetOwnerTransferCallbackDataTest, InvalidOXMType)
+TEST_F(PM, OCSetOwnerTransferCallbackDataTestInvalidOXMType)
 {
     OicSecOxm_t ownershipTransferMethod = OIC_OXM_COUNT;
     OTMCallbackData_t stOTMCallbackData = { &OTMLoadSecretCallback, NULL, NULL, NULL};
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetOwnerTransferCallbackData(ownershipTransferMethod,
-    &stOTMCallbackData));
+              &stOTMCallbackData));
 }
 
-TEST(OCResetDeviceTest, NULLCallback)
+TEST_F(PM, UpdateLinkResults)
 {
-    unsigned short waitTime = 10;
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCResetDevice(NULL, waitTime, &pDev1, NULL));
+    Linkdata_t *link = (Linkdata_t *)OICMalloc(sizeof(Linkdata_t));
+    link->pDev1 = NULL;
+    link->pDev1Acl = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
+    link->pDev2 = NULL;
+    link->pDev2Acl = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
+//    link->ctx = ctx;
+    link->numOfResults = 2;
+//    link->resultCallback = resultCallback;
+    link->currentCountResults = 0;
+    link->resArr = (OCProvisionResult_t *)OICCalloc(link->numOfResults, sizeof(OCProvisionResult_t));
+
+    UpdateLinkResults(NULL, 1, OC_STACK_OK);
+    UpdateLinkResults(link, 1, OC_STACK_OK);
+    link->pDev1 = createProvisionDev();
+    UpdateLinkResults(link, 1, OC_STACK_OK);
+    link->pDev2 = createProvisionDev();
+    UpdateLinkResults(link, 2, OC_STACK_OK);
+
+    freeProvisionDev((OCProvisionDev_t *)link->pDev1);
+    freeProvisionDev((OCProvisionDev_t *)link->pDev2);
+    OICFree(link->pDev2Acl);
+    OICFree(link->pDev1Acl);
+    OICFree(link->resArr);
+    OICFree(link);
 }
 
-TEST(OCResetDeviceTest, NullTargetDevice)
+static void prcb(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
-    unsigned short waitTime = 10;
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCResetDevice(NULL, waitTime, NULL, provisioningCB));
+    OC_UNUSED(nOfRes);
+    OC_UNUSED(arr);
+    OC_UNUSED(hasError);
+    OC_UNUSED(ctx);
+    OIC_LOG_V(DEBUG, TAG, "%s", __func__);
 }
 
-TEST(OCResetDeviceTest, ZeroWaitTime)
+Linkdata_t *createLinkData()
 {
-    unsigned short waitTime = 0;
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCResetDevice(NULL, waitTime, &pDev1, provisioningCB));
+    Linkdata_t *link = (Linkdata_t *)OICMalloc(sizeof(Linkdata_t));
+    link->pDev1 = createProvisionDev();
+    link->pDev1Acl = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
+    link->pDev2 = createProvisionDev();
+    link->pDev2Acl = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
+    link->numOfResults = 2;
+    link->currentCountResults = 0;
+    link->resArr = (OCProvisionResult_t *) OICMalloc(sizeof(OCProvisionResult_t) * link->numOfResults);
+    link->resultCallback = prcb;
+    return link;
+}
+
+void freeLinkData(Linkdata_t *link)
+{
+    freeProvisionDev((OCProvisionDev_t *)link->pDev2);
+    freeProvisionDev((OCProvisionDev_t *)link->pDev1);
+    OICFree(link->resArr);
+    OICFree(link->pDev2Acl);
+    OICFree(link->pDev1Acl);
+    OICFree(link);
+}
+
+TEST_F(PM, AclProv2CB)
+{
+    OCProvisionResult_t *arr = (OCProvisionResult_t *)OICCalloc(1, sizeof(OCProvisionResult_t));
+
+    AclProv2CB(NULL, 1, arr, false);
+
+    Linkdata_t *link = createLinkData();
+    AclProv2CB((void *)link, 1, arr, false);
+
+    Linkdata_t *link1 = createLinkData();
+    AclProv2CB((void *)link1, 1, arr, true);
+
+    OICFree(arr);
+}
+
+TEST_F(PM, ProvisionCredsCB)
+{
+    Linkdata_t *link = createLinkData();
+    OCProvisionResult_t *arr = (OCProvisionResult_t *)OICCalloc(1, sizeof(OCProvisionResult_t));
+
+    ProvisionCredsCB(NULL, 1, arr, false);
+    ProvisionCredsCB((void *)link, 1, arr, false);
+
+    Linkdata_t *link1 = createLinkData();
+    ProvisionCredsCB((void *)link1, 1, arr, true);
+
+    OICFree(arr);
+}
+
+TEST_F(PM, AclProv1CB)
+{
+    Linkdata_t *link = createLinkData();
+    OCProvisionResult_t *arr = (OCProvisionResult_t *)OICCalloc(1, sizeof(OCProvisionResult_t));
+
+    AclProv1CB(NULL, 1, arr, false);
+    AclProv1CB((void *)link, 1, arr, true);
+
+    Linkdata_t *link1 = createLinkData();
+    AclProv1CB((void *)link1, 1, arr, false);
+
+    OICFree(arr);
+}
+
+TEST_F(PM, RemoveDeviceInfoFromLocal)
+{
+    OCProvisionDev_t *pDev = createProvisionDev();
+    PDMAddDevice(&pDev->doxm->deviceID);
+    EXPECT_EQ(OC_STACK_OK, PDMSetDeviceState(&pDev->doxm->deviceID, PDM_DEVICE_ACTIVE));
+    EXPECT_EQ(OC_STACK_OK, RemoveDeviceInfoFromLocal(pDev));
+    freeProvisionDev(pDev);
+}
+
+static void provisionResultCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(nOfRes);
+    OC_UNUSED(arr);
+    OC_UNUSED(hasError);
+    OIC_LOG_V(DEBUG, TAG, "%s: has error: %d", __func__, hasError);
+}
+TEST_F(PM, OCRemoveDevice)
+{
+    void *ctx = NULL;
+    OCProvisionDev_t *pDev = createProvisionDev();
+//    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&pDev->doxm->deviceID));
+    EXPECT_EQ(OC_STACK_OK, PDMSetDeviceState(&pDev->doxm->deviceID, PDM_DEVICE_ACTIVE));
+    EXPECT_EQ(OC_STACK_OK, OCRemoveDevice(ctx, 1, pDev, provisionResultCB));
+    freeProvisionDev(pDev);
+}
+
+TEST_F(PM, OCRemoveDeviceWithUuid)
+{
+    void *ctx = NULL;
+
+    OicUuid_t *uuid1 = createUuidWith("33333333-3333-3333-3333-000000000000");
+    OicUuid_t *uuid2 = createUuidWith("33333333-3333-3333-3333-000000000001");
+
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(uuid1));
+    EXPECT_EQ(OC_STACK_OK, PDMSetDeviceState(uuid1, PDM_DEVICE_ACTIVE));
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(uuid2));
+    EXPECT_EQ(OC_STACK_OK, PDMSetDeviceState(uuid2, PDM_DEVICE_ACTIVE));
+
+    EXPECT_EQ(OC_STACK_OK, PDMLinkDevices(uuid1, uuid2));
+
+    EXPECT_EQ(OC_STACK_OK, OCRemoveDeviceWithUuid(ctx, 1, uuid1, provisionResultCB));
+    freeUuid(uuid1);
+    freeUuid(uuid2);
+}
+
+TEST_F(PM, OCResetDevice)
+{
+    void *ctx = NULL;
+    OCProvisionDev_t *pDev = createProvisionDev();
+    EXPECT_EQ(OC_STACK_OK, PDMSetDeviceState(&pDev->doxm->deviceID, PDM_DEVICE_ACTIVE));
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCResetDevice(ctx, 0, pDev, provisionResultCB));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, OCResetDevice(ctx, 1, pDev, NULL));
+    EXPECT_EQ(OC_STACK_OK, OCResetDevice(ctx, 1, pDev, provisionResultCB));
+    freeProvisionDev(pDev);
 }
 

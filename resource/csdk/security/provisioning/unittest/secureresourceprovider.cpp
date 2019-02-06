@@ -18,50 +18,113 @@
  *
  * *****************************************************************/
 #include <gtest/gtest.h>
-#include "secureresourceprovider.h"
 
-static OicSecAcl_t acl;
-static OCProvisionDev_t pDev1;
-static OCProvisionDev_t pDev2;
-static OicSecCredType_t credType = SYMMETRIC_PAIR_WISE_KEY;
-static OicSecOxm_t oicSecDoxmJustWorks = OIC_JUST_WORKS;
-static OicSecOxm_t oicSecDoxmRandomPin = OIC_RANDOM_DEVICE_PIN;
-static unsigned short timeout = 60;
-static OicSecDoxm_t defaultDoxm1 =
+#ifdef __cplusplus
+extern "C" {
+#endif
+//#include "../../../connectivity/src/cablockwisetransfer.c"
+#include "../src/secureresourceprovider.c"
+#undef TAG
+#include "../../src/csrresource.c"
+#undef TAG
+#include "../../src/credresource.c"
+#undef TAG
+#include "tools.h"
+#undef TAG
+
+#ifdef __cplusplus
+}
+#endif
+
+#define TAG "SRP"
+
+#define SVR_DB_FILE_NAME "oic_svr_db_client.dat"
+#define PM_DB_FILE_NAME TAG".db"
+
+static OCProvisionDev_t *pDev1 = NULL;
+static OCProvisionDev_t *pDev2 = NULL;
+static unsigned short timeout = 0;
+
+class SRP : public ::testing::Test
 {
-    &oicSecDoxmJustWorks,   /* uint16_t *oxm */
-    1,                      /* size_t oxmLen */
-    OIC_JUST_WORKS,         /* uint16_t oxmSel */
-    SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
-    false,                  /* bool owned */
-    {{0}},                  /* OicUuid_t deviceID */
-    false,                  /* bool dpc */
-    {{0}},                  /* OicUuid_t owner */
-#ifdef MULTIPLE_OWNER
-    NULL,                   /* OicSecSubOwner_t* subOwners */
-    NULL,                   /* OicSecMom_t *mom */
-#endif //MULTIPLE_OWNER
-    {{0}}                   /* rownerID */
+    public:
+        static void SetUpTestCase()
+        {
+            IOT_Init(PM_DB_FILE_NAME);
+
+            pDev1 = createProvisionDev();
+            pDev2 = createProvisionDev();
+            pDev2->endpoint.port = 9998;
+            ConvertStrToUuid("33333355-3333-3333-3333-111111111111", &pDev2->doxm->deviceID);
+
+            timeout = 60;
+        }
+
+        static void TearDownTestCase()
+        {
+            ClientCB *out = NULL;
+            ClientCB *tmp = NULL;
+            LL_FOREACH_SAFE(g_cbList, out, tmp)
+            {
+                LL_DELETE(g_cbList, out);
+            }
+
+            OicSecCred_t *cred = NULL;
+            OicSecCred_t *r = NULL;
+            LL_FOREACH_SAFE(gCred, cred, r)
+            {
+                LL_DELETE(gCred, cred);
+            }
+            /*
+                        size_t len = u_arraylist_length(g_context.dataList);
+                        for (size_t i = len; i > 0; i--)
+                        {
+                            CABlockData_t *removedData = (CABlockData_t *)u_arraylist_remove(g_context.dataList, i - 1);
+                        }*/
+            IOT_DeInit(PM_DB_FILE_NAME);
+        }
+
+        static const ByteArray g_caPublicKey;
+
+        static const ByteArray g_derCode ;
+
+        static ByteArray g_serNum;
+        //static OCProvisionDev_t *gList = NULL;
+        OicSecAcl_t acl;
 };
 
-static OicSecDoxm_t defaultDoxm2 =
+static void provisionResultCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
-    &oicSecDoxmRandomPin,   /* uint16_t *oxm */
-    1,                      /* size_t oxmLen */
-    OIC_RANDOM_DEVICE_PIN,  /* uint16_t oxmSel */
-    SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
-    false,                  /* bool owned */
-    {{0}},                  /* OicUuid_t deviceID */
-    false,                  /* bool dpc */
-    {{0}},                  /* OicUuid_t owner */
-#ifdef MULTIPLE_OWNER
-    NULL,                   /* OicSecSubOwner_t* subOwners */
-    NULL,                   /* OicSecMom_t *mom */
-#endif //MULTIPLE_OWNER
-    {{0}}                   /* rownerID */
-};
+    OC_UNUSED(ctx);
+    OC_UNUSED(nOfRes);
+    OC_UNUSED(arr);
+    OC_UNUSED(hasError);
+    OIC_LOG_V(DEBUG, TAG, "%s: %d", __func__, hasError);
+}
 
-static void provisioningCB (void* UNUSED1, size_t UNUSED2, OCProvisionResult_t *UNUSED3, bool UNUSED4)
+static CredentialData_t *createCredentialData()
+{
+    CredentialData_t *credData = (CredentialData_t *)OICCalloc(1, sizeof(CredentialData_t));
+    memset(credData, 0, sizeof(CredentialData_t));
+    credData->resultCallback = provisionResultCB;
+    credData->numOfResults = 0;
+    credData->resArr = (OCProvisionResult_t *)OICCalloc(2, sizeof(OCProvisionResult_t));
+    credData->deviceInfo[0] = createProvisionDev();
+    credData->deviceInfo[1] = createProvisionDev();
+
+    return credData;
+}
+
+static void freeCredentialData(CredentialData_t *credData)
+{
+    freeProvisionDev((OCProvisionDev_t *)credData->deviceInfo[0]);
+    freeProvisionDev((OCProvisionDev_t *)credData->deviceInfo[1]);
+    OICFree(credData->resArr);
+    OICFree(credData);
+}
+
+static void provisioningCB (void *UNUSED1, size_t UNUSED2, OCProvisionResult_t *UNUSED3,
+                            bool UNUSED4)
 {
     //dummy callback
     (void) UNUSED1;
@@ -70,266 +133,220 @@ static void provisioningCB (void* UNUSED1, size_t UNUSED2, OCProvisionResult_t *
     (void) UNUSED4;
 }
 
-TEST(SRPProvisionACLTest, NullDeviceInfo)
+TEST_F(SRP, SRPProvisionACLNullDeviceInfo)
 {
-    pDev1.doxm = &defaultDoxm1;
-    uint8_t deviceId1[] = {0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x64};
-    memcpy(pDev1.doxm->deviceID.id, deviceId1, sizeof(deviceId1));
-
-    pDev2.doxm = &defaultDoxm2;
-    uint8_t deviceId2[] = {0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x63};
-    memcpy(pDev2.doxm->deviceID.id, deviceId2, sizeof(deviceId2));
-
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, NULL, &acl, OIC_SEC_ACL_V2, &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, NULL, &acl, OIC_SEC_ACL_V2,
+              &provisioningCB));
 }
 
-TEST(SRPProvisionACLTest, NullCallback)
+TEST_F(SRP, SRPProvisionACLNullCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPProvisionACL(NULL, &pDev1, &acl, OIC_SEC_ACL_V2, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPProvisionACL(NULL, pDev1, &acl, OIC_SEC_ACL_V2, NULL));
 }
 
-TEST(SRPProvisionACLTest, NullACL)
+TEST_F(SRP, SRPProvisionACLNullACL)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, &pDev1, NULL, OIC_SEC_ACL_V2, &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, pDev1, NULL, OIC_SEC_ACL_V2,
+              &provisioningCB));
 }
 
-TEST(SRPProvisionACLTest, InvalidVersion)
+TEST_F(SRP, SRPProvisionACLInvalidVersion)
 {
-    EXPECT_EQ(OC_STACK_ERROR, SRPProvisionACL(NULL, &pDev1, &acl, OIC_SEC_ACL_UNKNOWN, &provisioningCB));
+    EXPECT_EQ(OC_STACK_OK, SRPProvisionACL(NULL, pDev1, &acl, OIC_SEC_ACL_UNKNOWN,
+                                           &provisioningCB));
 }
 
-TEST(SRPProvisionCredentialsTest, NullDevice1)
+TEST_F(SRP, SRPProvisionCredentialsNullDevice1)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
-                                                              OWNER_PSK_LENGTH_128, NULL,
-                                                              &pDev2, NULL, NULL, NULL, &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, SYMMETRIC_PAIR_WISE_KEY,
+              OWNER_PSK_LENGTH_128, NULL,
+              pDev2, NULL, NULL, NULL, &provisioningCB));
 }
 
-TEST(SRPProvisionCredentialsTest, SamelDeviceId)
+TEST_F(SRP, SRPProvisionCredentialsSamelDeviceId)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
-                                                              OWNER_PSK_LENGTH_128, &pDev1,
-                                                              &pDev1, NULL, NULL, NULL, &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, SYMMETRIC_PAIR_WISE_KEY,
+              OWNER_PSK_LENGTH_128, pDev1,
+              pDev1, NULL, NULL, NULL, &provisioningCB));
 }
 
-TEST(SRPProvisionCredentialsTest, NullCallback)
+TEST_F(SRP, SRPProvisionCredentialsNullCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPProvisionCredentials(NULL, credType,
-                                                                 OWNER_PSK_LENGTH_128,
-                                                                 &pDev1, &pDev2, NULL, NULL, NULL, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPProvisionCredentials(NULL, SYMMETRIC_PAIR_WISE_KEY,
+              OWNER_PSK_LENGTH_128,
+              pDev1, pDev2, NULL, NULL, NULL, NULL));
 }
 
-TEST(SRPProvisionCredentialsTest, InvalidKeySize)
+TEST_F(SRP, SRPProvisionCredentialsInvalidKeySize)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
-                                                                0, &pDev1, &pDev2, NULL, NULL, NULL, 
-                                                                &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, SYMMETRIC_PAIR_WISE_KEY,
+              0, pDev1, pDev2, NULL, NULL, NULL,
+              &provisioningCB));
 }
 
-TEST(SRPUnlinkDevicesTest, NullDevice1)
+TEST_F(SRP, SRPProvisionCredentialsFull)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, NULL, &pDev2, provisioningCB));
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&pDev1->doxm->deviceID));
+    EXPECT_EQ(OC_STACK_OK, PDMSetDeviceState(&pDev1->doxm->deviceID, PDM_DEVICE_ACTIVE));
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&pDev2->doxm->deviceID));
+    EXPECT_EQ(OC_STACK_OK, PDMSetDeviceState(&pDev2->doxm->deviceID, PDM_DEVICE_ACTIVE));
+//    EXPECT_EQ(OC_STACK_OK, PDMLinkDevices(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID));
+    EXPECT_EQ(OC_STACK_OK, SRPProvisionCredentials(NULL, SYMMETRIC_PAIR_WISE_KEY,
+              OWNER_PSK_LENGTH_128, pDev1, pDev2, getPemKey(), NULL, NULL,
+              &provisioningCB));
+    EXPECT_EQ(OC_STACK_OK, SRPProvisionCredentials(NULL, SIGNED_ASYMMETRIC_KEY,
+              OWNER_PSK_LENGTH_128, pDev1, pDev2, getPemKey(), NULL, NULL,
+              &provisioningCB));
 }
 
-TEST(SRPUnlinkDevicesTest, SamelDeviceId)
+
+TEST_F(SRP, SRPUnlinkDevicesTestNullDevice1)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, &pDev1, &pDev1, provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, NULL, pDev2, provisioningCB));
 }
 
-TEST(SRPUnlinkDevicesTest, NullCallback)
+TEST_F(SRP, SRPUnlinkDevicesTestSamelDeviceId)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPUnlinkDevices(NULL, &pDev1, &pDev2, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, pDev1, pDev1, provisioningCB));
 }
 
-TEST(SRPRemoveDeviceTest, NullTargetDevice)
+TEST_F(SRP, SRPUnlinkDevicesTestNullCallback)
+{
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPUnlinkDevices(NULL, pDev1, pDev2, NULL));
+}
+
+TEST_F(SRP, SRPRemoveDeviceTestNullTargetDevice)
 {
     unsigned short waitTime = 10 ;
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPRemoveDevice(NULL, waitTime, NULL, provisioningCB));
 }
 
-TEST(SRPRemoveDeviceTest, NullResultCallback)
+TEST_F(SRP, SRPRemoveDeviceTestNullResultCallback)
 {
     unsigned short waitTime = 10;
     OCProvisionDev_t dev1;
     EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPRemoveDevice(NULL, waitTime, &dev1, NULL));
 }
 
-TEST(SRPRemoveDeviceTest, ZeroWaitTime)
+TEST_F(SRP, SRPRemoveDeviceTestZeroWaitTime)
 {
     OCProvisionDev_t dev1;
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPRemoveDevice(NULL, 0, &dev1, NULL));
 }
-
-const char *SECURE_RESOURCE_PROVIDER_TEST_FILE_NAME = "secureresourceprovider.dat";
-OCPersistentStorage ps = { NULL, NULL, NULL, NULL, NULL};
-
-static FILE* TestFopen(const char *path, const char *mode)
+/*
+TEST_F(SRP, SRPRemoveDeviceFull)
 {
-    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
-    {
-        return fopen(SECURE_RESOURCE_PROVIDER_TEST_FILE_NAME, mode);
-    }
-    else
-    {
-        return fopen(path, mode);
-    }
+    PDMSetDeviceState(&pDev1->doxm->deviceID, PDM_DEVICE_ACTIVE);
+    PDMSetDeviceState(&pDev2->doxm->deviceID, PDM_DEVICE_ACTIVE);
+    PDMLinkDevices(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID);
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPRemoveDevice(NULL, 4, pDev1, provisioningCB));
+}
+*/
+void trustCertChainChangeCB(void *ctx, uint16_t credId, uint8_t *trustCertChain, size_t chainSize)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(credId);
+    OC_UNUSED(trustCertChain);
+    OC_UNUSED(chainSize);
+    OIC_LOG_V(DEBUG, TAG, "%s", __func__);
 }
 
-void SetPersistentHandler(OCPersistentStorage *persistentStorage)
+TEST_F(SRP, SRPSaveTrustCertChainDER)
 {
-    if(persistentStorage)
-    {
-        persistentStorage->open = TestFopen;
-        persistentStorage->read = fread;
-        persistentStorage->write = fwrite;
-        persistentStorage->close = fclose;
-        persistentStorage->unlink = remove;
-    }
-}
-
-class SRPTest : public ::testing::Test
-{
-public:
-    static void SetUpTestCase()
-    {
-        SetPersistentHandler(&ps);
-        OCStackResult res = OCRegisterPersistentStorageHandler(&ps);
-        ASSERT_TRUE(res == OC_STACK_OK);
-        res = OCInit(NULL, 0, OC_SERVER);
-        ASSERT_TRUE(res == OC_STACK_OK);
-    }
-
-    static void TearDownTestCase()
-    {
-        OCStackResult res = OCStop();
-        ASSERT_TRUE(res == OC_STACK_OK);
-    }
-
-    static const ByteArray g_caPublicKey;
-
-    static const ByteArray g_derCode ;
-
-    static ByteArray g_serNum;
-};
-
-static uint8_t certData[] = {
-        0x30, 0x82, 0x02, 0x39, 0x30, 0x82, 0x01, 0xdf, 0x02, 0x01, 0x01, 0x30, 0x0a, 0x06, 0x08, 0x2a,
-        0x86, 0x48, 0xce, 0x3d, 0x04, 0x03, 0x02, 0x30, 0x7c, 0x31, 0x0b, 0x30, 0x09, 0x06, 0x03, 0x55,
-        0x04, 0x06, 0x13, 0x02, 0x55, 0x53, 0x31, 0x12, 0x30, 0x10, 0x06, 0x03, 0x55, 0x04, 0x08, 0x0c,
-        0x09, 0x53, 0x6f, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x74, 0x65, 0x31, 0x11, 0x30, 0x0f, 0x06, 0x03,
-        0x55, 0x04, 0x07, 0x0c, 0x08, 0x53, 0x6f, 0x6d, 0x65, 0x63, 0x69, 0x74, 0x79, 0x31, 0x0b, 0x30,
-        0x09, 0x06, 0x03, 0x55, 0x04, 0x0a, 0x0c, 0x02, 0x42, 0x42, 0x31, 0x16, 0x30, 0x14, 0x06, 0x03,
-        0x55, 0x04, 0x0b, 0x0c, 0x0d, 0x53, 0x65, 0x71, 0x75, 0x72, 0x69, 0x74, 0x79, 0x20, 0x50, 0x61,
-        0x72, 0x74, 0x31, 0x0b, 0x30, 0x09, 0x06, 0x03, 0x55, 0x04, 0x03, 0x0c, 0x02, 0x6f, 0x62, 0x31,
-        0x14, 0x30, 0x12, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x01, 0x16, 0x05,
-        0x6f, 0x62, 0x40, 0x62, 0x62, 0x30, 0x1e, 0x17, 0x0d, 0x31, 0x36, 0x30, 0x38, 0x31, 0x35, 0x31,
-        0x33, 0x31, 0x31, 0x31, 0x37, 0x5a, 0x17, 0x0d, 0x31, 0x39, 0x30, 0x35, 0x31, 0x32, 0x31, 0x33,
-        0x31, 0x31, 0x31, 0x37, 0x5a, 0x30, 0x81, 0xd4, 0x31, 0x0b, 0x30, 0x09, 0x06, 0x03, 0x55, 0x04,
-        0x06, 0x13, 0x02, 0x55, 0x41, 0x31, 0x0c, 0x30, 0x0a, 0x06, 0x03, 0x55, 0x04, 0x08, 0x0c, 0x03,
-        0x41, 0x73, 0x64, 0x31, 0x0f, 0x30, 0x0d, 0x06, 0x03, 0x55, 0x04, 0x07, 0x0c, 0x06, 0x47, 0x6f,
-        0x74, 0x68, 0x61, 0x6d, 0x31, 0x0b, 0x30, 0x09, 0x06, 0x03, 0x55, 0x04, 0x0a, 0x0c, 0x02, 0x5a,
-        0x5a, 0x31, 0x11, 0x30, 0x0f, 0x06, 0x03, 0x55, 0x04, 0x0b, 0x0c, 0x08, 0x42, 0x65, 0x61, 0x6d,
-        0x54, 0x65, 0x61, 0x6d, 0x31, 0x1c, 0x30, 0x1a, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d,
-        0x01, 0x09, 0x01, 0x16, 0x0d, 0x72, 0x61, 0x69, 0x6c, 0x40, 0x6d, 0x61, 0x69, 0x6c, 0x2e, 0x63,
-        0x6f, 0x6d, 0x31, 0x32, 0x30, 0x30, 0x06, 0x03, 0x55, 0x04, 0x03, 0x0c, 0x29, 0x75, 0x75, 0x69,
-        0x64, 0x3a, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x2d, 0x33, 0x32, 0x33, 0x32, 0x2d,
-        0x33, 0x32, 0x33, 0x32, 0x2d, 0x33, 0x32, 0x33, 0x32, 0x2d, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32,
-        0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x31, 0x34, 0x30, 0x32, 0x06, 0x03, 0x55, 0x1d, 0x11, 0x0c,
-        0x2b, 0x75, 0x73, 0x65, 0x72, 0x69, 0x64, 0x3a, 0x36, 0x37, 0x36, 0x37, 0x36, 0x37, 0x36, 0x37,
-        0x2d, 0x36, 0x37, 0x36, 0x37, 0x2d, 0x36, 0x37, 0x36, 0x37, 0x2d, 0x36, 0x37, 0x36, 0x37, 0x2d,
-        0x36, 0x37, 0x36, 0x37, 0x36, 0x37, 0x36, 0x37, 0x36, 0x37, 0x36, 0x37, 0x30, 0x59, 0x30, 0x13,
-        0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d,
-        0x03, 0x01, 0x07, 0x03, 0x42, 0x00, 0x04, 0xf7, 0x13, 0x5c, 0x73, 0x72, 0xce, 0x10, 0xe5, 0x09,
-        0x97, 0x9a, 0xf8, 0xf2, 0x70, 0xa6, 0x3d, 0x89, 0xf5, 0xc5, 0xe4, 0x44, 0xe2, 0x4a, 0xb6, 0x61,
-        0xa8, 0x12, 0x8d, 0xb4, 0xdc, 0x2b, 0x47, 0x84, 0x60, 0x0c, 0x25, 0x66, 0xe9, 0xe0, 0xe5, 0xac,
-        0x22, 0xbf, 0x15, 0xdc, 0x71, 0xb1, 0x88, 0x4f, 0x16, 0xbf, 0xc2, 0x77, 0x37, 0x76, 0x3f, 0xe0,
-        0x67, 0xc6, 0x1d, 0x23, 0xfe, 0x7c, 0x8b, 0x30, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d,
-        0x04, 0x03, 0x02, 0x03, 0x48, 0x00, 0x30, 0x45, 0x02, 0x20, 0x47, 0xcc, 0x41, 0x8a, 0x27, 0xc7,
-        0xd0, 0xaa, 0xb4, 0xab, 0x85, 0xbf, 0x09, 0x4d, 0x06, 0xd7, 0x7e, 0x0d, 0x39, 0xf9, 0x36, 0xa1,
-        0x3d, 0x96, 0x23, 0xe2, 0x24, 0x64, 0x98, 0x63, 0x21, 0xba, 0x02, 0x21, 0x00, 0xe5, 0x8f, 0x7f,
-        0xf1, 0xa6, 0x82, 0x03, 0x6a, 0x18, 0x7a, 0x54, 0xe7, 0x0e, 0x25, 0x77, 0xd8, 0x46, 0xfa, 0x96,
-        0x8a, 0x7e, 0x14, 0xc4, 0xcb, 0x21, 0x32, 0x3e, 0x89, 0xd9, 0xba, 0x8c, 0x3f
-    };
-
-static uint8_t keyData[] = {
-	    0x67, 0xc6, 0x1d, 0x23, 0xfe, 0x7c, 0x8b, 0x30, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d,
-        0x04, 0x03, 0x02, 0x03, 0x48, 0x00, 0x30, 0x45, 0x02, 0x20, 0x47, 0xcc, 0x41, 0x8a, 0x27, 0xc7,
-        0xd0, 0xaa, 0xb4, 0xab, 0x85, 0xbf, 0x09, 0x4d, 0x06, 0xd7, 0x7e, 0x0d, 0x39, 0xf9, 0x36, 0xa1,
-        0x3d, 0x96, 0x23, 0xe2, 0x24, 0x64, 0x98, 0x63, 0x21, 0xba, 0x02, 0x21
-    };
-
-TEST_F(SRPTest, SRPSaveTrustCertChainDER)
-{
-    int result;
     uint16_t credId;
 
-    result = SRPSaveTrustCertChain(certData, sizeof(certData), OIC_ENCODING_DER, &credId);
-    EXPECT_EQ(OC_STACK_OK, result);
+    SRPRegisterTrustCertChainNotifier(NULL, trustCertChainChangeCB);
+    EXPECT_EQ(OC_STACK_OK, SRPSaveTrustCertChain(certData(), certDataLen(), OIC_ENCODING_DER, &credId));
 }
 
-TEST_F(SRPTest, SRPSaveTrustCertChainPEM)
+TEST_F(SRP, SRPSaveTrustCertChainPEM)
 {
-    int result;
     uint16_t credId;
 
-    result = SRPSaveTrustCertChain(certData, sizeof(certData), OIC_ENCODING_PEM, &credId);
-    EXPECT_EQ(OC_STACK_OK, result);
+    EXPECT_EQ(OC_STACK_OK, SRPSaveTrustCertChain((const uint8_t *)getPemCert(), certDataLen(),
+              OIC_ENCODING_PEM, &credId));
 }
 
-TEST_F(SRPTest, SRPSaveTrustCertChainNullCertData)
+TEST_F(SRP, SRPSaveTrustCertChainNullCertData)
 {
-    int result;
     uint16_t credId;
 
-    result = SRPSaveTrustCertChain(NULL, sizeof(certData), OIC_ENCODING_DER, &credId);
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPSaveTrustCertChain(NULL, certDataLen(), OIC_ENCODING_DER,
+              &credId));
+}
+
+TEST_F(SRP, SRPSaveTrustCertChainNullCredId)
+{
+    int result;
+
+    result = SRPSaveTrustCertChain(certData(), certDataLen(), OIC_ENCODING_DER, NULL);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, result);
+    RemoveAllCredentials();
 }
 
-TEST_F(SRPTest, SRPSaveTrustCertChainNullCredId)
+TEST_F(SRP, SRPSaveTrustCertChainDoxm)
 {
-    int result;
+    uint16_t credId;
 
-    result = SRPSaveTrustCertChain(certData, sizeof(certData), OIC_ENCODING_DER, NULL);
-
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, result);
+    DeInitDoxmResource();
+    EXPECT_EQ(OC_STACK_ERROR, SRPSaveTrustCertChain(certData(), certDataLen(), OIC_ENCODING_DER,
+              &credId));
+    InitDoxmResource();
 }
 
-TEST_F(SRPTest, SRPSaveOwnCertChainTest)
+TEST_F(SRP, SRPSaveTrustCertChainPstat)
 {
-    int result;
+    uint16_t credId;
+
+    DeInitPstatResource();
+    EXPECT_EQ(OC_STACK_OK, SRPSaveTrustCertChain(certData(), certDataLen(), OIC_ENCODING_DER, &credId));
+    InitPstatResource();
+}
+
+TEST_F(SRP, SRPSaveTrustCertChainUnknowEnc)
+{
+    uint16_t credId;
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPSaveTrustCertChain(certData(), certDataLen(),
+              OIC_ENCODING_UNKNOW, &credId));
+}
+
+
+TEST_F(SRP, SRPSaveOwnCertChainTest)
+{
     uint16_t credId;
     OicSecKey_t cert;
     OicSecKey_t key;
 
-    cert.data = certData;
-    cert.len = sizeof(certData);
+    cert.data = certData();
+    cert.len = certDataLen();
     cert.encoding = OIC_ENCODING_DER;
 
-    key.data = keyData;
-    key.len = sizeof(keyData);
+    key.data = keyData();
+    key.len = keyDataLen();
     key.encoding = OIC_ENCODING_DER;
 
-    result = SRPSaveOwnCertChain(&cert, &key, &credId);
-
-    EXPECT_EQ(OC_STACK_OK, result);
+    EXPECT_EQ(OC_STACK_OK, SRPSaveOwnCertChain(&cert, &key, &credId));
+    RemoveAllCredentials();
 }
 
-TEST_F(SRPTest, SRPSaveOwnCertChainTestNullCert)
+TEST_F(SRP, SRPSaveOwnCertChainTestNullCert)
 {
     int result;
     uint16_t credId;
     OicSecKey_t key;
 
-    key.data = keyData;
-    key.len = sizeof(keyData);
+    key.data = keyData();
+    key.len = keyDataLen();
 
     result = SRPSaveOwnCertChain(NULL, &key, &credId);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, result);
+    RemoveAllCredentials();
 }
 
-TEST_F(SRPTest, SRPSaveOwnCertChainTestNullCertData)
+TEST_F(SRP, SRPSaveOwnCertChainTestNullCertData)
 {
     int result;
     uint16_t credId;
@@ -337,64 +354,100 @@ TEST_F(SRPTest, SRPSaveOwnCertChainTestNullCertData)
     OicSecKey_t key;
 
     cert.data = NULL;
-    cert.len = sizeof(certData);
-    key.data = keyData;
-    key.len = sizeof(keyData);
+    cert.len = certDataLen();
+    key.data = keyData();
+    key.len = keyDataLen();
 
     result = SRPSaveOwnCertChain(&cert, &key, &credId);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, result);
+    RemoveAllCredentials();
 }
 
-TEST_F(SRPTest, SRPSaveOwnCertChainTestNullKey)
+TEST_F(SRP, SRPSaveOwnCertChainTestNullKey)
 {
     int result;
     uint16_t credId;
     OicSecKey_t cert;
 
-    cert.data = certData;
-    cert.len = sizeof(certData);
+    cert.data = certData();
+    cert.len = certDataLen();
 
     result = SRPSaveOwnCertChain(&cert, NULL, &credId);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, result);
+    RemoveAllCredentials();
 }
 
-TEST_F(SRPTest, SRPSaveOwnCertChainTestNullKeyData)
+TEST_F(SRP, SRPSaveOwnCertChainTestNullKeyData)
 {
     int result;
     uint16_t credId;
     OicSecKey_t cert;
     OicSecKey_t key;
 
-    cert.data = certData;
-    cert.len = sizeof(certData);
+    cert.data = certData();
+    cert.len = certDataLen();
     key.data = NULL;
-    key.len = sizeof(keyData);
+    key.len = keyDataLen();
 
     result = SRPSaveOwnCertChain(&cert, &key, &credId);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, result);
+    RemoveAllCredentials();
 }
 
-TEST_F(SRPTest, SRPSaveOwnCertChainTestNullCredId)
+
+OicSecKey_t *getCert()
+{
+    OicSecKey_t *cert = (OicSecKey_t *)OICCalloc(1, sizeof(OicSecKey_t));
+    cert->data = certData();
+    cert->len = certDataLen();
+    return cert;
+}
+
+OicSecKey_t *getKey()
+{
+    OicSecKey_t *key = (OicSecKey_t *)OICCalloc(1, sizeof(OicSecKey_t));
+    key->data = keyData();
+    key->len = keyDataLen();
+    return key;
+}
+
+TEST_F(SRP, SRPSaveOwnCertChainTestDoxm)
+{
+    uint16_t credId;
+    OicSecKey_t *cert = getCert();
+    OicSecKey_t *key = getKey();
+
+    DeInitDoxmResource();
+    EXPECT_EQ(OC_STACK_ERROR, saveCertChain(cert, key, &credId, "core.der"));
+    InitDoxmResource();
+    RemoveAllCredentials();
+    OICFree(cert);
+    OICFree(key);
+}
+
+
+TEST_F(SRP, SRPSaveOwnCertChainTestNullCredId)
 {
     int result;
     OicSecKey_t cert;
     OicSecKey_t key;
 
-    cert.data = certData;
-    cert.len = sizeof(certData);
-    key.data = keyData;
-    key.len = sizeof(keyData);
+    cert.data = certData();
+    cert.len = certDataLen();
+    key.data = keyData();
+    key.len = keyDataLen();
 
     result = SRPSaveOwnCertChain(&cert, &key, NULL);
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, result);
+    RemoveAllCredentials();
 }
 
 
-TEST(SRPProvisionTrustCertChainTest, SRPProvisionTrustCertChainNullSelectedDeviceInfo)
+TEST_F(SRP, SRPProvisionTrustCertChainNullSelectedDeviceInfo)
 {
     int result;
     int ctx;
@@ -403,9 +456,10 @@ TEST(SRPProvisionTrustCertChainTest, SRPProvisionTrustCertChainNullSelectedDevic
 
     result = SRPProvisionTrustCertChain(&ctx, type, credId, NULL, provisioningCB);
     EXPECT_EQ(OC_STACK_INVALID_PARAM, result);
+    RemoveAllCredentials();
 }
 
-TEST(SRPProvisionTrustCertChainTest, SRPProvisionTrustCertChainNullResultCallback)
+TEST_F(SRP, SRPProvisionTrustCertChainNullResultCallback)
 {
     int result;
     int ctx;
@@ -415,9 +469,10 @@ TEST(SRPProvisionTrustCertChainTest, SRPProvisionTrustCertChainNullResultCallbac
 
     result = SRPProvisionTrustCertChain(&ctx, type, credId, &deviceInfo, NULL);
     EXPECT_EQ(OC_STACK_INVALID_CALLBACK, result);
+    RemoveAllCredentials();
 }
 
-TEST(SRPProvisionTrustCertChainTest, SRPProvisionTrustCertChainInvalidOicSecCredType)
+TEST_F(SRP, SRPProvisionTrustCertChainInvalidOicSecCredType)
 {
     int result;
     int ctx;
@@ -427,9 +482,21 @@ TEST(SRPProvisionTrustCertChainTest, SRPProvisionTrustCertChainInvalidOicSecCred
 
     result = SRPProvisionTrustCertChain(&ctx, type, credId, &deviceInfo, provisioningCB);
     EXPECT_EQ(OC_STACK_INVALID_PARAM, result);
+    RemoveAllCredentials();
 }
 
-TEST_F(SRPTest, SRPProvisionTrustCertChainNoResource)
+
+static void provisioningCB1 (void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(nOfRes);
+    OC_UNUSED(arr);
+    OC_UNUSED(hasError);
+    OIC_LOG_V(DEBUG, TAG, "%s has error: %d", __func__, hasError);
+    RemoveAllCredentials();
+}
+
+TEST_F(SRP, SRPProvisionTrustCertChainNoResource)
 {
     int result;
     int ctx;
@@ -437,70 +504,815 @@ TEST_F(SRPTest, SRPProvisionTrustCertChainNoResource)
     uint16_t credId = 0;
     OCProvisionDev_t deviceInfo;
 
-    result = SRPProvisionTrustCertChain(&ctx, type, credId, &deviceInfo, provisioningCB);
+    memset(&deviceInfo, 0, sizeof(OCProvisionDev_t));
+
+    result = SRPProvisionTrustCertChain(&ctx, type, credId, &deviceInfo, provisioningCB1);
     EXPECT_EQ(OC_STACK_ERROR, result);
 }
 
-TEST(SRPProvisionTrustCertChainTest, SRPGetACLResourceNoCallback)
+TEST_F(SRP, SRPGetACLResourceNoCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPGetACLResource(NULL, &pDev1, OIC_SEC_ACL_V2, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPGetACLResource(NULL, pDev1, OIC_SEC_ACL_V2, NULL));
 }
 
-TEST(SRPProvisionTrustCertChainTest, SRPGetACLResourceNoDevice)
+TEST_F(SRP, SRPGetACLResourceNoDevice)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPGetACLResource(NULL, NULL, OIC_SEC_ACL_V2, provisioningCB));
 }
 
-TEST(SRPProvisionTrustCertChainTest, SRPGetCredResourceNoCallback)
+TEST_F(SRP, SRPGetCredResourceNoCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPGetCredResource(NULL, &pDev1, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPGetCredResource(NULL, pDev1, NULL));
 }
 
-TEST(SRPProvisionTrustCertChainTest, SRPGetCredResourceNoDevice)
+TEST_F(SRP, SRPGetCredResourceNoDevice)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPGetCredResource(NULL, NULL, provisioningCB));
 }
 
-TEST(SRPProvisionTrustCertChainTest, SRPResetDeviceNoCallback)
+TEST_F(SRP, SRPResetDeviceNoCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPResetDevice(&pDev1, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPResetDevice(pDev1, NULL));
 }
 
-TEST(SRPProvisionTrustCertChainTest, SRPResetDeviceNoDevice)
+TEST_F(SRP, SRPResetDeviceNoDevice)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPResetDevice(NULL, provisioningCB));
 }
 
-TEST(SRPProvisionTrustCertChainTest, SRPSyncDeviceNoCallback)
+TEST_F(SRP, SRPSyncDeviceNoCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPSyncDevice(NULL, timeout, &pDev1, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPSyncDevice(NULL, timeout, pDev1, NULL));
 }
 
-TEST(SRPProvisionTrustCertChainTest, SRPSyncDeviceNoDevice)
+TEST_F(SRP, SRPSyncDeviceNoDevice)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPSyncDevice(NULL, timeout, NULL, provisioningCB));
 }
 
-TEST(SRPProvisionTrustCertChainTest, SRPSyncDeviceZeroWaitTime)
+TEST_F(SRP, SRPSyncDeviceZeroWaitTime)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPSyncDevice(NULL, 0, &pDev1, provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPSyncDevice(NULL, 0, pDev1, provisioningCB));
 }
 
-TEST(SRPProvisionTrustCertChainTest, SRPRemoveDeviceWithoutDiscoveryNoCallback)
+TEST_F(SRP, SRPProvisionTrustCertChainFull)
+{
+    OCProvisionDev_t *pDev = createProvisionDev();
+    /*
+        OicUuid_t *uuid = createUuid();
+        EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&pDev->doxm->deviceID));
+        EXPECT_EQ(OC_STACK_OK, PDMSetDeviceState(&pDev->doxm->deviceID, PDM_DEVICE_ACTIVE));
+        EXPECT_EQ(OC_STACK_OK, PDMAddDevice(uuid));
+        EXPECT_EQ(OC_STACK_OK, PDMSetDeviceState(uuid, PDM_DEVICE_ACTIVE));
+        EXPECT_EQ(OC_STACK_OK, PDMLinkDevices(&pDev->doxm->deviceID, uuid));
+    */
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPSyncDevice(NULL, 0, pDev, provisioningCB));
+}
+
+TEST_F(SRP, SRPRemoveDeviceWithoutDiscoveryNoCallback)
 {
     EXPECT_EQ(OC_STACK_INVALID_CALLBACK,
-              SRPRemoveDeviceWithoutDiscovery(NULL, &pDev1, &pDev2, NULL));
+              SRPRemoveDeviceWithoutDiscovery(NULL, pDev1, pDev2, NULL));
 }
 
-TEST(SRPProvisionTrustCertChainTest, SRPRemoveDeviceWithoutDiscoveryNoDevice)
+TEST_F(SRP, SRPRemoveDeviceWithoutDiscoveryNoDevice)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM,
-              SRPRemoveDeviceWithoutDiscovery(NULL, &pDev1, NULL, provisioningCB));
+              SRPRemoveDeviceWithoutDiscovery(NULL, pDev1, NULL, provisioningCB));
 }
 
-TEST(SRPProvisionTrustCertChainTest, SRPRemoveDeviceWithoutDiscoveryNoDeviceList)
+TEST_F(SRP, SRPRemoveDeviceWithoutDiscoveryNoDeviceList)
 {
     EXPECT_EQ(OC_STACK_CONTINUE,
-              SRPRemoveDeviceWithoutDiscovery(NULL, NULL, &pDev2, provisioningCB));
+              SRPRemoveDeviceWithoutDiscovery(NULL, NULL, pDev2, provisioningCB));
 }
 
+TEST_F(SRP, SRPRemoveDeviceWithoutDiscoveryFull)
+{
+    PDMSetDeviceState(&pDev1->doxm->deviceID, PDM_DEVICE_ACTIVE);
+    PDMSetDeviceState(&pDev2->doxm->deviceID, PDM_DEVICE_ACTIVE);
+    PDMLinkDevices(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID);
+    OCProvisionDev_t *pOwnedDevList = NULL;
+    LL_PREPEND(pOwnedDevList, pDev1);
+    LL_PREPEND(pOwnedDevList, pDev2);
+    EXPECT_EQ(OC_STACK_OK, SRPRemoveDeviceWithoutDiscovery(NULL, pDev1, pOwnedDevList, provisioningCB));
+}
+
+
+TEST_F(SRP, registerResultForCredProvisioningFull)
+{
+    OCStackResult stackresult = OC_STACK_OK;
+    CredProvisioningResultCause_t cause = DEVICE_LOCAL_FINISHED;
+    CredentialData_t *credData = (CredentialData_t *)OICCalloc(1, sizeof(CredentialData_t));
+    credData->resArr = (OCProvisionResult_t *)OICCalloc(1, sizeof(OCProvisionResult_t));
+    registerResultForCredProvisioning(credData, stackresult, cause);
+    OICFree(credData->resArr);
+    OICFree(credData);
+    RemoveAllCredentials();
+}
+
+TEST_F(SRP, provisionCredentialCB2Full)
+{
+    CredentialData_t *credData = createCredentialData();
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    clientResponse->result = OC_STACK_RESOURCE_CHANGED;
+
+    PDMSetDeviceState(&credData->deviceInfo[0]->doxm->deviceID, PDM_DEVICE_ACTIVE);
+    PDMSetDeviceState(&credData->deviceInfo[1]->doxm->deviceID, PDM_DEVICE_ACTIVE);
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, provisionCredentialCB2((void *)credData, NULL,
+              clientResponse));
+    clientResponse->result = OC_STACK_OK;
+    CredentialData_t *credData1 = createCredentialData();
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, provisionCredentialCB2((void *)credData1, NULL,
+              clientResponse));
+
+    OICFree(clientResponse);
+    RemoveAllCredentials();
+}
+
+TEST_F(SRP, provisionCredentialCB1Full)
+{
+    CredentialData_t *credData = createCredentialData();
+    OCDoHandle UNUSED = NULL;
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, provisionCredentialCB1((void *)credData, UNUSED,
+              NULL));
+
+    clientResponse->result = OC_STACK_RESOURCE_CHANGED;
+    CredentialData_t *credData1 = createCredentialData();
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, provisionCredentialCB1((void *)credData1, UNUSED,
+              clientResponse));
+
+    clientResponse->result = OC_STACK_OK;
+    CredentialData_t *credData2 = createCredentialData();
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, provisionCredentialCB1((void *)credData2, UNUSED,
+              clientResponse));
+
+//    OICFree(clientResponse);
+    RemoveAllCredentials();
+}
+
+TEST_F(SRP, ProvisionCredentialDosCB2T1)
+{
+    CredentialData_t *credData = createCredentialData();
+    ConvertStrToUuid("33333333-3333-3333-3333-222222222211", &credData->deviceInfo[0]->doxm->deviceID);
+    ConvertStrToUuid("33333333-3333-3333-1111-222222222211", &credData->deviceInfo[1]->doxm->deviceID);
+    PDMAddDevice(&credData->deviceInfo[0]->doxm->deviceID);
+    PDMAddDevice(&credData->deviceInfo[1]->doxm->deviceID);
+    PDMSetDeviceState(&credData->deviceInfo[0]->doxm->deviceID, PDM_DEVICE_ACTIVE);
+    PDMSetDeviceState(&credData->deviceInfo[1]->doxm->deviceID, PDM_DEVICE_ACTIVE);
+
+
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->ctx = credData;
+    ctx->type = PSK_TYPE;
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    clientResponse->result = OC_STACK_RESOURCE_CHANGED;
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionCredentialDosCB2((void *)ctx, NULL,
+              clientResponse));
+
+    OICFree(clientResponse);
+    RemoveAllCredentials();
+}
+
+TEST_F(SRP, ProvisionCredentialDosCB2T2)
+{
+    CredentialData_t *credData = createCredentialData();
+    ConvertStrToUuid("33333333-3333-3333-3333-222222222211", &credData->deviceInfo[0]->doxm->deviceID);
+    ConvertStrToUuid("33333333-3333-3333-1111-222222222211", &credData->deviceInfo[1]->doxm->deviceID);
+    PDMAddDevice(&credData->deviceInfo[0]->doxm->deviceID);
+    PDMAddDevice(&credData->deviceInfo[1]->doxm->deviceID);
+    PDMSetDeviceState(&credData->deviceInfo[0]->doxm->deviceID, PDM_DEVICE_ACTIVE);
+    PDMSetDeviceState(&credData->deviceInfo[1]->doxm->deviceID, PDM_DEVICE_ACTIVE);
+
+
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->ctx = credData;
+    ctx->type = PSK_TYPE;
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    clientResponse->result = OC_STACK_RESOURCE_CHANGED;
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionCredentialDosCB2((void *)ctx, NULL, NULL));
+
+    OICFree(clientResponse);
+    RemoveAllCredentials();
+}
+
+
+TEST_F(SRP, ProvisionCredentialDosCB1Full)
+{
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->ctx = createCredentialData();
+    ctx->type = PSK_TYPE;
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    clientResponse->result = OC_STACK_RESOURCE_CHANGED;
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionCredentialDosCB1((void *)ctx, NULL,
+              clientResponse));
+//    OICFree(clientResponse);
+    RemoveAllCredentials();
+}
+
+TEST_F(SRP, ProvisionCredentialDosCB1ClientNull)
+{
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->ctx = createCredentialData();
+    ctx->type = PSK_TYPE;
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    clientResponse->result = OC_STACK_RESOURCE_CHANGED;
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionCredentialDosCB1((void *)ctx, NULL, NULL));
+//    OICFree(clientResponse);
+    RemoveAllCredentials();
+}
+
+
+static OCStackApplicationResult clientResponseHandler(void *context, OCDoHandle handle,
+        OCClientResponse *clientResponse)
+{
+    OC_UNUSED(context);
+    OC_UNUSED(handle);
+    OC_UNUSED(clientResponse);
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+TEST_F(SRP, provisionCredentialsFull)
+{
+    OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(OicSecCred_t ));
+    CredentialData_t *credData4 = createCredentialData();
+
+    EXPECT_EQ(OC_STACK_OK, provisionCredentials(cred, pDev1, credData4, clientResponseHandler));
+
+    freeCredentialData(credData4);
+
+    RemoveAllCredentials();
+}
+
+TEST_F(SRP, provisionCredentialsdeviceInfo)
+{
+    OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(OicSecCred_t ));
+    CredentialData_t *credData4 = createCredentialData();
+
+    EXPECT_EQ(OC_STACK_OK, provisionCredentials(cred, NULL, credData4, clientResponseHandler));
+
+    RemoveAllCredentials();
+}
+
+TEST_F(SRP, ProvisionCredentialsDosFull)
+{
+    OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(OicSecCred_t ));
+
+    EXPECT_EQ(OC_STACK_OK, ProvisionCredentialsDos(NULL, cred, pDev1, clientResponseHandler));
+
+    RemoveAllCredentials();
+}
+
+TEST_F(SRP, ProvisionCredentialsDosdeviceInfo)
+{
+    OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(OicSecCred_t ));
+
+    EXPECT_EQ(OC_STACK_ERROR, ProvisionCredentialsDos(NULL, cred, NULL, clientResponseHandler));
+
+    RemoveAllCredentials();
+}
+
+TEST_F(SRP, ProvisionLocalCredentialFull)
+{
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->ctx = createCredentialData();
+    ctx->type = PSK_TYPE;
+    OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(OicSecCred_t ));
+
+    EXPECT_EQ(OC_STACK_OK, ProvisionLocalCredential((void *)ctx, cred));
+
+    FreeData(ctx);
+    RemoveAllCredentials();
+}
+
+TEST_F(SRP, SetReadyForNormalOperationCBChainType)
+{
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->type = CHAIN_TYPE;
+    TrustChainData_t *chainData = (TrustChainData_t *)OICCalloc(1, sizeof(TrustChainData_t));
+    ctx->ctx = (TrustChainData_t *)chainData;
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, SetReadyForNormalOperationCB((void *)ctx, NULL,
+              clientResponse));
+
+    OICFree(clientResponse);
+    OICFree(chainData);
+    OICFree(ctx);
+}
+
+TEST_F(SRP, SetReadyForNormalOperationCBSpType)
+{
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->type = SP_TYPE;
+    SpData_t *pData = (SpData_t *)OICCalloc(1, sizeof(SpData_t));
+    ctx->ctx = (SpData_t *)pData;
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, SetReadyForNormalOperationCB((void *)ctx, NULL,
+              clientResponse));
+
+    OICFree(clientResponse);
+    OICFree(pData);
+    OICFree(ctx);
+}
+
+TEST_F(SRP, SetReadyForNormalOperationCBAclType)
+{
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->type = ACL_TYPE;
+    ACLData_t *pData = (ACLData_t *)OICCalloc(1, sizeof(ACLData_t));
+    ctx->ctx = (ACLData_t *)pData;
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, SetReadyForNormalOperationCB((void *)ctx, NULL,
+              clientResponse));
+
+    OICFree(clientResponse);
+    OICFree(pData);
+    OICFree(ctx);
+}
+
+TEST_F(SRP, SetReadyForNormalOperationCBCredType)
+{
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->type = PSK_TYPE;
+    CredentialData_t *pData = createCredentialData();
+    ctx->ctx = (CredentialData_t *)pData;
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, SetReadyForNormalOperationCB((void *)ctx, NULL,
+              clientResponse));
+
+    OICFree(clientResponse);
+}
+
+TEST_F(SRP, SetReadyForNormalOperationCBCertType)
+{
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->type = CERT_TYPE;
+    CertData_t *pData = (CertData_t *)OICCalloc(1, sizeof(CertData_t));
+    ctx->ctx = (CertData_t *)pData;
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, SetReadyForNormalOperationCB((void *)ctx, NULL,
+              clientResponse));
+
+    OICFree(clientResponse);
+}
+
+TEST_F(SRP, SetReadyForNormalOperationCBDefault)
+{
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->type = (DataType_t)55;
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, SetReadyForNormalOperationCB((void *)ctx, NULL,
+              clientResponse));
+
+    OICFree(clientResponse);
+}
+
+TEST_F(SRP, ProvisionCBFull)
+{
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->type = CHAIN_TYPE;
+    TrustChainData_t *chainData = (TrustChainData_t *)OICCalloc(1, sizeof(TrustChainData_t));
+    chainData->targetDev = pDev1;
+    ctx->ctx = (TrustChainData_t *)chainData;
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionCB((void *)ctx, NULL, clientResponse));
+
+    OICFree(clientResponse);
+    OICFree(chainData);
+    OICFree(ctx);
+}
+
+TEST_F(SRP, ProvisionPskCBFull)
+{
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->ctx = createCredentialData();
+    ctx->type = PSK_TYPE;
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionPskCB((void *)ctx, NULL, clientResponse));
+
+    Data_t *ctx1 = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx1->ctx = createCredentialData();
+    ctx1->type = PSK_TYPE;
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionPskCB((void *)ctx1, NULL, NULL));
+
+    OICFree(clientResponse);
+}
+
+TEST_F(SRP, provisionCertificateCBFull)
+{
+    CredentialData_t *credData = createCredentialData();
+    OCDoHandle UNUSED = NULL;
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, provisionCertificateCB((void *)credData, UNUSED,
+              clientResponse));
+
+    OICFree(clientResponse);
+}
+
+TEST_F(SRP, ProvisionTrustChainCBFull)
+{
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    clientResponse->result = OC_STACK_RESOURCE_CHANGED;
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionTrustChainCB(NULL, NULL, clientResponse));
+
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->type = ACL_TYPE;
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionTrustChainCB((void *)ctx, NULL, clientResponse));
+
+    clientResponse->result = OC_STACK_OK;
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionTrustChainCB((void *)ctx, NULL, clientResponse));
+    clientResponse->result = OC_STACK_RESOURCE_CHANGED;
+
+    ctx->type = CHAIN_TYPE;
+    TrustChainData_t *chainData = (TrustChainData_t *)OICCalloc(1, sizeof(TrustChainData_t));
+    chainData->targetDev = pDev1;
+    ctx->ctx = (TrustChainData_t *)chainData;
+    /*
+        if (NULL != gCred)
+        {
+            OicSecCred_t *cred = NULL;
+            OicSecCred_t *r = NULL;
+            LL_FOREACH_SAFE(gCred, cred, r)
+            {
+                LL_DELETE(gCred, cred);
+            }
+        }
+    */
+    //RemoveAllCredentials();
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionTrustChainCB((void *)ctx, NULL, clientResponse));
+
+    OicSecCred_t *credA = createCred();
+    EXPECT_EQ(OC_STACK_OK, AddCredential(credA));
+    chainData->credId = credA->credId;
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionTrustChainCB((void *)ctx, NULL, clientResponse));
+
+    OICFree(clientResponse);
+    OICFree(chainData);
+    OICFree(ctx);
+}
+
+TEST_F(SRP, DeleteUnlinkData_tFull)
+{
+    UnlinkData_t *u = (UnlinkData_t *)OICCalloc(1, sizeof(UnlinkData_t));
+    u->unlinkDev = (OCProvisionDev_t *)OICCalloc(1, sizeof(OCProvisionDev_t));
+    u->unlinkRes = (OCProvisionResult_t *)OICCalloc(1, sizeof(OCProvisionResult_t));
+    DeleteUnlinkData_t(u);
+}
+
+TEST_F(SRP, SRPGetCredResourceCBFull)
+{
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    GetSecData_t *getSecData = (GetSecData_t *)OICCalloc(1, sizeof(GetSecData_t));
+    getSecData->deviceInfo = createProvisionDev();
+    getSecData->resArr = (OCProvisionResult_t *)OICCalloc(1, sizeof(OCProvisionResult_t));
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, SRPGetCredResourceCB(getSecData, NULL, clientResponse));
+}
+
+TEST_F(SRP, registerResultForGetCSRResourceCBFull)
+{
+    GetCsrData_t *getCsrData = (GetCsrData_t *)OICCalloc(1, sizeof(GetCsrData_t));
+    getCsrData->deviceInfo = createProvisionDev();
+    getCsrData->numOfResults = 0;
+    getCsrData->resArr = (OCPMGetCsrResult_t *)OICCalloc(1, sizeof(OCPMGetCsrResult_t));
+    getCsrData->resArr->csr = certData();
+    getCsrData->resArr->csrLen = certDataLen();
+    getCsrData->resArr->encoding = OIC_ENCODING_DER;
+
+    uint8_t *payload = NULL;
+    size_t payloadSize = 0;
+    OCStackResult stackresult = OC_STACK_OK;
+
+    EXPECT_EQ(OC_STACK_OK, CSRToCBORPayload(getCsrData->resArr->csr,
+                                            getCsrData->resArr->csrLen, getCsrData->resArr->encoding, &payload, &payloadSize));
+    registerResultForGetCSRResourceCB(getCsrData, stackresult, payload, payloadSize);
+}
+
+TEST_F(SRP, registerResultForGetCSRResourceCBNull)
+{
+    GetCsrData_t *getCsrData = (GetCsrData_t *)OICCalloc(1, sizeof(GetCsrData_t));
+    getCsrData->deviceInfo = createProvisionDev();
+    getCsrData->numOfResults = 0;
+    getCsrData->resArr = (OCPMGetCsrResult_t *)OICCalloc(1, sizeof(OCPMGetCsrResult_t));
+    getCsrData->resArr->csr = certData();
+    getCsrData->resArr->csrLen = certDataLen();
+    getCsrData->resArr->encoding = OIC_ENCODING_DER;
+
+    uint8_t *payload = NULL;
+    OCStackResult stackresult = OC_STACK_OK;
+
+    registerResultForGetCSRResourceCB(getCsrData, stackresult, payload, 0);
+}
+
+
+TEST_F(SRP, RegisterProvResultFull)
+{
+    OCProvisionDev_t *targetDev = createProvisionDev();
+    int numOfResults = 0;
+    OCProvisionResult_t *resArr = (OCProvisionResult_t *)OICCalloc(1 + numOfResults,
+                                  sizeof(OCProvisionResult_t));
+    EXPECT_EQ(OC_STACK_OK, RegisterProvResult(targetDev, resArr, &numOfResults, OC_STACK_OK));
+    OICFree(resArr);
+}
+
+static UnlinkData_t *createUlinkData()
+{
+    UnlinkData_t *u = (UnlinkData_t *)OICCalloc(1, sizeof(UnlinkData_t));
+    if (NULL == u)
+    {
+        return NULL;
+    }
+    u->unlinkDev = (OCProvisionDev_t *)OICCalloc(2, sizeof(OCProvisionDev_t));
+    u->unlinkRes = (OCProvisionResult_t *)OICCalloc(1, sizeof(OCProvisionResult_t));
+    u->numOfResults = 0;
+    u->resultCallback = provisionResultCB;
+    ConvertStrToUuid("33333333-3333-3333-3333-222222222222", &u->unlinkRes[(u->numOfResults)].deviceId);
+    u->unlinkDev[0].doxm = createDoxm();
+    u->unlinkDev[1].doxm = createDoxm();
+
+    ConvertStrToUuid("33333333-3333-3333-3333-222222222211", &u->unlinkDev[0].doxm->deviceID);
+    ConvertStrToUuid("33333333-3333-3333-3333-222222222233", &u->unlinkDev[1].doxm->deviceID);
+    PDMAddDevice(&u->unlinkDev[0].doxm->deviceID);
+    PDMSetDeviceState(&u->unlinkDev[0].doxm->deviceID, PDM_DEVICE_ACTIVE);
+    PDMAddDevice(&u->unlinkDev[1].doxm->deviceID);
+    PDMSetDeviceState(&u->unlinkDev[1].doxm->deviceID, PDM_DEVICE_ACTIVE);
+    PDMLinkDevices(&u->unlinkDev[0].doxm->deviceID, &u->unlinkDev[1].doxm->deviceID);
+    return u;
+}
+/*
+static void freeUlinkData(UnlinkData_t *u)
+{
+    PDMUnlinkDevices(&u->unlinkDev[0].doxm->deviceID, &u->unlinkDev[1].doxm->deviceID);
+    PDMDeleteDevice(&u->unlinkDev[0].doxm->deviceID);
+    PDMDeleteDevice(&u->unlinkDev[1].doxm->deviceID);
+    OICFree(u->unlinkDev);
+    OICFree(u->unlinkRes);
+    OICFree(u);
+}
+*/
+TEST_F(SRP, registerResultForUnlinkDevices)
+{
+    UnlinkData_t *u = createUlinkData();
+    registerResultForUnlinkDevices(u, OC_STACK_OK, IDX_DB_UPDATE_RES);
+    PDMUnlinkDevices(&u->unlinkDev[0].doxm->deviceID, &u->unlinkDev[1].doxm->deviceID);
+    PDMDeleteDevice(&u->unlinkDev[0].doxm->deviceID);
+    OICFree(u->unlinkDev);
+    OICFree(u->unlinkRes);
+    OICFree(u);
+}
+
+TEST_F(SRP, SendDeleteACLRequest)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SendDeleteACLRequest(NULL, clientResponseHandler, pDev1, pDev2));
+    EXPECT_EQ(OC_STACK_OK, SendDeleteACLRequest((void *)clientResponseHandler, clientResponseHandler,
+              pDev1, pDev2));
+}
+
+TEST_F(SRP, SRPUnlinkDevice2CBNull)
+{
+    UnlinkData_t *u = createUlinkData();
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, SRPUnlinkDevice2CB(u, NULL, NULL));
+}
+
+TEST_F(SRP, SRPUnlinkDevice2CBFull)
+{
+    UnlinkData_t *u = createUlinkData();
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    clientResponse->result = OC_STACK_CONTINUE;
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, SRPUnlinkDevice2CB(u, NULL, clientResponse));
+    OICFree(clientResponse);
+}
+
+TEST_F(SRP, SRPUnlinkDevice1CBNull)
+{
+    UnlinkData_t *u = createUlinkData();
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, SRPUnlinkDevice1CB(u, NULL, NULL));
+}
+
+TEST_F(SRP, SRPUnlinkDevice1CBResult)
+{
+    UnlinkData_t *u = createUlinkData();
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    clientResponse->result = OC_STACK_CONTINUE;
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, SRPUnlinkDevice1CB(u, NULL, clientResponse));
+    OICFree(clientResponse);
+}
+
+TEST_F(SRP, SRPUnlinkDevice1CB)
+{
+    UnlinkData_t *u = createUlinkData();
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    clientResponse->result = OC_STACK_RESOURCE_DELETED;
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, SRPUnlinkDevice1CB(u, NULL, clientResponse));
+    OICFree(clientResponse);
+}
+
+static RemoveData_t *createRemoveData()
+{
+    RemoveData_t *pRemoveData = (RemoveData_t *)OICMalloc(sizeof(RemoveData_t));
+    pRemoveData->revokeTargetDev = createProvisionDev();
+    pRemoveData->linkedDevList = createProvisionDev();
+    pRemoveData->removeRes = (OCProvisionResult_t *)OICCalloc(1, sizeof(OCProvisionResult_t));
+    pRemoveData->numOfResults = 0;
+    return pRemoveData;
+}
+
+static void freeRemoveData(RemoveData_t *pRemoveData)
+{
+    freeProvisionDev(pRemoveData->revokeTargetDev);
+    freeProvisionDev(pRemoveData->linkedDevList);
+    OICFree(pRemoveData->removeRes);
+    pRemoveData->numOfResults = 0;
+    OICFree(pRemoveData);
+}
+
+TEST_F(SRP, DeleteRemoveData_t)
+{
+    RemoveData_t *pRemoveData = createRemoveData();
+    DeleteRemoveData_t(pRemoveData);
+}
+
+TEST_F(SRP, registerResultForRemoveDevice)
+{
+    RemoveData_t *removeData = createRemoveData();
+    OicUuid_t *pLinkedDevId = createUuid();
+
+    registerResultForRemoveDevice(removeData, pLinkedDevId, OC_STACK_OK, false);
+    freeUuid(pLinkedDevId);
+    freeRemoveData(removeData);
+}
+
+TEST_F(SRP, registerResultForResetDevice)
+{
+    RemoveData_t *removeData = createRemoveData();
+    OicUuid_t *pLinkedDevId = createUuid();
+
+    registerResultForResetDevice(removeData, pLinkedDevId, OC_STACK_OK, false);
+    freeUuid(pLinkedDevId);
+    freeRemoveData(removeData);
+}
+
+static void linkDevs(OicUuid_t *uuid1, OicUuid_t *uuid2)
+{
+    PDMAddDevice(uuid1);
+    PDMSetDeviceState(uuid1, PDM_DEVICE_ACTIVE);
+    PDMAddDevice(uuid2);
+    PDMSetDeviceState(uuid2, PDM_DEVICE_ACTIVE);
+    PDMLinkDevices(uuid1, uuid2);
+}
+
+TEST_F(SRP, SRPRemoveDeviceCB)
+{
+    RemoveData_t *pRemoveData = createRemoveData();
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    clientResponse->result = OC_STACK_RESOURCE_DELETED;
+    clientResponse->identity.id_length = UUID_LENGTH;
+
+    OicUuid_t *uuid = createUuid();
+    ConvertStrToUuid("33333333-3333-3333-3333-112222222222", uuid);
+    memcpy(clientResponse->identity.id, uuid->id, sizeof(OicUuid_t));
+    ConvertStrToUuid("33333333-3333-3333-3333-662222222222",
+                     &pRemoveData->revokeTargetDev->doxm->deviceID);
+    linkDevs(uuid, &pRemoveData->revokeTargetDev->doxm->deviceID);
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, SRPRemoveDeviceCB(pRemoveData, NULL, clientResponse));
+    freeUuid(uuid);
+    OICFree(clientResponse );
+    freeRemoveData(pRemoveData);
+}
+
+TEST_F(SRP, SRPSyncDeviceCredCB)
+{
+    RemoveData_t *pRemoveData = createRemoveData();
+    pRemoveData->resultCallback = provisionResultCB;
+
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    clientResponse->result = OC_STACK_RESOURCE_DELETED;
+    clientResponse->identity.id_length = UUID_LENGTH;
+
+    OicUuid_t *uuid = createUuid();
+    ConvertStrToUuid("33333333-3333-3333-3333-112222222222", uuid);
+    memcpy(clientResponse->identity.id, uuid->id, sizeof(OicUuid_t));
+    ConvertStrToUuid("33333333-3333-3333-3333-662222222222",
+                     &pRemoveData->revokeTargetDev->doxm->deviceID);
+    linkDevs(uuid, &pRemoveData->revokeTargetDev->doxm->deviceID);
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, SRPSyncDeviceCredCB(pRemoveData, NULL, clientResponse));
+    freeUuid(uuid);
+    OICFree(clientResponse );
+    freeRemoveData(pRemoveData);
+}
+
+TEST_F(SRP, GetListofDevToReqDeleteCred)
+{
+    OCProvisionDev_t *pRevokeTargetDev = createProvisionDev();
+    OCProvisionDev_t *pOwnedDevList = createProvisionDev();
+    OCUuidList_t *pLinkedUuidList = (OCUuidList_t *)OICMalloc(sizeof(OCUuidList_t));
+    pLinkedUuidList->next = NULL;
+    ConvertStrToUuid("33333333-3333-3333-3333-111111111111", &pLinkedUuidList->dev);
+    OCProvisionDev_t *ppLinkedDevList = NULL;
+    size_t numOfLinkedDev;
+
+    PDMAddDevice(&pLinkedUuidList->dev);
+    PDMAddDevice(&pRevokeTargetDev->doxm->deviceID);
+
+    EXPECT_EQ(OC_STACK_OK, GetListofDevToReqDeleteCred(pRevokeTargetDev, pOwnedDevList, pLinkedUuidList,
+              &ppLinkedDevList, &numOfLinkedDev));
+    OICFree(pLinkedUuidList);
+    freeProvisionDev(pRevokeTargetDev);
+    freeProvisionDev(pOwnedDevList);
+}
+
+TEST_F(SRP, SRPRemoveDevice)
+{
+    OCProvisionDev_t *pTargetDev = createProvisionDev();
+    OicUuid_t *uuid = createUuid();
+    ConvertStrToUuid("33333333-3333-3333-3333-112222222222", uuid);
+    linkDevs(uuid, &pTargetDev->doxm->deviceID);
+
+    EXPECT_EQ(OC_STACK_CONTINUE, SRPRemoveDevice((void *)provisionResultCB, 3, pTargetDev,
+              provisionResultCB));
+    freeUuid(uuid);
+    freeProvisionDev(pTargetDev);
+}
+
+
+TEST_F(SRP, SRPRemoveDeviceWithoutDiscovery)
+{
+    OCProvisionDev_t *pTargetDev = createProvisionDev();
+
+    OicUuid_t *uuid = createUuid();
+    ConvertStrToUuid(UUID_SRV1, uuid);
+    linkDevs(uuid, &pTargetDev->doxm->deviceID);
+
+    EXPECT_EQ(OC_STACK_CONTINUE,
+              SRPRemoveDeviceWithoutDiscovery((void *)provisionResultCB, pTargetDev, pDev2, provisioningCB));
+    freeUuid(uuid);
+    freeProvisionDev(pTargetDev);
+}
+
+
+TEST_F(SRP, ProvisionSecurityProfileInfoCB)
+{
+    SpData_t *pData = (SpData_t *)OICCalloc(1, sizeof(SpData_t));
+    pData->sp = getSpDefault();
+    pData->targetDev = createProvisionDev();
+    pData->resArr = (OCProvisionResult_t *)OICCalloc(1, sizeof(OCProvisionResult_t));
+
+    Data_t *ctx = (Data_t *)OICCalloc(1, sizeof(Data_t));
+    ctx->ctx = (SpData_t *)pData;
+    ctx->type = SP_TYPE;
+
+    OCClientResponse *clientResponse = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    clientResponse->result = OC_STACK_RESOURCE_CHANGED;
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionSecurityProfileInfoCB(NULL, NULL, clientResponse));
+    clientResponse->result = OC_STACK_OK;
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionSecurityProfileInfoCB(ctx, NULL, clientResponse));
+    clientResponse->result = OC_STACK_RESOURCE_CHANGED;
+    ctx->type = ACL_TYPE;
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionSecurityProfileInfoCB(ctx, NULL, clientResponse));
+    ctx->type = SP_TYPE;
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, ProvisionSecurityProfileInfoCB(ctx, NULL, clientResponse));
+
+    FreeData(ctx);
+    OICFree(clientResponse);
+}
+
+TEST_F(SRP, SetDOS)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SetDOS(NULL, DOS_RFNOP, NULL));
+
+    Data_t *data = (Data_t *)OICCalloc(1, sizeof(Data_t));
+
+    data->ctx = NULL;
+    data->type = (DataType_t)25;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SetDOS(data, DOS_RFNOP, clientResponseHandler));
+
+    SpData_t *pData = (SpData_t *)OICCalloc(1, sizeof(SpData_t));
+    pData->sp = getSpDefault();
+    pData->targetDev = createProvisionDev();
+    pData->resArr = (OCProvisionResult_t *)OICCalloc(1, sizeof(OCProvisionResult_t));
+    data->ctx = pData;
+    data->type = SP_TYPE;
+    EXPECT_EQ(OC_STACK_OK, SetDOS(data, DOS_RFNOP, clientResponseHandler));
+
+    OICFree(data);
+}

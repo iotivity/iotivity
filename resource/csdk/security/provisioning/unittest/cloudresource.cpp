@@ -37,21 +37,28 @@ extern "C" {
 #endif /* (__WITH_DTLS__) || (__WITH_TLS__) */
 #include "experimental/doxmresource.h"
 #include "pstatresource.h"
-}
+#include "tools.h"
 
+#undef TAG
 #include "../src/cloud/cloudresource.c"
-
-#ifdef TAG
 #undef TAG
-#endif
-
-#include "../src/cloud/config.c"
-
-#ifdef TAG
+#include "../src/cloud/aclgroup.c"
 #undef TAG
-#endif
-
+#include "../src/cloud/aclid.c"
+#undef TAG
+#include "../src/cloud/aclinvite.c"
+#undef TAG
 #include "../src/cloud/auth.c"
+#undef TAG
+#include "../src/cloud/config.c"
+#undef TAG
+#include "../src/cloud/crl.c"
+#undef TAG
+#include "../src/cloud/csr.c"
+#undef TAG
+#include "../src/cloud/utils.c"
+#undef TAG
+}
 
 #ifdef TAG
 #undef TAG
@@ -59,11 +66,28 @@ extern "C" {
 
 #define TAG  "CLOUD_UNITTEST"
 
-#define SVR_DB_FILE_NAME "oic_svr_db_client.dat"
-#define PM_DB_FILE_NAME "test.db"
+#define SVR_DB_FILE_NAME TAG".dat"
+#define PM_DB_FILE_NAME TAG".db"
+
 #define STR_LEN 512
 static const char *sample =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,.-#'?!:/";
+
+class CLOUD : public ::testing::Test
+{
+    public:
+        static void SetUpTestCase()
+        {
+            IOT_Init(PM_DB_FILE_NAME);
+            EXPECT_EQ(OC_STACK_OK, InitCloudResource());
+        }
+
+        static void TearDownTestCase()
+        {
+            EXPECT_EQ(OC_STACK_OK, DeInitCloudResource());
+            IOT_DeInit(PM_DB_FILE_NAME);
+        }
+};
 
 void sessionInit(session_t *ses)
 {
@@ -85,7 +109,7 @@ OicCloud_t *getCloud()
     OicCloud_t *cloud = (OicCloud_t *)OICCalloc(1, sizeof(OicCloud_t));
     VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, NULL);
 
-
+    cloud->next = NULL;
     cloud->apn = (char *)OICCalloc(STR_LEN, sizeof(char));
     cloud->cis = (char *)OICCalloc(STR_LEN, sizeof(char));
     cloud->at = (char *)OICCalloc(STR_LEN, sizeof(char));
@@ -107,49 +131,12 @@ OicCloud_t *getCloud()
     sessionInit(cloud->session);
 
     cloud->stat = OC_CLOUD_OK;
-
     cloud->pid = 0;
 
     return cloud;
 }
 
-static FILE *fopen_prvnMng(const char *path, const char *mode)
-{
-    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
-    {
-        return fopen(SVR_DB_FILE_NAME, mode);
-    }
-    OIC_LOG_V(DEBUG, TAG, "use db: %s", path);
-    return fopen(path, mode);
-}
-
-TEST(CloudResourceTest, Init)
-{
-    static OCPersistentStorage gPst;
-    OCStackResult result = OC_STACK_ERROR;
-
-#ifdef HAVE_UNISTD_H
-    EXPECT_EQ(0, access(SVR_DB_FILE_NAME, F_OK));
-#endif // HAVE_UNISTD_H
-    gPst.open = fopen_prvnMng;
-    gPst.read = fread;
-    gPst.write = fwrite;
-    gPst.close = fclose;
-    gPst.unlink = unlink;
-
-    result = OCRegisterPersistentStorageHandler(&gPst);
-    EXPECT_EQ(OC_STACK_OK, result);
-
-    result = OCInit(NULL, 0, OC_CLIENT_SERVER);
-    EXPECT_EQ(OC_STACK_OK, result);
-}
-
-TEST(CloudResourceTest, InitCloudResource)
-{
-    EXPECT_EQ(OC_STACK_OK, InitCloudResource());
-}
-
-TEST(CloudResourceTest, CloudToCBORPayloadNULL)
+TEST_F(CLOUD, CloudToCBORPayloadNULL)
 {
     OicCloud_t *cloud =  getCloud();
     size_t size = 10;
@@ -162,7 +149,7 @@ TEST(CloudResourceTest, CloudToCBORPayloadNULL)
     FreeCloud(cloud);
 }
 
-TEST(CloudResourceTest, CloudToCBORPayloadVALID)
+TEST_F(CLOUD, CloudToCBORPayloadVALID)
 {
     OicCloud_t *cloud = getCloud();
 
@@ -175,7 +162,7 @@ TEST(CloudResourceTest, CloudToCBORPayloadVALID)
     OCPayloadDestroy((OCPayload *)payload);
 }
 
-TEST(CloudResourceTest, CloudToCBORPayloadResourceVALID)
+TEST_F(CLOUD, CloudToCBORPayloadResourceVALID)
 {
     OicCloud_t *cloud = getCloud();
 
@@ -188,7 +175,7 @@ TEST(CloudResourceTest, CloudToCBORPayloadResourceVALID)
     OCPayloadDestroy((OCPayload *)payload);
 }
 
-TEST(CloudResourceTest, CBORPayloadToCloudNULL)
+TEST_F(CLOUD, CBORPayloadToCloudNULL)
 {
     OicCloud_t *cloud = NULL;
     uint8_t *cborPayload = (uint8_t *)OICCalloc(1, sizeof(uint8_t));
@@ -207,7 +194,7 @@ TEST(CloudResourceTest, CBORPayloadToCloudNULL)
     OICFree(cborPayload);
 }
 
-TEST(CloudResourceTest, CBORPayloadToCloudFULL)
+TEST_F(CLOUD, CBORPayloadToCloudFULL)
 {
     OicCloud_t *cloud = NULL;
     uint8_t *payload = NULL;
@@ -240,7 +227,7 @@ TEST(CloudResourceTest, CBORPayloadToCloudFULL)
     OCPayloadDestroy((OCPayload *)payload);
 }
 
-TEST(CloudResourceTest, strCopyFULL)
+TEST_F(CLOUD, strCopyFULL)
 {
     EXPECT_FALSE(strCopy(NULL, NULL));
     char *sample1 = (char *)OICCalloc(1, 1024);
@@ -260,7 +247,7 @@ TEST(CloudResourceTest, strCopyFULL)
     OICFree(sample1);
 }
 
-TEST(CloudResourceTest, CBORPayloadToCloudResourceFULL)
+TEST_F(CLOUD, CBORPayloadToCloudResourceFULL)
 {
     OicCloud_t *cloud =  getCloud();
     uint8_t *payload = NULL;
@@ -280,7 +267,7 @@ TEST(CloudResourceTest, CBORPayloadToCloudResourceFULL)
     OCPayloadDestroy((OCPayload *)payload);
 }
 
-TEST(CloudResourceTest, ValidCloudFULL)
+TEST_F(CLOUD, ValidCloudFULL)
 {
     ASSERT_TRUE(false == ValidCloud(NULL));
     OicCloud_t *cloud =  getCloud();
@@ -294,7 +281,7 @@ TEST(CloudResourceTest, ValidCloudFULL)
     FreeCloud(cloud);
 }
 
-TEST(CloudResourceTest, DeleteCloudListFULL)
+TEST_F(CLOUD, DeleteCloudListFULL)
 {
     DeleteCloudList(NULL, true);
     OicCloud_t *cloud =  getCloud();
@@ -303,7 +290,7 @@ TEST(CloudResourceTest, DeleteCloudListFULL)
     DeleteCloudList(cloud, true);
 }
 
-TEST(CloudResourceTest, CreateCloudGetPayloadFULL)
+TEST_F(CLOUD, CreateCloudGetPayloadFULL)
 {
     OCRepPayload *payload = CreateCloudGetPayload(NULL);
     ASSERT_TRUE(NULL != payload);
@@ -324,7 +311,7 @@ TEST(CloudResourceTest, CreateCloudGetPayloadFULL)
     OCPayloadDestroy((OCPayload *)payload);
 }
 
-TEST(CloudResourceTest, StartCloudFULL)
+TEST_F(CLOUD, StartCloudFULL)
 {
     ASSERT_TRUE(OC_STACK_OK == SetDosState(DOS_RESET));
     StartClouds();
@@ -342,8 +329,9 @@ TEST(CloudResourceTest, StartCloudFULL)
     OICFree(uuid);
 }
 
-TEST(CloudResourceTest, HandleCloudPostRequestFULL)
+TEST_F(CLOUD, HandleCloudPostRequestFULL)
 {
+    #define _MULTIPLE_CNC_
     ASSERT_TRUE(OC_EH_ERROR == HandleCloudPostRequest(NULL));
 
     OCEntityHandlerRequest *ehRequest = (OCEntityHandlerRequest *)OICCalloc(1,
@@ -393,15 +381,16 @@ TEST(CloudResourceTest, HandleCloudPostRequestFULL)
     OCRepPayloadSetPropInt(payload, OIC_JSON_CLOUD_CLEC, (int64_t)cloud->stat);
     ASSERT_TRUE(OC_EH_ERROR == HandleCloudPostRequest(ehRequest));
 
+    CloudsSignOut();
+
     OICFree(uuid);
     FreeCloud(cloud);
     ASSERT_TRUE(OC_STACK_OK == SetDosState(DOS_RFNOP));
     OCPayloadDestroy(ehRequest->payload);
     OICFree(ehRequest);
-    exit(0);
 }
 
-TEST(CloudResourceTest, HandleCloudGetRequestFULL)
+TEST_F(CLOUD, HandleCloudGetRequestFULL)
 {
     ASSERT_TRUE(OC_EH_ERROR == HandleCloudGetRequest(NULL));
     OCRepPayload *payload = NULL;
@@ -452,7 +441,7 @@ TEST(CloudResourceTest, HandleCloudGetRequestFULL)
     OICFree(ehRequest);
 }
 
-TEST(CloudResourceTest, HandleCloudDeleteRequestFULL)
+TEST_F(CLOUD, HandleCloudDeleteRequestFULL)
 {
     ASSERT_TRUE(OC_EH_ERROR == HandleCloudDeleteRequest(NULL));
 
@@ -486,6 +475,8 @@ TEST(CloudResourceTest, HandleCloudDeleteRequestFULL)
     ehRequest->payload = (OCPayload *)CreateCloudGetPayload(cloud);
     ASSERT_TRUE(NULL != ehRequest->payload);
     OCRepPayloadSetPropString((OCRepPayload *)ehRequest->payload, OIC_JSON_CLOUD_AT, "3453245234");
+    OCRepPayloadSetPropString((OCRepPayload *)ehRequest->payload, OC_CLOUD_PROVISIONING_CIS,
+                              cloud->cis);
     ASSERT_TRUE(OC_EH_ERROR == HandleCloudDeleteRequest(ehRequest));
 
     OICFree(uuid);
@@ -495,7 +486,7 @@ TEST(CloudResourceTest, HandleCloudDeleteRequestFULL)
     OICFree(ehRequest);
 }
 
-TEST(CloudResourceTest, CloudEntityHandlerFULL)
+TEST_F(CLOUD, CloudEntityHandlerFULL)
 {
     ASSERT_TRUE(OC_EH_ERROR == CloudEntityHandler((OCEntityHandlerFlag)0, NULL, NULL));
     ASSERT_TRUE(OC_EH_ERROR == CloudEntityHandler(OC_OBSERVE_FLAG, NULL, NULL));
@@ -522,7 +513,7 @@ OCStackApplicationResult resultHandler(void *context, OCDoHandle handle,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-TEST(CloudResourceTest, OCProvisionCloudConfigFULL)
+TEST_F(CLOUD, OCProvisionCloudConfigFULL)
 {
     void *ctx = NULL;
     OCProvisionDev_t *pDev = NULL;
@@ -539,14 +530,13 @@ TEST(CloudResourceTest, OCProvisionCloudConfigFULL)
     ASSERT_TRUE(OC_STACK_INVALID_PARAM == OCProvisionCloudConfig(ctx, pDev, cloud, resultCallback));
     resultCallback = resultHandler;
     ASSERT_TRUE(OC_STACK_ERROR == OCProvisionCloudConfig(ctx, pDev, cloud, resultCallback));
-    snprintf(pDev->endpoint.addr, sizeof(pDev->endpoint.addr), "127.0.0.1");
-    pDev->securePort = 1024;
-    pDev->connType = (OCConnectivityType)(CT_ADAPTER_IP | CT_FLAG_SECURE | CT_IP_USE_V4);
+
+    pDev = createProvisionDev();
     ASSERT_TRUE(OC_STACK_OK == OCProvisionCloudConfig(ctx, pDev, cloud, resultCallback));
 
+    freeProvisionDev(pDev);
     FreeCloud(cloud);
     OICFree(ctx);
-    OICFree(pDev);
 }
 
 static OCStackApplicationResult clientResponseHandler(void *context, OCDoHandle handle,
@@ -559,7 +549,7 @@ static OCStackApplicationResult clientResponseHandler(void *context, OCDoHandle 
     return ret;
 }
 
-TEST(CloudResourceTest, handleCloudStatusResponseFULL)
+TEST_F(CLOUD, handleCloudStatusResponseFULL)
 {
     void *ctx = NULL;
     OCDoHandle handle = NULL;
@@ -583,7 +573,7 @@ TEST(CloudResourceTest, handleCloudStatusResponseFULL)
     OICFree(response);
 }
 
-TEST(CloudResourceTest, OCRemoveCloudConfigCBFULL)
+TEST_F(CLOUD, OCRemoveCloudConfigCBFULL)
 {
     void *ctx = NULL;
     OCDoHandle handle = NULL;
@@ -628,7 +618,7 @@ TEST(CloudResourceTest, OCRemoveCloudConfigCBFULL)
     OICFree(response);
 }
 
-TEST(CloudResourceTest, OCGetCloudStatusRequestFULL)
+TEST_F(CLOUD, OCGetCloudStatusRequestFULL)
 {
     void *ctx = NULL;
     OCProvisionDev_t *pDev = NULL;
@@ -665,7 +655,7 @@ void resultCB(void *ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
     return;
 }
 
-TEST(CloudResourceTest, OCRemoveCloudConfigFULL)
+TEST_F(CLOUD, OCRemoveCloudConfigFULL)
 {
     void *ctx = NULL;
     OCProvisionDev_t *pDev = NULL;
@@ -692,7 +682,7 @@ TEST(CloudResourceTest, OCRemoveCloudConfigFULL)
     OICFree(pDev);
 }
 
-TEST(CloudResourceTest, GetCloudStatusFULL)
+TEST_F(CLOUD, GetCloudStatusFULL)
 {
     gCloud = getCloud();
     ASSERT_TRUE(NULL != gCloud);
@@ -708,7 +698,7 @@ TEST(CloudResourceTest, GetCloudStatusFULL)
     gCloud = NULL;
 }
 
-TEST(CloudResourceTest, handleCloudTokenRefreshResponseFULL)
+TEST_F(CLOUD, handleCloudTokenRefreshResponseFULL)
 {
     void *ctx = NULL;
     OCDoHandle handle = NULL;
@@ -738,7 +728,7 @@ TEST(CloudResourceTest, handleCloudTokenRefreshResponseFULL)
     FreeCloud(cloud);
 }
 
-TEST(CloudResourceTest, OCCloudTokenRefreshFULL)
+TEST_F(CLOUD, OCCloudTokenRefreshFULL)
 {
     OicCloud_t *cloud = NULL;
     ASSERT_TRUE(OC_STACK_INVALID_PARAM == OCCloudTokenRefresh(cloud));
@@ -759,7 +749,7 @@ TEST(CloudResourceTest, OCCloudTokenRefreshFULL)
     FreeCloud(cloud);
 }
 
-TEST(CloudResourceTest, handleCloudSignUpResponseFULL)
+TEST_F(CLOUD, handleCloudSignUpResponseFULL)
 {
     void *ctx = NULL;
     OCDoHandle handle = NULL;
@@ -797,7 +787,7 @@ TEST(CloudResourceTest, handleCloudSignUpResponseFULL)
 }
 
 /*
-TEST(CloudResourceTest, CloudTokenRefreshFULL)
+TEST_F(CLOUD, CloudTokenRefreshFULL)
 {
     OicCloud_t *cloud = NULL;
 
@@ -810,7 +800,7 @@ TEST(CloudResourceTest, CloudTokenRefreshFULL)
 }
 */
 
-TEST(CloudResourceTest, handleCloudSignInResponseFULL)
+TEST_F(CLOUD, handleCloudSignInResponseFULL)
 {
     void *ctx = NULL;
     OCDoHandle handle = NULL;
@@ -846,7 +836,7 @@ TEST(CloudResourceTest, handleCloudSignInResponseFULL)
     FreeCloud(cloud);
 }
 
-TEST(CloudResourceTest, CloudSignFULL)
+TEST_F(CLOUD, CloudSignFULL)
 {
     OicCloud_t *cloud = NULL;
 
@@ -860,7 +850,7 @@ TEST(CloudResourceTest, CloudSignFULL)
     FreeCloud(cloud);
 }
 
-TEST(CloudResourceTest, CloudSignUpParsePayloadFULL)
+TEST_F(CLOUD, CloudSignUpParsePayloadFULL)
 {
     OicCloud_t *cloud = NULL;
     OCRepPayload *payload = NULL;
@@ -928,7 +918,7 @@ TEST(CloudResourceTest, CloudSignUpParsePayloadFULL)
     FreeCloud(cloud);
 }
 
-TEST(CloudResourceTest, handleCloudSignOutResponseFULL)
+TEST_F(CLOUD, handleCloudSignOutResponseFULL)
 {
     void *ctx = NULL;
     OCDoHandle handle = NULL;
@@ -948,7 +938,7 @@ TEST(CloudResourceTest, handleCloudSignOutResponseFULL)
     OICFree(response);
 }
 
-TEST(CloudResourceTest, UpdateCloudPersistentStorageFULL)
+TEST_F(CLOUD, UpdateCloudPersistentStorageFULL)
 {
     DeleteCloudList(gCloud, true);
     ASSERT_TRUE(false == UpdateCloudPersistentStorage());
@@ -959,7 +949,797 @@ TEST(CloudResourceTest, UpdateCloudPersistentStorageFULL)
     gCloud = NULL;
 }
 
-TEST(CloudResourceTest, DeInitCloudResource)
+TEST_F(CLOUD, handleAclCreateGroupResponse)
 {
-    EXPECT_EQ(OC_STACK_OK, DeInitCloudResource());
+    OCClientResponse *response = NULL;
+    char *data = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == handleAclCreateGroupResponse(NULL, NULL, NULL));
+
+    response = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == handleAclCreateGroupResponse(NULL, (void **)&data, response));
+
+    response->payload = (OCPayload *)OCRepPayloadCreate();
+    EXPECT_TRUE(OC_STACK_MALFORMED_RESPONSE == handleAclCreateGroupResponse(NULL, (void **)&data,
+                response));
+
+    OCRepPayloadSetPropString((OCRepPayload *)response->payload, OC_RSRVD_GROUP_ID, "val");
+    EXPECT_TRUE(OC_STACK_OK == handleAclCreateGroupResponse(NULL, (void **)&data, response));
+
+    OCPayloadDestroy((OCPayload *)response->payload);
+    OICFree(response);
+}
+
+TEST_F(CLOUD, handleAclFindMyGroupResponse)
+{
+    OCClientResponse *response = NULL;
+    char *data = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == handleAclFindMyGroupResponse(NULL, NULL, NULL));
+
+    response = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == handleAclFindMyGroupResponse(NULL, (void **)&data, response));
+
+    response->payload = (OCPayload *)OCRepPayloadCreate();
+    EXPECT_TRUE(OC_STACK_MALFORMED_RESPONSE == handleAclFindMyGroupResponse(NULL, (void **)&data,
+                response));
+
+    const char **array = (const char **)OICCalloc(2, sizeof(const char *));
+    array[0] = OICStrdup("val0");
+// TODO wait for https://gerrit.iotivity.org/gerrit/#/c/29354
+#if defined(BUG_FIX)
+    array[1] = OICStrdup("val1");
+    size_t dim[MAX_REP_ARRAY_DEPTH] = {5, 5, 0};
+#else
+    size_t dim[MAX_REP_ARRAY_DEPTH] = {5, 0, 0};
+#endif
+    EXPECT_TRUE(OCRepPayloadSetStringArray((OCRepPayload *)response->payload, OC_RSRVD_GROUP_ID_LIST,
+                                           array, dim));
+    EXPECT_TRUE(OC_STACK_OK == handleAclFindMyGroupResponse(NULL, (void **)&data, response));
+
+    OCPayloadDestroy((OCPayload *)response->payload);
+    OICFree((void *)array[1]);
+    OICFree((void *)array[0]);
+    OICFree(array);
+    OICFree(response);
+}
+
+TEST_F(CLOUD, OCCloudAclCreateGroup)
+{
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclCreateGroup(NULL, NULL, NULL, NULL, NULL));
+    EXPECT_TRUE(OC_STACK_OK == OCCloudAclCreateGroup(NULL, "group", "grandmaster",
+                "coaps+tcp://127.0.0.1:7777", NULL));
+}
+
+TEST_F(CLOUD, OCCloudAclFindMyGroup)
+{
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclFindMyGroup(NULL, NULL, NULL, NULL));
+    EXPECT_TRUE(OC_STACK_OK == OCCloudAclFindMyGroup(NULL, "theId", "coaps+tcp://127.0.0.1:7777",
+                NULL));
+}
+
+TEST_F(CLOUD, OCCloudAclDeleteGroup)
+{
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclDeleteGroup(NULL, NULL, NULL, NULL, NULL));
+    EXPECT_TRUE(OC_STACK_OK == OCCloudAclDeleteGroup(NULL, "group", "grandmaster",
+                "coaps+tcp://127.0.0.1:7777", NULL));
+}
+
+TEST_F(CLOUD, OCCloudAclJoinToInvitedGroup)
+{
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclJoinToInvitedGroup(NULL, NULL, NULL, NULL));
+    EXPECT_TRUE(OC_STACK_OK == OCCloudAclJoinToInvitedGroup(NULL, "theId", "coaps+tcp://127.0.0.1:7777",
+                NULL));
+}
+
+TEST_F(CLOUD, OCCloudAclObserveGroup)
+{
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclObserveGroup(NULL, NULL, NULL, NULL));
+    EXPECT_TRUE(OC_STACK_OK == OCCloudAclObserveGroup(NULL, "theId", "coaps+tcp://127.0.0.1:7777",
+                NULL));
+}
+
+TEST_F(CLOUD, OCCloudAclShareDeviceIntoGroup)
+{
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclShareDeviceIntoGroup(NULL, NULL, NULL, NULL, NULL,
+                NULL));
+    stringArray_t *memberIds = (stringArray_t *)OICCalloc(1, sizeof(stringArray_t));
+    stringArray_t *deviceIds = (stringArray_t *)OICCalloc(1, sizeof(stringArray_t));
+
+    EXPECT_TRUE(OC_STACK_OK == OCCloudAclShareDeviceIntoGroup(NULL, "theId", memberIds, deviceIds,
+                "coaps+tcp://127.0.0.1:7777", NULL));
+
+    OICFree(memberIds);
+    OICFree(deviceIds);
+}
+
+TEST_F(CLOUD, OCCloudAclDeleteDeviceFromGroup)
+{
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclDeleteDeviceFromGroup(NULL, NULL, NULL, NULL, NULL,
+                NULL));
+    stringArray_t *memberIds = (stringArray_t *)OICCalloc(1, sizeof(stringArray_t));
+    stringArray_t *deviceIds = (stringArray_t *)OICCalloc(1, sizeof(stringArray_t));
+
+    EXPECT_TRUE(OC_STACK_OK == OCCloudAclDeleteDeviceFromGroup(NULL, "theId", memberIds, deviceIds,
+                "coaps+tcp://127.0.0.1:7777", NULL));
+
+    OICFree(memberIds);
+    OICFree(deviceIds);
+}
+
+TEST_F(CLOUD, OCCloudAclGroupGetInfo)
+{
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclGroupGetInfo(NULL, NULL, NULL, NULL, NULL));
+    EXPECT_TRUE(OC_STACK_OK == OCCloudAclGroupGetInfo(NULL, "groupId", "memberId",
+                "coaps+tcp://127.0.0.1:7777", NULL));
+}
+
+#define CLOUD_URI "coaps+tcp://cloud_uri.com"
+#define X_UUID "33333333-3333-3333-3333-222222222221"
+
+static void cloudResponseCB(void *ctx, OCClientResponse *response, void *data)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(response);
+    OC_UNUSED(data);
+    OIC_LOG_V(DEBUG, TAG, "%s: data: %s", __func__, (const char *)data);
+}
+
+TEST_F(CLOUD, getAclIdFromResponse)
+{
+    OCClientResponse *response = NULL;
+    char *data = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == getAclIdFromResponse(NULL, NULL, NULL));
+
+    response = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == getAclIdFromResponse(NULL, (void **)&data, response));
+
+    response->payload = (OCPayload *)OCRepPayloadCreate();
+    EXPECT_TRUE(OC_STACK_MALFORMED_RESPONSE == getAclIdFromResponse(NULL, (void **)&data, response));
+
+    OCRepPayloadSetPropString((OCRepPayload *)response->payload, OC_RSRVD_ACL_ID, "acl_id");
+    EXPECT_TRUE(OC_STACK_OK == getAclIdFromResponse(NULL, (void **)&data, response));
+    EXPECT_TRUE(OC_STACK_OK == handleGetAclIdByDeviceResponse(NULL, (void **)&data, response));
+    EXPECT_TRUE(OC_STACK_OK == handleAclIdCreateResponse(NULL, (void **)&data, response));
+
+    OCPayloadDestroy((OCPayload *)response->payload);
+    OICFree(response);
+}
+
+TEST_F(CLOUD, OCCloudGetAclIdByDevice)
+{
+    const char *deviceId = NULL;
+    const char *cloudUri = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudGetAclIdByDevice(NULL, NULL, NULL, NULL));
+
+    deviceId = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    snprintf((char *)deviceId, MAX_URI_LENGTH, X_UUID);
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_TRUE(OC_STACK_INVALID_URI == OCCloudGetAclIdByDevice(NULL, deviceId, cloudUri,
+                cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+    EXPECT_TRUE(OC_STACK_OK == OCCloudGetAclIdByDevice(NULL, deviceId, cloudUri, cloudResponseCB));
+
+    OICFree((void *)deviceId);
+    OICFree((void *)cloudUri);
+}
+
+TEST_F(CLOUD, OCCloudAclIdCreate)
+{
+    const char *ownerId = NULL;
+    const char *deviceId = NULL;
+    const char *cloudUri = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclIdCreate(NULL, NULL, NULL, NULL, NULL));
+
+    ownerId = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    snprintf((char *)ownerId, MAX_URI_LENGTH, X_UUID);
+    deviceId = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    snprintf((char *)deviceId, MAX_URI_LENGTH, "33333333-3333-3333-3333-222222222222");
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_TRUE(OC_STACK_INVALID_URI == OCCloudAclIdCreate(NULL, ownerId, deviceId, cloudUri,
+                cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+    EXPECT_TRUE(OC_STACK_OK == OCCloudAclIdCreate(NULL, ownerId, deviceId, cloudUri, cloudResponseCB));
+
+    OICFree((void *)deviceId);
+    OICFree((void *)cloudUri);
+    OICFree((void *)ownerId);
+}
+
+TEST_F(CLOUD, OCCloudAclIdDelete)
+{
+    const char *aclId = NULL;
+    const char *cloudUri = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclIdDelete(NULL, NULL, NULL, NULL));
+
+    aclId = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    snprintf((char *)aclId, MAX_URI_LENGTH, X_UUID);
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_TRUE(OC_STACK_INVALID_URI == OCCloudAclIdDelete(NULL, aclId, cloudUri, cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+    EXPECT_TRUE(OC_STACK_OK == OCCloudAclIdDelete(NULL, aclId, cloudUri, cloudResponseCB));
+
+    OICFree((void *)cloudUri);
+    OICFree((void *)aclId);
+}
+
+TEST_F(CLOUD, handleAclGetInfoResponse)
+{
+    OCClientResponse *response = NULL;
+    char *data = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == handleAclGetInfoResponse(NULL, NULL, NULL));
+
+    response = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == handleAclGetInfoResponse(NULL, (void **)&data, response));
+
+    response->payload = (OCPayload *)OCRepPayloadCreate();
+    EXPECT_TRUE(OC_STACK_OK == handleAclGetInfoResponse(NULL, (void **)&data, response));
+
+    OCRepPayloadSetPropString((OCRepPayload *)response->payload, OC_RSRVD_ACL_ID, "acl_id");
+    EXPECT_TRUE(OC_STACK_OK == handleAclGetInfoResponse(NULL, (void **)&data, response));
+
+    OCPayloadDestroy((OCPayload *)response->payload);
+    OICFree(response);
+}
+
+TEST_F(CLOUD, OCCloudAclIndividualGetInfo)
+{
+    const char *aclId = NULL;
+    const char *cloudUri = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclIndividualGetInfo(NULL, NULL, NULL, NULL));
+
+    aclId = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    snprintf((char *)aclId, MAX_URI_LENGTH, X_UUID);
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_TRUE(OC_STACK_INVALID_URI == OCCloudAclIndividualGetInfo(NULL, aclId, cloudUri,
+                cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+    EXPECT_TRUE(OC_STACK_OK == OCCloudAclIndividualGetInfo(NULL, aclId, cloudUri, cloudResponseCB));
+
+    OICFree((void *)cloudUri);
+    OICFree((void *)aclId);
+}
+
+TEST_F(CLOUD, OCCloudAclIndividualAclUpdate)
+{
+    const char *aclId = NULL;
+    const char *cloudUri = NULL;
+    cloudAce_t *ace = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclIndividualAclUpdate(NULL, NULL, NULL, NULL, NULL));
+
+    aclId = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    snprintf((char *)aclId, MAX_URI_LENGTH, X_UUID);
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCloudAclIndividualAclUpdate(NULL, aclId, ace, cloudUri,
+              cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+
+    ace = (cloudAce_t *)OICCalloc(1, sizeof(cloudAce_t));
+    ace->aceId = OICStrdup("ace_id");
+    EXPECT_TRUE(OC_STACK_OK == ConvertStrToUuid(X_UUID, &ace->subjectuuid));
+    ace->stype = 1;
+    ace->permission = 1;
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCloudAclIndividualAclUpdate(NULL, aclId, ace, cloudUri,
+              cloudResponseCB));
+
+    ace->resources = (OicSecRsrc_t *)OICCalloc(1, sizeof(OicSecRsrc_t));
+    ace->resources->href = OICStrdup(OC_RSRVD_ACL_ID_URL);
+
+    EXPECT_EQ(OC_STACK_OK, OCCloudAclIndividualAclUpdate(NULL, aclId, ace, cloudUri, cloudResponseCB));
+
+    OICFree((void *)ace->resources->href);
+    OICFree((void *)ace->resources);
+    OICFree((void *)ace->aceId);
+    OICFree((void *)ace);
+    OICFree((void *)cloudUri);
+    OICFree((void *)aclId);
+}
+
+TEST_F(CLOUD, OCCloudAclIndividualAceUpdate)
+{
+    const char *aclId = NULL;
+    const char *aceId = NULL;
+    const char *cloudUri = NULL;
+    cloudAce_t *ace = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclIndividualAceUpdate(NULL, NULL, NULL, NULL, NULL,
+                NULL));
+
+    aclId = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    snprintf((char *)aclId, MAX_URI_LENGTH, X_UUID);
+    aceId = OICStrdup("ace_id");
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCloudAclIndividualAceUpdate(NULL, aclId, aceId, ace, cloudUri,
+              cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+
+    ace = (cloudAce_t *)OICCalloc(1, sizeof(cloudAce_t));
+    ace->aceId = OICStrdup("ace_id");
+    EXPECT_TRUE(OC_STACK_OK == ConvertStrToUuid(X_UUID, &ace->subjectuuid));
+    ace->stype = 1;
+    ace->permission = 1;
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCloudAclIndividualAceUpdate(NULL, aclId, aceId, ace, cloudUri,
+              cloudResponseCB));
+
+    ace->resources = (OicSecRsrc_t *)OICCalloc(1, sizeof(OicSecRsrc_t));
+    ace->resources->href = OICStrdup(OC_RSRVD_ACL_ID_URL);
+
+    EXPECT_EQ(OC_STACK_OK, OCCloudAclIndividualAceUpdate(NULL, aclId, aceId, ace, cloudUri,
+              cloudResponseCB));
+
+    OICFree((void *)ace->resources->href);
+    OICFree((void *)ace->resources);
+    OICFree((void *)ace->aceId);
+    OICFree((void *)ace);
+    OICFree((void *)cloudUri);
+    OICFree((void *)aceId);
+    OICFree((void *)aclId);
+}
+
+TEST_F(CLOUD, OCCloudAclAcesDelete)
+{
+    const char *aclId = NULL;
+    const char *cloudUri = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclAcesDelete(NULL, NULL, NULL, NULL));
+
+    aclId = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    snprintf((char *)aclId, MAX_URI_LENGTH, X_UUID);
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_EQ(OC_STACK_INVALID_URI, OCCloudAclAcesDelete(NULL, aclId, cloudUri, cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+
+    EXPECT_EQ(OC_STACK_OK, OCCloudAclAcesDelete(NULL, aclId, cloudUri, cloudResponseCB));
+
+    OICFree((void *)cloudUri);
+    OICFree((void *)aclId);
+}
+
+TEST_F(CLOUD, OCCloudAclIndividualAceDelete)
+{
+    const char *aclId = NULL;
+    const char *aceId = NULL;
+    const char *cloudUri = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclIndividualAceDelete(NULL, NULL, NULL, NULL, NULL));
+
+    aclId = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    snprintf((char *)aclId, MAX_URI_LENGTH, X_UUID);
+    aceId = OICStrdup("ace_id");
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_EQ(OC_STACK_INVALID_URI, OCCloudAclIndividualAceDelete(NULL, aclId, aceId, cloudUri,
+              cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+
+    EXPECT_EQ(OC_STACK_OK, OCCloudAclIndividualAceDelete(NULL, aclId, aceId, cloudUri,
+              cloudResponseCB));
+
+    OICFree((void *)cloudUri);
+    OICFree((void *)aceId);
+    OICFree((void *)aclId);
+}
+
+//-------------------aclinvite-----------------
+TEST_F(CLOUD, parseInvitePayload)
+{
+    OCRepPayload *payload = (OCRepPayload *)OCRepPayloadCreate();
+    stringArrayPair_t *out = (stringArrayPair_t *)OICCalloc(1, sizeof(stringArrayPair_t));
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
+
+    EXPECT_EQ(OC_STACK_MALFORMED_RESPONSE, parseInvitePayload(NULL, NULL, NULL));
+
+    EXPECT_EQ(OC_STACK_MALFORMED_RESPONSE, parseInvitePayload(payload, OC_RSRVD_RESOURCES, out));
+
+    OCRepPayload **helperPayload = (OCRepPayload **)OICCalloc(1, sizeof(OCRepPayload *));
+    *helperPayload = OCRepPayloadCreate();
+    OCRepPayloadSetPropString(*helperPayload, OC_RSRVD_GROUP_ID, "12");
+    OCRepPayloadSetPropString(*helperPayload, OC_RSRVD_MEMBER_ID, "2");
+    dimensions[0] = 1;
+    EXPECT_TRUE(OCRepPayloadSetPropObjectArray(payload, "arrId",
+                (const OCRepPayload **)helperPayload, dimensions));
+
+    EXPECT_EQ(OC_STACK_OK, parseInvitePayload(payload, "arrId", out));
+    OICFree(out);
+}
+
+TEST_F(CLOUD, handleAclGetInvitationResponse)
+{
+    OCClientResponse *response = NULL;
+    char *data = NULL;
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == handleAclGetInvitationResponse(NULL, NULL, NULL));
+
+    response = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == handleAclGetInvitationResponse(NULL, (void **)&data,
+                response));
+    response->payload = (OCPayload *)OCRepPayloadCreate();
+    EXPECT_TRUE(OC_STACK_MALFORMED_RESPONSE == handleAclGetInvitationResponse(NULL, (void **)&data,
+                response));
+
+    OCRepPayload **helperPayload = (OCRepPayload **)OICCalloc(1, sizeof(OCRepPayload *));
+    *helperPayload = OCRepPayloadCreate();
+    OCRepPayloadSetPropString(*helperPayload, OC_RSRVD_GROUP_ID, "12");
+    OCRepPayloadSetPropString(*helperPayload, OC_RSRVD_MEMBER_ID, "2");
+    dimensions[0] = 1;
+    EXPECT_TRUE(OCRepPayloadSetPropObjectArray((OCRepPayload *)response->payload, OC_RSRVD_INVITE,
+                (const OCRepPayload **)helperPayload, dimensions));
+
+    OCRepPayload **helperPayload1 = (OCRepPayload **)OICCalloc(1, sizeof(OCRepPayload *));
+    *helperPayload1 = OCRepPayloadCreate();
+    OCRepPayloadSetPropString(*helperPayload1, OC_RSRVD_GROUP_ID, "11");
+    OCRepPayloadSetPropString(*helperPayload1, OC_RSRVD_MEMBER_ID, "1");
+    dimensions[0] = 1;
+    EXPECT_TRUE(OCRepPayloadSetPropObjectArray((OCRepPayload *)response->payload, OC_RSRVD_INVITED,
+                (const OCRepPayload **)helperPayload1, dimensions));
+
+    EXPECT_EQ(OC_STACK_OK, handleAclGetInvitationResponse(NULL, (void **)&data, response));
+
+    OCPayloadDestroy((OCPayload *)response->payload);
+    OICFree(response);
+}
+
+TEST_F(CLOUD, handleAclPolicyCheckResponse)
+{
+    OCClientResponse *response = NULL;
+    char *data = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == handleAclPolicyCheckResponse(NULL, NULL, NULL));
+
+    response = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == handleAclPolicyCheckResponse(NULL, (void **)&data, response));
+
+    response->payload = (OCPayload *)OCRepPayloadCreate();
+    EXPECT_TRUE(OC_STACK_MALFORMED_RESPONSE == handleAclPolicyCheckResponse(NULL, (void **)&data,
+                response));
+
+    OCRepPayloadSetPropString((OCRepPayload *)response->payload, OC_RSRVD_GROUP_PERMISSION, "0644");
+    EXPECT_EQ(OC_STACK_OK, handleAclPolicyCheckResponse(NULL, (void **)&data, response));
+
+    OCPayloadDestroy((OCPayload *)response->payload);
+    OICFree(response);
+}
+
+TEST_F(CLOUD, OCCloudAclInviteUser)
+{
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclInviteUser(NULL, NULL, NULL, NULL, NULL, NULL));
+
+    stringArray_t *memberIds = (stringArray_t *)OICCalloc(1, sizeof(stringArray_t));
+    stringArray_t *groupIds = (stringArray_t *)OICCalloc(1, sizeof(stringArray_t));
+    groupIds->length = 1;
+    groupIds->array = (char **)OICCalloc(groupIds->length, sizeof(char *));
+    groupIds->array[groupIds->length - 1] = OICStrdup("root");
+
+    memberIds->length = 1;
+    memberIds->array = (char **)OICCalloc(memberIds ->length, sizeof(char *));
+    memberIds->array[memberIds ->length - 1] = OICStrdup("root");
+
+    EXPECT_EQ(OC_STACK_OK, OCCloudAclInviteUser(NULL, "007", groupIds, memberIds, CLOUD_URI,
+              cloudResponseCB));
+}
+
+TEST_F(CLOUD, OCCloudAclGetInvitation)
+{
+    const char *userId = NULL;
+    const char *cloudUri = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclGetInvitation(NULL, NULL, NULL, NULL));
+
+    userId = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    snprintf((char *)userId, MAX_URI_LENGTH, X_UUID);
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_TRUE(OC_STACK_INVALID_URI == OCCloudAclGetInvitation(NULL, userId, cloudUri,
+                cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+    EXPECT_TRUE(OC_STACK_OK == OCCloudAclGetInvitation(NULL, userId, cloudUri, cloudResponseCB));
+
+    OICFree((void *)cloudUri);
+    OICFree((void *)userId);
+
+}
+
+TEST_F(CLOUD, OCCloudAclDeleteInvitation)
+{
+    const char *ownerId = NULL;
+    const char *deviceId = NULL;
+    const char *cloudUri = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclDeleteInvitation(NULL, NULL, NULL, NULL, NULL));
+
+    ownerId = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    snprintf((char *)ownerId, MAX_URI_LENGTH, X_UUID);
+    deviceId = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    snprintf((char *)deviceId, MAX_URI_LENGTH, "33333333-3333-3333-3333-222222222222");
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_TRUE(OC_STACK_INVALID_URI == OCCloudAclDeleteInvitation(NULL, ownerId, deviceId, cloudUri,
+                cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+    EXPECT_TRUE(OC_STACK_OK == OCCloudAclDeleteInvitation(NULL, ownerId, deviceId, cloudUri,
+                cloudResponseCB));
+
+    OICFree((void *)deviceId);
+    OICFree((void *)cloudUri);
+    OICFree((void *)ownerId);
+}
+
+TEST_F(CLOUD, OCCloudAclCancelInvitation)
+{
+    const char *userId = NULL;
+    const char *groupId = NULL;
+    const char *memberId = NULL;
+    const char *cloudUri = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclCancelInvitation(NULL, NULL, NULL, NULL, NULL,
+                NULL));
+
+    userId = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    snprintf((char *)userId, MAX_URI_LENGTH, X_UUID);
+    groupId = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    snprintf((char *)groupId, MAX_URI_LENGTH, "33333333-3333-3333-3333-222222222222");
+    memberId = OICStrdup("root");
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_TRUE(OC_STACK_INVALID_URI == OCCloudAclCancelInvitation(NULL, userId, groupId, memberId,
+                cloudUri,
+                cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+    EXPECT_TRUE(OC_STACK_OK == OCCloudAclCancelInvitation(NULL, userId, groupId, memberId, cloudUri,
+                cloudResponseCB));
+
+    OICFree((void *)cloudUri);
+    OICFree((void *)memberId);
+    OICFree((void *)groupId);
+    OICFree((void *)userId);
+}
+
+TEST_F(CLOUD, OCCloudAclPolicyCheck)
+{
+    const char *cloudUri = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudAclPolicyCheck(NULL, NULL, NULL, NULL, NULL, NULL,
+                NULL));
+
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_TRUE(OC_STACK_INVALID_URI == OCCloudAclPolicyCheck(NULL, X_UUID, X_UUID, "GET", "uuri",
+                cloudUri, cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+    EXPECT_EQ(OC_STACK_OK, OCCloudAclPolicyCheck(NULL, X_UUID, X_UUID, "GET", "uuri", cloudUri,
+              cloudResponseCB));
+
+    OICFree((void *)cloudUri);
+}
+//---------------------auth--------------------
+TEST_F(CLOUD, CloudTokenRefresh)
+{
+    OicCloud_t *cloud = (OicCloud_t *)OICCalloc(1, sizeof(OicCloud_t));
+    cloud->stat = OC_CLOUD_TOKEN_REFRESH0;
+    cloud->session = (session_t *)OICCalloc(1, sizeof(session_t));
+    cloud->session->expireSin = 3;
+    CloudTokenRefresh((void *)cloud);
+}
+//---------------------auth--------------------
+TEST_F(CLOUD, CloudsSignOut)
+{
+    CloudsSignOut();
+
+    DeleteCloudAccount();
+}
+//--------------------crl------------------
+TEST_F(CLOUD, handleCrlGetResponse)
+{
+    OCClientResponse *response = NULL;
+    char *data = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == handleCrlGetResponse(NULL, NULL, NULL));
+
+    response = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == handleCrlGetResponse(NULL, (void **)&data, response));
+
+    OicSecCrl_t *crl = (OicSecCrl_t *)OICCalloc(1, sizeof(OicSecCrl_t));
+    crl->CrlId = 3;
+    crl->ThisUpdate.data = certData();
+    crl->ThisUpdate.len = certDataLen();
+    crl->CrlData.data = keyData();
+    crl->CrlData.len = keyDataLen();
+
+    OCSecurityPayload *payload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
+    payload->base.type = PAYLOAD_TYPE_SECURITY;
+    response->payload = (OCPayload *)payload;
+
+    EXPECT_TRUE(OC_STACK_OK == CrlToCBORPayload(crl, (uint8_t **)&payload->securityData,
+                &payload->payloadSize, NULL));
+    response->payload->type = PAYLOAD_TYPE_SECURITY;
+
+    EXPECT_TRUE(OC_STACK_OK == handleCrlGetResponse(NULL, (void **)&data, response));
+
+    OCPayloadDestroy((OCPayload *)response->payload);
+    OICFree(response);
+}
+
+TEST_F(CLOUD, OCCloudGetCRL)
+{
+    const char *cloudUri = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudGetCRL(NULL, NULL, NULL));
+
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_TRUE(OC_STACK_INVALID_URI == OCCloudGetCRL(NULL, cloudUri, cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+    EXPECT_EQ(OC_STACK_OK, OCCloudGetCRL(NULL, cloudUri, cloudResponseCB));
+
+    OICFree((void *)cloudUri);
+}
+
+TEST_F(CLOUD, OCCloudPostCRL)
+{
+    const char *thisUpdate = OICStrdup("this");
+    const char *nextUpdate = OICStrdup("next");
+    OCByteString *crl = (OCByteString *)OICCalloc(1, sizeof(OCByteString ));
+    stringArray_t *serialNumbers = (stringArray_t *)OICCalloc(1, sizeof(stringArray_t));
+    const char *cloudUri = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudPostCRL(NULL, NULL, NULL, NULL, NULL, NULL, NULL));
+
+    crl->bytes = keyData();
+    crl->len = keyDataLen();
+
+    serialNumbers->length = 1;
+    serialNumbers->array = (char **)OICCalloc(serialNumbers->length, sizeof(char *));
+    serialNumbers->array[serialNumbers->length - 1] = OICStrdup("root");
+
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_TRUE(OC_STACK_INVALID_URI == OCCloudPostCRL(NULL, thisUpdate, nextUpdate, crl, serialNumbers,
+                cloudUri, cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+    EXPECT_TRUE(OC_STACK_OK == OCCloudPostCRL(NULL, thisUpdate, nextUpdate, crl, serialNumbers,
+                cloudUri, cloudResponseCB));
+
+    OICFree((void *)cloudUri);
+}
+//--------------------csr------------------
+TEST_F(CLOUD, CSRMakeSubject)
+{
+    char *subject = (char *)OICCalloc(1, 2048);
+    CSRMakeSubject(subject, "UA", "Samsung", "Sec", NULL);
+    CSRMakeSubject(subject, "UA", "Samsung", "Sec", X_UUID);
+    OICFree(subject);
+}
+
+TEST_F(CLOUD, ecdsaGenKeypair)
+{
+    mbedtls_pk_context pkCtx;
+    EXPECT_EQ(0, ecdsaGenKeypair(&pkCtx));
+    mbedtls_pk_free(&pkCtx);
+
+    char *subject = NULL;
+    OCByteString csr = {.bytes = NULL, .len = 0};
+
+    EXPECT_EQ(-1, GenerateCSR(subject, &csr));
+    subject = (char *)X_UUID;
+    EXPECT_EQ(0, GenerateCSR(subject, &csr));
+}
+
+TEST_F(CLOUD, HandleCertificateIssueRequest)
+{
+    OCClientResponse *response = NULL;
+    char *data = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == HandleCertificateIssueRequest(NULL, NULL, NULL));
+
+    response = (OCClientResponse *)OICCalloc(1, sizeof(OCClientResponse));
+    OCRepPayload *payload = OCRepPayloadCreate();
+    response->payload = (OCPayload *)payload;
+
+    EXPECT_EQ(OC_STACK_ERROR, HandleCertificateIssueRequest(NULL, (void **)&data, response));
+
+    response->result = OC_STACK_RESOURCE_CHANGED;
+
+    EXPECT_EQ(OC_STACK_ERROR, HandleCertificateIssueRequest(NULL, (void **)&data, response));
+
+    OCRepPayloadSetPropString(payload, OC_RSRVD_DEVICE_ID, X_UUID);
+
+    EXPECT_EQ(OC_STACK_ERROR, HandleCertificateIssueRequest(NULL, (void **)&data, response));
+
+    OicSecKey_t *key = (OicSecKey_t *)OICCalloc(1, sizeof(OicSecKey_t));
+    key->data = keyData();
+    key->len = keyDataLen();
+    key->encoding = OIC_ENCODING_DER;
+    OCRepPayloadSetPropPubDataType(payload, OC_RSRVD_CERT, key);
+
+    EXPECT_EQ(OC_STACK_ERROR, HandleCertificateIssueRequest(NULL, (void **)&data, response));
+
+    OicSecKey_t *caCert = (OicSecKey_t *)OICCalloc(1, sizeof(OicSecKey_t));
+    caCert->data = keyData();
+    caCert->len = keyDataLen();
+    caCert->encoding = OIC_ENCODING_DER;
+    OCRepPayloadSetPropPubDataType(payload, OC_RSRVD_CACERT, caCert);
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, HandleCertificateIssueRequest(NULL, (void **)&data, response));
+
+    OCPayloadDestroy((OCPayload *)response->payload);
+    OICFree(response);
+}
+
+TEST_F(CLOUD, OCCloudCertificateIssueRequest)
+{
+    const char *cloudUri = NULL;
+
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == OCCloudCertificateIssueRequest(NULL, NULL, NULL));
+
+    cloudUri = (const char *)OICCalloc(1, MAX_URI_LENGTH);
+    size_t ret = snprintf((char *)cloudUri, MAX_URI_LENGTH, CLOUD_URI);
+    memset((void *)(cloudUri + ret), 117, MAX_URI_LENGTH - ret);
+
+    EXPECT_TRUE(OC_STACK_INVALID_URI == OCCloudCertificateIssueRequest(NULL, cloudUri,
+                cloudResponseCB));
+    memset((void *)(cloudUri + ret), 0, MAX_URI_LENGTH - ret);
+    EXPECT_TRUE(OC_STACK_OK == OCCloudCertificateIssueRequest(NULL, cloudUri, cloudResponseCB));
+
+    OICFree((void *)cloudUri);
+}
+//--------------------util-----------------
+TEST_F(CLOUD, utill)
+{
+    setCoapPrefix(false);
+    setCoapPrefix(true);
+
+    EXPECT_EQ(OC_STACK_DELETE_TRANSACTION, handleResponse(NULL, NULL, NULL));
+
+    stringArray_t *serialNumbers = (stringArray_t *)OICCalloc(1, sizeof(stringArray_t));
+
+    clearStringArray(serialNumbers);
+
+    serialNumbers->length = 1;
+    serialNumbers->array = (char **)OICCalloc(serialNumbers->length, sizeof(char *));
+    serialNumbers->array[serialNumbers->length - 1] = OICStrdup("root");
+    clearStringArray(serialNumbers);
 }
