@@ -2403,6 +2403,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
                     char uuid[UUID_STRING_SIZE] = { 0 };
                     const unsigned char * uuidPos = NULL;
                     const unsigned char * userIdPos = NULL;
+                    uint8_t uuid_found = 0;
 
                     uuidPos = (const unsigned char*)memmem(name->val.p, name->val.len,
                                                            UUID_PREFIX, sizeof(UUID_PREFIX) - 1);
@@ -2414,33 +2415,41 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
                         (name->val.len >= ((uuidPos - name->val.p) + (sizeof(UUID_PREFIX) - 1) + uuidBufLen)))
                     {
                         memcpy(uuid, uuidPos + sizeof(UUID_PREFIX) - 1, uuidBufLen);
-                        OIC_LOG_V(DEBUG, NET_SSL_TAG, "certificate uuid string: %s", uuid);
-                        ret = (OCConvertStringToUuid(uuid, peer->sep.identity.id)) ? 0 : -1;
-                        if (!checkSslOperation(peer,
-                                               ret,
-                                               "Failed to convert subject",
-                                               MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT))
-                        {
-                            oc_mutex_unlock(g_sslContextMutex);
-                            OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-                            return CA_STATUS_FAILED;
-                        }
+                        OIC_LOG(INFO, NET_SSL_TAG, "uuid tag found");
+                        uuid_found = 1;
                     }
                     else
                     {
-                        OIC_LOG(WARNING, NET_SSL_TAG, "uuid not found");
+                        OIC_LOG(WARNING, NET_SSL_TAG, "uuid tag not found");
                     }
+
+                    userIdPos = (const unsigned char*)memmem(name->val.p, name->val.len,
+                                                             USERID_PREFIX, sizeof(USERID_PREFIX) - 1);
 
                     /* If USERID_PREFIX is present, ensure there's enough data for the prefix plus an entire
                      * UUID, to make sure we don't read past the end of the buffer.
                      */
-                    userIdPos = (const unsigned char*)memmem(name->val.p, name->val.len,
-                                                             USERID_PREFIX, sizeof(USERID_PREFIX) - 1);
                     if ((NULL != userIdPos) &&
                         (name->val.len >= ((userIdPos - name->val.p) + (sizeof(USERID_PREFIX) - 1) + uuidBufLen)))
                     {
                         memcpy(uuid, userIdPos + sizeof(USERID_PREFIX) - 1, uuidBufLen);
-                        ret = (OCConvertStringToUuid(uuid, peer->sep.userId.id)) ? 0 : -1;
+                        OIC_LOG(INFO, NET_SSL_TAG, "userid tag found");
+                        uuid_found = 1;
+                    }
+                    else
+                    {
+                        OIC_LOG(WARNING, NET_SSL_TAG, "userid tag not found");
+                    }
+
+                    if (!uuid_found && name->val.len > sizeof(UUID_PREFIX))
+                    {
+                        memcpy(uuid, name->val.p, name->val.len);
+                        uuid_found = 1;
+                    }
+                    else if (uuid_found)
+                    {
+                        OIC_LOG_V(DEBUG, NET_SSL_TAG, "certificate uuid string: %s", uuid);
+                        ret = (OCConvertStringToUuid(uuid, peer->sep.identity.id)) ? 0 : -1;
                         if (!checkSslOperation(peer,
                                                ret,
                                                "Failed to convert subject alt name",
@@ -2453,7 +2462,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
                     }
                     else
                     {
-                        OIC_LOG(WARNING, NET_SSL_TAG, "Subject alternative name not found");
+                        OIC_LOG(WARNING, NET_SSL_TAG, "neither uuid nor userid not found");
                     }
                 }
             }
