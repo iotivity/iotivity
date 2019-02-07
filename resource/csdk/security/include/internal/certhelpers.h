@@ -21,6 +21,10 @@
 #ifndef IOTVT_SRM_CERTHELPERS_H_
 #define IOTVT_SRM_CERTHELPERS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(__WITH_TLS__) || defined(__WITH_DTLS__)
 
 #include <mbedtls/pk.h>
@@ -125,4 +129,8 @@ OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificateChai
                                               const ByteArrayLL_t *trustedCaCerts,
                                               OicSecRole_t **roles, size_t *rolesLength,
                                               struct tm *notValidAfter);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

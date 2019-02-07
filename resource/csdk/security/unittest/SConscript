@@ -105,7 +105,8 @@ unittests_src += [
     'pbkdf2tests.cpp',
     'srmtestcommon.cpp',
     'crlresourcetest.cpp',
-    'ocsecurity.cpp'
+    'ocsecurity.cpp',
+    'certhelpers.cpp'
 ]
 
 if target_os not in ['msys_nt', 'windows']:
