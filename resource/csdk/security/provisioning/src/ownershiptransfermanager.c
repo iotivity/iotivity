@@ -2794,6 +2794,7 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
 
     VERIFY_NOT_NULL_RETURN(TAG, otmCtx, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, otmCtx->selectedDeviceInfo, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, otmCtx->selectedDeviceInfo->pstat, ERROR, OC_STACK_INVALID_PARAM);
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     // Change the TAKE_OWNER bit of TM to 0 (optional in Client Directed)
