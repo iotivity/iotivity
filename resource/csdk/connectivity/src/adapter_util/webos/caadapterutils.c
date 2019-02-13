@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright (c) 2018 LG Electronics Inc.
+ * Copyright (c) 2018-2019 LG Electronics Inc.
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
  *
@@ -425,10 +425,27 @@ static bool CACheckLSRegistered()
 static bool CACreateLSServiceName()
 {
     FILE *fp = NULL;
+    char processNameBuff[MAX_LS_NAME_SIZE];
     char lunaServiceBuff[MAX_LS_NAME_SIZE];
     size_t readSize = 0;
     char *command = NULL;
-    command = g_strdup_printf("ps -p %d -f | sed -n '2p' | awk '{print $8}'", getpid());
+
+    command = g_strdup_printf("ps -p %d -f | sed -n '2p' | awk '{print $8}' | cut -d '/' -f2", getpid());
+
+    fp = popen(command, "r");
+    if (NULL == fp)
+    {
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Failed to open ps");
+        exit(1);
+    }
+
+    readSize = fread((void*)processNameBuff, sizeof(char), MAX_LS_NAME_SIZE - 1, fp);
+    OIC_LOG_V(INFO, CA_ADAPTER_UTILS_TAG, "processNameBuff : %s, readSize: %d", processNameBuff, readSize);
+
+    processNameBuff[readSize]='0';
+    command = g_strdup_printf("find /usr/share/luna-service2/services.d/ -name \"*.*\" | /usr/bin/xargs \
+                               grep %s | grep 'Name' | cut -d '=' -f2 | cut -d '*' -f1",
+                               g_strndup(processNameBuff, readSize-1));
 
     OIC_LOG_V(INFO, CA_ADAPTER_UTILS_TAG, "PID : %d", getpid());
 
@@ -436,7 +453,7 @@ static bool CACreateLSServiceName()
     fp = popen(command, "r");
     if (NULL == fp)
     {
-        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Failed to open ps");
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Failed to open find");
         exit(1);
     }
 
