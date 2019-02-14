@@ -198,6 +198,24 @@ CAResult_t CAregisterGetCredentialTypesHandler(CAgetCredentialTypesHandler getCr
 CAResult_t CAregisterSslHandshakeCallback(CAHandshakeErrorCallback tlsHandshakeCallback);
 
 /**
+ * Callback to return peer's UUID on SSL session closure
+ *
+ * @param[out] uuid     peer's UUID
+ * @param[out] uuidLen  peer's UUID length
+ *
+ * @return  NONE
+*/
+typedef void (*CAcloseSslConnectionCallback)(const unsigned char *uuid, size_t uuidLen);
+
+/**
+ * Register callback to get the TLS disconnection info
+ * @param[in] tlsHandshakeCallback callback for get tls handshake result
+ * @return ::CA_STATUS_OK
+ */
+CAResult_t CAregisterSslDisconnectCallback(CAcloseSslConnectionCallback tlsDisconnectCallback);
+
+
+/**
  * Register callback to get TLS PSK credentials.
  * @param[in]   getTlsCredentials    GetDTLS Credetials callback.
  * @return  ::CA_STATUS_OK

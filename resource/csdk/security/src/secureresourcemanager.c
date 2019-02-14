@@ -35,6 +35,7 @@
 
 #if defined( __WITH_TLS__) || defined(__WITH_DTLS__)
 #include "pkix_interface.h"
+#include "rolesresource.h"
 #endif //__WITH_TLS__ or __WITH_DTLS__
 #define TAG  "OIC_SRM"
 
@@ -480,6 +481,7 @@ OCStackResult SRMInitSecureResources(void)
     CAregisterPkixInfoHandler(GetPkixInfo);
     CAregisterIdentityHandler(GetIdentityHandler);
     CAregisterGetCredentialTypesHandler(InitCipherSuiteList);
+    CAregisterSslDisconnectCallback(DeleteRolesCB);
 #endif // __WITH_DTLS__ or __WITH_TLS__
     return ret;
 }

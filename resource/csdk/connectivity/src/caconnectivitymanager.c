@@ -203,6 +203,19 @@ CAResult_t CAregisterSslHandshakeCallback(CAHandshakeErrorCallback tlsHandshakeC
     return CA_STATUS_OK;
 }
 
+CAResult_t CAregisterSslDisconnectCallback(CAcloseSslConnectionCallback tlsDisconnectCallback)
+{
+    OIC_LOG(DEBUG, TAG, "CAregisterSslDisconnectCallback");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    CAsetCloseSslConnectionCallback(tlsDisconnectCallback);
+    return CA_STATUS_OK;
+}
+
 CAResult_t CAregisterPskCredentialsHandler(CAgetPskCredentialsHandler getTlsCredentialsHandler)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);

@@ -1364,4 +1364,21 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
     return OC_STACK_OK;
 }
 
+void DeleteRolesCB(const unsigned char *uuid, size_t uuidLen)
+{
+    (void)(uuid);
+    (void)(uuidLen);
+
+    OIC_LOG_V(DEBUG, TAG, "IN %s:", __func__);
+
+    if (IsDoxmOwned())
+    {
+        FreeRolesList(gRoles);
+        gRoles = NULL;
+        OIC_LOG_V(DEBUG, TAG, "%s: done", __func__);
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT %s:", __func__);
+}
+
 #endif /* defined(__WITH_DTLS__) || defined(__WITH_TLS__) */

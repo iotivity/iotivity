@@ -110,6 +110,16 @@ OCStackResult RolesToCBORPayload(const RoleCertChain_t *roles, uint8_t **cborPay
  */
 void FreeRoleCertChainList(RoleCertChain_t *roleCertList);
 
+/**
+ * Callback to delete all roles on TLS session closure
+ *
+ * @param[out] uuid     peer's UUID
+ * @param[out] uuidLen  peer's UUID length
+ *
+ * @return  NONE
+*/
+void DeleteRolesCB(const unsigned char *uuid, size_t uuidLen);
+
 #ifdef __cplusplus
 }
 #endif

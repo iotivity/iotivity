@@ -1287,7 +1287,12 @@ CAResult_t CAcloseSslConnection(const CAEndpoint_t *endpoint)
         ret = mbedtls_ssl_close_notify(&tep->ssl);
     }
     while (MBEDTLS_ERR_SSL_WANT_WRITE == ret);
-    g_closeSslConnectionCallback(tep->sep.identity.id, tep->sep.identity.id_length);
+
+    if (NULL != g_closeSslConnectionCallback)
+    {
+        g_closeSslConnectionCallback(tep->sep.identity.id, tep->sep.identity.id_length);
+    }
+
     RemovePeerFromList(&tep->sep.endpoint);
     oc_mutex_unlock(g_sslContextMutex);
 
@@ -2507,6 +2512,12 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
              MBEDTLS_SSL_ALERT_MSG_CLOSE_NOTIFY == peer->ssl.in_msg[1]))
         {
             OIC_LOG(INFO, NET_SSL_TAG, "Connection was closed gracefully");
+
+            if (NULL != g_closeSslConnectionCallback)
+            {
+                g_closeSslConnectionCallback(peer->sep.identity.id, peer->sep.identity.id_length);
+            }
+
             RemovePeerFromList(&peer->sep.endpoint);
             oc_mutex_unlock(g_sslContextMutex);
             return CA_STATUS_OK;
