@@ -418,6 +418,12 @@ static CAgetPkixInfoHandler g_getPkixInfoCallback = NULL;
  * @brief callback to retrieve acceptable UUID list
  */
 static CAgetIdentityHandler g_getIdentityCallback = NULL;
+/**
+ * @var g_closeSslConnectionCallback
+ *
+ * @brief callback to retrieve UUID on SSL connection closure
+ */
+static CAcloseSslConnectionCallback g_closeSslConnectionCallback = NULL;
 
 /**
  * @var g_dtlsContextMutex
@@ -502,6 +508,13 @@ void CAsetPeerCNVerifyCallback(PeerCNVerifyCallback cb)
     }
     g_peerCNVerifyCallback = cb;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "OUT %s", __func__);
+}
+
+void CAsetCloseSslConnectionCallback(CAcloseSslConnectionCallback closeSslCallback)
+{
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+    g_closeSslConnectionCallback = closeSslCallback;
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
 }
 
 /**
@@ -1274,7 +1287,7 @@ CAResult_t CAcloseSslConnection(const CAEndpoint_t *endpoint)
         ret = mbedtls_ssl_close_notify(&tep->ssl);
     }
     while (MBEDTLS_ERR_SSL_WANT_WRITE == ret);
-
+    g_closeSslConnectionCallback(tep->sep.identity.id, tep->sep.identity.id_length);
     RemovePeerFromList(&tep->sep.endpoint);
     oc_mutex_unlock(g_sslContextMutex);
 

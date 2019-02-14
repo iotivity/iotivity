@@ -49,6 +49,7 @@
 #define SetCASecureEndpointAttribute SetCASecureEndpointAttributeTest
 #define GetCASecureEndpointAttributes GetCASecureEndpointAttributesTest
 #define CAsetPeerCNVerifyCallback CAsetPeerCNVerifyCallbackTest
+#define CAsetCloseSslConnectionCallback CAsetCloseSslConnectionCallbackTest
 
 #include "../src/adapter_util/ca_adapter_net_ssl.c"
 

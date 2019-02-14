@@ -84,6 +84,22 @@ void CAsetCredentialTypesCallback(CAgetCredentialTypesHandler credTypesCallback)
 void CAsetSslCredentialsCallback(CAgetPskCredentialsHandler credCallback);
 
 /**
+ * Callback to return peer's UUID on SSL session closure
+ *
+ * @param[out] uuid     peer's UUID
+ * @param[out] uuidLen  peer's UUID length
+ *
+ * @return  CA_STATUS_OK or CA_STATUS_FAIL
+ */
+typedef CAResult_t (*CAcloseSslConnectionCallback)(const unsigned char *uuid, size_t uuidLen);
+
+/**
+ * Register callback that returns peer's UUID on SSL session closure
+ * @param[in] cb callback to return peer's UUID on SSL session closure
+ */
+void CAsetCloseSslConnectionCallback(CAcloseSslConnectionCallback cb);
+
+/**
  * Close the TLS session
  *
  * @param[in] endpoint  information of network address
