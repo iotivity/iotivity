@@ -27,10 +27,11 @@ SConscript(dirs=[
     'consumer',  # build producer notification wrapper
 ])
 
-# Go to build sample apps using wrapper
-if target_os == 'linux':
-    SConscript('examples/linux/SConscript')
-
 # Go to build c++ wrapper unittest
 if env.get('WITH_TEST') and target_os in ('linux'):
     SConscript('unittest/SConscript')
+
+# Go to build sample apps using wrapper
+env.AppendTarget("notification-cpp-examples", default=False)
+if target_os == 'linux' and "notification-cpp-examples" in COMMAND_LINE_TARGETS:
+    SConscript('examples/linux/SConscript')

@@ -89,6 +89,7 @@ notificationproviderwrapper = notification_sample_provider_env.Program(
     'notificationproviderwrapper', 'notificationserviceprovider.cpp')
 i_notificationprovider = notification_sample_provider_env.Install(
     env.get('BUILD_DIR'), notificationproviderwrapper)
+Alias("notification-cpp-examples", notificationproviderwrapper)
 
 notification_sample_consumer_env = notification_sample_env.Clone()
 notification_sample_consumer_env.AppendUnique(
@@ -98,3 +99,4 @@ notificationconsumerwrapper = notification_sample_consumer_env.Program(
     'notificationconsumerwrapper', 'notificationserviceconsumer.cpp')
 i_notificationconsumer = notification_sample_consumer_env.Install(
     env.get('BUILD_DIR'), notificationconsumerwrapper)
+Alias("notification-cpp-examples", notificationconsumerwrapper)
