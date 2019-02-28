@@ -1753,6 +1753,11 @@ static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
 
+    OCCallbackData cbData;
+    cbData.cb = &OwnerCredentialHandler;
+    cbData.context = (void *)otmCtx;
+    cbData.cd = NULL;
+
     //Generate owner credential for new device
     OicUuid_t credSubjectId = {.id={0}};
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
@@ -1808,10 +1813,6 @@ static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
         OIC_LOG(DEBUG, TAG, "Cred Payload:");
         OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
-        OCCallbackData cbData;
-        cbData.cb = &OwnerCredentialHandler;
-        cbData.context = (void *)otmCtx;
-        cbData.cd = NULL;
         res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query,
                                          &deviceInfo->endpoint, (OCPayload*)secPayload,
                                          deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
@@ -1957,6 +1958,11 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx, OicSecAclVersion_t aclVe
         return OC_STACK_NO_MEMORY;
     }
 
+    OCCallbackData cbData;
+    cbData.cb = &OwnerAclHandler;
+    cbData.context = (void *)otmCtx;
+    cbData.cd = NULL;
+
     //Generate ACL payload
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if (NULL == secPayload)
@@ -1992,10 +1998,6 @@ static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx, OicSecAclVersion_t aclVe
     }
 
     //Send owner ACL to new device : POST /oic/sec/cred [ owner credential ]
-    OCCallbackData cbData;
-    cbData.cb = &OwnerAclHandler;
-    cbData.context = (void *)otmCtx;
-    cbData.cd = NULL;
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query,
                                      &deviceInfo->endpoint, (OCPayload*)secPayload,
                                      deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
@@ -2048,6 +2050,11 @@ static OCStackResult PostOwnerTransferModeToResource(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
 
+    OCCallbackData cbData;
+    cbData.cb = &OwnerTransferModeHandler;
+    cbData.context = (void *)otmCtx;
+    cbData.cd = NULL;
+
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     res = otmCtx->otmCallback.createSelectOxmPayloadCB(otmCtx,
             &secPayload->securityData, &secPayload->payloadSize);
@@ -2072,10 +2079,6 @@ static OCStackResult PostOwnerTransferModeToResource(OTMContext_t* otmCtx)
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
     }
 
-    OCCallbackData cbData;
-    cbData.cb = &OwnerTransferModeHandler;
-    cbData.context = (void *)otmCtx;
-    cbData.cd = NULL;
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query,
                        &deviceInfo->endpoint, (OCPayload *)secPayload,
                        deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
@@ -2180,6 +2183,12 @@ static OCStackResult PostOwnerUuid(OTMContext_t* otmCtx)
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
     }
+
+    OCCallbackData cbData;
+    cbData.cb = &OwnerUuidUpdateHandler;
+    cbData.context = (void *)otmCtx;
+    cbData.cd = NULL;
+
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     res = otmCtx->otmCallback.createOwnerTransferPayloadCB(
             otmCtx, &secPayload->securityData, &secPayload->payloadSize);
@@ -2204,11 +2213,6 @@ static OCStackResult PostOwnerUuid(OTMContext_t* otmCtx)
         SetCBORFormat(options, &numOptions);
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
     }
-
-    OCCallbackData cbData;
-    cbData.cb = &OwnerUuidUpdateHandler;
-    cbData.context = (void *)otmCtx;
-    cbData.cd = NULL;
 
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload *)secPayload,
             deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
@@ -2260,6 +2264,11 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
 
+    OCCallbackData cbData;
+    cbData.cb = &OwnershipInformationHandler;
+    cbData.context = (void *)otmCtx;
+    cbData.cd = NULL;
+
     otmCtx->selectedDeviceInfo->doxm->owned = true;
 
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
@@ -2302,11 +2311,6 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
         res = OC_STACK_INVALID_PARAM;
         goto exit;
     }
-
-    OCCallbackData cbData;
-    cbData.cb = &OwnershipInformationHandler;
-    cbData.context = (void *)otmCtx;
-    cbData.cd = NULL;
 
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
                        deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
@@ -2355,6 +2359,11 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
 
+    OCCallbackData cbData;
+    cbData.cb = &OperationModeUpdateHandler;
+    cbData.context = (void *)otmCtx;
+    cbData.cd = NULL;
+
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     OCHeaderOption *options = NULL;
     uint8_t numOptions = 0;
@@ -2387,10 +2396,6 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
         goto exit;
     }
 
-    OCCallbackData cbData;
-    cbData.cb = &OperationModeUpdateHandler;
-    cbData.context = (void *)otmCtx;
-    cbData.cd = NULL;
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload *)secPayload,
                        deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
     secPayload = NULL;
@@ -2825,6 +2830,12 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
     propertiesToInclude[PSTAT_DOS] = true;
     propertiesToInclude[PSTAT_TM] = true;
 
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(cbData));
+    cbData.cb = &ProvisioningStatusHandler;
+    cbData.context = (void*)otmCtx;
+    cbData.cd = NULL;
+
     if (DOS_RFOTM != otmCtx->selectedDeviceInfo->pstat->dos.state)
     {
         propertiesToInclude[PSTAT_ROWNERUUID] = false;
@@ -2880,11 +2891,6 @@ OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    OCCallbackData cbData;
-    memset(&cbData, 0, sizeof(cbData));
-    cbData.cb = &ProvisioningStatusHandler;
-    cbData.context = (void*)otmCtx;
-    cbData.cd = NULL;
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
             otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
     secPayload = NULL;
@@ -2923,6 +2929,12 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
 
     bool propertiesToInclude[PSTAT_PROPERTY_COUNT];
     memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
+
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(cbData));
+    cbData.cb = &ReadyForNomalStatusHandler;
+    cbData.context = (void*)otmCtx;
+    cbData.cd = NULL;
 
     if (IS_OIC(deviceInfo->specVer))
     {
@@ -2973,11 +2985,6 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    OCCallbackData cbData;
-    memset(&cbData, 0, sizeof(cbData));
-    cbData.cb = &ReadyForNomalStatusHandler;
-    cbData.context = (void*)otmCtx;
-    cbData.cd = NULL;
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
             otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
     secPayload = NULL;
@@ -3158,6 +3165,12 @@ OCStackResult PostRownerUuid(OTMContext_t* otmCtx)
     bool propertiesToInclude[PSTAT_PROPERTY_COUNT];
     memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
 
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(cbData));
+    cbData.cb = &RownerUuidHandler;
+    cbData.context = (void*)otmCtx;
+    cbData.cd = NULL;
+
     if (DOS_RFOTM != otmCtx->selectedDeviceInfo->pstat->dos.state)
     {
         propertiesToInclude[PSTAT_ROWNERUUID] = false;
@@ -3211,11 +3224,6 @@ OCStackResult PostRownerUuid(OTMContext_t* otmCtx)
         OIC_LOG_V(WARNING, TAG, "%s: oic version detected", __func__);
     }
 
-    OCCallbackData cbData;
-    memset(&cbData, 0, sizeof(cbData));
-    cbData.cb = &RownerUuidHandler;
-    cbData.context = (void*)otmCtx;
-    cbData.cd = NULL;
     res = OCDoResource(&otmCtx->ocDoHandle, OC_REST_POST, query, 0, (OCPayload*)secPayload,
             deviceInfo->connType, OC_HIGH_QOS, &cbData, options, numOptions);
     secPayload = NULL;
