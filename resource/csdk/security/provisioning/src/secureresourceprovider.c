@@ -282,6 +282,7 @@ void FreeData(Data_t *data)
                 OICFreeAndSetToNull((void**)&certData);
                 break;
             }
+#if defined(MULTIPLE_OWNER)
         case MOT_TYPE:
             {
                 OTMContext_t *motData = (OTMContext_t *) data->ctx;
@@ -289,6 +290,7 @@ void FreeData(Data_t *data)
                 OICFree(motData);
                 break;
             }
+#endif //MULTIPLE_OWNER
 #if defined(WITH_CLOUD)
         case CLOUD_TYPE:
             {
@@ -558,9 +560,7 @@ static OCStackApplicationResult ProvisionCredentialDosCB1(void *ctx, OCDoHandle 
             if (OC_STACK_OK != res)
             {
                 DeleteCredList(credInfo);
-            }
-            if (OC_STACK_OK != res)
-            {
+
                 registerResultForCredProvisioning(credData, res, DEVICE_LOCAL_FINISHED);
                 ((OCProvisionResultCB)(resultCallback))(credData->ctx, credData->numOfResults,
                                                         credData->resArr,
@@ -750,6 +750,7 @@ static OCStackResult ProvisionCredentialsDos(void *ctx, OicSecCred_t *cred,
  */
 static OCStackResult ProvisionLocalCredential(void *ctx, OicSecCred_t *cred)
 {
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_ERROR);
     CredentialData_t *credData = (CredentialData_t *)((Data_t *)ctx)->ctx;
 
     OCStackResult res = AddCredential(cred);
@@ -944,11 +945,13 @@ OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t dos,
             pTargetDev = ((CertData_t *)data->ctx)->targetDev;
             break;
         }
+#if defined(MULTIPLE_OWNER)
         case MOT_TYPE:
         {
             pTargetDev = ((OTMContext_t *)data->ctx)->selectedDeviceInfo;
             break;
         }
+#endif //MULTIPLE_OWNER
 #if defined(WITH_CLOUD)
         case CLOUD_TYPE:
         {
@@ -2136,18 +2139,23 @@ static void registerResultForUnlinkDevices(UnlinkData_t *unlinkData, OCStackResu
         OIC_LOG_V(INFO, TAG, "Stack result :: %d", stackresult);
 
         OicUuid_t *pUuid = &unlinkData->unlinkRes[(unlinkData->numOfResults)].deviceId;
-
-        // Set result in the result array according to the position (devNum).
-        if (idx != IDX_DB_UPDATE_RES)
+        if (pUuid && pUuid->id)
         {
-            memcpy(pUuid->id, unlinkData->unlinkDev[idx].doxm->deviceID.id, sizeof(pUuid->id));
+            // Set result in the result array according to the position (devNum).
+            if (idx != IDX_DB_UPDATE_RES)
+            {
+                if (unlinkData->unlinkDev[idx].doxm)
+                {
+                    memcpy(pUuid->id, unlinkData->unlinkDev[idx].doxm->deviceID.id, sizeof(pUuid->id));
+                }
+            }
+            else
+            {   // When deivce ID is 000... this means it's the result of database update.
+                memset(pUuid->id, 0, sizeof(pUuid->id));
+            }
+            unlinkData->unlinkRes[(unlinkData->numOfResults)].res = stackresult;
+            ++(unlinkData->numOfResults);
         }
-        else
-        {   // When deivce ID is 000... this means it's the result of database update.
-            memset(pUuid->id, 0, sizeof(pUuid->id));
-        }
-        unlinkData->unlinkRes[(unlinkData->numOfResults)].res = stackresult;
-        ++(unlinkData->numOfResults);
         OIC_LOG (INFO, TAG, "Out registerResultForUnlinkDevices");
     }
 }
@@ -2351,9 +2359,11 @@ static OCStackApplicationResult SRPUnlinkDevice2CB(void *unlinkCtx, OCDoHandle h
                                    unlinkData->numOfResults, unlinkData->unlinkRes, true);
         goto error;
     }
-    unlinkData->resultCallback(unlinkData->ctx, unlinkData->numOfResults, unlinkData->unlinkRes,
+    if (unlinkData->resultCallback)
+    {
+        unlinkData->resultCallback(unlinkData->ctx, unlinkData->numOfResults, unlinkData->unlinkRes,
                                false);
-
+    }
 error:
     DeleteUnlinkData_t(unlinkData);
     OIC_LOG(DEBUG, TAG, "OUT SRPUnlinkDevice2CB");
@@ -2381,7 +2391,6 @@ static OCStackApplicationResult SRPUnlinkDevice1CB(void *unlinkCtx, OCDoHandle h
     if (clientResponse)
     {
         OIC_LOG(DEBUG, TAG, "Valid client response for device 1");
-        clientResponse->result = OC_STACK_RESOURCE_DELETED;
         registerResultForUnlinkDevices(unlinkData, clientResponse->result, IDX_FIRST_DEVICE_RES);
 
         if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
@@ -3498,14 +3507,14 @@ static OCStackApplicationResult SRPGetCredResourceCB(void *ctx, OCDoHandle UNUSE
                                                   OCClientResponse *clientResponse)
 {
     OIC_LOG_V(INFO, TAG, "Inside SRPGetCredResourceCB.");
-    (void)UNUSED;
+    OC_UNUSED(UNUSED);
     VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     GetSecData_t *GetSecData = (GetSecData_t*)ctx;
     OCProvisionResultCB resultCallback = GetSecData->resultCallback;
 
     if (clientResponse)
     {
-        if(OC_STACK_OK == clientResponse->result)
+        if(OC_STACK_OK == clientResponse->result && clientResponse->payload)
         {
             uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
             size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
@@ -3515,19 +3524,27 @@ static OCStackApplicationResult SRPGetCredResourceCB(void *ctx, OCDoHandle UNUSE
             (void)payload;
 
             registerResultForGetCredResourceCB(GetSecData, OC_STACK_OK);
-            ((OCProvisionResultCB)(resultCallback))(GetSecData->ctx, GetSecData->numOfResults,
+
+            if (NULL != resultCallback)
+            {
+                ((OCProvisionResultCB)(resultCallback))(GetSecData->ctx, GetSecData->numOfResults,
                                                     GetSecData->resArr,
                                                     false);
-             OICFree(GetSecData->resArr);
-             OICFree(GetSecData);
+            }
+            OICFree(GetSecData->resArr);
+            OICFree(GetSecData);
 
             return OC_STACK_DELETE_TRANSACTION;
         }
     }
     registerResultForGetCredResourceCB(GetSecData, OC_STACK_OK);
-    ((OCProvisionResultCB)(resultCallback))(GetSecData->ctx, GetSecData->numOfResults,
+
+    if (NULL != resultCallback)
+    {
+        ((OCProvisionResultCB)(resultCallback))(GetSecData->ctx, GetSecData->numOfResults,
                                             GetSecData->resArr,
                                             false);
+    }
     OIC_LOG_V(ERROR, TAG, "SRPGetCredResourceCB received Null clientResponse");
     OICFree(GetSecData->resArr);
     OICFree(GetSecData);
