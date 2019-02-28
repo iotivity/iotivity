@@ -251,6 +251,8 @@ OCStackResult CBORPayloadToCSR(const uint8_t *cborPayload, size_t size, uint8_t 
     char* tagName = NULL;
     size_t len = 0;
 
+    CborValue csrRootMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+
     cborFindResult = cbor_parser_init(cborPayload, size, 0, &parser, &csrCbor);
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to initialize parser.");
 
@@ -260,7 +262,6 @@ OCStackResult CBORPayloadToCSR(const uint8_t *cborPayload, size_t size, uint8_t 
     }
 
     // Enter CSR Root Map
-    CborValue csrRootMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
     cborFindResult = cbor_value_enter_container(&csrCbor, &csrRootMap);
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering CSR Root Map.");
 
