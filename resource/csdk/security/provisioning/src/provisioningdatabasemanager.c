@@ -61,7 +61,7 @@
 #define PDM_SQLITE_TRANSACTION_ROLLBACK "ROLLBACK;"
 
 #ifdef __GNUC__
-#if ((__GNUC__ >= 4) && (__GNUC_MINOR__ >= 6))
+#if ((__GNUC__ > 4) && (__GNUC_MINOR__ >= 6))
 #define static_assert(value, message) _Static_assert((value) ? 1 : 0, message)
 #else
 #define static_assert(value, message)
