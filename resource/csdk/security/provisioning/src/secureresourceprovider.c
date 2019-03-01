@@ -968,7 +968,8 @@ OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t dos,
     // Skip posting new DOS state in case of OIC server
     if (IS_OIC(pTargetDev->specVer))
     {
-        OCClientResponse clientResponse = {.result = OC_STACK_RESOURCE_CHANGED};
+        OCClientResponse clientResponse;
+        clientResponse.result = OC_STACK_RESOURCE_CHANGED;
         resultCallback((void*) data, NULL, &clientResponse);
         return OC_STACK_OK;
     }
