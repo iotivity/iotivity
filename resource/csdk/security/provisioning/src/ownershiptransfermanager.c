@@ -1084,6 +1084,8 @@ static OCStackApplicationResult ListMethodsHandler(void *ctx, OCDoHandle UNUSED,
         {
             OIC_LOG(ERROR, TAG, "Device pairing mode enabling owner transfer operations is disabled");
             SetResult(otmCtx, OC_STACK_ERROR);
+            OICFree(pstat->sm);
+            OICFree(pstat);
             return OC_STACK_DELETE_TRANSACTION;
         }
         otmCtx->selectedDeviceInfo->pstat = pstat;
