@@ -73,10 +73,10 @@ typedef struct
 /** CoAP Cloud Configuration Resource */
 typedef struct
 {
-    OCResourceHandle handle;                 /*!< resource handle */
-    char accessToken[OIC_STRING_MAX_VALUE];  /*!< access token */
-    OAUTH_TOKENTYPE accessTokenType;         /*!< access token type */
-    char authProvider[OIC_STRING_MAX_VALUE]; /*!< auth provider */
+    OCResourceHandle handle;                       /*!< resource handle */
+    char accessToken[OIC_ACCESS_TOKEN_MAX_VALUE];  /*!< access token */
+    OAUTH_TOKENTYPE accessTokenType;               /*!< access token type */
+    char authProvider[OIC_STRING_MAX_VALUE];       /*!< auth provider */
     char ciServer[OIC_URI_STRING_MAX_VALUE];
 } CoapCloudConfResource;
 

@@ -733,7 +733,7 @@ void updateCoapCloudConfResource(OCRepPayload* input)
         return;
     }
 
-    memset(cloudData->accessToken, 0, OIC_STRING_MAX_VALUE);
+    memset(cloudData->accessToken, 0, OIC_ACCESS_TOKEN_MAX_VALUE);
     cloudData->accessTokenType = NONE_OAUTH_TOKENTYPE;
     memset(cloudData->authProvider, 0, OIC_STRING_MAX_VALUE);
     memset(cloudData->ciServer, 0, OIC_URI_STRING_MAX_VALUE);

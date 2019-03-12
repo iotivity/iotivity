@@ -35,6 +35,7 @@ extern "C"
 #define OC_RSRVD_ES_RES_TYPE              "rt"            /*!< Resource type */
 
 #define OIC_STRING_MAX_VALUE        64                    /*!< OIC string max value */
+#define OIC_ACCESS_TOKEN_MAX_VALUE  1024                  /*!< Access Token max value */
 #define OIC_URI_STRING_MAX_VALUE    256                   /*!< OIC uri string max value */
 #define MAX_WEBLINKLEN              3                     /*!< Wenlink length */
 #define NUM_WIFIMODE                10                    /*!< Supported wifi mode */
