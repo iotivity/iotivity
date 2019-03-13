@@ -528,7 +528,7 @@ void PrintCredList(const OicSecCred_t *creds)
                         char buf[2048];
                         mbedtls_x509_crt crt;
                         mbedtls_x509_crt *tmpCrt = NULL;
-                        PkiInfo_t inf;
+                        PkiInfoCrt_t inf;
                         int i = 0;
 
                         memset(&inf, 0x00, sizeof(PkiInfo_t));
@@ -553,7 +553,7 @@ void PrintCredList(const OicSecCred_t *creds)
                         char buf[2048];
                         mbedtls_x509_crt ca;
                         mbedtls_x509_crt *tmpCa = NULL;
-                        PkiInfo_t inf;
+                        PkiInfoCrt_t inf;
                         int i = 0;
 
                         memset(&inf, 0x00, sizeof(PkiInfo_t));
@@ -596,7 +596,7 @@ void PrintCredList(const OicSecCred_t *creds)
                         char buf[2048];
                         mbedtls_x509_crt ca;
                         mbedtls_x509_crt *tmpCa = NULL;
-                        PkiInfo_t inf;
+                        PkiInfoCrt_t inf;
                         int i = 0;
 
                         memset(&inf, 0x00, sizeof(PkiInfo_t));

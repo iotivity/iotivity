@@ -49,6 +49,7 @@
 #include "ocstackinternal.h"
 #include "rolesresource.h"
 #include "secureresourcemanager.h"
+#include "parsechain.h"
 
 #define TAG  "OIC_SRM_ROLES"
 
@@ -1159,7 +1160,7 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
     RolesEntry_t *targetEntry = NULL;
     OicSecRole_t *rolesToReturn = NULL;
     size_t rolesToReturnCount = 0;
-    ByteArray_t trustedCaCerts;
+    ByteArrayLL_t trustedCaCerts;
     memset(&trustedCaCerts, 0, sizeof(trustedCaCerts));
 
     OCStackResult res = GetPeerPublicKeyFromEndpoint(endpoint, &publicKey, &publicKeyLength);
@@ -1274,8 +1275,8 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
     InvalidateRoleCache(targetEntry);
 
     /* Retrieve the current set of trusted CAs from the cred resource. */
-    res = GetPemCaCert(&trustedCaCerts, TRUST_CA);
-    if (OC_STACK_OK != res)
+    GetCaCert(&trustedCaCerts, TRUST_CA);
+    if (NULL == trustedCaCerts.cert || 0 == trustedCaCerts.cert->len)
     {
         OIC_LOG_V(ERROR, TAG, "Could not get CA certs: %d", res);
         OICFree(publicKey);
@@ -1291,8 +1292,7 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
         struct tm notValidAfter;
         memset(&notValidAfter, 0, sizeof(notValidAfter));
 
-        res = OCInternalVerifyRoleCertificate(&chain->certificate, trustedCaCerts.data,
-                                              trustedCaCerts.len, &currCertRoles,
+        res = OCInternalVerifyRoleCertificate(&chain->certificate, &trustedCaCerts, &currCertRoles,
                                               &currCertRolesCount, &notValidAfter);
 
         if (OC_STACK_OK != res)
@@ -1312,7 +1312,7 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
             {
                 OIC_LOG(ERROR, TAG, "No memory reallocating rolesToReturn");
                 memset(&targetEntry->cacheValidUntil, 0, sizeof(targetEntry->cacheValidUntil));
-                OICFree(trustedCaCerts.data);
+                FreeCertChain(&trustedCaCerts);
                 OICFree(savePtr);
                 OICFree(currCertRoles);
                 OICFree(publicKey);
@@ -1355,14 +1355,14 @@ OCStackResult GetEndpointRoles(const CAEndpoint_t *endpoint, OicSecRole_t **role
     if (NULL == *roles)
     {
         OICFree(publicKey);
-        OICFree(trustedCaCerts.data);
+        FreeCertChain(&trustedCaCerts);
         return OC_STACK_NO_MEMORY;
     }
     memcpy(*roles, targetEntry->cachedRoles, (targetEntry->cachedRolesLength * sizeof(OicSecRole_t)));
     *roleCount = targetEntry->cachedRolesLength;
 
     OICFree(publicKey);
-    OICFree(trustedCaCerts.data);
+    FreeCertChain(&trustedCaCerts);
     return OC_STACK_OK;
 }
 
