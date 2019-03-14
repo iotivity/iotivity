@@ -596,12 +596,22 @@ static bool IsResourceInAce(SRMRequestContext_t *context, const OicSecAce_t *ace
     }
 
     OicSecRsrc_t* rsrc = NULL;
+    int debugLoggingResourceCounter = 0;
+
+    OIC_LOG_V(DEBUG, TAG, "%s: checking aceid %d for resource matching request for %s.",
+                        __func__, ace->aceid,context->resourceUri);
     LL_FOREACH(ace->resources, rsrc)
     {
+        OIC_LOG_V(DEBUG, TAG, "%s: checking resource %d in aceid %d.",
+                        __func__, debugLoggingResourceCounter, ace->aceid);
         if (NULL == rsrc->href)
         {
+            OIC_LOG_V(DEBUG, TAG, "%s: resource %d has null value in href.",
+                        __func__, debugLoggingResourceCounter);
             if (NO_WILDCARD != rsrc->wildcard)
             {
+                OIC_LOG_V(DEBUG, TAG, "%s: resource %d has wildcard = %d; see OicSecAceResourceWildcard enum.",
+                        __func__, debugLoggingResourceCounter, rsrc->wildcard);
                 if  (IsNonConfigurationResourceUri(context->resourceUri) &&
                         (
                             // "*" matches all NCRs
@@ -623,20 +633,27 @@ static bool IsResourceInAce(SRMRequestContext_t *context, const OicSecAce_t *ace
                         )
                     )
                 {
-                    OIC_LOG_V(DEBUG, TAG, "%s: found wc type %d matching resource.",
+                    OIC_LOG_V(DEBUG, TAG, "%s: found wc type %d matching Non-Configuration Resource.",
                         __func__, rsrc->wildcard);
                     return true;
                 }
             }
         }
-        else if (0 == strcmp(context->resourceUri, rsrc->href) ||
-                 0 == strcmp(WILDCARD_RESOURCE_URI, rsrc->href))
+        else if (0 == strcmp(context->resourceUri, rsrc->href))
         {
-            OIC_LOG_V(DEBUG, TAG, "%s: found href %s matching resource.",
-                        __func__, rsrc->href);
+            OIC_LOG_V(DEBUG, TAG, "%s: found href %s matching resource %s in resource %d from aceid %d.",
+                        __func__, rsrc->href, context->resourceUri, debugLoggingResourceCounter, ace->aceid);
             return true;
         }
+        else
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: resource %d does not match requested resource.",
+                        __func__, debugLoggingResourceCounter);
+        }
+        debugLoggingResourceCounter++;
     }
+    OIC_LOG_V(DEBUG, TAG, "%s: aceid %d does not contain a resource match for requested resource %s.",
+                        __func__, ace->aceid, context->resourceUri);
     return false;
 }
 
