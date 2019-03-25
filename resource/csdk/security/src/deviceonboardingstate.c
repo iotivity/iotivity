@@ -101,9 +101,6 @@ static bool IsReadyToEnterRFNOP(void)
 
     // Note: pstat.dos.p asserted by DoStateChange(), so not checked here.
 
-    // Verify doxm.owned == TRUE.
-    VERIFY_TRUE_OR_EXIT(TAG, IsDoxmOwned(), WARNING);
-
     // Verify doxm.devowneruuid != nil UUID.
     VERIFY_TRUE_OR_EXIT(TAG, !IsDoxmDevowneruuidTheNilUuid(), WARNING);
 
