@@ -18,7 +18,7 @@ MAINTAINER Philippe Coval (philippe.coval@osg.samsung.com)
 
 ENV project iotivity
 ARG version
-ENV version ${version:-2.0.0}
+ENV version ${version:-2.0.1}
 ENV package ${project}-${version}
 ARG user
 ENV user ${user:-abuild}

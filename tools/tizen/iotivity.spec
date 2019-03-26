@@ -1,5 +1,5 @@
 Name: iotivity
-Version: %{!?version:2.0.0}%{?version}
+Version: %{!?version:2.0.1}%{?version}
 Release: %{!?release:0}%{?release}
 Summary: IoT Connectivity sponsored by the OCF
 Group: Network & Connectivity / IoT Connectivity

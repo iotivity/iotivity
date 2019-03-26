@@ -31,7 +31,7 @@
 import os
 import platform
 
-project_version = '2.0.0'
+project_version = '2.0.1'
 
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {

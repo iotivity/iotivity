@@ -2,7 +2,7 @@
 %define ROOTDIR  %{_builddir}/%{name}-%{version}
 
 Name: com-oic-ri-sample
-Version:    2.0.0
+Version:    2.0.1
 Release:    0
 Summary: Tizen adapter interfacesample application
 Group: Network & Connectivity / IoT Connectivity
