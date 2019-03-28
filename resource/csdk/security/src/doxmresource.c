@@ -2108,8 +2108,10 @@ OCStackResult SetDoxmIsOwned(const bool isowned)
     if (gDoxm)
     {
         gDoxm->owned = isowned;
+        VERIFY_SUCCESS(TAG, UpdatePersistentStorage(gDoxm), ERROR);
         return OC_STACK_OK;
     }
+exit:
     return OC_STACK_ERROR;
 }
 
