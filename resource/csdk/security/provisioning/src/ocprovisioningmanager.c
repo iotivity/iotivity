@@ -1574,15 +1574,8 @@ OCStackResult OC_CALL OCSaveTrustCertChain(const uint8_t *trustCertChain, size_t
  */
 OCStackResult OC_CALL OCSaveOwnCertChain(const char* cert, const char* key, uint16_t *credId)
 {
-    OicSecKey_t ownCert = { 0 };
-    ownCert.data = (uint8_t*) cert;
-    ownCert.len = strlen(cert) + 1;
-    ownCert.encoding = OIC_ENCODING_PEM;
-
-    OicSecKey_t ownKey = { 0 };
-    ownKey.data = (uint8_t*) key;
-    ownKey.len = strlen(key) + 1;
-    ownKey.encoding = OIC_ENCODING_PEM;
+    OicSecKey_t ownCert = OC_INIT_SEC_KEY((uint8_t*)cert, strlen(cert) + 1, OIC_ENCODING_PEM);
+    OicSecKey_t ownKey = OC_INIT_SEC_KEY((uint8_t*) key, strlen(key) + 1, OIC_ENCODING_PEM);
 
     return SRPSaveOwnCertChain(&ownCert, &ownKey, credId);
 }
@@ -1599,10 +1592,7 @@ OCStackResult OC_CALL OCSaveOwnCertChain(const char* cert, const char* key, uint
  */
 OCStackResult OC_CALL OCSaveOwnRoleCert(const char* cert, uint16_t *credId)
 {
-    OicSecKey_t ownCert = { 0 };
-    ownCert.data = (uint8_t*)cert;
-    ownCert.len = strlen(cert) + 1;
-    ownCert.encoding = OIC_ENCODING_PEM;
+    OicSecKey_t ownCert = OC_INIT_SEC_KEY((uint8_t*)cert, strlen(cert) + 1, OIC_ENCODING_PEM);
 
     return SRPSaveOwnRoleCert(&ownCert, credId);
 }

@@ -64,7 +64,7 @@ OCStackResult CreatePinBasedOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t *
         return OC_STACK_INVALID_PARAM;
     }
 
-    OicUuid_t uuidPT = {.id={0}};
+    OicUuid_t uuidPT = OC_ZERO_UUID;
     *payload = NULL;
     *size = 0;
 

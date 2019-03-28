@@ -57,6 +57,15 @@
 
 #define TAG "OIC_SRPAPI"
 
+
+#ifndef OC_INIT_OC_CALLBACK_DATA
+#   if (__STDC_VERSION__ >= 199901L)
+#       define OC_INIT_OC_CALLBACK_DATA(ctx, handler, deleter) {.context=(ctx), .cb=(handler), .cd=(deleter)}
+#   else
+#       define OC_INIT_OC_CALLBACK_DATA(ctx, handler, deleter) {(ctx), (handler), (deleter)}
+#   endif
+#endif
+
 static trustCertChainContext_t g_trustCertChainNotifier;
 
 /**
@@ -639,11 +648,7 @@ static OCStackResult provisionCredentials(OicSecCred_t *cred,
         }
         OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-        OCCallbackData cbData;
-        memset(&cbData, 0, sizeof(cbData));
-        cbData.cb = responseHandler;
-        cbData.context = (void *)credData;
-        cbData.cd = NULL;
+        OCCallbackData cbData = OC_INIT_OC_CALLBACK_DATA(credData, responseHandler, NULL);
 
         OCDoHandle handle = NULL;
         OCMethod method = OC_REST_POST;
@@ -718,7 +723,7 @@ static OCStackResult ProvisionCredentialsDos(void *ctx, OicSecCred_t *cred,
         }
         OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-        OCCallbackData cbData = { .context = NULL, .cb = NULL, .cd = NULL };
+        OCCallbackData cbData = OC_INIT_OC_CALLBACK_DATA(NULL, NULL, NULL);
         cbData.cb = responseHandler;
         cbData.context = ctx;
         cbData.cd = NULL;
@@ -907,7 +912,7 @@ OCStackResult SetDOS(const Data_t *data, OicSecDeviceOnboardingState_t dos,
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCCallbackData cbData = { .context = NULL, .cb = NULL, .cd = NULL };
+    OCCallbackData cbData = OC_INIT_OC_CALLBACK_DATA(NULL, NULL, NULL);
     OCMethod method = OC_REST_POST;
     OCDoHandle handle = NULL;
     OCProvisionDev_t *targetDev = NULL;
@@ -1235,7 +1240,7 @@ static OCStackApplicationResult ProvisionTrustChainCB(void *ctx, OCDoHandle UNUS
         }
         OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-        OCCallbackData cbData =  {.context = NULL, .cb = NULL, .cd = NULL};
+        OCCallbackData cbData = OC_INIT_OC_CALLBACK_DATA(NULL, NULL, NULL);
         cbData.cb = ProvisionCB;
         cbData.context = ctx;
         cbData.cd = NULL;
@@ -1315,7 +1320,7 @@ static OCStackApplicationResult ProvisionSecurityProfileInfoCB(void *ctx, OCDoHa
         }
         OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-        OCCallbackData cbData =  {.context = NULL, .cb = NULL, .cd = NULL};
+        OCCallbackData cbData = OC_INIT_OC_CALLBACK_DATA(NULL, NULL, NULL);
         cbData.cb = ProvisionCB;
         cbData.context = ctx;
         cbData.cd = NULL;
@@ -1611,7 +1616,7 @@ static OCStackApplicationResult ProvisionCertificateCB(void *ctx, OCDoHandle han
     const OCProvisionDev_t *pDev = NULL;
     OicSecCred_t *cred = NULL;
     OCSecurityPayload *secPayload = NULL;
-    OCCallbackData cbData =  {.context = ctx, .cb = ProvisionCB, .cd = NULL};
+    OCCallbackData cbData = OC_INIT_OC_CALLBACK_DATA(ctx, ProvisionCB, NULL);
     OCDoHandle lHandle = NULL;
     int secureFlag = 0;//don't send private data(key)
 
@@ -1687,7 +1692,7 @@ OCStackResult SRPProvisionCertificate(void *ctx,
     OCStackResult ret = OC_STACK_ERROR;
     Data_t *data = NULL;
     OicSecCred_t *cred = NULL;
-    OicSecKey_t deviceCert = { 0 };
+    OicSecKey_t deviceCert = OC_INIT_SEC_KEY(NULL, 0, OIC_ENCODING_UNKNOW);
 
     OicUuid_t provTooldeviceID =   {{0,}};
     if (OC_STACK_OK != GetDoxmDeviceID(&provTooldeviceID))
@@ -1866,7 +1871,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             /* pemCert is the cerficiate to be provisioned */
             VERIFY_NOT_NULL_RETURN(TAG, pemCert, ERROR, OC_STACK_INVALID_PARAM);
 
-            OicSecKey_t deviceCert = { 0 };
+            OicSecKey_t deviceCert = OC_INIT_SEC_KEY(NULL, 0, OIC_ENCODING_UNKNOW);
             deviceCert.data = (uint8_t*) pemCert; /* Casting away const is OK here */
             deviceCert.len = strlen(pemCert) + 1;
             deviceCert.encoding = OIC_ENCODING_PEM;
@@ -2216,11 +2221,7 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
         return OC_STACK_ERROR;
     }
 
-    OCCallbackData cbData;
-    memset(&cbData, 0, sizeof(cbData));
-    cbData.context = ctx;
-    cbData.cb = respHandler;
-    cbData.cd = NULL;
+    OCCallbackData cbData = OC_INIT_OC_CALLBACK_DATA(ctx, respHandler, NULL);
     OIC_LOG_V(INFO, TAG, "URI: %s",reqBuf);
 
     OIC_LOG(DEBUG, TAG, "Sending remove credential request to resource server");
@@ -2284,11 +2285,7 @@ static OCStackResult SendDeleteACLRequest(void* ctx,
         return OC_STACK_ERROR;
     }
 
-    OCCallbackData cbData;
-    memset(&cbData, 0, sizeof(cbData));
-    cbData.context = ctx;
-    cbData.cb = respHandler;
-    cbData.cd = NULL;
+    OCCallbackData cbData = OC_INIT_OC_CALLBACK_DATA(ctx, respHandler, NULL);
     OIC_LOG_V(INFO, TAG, "URI: %s",reqBuf);
 
     OIC_LOG(DEBUG, TAG, "Sending remove ACL request to resource server");
@@ -2632,7 +2629,7 @@ static OCStackApplicationResult SRPRemoveDeviceCB(void *delDevCtx, OCDoHandle ha
 
     if (clientResponse)
     {
-        OicUuid_t revDevUuid = {.id={0}};
+        OicUuid_t revDevUuid = OC_ZERO_UUID;
         if(UUID_LENGTH == clientResponse->identity.id_length)
         {
             memcpy(revDevUuid.id, clientResponse->identity.id, sizeof(revDevUuid.id));
@@ -2711,7 +2708,7 @@ static OCStackApplicationResult SRPSyncDeviceCredCB(void *delDevCtx, OCDoHandle 
     OCProvisionResultCB resultCallback = removeData->resultCallback;
     if (clientResponse)
     {
-        OicUuid_t revDevUuid = {.id={0}};
+        OicUuid_t revDevUuid = OC_ZERO_UUID;
         if(UUID_LENGTH == clientResponse->identity.id_length)
         {
             memcpy(revDevUuid.id, clientResponse->identity.id, sizeof(revDevUuid.id));
@@ -2808,7 +2805,21 @@ static OCStackApplicationResult SRPResetDeviceCB(void *ctx, OCDoHandle UNUSED,
     // Delete Cred and ACL related to the target device.
     const OicSecCred_t *cred = NULL;
     OCProvisionDev_t * pTargetDev = (OCProvisionDev_t *)ctx;
-    CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+    CAEndpoint_t endpoint =
+#if (__STDC_VERSION__ >= 199901L)
+    {.adapter = CA_DEFAULT_ADAPTER, .flags = CA_DEFAULT_FLAGS,
+        .port = 0, .addr = {0}, .ifindex = 0, .remoteId = {0}
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+        ,.routeData = {0}
+#endif
+        };
+#else
+    {CA_DEFAULT_ADAPTER, CA_DEFAULT_FLAGS, 0, {0}, 0, {0}
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+        ,{0}
+#endif
+        };
+#endif
     CAResult_t caResult = CA_STATUS_FAILED;
     OCStackResult res = OC_STACK_OK;
 
@@ -3392,7 +3403,7 @@ OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
         return OC_STACK_NO_MEMORY;
     }
 
-    OCCallbackData cbData = { .context = NULL, .cb = NULL, .cd = NULL };
+    OCCallbackData cbData = OC_INIT_OC_CALLBACK_DATA(NULL, NULL, NULL);
     OCMethod method = OC_REST_POST;
     OCDoHandle handle = NULL;
     OCProvisionDev_t *targetDev = NULL;
@@ -3571,7 +3582,7 @@ OCStackResult SRPGetCredResource(void *ctx, const OCProvisionDev_t *selectedDevi
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData = OC_INIT_OC_CALLBACK_DATA(NULL, NULL, NULL);
     cbData.cb = &SRPGetCredResourceCB;
     GetSecData_t* GetSecData = (GetSecData_t*)OICCalloc(1, sizeof(GetSecData_t));
     if (NULL == GetSecData)
@@ -3708,7 +3719,7 @@ OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDevic
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData =  OC_INIT_OC_CALLBACK_DATA(NULL, NULL, NULL);
     cbData.cb = &SRPGetACLResourceCB;
     GetSecData_t* GetSecData = (GetSecData_t*)OICCalloc(1, sizeof(GetSecData_t));
     if (NULL == GetSecData)
@@ -3942,7 +3953,7 @@ OCStackResult SRPGetCSRResource(void *ctx, const OCProvisionDev_t *selectedDevic
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData =  OC_INIT_OC_CALLBACK_DATA(NULL, NULL, NULL);
     cbData.cb = &SRPGetCSRResourceCB;
     GetCsrData_t* getCsrData = (GetCsrData_t*)OICCalloc(1, sizeof(GetCsrData_t));
     if (NULL == getCsrData)
@@ -3998,7 +4009,7 @@ OCStackResult SRPGetSpResource(void *ctx, const OCProvisionDev_t *selectedDevice
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData = OC_INIT_OC_CALLBACK_DATA(NULL, NULL, NULL);
     cbData.cb = &SRPGetSpResourceCB;
     GetSpData_t* getSpData = (GetSpData_t*)OICCalloc(1, sizeof(GetSpData_t));
     if (NULL == getSpData)
@@ -4175,7 +4186,7 @@ OCStackResult SRPGetRolesResource(void *ctx, const OCProvisionDev_t *selectedDev
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData =  OC_INIT_OC_CALLBACK_DATA(NULL, NULL, NULL);
     cbData.cb = &SRPGetRolesResourceCB;
     GetRolesData_t *getRolesData = (GetRolesData_t*)OICCalloc(1, sizeof(GetRolesData_t));
     if (NULL == getRolesData)
@@ -4275,7 +4286,7 @@ OCStackResult SRPDeleteRoleCertificateByCredId(void* ctx, const OCProvisionDev_t
 
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
+    OCCallbackData cbData =  OC_INIT_OC_CALLBACK_DATA(NULL, NULL, NULL);
     cbData.cb = &SRPDeleteRoleCertificateCB;
     GetSecData_t *getSecData = (GetSecData_t*)OICCalloc(1, sizeof(GetSecData_t));
     if (NULL == getSecData)
@@ -4389,7 +4400,7 @@ static OCStackApplicationResult ProvisionAclCB(void *ctx, OCDoHandle UNUSED,
         }
 
         // if rowneruuid is empty, set it to device ID
-        OicUuid_t emptyOwner = {.id = {0} };
+        OicUuid_t emptyOwner = OC_ZERO_UUID;
         if (memcmp(&(aclData->acl->rownerID.id), &emptyOwner, UUID_IDENTITY_SIZE) == 0)
         {
             OIC_LOG(DEBUG, TAG, "Set Rowner to PT's deviceId, because Rowner of ACL is empty");
@@ -4441,7 +4452,7 @@ static OCStackApplicationResult ProvisionAclCB(void *ctx, OCDoHandle UNUSED,
         }
         OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-        OCCallbackData cbData =  {.context = NULL, .cb = NULL, .cd = NULL};
+        OCCallbackData cbData =  OC_INIT_OC_CALLBACK_DATA(NULL, NULL, NULL);
         cbData.cb = ProvisionCB;
         cbData.context = ctx;
         cbData.cd = NULL;

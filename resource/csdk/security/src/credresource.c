@@ -86,6 +86,14 @@ static const char PEM_END_CRT[] = "-----END CERTIFICATE-----";
 #include <intsafe.h>
 #endif
 
+#ifndef OC_PARSER_ITER_INIT
+#   if (__STDC_VERSION__ >= 199901L)
+#       define OC_PARSER_ITER_INIT {.attrPos = NULL, .attrLen = 0, .valPos = NULL, .valLen = 0, .pi = {0, NULL, NULL, 0, NULL, 0}}
+#   else
+#       define OC_PARSER_ITER_INIT {NULL, 0, NULL, 0, {0, NULL, NULL, 0, NULL, 0}}
+#   endif
+#endif
+
 /** Max credential types number used for TLS */
 #define MAX_TYPE 2
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
@@ -100,7 +108,7 @@ static const uint8_t ROLEID_MAP_SIZE = 1;
 
 static OicSecCred_t        *gCred = NULL;
 static OCResourceHandle    gCredHandle = NULL;
-static OicUuid_t           gRownerId = { .id = { 0 } };
+static OicUuid_t           gRownerId = OC_ZERO_UUID;
 
 typedef enum CredCompareResult{
     CRED_CMP_EQUAL = 0,
@@ -149,7 +157,7 @@ static bool CheckSubjectOfCertificate(OicSecCred_t* cred, OicUuid_t deviceID)
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     VERIFY_NOT_NULL_RETURN(TAG, cred, ERROR, false);
 
-    const OicUuid_t emptyUuid = { .id = { 0 } };
+    const OicUuid_t emptyUuid = OC_ZERO_UUID;
 
     if ( SIGNED_ASYMMETRIC_KEY == cred->credType
         && 0 != strcmp(cred->credUsage, TRUST_CA) )
@@ -184,7 +192,7 @@ static bool CheckSubjectOfCertificate(OicSecCred_t* cred, OicUuid_t deviceID)
  */
 static bool IsValidCredential(const OicSecCred_t* cred)
 {
-    OicUuid_t emptyUuid = {.id={0}};
+    OicUuid_t emptyUuid = OC_ZERO_UUID;
 
 
     OIC_LOG(DEBUG, TAG, "IN IsValidCredential");
@@ -264,7 +272,7 @@ exit:
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 static bool IsEmptyCred(const OicSecCred_t* cred)
 {
-    OicUuid_t emptyUuid = {.id={0}};
+    OicUuid_t emptyUuid = OC_ZERO_UUID;
 
     VERIFY_SUCCESS(TAG, (0 == memcmp(cred->subject.id, emptyUuid.id, sizeof(emptyUuid))), DEBUG);
     VERIFY_SUCCESS(TAG, !IsNonEmptyRole(&cred->roleId), DEBUG);
@@ -545,7 +553,7 @@ static CborError DeserializeEncodingFromCborInternal(CborValue *map, char *name,
 
 CborError DeserializeEncodingFromCbor(CborValue *rootMap, OicSecKey_t *value)
 {
-    CborValue map = { .parser = NULL };
+    CborValue map = OC_CBOR_VALUE_INIT;
     CborError cborFindResult = cbor_value_enter_container(rootMap, &map);
     size_t len = 0;
 
@@ -579,7 +587,7 @@ CborError DeserializeEncodingFromCbor(CborValue *rootMap, OicSecKey_t *value)
 
 CborError DeserializeSecOptFromCbor(CborValue *rootMap, OicSecOpt_t *value)
 {
-    CborValue map = { .parser = NULL };
+    CborValue map = OC_CBOR_VALUE_INIT;
     CborError cborFindResult = cbor_value_enter_container(rootMap, &map);
     size_t len = 0;
     value->revstat = false;
@@ -1025,8 +1033,14 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
     char* roleIdTagName = NULL;
     char* name = NULL;
     OCStackResult ret = OC_STACK_ERROR;
-    CborValue credCbor = { .parser = NULL };
-    CborParser parser = { .end = NULL };
+    CborValue credCbor = OC_CBOR_VALUE_INIT ;
+    CborParser parser =
+#   if (__STDC_VERSION__ >= 199901L)
+    { .end = NULL, .flags = 0};
+#   else
+    { NULL, 0};
+#   endif
+
     CborError cborFindResult = CborNoError;
     cbor_parser_init(cborPayload, size, 0, &parser, &credCbor);
 
@@ -1038,7 +1052,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
     OicSecCred_t *headCred = NULL;
 
     // Enter CRED Root Map
-    CborValue CredRootMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+    CborValue CredRootMap = OC_CBOR_VALUE_INIT;
     cborFindResult = cbor_value_enter_container(&credCbor, &CredRootMap);
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering CRED Root Map.");
 
@@ -1063,7 +1077,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                 // Enter CREDS Array
                 size_t tempLen = 0;
                 int credCount = 0;
-                CborValue credArray = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                CborValue credArray = OC_CBOR_VALUE_INIT;
                 cborFindResult = cbor_value_enter_container(&CredRootMap, &credArray);
                 VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding Cred Array.");
 
@@ -1071,7 +1085,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                 {
                     credCount++;
                     //CredId -- Mandatory
-                    CborValue credMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                    CborValue credMap = OC_CBOR_VALUE_INIT;
                     cborFindResult = cbor_value_enter_container(&credArray, &credMap);
                     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding Cred Map.");
                     OicSecCred_t *cred = NULL;
@@ -1420,7 +1434,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     OIC_LOG_BUFFER(DEBUG, TAG, cred->subject.id, sizeof(cred->subject.id));
     if (cred->privateData.data)
     {
-        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : privateData len: %"PRIuPTR, cred->privateData.len);
+        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : privateData len: %" PRIuPTR, cred->privateData.len);
         OIC_LOG_BUFFER(DEBUG, TAG, cred->privateData.data, cred->privateData.len);
     }
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
@@ -1463,7 +1477,7 @@ static OCStackResult CopyPayload(uint8_t **payload, size_t *payloadSize, const D
         /* Need more memory to copy encrypted payload out. */
         OICClearMemory(*payload, *payloadSize);
         OICFree(*payload);
-        *payload = OICMalloc(source->cbData);
+        *payload = (uint8_t*)OICMalloc(source->cbData);
 
         if (NULL == *payload)
         {
@@ -1952,8 +1966,7 @@ static OCStackResult RemoveCredentialByCredIds(CredIdList_t *credIdList)
 static bool GetCredIdsFromQueryString(const char *query, CredIdList_t **credid)
 {
     bool found = false;
-    OicParseQueryIter_t parseIter = { .attrPos = NULL };
-
+    OicParseQueryIter_t parseIter = OC_PARSER_ITER_INIT;
     ParseQueryIterInit((unsigned char *) query, &parseIter);
 
     while (GetNextQuery (&parseIter))
@@ -2031,7 +2044,7 @@ static OCStackResult RemoveAllCredentials(void)
  */
 static bool GetSubjectFromQueryString(const char *query, OicUuid_t *subject)
 {
-    OicParseQueryIter_t parseIter = { .attrPos = NULL };
+    OicParseQueryIter_t parseIter = OC_PARSER_ITER_INIT;
 
     ParseQueryIterInit((unsigned char *) query, &parseIter);
 
@@ -2189,7 +2202,7 @@ static bool FillPrivateDataOfSubOwnerPSK(OicSecCred_t* receivedCred, const CAEnd
         int encodeResult = mbedtls_base64_encode(NULL, 0, &b64OutSize, subOwnerPSK, OWNER_PSK_LENGTH_128);
         VERIFY_SUCCESS(TAG, MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL == encodeResult, ERROR);
         size_t b64BufSize = b64OutSize;
-        b64Buf = OICCalloc(1, b64BufSize);
+        b64Buf = (unsigned char*)OICCalloc(1, b64BufSize);
         VERIFY_NOT_NULL(TAG, b64Buf, ERROR);
         encodeResult = mbedtls_base64_encode(b64Buf, b64BufSize, &b64OutSize, subOwnerPSK, OWNER_PSK_LENGTH_128);
         VERIFY_SUCCESS(TAG, 0 == encodeResult, ERROR);
@@ -2223,7 +2236,7 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
     OCEntityHandlerResult ret = OC_EH_INTERNAL_SERVER_ERROR;
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-    OicUuid_t emptyUuid = {.id={0}};
+    OicUuid_t emptyUuid = OC_ZERO_UUID;
     const OicSecDoxm_t *doxm = GetDoxmResourceData();
     if( NO_SECURITY_MODE != cred->credType
         && doxm
@@ -2555,7 +2568,7 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     CredIdList_t *credIdList = NULL;
-    OicUuid_t subject = { .id= { 0 } };
+    OicUuid_t subject = OC_ZERO_UUID;
 
     if (NULL == ehRequest->query)
     {
@@ -2738,7 +2751,7 @@ OCStackResult InitCredResource(void)
     if (gCred)
     {
         OicUuid_t deviceID;
-        OicUuid_t emptyUuid = {.id={0}};
+        OicUuid_t emptyUuid = OC_ZERO_UUID;
 
         ret = GetDoxmDeviceID(&deviceID);
         if (ret != OC_STACK_OK)
@@ -2962,7 +2975,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
         case CA_DTLS_PSK_HINT:
         case CA_DTLS_PSK_IDENTITY:
             {
-                OicUuid_t deviceID = {.id={0}};
+                OicUuid_t deviceID = OC_ZERO_UUID;
                 // Retrieve Device ID from doxm resource
                 if ( OC_STACK_OK != GetDoxmDeviceID(&deviceID) )
                 {
@@ -3110,7 +3123,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                 size_t pinLength = 0;
                                 if (OIC_ENCODING_RAW == wildCardCred->privateData.encoding)
                                 {
-                                    pinBuffer = OICCalloc(1, wildCardCred->privateData.len + 1);
+                                    pinBuffer = (char*)OICCalloc(1, wildCardCred->privateData.len + 1);
                                     if(NULL == pinBuffer)
                                     {
                                         OIC_LOG (ERROR, TAG, "Failed to allocate memory.");
@@ -3128,7 +3141,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                         goto exit;
                                     }
                                     size_t pinBufSize = pinLength;
-                                    pinBuffer = OICCalloc(1, pinBufSize);
+                                    pinBuffer = (char*)OICCalloc(1, pinBufSize);
                                     if (NULL == pinBuffer)
                                     {
                                         OIC_LOG (ERROR, TAG, "Failed to allocate memory.");

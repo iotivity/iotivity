@@ -28,7 +28,10 @@ if provisioning_lib_env.get('WITH_TCP') == True and provisioning_lib_env.get('WI
 
 target_os = provisioning_lib_env.get('TARGET_OS')
 
-provisioning_lib_env.AppendUnique(CPPPATH=['#resource/csdk/security/include/experimental'])
+provisioning_lib_env.AppendUnique(CPPPATH=[
+    '#resource/csdk/security/include/experimental',
+    '#extlibs/sqlite3'
+])
 
 provisioning_lib_env.PrependUnique(LIBS=['coap'])
 

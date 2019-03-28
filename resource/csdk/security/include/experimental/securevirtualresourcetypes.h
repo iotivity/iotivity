@@ -411,6 +411,15 @@ struct OicUuid
     uint8_t             id[UUID_LENGTH];
 };
 
+
+#ifndef OC_ZERO_UUID
+#   if (__STDC_VERSION__ >= 199901L)
+#       define OC_ZERO_UUID {.id={0}}
+#   else
+#       define OC_ZERO_UUID {{0}}
+#   endif
+#endif
+
 /**
  * /oic/sec/jwk (JSON Web Key) data type.
  * See JSON Web Key (JWK)  draft-ietf-jose-json-web-key-41
@@ -425,6 +434,14 @@ struct OicSecKey
     OicEncodingType_t encoding;
 
 };
+
+#ifndef OC_INIT_SEC_KEY
+#   if (__STDC_VERSION__ >= 199901L)
+#       define OC_INIT_SEC_KEY(_data, _len, _encoding) {.data=(_data), .len=(_len), .encoding=(_encoding)}
+#   else
+#       define OC_INIT_SEC_KEY(_data, _len, _encoding) {(_data), (_len), (_encoding)}
+#   endif
+#endif
 
 struct OicSecOpt
 {

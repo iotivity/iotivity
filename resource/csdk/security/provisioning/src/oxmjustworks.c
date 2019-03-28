@@ -66,7 +66,7 @@ OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx,
         return OC_STACK_INVALID_PARAM;
     }
 
-    OicUuid_t uuidPT = {.id={0}};
+    OicUuid_t uuidPT = OC_ZERO_UUID;
 
     if (OC_STACK_OK != GetDoxmDeviceID(&uuidPT))
     {

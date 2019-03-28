@@ -243,15 +243,21 @@ OCStackResult CBORPayloadToCSR(const uint8_t *cborPayload, size_t size, uint8_t 
     }
 
     OCStackResult ret = OC_STACK_ERROR;
-    CborValue csrCbor = { .parser = NULL };
-    CborParser parser = { .end = NULL };
+    CborValue csrCbor = OC_CBOR_VALUE_INIT;
+    CborParser parser =
+#   if (__STDC_VERSION__ >= 199901L)
+    { .end = NULL, .flags = 0 };
+#   else
+    { NULL, 0 };
+#   endif
+
     CborError cborFindResult = CborNoError;
     uint8_t* cborCsr = NULL;
     size_t cborCsrLen = 0;
     char* tagName = NULL;
     size_t len = 0;
 
-    CborValue csrRootMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+    CborValue csrRootMap = OC_CBOR_VALUE_INIT;
 
     cborFindResult = cbor_parser_init(cborPayload, size, 0, &parser, &csrCbor);
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to initialize parser.");
@@ -374,8 +380,21 @@ static OCEntityHandlerResult HandleCsrGetRequest(OCEntityHandlerRequest * ehRequ
     char *myUuidStr = NULL;
     char *myDNStr = NULL;
     size_t myDNStrLen = 0;
-    ByteArray_t keyData = { .data = NULL, .len = 0 };
-    OCByteString csr = { .bytes = NULL, .len = 0 };
+
+    ByteArray_t keyData =
+#   if (__STDC_VERSION__ >= 199901L)
+    { .data = NULL, .len = 0 };
+#   else
+    { NULL, 0 };
+#   endif
+
+    OCByteString csr =
+#   if (__STDC_VERSION__ >= 199901L)
+    { .bytes = NULL, .len = 0 };
+#   else
+    { NULL, 0 };
+#   endif
+
     size_t size = 0;
     uint8_t *payload = NULL;
 

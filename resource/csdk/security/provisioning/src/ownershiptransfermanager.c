@@ -525,7 +525,7 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
         {
             OIC_LOG(WARNING, TAG, "Failed to revert  is DTLS credential handler.");
         }
-        OicUuid_t emptyUuid = { .id={0}};
+        OicUuid_t emptyUuid = OC_ZERO_UUID;
         SetUuidForPinBasedOxm(&emptyUuid);
     }
     else if(OIC_MANUFACTURER_CERTIFICATE == otmCtx->selectedDeviceInfo->doxm->oxmSel ||
@@ -622,7 +622,7 @@ static CAResult_t OwnershipTransferSessionEstablished(const CAEndpoint_t *endpoi
     {
         uint8_t preMutualVerifNum[OWNER_PSK_LENGTH_128] = {0};
         uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN] = {0};
-        OicUuid_t deviceID = {.id = {0}};
+        OicUuid_t deviceID = OC_ZERO_UUID;
 
         //Generate mutualVerifNum
         char label[LABEL_LEN] = {0};
@@ -706,7 +706,7 @@ static CAResult_t OwnershipTransferSessionFailed(const CAEndpoint_t *endpoint,
     {
         OIC_LOG(ERROR, TAG, "The PIN number may be incorrect.");
 
-        OicUuid_t emptyUuid = {.id={0}};
+        OicUuid_t emptyUuid = OC_ZERO_UUID;
         memcpy(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t));
         newDevDoxm->owned = false;
         otmCtx->attemptCnt++;
@@ -764,7 +764,7 @@ CAResult_t DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *in
 
     CAResult_t result = CA_STATUS_OK;
     bool emptyOwnerUuid = false;
-    OicUuid_t emptyUuid = {.id={0}};
+    OicUuid_t emptyUuid = OC_ZERO_UUID;
     bool matching = false;
     OicSecDoxm_t* newDevDoxm = NULL;
     OTMContext_t* otmCtx = NULL;
@@ -836,7 +836,7 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
     CopyDevAddrToEndpoint(&selectedDeviceInfo->endpoint, &endpoint);
     endpoint.port = getSecurePort(selectedDeviceInfo);
 
-    OicUuid_t ownerDeviceID = {.id={0}};
+    OicUuid_t ownerDeviceID = OC_ZERO_UUID;
     if (OC_STACK_OK != GetDoxmDeviceID(&ownerDeviceID))
     {
         OIC_LOG(ERROR, TAG, "Error while retrieving Owner's device ID");
@@ -1390,7 +1390,7 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
                   */
                 if(OIC_RANDOM_DEVICE_PIN == otmCtx->selectedDeviceInfo->doxm->oxmSel)
                 {
-                    OicUuid_t emptyUuid = { .id={0}};
+                    OicUuid_t emptyUuid = OC_ZERO_UUID;
                     SetUuidForPinBasedOxm(&emptyUuid);
 
                     caResult = CAregisterPskCredentialsHandler(GetDtlsPskCredentials);
@@ -1402,7 +1402,7 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
                     }
                 }
     #ifdef __WITH_TLS__
-                otmCtx->selectedDeviceInfo->connType |= CT_FLAG_SECURE;
+                otmCtx->selectedDeviceInfo->connType = (OCConnectivityType)(otmCtx->selectedDeviceInfo->connType | CT_FLAG_SECURE);
     #endif
                 res = PostOwnerAcl(otmCtx, GET_ACL_VER(otmCtx->selectedDeviceInfo->specVer));
                 if(OC_STACK_OK != res)
@@ -1761,7 +1761,7 @@ static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
     cbData.cd = NULL;
 
     //Generate owner credential for new device
-    OicUuid_t credSubjectId = {.id={0}};
+    OicUuid_t credSubjectId = OC_ZERO_UUID;
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     const OicSecCred_t* ownerCredential = GetCredResourceData(&(deviceInfo->doxm->deviceID));
     if (NULL == ownerCredential)
@@ -3027,7 +3027,7 @@ OCStackResult ConfigSelfOwnership(void)
         return OC_STACK_ERROR;
     }
 
-    OicUuid_t deviceID = {.id={0}};
+    OicUuid_t deviceID = OC_ZERO_UUID;
     if ( OC_STACK_OK != GetDoxmDeviceID(&deviceID) )
     {
         OIC_LOG (ERROR, TAG, "Unable to retrieve doxm Device ID");

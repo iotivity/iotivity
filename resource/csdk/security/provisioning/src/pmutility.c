@@ -333,7 +333,8 @@ OCStackResult MoveDeviceList(OCProvisionDev_t **ppDstDevicesList,
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCProvisionDev_t *ptr = GetDevice(ppSrcDevicesList, endpoint->addr, endpoint->port);
+    OCProvisionDev_t *ptr = NULL;
+    ptr = GetDevice(ppSrcDevicesList, endpoint->addr, endpoint->port);
     if(ptr)
     {
         LL_DELETE(*ppSrcDevicesList, ptr);
@@ -1576,7 +1577,7 @@ OCStackResult PMMultipleOwnerDeviceDiscovery(unsigned short waittime, bool isMul
     const char *DOXM_MOM_ENABLE_MULTICAST_QUERY = "/oic/sec/doxm?mom!=0&owned=TRUE";
     const char *DOXM_MULTIPLE_OWNED_MULTICAST_QUERY = "/oic/sec/doxm?owned=TRUE";
 
-    DiscoveryInfo *pDInfo = OICCalloc(1, sizeof(DiscoveryInfo));
+    DiscoveryInfo *pDInfo = (DiscoveryInfo *)OICCalloc(1, sizeof(DiscoveryInfo));
     if(NULL == pDInfo)
     {
         OIC_LOG(ERROR, TAG, "PMDeviceDiscovery : Memory allocation failed.");

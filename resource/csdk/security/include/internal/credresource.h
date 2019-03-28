@@ -210,7 +210,7 @@ int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
               unsigned char *result, size_t result_length);
 
 /*
- * This internal callback is used to retrieve UUIDs from CRED 
+ * This internal callback is used to retrieve UUIDs from CRED
  * entries that have matching publicData.
  *
  * @param ctx context holding UUID list
@@ -343,5 +343,13 @@ void FreeCred(OicSecCred_t *cred);
  * Check cred rowner uuid
  */
 bool IsCredRowneruuidTheNilUuid();
+
+#ifndef OC_CBOR_VALUE_INIT
+#   if (__STDC_VERSION__ >= 199901L)
+#       define OC_CBOR_VALUE_INIT {.parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0}
+#   else
+#       define OC_CBOR_VALUE_INIT {NULL, NULL, 0, 0, 0, 0}
+#   endif
+#endif
 
 #endif //IOTVT_SRM_CREDR_H

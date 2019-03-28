@@ -230,7 +230,7 @@ static void provisionCredCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, 
 }
 
 /* Function of type OCProvisionResultCB from \resource\csdk\security\provisioning\include\pmtypes.h */
-void provisionTrustChainCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+void provisionTrustChainCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
     if (!hasError)
     {
