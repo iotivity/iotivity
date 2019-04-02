@@ -48,6 +48,8 @@ static OCStackResult parseInvitePayload(const OCRepPayload *payload, const char 
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
     OCRepPayload **helperPayload  = NULL;
     size_t i = 0;
+    stringArray_t *gidlist = NULL;
+    stringArray_t *midlist = NULL;
 
     if (!OCRepPayloadGetPropObjectArray(payload, name, &helperPayload, dimensions))
     {
@@ -56,21 +58,26 @@ static OCStackResult parseInvitePayload(const OCRepPayload *payload, const char 
     }
 
     size_t count = calcDimTotal(dimensions);
+    if (0 == count)
+    {
+        OIC_LOG(ERROR, TAG, "zero list len");
+        goto exit;
+    }
 
-    stringArray_t *gidlist = &out->gidlist;
-    stringArray_t *midlist = &out->midlist;
+    gidlist = &out->gidlist;
+    midlist = &out->midlist;
 
     gidlist->length = count;
     midlist->length = count;
 
-    gidlist->array = OICCalloc(gidlist->length, sizeof(char *));
+    gidlist->array = (char**)OICCalloc(gidlist->length, sizeof(char *));
     if (NULL == gidlist->array)
     {
         OIC_LOG(ERROR, TAG, "Can't allocate gidlist->array");
         goto exit;
     }
 
-    midlist->array = OICCalloc(midlist->length, sizeof(char *));
+    midlist->array = (char**)OICCalloc(midlist->length, sizeof(char *));
     if (NULL == midlist->array)
     {
         OIC_LOG(ERROR, TAG, "Can't allocate midlist->array");
@@ -83,14 +90,14 @@ static OCStackResult parseInvitePayload(const OCRepPayload *payload, const char 
 
         if (!OCRepPayloadGetPropString(gidPayload, OC_RSRVD_GROUP_ID, &gidlist->array[i]))
         {
-            OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_GROUP_ID);
+            OIC_LOG_V(ERROR, TAG, "Can't get group id: %s", OC_RSRVD_GROUP_ID);
             result = OC_STACK_MALFORMED_RESPONSE;
             goto exit;
         }
 
         if (!OCRepPayloadGetPropString(gidPayload, OC_RSRVD_MEMBER_ID, &midlist->array[i]))
         {
-            OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_MEMBER_ID);
+            OIC_LOG_V(ERROR, TAG, "Can't get member id: %s", OC_RSRVD_MEMBER_ID);
             result = OC_STACK_MALFORMED_RESPONSE;
             goto exit;
         }
@@ -128,13 +135,16 @@ static OCStackResult handleAclGetInvitationResponse(void *ctx, void **data,
     OC_UNUSED(ctx);
     OCStackResult result = OC_STACK_OK;
 
+    VERIFY_NON_NULL_RET(response, TAG, "NULL response", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(data, TAG, "NULL data", OC_STACK_INVALID_PARAM);
+
     if (NULL == response->payload)
     {
         OIC_LOG(ERROR, TAG, "Receive NULL payload");
         return OC_STACK_INVALID_PARAM;
     }
 
-    inviteResponse_t *answer = OICCalloc(1, sizeof(inviteResponse_t));
+    inviteResponse_t *answer = (inviteResponse_t*)OICCalloc(1, sizeof(inviteResponse_t));
     if (NULL == answer)
     {
         OIC_LOG(ERROR, TAG, "Can't allocate answer");
@@ -173,6 +183,9 @@ static OCStackResult handleAclPolicyCheckResponse(void *ctx, void **data,
 {
     OC_UNUSED(ctx);
 
+    VERIFY_NON_NULL_RET(response, TAG, "NULL response", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(data, TAG, "NULL data", OC_STACK_INVALID_PARAM);
+
     if (NULL == response->payload)
     {
         OIC_LOG(ERROR, TAG, "Receive NULL payload");
@@ -202,10 +215,17 @@ OCStackResult OCCloudAclInviteUser(void *ctx,
     OCStackResult result = OC_STACK_ERROR;
     char uri[MAX_URI_LENGTH] = { 0 };
     size_t i = 0;
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
 
     VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupIds, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(memberIds, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
+
+    if (0 == groupIds->length)
+    {
+        OIC_LOG(ERROR, TAG, "groups length is 0");
+        return OC_STACK_INVALID_PARAM;
+    }
 
     if (groupIds->length != memberIds->length)
     {
@@ -225,7 +245,7 @@ OCStackResult OCCloudAclInviteUser(void *ctx,
         return OC_STACK_NO_MEMORY;
     }
 
-    OCRepPayload **heplerPayload = OICCalloc(groupIds->length, sizeof(OCRepPayload *));
+    OCRepPayload **heplerPayload = (OCRepPayload**)OICCalloc(groupIds->length, sizeof(OCRepPayload *));
     if (NULL == heplerPayload)
     {
         OCRepPayloadDestroy(payload);
@@ -246,7 +266,6 @@ OCStackResult OCCloudAclInviteUser(void *ctx,
     //add next fields if they were filled
     if (userId) OCRepPayloadSetPropString(payload, OC_RSRVD_USER_UUID, userId);
 
-    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0, 0, 0};
     dimensions[0] = groupIds->length;
     OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_INVITE,
                                    (const struct OCRepPayload **)heplerPayload, dimensions);

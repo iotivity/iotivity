@@ -51,6 +51,8 @@ static OCStackResult handleCrlGetResponse(void *ctx, void **data, OCClientRespon
     OC_UNUSED(ctx);
     OC_UNUSED(data);
 
+    VERIFY_NON_NULL_RET(response, TAG, "NULL response", OC_STACK_INVALID_PARAM);
+
     if (NULL == response->payload)
     {
         OIC_LOG(ERROR, TAG, "Receive NULL payload\n");
@@ -164,7 +166,7 @@ OCStackResult OCCloudPostCRL(void *ctx,
     OIC_LOG(DEBUG, TAG, "Next payload created:");
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *)payload);
 
-    secPayload = OICCalloc(1, sizeof(OCSecurityPayload));
+    secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if (!secPayload)
     {
         OIC_LOG(ERROR, TAG, "Can't allocate secPayload");

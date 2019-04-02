@@ -25,8 +25,8 @@
 extern "C" {
 #endif // __cplusplus
 
-extern char *DEFAULT_QUERY;
-extern char *DEFAULT_PREFIX;
+extern const char *DEFAULT_QUERY;
+extern const char *DEFAULT_PREFIX;
 
 typedef OCStackResult (*UserFunctionCB)(void *params, void **data, OCClientResponse *clientResponse);
 

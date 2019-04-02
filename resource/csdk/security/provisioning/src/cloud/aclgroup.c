@@ -44,6 +44,10 @@ static OCStackResult handleAclCreateGroupResponse(void *ctx, void **data,
         OCClientResponse *response)
 {
     OC_UNUSED(ctx);
+
+    VERIFY_NON_NULL_RET(response, TAG, "NULL response", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(data, TAG, "NULL data", OC_STACK_INVALID_PARAM);
+
     if (NULL == response->payload)
     {
         OIC_LOG(ERROR, TAG, "Receive NULL payload");
@@ -74,6 +78,10 @@ static OCStackResult handleAclFindMyGroupResponse(void *ctx, void **data,
         OCClientResponse *response)
 {
     OC_UNUSED(ctx);
+
+    VERIFY_NON_NULL_RET(response, TAG, "NULL response", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(data, TAG, "NULL data", OC_STACK_INVALID_PARAM);
+
     if (NULL == response->payload)
     {
         OIC_LOG(ERROR, TAG, "Receive NULL payload");
@@ -83,7 +91,7 @@ static OCStackResult handleAclFindMyGroupResponse(void *ctx, void **data,
     const OCRepPayload *payload = (const OCRepPayload *)response->payload;
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
 
-    stringArray_t *gidlist = OICCalloc(1, sizeof(stringArray_t));
+    stringArray_t *gidlist = (stringArray_t *)OICCalloc(1, sizeof(stringArray_t));
     if (NULL == gidlist)
     {
         OIC_LOG(ERROR, TAG, "Can't allocate gidlist");

@@ -35,8 +35,8 @@ typedef struct {
     void *params;
 }ContextInfo_t;
 
-char *DEFAULT_QUERY  = COAP_TCP_QUERY;
-char *DEFAULT_PREFIX = COAP_TCP_PREFIX;
+const char *DEFAULT_QUERY  = COAP_TCP_QUERY;
+const char *DEFAULT_PREFIX = COAP_TCP_PREFIX;
 
 /**
  * This function sets required CoAP prefix depending on

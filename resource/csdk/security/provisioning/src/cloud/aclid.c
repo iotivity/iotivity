@@ -45,11 +45,10 @@
 static OCStackResult getAclIdFromResponse(void *ctx, void **data, OCClientResponse *response)
 {
     OC_UNUSED(ctx);
-    if (NULL == response->payload)
-    {
-        OIC_LOG(ERROR, TAG, "Receive NULL payload");
-        return OC_STACK_INVALID_PARAM;
-    }
+
+    VERIFY_NON_NULL_RET(response, TAG, "NULL response", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(response->payload, TAG, "NULL payload response", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(data, TAG, "NULL data", OC_STACK_INVALID_PARAM);
 
     char *aclid = NULL;
 
@@ -102,8 +101,11 @@ OCStackResult OCCloudGetAclIdByDevice(void *ctx,
     VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(deviceId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s?%s=%s", cloudUri, OC_RSRVD_ACL_ID_URL, OC_RSRVD_DEVICE_ID,
-             deviceId);
+    if (MAX_URI_LENGTH - 1 <= snprintf(uri, MAX_URI_LENGTH, "%s%s?%s=%s",
+                                       cloudUri, OC_RSRVD_ACL_ID_URL, OC_RSRVD_DEVICE_ID, deviceId))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: uri truncated: %s", __func__, uri);
+    }
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, handleGetAclIdByDeviceResponse, NULL);
@@ -124,9 +126,13 @@ OCStackResult OCCloudAclIdCreate(void *ctx,
     VERIFY_NON_NULL_RET(ownerId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(deviceId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s?%s=%s&%s=%s",
-             cloudUri, OC_RSRVD_ACL_ID_URL,
-             OC_RSRVD_OWNER_ID, ownerId, OC_RSRVD_DEVICE_ID, deviceId);
+    if (MAX_URI_LENGTH - 1 <= snprintf(uri, MAX_URI_LENGTH, "%s%s?%s=%s&%s=%s",
+                                       cloudUri, OC_RSRVD_ACL_ID_URL,
+                                       OC_RSRVD_OWNER_ID, ownerId, OC_RSRVD_DEVICE_ID, deviceId))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: uri truncated: %s", __func__, uri);
+    }
+
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, handleAclIdCreateResponse, NULL);
@@ -145,7 +151,12 @@ OCStackResult OCCloudAclIdDelete(void *ctx,
     VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s?%s=%s", cloudUri, OC_RSRVD_ACL_ID_URL, OC_RSRVD_ACL_ID, aclId);
+    if (MAX_URI_LENGTH - 1 <= snprintf(uri, MAX_URI_LENGTH, "%s%s?%s=%s", cloudUri, OC_RSRVD_ACL_ID_URL,
+                                       OC_RSRVD_ACL_ID, aclId))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: uri truncated: %s", __func__, uri);
+    }
+
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
@@ -167,15 +178,13 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
     OCStackResult result = OC_STACK_OK;
     uint8_t *cbor = NULL;
     size_t size   = 0;
+    OicSecAcl_t *acl = NULL;
 
     OC_UNUSED(ctx);
     OC_UNUSED(data);
 
-    if (NULL == response->payload)
-    {
-        OIC_LOG(ERROR, TAG, "Receive NULL payload\n");
-        return OC_STACK_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL_RET(response, TAG, "NULL response", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(response->payload, TAG, "NULL pyload response", OC_STACK_INVALID_PARAM);
 
     result = OCConvertPayload(response->payload, OC_FORMAT_CBOR, &cbor, &size);
     if (result != OC_STACK_OK)
@@ -184,7 +193,7 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
         goto exit;
     }
 
-    OicSecAcl_t *acl = CBORPayloadToCloudAcl(cbor, size);
+    acl = CBORPayloadToCloudAcl(cbor, size);
     if (NULL == acl)
     {
         OIC_LOG(ERROR, TAG, "Can't parse CBOR payload");
@@ -213,16 +222,21 @@ exit:
 }
 
 OCStackResult OCCloudAclIndividualGetInfo(void *ctx,
-                                          const char *aclId,
-                                          const char *cloudUri,
-                                          OCCloudResponseCB callback)
+        const char *aclId,
+        const char *cloudUri,
+        OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH]  = { 0 };
 
     VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s/%s", cloudUri, OC_RSRVD_ACL_ID_URL, aclId);
+    if (MAX_URI_LENGTH - 1 <= snprintf(uri, MAX_URI_LENGTH, "%s%s/%s", cloudUri, OC_RSRVD_ACL_ID_URL,
+                                       aclId))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: uri truncated: %s", __func__, uri);
+    }
+
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, handleAclGetInfoResponse, NULL);
@@ -231,11 +245,44 @@ OCStackResult OCCloudAclIndividualGetInfo(void *ctx,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 
+static bool aceValidate(cloudAce_t *aces)
+{
+    cloudAce_t *ace = NULL;
+    size_t acllist_count = 0;
+    LL_FOREACH(aces, ace)
+    {
+        size_t reslist_count = 0;
+        OicSecRsrc_t *res = NULL;
+        LL_FOREACH( ace->resources, res)
+        {
+            if (NULL == res->href)
+            {
+                OIC_LOG_V(WARNING, TAG, "%s: wrong href of the resourse", __func__);
+                continue;
+            }
+            reslist_count++;
+        }
+        if(0 == reslist_count)
+        {
+            OIC_LOG_V(WARNING, TAG, "%s: there is no resourse", __func__);
+            return false;
+        }
+
+        acllist_count++;
+    }
+    if(0 == acllist_count)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: there is no acl", __func__);
+        return false;
+    }
+    return true;
+}
+
 OCStackResult OCCloudAclIndividualAclUpdate(void *ctx,
-                                            const char *aclId,
-                                            const cloudAce_t *aces,
-                                            const char *cloudUri,
-                                            OCCloudResponseCB callback)
+        const char *aclId,
+        const cloudAce_t *aces,
+        const char *cloudUri,
+        OCCloudResponseCB callback)
 {
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
     char uri[MAX_URI_LENGTH]  = { 0 };
@@ -244,12 +291,25 @@ OCStackResult OCCloudAclIndividualAclUpdate(void *ctx,
 
     OCRepPayload **helperPayload  = NULL;
     OCRepPayload **helperPayload2 = NULL;
+    cloudAce_t *ace = NULL;
+    size_t acllist_count = 0;
 
     VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aces, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s/%s", cloudUri, OC_RSRVD_ACL_ID_URL, aclId);
+    if(!aceValidate((cloudAce_t*)aces))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: invalid aces", __func__);
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if (MAX_URI_LENGTH - 1 <= snprintf(uri, MAX_URI_LENGTH, "%s%s/%s", cloudUri, OC_RSRVD_ACL_ID_URL,
+                                       aclId))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: uri truncated: %s", __func__, uri);
+    }
+
 
     OCRepPayload *payload = OCRepPayloadCreate();
     if (!payload)
@@ -258,7 +318,7 @@ OCStackResult OCCloudAclIndividualAclUpdate(void *ctx,
         goto no_memory;
     }
 
-    size_t acllist_count = 0;
+    acllist_count = 0;
     //code below duplicates LL_COUNT, implemented in newer version of utlist.h
     {
         cloudAce_t *ace = (cloudAce_t *)aces;
@@ -269,7 +329,7 @@ OCStackResult OCCloudAclIndividualAclUpdate(void *ctx,
         }
     }
 
-    helperPayload = OICCalloc(acllist_count, sizeof(OCRepPayload *));
+    helperPayload = (OCRepPayload **)OICCalloc(acllist_count, sizeof(OCRepPayload *));
     if (!helperPayload)
     {
         OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload");
@@ -277,8 +337,7 @@ OCStackResult OCCloudAclIndividualAclUpdate(void *ctx,
     }
 
     i = 0;
-    cloudAce_t *ace = NULL;
-
+    ace = NULL;
     LL_FOREACH((cloudAce_t *)aces, ace)
     {
         OCRepPayload *acePayload = OCRepPayloadCreate();
@@ -312,9 +371,10 @@ OCStackResult OCCloudAclIndividualAclUpdate(void *ctx,
             }
         }
 
-        helperPayload2 = OICCalloc(reslist_count, sizeof(OCRepPayload *));
+        helperPayload2 = (OCRepPayload **)OICCalloc(reslist_count, sizeof(OCRepPayload *));
         if (!helperPayload2)
         {
+            OIC_LOG_V(ERROR, TAG, "%s: Can't allocate memory", __func__);
             goto no_memory;
         }
 
@@ -381,19 +441,32 @@ OCStackResult OCCloudAclIndividualAceUpdate(void *ctx,
 {
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
     char uri[MAX_URI_LENGTH]  = { 0 };
+    cloudAce_t *ace;
 
     int i = 0, j = 0;
 
     OCRepPayload **helperPayload  = NULL;
     OCRepPayload **helperPayload2 = NULL;
+    size_t acllist_count;
 
     VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aceId, TAG, "NULL aceId", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aces, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s/%s?%s=%s", cloudUri, OC_RSRVD_ACL_ID_URL, aclId,
-             OC_RSRVD_ACE_ID, aceId);
+    if(!aceValidate((cloudAce_t*)aces))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: invalid aces", __func__);
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if (MAX_URI_LENGTH - 1 <= snprintf(uri, MAX_URI_LENGTH, "%s%s/%s?%s=%s", cloudUri,
+                                       OC_RSRVD_ACL_ID_URL, aclId,
+                                       OC_RSRVD_ACE_ID, aceId))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: uri truncated: %s", __func__, uri);
+    }
+
 
     OCRepPayload *payload = OCRepPayloadCreate();
     if (!payload)
@@ -402,9 +475,9 @@ OCStackResult OCCloudAclIndividualAceUpdate(void *ctx,
         goto no_memory;
     }
 
-    size_t acllist_count = 1;
+    acllist_count = 1;
 
-    helperPayload = OICCalloc(acllist_count, sizeof(OCRepPayload *));
+    helperPayload = (OCRepPayload **)OICCalloc(acllist_count, sizeof(OCRepPayload *));
     if (!helperPayload)
     {
         OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload");
@@ -412,7 +485,7 @@ OCStackResult OCCloudAclIndividualAceUpdate(void *ctx,
     }
 
     i = 0;
-    cloudAce_t *ace = NULL;
+    ace = NULL;
 
     LL_FOREACH((cloudAce_t *)aces, ace)
     {
@@ -447,7 +520,7 @@ OCStackResult OCCloudAclIndividualAceUpdate(void *ctx,
             }
         }
 
-        helperPayload2 = OICCalloc(reslist_count, sizeof(OCRepPayload *));
+        helperPayload2 = (OCRepPayload **)OICCalloc(reslist_count, sizeof(OCRepPayload *));
         if (!helperPayload2)
         {
             goto no_memory;
@@ -519,7 +592,12 @@ OCStackResult OCCloudAclAcesDelete(void *ctx,
     VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s/%s", cloudUri, OC_RSRVD_ACL_ID_URL, aclId);
+    if (MAX_URI_LENGTH - 1 <= snprintf(uri, MAX_URI_LENGTH, "%s%s/%s", cloudUri, OC_RSRVD_ACL_ID_URL,
+                                       aclId))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: uri truncated: %s", __func__, uri);
+    }
+
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
@@ -529,10 +607,10 @@ OCStackResult OCCloudAclAcesDelete(void *ctx,
 }
 
 OCStackResult OCCloudAclIndividualAceDelete(void *ctx,
-                                            const char *aclId,
-                                            const char *aceId,
-                                            const char *cloudUri,
-                                            OCCloudResponseCB callback)
+        const char *aclId,
+        const char *aceId,
+        const char *cloudUri,
+        OCCloudResponseCB callback)
 {
     char uri[MAX_URI_LENGTH]  = { 0 };
 
@@ -540,8 +618,13 @@ OCStackResult OCCloudAclIndividualAceDelete(void *ctx,
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aceId, TAG, "NULL aceId", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s/%s?%s=%s", cloudUri, OC_RSRVD_ACL_ID_URL, aclId,
-             OC_RSRVD_ACE_ID, aceId);
+    if (MAX_URI_LENGTH - 1 <= snprintf(uri, MAX_URI_LENGTH, "%s%s/%s?%s=%s", cloudUri,
+                                       OC_RSRVD_ACL_ID_URL, aclId,
+                                       OC_RSRVD_ACE_ID, aceId))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: uri truncated: %s", __func__, uri);
+    }
+
 
     OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);

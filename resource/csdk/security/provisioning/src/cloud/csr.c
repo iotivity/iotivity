@@ -383,6 +383,8 @@ OCStackResult OCCloudCertificateIssueRequest(void *ctx,
         OCCloudResponseCB callback)
 {
     OCStackResult ret = OC_STACK_OK;
+    char uri[MAX_URI_QUERY] = { 0 };
+    OCRepPayload *payload = NULL;
 
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
@@ -399,7 +401,7 @@ OCStackResult OCCloudCertificateIssueRequest(void *ctx,
 
     OIC_LOG_V(DEBUG, TAG, "Certificate Request subject: %s", subject);
 
-    OCByteString request = { 0 };
+    OCByteString request = { NULL, 0 };
     if (0 != GenerateCSR(subject, &request))
     {
         OIC_LOG(ERROR, TAG, "Cann't get the sertificate request");
@@ -412,7 +414,7 @@ OCStackResult OCCloudCertificateIssueRequest(void *ctx,
     OIC_LOG(DEBUG, TAG, "Private Key:");
     OIC_LOG_BUFFER(DEBUG, TAG, g_privateKey.bytes, g_privateKey.len);
 
-    OCRepPayload *payload = OCRepPayloadCreate();
+    payload = OCRepPayloadCreate();
     if (!payload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
@@ -432,7 +434,6 @@ OCStackResult OCCloudCertificateIssueRequest(void *ctx,
 
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *)payload);
 
-    char uri[MAX_URI_QUERY] = { 0 };
     snprintf(uri, MAX_URI_QUERY, "%s%s", cloudUri, OC_RSRVD_PROV_CERT_URI);
     OIC_LOG_V(DEBUG, TAG, "Certificate Request Query: %s", uri);
 
