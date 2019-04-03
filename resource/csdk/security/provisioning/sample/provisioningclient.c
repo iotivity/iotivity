@@ -247,32 +247,27 @@ void provisionTrustChainCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool
 }
 
 #ifdef WITH_CLOUD
-static void provisionCloudConfigCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+static OCStackApplicationResult  provisionCloudConfigCB(void *context, OCDoHandle handle, OCClientResponse * clientResponse)
 {
-    if(!hasError)
-    {
-        OIC_LOG_V(INFO, TAG, "Provision cloud config SUCCEEDED - ctx: %s", (char*) ctx);
-    }
-    else
-    {
-        OIC_LOG_V(ERROR, TAG, "Provision cloud config FAILED - ctx: %s", (char*) ctx);
-        printResultList((const OCProvisionResult_t*) arr, nOfRes);
-    }
+    OC_UNUSED(context);
+    OC_UNUSED(handle);
+    OC_UNUSED(clientResponse);
+
+    OIC_LOG_V(INFO, TAG, "%s: Provision cloud config DONE ctx: %s", __func__, (char*) context);
     g_doneCB = true;
+
+    return OC_STACK_DELETE_TRANSACTION;
 }
 
-static void getCloudStatusCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
+static OCStackApplicationResult getCloudStatusCB(void *context, OCDoHandle handle, OCClientResponse * clientResponse)
 {
-    if(!hasError)
-    {
-        OIC_LOG_V(INFO, TAG, "Get cloud status SUCCEEDED - ctx: %s", (char*) ctx);
-    }
-    else
-    {
-        OIC_LOG_V(ERROR, TAG, "Get cloud status FAILED - ctx: %s", (char*) ctx);
-        printResultList((const OCProvisionResult_t*) arr, nOfRes);
-    }
+    OC_UNUSED(context);
+    OC_UNUSED(handle);
+    OC_UNUSED(clientResponse);
+
+    OIC_LOG_V(INFO, TAG, "%s: DONE ctx: %s", __func__, (char*) context);
     g_doneCB = true;
+    return OC_STACK_DELETE_TRANSACTION;
 }
 
 static void removeCloudConfCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
@@ -1604,7 +1599,7 @@ static int provisionCloudConfig(void)
     //Provision the new cert
     printf("   > Provisioning certificate credential to selected device..\n");
     g_doneCB = false;
-    rst = OCProvisionCloudConfig((void*)g_ctx, targetDevice, cloud, (OCClientResponseHandler)provisionCloudConfigCB);
+    rst = OCProvisionCloudConfig((void*)g_ctx, targetDevice, cloud, provisionCloudConfigCB);
     if (OC_STACK_OK != rst)
     {
         OIC_LOG_V(ERROR, TAG, "OCProvisionCertificate returned error: %d", rst);
