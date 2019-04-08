@@ -169,7 +169,6 @@ static void SetDiscoverableAndOcSecureFlags(SRMRequestContext_t *context)
     if (NULL == context)
     {
         OIC_LOG_V(ERROR, TAG, "%s: Null context.", __func__);
-        context->discoverable = DISCOVERABLE_NOT_KNOWN;
         return;
     }
     if (NULL == context->resourceUri)
@@ -478,9 +477,18 @@ OCStackResult SRMInitSecureResources(void)
         OIC_LOG(ERROR, TAG, "Failed to revert TLS credential handler.");
         ret = OC_STACK_ERROR;
     }
-    CAregisterPkixInfoHandler(GetPkixInfo);
-    CAregisterIdentityHandler(GetIdentityHandler);
-    CAregisterGetCredentialTypesHandler(InitCipherSuiteList);
+    if (CA_STATUS_OK != CAregisterPkixInfoHandler(GetPkixInfo))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s : CAregisterPkixInfoHandler failed!", __func__);
+    }
+    if (CA_STATUS_OK != CAregisterIdentityHandler(GetIdentityHandler))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s : CAregisterIdentityHandler failed!", __func__);
+    }
+    if (CA_STATUS_OK != CAregisterGetCredentialTypesHandler(InitCipherSuiteList))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s : CAregisterGetCredentialTypesHandler failed!", __func__);
+    }
     CAregisterSslDisconnectCallback(DeleteRolesCB);
 #endif // __WITH_DTLS__ or __WITH_TLS__
     return ret;

@@ -3268,7 +3268,10 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
     ret = AddCredential(cred);
     if( OC_STACK_OK != ret)
     {
-        RemoveCredential(tmpSubject);
+        if(OC_STACK_RESOURCE_DELETED != RemoveCredential(tmpSubject))
+        {
+            OIC_LOG(WARNING, TAG, "Failed to remove credential!");
+        }
         OIC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to add credential");
     }
     OIC_LOG(DEBUG, TAG, "AddTmpPskWithPIN OUT");
@@ -3439,61 +3442,56 @@ OCStackResult FillCertChain(ByteArrayLL_t * chain, OicSecCred_t * temp)
     if (pemCertNum > 0)  // PEM or BASE64 certificates processing
     {
         uint8_t * begin = (uint8_t *) strstr((const char *)temp->publicData.data, PEM_BEGIN_CRT);
-        uint8_t * end = (uint8_t *) strstr((const char *)begin, PEM_END_CRT);
-        for (int i = 0; i < pemCertNum; i++)
+        if (begin)
         {
-            if (NULL != begin && NULL != end)
+            uint8_t * end = (uint8_t *) strstr((const char *)begin, PEM_END_CRT);
+            if (end)
             {
-                ByteArray_t * item = (ByteArray_t *) OICMalloc (sizeof(ByteArray_t));
-                if (NULL == item)
+                for (int i = 0; i < pemCertNum; i++)
                 {
-                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-                    return OC_STACK_ERROR;
-                }
-                item->len = end - begin + sizeof(PEM_END_CRT);
-                item->data = (uint8_t *) OICMalloc (item->len);
-                if (NULL == item->data)
-                {
-                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-                    OICFree(item);
-                    return OC_STACK_ERROR;
-                }
-                memcpy(item->data, begin, item->len - 1);
-                item->data[item->len - 1] = '\0'; // adding null terminator at the end of the cert (required by mbedtls_x509_crt_parse)
-                if (chain->cert == NULL)
-                {
-                    chain->cert = item;
-                }
-                else
-                {
-                    ByteArrayLL_t * tmp = (ByteArrayLL_t *) OICMalloc (sizeof(ByteArrayLL_t));
-                    if (NULL == tmp)
+                    ByteArray_t * item = (ByteArray_t *) OICMalloc (sizeof(ByteArray_t));
+                    if (NULL == item)
                     {
                         OIC_LOG(ERROR, TAG, "Failed to allocate memory");
-                        OICFree(item->data);
+                        return OC_STACK_ERROR;
+                    }
+                    item->len = end - begin + sizeof(PEM_END_CRT);
+                    item->data = (uint8_t *) OICMalloc (item->len);
+                    if (NULL == item->data)
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to allocate memory");
                         OICFree(item);
                         return OC_STACK_ERROR;
                     }
-                    tmp->cert = item;
-                    LL_APPEND(chain, tmp);
+                    memcpy(item->data, begin, item->len - 1);
+                    item->data[item->len - 1] = '\0'; // adding null terminator at the end of the cert (required by mbedtls_x509_crt_parse)
+                    if (chain->cert == NULL)
+                    {
+                        chain->cert = item;
+                    }
+                    else
+                    {
+                        ByteArrayLL_t * tmp = (ByteArrayLL_t *) OICMalloc (sizeof(ByteArrayLL_t));
+                        if (NULL == tmp)
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                            OICFree(item->data);
+                            OICFree(item);
+                            return OC_STACK_ERROR;
+                        }
+                        tmp->cert = item;
+                        LL_APPEND(chain, tmp);
+                    }
+
+                    if (!(begin = (uint8_t*)strstr((const char*)end, PEM_BEGIN_CRT)))
+                    {
+                        break;
+                    }
+                    if (!(end = (uint8_t*)strstr((const char*)begin, PEM_END_CRT)))
+                    {
+                        break;
+                    }
                 }
-            }
-            if (NULL != end)
-            {
-                begin = (uint8_t *) strstr((const char *)end, PEM_BEGIN_CRT);
-            }
-            else
-            {
-                begin = NULL;
-            }
-            if (NULL == begin)
-            {
-                break;
-            }
-            end = (uint8_t *) strstr((const char *)begin, PEM_END_CRT);
-            if (NULL == end)
-            {
-                break;
             }
         }
     }

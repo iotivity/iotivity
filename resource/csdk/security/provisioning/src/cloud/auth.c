@@ -930,19 +930,22 @@ static OCStackApplicationResult handleCloudSignInResponse(void *ctx,
             {
                 // find the interface name from UDP address of sender
                 percentChar = strchr(response->devAddr.addr, '%');
-                size_t ifLen = strlen(percentChar);
-                size_t addrLen = strlen(cloud->cis);
-                size_t cisLen = addrLen + ifLen + 3;
+                if (percentChar)
+                {
+                    size_t ifLen = strlen(percentChar);
+                    size_t addrLen = strlen(cloud->cis);
+                    size_t cisLen = addrLen + ifLen + 3;
 
-                // fill the cloud uri with interface name inserted
-                cis = (char *)OICMalloc(sizeof(char) * cisLen);
-                OICStrcpy(cis, ipv6End - cloud->cis + 1, cloud->cis);
-                OICStrcat(cis, cisLen, "%25");
-                OICStrcat(cis, cisLen, percentChar + 1);
-                OICStrcat(cis, cisLen, ipv6End);
+                    // fill the cloud uri with interface name inserted
+                    cis = (char *)OICMalloc(sizeof(char) * cisLen);
+                    OICStrcpy(cis, ipv6End - cloud->cis + 1, cloud->cis);
+                    OICStrcat(cis, cisLen, "%25");
+                    OICStrcat(cis, cisLen, percentChar + 1);
+                    OICStrcat(cis, cisLen, ipv6End);
 
-                OICFree(cloud->cis);
-                cloud->cis = cis;
+                    OICFree(cloud->cis);
+                    cloud->cis = cis;
+                }
             }
         }
 
@@ -1246,19 +1249,22 @@ static OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
                 {
                     // find the interface name from UDP address of sender
                     percentChar = strchr(response->devAddr.addr, '%');
-                    size_t ifLen = strlen(percentChar);
-                    size_t addrLen = strlen(cloud->redirectUri);
-                    size_t uriLen = addrLen + ifLen + 3;
+                    if (percentChar)
+                    {
+                        size_t ifLen = strlen(percentChar);
+                        size_t addrLen = strlen(cloud->redirectUri);
+                        size_t uriLen = addrLen + ifLen + 3;
 
-                    // fill the cloud uri with interface name inserted
-                    redirectUri = (char *)OICMalloc(sizeof(char) * uriLen);
-                    OICStrcpy(redirectUri, ipv6End - cloud->redirectUri + 1, cloud->redirectUri);
-                    OICStrcat(redirectUri, uriLen, "%25");
-                    OICStrcat(redirectUri, uriLen, percentChar + 1);
-                    OICStrcat(redirectUri, uriLen, ipv6End);
+                        // fill the cloud uri with interface name inserted
+                        redirectUri = (char *)OICMalloc(sizeof(char) * uriLen);
+                        OICStrcpy(redirectUri, ipv6End - cloud->redirectUri + 1, cloud->redirectUri);
+                        OICStrcat(redirectUri, uriLen, "%25");
+                        OICStrcat(redirectUri, uriLen, percentChar + 1);
+                        OICStrcat(redirectUri, uriLen, ipv6End);
 
-                    OICFree(cloud->redirectUri);
-                    cloud->redirectUri = redirectUri;
+                        OICFree(cloud->redirectUri);
+                        cloud->redirectUri = redirectUri;
+                    }
                 }
             }
 
@@ -1281,19 +1287,22 @@ static OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
                 {
                     // find the interface name from UDP address of sender
                     percentChar = strchr(response->devAddr.addr, '%');
-                    size_t ifLen = strlen(percentChar);
-                    size_t addrLen = strlen(cloud->cis);
-                    size_t uriLen = addrLen + ifLen + 3;
+                    if (percentChar)
+                    {
+                        size_t ifLen = strlen(percentChar);
+                        size_t addrLen = strlen(cloud->cis);
+                        size_t uriLen = addrLen + ifLen + 3;
 
-                    // fill the cloud uri with interface name inserted
-                    cis = (char *)OICMalloc(sizeof(char) * uriLen);
-                    OICStrcpy(cis, ipv6End - cloud->cis + 1, cloud->cis);
-                    OICStrcat(cis, uriLen, "%25");
-                    OICStrcat(cis, uriLen, percentChar + 1);
-                    OICStrcat(cis, uriLen, ipv6End);
+                        // fill the cloud uri with interface name inserted
+                        cis = (char *)OICMalloc(sizeof(char) * uriLen);
+                        OICStrcpy(cis, ipv6End - cloud->cis + 1, cloud->cis);
+                        OICStrcat(cis, uriLen, "%25");
+                        OICStrcat(cis, uriLen, percentChar + 1);
+                        OICStrcat(cis, uriLen, ipv6End);
 
-                    OICFree(cloud->cis);
-                    cloud->cis = cis;
+                        OICFree(cloud->cis);
+                        cloud->cis = cis;
+                    }
                 }
             }
 

@@ -2145,23 +2145,22 @@ static void registerResultForUnlinkDevices(UnlinkData_t *unlinkData, OCStackResu
         OIC_LOG_V(INFO, TAG, "Stack result :: %d", stackresult);
 
         OicUuid_t *pUuid = &unlinkData->unlinkRes[(unlinkData->numOfResults)].deviceId;
-        if (pUuid && pUuid->id)
+
+        // Set result in the result array according to the position (devNum).
+        if (idx != IDX_DB_UPDATE_RES)
         {
-            // Set result in the result array according to the position (devNum).
-            if (idx != IDX_DB_UPDATE_RES)
+            if (unlinkData->unlinkDev[idx].doxm)
             {
-                if (unlinkData->unlinkDev[idx].doxm)
-                {
-                    memcpy(pUuid->id, unlinkData->unlinkDev[idx].doxm->deviceID.id, sizeof(pUuid->id));
-                }
+                memcpy(pUuid->id, unlinkData->unlinkDev[idx].doxm->deviceID.id, sizeof(pUuid->id));
             }
-            else
-            {   // When deivce ID is 000... this means it's the result of database update.
-                memset(pUuid->id, 0, sizeof(pUuid->id));
-            }
-            unlinkData->unlinkRes[(unlinkData->numOfResults)].res = stackresult;
-            ++(unlinkData->numOfResults);
         }
+        else
+        {   // When deivce ID is 000... this means it's the result of database update.
+            memset(pUuid->id, 0, sizeof(pUuid->id));
+        }
+        unlinkData->unlinkRes[(unlinkData->numOfResults)].res = stackresult;
+        ++(unlinkData->numOfResults);
+
         OIC_LOG (INFO, TAG, "Out registerResultForUnlinkDevices");
     }
 }

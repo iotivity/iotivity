@@ -825,8 +825,10 @@ OCStackResult CreateResetProfile(void)
             resetPfCborLen = cbor_encoder_get_buffer_size(&encoder, resetPfCbor);
         }
 
-        UpdateSecureResourceInPS(OIC_JSON_RESET_PF_NAME, resetPfCbor, resetPfCborLen);
-
+        if (OC_STACK_OK != UpdateSecureResourceInPS(OIC_JSON_RESET_PF_NAME, resetPfCbor, resetPfCborLen))
+        {
+            OIC_LOG_V(WARNING, TAG, "%s : UpdateSecureResourceInPS failed!", __func__);
+        }
     }
     OIC_LOG(DEBUG, TAG, "CreateResetProfile OUT");
 

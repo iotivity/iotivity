@@ -452,7 +452,11 @@ static OCEntityHandlerResult AmaclEntityHandler (OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMResponse(ehRequest, ehRet, NULL, 0);
+                if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
+                {
+                    OIC_LOG_V(ERROR, TAG, "%s : SendSRMResponse failed!", __func__);
+                }
+                break;
         }
     }
 
@@ -518,7 +522,11 @@ OCStackResult InitAmaclResource(void)
 
 void DeInitAmaclResource(void)
 {
-    OCDeleteResource(gAmaclHandle);
+    OCStackResult res = OCDeleteResource(gAmaclHandle);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG_V(WARNING, TAG, "Failed to delete resource: %d", res);
+    }
     gAmaclHandle = NULL;
 
     DeleteAmaclList(gAmacl);

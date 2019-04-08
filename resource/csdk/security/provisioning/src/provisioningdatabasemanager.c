@@ -295,6 +295,12 @@ static OCStackResult getIdForUUID(const OicUuid_t *UUID , int *id)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 
+    if (NULL == UUID || NULL == id)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s params is NULL", __func__);
+        return OC_STACK_INVALID_PARAM;
+    }
+
     CHECK_PDM_INIT();
 
     sqlite3_stmt *stmt = 0;
@@ -307,7 +313,7 @@ static OCStackResult getIdForUUID(const OicUuid_t *UUID , int *id)
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     OIC_LOG(DEBUG, TAG, "Binding Done");
-    while (SQLITE_ROW == sqlite3_step(stmt))
+    if (SQLITE_ROW == sqlite3_step(stmt))
     {
         int tempId = sqlite3_column_int(stmt, PDM_FIRST_INDEX);
         OIC_LOG_V(DEBUG, TAG, "ID is %d", tempId);
@@ -663,6 +669,12 @@ static OCStackResult getUUIDforId(int id, OicUuid_t *uid, bool *result)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
 
+    if (NULL == uid)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s uid param is NULL", __func__);
+        return OC_STACK_INVALID_PARAM;
+    }
+
     CHECK_PDM_INIT();
 
     sqlite3_stmt *stmt = 0;
@@ -674,25 +686,14 @@ static OCStackResult getUUIDforId(int id, OicUuid_t *uid, bool *result)
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    while (SQLITE_ROW == sqlite3_step(stmt))
+    if (SQLITE_ROW == sqlite3_step(stmt))
     {
         const void *ptr = sqlite3_column_blob(stmt, PDM_FIRST_INDEX);
         memcpy(uid, ptr, sizeof(OicUuid_t));
-
-        int temp = sqlite3_column_int(stmt, PDM_SECOND_INDEX);
-        if(PDM_DEVICE_STALE == temp)
+        if (NULL != result)
         {
-            if(result)
-            {
-                *result = true;
-            }
-        }
-        else
-        {
-            if(result)
-            {
-                *result = false;
-            }
+            *result = (PDM_DEVICE_STALE == sqlite3_column_int(stmt, PDM_SECOND_INDEX)) ?
+                        true : false;
         }
         sqlite3_finalize(stmt);
         return OC_STACK_OK;

@@ -2758,7 +2758,6 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
         pCurDev = pCurDev->next;
     }
 
-    SetDosState(DOS_RFPRO);
     OCStackResult res = StartOwnershipTransfer(otmCtx, selectedDevicelist);
 
     OIC_LOG(DEBUG, TAG, "OUT OTMDoOwnershipTransfer");

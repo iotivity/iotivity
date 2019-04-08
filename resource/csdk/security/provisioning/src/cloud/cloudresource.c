@@ -468,7 +468,10 @@ static OCEntityHandlerResult HandleCloudGetRequest(OCEntityHandlerRequest *ehReq
 exit:
     response.requestHandle = ehRequest ? ehRequest->requestHandle : NULL;
     response.payload = (OCPayload *)CreateCloudGetPayload(p1);
-    response.payload->type = PAYLOAD_TYPE_REPRESENTATION;
+    if (response.payload)
+    {
+        response.payload->type = PAYLOAD_TYPE_REPRESENTATION;
+    }
     response.persistentBufferFlag = 0;
 
     if (OC_STACK_OK != OCDoResponse(&response))

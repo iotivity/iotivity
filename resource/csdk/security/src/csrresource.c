@@ -121,7 +121,7 @@ static OCStackResult CSRToCBORPayload(const uint8_t *csr, size_t csrLen, OicEnco
 
     CborError cborEncoderResult = CborNoError;
     uint8_t *outPayload = NULL;
-    size_t cborLen = *cborSize;
+    size_t cborLen = 0;
     CborEncoder encoder;
     CborEncoder csrRootMap;
     const char *strEncoding = NULL;
@@ -136,13 +136,13 @@ static OCStackResult CSRToCBORPayload(const uint8_t *csr, size_t csrLen, OicEnco
         return OC_STACK_INVALID_PARAM;
     }
 
-    *cborSize = 0;
-    *cborPayload = NULL;
-
-    if (0 == cborLen)
+    if (0 == (cborLen = *cborSize))
     {
         cborLen = CBOR_SIZE;
     }
+
+    *cborSize = 0;
+    *cborPayload = NULL;
 
     outPayload = (uint8_t *)OICCalloc(1, cborLen);
     VERIFY_NOT_NULL_RETURN(TAG, outPayload, ERROR, OC_STACK_NO_MEMORY);

@@ -219,7 +219,7 @@ OCStackApplicationResult discoveryReqCB(void *, OCDoHandle,
                          && (0 == strcmp(COAPS_STR, resource->eps->tps)))
                     {
                         OCDevAddr* endpoint = &clientResponse->devAddr;
-                        strcpy(endpoint->addr, resource->eps->addr);
+                        strncpy(endpoint->addr, resource->eps->addr, MAX_ADDR_STR_SIZE);
                         endpoint->port = resource->eps->port;
                         endpoint->flags = resource->eps->family;
 

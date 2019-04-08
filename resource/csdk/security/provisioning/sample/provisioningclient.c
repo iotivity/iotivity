@@ -1500,6 +1500,11 @@ static int provisionCloudConfig(void)
     int certsize = ftell (F);
     rewind (F);
     uint8_t* cert = (uint8_t*) malloc (sizeof(char)*certsize);
+    if (!cert)
+    {
+        printf("     Failed to allocate CA\n");
+        return -1;
+    }
     int res = fread (cert, 1, certsize, F);
     /* Set our own trust anchor so that we trust certs we've issued. */
     res = OCSaveTrustCertChain((uint8_t*) cert, certsize, OIC_ENCODING_PEM, &g_caCredId);

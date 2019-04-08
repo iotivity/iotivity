@@ -1450,7 +1450,7 @@ static OicSecCred_t *JSONToCredBinWithRowner(const char *jsonStr,OicUuid_t *rown
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_CREDUSAGE_NAME);
             if (NULL != jsonObj)
             {
-                jsonObjLen = strlen(jsonObj->valuestring);
+//                jsonObjLen = strlen(jsonObj->valuestring);
                 cred->credUsage = OICStrdup(jsonObj->valuestring);
                 VERIFY_NOT_NULL(TAG, (cred->credUsage), ERROR);
             }

@@ -458,7 +458,10 @@ static int sendPutLed(void)
             return -1;
         }
 
-        waitCallbackRet();
+        if (waitCallbackRet() != 0)
+        {
+            OIC_LOG(WARNING, TAG, "waitCallbackRet failed");
+        }
     }
     else
     {

@@ -598,8 +598,14 @@ static OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
                 break;
 
             default:
-                ehRet = OC_EH_ERROR;
-                SendSRMResponse(ehRequest, ehRet, NULL, 0);
+                {
+                    ehRet = OC_EH_ERROR;
+                    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
+                    {
+                        OIC_LOG_V(WARNING, TAG, "%s : SendSRMResponse failed!", __func__);
+                    }
+                }
+                break;
         }
     }
 
