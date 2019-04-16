@@ -25,6 +25,9 @@
 // For POSIX.1-2001 base specification,
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 // Required for strok_r
+#if defined(_POSIX_C_SOURCE)
+#undef _POSIX_C_SOURCE
+#endif
 #define _POSIX_C_SOURCE 200112L
 
 #include <string.h>
@@ -132,7 +135,7 @@ static char* InPlaceStringTrim(char* str)
     return str;
 }
 
-static CborError OCParseStringLL(CborValue *map, char *type, OCStringLL **resource)
+static CborError OCParseStringLL(CborValue *map, const char *type, OCStringLL **resource)
 {
     CborValue val;
     CborError err = cbor_value_map_find_value(map, type, &val);
@@ -552,7 +555,7 @@ static CborError ParseResources(OCDiscoveryPayload **outPayload, CborValue *reso
         err = cbor_value_advance(resourceMap);
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "to advance resource map");
 
-        char* anchorPrefix =  "ocf://";
+        const char* anchorPrefix =  "ocf://";
         // Parse di from anchor
         if (!resource->anchor || strncmp(resource->anchor, anchorPrefix, strlen(anchorPrefix)))
         {
