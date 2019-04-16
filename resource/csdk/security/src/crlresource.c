@@ -788,19 +788,6 @@ exit:
     return result;
 }
 
-uint8_t *GetCrl(void)
-{
-    uint8_t *data = NULL;
-    size_t size = 0;
-    OicSecCrl_t *crl = NULL;
-    if (OC_STACK_OK == GetSecureVirtualDatabaseFromPS(OIC_CBOR_CRL_NAME, &data, &size) && data &&
-        OC_STACK_OK == CBORPayloadToCrl(data, size, &crl))
-    {
-        return crl->CrlData.data;
-    }
-    return NULL;
-}
-
 void GetDerCrl(ByteArray_t* out)
 {
     if(NULL == out)

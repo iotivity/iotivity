@@ -37,15 +37,6 @@ extern "C" {
 OCStackResult UpdateCRLResource(OicSecCrl_t *crl);
 
 /**
- * This function get encoded with base64 CRL from SRM.
- *
- * @note Caller responsible for resulting string memory (use OICFree to remove it).
- *
- * @return NULL if error occured (e.g. CRL did not set).
- */
-uint8_t* GetCrl(void);
-
-/**
  * This function get encoded with DER CRL from SRM.
  *
  * @return encoded CRL with DER format. array len is 0 if error occured (e.g. CRL did not set).
