@@ -119,6 +119,8 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
     VERIFY_NON_NULL_RET(optlist, TAG, "optlist", NULL);
 
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+
     OIC_LOG_V(DEBUG, TAG, "generate pdu for [%d]adapter, [%d]flags",
               endpoint->adapter, endpoint->flags);
 
@@ -194,6 +196,8 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
             return NULL;
         }
     }
+
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 
     // pdu print method : coap_show_pdu(pdu);
     return pdu;
@@ -551,6 +555,7 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
 {
     (void)code;
     VERIFY_NON_NULL_RET(info, TAG, "info", CA_STATUS_INVALID_PARAM);
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
     OIC_LOG_V(DEBUG, TAG, "parse Head Opt: %d", info->numOptions);
 
@@ -598,13 +603,30 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
     // insert one extra header with the payload format if applicable.
     if (CA_FORMAT_UNDEFINED != info->payloadFormat)
     {
-        CAParsePayloadFormatHeadOption(COAP_OPTION_CONTENT_FORMAT, info->payloadFormat, CA_OPTION_CONTENT_VERSION, info->payloadVersion, optlist);
+        OIC_LOG_V(DEBUG, TAG, "%s: info->payloadFormat = %d; info->payloadVersion = %d", __func__, info->payloadFormat, info->payloadVersion);
+        // IoTivity should not send a message with an OCF-Content-Format-Version greater than 1.0.0, per Spec v2.0.1
+        uint16_t contentFormatVersion = info->payloadVersion;
+        if(MAX_VERSION_VALUE < contentFormatVersion)
+        {
+            contentFormatVersion = MAX_VERSION_VALUE;
+        }
+        OIC_LOG_V(DEBUG, TAG, "%s: set contentFormatVersion = %d", __func__, contentFormatVersion);
+        CAParsePayloadFormatHeadOption(COAP_OPTION_CONTENT_FORMAT, info->payloadFormat, CA_OPTION_CONTENT_VERSION, contentFormatVersion, optlist);
     }
-
     if (CA_FORMAT_UNDEFINED != info->acceptFormat)
     {
-        CAParsePayloadFormatHeadOption(COAP_OPTION_ACCEPT, info->acceptFormat, CA_OPTION_ACCEPT_VERSION, info->acceptVersion, optlist);
+        OIC_LOG_V(DEBUG, TAG, "%s: info->acceptVersion = %d", __func__, info->acceptVersion);
+        // IoTivity should not send a message with an OCF-Content-Format-Accept-Version greater than 1.0.0, per Spec v2.0.1
+        uint16_t contentFormatAcceptVersion = info->acceptVersion;
+        if(MAX_VERSION_VALUE < contentFormatAcceptVersion)
+        {
+            contentFormatAcceptVersion = MAX_VERSION_VALUE;
+        }
+        OIC_LOG_V(DEBUG, TAG, "%s: set contentFormatAcceptVersion = %d", __func__, contentFormatAcceptVersion);
+        CAParsePayloadFormatHeadOption(COAP_OPTION_ACCEPT, info->acceptFormat, CA_OPTION_ACCEPT_VERSION, contentFormatAcceptVersion, optlist);
     }
+
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 
     return CA_STATUS_OK;
 }
@@ -616,6 +638,8 @@ CAResult_t CAParsePayloadFormatHeadOption(uint16_t formatOption, CAPayloadFormat
     coap_list_t* versionNode = NULL;
     uint8_t encodeBuf[CA_ENCODE_BUFFER_SIZE] = { 0 };
     uint8_t versionBuf[CA_ENCODE_BUFFER_SIZE] = { 0 };
+
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
     switch (format)
     {
@@ -668,6 +692,7 @@ CAResult_t CAParsePayloadFormatHeadOption(uint16_t formatOption, CAPayloadFormat
             return CA_STATUS_INVALID_PARAM;
         }
     }
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
     return CA_STATUS_OK;
 }
 
@@ -1131,6 +1156,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
 
 exit:
     OIC_LOG(ERROR, TAG, "buffer too small");
+    OIC_LOG_V(ERROR, TAG, "%s: ERROR EXIT", __func__);
     OICFree(outInfo->options);
     OICFree(optionResult);
     return CA_STATUS_FAILED;

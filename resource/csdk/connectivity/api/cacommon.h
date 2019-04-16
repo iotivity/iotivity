@@ -142,6 +142,7 @@ extern "C"
 
 // The Accept Version and Content-Format Version for OCF 1.0.0 (0b0000 1000 0000 0000).
 #define DEFAULT_VERSION_VALUE 2048
+#define MAX_VERSION_VALUE DEFAULT_VERSION_VALUE /**< only one version supported as of Spec v2.0.1 */
 
 /**
  * Option numbers for Signaling messages are specific to the message code.
