@@ -51,6 +51,8 @@ static OCStackResult parseInvitePayload(const OCRepPayload *payload, const char 
     stringArray_t *gidlist = NULL;
     stringArray_t *midlist = NULL;
 
+    VERIFY_NON_NULL_RET(out, TAG, "out is NULL", OC_STACK_INVALID_PARAM);
+
     if (!OCRepPayloadGetPropObjectArray(payload, name, &helperPayload, dimensions))
     {
         OIC_LOG_V(ERROR, TAG, "Can't get: %s", name);
