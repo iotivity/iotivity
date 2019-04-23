@@ -30,6 +30,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <inttypes.h>
+#include <errno.h>
 #include "oic_string.h"
 #include "cainterface.h"
 #include "experimental/payload_logging.h"
@@ -940,8 +941,10 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
         if (strncasecmp((const char *)parseIter.attrPos, OIC_JSON_CREDID_NAME,
             parseIter.attrLen) == 0)
         {
-            int ret = sscanf((const char *)parseIter.valPos, "%u", &credId);
-            if (1 > ret)
+            char* endptr = NULL;
+            errno = 0;
+            credId = strtol((const char*)parseIter.valPos, &endptr, 10);
+            if (errno != 0 || !endptr || endptr == (char*)parseIter.valPos || *endptr != '\0')
             {
                 OIC_LOG_V(ERROR, TAG, "credId was not valid: %s", parseIter.valPos);
                 ehRet = OC_EH_ERROR;
