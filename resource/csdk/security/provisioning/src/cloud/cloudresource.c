@@ -236,19 +236,22 @@ static OCEntityHandlerResult HandleCloudPostRequest(OCEntityHandlerRequest *ehRe
         {
             // find the interface name from UDP address of sender
             percentChar = strchr(ehRequest->devAddr.addr, '%');
-            size_t ifLen = strlen(percentChar);
-            size_t addrLen = strlen(newCloud->cis);
-            size_t cisLen = addrLen + ifLen + 3;
+            if (NULL != percentChar)
+            {
+                size_t ifLen = strlen(percentChar);
+                size_t addrLen = strlen(newCloud->cis);
+                size_t cisLen = addrLen + ifLen + 3;
 
-            // fill the cloud uri with interface name inserted
-            cis = (char *)OICMalloc(sizeof(char) * cisLen);
-            OICStrcpy(cis, ipv6End - newCloud->cis + 1, newCloud->cis);
-            OICStrcat(cis, cisLen, "%25");
-            OICStrcat(cis, cisLen, percentChar + 1);
-            OICStrcat(cis, cisLen, ipv6End);
+                // fill the cloud uri with interface name inserted
+                cis = (char *)OICMalloc(sizeof(char) * cisLen);
+                OICStrcpy(cis, ipv6End - newCloud->cis + 1, newCloud->cis);
+                OICStrcat(cis, cisLen, "%25");
+                OICStrcat(cis, cisLen, percentChar + 1);
+                OICStrcat(cis, cisLen, ipv6End);
 
-            OICFree(newCloud->cis);
-            newCloud->cis = cis;
+                OICFree(newCloud->cis);
+                newCloud->cis = cis;
+            }
         }
     }
 

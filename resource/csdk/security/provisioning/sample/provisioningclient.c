@@ -1508,6 +1508,7 @@ static int provisionCloudConfig(void)
     int res = fread (cert, 1, certsize, F);
     /* Set our own trust anchor so that we trust certs we've issued. */
     res = OCSaveTrustCertChain((uint8_t*) cert, certsize, OIC_ENCODING_PEM, &g_caCredId);
+    free(cert);
     if (OC_STACK_OK != res)
     {
         printf("     Failed to setup CA\n");

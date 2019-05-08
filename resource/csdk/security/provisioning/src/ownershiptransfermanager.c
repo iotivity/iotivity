@@ -591,7 +591,18 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
     //If all OTM process is complete, invoke the user callback.
     if(IsComplete(otmCtx))
     {
-        SetDosState(DOS_RFNOP);
+        switch (SetDosState(DOS_RFNOP))
+        {
+        case OC_STACK_OK:
+            OIC_LOG(INFO, TAG, "DOS state SUCCESSFULLY changed to DOS_RFNOP.");
+            break;
+        case OC_STACK_FORBIDDEN_REQ:
+            OIC_LOG(WARNING, TAG, "DOS state change to DOS_RFNOP NOT ALLOWED.");
+            break;
+        default:
+            OIC_LOG(WARNING, TAG, "DOS state change to DOS_RFNOP FAILED.");
+            break;
+        }
         otmCtx->ctxResultCallback(otmCtx->userCtx, otmCtx->ctxResultArraySize,
                                    otmCtx->ctxResultArray, otmCtx->ctxHasError);
         OICFree(otmCtx->ctxResultArray);
