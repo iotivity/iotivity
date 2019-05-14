@@ -121,7 +121,7 @@ static OCStackResult GetPeerPublicKeyFromEndpoint(const CAEndpoint_t *endpoint,
         return OC_STACK_NO_RESOURCE;
     }
 
-    *publicKey = OICCalloc(1, sep.publicKeyLength);
+    *publicKey = (uint8_t*)OICCalloc(1, sep.publicKeyLength);
     if (NULL == *publicKey)
     {
         OIC_LOG_V(ERROR, TAG, "%s: No memory for publicKey", __func__);
@@ -254,7 +254,11 @@ OCStackResult RegisterSymmetricCredentialRole(const OicSecCred_t *cred)
         curr->subject = cred->subject;
         curr->role = cred->roleId;
     }
-
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "%s not empty role id", __func__);
+        return OC_STACK_ERROR;
+    }
     return OC_STACK_OK;
 }
 
@@ -573,8 +577,8 @@ OCStackResult CBORPayloadToRoles(const uint8_t *cborPayload, size_t size, RoleCe
         return OC_STACK_INVALID_PARAM;
     }
 
-    CborValue rolesCbor = { .parser = NULL };
-    CborParser parser = { .end = NULL };
+    CborValue rolesCbor = OC_DEFAULT_CBOR_VALUE;
+    CborParser parser = OC_DEFAULT_CBOR_PARSER;
     CborError cborFindResult = CborNoError;
     RoleCertChain_t *headRoleCertChain = NULL;
     char* tagName = NULL;
@@ -816,6 +820,9 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest *ehRequest
 
     OIC_LOG(DEBUG, TAG, "Roles HandlePostRequest IN");
 
+    VERIFY_NOT_NULL_RETURN(TAG, ehRequest, ERROR, OC_EH_ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, ehRequest->payload, ERROR, OC_EH_ERROR);
+
     RoleCertChain_t *chains = NULL;
     uint8_t *payload = (((OCSecurityPayload*)ehRequest->payload)->securityData);
     size_t size = (((OCSecurityPayload*)ehRequest->payload)->payloadSize);
@@ -843,7 +850,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest *ehRequest
             if ((dataLength > 0) && (data[dataLength - 1] != 0))
             {
                 /* mbedtls_x509_crt_parse requires null terminator */
-                data = OICMalloc(dataLength + 1);
+                data = (uint8_t*)OICMalloc(dataLength + 1);
 
                 if (data == NULL)
                 {
@@ -926,8 +933,10 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     uint8_t *peerPubKey = NULL;
     size_t peerPubKeyLen = 0;
-    OicParseQueryIter_t parseIter = { .attrPos = NULL };
+    OicParseQueryIter_t parseIter = OC_DEFAULT_OICPARSEQUWRYITER;
     uint32_t credId = 0;
+    RolesEntry_t *entry = NULL;
+    OCStackResult res = OC_STACK_ERROR;
 
     if (NULL == ehRequest->query)
     {
@@ -957,7 +966,7 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
         }
     }
 
-    OCStackResult res = GetPeerPublicKey(&ehRequest->devAddr, &peerPubKey, &peerPubKeyLen);
+    res = GetPeerPublicKey(&ehRequest->devAddr, &peerPubKey, &peerPubKeyLen);
     if (OC_STACK_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "Could not get peer's public key: %d", res);
@@ -965,7 +974,6 @@ static OCEntityHandlerResult HandleDeleteRequest(OCEntityHandlerRequest *ehReque
         goto exit;
     }
 
-    RolesEntry_t *entry = NULL;
     for (entry = gRoles; NULL != entry; entry = entry->next)
     {
         assert((0 < entry->publicKeyLength) && (NULL != entry->publicKey));

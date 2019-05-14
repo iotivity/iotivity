@@ -45,13 +45,13 @@ static OicSecSp_t         *gSp        = NULL;
 
 // Default sp values
 // char * gSupportedProfiles[] = { "1.3.6.1.4.1.51414.0.0.1.0", "1.3.6.1.4.1.51414.0.0.2.0", "1.3.6.1.4.1.51414.0.0.3.0", "1.3.6.1.4.1.51414.0.0.4.0" };
-char * gSupportedProfiles[] = { "1.3.6.1.4.1.51414.0.0.1.0" };
+const char * gSupportedProfiles[] = { "1.3.6.1.4.1.51414.0.0.1.0" };
 OicSecSp_t gDefaultSp =
 {
     // 4,                      // supportedLen
     1,
-    gSupportedProfiles,        // supportedProfiles
-    "1.3.6.1.4.1.51414.0.0.1.0", // currentProfile
+    (char**)gSupportedProfiles,        // supportedProfiles
+    (char*)"1.3.6.1.4.1.51414.0.0.1.0", // currentProfile
 };
 
 bool gAllProps[SP_PROPERTY_COUNT] = { true, true };
@@ -250,8 +250,8 @@ static OCStackResult SupportedProfilesFromCBOR(CborValue *spMap,
     CborError cborResult = CborNoError;
     *supportedProfiles = NULL;
     *supportedLen = 0;
-
     size_t readLen = 0;
+    size_t numProfilesExtracted = 0;
 
     cborResult = cbor_value_get_array_length(spMap, supportedLen);
     VERIFY_OR_LOG_AND_EXIT(TAG, (CborNoError == cborResult) && (0 != supportedLen),
@@ -264,7 +264,6 @@ static OCStackResult SupportedProfilesFromCBOR(CborValue *spMap,
     cborResult = cbor_value_enter_container(spMap, &supportedProfilesCbor);
     VERIFY_CBOR_SUCCESS(TAG, cborResult, "Failed to enter SP supportedprofiles array");
 
-    size_t numProfilesExtracted = 0;
     for(size_t i = 0;
        cbor_value_is_valid(&supportedProfilesCbor) &&
        cbor_value_is_text_string(&supportedProfilesCbor); i++)
@@ -346,11 +345,13 @@ OCStackResult CBORPayloadToSp(const uint8_t *cborPayload,
     OCStackResult ret = OC_STACK_ERROR;
     CborError cborResult = CborNoError;
 
-    CborParser parser = { .end = NULL };
-    CborValue spCbor = { .parser = NULL };
-    CborValue spMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+    CborParser parser = OC_DEFAULT_CBOR_PARSER;
+    CborValue spCbor = OC_DEFAULT_CBOR_VALUE;
+    CborValue spMap = OC_DEFAULT_CBOR_VALUE;
 
     OicSecSp_t *sp = NULL;
+    char* tagName = NULL;
+    size_t tagLen = 0;
 
     if (NULL != decodedProperties)
     {
@@ -369,9 +370,7 @@ OCStackResult CBORPayloadToSp(const uint8_t *cborPayload,
     VERIFY_CBOR_SUCCESS(TAG, cborResult, "Failed to enter the SP map");
 
     // loop over all cbor entries looking for known keys
-    char* tagName = NULL;
-    size_t tagLen = 0;
-    while (cbor_value_is_valid(&spMap))
+   while (cbor_value_is_valid(&spMap))
     {
         // Determine the next tag and advance to the corresponding value
         CborType type = cbor_value_get_type(&spMap);
@@ -520,7 +519,7 @@ static bool ValidateQuery(const char * query)
     bool bInterfaceQry = false;      // does querystring contains 'if' query ?
     bool bInterfaceMatch = false;    // does 'if' query matches with oic.if.baseline ?
 
-    OicParseQueryIter_t parseIter = {.attrPos = NULL};
+    OicParseQueryIter_t parseIter = OC_DEFAULT_OICPARSEQUWRYITER;
 
     ParseQueryIterInit((unsigned char*)query, &parseIter);
 

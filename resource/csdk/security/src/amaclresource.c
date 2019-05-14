@@ -91,7 +91,7 @@ OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayl
 
     CborEncoder encoder;
     CborEncoder amaclMap;
-    int64_t cborEncoderResult = CborNoError;
+    CborError cborEncoderResult = CborNoError;
     CborEncoder rsrcMap;
     CborEncoder rlistArray;
 
@@ -217,15 +217,15 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
 
     OCStackResult ret = OC_STACK_ERROR;
 
-    CborValue amaclCbor = { .parser = NULL };
-    CborParser parser = { .end = NULL };
+    CborValue amaclCbor = OC_DEFAULT_CBOR_VALUE;
+    CborParser parser = OC_DEFAULT_CBOR_PARSER;
     CborError cborFindResult = CborNoError;
 
     cbor_parser_init(cborPayload, size, 0, &parser, &amaclCbor);
     OicSecAmacl_t *headAmacl = (OicSecAmacl_t *)OICCalloc(1, sizeof(OicSecAmacl_t));
     VERIFY_NOT_NULL_RETURN(TAG, headAmacl, ERROR, OC_STACK_NO_MEMORY);
 
-    CborValue amaclMap = { .parser = NULL };
+    CborValue amaclMap = OC_DEFAULT_CBOR_VALUE;
     cborFindResult = cbor_value_enter_container(&amaclCbor, &amaclMap);
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering Amacl Map.");
 
@@ -244,7 +244,7 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
         if (0 == strcmp(OIC_JSON_RESOURCES_NAME, name))
         {
             // resource map
-            CborValue rsrcMap = { .parser = NULL  };
+            CborValue rsrcMap = OC_DEFAULT_CBOR_VALUE;
             cborFindResult = cbor_value_enter_container(&amaclMap, &rsrcMap);
             VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering Resource Map");
 
@@ -266,7 +266,7 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
                     cborFindResult = cbor_value_get_array_length(&rsrcMap, &headAmacl->resourcesLen);
                     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding Rlist Array Len.");
 
-                    CborValue rsrcArray = { .parser = NULL  };
+                    CborValue rsrcArray = OC_DEFAULT_CBOR_VALUE;
 
                     // rlist array
                     cborFindResult = cbor_value_enter_container(&rsrcMap, &rsrcArray);
@@ -279,7 +279,7 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
                     while (cbor_value_is_valid(&rsrcArray))
                     {
                         // rMap
-                        CborValue rMap = { .parser = NULL  };
+                        CborValue rMap = OC_DEFAULT_CBOR_VALUE;
                         cborFindResult = cbor_value_enter_container(&rsrcArray, &rMap);
                         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering Rlist Map");
 

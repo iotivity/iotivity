@@ -177,7 +177,7 @@ OCStackResult OC_CALL OCGenerateRandomSerialNumber(char **serial, size_t *serial
     /* Get the needed string length and allocate. */
     ret = mbedtls_mpi_write_string(&serialMpi, 10, NULL, 0, serialLen);
     VERIFY_SUCCESS(TAG, ret == MBEDTLS_ERR_MPI_BUFFER_TOO_SMALL, ERROR);
-    *serial = OICCalloc(1, *serialLen);
+    *serial = (char*)OICCalloc(1, *serialLen);
     VERIFY_NOT_NULL(TAG, *serial, ERROR);
 
     /* Do the write for real. */
@@ -233,7 +233,7 @@ OCStackResult OC_CALL OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen,
     }
 
     *publicKeyLen = strlen((char *)buf) + 1;
-    *publicKey = OICCalloc(1, *publicKeyLen);
+    *publicKey = (char*)OICCalloc(1, *publicKeyLen);
     if (NULL == *publicKey)
     {
         OIC_LOG(ERROR, TAG, "Could not allocate memory for public key");
@@ -250,7 +250,7 @@ OCStackResult OC_CALL OCGenerateKeyPair(char **publicKey, size_t *publicKeyLen,
     }
 
     *privateKeyLen = strlen((char *)buf) + 1;
-    *privateKey = OICCalloc(1, *privateKeyLen);
+    *privateKey = (char*)OICCalloc(1, *privateKeyLen);
     if (NULL == *privateKey)
     {
         OIC_LOG(ERROR, TAG, "Could not allocate memory for private key");
@@ -294,23 +294,24 @@ typedef enum {
 
 // write basic constraints to a cert
 // Same as mbedtls_x509write_crt_set_basic_constraints, with the added ability to set `critical` flag
-static OCStackResult OCWriteBasicConstraints( mbedtls_x509write_cert *ctx, int is_ca, int max_pathlen, int critical)
+static int writeBasicConstraints(mbedtls_x509write_cert *ctx, int is_ca, int max_pathlen, int critical)
 {
-
-    int ret;
+    int ret = 0;
     char mbedErrorBuf[256];
     unsigned char buf[9];
     unsigned char *c = buf + sizeof(buf);
     size_t len = 0;
 
-    memset( buf, 0, sizeof(buf) );
-
-    if( is_ca && max_pathlen > 127 )
-        return( MBEDTLS_ERR_X509_BAD_INPUT_DATA );
+    memset(buf, 0, sizeof(buf));
 
     if( is_ca )
     {
-        if( max_pathlen >= 0 )
+        if(max_pathlen > 127)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: mbedtls error: X509: bad input data: %d", __func__, max_pathlen);
+            return(OC_STACK_INVALID_PARAM);
+        }
+        else if(max_pathlen >= 0)
         {
             MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_int( &c, buf, max_pathlen ) );
         }
@@ -325,9 +326,13 @@ static OCStackResult OCWriteBasicConstraints( mbedtls_x509write_cert *ctx, int i
                                                    MBEDTLS_OID_SIZE( MBEDTLS_OID_BASIC_CONSTRAINTS ),
                                                    critical, buf + sizeof(buf) - len, len );
     LOG_MBED_ERROR(TAG, ret, mbedErrorBuf, sizeof(ret), ERROR);
-    return (0 == ret) ? OC_STACK_OK : OC_STACK_ERROR;
+    return ret;
 }
 
+static OCStackResult OCWriteBasicConstraints(mbedtls_x509write_cert *ctx, int is_ca, int max_pathlen, int critical)
+{
+    return (0 == writeBasicConstraints(ctx, is_ca, max_pathlen, critical)) ? OC_STACK_OK : OC_STACK_ERROR;
+}
 
 static OCStackResult GenerateCertificate(
     CertificateType_t certType,
@@ -360,6 +365,7 @@ static OCStackResult GenerateCertificate(
     if (NULL == subjectPublicKey || NULL == issuerPrivateKey || NULL == subject || NULL == serial ||
         NULL == notValidBefore || NULL == notValidAfter)
     {
+        OIC_LOG_V(ERROR, TAG, "%s: %s is NULL", __func__, !subjectPublicKey ? "subjectPublicKey" : !issuerPrivateKey ? "issuerPrivateKey" : !subject ? "subject" : !serial ? "serial" : !notValidBefore ? "not validBefore" : "notValidAfter");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -602,7 +608,7 @@ OCStackResult OC_CALL OCGenerateRootCACertificate(
     size_t *certificateLen)
 {
     OCStackResult res = OC_STACK_OK;
-    OCByteString byteStr = { 0 };
+    OCByteString byteStr = { NULL, 0 };
 
     res = GenerateCertificate(
         CERT_TYPE_ROOT_CA,
@@ -638,7 +644,7 @@ OCStackResult OC_CALL OCGenerateIntermediateCACertificate(
     size_t *certificateLen)
 {
     OCStackResult res = OC_STACK_OK;
-    OCByteString byteStr = { 0 };
+    OCByteString byteStr = { NULL, 0 };
 
     res = GenerateCertificate(
         CERT_TYPE_INTERMEDIATE_CA,
@@ -674,7 +680,7 @@ OCStackResult OC_CALL OCGenerateIdentityCertificate(
     size_t *certificateLen)
 {
     OCStackResult res = OC_STACK_OK;
-    OCByteString byteStr = { 0 };
+    OCByteString byteStr = { NULL, 0 };
     char uuidStr[UUID_STRING_SIZE] = { 0 } ;
     char subject[sizeof(uuidStr) + sizeof(SUBJECT_PREFIX)] = { 0 } ;
 
@@ -739,6 +745,7 @@ OCStackResult OC_CALL OCGenerateRoleCertificate(
 
     if (NULL == role || NULL == issuerCert)
     {
+        OIC_LOG_V(ERROR, TAG, "%s: %s is NULL", __func__, !role ? "role" : "isserCert");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -771,6 +778,10 @@ OCStackResult OC_CALL OCGenerateRoleCertificate(
     {
         *certificate = (char *)byteStr.bytes;
         *certificateLen = byteStr.len;
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: GenerateCertificate", __func__);
     }
 
     return res;
@@ -875,42 +886,84 @@ OCStackResult OC_CALL OCVerifyCSRSignature(const char* csr)
 
 OCStackResult OC_CALL OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid)
 {
+    OCStackResult res = OC_STACK_ERROR;
     mbedtls_x509_csr csrObj;
+    char *p = NULL;
+    char *dnStr = NULL;
+    size_t dnSize = UUID_STRING_SIZE + sizeof(SUBJECT_PREFIX) - 1;
 
     mbedtls_x509_csr_init(&csrObj);
+
     int ret = mbedtls_x509_csr_parse(&csrObj, (const unsigned char*)csr, strlen(csr) + 1);
     if (ret < 0)
     {
         OIC_LOG_V(ERROR, TAG, "Couldn't parse CSR: %d", ret);
-        mbedtls_x509_csr_free(&csrObj);
-        return OC_STACK_ERROR;
+        LOG_MBEDTLS_ERROR(ret);
+        goto exit;
     }
 
-    char uuidStr[UUID_STRING_SIZE + sizeof(SUBJECT_PREFIX) - 1] = { 0 };   // Both constants count NULL, subtract one
-    ret = mbedtls_x509_dn_gets(uuidStr, sizeof(uuidStr), &csrObj.subject);
-    if (ret != (sizeof(uuidStr) - 1))
+    dnStr = (char*)OICCalloc(dnSize, 1);
+    if (NULL == dnStr)
     {
-        OIC_LOG_V(ERROR, TAG, "mbedtls_x509_dn_gets returned length or error: %d, expected %" PRIuPTR, ret, sizeof(uuidStr) - 1);
-        mbedtls_x509_csr_free(&csrObj);
-        return OC_STACK_ERROR;
+        OIC_LOG_V(ERROR, TAG, "%s: allocate", __func__);
+        goto exit;
     }
 
-    if (!OCConvertStringToUuid(uuidStr + sizeof(SUBJECT_PREFIX) - 1, uuid->id))
+    ret = mbedtls_x509_dn_gets(dnStr, dnSize - 1, &csrObj.subject);
+    if (ret < 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to convert UUID: '%s'", uuidStr);
-        mbedtls_x509_csr_free(&csrObj);
-        return OC_STACK_ERROR;
+        while (MBEDTLS_ERR_X509_BUFFER_TOO_SMALL == ret && 8192 > dnSize)
+        {
+            dnSize += 512;
+            p = (char*)OICRealloc(dnStr, dnSize);
+            if (p == dnStr)
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: allocate", __func__);
+                goto exit;
+            }
+            dnStr = p;
+            *(dnStr + dnSize) = '\0';
+            ret = mbedtls_x509_dn_gets(dnStr, dnSize - 1, &csrObj.subject);
+        }
+
+        if (ret < 0)
+        {
+            OIC_LOG_V(ERROR, TAG, "mbedtls_x509_dn_gets returned length or error: %d, expected %" PRIuPTR, ret, sizeof(dnStr) - 1);
+            LOG_MBEDTLS_ERROR(ret);
+            goto exit;
+        }
+    }
+
+    p = strstr(dnStr, "CN=");
+    if (NULL == p)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to find: CN in: %s", dnStr);
+        goto exit;
+    }
+
+    p += 3;
+    *(p + UUID_STRING_SIZE - 1) = '\0';
+
+    if (!OCConvertStringToUuid(p, uuid->id))
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to convert UUID: %s", p);
+        goto exit;
     }
 
     if (memcmp(uuid->id, &WILDCARD_SUBJECT_ID, sizeof(uuid->id)) == 0)
     {
         OIC_LOG(ERROR, TAG, "Invalid UUID in CSR: '*'");
-        mbedtls_x509_csr_free(&csrObj);
-        return OC_STACK_ERROR;
+        goto exit;
     }
 
+    res = OC_STACK_OK;
+exit:
+    if (dnStr)
+    {
+        OICFree(dnStr);
+    }
     mbedtls_x509_csr_free(&csrObj);
-    return OC_STACK_OK;
+    return res;
 }
 
 OCStackResult OC_CALL OCGetPublicKeyFromCSR(const char* csr, char** publicKey)
@@ -922,6 +975,7 @@ OCStackResult OC_CALL OCGetPublicKeyFromCSR(const char* csr, char** publicKey)
     if (ret < 0)
     {
         OIC_LOG_V(ERROR, TAG, "Couldn't parse CSR: %d", ret);
+        LOG_MBEDTLS_ERROR(ret);
         mbedtls_x509_csr_free(&csrObj);
         return OC_STACK_ERROR;
     }
@@ -931,6 +985,7 @@ OCStackResult OC_CALL OCGetPublicKeyFromCSR(const char* csr, char** publicKey)
     if (ret != 0)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to write subject public key as PEM: %d", ret);
+        LOG_MBEDTLS_ERROR(ret);
         mbedtls_x509_csr_free(&csrObj);
         return OC_STACK_ERROR;
     }
@@ -970,7 +1025,7 @@ OCStackResult OC_CALL OCConvertDerCSRToPem(const char* derCSR, size_t derCSRLen,
         return OC_STACK_ERROR;
     }
 
-    *pemCSR = OICCalloc(1, pemCSRLen + 1);
+    *pemCSR = (char*)OICCalloc(1, pemCSRLen + 1);
     if (*pemCSR == NULL)
     {
         OIC_LOG(ERROR, TAG, "Failed to allocate memory for PEM CSR");

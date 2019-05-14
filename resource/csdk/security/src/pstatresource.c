@@ -430,10 +430,10 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload,
     }
 
     OCStackResult ret = OC_STACK_ERROR;
-    CborValue pstatCbor = { .parser = NULL };
-    CborValue pstatMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
-    CborValue dosMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
-    CborParser parser = { .end = NULL };
+    CborValue pstatCbor = OC_DEFAULT_CBOR_VALUE;
+    CborValue pstatMap = OC_DEFAULT_CBOR_VALUE;
+    CborValue dosMap = OC_DEFAULT_CBOR_VALUE;
+    CborParser parser = OC_DEFAULT_CBOR_PARSER;
     CborError cborFindResult = CborNoError;
     char *strUuid = NULL;
     char *dosTagName = NULL;
@@ -744,7 +744,7 @@ static bool ValidateQuery(const char * query)
     bool bInterfaceQry = false;      // does querystring contains 'if' query ?
     bool bInterfaceMatch = false;    // does 'if' query matches with oic.if.baseline ?
 
-    OicParseQueryIter_t parseIter = {.attrPos = NULL};
+    OicParseQueryIter_t parseIter = OC_DEFAULT_OICPARSEQUWRYITER;
 
     ParseQueryIterInit((unsigned char*)query, &parseIter);
 

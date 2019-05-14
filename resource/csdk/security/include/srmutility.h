@@ -124,23 +124,23 @@ struct OicParseQueryIter
 
 #define LOG_MBEDTLS_ERROR(ret) do{ \
     if (0!=(ret)) {\
-    char *buf = (char*)OICCalloc(2048, 1);\
-    if (buf)\
+    char *_buf = (char*)OICCalloc(2048, 1);\
+    if (_buf)\
     {\
-        mbedtls_strerror((ret), buf, 2048);                           \
-        OIC_LOG_V(ERROR, TAG, "mbedtls error:  %s", buf); \
-        OICFree(buf);\
+        mbedtls_strerror((ret), _buf, 2048);                           \
+        OIC_LOG_V(ERROR, TAG, "mbedtls error:  %s", _buf); \
+        OICFree(_buf);\
     }\
     } }while(0)
 
 #define LOG_MBEDTLS_VERIFY_ERROR(flags) do{ \
     if (0!=(flags)) {                       \
-    char *buf = (char*)OICCalloc(2048, 1);  \
-    if (buf)                                \
+    char *_buf = (char*)OICCalloc(2048, 1);  \
+    if (_buf)                                \
     {                                       \
-        mbedtls_x509_crt_verify_info(buf, 2048, "", flags); \
-        OIC_LOG_V(ERROR, TAG, "mbedtls verify error:  %s", buf); \
-        OICFree(buf);                       \
+        mbedtls_x509_crt_verify_info(_buf, 2048, "", flags); \
+        OIC_LOG_V(ERROR, TAG, "mbedtls verify error:  %s", _buf); \
+        OICFree(_buf);                       \
     }                                       \
     } }while(0)
 
@@ -242,6 +242,22 @@ bool IsNilUuid(const OicUuid_t *uuid);
  */
 OCStackResult OC_CALL SetDeviceIdSeed(const uint8_t* seed, size_t seedSize);
 #endif
+
+/**
+ * cbor default init
+ */
+#define OC_DEFAULT_CBOR_VALUE {.parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0}
+
+#define OC_DEFAULT_CBOR_PARSER {.end = NULL, .flags = 0}
+
+#define OC_DEFAULT_OICPARSEQUWRYITER \
+{ \
+    .attrPos = NULL,\
+    .attrLen = 0,\
+    .valPos = NULL,\
+    .valLen = 0,\
+    .pi = {.n=0,.separator=NULL,.delim=NULL,.dlen=0,.pos=NULL,.segment_length=0}\
+}
 
 /**
  * Is the URI for a Security Virtual Resource as defined

@@ -140,7 +140,7 @@ static size_t GetDatabaseSize(const OCPersistentStorage *ps, const char *databas
 
 /**
  * Reads the database from PS
- * 
+ *
  * @note Caller of this method MUST use OICFree() method to release memory
  *       referenced by the data argument.
  *
@@ -185,7 +185,7 @@ OCStackResult ReadDatabaseFromPS(const char *databaseName, const char *resourceN
                 CborParser parser;  // will be initialized in |cbor_parser_init|
                 CborValue cbor;     // will be initialized in |cbor_parser_init|
                 cbor_parser_init(fsData, fileSize, 0, &parser, &cbor);
-                CborValue cborValue = {0};
+                CborValue cborValue = OC_DEFAULT_CBOR_VALUE;
                 CborError cborFindResult = cbor_value_map_find_value(&cbor, resourceName, &cborValue);
                 if (CborNoError == cborFindResult && cbor_value_is_byte_string(&cborValue))
                 {
@@ -278,7 +278,7 @@ OCStackResult UpdateResourceInPS(const char *databaseName, const char *resourceN
             CborParser parser;  // will be initialized in |cbor_parser_init|
             CborValue cbor;     // will be initialized in |cbor_parser_init|
             cbor_parser_init(dbData, dbSize, 0, &parser, &cbor);
-            CborValue curVal = {0};
+            CborValue curVal = OC_DEFAULT_CBOR_VALUE;
             CborError cborFindResult = CborNoError;
 
             // Only search for and copy resources owned by the target database
@@ -581,7 +581,7 @@ OCStackResult ResetSecureResourceInPS(void)
             CborParser parser;  // will be initialized in |cbor_parser_init|
             CborValue cbor;     // will be initialized in |cbor_parser_init|
             cbor_parser_init(dbData, dbSize, 0, &parser, &cbor);
-            CborValue curVal = {0};
+            CborValue curVal = OC_DEFAULT_CBOR_VALUE;
             CborError cborFindResult = CborNoError;
             cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_RESET_PF_NAME, &curVal);
             if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
@@ -597,7 +597,7 @@ OCStackResult ResetSecureResourceInPS(void)
             CborParser parser;  // will be initialized in |cbor_parser_init|
             CborValue cbor;     // will be initialized in |cbor_parser_init|
             cbor_parser_init(resetPfCbor, resetPfCborLen, 0, &parser, &cbor);
-            CborValue curVal = {0};
+            CborValue curVal = OC_DEFAULT_CBOR_VALUE;
             CborError cborFindResult = CborNoError;
             cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_ACL_NAME, &curVal);
             if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
@@ -740,7 +740,7 @@ OCStackResult CreateResetProfile(void)
             CborParser parser;
             CborValue cbor;
             cbor_parser_init(dbData, dbSize, 0, &parser, &cbor);
-            CborValue curVal = {0};
+            CborValue curVal = OC_DEFAULT_CBOR_VALUE;
             CborError cborFindResult = CborNoError;
 
             // abort if reset profile exists
@@ -811,7 +811,7 @@ OCStackResult CreateResetProfile(void)
             VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding PSTAT Value.");
 
             cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_DOXM_NAME, strlen(OIC_JSON_DOXM_NAME));
-            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Doxm Name.");
+            VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, (CborError)cborEncoderResult, "Failed Adding Doxm Name.");
             cborEncoderResult |= cbor_encode_byte_string(&secRsrc, doxmCbor, doxmCborLen);
             VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Doxm Value.");
 

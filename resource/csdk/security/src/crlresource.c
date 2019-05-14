@@ -79,7 +79,7 @@ void DeleteCrl(OicSecCrl_t *crl)
 static bool copyByteArray(const uint8_t *in, size_t in_len, uint8_t **out, size_t *out_len)
 {
     OICFree(*out);
-    uint8_t *tmp = OICMalloc(in_len);
+    uint8_t *tmp = (uint8_t *)OICMalloc(in_len);
     if (!tmp)
     {
         return false;
@@ -128,13 +128,14 @@ static CborError setCrlData(CborEncoder *out, const char *name, const OicSecKey_
 
     CborError result = CborErrorInternalError;
 
+    size_t encodeBufferSize = 0;
     size_t len = 0;
     unsigned char *encodeBuffer = NULL;
     int b64result = mbedtls_base64_encode(NULL, 0, &len, value->data, value->len);
     VERIFY_SUCCESS(TAG, (MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL == b64result), ERROR);
 
-    size_t encodeBufferSize = len;
-    encodeBuffer = OICCalloc(1, encodeBufferSize);
+    encodeBufferSize = len;
+    encodeBuffer = (unsigned char *)OICCalloc(1, encodeBufferSize);
     VERIFY_NOT_NULL(TAG, encodeBuffer, ERROR);
 
     b64result = mbedtls_base64_encode(encodeBuffer, encodeBufferSize, &len, value->data, value->len);
@@ -161,7 +162,7 @@ static CborError getCrlData(CborValue *in, const char *name, OicSecKey_t *value)
     }
 
     CborError result = CborNoError;
-    CborValue crlNode = { .parser = NULL };
+    CborValue crlNode = OC_DEFAULT_CBOR_VALUE;
     unsigned char *decodeBuffer = NULL;
     size_t decodeBufferSize;
 
@@ -180,7 +181,7 @@ static CborError getCrlData(CborValue *in, const char *name, OicSecKey_t *value)
             return CborErrorInternalError;
         }
         value->len = outLen;
-        value->data = OICCalloc(1, value->len);
+        value->data = (uint8_t*)OICCalloc(1, value->len);
         VERIFY_NOT_NULL(TAG, value->data, ERROR);
 
         decodeResult = mbedtls_base64_decode(value->data, value->len, &outLen, decodeBuffer, decodeBufferSize);
@@ -338,12 +339,12 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
     OCStackResult ret = OC_STACK_ERROR;
     OicSecCrl_t *crl = NULL;
 
-    CborValue crlCbor = {.parser = NULL};
-    CborParser parser = {.end = NULL};
+    CborValue crlCbor = OC_DEFAULT_CBOR_VALUE;
+    CborParser parser = OC_DEFAULT_CBOR_PARSER;
     CborError cborFindResult = CborNoError;
 
     cbor_parser_init(cborPayload, size, 0, &parser, &crlCbor);
-    CborValue crlMap = { .parser = NULL};
+    CborValue crlMap = OC_DEFAULT_CBOR_VALUE;
     cborFindResult = cbor_value_enter_container(&crlCbor, &crlMap);
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed to enter Crl map");
 
@@ -465,7 +466,7 @@ static bool ValidateQuery(const char * query)
     bool bInterfaceQry = false;      // does querystring contains 'if' query ?
     bool bInterfaceMatch = false;    // does 'if' query matches with oic.if.baseline ?
 
-    OicParseQueryIter_t parseIter = {.attrPos = NULL};
+    OicParseQueryIter_t parseIter = OC_DEFAULT_OICPARSEQUWRYITER;
 
     ParseQueryIterInit((unsigned char*)query, &parseIter);
 
@@ -821,7 +822,7 @@ void GetDerCrl(ByteArray_t* out)
         }
 
         size_t decodeBufferSize = len;
-        unsigned char *decodeBuffer = OICCalloc(1, decodeBufferSize);
+        unsigned char *decodeBuffer = (unsigned char*)OICCalloc(1, decodeBufferSize);
         if (!decodeBuffer)
         {
             OIC_LOG(ERROR, TAG, "Can't allocate memory for base64 str");
@@ -844,7 +845,7 @@ void GetDerCrl(ByteArray_t* out)
 
     out->len = 0;
 
-    uint8_t *tmp = OICRealloc(out->data, crl->len);
+    uint8_t *tmp = (uint8_t*)OICRealloc(out->data, crl->len);
     if (tmp)
     {
         out->data = tmp;

@@ -272,6 +272,7 @@ OCStackResult OCInternalIsValidRoleCertificate(const uint8_t *buf, size_t bufLen
 {
     OCStackResult res = OC_STACK_ERROR;
     mbedtls_x509_crt parsedCert;
+    bool valid = false;
 
     OIC_LOG(DEBUG, TAG, "OCInternalIsValidRoleCertificate IN");
 
@@ -310,7 +311,7 @@ OCStackResult OCInternalIsValidRoleCertificate(const uint8_t *buf, size_t bufLen
         goto exit;
     }
 
-    bool valid = false;
+    valid = false;
     /* Check for at least one subjAltName with a role in it. */
     for (const mbedtls_x509_general_names *nameCur = &parsedCert.subject_alt_names;
             NULL != nameCur;
@@ -446,16 +447,17 @@ OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificateChai
                                               OicSecRole_t **roles, size_t *rolesLength,
                                               struct tm *notValidAfter)
 {
-    bool freeData = false;
-    uint8_t *data = certificateChain->data;
-    size_t dataLength = certificateChain->len;
-
-    VERIFY_NOT_NULL_RETURN(TAG, certificateChain, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, trustedCaCerts, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, roles, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, rolesLength, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, notValidAfter, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, certificateChain, ERROR, OC_STACK_INVALID_PARAM);
 
+    bool freeData = false;
+    uint8_t *data = certificateChain->data;
+    size_t dataLength = certificateChain->len;
+    int count;
+    int errNum;
     OCStackResult res = OC_STACK_ERROR;
     int mbedRet;
     uint32_t flags = 0;
@@ -467,10 +469,10 @@ OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificateChai
 
     OIC_LOG(DEBUG, TAG, "OCInternalVerifyRoleCertificate IN");
 
-    if ((dataLength > 0) && (data[dataLength - 1] != 0))
+    if ((dataLength > 0) && (data[dataLength - 1] != '\0'))
     {
         /* mbedtls_x509_crt_parse requires null terminator */
-        data = OICMalloc(dataLength + 1);
+        data = (uint8_t*)OICMalloc(dataLength + 1);
 
         if (data == NULL)
         {
@@ -504,17 +506,14 @@ OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificateChai
         goto exit;
     }
 
-    int errNum;
-    int count = ParseChain(&trustedCas, trustedCaCerts, &errNum);
-    if (0 >= count)
-    {
-        OIC_LOG(WARNING, TAG, "Could not parse trusted CA certs");
-        res = OC_STACK_ERROR;
-        goto exit;
-    }
+    count = ParseChain(&trustedCas, trustedCaCerts, &errNum);
     if (0 != errNum)
     {
         OIC_LOG_V(WARNING, TAG, "Trusted CA certs parsing error: %d certs failed to parse", errNum);
+    }
+    if (0 >= count)
+    {
+        OIC_LOG(ERROR, TAG, "Could not parse trusted CA certs");
         res = OC_STACK_ERROR;
         goto exit;
     }
@@ -531,6 +530,8 @@ OCStackResult OCInternalVerifyRoleCertificate(const OicSecKey_t *certificateChai
     if (0 > mbedRet)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to verify certificate: ret = %d, flags = %u", mbedRet, flags);
+        LOG_MBEDTLS_ERROR(mbedRet);
+        LOG_MBEDTLS_VERIFY_ERROR(flags);
         res = OC_STACK_INVALID_PARAM;
         goto exit;
     }

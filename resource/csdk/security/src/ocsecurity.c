@@ -52,7 +52,7 @@ static OCConnectivityType endpointToConnType(const CAEndpoint_t* endpoint)
      * OCConnectivityType is CATransportAdapter_t | CATransportFlags_t (as 16-bit ints)
      * and CATransportFlags_t has some scope bits in the low byte that must be cleared.
      */
-    return (endpoint->adapter << CT_ADAPTER_SHIFT) | ((uint16_t)endpoint->flags & (~CA_SCOPE_MASK));
+    return (OCConnectivityType)(endpoint->adapter | ((uint16_t)endpoint->flags & (~CA_SCOPE_MASK)));
 }
 
 static bool GenerateQuery(bool isSecure,
@@ -103,7 +103,7 @@ static bool GenerateQuery(bool isSecure,
             break;
         }
         default:
-            OIC_LOG_V(ERROR, TAG, "Unknown address format. (conntype = %d)", connType);
+            OIC_LOG_V(ERROR, TAG, "Unknown address format. (conntype = 0x%X)", (connType & CT_MASK_FLAGS));
             return false;
         }
         break;
@@ -115,7 +115,7 @@ static bool GenerateQuery(bool isSecure,
         OIC_LOG(ERROR, TAG, "Not supported connectivity adapter.");
         return false;
     default:
-        OIC_LOG_V(ERROR, TAG, "Unknown connectivity adapter %d, (conntype = %d).", (connType & CT_MASK_ADAPTER), connType);
+        OIC_LOG_V(ERROR, TAG, "Unknown connectivity adapter 0x%X, (conntype = 0x%X).", (connType & CT_MASK_ADAPTER), connType);
         return false;
     }
 
@@ -180,8 +180,8 @@ OCStackResult OC_CALL OCAssertRoles(void *ctx, const OCDevAddr *devAddr, OCAsser
     CAEndpoint_t endpoint;
     CopyDevAddrToEndpoint(devAddr, &endpoint);
     OIC_LOG_V(DEBUG, TAG, "%s: Endpoint info: ", __func__);
-    OIC_LOG_V(DEBUG, TAG, "%s:     adapter: %d", __func__, endpoint.adapter);
-    OIC_LOG_V(DEBUG, TAG, "%s:     flags: %d", __func__, endpoint.flags);
+    OIC_LOG_V(DEBUG, TAG, "%s:     adapter: 0x%X", __func__, endpoint.adapter);
+    OIC_LOG_V(DEBUG, TAG, "%s:     flags: 0x%X", __func__, endpoint.flags);
     OIC_LOG_V(DEBUG, TAG, "%s:     port: %d", __func__, endpoint.port);
     OIC_LOG_V(DEBUG, TAG, "%s:     addr: %s", __func__, endpoint.addr);
     OIC_LOG_V(DEBUG, TAG, "%s:     index: %d", __func__, endpoint.ifindex);
@@ -256,7 +256,7 @@ OCStackResult OC_CALL OCAssertRoles(void *ctx, const OCDevAddr *devAddr, OCAsser
     OIC_LOG(DEBUG, TAG, "Sending roles to server");
     OCStackResult ret = OCDoRequest(&handle, method, query,
         devAddr, (OCPayload*)secPayload,
-        endpoint.adapter, OC_HIGH_QOS, &cbData, NULL, 0);
+        connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OICFree(assertRolesData);

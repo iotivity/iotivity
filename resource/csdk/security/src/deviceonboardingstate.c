@@ -357,13 +357,17 @@ static bool EnterRFPRO(void)
 static bool EnterRESET(void)
 {
     bool ret = false;
-
+    OicSecDpm_t dpmZero = 0;
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    // Enable Anon DH cipher suite if appropriate
+    bool isAnonEnabled = false;
+#endif // __WITH_DTLS__ or __WITH_TLS__
     // Restore Mfr Defaults
     // "Mfr Defaults" is defined by manufacturer.  It could be "failsafe"
     // SVRs (e.g. the hard-coded SVRs in IoTivity) or it could be a backup
     // copy of the initally-provisioned SVRs (e.g. the ResetSecureResourceInPS
     // function in IoTivity).
-    // TODO [IOT-2633]: 
+    // TODO [IOT-2633]:
     VERIFY_SUCCESS(TAG, OC_STACK_OK == ResetSecureResources(), ERROR);
 
     // Set doxm.deviceuuid = Mfr Default (handled above)
@@ -386,7 +390,6 @@ static bool EnterRESET(void)
     VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatRownerId(&THE_NIL_UUID), ERROR);
 
     // clear all bits in cm and tm before setting the 2 lsbs
-    OicSecDpm_t dpmZero = 0;
     VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatCm(dpmZero), ERROR);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == SetPstatTm(dpmZero), ERROR);
 
@@ -399,8 +402,6 @@ static bool EnterRESET(void)
         ERROR);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-    // Enable Anon DH cipher suite if appropriate
-    bool isAnonEnabled = false;
     VERIFY_SUCCESS(TAG,
         OC_STACK_OK == EnableAnonCipherSuiteIfUnOwnedAndJustWorksSelected(&isAnonEnabled),
         ERROR);

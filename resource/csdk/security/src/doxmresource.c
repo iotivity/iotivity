@@ -846,7 +846,7 @@ static bool ValidateQuery(const char * query)
     bool bMotMatch = false;       // does 'mom' query value is not '0' && does query value matches with doxm.owned status?
 #endif //MULTIPLE_OWNER
 
-    OicParseQueryIter_t parseIter = {.attrPos = NULL};
+    OicParseQueryIter_t parseIter = OC_DEFAULT_OICPARSEQUWRYITER;
 
     ParseQueryIterInit((unsigned char*)query, &parseIter);
 
@@ -1399,7 +1399,7 @@ OCEntityHandlerResult StartOTMJustWorks(OCEntityHandlerRequest *ehRequest)
              sizeof(mutualVerifNum));
 
             //Wait for user confirmation
-            if (OC_STACK_OK != VerifyOwnershipTransfer(mutualVerifNum, DISPLAY_NUM | USER_CONFIRM))
+            if (OC_STACK_OK != VerifyOwnershipTransfer(mutualVerifNum, (VerifyOptionBitmask_t)(DISPLAY_NUM | USER_CONFIRM)))
             {
                 ehRet = OC_EH_NOT_ACCEPTABLE;
             }
@@ -1488,6 +1488,7 @@ OCEntityHandlerResult HandleDoxmPostRequestMfg(OicSecDoxm_t *newDoxm,
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
     OCEntityHandlerResult ehRet = OC_EH_OK;
+    CAResult_t caRes = CA_STATUS_OK;
 
         //In case of Confirm Manufacturer Cert, get user confirmation
         if (OIC_CON_MFG_CERT == newDoxm->oxmSel && false == newDoxm->owned &&
@@ -1509,7 +1510,7 @@ OCEntityHandlerResult HandleDoxmPostRequestMfg(OicSecDoxm_t *newDoxm,
         gDoxm->oxmSel = newDoxm->oxmSel;
 
         RegisterOTMSslHandshakeCallback(DoxmDTLSHandshakeCB);
-        CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
+        caRes = CAEnableAnonECDHCipherSuite(false);
         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
         OIC_LOG_V(INFO, TAG, "%s: ECDH_ANON CipherSuite is DISABLED", __func__);
 
@@ -1568,6 +1569,9 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest *ehReq
     bool roParsed = false;
     bool oxmselParsed = false;
     OicSecDostype_t dos;
+    size_t size =  0;
+    uint8_t *payload = NULL;
+    OCStackResult res = OC_STACK_OK;
 
     VERIFY_NOT_NULL(TAG, ehRequest, ERROR);
     VERIFY_NOT_NULL(TAG, ehRequest->payload, ERROR);
@@ -1586,10 +1590,10 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest *ehReq
 
     // Convert CBOR Doxm data into binary. This will also validate
     // the Doxm data received.
-    uint8_t *payload = ((OCSecurityPayload *)ehRequest->payload)->securityData;
+    payload = ((OCSecurityPayload *)ehRequest->payload)->securityData;
     VERIFY_NOT_NULL(TAG, payload, ERROR);
-    size_t size = ((OCSecurityPayload *)ehRequest->payload)->payloadSize;
-    OCStackResult res = CBORPayloadToDoxmBin(payload, size, &newDoxm, &roParsed,
+    size = ((OCSecurityPayload *)ehRequest->payload)->payloadSize;
+    res = CBORPayloadToDoxmBin(payload, size, &newDoxm, &roParsed,
                         &oxmselParsed, dos.state);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
     VERIFY_NOT_NULL(TAG, newDoxm, ERROR);

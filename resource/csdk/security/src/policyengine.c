@@ -241,6 +241,9 @@ bool IsRequestFromResourceOwner(SRMRequestContext_t *context)
 {
     bool retVal = false;
     OicUuid_t resourceOwner;
+#ifndef NDEBUG // if debug build, log the IDs being used for matching
+    char strUuid[UUID_STRING_SIZE] = "UUID_ERROR";
+#endif
 
     if (NULL == context)
     {
@@ -277,7 +280,6 @@ bool IsRequestFromResourceOwner(SRMRequestContext_t *context)
         }
 
 #ifndef NDEBUG // if debug build, log the IDs being used for matching rowner
-        char strUuid[UUID_STRING_SIZE] = "UUID_ERROR";
         if (OCConvertUuidToString(context->subjectUuid.id, strUuid))
         {
             OIC_LOG_V(DEBUG, TAG, "context->subjectUuid for request: %s.", strUuid);
@@ -314,6 +316,10 @@ exit:
 bool IsRequestFromDoxs(SRMRequestContext_t *context)
 {
     bool retVal = false;
+    OCStackResult res = OC_STACK_ERROR;
+#ifndef NDEBUG // if debug build, log the IDs being used for matching
+    char strUuid[UUID_STRING_SIZE] = "UUID_ERROR";
+#endif
 
     if (NULL == context)
     {
@@ -335,13 +341,11 @@ bool IsRequestFromDoxs(SRMRequestContext_t *context)
         goto exit;
     }
 
-    OCStackResult res = OC_STACK_ERROR;
     OicUuid_t doxsUuid;
 
     res = GetDoxmRownerId(&doxsUuid);
 
 #ifndef NDEBUG // if debug build, log the IDs being used for matching
-    char strUuid[UUID_STRING_SIZE] = "UUID_ERROR";
     if (OCConvertUuidToString(context->subjectUuid.id, strUuid))
     {
         OIC_LOG_V(DEBUG, TAG, "context->subjectUuid for request: %s.", strUuid);
@@ -378,6 +382,10 @@ exit:
 bool IsRequestFromAms(SRMRequestContext_t *context)
 {
     bool retVal = false;
+    OCStackResult res = OC_STACK_ERROR;
+#ifndef NDEBUG // if debug build, log the IDs being used for matching
+    char strUuid[UUID_STRING_SIZE] = "UUID_ERROR";
+#endif
 
     if (NULL == context)
     {
@@ -399,13 +407,11 @@ bool IsRequestFromAms(SRMRequestContext_t *context)
         goto exit;
     }
 
-    OCStackResult res = OC_STACK_ERROR;
     OicUuid_t amsUuid;
 
     res = GetAclRownerId(&amsUuid);
 
 #ifndef NDEBUG // if debug build, log the IDs being used for matching
-    char strUuid[UUID_STRING_SIZE] = "UUID_ERROR";
     if (OCConvertUuidToString(context->subjectUuid.id, strUuid))
     {
         OIC_LOG_V(DEBUG, TAG, "context->subjectUuid for request: %s.", strUuid);
@@ -442,6 +448,10 @@ exit:
 bool IsRequestFromCms(SRMRequestContext_t *context)
 {
     bool retVal = false;
+    OCStackResult res = OC_STACK_ERROR;
+#ifndef NDEBUG // if debug build, log the IDs being used for matching
+    char strUuid[UUID_STRING_SIZE] = "UUID_ERROR";
+#endif
 
     if (NULL == context)
     {
@@ -463,13 +473,11 @@ bool IsRequestFromCms(SRMRequestContext_t *context)
         goto exit;
     }
 
-    OCStackResult res = OC_STACK_ERROR;
     OicUuid_t cmsUuid;
 
     res = GetCredRownerId(&cmsUuid);
 
 #ifndef NDEBUG // if debug build, log the IDs being used for matching
-    char strUuid[UUID_STRING_SIZE] = "UUID_ERROR";
     if (OCConvertUuidToString(context->subjectUuid.id, strUuid))
     {
         OIC_LOG_V(DEBUG, TAG, "context->subjectUuid for request: %s.", strUuid);

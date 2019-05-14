@@ -274,6 +274,8 @@ static bool IsEmptyCred(const OicSecCred_t* cred)
 {
     OicUuid_t emptyUuid = OC_ZERO_UUID;
 
+    VERIFY_NOT_NULL(TAG, cred, ERROR);
+
     VERIFY_SUCCESS(TAG, (0 == memcmp(cred->subject.id, emptyUuid.id, sizeof(emptyUuid))), DEBUG);
     VERIFY_SUCCESS(TAG, !IsNonEmptyRole(&cred->roleId), DEBUG);
     VERIFY_SUCCESS(TAG, (0 == cred->credId), DEBUG);
@@ -1683,6 +1685,7 @@ bool IsSameSecOpt(const OicSecOpt_t* sk1, const OicSecOpt_t* sk2)
     VERIFY_SUCCESS(TAG, (sk1->len == sk2->len), INFO);
     VERIFY_SUCCESS(TAG, (sk1->encoding == sk2->encoding), INFO);
     VERIFY_SUCCESS(TAG, (0 == memcmp(sk1->data, sk2->data, sk1->len)), INFO);
+    VERIFY_SUCCESS(TAG, (sk1->revstat == sk2->revstat), INFO);
     return true;
 exit:
     return false;
@@ -1827,8 +1830,9 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
         mbedtls_x509_crt_free(&crt);
     }
 #endif
-
-    OIC_LOG(DEBUG, TAG, "Adding New Cred");
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    OIC_LOG_V(DEBUG, TAG, "%s: adding cred: %d %s", __func__, newCred->credId, newCred->credUsage);
+#endif /* __WITH_DTLS__  or __WITH_TLS__*/
     LL_APPEND(gCred, newCred);
 
 saveToDB:
@@ -3329,7 +3333,6 @@ bool IsCredRowneruuidTheNilUuid()
 {
     return IsNilUuid(&gRownerId);
 }
-
 #if defined (__WITH_TLS__) || defined(__WITH_DTLS__)
 /* Caller must call OICFree on *der when finished. */
 static int ConvertPemCertToDer(const char *pem, size_t pemLen, uint8_t** der, size_t* derLen)
@@ -3348,7 +3351,8 @@ static int ConvertPemCertToDer(const char *pem, size_t pemLen, uint8_t** der, si
     ret = mbedtls_pem_read_buffer(&ctx, pemHeader, pemFooter, (const uint8_t*) pem, NULL, 0, &usedLen);
     if (ret != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: failed reading PEM cert", __func__);
+        LOG_MBEDTLS_ERROR(ret);
+        OIC_LOG_V(ERROR, TAG, "%s: failed reading PEM cert: %d", __func__, ret);
         goto exit;
     }
 
@@ -3818,6 +3822,10 @@ void GetCaCert(ByteArrayLL_t * chain, const char * usage)
 
     LL_FOREACH(gCred, temp)
     {
+#ifndef NDEBUG
+        OIC_LOG_V(DEBUG, TAG, "%s: cred: %d %s", __func__, temp->credId, temp->credUsage);
+        LogCert ( temp->publicData.data, temp->publicData.len, temp->publicData.encoding, TAG_LOG );
+#endif
         if ((SIGNED_ASYMMETRIC_KEY == temp->credType) &&
             (temp->credUsage != NULL) &&
             (0 == strcmp(temp->credUsage, usage)) && (false == temp->optionalData.revstat))
@@ -3835,6 +3843,15 @@ void GetCaCert(ByteArrayLL_t * chain, const char * usage)
                 FreeCertChain(chain);
                 OIC_LOG_V(ERROR, TAG, "%s: Failed to parse certificate chain", __func__);
             }
+        }
+        else
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: cred: %d does not match by: %s",
+                __func__, temp->credId,
+                    SIGNED_ASYMMETRIC_KEY != temp->credType ? "not asym key" :
+                    temp->credUsage == NULL ? "null cred usage" :
+                    0 != strcmp(temp->credUsage, usage) ? "invalid cred usage" :
+                    "revstat is not false");
         }
     }
     if(NULL == chain->cert)
@@ -3910,6 +3927,7 @@ OCStackResult GetAllRoleCerts(RoleCertChain_t ** output)
             }
             LL_APPEND(*output, add);
             add->credId = temp->credId;
+            OIC_LOG_V(DEBUG, TAG, "%s: add: %d", __func__, add->credId);
             if (cloneSecKey(&add->certificate, &temp->publicData) != 0)
             {
                 OIC_LOG_V(ERROR, TAG, "%s failed to copy certificate data", __func__);

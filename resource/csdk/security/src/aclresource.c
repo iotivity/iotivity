@@ -34,7 +34,6 @@
 #include "oic_string.h"
 #include "experimental/ocrandom.h"
 #include "ocpayload.h"
-#include "utlist.h"
 #include "acl_logging.h"
 #include "experimental/payload_logging.h"
 #include "srmresourcestrings.h"
@@ -361,6 +360,7 @@ static size_t OicSecAclSize(const OicSecAcl_t *secAcl)
        size++;
        ace = ace->next;
     }
+    OIC_LOG_V(DEBUG, TAG, "%s: %lu", __func__, size);
     return size;
 }
 OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl,
@@ -440,7 +440,7 @@ OCStackResult AclToCBORPayloadPartial(const OicSecAcl_t *secAcl,
         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Creating ACL Map.");
         OIC_LOG_V(DEBUG, TAG, "%s starting encoding of %s resource.",
             __func__, (OIC_SEC_ACL_V1 == aclVersion)?"v1 acl":"v2 acl2");
-    
+
     // v1 uses "aclist" as the top-level tag, containing an "aces" object
     if (OIC_SEC_ACL_V1 == aclVersion)
     {
@@ -522,6 +522,7 @@ OCStackResult AclToCBORPayloadPartial(const OicSecAcl_t *secAcl,
             {
                 aceMapSize++;
             }
+            validityElts = validityElts->next;
         }
 
 #ifdef MULTIPLE_OWNER
@@ -761,7 +762,7 @@ OCStackResult AclToCBORPayloadPartial(const OicSecAcl_t *secAcl,
                     rsrcMapSize++;
                 }
 
-                OIC_LOG_V(DEBUG, TAG, "%s resource map size = %"PRIuPTR, __func__, rsrcMapSize);
+                OIC_LOG_V(DEBUG, TAG, "%s resource map size = %" PRIuPTR, __func__, rsrcMapSize);
 
                 cborEncoderResult = cbor_encoder_create_map(&resources, &rMap, rsrcMapSize);
                 VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed Adding Resource Map.");
@@ -1108,7 +1109,6 @@ exit:
 // It parses { "aclist" : [ { ... } ] } instead of { "aclist" : { "aces" : [ ] } }
 
 #if defined(TCP_ADAPTER) && defined(WITH_CLOUD)
-
 OicSecAcl_t* CBORPayloadToCloudAcl(const uint8_t *cborPayload, const size_t size)
 {
     if (NULL == cborPayload || 0 == size)
@@ -1116,8 +1116,8 @@ OicSecAcl_t* CBORPayloadToCloudAcl(const uint8_t *cborPayload, const size_t size
         return NULL;
     }
     OCStackResult ret = OC_STACK_ERROR;
-    CborValue aclCbor = { .parser = NULL };
-    CborParser parser = { .end = NULL };
+    CborValue aclCbor = OC_DEFAULT_CBOR_VALUE;
+    CborParser parser = OC_DEFAULT_CBOR_PARSER;
     CborError cborFindResult = CborNoError;
     cbor_parser_init(cborPayload, size, 0, &parser, &aclCbor);
 
@@ -1125,7 +1125,7 @@ OicSecAcl_t* CBORPayloadToCloudAcl(const uint8_t *cborPayload, const size_t size
     VERIFY_NOT_NULL_RETURN(TAG, acl, ERROR, NULL);
 
     // Enter ACL Map
-    CborValue aclMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+    CborValue aclMap = OC_DEFAULT_CBOR_VALUE;
     cborFindResult = cbor_value_enter_container(&aclCbor, &aclMap);
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering ACL Map.");
 
@@ -1146,7 +1146,7 @@ OicSecAcl_t* CBORPayloadToCloudAcl(const uint8_t *cborPayload, const size_t size
             if (strcmp(tagName, OIC_JSON_ACLIST_NAME)  == 0)
             {
                 // Enter ACES Array
-                CborValue acesArray = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                CborValue acesArray = OC_DEFAULT_CBOR_VALUE;
                 cborFindResult = cbor_value_enter_container(&aclMap, &acesArray);
                 VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering ACES Array.");
 
@@ -1154,7 +1154,12 @@ OicSecAcl_t* CBORPayloadToCloudAcl(const uint8_t *cborPayload, const size_t size
                 while (cbor_value_is_valid(&acesArray))
                 {
                     acesCount++;
-                    CborValue aceMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                    CborValue aceMap = OC_DEFAULT_CBOR_VALUE;
+                    if (!cbor_value_is_container(&acesArray))
+                    {
+                        OIC_LOG_V(WARNING, TAG, "%s: access array is not container", __func__);
+                        return NULL;
+                    }
                     cborFindResult = cbor_value_enter_container(&acesArray, &aceMap);
                     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering ACE Map.");
 
@@ -1202,14 +1207,14 @@ OicSecAcl_t* CBORPayloadToCloudAcl(const uint8_t *cborPayload, const size_t size
                             // Resources -- Mandatory
                             if (strcmp(name, OIC_JSON_RESOURCES_NAME) == 0)
                             {
-                                CborValue resources = { .parser = NULL };
+                                CborValue resources = OC_DEFAULT_CBOR_VALUE;
                                 cborFindResult = cbor_value_enter_container(&aceMap, &resources);
                                 VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering a Resource Array.");
 
                                 while (cbor_value_is_valid(&resources))
                                 {
                                     // rMap
-                                    CborValue rMap = { .parser = NULL  };
+                                    CborValue rMap = OC_DEFAULT_CBOR_VALUE;
                                     cborFindResult = cbor_value_enter_container(&resources, &rMap);
                                     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering Resource Map");
 
@@ -1317,7 +1322,7 @@ OicSecAcl_t* CBORPayloadToCloudAcl(const uint8_t *cborPayload, const size_t size
                             // Validity -- Not mandatory
                             if(strcmp(name, OIC_JSON_VALIDITY_NAME) == 0)
                             {
-                                CborValue validitiesMap = {.parser = NULL};
+                                CborValue validitiesMap = OC_DEFAULT_CBOR_VALUE;
                                 size_t validitySize = 0;
 
                                 cborFindResult = cbor_value_get_array_length(&aceMap, &validitySize);
@@ -1332,7 +1337,7 @@ OicSecAcl_t* CBORPayloadToCloudAcl(const uint8_t *cborPayload, const size_t size
                                     VERIFY_NOT_NULL(TAG, validity, ERROR);
                                     LL_APPEND(ace->validities, validity);
 
-                                    CborValue validityMap  = {.parser = NULL};
+                                    CborValue validityMap = OC_DEFAULT_CBOR_VALUE;
                                     //period (string)
                                     cborFindResult = cbor_value_enter_container(&validitiesMap, &validityMap);
                                     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding a validity Map.");
@@ -1342,7 +1347,7 @@ OicSecAcl_t* CBORPayloadToCloudAcl(const uint8_t *cborPayload, const size_t size
                                     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding a Period value.");
 
                                     //recurrence (string array)
-                                    CborValue recurrenceMap  = {.parser = NULL};
+                                    CborValue recurrenceMap  = OC_DEFAULT_CBOR_VALUE ;
                                     cborFindResult = cbor_value_enter_container(&validityMap, &recurrenceMap);
                                     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding a recurrence array.");
 
@@ -1438,8 +1443,8 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
     }
     OCStackResult ret = OC_STACK_ERROR;
     CborValue aclMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
-    CborValue aclCbor = { .parser = NULL };
-    CborParser parser = { .end = NULL };
+    CborValue aclCbor = OC_DEFAULT_CBOR_VALUE ;
+    CborParser parser = OC_DEFAULT_CBOR_PARSER ;
     CborError cborFindResult = CborNoError;
     char *tagName = NULL;
     char *subjectTag = NULL;
@@ -1796,7 +1801,7 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                                 // Resources -- Mandatory
                                 if (0 == strcmp(name, OIC_JSON_RESOURCES_NAME))
                                 {
-                                    CborValue resources = { .parser = NULL };
+                                    CborValue resources = OC_DEFAULT_CBOR_VALUE;
                                     cborFindResult = cbor_value_enter_container(&aceMap, &resources);
                                     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering a Resource Array.");
                                     OIC_LOG_V(DEBUG, TAG, "%s entered resources array.", __func__);
@@ -1805,7 +1810,7 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                                     while (cbor_value_is_valid(&resources))
                                     {
                                         // rMap is the map of the current Resource being decoded
-                                        CborValue rMap = { .parser = NULL  };
+                                        CborValue rMap = OC_DEFAULT_CBOR_VALUE;
                                         cborFindResult = cbor_value_enter_container(&resources, &rMap);
                                         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering Resource Map");
                                         resourceCount++;
@@ -1971,7 +1976,7 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                                 // Validity -- Not mandatory
                                 if(strcmp(name, OIC_JSON_VALIDITY_NAME) == 0)
                                 {
-                                    CborValue validitiesMap = {.parser = NULL};
+                                    CborValue validitiesMap = OC_DEFAULT_CBOR_VALUE;
                                     size_t validitySize = 0;
 
                                     cborFindResult = cbor_value_get_array_length(&aceMap, &validitySize);
@@ -1986,7 +1991,7 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                                         VERIFY_NOT_NULL(TAG, validity, ERROR);
                                         LL_APPEND(ace->validities, validity);
 
-                                        CborValue validityMap  = {.parser = NULL};
+                                        CborValue validityMap = OC_DEFAULT_CBOR_VALUE;
                                         //period (string)
                                         cborFindResult = cbor_value_enter_container(&validitiesMap, &validityMap);
                                         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding a validity Map.");
@@ -1996,7 +2001,7 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                                         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding a Period value.");
 
                                         //recurrence (string array)
-                                        CborValue recurrenceMap  = {.parser = NULL};
+                                        CborValue recurrenceMap  = OC_DEFAULT_CBOR_VALUE;
                                         cborFindResult = cbor_value_enter_container(&validityMap, &recurrenceMap);
                                         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Finding a recurrence array.");
 
@@ -2340,7 +2345,7 @@ static OCStackResult RemoveAceByAceIds(AceIdList_t *aceIdList)
  */
 static bool GetSubjectFromQueryString(const char *query, OicUuid_t *subject)
 {
-    OicParseQueryIter_t parseIter = { .attrPos = NULL };
+    OicParseQueryIter_t parseIter = OC_DEFAULT_OICPARSEQUWRYITER;
 
     ParseQueryIterInit((unsigned char *) query, &parseIter);
 
@@ -2379,7 +2384,7 @@ exit:
 static bool GetAceIdsFromQueryString(const char *query, AceIdList_t **aceid)
 {
     bool found = false;
-    OicParseQueryIter_t parseIter = { .attrPos = NULL };
+    OicParseQueryIter_t parseIter = OC_DEFAULT_OICPARSEQUWRYITER;
 
     ParseQueryIterInit((unsigned char *) query, &parseIter);
 
@@ -2440,7 +2445,7 @@ exit:
  */
 static bool GetResourceFromQueryString(const char *query, char *resource, size_t resourceSize)
 {
-    OicParseQueryIter_t parseIter = { .attrPos = NULL };
+    OicParseQueryIter_t parseIter = OC_DEFAULT_OICPARSEQUWRYITER;
 
     ParseQueryIterInit((unsigned char *) query, &parseIter);
 
@@ -3014,6 +3019,9 @@ static OCEntityHandlerResult HandleACL2PostRequest(const OCEntityHandlerRequest 
 {
     OIC_LOG(INFO, TAG, "HandleACLPostRequest processing the request");
     OCEntityHandlerResult ehRet = OC_EH_INTERNAL_SERVER_ERROR;
+
+    VERIFY_NOT_NULL_RETURN(TAG, ehRequest, ERROR, OC_EH_ERROR);
+    VERIFY_NOT_NULL_RETURN(TAG, ehRequest->payload, ERROR, OC_EH_ERROR);
 
     // Convert CBOR into ACL data and update to SVR buffers. This will also validate the ACL data received.
     uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;
