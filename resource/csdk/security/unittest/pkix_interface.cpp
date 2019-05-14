@@ -23,9 +23,10 @@
 extern "C" {
 #endif
 
+#include "oic_malloc.h"
 #include "tools.h"
 #undef TAG
-#include "../src/policyengine.c"
+#include "../src/pkix_interface.c"
 
 #ifdef __cplusplus
 }
@@ -35,13 +36,13 @@ extern "C" {
 #undef TAG
 #endif
 
-#define TAG  "PE"
+#define TAG  "PKIX"
 
 #define SVR_DB_FILE_NAME TAG".dat"
 #define PM_DB_FILE_NAME TAG".db"
 
 
-class PE : public ::testing::Test
+class PKIX : public ::testing::Test
 {
     public:
         static void SetUpTestCase()
@@ -52,37 +53,23 @@ class PE : public ::testing::Test
         }
 };
 
-TEST_F(PE, IsRequestFromAms)
+TEST_F(PKIX, GetManufacturerPkixInfo)
 {
-    SRMRequestContext_t *context = NULL;
-    EXPECT_FALSE(IsRequestFromAms(context));
+    PkiInfo_t* inf = NULL;
+    bool list = false;
 
-    context = (SRMRequestContext_t*)OICCalloc(1, sizeof(SRMRequestContext_t));
-    EXPECT_FALSE(IsRequestFromAms(context));
+    GetPkixInfo(inf);
+    GetManufacturerPkixInfo(inf);
+    InitManufacturerCipherSuiteList(&list, "33333333-3333-3333-3333-111111111111");
 
-    context->subjectIdType = SUBJECT_ID_TYPE_UUID;
-    EXPECT_FALSE(IsRequestFromAms(context));
+    inf = (PkiInfo_t*)OICCalloc(1, sizeof(PkiInfo_t));
+    inf->key.data = keyData();
+    inf->key.len = keyDataLen();
 
-    ConvertStrToUuid("33333333-3333-3333-3333-222222222222", &context->subjectUuid);
-    EXPECT_FALSE(IsRequestFromAms(context));
+    GetPkixInfo(inf);
+    GetManufacturerPkixInfo(inf);
 
-    OICFree(context);
-}
-
-TEST_F(PE, IsRequestFromCms)
-{
-    SRMRequestContext_t *context = NULL;
-    EXPECT_FALSE(IsRequestFromCms(context));
-
-    context = (SRMRequestContext_t*)OICCalloc(1, sizeof(SRMRequestContext_t));
-    EXPECT_FALSE(IsRequestFromCms(context));
-
-    context->subjectIdType = SUBJECT_ID_TYPE_UUID;
-    EXPECT_FALSE(IsRequestFromCms(context));
-
-    ConvertStrToUuid("33333333-3333-3333-3333-222222222222", &context->subjectUuid);
-    EXPECT_FALSE(IsRequestFromCms(context));
-
-    OICFree(context);
+    OICFree(inf->key.data);
+    OICFree(inf);
 }
 

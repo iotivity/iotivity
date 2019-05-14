@@ -25,10 +25,10 @@
 #include <cinttypes>
 
 /*
- * Tests for the PBKDF2 implementation. 
- * There is a disabled test here that generates test vectors. Test vectors 
+ * Tests for the PBKDF2 implementation.
+ * There is a disabled test here that generates test vectors. Test vectors
  * for PBKDF2-HMAC-SHA256 are not generally available, so we created our own to
- * ensure consistency when changing the PBKDF2 implementation (initially based 
+ * ensure consistency when changing the PBKDF2 implementation (initially based
  * on tiny DTLS, now moving to mbedTLS).
  */
 
@@ -41,7 +41,7 @@ static void print_buffer(const char* label, const uint8_t* buffer, size_t len)
         printf(" NULL\n");
         return;
     }
-    
+
     printf("{");
     for (size_t i = 0; i < len - 1; i++)
     {
@@ -51,7 +51,7 @@ static void print_buffer(const char* label, const uint8_t* buffer, size_t len)
 
 }
 
-static void print_vector(const char* label, 
+static void print_vector(const char* label,
     const unsigned char* passwd, size_t pLen,
     const uint8_t* salt, const size_t saltLen,
     const size_t iterations,
@@ -216,4 +216,16 @@ TEST(PBKDF2Tests, TestVector6)
 
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(memcmp(derivedKey, reDerivedKey, sizeof(derivedKey)), 0);
+}
+
+TEST(PBKDF2Tests, TestVector7)
+{
+    size_t keyLen = std::numeric_limits<size_t>::max();;
+    size_t iterations = 0;
+
+    EXPECT_EQ(-1, DeriveCryptoKeyFromPassword(NULL , 0, NULL, 0, iterations, keyLen, NULL));
+
+    iterations = keyLen;
+    keyLen = 10000;
+    EXPECT_EQ(-1,  DeriveCryptoKeyFromPassword(NULL , 0, NULL, 0, iterations, keyLen, NULL));
 }

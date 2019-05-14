@@ -64,5 +64,5 @@ TEST(VerifyOwnershipTransferTest, InvalidUserConfirmCB)
 {
     gUserConfirmContext.callback = NULL;
     gVerifyOption = (VerifyOptionBitmask_t)USER_CONFIRM;
-    EXPECT_EQ(OC_STACK_ERROR, VerifyOwnershipTransfer(NULL, (VerifyOptionBitmask_t)USER_CONFIRM));
+    EXPECT_EQ(OC_STACK_OK, VerifyOwnershipTransfer(NULL, (VerifyOptionBitmask_t)USER_CONFIRM));
 }

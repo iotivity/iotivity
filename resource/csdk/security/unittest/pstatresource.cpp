@@ -24,41 +24,53 @@
 #endif
 #include <gtest/gtest.h>
 
-#include "ocpayload.h"
-#include "ocstack.h"
-#include "oic_malloc.h"
-#include "cainterface.h"
-#include "resourcemanager.h"
-#include "secureresourcemanager.h"
-#include "pstatresource.h"
-#include "security_internals.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// InitPstatResource Tests
-TEST(PstatResourceTest, InitPstatResource)
-{
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, InitPstatResource());
-}
+#include "tools.h"
+#undef TAG
+#include "../src/pstatresource.c"
 
-// DeInitPstatResource Tests
-TEST(PstatResourceTest, DeInitPstatResource)
-{
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, DeInitPstatResource());
+#ifdef __cplusplus
 }
+#endif
 
-//CreatePstatResource Tests
-TEST(PstatResourceTest, CreatePstatResource)
+#ifdef TAG
+#undef TAG
+#endif
+
+#define TAG  "PSTAT"
+
+#define SVR_DB_FILE_NAME TAG".dat"
+#define PM_DB_FILE_NAME TAG".db"
+
+class PSTAT : public ::testing::Test
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, CreatePstatResource());
-}
+    public:
+
+        static void SetUpTestCase()
+        {
+            IOT_Init(PM_DB_FILE_NAME);
+            EXPECT_EQ(OC_STACK_INVALID_PARAM, InitPstatResource());
+            EXPECT_EQ(OC_STACK_OK, CreatePstatResource());
+        }
+
+        static void TearDownTestCase()
+        {
+            IOT_DeInit(PM_DB_FILE_NAME);
+            EXPECT_EQ(OC_STACK_INVALID_PARAM, DeInitPstatResource());
+        }
+};
 
 //PstatEntityHandler Tests
-TEST(PstatResourceTest, PstatEntityHandlerWithDummyRequest)
+TEST_F(PSTAT, PstatEntityHandlerWithDummyRequest)
 {
     OCEntityHandlerRequest req = OCEntityHandlerRequest();
-    EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
+    EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req, NULL));
 }
 
-TEST(PstatResourceTest, PstatEntityHandlerWithPostRequest)
+TEST_F(PSTAT, PstatEntityHandlerWithPostRequest)
 {
     OicSecPstat_t *defaultPstat = (OicSecPstat_t *) OICCalloc(1, sizeof(*defaultPstat));
     ASSERT_TRUE(defaultPstat != NULL);
@@ -92,17 +104,17 @@ TEST(PstatResourceTest, PstatEntityHandlerWithPostRequest)
     OCEntityHandlerRequest req = OCEntityHandlerRequest();
     req.method = OC_REST_POST;
     req.payload = (OCPayload *) OCSecurityPayloadCreate(cbor, size);
-    EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
+    EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req, NULL));
     OICFree(cbor);
     OCPayloadDestroy(req.payload);
 }
 
-TEST(PstatResourceTest, PstatEntityHandlerInvalidRequest)
+TEST_F(PSTAT, PstatEntityHandlerInvalidRequest)
 {
-    EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_OBSERVE_FLAG, NULL));
+    EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_OBSERVE_FLAG, NULL, NULL));
 }
 
-TEST(PstatResourceTest, PstatToCBORPayloadNULL)
+TEST_F(PSTAT, PstatToCBORPayloadNULL)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, PstatToCBORPayload(NULL, NULL, 0));
     // Case when cbor payload is NULL
@@ -121,12 +133,12 @@ TEST(PstatResourceTest, PstatToCBORPayloadNULL)
     OICFree(cborPayload);
 }
 
-TEST(PstatResourceTest, CBORPayloadToPstat)
+TEST_F(PSTAT, CBORPayloadToPstat)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToPstat(NULL, 0, NULL));
 }
 
-TEST(PstatResourceTest, PstatToCBORPayloadAndCBORPayloadToPstat)
+TEST_F(PSTAT, PstatToCBORPayloadAndCBORPayloadToPstat)
 {
     OicSecPstat_t pstat;
     pstat.dos.state = DOS_RFNOP;

@@ -18,18 +18,54 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <gtest/gtest.h>
-#include "ocstack.h"
-#include "ocserverrequest.h"
 #include "oic_string.h"
-#include "oic_malloc.h"
-#include "resourcemanager.h"
-#include "srmresourcestrings.h"
-#include "experimental/doxmresource.h"
-#include "security_internals.h"
-#include "experimental/ocrandom.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "tools.h"
+#undef TAG
+#include "../src/doxmresource.c"
+
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef TAG
+#undef TAG
+#endif
 
 #define TAG  "SRM-DOXM"
+
+#define SVR_DB_FILE_NAME TAG".dat"
+#define PM_DB_FILE_NAME TAG".db"
+
+class DOXM : public ::testing::Test
+{
+    public:
+
+        static void SetUpTestCase()
+        {
+            IOT_Init(PM_DB_FILE_NAME);
+            //InitDoxmResource Tests
+            EXPECT_EQ(OC_STACK_OK, InitDoxmResource());
+            //CreateDoxmResource Tests
+            EXPECT_EQ(OC_STACK_OK, CreateDoxmResource());
+            //DoxmEntityHandler Tests
+            OCEntityHandlerRequest req = OCEntityHandlerRequest();
+            EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req, NULL));
+        }
+
+        static void TearDownTestCase()
+        {
+            //DeInitDoxmResource Tests
+            EXPECT_EQ(OC_STACK_OK, DeInitDoxmResource());
+            IOT_DeInit(PM_DB_FILE_NAME);
+        }
+};
 
 OicSecDoxm_t * getBinDoxm()
 {
@@ -59,43 +95,18 @@ OicSecDoxm_t * getBinDoxm()
     return doxm;
 }
 
- //InitDoxmResource Tests
-TEST(DoxmResourceTest, InitDoxmResource)
-{
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
-}
-
-//DeInitDoxmResource Tests
-TEST(DoxmResourceTest, DeInitDoxmResource)
-{
-    EXPECT_EQ(OC_STACK_ERROR, DeInitDoxmResource());
-}
-
-//CreateDoxmResource Tests
-TEST(DoxmResourceTest, CreateDoxmResource)
-{
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, CreateDoxmResource());
-}
-
- //DoxmEntityHandler Tests
-TEST(DoxmResourceTest, DoxmEntityHandlerWithDummyRequest)
-{
-    OCEntityHandlerRequest req = OCEntityHandlerRequest();
-    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req, NULL));
-}
-
-TEST(DoxmResourceTest, DoxmEntityHandlerWithNULLRequest)
+TEST_F(DOXM, DoxmEntityHandlerWithNULLRequest)
 {
     EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, NULL, NULL));
 }
 
-TEST(DoxmResourceTest, DoxmEntityHandlerInvalidFlag)
+TEST_F(DOXM, DoxmEntityHandlerInvalidFlag)
 {
     OCEntityHandlerRequest req = OCEntityHandlerRequest();
     EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_OBSERVE_FLAG, &req, NULL));
 }
 
-TEST(DoxmResourceTest, DoxmEntityHandlerValidRequest)
+TEST_F(DOXM, DoxmEntityHandlerValidRequest)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
     char query[] = "oxm=0;owned=false;owner=owner1";
@@ -107,9 +118,9 @@ TEST(DoxmResourceTest, DoxmEntityHandlerValidRequest)
     OICFree(req.query);
 }
 
-TEST(DoxmResourceTest, DoxmEntityHandlerDeviceIdQuery)
+TEST_F(DOXM, DoxmEntityHandlerDeviceIdQuery)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
+    EXPECT_EQ(OC_STACK_OK, InitDoxmResource());
     char query[] = "deviceuuid=2222222222222222";
     OCEntityHandlerRequest req = OCEntityHandlerRequest();
     req.method = OC_REST_GET;
@@ -119,7 +130,7 @@ TEST(DoxmResourceTest, DoxmEntityHandlerDeviceIdQuery)
     OICFree(req.query);
 }
 
-TEST(DoxmResourceTest, DoxmToCBORPayloadNULL)
+TEST_F(DOXM, DoxmToCBORPayloadNULL)
 {
     OicSecDoxm_t *doxm =  getBinDoxm();
     size_t size = 10;
@@ -131,7 +142,7 @@ TEST(DoxmResourceTest, DoxmToCBORPayloadNULL)
     DeleteDoxmBinData(doxm);
 }
 
-TEST(DoxmResourceTest, DoxmToCBORPayloadVALID)
+TEST_F(DOXM, DoxmToCBORPayloadVALID)
 {
     OicSecDoxm_t *doxm = getBinDoxm();
 
@@ -153,7 +164,7 @@ TEST(DoxmResourceTest, DoxmToCBORPayloadVALID)
 }
 
 //CBORPayloadToDoxm Tests
-TEST(DoxmResourceTest, CBORPayloadToDoxmNULL)
+TEST_F(DOXM, CBORPayloadToDoxmNULL)
 {
     OicSecDoxm_t *doxm = NULL;
     uint8_t *cborPayload = (uint8_t *)OICCalloc(1, sizeof(uint8_t));
@@ -165,7 +176,7 @@ TEST(DoxmResourceTest, CBORPayloadToDoxmNULL)
     OICFree(cborPayload);
 }
 
-TEST(DoxmResourceTest, CBORPayloadToDoxmVALID)
+TEST_F(DOXM, CBORPayloadToDoxmVALID)
 {
     OicSecDoxm_t *doxm =  getBinDoxm();
     uint8_t *payload = NULL;
@@ -188,7 +199,7 @@ TEST(DoxmResourceTest, CBORPayloadToDoxmVALID)
 
 #if 0
 //HandleDoxmPostRequest Test
-TEST(HandleDoxmPostRequestTest, HandleDoxmPostRequestValidInput)
+TEST_F(HandleDoxmPostRequestTest, HandleDoxmPostRequestValidInput)
 {
     OCEntityHandlerRequest ehRequest = {};
     OCServerRequest svRequest = {};

@@ -73,8 +73,8 @@ bool ReadCBORFile(const char* filename, const char* rsrcname, uint8_t **payload,
     size_t size = 0;
 
 #ifdef _MSC_VER
-// The path SECURITY_BUILD_UNITTEST_DIR can contain '\u' which VS misinterprets as a universal 
-// character name in the STRINGIZE macro and outputs warning C4429 'possible incomplete or 
+// The path SECURITY_BUILD_UNITTEST_DIR can contain '\u' which VS misinterprets as a universal
+// character name in the STRINGIZE macro and outputs warning C4429 'possible incomplete or
 // improperly formed universal-character-name' https://msdn.microsoft.com/en-us/library/z78hwa6k.aspx
 #pragma warning(push)
 #pragma warning(disable:4429)
@@ -155,20 +155,3 @@ bool ReadCBORFile(const char* filename, const char* rsrcname, uint8_t **payload,
     return status;
 }
 
-void SetPersistentHandler(OCPersistentStorage *ps, bool set)
-{
-    if (set)
-    {
-        ps->open = fopen;
-        ps->read = fread;
-        ps->write = fwrite;
-        ps->close = fclose;
-        ps->unlink = remove;
-    }
-    else
-    {
-        memset(ps, 0, sizeof(OCPersistentStorage));
-    }
-    EXPECT_EQ(OC_STACK_OK,
-            OCRegisterPersistentStorageHandler(ps));
-}

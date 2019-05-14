@@ -34,6 +34,17 @@ extern "C" {
 
 #define TAG  "OXM-PIN-UT"
 
+class OXMPIN : public ::testing::Test
+{
+    public:
+        static void SetUpTestCase()
+        {
+        }
+        static void TearDownTestCase()
+        {
+        }
+};
+
 static void OC_CALL inputPinCB(char* pin, size_t len)
 {
     if(NULL == pin || OXM_RANDOM_PIN_MIN_SIZE > len || len > OXM_RANDOM_PIN_MAX_SIZE)
@@ -106,50 +117,45 @@ static void OC_CALL closePinDisplayCB(void)
     OIC_LOG(INFO, TAG, "============================");
 }
 
-TEST(SetRandomPinPolicyTest, InvalidMinPinSize)
+TEST_F(OXMPIN, SetRandomPinPolicyTest1)
 {
     size_t pinSize = OXM_RANDOM_PIN_MIN_SIZE - 1;
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SetRandomPinPolicy(pinSize, NUM_PIN));
 }
 
-TEST(SetRandomPinPolicyTest, InvalidMaxPinSize)
+TEST_F(OXMPIN, SetRandomPinPolicyTest2)
 {
     size_t pinSize = OXM_RANDOM_PIN_MAX_SIZE + 1;
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SetRandomPinPolicy(pinSize, NUM_PIN));
 }
 
-TEST(SetRandomPinPolicyTest, InvalidPinType)
+TEST_F(OXMPIN, SetRandomPinPolicyTest3)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SetRandomPinPolicy(OXM_RANDOM_PIN_MIN_SIZE, (OicSecPinType_t)(NUM_PIN + 1)));
+    EXPECT_EQ(OC_STACK_OK, SetRandomPinPolicy(OXM_RANDOM_PIN_MIN_SIZE, (OicSecPinType_t)(NUM_PIN + 1)));
 }
 
-TEST(SetInputPinCBTest, InvalidCallback)
-{
-    SetInputPinCB(NULL);
-}
-
-TEST(SetInputPinCBTest, Full)
+TEST_F(OXMPIN, SetInputPinCBTest)
 {
     InputPinCallback callBack = inputPinCB;
     InputPinCallbackWithContext callBackWithCtx = inputPinWithCtxCB;
     g_inputPinCallbacks.contextCallback = callBackWithCtx;
+
+    SetInputPinCB(NULL);
     SetInputPinCB(callBack);
 
     g_inputPinCallbacks.contextCallback = NULL;
     SetInputPinCB(callBack);
 }
 
-TEST(SetInputPinWithContextCBTest, InvalidCallback)
-{
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SetInputPinWithContextCB(NULL, NULL));
-}
-
-TEST(SetInputPinWithContextCBTest, Full)
+TEST_F(OXMPIN, SetInputPinWithContextCBTest)
 {
     InputPinCallback callBack = inputPinCB;
     InputPinCallbackWithContext callBackWithCtx = inputPinWithCtxCB;
     g_inputPinCallbacks.callback = callBack;
     g_inputPinCallbacks.contextCallback = callBackWithCtx;
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SetInputPinWithContextCB(NULL, NULL));
+
     EXPECT_EQ(OC_STACK_DUPLICATE_REQUEST, SetInputPinWithContextCB(callBackWithCtx, NULL));
 
     g_inputPinCallbacks.callback = NULL;
@@ -157,7 +163,7 @@ TEST(SetInputPinWithContextCBTest, Full)
     EXPECT_EQ(OC_STACK_OK, SetInputPinWithContextCB(callBackWithCtx, NULL));
 }
 
-TEST(SetGeneratePinCBTest, Full)
+TEST_F(OXMPIN, SetGeneratePinCBTest)
 {
     SetGeneratePinCB(NULL);
 
@@ -172,7 +178,7 @@ TEST(SetGeneratePinCBTest, Full)
     SetGeneratePinCB(pinCB);
 }
 
-TEST(SetDisplayPinWithContextCBTest, Full)
+TEST_F(OXMPIN, SetDisplayPinWithContextCBTest)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SetDisplayPinWithContextCB(NULL, NULL));
 
@@ -187,7 +193,7 @@ TEST(SetDisplayPinWithContextCBTest, Full)
     EXPECT_EQ(OC_STACK_OK, SetDisplayPinWithContextCB(ctxPinCB, NULL));
 }
 
-TEST(SetClosePinDisplayCBTest, Full)
+TEST_F(OXMPIN, SetClosePinDisplayCBTest)
 {
     SetClosePinDisplayCB(NULL);
 
@@ -199,22 +205,46 @@ TEST(SetClosePinDisplayCBTest, Full)
     SetClosePinDisplayCB(closeCB);
 }
 
-TEST(UnsetInputPinWithContextCBTest, Simple)
+TEST_F(OXMPIN, UnsetInputPinWithContextCBTest)
 {
     UnsetInputPinWithContextCB();
 }
 
-TEST(UnsetDisplayPinWithContextCBTest, Simple)
+TEST_F(OXMPIN, UnsetDisplayPinWithContextCBTest)
 {
     UnsetDisplayPinWithContextCB();
 }
 
-TEST(UnsetClosePinDisplayCBTest, Simple)
+TEST_F(OXMPIN, UnsetClosePinDisplayCBTest)
 {
     UnsetClosePinDisplayCB();
 }
 
-TEST(ClosePinDisplayTest, Simple)
+TEST_F(OXMPIN, ClosePinDisplayTest)
 {
     ClosePinDisplay();
+}
+
+TEST_F(OXMPIN, GetDtlsPskForRandomPinOxm)
+{
+    size_t len = 512;
+    unsigned char *result = (uint8_t*)OICCalloc(len, 1);
+    ASSERT_NE(nullptr, result);
+
+    EXPECT_EQ(GetDtlsPskForRandomPinOxm(CA_DTLS_PSK_KEY, NULL, 0, result, len), OWNER_PSK_LENGTH_128);
+    EXPECT_GT(GetDtlsPskForRandomPinOxm(CA_DTLS_PSK_HINT, NULL, 0, result, len), 0);
+    EXPECT_EQ(GetDtlsPskForRandomPinOxm((CADtlsPskCredType_t)3, NULL, 0, result, len), -1);
+
+    OICFree(result);
+}
+
+TEST_F(OXMPIN, GeneratePin)
+{
+    size_t len = 512;
+    char *result = (char*)OICCalloc(len, 1);
+    ASSERT_NE(nullptr, result);
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, GeneratePin(NULL, 0));
+    EXPECT_EQ(OC_STACK_ERROR, GeneratePin(result, len));
+    OICFree(result);
 }

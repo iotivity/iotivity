@@ -25,7 +25,7 @@ extern "C" {
 
 #include "tools.h"
 #undef TAG
-#include "../src/policyengine.c"
+#include "../src/deviceonboardingstate.c"
 
 #ifdef __cplusplus
 }
@@ -35,54 +35,38 @@ extern "C" {
 #undef TAG
 #endif
 
-#define TAG  "PE"
+#define TAG  "DOS"
 
 #define SVR_DB_FILE_NAME TAG".dat"
 #define PM_DB_FILE_NAME TAG".db"
 
-
-class PE : public ::testing::Test
+class DOS : public ::testing::Test
 {
     public:
+
         static void SetUpTestCase()
         {
+            IOT_Init(PM_DB_FILE_NAME);
         }
+
         static void TearDownTestCase()
         {
+            IOT_DeInit(PM_DB_FILE_NAME);
         }
 };
 
-TEST_F(PE, IsRequestFromAms)
+TEST_F(DOS, IsReadyToEnterSRESET)
 {
-    SRMRequestContext_t *context = NULL;
-    EXPECT_FALSE(IsRequestFromAms(context));
-
-    context = (SRMRequestContext_t*)OICCalloc(1, sizeof(SRMRequestContext_t));
-    EXPECT_FALSE(IsRequestFromAms(context));
-
-    context->subjectIdType = SUBJECT_ID_TYPE_UUID;
-    EXPECT_FALSE(IsRequestFromAms(context));
-
-    ConvertStrToUuid("33333333-3333-3333-3333-222222222222", &context->subjectUuid);
-    EXPECT_FALSE(IsRequestFromAms(context));
-
-    OICFree(context);
+    EXPECT_FALSE(IsReadyToEnterSRESET());
 }
 
-TEST_F(PE, IsRequestFromCms)
+TEST_F(DOS, EnterSRESET)
 {
-    SRMRequestContext_t *context = NULL;
-    EXPECT_FALSE(IsRequestFromCms(context));
+    EXPECT_TRUE(EnterSRESET());
+}
 
-    context = (SRMRequestContext_t*)OICCalloc(1, sizeof(SRMRequestContext_t));
-    EXPECT_FALSE(IsRequestFromCms(context));
-
-    context->subjectIdType = SUBJECT_ID_TYPE_UUID;
-    EXPECT_FALSE(IsRequestFromCms(context));
-
-    ConvertStrToUuid("33333333-3333-3333-3333-222222222222", &context->subjectUuid);
-    EXPECT_FALSE(IsRequestFromCms(context));
-
-    OICFree(context);
+TEST_F(DOS, SetDosState)
+{
+    EXPECT_FALSE(SetDosState(DOS_RESET));
 }
 

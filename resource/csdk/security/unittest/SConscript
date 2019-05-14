@@ -27,7 +27,6 @@ Import('test_env')
 # SConscript file for Local PKI google tests
 srmtest_env = test_env.Clone()
 target_os = srmtest_env.get('TARGET_OS')
-rd_mode = srmtest_env.get('RD_MODE')
 
 ######################################################################
 # Build flags
@@ -51,20 +50,26 @@ srmtest_env.PrependUnique(CPPPATH=[
     '../../stack/include/internal',
     '../../../oc_logger/include',
     '../provisioning/include',
-    '../include'
+    '../include',
+    '#resource/csdk/security/include/experimental',
+    '#resource/csdk/security/provisioning/include/internal',
+    '#resource/csdk/logger/include/experimental',
+    '#resource/csdk/connectivity/common/inc',
+    '#resource/csdk/security/src',
+    '#extlibs/mbedtls/mbedtls/include',
+    '#resource/csdk/security/provisioning/include/cloud'
 ])
 
 srmtest_env.PrependUnique(LIBS=[
     'octbstack_internal',
-    'ocsrm',
     'routingmanager',
     'oc_logger_internal',
     'connectivity_abstraction_internal',
-    'coap'
+    'coap',
+    'ocpmapi_internal',
+    'ocsrm',
+    'mbedtls', 'mbedx509', 'mbedcrypto'
 ])
-
-if srmtest_env.get('SECURED') == '1':
-    srmtest_env.AppendUnique(LIBS=['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if srmtest_env.get('LOGGING') == '1':
     srmtest_env.AppendUnique(CPPDEFINES=['TB_LOG'])
@@ -73,6 +78,7 @@ if srmtest_env.get('MULTIPLE_OWNER') == '1':
     srmtest_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
 if target_os == 'windows':
+#    srmtest_env.Replace(CCFLAGS = str(srmtest_env['CCFLAGS']).replace('/WX',''))
     srmtest_env.AppendUnique(LIBS=['sqlite3'])
     #Disable deprecated code warning we are still testing deprecated functions till they are removed.
     srmtest_env.AppendUnique(CCFLAGS=['/wd4996'])
@@ -88,34 +94,36 @@ else:
 ######################################################################
 # Source files and Targets
 ######################################################################
-unittests = []
-unittests_src = []
-unittests_src += [
-    'aclresourcetest.cpp',
-    'amaclresourcetest.cpp',
-    'pstatresource.cpp',
-    'doxmresource.cpp',
-    'policyengine.cpp',
-    'securityresourcemanager.cpp',
-    'credentialresource.cpp',
-    'spresource.cpp',
-    'srmutility.cpp',
-    'iotvticalendartest.cpp',
-    'base64tests.cpp',
-    'pbkdf2tests.cpp',
-    'srmtestcommon.cpp',
-    'crlresourcetest.cpp',
-    'ocsecurity.cpp',
-    'certhelpers.cpp'
+unittests_src = [
+        'tools.cpp',
+        'aclresourcetest.cpp',
+        'amaclresourcetest.cpp',
+        'pstatresource.cpp',
+        'doxmresource.cpp',
+        'policyengine.cpp',
+        'securityresourcemanager.cpp',
+        'credentialresource.cpp',
+        'spresource.cpp',
+        'srmutility.cpp',
+        'iotvticalendartest.cpp',
+        'base64tests.cpp',
+        'pbkdf2tests.cpp',
+        'crlresourcetest.cpp',
+        'ocsecurity.cpp',
+        'certhelpers.cpp',
+        'deviceonboardingstate.cpp',
+        'occertutility.cpp',
+        'pkix_interface.cpp',
+        'srmtestcommon.cpp',
+        'csrresource.cpp'
 ]
 
 if target_os not in ['msys_nt', 'windows']:
     unittests_src += [
         'oxmpincommon.cpp',
-        'oxmverifycommon.cpp'
+        'oxmverifycommon.cpp',
+        'rolesresource.cpp'
     ]
-
-unittests += srmtest_env.Program('unittest', unittests_src)
 
 # this path will be passed as a command-line parameter,
 # so needs encoding to avoid problems with escapes on Windows
@@ -130,20 +138,20 @@ srmtest_env.AppendUnique(CPPDEFINES=[
     'SECURITY_BUILD_UNITTEST_DIR=' + unittest_build_dir
 ])
 
-unittests += srmtest_env.ScanJSON('resource/csdk/security/unittest')
 
 srmtest_env.AppendTarget('test')
-if srmtest_env.get('TEST') == '1':
-    if target_os in ['linux', 'windows']:
-        out_dir = srmtest_env.get('BUILD_DIR')
-        result_dir = os.path.join(srmtest_env.get('BUILD_DIR'), 'test_out') + os.sep
-        if not os.path.isdir(result_dir):
-            os.makedirs(result_dir)
-        srmtest_env.AppendENVPath('GTEST_OUTPUT', ['xml:' + result_dir])
-        srmtest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-        run_test(srmtest_env,
+
+if srmtest_env.get('TEST') == '1' and target_os in ['linux', 'windows']:
+    unittests = srmtest_env.Program('unittest', unittests_src)
+    unittests += srmtest_env.ScanJSON('resource/csdk/security/unittest')
+    out_dir = srmtest_env.get('BUILD_DIR')
+    result_dir = os.path.join(srmtest_env.get('BUILD_DIR'), 'test_out') + os.sep
+    if not os.path.isdir(result_dir):
+        os.makedirs(result_dir)
+    srmtest_env.AppendENVPath('GTEST_OUTPUT', ['xml:' + result_dir])
+    srmtest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
+    run_test(srmtest_env,
                  'resource_csdk_security_unittest.memcheck',
                  'resource/csdk/security/unittest/unittest')
-
-srmtest_env.UserInstallTargetExtra(unittests, 'tests/resource/csdk/security/')
+    srmtest_env.UserInstallTargetExtra(unittests, 'tests/resource/csdk/security/')
 

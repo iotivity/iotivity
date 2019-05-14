@@ -74,7 +74,9 @@ TEST(ConvertStrToUuidTest, LowCase)
 
     const char *uuidString1 = "ca5bfba0-c0f1-4906-b995-f139d626dfbd";
     EXPECT_EQ(OC_STACK_OK, ConvertStrToUuid(uuidString1, &uuid));
-
+#ifndef NDEBUG
+    LogUuid(&uuid);
+#endif //NDEBUG
     EXPECT_EQ((uint8_t)0xca, uuid.id[0]);
     EXPECT_EQ((uint8_t)0x5b, uuid.id[1]);
     EXPECT_EQ((uint8_t)0xfb, uuid.id[2]);
@@ -180,3 +182,10 @@ TEST(SetUuidSeedTest, ValidValue)
     EXPECT_EQ(OC_STACK_OK, SetDeviceIdSeed(seed, sizeof(seed)));
 }
 #endif
+
+TEST(GetOxmString, Full)
+{
+    EXPECT_TRUE("oic.sec.doxm.jw" == std::string(GetOxmString(OIC_JUST_WORKS)));
+    EXPECT_TRUE("oic.sec.doxm.rdp" == std::string(GetOxmString(OIC_RANDOM_DEVICE_PIN)));
+    EXPECT_TRUE("oic.sec.doxm.mfgcert" == std::string(GetOxmString(OIC_MANUFACTURER_CERTIFICATE)));
+}

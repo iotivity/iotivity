@@ -18,23 +18,46 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <gtest/gtest.h>
-#include "ocpayload.h"
-#include "ocstack.h"
-#include "oic_malloc.h"
-#include "oic_string.h"
-#include "resourcemanager.h"
-#include "spresource.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "srmtestcommon.h"
-#include "srmutility.h"
-#include "psinterface.h"
-#include "security_internals.h"
-#include "experimental/logger.h"
+#include "tools.h"
+#include "ocserverrequest.h"
+#undef TAG
+#include "../src/spresource.c"
+
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef TAG
+#undef TAG
+#endif
 
 #define TAG "SRM-SP-UT"
 
-// helper fxns
-static void TestEncodeDecode(OicSecSp_t* spToTest, bool* propsToTest, bool checkForValidSp);
-static void TestInit(OicSecSp_t* testSp, bool* spProps);
+#define SVR_DB_FILE_NAME TAG".dat"
+#define PM_DB_FILE_NAME TAG".db"
+
+static CAEndpoint_t *endpoint = NULL;
+
+class SP : public ::testing::Test
+{
+    public:
+        static void SetUpTestCase()
+        {
+            IOT_Init(PM_DB_FILE_NAME);
+            endpoint = createEndpoint();
+        }
+
+        static void TearDownTestCase()
+        {
+            IOT_DeInit(PM_DB_FILE_NAME);
+        }
+};
 
 //*****************************************************************************
 // Test data
@@ -53,84 +76,9 @@ static OicSecSp_t s_testSp =
     NULL,                   // currentProfile
 };
 
-
-//*****************************************************************************
-// Tests
-//*****************************************************************************
-
-TEST(SPResourceTest, CBORFullEncodingPositive)
-{
-    bool propsToTest[SP_PROPERTY_COUNT];
-
-    // all supported profiles
-    TestInit(&s_testSp, propsToTest);
-    SetAllSpProps(propsToTest, true);
-    s_testSp.supportedLen = 4;
-    s_testSp.supportedProfiles[0] = s_spBlueName;
-    s_testSp.supportedProfiles[1] = s_spBaselineName;
-    s_testSp.supportedProfiles[2] = s_spBlackName;
-    s_testSp.supportedProfiles[3] = s_spPurpleName;
-    s_testSp.currentProfile = s_spBlackName;
-    TestEncodeDecode(&s_testSp, propsToTest, true);
-
-    // default configuration
-    TestInit(&s_testSp, propsToTest);
-    SetAllSpProps(propsToTest, true);
-    s_testSp.supportedLen = 1;
-    s_testSp.supportedProfiles[0] = s_spBaselineName;
-    s_testSp.currentProfile = s_spBaselineName;
-    TestEncodeDecode(&s_testSp, propsToTest, true);
-
-    // one non baseline
-    TestInit(&s_testSp, propsToTest);
-    SetAllSpProps(propsToTest, true);
-    s_testSp.supportedLen = 2;
-    s_testSp.supportedProfiles[0] = s_spBaselineName;
-    s_testSp.supportedProfiles[1] = s_spBlackName;
-    s_testSp.currentProfile = s_spBlackName;
-    TestEncodeDecode(&s_testSp, propsToTest, true);
-}
-
-TEST(SPResourceTest, CBORPartialEncodingPositive)
-{
-    bool propsToTest[SP_PROPERTY_COUNT];
-
-    // supported profiles only
-    TestInit(&s_testSp, propsToTest);
-    propsToTest[SP_SUPPORTED_PROFILES] = true;
-    s_testSp.supportedLen = 1;
-    s_testSp.supportedProfiles[0] = s_spBaselineName;
-    TestEncodeDecode(&s_testSp, propsToTest, false);
-
-    // current profile only
-    TestInit(&s_testSp, propsToTest);
-    propsToTest[SP_CURRENT_PROFILE] = true;
-    s_testSp.currentProfile = s_spBlueName;
-    TestEncodeDecode(&s_testSp, propsToTest, false);
-
-    // supported profiles and current profile
-    TestInit(&s_testSp, propsToTest);
-    propsToTest[SP_SUPPORTED_PROFILES] = true;
-    propsToTest[SP_CURRENT_PROFILE] = true;
-    s_testSp.supportedLen = 2;
-    s_testSp.supportedProfiles[0] = s_spBaselineName;
-    s_testSp.supportedProfiles[1] = s_spBlueName;
-    s_testSp.currentProfile = s_spBlueName;
-    TestEncodeDecode(&s_testSp, propsToTest, false);
-}
-
-// TODO: in order of priority
-// * GetRequestPositive
-// * PostRequestPositive
-// * GetRequestGetNegative
-// * GetRequestPostNegative
-// * CBORFullEncodingNegative
-// * CBORPartialEncodingNegative
-
 //*****************************************************************************
 // Helper fxns
 //*****************************************************************************
-
 static void TestEncodeDecode(OicSecSp_t* spToTest, bool* propsToTest, bool checkForValidSp)
 {
     OCStackResult ret = OC_STACK_OK;
@@ -165,6 +113,7 @@ exit:
     OICFree(spDecoded);
 }
 
+
 // can pass in spProps = NULL;
 static void TestInit(OicSecSp_t* testSp, bool* spProps)
 {
@@ -179,5 +128,123 @@ static void TestInit(OicSecSp_t* testSp, bool* spProps)
     {
         SetAllSpProps(spProps, false);
     }
+}
+
+//*****************************************************************************
+// Tests
+//*****************************************************************************
+
+TEST_F(SP, CBORFullEncodingPositive)
+{
+    bool propsToTest[SP_PROPERTY_COUNT];
+
+    // all supported profiles
+    TestInit(&s_testSp, propsToTest);
+    SetAllSpProps(propsToTest, true);
+    s_testSp.supportedLen = 4;
+    s_testSp.supportedProfiles[0] = s_spBlueName;
+    s_testSp.supportedProfiles[1] = s_spBaselineName;
+    s_testSp.supportedProfiles[2] = s_spBlackName;
+    s_testSp.supportedProfiles[3] = s_spPurpleName;
+    s_testSp.currentProfile = s_spBlackName;
+    TestEncodeDecode(&s_testSp, propsToTest, true);
+
+    // default configuration
+    TestInit(&s_testSp, propsToTest);
+    SetAllSpProps(propsToTest, true);
+    s_testSp.supportedLen = 1;
+    s_testSp.supportedProfiles[0] = s_spBaselineName;
+    s_testSp.currentProfile = s_spBaselineName;
+    TestEncodeDecode(&s_testSp, propsToTest, true);
+
+    // one non baseline
+    TestInit(&s_testSp, propsToTest);
+    SetAllSpProps(propsToTest, true);
+    s_testSp.supportedLen = 2;
+    s_testSp.supportedProfiles[0] = s_spBaselineName;
+    s_testSp.supportedProfiles[1] = s_spBlackName;
+    s_testSp.currentProfile = s_spBlackName;
+    TestEncodeDecode(&s_testSp, propsToTest, true);
+}
+
+TEST_F(SP, CBORPartialEncodingPositive)
+{
+    bool propsToTest[SP_PROPERTY_COUNT];
+
+    // supported profiles only
+    TestInit(&s_testSp, propsToTest);
+    propsToTest[SP_SUPPORTED_PROFILES] = true;
+    s_testSp.supportedLen = 1;
+    s_testSp.supportedProfiles[0] = s_spBaselineName;
+    TestEncodeDecode(&s_testSp, propsToTest, false);
+
+    // current profile only
+    TestInit(&s_testSp, propsToTest);
+    propsToTest[SP_CURRENT_PROFILE] = true;
+    s_testSp.currentProfile = s_spBlueName;
+    TestEncodeDecode(&s_testSp, propsToTest, false);
+
+    // supported profiles and current profile
+    TestInit(&s_testSp, propsToTest);
+    propsToTest[SP_SUPPORTED_PROFILES] = true;
+    propsToTest[SP_CURRENT_PROFILE] = true;
+    s_testSp.supportedLen = 2;
+    s_testSp.supportedProfiles[0] = s_spBaselineName;
+    s_testSp.supportedProfiles[1] = s_spBlueName;
+    s_testSp.currentProfile = s_spBlueName;
+    TestEncodeDecode(&s_testSp, propsToTest, false);
+}
+
+TEST_F(SP, ValidateQuery)
+{
+    EXPECT_TRUE(ValidateQuery("q=35"));
+    EXPECT_FALSE(ValidateQuery("if=eth0"));
+}
+
+static OCStackResult responseHandler(OCEntityHandlerResponse * ehResponse)
+{
+    OC_UNUSED(ehResponse);
+    OIC_LOG_V(DEBUG, TAG, "%s run", __func__);
+    return OC_STACK_OK;
+}
+
+TEST_F(SP, HandleSpGetRequest)
+{
+    OCServerRequest *srvReq = (OCServerRequest*)OICCalloc(1, sizeof(OCServerRequest));
+    srvReq->ehResponseHandler = responseHandler;
+    OCEntityHandlerRequest req = OCEntityHandlerRequest();
+    req.method = OC_REST_GET;
+    req.requestHandle = (OCRequestHandle) srvReq;
+    req.devAddr.port = endpoint->port;
+    strncpy(req.devAddr.addr, endpoint->addr, MAX_ADDR_STR_SIZE);
+    req.devAddr.flags = (OCTransportFlags)endpoint->flags;
+    req.devAddr.adapter = (OCTransportAdapter)endpoint->adapter;
+    req.query = (char*)OICCalloc(256, 1);
+    strncpy(req.query, "coaps://127.0.0.1:3333/?if=eth0", 256);
+
+    EXPECT_EQ(OC_EH_OK, HandleSpGetRequest(&req));
+}
+
+TEST_F(SP, HandleSpPostRequest)
+{
+    OCServerRequest *srvReq = (OCServerRequest*)OICCalloc(1, sizeof(OCServerRequest));
+    srvReq->ehResponseHandler = responseHandler;
+    OCEntityHandlerRequest req = OCEntityHandlerRequest();
+    req.method = OC_REST_POST;
+    req.requestHandle = (OCRequestHandle) srvReq;
+    req.devAddr.port = endpoint->port;
+    strncpy(req.devAddr.addr, endpoint->addr, MAX_ADDR_STR_SIZE);
+    req.devAddr.flags = (OCTransportFlags)endpoint->flags;
+    req.devAddr.adapter = (OCTransportAdapter)endpoint->adapter;
+
+    uint8_t *payload = NULL;
+    size_t size = 0;
+    OicSecSp_t *sp = &gDefaultSp;//(OicSecSp_t*)OICCalloc(1, sizeof(OicSecSp_t));
+    ASSERT_EQ(OC_STACK_OK, SpToCBORPayload(sp, &payload, &size));
+    OCSecurityPayload *securityPayload = OCSecurityPayloadCreate(payload, size);
+    ASSERT_TRUE(NULL != securityPayload);
+    req.payload = (OCPayload *) securityPayload;
+
+    EXPECT_EQ(OC_EH_OK, HandleSpPostRequest(&req));
 }
 

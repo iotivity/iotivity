@@ -142,6 +142,7 @@ if target_os not in ['windows', 'winrt']:
             '-fdata-sections', '-fno-exceptions'])
 
 if target_os == 'msys_nt':
+    libcoap_env.Replace(CCFLAGS = str(libcoap_env['CCFLAGS']).replace('/WX',''))
     libcoap_env.AppendUnique(CPPDEFINES=['_DEFAULT_SOURCE'])
     libcoap_env.AppendUnique(CFLAGS=['-std=c99'])
 
