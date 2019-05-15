@@ -757,7 +757,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
     {
         strncat(temp, actionset->actionsetName, strlen(actionset->actionsetName));
         remaining -= strlen(actionset->actionsetName);
-        strncat(temp, ACTION_DELIMITER, strlen(ACTION_DELIMITER));
+        strncat(temp, ACTION_DELIMITER, strlen(ACTION_DELIMITER) + 1);
         remaining--;
     }
     else
@@ -774,7 +774,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
         {
             strncat(temp, actionTypeStr, strlen(actionTypeStr));
             remaining -= strlen(actionTypeStr);
-            strncat(temp, ACTION_DELIMITER, strlen(ACTION_DELIMITER));
+            strncat(temp, ACTION_DELIMITER, strlen(ACTION_DELIMITER) + 1);
             remaining -= strlen(ACTION_DELIMITER);
             OICFree(actionTypeStr);
         }
