@@ -55,12 +55,12 @@ extern "C"
  * Macro to verify the validity of cbor operation or out of memory condition
  */
 #define VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(log_tag, err, log_message) \
-    if ((CborNoError != (err)) && !(CborErrorOutOfMemory & (err))) \
+    if ((CborNoError != (CborError)(err)) && !(CborErrorOutOfMemory & (CborError)(err))) \
     { \
         if ((log_tag) && (log_message)) \
         { \
             OIC_LOG_V(ERROR, (log_tag), "%s with cbor error: \'%s\'.", \
-                    (log_message), (cbor_error_string(err))); \
+                    (log_message), (cbor_error_string((CborError)err))); \
         } \
         goto exit; \
     } \
