@@ -942,11 +942,11 @@ static gboolean userInputCb(GIOChannel *channel, GIOCondition cond, gpointer dat
 
     if (g_io_channel_read_line (channel, &str_return, &length, &terminator_pos, &error) == G_IO_STATUS_ERROR)
     {
-        printf("Something went wrong");
+        printf("Error occurred while reading input from command line\n");
     }
     if (error != NULL)
     {
-        printf (error->message);
+        printf ("Error code: %s\n", error->message);
         exit(1);
     }
 
