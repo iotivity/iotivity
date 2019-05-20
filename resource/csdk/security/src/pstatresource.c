@@ -64,7 +64,7 @@ static OicSecPstat_t gDefaultPstat =
     1,                                        // the number of elts in Sms
     &gSm,                                     // OicSecDpom_t *sm
     0,                                        // uint16_t commitHash
-    {.id = {0}},                              // OicUuid_t rowneruuid
+    OC_DEFAULT_OICUUID,                              // OicUuid_t rowneruuid
 };
 
 static OicSecPstat_t    *gPstat = NULL;
@@ -1071,7 +1071,7 @@ bool IsPstatRowneruuidTheNilUuid(void)
 OCStackResult SetPstatRownerId(const OicUuid_t *rowneruuid)
 {
     OCStackResult ret = OC_STACK_OK;
-    OicUuid_t prevId = {.id={0}};
+    OicUuid_t prevId = OC_DEFAULT_OICUUID;
 
     VERIFY_NOT_NULL_RETURN(TAG, rowneruuid, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, gPstat, ERROR, OC_STACK_NO_RESOURCE);

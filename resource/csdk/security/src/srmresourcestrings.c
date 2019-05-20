@@ -195,8 +195,7 @@ const char * MF_TRUST_CA = "oic.sec.cred.mfgtrustca";
 const char * MF_PRIMARY_CERT = "oic.sec.cred.mfgcert";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
-OicUuid_t WILDCARD_SUBJECT_B64_ID = { .id = {'2', '2', '2', '2', '2', '2', '2', '2',
-                                             '2', '2', '2', '2', '2', '2', '2', '2' }};
+OicUuid_t WILDCARD_SUBJECT_B64_ID = {{'2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2'}};
 size_t WILDCARD_SUBJECT_ID_LEN = 1;
 const char * WILDCARD_RESOURCE_URI = "*";
 

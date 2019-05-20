@@ -916,7 +916,7 @@ OCStackResult OC_CALL OCGetUuidFromCSR(const char* csr, OicUuid_t* uuid)
         {
             dnSize += 512;
             p = (char*)OICRealloc(dnStr, dnSize);
-            if (p == dnStr)
+            if (p == NULL)
             {
                 OIC_LOG_V(ERROR, TAG, "%s: allocate", __func__);
                 goto exit;

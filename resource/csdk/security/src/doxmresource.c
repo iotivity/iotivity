@@ -86,14 +86,14 @@ static OicSecDoxm_t gDefaultDoxm =
     OIC_RANDOM_DEVICE_PIN,  /* uint16_t oxmSel */
     SYMMETRIC_PAIR_WISE_KEY | SIGNED_ASYMMETRIC_KEY, /* OicSecCredType_t sct */
     false,                  /* bool owned */
-    {.id = {0}},            /* OicUuid_t deviceID */
+    OC_DEFAULT_OICUUID,            /* OicUuid_t deviceID */
     false,                  /* bool dpc */
-    {.id = {0}},            /* OicUuid_t owner */
+    OC_DEFAULT_OICUUID,            /* OicUuid_t owner */
 #ifdef MULTIPLE_OWNER
     NULL,                   /* OicSecSubOwner_t sub-owner list */
     NULL,                   /* OicSecMomType_t multiple owner mode */
 #endif //MULTIPLE_OWNER
-    {.id = {0}},            /* OicUuid_t rownerID */
+    OC_DEFAULT_OICUUID,            /* OicUuid_t rownerID */
 };
 
 #define R PERMISSION_READ
@@ -892,7 +892,7 @@ static bool ValidateQuery(const char * query)
         if (strncasecmp((char *)parseIter.attrPos, OIC_JSON_DEVICE_ID_NAME, parseIter.attrLen) == 0)
         {
             bDeviceIDQry = true;
-            OicUuid_t subject = {.id={0}};
+            OicUuid_t subject = OC_DEFAULT_OICUUID;
 
             if (sizeof(subject.id) < parseIter.valLen)
             {
@@ -1366,7 +1366,7 @@ OCEntityHandlerResult StartOTMJustWorks(OCEntityHandlerRequest *ehRequest)
         {
             uint8_t preMutualVerifNum[OWNER_PSK_LENGTH_128] = {0};
             uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN] = {0};
-            OicUuid_t deviceID = {.id = {0}};
+            OicUuid_t deviceID = OC_DEFAULT_OICUUID;
 
             //Generate mutualVerifNum
             OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
@@ -1906,7 +1906,7 @@ OCStackResult InitDoxmResource(void)
     //In case of the server is shut down unintentionally, we should initialize the owner
     if(gDoxm && (false == gDoxm->owned))
     {
-        OicUuid_t emptyUuid = {.id={0}};
+        OicUuid_t emptyUuid = OC_DEFAULT_OICUUID;
         memcpy(&gDoxm->owner, &emptyUuid, sizeof(OicUuid_t));
     }
 

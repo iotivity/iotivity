@@ -1442,9 +1442,9 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
         return NULL;
     }
     OCStackResult ret = OC_STACK_ERROR;
-    CborValue aclMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
-    CborValue aclCbor = OC_DEFAULT_CBOR_VALUE ;
-    CborParser parser = OC_DEFAULT_CBOR_PARSER ;
+    CborValue aclMap = OC_DEFAULT_CBOR_VALUE;
+    CborValue aclCbor = OC_DEFAULT_CBOR_VALUE;
+    CborParser parser = OC_DEFAULT_CBOR_PARSER;
     CborError cborFindResult = CborNoError;
     char *tagName = NULL;
     char *subjectTag = NULL;
@@ -1519,7 +1519,7 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                 }
             }
 
-            CborValue aclistMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+            CborValue aclistMap = OC_DEFAULT_CBOR_VALUE;
             if (aclistTagJustFound && OIC_SEC_ACL_V1 == aclistVersion)
             {
                 aclistTagJustFound = false; // don't enter this check a second time
@@ -1572,7 +1572,7 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                 while (cbor_value_is_valid(&aclistMap) && !aclistMapDone)
                 {
                     // Enter ACES Array
-                    CborValue acesArray = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                    CborValue acesArray = OC_DEFAULT_CBOR_VALUE;
                     cborFindResult = cbor_value_enter_container(&aclistMap, &acesArray);
                     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering ACES Array.");
                     OIC_LOG_V(DEBUG, TAG, "%s entered ace object array.", __func__);
@@ -1583,7 +1583,7 @@ static OicSecAcl_t* CBORPayloadToAclVersionOpt(const uint8_t *cborPayload, const
                     while (cbor_value_is_valid(&acesArray))
                     {
                         acesCount++;
-                        CborValue aceMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                        CborValue aceMap = OC_DEFAULT_CBOR_VALUE;
                         cborFindResult = cbor_value_enter_container(&acesArray, &aceMap);
                         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborFindResult, "Failed Entering ACE Map.");
                         OIC_LOG_V(DEBUG, TAG, "%s entered %s map.", __func__,
@@ -2805,9 +2805,7 @@ static OCEntityHandlerResult HandleACLGetRequest(const OCEntityHandlerRequest *e
     uint8_t* payload = NULL;
     size_t size = 0;
     OCEntityHandlerResult ehRet;
-
-    OicUuid_t subject = {.id= { 0 } };
-
+    OicUuid_t subject = OC_DEFAULT_OICUUID;
 
     // In case, 'subject' field is included in REST request.
     if (ehRequest->query && GetSubjectFromQueryString(ehRequest->query, &subject))
@@ -3142,7 +3140,7 @@ static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest
 {
     OIC_LOG(DEBUG, TAG, "Processing ACLDeleteRequest");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
-    OicUuid_t subject = { .id= { 0 } };
+    OicUuid_t subject = OC_DEFAULT_OICUUID;
     AceIdList_t *aceIdList = NULL;
     char resource[MAX_URI_LENGTH] = { 0 };
 
@@ -3309,7 +3307,7 @@ OCStackResult SetDefaultACL(OicSecAcl_t *acl)
 OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
 {
     OCStackResult ret = OC_STACK_ERROR;
-    OicUuid_t ownerId = { .id = { 0 } };
+    OicUuid_t ownerId = OC_DEFAULT_OICUUID;
     OicSecAcl_t *acl = NULL;
     OicSecAce_t *readOnlyAceAnon = NULL;
     OicSecAce_t *readOnlyAceAuth = NULL;
@@ -4033,7 +4031,7 @@ OCStackResult SetAclRownerId(const OicUuid_t* newROwner)
     OCStackResult ret = OC_STACK_ERROR;
     uint8_t *cborPayload = NULL;
     size_t size = 0;
-    OicUuid_t prevId = {.id={0}};
+    OicUuid_t prevId = OC_DEFAULT_OICUUID;
 
     if(NULL == newROwner)
     {

@@ -236,7 +236,13 @@ OCStackResult OC_CALL OCAssertRoles(void *ctx, const OCDevAddr *devAddr, OCAsser
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    OCCallbackData cbData = { .context = NULL,.cb = NULL,.cd = NULL };
+    OCCallbackData cbData = {
+#   if (__STDC_VERSION__ >= 199901L)
+    .context = NULL,.cb = NULL,.cd = NULL
+#   else
+    NULL,NULL,NULL
+#   endif
+    };
     cbData.cb = &OCAssertRolesCBHandler;
     AssertRolesData_t *assertRolesData = (AssertRolesData_t *)OICCalloc(1, sizeof(AssertRolesData_t));
     if (assertRolesData == NULL)

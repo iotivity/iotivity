@@ -246,18 +246,44 @@ OCStackResult OC_CALL SetDeviceIdSeed(const uint8_t* seed, size_t seedSize);
 /**
  * cbor default init
  */
-#define OC_DEFAULT_CBOR_VALUE {.parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0}
+#ifndef OC_DEFAULT_CBOR_VALUE
+#   if (__STDC_VERSION__ >= 199901L)
+#       define OC_DEFAULT_CBOR_VALUE {.parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0}
+#   else
+#       define OC_DEFAULT_CBOR_VALUE {NULL, NULL, 0, 0, 0, 0}
+#   endif
+#endif
 
-#define OC_DEFAULT_CBOR_PARSER {.end = NULL, .flags = 0}
+#ifndef OC_DEFAULT_CBOR_PARSER
+#   if (__STDC_VERSION__ >= 199901L)
+#       define OC_DEFAULT_CBOR_PARSER {.end = NULL, .flags = 0}
+#   else
+#       define OC_DEFAULT_CBOR_PARSER {NULL, 0}
+#   endif
+#endif
 
-#define OC_DEFAULT_OICPARSEQUWRYITER \
-{ \
-    .attrPos = NULL,\
-    .attrLen = 0,\
-    .valPos = NULL,\
-    .valLen = 0,\
-    .pi = {.n=0,.separator=NULL,.delim=NULL,.dlen=0,.pos=NULL,.segment_length=0}\
-}
+#ifndef OC_DEFAULT_OICPARSEQUWRYITER
+#   if (__STDC_VERSION__ >= 199901L)
+#       define OC_DEFAULT_OICPARSEQUWRYITER \
+        { \
+            .attrPos = NULL,\
+            .attrLen = 0,\
+            .valPos = NULL,\
+            .valLen = 0,\
+            .pi = {.n=0,.separator=NULL,.delim=NULL,.dlen=0,.pos=NULL,.segment_length=0}\
+        }
+#   else
+#       define OC_DEFAULT_OICPARSEQUWRYITER { NULL, 0, NULL, 0, {0,NULL,NULL,0,NULL,0}}
+#   endif
+#endif
+
+#ifndef OC_DEFAULT_OICUUID
+#   if (__STDC_VERSION__ >= 199901L)
+#   define OC_DEFAULT_OICUUID {.id= { 0 } }
+#   else
+#   define OC_DEFAULT_OICUUID {{ 0 }}
+#   endif
+#endif
 
 /**
  * Is the URI for a Security Virtual Resource as defined

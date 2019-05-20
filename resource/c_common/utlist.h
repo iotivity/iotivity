@@ -335,10 +335,9 @@ do {                                                                            
 
 #define LL_APPEND2(head,add,next)                                                              \
 do {                                                                                           \
-  LDECLTYPE(head) _tmp;                                                                        \
   (add)->next=NULL;                                                                            \
   if (head) {                                                                                  \
-    _tmp = (head);                                                                             \
+    LDECLTYPE(head) _tmp = (head);                                                             \
     while (_tmp->next) { _tmp = _tmp->next; }                                                  \
     _tmp->next=(add);                                                                          \
   } else {                                                                                     \
