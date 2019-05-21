@@ -2271,9 +2271,12 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
     bool propertiesToInclude[DOXM_PROPERTY_COUNT];
     memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
     if ( ! ( IS_OCF(otmCtx->selectedDeviceInfo->specVer)
-            && GET_OCF_MAJOR_VER(otmCtx->selectedDeviceInfo->specVer) > 2) )
+              && ( GET_OCF_MAJOR_VER(otmCtx->selectedDeviceInfo->specVer) > 2
+              || ( GET_OCF_MAJOR_VER(otmCtx->selectedDeviceInfo->specVer) == 2 
+              && GET_OCF_MINOR_VER(otmCtx->selectedDeviceInfo->specVer) >= 1) ) )
+        )
     {
-        OIC_LOG_V(DEBUG, TAG, "%s: Pre ocf.3.x version detected", __func__);
+        OIC_LOG_V(DEBUG, TAG, "%s: Pre ocf.2.1.x version detected", __func__);
         propertiesToInclude[DOXM_OWNED] = true;
     }
     //include rowner uuid

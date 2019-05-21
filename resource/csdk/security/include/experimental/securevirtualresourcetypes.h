@@ -712,6 +712,9 @@ struct OicSecPdAcl
 
 #define GET_OCF_MAJOR_VER(specVer) ((int)((specVer)[4] - '0'))
 
+#define GET_OCF_MINOR_VER(specVer) ((int)((specVer)[6] - '0'))
+
+
 #ifdef __cplusplus
 }
 #endif
