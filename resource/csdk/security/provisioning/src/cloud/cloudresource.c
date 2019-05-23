@@ -64,32 +64,24 @@ static OicCloud_t gDefaultCloud =
     NULL,
     NULL,
     NULL,
-    NULL
+    NULL,
+    false
 };
 
-static void DeleteCloudList(OicCloud_t *clouds, bool signout)
+static void DeleteCloudList(OicCloud_t *clouds, bool delete_after_signout)
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
-    if (!clouds)
-    {
-        OIC_LOG_V(WARNING, TAG, "%s: cloud is NULL", __func__);
-        return;
-    }
-
     OicCloud_t *p1 = NULL, *p2 = NULL;
-    oc_mutex_lock(gCloudMutex);
     LL_FOREACH_SAFE(clouds, p1, p2)
     {
-        if (signout)
+        if (delete_after_signout)
         {
-            OCCloudSignOut(p1);
+            LL_DELETE(clouds, p1);
         }
-        LL_DELETE(clouds, p1);
-        FreeCloud(p1);
-        p1 = NULL;
+        p1->delete_after_signout = delete_after_signout;
+        OCCloudSignOut(p1);
     }
-    oc_mutex_unlock(gCloudMutex);
 
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 }
@@ -98,20 +90,14 @@ void CloudsSignOut()
 {
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
+    oc_mutex_lock(gCloudMutex);
     if (!gCloud)
     {
         OIC_LOG_V(WARNING, TAG, "%s: cloud is NULL", __func__);
+        oc_mutex_unlock(gCloudMutex);
         return;
     }
-
-    OicCloud_t *p1 = NULL, *p2 = NULL;
-    oc_mutex_lock(gCloudMutex);
-    LL_FOREACH_SAFE(gCloud, p1, p2)
-    {
-        OCCloudSignOut(p1);
-        StopCloudRefresh(p1);
-        p1 = NULL;
-    }
+    DeleteCloudList(gCloud, false);
     oc_mutex_unlock(gCloudMutex);
 
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
@@ -119,20 +105,43 @@ void CloudsSignOut()
 
 void ResetClouds()
 {
-    DeleteCloudList(gCloud, false);
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+
+    oc_mutex_lock(gCloudMutex);
+    if (!gCloud)
+    {
+        OIC_LOG_V(WARNING, TAG, "%s: cloud is NULL", __func__);
+        oc_mutex_unlock(gCloudMutex);
+        return;
+    }
+    DeleteCloudList(gCloud, true);
     gCloud = NULL;
+    oc_mutex_unlock(gCloudMutex);
+
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 }
 
 void DeleteCloudAccount()
 {
-    if ( OC_STACK_OK != OCCloudDelete(gCloud))
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+
+    oc_mutex_lock(gCloudMutex);
+    if (!gCloud)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: cannot delete cloud", __func__);
+        OIC_LOG_V(WARNING, TAG, "%s: cloud is NULL", __func__);
+        oc_mutex_unlock(gCloudMutex);
+        return;
     }
-    else
+    OicCloud_t *p1 = NULL, *p2 = NULL;
+    LL_FOREACH_SAFE(gCloud, p1, p2)
     {
-        OIC_LOG_V(ERROR, TAG, "%s: cloud is deleted", __func__);
+        LL_DELETE(gCloud, p1);
+        OCCloudDelete(p1);
     }
+    gCloud = NULL;
+    oc_mutex_unlock(gCloudMutex);
+
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 }
 
 static void *CloudWaitForRFNOP(void *data)
@@ -537,6 +546,7 @@ static OCEntityHandlerResult HandleCloudDeleteRequest(OCEntityHandlerRequest *eh
         {
             OIC_LOG_V(INFO, TAG, "%s: delete cloud: %s", __func__, p1->cis);
             p1->stat = OC_CLOUD_EXIT;
+            p1->delete_after_signout = true;
             OCCloudSignOut(p1);
             LL_DELETE(gCloud, p1);
             ehRet = OC_EH_OK;

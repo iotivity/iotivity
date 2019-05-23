@@ -85,6 +85,7 @@ struct OicCloud
     oc_thread   pid;
     session_t   *session;
     OicCloud_t  *next;
+    bool        delete_after_signout;
 };
 
 #define OIC_JSON_CLOUDS_NAME    "clouds"

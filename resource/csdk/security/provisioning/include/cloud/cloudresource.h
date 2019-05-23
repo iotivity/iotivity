@@ -56,17 +56,17 @@ OCStackResult CreateCloudResource();
 bool UpdateCloudPersistentStorage();
 
 /**
-* SignOut & release clouds
+* SignOut from cloud accounts.
 */
 void CloudsSignOut();
 
 /**
-* Release cloud entries
+* SignOut/Delete cloud accounts and release cloud entries
 */
 void ResetClouds();
 
 /**
-* Delete clouds acount
+* Delete cloud accounts and release cloud entries.
 */
 void DeleteCloudAccount();
 

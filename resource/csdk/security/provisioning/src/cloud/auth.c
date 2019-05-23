@@ -1005,6 +1005,18 @@ static OCStackApplicationResult handleCloudSignOutResponse(void *ctx,
     cloud->session = NULL;
     cloud->stat = OC_CLOUD_PROV;
 
+    if (cloud->delete_after_signout)
+    {
+        if (OC_STACK_OK != OCCloudDelete(cloud))
+        {
+            OIC_LOG(ERROR, TAG, "cannot delete cloud");
+        }
+        else
+        {
+            OIC_LOG(DEBUG, TAG, "cloud deleted successfully");
+        }
+    }
+
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
 
     return ret;
@@ -1147,11 +1159,15 @@ static OCStackApplicationResult handleCloudDeleteResponse(void *ctx,
 
     VERIFY_NOT_NULL_RETURN(TAG, response, ERROR, OC_STACK_DELETE_TRANSACTION);
     VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, OC_STACK_DELETE_TRANSACTION);
-    VERIFY_NOT_NULL_RETURN(TAG, cloud->session, ERROR, OC_STACK_DELETE_TRANSACTION);
+    if (!cloud->session)
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: session already deleted", __func__);
+    }
 
-    OIC_LOG_V(ERROR, TAG, "%s: response result: %d", __func__, response->result);
+    OIC_LOG_V(DEBUG, TAG, "%s: response result: %d", __func__, response->result);
 
     cloud->stat = OC_CLOUD_EXIT;
+    FreeCloud(cloud);
 
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
     return ret;
