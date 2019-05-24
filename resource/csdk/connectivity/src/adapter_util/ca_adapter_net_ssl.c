@@ -1359,6 +1359,12 @@ static int verifyIdentity( void *data, mbedtls_x509_crt *crt, int depth, uint32_
     {
         return MBEDTLS_ERR_X509_FEATURE_UNAVAILABLE;
     }
+
+    if (NULL == crt || NULL == crt->raw.p)
+    {
+        return MBEDTLS_ERR_X509_BAD_INPUT_DATA;
+    }
+
     g_getIdentityCallback(&ctx, crt->raw.p, crt->raw.len);
     if (0 == depth) // leaf certificate
     {
