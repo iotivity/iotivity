@@ -101,9 +101,6 @@ static bool IsReadyToEnterRFNOP(void)
 
     // Note: pstat.dos.p asserted by DoStateChange(), so not checked here.
 
-    // Verify doxm.owned == TRUE.
-    VERIFY_TRUE_OR_EXIT(TAG, IsDoxmOwned(), WARNING);
-
     // Verify doxm.devowneruuid != nil UUID.
     VERIFY_TRUE_OR_EXIT(TAG, !IsDoxmDevowneruuidTheNilUuid(), WARNING);
 
@@ -172,9 +169,6 @@ static bool IsReadyToEnterRFPRO(void)
     bool ret = false;
 
     // Note: pstat.dos.p asserted by DoStateChange(), so not checked here.
-
-    // Verify doxm.owned == TRUE.
-    VERIFY_TRUE_OR_EXIT(TAG, IsDoxmOwned(), WARNING);
 
     // Verify doxm.devowneruuid != nil UUID.
     VERIFY_TRUE_OR_EXIT(TAG, !IsDoxmDevowneruuidTheNilUuid(), WARNING);
@@ -311,8 +305,16 @@ static bool EnterRFNOP(void)
     // Unset pstat.cm RESET and TAKE_OWNER bits
     // Unset pstat.tm RESET and TAKE_OWNER bits
     // Set pstat.dos to RFNOP
-    ret = EnterStateGeneric(true, false, false, false, false, DOS_RFNOP);
+    VERIFY_SUCCESS(TAG,
+        EnterStateGeneric(true, false, false, false, false, DOS_RFNOP),
+        ERROR);
 
+    // Set doxm.owned = TRUE
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == SetDoxmIsOwned(true), ERROR);
+
+    ret = true;
+
+exit:
     OIC_LOG_V(DEBUG, TAG, "%s: returning %s.", __func__, ret?"true":"false");
     return ret;
 }
@@ -328,8 +330,15 @@ static bool EnterRFOTM(void)
     // Unset pstat.cm RESET bit, and set TAKE_OWNER bit
     // Unset pstat.tm RESET and TAKE_OWNER bits
     // Set pstat.dos to RFOTM
-    ret = EnterStateGeneric(false, false, true, false, false, DOS_RFOTM);
+    VERIFY_SUCCESS(TAG,
+        EnterStateGeneric(false, false, true, false, false, DOS_RFOTM),
+        ERROR);
 
+    // Set doxm.owned = FALSE
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == SetDoxmIsOwned(false), ERROR);
+
+    ret = true;
+exit:
     OIC_LOG_V(DEBUG, TAG, "%s: returning %s.", __func__, ret?"true":"false");
     return ret;
 }
@@ -345,8 +354,15 @@ static bool EnterRFPRO(void)
     // Unset pstat.cm RESET and TAKE_OWNER bits
     // Unset pstat.tm RESET and TAKE_OWNER bits
     // Set pstat.dos to RFPRO
-    ret = EnterStateGeneric(false, false, false, false, false, DOS_RFPRO);
+    VERIFY_SUCCESS(TAG,
+        EnterStateGeneric(false, false, false, false, false, DOS_RFPRO),
+        ERROR);
 
+    // Set doxm.owned = TRUE
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == SetDoxmIsOwned(true), ERROR);
+
+    ret = true;
+exit:
     OIC_LOG_V(DEBUG, TAG, "%s: returning %s.", __func__, ret?"true":"false");
     return ret;
 }

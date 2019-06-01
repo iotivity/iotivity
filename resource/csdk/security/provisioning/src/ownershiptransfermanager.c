@@ -2289,7 +2289,15 @@ static OCStackResult PostOwnershipInformation(OTMContext_t* otmCtx)
     uint8_t numOptions = 0;
     bool propertiesToInclude[DOXM_PROPERTY_COUNT];
     memset(propertiesToInclude, 0, sizeof(propertiesToInclude));
-    propertiesToInclude[DOXM_OWNED] = true;
+    if ( ! ( IS_OCF(otmCtx->selectedDeviceInfo->specVer)
+              && ( GET_OCF_MAJOR_VER(otmCtx->selectedDeviceInfo->specVer) > 2
+              || ( GET_OCF_MAJOR_VER(otmCtx->selectedDeviceInfo->specVer) == 2 
+              && GET_OCF_MINOR_VER(otmCtx->selectedDeviceInfo->specVer) >= 1) ) )
+        )
+    {
+        OIC_LOG_V(DEBUG, TAG, "%s: Pre ocf.2.1.x version detected", __func__);
+        propertiesToInclude[DOXM_OWNED] = true;
+    }
     //include rowner uuid
     propertiesToInclude[DOXM_ROWNERUUID] = true;
     //doxm.rowneruuid set to the provisioningclient's /doxm.deviceuuid.
