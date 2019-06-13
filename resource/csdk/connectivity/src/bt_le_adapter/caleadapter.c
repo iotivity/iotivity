@@ -2658,7 +2658,7 @@ static CAResult_t CAStartLE(void)
 static CAResult_t CAStopLE(void)
 {
 #ifdef __WITH_DTLS__
-    CAdeinitSslAdapter();
+    CAdeinitSslAdapter(false);
 #endif
 
     CAStopLEQueues();
@@ -2680,6 +2680,11 @@ static CAResult_t CAStopLE(void)
             break;
     }
     oc_mutex_unlock(g_bleIsServerMutex);
+
+#ifdef __WITH_DTLS__
+    CAcleanupSslAdapter();
+#endif
+
     return CAStopLEAdapter();
 }
 

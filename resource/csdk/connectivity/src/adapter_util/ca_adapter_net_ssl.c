@@ -432,6 +432,12 @@ static CAcloseSslConnectionCallback g_closeSslConnectionCallback = NULL;
 static oc_mutex g_sslContextMutex = NULL;
 
 /**
+ * @var g_sslInterestedThreadsCount
+ * @brief The number of threads that use this module
+ */
+static int g_sslInterestedThreadsCount = 0;
+
+/**
  * @var g_sslCallback
  * @brief callback to deliver the TLS handshake result
  */
@@ -1717,7 +1723,7 @@ static void StopRetransmit(void)
     }
 }
 #endif
-void CAdeinitSslAdapter(void)
+void CAdeinitSslAdapter(bool cleanup)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
 
@@ -1753,8 +1759,34 @@ void CAdeinitSslAdapter(void)
 
     // Unlock tlsContext mutex and de-initialize it
     oc_mutex_unlock(g_sslContextMutex);
-    oc_mutex_free(g_sslContextMutex);
-    g_sslContextMutex = NULL;
+
+    if (cleanup)
+    {
+        CAcleanupSslAdapter();
+    }
+
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s ", __func__);
+}
+
+void CAcleanupSslAdapter(void)
+{
+    bool free_mutex = false;
+
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+
+    VERIFY_NON_NULL_VOID(g_sslContextMutex, NET_SSL_TAG, "context mutex is NULL");
+
+    oc_mutex_lock(g_sslContextMutex);
+    if (g_sslInterestedThreadsCount > 0 && --g_sslInterestedThreadsCount == 0)
+    {
+        free_mutex = true;
+    }
+    oc_mutex_unlock(g_sslContextMutex);
+    if (free_mutex)
+    {
+        oc_mutex_free(g_sslContextMutex);
+        g_sslContextMutex = NULL;
+    }
 
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s ", __func__);
 }
@@ -1868,17 +1900,27 @@ CAResult_t CAinitSslAdapter(void)
         g_sslContextMutex = oc_mutex_new_recursive();
         VERIFY_NON_NULL_RET(g_sslContextMutex, NET_SSL_TAG, "oc_mutex_new_recursive failed",
             CA_MEMORY_ALLOC_FAILED);
+
+        oc_mutex_lock(g_sslContextMutex);
+        g_sslInterestedThreadsCount = 0;
     }
     else
     {
         OIC_LOG(INFO, NET_SSL_TAG, "Done already!");
-        return CA_STATUS_OK;
+
+        oc_mutex_lock(g_sslContextMutex);
+        if (NULL != g_caSslContext)
+        {
+            g_sslInterestedThreadsCount++;
+            oc_mutex_unlock(g_sslContextMutex);
+            return CA_STATUS_OK;
+        }
     }
 
     // Lock tlsContext mutex and create tlsContext
-    oc_mutex_lock(g_sslContextMutex);
-    g_caSslContext = (SslContext_t *)OICCalloc(1, sizeof(SslContext_t));
+    g_sslInterestedThreadsCount++;
 
+    g_caSslContext = (SslContext_t *)OICCalloc(1, sizeof(SslContext_t));
     if (NULL == g_caSslContext)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Context malloc failed");
@@ -1925,7 +1967,7 @@ CAResult_t CAinitSslAdapter(void)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Seed initialization failed!");
         oc_mutex_unlock(g_sslContextMutex);
-        CAdeinitSslAdapter();
+        CAdeinitSslAdapter(true);
         return CA_STATUS_FAILED;
     }
     mbedtls_ctr_drbg_set_prediction_resistance(&g_caSslContext->rnd, MBEDTLS_CTR_DRBG_PR_ON);
@@ -1936,7 +1978,7 @@ CAResult_t CAinitSslAdapter(void)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Client config initialization failed!");
         oc_mutex_unlock(g_sslContextMutex);
-        CAdeinitSslAdapter();
+        CAdeinitSslAdapter(true);
         OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
         return CA_STATUS_FAILED;
     }
@@ -1946,7 +1988,7 @@ CAResult_t CAinitSslAdapter(void)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Server config initialization failed!");
         oc_mutex_unlock(g_sslContextMutex);
-        CAdeinitSslAdapter();
+        CAdeinitSslAdapter(true);
         OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
         return CA_STATUS_FAILED;
     }
@@ -1958,7 +2000,7 @@ CAResult_t CAinitSslAdapter(void)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Cookie setup failed!");
         oc_mutex_unlock(g_sslContextMutex);
-        CAdeinitSslAdapter();
+        CAdeinitSslAdapter(true);
         OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
         return CA_STATUS_FAILED;
     }
@@ -1968,7 +2010,7 @@ CAResult_t CAinitSslAdapter(void)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Client config initialization failed!");
         oc_mutex_unlock(g_sslContextMutex);
-        CAdeinitSslAdapter();
+        CAdeinitSslAdapter(true);
         OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
         return CA_STATUS_FAILED;
     }
@@ -1978,7 +2020,7 @@ CAResult_t CAinitSslAdapter(void)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Server config initialization failed!");
         oc_mutex_unlock(g_sslContextMutex);
-        CAdeinitSslAdapter();
+        CAdeinitSslAdapter(true);
         OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
         return CA_STATUS_FAILED;
     }

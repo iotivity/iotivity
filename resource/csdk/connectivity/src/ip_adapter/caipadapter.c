@@ -550,7 +550,7 @@ CAResult_t CAReadIPData(void)
 CAResult_t CAStopIP(void)
 {
 #ifdef __WITH_DTLS__
-    CAdeinitSslAdapter();
+    CAdeinitSslAdapter(false);
 #endif
 
     if (g_sendQueueHandle && g_sendQueueHandle->threadMutex)
@@ -560,6 +560,10 @@ CAResult_t CAStopIP(void)
 
     CAIPStopNetworkMonitor(CA_ADAPTER_IP);
     CAIPStopServer();
+
+#ifdef __WITH_DTLS__
+    CAcleanupSslAdapter();
+#endif
 
     return CA_STATUS_OK;
 }

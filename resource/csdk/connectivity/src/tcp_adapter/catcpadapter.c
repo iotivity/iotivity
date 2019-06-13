@@ -547,7 +547,7 @@ CAResult_t CAStopTCP()
     CAInitializeTCPGlobals();
 
 #ifdef __WITH_TLS__
-    CAdeinitSslAdapter();
+    CAdeinitSslAdapter(true);
 #endif
 
     return CA_STATUS_OK;

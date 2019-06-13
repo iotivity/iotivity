@@ -153,6 +153,13 @@ static CAIPErrorHandleCallback g_ipErrorHandler = NULL;
 
 static CAIPPacketReceivedCallback g_packetReceivedCallback = NULL;
 
+static oc_mutex g_mutex = NULL;
+static oc_cond g_condVar = NULL;
+
+static CAResult_t CAIPCreateMutex(void);
+static void CAIPDestroyMutex(void);
+static CAResult_t CAIPCreateCond(void);
+static void CAIPDestroyCond(void);
 static void CAFindReadyMessage(void);
 #if !defined(WSA_WAIT_EVENT_0)
 static void CASelectReturned(fd_set *readFds, int ret);
@@ -161,6 +168,47 @@ static void CAEventReturned(CASocketFd_t socket);
 #endif
 
 static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags);
+
+static CAResult_t CAIPCreateMutex(void)
+{
+    if (!g_mutex)
+    {
+        if (NULL == (g_mutex = oc_mutex_new()))
+        {
+            OIC_LOG(ERROR, TAG, "Failed to created mutex!");
+            return CA_STATUS_FAILED;
+        }
+    }
+    return CA_STATUS_OK;
+}
+static void CAIPDestroyMutex(void)
+{
+    if (g_mutex)
+    {
+        oc_mutex_free(g_mutex);
+        g_mutex = NULL;
+    }
+}
+static CAResult_t CAIPCreateCond(void)
+{
+    if (!g_condVar)
+    {
+        if (NULL == (g_condVar = oc_cond_new()))
+        {
+            OIC_LOG(ERROR, TAG, "Failed to created cond!");
+            return CA_STATUS_FAILED;
+        }
+    }
+    return CA_STATUS_OK;
+}
+static void CAIPDestroyCond(void)
+{
+    if (g_condVar)
+    {
+        oc_cond_free(g_condVar);
+        g_condVar = NULL;
+    }
+}
 
 static void CACloseFDs(void)
 {
@@ -183,6 +231,10 @@ static void CAReceiveHandler(void *data)
         CAFindReadyMessage();
     }
     CACloseFDs();
+
+    oc_mutex_lock(g_mutex);
+    oc_cond_signal(g_condVar);
+    oc_mutex_unlock(g_mutex);
 }
 
 #define CLOSE_SOCKET(TYPE) \
@@ -1001,6 +1053,18 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
         return CA_STATUS_FAILED;
     }
 #endif
+
+    res = CAIPCreateMutex();
+    if (CA_STATUS_OK == res)
+    {
+        res = CAIPCreateCond();
+    }
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "failed to create mutex/cond");
+        return res;
+    }
+
     // set up appropriate FD mechanism for fast shutdown
     CAInitializeFastShutdownMechanism();
 
@@ -1033,6 +1097,20 @@ void CAIPStopServer(void)
 {
     caglobals.ip.terminate = true;
 
+    if (!caglobals.ip.started)
+    {
+        // Close fd's since receive handler was not started
+        CACloseFDs();
+    }
+    else
+    {
+        caglobals.ip.started = false;
+        // wait for thread finished
+        oc_mutex_lock(g_mutex);
+        oc_cond_wait_for(g_condVar, g_mutex, 300000);
+        oc_mutex_unlock(g_mutex);
+    }
+
 #if !defined(WSA_WAIT_EVENT_0)
     if (caglobals.ip.shutdownFds[1] != -1)
     {
@@ -1052,11 +1130,8 @@ void CAIPStopServer(void)
     }
 #endif
 
-    if (!caglobals.ip.started)
-    { // Close fd's since receive handler was not started
-        CACloseFDs();
-    }
-    caglobals.ip.started = false;
+    CAIPDestroyMutex();
+    CAIPDestroyCond();
 }
 
 void CAWakeUpForChange(void)

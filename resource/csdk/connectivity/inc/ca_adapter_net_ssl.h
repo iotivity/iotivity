@@ -111,8 +111,17 @@ CAResult_t CAinitSslAdapter(void);
 
 /**
  * de-inits mbedTLS library and free the allocated memory.
+ *
+ * @param[in]  cleanup  perform cleanup of allocated memory.
+ *             If this flag is false, need to perform cleanup
+ *             by calling CAcleanupSslAdapter.
  */
-void CAdeinitSslAdapter(void);
+void CAdeinitSslAdapter(bool cleanup);
+
+/**
+ * Free allocated memory
+ */
+void CAcleanupSslAdapter(void);
 
 /**
  * Performs TLS encryption of the CoAP PDU.

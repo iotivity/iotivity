@@ -50,6 +50,7 @@
 #define GetCASecureEndpointAttributes GetCASecureEndpointAttributesTest
 #define CAsetPeerCNVerifyCallback CAsetPeerCNVerifyCallbackTest
 #define CAsetCloseSslConnectionCallback CAsetCloseSslConnectionCallbackTest
+#define CAcleanupSslAdapter CAcleanupSslAdapterTest
 
 #include "../src/adapter_util/ca_adapter_net_ssl.c"
 
@@ -1891,7 +1892,7 @@ static int testCAinitSslAdapter()
     result = CAinitSslAdapter();
     if (result == CA_STATUS_OK)
     {
-        CAdeinitSslAdapter();
+        CAdeinitSslAdapter(true);
     }
     else
     {
@@ -1958,7 +1959,7 @@ static int testCAsetSslAdapterCallbacks()
         ret += 1;
     }
 
-    CAdeinitSslAdapter();
+    CAdeinitSslAdapter(true);
 
     return ret;
 }
@@ -2269,7 +2270,7 @@ static void * testCAencryptSsl(void * arg)
 
     CAcloseSslConnection(&serverAddr);
 
-    CAdeinitSslAdapter();
+    CAdeinitSslAdapter(true);
 
     socketClose();
 
@@ -2657,7 +2658,7 @@ static void * testCAdecryptSsl(void * arg)
 
     CAcloseSslConnection(&serverAddr);
 
-    CAdeinitSslAdapter();
+    CAdeinitSslAdapter(true);
 
     socketClose();
 
@@ -2739,7 +2740,7 @@ static int testCAdeinitSslAdapter()
 
     CAsetTlsCipherSuite(SSL_ECDHE_ECDSA_WITH_AES_128_CCM);
 
-    CAdeinitSslAdapter();
+    CAdeinitSslAdapter(true);
 
     if (g_caSslContext != NULL ||
         g_sslContextMutex != NULL)
@@ -2814,7 +2815,7 @@ static void * testServer(void * arg)
 
     CAcloseSslConnection(&serverAddr);
 
-    CAdeinitSslAdapter();
+    CAdeinitSslAdapter(true);
 
     socketClose_server();
 
@@ -3027,7 +3028,7 @@ static int testCAsetTlsCipherSuite()
         ret += 1;
     }
 
-    CAdeinitSslAdapter();
+    CAdeinitSslAdapter(true);
 
     return ret;
 }
@@ -3139,7 +3140,7 @@ TEST(TLSAdapter, Test_11)
 
     CAcloseSslConnection(&serverAddr);
 
-    CAdeinitSslAdapter();
+    CAdeinitSslAdapter(true);
 
     socketClose();
 
