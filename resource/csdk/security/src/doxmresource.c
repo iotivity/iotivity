@@ -111,7 +111,7 @@ static const uint8_t gDoxmPropertyAccessModes[DOXM_PROPERTY_COUNT][DOS_STATE_COU
     { R,    RW,     R,      R,      R   }, // .oxmsel
 #endif // MULTIPLE_OWNER
     { R,    R,      R,      R,      R   }, // .sct
-    { R,    R,      R,      R,      R   }, // .owned
+    { R,    RW,     R,      R,      R   }, // .owned
 #ifdef MULTIPLE_OWNER
     { RW,   RW,    RW,      RW,     RW  }, // .subowner
     { RW,   RW,    RW,      RW,     RW  }, // .mom
@@ -2112,10 +2112,8 @@ OCStackResult SetDoxmIsOwned(const bool isowned)
     if (gDoxm)
     {
         gDoxm->owned = isowned;
-        VERIFY_SUCCESS(TAG, UpdatePersistentStorage(gDoxm), ERROR);
         return OC_STACK_OK;
     }
-exit:
     return OC_STACK_ERROR;
 }
 
