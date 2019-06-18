@@ -385,6 +385,7 @@ OCStackResult OCCloudCertificateIssueRequest(void *ctx,
     OCStackResult ret = OC_STACK_OK;
     char uri[MAX_URI_QUERY] = { 0 };
     OCRepPayload *payload = NULL;
+    OCCallbackData cbData;
 
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
@@ -437,7 +438,6 @@ OCStackResult OCCloudCertificateIssueRequest(void *ctx,
     snprintf(uri, MAX_URI_QUERY, "%s%s", cloudUri, OC_RSRVD_PROV_CERT_URI);
     OIC_LOG_V(DEBUG, TAG, "Certificate Request Query: %s", uri);
 
-    OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, HandleCertificateIssueRequest, NULL);
 
     ret = OCDoResource(NULL, OC_REST_POST, uri, NULL,

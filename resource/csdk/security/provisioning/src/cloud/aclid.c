@@ -293,6 +293,7 @@ OCStackResult OCCloudAclIndividualAclUpdate(void *ctx,
     OCRepPayload **helperPayload2 = NULL;
     cloudAce_t *ace = NULL;
     size_t acllist_count = 0;
+    OCCallbackData cbData;
 
     VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
@@ -409,7 +410,6 @@ OCStackResult OCCloudAclIndividualAclUpdate(void *ctx,
     OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_ACCESS_CONTROL_LIST,
                                    (const OCRepPayload **)helperPayload, dimensions);
 
-    OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
 
     OIC_LOG(DEBUG, TAG, "Next payload created:");
@@ -448,6 +448,7 @@ OCStackResult OCCloudAclIndividualAceUpdate(void *ctx,
     OCRepPayload **helperPayload  = NULL;
     OCRepPayload **helperPayload2 = NULL;
     size_t acllist_count;
+    OCCallbackData cbData;
 
     VERIFY_NON_NULL_RET(cloudUri, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
@@ -557,7 +558,6 @@ OCStackResult OCCloudAclIndividualAceUpdate(void *ctx,
     OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_ACCESS_CONTROL_LIST,
                                    (const OCRepPayload **)helperPayload, dimensions);
 
-    OCCallbackData cbData;
     fillCallbackData(&cbData, ctx, callback, NULL, NULL);
 
     OIC_LOG(DEBUG, TAG, "Next payload created:");
