@@ -232,7 +232,8 @@ if target_os in ['linux']:
         'oxmmanufacturercert.cpp',
         'oxmrandompin.cpp',
         'credentialgenerator.cpp',
-        'otmunittest.cpp'
+        'otmunittest.cpp',
+        'deviceonboardingstate.cpp'
     ]
     if sptest_env.get('WITH_TCP') == True and sptest_env.get('WITH_CLOUD') == True:
         unittest_src.append('cloudresource.cpp')

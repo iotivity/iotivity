@@ -55,29 +55,26 @@ const char ID_13[] = "4222222222222222";
 #define F_OK 0
 #endif
 
-TEST(CallPDMAPIbeforeInit, BeforeInit)
-{
-    if (0 == access(PM_DB_FILE_NAME, F_OK))
-    {
-        EXPECT_EQ(0, remove(PM_DB_FILE_NAME));
-    }
-    EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMAddDevice(NULL));
-    EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMIsDuplicateDevice(NULL, NULL));
-    EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMLinkDevices(NULL, NULL));
-    EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMUnlinkDevices(NULL, NULL));
-    EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMDeleteDevice(NULL));
-    EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMGetOwnedDevices(NULL, NULL));
-    EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMGetLinkedDevices(NULL, NULL, NULL));
-    EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMSetLinkStale(NULL, NULL));
-    EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMGetToBeUnlinkedDevices(NULL, NULL));
-    EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMIsLinkExists(NULL, NULL, NULL));
-}
-
 class PDB : public ::testing::Test
 {
     public:
         static void SetUpTestCase()
         {
+            if (0 == access(PM_DB_FILE_NAME, F_OK))
+            {
+                EXPECT_EQ(0, remove(PM_DB_FILE_NAME));
+            }
+            EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMAddDevice(NULL));
+            EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMIsDuplicateDevice(NULL, NULL));
+            EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMLinkDevices(NULL, NULL));
+            EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMUnlinkDevices(NULL, NULL));
+            EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMDeleteDevice(NULL));
+            EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMGetOwnedDevices(NULL, NULL));
+            EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMGetLinkedDevices(NULL, NULL, NULL));
+            EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMSetLinkStale(NULL, NULL));
+            EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMGetToBeUnlinkedDevices(NULL, NULL));
+            EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMIsLinkExists(NULL, NULL, NULL));
+
             unlink("PDM.db");
             IOT_Init(PM_DB_FILE_NAME);
         }

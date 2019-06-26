@@ -867,7 +867,6 @@ TEST_F(OTM, OCSaveTrustCertChainFull)
     uint8_t *trustCertChain = (uint8_t *)getPemCert();
     uint16_t credId = 0;
     EXPECT_EQ(OC_STACK_OK, OCSaveTrustCertChain(trustCertChain, chainSize, OIC_ENCODING_PEM, &credId));
-    OICFree(trustCertChain);
 }
 
 TEST_F(OTM, OCSaveOwnRoleCertFull)
@@ -875,7 +874,6 @@ TEST_F(OTM, OCSaveOwnRoleCertFull)
     uint16_t credId = 0;
     char *cert = (char *)getPemCert();
     EXPECT_EQ(OC_STACK_OK, OCSaveOwnRoleCert(cert, &credId));
-    OICFree(cert);
 }
 
 static void trustCertChainChangeCB(void *ctx, uint16_t credId, uint8_t *trustCertChain,
@@ -909,9 +907,6 @@ TEST_F(OTM, OCSaveOwnCertChainFull)
     uint16_t credId = 0;
 
     EXPECT_EQ(OC_STACK_OK, OCSaveOwnCertChain(cert, key, &credId));
-
-    OICFree(key);
-    OICFree(cert);
 }
 
 TEST_F(OTM, OCRemoveCredentialFull)
