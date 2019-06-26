@@ -4452,7 +4452,7 @@ OCStackResult OC_CALL OCBindResourceAM(
     }
     else
     {
-        
+
         newChildResource->rsrcResource->amEntityHandler = NULL;
     }
 
@@ -5231,7 +5231,7 @@ OCStackResult OC_CALL OCDoResponse(OCEntityHandlerResponse *ehResponse)
     // Normal response
     // Get pointer to request info
     serverRequest = (OCServerRequest *)ehResponse->requestHandle;
-    if(serverRequest)
+    if(serverRequest && serverRequest->ehResponseHandler)
     {
         // response handler in ocserverrequest.c. Usually HandleSingleResponse.
         result = serverRequest->ehResponseHandler(ehResponse);
