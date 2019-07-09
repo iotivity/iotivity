@@ -2524,6 +2524,12 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
                 g_closeSslConnectionCallback(peer->sep.identity.id, peer->sep.identity.id_length);
             }
 
+            do
+            {
+                ret = mbedtls_ssl_close_notify(&peer->ssl);
+            }
+            while (MBEDTLS_ERR_SSL_WANT_WRITE == ret);
+
             RemovePeerFromList(&peer->sep.endpoint);
             oc_mutex_unlock(g_sslContextMutex);
             return CA_STATUS_OK;
