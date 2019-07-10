@@ -1186,17 +1186,28 @@ static bool checkSslOperation(SslEndPoint_t*  peer,
         (MBEDTLS_SSL_ALERT_MSG_UNKNOWN_PSK_IDENTITY != ret) &&
         (MBEDTLS_SSL_ALERT_MSG_NO_APPLICATION_PROTOCOL != ret))
     {
-        size_t bufSize = 1024;
-        char *bufMsg = (char*)OICCalloc(1, bufSize);
-        if (bufMsg)
+        if (MBEDTLS_ERR_SSL_BAD_HS_CLIENT_HELLO == ret)
         {
-            mbedtls_strerror(ret, bufMsg, bufSize);
-            OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: 0x%X: %s", __func__, -ret, bufMsg);
-            OICFree(bufMsg);
+            unsigned char *buf = peer->ssl.in_hdr;
+            if (buf[0] == 0x15)
+            {
+                OIC_LOG_V(INFO, NET_SSL_TAG, "encrypted alert message received");
+            }
         }
         else
         {
-            OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: -0x%x", (str), -ret);
+            size_t bufSize = 1024;
+            char *bufMsg = (char*)OICCalloc(1, bufSize);
+            if (bufMsg)
+            {
+                mbedtls_strerror(ret, bufMsg, bufSize);
+                OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: 0x%X: %s", __func__, -ret, bufMsg);
+                OICFree(bufMsg);
+            }
+            else
+            {
+                OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: -0x%x", (str), -ret);
+            }
         }
 
         // Make a copy of the endpoint, because the callback might
