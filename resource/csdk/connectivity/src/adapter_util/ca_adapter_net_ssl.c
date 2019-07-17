@@ -124,7 +124,9 @@
  * @def UUID_LENGTHPSK_LENGTH
  * @brief Identity max length
  */
+#if !defined(UUID_LENGTH)
 #define UUID_LENGTH (128/8)
+#endif
 /**
  * @def MASTER_SECRET_LEN
  * @brief TLS master secret length
@@ -267,7 +269,7 @@ static const int tlsCipher[SSL_CIPHER_MAX][2] =
 
 static int g_cipherSuitesList[SSL_CIPHER_MAX];
 
-mbedtls_ecp_group_id curve[ADAPTER_CURVE_MAX][2] =
+static mbedtls_ecp_group_id curve[ADAPTER_CURVE_MAX][2] =
 {
     {MBEDTLS_ECP_DP_SECP256R1, MBEDTLS_ECP_DP_NONE}
 };
@@ -982,7 +984,7 @@ bool SetCASecureEndpointAttribute(const CAEndpoint_t* peer, uint32_t newAttribut
     bool result = false;
 
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s(peer = %s:%u, attribute = %#x)", __func__,
-        peer->addr, (uint32_t)peer->port, newAttribute);
+        peer? peer->addr : "null", peer ? (uint32_t)peer->port : 0, newAttribute);
 
     // In the current implementation, the caller already owns g_sslContextMutex.
     oc_mutex_assert_owner(g_sslContextMutex, true);

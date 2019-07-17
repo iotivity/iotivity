@@ -31,7 +31,7 @@
 #ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
 #endif
-
+#include <ocstack.h>
 // Test function hooks
 #define CAcloseSslConnection CAcloseSslConnectionTest
 #define CAdecryptSsl CAdecryptSslTest
@@ -89,6 +89,9 @@
 #include "platform_features.h"
 #include "experimental/logger.h"
 
+
+#undef TAG
+#define TAG "SSLADAPTER_UNITTEST"
 
 #define SEED "PREDICTED_SEED"
 #define dummyHandler 0xF123
@@ -1034,7 +1037,7 @@ static void PacketReceive(unsigned char *data, int * datalen)
     *datalen = n + 5;
     memcpy(data, buffer, *datalen);
 }
-
+/*
 static void infoCallback_that_loads_x509(PkiInfo_t * inf)
 {
     ByteArray_t * ca = (ByteArray_t *)OICMalloc(sizeof(ByteArray_t));
@@ -1061,7 +1064,7 @@ static void infoCallback_that_loads_x509(PkiInfo_t * inf)
     inf->crl.data = NULL;
     inf->crl.len = 0;
 }
-
+*/
 static bool socketOpen_server()
 {
     unsigned short portno;
@@ -1883,6 +1886,139 @@ exit:
  *
  *
  * *************************/
+static oc_thread pInternalThread;
+static bool pInternalWorking;
+
+static ByteArray_t *ca;
+static ByteArray_t *crl;
+static ByteArray_t *key;
+static ByteArray_t *cert;
+
+#define TESTDIR "resource/csdk/connectivity/test"
+
+static ByteArray_t *readFile(const char *fname)
+{
+    ByteArray_t *ret = NULL;
+    size_t rb = 0;
+    int fd = open(fname, O_RDONLY);
+    if (0 > fd)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: open file %s", __func__, fname);
+        return NULL;
+    }
+
+    struct stat st;
+    memset(&st, 0, sizeof(struct stat));
+    if (0 != fstat(fd, &st))
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: fstat: (%d) %s", __func__, errno, strerror(errno));
+        goto exit;
+    }
+
+    ret = (ByteArray_t *)OICCalloc(1, sizeof(ByteArray_t));
+    if (!ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: alloc", __func__);
+        goto exit;
+    }
+    ret->data = (unsigned char *)OICCalloc(st.st_size, sizeof(unsigned char));
+    if (!ret->data)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: alloc", __func__);
+        goto exit;
+    }
+    ret->len = st.st_size;
+    rb = read(fd, ret->data,
+#if !defined(__unix__)
+              (unsigned)
+#endif
+              ret->len);
+    if ((size_t)ret->len != rb)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: read %s (%lu)", __func__, fname, rb);
+    }
+exit:
+    close(fd);
+    return ret;
+}
+
+
+static void *__process__(void *p)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+    OC_UNUSED(p);
+    struct timespec timeout = {0, 100000000L};
+    pInternalWorking = true;
+    while (pInternalWorking)
+    {
+        if (OCProcess() != OC_STACK_OK)
+        {
+            OIC_LOG(FATAL, TAG, "OCStack process error");
+            return NULL;
+        }
+        nanosleep(&timeout, NULL);
+    }
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+    return NULL;
+}
+
+static void PkixInfoHandler(PkiInfo_t *inf)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
+
+    inf->crt.next = NULL;
+    inf->crt.cert = (ByteArray_t *)OICCalloc(1, sizeof(ByteArray_t));
+    inf->crt.cert->data = (unsigned char *)OICCalloc(cert->len, sizeof(unsigned char));
+    inf->crt.cert->len = cert->len;
+    memcpy(inf->crt.cert->data, cert->data, cert->len);
+
+    inf->ca.next = NULL;
+    inf->ca.cert = (ByteArray_t *)OICCalloc(1, sizeof(ByteArray_t));
+    inf->ca.cert->data = (unsigned char *)OICCalloc(ca->len, sizeof(unsigned char));
+    inf->ca.cert->len = ca->len;
+    memcpy(inf->ca.cert->data, ca->data, ca->len);
+
+    inf->crl.len = crl->len;
+    inf->crl.data = (unsigned char *)OICCalloc(crl->len, sizeof(unsigned char));
+    memcpy(inf->crl.data, crl->data, crl->len);
+
+    inf->key.len = key->len;
+    inf->key.data = (unsigned char *)OICCalloc(key->len, sizeof(unsigned char));
+    memcpy(inf->key.data, key->data, key->len);
+
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+}
+
+class TLSAdapter: public ::testing::Test
+{
+    public:
+        static void SetUpTestCase()
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+            ca = readFile(TESTDIR"/cert/ca.der");
+            crl = readFile(TESTDIR"/cert/crl.der");
+            key = readFile(TESTDIR"/cert/key.der");
+            cert = readFile(TESTDIR"/cert/crt.der");
+
+            CAsetPkixInfoCallback(PkixInfoHandler);
+
+            oc_thread_new(&pInternalThread, __process__, NULL);
+
+            EXPECT_EQ(CA_STATUS_OK, CAinitSslAdapter());
+            oc_mutex_lock(g_sslContextMutex);
+
+            OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+        }
+
+        static void TearDownTestCase()
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+            pInternalWorking = false;
+            oc_mutex_unlock(g_sslContextMutex);
+            CAdeinitSslAdapter();
+            OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
+        }
+};
 
 static int testCAinitSslAdapter()
 {
@@ -1903,7 +2039,7 @@ static int testCAinitSslAdapter()
 }
 
 // CAinitTlsAdapter()
-TEST(TLSAdapter, Test_1)
+TEST_F(TLSAdapter, Test_1)
 {
     int ret = 0xFF;
     ret = testCAinitSslAdapter();
@@ -1965,7 +2101,7 @@ static int testCAsetSslAdapterCallbacks()
 }
 
 // CAsetSslAdapterCallbacks()
-TEST(TLSAdapter, Test_2)
+TEST_F(TLSAdapter, Test_2)
 {
     int ret = 0xFF;
     ret = testCAsetSslAdapterCallbacks();
@@ -2020,7 +2156,12 @@ static void * test0CAinitiateSslHandshake(void * arg)
     serverAddr.ifindex = 0;
 
     g_sslContextMutex = oc_mutex_new_recursive();
+    if (NULL == g_sslContextMutex)
+    {
+        g_sslContextMutex = oc_mutex_new_recursive();
+    }
     oc_mutex_lock(g_sslContextMutex);
+
     g_caSslContext = (SslContext_t *)OICCalloc(1, sizeof(SslContext_t));
     g_caSslContext->peerList = u_arraylist_create();
     mbedtls_entropy_init(&g_caSslContext->entropy);
@@ -2052,7 +2193,7 @@ static void * test0CAinitiateSslHandshake(void * arg)
     g_caSslContext->adapterCallbacks[1].sendCallback = CATCPPacketSendCB_forInitHsTest;
 
     // CAsetPkixInfoCallback
-    g_getPkixInfoCallback = infoCallback_that_loads_x509;
+    g_getPkixInfoCallback = PkixInfoHandler;//rinfoCallback_that_loads_x509;
 
     // CAsetCredentialTypesCallback
     g_getCredentialTypesCallback = clutch;
@@ -2136,9 +2277,9 @@ static int test1CAinitiateSslHandshake()
 //  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
 //  to true) and socketConnect() is hard coded to try only IPv4.
 #ifdef HAVE_WINSOCK2_H
-TEST(TLSAdapter, DISABLED_Test_3_0)
+TEST_F(TLSAdapter, DISABLED_Test_3_0)
 #else
-TEST(TLSAdapter, Test_3_0)
+TEST_F(TLSAdapter, Test_3_0)
 #endif
 {
     socket_error = false;
@@ -2168,7 +2309,7 @@ TEST(TLSAdapter, Test_3_0)
     EXPECT_EQ(0, arg);
 }
 
-TEST(TLSAdapter, Test_3_1)
+TEST_F(TLSAdapter, Test_3_1)
 {
     int ret = 0xFF;
     ret = test1CAinitiateSslHandshake();
@@ -2190,7 +2331,7 @@ static void * testCAencryptSsl(void * arg)
     memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.adapter = CA_ADAPTER_TCP;
     serverAddr.flags = CA_SECURE;
-    serverAddr.port = 4433;
+    serverAddr.port = 4438;
     char addr[] = {0x31, 0x32, 0x37, 0x2e, 0x30, 0x2e, 0x30, 0x2e, 0x31, 0x00}; // 127.0.0.1
     memcpy(serverAddr.addr, addr, sizeof(addr));
     serverAddr.ifindex = 0;
@@ -2199,7 +2340,7 @@ static void * testCAencryptSsl(void * arg)
 
     CAsetSslAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, CATCPPacketErrorCB, CA_ADAPTER_TCP);
 
-    CAsetPkixInfoCallback(infoCallback_that_loads_x509);
+    CAsetPkixInfoCallback(PkixInfoHandler);
 
     // CAsetCredentialTypesCallback
     g_getCredentialTypesCallback = clutch;
@@ -2370,9 +2511,9 @@ static void * testCAencryptSsl(void * arg)
 //  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
 //  to true) and socketConnect() is hard coded to try only IPv4.
 #ifdef HAVE_WINSOCK2_H
-TEST(TLSAdapter, DISABLED_Test_4_0)
+TEST_F(TLSAdapter, DISABLED_Test_4_0)
 #else
-TEST(TLSAdapter, Test_4_0)
+TEST_F(TLSAdapter, Test_4_0)
 #endif
 {
     socket_error = false;
@@ -2407,9 +2548,9 @@ TEST(TLSAdapter, Test_4_0)
 //  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
 //  to true) and socketConnect() is hard coded to try only IPv4.
 #ifdef HAVE_WINSOCK2_H
-TEST(TLSAdapter, DISABLED_Test_4_1)
+TEST_F(TLSAdapter, DISABLED_Test_4_1)
 #else
-TEST(TLSAdapter, Test_4_1)
+TEST_F(TLSAdapter, Test_4_1)
 #endif
 {
     socket_error = false;
@@ -2444,9 +2585,9 @@ TEST(TLSAdapter, Test_4_1)
 //  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
 //  to true) and socketConnect() is hard coded to try only IPv4.
 #ifdef HAVE_WINSOCK2_H
-TEST(TLSAdapter, DISABLED_Test_4_2)
+TEST_F(TLSAdapter, DISABLED_Test_4_2)
 #else
-TEST(TLSAdapter, Test_4_2)
+TEST_F(TLSAdapter, Test_4_2)
 #endif
 {
     socket_error = false;
@@ -2481,9 +2622,9 @@ TEST(TLSAdapter, Test_4_2)
 //  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
 //  to true) and socketConnect() is hard coded to try only IPv4.
 #ifdef HAVE_WINSOCK2_H
-TEST(TLSAdapter, DISABLED_Test_4_3)
+TEST_F(TLSAdapter, DISABLED_Test_4_3)
 #else
-TEST(TLSAdapter, Test_4_3)
+TEST_F(TLSAdapter, Test_4_3)
 #endif
 {
     socket_error = false;
@@ -2518,9 +2659,9 @@ TEST(TLSAdapter, Test_4_3)
 //  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
 //  to true) and socketConnect() is hard coded to try only IPv4.
 #ifdef HAVE_WINSOCK2_H
-TEST(TLSAdapter, DISABLED_Test_4_4)
+TEST_F(TLSAdapter, DISABLED_Test_4_4)
 #else
-TEST(TLSAdapter, Test_4_4)
+TEST_F(TLSAdapter, Test_4_4)
 #endif
 {
     socket_error = false;
@@ -2554,9 +2695,9 @@ TEST(TLSAdapter, Test_4_4)
 //  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
 //  to true) and socketConnect() is hard coded to try only IPv4.
 #ifdef HAVE_WINSOCK2_H
-TEST(TLSAdapter, DISABLED_Test_4_5)
+TEST_F(TLSAdapter, DISABLED_Test_4_5)
 #else
-TEST(TLSAdapter, Test_4_5)
+TEST_F(TLSAdapter, Test_4_5)
 #endif
 {
     socket_error = false;
@@ -2613,7 +2754,7 @@ static void * testCAdecryptSsl(void * arg)
 
     CAsetSslAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, CATCPPacketErrorCB, CA_ADAPTER_TCP);
 
-    CAsetPkixInfoCallback(infoCallback_that_loads_x509);
+    CAsetPkixInfoCallback(PkixInfoHandler);
 
     CAsetCredentialTypesCallback(clutch);
 
@@ -2681,9 +2822,9 @@ static void * testCAdecryptSsl(void * arg)
 //  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
 //  to true) and socketConnect() is hard coded to try only IPv4.
 #ifdef HAVE_WINSOCK2_H
-TEST(TLSAdapter, DISABLED_Test_5)
+TEST_F(TLSAdapter, DISABLED_Test_5)
 #else
-TEST(TLSAdapter, Test_5)
+TEST_F(TLSAdapter, Test_5)
 #endif
 {
     socket_error = false;
@@ -2736,7 +2877,7 @@ static int testCAdeinitSslAdapter()
 
     CAsetSslAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, CATCPPacketErrorCB, CA_ADAPTER_TCP);
 
-    CAsetPkixInfoCallback(infoCallback_that_loads_x509);
+    CAsetPkixInfoCallback(PkixInfoHandler);
 
     CAsetTlsCipherSuite(SSL_ECDHE_ECDSA_WITH_AES_128_CCM);
 
@@ -2755,7 +2896,7 @@ static int testCAdeinitSslAdapter()
 }
 
 // CAdeinitSslAdapter()
-TEST(TLSAdapter, Test_6)
+TEST_F(TLSAdapter, Test_6)
 {
     int ret = 0xFF;
     ret = testCAdeinitSslAdapter();
@@ -2785,7 +2926,7 @@ static void * testServer(void * arg)
     CAinitSslAdapter();
 
     CAsetSslAdapterCallbacks(CATCPPacketReceivedCB_server, CATCPPacketSendCB_server, CATCPPacketErrorCB_server, CA_ADAPTER_TCP);
-    CAsetPkixInfoCallback(infoCallback_that_loads_x509);
+    CAsetPkixInfoCallback(PkixInfoHandler);
 
     CAsetCredentialTypesCallback(clutch);
 
@@ -2836,9 +2977,9 @@ static void * testServer(void * arg)
 // This test doesn't work on Windows:
 // testServer opens a socket without first calling WSAStartup
 // PacketReceive_server calls read() rather than recv() on a socket handle
-TEST(TLSAdapter, DISABLED_Test_7)
+TEST_F(TLSAdapter, DISABLED_Test_7)
 #else
-TEST(TLSAdapter, Test_7)
+TEST_F(TLSAdapter, Test_7)
 #endif
 {
     socket_error = false;
@@ -2919,21 +3060,21 @@ static int testCAsetCredentialTypesCallback()
 }
 
 // CAsetPskCredentialsCallback()
-TEST(TLSAdapter, Test_9_0)
+TEST_F(TLSAdapter, Test_9_0)
 {
     int ret = 0xFF;
     ret = testCAsetPskCredentialsCallback();
     EXPECT_EQ(0, ret);
 }
 // CAsetPkixInfoCallback()
-TEST(TLSAdapter, Test_9_1)
+TEST_F(TLSAdapter, Test_9_1)
 {
     int ret = 0xFF;
     ret = testCAsetPkixInfoCallback();
     EXPECT_EQ(0, ret);
 }
 // CAsetCredentialTypesCallback()
-TEST(TLSAdapter, Test_9_2)
+TEST_F(TLSAdapter, Test_9_2)
 {
     int ret = 0xFF;
     ret = testCAsetCredentialTypesCallback();
@@ -3034,7 +3175,7 @@ static int testCAsetTlsCipherSuite()
 }
 
 // CAinitTlsAdapter()
-TEST(TLSAdapter, Test_10)
+TEST_F(TLSAdapter, Test_10)
 {
     int ret = 0xff;
     ret = testCAsetTlsCipherSuite();
@@ -3045,18 +3186,18 @@ TEST(TLSAdapter, Test_10)
 //  server() listens only on IPv6 on Windows (because IPV6_V6ONLY defaults
 //  to true) and socketConnect() is hard coded to try only IPv4.
 #ifdef HAVE_WINSOCK2_H
-TEST(TLSAdapter, DISABLED_Test_11)
+TEST_F(TLSAdapter, DISABLED_Test_11)
 #else
-TEST(TLSAdapter, Test_11)
+TEST_F(TLSAdapter, Test_11)
 #endif
 {
     uint8_t predictedPSK[] = {
-        0xba, 0x72, 0x16, 0xbc, 0x7f, 0x8c, 0xfe, 0xfc, 0xd0, 0xac, 0x1a, 0x37, 0xad, 0x60, 0xe8, 0x9e, 
-        0xb3, 0x31, 0xa2, 0x30, 0xaf, 0x68, 0xc9, 0xa6, 0x89, 0x8a, 0x04, 0x21, 0x6c, 0xbd, 0x04, 0x08, 
-        0x68, 0x11, 0x54, 0x9e, 0x2a, 0x10, 0x91, 0x94, 0x3c, 0x44, 0x52, 0xc7, 0xfa, 0x78, 0x44, 0x87, 
-        0xea, 0x30, 0x08, 0x5f, 0xc1, 0x64, 0xaa, 0x0d, 0xfd, 0x84, 0x16, 0x83, 0x20, 0xc9, 0x08, 0x65, 
-        0xd2, 0x4a, 0x55, 0x9e, 0x8f, 0x88, 0x3c, 0x57, 0x10, 0xbd, 0x5a, 0x30, 0x01, 0xb4, 0x59, 0x63, 
-        0x64, 0x19, 0x8d, 0xfa, 0x5c, 0x86, 0x92, 0xf7, 0x60, 0x99, 0xdb, 0xae, 0x0e, 0xad, 0x80, 0xf1, 
+        0xba, 0x72, 0x16, 0xbc, 0x7f, 0x8c, 0xfe, 0xfc, 0xd0, 0xac, 0x1a, 0x37, 0xad, 0x60, 0xe8, 0x9e,
+        0xb3, 0x31, 0xa2, 0x30, 0xaf, 0x68, 0xc9, 0xa6, 0x89, 0x8a, 0x04, 0x21, 0x6c, 0xbd, 0x04, 0x08,
+        0x68, 0x11, 0x54, 0x9e, 0x2a, 0x10, 0x91, 0x94, 0x3c, 0x44, 0x52, 0xc7, 0xfa, 0x78, 0x44, 0x87,
+        0xea, 0x30, 0x08, 0x5f, 0xc1, 0x64, 0xaa, 0x0d, 0xfd, 0x84, 0x16, 0x83, 0x20, 0xc9, 0x08, 0x65,
+        0xd2, 0x4a, 0x55, 0x9e, 0x8f, 0x88, 0x3c, 0x57, 0x10, 0xbd, 0x5a, 0x30, 0x01, 0xb4, 0x59, 0x63,
+        0x64, 0x19, 0x8d, 0xfa, 0x5c, 0x86, 0x92, 0xf7, 0x60, 0x99, 0xdb, 0xae, 0x0e, 0xad, 0x80, 0xf1,
         0x82, 0xaf, 0x1b, 0x14
     };
     size_t predictedPSK_len = sizeof(predictedPSK);
@@ -3115,7 +3256,7 @@ TEST(TLSAdapter, Test_11)
 
     CAsetSslAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, CATCPPacketErrorCB, CA_ADAPTER_TCP);
 
-    CAsetPkixInfoCallback(infoCallback_that_loads_x509);
+    CAsetPkixInfoCallback(PkixInfoHandler);
 
     CAsetCredentialTypesCallback(clutch);
 
@@ -3152,7 +3293,7 @@ TEST(TLSAdapter, Test_11)
     OICFree(ownerPsk);
 }
 
-TEST(TLSAdapter, Test_ParseChain)
+TEST_F(TLSAdapter, Test_ParseChain)
 {
     mbedtls_x509_crt crt;
     mbedtls_x509_crt_init(&crt);
@@ -3206,17 +3347,17 @@ TEST(TLSAdapter, Test_ParseChain)
     EXPECT_EQ(10, ret + errNum);
 }
 
-TEST(TLSAdapter, TestCertsValid)
+TEST_F(TLSAdapter, TestCertsValid)
 {
-    mbedtls_x509_crt cert;
+    mbedtls_x509_crt crt;
 
-    mbedtls_x509_crt_init(&cert);
-    int ret = mbedtls_x509_crt_parse(&cert, (const unsigned char *)serverCert, serverCertLen);
+    mbedtls_x509_crt_init(&crt);
+    int ret = mbedtls_x509_crt_parse(&crt, (const unsigned char *)serverCert, serverCertLen);
     EXPECT_EQ(0, ret) << "Failed to parse server cert";
-    mbedtls_x509_crt_free(&cert);
+    mbedtls_x509_crt_free(&crt);
 
-    mbedtls_x509_crt_init(&cert);
-    ret = mbedtls_x509_crt_parse(&cert, (const unsigned char *)caCert, caCertLen);
+    mbedtls_x509_crt_init(&crt);
+    ret = mbedtls_x509_crt_parse(&crt, (const unsigned char *)caCert, caCertLen);
     EXPECT_EQ(0, ret) << "Failed to parse CA cert";
-    mbedtls_x509_crt_free(&cert);
+    mbedtls_x509_crt_free(&crt);
 }

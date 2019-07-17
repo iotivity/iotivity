@@ -902,10 +902,7 @@ size_t OC_CALL calcDimTotal(const size_t dimensions[MAX_REP_ARRAY_DEPTH])
     }
 
     size_t total = 1;
-    for(uint8_t i = 0; i < MAX_REP_ARRAY_DEPTH && dimensions[i] != 0; ++i)
-    {
-        total *= dimensions[i];
-    }
+    for(; total < MAX_REP_ARRAY_DEPTH && dimensions[total] != 0; ++total);
     return total;
 }
 
@@ -1211,7 +1208,7 @@ bool OC_CALL OCRepPayloadSetStringArray(OCRepPayload* payload, const char* name,
         return false;
     }
 
-    char** newArray = (char**)OICMalloc(dimTotal * sizeof(char*));
+    char** newArray = (char**)OICCalloc(dimTotal, sizeof(char*));
 
     if (!newArray)
     {

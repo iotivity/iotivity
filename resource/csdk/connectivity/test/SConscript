@@ -109,11 +109,12 @@ tests_src = [
 if 'IP' in target_transport or 'ALL' in target_transport:
     tests_src.append('cablocktransfertest.cpp')
 
-if catest_env.get('SECURED') == '1' and catest_env.get('WITH_TCP') == True:
-    tests_src.append('ssladapter_test.cpp')
-
 if catest_env.get('SECURED') == '1':
-    tests_src.append('cacertprofiletest.cpp')
+    tests_src += ['cacertprofiletest.cpp']
+    if target_os in ('linux'):
+        tests_src += ['ca_adapter_net_ssl.cpp']
+    if catest_env.get('WITH_TCP') == True:
+        tests_src += ['ssladapter_test.cpp']
 
 catests = [catest_env.Program('catests', tests_src)]
 
