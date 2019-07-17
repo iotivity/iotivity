@@ -57,6 +57,7 @@
 #include "secureresourcemanager.h"
 #include "ocstackinternal.h"
 #include "deviceonboardingstate.h"
+#include "mbedtls_messages.h"
 
 #ifdef __unix__
 #include <sys/types.h>

@@ -35,6 +35,7 @@
 #include "experimental/payload_logging.h"
 #include "pmutility.h"
 #include "srmutility.h"
+#include "mbedtls_messages.h"
 
 // headers required for mbed TLS
 #include "mbedtls/config.h"

@@ -38,6 +38,7 @@
 #include "pmutility.h"
 #include "srmutility.h"
 #include "srmresourcestrings.h"
+#include "mbedtls_messages.h"
 
 // headers required for mbed TLS
 #include "mbedtls/config.h"

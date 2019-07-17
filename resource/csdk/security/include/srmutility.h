@@ -35,9 +35,6 @@ extern "C"
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-#if defined (__WITH_TLS__) || defined(__WITH_DTLS__)
-#include "mbedtls/error.h"
-#endif
 typedef struct OicParseQueryIter OicParseQueryIter_t;
 
 /**
@@ -112,41 +109,6 @@ struct OicParseQueryIter
 #define VERIFY_NOT_NULL_RETURN(tag, arg, logLevel, retValue) do { if (NULL == (arg)) \
             { OIC_LOG((logLevel), tag, #arg " is NULL"); return retValue; } } while(0)
 #endif
-#if defined (__WITH_TLS__) || defined(__WITH_DTLS__)
-/**
- * Macro to log an mbedtls error
- * For mbedtls functions that return 0 as non-error
- * @note Invoker must provide message buffer, and must include "mbedtls/error.h"
- */
-#define LOG_MBED_ERROR(tag, ret, buf, bufSize, logLevel) do{ if (0!=(ret)) { \
-    mbedtls_strerror((ret), (buf), (bufSize));                               \
-    OIC_LOG_V((logLevel), (tag), "mbedtls error:  %s", (buf)); } }while(0)
-
-#define LOG_MBEDTLS_ERROR(ret) do{ \
-    if (0!=(ret)) {\
-    char *_buf = (char*)OICCalloc(2048, 1);\
-    if (_buf)\
-    {\
-        mbedtls_strerror((ret), _buf, 2048);                           \
-        OIC_LOG_V(ERROR, TAG, "mbedtls error:  %s", _buf); \
-        OICFree(_buf);\
-    }\
-    } }while(0)
-
-#define LOG_MBEDTLS_VERIFY_ERROR(flags) do{ \
-    if (0!=(flags)) {                       \
-    char *_buf = (char*)OICCalloc(2048, 1);  \
-    if (_buf)                                \
-    {                                       \
-        mbedtls_x509_crt_verify_info(_buf, 2048, "", flags); \
-        OIC_LOG_V(ERROR, TAG, "mbedtls verify error:  %s", _buf); \
-        OICFree(_buf);                       \
-    }                                       \
-    } }while(0)
-
-
-#endif //(__WITH_TLS__) || defined(__WITH_DTLS__)
-
 /**
  * This method initializes the @ref OicParseQueryIter_t struct.
  *
