@@ -232,7 +232,7 @@ TEST_F(OXMPIN, GetDtlsPskForRandomPinOxm)
     ASSERT_NE(nullptr, result);
 
     EXPECT_EQ(GetDtlsPskForRandomPinOxm(CA_DTLS_PSK_KEY, NULL, 0, result, len), OWNER_PSK_LENGTH_128);
-    EXPECT_GT(GetDtlsPskForRandomPinOxm(CA_DTLS_PSK_HINT, NULL, 0, result, len), 0);
+    EXPECT_GT(GetDtlsPskForRandomPinOxm(CA_DTLS_PSK_HINT, NULL, 0, result, len), sizeof(OicUuid_t));
     EXPECT_EQ(GetDtlsPskForRandomPinOxm((CADtlsPskCredType_t)3, NULL, 0, result, len), -1);
 
     OICFree(result);

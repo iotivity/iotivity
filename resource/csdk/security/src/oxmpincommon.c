@@ -451,21 +451,25 @@ int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
         case CA_DTLS_PSK_HINT:
         case CA_DTLS_PSK_IDENTITY:
             {
-                /**
-                 * The server will provide PSK hint to identify PSK according to RFC 4589 and RFC 4279.
-                 *
-                 * At this point, The server generate random hint and
-                 * provide it to client through server key exchange message.
-                 */
-                if (!OCGetRandomBytes(result, result_length))
+                const OicSecDoxm_t* doxm = GetDoxmResourceData();
+
+                if (NULL == doxm)
                 {
-                    OIC_LOG(ERROR, TAG, "Failed to generate random PSK hint");
-                    break;
+                    OIC_LOG(ERROR, TAG, "Cant get own uuid");
+                    return ret;
                 }
-                ret = (int32_t)result_length;
+
+                if (sizeof(doxm->deviceID.id) > result_length)
+                {
+                    OIC_LOG(ERROR, TAG, "Identity buffer is too small");
+                    return ret;
+                }
+
+                memcpy(result, doxm->deviceID.id, sizeof(doxm->deviceID.id));
+                ret = sizeof(doxm->deviceID.id);
 
                 OIC_LOG(DEBUG, TAG, "PSK HINT : ");
-                OIC_LOG_BUFFER(DEBUG, TAG, result, result_length);
+                OIC_LOG_BUFFER(DEBUG, TAG, result, ret);
             }
             break;
 
