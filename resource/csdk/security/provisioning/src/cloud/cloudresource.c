@@ -372,7 +372,7 @@ OCRepPayload *CreateCloudGetPayload(const OicCloud_t *cloud)
         {
             OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_APN);
         }
-        if (!OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, ""))
+        if (!OCRepPayloadSetPropString(payload, OIC_JSON_CLOUD_CIS, "coaps+tcp://127.0.0.1"))
         {
             OIC_LOG_V(ERROR, TAG, "%s: Can't set: %s", __func__, OC_CLOUD_PROVISIONING_CIS);
         }
