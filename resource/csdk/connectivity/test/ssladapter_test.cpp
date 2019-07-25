@@ -2015,7 +2015,7 @@ class TLSAdapter: public ::testing::Test
             OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
             pInternalWorking = false;
             oc_mutex_unlock(g_sslContextMutex);
-            CAdeinitSslAdapter();
+            CAdeinitSslAdapter(true);
             OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
         }
 };
