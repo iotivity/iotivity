@@ -515,7 +515,7 @@ OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
 
     // Remove query from Uri for resource string comparison
     size_t uriLen = strlen(uri);
-    char *query = strchr (uri, URI_QUERY_CHAR);
+    char *query = (char*)strchr (uri, URI_QUERY_CHAR);
     if (query)
     {
         uriLen = query - uri;
