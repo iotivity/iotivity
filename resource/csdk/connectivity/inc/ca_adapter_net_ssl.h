@@ -59,6 +59,16 @@ typedef ssize_t (*CAPacketSendCallback)(CAEndpoint_t *endpoint,
 CAResult_t CAsetTlsCipherSuite(const uint32_t cipher);
 
 /**
+ * Set the TLS certificate verification mode
+ *
+ * @param[in] enable  TRUE/FALSE enables/disables peer certificate checking.
+ *
+ * @retval  ::CA_STATUS_OK    Successful.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
+ */
+CAResult_t CAsetTlsAuthMode(const bool enable);
+
+/**
  * Used set send,recv and error callbacks for different adapters(WIFI,EtherNet).
  *
  * @param[in]  recvCallback    packet received callback.

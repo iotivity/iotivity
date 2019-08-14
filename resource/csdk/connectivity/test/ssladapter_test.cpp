@@ -51,6 +51,8 @@
 #define CAsetPeerCNVerifyCallback CAsetPeerCNVerifyCallbackTest
 #define CAsetCloseSslConnectionCallback CAsetCloseSslConnectionCallbackTest
 #define CAcleanupSslAdapter CAcleanupSslAdapterTest
+#define CAsetTlsAuthMode CAsetTlsAuthModeTest
+
 
 #include "../src/adapter_util/ca_adapter_net_ssl.c"
 

@@ -272,6 +272,17 @@ CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapt
  */
 CAResult_t CAEnableAnonECDHCipherSuite(const bool enable);
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+/**
+ * Set the TLS certificate verification mode
+ *
+ * @param[in] enable  TRUE/FALSE enables/disables peer certificate checking.
+ *
+ * @retval  ::CA_STATUS_OK    Successful.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
+ */
+CAResult_t CASetCertificateRequest(const bool enable);
+#endif
 
 /**
  * Generate ownerPSK using PRF.

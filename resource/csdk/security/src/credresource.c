@@ -2304,7 +2304,8 @@ static OCEntityHandlerResult HandleNewCredential(OCEntityHandlerRequest *ehReque
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                         if(CA_STATUS_OK != CAregisterPkixInfoHandler(GetPkixInfo)
                             || CA_STATUS_OK != CAregisterIdentityHandler(GetIdentityHandler)
-                            || CA_STATUS_OK != CAregisterGetCredentialTypesHandler(InitCipherSuiteList))
+                            || CA_STATUS_OK != CAregisterGetCredentialTypesHandler(InitCipherSuiteList)
+                            || CA_STATUS_OK != CASetCertificateRequest(true))
                         {
                             OIC_LOG(ERROR, TAG, "Failed to revert TLS default handlers.");
                             ret = OC_EH_ERROR;

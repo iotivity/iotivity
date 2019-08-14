@@ -568,6 +568,22 @@ CAResult_t CAEnableAnonECDHCipherSuite(const bool enable)
     return res;
 }
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+CAResult_t CASetCertificateRequest(const bool enable)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+    CAResult_t res = CA_STATUS_FAILED;
+
+    res = CAsetTlsAuthMode(enable);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to CAsetTlsCipherSuiteAuthMode : %d", res);
+    }
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return res;
+}
+#endif
+
 CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t* endpoint,
                     const uint8_t* label, const size_t labelLen,
                     const uint8_t* rsrcServerDeviceID, const size_t rsrcServerDeviceIDLen,

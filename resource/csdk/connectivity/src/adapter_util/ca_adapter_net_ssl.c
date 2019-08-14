@@ -2329,32 +2329,36 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
                                                  sizeof(sep->endpoint.addr));
             ret = mbedtls_ssl_handshake_step(&peer->ssl);
         }
-        uint32_t flags = mbedtls_ssl_get_verify_result(&peer->ssl);
-        if (0 != flags)
+
+        if (peer->ssl.conf->authmode != MBEDTLS_SSL_VERIFY_NONE)
         {
-            size_t bufSize = 1024;
-            char *bufMsg = (char*)OICCalloc(1, bufSize);
-            if (bufMsg)
+            uint32_t flags = mbedtls_ssl_get_verify_result(&peer->ssl);
+            if (0 != flags)
             {
-                mbedtls_x509_crt_verify_info(bufMsg, bufSize, "", flags);
-                OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: session verification(%X): %s", __func__, flags, bufMsg);
-                OICFree(bufMsg);
-            }
-            else
-            {
-                OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: session verification(%X)", __func__, flags);
-            }
+                size_t bufSize = 1024;
+                char *bufMsg = (char*)OICCalloc(1, bufSize);
+                if (bufMsg)
+                {
+                    mbedtls_x509_crt_verify_info(bufMsg, bufSize, "", flags);
+                    OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: session verification(%X): %s", __func__, flags, bufMsg);
+                    OICFree(bufMsg);
+                }
+                else
+                {
+                    OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: session verification(%X)", __func__, flags);
+                }
 
-            OIC_LOG_BUFFER(ERROR, NET_SSL_TAG, (const uint8_t *) &flags, sizeof(flags));
+                OIC_LOG_BUFFER(ERROR, NET_SSL_TAG, (const uint8_t *) &flags, sizeof(flags));
 
-            if (!checkSslOperation(peer,
-                                   (int)flags,
-                                   "Cert verification failed",
-                                   GetAlertCode(flags)))
-            {
-                oc_mutex_unlock(g_sslContextMutex);
-                OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-                return CA_STATUS_FAILED;
+                if (!checkSslOperation(peer,
+                                       (int)flags,
+                                       "Cert verification failed",
+                                       GetAlertCode(flags)))
+                {
+                    oc_mutex_unlock(g_sslContextMutex);
+                    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+                    return CA_STATUS_FAILED;
+                }
             }
         }
         if (!checkSslOperation(peer,
@@ -2421,7 +2425,8 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
             int selectedCipher = peer->ssl.session->ciphersuite;
             OIC_LOG_V(DEBUG, NET_SSL_TAG, "(D)TLS Session is connected via ciphersuite [0x%x]", selectedCipher);
             if (MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 != selectedCipher &&
-                MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256 != selectedCipher)
+                MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256 != selectedCipher &&
+                peer->ssl.conf->authmode != MBEDTLS_SSL_VERIFY_NONE)
             {
                 const mbedtls_x509_crt * peerCert = mbedtls_ssl_get_peer_cert(&peer->ssl);
                 const mbedtls_x509_name * name = NULL;
@@ -2747,6 +2752,37 @@ CAResult_t CAsetTlsCipherSuite(const uint32_t cipher)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return CA_STATUS_OK;
 }
+
+CAResult_t CAsetTlsAuthMode(const bool enable)
+{
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+    oc_mutex_lock(g_sslContextMutex);
+
+    if (NULL == g_caSslContext)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "SSL context is not initialized.");
+        oc_mutex_unlock(g_sslContextMutex);
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+#ifdef __WITH_TLS__
+        mbedtls_ssl_conf_authmode(&g_caSslContext->serverTlsConf
+                                 , enable ? MBEDTLS_SSL_VERIFY_REQUIRED
+                                          : MBEDTLS_SSL_VERIFY_NONE);
+#endif
+#ifdef __WITH_DTLS__
+        mbedtls_ssl_conf_authmode(&g_caSslContext->serverDtlsConf
+                                 , enable ? MBEDTLS_SSL_VERIFY_REQUIRED
+                                          : MBEDTLS_SSL_VERIFY_NONE);
+
+#endif
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Certificate check is : %s", enable ? "enabled":"disabled");
+
+    oc_mutex_unlock(g_sslContextMutex);
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+    return CA_STATUS_OK;
+}
+
 
 CAResult_t CAinitiateSslHandshake(const CAEndpoint_t *endpoint)
 {

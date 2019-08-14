@@ -489,6 +489,10 @@ OCStackResult SRMInitSecureResources(void)
     {
         OIC_LOG_V(WARNING, TAG, "%s : CAregisterGetCredentialTypesHandler failed!", __func__);
     }
+    if (CA_STATUS_OK != CASetCertificateRequest(true))
+    {
+        OIC_LOG_V(WARNING, TAG, "%s : CASetCertificateRequest failed!", __func__);
+    }
     CAregisterSslDisconnectCallback(DeleteRolesCB);
 #endif // __WITH_DTLS__ or __WITH_TLS__
     return ret;

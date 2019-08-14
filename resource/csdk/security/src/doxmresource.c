@@ -1523,6 +1523,7 @@ OCEntityHandlerResult HandleDoxmPostRequestMfg(OicSecDoxm_t *newDoxm,
         VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterIdentityHandler(NULL), ERROR);
         VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterGetCredentialTypesHandler(
                            InitManufacturerCipherSuiteList), ERROR);
+        VERIFY_SUCCESS(TAG, CA_STATUS_OK == CASetCertificateRequest(false), ERROR);
 exit:
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
     return ehRet;
