@@ -519,6 +519,12 @@ struct OicSecRole
     char authority[ROLEAUTHORITY_LENGTH];   // 1:R:S:N:String
 };
 
+#if (__STDC_VERSION__ >= 199901L)
+#define ZERO_ROLE {.id = { 0 }, .authority = { 0 }};
+#else
+#define ZERO_ROLE {{ 0 }, { 0 }};
+#endif
+
 typedef enum OicSecConntype
 {
     AUTH_CRYPT, // any subject requesting over authenticated and encrypted channel

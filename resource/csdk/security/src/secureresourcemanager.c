@@ -265,7 +265,7 @@ static void ClearRequestContext(SRMRequestContext_t *context)
 // denied).
 bool IsRequestOverSecureChannel(SRMRequestContext_t *context)
 {
-    OicUuid_t nullSubjectId = {.id = {0}};
+    OicUuid_t nullSubjectId = OC_ZERO_UUID;
 
     // If flag set, return true
     if (context->endPoint->flags & CA_SECURE)
@@ -637,7 +637,7 @@ OicSecSvrType_t GetSvrTypeFromUri(const char* uri)
 /**
  * An unset role, used in comparisons.
  */
-const OicSecRole_t EMPTY_ROLE = { .id = { 0 }, .authority = { 0 } };
+const OicSecRole_t EMPTY_ROLE = ZERO_ROLE;
 
 bool IsNonEmptyRole(const OicSecRole_t *role)
 {
