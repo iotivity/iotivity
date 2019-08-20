@@ -17,6 +17,9 @@
  * limitations under the License.
  *
  * *****************************************************************/
+#if defined(_WIN32)
+#pragma warning(disable:4200)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <gtest/gtest.h>

@@ -219,7 +219,7 @@ else:
 # Source files and Targets
 ######################################################################
 
-if target_os in ['linux']:
+if target_os in ['linux','windows']:
     unittest_src = [
         'tools.cpp',
         'ocprovisioningmanager.cpp',
