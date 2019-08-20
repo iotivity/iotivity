@@ -48,6 +48,22 @@
  */
 #define UINT64_MAX_STRLEN 20
 
+#ifndef OC_ZERO_BYTE_STR
+#   if (__STDC_VERSION__ >= 199901L)
+#       define ZERO_BYTE_STR { .bytes = NULL, .len = 0}
+#   else
+#       define ZERO_BYTE_STR { NULL, 0}
+#   endif
+#endif
+
+#ifndef OC_INIT_BYTE_STR
+#   if (__STDC_VERSION__ >= 199901L)
+#       define OC_INIT_BYTE_STR(_bytes, _len) {.bytes=(_bytes), .len=(_len)}
+#   else
+#       define OC_INIT_BYTE_STR(_bytes, _len) {(_bytes), (_len)}
+#   endif
+#endif
+
 static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, OCPayloadFormat format,
         CborValue *arrayVal);
 static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *repParent, bool isRoot);
@@ -827,7 +843,7 @@ static CborError OCParseArrayFillArray(const CborValue *parent,
 
     size_t i = 0;
     char *tempStr = NULL;
-    OCByteString ocByteStr = { .bytes = NULL, .len = 0};
+    OCByteString ocByteStr = ZERO_BYTE_STR;
     size_t tempLen = 0;
     OCRepPayload *tempPl = NULL;
 
@@ -976,7 +992,7 @@ static CborError OCParseArray(OCRepPayload *out, const char *name, CborValue *co
     arr = OICCalloc(dimTotal, allocSize);
     VERIFY_PARAM_NON_NULL(TAG, arr, "Array Parse allocation failed");
 
-    res = OCParseArrayFillArray(container, dimensions, type, arr);
+    err = OCParseArrayFillArray(container, dimensions, type, arr);
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Failed parse array");
 
     switch (type)
@@ -1146,7 +1162,7 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
                         uint8_t* bytestrval = NULL;
                         err = cbor_value_dup_byte_string(&repMap, &bytestrval, &len, NULL);
                         VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, err, "Failed getting byte string value");
-                        OCByteString tmp = {.bytes = bytestrval, .len = len};
+                        OCByteString tmp = OC_INIT_BYTE_STR(bytestrval, len);
                         res = OCRepPayloadSetPropByteStringAsOwner(curPayload, name, &tmp);
                     }
                     break;
