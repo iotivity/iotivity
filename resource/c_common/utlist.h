@@ -350,11 +350,10 @@ do {                                                                            
 
 #define LL_DELETE2(head,del,next)                                                              \
 do {                                                                                           \
-  LDECLTYPE(head) _tmp;                                                                        \
   if ((head) == (del)) {                                                                       \
     (head)=(head)->next;                                                                       \
   } else {                                                                                     \
-    _tmp = (head);                                                                             \
+    LDECLTYPE(head) _tmp = (head);                                                             \
     while (_tmp->next && (_tmp->next != (del))) {                                              \
       _tmp = _tmp->next;                                                                       \
     }                                                                                          \
