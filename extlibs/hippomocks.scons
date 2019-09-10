@@ -1,8 +1,8 @@
-#******************************************************************
+# ******************************************************************
 #
 # Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
 #
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 ##
 # 'hippomocks' script to check if Hippo Mocks Unit Test library is installed.
@@ -24,35 +24,52 @@
 #
 ##
 
-import os, sys
+import os
+import sys
 
 Import('env')
 
 target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 
+
+def removePath(path):
+    print('remove: ' + path)
+    try:
+        from subprocess import Popen, PIPE
+        return Popen('/bin/rm -rf ' + path, shell=True, stdout=PIPE).stdout.read()
+    except Exception, ex:
+        print('error: '+str(ex)+'\n')
+
+def movePath(src, dst):
+    print('move: ' + src + ' to ' + dst)
+    removePath(dst)
+    try:
+        from subprocess import Popen, PIPE
+        return Popen('/bin/mv ' + src + ' ' + dst, shell=True, stdout=PIPE).stdout.read()
+    except Exception, ex:
+        print('error: '+str(ex)+'\n')
+
 # Only verify/install on linux
 if target_os in ['linux']:
-	print '*** Checking for installation of hippomocks ***'
+    print '*** Checking for installation of hippomocks ***'
 
-	hippomocks_sha      = '8e210c5808d490b26fff69151c801fa28d291fcb'
-	hippomocks_dir_src  = src_dir + '/extlibs/hippomocks-' + hippomocks_sha
-	hippomocks_dir_dest = src_dir + '/extlibs/hippomocks-master'
-	hippomocks_zip_file = src_dir + '/extlibs/hippomocks-' + hippomocks_sha + '.zip'
-	hippomocks_url      = 'https://github.com/dascandy/hippomocks/archive/' + hippomocks_sha + '.zip'
+    hippomocks_sha = '8e210c5808d490b26fff69151c801fa28d291fcb'
+    hippomocks_dir_src = src_dir + '/extlibs/hippomocks-' + hippomocks_sha
+    hippomocks_dir_dest = src_dir + '/extlibs/hippomocks-master'
+    hippomocks_zip_file = src_dir + '/extlibs/hippomocks-' + hippomocks_sha + '.zip'
+    hippomocks_url = 'https://github.com/dascandy/hippomocks/archive/' + \
+        hippomocks_sha + '.zip'
 
-	if not os.path.exists(hippomocks_dir_dest):
-		# If the hippomocks zip file is not already present, download it
-		if not os.path.exists(hippomocks_zip_file):
-			hippomocks_zip = env.Download(hippomocks_zip_file, hippomocks_url)
-		else:
-			hippomocks_zip = hippomocks_zip_file
+    if not os.path.exists(hippomocks_dir_dest):
+        # If the hippomocks zip file is not already present, download it
+        if not os.path.exists(hippomocks_zip_file):
+            hippomocks_zip = env.Download(hippomocks_zip_file, hippomocks_url)
+        else:
+            hippomocks_zip = hippomocks_zip_file
 
-		# Unzip hippomocks
-		print 'Unzipping hippomocks'
-		env.UnpackAll(hippomocks_dir_src, hippomocks_zip)
-		print 'Renaming hippomocks directory'
-		os.rename(hippomocks_dir_src, hippomocks_dir_dest)
-
-
-
+        # Unzip hippomocks
+        print 'Unzipping hippomocks'
+        env.UnpackAll(hippomocks_dir_src, hippomocks_zip)
+        print 'Renaming hippomocks directory.'
+        movePath(hippomocks_dir_src, hippomocks_dir_dest)
