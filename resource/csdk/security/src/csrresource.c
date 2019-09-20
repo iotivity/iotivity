@@ -437,7 +437,7 @@ static OCEntityHandlerResult HandleCsrGetRequest(OCEntityHandlerRequest * ehRequ
     VERIFY_SUCCESS(TAG, 0 <= ret, ERROR);
     /* ret >= myDNStrLen means there was truncation; assert because this means a code bug. */
     assert((size_t)ret < myDNStrLen);
-    ret = OCInternalCSRRequest(myDNStr, &keyPair, OIC_ENCODING_DER, &csr);
+    ret = OCInternalCSRRequest(myDNStr, &keyPair, OIC_ENCODING_PEM, &csr);
     if (0 > ret)
     {
         res = OC_STACK_ERROR;
@@ -445,7 +445,7 @@ static OCEntityHandlerResult HandleCsrGetRequest(OCEntityHandlerRequest * ehRequ
     }
 
     // Convert CSR data into CBOR for transmission
-    res = CSRToCBORPayload(csr.bytes, csr.len, OIC_ENCODING_DER, &payload, &size);
+    res = CSRToCBORPayload(csr.bytes, csr.len, OIC_ENCODING_PEM, &payload, &size);
 
 exit:
 
