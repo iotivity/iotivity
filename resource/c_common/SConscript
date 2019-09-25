@@ -63,16 +63,11 @@ if not os.path.isfile(config_h_file_path) and env.GetOption not in ('clean', 'he
 '''
 
     cxx_headers = [
-        'arpa/inet.h',
         'fcntl.h',
         'grp.h',
         'in6addr.h',
         'linux/limits.h',
         'memory.h',
-        'net/if.h',
-        'netdb.h',
-        'netinet/in.h',
-        'pthread.h',
         'pwd.h',
         'stdlib.h',
         'string.h',
@@ -88,17 +83,15 @@ if not os.path.isfile(config_h_file_path) and env.GetOption not in ('clean', 'he
         'syslog.h',
         'time.h',
         'unistd.h',
-        'uuid/uuid.h',
-        'windows.h',
-        'winsock2.h',
-        'ws2tcpip.h'
+        'uuid/uuid.h'
     ]
 
     cxx_functions = ['strptime']
 
-    if target_os == 'msys_nt':
-        # WinPThread provides a pthread.h, but we want to use native threads.
-        cxx_headers.remove('pthread.h')
+    if target_os not in ['windows', 'msys_nt']:
+        cxx_headers+=['pthread.h', 'arpa/inet.h', 'net/if.h', 'netdb.h', 'netinet/in.h']
+    else:
+        cxx_headers+=['windows.h', 'winsock2.h', 'ws2tcpip.h']
 
     def get_define_from_string(header_file):
         header_file_converted = header_file.replace("/", "_").replace(".", "_").upper()
