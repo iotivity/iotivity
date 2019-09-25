@@ -2177,12 +2177,13 @@ static bool FillPrivateDataOfSubOwnerPSK(OicSecCred_t* receivedCred, const CAEnd
                            const OicSecDoxm_t* doxm, const OicUuid_t* subOwner)
 {
     unsigned char* b64Buf = NULL;
+    uint8_t subOwnerPSK[OWNER_PSK_LENGTH_128] = {0};
+    CAResult_t pskRet = CA_STATUS_OK;
     //Derive OwnerPSK locally
     const char* oxmLabel = GetOxmString(doxm->oxmSel);
     VERIFY_NOT_NULL(TAG, oxmLabel, ERROR);
 
-    uint8_t subOwnerPSK[OWNER_PSK_LENGTH_128] = {0};
-    CAResult_t pskRet = CAGenerateOwnerPSK(ownerAddr,
+    pskRet = CAGenerateOwnerPSK(ownerAddr,
         (uint8_t*)oxmLabel, strlen(oxmLabel),
         subOwner->id, sizeof(subOwner->id),
         doxm->deviceID.id, sizeof(doxm->deviceID.id),
