@@ -18,9 +18,10 @@ class Server extends React.Component {
             resourceType: "oic.r.switch.binary",
             resourceUpdateCompleted: true,
             resourceObservable: true,
+            serverStarted:false,
         };
 
-        this.onCreateResourceTapped = this.createResource.bind(this);
+        this.onStartServerTapped = this.startServer.bind(this);
         this.onResourceValueTapped = this.setBinarySwitchValue.bind(this);
         this.onStopServerTapped = this.stopServer.bind(this);
         this.onRFOTMTapped = this.onRFOTMChanged.bind(this);
@@ -30,35 +31,30 @@ class Server extends React.Component {
         this.props.stopObserveBinarySwitchValue();
         this.props.stopServer();
     }
-    createResource() {
-        this.props.startServer();
-        let param = {
-            uri: this.state.resourceUri,
-            types: this.state.resourceType,
-            observable: this.state.resourceObservable
+    componentWillReceiveProps(props) {
+        if (props.serverEnabled && !this.state.serverStarted)
+        {
+            this.setState({
+                serverStarted:true,
+            });
+            let param = {
+                uri: this.state.resourceUri,
+                types: this.state.resourceType,
+                observable: this.state.resourceObservable
+            }
+            this.props.createResource(param);
+            this.setState({
+                resourceUri: "/binaryswitch",
+                resourceType: "oic.r.switch.binary",
+                resourceObservable: true,
+                resourceUpdateCompleted: true,
+            });
+            this.props.observeBinarySwitchValue();
         }
-        this.props.actionDisableServerResourceControlUI();
-        this.props.createResource(param);
-        this.setState({
-            resourceUri: "/binaryswitch",
-            resourceType: "oic.r.switch.binary",
-            resourceObservable: true,
-            resourceUpdateCompleted: true,
-        });
-        this.props.observeBinarySwitchValue();
     }
-    deleteResource() {
-        let param = {
-            uri: this.state.resourceUri,
-        }
+    startServer() {
         this.props.actionDisableServerResourceControlUI();
-        this.props.deleteResource(param);
-        this.setState({
-            resourceUri: "/binaryswitch",
-            resourceType: "oic.r.switch.binary",
-            resourceObservable: true,
-            resourceUpdateCompleted: true,
-        });
+        this.props.startServer();
     }
     setBinarySwitchValue() {
         let param = {
@@ -69,21 +65,22 @@ class Server extends React.Component {
     stopServer() {
         this.props.stopObserveBinarySwitchValue();
         this.props.stopServer();
+        this.setState({
+            serverStarted:false,
+        });
     }
     onRFOTMChanged() {
         let param = {
             mode: "RFOTM"
         }
-        this.props.stopObserveBinarySwitchValue();
-        this.props.stopServer();
+        this.stopServer();
         this.props.copyServerCBORFile(param);
     }
     onRFNOPChanged() {
         let param = {
             mode: "RFNOP"
         }
-        this.props.stopObserveBinarySwitchValue();
-        this.props.stopServer();
+        this.stopServer();
         this.props.copyServerCBORFile(param);
     }
     render() {
@@ -101,7 +98,7 @@ class Server extends React.Component {
                     <Cell shrink>
                         {serverEnabled ?
                             <Button small onClick={this.onStopServerTapped}>stop server</Button>
-                            : <Button disabled={!serverStartable} small onClick={this.onCreateResourceTapped}>start server</Button>
+                            : <Button disabled={!serverStartable} small onClick={this.onStartServerTapped}>start server</Button>
                         }
                     </Cell>
                     <Cell>
@@ -142,7 +139,6 @@ Server.propTypes = {
     startServer: PropTypes.func,
     stopServer: PropTypes.func,
     createResource: PropTypes.func,
-    deleteResource: PropTypes.func,
     actionDisableServerResourceControlUI: PropTypes.func,
     setBinarySwitchValue: PropTypes.func,
 };
@@ -151,7 +147,6 @@ const mapDispatchToProps = (dispatch) => {
         startServer: () => ActionCreators.startServer(dispatch),
         stopServer: () => ActionCreators.stopServer(dispatch),
         createResource: (params) => dispatch(ActionCreators.createResource(params)),
-        deleteResource: (params) => dispatch(ActionCreators.deleteResource(params)),
         actionDisableServerResourceControlUI: () => dispatch(ActionCreators.actionDisableServerResourceControlUI()),
         setBinarySwitchValue: (params) => dispatch(ActionCreators.setBinarySwitchValue(params)),
         observeBinarySwitchValue: () => ActionCreators.observeBinarySwitchValue(dispatch),
