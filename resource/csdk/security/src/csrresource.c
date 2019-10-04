@@ -155,7 +155,14 @@ static OCStackResult CSRToCBORPayload(const uint8_t *csr, size_t csrLen, OicEnco
     // Create CSR string entry
     cborEncoderResult = cbor_encode_text_string(&csrRootMap, OIC_JSON_CSR_NAME, strlen(OIC_JSON_CSR_NAME));
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding CSR name.");
-    cborEncoderResult = cbor_encode_byte_string(&csrRootMap, csr, csrLen);
+    if (OIC_ENCODING_PEM == encoding)
+    {
+        cborEncoderResult = cbor_encode_text_string(&csrRootMap, (const char *)csr, csrLen);
+    }
+    else
+    {
+        cborEncoderResult = cbor_encode_byte_string(&csrRootMap, csr, csrLen);
+    }
     VERIFY_CBOR_SUCCESS_OR_OUT_OF_MEMORY(TAG, cborEncoderResult, "Failed adding CSR value.");
 
     // Create encoding entry
