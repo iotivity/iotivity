@@ -1436,10 +1436,12 @@ static void sendData(CASocketFd_t fd, const CAEndpoint_t *endpoint,
                            len, true, NULL);
     }
 #else
-    int err = 0;
+    #define SOCKET_ERROR_WAIT 300
     int len = 0;
     size_t sent = 0;
+    int err;
     do {
+        err = 0;
         int dataToSend = ((dlen - sent) > INT_MAX) ? INT_MAX : (int)(dlen - sent);
         len = sendto(fd, ((char*)data) + sent, dataToSend, 0, (struct sockaddr *)&sock, socklen);
         if (OC_SOCKET_ERROR == len)
@@ -1447,14 +1449,17 @@ static void sendData(CASocketFd_t fd, const CAEndpoint_t *endpoint,
             err = WSAGetLastError();
             if ((WSAEWOULDBLOCK != err) && (WSAENOBUFS != err))
             {
+                OIC_LOG_V(ERROR, TAG, "%s%s %s sendTo failed: %i", secure, cast, fam, err);
                  // If logging is not defined/enabled.
                 if (g_ipErrorHandler)
                 {
                     g_ipErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
                 }
-
-                OIC_LOG_V(ERROR, TAG, "%s%s %s sendTo failed: %i", secure, cast, fam, err);
+                break;
             }
+            OIC_LOG_V(WARNING, TAG, "%s%s %s sendTo failed: %s", secure, cast, fam,
+                err == WSAEWOULDBLOCK ? "Resource temporarily unavailable." : "No buffer space available." );
+            Sleep(SOCKET_ERROR_WAIT);
         }
         else
         {
