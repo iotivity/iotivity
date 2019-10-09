@@ -557,33 +557,6 @@ FILE *client_fopen(const char *path, const char *mode)
     }
 }
 
-//static gboolean clientStarter(gpointer user_data)
-void *clientStarter(gpointer user_data)
-{
-    struct timespec timeout;
-
-    timeout.tv_sec  = 0;
-    timeout.tv_nsec = 100000000L;
-
-    OCSAMPLE_LOG_INFO(TAG, 0, "clientStarter...");
-    while (!gQuitFlag)
-    {
-        if (OCProcess() != OC_STACK_OK)
-        {
-            OCSAMPLE_LOG_ERROR(TAG, 0, "OCStack process error");
-            return 0;
-        }
-        nanosleep(&timeout, NULL);
-    }
-}
-
-static gboolean getInput(gpointer user_data)
-{
-    OCSAMPLE_LOG_INFO(TAG, 0, "getInput....");
-    char input[10] = {0};
-    //char * ret = fgets(input, sizeof(input), stdin);
-}
-
 static void
 PrintDiscoveredResources(void)
 {

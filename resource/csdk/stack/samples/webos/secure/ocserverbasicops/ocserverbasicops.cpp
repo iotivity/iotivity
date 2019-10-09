@@ -588,6 +588,8 @@ void *serverStarter(gpointer user_data)
         }
     }
     OCSAMPLE_LOG_INFO(TAG, 0, "Stopping serverStarter loop...");
+
+    return;
 }
 
 int main(int /*argc*/, char* /*argv*/[])
