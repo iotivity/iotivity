@@ -987,7 +987,6 @@ static OCStackApplicationResult handleCloudSignOutResponse(void *ctx,
     OCStackApplicationResult ret = OC_STACK_DELETE_TRANSACTION;
 
     VERIFY_NOT_NULL_RETURN(TAG, response, ERROR, OC_STACK_DELETE_TRANSACTION);
-    VERIFY_NOT_NULL_RETURN(TAG, response->payload, ERROR, OC_STACK_DELETE_TRANSACTION);
 
 //TODO clarify response result code from cloud
     /*    if (response->result != LOGIN_OK)
