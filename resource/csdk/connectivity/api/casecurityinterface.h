@@ -260,6 +260,16 @@ CAResult_t CAregisterPkixInfoHandler(CAgetPkixInfoHandler getPkixInfoHandler);
  */
 CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter);
 
+#if defined(WITH_CLOUD)
+/**
+ * Enable cipher suites for use with (D)TLS cloud connection.
+ *
+ * @retval  ::CA_STATUS_OK    Successful.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
+ */
+CAResult_t CAEnableCloudConnection(void);
+#endif
+
 /**
  * Enable TLS_ECDH_anon_WITH_AES_128_CBC_SHA cipher suite in dtls.
  *

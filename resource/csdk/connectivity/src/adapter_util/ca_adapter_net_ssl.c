@@ -390,6 +390,9 @@ typedef struct SslContext
     int timerId;
 #endif
 
+#if defined(WITH_CLOUD)
+    bool cloudConn;
+#endif
 } SslContext_t;
 
 /**
@@ -1057,6 +1060,35 @@ bool GetCASecureEndpointAttributes(const CAEndpoint_t* peer, uint32_t* allAttrib
     return result;
 }
 
+#if defined(WITH_CLOUD)
+/**
+ * Enable cipher suites for use with (D)TLS cloud connection.
+ *
+ * @return  true on success, false otherwise.
+ */
+bool CAEnableCloudCipherSuites(void)
+{
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+
+    oc_mutex_lock(g_sslContextMutex);
+
+    if (NULL == g_caSslContext)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "Context is NULL");
+        oc_mutex_unlock(g_sslContextMutex);
+        return false;
+    }
+
+    // flag will be cleared after the connection is established
+    g_caSslContext->cloudConn = true;
+
+    oc_mutex_unlock(g_sslContextMutex);
+
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+    return true;
+}
+#endif
+
 /**
  * Deletes cached message.
  *
@@ -1631,6 +1663,49 @@ static bool SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return true;
 }
+
+#if defined(WITH_CLOUD)
+/**
+ * Select cipher suites for use with (D)TLS cloud connection.
+ *
+ * @param[in]  config     the (D)TLS configuration object
+ * @param[in]  adapter    the associated transport adapter
+ * @param[in]  deviceId   the device ID of the peer we will connect to
+ *
+ * @return  true on success or false on error
+ */
+static bool SetupCloudCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapter,
+                             const char* deviceId)
+{
+    static const int csList[] =
+    {
+        MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, //prefered ciphersuite
+        MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+        MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+        MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,
+        0
+    };
+    OC_UNUSED(deviceId);
+
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+
+    VERIFY_NON_NULL_RET(config, NET_SSL_TAG, "Invailid param", false);
+    VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL", false);
+
+    // Retrieve the Cert credential from SRM
+    if (0 != InitPKIX(adapter))
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "Failed to init X.509");
+        /* Don't return error, the connection may work with another cred type */
+    }
+
+    mbedtls_ssl_conf_ciphersuites(config, csList);
+
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+    return true;
+}
+#endif
+
 /**
  * Initiate TLS handshake with endpoint.
  *
@@ -1658,7 +1733,22 @@ static SslEndPoint_t * InitiateTlsHandshake(const CAEndpoint_t *endpoint)
     }
 
     //Load allowed SVR suites from SVR DB
-    if(!SetupCipher(config, endpoint->adapter, endpoint->remoteId))
+    bool setupCipherRes = false;
+#if defined(WITH_CLOUD)
+    // Check cloudConnection flag and set appropriate ciphersuite
+    if (!g_caSslContext->cloudConn)
+    {
+        setupCipherRes = SetupCipher(config, endpoint->adapter, endpoint->remoteId);
+    }
+    else
+    {
+        g_caSslContext->cloudConn = false;
+        setupCipherRes = SetupCloudCipher(config, endpoint->adapter, endpoint->remoteId);
+    }
+#else
+    setupCipherRes = SetupCipher(config, endpoint->adapter, endpoint->remoteId);
+#endif
+    if (!setupCipherRes)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Failed to set up cipher");
         DeleteSslEndPoint(tep);
@@ -2115,6 +2205,14 @@ CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint,
         oc_mutex_unlock(g_sslContextMutex);
         return CA_STATUS_FAILED;
     }
+
+#if defined(WITH_CLOUD)
+    if (g_caSslContext->cloudConn && MBEDTLS_SSL_IS_CLIENT == tep->ssl.conf->endpoint)
+    {
+        // cloud connection exist just clear the flag
+        g_caSslContext->cloudConn = false;
+    }
+#endif
 
     if (MBEDTLS_SSL_HANDSHAKE_OVER == tep->ssl.state)
     {

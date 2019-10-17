@@ -549,6 +549,21 @@ CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapt
     return res;
 }
 
+#if defined(WITH_CLOUD)
+CAResult_t CAEnableCloudConnection(void)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+    CAResult_t res = CA_NOT_SUPPORTED;
+#if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
+    res = CAEnableCloudCipherSuites() ? CA_STATUS_OK : CA_STATUS_FAILED;
+#else
+    OIC_LOG(ERROR, TAG, "Method not supported");
+#endif
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return res;
+}
+#endif
+
 CAResult_t CAEnableAnonECDHCipherSuite(const bool enable)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);

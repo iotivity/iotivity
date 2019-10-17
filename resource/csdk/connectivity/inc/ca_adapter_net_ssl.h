@@ -237,6 +237,15 @@ bool SetCASecureEndpointAttribute(const CAEndpoint_t* peer, uint32_t newAttribut
  */
 bool GetCASecureEndpointAttributes(const CAEndpoint_t* peer, uint32_t* allAttributes);
 
+#if defined(WITH_CLOUD)
+/**
+ * Enable cipher suites for use with (D)TLS cloud connection.
+ *
+ * @return  true on success, false otherwise.
+ */
+bool CAEnableCloudCipherSuites(void);
+#endif
+
 #ifdef __cplusplus
 }
 #endif //__cplusplus

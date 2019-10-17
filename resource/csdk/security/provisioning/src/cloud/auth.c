@@ -708,7 +708,7 @@ OCStackResult OCCloudTokenRefresh(OicCloud_t *cloud)
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
     char uri[MAX_URI_LENGTH] = { 0 };
-    OCStackResult ret = OC_STACK_OK;
+    OCStackResult ret = OC_STACK_ERROR;
 
     VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, OC_STACK_INVALID_PARAM);
     if (OC_CLOUD_TOKEN_REFRESH4 < cloud->stat)
@@ -748,8 +748,11 @@ OCStackResult OCCloudTokenRefresh(OicCloud_t *cloud)
     }
     else
     {
-        ret = OCDoResource(NULL, OC_REST_POST, uri, NULL, (OCPayload *)payload,
-                           CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+        if (CA_STATUS_OK == CAEnableCloudConnection())
+        {
+            ret = OCDoResource(NULL, OC_REST_POST, uri, NULL, (OCPayload *)payload,
+                               CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+        }
     }
 
     OIC_LOG_V(DEBUG, TAG, "%s: OUT: %d", __func__, (int)ret);
@@ -1038,7 +1041,7 @@ static OCStackResult CloudSign(OicCloud_t *cloud, bool signIn)
     VERIFY_NOT_NULL_RETURN(TAG, cloud->session->uid, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cloud->session->accessToken, ERROR, OC_STACK_INVALID_PARAM);
 
-    OCStackResult ret = OC_STACK_OK;
+    OCStackResult ret = OC_STACK_ERROR;
     char uri[MAX_URI_QUERY] = { 0 };
 
     char *deviceId = getDeviceId();
@@ -1072,8 +1075,11 @@ static OCStackResult CloudSign(OicCloud_t *cloud, bool signIn)
 
     cloud->stat = signIn ? OC_CLOUD_SIGNIN : OC_CLOUD_SIGNOUT;
 
-    ret = OCDoResource(NULL, OC_REST_POST, uri, NULL, (OCPayload *)payload,
-                       CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+    if (CA_STATUS_OK == CAEnableCloudConnection())
+    {
+        ret = OCDoResource(NULL, OC_REST_POST, uri, NULL, (OCPayload *)payload,
+                           CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+    }
 
     OIC_LOG_V(DEBUG, TAG, "%s: OUT", __func__);
     return ret;
@@ -1337,7 +1343,7 @@ static OCStackResult OCCloudAccountResource(OicCloud_t *cloud, OCMethod method)
     OIC_LOG_V(DEBUG, TAG, "%s: IN", __func__);
 
     char uri[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = { 0 };
-    OCStackResult ret = OC_STACK_OK;
+    OCStackResult ret = OC_STACK_ERROR;
 
     VERIFY_NOT_NULL_RETURN(TAG, cloud, ERROR, OC_STACK_INVALID_PARAM);
     VERIFY_NOT_NULL_RETURN(TAG, cloud->cis, ERROR, OC_STACK_INVALID_PARAM);
@@ -1397,8 +1403,11 @@ static OCStackResult OCCloudAccountResource(OicCloud_t *cloud, OCMethod method)
         cbData.cb = handleCloudDeleteResponse;
     }
 
-    ret = OCDoResource(NULL, method, uri, NULL, (OCPayload *)payload,
-                       CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+    if (CA_STATUS_OK == CAEnableCloudConnection())
+    {
+        ret = OCDoResource(NULL, method, uri, NULL, (OCPayload *)payload,
+                           CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+    }
 
     OIC_LOG_V(INFO, TAG, "%s: cloud(%s) sign in", __func__, cloud->cis);
 
