@@ -1559,13 +1559,6 @@ static bool SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
     g_caSslContext->cipherFlag[0] = false;
     g_caSslContext->cipherFlag[1] = false;
 
-    if (NULL == g_getCredentialTypesCallback)
-    {
-        OIC_LOG(ERROR, NET_SSL_TAG, "Param callback is null");
-        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-        return false;
-    }
-
     g_getCredentialTypesCallback(g_caSslContext->cipherFlag, deviceId);
 
     // Retrieve the PSK credential from SRM or use PIN based generation
