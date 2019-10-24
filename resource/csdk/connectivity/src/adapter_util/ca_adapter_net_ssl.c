@@ -2261,6 +2261,12 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, size_t dat
     VERIFY_NON_NULL_RET(sep, NET_SSL_TAG, "endpoint is NULL" , CA_STATUS_INVALID_PARAM);
     VERIFY_NON_NULL_RET(data, NET_SSL_TAG, "Param data is NULL" , CA_STATUS_INVALID_PARAM);
 
+    if (0 == dataLen)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "dataLen is zero");
+        return CA_STATUS_FAILED;
+    }
+
     oc_mutex_lock(g_sslContextMutex);
     if (NULL == g_caSslContext)
     {
