@@ -35,6 +35,11 @@
 #include "oic_time.h"
 #include "NSProviderSystem.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif // __cplusplus
+
 OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *);
 NSResult NSFreeOCEntityHandlerRequest(OCEntityHandlerRequest *);
 
@@ -65,5 +70,9 @@ OCRepPayloadValue* NSPayloadFindValue(const OCRepPayload* payload, const char* n
 
 OCDevAddr * NSChangeAddress(const char * address);
 bool NSOCResultToSuccess(OCStackResult ret);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif /* _NS_UTIL__H_ */

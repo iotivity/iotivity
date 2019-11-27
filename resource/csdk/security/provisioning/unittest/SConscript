@@ -133,7 +133,7 @@ def run_test(target, source, env):
     po_srv1 = start_srv(str(1))
     po_srv2 = start_srv(str(2))
     print("Waiting for servers start")
-    sleep(3)
+    sleep(30)
     call([unittest_build_dir + unittest_bin])
     print("Servers are stopping")
     sleep(3)

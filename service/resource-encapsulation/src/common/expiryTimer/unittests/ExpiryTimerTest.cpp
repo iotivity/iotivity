@@ -92,7 +92,7 @@ TEST_F(ExpiryTimerImplTest, CallbackBeInvokedWithinTolerance)
     ExpiryTimerImpl::getInstance()->post(10,
             std::bind(&FunctionObject::execute, functor, std::placeholders::_1));
 
-    Wait(TOLERANCE_IN_MILLIS * 2);
+    Wait(TOLERANCE_IN_MILLIS * 10);
 }
 
 TEST_F(ExpiryTimerImplTest, DISABLED_CallbackBeInvokedWithTimerId)

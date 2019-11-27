@@ -29,9 +29,18 @@
 #include "NSStructs.h"
 #include "NSUtil.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif // __cplusplus
+
 void NSRegisterSubscribeRequestCb(NSSubscribeRequestCallback subscribeRequestCb);
 void NSRegisterSyncCb(NSProviderSyncInfoCallback syncCb);
 void NSSubscribeRequestCb(NSConsumer *consumer);
 void NSSyncCb(NSSyncInfo *sync);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif /* _NS_PROVIDER_CALLBACK_RESPONSE__H_ */

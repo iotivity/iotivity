@@ -91,6 +91,7 @@ class NotificationProviderServiceTest : public TestWithMock
 
         void SetUp()
         {
+            TestWithMock::SetUp();
 
             if (g_isStartedStack == false)
             {

@@ -26,7 +26,16 @@
 #include "NSProviderScheduler.h"
 #include "NSProviderResource.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif // __cplusplus
+
 NSResult NSStartPresence();
 NSResult NSStopPresence();
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif /* _NS_PROVIDER_DISCOVERY_H_ */

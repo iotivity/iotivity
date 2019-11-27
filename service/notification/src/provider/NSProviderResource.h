@@ -29,6 +29,11 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif // __cplusplus
+
 #define NS_CREATE_RESOURCE(func, obj) \
     { \
         NSResult _ret = (func); \
@@ -64,5 +69,9 @@ NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle);
 NSResult NSPutSyncResource(NSSyncInfo *sync, OCResourceHandle * handle);
 
 NSResult NSPutTopicResource(NSTopicList *topicList, OCResourceHandle * handle);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif /* _NS_PROVIDER_RESOURCE_H_ */

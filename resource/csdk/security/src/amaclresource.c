@@ -42,7 +42,7 @@ static const uint16_t CBOR_SIZE = 1024;
 static const uint16_t CBOR_MAX_SIZE = 4400;
 
 /** AMACL Map size - Number of mandatory items. */
-static const uint8_t AMACL_MAP_SIZE = 3;
+static const uint8_t AMACL_MAP_SIZE = 1;
 static const uint8_t AMACL_RSRC_MAP_SIZE = 1;
 static const uint8_t AMACL_RLIST_MAP_SIZE = 3;
 
@@ -90,7 +90,7 @@ OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayl
 
     CborEncoder encoder;
     CborEncoder amaclMap;
-    int64_t cborEncoderResult = CborNoError;
+    CborError cborEncoderResult = CborNoError;
     CborEncoder rsrcMap;
     CborEncoder rlistArray;
 

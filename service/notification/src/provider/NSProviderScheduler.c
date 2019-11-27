@@ -23,7 +23,7 @@
 pthread_t NSThread[THREAD_COUNT];
 pthread_mutex_t NSMutex[THREAD_COUNT];
 sem_t NSSemaphore[THREAD_COUNT];
-bool NSIsRunning[THREAD_COUNT] = { false, };
+volatile bool NSIsRunning[THREAD_COUNT] = { false, };
 
 NSTask* NSHeadMsg[THREAD_COUNT];
 NSTask* NSTailMsg[THREAD_COUNT];
@@ -117,12 +117,10 @@ bool NSStopScheduler()
 
     for (i = THREAD_COUNT - 1; i >= 0; --i)
     {
-        int status = -1;
-
         NSIsRunning[i] = false;
 
         sem_post(&(NSSemaphore[i]));
-        pthread_join(NSThread[i], (void **) &status);
+        pthread_join(NSThread[i], NULL);
 
         NSThread[i] = 0;
 

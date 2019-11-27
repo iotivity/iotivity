@@ -128,7 +128,7 @@ namespace OIC
             return &s_instance;
         }
 
-        NSResult NSProviderService::start(NSProviderService::ProviderConfig config)
+        NSResult NSProviderService::start(const NSProviderService::ProviderConfig &config)
         {
             NS_LOG(DEBUG, "start - IN");
             m_acceptedConsumers->removeConsumers();

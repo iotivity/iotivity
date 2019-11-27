@@ -31,6 +31,11 @@
 #include "oic_string.h"
 #include "NSUtil.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif // __cplusplus
+
 NSCacheList * NSProviderStorageCreate();
 NSCacheElement * NSProviderStorageRead(NSCacheList * list, const char * findId);
 NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj);
@@ -59,5 +64,9 @@ NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
 
 pthread_mutex_t NSCacheMutex;
 pthread_mutexattr_t NSCacheMutexAttr;
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif /* _NS_PROVIDER_CACHEADAPTER__H_ */

@@ -28,6 +28,11 @@
 #include "NSProviderResource.h"
 #include "NSProviderSubscription.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif // __cplusplus
+
 typedef struct {
     pthread_cond_t * condition;
     pthread_mutex_t * mutex;
@@ -49,5 +54,9 @@ NSResult NSInitTopicList();
 NSTopicList * NSGetTopics(char *consumerId);
 
 bool NSIsTopicSubscribed(char *consumerId, char *topic);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif /* _NS_PROVIDER_TOPIC_H_ */

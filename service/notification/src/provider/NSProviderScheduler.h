@@ -34,13 +34,18 @@
 #include "oic_string.h"
 #include "NSUtil.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif // __cplusplus
+
 extern NSTask* NSHeadMsg[THREAD_COUNT]; // Current MSG;
 extern NSTask* NSTailMsg[THREAD_COUNT]; // Recently MSG;
 
 extern pthread_t NSThread[THREAD_COUNT];
 extern pthread_mutex_t NSMutex[THREAD_COUNT];
 extern sem_t NSSemaphore[THREAD_COUNT];
-extern bool NSIsRunning[THREAD_COUNT];
+extern volatile bool NSIsRunning[THREAD_COUNT];
 
 extern void * NSCallbackResponseSchedule(void *ptr);
 extern void * NSDiscoverySchedule(void *ptr);
@@ -54,5 +59,9 @@ bool NSStartScheduler();
 bool NSStopScheduler();
 void NSPushQueue(NSSchedulerType, NSTaskType, void*);
 void NSFreeData(NSSchedulerType, NSTask * );
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif /* _PROVIDER_SCHEDULER_H_ */

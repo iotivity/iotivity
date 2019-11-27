@@ -95,7 +95,7 @@ namespace OIC
                       * and onMessageSynchronized function listeners
                       * @return :: result code of Provider Service
                       */
-                NSResult start(ProviderConfig config);
+                NSResult start(const ProviderConfig &config);
 
                 /**
                       * Terminate notification service for provider

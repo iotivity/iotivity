@@ -39,7 +39,7 @@
 #include "pmutility.h"
 #include "experimental/ocrandom.h"
 
-#define OTM_TIMEOUT 60
+#define OTM_TIMEOUT 120
 #define DISCOVERY_TIMEOUT 10
 
 #define SVR_DB_FILE_NAME "oic_svr_db_client.dat"

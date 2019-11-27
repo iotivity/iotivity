@@ -32,6 +32,15 @@
 #include "oic_malloc.h"
 #include "NSUtil.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif // __cplusplus
+
 NSResult NSRegisterResource();
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif /* _NS_PROVIDER_NOTIFICATION_H_ */

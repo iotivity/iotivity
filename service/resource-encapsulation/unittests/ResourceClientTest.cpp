@@ -104,7 +104,7 @@ private:
                     RCSAddress::multicast(), RESOURCETYPE,
                     std::bind(&RemoteResourceObjectTest::resourceDiscovered, this,
                             std::placeholders::_1));
-            Wait(1000);
+            Wait();
             discoveryTask->cancel();
         }
     }

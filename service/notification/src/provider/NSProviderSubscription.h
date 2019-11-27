@@ -34,6 +34,11 @@
 #include "oic_malloc.h"
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif // __cplusplus
+
 NSCacheList * consumerSubList;
 
 NSResult NSInitSubscriptionList();
@@ -45,5 +50,9 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest);
 void NSAskAcceptanceToUser(OCEntityHandlerRequest *entityHandlerRequest);
 NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest *entityHandlerRequest);
 NSResult NSSendResponse(const char * id, bool accepted);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif /* _NS_PROVIDER_SUBSCRIPTION_H_ */

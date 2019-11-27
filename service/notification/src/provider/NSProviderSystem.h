@@ -29,6 +29,11 @@
 #include "NSStructs.h"
 #include "NSUtil.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif // __cplusplus
+
 void NSSetProviderConnectionState(NSConnectionState state);
 NSConnectionState NSGetProviderConnectionState();
 
@@ -45,5 +50,9 @@ void NSSetResourceSecurity(bool secured);
 void NSSetMQServerInfo(const char * serverUri, OCDevAddr * devAddr);
 NSMQServerInfo * NSGetMQServerInfo();
 #endif
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif /* _NS_PROVIDER_SYSTEM__H_ */
