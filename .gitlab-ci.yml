@@ -1,0 +1,12 @@
+---
+
+image: gcc
+
+build:
+    stage: build
+    before_script:
+        - apt update && apt -y install build-essential git scons libtool autoconf valgrind doxygen wget unzip cmake libboost-dev libboost-program-options-dev libboost-thread-dev uuid-dev libexpat1-dev libglib2.0-dev libsqlite3-dev libcurl4-gnutls-dev chrpath
+    script:
+        - git clone https://github.com/intel/tinycbor.git extlibs/tinycbor/tinycbor -b v0.5.1
+        - git clone https://github.com/ARMmbed/mbedtls.git extlibs/mbedtls/mbedtls -b mbedtls-2.4.2
+        - scons -j 2
