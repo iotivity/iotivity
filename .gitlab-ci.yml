@@ -2,11 +2,44 @@
 
 image: gcc
 
-build:
+build_Linux_release:
     stage: build
     before_script:
         - apt update && apt -y install build-essential git scons libtool autoconf valgrind doxygen wget unzip cmake libboost-dev libboost-program-options-dev libboost-thread-dev uuid-dev libexpat1-dev libglib2.0-dev libsqlite3-dev libcurl4-gnutls-dev chrpath
-    script:
+        - set -o pipefail
+        - export VERBOSE=false
+        - export CCACHE_DISABLE=false
         - git clone https://github.com/intel/tinycbor.git extlibs/tinycbor/tinycbor -b v0.5.1
         - git clone https://github.com/ARMmbed/mbedtls.git extlibs/mbedtls/mbedtls -b mbedtls-2.4.2
-        - scons -j 2
+    script:
+        - echo "*********** Release Build for linux with Security *************"
+        - scons RELEASE=1 ERROR_ON_WARN=0 -j2
+
+build_linux_debug:
+    stage: build
+    before_script:
+        - apt update && apt -y install build-essential git scons libtool autoconf valgrind doxygen wget unzip cmake libboost-dev libboost-program-options-dev libboost-thread-dev uuid-dev libexpat1-dev libglib2.0-dev libsqlite3-dev libcurl4-gnutls-dev chrpath
+        - set -o pipefail
+        - export VERBOSE=false
+        - export CCACHE_DISABLE=false
+        - git clone https://github.com/intel/tinycbor.git extlibs/tinycbor/tinycbor -b v0.5.1
+        - git clone https://github.com/ARMmbed/mbedtls.git extlibs/mbedtls/mbedtls -b mbedtls-2.4.2
+    script:
+        - echo "*********** Debug Build for linux with Security *************"
+        - scons RELEASE=0 ERROR_ON_WARN=0 -j2
+
+.build_linux_full:
+    stage: build
+    before_script:
+        - apt update && apt -y install build-essential git scons libtool autoconf valgrind doxygen wget unzip cmake libboost-dev libboost-program-options-dev libboost-thread-dev uuid-dev libexpat1-dev libglib2.0-dev libsqlite3-dev libcurl4-gnutls-dev chrpath default-jdk
+        - set -o pipefail
+        - export VERBOSE=false
+        - export CCACHE_DISABLE=false
+        - export JAVA_HOME=/usr
+        - git clone https://github.com/intel/tinycbor.git extlibs/tinycbor/tinycbor -b v0.5.1
+        - git clone https://github.com/ARMmbed/mbedtls.git extlibs/mbedtls/mbedtls -b mbedtls-2.4.2
+    script:
+        - echo "*********** Release Build for linux *************"
+        - scons VERBOSE=false WITH_CLOUD=1 WITH_TCP=1 WITH_PROXY=1 WITH_RA=1 BUILD_JAVA=1 MULTIPLE_OWNER=1 RELEASE=1 ERROR_ON_WARN=0 SECURED=1 WITH_RA_IBB=1 -j2
+        - echo "*********** Debug Build for linux *************"
+        - scons VERBOSE=false WITH_CLOUD=1 WITH_TCP=1 WITH_PROXY=1 WITH_RA=1 BUILD_JAVA=1 MULTIPLE_OWNER=1 RELEASE=0 ERROR_ON_WARN=0 SECURED=1 WITH_RA_IBB=1 -j2

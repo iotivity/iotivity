@@ -20,6 +20,7 @@
 //
 
 #include <sstream>
+#include <cstddef>
 #include "octypes.h"
 #include "ConcurrentIotivityUtils.h"
 #include "ocpayload.h"
