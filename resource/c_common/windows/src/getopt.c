@@ -45,8 +45,8 @@ int getopt(int argc, char *const argv[], const char *optstring)
             return '?';
         }
         optarg = argv[optind];
-        optind++;
     }
+    optind++;
     return opt;
 }
 
