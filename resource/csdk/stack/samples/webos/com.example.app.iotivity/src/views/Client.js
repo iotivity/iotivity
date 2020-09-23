@@ -323,13 +323,12 @@ class Client extends React.Component {
                                 <ExpandableInput title="value" onChange={this.onResourceValueChanged} />
                                 <Button style={{ lineHeight: 25 + "px" }} disabled={!this.state.resourceUri || !this.state.resourceKey || !this.state.resourceValue} small onClick={this.onPostResourceTapped}>send</Button>
                             </div> : null}
-                        {detailResourceInfo ?
-                            <div>
-                                <MarqueeText marqueeOn="render">return</MarqueeText>
-                                <SpotlightContainerDecorator focusableScrollbar style={{ "height": 400 + "px" }} direction="both" horizontalScrollbar="auto" verticalScrollbar="auto">
-                                    <BodyText>{JSON.stringify(detailResourceInfo, null, 4)}</BodyText>
-                                </SpotlightContainerDecorator>
-                            </div> : null}
+                        <div>
+                            <MarqueeText marqueeOn="render">return</MarqueeText>
+                            <SpotlightContainerDecorator focusableScrollbar style={{ "height": 400 + "px" }} direction="both" horizontalScrollbar="auto" verticalScrollbar="auto">
+                                <BodyText>{(detailResourceInfo ? JSON.stringify(detailResourceInfo, null, 4) : "")}</BodyText>
+                            </SpotlightContainerDecorator>
+                        </div>
                     </SpotlightContainerDecorator>
                 </Layout>
             </div>
